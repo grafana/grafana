@@ -119,6 +119,7 @@ func TestValidateRuleGroup(t *testing.T) {
 		require.Len(t, alerts, len(rules))
 		require.Equal(t, len(rules), conditionValidations)
 	})
+
 	t.Run("should default to default interval from config if group interval is 0", func(t *testing.T) {
 		g := validGroup(cfg, rules...)
 		g.Interval = 0
@@ -128,6 +129,23 @@ func TestValidateRuleGroup(t *testing.T) {
 		require.NoError(t, err)
 		for _, alert := range alerts {
 			require.Equal(t, int64(cfg.DefaultRuleEvaluationInterval.Seconds()), alert.IntervalSeconds)
+			require.False(t, alert.HasPause)
+		}
+	})
+
+	t.Run("should show the payload has isPaused field", func(t *testing.T) {
+		for _, rule := range rules {
+			isPaused := true
+			rule.GrafanaManagedAlert.IsPaused = &isPaused
+			isPaused = !(isPaused)
+		}
+		g := validGroup(cfg, rules...)
+		alerts, err := validateRuleGroup(&g, orgId, folder, func(condition models.Condition) error {
+			return nil
+		}, cfg)
+		require.NoError(t, err)
+		for _, alert := range alerts {
+			require.True(t, alert.HasPause)
 		}
 	})
 }

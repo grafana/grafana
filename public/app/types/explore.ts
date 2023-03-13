@@ -9,7 +9,6 @@ import {
   HistoryItem,
   LogsModel,
   PanelData,
-  QueryHint,
   RawTimeRange,
   TimeRange,
   EventBusExtended,
@@ -88,7 +87,7 @@ export interface ExploreState {
 }
 
 export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
-export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
+export type ExploreGraphStyle = (typeof EXPLORE_GRAPH_STYLES)[number];
 
 export interface ExploreItemState {
   /**
@@ -231,11 +230,8 @@ export interface QueryOptions {
 export interface QueryTransaction {
   id: string;
   done: boolean;
-  error?: string | JSX.Element;
-  hints?: QueryHint[];
   request: DataQueryRequest;
   queries: DataQuery[];
-  result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
 
@@ -268,7 +264,7 @@ export enum TABLE_RESULTS_STYLE {
   raw = 'raw',
 }
 export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.table, TABLE_RESULTS_STYLE.raw];
-export type TableResultsStyle = typeof TABLE_RESULTS_STYLES[number];
+export type TableResultsStyle = (typeof TABLE_RESULTS_STYLES)[number];
 
 export interface SupplementaryQuery {
   enabled: boolean;

@@ -10,6 +10,7 @@ import {
   PanelData,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
+  TimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
@@ -42,7 +43,7 @@ class OptionsPaneOptionsTestScenario {
   panelData: PanelData = {
     series: [],
     state: LoadingState.Done,
-    timeRange: {} as any,
+    timeRange: {} as TimeRange,
   };
 
   plugin = getPanelPlugin({

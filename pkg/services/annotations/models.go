@@ -6,15 +6,15 @@ import (
 )
 
 type ItemQuery struct {
-	OrgId        int64    `json:"orgId"`
+	OrgID        int64    `json:"orgId"`
 	From         int64    `json:"from"`
 	To           int64    `json:"to"`
-	UserId       int64    `json:"userId"`
-	AlertId      int64    `json:"alertId"`
-	DashboardId  int64    `json:"dashboardId"`
-	DashboardUid string   `json:"dashboardUID"`
-	PanelId      int64    `json:"panelId"`
-	AnnotationId int64    `json:"annotationId"`
+	UserID       int64    `json:"userId"`
+	AlertID      int64    `json:"alertId"`
+	DashboardID  int64    `json:"dashboardId"`
+	DashboardUID string   `json:"dashboardUID"`
+	PanelID      int64    `json:"panelId"`
+	AnnotationID int64    `json:"annotationId"`
 	Tags         []string `json:"tags"`
 	Type         string   `json:"type"`
 	MatchAny     bool     `json:"matchAny"`
@@ -55,20 +55,20 @@ type GetAnnotationTagsResponse struct {
 }
 
 type DeleteParams struct {
-	OrgId       int64
-	Id          int64
-	DashboardId int64
-	PanelId     int64
+	OrgID       int64
+	ID          int64
+	DashboardID int64
+	PanelID     int64
 }
 
 type Item struct {
-	Id          int64            `json:"id" xorm:"pk autoincr 'id'"`
-	OrgId       int64            `json:"orgId"`
-	UserId      int64            `json:"userId"`
-	DashboardId int64            `json:"dashboardId"`
-	PanelId     int64            `json:"panelId"`
+	ID          int64            `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID       int64            `json:"orgId" xorm:"org_id"`
+	UserID      int64            `json:"userId" xorm:"user_id"`
+	DashboardID int64            `json:"dashboardId" xorm:"dashboard_id"`
+	PanelID     int64            `json:"panelId" xorm:"panel_id"`
 	Text        string           `json:"text"`
-	AlertId     int64            `json:"alertId"`
+	AlertID     int64            `json:"alertId" xorm:"alert_id"`
 	PrevState   string           `json:"prevState"`
 	NewState    string           `json:"newState"`
 	Epoch       int64            `json:"epoch"`
@@ -88,13 +88,13 @@ func (i Item) TableName() string {
 }
 
 type ItemDTO struct {
-	Id           int64            `json:"id"`
-	AlertId      int64            `json:"alertId"`
+	ID           int64            `json:"id" xorm:"id"`
+	AlertID      int64            `json:"alertId" xorm:"alert_id"`
 	AlertName    string           `json:"alertName"`
-	DashboardId  int64            `json:"dashboardId"`
-	DashboardUID *string          `json:"dashboardUID"`
-	PanelId      int64            `json:"panelId"`
-	UserId       int64            `json:"userId"`
+	DashboardID  int64            `json:"dashboardId" xorm:"dashboard_id"`
+	DashboardUID *string          `json:"dashboardUID" xorm:"dashboard_uid"`
+	PanelID      int64            `json:"panelId" xorm:"panel_id"`
+	UserID       int64            `json:"userId" xorm:"user_id"`
 	NewState     string           `json:"newState"`
 	PrevState    string           `json:"prevState"`
 	Created      int64            `json:"created"`
@@ -105,7 +105,7 @@ type ItemDTO struct {
 	Tags         []string         `json:"tags"`
 	Login        string           `json:"login"`
 	Email        string           `json:"email"`
-	AvatarUrl    string           `json:"avatarUrl"`
+	AvatarURL    string           `json:"avatarUrl" xorm:"avatar_url"`
 	Data         *simplejson.Json `json:"data"`
 }
 
@@ -128,7 +128,7 @@ func (a annotationType) String() string {
 }
 
 func (annotation *ItemDTO) GetType() annotationType {
-	if annotation.DashboardId != 0 {
+	if annotation.DashboardID != 0 {
 		return Dashboard
 	}
 	return Organization

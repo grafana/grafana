@@ -34,6 +34,7 @@ import { LokiOptions } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
+import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import {
   failedMetric,
   histogramMetric,
@@ -223,6 +224,36 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
     }
+    if (targets.traceqlSearch?.length) {
+      try {
+        const queryValue = generateQueryFromFilters(targets.traceqlSearch[0].filters);
+        reportInteraction('grafana_traces_traceql_search_queried', {
+          datasourceType: 'tempo',
+          app: options.app ?? '',
+          grafana_version: config.buildInfo.version,
+          query: queryValue ?? '',
+        });
+        subQueries.push(
+          this._request('/api/search', {
+            q: queryValue,
+            limit: options.targets[0].limit,
+            start: options.range.from.unix(),
+            end: options.range.to.unix(),
+          }).pipe(
+            map((response) => {
+              return {
+                data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+              };
+            }),
+            catchError((error) => {
+              return of({ error: { message: error.data.message }, data: [] });
+            })
+          )
+        );
+      } catch (error) {
+        return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
+      }
+    }
 
     if (targets.upload?.length) {
       if (this.uploadedJson) {
@@ -259,19 +290,15 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
       const dsId = this.serviceMap.datasourceUid;
       const tempoDsUid = this.uid;
-      if (config.featureToggles.tempoApmTable) {
-        subQueries.push(
-          serviceMapQuery(options, dsId, tempoDsUid).pipe(
-            concatMap((result) =>
-              rateQuery(options, result, dsId).pipe(
-                concatMap((result) => errorAndDurationQuery(options, result, dsId, tempoDsUid))
-              )
+      subQueries.push(
+        serviceMapQuery(options, dsId, tempoDsUid).pipe(
+          concatMap((result) =>
+            rateQuery(options, result, dsId).pipe(
+              concatMap((result) => errorAndDurationQuery(options, result, dsId, tempoDsUid))
             )
           )
-        );
-      } else {
-        subQueries.push(serviceMapQuery(options, dsId, tempoDsUid));
-      }
+        )
+      );
     }
 
     return merge(...subQueries);

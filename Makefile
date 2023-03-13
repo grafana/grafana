@@ -16,6 +16,8 @@ GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 
+targets := $(shell echo '$(sources)' | tr "," " ")
+
 all: deps build
 
 ##@ Dependencies
@@ -49,6 +51,7 @@ $(SPEC_TARGET): $(SWAGGER) ## Generate API Swagger specification
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha
+	go run pkg/services/ngalert/api/tooling/cmd/clean-swagger/main.go -if $@ -of $@
 
 swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET) validate-api-spec
 
@@ -56,7 +59,7 @@ validate-api-spec: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
 	$(SWAGGER) validate $(<)
 
 clean-api-spec:
-	rm $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
+	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
@@ -84,7 +87,7 @@ fix-cue: $(CUE)
 gen-jsonnet:
 	go generate ./devenv/jsonnet
 
-build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
+build-go: gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
@@ -162,19 +165,35 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 
 ##@ Docker
 
+TMP_DIR!=mktemp -d
+TAG_SUFFIX=$(if $(WIRE_TAGS)!=oss,-$(WIRE_TAGS))
+PLATFORM=linux/amd64
+
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
+	cp -Lrf . $(TMP_DIR)
 	DOCKER_BUILDKIT=1 \
-	docker build \
-	--tag grafana/grafana:dev .
+	docker build $(TMP_DIR) \
+	--platform $(PLATFORM) \
+	--build-arg BINGO=false \
+	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
+	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
+	--tag grafana/grafana$(TAG_SUFFIX):dev \
+	$(DOCKER_BUILD_ARGS)
 
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	@echo "build docker container"
+	cp -Lrf . $(TMP_DIR)
 	DOCKER_BUILDKIT=1 \
-	docker build \
+	docker build $(TMP_DIR) \
+	--platform $(PLATFORM) \
+	--build-arg BINGO=false \
+	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
+	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg BASE_IMAGE=ubuntu:20.04 \
-	--build-arg GO_IMAGE=golang:1.19.4 \
-	--tag grafana/grafana:dev-ubuntu .
+	--build-arg GO_IMAGE=golang:1.20.1 \
+	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
+	$(DOCKER_BUILD_ARGS)
 
 ##@ Services
 
@@ -184,8 +203,11 @@ ifeq ($(sources),)
 devenv:
 	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,openldap\n'
 else
-devenv: devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
-	$(eval targets := $(shell echo '$(sources)' | tr "," " "))
+devenv: ${KIND} devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
+ifneq (,$(findstring apiserver,$(targets)))
+	@${KIND} create cluster --name grafana-devenv
+	$(eval targets := $(filter-out apiserver,$(targets)))
+endif
 
 	@cd devenv; \
 	./create_docker_compose.sh $(targets) || \
@@ -196,6 +218,7 @@ devenv: devenv-down ## Start optional services, e.g. postgres, prometheus, and e
 endif
 
 devenv-down: ## Stop optional services.
+	@${KIND} delete cluster --name grafana
 	@cd devenv; \
 	test -f docker-compose.yaml && \
 	docker-compose down || exit 0;

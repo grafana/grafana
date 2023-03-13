@@ -196,7 +196,7 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
     // Fill labelsFields with labels from dataFrames
     dataFramesByRefId[refId].forEach((df) => {
       const frameValueField = df.fields[1];
-      const promLabels = frameValueField.labels ?? {};
+      const promLabels = frameValueField?.labels ?? {};
 
       Object.keys(promLabels)
         .sort()
@@ -216,8 +216,10 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
 
     // Fill valueField, timeField and labelFields with values
     dataFramesByRefId[refId].forEach((df) => {
-      df.fields[0].values.toArray().forEach((value) => timeField.values.add(value));
-      df.fields[1].values.toArray().forEach((value) => {
+      const timeFields = df.fields[0]?.values ?? new ArrayVector();
+      const dataFields = df.fields[1]?.values ?? new ArrayVector();
+      timeFields.toArray().forEach((value) => timeField.values.add(value));
+      dataFields.toArray().forEach((value) => {
         valueField.values.add(parseSampleValue(value));
         const labelsForField = df.fields[1].labels ?? {};
         labelFields.forEach((field) => field.values.add(getLabelValue(labelsForField, field.name)));

@@ -135,6 +135,7 @@ func (sc *scenarioContext) exec() {
 			Value: sc.tokenSessionCookie,
 		})
 	}
+
 	sc.m.ServeHTTP(sc.resp, sc.req)
 
 	if sc.resp.Header().Get("Content-Type") == "application/json; charset=UTF-8" {

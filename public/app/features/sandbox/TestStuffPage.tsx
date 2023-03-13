@@ -4,13 +4,15 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   ApplyFieldOverrideOptions,
-  DataTransformerConfig,
   dateMath,
   FieldColorModeId,
+  isPluginExtensionLink,
   NavModelItem,
   PanelData,
 } from '@grafana/data';
-import { Button, Table } from '@grafana/ui';
+import { getPluginExtensions } from '@grafana/runtime';
+import { DataTransformerConfig } from '@grafana/schema';
+import { Button, HorizontalGroup, LinkButton, Table } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -66,6 +68,9 @@ export const TestStuffPage = () => {
   return (
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
+        <HorizontalGroup>
+          <LinkToBasicApp placement="grafana/sandbox/testing" />
+        </HorizontalGroup>
         {data && (
           <AutoSizer style={{ width: '100%', height: '600px' }}>
             {({ width }) => {
@@ -148,6 +153,29 @@ export function getDefaultState(): State {
       savedQueryUid: null,
     },
   };
+}
+
+function LinkToBasicApp({ placement }: { placement: string }) {
+  const { extensions } = getPluginExtensions({ placement });
+
+  if (extensions.length === 0) {
+    return null;
+  }
+
+  return (
+    <div>
+      {extensions.map((extension) => {
+        if (!isPluginExtensionLink(extension)) {
+          return null;
+        }
+        return (
+          <LinkButton href={extension.path} title={extension.description} key={extension.key}>
+            {extension.title}
+          </LinkButton>
+        );
+      })}
+    </div>
+  );
 }
 
 export default TestStuffPage;

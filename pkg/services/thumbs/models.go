@@ -55,16 +55,6 @@ type crawlStatus struct {
 	Last     time.Time    `json:"last,omitempty"`
 }
 
-type dashboardPreviewsSystemRequirements struct {
-	Met                                bool   `json:"met"`
-	RequiredImageRendererPluginVersion string `json:"requiredImageRendererPluginVersion"`
-}
-
-type dashboardPreviewsSetupConfig struct {
-	SystemRequirements dashboardPreviewsSystemRequirements `json:"systemRequirements"`
-	ThumbnailsExist    bool                                `json:"thumbnailsExist"`
-}
-
 type ThumbnailKind string
 type ThumbnailState string
 

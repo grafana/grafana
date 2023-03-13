@@ -27,7 +27,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
-	query := apikey.GetApiKeysQuery{OrgId: c.OrgID, User: c.SignedInUser, IncludeExpired: c.QueryBool("includeExpired")}
+	query := apikey.GetApiKeysQuery{OrgID: c.OrgID, User: c.SignedInUser, IncludeExpired: c.QueryBool("includeExpired")}
 
 	if err := hs.apiKeyService.GetAPIKeys(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to list api keys", err)
@@ -36,24 +36,25 @@ func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 	ids := map[string]bool{}
 	result := make([]*dtos.ApiKeyDTO, len(query.Result))
 	for i, t := range query.Result {
-		ids[strconv.FormatInt(t.Id, 10)] = true
+		ids[strconv.FormatInt(t.ID, 10)] = true
 		var expiration *time.Time = nil
 		if t.Expires != nil {
 			v := time.Unix(*t.Expires, 0)
 			expiration = &v
 		}
 		result[i] = &dtos.ApiKeyDTO{
-			Id:         t.Id,
+			ID:         t.ID,
 			Name:       t.Name,
 			Role:       t.Role,
 			Expiration: expiration,
+			LastUsedAt: t.LastUsedAt,
 		}
 	}
 
 	metadata := hs.getMultiAccessControlMetadata(c, c.OrgID, "apikeys:id", ids)
 	if len(metadata) > 0 {
 		for _, key := range result {
-			key.AccessControl = metadata[strconv.FormatInt(key.Id, 10)]
+			key.AccessControl = metadata[strconv.FormatInt(key.ID, 10)]
 		}
 	}
 
@@ -76,7 +77,7 @@ func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	cmd := &apikey.DeleteCommand{Id: id, OrgId: c.OrgID}
+	cmd := &apikey.DeleteCommand{ID: id, OrgID: c.OrgID}
 	err = hs.apiKeyService.DeleteApiKey(c.Req.Context(), cmd)
 	if err != nil {
 		var status int
@@ -125,9 +126,9 @@ func (hs *HTTPServer) AddAPIKey(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
-	cmd.OrgId = c.OrgID
+	cmd.OrgID = c.OrgID
 
-	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
+	newKeyInfo, err := apikeygen.New(cmd.OrgID, cmd.Name)
 	if err != nil {
 		return response.Error(500, "Generating API key failed", err)
 	}
@@ -144,7 +145,7 @@ func (hs *HTTPServer) AddAPIKey(c *contextmodel.ReqContext) response.Response {
 	}
 
 	result := &dtos.NewApiKeyResult{
-		ID:   cmd.Result.Id,
+		ID:   cmd.Result.ID,
 		Name: cmd.Result.Name,
 		Key:  newKeyInfo.ClientSecret,
 	}

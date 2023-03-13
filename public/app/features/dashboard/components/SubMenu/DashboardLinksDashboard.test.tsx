@@ -1,3 +1,6 @@
+import { backendSrv } from 'app/core/services/__mocks__/backend_srv';
+import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
+
 import { DashboardSearchItem, DashboardSearchItemType } from '../../../search/types';
 import { DashboardLink } from '../../state/DashboardModel';
 
@@ -18,9 +21,7 @@ describe('searchForTags', () => {
       type: 'dashboards',
       url: '/d/6ieouugGk/DashLinks',
     };
-    const backendSrv: any = {
-      search: jest.fn((args) => []),
-    };
+    jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
 
     return { link, backendSrv };
   };
@@ -58,15 +59,14 @@ describe('resolveLinks', () => {
         title: 'DashLinks',
         url: '/d/6ieouugGk/DashLinks',
         isStarred: false,
-        items: [],
         tags: [],
         uri: 'db/DashLinks',
         type: DashboardSearchItemType.DashDB,
       },
     ];
-    const linkSrv: any = {
+    const linkSrv = {
       getLinkUrl: jest.fn((args) => args.url),
-    };
+    } as unknown as LinkSrv;
     const sanitize = jest.fn((args) => args);
     const sanitizeUrl = jest.fn((args) => args);
 

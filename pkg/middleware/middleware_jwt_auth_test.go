@@ -79,7 +79,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		assert.Equal(t, myUsername, sc.context.Login)
 		list := contexthandler.AuthHTTPHeaderListFromContext(sc.context.Req.Context())
 		require.NotNil(t, list)
-		require.EqualValues(t, []string{sc.cfg.JWTAuthHeaderName}, list.Items)
+		require.EqualValues(t, []string{"Authorization", sc.cfg.JWTAuthHeaderName}, list.Items)
 	}, configure, configureUsernameClaim)
 
 	middlewareScenario(t, "Valid token with bearer in authorization header", func(t *testing.T, sc *scenarioContext) {

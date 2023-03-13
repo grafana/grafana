@@ -1,14 +1,15 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { History, Location } from 'history';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { type match } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
+import { RouteDescriptor } from 'app/core/navigation/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { configureStore } from '../../store/configureStore';
-
-import { PlaylistEditPage } from './PlaylistEditPage';
+import { PlaylistEditPage, RouteParams } from './PlaylistEditPage';
 import { Playlist } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -24,25 +25,26 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
 
 async function getTestContext({ name, interval, items, uid }: Partial<Playlist> = {}) {
   jest.clearAllMocks();
-  const store = configureStore();
   const playlist = { name, items, interval, uid } as unknown as Playlist;
   const queryParams = {};
-  const route: any = {};
-  const match: any = { params: { uid: 'foo' } };
-  const location: any = {};
-  const history: any = {};
+  const route = {} as RouteDescriptor;
+  const match = { params: { uid: 'foo' } } as unknown as match<RouteParams>;
+  const location = {} as Location;
+  const history = {} as History;
   const getMock = jest.spyOn(backendSrv, 'get');
   const putMock = jest.spyOn(backendSrv, 'put');
+
   getMock.mockResolvedValue({
     name: 'Test Playlist',
     interval: '5s',
     items: [{ title: 'First item', type: 'dashboard_by_uid', order: 1, value: '1' }],
     uid: 'foo',
   });
+
   const { rerender } = render(
-    <Provider store={store}>
+    <TestProvider>
       <PlaylistEditPage queryParams={queryParams} route={route} match={match} location={location} history={history} />
-    </Provider>
+    </TestProvider>
   );
   await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
 

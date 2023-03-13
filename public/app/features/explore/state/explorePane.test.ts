@@ -19,7 +19,7 @@ jest.mock('../../dashboard/services/TimeSrv', () => ({
 const { testRange, defaultInitialState } = createDefaultInitialState();
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
     updateTimeRange: jest.fn(),
   }),

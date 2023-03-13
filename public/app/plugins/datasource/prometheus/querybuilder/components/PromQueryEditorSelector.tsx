@@ -8,6 +8,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
+import { PromQueryFormat } from '../../dataquery.gen';
 import { PromQuery } from '../../types';
 import { QueryPatternsModal } from '../QueryPatternsModal';
 import { buildVisualQueryFromString } from '../parsing';
@@ -21,7 +22,7 @@ import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 
-export const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
+export const FORMAT_OPTIONS: Array<SelectableValue<PromQueryFormat>> = [
   { label: 'Time series', value: 'time_series' },
   { label: 'Table', value: 'table' },
   { label: 'Heatmap', value: 'heatmap' },

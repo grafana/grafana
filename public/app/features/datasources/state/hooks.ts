@@ -23,6 +23,7 @@ import {
 } from './actions';
 import { DataSourcesRoutesContext } from './contexts';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from './navModel';
+import { initialDataSourceSettingsState } from './reducers';
 import { getDataSource, getDataSourceMeta } from './selectors';
 
 export const useInitDataSourceSettings = (uid: string) => {
@@ -34,7 +35,7 @@ export const useInitDataSourceSettings = (uid: string) => {
     return function cleanUp() {
       dispatch(
         cleanUpAction({
-          cleanupAction: (state) => state.dataSourceSettings,
+          cleanupAction: (state) => (state.dataSourceSettings = initialDataSourceSettingsState),
         })
       );
     };
@@ -50,10 +51,14 @@ export const useTestDataSource = (uid: string) => {
 
 export const useLoadDataSources = () => {
   const dispatch = useDispatch();
+  const isLoading = useSelector((state) => state.dataSources.isLoadingDataSources);
+  const dataSources = useSelector((state) => state.dataSources.dataSources);
 
   useEffect(() => {
     dispatch(loadDataSources());
   }, [dispatch]);
+
+  return { isLoading, dataSources };
 };
 
 export const useLoadDataSource = (uid: string) => {

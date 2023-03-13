@@ -60,22 +60,7 @@ it('renders panel with a header if prop leftItems', () => {
   expect(screen.getByTestId('header-container')).toBeInTheDocument();
 });
 
-// todo implement when hoverHeader is implemented
-it.skip('renders panel without header if no title, no leftItems, and hoverHeader is undefined', () => {
-  setup();
-
-  expect(screen.getByTestId('header-container')).toBeInTheDocument();
-});
-
-// todo implement when hoverHeader is implemented
-it.skip('renders panel with a fixed header if prop hoverHeader is false', () => {
-  setup({ hoverHeader: false });
-
-  expect(screen.getByTestId('header-container')).toBeInTheDocument();
-});
-
-// todo implement when hoverHeader is implemented
-it.skip('renders panel with a hovering header if prop hoverHeader is true', () => {
+it('renders panel with a hovering header if prop hoverHeader is true', () => {
   setup({ title: 'Test Panel Header', hoverHeader: true });
 
   expect(screen.queryByTestId('header-container')).not.toBeInTheDocument();
@@ -95,12 +80,6 @@ it('renders panel with a header with icons in place if prop titleItems', () => {
   });
 
   expect(screen.getByTestId('title-items-container')).toBeInTheDocument();
-});
-
-it('renders panel with a header if prop menu', () => {
-  setup({ menu: <div> Menu </div> });
-
-  expect(screen.getByTestId('header-container')).toBeInTheDocument();
 });
 
 it('renders panel with a show-on-hover menu icon if prop menu', () => {

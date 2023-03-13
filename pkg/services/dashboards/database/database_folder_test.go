@@ -29,7 +29,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		var sqlStore *sqlstore.SQLStore
 		var flder, dashInRoot, childDash *dashboards.Dashboard
 		var currentUser user.User
-		var dashboardStore *DashboardStore
+		var dashboardStore dashboards.Store
 
 		setup := func() {
 			sqlStore = db.InitTestDB(t)
@@ -474,82 +474,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 			})
 		})
-
-		t.Run("Given dashboard and folder with the same title", func(t *testing.T) {
-			var orgId int64 = 1
-			title := "Very Unique Name"
-			var sqlStore *sqlstore.SQLStore
-			var folder1, folder2 *dashboards.Dashboard
-			sqlStore = db.InitTestDB(t)
-			quotaService := quotatest.New(false, nil)
-			dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
-			require.NoError(t, err)
-			folder2 = insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
-			_ = insertTestDashboard(t, dashboardStore, title, orgId, folder2.ID, false, "prod")
-			folder1 = insertTestDashboard(t, dashboardStore, title, orgId, 0, true, "prod")
-
-			t.Run("GetFolderByTitle should find the folder", func(t *testing.T) {
-				result, err := dashboardStore.GetFolderByTitle(context.Background(), orgId, title)
-				require.NoError(t, err)
-				require.Equal(t, folder1.ID, result.ID)
-			})
-		})
-
-		t.Run("GetFolderByUID", func(t *testing.T) {
-			var orgId int64 = 1
-			sqlStore := db.InitTestDB(t)
-			quotaService := quotatest.New(false, nil)
-			dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
-			require.NoError(t, err)
-			folder := insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
-			dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, false, "prod")
-
-			t.Run("should return folder by UID", func(t *testing.T) {
-				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId, folder.UID)
-				require.Equal(t, folder.ID, d.ID)
-				require.NoError(t, err)
-			})
-			t.Run("should not find dashboard", func(t *testing.T) {
-				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId, dash.UID)
-				require.Nil(t, d)
-				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
-			})
-			t.Run("should search in organization", func(t *testing.T) {
-				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId+1, folder.UID)
-				require.Nil(t, d)
-				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
-			})
-		})
-
-		t.Run("GetFolderByID", func(t *testing.T) {
-			var orgId int64 = 1
-			sqlStore := db.InitTestDB(t)
-			quotaService := quotatest.New(false, nil)
-			dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
-			require.NoError(t, err)
-			folder := insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
-			dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, false, "prod")
-
-			t.Run("should return folder by ID", func(t *testing.T) {
-				d, err := dashboardStore.GetFolderByID(context.Background(), orgId, folder.ID)
-				require.Equal(t, folder.ID, d.ID)
-				require.NoError(t, err)
-			})
-			t.Run("should not find dashboard", func(t *testing.T) {
-				d, err := dashboardStore.GetFolderByID(context.Background(), orgId, dash.ID)
-				require.Nil(t, d)
-				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
-			})
-			t.Run("should search in organization", func(t *testing.T) {
-				d, err := dashboardStore.GetFolderByID(context.Background(), orgId+1, folder.ID)
-				require.Nil(t, d)
-				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
-			})
-		})
 	})
 }
 
-func moveDashboard(t *testing.T, dashboardStore *DashboardStore, orgId int64, dashboard *simplejson.Json,
+func moveDashboard(t *testing.T, dashboardStore dashboards.Store, orgId int64, dashboard *simplejson.Json,
 	newFolderId int64) *dashboards.Dashboard {
 	t.Helper()
 

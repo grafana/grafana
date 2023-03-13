@@ -6,6 +6,9 @@ package runner
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
@@ -39,12 +42,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
-	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -56,7 +57,6 @@ import (
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
-	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
@@ -78,8 +78,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -107,6 +105,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	entitystoredummy "github.com/grafana/grafana/pkg/services/store/entity/dummy"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
+	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -156,6 +156,8 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
 	secretsManager.ProvideSecretsService,
 	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)),
+	bundleregistry.ProvideService,
+	wire.Bind(new(supportbundles.Service), new(*bundleregistry.Service)),
 	hooks.ProvideService,
 	legacydataservice.ProvideService,
 	wire.Bind(new(legacydata.RequestHandler), new(*legacydataservice.Service)),
@@ -204,7 +206,6 @@ var wireSet = wire.NewSet(
 	search.ProvideService,
 	searchV2.ProvideService,
 	store.ProvideService,
-	export.ProvideService,
 	live.ProvideService,
 	pushhttp.ProvideService,
 	contexthandler.ProvideService,
@@ -240,8 +241,6 @@ var wireSet = wire.NewSet(
 	dashsnapsvc.ProvideService,
 	datasourceservice.ProvideService,
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
-	pluginSettings.ProvideService,
-	wire.Bind(new(pluginsettings.Service), new(*pluginSettings.Service)),
 	alerting.ProvideService,
 	ossaccesscontrol.ProvideServiceAccountPermissions,
 	wire.Bind(new(accesscontrol.ServiceAccountPermissionsService), new(*ossaccesscontrol.ServiceAccountPermissionsService)),
@@ -251,13 +250,13 @@ var wireSet = wire.NewSet(
 	teamguardianDatabase.ProvideTeamGuardianStore,
 	wire.Bind(new(teamguardian.Store), new(*teamguardianDatabase.TeamGuardianStoreImpl)),
 	teamguardianManager.ProvideService,
-	dashboardservice.ProvideDashboardService, //DashboardServiceImpl
+	dashboardservice.ProvideDashboardServiceImpl,
 	dashboardstore.ProvideDashboardStore,
-	dashboardservice.ProvideSimpleDashboardService,
+	dashboardservice.ProvideDashboardService,
 	dashboardservice.ProvideDashboardProvisioningService,
 	dashboardservice.ProvideDashboardPluginService,
-	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
-	wire.Bind(new(dashboards.FolderStore), new(*dashboardstore.DashboardStore)),
+	folderimpl.ProvideDashboardFolderStore,
+	wire.Bind(new(folder.FolderStore), new(*folderimpl.DashboardFolderStoreImpl)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboardsservice.ProvideService,
@@ -265,7 +264,6 @@ var wireSet = wire.NewSet(
 	plugindashboardsservice.ProvideDashboardUpdater,
 	alerting.ProvideDashAlertExtractorService,
 	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
-	comments.ProvideService,
 	guardian.ProvideService,
 	sanitizer.ProvideService,
 	secretsStore.ProvideService,

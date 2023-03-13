@@ -45,6 +45,8 @@ func (cmd Command) lsCommand(c utils.CommandLine) error {
 
 	if len(plugins) > 0 {
 		logger.Info("installed plugins:\n")
+	} else {
+		logger.Info("no installed plugins found\n")
 	}
 
 	for _, plugin := range plugins {

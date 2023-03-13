@@ -50,26 +50,26 @@ func (c *dsCache) refreshCache(ctx context.Context) error {
 
 	for _, ds := range q.Result {
 		val := &dsVal{
-			InternalID: ds.Id,
+			InternalID: ds.ID,
 			Name:       ds.Name,
-			UID:        ds.Uid,
+			UID:        ds.UID,
 			Type:       ds.Type,
 			IsDefault:  ds.IsDefault,
 		}
 		_, ok := c.pluginStore.Plugin(ctx, val.Type)
 		val.PluginExists = ok
 
-		orgCache, ok := cache[ds.OrgId]
+		orgCache, ok := cache[ds.OrgID]
 		if !ok {
 			orgCache = make(map[string]*dsVal, 0)
-			cache[ds.OrgId] = orgCache
+			cache[ds.OrgID] = orgCache
 		}
 
 		orgCache[val.UID] = val
 
 		// Empty string or
 		if val.IsDefault {
-			defaultDS[ds.OrgId] = val
+			defaultDS[ds.OrgID] = val
 		}
 	}
 

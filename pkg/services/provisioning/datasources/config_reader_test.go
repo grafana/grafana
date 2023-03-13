@@ -44,15 +44,15 @@ func TestDatasourceAsConfig(t *testing.T) {
 		}
 
 		require.Equal(t, len(store.inserted), 1)
-		require.Equal(t, store.inserted[0].OrgId, int64(1))
+		require.Equal(t, store.inserted[0].OrgID, int64(1))
 		require.Equal(t, store.inserted[0].Access, datasources.DsAccess("proxy"))
 		require.Equal(t, store.inserted[0].Name, "My datasource name")
-		require.Equal(t, store.inserted[0].Uid, "P2AD1F727255C56BA")
+		require.Equal(t, store.inserted[0].UID, "P2AD1F727255C56BA")
 	})
 
 	t.Run("when some values missing should not change UID when updates", func(t *testing.T) {
 		store := &spyStore{
-			items: []*datasources.DataSource{{Name: "My datasource name", OrgId: 1, Id: 1, Uid: util.GenerateShortUID()}},
+			items: []*datasources.DataSource{{Name: "My datasource name", OrgID: 1, ID: 1, UID: util.GenerateShortUID()}},
 		}
 		orgFake := &orgtest.FakeOrgService{}
 		correlationsStore := &mockCorrelationsStore{}
@@ -65,7 +65,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		require.Equal(t, len(store.deleted), 0)
 		require.Equal(t, len(store.inserted), 0)
 		require.Equal(t, len(store.updated), 1)
-		require.Equal(t, "", store.updated[0].Uid) // XORM will not update the field if its value is default
+		require.Equal(t, "", store.updated[0].UID) // XORM will not update the field if its value is default
 	})
 
 	t.Run("no datasource in database", func(t *testing.T) {
@@ -84,7 +84,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 
 	t.Run("One datasource in database with same name should update one datasource", func(t *testing.T) {
-		store := &spyStore{items: []*datasources.DataSource{{Name: "Graphite", OrgId: 1, Id: 1}}}
+		store := &spyStore{items: []*datasources.DataSource{{Name: "Graphite", OrgID: 1, ID: 1}}}
 		orgFake := &orgtest.FakeOrgService{}
 		correlationsStore := &mockCorrelationsStore{}
 		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
@@ -116,9 +116,9 @@ func TestDatasourceAsConfig(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, len(store.inserted), 4)
 		require.True(t, store.inserted[0].IsDefault)
-		require.Equal(t, store.inserted[0].OrgId, int64(1))
+		require.Equal(t, store.inserted[0].OrgID, int64(1))
 		require.True(t, store.inserted[2].IsDefault)
-		require.Equal(t, store.inserted[2].OrgId, int64(2))
+		require.Equal(t, store.inserted[2].OrgID, int64(2))
 	})
 
 	t.Run("Remove one datasource should have removed old datasource", func(t *testing.T) {
@@ -139,7 +139,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 
 	t.Run("Two configured datasource and purge others", func(t *testing.T) {
-		store := &spyStore{items: []*datasources.DataSource{{Name: "old-graphite", OrgId: 1, Id: 1}, {Name: "old-graphite2", OrgId: 1, Id: 2}}}
+		store := &spyStore{items: []*datasources.DataSource{{Name: "old-graphite", OrgID: 1, ID: 1}, {Name: "old-graphite2", OrgID: 1, ID: 2}}}
 		orgFake := &orgtest.FakeOrgService{}
 		correlationsStore := &mockCorrelationsStore{}
 		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
@@ -154,7 +154,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 
 	t.Run("Two configured datasource and purge others = false", func(t *testing.T) {
-		store := &spyStore{items: []*datasources.DataSource{{Name: "Graphite", OrgId: 1, Id: 1}, {Name: "old-graphite2", OrgId: 1, Id: 2}}}
+		store := &spyStore{items: []*datasources.DataSource{{Name: "Graphite", OrgID: 1, ID: 1}, {Name: "old-graphite2", OrgID: 1, ID: 2}}}
 		orgFake := &orgtest.FakeOrgService{}
 		correlationsStore := &mockCorrelationsStore{}
 		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
@@ -255,7 +255,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		t.Run("Updating existing datasource deletes existing correlations and creates two", func(t *testing.T) {
-			store := &spyStore{items: []*datasources.DataSource{{Name: "Graphite", OrgId: 1, Id: 1}}}
+			store := &spyStore{items: []*datasources.DataSource{{Name: "Graphite", OrgID: 1, ID: 1}}}
 			orgFake := &orgtest.FakeOrgService{}
 			correlationsStore := &mockCorrelationsStore{}
 			dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
@@ -270,7 +270,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		t.Run("Deleting datasource deletes existing correlations", func(t *testing.T) {
-			store := &spyStore{items: []*datasources.DataSource{{Name: "old-data-source", OrgId: 1, Id: 1, Uid: "some-uid"}}}
+			store := &spyStore{items: []*datasources.DataSource{{Name: "old-data-source", OrgID: 1, ID: 1, UID: "some-uid"}}}
 			orgFake := &orgtest.FakeOrgService{}
 			targetUid := "target-uid"
 			correlationsStore := &mockCorrelationsStore{items: []correlations.Correlation{{UID: "some-uid", SourceUID: "some-uid", TargetUID: &targetUid}}}
@@ -367,20 +367,19 @@ type spyStore struct {
 	items    []*datasources.DataSource
 }
 
-func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
+func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	for _, v := range s.items {
-		if query.Name == v.Name && query.OrgId == v.OrgId {
-			query.Result = v
-			return nil
+		if query.Name == v.Name && query.OrgID == v.OrgID {
+			return v, nil
 		}
 	}
-	return datasources.ErrDataSourceNotFound
+	return nil, datasources.ErrDataSourceNotFound
 }
 
 func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	s.deleted = append(s.deleted, cmd)
 	for _, v := range s.items {
-		if cmd.Name == v.Name && cmd.OrgID == v.OrgId {
+		if cmd.Name == v.Name && cmd.OrgID == v.OrgID {
 			cmd.DeletedDatasourcesCount = 1
 			return nil
 		}
@@ -388,15 +387,12 @@ func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delete
 	return nil
 }
 
-func (s *spyStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
+func (s *spyStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
 	s.inserted = append(s.inserted, cmd)
-	cmd.Result = &datasources.DataSource{
-		Uid: cmd.Uid,
-	}
-	return nil
+	return &datasources.DataSource{UID: cmd.UID}, nil
 }
 
-func (s *spyStore) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
+func (s *spyStore) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	s.updated = append(s.updated, cmd)
-	return nil
+	return nil, nil
 }

@@ -186,8 +186,8 @@ function useInternalMatches(filtered: ActionImpl[], search: string): Match[] {
       return throttledFiltered.map((action) => ({ score: 0, action }));
     }
 
-    const haystack = throttledFiltered.map((action) =>
-      [action.name, action.keywords, action.subtitle].join(' ').toLowerCase()
+    const haystack = throttledFiltered.map(({ name, keywords, subtitle }) =>
+      `${name} ${keywords ?? ''} ${subtitle ?? ''}`.toLowerCase()
     );
 
     const results: Match[] = [];
@@ -201,35 +201,27 @@ function useInternalMatches(filtered: ActionImpl[], search: string): Match[] {
         const haystackItem = haystack[haystackIndex];
 
         // Use the position of the match as a stand-in for score
-        const substringPosition = haystackItem.toLowerCase().indexOf(query);
+        const substringPosition = haystackItem.indexOf(query);
 
         if (substringPosition > -1) {
-          const score = haystack.length - substringPosition;
+          const score = substringPosition * -1; // lower position of the match should be a higher priority score
           const action = throttledFiltered[haystackIndex];
           results.push({ score, action });
         }
       }
     } else {
-      const allMatchedIndexes = new Set<number>();
+      const termCount = ufuzzy.split(throttledSearch).length;
+      const infoThresh = Infinity;
+      const oooSearch = termCount < 5;
 
-      const queryWords = ufuzzy.split(throttledSearch);
-      const queryPermutations =
-        queryWords.length < 5 ? uFuzzy.permute(queryWords).map((terms) => terms.join(' ')) : [throttledSearch];
+      const [, info, order] = ufuzzy.search(haystack, throttledSearch, oooSearch, infoThresh);
 
-      for (const permutedSearchTerm of queryPermutations) {
-        const indexes = ufuzzy.filter(haystack, permutedSearchTerm);
-        const info = ufuzzy.info(indexes, haystack, permutedSearchTerm);
-        const order = ufuzzy.sort(info, haystack, permutedSearchTerm);
-
+      if (info && order) {
         for (let orderIndex = 0; orderIndex < order.length; orderIndex++) {
           const actionIndex = order[orderIndex];
-
-          if (!allMatchedIndexes.has(actionIndex)) {
-            allMatchedIndexes.add(actionIndex);
-            const score = order.length - orderIndex;
-            const action = throttledFiltered[info.idx[actionIndex]];
-            results.push({ score, action });
-          }
+          const score = order.length - orderIndex;
+          const action = throttledFiltered[info.idx[actionIndex]];
+          results.push({ score, action });
         }
       }
     }

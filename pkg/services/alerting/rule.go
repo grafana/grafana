@@ -147,10 +147,10 @@ func getForValue(rawFor string) (time.Duration, error) {
 // alert to an in-memory version.
 func NewRuleFromDBAlert(ctx context.Context, store AlertStore, ruleDef *models.Alert, logTranslationFailures bool) (*Rule, error) {
 	model := &Rule{}
-	model.ID = ruleDef.Id
-	model.OrgID = ruleDef.OrgId
-	model.DashboardID = ruleDef.DashboardId
-	model.PanelID = ruleDef.PanelId
+	model.ID = ruleDef.ID
+	model.OrgID = ruleDef.OrgID
+	model.DashboardID = ruleDef.DashboardID
+	model.PanelID = ruleDef.PanelID
 	model.Name = ruleDef.Name
 	model.Message = ruleDef.Message
 	model.State = ruleDef.State
@@ -170,7 +170,7 @@ func NewRuleFromDBAlert(ctx context.Context, store AlertStore, ruleDef *models.A
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)
 		if id, err := jsonModel.Get("id").Int64(); err == nil {
-			uid, err := translateNotificationIDToUID(ctx, store, id, ruleDef.OrgId)
+			uid, err := translateNotificationIDToUID(ctx, store, id, ruleDef.OrgID)
 			if err != nil {
 				if !errors.Is(err, models.ErrAlertNotificationFailedTranslateUniqueID) {
 					logger.Error("Failed to translate notification id to uid", "error", err.Error(), "dashboardId", model.DashboardID, "alert", model.Name, "panelId", model.PanelID, "notificationId", id)
@@ -222,15 +222,16 @@ func translateNotificationIDToUID(ctx context.Context, store AlertStore, id int6
 
 func getAlertNotificationUIDByIDAndOrgID(ctx context.Context, store AlertStore, notificationID int64, orgID int64) (string, error) {
 	query := &models.GetAlertNotificationUidQuery{
-		OrgId: orgID,
-		Id:    notificationID,
+		OrgID: orgID,
+		ID:    notificationID,
 	}
 
-	if err := store.GetAlertNotificationUidWithId(ctx, query); err != nil {
+	uid, err := store.GetAlertNotificationUidWithId(ctx, query)
+	if err != nil {
 		return "", err
 	}
 
-	return query.Result, nil
+	return uid, nil
 }
 
 // ConditionFactory is the function signature for creating `Conditions`.

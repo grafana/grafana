@@ -135,22 +135,22 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/logo.jpg",
-        "large": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/logo.jpg"
+        "small": "public/app/plugins/datasource/azuremonitor/img/logo.jpg",
+        "large": "public/app/plugins/datasource/azuremonitor/img/logo.jpg"
       },
       "build": {},
       "screenshots": [
         {
           "name": "Azure Contoso Loans",
-          "path": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/contoso_loans_grafana_dashboard.png"
+          "path": "public/app/plugins/datasource/azuremonitor/img/contoso_loans_grafana_dashboard.png"
         },
         {
           "name": "Azure Monitor Network",
-          "path": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/azure_monitor_network.png"
+          "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_network.png"
         },
         {
           "name": "Azure Monitor CPU",
-          "path": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/azure_monitor_cpu.png"
+          "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
         }
       ],
       "version": "1.0.0",
@@ -458,7 +458,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/flamegraph/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -1061,7 +1061,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/nodeGraph/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -1097,6 +1097,83 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/opentsdb/",
     "category": "tsdb",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },{
+    "name": "Parca",
+    "type": "datasource",
+    "id": "parca",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://www.grafana.com"
+      },
+      "description": "Continuous profiling for analysis of CPU and memory usage, down to the line number and throughout time. Saving infrastructure cost, improving performance, and increasing reliability.",
+      "links": [{
+        "name": "GitHub Project",
+        "url": "https://github.com/parca-dev/parca"
+      }],
+      "logos": {
+        "small": "public/app/plugins/datasource/parca/img/logo-small.svg",
+        "large": "public/app/plugins/datasource/parca/img/logo-small.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/parca/",
+    "category": "profiling",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Phlare",
+    "type": "datasource",
+    "id": "phlare",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://www.grafana.com"
+      },
+      "description": "Horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system. OSS profiling solution from Grafana Labs.",
+      "links": [{
+        "name": "GitHub Project",
+        "url": "https://github.com/grafana/phlare"
+      }],
+      "logos": {
+        "small": "public/app/plugins/datasource/phlare/img/phlare_icon_color.svg",
+        "large": "public/app/plugins/datasource/phlare/img/phlare_icon_color.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/phlare/",
+    "category": "profiling",
     "state": "",
     "signature": "internal",
     "signatureType": "",
@@ -1575,7 +1652,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/traces/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""

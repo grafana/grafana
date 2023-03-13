@@ -5,6 +5,7 @@ import (
 	tmplhtml "html/template"
 	"regexp"
 	"strings"
+	tmpltext "text/template"
 	"time"
 
 	"github.com/prometheus/alertmanager/template"
@@ -65,13 +66,6 @@ func (t *NotificationTemplate) Validate() error {
 		return fmt.Errorf("template must have content")
 	}
 
-	tmpl := tmplhtml.New("").Option("missingkey=zero")
-	tmpl.Funcs(tmplhtml.FuncMap(template.DefaultFuncs))
-	_, err := tmpl.Parse(t.Template)
-	if err != nil {
-		return fmt.Errorf("invalid template: %w", err)
-	}
-
 	content := strings.TrimSpace(t.Template)
 	found, err := regexp.MatchString(`\{\{\s*define`, content)
 	if err != nil {
@@ -86,6 +80,21 @@ func (t *NotificationTemplate) Validate() error {
 		content = fmt.Sprintf("{{ define \"%s\" }}\n%s\n{{ end }}", t.Name, content)
 	}
 	t.Template = content
+
+	// Validate template contents. We try to stick as close to what will actually happen when the templates are parsed
+	// by the alertmanager as possible. That means parsing with both the text and html parsers and making sure we set
+	// the template name and options.
+	ttext := tmpltext.New(t.Name).Option("missingkey=zero")
+	ttext.Funcs(tmpltext.FuncMap(template.DefaultFuncs))
+	if _, err := ttext.Parse(t.Template); err != nil {
+		return fmt.Errorf("invalid template: %w", err)
+	}
+
+	thtml := tmplhtml.New(t.Name).Option("missingkey=zero")
+	thtml.Funcs(tmplhtml.FuncMap(template.DefaultFuncs))
+	if _, err := thtml.Parse(t.Template); err != nil {
+		return fmt.Errorf("invalid template: %w", err)
+	}
 
 	return nil
 }

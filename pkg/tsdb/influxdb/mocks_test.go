@@ -68,7 +68,7 @@ func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.In
 		HTTPClient:    client,
 		Token:         "sometoken",
 		URL:           "https://awesome-influx.com",
-		Database:      "testdb",
+		DbName:        "testdb",
 		Version:       f.version,
 		HTTPMode:      "GET",
 		TimeInterval:  "10s",

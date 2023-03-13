@@ -31,8 +31,8 @@ func main() {
 
 	// Core kinds composite code generator. Produces all generated code in
 	// grafana/grafana that derives from core kinds.
-	coreKindsGen := codejen.JennyListWithNamer(func(decl *codegen.DeclForGen) string {
-		return decl.Properties.Common().MachineName
+	coreKindsGen := codejen.JennyListWithNamer(func(def kindsys.Kind) string {
+		return def.Props().Common().MachineName
 	})
 
 	// All the jennies that comprise the core kinds generator pipeline
@@ -42,6 +42,9 @@ func main() {
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
 		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
+		codegen.CRDTypesJenny(kindsys.GoCoreKindParentPath),
+		codegen.YamlCRDJenny(kindsys.GoCoreKindParentPath),
+		codegen.CRDKindRegistryJenny(filepath.Join("pkg", "registry", "corecrd")),
 		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)
 
@@ -56,28 +59,28 @@ func main() {
 	groot := filepath.Dir(cwd)
 
 	rt := cuectx.GrafanaThemaRuntime()
-	var all []*codegen.DeclForGen
+	var all []kindsys.Kind
 
-	f := os.DirFS(filepath.Join(groot, kindsys.CoreDeclParentPath))
+	f := os.DirFS(filepath.Join(groot, kindsys.CoreDefParentPath))
 	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
-	for _, ent := range kinddirs {
-		if !ent.IsDir() {
+	for _, kinddir := range kinddirs {
+		if !kinddir.IsDir() {
 			continue
 		}
-		rel := filepath.Join(kindsys.CoreDeclParentPath, ent.Name())
-		decl, err := kindsys.LoadCoreKind(rel, rt.Context(), nil)
+		rel := filepath.Join(kindsys.CoreDefParentPath, kinddir.Name())
+		def, err := kindsys.LoadCoreKindDef(rel, rt.Context(), nil)
 		if err != nil {
 			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
 		}
-		if decl.Properties.MachineName != ent.Name() {
-			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Properties.Name, ent.Name()))
+		if def.Properties.MachineName != kinddir.Name() {
+			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, def.Properties.Name, kinddir.Name()))
 		}
 
-		all = append(all, elsedie(codegen.ForGen(rt, decl.Some()))(rel))
+		all = append(all, elsedie(kindsys.BindCore(rt, def))(rel))
 	}
 
 	sort.Slice(all, func(i, j int) bool {
-		return nameFor(all[i].Properties) < nameFor(all[j].Properties)
+		return nameFor(all[i].Props()) < nameFor(all[j].Props())
 	})
 
 	jfs, err := coreKindsGen.GenerateFS(all...)

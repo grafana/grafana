@@ -76,7 +76,7 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
         >
           <Input
             width={60}
-            placeholder="15m"
+            placeholder="30m"
             value={options.jsonData.logsTimeout || ''}
             onChange={onUpdateDatasourceJsonDataOption(props, 'logsTimeout')}
             title={'The timeout must be a valid duration string, such as "15m" "30s" "2000ms" etc.'}

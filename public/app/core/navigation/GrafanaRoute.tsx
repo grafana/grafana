@@ -19,8 +19,8 @@ export function GrafanaRoute(props: Props) {
   chrome.setMatchedRoute(props.route);
 
   useLayoutEffect(() => {
-    keybindings.clearAndInitGlobalBindings();
-  }, [keybindings]);
+    keybindings.clearAndInitGlobalBindings(props.route);
+  }, [keybindings, props.route]);
 
   useEffect(() => {
     updateBodyClassNames(props.route);

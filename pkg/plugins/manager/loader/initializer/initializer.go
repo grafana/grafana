@@ -9,9 +9,9 @@ import (
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type Initializer struct {
@@ -57,6 +57,7 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 			hostEnv,
 			fmt.Sprintf("GF_EDITION=%s", i.license.Edition()),
 			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", i.license.Path()),
+			fmt.Sprintf("GF_ENTERPRISE_APP_URL=%s", i.license.AppURL()),
 		)
 		hostEnv = append(hostEnv, i.license.Environment()...)
 	}

@@ -217,7 +217,7 @@ By default, a refresh token is included in the response for the **Authorization 
    allow_sign_up = true
    auto_login = false
    client_id = <OpenID Connect Client ID from Centrify>
-   client_secret = <your generated OpenID Connect Client Secret"
+   client_secret = <your generated OpenID Connect Client Secret>
    scopes = openid profile email
    auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
    token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
@@ -274,8 +274,8 @@ For more information, refer to the [JMESPath examples](#jmespath-examples).
 
 > **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
 > update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
-> enable the `oauth_skip_org_role_update_sync` option.
-> See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
+> enable the `skip_org_role_sync` option.
+> See [configure-grafana]({{< relref "../../../configure-grafana#authgeneric_oauth-skip-org-role-sync" >}}) for more information.
 
 On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
 specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
@@ -391,4 +391,17 @@ Payload:
     },
     ...
 }
+```
+
+## Skip organization role sync
+
+To prevent the sync of organization roles from the OAuth provider, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from the OAuth provider.
+
+```ini
+[auth.generic_oauth]
+# ..
+# prevents the sync of org roles from the Oauth provider
+skip_org_role_sync = true
+``
 ```

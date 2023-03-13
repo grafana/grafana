@@ -38,6 +38,7 @@ export * from './geometry';
 export { isUnsignedPluginSignature } from './pluginSignature';
 export type {
   CurrentUserDTO,
+  AnalyticsSettings,
   BootData,
   OAuth,
   OAuthSettings,
@@ -45,10 +46,20 @@ export type {
   GrafanaConfig,
   BuildInfo,
   LicenseInfo,
-  PreloadPlugin,
 } from './config';
 export type { FeatureToggles } from './featureToggles.gen';
 export * from './alerts';
 export * from './slider';
 export * from './accesscontrol';
 export * from './icon';
+export {
+  type PluginExtension,
+  type PluginExtensionLink,
+  isPluginExtensionLink,
+  assertPluginExtensionLink,
+  type PluginExtensionCommand,
+  isPluginExtensionCommand,
+  assertPluginExtensionCommand,
+  PluginExtensionTypes,
+  PluginExtensionPlacements,
+} from './pluginExtensions';

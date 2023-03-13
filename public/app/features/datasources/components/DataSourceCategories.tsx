@@ -1,8 +1,11 @@
 import React from 'react';
 
 import { DataSourcePluginMeta } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 import { DataSourcePluginCategory } from 'app/types';
+
+import { ROUTES } from '../../connections/constants';
 
 import { DataSourceTypeCardList } from './DataSourceTypeCardList';
 
@@ -15,6 +18,10 @@ export type Props = {
 };
 
 export function DataSourceCategories({ categories, onClickDataSourceType }: Props) {
+  const moreDataSourcesLink = config.featureToggles.dataConnectionsConsole
+    ? `${ROUTES.ConnectData}?cat=data-source`
+    : '/plugins?filterBy=all&filterByType=datasource&utm_source=grafana_add_ds';
+
   return (
     <>
       {/* Categories */}
@@ -29,13 +36,8 @@ export function DataSourceCategories({ categories, onClickDataSourceType }: Prop
 
       {/* Find more */}
       <div className="add-data-source-more">
-        <LinkButton
-          variant="secondary"
-          href="https://grafana.com/plugins?type=datasource&utm_source=grafana_add_ds"
-          target="_blank"
-          rel="noopener"
-        >
-          Find more data source plugins on grafana.com
+        <LinkButton variant="secondary" href={moreDataSourcesLink} target="_self" rel="noopener">
+          Find more data source plugins
         </LinkButton>
       </div>
     </>

@@ -1,11 +1,10 @@
 import { render, act, waitFor } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { setDataSourceSrv } from '@grafana/runtime';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -69,15 +68,11 @@ const renderAlertTabContent = (
   panel: PanelModel,
   initialStore?: ReturnType<typeof configureStore>
 ) => {
-  const store = initialStore ?? configureStore();
-
   return act(async () => {
     render(
-      <Provider store={store}>
-        <Router history={locationService.getHistory()}>
-          <PanelAlertTabContent dashboard={dashboard} panel={panel} />
-        </Router>
-      </Provider>
+      <TestProvider store={initialStore}>
+        <PanelAlertTabContent dashboard={dashboard} panel={panel} />
+      </TestProvider>
     );
   });
 };

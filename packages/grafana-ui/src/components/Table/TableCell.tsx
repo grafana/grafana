@@ -13,7 +13,7 @@ export interface Props {
   userProps?: object;
 }
 
-export const TableCell: FC<Props> = ({ cell, tableStyles, onCellFilterAdded, columnIndex, columnCount, userProps }) => {
+export const TableCell: FC<Props> = ({ cell, tableStyles, onCellFilterAdded, userProps }) => {
   const cellProps = cell.getCellProps();
   const field = (cell.column as unknown as GrafanaTableColumn).field;
 

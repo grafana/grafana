@@ -136,8 +136,10 @@ func TestOAuth_Authenticate(t *testing.T) {
 				OrgRoles:   map[int64]org.RoleType{1: org.RoleAdmin},
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
-					SyncTeamMembers: true,
+					SyncTeams:       true,
 					AllowSignUp:     true,
+					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
 					LookUpParams:    login.UserLookupParams{Email: strPtr("some@email.com")},
 				},
 			},
@@ -179,7 +181,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 
 				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncUser, identity.ClientParams.SyncUser)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.AllowSignUp, identity.ClientParams.AllowSignUp)
-				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncTeamMembers, identity.ClientParams.SyncTeamMembers)
+				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncTeams, identity.ClientParams.SyncTeams)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.EnableDisabledUsers, identity.ClientParams.EnableDisabledUsers)
 
 				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Email, identity.ClientParams.LookUpParams.Email)

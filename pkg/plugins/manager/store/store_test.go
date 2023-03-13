@@ -8,9 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestStore_ProvideService(t *testing.T) {
@@ -22,21 +20,23 @@ func TestStore_ProvideService(t *testing.T) {
 				return nil, nil
 			},
 		}
-		cfg := &setting.Cfg{
-			BundledPluginsPath: "path1",
-		}
-		pCfg := &config.Cfg{
-			PluginsPath: "path2",
-			PluginSettings: setting.PluginSettings{
-				"blah": map[string]string{
-					"path": "path3",
-				},
-			},
-		}
 
-		_, err := ProvideService(cfg, pCfg, fakes.NewFakePluginRegistry(), l)
+		srcs := &fakes.FakeSources{ListFunc: func(_ context.Context) []plugins.PluginSource {
+			return []plugins.PluginSource{
+				{
+					Class: plugins.Bundled,
+					Paths: []string{"path1"},
+				},
+				{
+					Class: plugins.External,
+					Paths: []string{"path2", "path3"},
+				},
+			}
+		}}
+
+		_, err := ProvideService(fakes.NewFakePluginRegistry(), srcs, l)
 		require.NoError(t, err)
-		require.Equal(t, []string{"app/plugins/datasource", "app/plugins/panel", "path1", "path2", "path3"}, addedPaths)
+		require.Equal(t, []string{"path1", "path2", "path3"}, addedPaths)
 	})
 }
 
@@ -97,11 +97,11 @@ func TestStore_Plugins(t *testing.T) {
 
 func TestStore_Routes(t *testing.T) {
 	t.Run("Routes returns all static routes for non-decommissioned plugins", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-renderer", Type: plugins.Renderer}, PluginDir: "/some/dir"}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.Panel}, PluginDir: "/grafana/"}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-secrets", Type: plugins.SecretsManager}, PluginDir: "./secrets", Class: plugins.Core}
-		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-datasource", Type: plugins.DataSource}, PluginDir: "../test"}
-		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-app", Type: plugins.App}}
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-renderer", Type: plugins.Renderer}, FS: fakes.NewFakePluginFiles("/some/dir")}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.Panel}, FS: fakes.NewFakePluginFiles("/grafana/")}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-secrets", Type: plugins.SecretsManager}, FS: fakes.NewFakePluginFiles("./secrets"), Class: plugins.Core}
+		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-datasource", Type: plugins.DataSource}, FS: fakes.NewFakePluginFiles("../test")}
+		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-app", Type: plugins.App}, FS: fakes.NewFakePluginFiles("any/path")}
 		p6 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "f-test-app", Type: plugins.App}}
 		p6.RegisterClient(&DecommissionedPlugin{})
 
@@ -115,7 +115,7 @@ func TestStore_Routes(t *testing.T) {
 		}))
 
 		sr := func(p *plugins.Plugin) *plugins.StaticRoute {
-			return &plugins.StaticRoute{PluginID: p.ID, Directory: p.PluginDir}
+			return &plugins.StaticRoute{PluginID: p.ID, Directory: p.FS.Base()}
 		}
 
 		rs := ps.Routes()

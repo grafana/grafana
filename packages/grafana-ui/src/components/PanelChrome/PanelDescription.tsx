@@ -1,6 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip';
 
@@ -12,7 +15,7 @@ interface Props {
 }
 
 export function PanelDescription({ description, className }: Props) {
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
 
   const getDescriptionContent = (): JSX.Element => {
     // description
@@ -28,13 +31,13 @@ export function PanelDescription({ description, className }: Props) {
   return description !== '' ? (
     <Tooltip interactive content={getDescriptionContent}>
       <TitleItem className={cx(className, styles.description)}>
-        <Icon name="info-circle" size="lg" title="description" />
+        <Icon name="info-circle" size="md" title="description" />
       </TitleItem>
     </Tooltip>
   ) : null;
 }
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     description: css({
       code: {

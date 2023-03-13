@@ -31,12 +31,18 @@ Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
    - Click **Run queries** to verify that the query is successful.
    - Next, select the query or expression for your alert condition.
 1. In Step 3, specify the alert evaluation interval.
+
    - From the **Condition** drop-down, select the query or expression to trigger the alert rule.
    - For **Evaluate every**, specify the frequency of evaluation. Must be a multiple of 10 seconds. For examples, `1m`, `30s`.
    - For **Evaluate for**, specify the duration for which the condition must be true before an alert fires.
      > **Note:** Once a condition is breached, the alert goes into the Pending state. If the condition remains breached for the duration specified, the alert transitions to the `Firing` state, otherwise it reverts back to the `Normal` state.
    - In **Configure no data and error handling**, configure alerting behavior in the absence of data. Use the guidelines in [No data and error handling](#no-data-and-error-handling).
    - Click **Preview alerts** to check the result of running the query at this moment. Preview excludes no data and error handling.
+
+     **Note:**
+
+     You can pause alert rule evaluation to prevent noisy alerting while tuning your alerts. Pausing stops alert rule evaluation and does not create any alert instances. This is different to mute timings, which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
+
 1. In Step 4, add the storage location, rule group, as well as additional metadata associated with the rule.
    - From the **Folder** drop-down, select the folder where you want to store the rule.
    - For **Group**, specify a pre-defined group. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.

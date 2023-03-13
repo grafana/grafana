@@ -10,6 +10,7 @@ import (
 type FakeService struct {
 	ExpectedTeam        team.Team
 	ExpectedIsMember    bool
+	ExpectedIsAdmin     bool
 	ExpectedTeamDTO     *team.TeamDTO
 	ExpectedTeamsByUser []*team.TeamDTO
 	ExpectedMembers     []*team.TeamMemberDTO
@@ -69,5 +70,5 @@ func (s *FakeService) GetTeamMembers(ctx context.Context, query *team.GetTeamMem
 }
 
 func (s *FakeService) IsAdminOfTeams(ctx context.Context, query *team.IsAdminOfTeamsQuery) (bool, error) {
-	return false, s.ExpectedError
+	return s.ExpectedIsAdmin, s.ExpectedError
 }

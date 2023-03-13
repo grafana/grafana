@@ -3,7 +3,7 @@ import React from 'react';
 import { openMenu } from 'react-select-event';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
-import { ValueTypes, MetricKind } from '../types';
+import { ValueTypes, MetricKind, MetricDescriptor } from '../types';
 
 import { Aggregation, Props } from './Aggregation';
 
@@ -14,7 +14,7 @@ const props: Props = {
   metricDescriptor: {
     valueType: '',
     metricKind: '',
-  } as any,
+  } as unknown as MetricDescriptor,
   crossSeriesReducer: '',
   groupBys: [],
   templateVariableOptions: [],
@@ -33,7 +33,7 @@ describe('Aggregation', () => {
         metricDescriptor: {
           valueType: ValueTypes.DOUBLE,
           metricKind: MetricKind.GAUGE,
-        } as any,
+        } as MetricDescriptor,
       };
 
       it('should not have the reduce values', () => {
@@ -51,7 +51,7 @@ describe('Aggregation', () => {
         metricDescriptor: {
           valueType: ValueTypes.MONEY,
           metricKind: MetricKind.CUMULATIVE,
-        } as any,
+        } as MetricDescriptor,
       };
 
       it('should have the reduce values', () => {

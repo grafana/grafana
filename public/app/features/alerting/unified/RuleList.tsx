@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAsyncFn, useInterval } from 'react-use';
 
@@ -27,13 +27,12 @@ import { fetchAllPromAndRulerRulesAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { getAllRulesSourceNames } from './utils/datasource';
+import { createUrl } from './utils/url';
 
 const VIEWS = {
   groups: RuleListGroupView,
   state: RuleListStateView,
 };
-
-const onExport = () => window.open(`/api/v1/provisioning/alert-rules/export?download=true`);
 
 const RuleList = withErrorBoundary(
   () => {
@@ -42,6 +41,8 @@ const RuleList = withErrorBoundary(
     const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
     const location = useLocation();
     const [expandAll, setExpandAll] = useState(false);
+
+    const onFilterCleared = useCallback(() => setExpandAll(false), []);
 
     const [queryParams] = useQueryParams();
     const { filterState, hasActiveFilters } = useRulesFilter();
@@ -91,7 +92,7 @@ const RuleList = withErrorBoundary(
       // We show separate indicators for Grafana-managed and Cloud rules
       <AlertingPageWrapper pageId="alert-list" isLoading={false}>
         <RuleListErrors />
-        <RulesFilter onFilterCleared={() => setExpandAll(false)} />
+        <RulesFilter onFilterCleared={onFilterCleared} />
         {!hasNoAlertRulesCreatedYet && (
           <>
             <div className={styles.break} />
@@ -111,9 +112,17 @@ const RuleList = withErrorBoundary(
               </div>
               <Stack direction="row" gap={0.5}>
                 {canReadProvisioning && (
-                  <Button icon="download-alt" type="button" onClick={onExport}>
+                  <LinkButton
+                    href={createUrl('/api/v1/provisioning/alert-rules/export', {
+                      download: 'true',
+                      format: 'yaml',
+                    })}
+                    icon="download-alt"
+                    target="_blank"
+                    rel="noopener"
+                  >
                     Export
-                  </Button>
+                  </LinkButton>
                 )}
                 {(canCreateGrafanaRules || canCreateCloudRules) && (
                   <LinkButton

@@ -129,7 +129,7 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
     }
 
     buttons.push(
-      <Tooltip placement="top" content="Clone">
+      <Tooltip placement="top" content="Copy">
         <CloneRuleButton ruleIdentifier={identifier} isProvisioned={isProvisioned} className={style.button} />
       </Tooltip>
     );

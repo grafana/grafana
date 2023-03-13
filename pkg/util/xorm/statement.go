@@ -99,6 +99,11 @@ func (statement *Statement) Init() {
 	statement.lastError = nil
 }
 
+var (
+	ptrPkType = reflect.TypeOf(&core.PK{})
+	pkType    = reflect.TypeOf(core.PK{})
+)
+
 // NoAutoCondition if you do not want convert bean's field as query condition, then use this function
 func (statement *Statement) NoAutoCondition(no ...bool) *Statement {
 	statement.noAutoCondition = true

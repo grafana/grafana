@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -178,7 +179,7 @@ func TestUserAuthToken(t *testing.T) {
 
 		getTime = func() time.Time { return now.Add(time.Hour) }
 
-		rotated, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
+		rotated, _, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
 			net.ParseIP("192.168.10.11"), "some user agent")
 		require.Nil(t, err)
 		require.True(t, rotated)
@@ -262,7 +263,7 @@ func TestUserAuthToken(t *testing.T) {
 		prevToken := userToken.AuthToken
 		unhashedPrev := userToken.UnhashedToken
 
-		rotated, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
+		rotated, _, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
 			net.ParseIP("192.168.10.12"), "a new user agent")
 		require.Nil(t, err)
 		require.False(t, rotated)
@@ -280,12 +281,12 @@ func TestUserAuthToken(t *testing.T) {
 
 		getTime = func() time.Time { return now.Add(time.Hour) }
 
-		rotated, err = ctx.tokenService.TryRotateToken(context.Background(), &tok,
+		rotated, newToken, err := ctx.tokenService.TryRotateToken(context.Background(), &tok,
 			net.ParseIP("192.168.10.12"), "a new user agent")
 		require.Nil(t, err)
 		require.True(t, rotated)
 
-		unhashedToken := tok.UnhashedToken
+		unhashedToken := newToken.UnhashedToken
 
 		model, err = ctx.getAuthTokenByID(tok.Id)
 		require.Nil(t, err)
@@ -326,7 +327,7 @@ func TestUserAuthToken(t *testing.T) {
 		require.NotNil(t, lookedUpModel)
 		require.False(t, lookedUpModel.AuthTokenSeen)
 
-		rotated, err = ctx.tokenService.TryRotateToken(context.Background(), userToken,
+		rotated, _, err = ctx.tokenService.TryRotateToken(context.Background(), userToken,
 			net.ParseIP("192.168.10.12"), "a new user agent")
 		require.Nil(t, err)
 		require.True(t, rotated)
@@ -351,7 +352,7 @@ func TestUserAuthToken(t *testing.T) {
 		getTime = func() time.Time { return now.Add(10 * time.Minute) }
 
 		prevToken := userToken.UnhashedToken
-		rotated, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
+		rotated, _, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
 			net.ParseIP("1.1.1.1"), "firefox")
 		require.Nil(t, err)
 		require.True(t, rotated)
@@ -407,7 +408,7 @@ func TestUserAuthToken(t *testing.T) {
 				return now.Add(10 * time.Minute)
 			}
 
-			rotated, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
+			rotated, _, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
 				net.ParseIP("1.1.1.1"), "firefox")
 			require.Nil(t, err)
 			require.True(t, rotated)
@@ -429,7 +430,7 @@ func TestUserAuthToken(t *testing.T) {
 				return now.Add(20 * time.Minute)
 			}
 
-			rotated, err = ctx.tokenService.TryRotateToken(context.Background(), userToken,
+			rotated, _, err = ctx.tokenService.TryRotateToken(context.Background(), userToken,
 				net.ParseIP("1.1.1.1"), "firefox")
 			require.Nil(t, err)
 			require.True(t, rotated)
@@ -456,7 +457,7 @@ func TestUserAuthToken(t *testing.T) {
 				return now.Add(2 * time.Minute)
 			}
 
-			rotated, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
+			rotated, _, err := ctx.tokenService.TryRotateToken(context.Background(), userToken,
 				net.ParseIP("1.1.1.1"), "firefox")
 			require.Nil(t, err)
 			require.True(t, rotated)
@@ -550,9 +551,10 @@ func createTestContext(t *testing.T) *testContext {
 	}
 
 	tokenService := &UserAuthTokenService{
-		sqlStore: sqlstore,
-		cfg:      cfg,
-		log:      log.New("test-logger"),
+		sqlStore:     sqlstore,
+		cfg:          cfg,
+		log:          log.New("test-logger"),
+		singleflight: new(singleflight.Group),
 	}
 
 	return &testContext{

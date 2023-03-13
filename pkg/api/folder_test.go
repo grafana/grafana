@@ -71,7 +71,6 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			{Error: dashboards.ErrFolderAccessDenied, ExpectedStatusCode: 403},
 			{Error: dashboards.ErrFolderNotFound, ExpectedStatusCode: 404},
 			{Error: dashboards.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
-			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
 		cmd := folder.CreateFolderCommand{
@@ -124,7 +123,6 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			{Error: dashboards.ErrFolderAccessDenied, ExpectedStatusCode: 403},
 			{Error: dashboards.ErrFolderNotFound, ExpectedStatusCode: 404},
 			{Error: dashboards.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
-			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
 		title := "Folder upd"

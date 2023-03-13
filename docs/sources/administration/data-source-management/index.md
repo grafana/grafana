@@ -79,10 +79,12 @@ After you have enabled permissions for a data source you can assign query permis
 **Assign query permission to users and teams:**
 
 1. Navigate to **Configuration > Data Sources**.
-1. Select the data source you want to assign query permissions for.
-1. On the Permissions tab, click **Add Permission**.
-1. Select **Team** or **User**.
-1. Select the entity you want to allow query access and then click **Save**.
+1. Select the data source you want to assign query permissions to.
+1. On the **Permissions** tab, click **Add Permission**.
+1. Select **Team**, **User**, or **Role**.
+1. Select the entity you want to modify permissions for.
+1. Select the **Query** or **Edit** permission.
+1. Click **Save**.
 
 <div class="clearfix"></div>
 
@@ -153,6 +155,10 @@ By default, data source queries are not cached. To enable query caching for a si
 1. Open the Cache tab.
 1. Press the Enable button.
 1. (Optional) Choose custom TTLs for the data source's queries and resources caching. If you skip this step, then Grafana uses the default TTL.
+
+You can optionally override a data source's configured TTL for individual dashboard panels. This can be be useful when you have queries whose results change more or less often than the configured TTL. In the Edit Panel view, select the caching-enabled data source, expand the Query options, and enter your the TTL in milliseconds.
+
+{{< figure max-width="500px" src="/media/docs/grafana/per-panel-cache-ttl-9-4.png" caption="Set Cache TTL for a single panel" >}}
 
 > **Note:** If query caching is enabled and the Cache tab is not visible in a data source's settings, then query caching is not available for that data source.
 
