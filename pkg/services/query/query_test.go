@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -447,7 +448,7 @@ func setup(t *testing.T) *testContext {
 		SimulatePluginFailure: false,
 	}
 	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, fakeDatasourceService)
-	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, ds, pc) // provider belonging to this package
+	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, ds, pc, &caching.OSSCachingService{}) // provider belonging to this package
 	return &testContext{
 		pluginContext:          pc,
 		secretStore:            ss,

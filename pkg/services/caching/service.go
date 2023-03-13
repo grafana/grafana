@@ -16,29 +16,21 @@ func ProvideCachingService() *OSSCachingService {
 }
 
 type CachingService interface {
-	CacheQueryResponse(context.Context, *backend.QueryDataResponse) error
-	CacheResourceResponse(context.Context, *backend.QueryDataResponse) error
-	HandleQueryRequest(context.Context) (*backend.QueryDataResponse, error)
-	HandleResourceRequest(context.Context) (*backend.QueryDataResponse, error)
+	HandleQueryRequest(context.Context) (*backend.QueryDataResponse, bool, CacheResponseFn, error)
+	HandleResourceRequest(context.Context) (*backend.QueryDataResponse, bool, CacheResponseFn, error)
 }
+
+type CacheResponseFn func(context.Context, *backend.QueryDataResponse)
 
 type OSSCachingService struct {
 }
 
-func (s *OSSCachingService) HandleQueryRequest(ctx context.Context) (*backend.QueryDataResponse, error) {
-	return nil, ErrCachingNotAvailable
+func (s *OSSCachingService) HandleQueryRequest(ctx context.Context) (*backend.QueryDataResponse, bool, CacheResponseFn, error) {
+	return nil, false, nil, ErrCachingNotAvailable
 }
 
-func (s *OSSCachingService) HandleResourceRequest(ctx context.Context) (*backend.QueryDataResponse, error) {
-	return nil, ErrCachingNotAvailable
-}
-
-func (s *OSSCachingService) CacheQueryResponse(ctx context.Context, resp *backend.QueryDataResponse) error {
-	return ErrCachingNotAvailable
-}
-
-func (s *OSSCachingService) CacheResourceResponse(ctx context.Context, resp *backend.QueryDataResponse) error {
-	return ErrCachingNotAvailable
+func (s *OSSCachingService) HandleResourceRequest(ctx context.Context) (*backend.QueryDataResponse, bool, CacheResponseFn, error) {
+	return nil, false, nil, ErrCachingNotAvailable
 }
 
 var _ CachingService = &OSSCachingService{}

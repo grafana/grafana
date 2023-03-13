@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -37,6 +38,7 @@ func ProvideService(
 	pluginRequestValidator validations.PluginRequestValidator,
 	dataSourceService datasources.DataSourceService,
 	pluginClient plugins.Client,
+	cachingService caching.CachingService,
 ) *Service {
 	g := &Service{
 		cfg:                    cfg,
@@ -45,6 +47,7 @@ func ProvideService(
 		pluginRequestValidator: pluginRequestValidator,
 		dataSourceService:      dataSourceService,
 		pluginClient:           pluginClient,
+		cachingService:         cachingService,
 		log:                    log.New("query_data"),
 	}
 	g.log.Info("Query Service initialization")
@@ -58,6 +61,7 @@ type Service struct {
 	pluginRequestValidator validations.PluginRequestValidator
 	dataSourceService      datasources.DataSourceService
 	pluginClient           plugins.Client
+	cachingService         caching.CachingService
 	log                    log.Logger
 }
 
