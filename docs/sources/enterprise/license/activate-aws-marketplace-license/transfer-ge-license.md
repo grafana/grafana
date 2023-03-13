@@ -2,7 +2,7 @@
 title = "Transfer your AWS Marketplace Grafana Enterprise license"
 description = "Transfer your AWS Marketplace Grafana Enterprise license"
 keywords = ["grafana", "enterprise", "aws", "marketplace", "transfer", "move"]
-aliases = ["/docs/grafana/latest/enterprise/activate-aws-marketplace-license/transfer-ge-license"]
+aliases = ["/docs/grafana/v8.3/enterprise/activate-aws-marketplace-license/transfer-ge-license"]
 weight = 400
 +++
 

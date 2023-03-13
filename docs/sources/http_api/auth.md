@@ -2,7 +2,7 @@
 title = "Authentication HTTP API "
 description = "Grafana Authentication HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "authentication"]
-aliases = ["/docs/grafana/latest/http_api/authentication/"]
+aliases = ["/docs/grafana/v8.3/http_api/authentication/"]
 +++
 
 # Authentication API

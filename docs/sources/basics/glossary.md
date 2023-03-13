@@ -2,7 +2,7 @@
 title = "Glossary"
 description = "Grafana glossary"
 keywords = ["grafana", "intro", "glossary", "dictionary"]
-aliases = ["/docs/grafana/latest/guides/glossary", "/docs/grafana/latest/getting-started/glossary"]
+aliases = ["/docs/grafana/v8.3/guides/glossary", "/docs/grafana/v8.3/getting-started/glossary"]
 weight = 800
 +++
 
@@ -44,7 +44,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">Explore</td>
     <td>
-      Explore allows a user to focus on building a query. Users can refine the query to return the expected metrics before building a dashboard. For more information, refer to the <a href="https://grafana.com/docs/grafana/latest/explore">Explore</a> topic.
+      Explore allows a user to focus on building a query. Users can refine the query to return the expected metrics before building a dashboard. For more information, refer to the <a href="https://grafana.com/docs/grafana/v8.3/explore">Explore</a> topic.
     </td>
   </tr>
   <tr>
@@ -116,7 +116,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">transformation</td>
     <td>
-      Transformations process the result set of a query before it’s passed on for visualization. For more information, refer to the <a href="https://grafana.com/docs/grafana/latest/panels/transformations">Transformations overview</a> topic.
+      Transformations process the result set of a query before it’s passed on for visualization. For more information, refer to the <a href="https://grafana.com/docs/grafana/v8.3/panels/transformations">Transformations overview</a> topic.
     </td>
   </tr>
   <tr>

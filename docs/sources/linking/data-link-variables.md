@@ -1,7 +1,7 @@
 +++
 title = "URL variables"
 keywords = ["grafana", "url variables", "documentation", "variables", "data link"]
-aliases = ["/docs/grafana/latest/variables/url-variables.md","/docs/grafana/latest/variables/variable-types/url-variables.md"]
+aliases = ["/docs/grafana/v8.3/variables/url-variables.md","/docs/grafana/v8.3/variables/variable-types/url-variables.md"]
 weight = 400
 +++
 

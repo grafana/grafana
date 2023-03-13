@@ -1,7 +1,7 @@
 +++
 title = "Chained variables"
 keywords = ["grafana", "templating", "variable", "nested", "chained", "linked"]
-aliases = ["/docs/grafana/latest/variables/chained-variables.md"]
+aliases = ["/docs/grafana/v8.3/variables/chained-variables.md"]
 weight = 800
 +++
 

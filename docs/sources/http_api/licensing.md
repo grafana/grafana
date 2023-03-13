@@ -2,7 +2,7 @@
 title = "Licensing HTTP API "
 description = "Enterprise Licensing HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "licensing", "enterprise"]
-aliases = ["/docs/grafana/latest/http_api/licensing/"]
+aliases = ["/docs/grafana/v8.3/http_api/licensing/"]
 +++
 
 # Enterprise License API

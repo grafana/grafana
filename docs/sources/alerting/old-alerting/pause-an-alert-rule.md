@@ -3,7 +3,7 @@ title = "Pause alert rule"
 description = "Pause an existing alert rule"
 keywords = ["grafana", "alerting", "guide", "rules", "view"]
 weight = 400
-aliases = ["/docs/grafana/latest/alerting/pause-an-alert-rule/"]
+aliases = ["/docs/grafana/v8.3/alerting/pause-an-alert-rule/"]
 +++
 
 # Pause an alert rule

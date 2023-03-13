@@ -1,7 +1,7 @@
 +++
 title = "Annotate time series"
 keywords = ["grafana", "time series panel", "documentation", "guide", "graph", "annotations"]
-aliases = ["/docs/grafana/latest/panels/visualizations/time-series/annotate-time-series/"]
+aliases = ["/docs/grafana/v8.3/panels/visualizations/time-series/annotate-time-series/"]
 weight = 100
 +++
 
