@@ -20,7 +20,7 @@ export interface Props<TQuery extends DataQuery = DataQuery> {
 }
 
 export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQuery>) => {
-  const { query, queries, onClick, onChange, collapsedText, renderExtras, disabled } = props;
+  const { query, queries, onChange, collapsedText, renderExtras, disabled } = props;
 
   const styles = useStyles2(getStyles);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -120,11 +120,7 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
         {disabled && <em className={styles.contextInfo}>Disabled</em>}
       </div>
 
-      {collapsedText && (
-        <div className={styles.collapsedText} onClick={onClick}>
-          {collapsedText}
-        </div>
-      )}
+      {collapsedText && <div className={styles.collapsedText}>{collapsedText}</div>}
     </>
   );
 };

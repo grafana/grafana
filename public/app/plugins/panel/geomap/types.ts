@@ -5,6 +5,7 @@ import BaseLayer from 'ol/layer/Base';
 import { Subject } from 'rxjs';
 
 import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
+import { ComparisonOperation } from '@grafana/schema';
 import { LayerElement } from 'app/core/components/Layers/types';
 
 import { ControlsOptions as ControlsOptionsBase } from './panelcfg.gen';
@@ -38,15 +39,6 @@ export interface GeomapInstanceState {
   layers: MapLayerState[];
   selected: number;
   actions: GeomapLayerActions;
-}
-
-export enum ComparisonOperation {
-  EQ = 'eq',
-  NEQ = 'neq',
-  LT = 'lt',
-  LTE = 'lte',
-  GT = 'gt',
-  GTE = 'gte',
 }
 
 //-------------------

@@ -16,7 +16,9 @@ export enum FieldType {
   // Used to detect that the value is some kind of trace data to help with the visualisation and processing.
   trace = 'trace',
   geo = 'geo',
+  enum = 'enum',
   other = 'other', // Object, Array, etc
+  frame = 'frame', // DataFrame
 }
 
 /**
@@ -91,8 +93,22 @@ export interface FieldConfig<TOptions = any> {
   // Alternative to empty string
   noValue?: string;
 
+  // The field type may map to specific config
+  type?: FieldTypeConfig;
+
   // Panel Specific Values
   custom?: TOptions;
+}
+
+export interface FieldTypeConfig {
+  enum?: EnumFieldConfig;
+}
+
+export interface EnumFieldConfig {
+  text?: string[];
+  color?: string[];
+  icon?: string[];
+  description?: string[];
 }
 
 /** @public */

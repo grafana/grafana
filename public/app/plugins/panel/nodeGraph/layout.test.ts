@@ -3,9 +3,9 @@ import { renderHook } from '@testing-library/react-hooks';
 import { useLayout } from './layout';
 import { EdgeDatum, NodeDatum } from './types';
 
-let onmessage: jest.MockedFunction<any>;
-let postMessage: jest.MockedFunction<any>;
-let terminate: jest.MockedFunction<any>;
+let onmessage: jest.Mock;
+let postMessage: jest.Mock;
+let terminate: jest.Mock;
 
 jest.mock('./createLayoutWorker', () => {
   return {

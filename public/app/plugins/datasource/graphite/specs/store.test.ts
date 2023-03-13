@@ -14,8 +14,8 @@ import { createStore } from '../state/store';
 import { GraphiteSegment } from '../types';
 
 jest.mock('app/angular/promiseToDigest', () => ({
-  promiseToDigest: (scope: any) => {
-    return (p: Promise<any>) => p;
+  promiseToDigest: () => {
+    return (p: Promise<unknown>) => p;
   },
 }));
 

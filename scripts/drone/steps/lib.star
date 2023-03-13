@@ -9,14 +9,14 @@ load(
 )
 
 grabpl_version = "v3.0.21"
-build_image = "grafana/build-container:v1.7.1"
+build_image = "grafana/build-container:1.7.2"
 publish_image = "grafana/grafana-ci-deploy:1.3.3"
 deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
 alpine_image = "alpine:3.17.1"
 curl_image = "byrnedo/alpine-curl:0.1.8"
 windows_image = "mcr.microsoft.com/windows:1809"
 wix_image = "grafana/ci-wix:0.1.1"
-go_image = "golang:1.19.4"
+go_image = "golang:1.20.1"
 
 trigger_oss = {
     "repo": [
@@ -940,7 +940,7 @@ def build_docs_website_step():
         # Use latest revision here, since we want to catch if it breaks
         "image": "grafana/docs-base:latest",
         "commands": [
-            "mkdir -p /hugo/content/docs/grafana",
+            "mkdir -p /hugo/content/docs/grafana/latest",
             "cp -r docs/sources/* /hugo/content/docs/grafana/latest/",
             "cd /hugo && make prod",
         ],
@@ -1481,7 +1481,6 @@ def trigger_test_release():
         "image": build_image,
         "environment": {
             "GITHUB_TOKEN": from_secret("github_token_pr"),
-            "DOWNSTREAM_REPO": from_secret("downstream"),
             "TEST_TAG": "v0.0.0-test",
         },
         "commands": [

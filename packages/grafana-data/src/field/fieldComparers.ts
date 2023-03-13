@@ -1,6 +1,6 @@
 import { isNumber } from 'lodash';
 
-import { dateTime, isDateTime } from '../datetime';
+import { dateTime, isDateTimeInput } from '../datetime';
 import { Field, FieldType } from '../types/dataFrame';
 import { Vector } from '../types/vector';
 
@@ -34,7 +34,7 @@ export const timeComparer = (a: unknown, b: unknown): number => {
     return numericComparer(a, b);
   }
 
-  if (isDateTime(a) && isDateTime(b)) {
+  if (isDateTimeInput(a) && isDateTimeInput(b)) {
     if (dateTime(a).isBefore(b)) {
       return -1;
     }

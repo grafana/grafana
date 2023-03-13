@@ -1,7 +1,14 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { DataQueryResponse, DataQueryResponseData, QueryResultMetaStat } from '@grafana/data';
+import {
+  ArrayVector,
+  DataFrame,
+  DataQueryResponse,
+  DataQueryResponseData,
+  Field,
+  QueryResultMetaStat,
+} from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -298,30 +305,31 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
 }
 
 export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
-  const queries = allQueries.filter((query) => !query.hide);
-  /*
-   * For now, we will not split when more than 1 query is requested.
-   */
-  if (queries.length > 1) {
+  const queries = allQueries
+    .filter((query) => !query.hide)
+    .filter((query) => !query.refId.includes('do-not-chunk'))
+    .filter((query) => query.expr);
+
+  return queries.length > 0;
+}
+
+function shouldCombine(frame1: DataFrame, frame2: DataFrame): boolean {
+  if (frame1.refId !== frame2.refId) {
     return false;
   }
 
-  if (queries[0].refId.includes('do-not-chunk')) {
-    return false;
-  }
-
-  return true;
+  return frame1.name === frame2.name;
 }
 
 export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
   if (!currentResult) {
-    return newResult;
+    return cloneQueryResponse(newResult);
   }
 
   newResult.data.forEach((newFrame) => {
-    const currentFrame = currentResult.data.find((frame) => frame.name === newFrame.name);
+    const currentFrame = currentResult.data.find((frame) => shouldCombine(frame, newFrame));
     if (!currentFrame) {
-      currentResult.data.push(newFrame);
+      currentResult.data.push(cloneDataFrame(newFrame));
       return;
     }
     combineFrames(currentFrame, newFrame);
@@ -330,32 +338,60 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
   return currentResult;
 }
 
-function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseData) {
+function combineFrames(dest: DataFrame, source: DataFrame) {
   const totalFields = dest.fields.length;
   for (let i = 0; i < totalFields; i++) {
-    dest.fields[i].values.buffer = [].concat.apply(source.fields[i].values.buffer, dest.fields[i].values.buffer);
+    dest.fields[i].values = new ArrayVector(
+      [].concat.apply(source.fields[i].values.toArray(), dest.fields[i].values.toArray())
+    );
   }
   dest.length += source.length;
-  combineMetadata(dest, source);
+  dest.meta = {
+    ...dest.meta,
+    stats: getCombinedMetadataStats(dest.meta?.stats ?? [], source.meta?.stats ?? []),
+  };
 }
 
-function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResponseData = {}) {
-  if (!source.meta?.stats) {
-    return;
+const TOTAL_BYTES_STAT = 'Summary: total bytes processed';
+
+function getCombinedMetadataStats(
+  destStats: QueryResultMetaStat[],
+  sourceStats: QueryResultMetaStat[]
+): QueryResultMetaStat[] {
+  // in the current approach, we only handle a single stat
+  const destStat = destStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
+  const sourceStat = sourceStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
+
+  if (sourceStat != null && destStat != null) {
+    return [{ value: sourceStat.value + destStat.value, displayName: TOTAL_BYTES_STAT, unit: destStat.unit }];
   }
-  if (!dest.meta?.stats) {
-    if (!dest.meta) {
-      dest.meta = {};
-    }
-    Object.assign(dest.meta, { stats: source.meta.stats });
-    return;
+
+  // maybe one of them exist
+  const eitherStat = sourceStat ?? destStat;
+  if (eitherStat != null) {
+    return [eitherStat];
   }
-  dest.meta.stats.forEach((destStat: QueryResultMetaStat, i: number) => {
-    const sourceStat = source.meta.stats?.find(
-      (sourceStat: QueryResultMetaStat) => destStat.displayName === sourceStat.displayName
-    );
-    if (sourceStat) {
-      destStat.value += sourceStat.value;
-    }
-  });
+
+  return [];
+}
+
+/**
+ * Deep clones a DataQueryResponse
+ */
+export function cloneQueryResponse(response: DataQueryResponse): DataQueryResponse {
+  const newResponse = {
+    ...response,
+    data: response.data.map(cloneDataFrame),
+  };
+  return newResponse;
+}
+
+function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
+  return {
+    ...frame,
+    fields: frame.fields.map((field: Field<unknown, ArrayVector>) => ({
+      ...field,
+      values: new ArrayVector(field.values.buffer),
+    })),
+  };
 }
