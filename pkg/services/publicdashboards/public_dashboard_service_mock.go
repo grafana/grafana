@@ -361,12 +361,12 @@ func (_m *FakePublicDashboardService) GetOrgIdByAccessToken(ctx context.Context,
 }
 
 // GetQueryDataResponse provides a mock function with given fields: ctx, skipCache, reqDTO, panelId, accessToken
-func (_m *FakePublicDashboardService) GetQueryDataResponse(ctx context.Context, skipCache bool, reqDTO models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
-	ret := _m.Called(ctx, skipCache, reqDTO, panelId, accessToken)
+func (_m *FakePublicDashboardService) GetQueryDataResponse(ctx context.Context, skipDSCache bool, skipQueryCache bool, reqDTO models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
+	ret := _m.Called(ctx, skipDSCache, reqDTO, panelId, accessToken)
 
 	var r0 *backend.QueryDataResponse
-	if rf, ok := ret.Get(0).(func(context.Context, bool, models.PublicDashboardQueryDTO, int64, string) *backend.QueryDataResponse); ok {
-		r0 = rf(ctx, skipCache, reqDTO, panelId, accessToken)
+	if rf, ok := ret.Get(0).(func(context.Context, bool, bool, models.PublicDashboardQueryDTO, int64, string) *backend.QueryDataResponse); ok {
+		r0 = rf(ctx, skipDSCache, skipQueryCache, reqDTO, panelId, accessToken)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*backend.QueryDataResponse)
@@ -374,8 +374,8 @@ func (_m *FakePublicDashboardService) GetQueryDataResponse(ctx context.Context, 
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, bool, models.PublicDashboardQueryDTO, int64, string) error); ok {
-		r1 = rf(ctx, skipCache, reqDTO, panelId, accessToken)
+	if rf, ok := ret.Get(1).(func(context.Context, bool, bool, models.PublicDashboardQueryDTO, int64, string) error); ok {
+		r1 = rf(ctx, skipDSCache, skipQueryCache, reqDTO, panelId, accessToken)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -136,7 +136,7 @@ func contextProvider(modifiers ...func(c *contextmodel.ReqContext)) web.Handler 
 			Logger:       log.New(""),
 			SignedInUser: &user.SignedInUser{},
 			IsSignedIn:   true,
-			SkipCache:    true,
+			SkipDSCache:  true,
 		}
 		for _, modifier := range modifiers {
 			modifier(reqCtx)

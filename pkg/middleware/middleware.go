@@ -21,8 +21,9 @@ var (
 	ReqOrgAdmin            = RoleAuth(org.RoleAdmin)
 )
 
-func HandleNoCacheHeader(ctx *contextmodel.ReqContext) {
-	ctx.SkipCache = ctx.Req.Header.Get("X-Grafana-NoCache") == "true"
+func HandleNoCacheHeaders(ctx *contextmodel.ReqContext) {
+	ctx.SkipDSCache = ctx.Req.Header.Get("X-Grafana-NoCache") == "true"
+	ctx.SkipQueryCache = ctx.Req.Header.Get("X-Cache-Skip") == "true"
 }
 
 func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {

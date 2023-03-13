@@ -68,9 +68,9 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 // QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
-func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 	// Parse the request into parsed queries grouped by datasource uid
-	parsedReq, err := s.parseMetricRequest(ctx, user, skipCache, reqDTO)
+	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO)
 	if err != nil {
 		return nil, err
 	}
@@ -84,11 +84,11 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 		return s.handleQuerySingleDatasource(ctx, user, parsedReq)
 	}
 	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
-	return s.executeConcurrentQueries(ctx, user, skipCache, reqDTO, parsedReq.parsedQueries)
+	return s.executeConcurrentQueries(ctx, user, skipDSCache, skipQueryCache, reqDTO, parsedReq.parsedQueries)
 }
 
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
-func (s *Service) executeConcurrentQueries(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, queriesbyDs map[string][]parsedQuery) (*backend.QueryDataResponse, error) {
+func (s *Service) executeConcurrentQueries(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest, queriesbyDs map[string][]parsedQuery) (*backend.QueryDataResponse, error) {
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(8) // arbitrary limit to prevent too many concurrent requests
 	rchan := make(chan backend.Responses, len(queriesbyDs))
@@ -121,7 +121,7 @@ func (s *Service) executeConcurrentQueries(ctx context.Context, user *user.Signe
 			// Handle panics in the datasource qery
 			defer recoveryFn(subDTO.Queries)
 
-			subResp, err := s.QueryData(ctx, user, skipCache, subDTO)
+			subResp, err := s.QueryData(ctx, user, skipDSCache, skipQueryCache, subDTO)
 			if err == nil {
 				rchan <- subResp.Responses
 			} else {

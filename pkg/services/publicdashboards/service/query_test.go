@@ -404,7 +404,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 		pubdashDto, err := service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		resp, _ := service.GetQueryDataResponse(context.Background(), true, publicDashboardQueryDTO, 1, pubdashDto.AccessToken)
+		resp, _ := service.GetQueryDataResponse(context.Background(), true, false, publicDashboardQueryDTO, 1, pubdashDto.AccessToken)
 		require.Nil(t, resp)
 	})
 }

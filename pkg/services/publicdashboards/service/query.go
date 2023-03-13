@@ -118,7 +118,7 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 }
 
 // GetQueryDataResponse returns a query data response for the given panel and query
-func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipCache bool, queryDto models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
+func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipDSCache bool, skipQueryCache bool, queryDto models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
 	publicDashboard, dashboard, err := pd.FindEnabledPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
@@ -134,7 +134,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 	}
 
 	anonymousUser := buildAnonymousUser(ctx, dashboard)
-	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipCache, metricReq)
+	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipDSCache, skipQueryCache, metricReq)
 
 	reqDatasources := metricReq.GetUniqueDatasourceTypes()
 	if err != nil {
