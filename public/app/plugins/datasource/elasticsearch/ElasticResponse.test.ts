@@ -1,4 +1,13 @@
-import { DataFrame, DataFrameView, Field, FieldCache, FieldType, KeyValue, MutableDataFrame } from '@grafana/data';
+import {
+  DataFrame,
+  DataFrameView,
+  Field,
+  FieldCache,
+  FieldType,
+  isDateTime,
+  KeyValue,
+  MutableDataFrame,
+} from '@grafana/data';
 import flatten from 'app/core/utils/flatten';
 
 import { ElasticResponse } from './ElasticResponse';
@@ -1301,6 +1310,7 @@ describe('ElasticResponse', () => {
           refId: 'A',
           metrics: [{ type: 'raw_data', id: '1' }],
           bucketAggs: [],
+          timeField: '@timestamp',
         },
       ];
 
@@ -1317,7 +1327,7 @@ describe('ElasticResponse', () => {
                   _id: '1',
                   _type: '_doc',
                   _index: 'index',
-                  _source: { sourceProp: 'asd' },
+                  _source: { sourceProp: 'asd', '@timestamp': '2019-01-01T00:00:00Z' },
                 },
               ],
             },
@@ -1332,6 +1342,12 @@ describe('ElasticResponse', () => {
       for (const field of result.data[0].fields) {
         expect(field.config.filterable).toBe(true);
       }
+    });
+
+    it('should have time field values in DateTime format', () => {
+      const timeField = result.data[0].fields.find((field) => field.name === '@timestamp');
+      expect(timeField).toBeDefined();
+      expect(isDateTime(timeField?.values.get(0))).toBe(true);
     });
   });
 
