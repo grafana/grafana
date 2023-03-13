@@ -55,7 +55,7 @@ func NewAnnotationBackend(annotations AnnotationStore, dashboards dashboards.Das
 }
 
 // RecordStates writes a number of state transitions for a given rule to state history.
-func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
+func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
 	annotations := buildAnnotations(rule, states, logger)

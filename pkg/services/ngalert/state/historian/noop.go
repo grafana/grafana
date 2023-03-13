@@ -16,7 +16,7 @@ func NewNopHistorian() *NoOpHistorian {
 	return &NoOpHistorian{}
 }
 
-func (f *NoOpHistorian) RecordStatesAsync(ctx context.Context, _ history_model.RuleMeta, _ []state.StateTransition) <-chan error {
+func (f *NoOpHistorian) Record(ctx context.Context, _ history_model.RuleMeta, _ []state.StateTransition) <-chan error {
 	errCh := make(chan error)
 	close(errCh)
 	return errCh

@@ -67,7 +67,7 @@ func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
 	return h.client.ping(ctx)
 }
 
-func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
+func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	streams := statesToStreams(rule, states, h.externalLabels, logger)
 	errCh := make(chan error, 1)
