@@ -89,7 +89,7 @@ func Test_prepareLog(t *testing.T) {
 				"referer":     "",
 			},
 			expectAbsence: map[string]struct{}{
-				"err":           {},
+				"error":         {},
 				"db_call_count": {},
 			},
 		},
@@ -109,7 +109,7 @@ func Test_prepareLog(t *testing.T) {
 				"referer":     "",
 			},
 			expectAbsence: map[string]struct{}{
-				"err":           {},
+				"error":         {},
 				"db_call_count": {},
 			},
 			expectedLevel: errutil.LevelInfo,
@@ -124,11 +124,11 @@ func Test_prepareLog(t *testing.T) {
 
 			expectFields: map[string]any{
 				"status": http.StatusInternalServerError,
-				"err":    "got an error",
+				"error":  "got an error",
 			},
 			expectAbsence: map[string]struct{}{
-				"errReason":    {},
-				"errMessageID": {},
+				"errorReason":    {},
+				"errorMessageID": {},
 			},
 			expectedLevel: errutil.LevelError,
 		},
@@ -140,10 +140,10 @@ func Test_prepareLog(t *testing.T) {
 			},
 			error: grafanaFlavoredErr,
 			expectFields: map[string]any{
-				"status":       http.StatusNotFound,
-				"err":          "got error",
-				"errReason":    errutil.StatusNotFound,
-				"errMessageID": "test.notFound",
+				"status":         http.StatusNotFound,
+				"error":          "got error",
+				"errorReason":    errutil.StatusNotFound,
+				"errorMessageID": "test.notFound",
 			},
 			expectedLevel: errutil.LevelInfo,
 		},
