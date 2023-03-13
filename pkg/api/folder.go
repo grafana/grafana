@@ -253,9 +253,6 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 //
 // Update folder.
 //
-// If nested folders are enabled then it optionally expects a new parent folder UID that moves the folder and
-// includes it into the response.
-//
 // Responses:
 // 200: folderResponse
 // 400: badRequestError
