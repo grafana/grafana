@@ -93,7 +93,6 @@
 /pkg/services/annotations/ @grafana/backend-platform
 /pkg/services/apikey/ @grafana/backend-platform
 /pkg/services/cleanup/ @grafana/backend-platform
-/pkg/services/comments/ @grafana/backend-platform
 /pkg/services/contexthandler/ @grafana/backend-platform
 /pkg/services/correlations/ @grafana/backend-platform
 /pkg/services/dashboardimport/ @grafana/backend-platform
@@ -347,7 +346,6 @@ lerna.json @grafana/frontend-ops
 /public/app/features/api-keys/ @grafana/user-essentials
 /public/app/features/canvas/ @grafana/dataviz-squad
 /public/app/features/commandPalette/ @grafana/user-essentials
-/public/app/features/comments/ @grafana/dataviz-squad
 /public/app/features/connections/ @grafana/plugins-platform-frontend
 /public/app/features/correlations/ @grafana/explore-squad
 /public/app/features/dashboard/ @grafana/dashboards-squad

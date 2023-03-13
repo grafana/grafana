@@ -725,6 +725,15 @@ export interface TableColoredBackgroundCellOptions {
 }
 
 /**
+ * Height of a table cell
+ */
+export enum TableCellHeight {
+  Lg = 'lg',
+  Md = 'md',
+  Sm = 'sm',
+}
+
+/**
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
@@ -790,12 +799,15 @@ export enum LogsDedupStrategy {
 }
 
 /**
- * Height of a table cell
+ * Compare two values
  */
-export enum TableCellHeight {
-  Lg = 'lg',
-  Md = 'md',
-  Sm = 'sm',
+export enum ComparisonOperation {
+  EQ = 'eq',
+  GT = 'gt',
+  GTE = 'gte',
+  LT = 'lt',
+  LTE = 'lte',
+  NEQ = 'neq',
 }
 
 /**

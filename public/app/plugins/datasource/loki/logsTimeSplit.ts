@@ -2,8 +2,6 @@
 // like returned by `new Date().getTime()`. this is needed because the "math"
 // has to be done on integer numbers.
 
-const MAX_CHUNK_COUNT = 50;
-
 // the way loki handles logs-range-queries is that if you specify start & end,
 // one of those will be included, but the other will not. this allows us to
 // make it easy to split ranges.
@@ -22,7 +20,7 @@ export function getRangeChunks(
   startTime: number,
   endTime: number,
   idealRangeDuration: number
-): Array<[number, number]> | null {
+): Array<[number, number]> {
   if (endTime - startTime <= idealRangeDuration) {
     return [[startTime, endTime]];
   }
@@ -36,10 +34,6 @@ export function getRangeChunks(
     // to cross over the startTime
     const chunkStartTime = Math.max(chunkEndTime - idealRangeDuration, startTime);
     result.push([chunkStartTime, chunkEndTime]);
-
-    if (result.length > MAX_CHUNK_COUNT) {
-      return null;
-    }
   }
 
   // because we walked backwards, we need to reverse the array

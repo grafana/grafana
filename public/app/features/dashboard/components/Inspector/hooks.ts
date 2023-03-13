@@ -9,14 +9,6 @@ import { InspectTab } from 'app/features/inspector/types';
 
 import { supportsDataQuery } from '../PanelEditor/utils';
 
-import { PanelInspectActionSupplier } from './PanelInspectActions';
-
-declare global {
-  interface Window {
-    grafanaPanelInspectActionSupplier?: PanelInspectActionSupplier;
-  }
-}
-
 /**
  * Given PanelData return first data source supporting metadata inspector
  */
@@ -68,19 +60,9 @@ export const useInspectTabs = (
       tabs.push({ label: t('dashboard.inspect.error-tab', 'Error'), value: InspectTab.Error });
     }
 
-    // This is a quick internal hack to allow custom actions in inspect
-    // For 8.1, something like this should be exposed through grafana/runtime
-    const supplier = window.grafanaPanelInspectActionSupplier;
-    if (supplier && supplier.getActions(panel)?.length) {
-      tabs.push({
-        label: t('dashboard.inspect.actions-tab', 'Actions'),
-        value: InspectTab.Actions,
-      });
-    }
-
     if (dashboard.meta.canEdit && supportsDataQuery(plugin)) {
       tabs.push({ label: t('dashboard.inspect.query-tab', 'Query'), value: InspectTab.Query });
     }
     return tabs;
-  }, [panel, plugin, metaDs, dashboard, error]);
+  }, [plugin, metaDs, dashboard, error]);
 };

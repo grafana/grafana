@@ -67,14 +67,6 @@ const (
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
 
-	// FlagDashboardComments
-	// Enable dashboard-wide comments
-	FlagDashboardComments = "dashboardComments"
-
-	// FlagAnnotationComments
-	// Enable annotation comments
-	FlagAnnotationComments = "annotationComments"
-
 	// FlagMigrationLocking
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
@@ -83,9 +75,9 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagK8s
+	// FlagK8S
 	// Explore native k8s integrations
-	FlagK8s = "k8s"
+	FlagK8S = "k8s"
 
 	// FlagDashboardsFromStorage
 	// Load dashboards from the generic storage interface
