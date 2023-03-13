@@ -581,12 +581,6 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/scenes/embedded/:name',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/SceneEmbeddedPage')
-      ),
-    },
-    {
       path: '/scenes/grafana-monitoring',
       exact: false,
       component: SafeDynamicImport(
