@@ -115,7 +115,7 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 	// We add an empty referer when there's a parsing error, hence this is before the err check.
 	logParams = append(logParams, "referer", referer)
 	if err != nil {
-		logParams = append(logParams, "refererParsingErr", err)
+		logParams = append(logParams, "refererParsingErr", fmt.Errorf("received invalid referer in request headers, removed for log forgery prevention: %w", err))
 		lvl = lvl.HighestOf(errutil.LevelWarn)
 	}
 
@@ -160,7 +160,7 @@ func SanitizeURL(s string) (string, error) {
 
 	u, err := url.ParseRequestURI(s)
 	if err != nil {
-		return "", fmt.Errorf("received invalid referer in request headers, removed for log forgery prevention")
+		return "", fmt.Errorf("failed to sanitize URL")
 	}
 
 	// strip out sensitive query strings
