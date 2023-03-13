@@ -2,7 +2,7 @@
 title = "Activate an Enterprise license"
 description = "Activate an Enterprise license"
 keywords = ["grafana", "licensing", "enterprise"]
-aliases = ["/docs/grafana/latest/enterprise/activate-license"]
+aliases = ["/docs/grafana/v8.0/enterprise/activate-license"]
 weight = 100
 +++
 
@@ -68,13 +68,13 @@ In your configuration file:
 
 ```
 [server]
-root_url = https://grafana.example.com/
+root_url = https://grafana.blah.com/
 ```
 
 Or with an environment variable:
 
 ```
-GF_SERVER_ROOT_URL=https://grafana.example.com/
+GF_SERVER_ROOT_URL=https://grafana.blah.com/
 ```
 
 ## Step 4. Restart Grafana

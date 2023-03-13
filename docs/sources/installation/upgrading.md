@@ -342,27 +342,5 @@ Refer to [Grafana Live configuration]({{< relref "../live/configure-grafana-live
 Grafana v8.0 changes the underlying data structure to [data frames]({{< relref "../developers/plugins/data-frames.md" >}}) for the Postgres, MySQL, Microsoft SQL Server data sources. As a result, a _Time series_ query result gets returned in a [wide format]({{< relref "../developers/plugins/data-frames.md#wide-format" >}}). To make the visualizations work as they did before, you might have to do some manual migrations.
 
 For any existing panels/visualizations using a _Time series_ query, where the time column is only needed for filtering the time range, for example, using the bar gauge or pie chart panel, we recommend that you use a _Table query_ instead and exclude the time column as a field in the response.
-
+		
 Refer to this [issue comment](https://github.com/grafana/grafana/issues/35534#issuecomment-861519658) for detailed instructions and workarounds.
-
-#### Prefix added to series names
-
-When you have a query where there's a time value and a numeric value selected together with a string value that's not named _metric_, the graph panel renders series names as `value <hostname>` rather than just `<hostname>` which was the case before Grafana 8.
-
-```sql
-SELECT
-  $__timeGroup("createdAt",'10m'),
-  avg(value) as "value",
-  hostname
-FROM grafana_metric
-WHERE $__timeFilter("createdAt")
-GROUP BY time, hostname
-ORDER BY time
-```
-
-There are two possible workarounds to resolve this problem:
-
-1. In Grafana v8.0.3, use an alias of the string column selected as `metric`. for example, `hostname as metric`.
-2. Use the [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
-
-For more information, refer to the our relational databases documentation of [Postgres]({{< relref "../datasources/postgres.md#time-series-queries" >}}), [MySQL]({{< relref "../datasources/mysql.md#time-series-queries" >}}), [Microsoft SQL Server]({{< relref "../datasources/mssql.md#time-series-queries" >}}).

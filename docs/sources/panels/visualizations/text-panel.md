@@ -1,7 +1,7 @@
 +++
 title = "Text"
 keywords = ["grafana", "text", "documentation", "panel"]
-aliases = ["/docs/grafana/latest/reference/alertlist/", "/docs/grafana/latest/features/panels/text/"]
+aliases = ["/docs/grafana/v8.0/reference/alertlist/", "/docs/grafana/v8.0/features/panels/text/"]
 weight = 1100
 +++
 

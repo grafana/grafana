@@ -1,6 +1,6 @@
 +++
 title = "Legend options"
-aliases = ["/docs/grafana/latest/panels/visualizations/panel-legend/"]
+aliases = ["/docs/grafana/v8.0/panels/visualizations/panel-legend/"]
 weight = 950
 +++
 

@@ -2,7 +2,7 @@
 title = "Provisioning"
 description = ""
 keywords = ["grafana", "provisioning"]
-aliases = ["/docs/grafana/latest/installation/provisioning"]
+aliases = ["/docs/grafana/v8.0/installation/provisioning"]
 weight = 800
 +++
 
@@ -439,11 +439,11 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `discord`
 
-| Name       | Secure setting |
-| ---------- | -------------- |
-| url        | yes            |
-| avatar_url |                |
-| content    |                |
+| Name           | Secure setting |
+| -------------- | -------------- |
+| url            | yes            |
+| avatar_url     |                |
+| message        |                |
 
 #### Alert notification `slack`
 

@@ -2,7 +2,7 @@
 title = "Panel links"
 description = ""
 keywords = ["grafana", "linking", "create links", "link panels", "link dashboards", "navigate"]
-aliases = ["/docs/grafana/latest/features/navigation-links/"]
+aliases = ["/docs/grafana/v8.0/features/navigation-links/"]
 weight = 300
 +++
 

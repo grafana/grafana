@@ -1,6 +1,6 @@
 +++
 title = "Create and manage rules"
-aliases = ["/docs/grafana/latest/alerting/rules/"]
+aliases = ["/docs/grafana/v8.0/alerting/rules/"]
 weight = 130
 +++
 

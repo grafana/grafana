@@ -2,7 +2,7 @@
 title = "Histograms and heatmaps"
 description = "An introduction to histograms and heatmaps"
 keywords = ["grafana", "heatmap", "panel", "documentation", "histogram"]
-aliases = ["/docs/grafana/latest/getting-started/intro-histograms"]
+aliases = ["/docs/grafana/v8.0/getting-started/intro-histograms"]
 weight = 700
 +++
 

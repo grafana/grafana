@@ -2,7 +2,7 @@
 title = "Presence indicator"
 description = "Know who is looking at the same dashboard as you are"
 keywords = ["grafana", "presence-indicator", "enterprise"]
-aliases = ["/docs/grafana/latest/enterprise/usage-insights/presence-indicator.md"]
+aliases = ["/docs/grafana/v8.0/enterprise/usage-insights/presence-indicator.md"]
 weight = 300
 +++
 

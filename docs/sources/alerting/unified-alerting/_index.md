@@ -1,6 +1,6 @@
 +++
 title = "Grafana 8 Alerts"
-aliases = ["/docs/grafana/latest/alerting/metrics/"]
+aliases = ["/docs/grafana/v8.0/alerting/metrics/"]
 weight = 113
 +++
 
@@ -24,7 +24,6 @@ You can perform the following tasks for alerts:
 - [Create a Grafana managed alert rule]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
 - [Create a Cortex or Loki managed alert rule]({{< relref "alerting-rules/create-cortex-loki-managed-rule.md" >}})
 - [View existing alert rules and their current state]({{< relref "alerting-rules/rule-list.md" >}})
-- [Test alert rules and troubleshoot]({{< relref "./troubleshoot-alerts.md" >}})
 - [Add or edit an alert contact point]({{< relref "./contact-points.md" >}})
 - [Add or edit notification policies]({{< relref "./notification-policies.md" >}})
 - [Create and edit silences]({{< relref "./silences.md" >}})

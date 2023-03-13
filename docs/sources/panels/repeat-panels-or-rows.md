@@ -1,7 +1,7 @@
 +++
 title = "Repeat panels or rows"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable", "repeat"]
-aliases = ["/docs/grafana/latest/variables/repeat-panels-or-rows/"]
+aliases = ["/docs/grafana/v8.0/variables/repeat-panels-or-rows/"]
 weight = 800
 +++
 

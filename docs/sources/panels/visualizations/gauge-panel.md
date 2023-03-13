@@ -2,7 +2,7 @@
 title = "Gauge"
 description = "Gauge panel docs"
 keywords = ["grafana", "gauge", "gauge panel"]
-aliases = ["/docs/grafana/latest/features/panels/gauge/"]
+aliases = ["/docs/grafana/v8.0/features/panels/gauge/"]
 weight = 400
 +++
 

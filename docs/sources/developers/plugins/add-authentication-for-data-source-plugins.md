@@ -1,6 +1,6 @@
 +++
 title = "Add authentication for data source plugins"
-aliases = ["/docs/grafana/latest/plugins/developing/auth-for-datasources/", "/docs/grafana/next/developers/plugins/authentication/"]
+aliases = ["/docs/grafana/v8.0/plugins/developing/auth-for-datasources/", "/docs/grafana/next/developers/plugins/authentication/"]
 +++
 
  # Add authentication for data source plugins
@@ -23,7 +23,7 @@ Users with the _Viewer_ role can access data source configuration—such as the 
 
 > **Note:** You can see the settings that the current user has access to by entering `window.grafanaBootData` in the developer console of your browser.
 
-> **Note:** Users of [Grafana Enterprise](https://grafana.com/products/enterprise/grafana/) can restrict access to data sources to specific users and teams. For more information, refer to [Data source permissions](https://grafana.com/docs/grafana/latest/enterprise/datasource_permissions).
+> **Note:** Users of [Grafana Enterprise](https://grafana.com/products/enterprise/grafana/) can restrict access to data sources to specific users and teams. For more information, refer to [Data source permissions](https://grafana.com/docs/grafana/v8.0/enterprise/datasource_permissions).
 
 If you need to store sensitive information, such as passwords, tokens and API keys, use `secureJsonData` instead. Whenever the user saves the data source configuration, the secrets in `secureJsonData` are sent to the Grafana server and encrypted before they're stored.
 
@@ -108,7 +108,7 @@ The Grafana server comes with a proxy that lets you define templates for your re
 
 ### Add a proxy route to your plugin
 
-To forward requests through the Grafana proxy, you need to configure one or more proxy routes. A proxy route is a template for any outgoing request that is handled by the proxy. You can configure proxy routes in the [plugin.json](https://grafana.com/docs/grafana/latest/developers/plugins/metadata/) file.
+To forward requests through the Grafana proxy, you need to configure one or more proxy routes. A proxy route is a template for any outgoing request that is handled by the proxy. You can configure proxy routes in the [plugin.json](https://grafana.com/docs/grafana/v8.0/developers/plugins/metadata/) file.
 
 1. Add the route to plugin.json. Note that you need to restart the Grafana server every time you make a change to your plugin.json file.
 

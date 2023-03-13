@@ -2,7 +2,7 @@
 title = "PostgreSQL"
 description = "Guide for using PostgreSQL in Grafana"
 keywords = ["grafana", "postgresql", "guide"]
-aliases = ["/docs/grafana/latest/features/datasources/postgres/"]
+aliases = ["/docs/grafana/v8.0/features/datasources/postgres/"]
 weight = 1200
 +++
 
@@ -183,13 +183,12 @@ The resulting table panel:
 
 ## Time series queries
 
-If you set Format as to _Time series_, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
+If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must return a column named `time` that returns either a SQL datetime or any numeric datatype representing Unix epoch.
+Any column except `time` and `metric` are treated as a value column.
+You may return a column named `metric` that is used as metric name for the value column.
+If you return multiple value columns and a column named `metric` then this column is used as prefix for the series name (only available in Grafana 5.3+).
 
-A time series query result is returned in a [wide data frame format]({{< relref "../developers/plugins/data-frames.md#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
-
-> For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
-
-You can optionally customize the default series name formatting using instructions in [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}).
+Resultsets of time series queries need to be sorted by time.
 
 **Example with `metric` column:**
 
@@ -204,46 +203,18 @@ GROUP BY time
 ORDER BY time
 ```
 
-Data frame result:
-
-```text
-+---------------------+-----------------+
-| Name: time          | Name: min       |
-| Labels:             | Labels:         |
-| Type: []time.Time   | Type: []float64 |
-+---------------------+-----------------+
-| 2020-01-02 03:05:00 | 3               |
-| 2020-01-02 03:10:00 | 6               |
-+---------------------+-----------------+
-```
-
-**Example using the fill parameter in the $\_\_timeGroup macro to convert null values to be zero instead:**
+**Example using the fill parameter in the $__timeGroup macro to convert null values to be zero instead:**
 
 ```sql
 SELECT
   $__timeGroup("createdAt",'5m',0),
   sum(value) as value,
-  hostname
+  measurement
 FROM test_data
 WHERE
   $__timeFilter("createdAt")
-GROUP BY time, hostname
+GROUP BY time, measurement
 ORDER BY time
-```
-
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}) value of `${__field.labels.hostname}`.
-
-Data frame result:
-
-```text
-+---------------------+---------------------------+---------------------------+
-| Name: time          | Name: value               | Name: value               |
-| Labels:             | Labels: hostname=10.0.1.1 | Labels: hostname=10.0.1.2 |
-| Type: []time.Time   | Type: []float64           | Type: []float64           |
-+---------------------+---------------------------+---------------------------+
-| 2020-01-02 03:05:00 | 3                         | 4                         |
-| 2020-01-02 03:10:00 | 6                         | 7                         |
-+---------------------+---------------------------+---------------------------+
 ```
 
 **Example with multiple columns:**
@@ -257,19 +228,6 @@ FROM test_data
 WHERE $__timeFilter("time_date_time")
 GROUP BY time
 ORDER BY time
-```
-
-Data frame result:
-
-```text
-+---------------------+-----------------+-----------------+
-| Name: time          | Name: min_value | Name: max_value |
-| Labels:             | Labels:         | Labels:         |
-| Type: []time.Time   | Type: []float64 | Type: []float64 |
-+---------------------+-----------------+-----------------+
-| 2020-01-02 03:04:00 | 3               | 4               |
-| 2020-01-02 03:05:00 | 6               | 7               |
-+---------------------+-----------------+-----------------+
 ```
 
 ## Templating
