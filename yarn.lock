@@ -4956,7 +4956,7 @@ __metadata:
     react-test-renderer: 17.0.2
     react-use: 17.4.0
     regenerator-runtime: 0.13.11
-    rimraf: 4.2.0
+    rimraf: 4.4.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -4983,7 +4983,7 @@ __metadata:
     "@rollup/plugin-node-resolve": 15.0.1
     "@types/node": 18.14.6
     esbuild: 0.16.17
-    rimraf: 4.2.0
+    rimraf: 4.4.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -4993,14 +4993,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@npm:canary":
-  version: 9.4.0-96193pre
-  resolution: "@grafana/e2e-selectors@npm:9.4.0-96193pre"
+"@grafana/e2e-selectors@npm:^9.4.3":
+  version: 9.4.3
+  resolution: "@grafana/e2e-selectors@npm:9.4.3"
   dependencies:
     "@grafana/tsconfig": ^1.2.0-rc1
     tslib: 2.4.1
     typescript: 4.8.4
-  checksum: 1ce663607c0c816ec02cad33d80c38731c4dfafdc7d1693baa989b8eff6588e3cc1d8a031c4f30f888bbd8aa8768cce7c5dd4cb2455306040f39dcac933ceae4
+  checksum: 85a88cdf4adb643ff863b15f96fc6c04ecb7567c27cc526a00c157eb02575e55adc1e7701d58e1b48f00f24951c332fbb191cd2b5a8e74cd0c545543777e82af
   languageName: node
   linkType: hard
 
@@ -5031,7 +5031,7 @@ __metadata:
     lodash: 4.17.21
     mocha: 10.2.0
     resolve-bin: 1.0.1
-    rimraf: 4.2.0
+    rimraf: 4.4.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -5041,7 +5041,7 @@ __metadata:
     tslib: 2.5.0
     typescript: 4.8.4
     uuid: 9.0.0
-    webpack: 5.75.0
+    webpack: 5.76.0
     yaml: ^2.0.0
   bin:
     grafana-e2e: bin/grafana-e2e.js
@@ -5190,7 +5190,7 @@ __metadata:
     lodash: 4.17.21
     react: 17.0.2
     react-dom: 17.0.2
-    rimraf: 4.2.0
+    rimraf: 4.4.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -5207,17 +5207,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^0.0.16":
-  version: 0.0.16
-  resolution: "@grafana/scenes@npm:0.0.16"
+"@grafana/scenes@npm:^0.0.18":
+  version: 0.0.18
+  resolution: "@grafana/scenes@npm:0.0.18"
   dependencies:
-    "@grafana/e2e-selectors": canary
+    "@grafana/e2e-selectors": ^9.4.3
     "@grafana/experimental": 1.0.1
     react-grid-layout: 1.3.4
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
-  checksum: c6cf9f1571309da4ed0fb5046f8abf18b324e9847890c54307ca093610760d52fdb44002fb1db8e81abca6371121a0623a2f44c9828ef80b11d8d189993f457a
+  checksum: f863cbf410d71e579cd4e343fb7b8ad014bc66a250f4d31f9d43c43fe8e97f5b6e3e8d01ed69818c347b3db31b6ecb153d1dc7a0e2946d360e7e1806eb6f5d8c
   languageName: node
   linkType: hard
 
@@ -5230,7 +5230,7 @@ __metadata:
     "@rollup/plugin-json": 5.0.1
     "@rollup/plugin-node-resolve": 15.0.1
     esbuild: 0.16.17
-    rimraf: 4.2.0
+    rimraf: 4.4.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -5351,7 +5351,7 @@ __metadata:
     "@grafana/e2e-selectors": 9.5.0-pre
     "@grafana/schema": 9.5.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@leeoniya/ufuzzy": 1.0.2
+    "@leeoniya/ufuzzy": 1.0.6
     "@mdx-js/react": 1.6.22
     "@monaco-editor/react": 4.4.6
     "@popperjs/core": 2.11.6
@@ -5462,7 +5462,7 @@ __metadata:
     react-transition-group: 4.4.5
     react-use: 17.4.0
     react-window: 1.8.8
-    rimraf: 4.2.0
+    rimraf: 4.4.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -5481,7 +5481,7 @@ __metadata:
     typescript: 4.8.4
     uplot: 1.6.24
     uuid: 9.0.0
-    webpack: 5.75.0
+    webpack: 5.76.0
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
     react-dom: ^16.8.0 || ^17.0.0
@@ -6330,10 +6330,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@leeoniya/ufuzzy@npm:1.0.2":
-  version: 1.0.2
-  resolution: "@leeoniya/ufuzzy@npm:1.0.2"
-  checksum: 5460378a8c32d121b0bc7c8e95cde995316516655528e248051b1bf360cdca0311ef3275de14b802587748231333cee6183c931b3abba26f9e4236ecc4959aa3
+"@leeoniya/ufuzzy@npm:1.0.6":
+  version: 1.0.6
+  resolution: "@leeoniya/ufuzzy@npm:1.0.6"
+  checksum: e09672848e094745726331feebe6744d42563ccf160b38796eed4d72105daa052838fdec1944d5b44a27e328fc74a00547d00b894710e2720aa692ed5d3d6e3b
   languageName: node
   linkType: hard
 
@@ -13195,7 +13195,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@xstate/react@npm:^3.0.0":
+"@xstate/react@npm:^3.2.1":
   version: 3.2.1
   resolution: "@xstate/react@npm:3.2.1"
   dependencies:
@@ -21888,15 +21888,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:9.1.2":
-  version: 9.1.2
-  resolution: "glob@npm:9.1.2"
+"glob@npm:9.2.1, glob@npm:^9.2.0":
+  version: 9.2.1
+  resolution: "glob@npm:9.2.1"
   dependencies:
     fs.realpath: ^1.0.0
     minimatch: ^7.4.1
     minipass: ^4.2.4
-    path-scurry: ^1.5.0
-  checksum: 8c0bcd729b5783c340553966a25728a6c6e53275b825b4bf3be52bc2d6d31ea39d55d3c7e989edfc541f5a0ba7421b8616788f55367dd8551aac6cebbf7491ab
+    path-scurry: ^1.6.1
+  checksum: ef9b1c32491e6b532bdd0d2abcc3c9f48e83446609e11285869156982fc5a756dfbaa6f59f797712343bd1e22500ac15708692806633653fde4ef67c85e2aab7
   languageName: node
   linkType: hard
 
@@ -21910,18 +21910,6 @@ __metadata:
     minimatch: ^5.0.1
     once: ^1.3.0
   checksum: 50bcdea19d8e79d8de5f460b1939ffc2b3299eac28deb502093fdca22a78efebc03e66bf54f0abc3d3d07d8134d19a32850288b7440d77e072aa55f9d33b18c5
-  languageName: node
-  linkType: hard
-
-"glob@npm:^9.2.0":
-  version: 9.2.1
-  resolution: "glob@npm:9.2.1"
-  dependencies:
-    fs.realpath: ^1.0.0
-    minimatch: ^7.4.1
-    minipass: ^4.2.4
-    path-scurry: ^1.6.1
-  checksum: ef9b1c32491e6b532bdd0d2abcc3c9f48e83446609e11285869156982fc5a756dfbaa6f59f797712343bd1e22500ac15708692806633653fde4ef67c85e2aab7
   languageName: node
   linkType: hard
 
@@ -22130,13 +22118,13 @@ __metadata:
     "@grafana/lezer-logql": 0.1.2
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^0.0.16
+    "@grafana/scenes": ^0.0.18
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": "workspace:*"
     "@kusto/monaco-kusto": 5.3.6
-    "@leeoniya/ufuzzy": 1.0.2
+    "@leeoniya/ufuzzy": 1.0.6
     "@lezer/common": 1.0.2
     "@lezer/highlight": 1.1.3
     "@lezer/lr": 1.3.3
@@ -22288,7 +22276,7 @@ __metadata:
     file-saver: 2.0.5
     fork-ts-checker-webpack-plugin: 8.0.0
     framework-utils: ^1.1.0
-    glob: 9.1.2
+    glob: 9.2.1
     history: 4.10.1
     hoist-non-react-statics: 3.3.2
     html-loader: 4.2.0
@@ -22356,7 +22344,7 @@ __metadata:
     react-dom: 17.0.2
     react-draggable: 4.4.5
     react-dropzone: ^14.2.3
-    react-enable: ^3.0.1
+    react-enable: ^3.1.0
     react-grid-layout: 1.3.4
     react-highlight-words: 0.20.0
     react-hook-form: 7.5.3
@@ -22387,7 +22375,7 @@ __metadata:
     redux-thunk: 2.4.2
     regenerator-runtime: 0.13.11
     reselect: 4.1.7
-    rimraf: 4.2.0
+    rimraf: 4.4.0
     rst2html: "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809"
     rudder-sdk-js: 2.25.0
     rxjs: 7.8.0
@@ -22421,7 +22409,7 @@ __metadata:
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
     wait-on: 7.0.1
-    webpack: 5.75.0
+    webpack: 5.76.0
     webpack-bundle-analyzer: 4.8.0
     webpack-cli: 5.0.1
     webpack-dev-server: 4.11.1
@@ -30356,7 +30344,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"path-scurry@npm:^1.5.0, path-scurry@npm:^1.6.1":
+"path-scurry@npm:^1.6.1":
   version: 1.6.1
   resolution: "path-scurry@npm:1.6.1"
   dependencies:
@@ -33019,18 +33007,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-enable@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "react-enable@npm:3.0.1"
+"react-enable@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "react-enable@npm:3.1.0"
   dependencies:
     "@headlessui/react": ^1.5.0
-    "@xstate/react": ^3.0.0
+    "@xstate/react": ^3.2.1
     tslib: ^1.14.1
-    xstate: ^4.31.0
+    xstate: ^4.37.0
   peerDependencies:
     react: ^17 || ^18
     react-dom: ^17 || ^18
-  checksum: 1426b2433785eab34054b82594c085772a8ce334e71ca8d49d4171cd3f37dc8d5273e4717f1c70efb1411ef89220a4bba156a9fae5c6eb2a9a80c178307567f4
+  checksum: fc6509bac91bff78529df3699799bb02ce6d5fcc594eea844779834fa8cd8827f328c4456c157e2aca6bebbd0969846e184625f2fa3e2edde97074e19e10d5e0
   languageName: node
   linkType: hard
 
@@ -34600,14 +34588,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rimraf@npm:4.2.0":
-  version: 4.2.0
-  resolution: "rimraf@npm:4.2.0"
+"rimraf@npm:4.4.0":
+  version: 4.4.0
+  resolution: "rimraf@npm:4.4.0"
   dependencies:
     glob: ^9.2.0
   bin:
     rimraf: dist/cjs/src/bin.js
-  checksum: 885baaec6d8e3a771bb3060f110c29070073a47fdcb26775ae165703173e79e845974dc8ed07e8eb4c3c85f126777968febdb385d0c274ad3b167db326e7f82e
+  checksum: 0cedaf9d138589d1bb0ab851f05804c6d30827aa66563472b04ab76245f83537e23e7b94f1f79ea6c368c0d84a18fcde6a756fca3a44c967e08792671b3a0a6e
   languageName: node
   linkType: hard
 
@@ -39484,9 +39472,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5.75.0":
-  version: 5.75.0
-  resolution: "webpack@npm:5.75.0"
+"webpack@npm:5.76.0":
+  version: 5.76.0
+  resolution: "webpack@npm:5.76.0"
   dependencies:
     "@types/eslint-scope": ^3.7.3
     "@types/estree": ^0.0.51
@@ -39517,7 +39505,7 @@ __metadata:
       optional: true
   bin:
     webpack: bin/webpack.js
-  checksum: 2bcc5f3c195f375944e8af2f00bf2feea39cb9fda5f763b0d1b00077f1c51783db25c94d3fae96a07dead9fa085e6ae7474417e5ab31719c9776ea5969ceb83a
+  checksum: e897b3b34068222fe910d8894837cbf39f5e66b4772fe8d24dfc0090cd13e19337a3a757a97bc185be6c64d9d5a7b1ae372821b65a6079ce8c7ceba606edb409
   languageName: node
   linkType: hard
 
@@ -40069,10 +40057,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xstate@npm:^4.31.0":
-  version: 4.36.0
-  resolution: "xstate@npm:4.36.0"
-  checksum: c8c4c7bb02b0a1f402dc967ce29489551457f0bb5e021328b4cddf34d7eb6b66ad5c131003d33808f5a9ef2cbd2f6ae31ac5904314ee5e6adc7616589b746310
+"xstate@npm:^4.37.0":
+  version: 4.37.0
+  resolution: "xstate@npm:4.37.0"
+  checksum: 8eba107721c91ba08934b68a2881f01dd9ab6f23cc2ebcdd91145ce5999db8f690b38cf1570b928c058755150fc5024bed1cafe731ff7e6750d4e64752a7ab5b
   languageName: node
   linkType: hard
 
