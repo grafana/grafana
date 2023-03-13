@@ -50,6 +50,7 @@ type Props = {
   style?: React.CSSProperties;
   setSelectedLocation: (index: number) => void;
   className?: string
+  getLabelValue: (label: string | number) => string;
 };
 
 const FlameGraph = ({
@@ -69,11 +70,13 @@ const FlameGraph = ({
   selectedView,
   setSelectedLocation,
   className,
+  getLabelValue,
 }: Props) => {
   const styles = getStyles(selectedView, app, flameGraphHeight);
   const totalTicks = data.fields[1].values.get(0);
   const valueField =
     data.fields.find((f) => f.name === 'value') ?? data.fields.find((f) => f.type === FieldType.number);
+
   if (!valueField) {
     throw new Error('Malformed dataFrame: value field of type number is not in the query response');
   }
@@ -89,7 +92,13 @@ const FlameGraph = ({
   });
 
   const uniqueLabels = useMemo(() => {
-    return [...new Set<string>(data.fields.find((f) => f.name === 'label')?.values.toArray())];
+    const labelField = data.fields.find((f) => f.name === 'label');
+    const enumConfig = labelField?.config?.type?.enum;
+    if (enumConfig) {
+      return enumConfig.text || [];
+    } else {
+      return [...new Set<string>(labelField?.values.toArray())];
+    }
   }, [data]);
 
   const foundLabels = useMemo(() => {
@@ -135,14 +144,33 @@ const FlameGraph = ({
         const level = levels[levelIndex];
         // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
         // sometimes we collapse multiple bars into single rect.
-        const dimensions = getRectDimensionsForLevel(level, levelIndex, totalTicks, rangeMin, pixelsPerTick, processor);
+        const dimensions = getRectDimensionsForLevel(
+          level,
+          levelIndex,
+          totalTicks,
+          rangeMin,
+          pixelsPerTick,
+          processor,
+          getLabelValue
+        );
         for (const rect of dimensions) {
           // Render each rectangle based on the computed dimensions
           renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex, foundLabels);
         }
       }
     },
-    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex, foundLabels]
+    [
+      levels,
+      wrapperWidth,
+      valueField,
+      totalTicks,
+      rangeMin,
+      rangeMax,
+      search,
+      topLevelIndex,
+      foundLabels,
+      getLabelValue,
+    ]
   );
 
   useEffect(() => {
@@ -239,7 +267,7 @@ const FlameGraph = ({
       <div className={styles.canvasContainer} id="flameGraphCanvasContainer">
         <canvas ref={graphRef} data-testid="flameGraph" />
       </div>
-      <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} />
+      <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} getLabelValue={getLabelValue} />
       {contextMenuData && (
         <FlameGraphContextMenu
           contextMenuData={contextMenuData!}

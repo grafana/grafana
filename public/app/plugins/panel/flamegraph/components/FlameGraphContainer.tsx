@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, DataFrameView, CoreApp, DataSourceApi } from '@grafana/data';
+import { DataFrame, DataFrameView, CoreApp, getEnumDisplayProcessor, createTheme, DataSourceApi } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { PhlareDataSource } from '../../../datasource/phlare/datasource';
@@ -17,7 +17,7 @@ import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer'
 import { SelectedView } from './types';
 
 type Props = {
-  data: DataFrame;
+  data?: DataFrame;
   app: CoreApp;
   datasource?: DataSourceApi | null;
   // Height for flame graph when not used in explore.
@@ -37,6 +37,23 @@ const FlameGraphContainer = (props: Props) => {
 
   // State for the selected filename/func/line
   const [selectedLocation, setSelectedLocation] = useState<CodeLocation>();
+
+  const labelField = props.data?.fields.find((f) => f.name === 'label');
+
+  // Label can actually be an enum field so depending on that we have to access it through display processor. This is
+  // both a backward compatibility but also to allow using a simple dataFrame without enum config. This would allow
+  // users to use this panel with correct query from data sources that do not return profiles natively.
+  const getLabelValue = useCallback(
+    (label: string | number) => {
+      const enumConfig = labelField?.config?.type?.enum;
+      if (enumConfig) {
+        return getEnumDisplayProcessor(createTheme(), enumConfig)(label).text;
+      } else {
+        return label.toString();
+      }
+    },
+    [labelField]
+  );
 
   // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular
   // level of the flame graph. We do this temporary as in the end we should be able to render directly by iterating
@@ -98,6 +115,7 @@ const FlameGraphContainer = (props: Props) => {
               setSelectedBarIndex={setSelectedBarIndex}
               setRangeMin={setRangeMin}
               setRangeMax={setRangeMax}
+              getLabelValue={getLabelValue}
             />
           )}
 
@@ -118,6 +136,7 @@ const FlameGraphContainer = (props: Props) => {
               setRangeMin={setRangeMin}
               setRangeMax={setRangeMax}
               selectedView={selectedView}
+              getLabelValue={getLabelValue}
               setSelectedLocation={(index: number) => {
                 const view = new DataFrameView<Item>(props.data);
                 const row = view.get(index);
@@ -129,7 +148,7 @@ const FlameGraphContainer = (props: Props) => {
               }}
             />
           )}
-
+          
           {selectedLocation && (
             <SourceCodeView
               className={styles.code}
