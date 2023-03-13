@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, ReactElement, ReactNode, useState } from 'react';
+import React, { CSSProperties, ReactElement, ReactNode, useMemo } from 'react';
 import { useMedia } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
@@ -86,8 +86,10 @@ export function PanelChrome({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
+  const pointerQuery = useMemo(() => '(pointer: coarse)', []); // memoize the media query string
+
   // detect if we are on touch devices
-  const isTouchDevice = useMedia('(pointer: coarse)');
+  const isTouchDevice = useMedia(pointerQuery);
   const hasHeader = !hoverHeader || isTouchDevice;
 
   // hover menu is only shown on hover when not on touch devices
