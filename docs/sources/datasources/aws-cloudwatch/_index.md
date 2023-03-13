@@ -2,7 +2,7 @@
 title = "AWS CloudWatch"
 description = "Guide for using CloudWatch in Grafana"
 keywords = ["grafana", "cloudwatch", "guide"]
-aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
+aliases = ["/docs/grafana/v8.2/datasources/cloudwatch"]
 weight = 200
 +++
 
@@ -343,7 +343,7 @@ Allows you to disable `assume role (ARN)` in the CloudWatch data source. By defa
 
 ### list_metrics_page_limit
 
-When a custom namespace is specified in the query editor, the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) is used to populate the _Metrics_ field and the _Dimension_ fields. The API is paginated and returns up to 500 results per page. The CloudWatch data source also limits the number of pages to 500. However, you can change this limit using the `list_metrics_page_limit` variable in the [grafana configuration file](https://grafana.com/docs/grafana/latest/administration/configuration/#aws).
+When a custom namespace is specified in the query editor, the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) is used to populate the _Metrics_ field and the _Dimension_ fields. The API is paginated and returns up to 500 results per page. The CloudWatch data source also limits the number of pages to 500. However, you can change this limit using the `list_metrics_page_limit` variable in the [grafana configuration file](https://grafana.com/docs/grafana/v8.2/administration/configuration/#aws).
 
 ## Configure the data source with provisioning
 

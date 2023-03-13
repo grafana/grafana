@@ -2,7 +2,7 @@
 title = "What's New in Grafana v7.0"
 description = "Feature and improvement highlights for Grafana v7"
 keywords = ["grafana", "new", "documentation", "7.0", "release notes"]
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-0/"]
+aliases = ["/docs/grafana/v8.2/guides/whats-new-in-v7-0/"]
 weight = -27
 [_build]
 list = false
@@ -130,7 +130,7 @@ In Grafana 7.0 we are maturing our panel and front-end datasource plugins platfo
 
 Plugins can use the same React components that the Grafana team uses to build Grafana. Using these components means the Grafana team will support and improve them continually and make your plugin as polished as the rest of Grafana’s UI. The new [`@grafana/ui` components library](https://developers.grafana.com/ui) is documented with Storybook (visual documentation) and is available on NPM.
 
-The `@grafana/data`, `@grafana/runtime`, `@grafana/e2e packages` (also available via NPM) aim to simplify the way plugins are developed. We want to deliver a set of [reliable APIs](https://grafana.com/docs/grafana/latest/packages_api/) for plugin developers.
+The `@grafana/data`, `@grafana/runtime`, `@grafana/e2e packages` (also available via NPM) aim to simplify the way plugins are developed. We want to deliver a set of [reliable APIs](https://grafana.com/docs/grafana/v8.2/packages_api/) for plugin developers.
 
 With [@grafana/toolkit](https://www.npmjs.com/package/@grafana/toolkit) we are delivering a simple CLI that helps plugin authors quickly scaffold, develop and test their plugins without worrying about configuration details. A plugin author no longer needs to be a grunt or webpack expert to build their plugin.
 

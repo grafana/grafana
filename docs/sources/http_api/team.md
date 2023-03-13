@@ -2,7 +2,7 @@
 title = "Team HTTP API "
 description = "Grafana Team HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "team", "teams", "group"]
-aliases = ["/docs/grafana/latest/http_api/team/"]
+aliases = ["/docs/grafana/v8.2/http_api/team/"]
 +++
 
 # Team API

@@ -29,10 +29,10 @@ For Cortex and Loki data sources to work with Grafana 8.0 alerting, enable the r
    - From the **Select data source** drop-down, select an external Prometheus, an external Loki, or a Grafana Cloud data source.
    - From the **Namespace** drop-down, select an existing rule namespace. Otherwise, click **Add new** and enter a name to create a new one. Namespaces can contain one or more rule groups and only have an organizational purpose.
    - From the **Group** drop-down, select an existing group within the selected namespace. Otherwise, click **Add new** and enter a name to create a new one. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
-     {{< figure src="/static/img/docs/alerting/unified/rule-edit-cortex-alert-type-8-0.png" max-width="550px" caption="Alert details" >}}
+     {{< figure src="/static/img/docs/alerting/unified/rule-edit-mimir-alert-type-8-0.png" max-width="550px" caption="Alert details" >}}
 1. In Step 2, add the query to evaluate.
    - Enter a PromQL or LogQL expression. The rule fires if the evaluation result has at least one series with a value that is greater than 0. An alert is created for each series.
-     {{< figure src="/static/img/docs/alerting/unified/rule-edit-cortex-query-8-0.png" max-width="550px" caption="Alert details" >}}
+     {{< figure src="/static/img/docs/alerting/unified/rule-edit-mimir-query-8-0.png" max-width="550px" caption="Alert details" >}}
 1. In Step 3, add additional metadata associated with the rule.
    - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "./alert-annotation-label.md" >}}).
    - Add Runbook URL, panel, dashboard, and alert IDs.

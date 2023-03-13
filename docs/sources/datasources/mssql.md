@@ -2,7 +2,7 @@
 title = "Microsoft SQL Server"
 description = "Guide for using Microsoft SQL Server in Grafana"
 keywords = ["grafana", "MSSQL", "Microsoft", "SQL", "guide", "Azure SQL Database"]
-aliases = ["/docs/grafana/latest/features/datasources/mssql/"]
+aliases = ["/docs/grafana/v8.2/features/datasources/mssql/"]
 weight = 900
 +++
 

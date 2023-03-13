@@ -2,7 +2,7 @@
 title = "Change your password"
 description = "How to change your Grafana password"
 keywords = ["grafana", "password", "change", "preferences"]
-aliases = ["/docs/grafana/latest/administration/change-your-password/"]
+aliases = ["/docs/grafana/v8.2/administration/change-your-password/"]
 weight = 200
 +++
 

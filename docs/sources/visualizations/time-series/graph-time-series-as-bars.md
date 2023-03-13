@@ -1,7 +1,7 @@
 +++
 title = "Graph time series as bars"
 keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
-aliases = ["/docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-bars/"]
+aliases = ["/docs/grafana/v8.2/panels/visualizations/time-series/graph-time-series-as-bars/"]
 weight = 200
 +++
 
