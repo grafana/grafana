@@ -57,7 +57,7 @@ export const Table = memo((props: Props) => {
     showTypeIcons,
     footerValues,
     enablePagination,
-    cellHeight = TableCellHeight.Md,
+    cellHeight = TableCellHeight.Sm,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
