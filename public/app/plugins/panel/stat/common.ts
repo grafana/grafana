@@ -134,7 +134,8 @@ export function formatDisplayValuesWithCustomUnits(
 ): FieldDisplay[] {
   const { prefix, suffix } = config;
 
-  // No custom values?
+  // No custom values? This will skip any updates both for empty strings (the default ui fill-in values),
+  // as well as `undefined` (the value if a custom prefix/suffix is chosen, then removed in the ui)
   if (!prefix && !suffix) {
     return fieldValues;
   }
@@ -145,7 +146,7 @@ export function formatDisplayValuesWithCustomUnits(
     if (fieldType === FieldType.number) {
       const { display } = fieldValue;
 
-      // Test also for nullishness here, otherwise "undefined" will be concatenated into the string
+      // Test for nullishness here, otherwise the substring "undefined" will be concatenated into the string
       const customPrefix = `${prefix ?? ''}${display.prefix ?? ''}`;
       const customSuffix = `${display.suffix ?? ''}${suffix ?? ''}`;
 

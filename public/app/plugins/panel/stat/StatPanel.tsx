@@ -84,7 +84,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
   getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
     // Grab any custom units to prepend/append
-    const customConfig = fieldConfig.defaults?.custom ?? {};
+    const { prefix, suffix } = fieldConfig.defaults?.custom;
 
     let globalRange: NumericRange | undefined = undefined;
 
@@ -118,7 +118,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
       timeZone,
     });
 
-    return formatDisplayValuesWithCustomUnits(fieldDisplayValues, customConfig);
+    return formatDisplayValuesWithCustomUnits(fieldDisplayValues, { prefix, suffix });
   };
 
   render() {
