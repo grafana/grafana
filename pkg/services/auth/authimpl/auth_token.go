@@ -5,8 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"net"
-	"strconv"
 	"strings"
 	"time"
 
@@ -215,20 +215,23 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		return nil, auth.ErrInvalidSessionToken
 	}
 
-	token, err := s.LookupToken(ctx, cmd.UnHashedToken)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err, _ := s.singleflight.Do(strconv.FormatInt(token.Id, 10), func() (interface{}, error) {
-		newToken, err := s.rotateToken(ctx, token, cmd.IP, cmd.UserAgent)
+	res, err, _ := s.singleflight.Do(cmd.UnHashedToken, func() (interface{}, error) {
+		token, err := s.LookupToken(ctx, cmd.UnHashedToken)
 		if err != nil {
 			return nil, err
 		}
 
-		return &auth.RotateResponse{
-			Token: newToken.UnhashedToken,
-		}, nil
+		newToken, err := s.rotateToken(ctx, token, cmd.IP, cmd.UserAgent)
+
+		if errors.Is(err, errTokenNotRotated) {
+			return &auth.RotateResponse{Token: cmd.UnHashedToken}, nil
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		return &auth.RotateResponse{Token: newToken.UnhashedToken}, nil
 	})
 
 	if err != nil {
@@ -236,34 +239,6 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 	}
 
 	return res.(*auth.RotateResponse), nil
-}
-
-func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.UserToken,
-	clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
-	if token == nil {
-		return false, nil, nil
-	}
-
-	if !token.NeedRotation(time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute) {
-		return false, nil, nil
-	}
-
-	ctxLogger := s.log.FromContext(ctx)
-	ctxLogger.Debug("token needs rotation", "tokenId", token.Id, "authTokenSeen", token.AuthTokenSeen, "rotatedAt", time.Unix(token.RotatedAt, 0))
-
-	newToken, err, _ := s.singleflight.Do(strconv.FormatInt(token.Id, 10), func() (interface{}, error) {
-		return s.rotateToken(ctx, token, clientIP, userAgent)
-	})
-
-	if errors.Is(err, errTokenNotRotated) {
-		return false, nil, nil
-	}
-
-	if err != nil {
-		return false, nil, err
-	}
-
-	return true, newToken.(*auth.UserToken), nil
 }
 
 func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
@@ -274,25 +249,23 @@ func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.User
 
 	newToken, hashedToken, err := generateAndHashToken()
 
-	// very important that auth_token_seen is set after the prev_auth_token = case when ... for mysql to function correctly
 	sql := `
-			UPDATE user_auth_token
-			SET
-				seen_at = 0,
-				user_agent = ?,
-				client_ip = ?,
-				prev_auth_token = case when auth_token_seen = ? then auth_token else prev_auth_token end,
-				auth_token = ?,
-				auth_token_seen = ?,
-				rotated_at = ?
-			WHERE id = ? AND (auth_token_seen = ? OR rotated_at < ?)`
+		UPDATE user_auth_token
+		SET
+			seen_at = 0,
+			user_agent = ?,
+			client_ip = ?,
+			prev_auth_token = auth_token,
+			auth_token = ?,
+			auth_token_seen = ?,
+			rotated_at = ?
+		WHERE id = ?
+	`
 
 	now := getTime()
 	var affected int64
 	err = s.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
-		res, err := dbSession.Exec(sql, userAgent, clientIPStr, s.sqlStore.GetDialect().BooleanStr(true), hashedToken,
-			s.sqlStore.GetDialect().BooleanStr(false), now.Unix(), token.Id, s.sqlStore.GetDialect().BooleanStr(true),
-			now.Add(-30*time.Second).Unix())
+		res, err := dbSession.Exec(sql, userAgent, clientIPStr, hashedToken, s.sqlStore.GetDialect().BooleanStr(false), now.Unix(), token.Id)
 		if err != nil {
 			return err
 		}
@@ -313,6 +286,105 @@ func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.User
 	token.UnhashedToken = newToken
 
 	return token, nil
+}
+
+func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.UserToken,
+	clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
+	if token == nil {
+		return false, nil, nil
+	}
+
+	model, err := userAuthTokenFromUserToken(token)
+	if err != nil {
+		return false, nil, err
+	}
+
+	now := getTime()
+
+	type rotationResult struct {
+		rotated  bool
+		newToken *auth.UserToken
+	}
+
+	rotResult, err, _ := s.singleflight.Do(fmt.Sprint(model.Id), func() (interface{}, error) {
+		var needsRotation bool
+		rotatedAt := time.Unix(model.RotatedAt, 0)
+		if model.AuthTokenSeen {
+			needsRotation = rotatedAt.Before(now.Add(-time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute))
+		} else {
+			needsRotation = rotatedAt.Before(now.Add(-usertoken.UrgentRotateTime))
+		}
+
+		if !needsRotation {
+			return &rotationResult{rotated: false}, nil
+		}
+
+		ctxLogger := s.log.FromContext(ctx)
+		ctxLogger.Debug("token needs rotation", "tokenId", model.Id, "authTokenSeen", model.AuthTokenSeen, "rotatedAt", rotatedAt)
+
+		clientIPStr := clientIP.String()
+		if len(clientIP) == 0 {
+			clientIPStr = ""
+		}
+		newToken, err := util.RandomHex(16)
+		if err != nil {
+			return nil, err
+		}
+		hashedToken := hashToken(newToken)
+
+		// very important that auth_token_seen is set after the prev_auth_token = case when ... for mysql to function correctly
+		sql := `
+			UPDATE user_auth_token
+			SET
+				seen_at = 0,
+				user_agent = ?,
+				client_ip = ?,
+				prev_auth_token = case when auth_token_seen = ? then auth_token else prev_auth_token end,
+				auth_token = ?,
+				auth_token_seen = ?,
+				rotated_at = ?
+			WHERE id = ? AND (auth_token_seen = ? OR rotated_at < ?)`
+
+		var affected int64
+		err = s.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
+			res, err := dbSession.Exec(sql, userAgent, clientIPStr, s.sqlStore.GetDialect().BooleanStr(true), hashedToken,
+				s.sqlStore.GetDialect().BooleanStr(false), now.Unix(), model.Id, s.sqlStore.GetDialect().BooleanStr(true),
+				now.Add(-30*time.Second).Unix())
+			if err != nil {
+				return err
+			}
+
+			affected, err = res.RowsAffected()
+			return err
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		if affected > 0 {
+			ctxLogger.Debug("auth token rotated", "affected", affected, "auth_token_id", model.Id, "userId", model.UserId)
+			model.UnhashedToken = newToken
+			var result auth.UserToken
+			if err := model.toUserToken(&result); err != nil {
+				return nil, err
+			}
+			return &rotationResult{
+				rotated:  true,
+				newToken: &result,
+			}, nil
+		}
+
+		return &rotationResult{rotated: false}, nil
+	})
+
+	if err != nil {
+		return false, nil, err
+	}
+
+	result := rotResult.(*rotationResult)
+
+	return result.rotated, result.newToken, nil
 }
 
 func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *auth.UserToken, soft bool) error {
