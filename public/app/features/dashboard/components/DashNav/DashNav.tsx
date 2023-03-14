@@ -25,7 +25,6 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { appEvents } from 'app/core/core';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import { t, Trans } from 'app/core/internationalization';
-import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -130,7 +129,7 @@ export const DashNav = React.memo<Props>((props) => {
     const dashboardSrv = getDashboardSrv();
     const { dashboard, setStarred } = props;
 
-    dashboardSrv.starDashboard(dashboard.id, Boolean(dashboard.meta.isStarred)).then((newState) => {
+    dashboardSrv.starDashboard(dashboard.uid, Boolean(dashboard.meta.isStarred)).then((newState) => {
       setStarred({ id: dashboard.uid, title: dashboard.title, url: dashboard.meta.url ?? '', isStarred: newState });
       dashboard.meta.isStarred = newState;
       forceUpdate();
@@ -241,26 +240,6 @@ export const DashNav = React.memo<Props>((props) => {
     if (dashboard.meta.publicDashboardEnabled) {
       buttons.push(
         <Tag key="public-dashboard" name="Public" colorIndex={5} data-testid={selectors.publicDashboardTag}></Tag>
-      );
-    }
-
-    if (dashboard.uid && config.featureToggles.dashboardComments) {
-      buttons.push(
-        <ModalsController key="button-dashboard-comments">
-          {({ showModal, hideModal }) => (
-            <DashNavButton
-              tooltip={t('dashboard.toolbar.comments-show', 'Show dashboard comments')}
-              icon="comment-alt-message"
-              iconSize="lg"
-              onClick={() => {
-                showModal(DashboardCommentsModal, {
-                  dashboard,
-                  onDismiss: hideModal,
-                });
-              }}
-            />
-          )}
-        </ModalsController>
       );
     }
 

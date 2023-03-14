@@ -13,13 +13,15 @@ import (
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 )
 
 var (
 	logger = log.New("expr")
 )
+
+const FromExpressionHeaderName = "FromExpression"
 
 type QueryError struct {
 	RefID string
@@ -201,7 +203,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 // other nodes they must have already been executed and their results must
 // already by in vars.
 func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *Service) (r mathexp.Results, e error) {
-	logger := logger.FromContext(ctx).New("datasourceType", dn.datasource.Type, "queryRefId", dn.refID, "datasourceUid", dn.datasource.Uid, "datasourceVersion", dn.datasource.Version)
+	logger := logger.FromContext(ctx).New("datasourceType", dn.datasource.Type, "queryRefId", dn.refID, "datasourceUid", dn.datasource.UID, "datasourceVersion", dn.datasource.Version)
 	dsInstanceSettings, err := adapters.ModelToInstanceSettings(dn.datasource, s.decryptSecureJsonDataFn(ctx))
 	if err != nil {
 		return mathexp.Results{}, fmt.Errorf("%v: %w", "failed to convert datasource instance settings", err)
@@ -227,6 +229,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		},
 		Headers: dn.request.Headers,
 	}
+	req.Headers[FromExpressionHeaderName] = "true"
 
 	responseType := "unknown"
 	defer func() {

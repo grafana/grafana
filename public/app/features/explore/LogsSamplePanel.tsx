@@ -12,7 +12,7 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { TimeZone, DataQuery } from '@grafana/schema';
+import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Collapse, useStyles2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
@@ -58,7 +58,7 @@ export function LogsSamplePanel(props: Props) {
     }
 
     const onSplitOpen = () => {
-      splitOpen({ query: logSampleQueries[0], datasourceUid: datasourceInstance.uid });
+      splitOpen({ queries: logSampleQueries, datasourceUid: datasourceInstance.uid });
       reportInteraction('grafana_explore_logs_sample_split_button_clicked', {
         datasourceType: datasourceInstance?.type ?? 'unknown',
         queriesCount: logSampleQueries.length,
@@ -95,31 +95,36 @@ export function LogsSamplePanel(props: Props) {
     LogsSamplePanelContent = (
       <>
         <OpenInSplitViewButton />
-        <LogRows
-          logRows={logs.rows}
-          dedupStrategy={LogsDedupStrategy.none}
-          showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
-          showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-          wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
-          prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
-          timeZone={timeZone}
-          enableLogDetails={true}
-        />
+        <div className={styles.logContainer}>
+          <LogRows
+            logRows={logs.rows}
+            dedupStrategy={LogsDedupStrategy.none}
+            showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
+            showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+            wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+            prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
+            timeZone={timeZone}
+            enableLogDetails={true}
+          />
+        </div>
       </>
     );
   }
 
-  return (
+  return queryResponse?.state !== LoadingState.NotStarted ? (
     <Collapse label="Logs sample" isOpen={enabled} collapsible={true} onToggle={onToggleLogsSampleCollapse}>
       {LogsSamplePanelContent}
     </Collapse>
-  );
+  ) : null;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   logSamplesButton: css`
     position: absolute;
     top: ${theme.spacing(1)};
-    right: ${theme.spacing(1)}; ;
+    right: ${theme.spacing(1)};
+  `,
+  logContainer: css`
+    overflow-x: scroll;
   `,
 });

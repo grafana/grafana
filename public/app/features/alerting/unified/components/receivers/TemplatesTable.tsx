@@ -102,24 +102,35 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
                       />
                     )}
                     {!provenance && (
-                      <Authorize actions={[permissions.update, permissions.delete]}>
-                        <Authorize actions={[permissions.update]}>
-                          <ActionIcon
-                            to={makeAMLink(
-                              `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
-                              alertManagerName
-                            )}
-                            tooltip="edit template"
-                            icon="pen"
-                          />
-                        </Authorize>
-                        <Authorize actions={[permissions.delete]}>
-                          <ActionIcon
-                            onClick={() => setTemplateToDelete(name)}
-                            tooltip="delete template"
-                            icon="trash-alt"
-                          />
-                        </Authorize>
+                      <Authorize actions={[permissions.update]}>
+                        <ActionIcon
+                          to={makeAMLink(
+                            `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
+                            alertManagerName
+                          )}
+                          tooltip="edit template"
+                          icon="pen"
+                        />
+                      </Authorize>
+                    )}
+                    {contextSrv.hasPermission(permissions.create) && (
+                      <ActionIcon
+                        to={makeAMLink(
+                          `/alerting/notifications/templates/${encodeURIComponent(name)}/duplicate`,
+                          alertManagerName
+                        )}
+                        tooltip="Copy template"
+                        icon="copy"
+                      />
+                    )}
+
+                    {!provenance && (
+                      <Authorize actions={[permissions.delete]}>
+                        <ActionIcon
+                          onClick={() => setTemplateToDelete(name)}
+                          tooltip="delete template"
+                          icon="trash-alt"
+                        />
                       </Authorize>
                     )}
                   </td>

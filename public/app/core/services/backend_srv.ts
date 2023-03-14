@@ -304,7 +304,7 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  showErrorAlert<T>(config: BackendSrvRequest, err: FetchError) {
+  showErrorAlert(config: BackendSrvRequest, err: FetchError) {
     if (config.showErrorAlert === false) {
       return;
     }
@@ -317,6 +317,11 @@ export class BackendSrv implements BackendService {
     let description = '';
     let message = err.data.message;
 
+    // Sometimes we have a better error message on err.message
+    if (message === 'Unexpected error' && err.message) {
+      message = err.message;
+    }
+
     if (message.length > 80) {
       description = message;
       message = 'Error';
@@ -324,6 +329,7 @@ export class BackendSrv implements BackendService {
 
     // Validation
     if (err.status === 422) {
+      description = err.data.message;
       message = 'Validation failed';
     }
 

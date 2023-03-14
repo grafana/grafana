@@ -5,6 +5,7 @@ This module returns the pipeline used for linting backend code.
 load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
+    "enterprise_setup_step",
     "identify_runner_step",
     "lint_backend_step",
     "lint_drone_step",
@@ -33,8 +34,14 @@ def lint_backend_pipeline(trigger, ver_mode):
     init_steps = [
         identify_runner_step(),
         compile_build_cmd(),
-        wire_step,
     ]
+
+    if ver_mode == "pr":
+        # In pull requests, attempt to clone grafana enterprise.
+        init_steps.append(enterprise_setup_step())
+        wire_step["depends_on"].append("clone-enterprise")
+
+    init_steps.append(wire_step)
 
     test_steps = [
         lint_backend_step(),

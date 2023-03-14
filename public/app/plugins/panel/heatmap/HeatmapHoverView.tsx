@@ -9,10 +9,10 @@ import {
   LinkModel,
   TimeRange,
 } from '@grafana/data';
+import { HeatmapCellLayout } from '@grafana/schema';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
-import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { DataHoverView } from '../geomap/components/DataHoverView';
 
@@ -237,7 +237,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
     <>
       <div>
         <div>{xDisp(xBucketMin)}</div>
-        <div>{xDisp(xBucketMax)}</div>
+        {data.xLayout !== HeatmapCellLayout.unknown && <div>{xDisp(xBucketMax)}</div>}
       </div>
       {showHistogram && (
         <canvas

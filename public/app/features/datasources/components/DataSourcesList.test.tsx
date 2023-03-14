@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
+import { Router } from 'react-router-dom';
 
+import { locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { getMockDataSources } from '../__mocks__';
@@ -13,14 +15,16 @@ const setup = () => {
 
   return render(
     <Provider store={store}>
-      <DataSourcesListView
-        dataSources={getMockDataSources(3)}
-        dataSourcesCount={3}
-        isLoading={false}
-        hasCreateRights={true}
-        hasWriteRights={true}
-        hasExploreRights={true}
-      />
+      <Router history={locationService.getHistory()}>
+        <DataSourcesListView
+          dataSources={getMockDataSources(3)}
+          dataSourcesCount={3}
+          isLoading={false}
+          hasCreateRights={true}
+          hasWriteRights={true}
+          hasExploreRights={true}
+        />
+      </Router>
     </Provider>
   );
 };

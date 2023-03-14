@@ -280,7 +280,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(logger log.Logger, res *http.
 
 	if res.StatusCode/100 != 2 {
 		logger.Debug("Request failed", "status", res.Status, "body", string(body))
-		return types.AzureMonitorResponse{}, fmt.Errorf("request failed, status: %s", res.Status)
+		return types.AzureMonitorResponse{}, fmt.Errorf("request failed, status: %s, error: %s", res.Status, string(body))
 	}
 
 	var data types.AzureMonitorResponse

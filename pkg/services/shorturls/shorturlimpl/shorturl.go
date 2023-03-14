@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/teris-io/shortid"
 )
 
 var getTime = time.Now
@@ -44,10 +44,15 @@ func (s ShortURLService) CreateShortURL(ctx context.Context, user *user.SignedIn
 		return nil, shorturls.ErrShortURLInvalidPath.Errorf("path cannot contain '../': %s", relPath)
 	}
 
+	uid, err := shortid.Generate()
+	if err != nil {
+		return nil, shorturls.ErrShortURLInternal.Errorf("failed to generate uid: %w", err)
+	}
+
 	now := time.Now().Unix()
 	shortURL := shorturls.ShortUrl{
 		OrgId:     user.OrgID,
-		Uid:       util.GenerateShortUID(),
+		Uid:       uid,
 		Path:      relPath,
 		CreatedBy: user.UserID,
 		CreatedAt: now,

@@ -3,21 +3,18 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { CanvasConnection } from 'app/features/canvas/element';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
+
+import { getConnections } from './utils';
 
 type Props = {
   setSVGRef: (anchorElement: SVGSVGElement) => void;
   setLineRef: (anchorElement: SVGLineElement) => void;
   scene: Scene;
 };
-
-interface ConnectionInfo {
-  source: ElementState;
-  target: ElementState;
-  info: CanvasConnection;
-}
 
 let idCounter = 0;
 export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
@@ -27,6 +24,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   const CONNECTION_LINE_ID = 'connectionLineId';
   const CONNECTION_HEAD_ID = useMemo(() => `head-${headId}`, [headId]);
   const EDITOR_HEAD_ID = useMemo(() => `editorHead-${headId}`, [headId]);
+  const defaultArrowColor = config.theme2.colors.text.primary;
 
   const [selectedConnection, setSelectedConnection] = useState<CanvasConnection | undefined>(undefined);
 
@@ -89,22 +87,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
 
   // Flat list of all connections
   const findConnections = useCallback(() => {
-    const connections: ConnectionInfo[] = [];
-    for (let v of scene.byName.values()) {
-      if (v.options.connections) {
-        for (let c of v.options.connections) {
-          const target = c.targetName ? scene.byName.get(c.targetName) : v.parent;
-          if (target) {
-            connections.push({
-              source: v,
-              target,
-              info: c,
-            });
-          }
-        }
-      }
-    }
-    return connections;
+    return getConnections(scene.byName);
   }, [scene.byName]);
 
   // Figure out target and then target's relative coordinates drawing (if no target do parent)
@@ -161,9 +144,9 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
                 refX="10"
                 refY="3.5"
                 orient="auto"
-                stroke="rgb(255,255,255)"
+                stroke={defaultArrowColor}
               >
-                <polygon points="0 0, 10 3.5, 0 7" fill="rgb(255,255,255)" />
+                <polygon points="0 0, 10 3.5, 0 7" fill={defaultArrowColor} />
               </marker>
             </defs>
             <line
@@ -179,7 +162,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
             />
             <line
               id={CONNECTION_LINE_ID}
-              stroke="rgb(255,255,255)"
+              stroke={defaultArrowColor}
               pointerEvents="auto"
               strokeWidth={2}
               markerEnd={`url(#${CONNECTION_HEAD_ID})`}
@@ -207,12 +190,12 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
             refX="10"
             refY="3.5"
             orient="auto"
-            stroke="rgb(255,255,255)"
+            stroke={defaultArrowColor}
           >
-            <polygon points="0 0, 10 3.5, 0 7" fill="rgb(255,255,255)" />
+            <polygon points="0 0, 10 3.5, 0 7" fill={defaultArrowColor} />
           </marker>
         </defs>
-        <line ref={setLineRef} stroke="rgb(255,255,255)" strokeWidth={2} markerEnd={`url(#${EDITOR_HEAD_ID})`} />
+        <line ref={setLineRef} stroke={defaultArrowColor} strokeWidth={2} markerEnd={`url(#${EDITOR_HEAD_ID})`} />
       </svg>
       {renderConnections()}
     </>

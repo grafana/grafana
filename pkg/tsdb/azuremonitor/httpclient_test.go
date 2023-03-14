@@ -2,10 +2,12 @@ package azuremonitor
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -20,6 +22,16 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 		Credentials: &azcredentials.AzureManagedIdentityCredentials{},
 	}
 
+	jsonData, _ := json.Marshal(map[string]interface{}{
+		"httpHeaderName1": "GrafanaHeader",
+	})
+	settings := &backend.DataSourceInstanceSettings{
+		JSONData: jsonData,
+		DecryptedSecureJSONData: map[string]string{
+			"httpHeaderValue1": "GrafanaValue",
+		},
+	}
+
 	cfg := &setting.Cfg{}
 	provider := &fakeHttpClientProvider{}
 
@@ -28,7 +40,7 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 			Scopes: []string{"https://management.azure.com/.default"},
 		}
 
-		_, err := newHTTPClient(route, model, cfg, provider, sdkhttpclient.Options{})
+		_, err := newHTTPClient(route, model, settings, cfg, provider)
 		require.NoError(t, err)
 
 		require.NotNil(t, provider.opts)
@@ -41,7 +53,7 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 			Scopes: []string{},
 		}
 
-		_, err := newHTTPClient(route, model, cfg, provider, sdkhttpclient.Options{})
+		_, err := newHTTPClient(route, model, settings, cfg, provider)
 		require.NoError(t, err)
 
 		assert.NotNil(t, provider.opts)
@@ -57,17 +69,12 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 				"AzureHeader": "AzureValue",
 			},
 		}
-		opts := sdkhttpclient.Options{
-			Headers: map[string]string{
-				"GrafanaHeader": "GrafanaValue",
-			},
-		}
 
 		res := map[string]string{
 			"GrafanaHeader": "GrafanaValue",
 			"AzureHeader":   "AzureValue",
 		}
-		_, err := newHTTPClient(route, model, cfg, provider, opts)
+		_, err := newHTTPClient(route, model, settings, cfg, provider)
 		require.NoError(t, err)
 
 		assert.NotNil(t, provider.opts)

@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -176,7 +176,7 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user *user.SignedInUser, folder *folder.Folder) error {
-	// Set default folder permissions
+	isNested := folder.ParentUID != ""
 	var permissionErr error
 	if !accesscontrol.IsDisabled(hs.Cfg) {
 		var permissions []accesscontrol.SetResourcePermissionCommand
@@ -186,15 +186,17 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 			})
 		}
 
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
-		}...)
+		if !isNested {
+			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+				{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+			}...)
+		}
 
 		_, permissionErr = hs.folderPermissionsService.SetPermissions(ctx, orgID, folder.UID, permissions...)
 		return permissionErr
 	} else if hs.Cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
-		return hs.folderService.MakeUserAdmin(ctx, orgID, user.UserID, folder.ID, true)
+		return hs.folderService.MakeUserAdmin(ctx, orgID, user.UserID, folder.ID, !isNested)
 	}
 	return nil
 }
@@ -275,7 +277,7 @@ func (hs *HTTPServer) UpdateFolder(c *contextmodel.ReqContext) response.Response
 func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
 	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
-		if errors.Is(err, libraryelements.ErrFolderHasConnectedLibraryElements) {
+		if errors.Is(err, model.ErrFolderHasConnectedLibraryElements) {
 			return response.Error(403, "Folder could not be deleted because it contains library elements in use", err)
 		}
 		return apierrors.ToFolderErrorResponse(err)

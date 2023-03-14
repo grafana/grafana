@@ -1,9 +1,10 @@
-import { DataQuery } from '@grafana/data';
 import { DataSourceJsonData, KeyValue } from '@grafana/data/src';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 
 import { LokiQuery } from '../loki/types';
+
+import { TempoQuery as TempoBase, TempoQueryType } from './dataquery.gen';
 
 export interface SearchQueryParams {
   minDuration?: string;
@@ -36,21 +37,11 @@ export interface TempoJsonData extends DataSourceJsonData {
   };
 }
 
-// search = Loki search, nativeSearch = Tempo search for backwards compatibility
-export type TempoQueryType = 'traceql' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
-
-export interface TempoQuery extends DataQuery {
-  query: string;
+export interface TempoQuery extends TempoBase {
   // Query to find list of traces, e.g., via Loki
+  // TODO change this field to the schema type when LokiQuery exists in the schema
   linkedQuery?: LokiQuery;
-  search?: string;
   queryType: TempoQueryType;
-  serviceName?: string;
-  spanName?: string;
-  minDuration?: string;
-  maxDuration?: string;
-  limit?: number;
-  serviceMapQuery?: string;
 }
 
 export interface MyDataSourceOptions extends DataSourceJsonData {}

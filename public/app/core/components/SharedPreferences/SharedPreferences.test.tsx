@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import TestProvider from 'test/helpers/TestProvider';
 import { assertInstanceOf } from 'test/helpers/asserts';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
@@ -124,11 +123,7 @@ describe('SharedPreferences', () => {
     mockReload.mockReset();
     mockPrefsUpdate.mockReset();
 
-    render(
-      <TestProvider>
-        <SharedPreferences {...props} />
-      </TestProvider>
-    );
+    render(<SharedPreferences {...props} />);
 
     await waitFor(() => expect(mockPrefsLoad).toHaveBeenCalled());
   });

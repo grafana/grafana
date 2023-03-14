@@ -80,7 +80,7 @@ export const LogsMetaRow = React.memo(
     // Add deduplication info
     if (dedupStrategy !== LogsDedupStrategy.none) {
       logsMetaItem.push({
-        label: 'Dedup count',
+        label: 'Deduplication count',
         value: dedupCount,
         kind: LogsMetaKind.Number,
       });

@@ -3,12 +3,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { e2e } from '@grafana/e2e';
 
-import { selectors } from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/e2e/selectors';
+import { selectors } from '../../public/app/plugins/datasource/azuremonitor/e2e/selectors';
 import {
   AzureDataSourceJsonData,
   AzureDataSourceSecureJsonData,
   AzureQueryType,
-} from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/types';
+} from '../../public/app/plugins/datasource/azuremonitor/types';
 
 const provisioningPath = `../../provisioning/datasources/azmonitor-ds.yaml`;
 const e2eSelectors = e2e.getSelectors(selectors.components);

@@ -28,7 +28,7 @@ export const CloneRuleButton = React.forwardRef<HTMLAnchorElement, CloneRuleButt
     return (
       <>
         <LinkButton
-          title="Clone"
+          title="Copy"
           className={className}
           size="sm"
           key="clone"
@@ -43,19 +43,19 @@ export const CloneRuleButton = React.forwardRef<HTMLAnchorElement, CloneRuleButt
 
         <ConfirmModal
           isOpen={!!provRuleCloneUrl}
-          title="Clone provisioned rule"
+          title="Copy provisioned alert rule"
           body={
             <div>
               <p>
                 The new rule will <span className={styles.bold}>NOT</span> be marked as a provisioned rule.
               </p>
               <p>
-                You will need to set a new alert group for the cloned rule because the original one has been provisioned
+                You will need to set a new alert group for the copied rule because the original one has been provisioned
                 and cannot be used for rules created in the UI.
               </p>
             </div>
           }
-          confirmText="Clone"
+          confirmText="Copy"
           onConfirm={() => provRuleCloneUrl && locationService.push(provRuleCloneUrl)}
           onDismiss={() => setProvRuleCloneUrl(undefined)}
         />

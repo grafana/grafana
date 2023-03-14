@@ -11,13 +11,13 @@ import (
 var ErrNotImplemented = errors.New("not implemented")
 
 type DatasourcePermissionsService interface {
-	FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *datasources.DatasourcesPermissionFilterQuery) error
+	FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *datasources.DatasourcesPermissionFilterQuery) ([]*datasources.DataSource, error)
 	FilterDatasourceUidsBasedOnQueryPermissions(ctx context.Context, user *user.SignedInUser, datasourceUids []string) ([]string, error)
 }
 
 // dummy method
-func (hs *OSSDatasourcePermissionsService) FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *datasources.DatasourcesPermissionFilterQuery) error {
-	return ErrNotImplemented
+func (hs *OSSDatasourcePermissionsService) FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *datasources.DatasourcesPermissionFilterQuery) ([]*datasources.DataSource, error) {
+	return nil, ErrNotImplemented
 }
 
 func (hs *OSSDatasourcePermissionsService) FilterDatasourceUidsBasedOnQueryPermissions(ctx context.Context, user *user.SignedInUser, datasourceUids []string) ([]string, error) {

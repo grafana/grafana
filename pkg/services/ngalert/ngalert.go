@@ -210,7 +210,7 @@ func (ng *AlertNG) init() error {
 		Tracer:               ng.tracer,
 	}
 
-	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store)
+	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log)
 	if err != nil {
 		return err
 	}
@@ -268,6 +268,7 @@ func (ng *AlertNG) init() error {
 		EvaluatorFactory:     evalFactory,
 		FeatureManager:       ng.FeatureToggles,
 		AppUrl:               appUrl,
+		Historian:            history,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
@@ -383,29 +384,33 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	return limits, nil
 }
 
-func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore) (state.Historian, error) {
+type Historian interface {
+	api.Historian
+	state.Historian
+}
+
+func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore, met *metrics.Historian, l log.Logger) (Historian, error) {
 	if !cfg.Enabled {
+		met.Info.WithLabelValues("noop").Set(0)
 		return historian.NewNopHistorian(), nil
 	}
 
+	met.Info.WithLabelValues(cfg.Backend).Set(1)
 	if cfg.Backend == "annotations" {
-		return historian.NewAnnotationBackend(ar, ds, rs), nil
+		return historian.NewAnnotationBackend(ar, ds, rs, met), nil
 	}
 	if cfg.Backend == "loki" {
-		baseURL, err := url.Parse(cfg.LokiRemoteURL)
+		lcfg, err := historian.NewLokiConfig(cfg)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse remote loki URL: %w", err)
+			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 		}
-		backend := historian.NewRemoteLokiBackend(historian.LokiConfig{
-			Url:               baseURL,
-			BasicAuthUser:     cfg.LokiBasicAuthUsername,
-			BasicAuthPassword: cfg.LokiBasicAuthPassword,
-			TenantID:          cfg.LokiTenantID,
-		})
+		req := historian.NewRequester()
+		backend := historian.NewRemoteLokiBackend(lcfg, req, met)
+
 		testConnCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 		defer cancelFunc()
 		if err := backend.TestConnection(testConnCtx); err != nil {
-			return nil, fmt.Errorf("failed to ping the remote loki historian: %w", err)
+			l.Error("Failed to communicate with configured remote Loki backend, state history may not be persisted", "error", err)
 		}
 		return backend, nil
 	}

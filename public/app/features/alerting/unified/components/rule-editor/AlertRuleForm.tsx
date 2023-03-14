@@ -255,6 +255,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
                       initialFolder={defaultValues.folder}
                       evaluateEvery={evaluateEvery}
                       setEvaluateEvery={setEvaluateEvery}
+                      existing={Boolean(existing)}
                     />
                   ) : (
                     <CloudEvaluationBehavior />

@@ -31,10 +31,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -51,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/services/live/survey"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -74,7 +73,7 @@ type CoreGrafanaScope struct {
 }
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
-	pluginStore plugins.Store, cacheService *localcache.CacheService,
+	pluginStore plugins.Store, pluginClient plugins.Client, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore db.DB, secretsService secrets.Service,
 	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService, annotationsRepo annotations.Repository,
@@ -85,6 +84,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		PluginContextProvider: plugCtxProvider,
 		RouteRegister:         routeRegister,
 		pluginStore:           pluginStore,
+		pluginClient:          pluginClient,
 		CacheService:          cacheService,
 		DataSourceCache:       dataSourceCache,
 		SQLStore:              sqlStore,
@@ -246,7 +246,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
-	g.GrafanaScope.Features["comment"] = features.NewCommentHandler(commentmodel.NewPermissionChecker(g.SQLStore, g.Features, accessControl, dashboardService, annotationsRepo))
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
@@ -408,6 +407,7 @@ type GrafanaLive struct {
 	SQLStore              db.DB
 	SecretsService        secrets.Service
 	pluginStore           plugins.Store
+	pluginClient          plugins.Client
 	queryDataService      *query.Service
 	orgService            org.Service
 
@@ -460,7 +460,7 @@ func (g *GrafanaLive) getStreamPlugin(ctx context.Context, pluginID string) (bac
 		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}
 	if plugin.SupportsStreaming() {
-		return plugin, nil
+		return g.pluginClient, nil
 	}
 	return nil, fmt.Errorf("%s plugin does not implement StreamHandler: %#v", pluginID, plugin)
 }
@@ -949,7 +949,7 @@ func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, user *user.Sign
 	}
 	return features.NewPluginRunner(
 		ds.Type,
-		ds.Uid,
+		ds.UID,
 		g.runStreamManager,
 		g.contextGetter,
 		streamHandler,

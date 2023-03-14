@@ -2,8 +2,9 @@ package kind
 
 import "strings"
 
-name:     "LibraryPanel"
-maturity: "experimental"
+name:        "LibraryPanel"
+maturity:    "experimental"
+description: "A standalone panel"
 
 lineage: seqs: [
 	{

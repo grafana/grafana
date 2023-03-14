@@ -1,27 +1,25 @@
-import { css, cx } from '@emotion/css';
+import { cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
-import tinycolor from 'tinycolor2';
 
 import {
   LogRowModel,
   findHighlightChunksInText,
-  GrafanaTheme2,
   LogsSortOrder,
   CoreApp,
   DataSourceWithLogsContextSupport,
 } from '@grafana/data';
-import { withTheme2, Themeable2, IconButton, Tooltip } from '@grafana/ui';
+import { IconButton, Tooltip } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowContext } from './LogRowContext';
 import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
-import { getLogRowStyles } from './getLogRowStyles';
+import { LogRowStyles } from './getLogRowStyles';
 
 export const MAX_CHARACTERS = 100000;
 
-interface Props extends Themeable2 {
+interface Props {
   row: LogRowModel;
   hasMoreContextRows?: HasMoreContextRows;
   contextIsOpen: boolean;
@@ -39,66 +37,8 @@ interface Props extends Themeable2 {
   updateLimit?: () => void;
   runContextQuery?: () => void;
   logsSortOrder?: LogsSortOrder | null;
+  styles: LogRowStyles;
 }
-
-const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInExplore: boolean) => {
-  const outlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
-
-  return {
-    positionRelative: css`
-      label: positionRelative;
-      position: relative;
-    `,
-    rowWithContext: css`
-      label: rowWithContext;
-      z-index: 1;
-      outline: 9999px solid ${outlineColor};
-      display: inherit;
-    `,
-    horizontalScroll: css`
-      label: horizontalScroll;
-      white-space: pre;
-    `,
-    contextNewline: css`
-      display: block;
-      margin-left: 0px;
-    `,
-    rowMenu: css`
-      display: flex;
-      flex-wrap: nowrap;
-      flex-direction: row;
-      align-content: flex-end;
-      justify-content: space-evenly;
-      align-items: center;
-      position: absolute;
-      top: 0;
-      bottom: auto;
-      height: ${theme.spacing(4.5)};
-      background: ${theme.colors.background.primary};
-      box-shadow: ${theme.shadows.z3};
-      padding: ${theme.spacing(0, 0, 0, 0.5)};
-      z-index: 100;
-      visibility: hidden;
-      width: ${showContextButton ? theme.spacing(10) : theme.spacing(5)};
-    `,
-    logRowMenuCell: css`
-      position: absolute;
-      right: ${!isInExplore ? '40px' : `calc(75px + ${theme.spacing()} + ${showContextButton ? '80px' : '40px'})`};
-      margin-top: -${theme.spacing(0.125)};
-    `,
-    logLine: css`
-      background-color: transparent;
-      border: none;
-      diplay: inline;
-      font-family: ${theme.typography.fontFamilyMonospace};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      letter-spacing: ${theme.typography.bodySmall.letterSpacing};
-      text-align: left;
-      padding: 0;
-      user-select: text;
-    `,
-  };
-};
 
 function renderLogMessage(
   hasAnsi: boolean,
@@ -137,7 +77,7 @@ const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): s
   return line;
 });
 
-class UnThemedLogRowMessage extends PureComponent<Props> {
+export class LogRowMessage extends PureComponent<Props> {
   logRowRef: React.RefObject<HTMLTableCellElement> = React.createRef();
 
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
@@ -159,7 +99,6 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
   render() {
     const {
       row,
-      theme,
       errors,
       hasMoreContextRows,
       updateLimit,
@@ -174,24 +113,23 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       logsSortOrder,
       showContextToggle,
       getLogRowContextUi,
+      styles,
     } = this.props;
-
-    const style = getLogRowStyles(theme, row.logLevel);
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
-    const styles = getStyles(theme, shouldShowContextToggle, app === CoreApp.Explore);
+    const inExplore = app === CoreApp.Explore;
 
     return (
       <>
         {
           // When context is open, the position has to be NOT relative. // Setting the postion as inline-style to
-          // overwrite the more sepecific style definition from `style.logsRowMessage`.
+          // overwrite the more sepecific style definition from `styles.logsRowMessage`.
         }
         <td
           ref={this.logRowRef}
           style={contextIsOpen ? { position: 'unset' } : undefined}
-          className={style.logsRowMessage}
+          className={styles.logsRowMessage}
         >
           <div
             className={cx(
@@ -218,13 +156,24 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
               />
             )}
             <button className={cx(styles.logLine, styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
-              {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
+              {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, styles.logsRowMatchHighLight)}
             </button>
           </div>
         </td>
         {showRowMenu && (
-          <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
-            <span className={cx('log-row-menu', styles.rowMenu)} onClick={(e) => e.stopPropagation()}>
+          <td
+            className={cx('log-row-menu-cell', styles.logRowMenuCell, {
+              [styles.logRowMenuCellDefaultPosition]: !inExplore,
+              [styles.logRowMenuCellExplore]: inExplore && !shouldShowContextToggle,
+              [styles.logRowMenuCellExploreWithContextButton]: inExplore && shouldShowContextToggle,
+            })}
+          >
+            <span
+              className={cx('log-row-menu', styles.rowMenu, {
+                [styles.rowMenuWithContextButton]: shouldShowContextToggle,
+              })}
+              onClick={(e) => e.stopPropagation()}
+            >
               {shouldShowContextToggle && (
                 <Tooltip placement="top" content={'Show context'}>
                   <IconButton size="md" name="gf-show-context" onClick={this.onShowContextClick} />
@@ -240,6 +189,3 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     );
   }
 }
-
-export const LogRowMessage = withTheme2(UnThemedLogRowMessage);
-LogRowMessage.displayName = 'LogRowMessage';

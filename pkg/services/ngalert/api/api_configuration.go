@@ -118,18 +118,18 @@ func (srv ConfigSrv) RouteDeleteNGalertConfig(c *contextmodel.ReqContext) respon
 func (srv ConfigSrv) externalAlertmanagers(ctx context.Context, orgID int64) ([]string, error) {
 	var alertmanagers []string
 	query := &datasources.GetDataSourcesByTypeQuery{
-		OrgId: orgID,
+		OrgID: orgID,
 		Type:  datasources.DS_ALERTMANAGER,
 	}
-	err := srv.datasourceService.GetDataSourcesByType(ctx, query)
+	dataSources, err := srv.datasourceService.GetDataSourcesByType(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
 	}
-	for _, ds := range query.Result {
+	for _, ds := range dataSources {
 		if ds.JsonData.Get(apimodels.HandleGrafanaManagedAlerts).MustBool(false) {
 			// we don't need to build the exact URL as we only need
 			// to know if any is set
-			alertmanagers = append(alertmanagers, ds.Uid)
+			alertmanagers = append(alertmanagers, ds.UID)
 		}
 	}
 	return alertmanagers, nil
@@ -148,8 +148,15 @@ func (srv ConfigSrv) RouteGetAlertingStatus(c *contextmodel.ReqContext) response
 		sendsAlertsTo = cfg.SendAlertsTo
 	}
 
+	// handle errors
+	externalAlertManagers, err := srv.externalAlertmanagers(c.Req.Context(), c.OrgID)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+
 	resp := apimodels.AlertingStatus{
-		AlertmanagersChoice: apimodels.AlertmanagersChoice(sendsAlertsTo.String()),
+		AlertmanagersChoice:      apimodels.AlertmanagersChoice(sendsAlertsTo.String()),
+		NumExternalAlertmanagers: len(externalAlertManagers),
 	}
 	return response.JSON(http.StatusOK, resp)
 }

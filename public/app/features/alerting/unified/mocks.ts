@@ -22,7 +22,7 @@ import {
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction, FolderDTO, StoreState } from 'app/types';
+import { AccessControlAction, FolderDTO, NotifiersState, ReceiversState, StoreState } from 'app/types';
 import {
   Alert,
   AlertingRule,
@@ -173,6 +173,25 @@ export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): Alert
   };
 };
 
+export const mockGrafanaRulerRule = (partial: Partial<RulerGrafanaRuleDTO> = {}): RulerGrafanaRuleDTO => {
+  return {
+    for: '',
+    annotations: {},
+    labels: {},
+    grafana_alert: {
+      ...partial,
+      uid: '',
+      title: 'my rule',
+      namespace_uid: '',
+      namespace_id: 0,
+      condition: '',
+      no_data_state: GrafanaAlertStateDecision.NoData,
+      exec_err_state: GrafanaAlertStateDecision.Error,
+      data: [],
+    },
+  };
+};
+
 export const mockPromRecordingRule = (partial: Partial<RecordingRule> = {}): RecordingRule => {
   return {
     type: PromRuleType.Recording,
@@ -254,6 +273,31 @@ export const mockSilence = (partial: Partial<Silence> = {}): Silence => {
     comment: 'Silence noisy alerts',
     status: {
       state: SilenceState.Active,
+    },
+    ...partial,
+  };
+};
+
+export const mockNotifiersState = (partial: Partial<NotifiersState> = {}): NotifiersState => {
+  return {
+    email: [
+      {
+        name: 'email',
+        lastNotifyAttempt: new Date().toISOString(),
+        lastNotifyAttemptError: 'this is the error message',
+        lastNotifyAttemptDuration: '10s',
+      },
+    ],
+    ...partial,
+  };
+};
+
+export const mockReceiversState = (partial: Partial<ReceiversState> = {}): ReceiversState => {
+  return {
+    'broken-receiver': {
+      active: false,
+      errorCount: 1,
+      notifiers: mockNotifiersState(),
     },
     ...partial,
   };
@@ -570,6 +614,7 @@ export function getGrafanaRule(override?: Partial<CombinedRule>) {
       name: 'Grafana',
       rulesSource: 'grafana',
     },
+    rulerRule: mockGrafanaRulerRule(),
     ...override,
   });
 }

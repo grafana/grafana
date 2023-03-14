@@ -17,8 +17,8 @@ var (
 )
 
 type APIKey struct {
-	Id               int64        `db:"id"`
-	OrgId            int64        `db:"org_id"`
+	ID               int64        `db:"id" xorm:"pk autoincr 'id'"`
+	OrgID            int64        `db:"org_id" xorm:"org_id"`
 	Name             string       `db:"name"`
 	Key              string       `db:"key"`
 	Role             org.RoleType `db:"role"`
@@ -36,7 +36,7 @@ func (k APIKey) TableName() string { return "api_key" }
 type AddCommand struct {
 	Name             string       `json:"name" binding:"Required"`
 	Role             org.RoleType `json:"role" binding:"Required"`
-	OrgId            int64        `json:"-"`
+	OrgID            int64        `json:"-" xorm:"org_id"`
 	Key              string       `json:"-"`
 	SecondsToLive    int64        `json:"secondsToLive"`
 	ServiceAccountID *int64       `json:"-"`
@@ -45,24 +45,24 @@ type AddCommand struct {
 }
 
 type DeleteCommand struct {
-	Id    int64 `json:"id"`
-	OrgId int64 `json:"-"`
+	ID    int64 `json:"id"`
+	OrgID int64 `json:"-"`
 }
 
 type GetApiKeysQuery struct {
-	OrgId          int64
+	OrgID          int64
 	IncludeExpired bool
 	User           *user.SignedInUser
 	Result         []*APIKey
 }
 type GetByNameQuery struct {
 	KeyName string
-	OrgId   int64
+	OrgID   int64
 	Result  *APIKey
 }
 
 type GetByIDQuery struct {
-	ApiKeyId int64
+	ApiKeyID int64
 	Result   *APIKey
 }
 

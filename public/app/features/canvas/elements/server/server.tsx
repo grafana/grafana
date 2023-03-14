@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import config from 'app/core/config';
 import { ColorDimensionConfig, DimensionContext, ScalarDimensionConfig } from 'app/features/dimensions';
 import { ColorDimensionEditor, ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
@@ -34,10 +35,11 @@ enum ServerType {
 }
 
 type Props = CanvasElementProps<ServerConfig, ServerData>;
+const outlineColor = config.theme2.colors.text.primary;
 
 const ServerDisplay = ({ data }: Props) => {
   return data ? (
-    <svg viewBox="0 0 207.95 197.78">
+    <svg viewBox="0 0 75 75">
       {data.type === ServerType.Single ? (
         <ServerSingle {...data} />
       ) : data.type === ServerType.Stack ? (
@@ -85,7 +87,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
   prepareData: (ctx: DimensionContext, cfg: ServerConfig) => {
     const data: ServerData = {
       blinkRate: cfg?.blinkRate ? ctx.getScalar(cfg.blinkRate).value() : 0,
-      statusColor: cfg?.statusColor ? ctx.getColor(cfg.statusColor).value() : '#8a8a8a',
+      statusColor: cfg?.statusColor ? ctx.getColor(cfg.statusColor).value() : 'transparent',
       bulbColor: cfg?.bulbColor ? ctx.getColor(cfg.bulbColor).value() : 'green',
       type: cfg.type,
     };
@@ -118,7 +120,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {
-          fixed: '#8a8a8a',
+          fixed: 'transparent',
         },
       })
       .addCustomEditor({
@@ -158,54 +160,22 @@ export const getServerStyles = (data: ServerData | undefined) => (theme: Grafana
     }
   `,
   server: css`
-    fill: #dadada;
-    stroke-linecap: round;
-    stroke-miterlimit: 10;
-    stroke-width: 10;
-    stroke: ${data?.statusColor ?? '#8a8a8a'};
+    fill: ${data?.statusColor ?? 'transparent'};
   `,
   circle: css`
     animation: blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end;
     fill: ${data?.bulbColor};
-    stroke-linecap: round;
-    stroke-miterlimit: 10;
-    stroke-width: 3;
-    stroke: #000;
+    stroke: none;
+  `,
+  circleBack: css`
+    fill: ${outlineColor};
+    stroke: none;
+    opacity: 1;
   `,
   outline: css`
-    fill: none;
+    stroke: ${outlineColor};
     stroke-linecap: round;
-    stroke-miterlimit: 10;
-    stroke-width: 10;
-    stroke: #303030;
-  `,
-  pathA: css`
-    display: none;
-    fill: #fff;
-  `,
-  pathB: css`
-    fill: #fff;
-  `,
-  thinLine: css`
-    stroke-width: 0.7;
-  `,
-  monitor: css`
-    stroke: ${data?.statusColor ?? '#8a8a8a'};
-    fill: #fff;
-    stroke-linecap: square;
-    stroke-miterlimit: 0;
-    stroke-width: 14;
-  `,
-  monitorOutline: css`
-    stroke: #8a8a8a;
-    stroke-linecap: square;
-    stroke-miterlimit: 0;
-  `,
-  keyboard: css`
-    fill: #dadada;
-    stroke-linecap: round;
-    stroke-miterlimit: 10;
-    stroke-width: 10;
-    stroke: ${data?.statusColor ?? '#8a8a8a'};
+    stroke-linejoin: round;
+    stroke-width: 4px;
   `,
 });

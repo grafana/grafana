@@ -1,8 +1,7 @@
 [run]
 init_cmds = [
-  ["make", "gen-go"],
-  ["make", "gen-jsonnet"],
   ["GO_BUILD_DEV=1", "make", "build-go"],
+  ["make", "gen-jsonnet"],
   ["./bin/grafana", "server", "-packaging=dev", "cfg:app_mode=development"]
 ]
 watch_all = true
@@ -17,8 +16,7 @@ watch_exts = [".go", ".ini", ".toml", ".template.html"]
 ignore_files = [".*_gen.go"]
 build_delay = 1500
 cmds = [
-  ["make", "gen-go"],
-  ["make", "gen-jsonnet"],
   ["GO_BUILD_DEV=1", "make", "build-go"],
+  ["make", "gen-jsonnet"],
   ["./bin/grafana", "server", "-packaging=dev", "cfg:app_mode=development"]
 ]

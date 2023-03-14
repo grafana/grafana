@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -53,7 +54,8 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUser
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
-		"Subject": subjectTemplateFunc,
+		"Subject":       subjectTemplateFunc,
+		"HiddenSubject": hiddenSubjectTemplateFunc,
 	})
 	mailTemplates.Funcs(sprig.FuncMap())
 
@@ -143,9 +145,33 @@ func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *SendWeb
 	})
 }
 
-func subjectTemplateFunc(obj map[string]interface{}, value string) string {
+// hiddenSubjectTemplateFunc sets the subject template (value) on the map represented by `.Subject.` (obj) so that it can be compiled and executed later.
+// It returns a blank string, so there will be no resulting value left in place of the template.
+func hiddenSubjectTemplateFunc(obj map[string]interface{}, value string) string {
 	obj["value"] = value
 	return ""
+}
+
+// subjectTemplateFunc does the same thing has hiddenSubjectTemplateFunc, but in addition it executes and returns the subject template using the data represented in `.TemplateData` (data)
+// This results in the template being replaced by the subject string.
+func subjectTemplateFunc(obj map[string]interface{}, data map[string]interface{}, value string) string {
+	obj["value"] = value
+
+	titleTmpl, err := template.New("title").Parse(value)
+	if err != nil {
+		return ""
+	}
+
+	var buf bytes.Buffer
+	err = titleTmpl.ExecuteTemplate(&buf, "title", data)
+	if err != nil {
+		return ""
+	}
+
+	subj := buf.String()
+	// Since we have already executed the template, save it to subject data so we don't have to do it again later on
+	obj["executed_template"] = subj
+	return subj
 }
 
 func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, cmd *SendEmailCommandSync) error {

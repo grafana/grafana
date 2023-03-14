@@ -5,9 +5,9 @@ import React, { Fragment, useEffect } from 'react';
 import { Input, InlineLabel } from '@grafana/ui';
 
 import { useStatelessReducer, useDispatch } from '../../../../../hooks/useStatelessReducer';
+import { BucketScript, MetricAggregation } from '../../../../../types';
 import { AddRemove } from '../../../../AddRemove';
 import { MetricPicker } from '../../../../MetricPicker';
-import { BucketScript, MetricAggregation } from '../../aggregations';
 import { changeMetricAttribute } from '../../state/actions';
 import { SettingField } from '../SettingField';
 

@@ -12,8 +12,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionQuery, ExpressionQueryType, ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -96,7 +95,7 @@ function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined): Arr
 }
 
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
-  const { name, condition, noDataState, execErrState, evaluateFor, queries } = values;
+  const { name, condition, noDataState, execErrState, evaluateFor, queries, isPaused } = values;
   if (condition) {
     return {
       grafana_alert: {
@@ -105,6 +104,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         no_data_state: noDataState,
         exec_err_state: execErrState,
         data: queries.map(fixBothInstantAndRangeQuery),
+        is_paused: Boolean(isPaused),
       },
       for: evaluateFor,
       annotations: arrayToRecord(values.annotations || []),
@@ -135,6 +135,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         annotations: listifyLabelsOrAnnotations(rule.annotations),
         labels: listifyLabelsOrAnnotations(rule.labels),
         folder: { title: namespace, id: ga.namespace_id },
+        isPaused: ga.is_paused,
       };
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');

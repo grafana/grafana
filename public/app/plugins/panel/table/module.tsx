@@ -7,17 +7,23 @@ import {
   standardEditorsRegistry,
   identityOverrideProcessor,
 } from '@grafana/data';
-import { TableFieldOptions, TableCellOptions, TableCellDisplayMode } from '@grafana/schema';
+import {
+  TableFieldOptions,
+  TableCellOptions,
+  TableCellDisplayMode,
+  defaultTableFieldOptions,
+  TableCellHeight,
+} from '@grafana/schema';
 
 import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
-import { PanelOptions, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
+import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
 import { TableSuggestionsSupplier } from './suggestions';
 
 const footerCategory = 'Table footer';
-const cellCategory = ['Cell Options'];
+const cellCategory = ['Cell options'];
 
 export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -35,7 +41,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
             max: 500,
           },
           shouldApply: () => true,
-          defaultValue: defaultPanelFieldConfig.minWidth,
+          defaultValue: defaultTableFieldOptions.minWidth,
         })
         .addNumberInput({
           path: 'width',
@@ -46,7 +52,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
             max: 300,
           },
           shouldApply: () => true,
-          defaultValue: defaultPanelFieldConfig.width,
+          defaultValue: defaultTableFieldOptions.width,
         })
         .addRadio({
           path: 'align',
@@ -59,15 +65,15 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
               { label: 'right', value: 'right' },
             ],
           },
-          defaultValue: defaultPanelFieldConfig.align,
+          defaultValue: defaultTableFieldOptions.align,
         })
         .addCustomEditor<void, TableCellOptions>({
           id: 'cellOptions',
           path: 'cellOptions',
-          name: 'Cell Type',
+          name: 'Cell type',
           editor: TableCellOptionEditor,
           override: TableCellOptionEditor,
-          defaultValue: defaultPanelFieldConfig.cellOptions,
+          defaultValue: defaultTableFieldOptions.cellOptions,
           process: identityOverrideProcessor,
           category: cellCategory,
           shouldApply: () => true,
@@ -91,7 +97,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           path: 'filterable',
           name: 'Column filter',
           description: 'Enables/disables field filters in table',
-          defaultValue: defaultPanelFieldConfig.filterable,
+          defaultValue: defaultTableFieldOptions.filterable,
         })
         .addBooleanSwitch({
           path: 'hidden',
@@ -107,6 +113,23 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         path: 'showHeader',
         name: 'Show table header',
         defaultValue: defaultPanelOptions.showHeader,
+      })
+      .addRadio({
+        path: 'cellHeight',
+        name: 'Cell height',
+        defaultValue: defaultPanelOptions.cellHeight,
+        settings: {
+          options: [
+            { value: TableCellHeight.Sm, label: 'Small' },
+            { value: TableCellHeight.Md, label: 'Medium' },
+            { value: TableCellHeight.Lg, label: 'Large' },
+          ],
+        },
+      })
+      .addBooleanSwitch({
+        path: 'showRowNums',
+        name: 'Show row numbers',
+        defaultValue: defaultPanelOptions.showRowNums,
       })
       .addBooleanSwitch({
         path: 'footer.show',

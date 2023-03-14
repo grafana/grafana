@@ -148,7 +148,7 @@ export class SQLSearcher implements GrafanaSearcher {
       const k = hit.type === 'dash-folder' ? 'folder' : 'dashboard';
       kind.push(k);
       name.push(hit.title);
-      uid.push(hit.uid!);
+      uid.push(hit.uid);
       url.push(hit.url);
       tags.push(hit.tags);
       sortBy.push(hit.sortMeta!);
@@ -171,7 +171,7 @@ export class SQLSearcher implements GrafanaSearcher {
           folderId: hit.folderId,
         };
       } else if (k === 'folder') {
-        this.locationInfo[hit.uid!] = {
+        this.locationInfo[hit.uid] = {
           kind: k,
           name: hit.title!,
           url: hit.url,

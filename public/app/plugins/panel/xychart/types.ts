@@ -24,13 +24,6 @@ export interface ScatterHoverEvent {
 
 export type ScatterHoverCallback = (evt?: ScatterHoverEvent) => void;
 
-export interface LegendInfo {
-  color: CanvasRenderingContext2D['strokeStyle'];
-  text: string;
-  symbol: string;
-  openEditor?: (evt: any) => void;
-}
-
 export interface ScatterFieldConfig extends GeneratedScatterFieldConfig {
   pointSymbol?: DimensionSupplier<string>;
 }

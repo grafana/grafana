@@ -92,20 +92,6 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     }
   };
 
-  const onSpanNameChange = (v: SelectableValue<string>) => {
-    // If the 'x' icon is clicked to clear the selected span name, remove spanName from the query object.
-    if (!v) {
-      delete query.spanName;
-      return;
-    }
-    if (spanOptions?.find((obj) => obj.value === v.value)) {
-      onChange({
-        ...query,
-        spanName: v.value,
-      });
-    }
-  };
-
   const handleOnChange = useCallback(
     (value) => {
       onChange({
@@ -130,11 +116,11 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 loadOptions('serviceName');
               }}
               isLoading={isLoading.serviceName}
-              value={serviceOptions?.find((v) => v?.value === query.serviceName) || undefined}
+              value={serviceOptions?.find((v) => v?.value === query.serviceName) || query.serviceName}
               onChange={(v) => {
                 onChange({
                   ...query,
-                  serviceName: v?.value || undefined,
+                  serviceName: v?.value,
                 });
               }}
               placeholder="Select a service"
@@ -154,7 +140,13 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 loadOptions('spanName');
               }}
               isLoading={isLoading.spanName}
-              onChange={onSpanNameChange}
+              value={spanOptions?.find((v) => v?.value === query.spanName) || query.spanName}
+              onChange={(v) => {
+                onChange({
+                  ...query,
+                  spanName: v?.value,
+                });
+              }}
               placeholder="Select a span"
               isClearable
               onKeyDown={onKeyDown}

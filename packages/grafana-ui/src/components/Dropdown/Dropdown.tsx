@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 import { CSSTransition } from 'react-transition-group';
 
@@ -12,11 +12,18 @@ export interface Props {
   overlay: React.ReactElement | (() => React.ReactElement);
   placement?: TooltipPlacement;
   children: React.ReactElement | ((isOpen: boolean) => React.ReactElement);
+  /** Amount in pixels to nudge the dropdown vertically and horizontally, respectively. */
+  offset?: [number, number];
+  onVisibleChange?: (state: boolean) => void;
 }
 
-export const Dropdown = React.memo(({ children, overlay, placement }: Props) => {
+export const Dropdown = React.memo(({ children, overlay, placement, offset, onVisibleChange }: Props) => {
   const [show, setShow] = useState(false);
   const transitionRef = useRef(null);
+
+  useEffect(() => {
+    onVisibleChange?.(show);
+  }, [onVisibleChange, show]);
 
   const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible } = usePopperTooltip({
     visible: show,
@@ -25,7 +32,7 @@ export const Dropdown = React.memo(({ children, overlay, placement }: Props) => 
     interactive: true,
     delayHide: 0,
     delayShow: 0,
-    offset: [0, 8],
+    offset: offset ?? [0, 8],
     trigger: ['click'],
   });
 

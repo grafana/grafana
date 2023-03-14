@@ -2,6 +2,8 @@ package serviceaccounts
 
 import (
 	"context"
+
+	"github.com/grafana/grafana/pkg/services/apikey"
 )
 
 /*
@@ -17,5 +19,6 @@ type Service interface {
 	RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error)
 	UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64,
 		saForm *UpdateServiceAccountForm) (*ServiceAccountProfileDTO, error)
-	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *AddServiceAccountTokenCommand) error
+	AddServiceAccountToken(ctx context.Context, serviceAccountID int64,
+		cmd *AddServiceAccountTokenCommand) (*apikey.APIKey, error)
 }

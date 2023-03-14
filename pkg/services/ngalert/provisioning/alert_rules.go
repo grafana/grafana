@@ -238,13 +238,13 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		NamespaceUID: group.FolderUID,
 		RuleGroup:    group.Title,
 	}
-	rules := make([]*models.AlertRule, len(group.Rules))
+	rules := make([]*models.AlertRuleWithOptionals, len(group.Rules))
 	group = *syncGroupRuleFields(&group, orgID)
 	for i := range group.Rules {
 		if err := group.Rules[i].SetDashboardAndPanelFromAnnotations(); err != nil {
 			return err
 		}
-		rules = append(rules, &group.Rules[i])
+		rules = append(rules, &models.AlertRuleWithOptionals{AlertRule: group.Rules[i], HasPause: true})
 	}
 	delta, err := store.CalculateChanges(ctx, service.ruleStore, key, rules)
 	if err != nil {

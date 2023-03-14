@@ -78,6 +78,8 @@ export class Scene {
   tooltipCallback?: (tooltip: CanvasTooltipPayload | undefined) => void;
   tooltip?: CanvasTooltipPayload;
 
+  moveableActionCallback?: (moved: boolean) => void;
+
   readonly editModeEnabled = new BehaviorSubject<boolean>(false);
   subscription: Subscription;
 
@@ -407,13 +409,29 @@ export class Scene {
       })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
-        targetedElement!.applyDrag(event);
+        if (targetedElement) {
+          targetedElement.applyDrag(event);
+
+          if (this.connections.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
+            this.moveableActionCallback(true);
+          }
+        }
       })
       .on('dragGroup', (e) => {
-        e.events.forEach((event) => {
+        let needsUpdate = false;
+        for (let event of e.events) {
           const targetedElement = this.findElementByTarget(event.target);
-          targetedElement!.applyDrag(event);
-        });
+          if (targetedElement) {
+            targetedElement.applyDrag(event);
+            if (!needsUpdate) {
+              needsUpdate = this.connections.connectionsNeedUpdate(targetedElement);
+            }
+          }
+        }
+
+        if (needsUpdate && this.moveableActionCallback) {
+          this.moveableActionCallback(true);
+        }
       })
       .on('dragGroupEnd', (e) => {
         e.events.forEach((event) => {
@@ -450,14 +468,32 @@ export class Scene {
       })
       .on('resize', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
-        targetedElement!.applyResize(event);
+        if (targetedElement) {
+          targetedElement.applyResize(event);
+
+          if (this.connections.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
+            this.moveableActionCallback(true);
+          }
+        }
         this.moved.next(Date.now()); // TODO only on end
       })
       .on('resizeGroup', (e) => {
-        e.events.forEach((event) => {
+        let needsUpdate = false;
+        for (let event of e.events) {
           const targetedElement = this.findElementByTarget(event.target);
-          targetedElement!.applyResize(event);
-        });
+          if (targetedElement) {
+            targetedElement.applyResize(event);
+
+            if (!needsUpdate) {
+              needsUpdate = this.connections.connectionsNeedUpdate(targetedElement);
+            }
+          }
+        }
+
+        if (needsUpdate && this.moveableActionCallback) {
+          this.moveableActionCallback(true);
+        }
+
         this.moved.next(Date.now()); // TODO only on end
       })
       .on('resizeEnd', (event) => {

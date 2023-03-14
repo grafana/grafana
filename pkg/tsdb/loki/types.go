@@ -1,27 +1,30 @@
 package loki
 
-import "time"
+import (
+	"time"
 
-type QueryType string
-type SupportingQueryType string
+	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
+)
+
+type QueryType = dataquery.LokiQueryType
+type SupportingQueryType = dataquery.SupportingQueryType
+type Direction = dataquery.LokiQueryDirection
 
 const (
-	QueryTypeRange   QueryType = "range"
-	QueryTypeInstant QueryType = "instant"
+	QueryTypeRange   = dataquery.LokiQueryTypeRange
+	QueryTypeInstant = dataquery.LokiQueryTypeInstant
 )
 
 const (
-	SupportingQueryLogsVolume SupportingQueryType = "logsVolume"
-	SupportingQueryLogsSample SupportingQueryType = "logsSample"
-	SupportingQueryDataSample SupportingQueryType = "dataSample"
+	SupportingQueryLogsVolume                     = dataquery.SupportingQueryTypeLogsVolume
+	SupportingQueryLogsSample                     = dataquery.SupportingQueryTypeLogsSample
+	SupportingQueryDataSample                     = dataquery.SupportingQueryTypeDataSample
 	SupportingQueryNone       SupportingQueryType = "none"
 )
 
-type Direction string
-
 const (
-	DirectionBackward Direction = "backward"
-	DirectionForward  Direction = "forward"
+	DirectionBackward = dataquery.LokiQueryDirectionBackward
+	DirectionForward  = dataquery.LokiQueryDirectionForward
 )
 
 type lokiQuery struct {

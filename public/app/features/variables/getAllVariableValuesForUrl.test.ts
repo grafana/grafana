@@ -31,7 +31,7 @@ describe('getAllVariableValuesForUrl', () => {
     });
 
     it('should set multiple url params', () => {
-      let params: any = getVariablesUrlParams();
+      const params = getVariablesUrlParams();
       expect(params['var-test']).toMatchObject(['val1', 'val2']);
     });
   });
