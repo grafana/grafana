@@ -1,4 +1,6 @@
-import type { AppConfigureExtension, AppPluginExtensionLink } from '@grafana/data';
+import type { AppPluginExtensionLink } from '@grafana/data';
+
+import type { ConfigureFunc } from './types';
 
 type Options = {
   pluginId: string;
@@ -9,7 +11,7 @@ type Options = {
 export function createLinkValidator(options: Options) {
   const { pluginId, title, logger } = options;
 
-  return (configure: AppConfigureExtension<AppPluginExtensionLink>): AppConfigureExtension<AppPluginExtensionLink> => {
+  return (configure: ConfigureFunc<AppPluginExtensionLink>): ConfigureFunc<AppPluginExtensionLink> => {
     return function validateLink(link, context) {
       const configured = configure(link, context);
 
