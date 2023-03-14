@@ -6,7 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { testIds } from '../../components/LokiQueryEditor';
 import { LokiQueryField } from '../../components/LokiQueryField';
-import { getStats, shouldUpdateStats } from '../../components/stats';
+import { getStats } from '../../components/stats';
 import { LokiQueryEditorProps } from '../../components/types';
 import { QueryStats } from '../../types';
 
@@ -44,16 +44,8 @@ export function LokiQueryCodeEditor({
         app={app}
         data-testid={testIds.editor}
         onQueryType={async (query: string) => {
-          const timerange = datasource.getTimeRange();
-          const previousTimerange = undefined;
-          const previousQuery = undefined;
-
-          const update = shouldUpdateStats(query, previousQuery, timerange, previousTimerange);
-
-          if (update) {
-            const stats = await getStats(datasource, query);
-            setQueryStats(stats);
-          }
+          const stats = await getStats(datasource, query);
+          setQueryStats(stats);
         }}
       />
       {showExplain && <LokiQueryBuilderExplained query={query.expr} />}
