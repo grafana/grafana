@@ -10,6 +10,7 @@ import (
 )
 
 type CookieOptions struct {
+	NotHttpOnly      bool
 	Path             string
 	Secure           bool
 	SameSiteDisabled bool
@@ -45,7 +46,7 @@ func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, g
 		Name:     name,
 		MaxAge:   maxAge,
 		Value:    value,
-		HttpOnly: true,
+		HttpOnly: !options.NotHttpOnly,
 		Path:     options.Path,
 		Secure:   options.Secure,
 	}
