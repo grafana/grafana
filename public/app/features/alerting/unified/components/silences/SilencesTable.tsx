@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, dateMath } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -36,7 +36,7 @@ interface Props {
   alertManagerSourceName: string;
 }
 
-const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSourceName }) => {
+const SilencesTable = ({ silences, alertManagerAlerts, alertManagerSourceName }: Props) => {
   const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
   const filteredSilences = useFilteredSilences(silences);

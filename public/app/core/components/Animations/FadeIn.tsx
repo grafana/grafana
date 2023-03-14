@@ -1,4 +1,4 @@
-import React, { FC, CSSProperties } from 'react';
+import React, { CSSProperties } from 'react';
 import Transition, { ExitHandler } from 'react-transition-group/Transition';
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
   onExited?: ExitHandler<HTMLDivElement>;
 }
 
-export const FadeIn: FC<Props> = (props) => {
+export const FadeIn = (props: Props) => {
   const defaultStyle: CSSProperties = {
     transition: `opacity ${props.duration}ms linear`,
     opacity: 0,
