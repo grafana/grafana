@@ -151,17 +151,16 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 
 	// Current incoming token is the previous auth token in the DB and the auth_token_seen is true
 	if model.AuthToken != hashedToken && model.PrevAuthToken == hashedToken && model.AuthTokenSeen {
-		modelCopy := model
-		modelCopy.AuthTokenSeen = false
-		expireBefore := getTime().Add(-usertoken.UrgentRotateTime).Unix()
+		model.AuthTokenSeen = false
+		model.RotatedAt = getTime().Add(-usertoken.UrgentRotateTime).Unix()
 
 		var affectedRows int64
 		err = s.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
 			affectedRows, err = dbSession.Where("id = ? AND prev_auth_token = ? AND rotated_at < ?",
-				modelCopy.Id,
-				modelCopy.PrevAuthToken,
-				expireBefore).
-				AllCols().Update(&modelCopy)
+				model.Id,
+				model.PrevAuthToken,
+				model.RotatedAt).
+				AllCols().Update(&model)
 
 			return err
 		})
@@ -179,26 +178,21 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 
 	// Current incoming token is not seen and it is the latest valid auth token in the db
 	if !model.AuthTokenSeen && model.AuthToken == hashedToken {
-		modelCopy := model
-		modelCopy.AuthTokenSeen = true
-		modelCopy.SeenAt = getTime().Unix()
+		model.AuthTokenSeen = true
+		model.SeenAt = getTime().Unix()
 
 		var affectedRows int64
 		err = s.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
 			affectedRows, err = dbSession.Where("id = ? AND auth_token = ?",
-				modelCopy.Id,
-				modelCopy.AuthToken).
-				AllCols().Update(&modelCopy)
+				model.Id,
+				model.AuthToken).
+				AllCols().Update(&model)
 
 			return err
 		})
 
 		if err != nil {
 			return nil, err
-		}
-
-		if affectedRows == 1 {
-			model = modelCopy
 		}
 
 		if affectedRows == 0 {
