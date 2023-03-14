@@ -3,7 +3,6 @@ package schedule
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 
@@ -30,19 +29,6 @@ func (r *alertRuleInfoRegistry) getOrCreateInfo(context context.Context, key mod
 		r.alertRuleInfo[key] = info
 	}
 	return info, !ok
-}
-
-// get returns the channel for the specific alert rule
-// if the key does not exist returns an error
-func (r *alertRuleInfoRegistry) get(key models.AlertRuleKey) (*alertRuleInfo, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	info, ok := r.alertRuleInfo[key]
-	if !ok {
-		return nil, fmt.Errorf("%v key not found", key)
-	}
-	return info, nil
 }
 
 func (r *alertRuleInfoRegistry) exists(key models.AlertRuleKey) bool {
