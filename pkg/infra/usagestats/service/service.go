@@ -124,7 +124,7 @@ func (uss *UsageStats) supportBundleCollector() supportbundles.Collector {
 				return nil, err
 			}
 
-			data, err := json.Marshal(report)
+			data, err := json.MarshalIndent(report, "", " ")
 			if err != nil {
 				return nil, err
 			}

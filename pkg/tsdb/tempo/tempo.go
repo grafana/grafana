@@ -61,7 +61,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	queryRes := backend.DataResponse{}
 	refID := req.Queries[0].RefID
 
-	model := &dataquery.TempoDataQuery{}
+	model := &dataquery.TempoQuery{}
 	err := json.Unmarshal(req.Queries[0].JSON, model)
 	if err != nil {
 		return result, err

@@ -42,7 +42,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
-	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
@@ -79,8 +78,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -244,8 +241,6 @@ var wireSet = wire.NewSet(
 	dashsnapsvc.ProvideService,
 	datasourceservice.ProvideService,
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
-	pluginSettings.ProvideService,
-	wire.Bind(new(pluginsettings.Service), new(*pluginSettings.Service)),
 	alerting.ProvideService,
 	ossaccesscontrol.ProvideServiceAccountPermissions,
 	wire.Bind(new(accesscontrol.ServiceAccountPermissionsService), new(*ossaccesscontrol.ServiceAccountPermissionsService)),
@@ -255,9 +250,9 @@ var wireSet = wire.NewSet(
 	teamguardianDatabase.ProvideTeamGuardianStore,
 	wire.Bind(new(teamguardian.Store), new(*teamguardianDatabase.TeamGuardianStoreImpl)),
 	teamguardianManager.ProvideService,
-	dashboardservice.ProvideDashboardService, //DashboardServiceImpl
+	dashboardservice.ProvideDashboardServiceImpl,
 	dashboardstore.ProvideDashboardStore,
-	dashboardservice.ProvideSimpleDashboardService,
+	dashboardservice.ProvideDashboardService,
 	dashboardservice.ProvideDashboardProvisioningService,
 	dashboardservice.ProvideDashboardPluginService,
 	folderimpl.ProvideDashboardFolderStore,
@@ -269,7 +264,6 @@ var wireSet = wire.NewSet(
 	plugindashboardsservice.ProvideDashboardUpdater,
 	alerting.ProvideDashAlertExtractorService,
 	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
-	comments.ProvideService,
 	guardian.ProvideService,
 	sanitizer.ProvideService,
 	secretsStore.ProvideService,

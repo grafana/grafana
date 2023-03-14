@@ -10,11 +10,14 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginmod"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -24,6 +27,10 @@ var WireSet = wire.NewSet(
 	coreplugin.ProvideCoreRegistry,
 	plugincontext.ProvideService,
 	pluginscdn.ProvideService,
+	pluginSettings.ProvideService,
+	wire.Bind(new(pluginsettings.Service), new(*pluginSettings.Service)),
+	wire.Bind(new(sources.Resolver), new(*sources.Service)),
+	sources.ProvideService,
 
 	//TODO remove (only here to support backendplugin_test.go)
 	// <toRemove>

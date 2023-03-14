@@ -30,6 +30,7 @@ export class PanelHeaderMenu extends PureComponent<Props> {
               iconClassName={menuItem.iconClassName}
               onClick={menuItem.onClick}
               shortcut={menuItem.shortcut}
+              href={menuItem.href}
             >
               {menuItem.subMenu && this.renderItems(menuItem.subMenu, true)}
             </PanelHeaderMenuItem>

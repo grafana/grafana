@@ -597,7 +597,7 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 		assert.Equal(t, savedDashboard.OrgID, orgId)
 	})
 
-	t.Run("GetOrgIdByAccessToken will return 0 when IsEnabled=false", func(t *testing.T) {
+	t.Run("GetOrgIdByAccessToken will return current OrgId when IsEnabled=false", func(t *testing.T) {
 		setup()
 		cmd := SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
@@ -616,7 +616,7 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 
 		orgId, err := publicdashboardStore.GetOrgIdByAccessToken(context.Background(), "accessToken")
 		require.NoError(t, err)
-		assert.NotEqual(t, savedDashboard.OrgID, orgId)
+		assert.Equal(t, savedDashboard.OrgID, orgId)
 	})
 
 	t.Run("GetOrgIdByAccessToken will return 0 when no public dashboard has matching access token", func(t *testing.T) {
@@ -652,7 +652,7 @@ func TestIntegrationDelete(t *testing.T) {
 	t.Run("Delete success", func(t *testing.T) {
 		setup()
 		// Do the deletion
-		affectedRows, err := publicdashboardStore.Delete(context.Background(), savedPublicDashboard.OrgId, savedPublicDashboard.Uid)
+		affectedRows, err := publicdashboardStore.Delete(context.Background(), savedPublicDashboard.Uid)
 		require.NoError(t, err)
 		assert.EqualValues(t, affectedRows, 1)
 
@@ -665,9 +665,48 @@ func TestIntegrationDelete(t *testing.T) {
 	t.Run("Non-existent public dashboard deletion doesn't throw an error", func(t *testing.T) {
 		setup()
 
-		affectedRows, err := publicdashboardStore.Delete(context.Background(), 15, "non-existent-uid")
+		affectedRows, err := publicdashboardStore.Delete(context.Background(), "non-existent-uid")
 		require.NoError(t, err)
 		assert.EqualValues(t, affectedRows, 0)
+	})
+}
+
+func TestGetDashboardByFolder(t *testing.T) {
+	t.Run("returns nil when dashboard is not a folder", func(t *testing.T) {
+		sqlStore, _ := db.InitTestDBwithCfg(t)
+		dashboard := &dashboards.Dashboard{IsFolder: false}
+		store := ProvideStore(sqlStore)
+		pubdashes, err := store.FindByDashboardFolder(context.Background(), dashboard)
+
+		require.NoError(t, err)
+		assert.Nil(t, pubdashes)
+	})
+
+	t.Run("returns nil when dashboard is nil", func(t *testing.T) {
+		sqlStore, _ := db.InitTestDBwithCfg(t)
+		store := ProvideStore(sqlStore)
+		pubdashes, err := store.FindByDashboardFolder(context.Background(), nil)
+
+		require.NoError(t, err)
+		assert.Nil(t, pubdashes)
+	})
+
+	t.Run("can get all pubdashes for dashboard folder and org", func(t *testing.T) {
+		sqlStore, cfg := db.InitTestDBwithCfg(t)
+		quotaService := quotatest.New(false, nil)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+		require.NoError(t, err)
+		pubdashStore := ProvideStore(sqlStore)
+		dashboard := insertTestDashboard(t, dashboardStore, "title", 1, 1, true)
+		pubdash := insertPublicDashboard(t, pubdashStore, dashboard.UID, dashboard.OrgID, true)
+		dashboard2 := insertTestDashboard(t, dashboardStore, "title", 1, 2, true)
+		_ = insertPublicDashboard(t, pubdashStore, dashboard2.UID, dashboard2.OrgID, true)
+
+		pubdashes, err := pubdashStore.FindByDashboardFolder(context.Background(), dashboard)
+
+		require.NoError(t, err)
+		assert.Len(t, pubdashes, 1)
+		assert.Equal(t, pubdash, pubdashes[0])
 	})
 }
 

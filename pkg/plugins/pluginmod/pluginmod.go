@@ -3,10 +3,10 @@ package pluginmod
 import (
 	"github.com/grafana/dskit/services"
 
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/server/modules"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -14,24 +14,15 @@ func ProvidePluginsModule(cfg *setting.Cfg, moduleManager modules.Manager, coreR
 	internalRegistry *registry.InMemory, pluginClient *client.Decorator) (*PluginsModule, error) {
 	m := &PluginsModule{
 		cfg:              cfg,
-		moduleManager:    moduleManager,
 		coreRegistry:     coreRegistry,
 		internalRegistry: internalRegistry,
 		pluginClient:     pluginClient,
 	}
 
-	if err := m.moduleManager.RegisterModule(modules.PluginManagerServer, m.initServer); err != nil {
-		return nil, err
-	}
-	if err := m.moduleManager.RegisterInvisibleModule(modules.PluginManagerClient, m.initClient); err != nil {
-		return nil, err
-	}
-	if err := m.moduleManager.RegisterInvisibleModule(modules.PluginManagement, m.initLocalPluginManagement); err != nil {
-		return nil, err
-	}
-	if err := m.moduleManager.RegisterInvisibleModule(modules.Plugins, nil); err != nil {
-		return nil, err
-	}
+	moduleManager.RegisterModule(modules.PluginManagerServer, m.initServer)
+	moduleManager.RegisterInvisibleModule(modules.PluginManagerClient, m.initClient)
+	moduleManager.RegisterInvisibleModule(modules.PluginManagement, m.initLocalPluginManagement)
+	moduleManager.RegisterInvisibleModule(modules.Plugins, nil)
 
 	return m, nil
 }
@@ -41,7 +32,6 @@ type PluginsModule struct {
 	PluginManager
 
 	cfg              *setting.Cfg
-	moduleManager    modules.Manager
 	coreRegistry     *coreplugin.Registry
 	internalRegistry *registry.InMemory
 	pluginClient     *client.Decorator

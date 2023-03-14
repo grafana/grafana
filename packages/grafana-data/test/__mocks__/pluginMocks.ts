@@ -34,7 +34,7 @@ export const getMockPlugins = (amount: number): PluginMeta[] => {
     });
   }
 
-  return plugins as any;
+  return plugins;
 };
 
 export function getPanelPlugin(

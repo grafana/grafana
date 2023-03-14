@@ -15,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/server/modules"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -98,13 +98,10 @@ func ProvideBackgroundServiceRegistry(
 		dashboardUpdater,
 	)
 
-	err := moduleManager.RegisterModule(modules.Core, func() (services.Service, error) {
+	moduleManager.RegisterModule(modules.Core, func() (services.Service, error) {
 		r.BasicService = services.NewBasicService(r.start, r.run, r.stop)
 		return r, nil
 	})
-	if err != nil {
-		return nil, err
-	}
 
 	r.usageStatsProvidersRegistry = usageStatsProvidersRegistry
 	r.statsCollectorService = statsCollector

@@ -15,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/server/modules"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
@@ -51,13 +51,10 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 		accessControl: accessControl,
 		moduleManager: moduleManager,
 	}
-	err := s.moduleManager.RegisterModule(modules.AccessControl, func() (services.Service, error) {
+	s.moduleManager.RegisterModule(modules.AccessControl, func() (services.Service, error) {
 		s.BasicService = services.NewBasicService(s.start, s.run, nil)
 		return s, nil
 	})
-	if err != nil {
-		return nil, err
-	}
 	return s, nil
 }
 

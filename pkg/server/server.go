@@ -9,13 +9,12 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
-
 	"github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/server/modules"
+	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -30,9 +29,9 @@ type Options struct {
 }
 
 // New returns a new instance of Server.
-func New(opts Options, cfg *setting.Cfg, moduleService *modules.Modules, httpServer *api.HTTPServer,
+func New(opts Options, cfg *setting.Cfg, moduleEngine modules.Engine, httpServer *api.HTTPServer,
 	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry) (*Server, error) {
-	s := newServer(opts, cfg, moduleService, backgroundServiceRegistry, httpServer)
+	s := newServer(opts, cfg, moduleEngine, backgroundServiceRegistry, httpServer)
 
 	if err := s.init(context.Background()); err != nil {
 		return nil, err
@@ -41,14 +40,14 @@ func New(opts Options, cfg *setting.Cfg, moduleService *modules.Modules, httpSer
 	return s, nil
 }
 
-func newServer(opts Options, cfg *setting.Cfg, modulesEngine modules.Engine,
+func newServer(opts Options, cfg *setting.Cfg, moduleEngine modules.Engine,
 	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry, httpServer *api.HTTPServer) *Server {
 	return &Server{
 		log:                       log.New("server"),
 		cfg:                       cfg,
 		shutdownFinished:          make(chan struct{}),
 		pidFile:                   opts.PidFile,
-		modulesEngine:             modulesEngine,
+		moduleEngine:              moduleEngine,
 		httpServer:                httpServer,
 		backgroundServiceRegistry: backgroundServiceRegistry,
 	}
@@ -56,7 +55,7 @@ func newServer(opts Options, cfg *setting.Cfg, modulesEngine modules.Engine,
 
 // Server is responsible for managing the lifecycle of services.
 type Server struct {
-	modulesEngine    modules.Engine
+	moduleEngine     modules.Engine
 	log              log.Logger
 	cfg              *setting.Cfg
 	shutdownOnce     sync.Once
@@ -83,11 +82,16 @@ func (s *Server) init(ctx context.Context) error {
 		return err
 	}
 
+	// Initialize dskit modules.
+	if err := s.moduleEngine.Init(ctx); err != nil {
+		return err
+	}
+
 	if err := metrics.SetEnvironmentInformation(s.cfg.MetricsGrafanaEnvironmentInfo); err != nil {
 		return err
 	}
 
-	return s.modulesEngine.Init(ctx)
+	return nil
 }
 
 // Run initializes and starts services. This will block until all services have
@@ -101,7 +105,7 @@ func (s *Server) Run(ctx context.Context) error {
 	s.notifySystemd("READY=1")
 
 	s.log.Debug("Waiting on services...")
-	return s.modulesEngine.Run(ctx)
+	return s.moduleEngine.Run(ctx)
 }
 
 // Shutdown initiates Grafana graceful shutdown. This shuts down all
@@ -111,8 +115,7 @@ func (s *Server) Shutdown(ctx context.Context, reason string) error {
 	var err error
 	s.shutdownOnce.Do(func() {
 		s.log.Info("Shutdown started", "reason", reason)
-
-		if err = s.modulesEngine.Shutdown(ctx); err != nil {
+		if err = s.moduleEngine.Shutdown(ctx); err != nil {
 			s.log.Error("Failed to stop modules", "error", err)
 		}
 
