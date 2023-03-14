@@ -261,12 +261,7 @@ export class BackendSrv implements BackendService {
                   return of({});
                 }
 
-                let autchChecker = this.loginPing;
-                if (config.featureToggles.clientTokenRotation) {
-                  autchChecker = this.rotateToken;
-                }
-
-                return from(autchChecker()).pipe(
+                return from(this.loginPing()).pipe(
                   catchError((err) => {
                     if (err.status === 401) {
                       this.dependencies.logout();
@@ -452,10 +447,6 @@ export class BackendSrv implements BackendService {
 
   loginPing() {
     return this.request({ url: '/api/login/ping', method: 'GET', retry: 1 });
-  }
-
-  rotateToken() {
-    return this.request({ url: '/api/user/auth-tokens/rotate', method: 'POST', retry: 1 });
   }
 
   /** @deprecated */
