@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { pickBy } from 'lodash';
-import React, { FC, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useDebounce } from 'react-use';
 
@@ -97,7 +97,7 @@ const getDefaultFormValues = (searchParams: URLSearchParams, silence?: Silence):
   }
 };
 
-export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) => {
+export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
   const [urlSearchParams] = useURLSearchParams();
 
   const defaultValues = useMemo(() => getDefaultFormValues(urlSearchParams, silence), [silence, urlSearchParams]);

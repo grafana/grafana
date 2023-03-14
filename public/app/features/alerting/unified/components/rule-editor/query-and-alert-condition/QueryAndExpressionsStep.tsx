@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { LoadingState, PanelData } from '@grafana/data';
@@ -38,7 +38,7 @@ interface Props {
   onDataChange: (error: string) => void;
 }
 
-export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onDataChange }) => {
+export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: Props) => {
   const runner = useRef(new AlertingQueryRunner());
   const {
     setValue,

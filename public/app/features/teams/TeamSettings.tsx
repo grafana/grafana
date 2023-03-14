@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Input, Field, Form, Button, FieldSet, VerticalGroup } from '@grafana/ui';
@@ -22,7 +22,7 @@ interface OwnProps {
 }
 export type Props = ConnectedProps<typeof connector> & OwnProps;
 
-export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
+export const TeamSettings = ({ team, updateTeam }: Props) => {
   const canWriteTeamSettings = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsWrite, team);
   const currentOrgId = contextSrv.user.orgId;
 

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -33,14 +33,14 @@ interface Props {
   className?: string;
 }
 
-export const RulesTable: FC<Props> = ({
+export const RulesTable = ({
   rules,
   className,
   showGuidelines = false,
   emptyMessage = 'No rules found.',
   showGroupColumn = false,
   showSummaryColumn = false,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   const wrapperClass = cx(styles.wrapper, className, { [styles.wrapperMargin]: showGuidelines });
