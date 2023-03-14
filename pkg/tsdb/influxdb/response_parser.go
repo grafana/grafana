@@ -89,7 +89,6 @@ func transformRows(rows []Row, query Query) data.Frames {
 
 			for colIndex, column := range row.Columns {
 				if strings.ToLower(column) == "time" {
-					column = timeName
 					continue
 				}
 
