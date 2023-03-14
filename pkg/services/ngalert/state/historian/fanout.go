@@ -2,12 +2,12 @@ package historian
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
-	"github.com/hashicorp/go-multierror"
 )
 
 type backend interface {
@@ -40,19 +40,11 @@ func (h *FanoutBackend) Record(ctx context.Context, rule history_model.RuleMeta,
 				errs = append(errs, err)
 			}
 		}
-		errCh <- combineErrors(errs...)
+		errCh <- errors.Join(errs...)
 	}()
 	return errCh
 }
 
 func (h *FanoutBackend) Query(ctx context.Context, query ngmodels.HistoryQuery) (*data.Frame, error) {
 	return h.targets[0].Query(ctx, query)
-}
-
-func combineErrors(errs ...error) error {
-	var multi *multierror.Error
-	for _, err := range errs {
-		multi = multierror.Append(multi, err)
-	}
-	return multi
 }
