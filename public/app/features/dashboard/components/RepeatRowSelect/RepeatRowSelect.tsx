@@ -18,7 +18,7 @@ export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {
   });
 
   const variableOptions = useMemo(() => {
-    const options = variables.map((item: any) => {
+    const options: Array<SelectableValue<string | null>> = variables.map((item) => {
       return { label: item.name, value: item.name };
     });
 

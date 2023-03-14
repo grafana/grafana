@@ -14,9 +14,7 @@ const fixedValueOption: SelectableValue<string> = {
   value: '_____fixed_____',
 };
 
-type Props = StandardEditorProps<ScaleDimensionConfig, ScaleDimensionOptions, any>;
-
-export const ScaleDimensionEditor = (props: Props) => {
+export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionConfig, ScaleDimensionOptions>) => {
   const { value, context, onChange, item } = props;
   const { settings } = item;
   const styles = useStyles2(getStyles);
