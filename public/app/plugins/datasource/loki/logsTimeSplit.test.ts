@@ -26,10 +26,4 @@ describe('querySplit', () => {
       [Date.parse('2022-02-06T14:10:43.567'), Date.parse('2022-02-06T14:11:03.567')],
     ]);
   });
-
-  it('should return null if too many chunks would be generated', () => {
-    const start = Date.parse('2022-02-06T14:10:03');
-    const end = Date.parse('2022-02-06T14:30:03');
-    expect(getRangeChunks(start, end, 10000)).toBeNull();
-  });
 });

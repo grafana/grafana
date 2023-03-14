@@ -1,13 +1,13 @@
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import * as api from '../../../../features/manage-dashboards/state/actions';
-import { DashboardSearchItem } from '../../../../features/search/types';
+import { DashboardSearchHit } from '../../../../features/search/types';
 import { PermissionLevelString } from '../../../../types';
 
 import { ALL_FOLDER, GENERAL_FOLDER } from './ReadonlyFolderPicker';
 import { getFolderAsOption, getFoldersAsOptions } from './api';
 
 function getTestContext(
-  searchHits: DashboardSearchItem[] = [],
+  searchHits: DashboardSearchHit[] = [],
   folderById: { id: number; title: string } = { id: 1, title: 'Folder 1' }
 ) {
   jest.clearAllMocks();
@@ -31,7 +31,7 @@ describe('getFoldersAsOptions', () => {
     describe('and extra folders are passed', () => {
       it('then extra folders should all appear first in the result', async () => {
         const args = { query: '', extraFolders: [ALL_FOLDER, GENERAL_FOLDER] };
-        const searchHits: any[] = [{ id: 1, title: 'Folder 1' }];
+        const searchHits = [{ id: 1, title: 'Folder 1' }] as DashboardSearchHit[];
         getTestContext(searchHits);
 
         const result = await getFoldersAsOptions(args);
@@ -57,7 +57,7 @@ describe('getFoldersAsOptions', () => {
     describe('and extra folders are passed and extra folders contain query', () => {
       it('then correct extra folders should all appear first in the result', async () => {
         const args = { query: 'er', extraFolders: [ALL_FOLDER, GENERAL_FOLDER] };
-        const searchHits: any[] = [{ id: 1, title: 'Folder 1' }];
+        const searchHits = [{ id: 1, title: 'Folder 1' }] as DashboardSearchHit[];
         getTestContext(searchHits);
 
         const result = await getFoldersAsOptions(args);
@@ -71,7 +71,7 @@ describe('getFoldersAsOptions', () => {
     describe('and extra folders are passed and extra folders do not contain query', () => {
       it('then no extra folders should appear first in the result', async () => {
         const args = { query: '1', extraFolders: [ALL_FOLDER, GENERAL_FOLDER] };
-        const searchHits: any[] = [{ id: 1, title: 'Folder 1' }];
+        const searchHits = [{ id: 1, title: 'Folder 1' }] as DashboardSearchHit[];
         getTestContext(searchHits);
 
         const result = await getFoldersAsOptions(args);

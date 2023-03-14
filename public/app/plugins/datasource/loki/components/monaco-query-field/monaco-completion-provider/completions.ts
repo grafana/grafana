@@ -1,7 +1,7 @@
 import { escapeLabelValueInExactSelector } from '../../../languageUtils';
 import { explainOperator } from '../../../querybuilder/operations';
 import { LokiOperationId } from '../../../querybuilder/types';
-import { AGGREGATION_OPERATORS, RANGE_VEC_FUNCTIONS } from '../../../syntax';
+import { AGGREGATION_OPERATORS, RANGE_VEC_FUNCTIONS, BUILT_IN_FUNCTIONS } from '../../../syntax';
 
 import { CompletionDataProvider } from './CompletionDataProvider';
 import { NeverCaseError } from './NeverCaseError';
@@ -52,6 +52,16 @@ const FUNCTION_COMPLETIONS: Completion[] = RANGE_VEC_FUNCTIONS.map((f) => ({
   type: 'FUNCTION',
   label: f.label,
   insertText: `${f.insertText ?? ''}({$0}[\\$__interval])`, // i don't know what to do when this is nullish. it should not be.
+  isSnippet: true,
+  triggerOnInsert: true,
+  detail: f.detail,
+  documentation: f.documentation,
+}));
+
+const BUILT_IN_FUNCTIONS_COMPLETIONS: Completion[] = BUILT_IN_FUNCTIONS.map((f) => ({
+  type: 'FUNCTION',
+  label: f.label,
+  insertText: `${f.insertText ?? ''}($0)`,
   isSnippet: true,
   triggerOnInsert: true,
   detail: f.detail,
@@ -293,7 +303,13 @@ export async function getCompletions(
     case 'EMPTY':
     case 'AT_ROOT':
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
-      return [...historyCompletions, ...LOG_COMPLETIONS, ...AGGREGATION_COMPLETIONS, ...FUNCTION_COMPLETIONS];
+      return [
+        ...historyCompletions,
+        ...LOG_COMPLETIONS,
+        ...AGGREGATION_COMPLETIONS,
+        ...BUILT_IN_FUNCTIONS_COMPLETIONS,
+        ...FUNCTION_COMPLETIONS,
+      ];
     case 'IN_RANGE':
       return DURATION_COMPLETIONS;
     case 'IN_GROUPING':

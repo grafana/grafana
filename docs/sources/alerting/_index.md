@@ -2,6 +2,11 @@
 aliases:
   - about-alerting/
   - unified-alerting/alerting/
+cascade:
+  labels:
+    products:
+      - cloud
+      - oss
 title: Alerting
 weight: 114
 ---

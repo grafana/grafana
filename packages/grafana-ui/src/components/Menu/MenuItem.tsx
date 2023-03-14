@@ -30,7 +30,7 @@ export interface MenuItemProps<T = any> {
   /** Url of the menu item */
   url?: string;
   /** Handler for the click behaviour */
-  onClick?: (event?: React.MouseEvent<HTMLElement>, payload?: T) => void;
+  onClick?: (event: React.MouseEvent<HTMLElement>, payload?: T) => void;
   /** Custom MenuItem styles*/
   className?: string;
   /** Active */

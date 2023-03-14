@@ -1,5 +1,17 @@
-import { PanelMenuItem } from '@grafana/data';
-import { AngularComponent, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
+import {
+  isPluginExtensionCommand,
+  isPluginExtensionLink,
+  PanelMenuItem,
+  PluginExtensionPlacements,
+} from '@grafana/data';
+import {
+  AngularComponent,
+  getDataSourceSrv,
+  getPluginExtensions,
+  locationService,
+  reportInteraction,
+  PluginExtensionPanelContext,
+} from '@grafana/runtime';
 import { LoadingState } from '@grafana/schema';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
@@ -35,6 +47,7 @@ export function getPanelMenu(
     locationService.partial({
       viewPanel: panel.id,
     });
+    reportInteraction('dashboards_panelheader_view_clicked');
   };
 
   const onEditPanel = (event: React.MouseEvent<any>) => {
@@ -42,21 +55,25 @@ export function getPanelMenu(
     locationService.partial({
       editPanel: panel.id,
     });
+    reportInteraction('dashboards_panelheader_edit_clicked');
   };
 
   const onSharePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     sharePanel(dashboard, panel);
+    reportInteraction('dashboards_panelheader_share_clicked');
   };
 
   const onAddLibraryPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     addLibraryPanel(dashboard, panel);
+    reportInteraction('dashboards_panelheader_createlibrarypanel_clicked');
   };
 
   const onUnlinkLibraryPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     unlinkLibraryPanel(panel);
+    reportInteraction('dashboards_panelheader_unlinklibrarypanel_clicked');
   };
 
   const onInspectPanel = (tab?: InspectTab) => {
@@ -64,10 +81,7 @@ export function getPanelMenu(
       inspect: panel.id,
       inspectTab: tab,
     });
-
-    reportInteraction('grafana_panel_menu_inspect', {
-      tab: tab ?? InspectTab.Data,
-    });
+    reportInteraction('dashboards_panelheader_inspect_clicked', { tab: tab ?? InspectTab.Data });
   };
 
   const onMore = (event: React.MouseEvent<any>) => {
@@ -77,16 +91,19 @@ export function getPanelMenu(
   const onDuplicatePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     duplicatePanel(dashboard, panel);
+    reportInteraction('dashboards_panelheader_duplicate_clicked');
   };
 
   const onCopyPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     copyPanel(panel);
+    reportInteraction('dashboards_panelheader_copy_clicked');
   };
 
   const onRemovePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     removePanel(dashboard, panel, true);
+    reportInteraction('dashboards_panelheader_remove_clicked');
   };
 
   const onNavigateToExplore = (event: React.MouseEvent<any>) => {
@@ -94,16 +111,19 @@ export function getPanelMenu(
     const openInNewWindow =
       event.ctrlKey || event.metaKey ? (url: string) => window.open(`${config.appSubUrl}${url}`) : undefined;
     store.dispatch(navigateToExplore(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow }) as any);
+    reportInteraction('dashboards_panelheader_explore_clicked');
   };
 
   const onToggleLegend = (event: React.MouseEvent) => {
     event.preventDefault();
     toggleLegend(panel);
+    reportInteraction('dashboards_panelheader_togglelegend_clicked');
   };
 
   const onCancelStreaming = (event: React.MouseEvent) => {
     event.preventDefault();
     panel.getQueryRunner().cancelQuery();
+    reportInteraction('dashboards_panelheader_cancelstreaming_clicked');
   };
 
   const menu: PanelMenuItem[] = [];
@@ -278,5 +298,61 @@ export function getPanelMenu(
     });
   }
 
+  const { extensions } = getPluginExtensions({
+    placement: PluginExtensionPlacements.DashboardPanelMenu,
+    context: createExtensionContext(panel, dashboard),
+  });
+
+  for (const extension of extensions) {
+    if (isPluginExtensionLink(extension)) {
+      subMenu.push({
+        text: truncateTitle(extension.title, 25),
+        href: extension.path,
+      });
+      continue;
+    }
+
+    if (isPluginExtensionCommand(extension)) {
+      subMenu.push({
+        text: truncateTitle(extension.title, 25),
+        onClick: extension.callHandlerWithContext,
+      });
+      continue;
+    }
+  }
+
   return menu;
+}
+
+function truncateTitle(title: string, length: number): string {
+  if (title.length < length) {
+    return title;
+  }
+  const part = title.slice(0, length - 3);
+  return `${part.trimEnd()}...`;
+}
+
+function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): PluginExtensionPanelContext {
+  const timeRange = Object.assign({}, dashboard.time);
+
+  return Object.freeze({
+    id: panel.id,
+    pluginId: panel.type,
+    title: panel.title,
+    timeRange: Object.freeze(timeRange),
+    timeZone: dashboard.timezone,
+    dashboard: Object.freeze({
+      uid: dashboard.uid,
+      title: dashboard.title,
+      tags: Object.freeze(Array.from<string>(dashboard.tags)),
+    }),
+    targets: Object.freeze(
+      panel.targets.map((t) =>
+        Object.freeze({
+          refId: t.refId,
+          pluginId: t.datasource?.type ?? 'unknown',
+        })
+      )
+    ),
+  });
 }

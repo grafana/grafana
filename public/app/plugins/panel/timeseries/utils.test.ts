@@ -29,6 +29,22 @@ describe('prepare timeseries graph', () => {
     expect(frames).toBeNull();
   });
 
+  it('sets classic palette index on graphable fields', () => {
+    const input = [
+      toDataFrame({
+        fields: [
+          { name: 'a', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'b', type: FieldType.string, values: ['a', 'b', 'c'] },
+          { name: 'c', type: FieldType.number, values: [1, 2, 3] },
+          { name: 'd', type: FieldType.string, values: ['d', 'e', 'f'] },
+          { name: 'e', type: FieldType.boolean, values: [true, false, true] },
+        ],
+      }),
+    ];
+    const frames = prepareGraphableFields(input, createTheme());
+    expect(frames![0].fields.map((f) => f.state?.seriesIndex)).toEqual([undefined, undefined, 0, undefined, 1]);
+  });
+
   it('will graph numbers and boolean values', () => {
     const input = [
       toDataFrame({
