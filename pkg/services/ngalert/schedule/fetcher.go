@@ -52,9 +52,8 @@ func (sch *schedule) updateSchedulableAlertRules(ctx context.Context) (diff, err
 			sch.log.Debug("No changes detected. Skip updating")
 			return diff{}, nil
 		}
-		// if diff is not empty then fetch ALL rules from the database.
 	}
-// At this point, we know we need to re-fetch rules as there are changes.
+	// At this point, we know we need to re-fetch rules as there are changes.
 	q := models.GetAlertRulesForSchedulingQuery{
 		PopulateFolders: !sch.disableGrafanaFolder,
 	}
