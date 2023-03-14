@@ -51,7 +51,9 @@ interface Settings {
   to: number;
 }
 
-export const SimpleEditor: React.FC<StandardEditorProps<number, Settings>> = ({ item, value, onChange }) => {
+type Props = StandardEditorProps<number, Settings>;
+
+export const SimpleEditor = ({ item, value, onChange }: Props) => {
   const options: Array<SelectableValue<number>> = [];
 
   // Default values

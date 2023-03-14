@@ -15,7 +15,7 @@ const MIN_ZOOM_DIST = 5;
 /**
  * @alpha
  */
-export const ZoomPlugin: React.FC<ZoomPluginProps> = ({ onZoom, config }) => {
+export const ZoomPlugin = ({ onZoom, config }: ZoomPluginProps) => {
   const [selection, setSelection] = useState<PlotSelection | null>(null);
 
   useEffect(() => {

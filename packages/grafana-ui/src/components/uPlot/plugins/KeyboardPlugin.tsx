@@ -170,7 +170,7 @@ const initHook = (u: uPlot) => {
 /**
  * @alpha
  */
-export const KeyboardPlugin: React.FC<KeyboardPluginProps> = ({ config }) => {
+export const KeyboardPlugin = ({ config }: KeyboardPluginProps) => {
   useLayoutEffect(() => config.addHook('init', initHook), [config]);
 
   return null;
