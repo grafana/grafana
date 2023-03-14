@@ -29,7 +29,7 @@ type Local struct {
 
 func NewLocalFinder() *Local {
 	return &Local{
-		log: log.New("finder.local"),
+		log: log.New("local.finder"),
 	}
 }
 
