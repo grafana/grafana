@@ -1,9 +1,9 @@
-package client
+package kine
 
 import "github.com/google/wire"
 
 var WireSet = wire.NewSet(
-	ProvideClientsetProvier,
-	wire.Bind(new(ClientSetProvider), new(*service)),
+	ProvideService,
+	wire.Bind(new(EtcdProvider), new(*service)),
 	wire.Bind(new(Service), new(*service)),
 )

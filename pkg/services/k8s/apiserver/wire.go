@@ -1,9 +1,9 @@
-package client
+package apiserver
 
 import "github.com/google/wire"
 
 var WireSet = wire.NewSet(
-	ProvideClientsetProvier,
-	wire.Bind(new(ClientSetProvider), new(*service)),
+	ProvideService,
 	wire.Bind(new(Service), new(*service)),
+	wire.Bind(new(RestConfigProvider), new(*service)),
 )

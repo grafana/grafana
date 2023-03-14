@@ -1,9 +1,9 @@
 package publicdashboard
 
 import (
-	"context"
 	"encoding/json"
 	"io"
+
 	k8sTypes "k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -25,11 +25,12 @@ type WebhooksAPI struct {
 	Features             *featuremgmt.FeatureManager
 	Log                  log.Logger
 	ValidationController admission.ValidatingAdmissionController
+	clientsetProvider    client.ClientSetProvider
 }
 
 func ProvideWebhooks(
 	rr routing.RouteRegister,
-	clientset *client.Clientset,
+	clientset client.ClientSetProvider,
 	ac accesscontrol.AccessControl,
 	features *featuremgmt.FeatureManager,
 	vc admission.ValidatingAdmissionController,
@@ -39,15 +40,13 @@ func ProvideWebhooks(
 		AccessControl:        ac,
 		Log:                  log.New("k8s.publicdashboard.webhooks.admission.create"),
 		ValidationController: vc,
+		clientsetProvider:    clientset,
 	}
 
 	webhooksAPI.RegisterAPIEndpoints()
-	err := clientset.RegisterValidation(context.Background(), []client.ShortWebhookConfig{})
 
-	// TODO do better
-	if err != nil {
-		panic(err)
-	}
+	// TODO: figure out how to register the webhooks
+
 	return webhooksAPI
 }
 
