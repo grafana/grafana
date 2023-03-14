@@ -8,8 +8,9 @@ import {
   isValidDuration,
   parseDuration,
   dateTimeFormat,
+  dateTime,
 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, Tooltip } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -128,7 +129,10 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
     const lastEvaluationDate = Date.parse(rule.promRule?.lastEvaluation || '');
     const intervalDuration = parseDuration(rule.group.interval!);
     const nextEvaluationDate = addDurationToDate(lastEvaluationDate, intervalDuration);
-    return dateTimeFormat(nextEvaluationDate, { format: 'YYYY-MM-DD HH:mm:ss' });
+    return {
+      humanized: dateTime(nextEvaluationDate).locale('en').fromNow(true),
+      fullDate: dateTimeFormat(nextEvaluationDate, { format: 'YYYY-MM-DD HH:mm:ss' }),
+    };
   }, []);
 
   return useMemo((): RuleTableColumnProps[] => {
@@ -204,7 +208,16 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
       columns.push({
         id: 'nextEvaluation',
         label: 'Next evaluation',
-        renderCell: ({ data: rule }) => calculateNextEvaluationDate(rule),
+        renderCell: ({ data: rule }) => {
+          const nextEvalInfo = calculateNextEvaluationDate(rule);
+          return (
+            nextEvalInfo?.fullDate && (
+              <Tooltip placement="top" content={`${nextEvalInfo?.fullDate}`} theme="info">
+                <span>in {nextEvalInfo?.humanized}</span>
+              </Tooltip>
+            )
+          );
+        },
         size: 2,
       });
     }
