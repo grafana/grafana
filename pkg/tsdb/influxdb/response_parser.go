@@ -204,16 +204,30 @@ func formatFrameName(row Row, column string, query Query) string {
 
 func buildFrameNameFromQuery(row Row, column string) string {
 	tags := make([]string, 0, len(row.Tags))
+	b := make([]byte, 0, 40)
 	for k, v := range row.Tags {
-		tags = append(tags, fmt.Sprintf("%s: %s", k, v))
+		b = append(b, k...)
+		b = append(b, []byte(": ")...)
+		b = append(b, v...)
+		tags = append(tags, string(b))
 	}
 
-	tagText := ""
+	tagText := make([]byte, 0)
 	if len(tags) > 0 {
-		tagText = fmt.Sprintf(" { %s }", strings.Join(tags, " "))
+		tagText = append(tagText, []byte(" { ")...)
+		tagsStr := strings.Join(tags, " ")
+		tagText = append(tagText, tagsStr...)
+		tagText = append(tagText, []byte(" }")...)
 	}
 
-	return fmt.Sprintf("%s.%s%s", row.Name, column, tagText)
+	resLength := len(row.Name) + len(column) + len(tagText) + 1
+	result := make([]byte, 0, resLength)
+	result = append(result, row.Name...)
+	result = append(result, '.')
+	result = append(result, column...)
+	result = append(result, tagText...)
+
+	return string(result)
 }
 
 func parseTimestamp(value interface{}) (time.Time, error) {
