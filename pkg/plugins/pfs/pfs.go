@@ -52,16 +52,7 @@ func loadGP(ctx *cue.Context) cue.Value {
 
 // PermittedCUEImports returns the list of import paths that may be used in a
 // plugin's grafanaplugin cue package.
-//
-// TODO probably move this into kindsys
-func PermittedCUEImports() []string {
-	return []string{
-		"github.com/grafana/thema",
-		"github.com/grafana/grafana/pkg/kindsys",
-		"github.com/grafana/grafana/pkg/plugins/pfs",
-		"github.com/grafana/grafana/packages/grafana-schema/src/common",
-	}
-}
+var PermittedCUEImports = cuectx.PermittedCUEImports
 
 func importAllowed(path string) bool {
 	for _, p := range PermittedCUEImports() {

@@ -55,9 +55,17 @@ func main() {
 		kind2pd(corecodegen.DocsJenny(
 			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
 		)),
+		// TODO UGH SO MUCH DUPLICATION, CODEJEN NEEDS TO BE BETTER
+		kinds2pd(corecodegen.LatestMajorsOrXJenny(
+			filepath.Join("packages", "grafana-schema", "src", "raw", "composable"), corecodegen.TSTypesJenny{})),
 	)
 
-	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"))
+	schifs := kindsys.SchemaInterfaces(rt.Context())
+	schifnames := make([]string, 0, len(schifs))
+	for _, schif := range schifs {
+		schifnames = append(schifnames, strings.ToLower(schif.Name()))
+	}
+	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"), splitSchiffer(schifnames))
 
 	declParser := pfs.NewDeclParser(rt, skipPlugins)
 	decls, err := declParser.Parse(os.DirFS(cwd))
@@ -97,4 +105,30 @@ func kind2pd(j codejen.OneToOne[kindsys.Kind]) codejen.OneToOne[*pfs.PluginDecl]
 		}
 		return kd
 	})
+}
+
+func kinds2pd(j codejen.OneToMany[kindsys.Kind]) codejen.OneToMany[*pfs.PluginDecl] {
+	return codejen.AdaptOneToMany(j, func(pd *pfs.PluginDecl) kindsys.Kind {
+		kd, err := kindsys.BindComposable(nil, pd.KindDecl)
+		if err != nil {
+			return nil
+		}
+		return kd
+	})
+}
+
+func splitSchiffer(names []string) codejen.FileMapper {
+	for i := range names {
+		names[i] = names[i] + "/"
+	}
+	return func(f codejen.File) (codejen.File, error) {
+		// TODO it's terrible that this has to exist, CODEJEN NEEDS TO BE BETTER
+		for _, name := range names {
+			if idx := strings.Index(f.RelativePath, name); idx != -1 {
+				f.RelativePath = fmt.Sprintf("%s/%s", f.RelativePath[:idx], f.RelativePath[idx:])
+				break
+			}
+		}
+		return f, nil
+	}
 }

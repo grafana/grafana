@@ -9,8 +9,10 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
+	"github.com/grafana/cuetsy"
 	"github.com/grafana/cuetsy/ts"
 	"github.com/grafana/cuetsy/ts/ast"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/typescript"
@@ -44,6 +46,9 @@ func (gen *genTSVeneerIndex) Generate(kinds ...kindsys.Kind) (*codejen.File, err
 	for _, def := range kinds {
 		sch := def.Lineage().Latest()
 		f, err := typescript.GenerateTypes(sch, &typescript.TypeConfig{
+			CuetsyConfig: &cuetsy.Config{
+				ImportMapper: cuectx.MapCUEImportToTS,
+			},
 			RootName: def.Props().Common().Name,
 			Group:    def.Props().Common().LineageIsGroup,
 		})

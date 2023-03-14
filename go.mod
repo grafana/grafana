@@ -32,7 +32,7 @@ require (
 
 require (
 	cloud.google.com/go/storage v1.28.1
-	cuelang.org/go v0.5.0-beta.2
+	cuelang.org/go v0.5.0-beta.5
 	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.28
 	github.com/BurntSushi/toml v1.2.1
@@ -65,7 +65,7 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/grafana/alerting v0.0.0-20230302124801-c17c23256fba
-	github.com/grafana/cuetsy v0.1.6
+	github.com/grafana/cuetsy v0.1.7-0.20230314035336-67e1910e462f
 	github.com/grafana/grafana-aws-sdk v0.12.0
 	github.com/grafana/grafana-azure-sdk-go v1.6.0
 	github.com/grafana/grafana-plugin-sdk-go v0.153.0
