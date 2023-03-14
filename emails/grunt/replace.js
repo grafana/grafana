@@ -23,14 +23,14 @@ const txt = {
 };
 
 /**
- * Replace all instances of HTML comments with {{ safeHTML "<!-- my comment -->" }}.
+ * Replace all instances of HTML comments with {{ __dangerouslyInjectHTML "<!-- my comment -->" }}.
  *
  * MJML will output <!--[if !mso]><!--> comments which are specific to MS Outlook.
  *
  * Go's template/html package will strip all HTML comments and we need them to be preserved
  * to work with MS Outlook on the Desktop.
  */
-const HTML_SAFE_FUNC = 'safeHTML';
+const HTML_SAFE_FUNC = '__dangerouslyInjectHTML';
 const commentBlock = /(<!--[\s\S]*?-->)/g;
 
 const comments = {
