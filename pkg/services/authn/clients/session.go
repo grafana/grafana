@@ -119,7 +119,7 @@ func (s *Session) Hook(ctx context.Context, identity *authn.Identity, r *authn.R
 			identity.SessionToken = newToken
 			s.log.Debug("rotated session token", "user", identity.ID)
 
-			authn.WriteSessionCookie(w, s.cfg, identity)
+			authn.WriteSessionCookie(w, s.cfg, identity.SessionToken)
 		}
 	})
 

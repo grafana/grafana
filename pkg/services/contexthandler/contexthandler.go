@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	loginpkg "github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -551,7 +550,7 @@ func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *context
 		}
 
 		reqContext.Logger.Debug("Expiring invalid cookie")
-		cookies.DeleteCookie(reqContext.Resp, h.Cfg.LoginCookieName, nil)
+		authn.DeleteSessionCookie(reqContext.Resp, h.Cfg)
 	}
 }
 
@@ -594,7 +593,7 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *contextmodel.ReqCont
 
 		if rotated {
 			reqContext.UserToken = newToken
-			cookies.WriteSessionCookie(reqContext, h.Cfg, newToken.UnhashedToken, h.Cfg.LoginMaxLifetime)
+			authn.WriteSessionCookie(reqContext.Resp, h.Cfg, newToken)
 		}
 	}
 }

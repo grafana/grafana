@@ -11,8 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/network"
-	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -83,13 +83,15 @@ func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) re
 	if err != nil {
 		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
 		if errors.Is(err, auth.ErrInvalidSessionToken) {
-			cookies.DeleteCookie(c.Resp, hs.Cfg.LoginCookieName, nil)
+			authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 		}
 		return response.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 
 	if res.Token != token {
-		cookies.WriteSessionCookie(c, hs.Cfg, res.Token, hs.Cfg.LoginMaxLifetime)
+		// FIXME: get full token structure
+		//authn.WriteSessionCookie(c.Resp, hs.Cfg, res.Token)
+		//cookies.WriteSessionCookie(c, hs.Cfg, res.Token, hs.Cfg.LoginMaxLifetime)
 	}
 
 	return response.Redirect(hs.GetRedirectURL(c))
@@ -124,13 +126,13 @@ func (hs *HTTPServer) RotateUserAuthToken(c *contextmodel.ReqContext) response.R
 	if err != nil {
 		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
 		if errors.Is(err, auth.ErrInvalidSessionToken) {
-			cookies.DeleteCookie(c.Resp, hs.Cfg.LoginCookieName, nil)
+			authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 		}
 		return response.ErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), err)
 	}
 
 	if res.Token != token {
-		cookies.WriteSessionCookie(c, hs.Cfg, res.Token, hs.Cfg.LoginMaxLifetime)
+		authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 	}
 
 	return response.JSON(http.StatusOK, map[string]any{})
