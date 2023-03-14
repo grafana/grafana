@@ -2,9 +2,6 @@ package apiserver
 
 import (
 	"context"
-	"fmt"
-	"net"
-	"net/http"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/services/k8s/kine"
@@ -12,10 +9,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/apiserver/pkg/util/notfoundhandler"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/kubernetes/cmd/kube-apiserver/app"
+	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
 )
 
 var _ Service = (*service)(nil)
@@ -36,7 +34,7 @@ type service struct {
 	restConfig   *rest.Config
 
 	stopCh    chan struct{}
-	stoppedCh <-chan struct{}
+	stoppedCh chan error
 }
 
 var (
@@ -65,72 +63,75 @@ func (s *service) GetRestConfig() *rest.Config {
 }
 
 func (s *service) start(ctx context.Context) error {
-	apiConfig, err := s.apiserverConfig()
-	if err != nil {
-		return fmt.Errorf("failed to create apiserver config: %w", err)
-	}
-	extensionsServerConfig, err := s.extensionsServerConfig(*apiConfig)
-	if err != nil {
-		return fmt.Errorf("failed to create extensions server config: %w", err)
-	}
-
-	notFoundHandler := notfoundhandler.New(extensionsServerConfig.GenericConfig.Serializer, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
-	delegateAPIServer := genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler)
-
-	extensionServer, err := extensionsServerConfig.Complete().New(delegateAPIServer)
+	serverRunOptions := options.NewServerRunOptions()
+	serverRunOptions.SecureServing.ServerCert.CertDirectory = "data/k8s"
+	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{"https://127.0.0.1:6443"}
+	etcdConfig := s.etcdProvider.GetConfig()
+	serverRunOptions.Etcd.StorageConfig.Transport.ServerList = etcdConfig.Endpoints
+	serverRunOptions.Etcd.StorageConfig.Transport.CertFile = etcdConfig.TLSConfig.CertFile
+	serverRunOptions.Etcd.StorageConfig.Transport.KeyFile = etcdConfig.TLSConfig.KeyFile
+	serverRunOptions.Etcd.StorageConfig.Transport.TrustedCAFile = etcdConfig.TLSConfig.CAFile
+	completedOptions, err := app.Complete(serverRunOptions)
 	if err != nil {
 		return err
 	}
 
-	apiServer, err := createAPIServer(apiConfig.ControlPlaneConfig, extensionServer.GenericAPIServer)
+	server, err := app.CreateServerChain(completedOptions)
 	if err != nil {
 		return err
 	}
 
-	aggregatorConfig, err := createAggregatorConfig(*apiConfig)
+	s.restConfig = server.GenericAPIServer.LoopbackClientConfig
+	s.writeKubeConfiguration(s.restConfig)
+
+	prepared, err := server.PrepareRun()
 	if err != nil {
 		return err
 	}
 
-	aggregatorServer, err := createAggregatorServer(aggregatorConfig, apiServer.GenericAPIServer, extensionServer.Informers)
-	if err != nil {
-		return err
-	}
-
-	prepared, err := aggregatorServer.PrepareRun()
-	if err != nil {
-		return err
-	}
-
-	l, err := net.Listen("tcp", "127.0.0.1:6443")
-	if err != nil {
-		return err
-	}
-
-	stoppedCh, _, err := genericapiserver.RunServer(&http.Server{
-		Addr:           "127.0.0.1:6443",
-		Handler:        prepared.GenericAPIServer.Handler,
-		MaxHeaderBytes: 1 << 20,
-	}, l, prepared.GenericAPIServer.ShutdownTimeout, s.stopCh)
-	if err != nil {
-		return err
-	}
-	s.stoppedCh = stoppedCh
-	s.restConfig = apiConfig.Config.LoopbackClientConfig
-	if err := prepared.Run(s.stopCh); err != nil {
-		return err
-	}
-
-	fmt.Printf("K8s API server is running %v", s.restConfig)
+	go func() {
+		s.stoppedCh <- prepared.Run(s.stopCh)
+	}()
 
 	return nil
 }
 
 func (s *service) running(ctx context.Context) error {
 	select {
+	case err := <-s.stoppedCh:
+		if err != nil {
+			return err
+		}
 	case <-ctx.Done():
 		close(s.stopCh)
-	case <-s.stoppedCh:
 	}
 	return nil
+}
+
+func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
+	clusters := make(map[string]*clientcmdapi.Cluster)
+	clusters["default-cluster"] = &clientcmdapi.Cluster{
+		Server:                   restConfig.Host,
+		CertificateAuthorityData: restConfig.CAData,
+	}
+
+	contexts := make(map[string]*clientcmdapi.Context)
+	contexts["default-context"] = &clientcmdapi.Context{
+		Cluster:   "default-cluster",
+		Namespace: "default",
+		AuthInfo:  "default",
+	}
+
+	authinfos := make(map[string]*clientcmdapi.AuthInfo)
+	authinfos["default"] = &clientcmdapi.AuthInfo{}
+
+	clientConfig := clientcmdapi.Config{
+		Kind:           "Config",
+		APIVersion:     "v1",
+		Clusters:       clusters,
+		Contexts:       contexts,
+		CurrentContext: "default-context",
+		AuthInfos:      authinfos,
+	}
+	return clientcmd.WriteToFile(clientConfig, "data/grafana.kubeconfig")
 }
