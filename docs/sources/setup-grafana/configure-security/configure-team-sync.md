@@ -9,7 +9,6 @@ labels:
   products:
     - cloud
     - enterprise
-    - oss
 title: Configure Team Sync
 weight: 1000
 ---

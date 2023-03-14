@@ -13,6 +13,7 @@ keywords:
   - settings
 labels:
   products:
+    - enterprise
     - oss
 title: Stats and license
 weight: 400
