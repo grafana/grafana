@@ -438,17 +438,9 @@ export function ChangeOrgButton({
   const styles = useStyles2(getChangeOrgButtonTheme);
   return (
     <div className={styles.disabledTooltip}>
-      <ConfirmButton
-        confirmText="Save"
-        onClick={onChangeRoleClick}
-        onCancel={onCancelClick}
-        onConfirm={onOrgRoleSave}
-        disabled={isExternalUser}
-      >
-        Change role
-      </ConfirmButton>
-      {isExternalUser && (
+      {isExternalUser ? (
         <>
+          <span className={styles.lockMessageClass}>{lockMessage}</span>
           <Tooltip
             placement="right-end"
             content={
@@ -469,8 +461,17 @@ export function ChangeOrgButton({
           >
             <Icon name="question-circle" />
           </Tooltip>
-          <span className={styles.lockMessageClass}>{lockMessage}</span>
         </>
+      ) : (
+        <ConfirmButton
+          confirmText="Save"
+          onClick={onChangeRoleClick}
+          onCancel={onCancelClick}
+          onConfirm={onOrgRoleSave}
+          disabled={isExternalUser}
+        >
+          Change role
+        </ConfirmButton>
       )}
     </div>
   );
