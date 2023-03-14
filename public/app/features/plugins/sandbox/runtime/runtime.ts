@@ -20,21 +20,27 @@ class SandboxRuntime {
     }
 
     if (!this.isHandShakeDone && event.data.type === SandboxMessageType.Handshake && event.data.key?.length > 0) {
-      console.log('handshake done', event.data);
       this.isHandShakeDone = true;
       this.key = event.data.key;
+      this.initPlugin();
+      console.log('handshake done (plugin side))');
       return;
     }
   };
 
   handShake() {
-    this.port.postMessage({ type: 'handshake', uid: this.bootData.instanceSettings.uid });
+    this.port.postMessage({ type: 'handshake', id: this.bootData.id });
+  }
+
+  initPlugin() {
+    console.log('initPlugin', this.bootData);
+    this.isReady = true;
   }
 }
 
 function main() {
   // @ts-ignore
-  const bootData = window.grafanaSandboxData as SandboxGrafanaBootData;
+  const bootData: SandboxGrafanaBootData = window.grafanaSandboxData;
   if (!bootData) {
     return;
   }

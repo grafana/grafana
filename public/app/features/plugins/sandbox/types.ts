@@ -1,7 +1,8 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 
 export type SandboxGrafanaBootData = {
-  instanceSettings: DataSourceInstanceSettings;
+  id: string;
+  instanceSettings?: DataSourceInstanceSettings;
   isSandbox: boolean;
   isDev: boolean;
   modulePath: string;
