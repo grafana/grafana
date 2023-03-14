@@ -53,6 +53,11 @@ aliases:
   - whats-new-in-v6-5/
   - whats-new-in-v6-6/
   - whats-new-in-v6-7/
+cascade:
+  labels:
+    products:
+      - cloud
+      - oss
 title: What's new
 weight: 1
 ---
