@@ -123,7 +123,7 @@ func (c TestContext) getURL(url string, user User) string {
 
 	baseUrl := fmt.Sprintf("http://%s", c.env.HTTPServer.Listener.Addr())
 	if user.User.Login != "" && user.password != "" {
-		baseUrl = fmt.Sprintf("http://%s:%s@%s", user.User.Login, user.password, c.env.Server.HTTPServer.Listener.Addr())
+		baseUrl = fmt.Sprintf("http://%s:%s@%s", user.User.Login, user.password, c.env.HTTPServer.Listener.Addr())
 	}
 
 	return fmt.Sprintf(

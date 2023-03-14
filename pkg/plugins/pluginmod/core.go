@@ -64,14 +64,14 @@ func NewCore(cfg *setting.Cfg, coreRegistry *coreplugin.Registry, reg *registry.
 }
 
 func (c *core) start(ctx context.Context) error {
-	return nil
-}
-
-func (c *core) run(ctx context.Context) error {
 	err := c.s.Run(ctx)
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (c *core) run(ctx context.Context) error {
 	<-ctx.Done()
 	return ctx.Err()
 }

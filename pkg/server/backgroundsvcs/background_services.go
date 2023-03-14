@@ -101,7 +101,7 @@ func ProvideBackgroundServiceRegistry(
 	moduleManager.RegisterModule(modules.Core, func() (services.Service, error) {
 		r.BasicService = services.NewBasicService(r.start, r.run, r.stop)
 		return r, nil
-	})
+	}, modules.AccessControl, modules.Plugins)
 
 	r.usageStatsProvidersRegistry = usageStatsProvidersRegistry
 	r.statsCollectorService = statsCollector

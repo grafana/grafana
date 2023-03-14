@@ -33,6 +33,7 @@ type Engine interface {
 type Manager interface {
 	RegisterModule(name string, initFn func() (services.Service, error), deps ...string)
 	RegisterInvisibleModule(name string, initFn func() (services.Service, error), deps ...string)
+	IsModuleEnabled(name string) bool
 }
 
 var _ Engine = (*service)(nil)
@@ -53,20 +54,10 @@ type service struct {
 func ProvideService(cfg *setting.Cfg) *service {
 	logger := log.New("modules")
 	return &service{
-		cfg:     cfg,
-		log:     logger,
-		targets: cfg.Target,
-		dependencyMap: map[string][]string{
-			PluginManagerServer: {},
-			PluginManagerClient: {},
-			PluginManagement:    {},
-			Plugins:             {},
-
-			AccessControl: {},
-			Core:          {AccessControl, Plugins},
-			HTTPServer:    {Core, Plugins},
-			All:           {Core, HTTPServer, AccessControl, Plugins},
-		},
+		cfg:           cfg,
+		log:           logger,
+		targets:       cfg.Target,
+		dependencyMap: map[string][]string{},
 
 		ModuleManager: modules.NewManager(logger),
 		ServiceMap:    map[string]services.Service{},
@@ -78,13 +69,7 @@ func (m *service) Init(_ context.Context) error {
 	var err error
 
 	// module registration
-	m.RegisterModule(All, nil)
-
-	if m.IsModuleEnabled(All) {
-		m.dependencyMap[Plugins] = append(m.dependencyMap[Plugins], PluginManagement)
-	} else {
-		m.dependencyMap[Plugins] = append(m.dependencyMap[Plugins], PluginManagerClient)
-	}
+	m.RegisterModule(All, nil, Core, HTTPServer, AccessControl, Plugins)
 
 	for mod, targets := range m.dependencyMap {
 		if err := m.ModuleManager.AddDependency(mod, targets...); err != nil {

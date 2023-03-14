@@ -22,7 +22,12 @@ func ProvidePluginsModule(cfg *setting.Cfg, moduleManager modules.Manager, coreR
 	moduleManager.RegisterModule(modules.PluginManagerServer, m.initServer)
 	moduleManager.RegisterInvisibleModule(modules.PluginManagerClient, m.initClient)
 	moduleManager.RegisterInvisibleModule(modules.PluginManagement, m.initLocalPluginManagement)
-	moduleManager.RegisterInvisibleModule(modules.Plugins, nil)
+
+	if moduleManager.IsModuleEnabled(modules.All) {
+		moduleManager.RegisterInvisibleModule(modules.Plugins, nil, modules.PluginManagement)
+	} else {
+		moduleManager.RegisterInvisibleModule(modules.Plugins, nil, modules.PluginManagerClient)
+	}
 
 	return m, nil
 }

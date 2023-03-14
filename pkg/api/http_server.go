@@ -375,7 +375,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	hs.moduleManager.RegisterModule(modules.HTTPServer, func() (services.Service, error) {
 		hs.BasicService = services.NewBasicService(hs.start, hs.run, nil)
 		return hs, nil
-	})
+	}, modules.Core, modules.Plugins)
 
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err
@@ -391,7 +391,7 @@ func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddlew
 	hs.namedMiddlewares = append(hs.namedMiddlewares, middleware)
 }
 
-func (hs *HTTPServer) start(ctx context.Context) error {
+func (hs *HTTPServer) start(_ context.Context) error {
 	hs.applyRoutes()
 
 	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
