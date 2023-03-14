@@ -20,8 +20,9 @@ func TestTracingMiddleware(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
-		name string
-		run  func(pluginCtx backend.PluginContext, cdt *clienttest.ClientDecoratorTest) error
+		name        string
+		run         func(pluginCtx backend.PluginContext, cdt *clienttest.ClientDecoratorTest) error
+		expSpanName string
 	}{
 		{
 			name: "QueryData",
@@ -31,6 +32,7 @@ func TestTracingMiddleware(t *testing.T) {
 				})
 				return err
 			},
+			expSpanName: "queryData",
 		},
 		{
 			name: "CallResource",
@@ -39,6 +41,7 @@ func TestTracingMiddleware(t *testing.T) {
 					PluginContext: pluginCtx,
 				}, nopCallResourceSender)
 			},
+			expSpanName: "callResource",
 		},
 		{
 			name: "CheckHealth",
@@ -48,6 +51,7 @@ func TestTracingMiddleware(t *testing.T) {
 				})
 				return err
 			},
+			expSpanName: "checkHealth",
 		},
 		{
 			name: "CollectMetrics",
@@ -57,6 +61,7 @@ func TestTracingMiddleware(t *testing.T) {
 				})
 				return err
 			},
+			expSpanName: "collectMetrics",
 		},
 		{
 			name: "SubscribeStream",
@@ -66,6 +71,7 @@ func TestTracingMiddleware(t *testing.T) {
 				})
 				return err
 			},
+			expSpanName: "subscribeStream",
 		},
 		{
 			name: "PublishStream",
@@ -75,6 +81,7 @@ func TestTracingMiddleware(t *testing.T) {
 				})
 				return err
 			},
+			expSpanName: "publishStream",
 		},
 		// TODO: RunStream?
 	} {
@@ -94,6 +101,7 @@ func TestTracingMiddleware(t *testing.T) {
 				assert.True(t, span.IsEnded(), "span should be ended")
 				assert.NoError(t, span.Err, "span should not have an error")
 				assert.Equal(t, codes.Unset, span.StatusCode, "span should not have a status code")
+				assert.Equal(t, "PluginClient."+tc.expSpanName, span.Name)
 			})
 
 			t.Run("error", func(t *testing.T) {
