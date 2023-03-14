@@ -230,7 +230,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.log.Error("Failed to update alert rules", "error", err)
 	}
 
-	// this is the new current state. rulesDiff contains the difference between this state and the previous state.
+	// this is the new current state. rulesDiff contains the previously existing rules that were different between this state and the previous state.
 	alertRules, folderTitles := sch.schedulableAlertRules.all()
 
 	// registeredDefinitions is a map used for finding deleted alert rules
