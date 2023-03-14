@@ -88,7 +88,10 @@ func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) re
 		return response.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 
-	cookies.WriteSessionCookie(c, hs.Cfg, res.Token, hs.Cfg.LoginMaxLifetime)
+	if res.Token != token {
+		cookies.WriteSessionCookie(c, hs.Cfg, res.Token, hs.Cfg.LoginMaxLifetime)
+	}
+
 	return response.Redirect(hs.GetRedirectURL(c))
 }
 
@@ -126,7 +129,10 @@ func (hs *HTTPServer) RotateUserAuthToken(c *contextmodel.ReqContext) response.R
 		return response.ErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), err)
 	}
 
-	cookies.WriteSessionCookie(c, hs.Cfg, res.Token, hs.Cfg.LoginMaxLifetime)
+	if res.Token != token {
+		cookies.WriteSessionCookie(c, hs.Cfg, res.Token, hs.Cfg.LoginMaxLifetime)
+	}
+
 	return response.JSON(http.StatusOK, map[string]any{})
 }
 
