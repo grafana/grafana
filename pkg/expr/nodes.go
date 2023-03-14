@@ -13,13 +13,15 @@ import (
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 )
 
 var (
 	logger = log.New("expr")
 )
+
+const FromExpressionHeaderName = "FromExpression"
 
 type QueryError struct {
 	RefID string
@@ -227,6 +229,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		},
 		Headers: dn.request.Headers,
 	}
+	req.Headers[FromExpressionHeaderName] = "true"
 
 	responseType := "unknown"
 	defer func() {

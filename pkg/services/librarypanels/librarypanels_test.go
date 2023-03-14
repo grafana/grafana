@@ -706,8 +706,9 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 	require.NoError(t, err)
 	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	ac := acmock.New()
-	service := dashboardservice.ProvideDashboardService(
-		cfg, dashboardStore, dashAlertService,
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	service := dashboardservice.ProvideDashboardServiceImpl(
+		cfg, dashboardStore, folderStore, dashAlertService,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), acmock.NewMockedPermissionsService(), ac,
 		foldertest.NewFakeService(),
 	)

@@ -8,15 +8,6 @@
   padding: 0 0 $space-sm 0;
 }
 
-.annotation-segment {
-  padding: 8px 7px;
-
-  label.cr1 {
-    margin-left: 5px;
-    margin-top: 3px;
-  }
-}
-
 .submenu-item {
   display: inline-block;
 
@@ -30,114 +21,7 @@
   }
 }
 
-.variable-value-link {
-  max-width: 500px;
-  padding-right: 10px;
-  padding: 0 $space-sm;
-  background-color: $input-bg;
-  border: 1px solid $input-border-color;
-  border-radius: $input-border-radius;
-  display: flex;
-  align-items: center;
-  color: $text-color;
-  height: $input-height;
-
-  .label-tag {
-    margin: 0 5px;
-  }
-}
-
 .variable-link-wrapper {
   display: inline-block;
   position: relative;
-}
-
-.variable-value-dropdown {
-  position: absolute;
-  top: $input-height;
-  min-width: 150px;
-  max-height: 400px;
-  min-height: 150px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  background-color: $dropdownBackground;
-  box-shadow: $dropdownShadow;
-  z-index: $zindex-typeahead;
-  font-size: $font-size-base;
-  border-radius: 3px 3px 0 0;
-  border: 1px solid $tight-form-func-bg;
-
-  &.multi {
-    .selected {
-      .variable-option-icon {
-        background: url($checkboxImageUrl) 0px -18px no-repeat;
-      }
-    }
-  }
-
-  &.single {
-    .variable-option-icon {
-      display: none;
-    }
-    .selected {
-      background-color: $tight-form-func-highlight-bg;
-    }
-  }
-}
-
-.variable-options-wrapper {
-  display: table;
-  width: 100%;
-}
-
-.variable-options-column {
-  max-height: 350px;
-  display: table-cell;
-  line-height: 26px;
-  &:nth-child(2) {
-    border-left: 1px solid $tight-form-func-bg;
-  }
-}
-
-.variable-option-tag,
-.variable-option,
-.variable-options-column-header {
-  display: block;
-  padding: 2px 27px 0 8px;
-  position: relative;
-  white-space: nowrap;
-  min-width: 115px;
-}
-
-.variable-options-column-header {
-  padding-top: 5px;
-  padding-bottom: 5px;
-  margin-bottom: 5px;
-  &.many-selected {
-    .variable-option-icon {
-      background: url($checkboxImageUrl) 0px -36px no-repeat;
-    }
-  }
-}
-
-.variable-option-icon {
-  display: inline-block;
-  width: 24px;
-  height: 18px;
-  position: relative;
-  top: 4px;
-  background: url($checkboxImageUrl) left top no-repeat;
-}
-
-.variable-option {
-  &:hover,
-  &.highlighted {
-    background-color: $variable-option-bg;
-  }
-}
-
-.dash-nav-link {
-  padding: 8px 7px;
-  display: inline-block;
-  color: $text-color;
 }

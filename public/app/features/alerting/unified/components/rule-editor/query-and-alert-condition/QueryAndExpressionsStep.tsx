@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { DataQuery, DataSourceApi, DataSourceJsonData, LoadingState, PanelData } from '@grafana/data';
+import { LoadingState, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
@@ -35,25 +35,16 @@ import {
 
 interface Props {
   editingExistingRule: boolean;
-  prefill: boolean;
   onDataChange: (error: string) => void;
-  asyncDefaultQueries?: AlertQuery[];
-  asyncDataSource?: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
 }
 
-export const QueryAndExpressionsStep: FC<Props> = ({
-  editingExistingRule,
-  onDataChange,
-  asyncDefaultQueries,
-  asyncDataSource,
-  prefill,
-}) => {
+export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onDataChange }) => {
   const runner = useRef(new AlertingQueryRunner());
   const {
     setValue,
     getValues,
     watch,
-    formState: { errors, isDirty },
+    formState: { errors },
     control,
   } = useFormContext<RuleFormValues>();
   const [panelData, setPanelData] = useState<Record<string, PanelData>>({});
@@ -63,6 +54,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({
     panelData: {},
   };
   const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
+
   const [type, condition, dataSourceName] = watch(['type', 'condition', 'dataSourceName']);
 
   const isGrafanaManagedType = type === RuleFormType.grafana;
@@ -78,15 +70,6 @@ export const QueryAndExpressionsStep: FC<Props> = ({
   const runQueries = useCallback(() => {
     runner.current.run(getValues('queries'));
   }, [getValues]);
-
-  const updateWithDefault = !editingExistingRule && !prefill;
-  //once default queries is updated
-  useEffect(() => {
-    const shouldSetDataQuery = updateWithDefault && !isDirty && asyncDefaultQueries;
-    if (shouldSetDataQuery) {
-      dispatch(setDataQueries(asyncDefaultQueries));
-    }
-  }, [asyncDefaultQueries, updateWithDefault, isDirty]);
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -193,13 +176,6 @@ export const QueryAndExpressionsStep: FC<Props> = ({
     }
   }, [condition, queries, handleSetCondition]);
 
-  const defaultQueryAvailable = asyncDataSource && asyncDefaultQueries;
-  const onAddNewQuery = () => {
-    if (defaultQueryAvailable) {
-      dispatch(addNewDataQuery({ ds: asyncDataSource, defaultQuery: asyncDefaultQueries[0]?.model }));
-    }
-  };
-
   return (
     <RuleEditorSection stepNo={2} title="Set a query and alert condition">
       <AlertType editingExistingRule={editingExistingRule} />
@@ -215,8 +191,6 @@ export const QueryAndExpressionsStep: FC<Props> = ({
                   {...field}
                   dataSourceName={dataSourceName}
                   showPreviewAlertsButton={!isRecordingRuleType}
-                  asyncDefaultQuery={asyncDefaultQueries?.[0]}
-                  preservePreviousValue={!updateWithDefault}
                 />
               );
             }}
@@ -265,7 +239,9 @@ export const QueryAndExpressionsStep: FC<Props> = ({
               <Button
                 type="button"
                 icon="plus"
-                onClick={onAddNewQuery}
+                onClick={() => {
+                  dispatch(addNewDataQuery());
+                }}
                 variant="secondary"
                 aria-label={selectors.components.QueryTab.addQuery}
                 disabled={noCompatibleDataSources}

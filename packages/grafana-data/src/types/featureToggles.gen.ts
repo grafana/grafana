@@ -31,8 +31,6 @@ export interface FeatureToggles {
   lokiLive?: boolean;
   lokiDataframeApi?: boolean;
   featureHighlights?: boolean;
-  dashboardComments?: boolean;
-  annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
   k8s?: boolean;
@@ -80,4 +78,7 @@ export interface FeatureToggles {
   lokiQuerySplitting?: boolean;
   individualCookiePreferences?: boolean;
   drawerDataSourcePicker?: boolean;
+  traceqlSearch?: boolean;
+  prometheusMetricEncyclopedia?: boolean;
+  timeSeriesTable?: boolean;
 }
