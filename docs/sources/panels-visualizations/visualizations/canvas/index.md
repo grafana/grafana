@@ -99,7 +99,7 @@ Canvas supports [data links](https://grafana.com/docs/grafana/latest/panels-visu
 If multiple elements use the same field name, and you want to control which elements display the data link, you can create a unique field name using the [add field from calculation transform](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation). The alias you create in the transformation will appear as a field you can use with an element.
 
 1. In the panel editor for the canvas panel, click the **Transform** tab.
-1. Click **+ Add transformation** and select **Add field from calculation**.
+1. Select **Add field from calculation** from the list of transformations, or click **+ Add transformation** to display the list first.
 1. Choose **Reduce row** from the dropdown and click the field name that you want to use for the element.
 1. Select **All Values** from the **Calculation** dropdown.
 1. Add an alias for the field name.
