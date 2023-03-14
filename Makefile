@@ -158,12 +158,17 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
-	docker build --tag grafana/grafana:dev .
+	DOCKER_BUILDKIT=1 \
+	docker build \
+	--tag grafana/grafana:dev .
 
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	@echo "build docker container"
-	docker build --tag grafana/grafana:dev-ubuntu -f ./Dockerfile.ubuntu .
-
+	DOCKER_BUILDKIT=1 \
+	docker build \
+	--build-arg BASE_IMAGE=ubuntu:20.04 \
+	--build-arg GO_IMAGE=golang:1.19.4 \
+	--tag grafana/grafana:dev-ubuntu .
 
 ##@ Services
 
