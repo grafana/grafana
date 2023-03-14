@@ -401,11 +401,12 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 			secCfg.Backend = b
 			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l)
 			if err != nil {
-				return nil, fmt.Errorf("fanout target \"%s\"was miconfigured: %w", b, err)
+				return nil, fmt.Errorf("fanout target \"%s\" was miconfigured: %w", b, err)
 			}
 			secondaries = append(secondaries, sec)
 		}
 
+		l.Info("State history is operating in fanout mode", "primary", cfg.FanoutPrimary, "secondaries", cfg.FanoutSecondaries)
 		return historian.NewFanoutBackend(primary, secondaries...), nil
 	}
 	if cfg.Backend == "annotations" {
