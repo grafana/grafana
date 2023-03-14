@@ -84,6 +84,8 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
   getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
     // Grab any custom units to prepend/append
+    // The ui will default empty inputs to a value of an empty string,
+    // but if a custom prefix/suffix is chosen, then removed, that value will be `undefined`
     const { prefix, suffix } = fieldConfig.defaults?.custom;
 
     let globalRange: NumericRange | undefined = undefined;
