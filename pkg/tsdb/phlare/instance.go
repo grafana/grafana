@@ -49,7 +49,7 @@ func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backen
 		return nil, fmt.Errorf("error unmarshalling JSONData: %w", err)
 	}
 
-	sourceCodeURL := "https://localhost:8090/source/go"
+	sourceCodeURL := "http://localhost:8090/source/go"
 	if urlIntf, ok := jsonData["sourceCodeUrl"]; ok {
 		if url, ok := urlIntf.(string); ok {
 			sourceCodeURL = url
