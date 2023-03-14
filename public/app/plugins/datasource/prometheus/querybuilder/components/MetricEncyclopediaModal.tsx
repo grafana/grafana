@@ -330,6 +330,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
       title="Browse Metrics"
       onDismiss={onClose}
       aria-label="Metric Encyclopedia"
+      className={styles.modal}
     >
       <div className={styles.spacing}>
         Browse {metrics.length} metric{metrics.length > 1 ? 's' : ''} by text, by type, alphabetically or select a
@@ -658,6 +659,12 @@ function alphabetically(ascending: boolean, metadataFilters: boolean) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    modal: css`
+      width: 85vw;
+      ${theme.breakpoints.down('md')} {
+        width: 100%;
+      }
+    `,
     cardsContainer: css`
       display: flex;
       flex-direction: row;
