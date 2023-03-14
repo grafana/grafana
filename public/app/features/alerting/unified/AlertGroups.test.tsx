@@ -73,7 +73,7 @@ describe('AlertGroups', () => {
 
     await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
 
-    const groups = ui.group.getAll();
+    const groups = await ui.group.findAll();
 
     expect(groups).toHaveLength(2);
     expect(groups[0]).toHaveTextContent('No grouping');
@@ -105,7 +105,7 @@ describe('AlertGroups', () => {
 
     renderAmNotifications();
     await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
-    let groups = ui.group.getAll();
+    let groups = await ui.group.findAll();
     const groupByInput = ui.groupByInput.get();
     const groupByWrapper = ui.groupByContainer.get();
 
@@ -118,7 +118,7 @@ describe('AlertGroups', () => {
 
     await waitFor(() => expect(groupByWrapper).toHaveTextContent('appName'));
 
-    groups = ui.group.getAll();
+    groups = await ui.group.findAll();
 
     await waitFor(() => expect(ui.clearButton.get()).toBeInTheDocument());
     expect(groups).toHaveLength(3);
@@ -132,7 +132,7 @@ describe('AlertGroups', () => {
     await userEvent.type(groupByInput, 'env{enter}');
     await waitFor(() => expect(groupByWrapper).toHaveTextContent('env'));
 
-    groups = ui.group.getAll();
+    groups = await ui.group.findAll();
 
     expect(groups).toHaveLength(2);
     expect(groups[0]).toHaveTextContent('env=production');
@@ -144,7 +144,7 @@ describe('AlertGroups', () => {
     await userEvent.type(groupByInput, 'uniqueLabel{enter}');
     await waitFor(() => expect(groupByWrapper).toHaveTextContent('uniqueLabel'));
 
-    groups = ui.group.getAll();
+    groups = await ui.group.findAll();
     expect(groups).toHaveLength(2);
     expect(groups[0]).toHaveTextContent('No grouping');
     expect(groups[1]).toHaveTextContent('uniqueLabel=true');
@@ -159,9 +159,8 @@ describe('AlertGroups', () => {
       return Promise.resolve(groups);
     });
     renderAmNotifications();
-    await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
-    const groups = ui.group.getAll();
-
-    expect(groups).toHaveLength(1);
+    await waitFor(() => {
+      expect(ui.group.getAll()).toHaveLength(1);
+    });
   });
 });
