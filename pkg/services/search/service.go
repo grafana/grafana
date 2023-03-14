@@ -58,10 +58,24 @@ type SearchService struct {
 }
 
 func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
+	starredQuery := star.GetUserStarsQuery{
+		UserID: query.SignedInUser.UserID,
+	}
+	staredDashIDs, err := s.starService.GetByUser(ctx, &starredQuery)
+	if err != nil {
+		return err
+	}
+
+	// filter by starred dashboard IDs when starred dashboards are requested and no UID or ID filters are specified to improve query performance
+	if query.IsStarred && len(query.DashboardIds) == 0 && len(query.DashboardUIDs) == 0 {
+		for id := range staredDashIDs.UserStars {
+			query.DashboardIds = append(query.DashboardIds, id)
+		}
+	}
+
 	dashboardQuery := dashboards.FindPersistedDashboardsQuery{
 		Title:         query.Title,
 		SignedInUser:  query.SignedInUser,
-		IsStarred:     query.IsStarred,
 		DashboardUIDs: query.DashboardUIDs,
 		DashboardIds:  query.DashboardIds,
 		Type:          query.Type,
@@ -85,11 +99,23 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 		hits = sortedHits(hits)
 	}
 
-	if err := s.setStarredDashboards(ctx, query.SignedInUser.UserID, hits); err != nil {
-		return err
+	// set starred dashboards
+	for _, dashboard := range hits {
+		if _, ok := staredDashIDs.UserStars[dashboard.ID]; ok {
+			dashboard.IsStarred = true
+		}
 	}
 
-	query.Result = hits
+	// filter for starred dashboards if requested
+	if !query.IsStarred {
+		query.Result = hits
+	} else {
+		for _, dashboard := range hits {
+			if dashboard.IsStarred {
+				query.Result = append(query.Result, dashboard)
+			}
+		}
+	}
 
 	return nil
 }
@@ -105,23 +131,4 @@ func sortedHits(unsorted model.HitList) model.HitList {
 	}
 
 	return hits
-}
-
-func (s *SearchService) setStarredDashboards(ctx context.Context, userID int64, hits []*model.Hit) error {
-	query := star.GetUserStarsQuery{
-		UserID: userID,
-	}
-
-	res, err := s.starService.GetByUser(ctx, &query)
-	if err != nil {
-		return err
-	}
-	iuserstars := res.UserStars
-	for _, dashboard := range hits {
-		if _, ok := iuserstars[dashboard.ID]; ok {
-			dashboard.IsStarred = true
-		}
-	}
-
-	return nil
 }
