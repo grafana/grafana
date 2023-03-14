@@ -36,10 +36,6 @@ export const joinByFieldTransformer: SynchronousDataTransformerInfo<JoinByFieldO
     return (data: DataFrame[]) => {
       if (data.length > 1) {
         if (options.byField && !joinBy) {
-          // Either "time" or "Time" can be saved in the panel JSON from different versions of Grafana, so we need to make sure that they are both treated the same
-          if (options.byField.toLowerCase() === 'time') {
-            options.byField = 'Time';
-          }
           joinBy = fieldMatchers.get(FieldMatcherID.byName).get(options.byField);
         }
         const joined = joinDataFrames({ frames: data, joinBy, mode: options.mode });
