@@ -4,12 +4,12 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePlugin,
-  FieldType,
-  MutableDataFrame,
 } from '@grafana/data';
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
 import { IframeController } from './sandboxIframeController';
+import { fromDataQueryRequestToSandboxDataQueryRequest } from './sandboxSerializer';
+import { SandboxMessageType } from './types';
 
 export interface SandboxQuery extends DataQuery {}
 export interface SandboxOptions extends DataSourceJsonData {}
@@ -30,19 +30,10 @@ export class SandboxProxyDataSource extends DataSourceApi<SandboxQuery, SandboxO
   }
 
   async query(options: DataQueryRequest<SandboxQuery>): Promise<DataQueryResponse> {
-    // console.log(options);
-    // Return a constant for each query.
-    const data = options.targets.map((target) => {
-      // gen 2 random numbers from 1 to 100
-      const random1 = Math.floor(Math.random() * 100) + 1;
-      const random2 = Math.floor(Math.random() * 100) + 1;
-      return new MutableDataFrame({
-        refId: target.refId,
-        fields: [{ name: 'Static Sandbox Datasource', values: [random1, random2], type: FieldType.number }],
-      });
+    return this.iframeController.sendMessage({
+      type: SandboxMessageType.DatasourceQuery,
+      options: fromDataQueryRequestToSandboxDataQueryRequest(options),
     });
-
-    return { data };
   }
 
   async testDatasource() {
