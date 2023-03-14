@@ -123,7 +123,11 @@ func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 	}
 
 	authinfos := make(map[string]*clientcmdapi.AuthInfo)
-	authinfos["default"] = &clientcmdapi.AuthInfo{}
+	authinfos["default"] = &clientcmdapi.AuthInfo{
+		Token:    restConfig.BearerToken,
+		Username: restConfig.Username,
+		Password: restConfig.Password,
+	}
 
 	clientConfig := clientcmdapi.Config{
 		Kind:           "Config",
@@ -133,5 +137,5 @@ func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 		CurrentContext: "default-context",
 		AuthInfos:      authinfos,
 	}
-	return clientcmd.WriteToFile(clientConfig, "data/grafana.kubeconfig")
+	return clientcmd.WriteToFile(clientConfig, "data/k8s/grafana.kubeconfig")
 }
