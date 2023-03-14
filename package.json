@@ -254,6 +254,10 @@
     "yargs": "^17.5.1"
   },
   "dependencies": {
+    "@codemirror/language": "^6.6.0",
+    "@codemirror/legacy-modes": "^6.3.1",
+    "@codemirror/theme-one-dark": "^6.1.1",
+    "@codemirror/view": "^6.9.2",
     "@daybrush/utils": "1.10.2",
     "@emotion/css": "11.10.6",
     "@emotion/react": "11.10.6",
@@ -314,6 +318,7 @@
     "calculate-size": "1.1.1",
     "centrifuge": "3.1.0",
     "classnames": "2.3.2",
+    "codemirror": "^6.0.1",
     "combokeys": "^3.0.0",
     "comlink": "4.4.1",
     "common-tags": "1.8.2",
