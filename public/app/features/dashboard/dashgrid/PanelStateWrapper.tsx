@@ -625,6 +625,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     locationService.partial({ inspect: this.props.panel.id, inspectTab: InspectTab.Error });
   };
 
+  onCancelQuery = () => {
+    this.props.panel.getQueryRunner().cancelQuery();
+  };
+
   render() {
     const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
@@ -689,6 +693,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           hoverHeaderOffset={hoverHeaderOffset}
           hoverHeader={this.hasOverlayHeader()}
           displayMode={transparent ? 'transparent' : 'default'}
+          onCancelQuery={this.onCancelQuery}
         >
           {(innerWidth, innerHeight) => (
             <>
