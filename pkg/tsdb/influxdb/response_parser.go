@@ -85,6 +85,7 @@ func transformRows(rows []Row, query Query) data.Frames {
 			field := data.NewField("value", nil, values)
 			frames = append(frames, data.NewFrame(row.Name, field))
 		} else {
+			frameName := make([]byte, 0, 40)
 			for colIndex, column := range row.Columns {
 				if column == "time" {
 					continue
@@ -95,7 +96,6 @@ func transformRows(rows []Row, query Query) data.Frames {
 				var stringArray []*string
 				var boolArray []*bool
 				valType := typeof(row.Values, colIndex)
-				name := formatFrameName(row, column, query)
 
 				for _, valuePair := range row.Values {
 					timestamp, timestampErr := parseTimestamp(valuePair[0])
@@ -127,6 +127,8 @@ func transformRows(rows []Row, query Query) data.Frames {
 						}
 					}
 				}
+
+				name := string(formatFrameName(row, column, query, frameName[:]))
 
 				timeField := data.NewField("time", nil, timeArray)
 				if valType == "string" {
@@ -162,9 +164,9 @@ func newDataFrame(name string, queryString string, timeField *data.Field, valueF
 	return frame
 }
 
-func formatFrameName(row Row, column string, query Query) string {
+func formatFrameName(row Row, column string, query Query, frameName []byte) []byte {
 	if query.Alias == "" {
-		return buildFrameNameFromQuery(row, column)
+		return buildFrameNameFromQuery(row, column, frameName)
 	}
 	nameSegment := strings.Split(row.Name, ".")
 
@@ -199,35 +201,32 @@ func formatFrameName(row Row, column string, query Query) string {
 		return in
 	})
 
-	return string(result)
+	return result
 }
 
-func buildFrameNameFromQuery(row Row, column string) string {
-	tags := make([]string, 0, len(row.Tags))
-	b := make([]byte, 0, 40)
-	for k, v := range row.Tags {
-		b = append(b, k...)
-		b = append(b, []byte(": ")...)
-		b = append(b, v...)
-		tags = append(tags, string(b))
+func buildFrameNameFromQuery(row Row, column string, frameName []byte) []byte {
+	frameName = append(frameName, row.Name...)
+	frameName = append(frameName, '.')
+	frameName = append(frameName, column...)
+
+	if len(row.Tags) > 0 {
+		frameName = append(frameName, ' ', '{', ' ')
+		first := true
+		for k, v := range row.Tags {
+			if !first {
+				frameName = append(frameName, ' ')
+			} else {
+				first = false
+			}
+			frameName = append(frameName, k...)
+			frameName = append(frameName, ':', ' ')
+			frameName = append(frameName, v...)
+		}
+
+		frameName = append(frameName, ' ', '}')
 	}
 
-	tagText := make([]byte, 0)
-	if len(tags) > 0 {
-		tagText = append(tagText, []byte(" { ")...)
-		tagsStr := strings.Join(tags, " ")
-		tagText = append(tagText, tagsStr...)
-		tagText = append(tagText, []byte(" }")...)
-	}
-
-	resLength := len(row.Name) + len(column) + len(tagText) + 1
-	result := make([]byte, 0, resLength)
-	result = append(result, row.Name...)
-	result = append(result, '.')
-	result = append(result, column...)
-	result = append(result, tagText...)
-
-	return string(result)
+	return frameName
 }
 
 func parseTimestamp(value interface{}) (time.Time, error) {
