@@ -11,7 +11,6 @@ import {
   Card,
   Collapse,
   InlineField,
-  InlineLabel,
   InlineSwitch,
   Input,
   Modal,
@@ -323,6 +322,20 @@ export const MetricEncyclopediaModal = (props: Props) => {
     [datasource, query.labels]
   );
 
+  const MAXIMUM_RESULTS_PER_PAGE = 1000;
+
+  const calculateResultsPerPage = (results: number) => {
+    if (results < 1) {
+      return 1;
+    }
+
+    if (results > MAXIMUM_RESULTS_PER_PAGE) {
+      return MAXIMUM_RESULTS_PER_PAGE;
+    }
+
+    return results ?? 10;
+  };
+
   return (
     <Modal
       data-testid={testIds.metricModal}
@@ -586,38 +599,42 @@ export const MetricEncyclopediaModal = (props: Props) => {
         })}
       <br />
       <div className="gf-form">
-        <InlineLabel width={20} className="query-keyword">
-          Select Page
-        </InlineLabel>
-        <Select
-          data-testid={testIds.searchPage}
-          options={calculatePageList(metrics, resultsPerPage).map((p) => {
-            return { value: p, label: '' + p };
-          })}
-          value={pageNum ?? 1}
-          placeholder="select page"
-          onChange={(e) => {
-            const value = e.value ?? 1;
-            setPageNum(value);
-          }}
-        />
-        <InlineLabel width={20} className="query-keyword">
-          # results per page
-        </InlineLabel>
-        <Input
-          data-testid={testIds.resultsPerPage}
-          value={resultsPerPage ?? 10}
-          placeholder="results per page"
-          onInput={(e) => {
-            const value = +e.currentTarget.value;
+        <InlineField label="Select Page" labelWidth={20} className="query-keyword" grow={true}>
+          <Select
+            data-testid={testIds.searchPage}
+            options={calculatePageList(metrics, resultsPerPage).map((p) => {
+              return { value: p, label: '' + p };
+            })}
+            value={pageNum ?? 1}
+            placeholder="select page"
+            onChange={(e) => {
+              const value = e.value ?? 1;
+              setPageNum(value);
+            }}
+          />
+        </InlineField>
+        <InlineField
+          label="# results per page"
+          labelWidth={25}
+          className="query-keyword"
+          grow={true}
+          tooltip={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}
+        >
+          <Input
+            data-testid={testIds.resultsPerPage}
+            value={calculateResultsPerPage(resultsPerPage)}
+            placeholder="results per page"
+            onInput={(e) => {
+              const value = +e.currentTarget.value;
 
-            if (isNaN(value)) {
-              return;
-            }
+              if (isNaN(value)) {
+                return;
+              }
 
-            setResultsPerPage(value);
-          }}
-        />
+              setResultsPerPage(value);
+            }}
+          />
+        </InlineField>
       </div>
       <br />
       <Button aria-label="close metric encyclopedia modal" variant="secondary" onClick={onClose}>
