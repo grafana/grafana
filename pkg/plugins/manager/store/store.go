@@ -20,7 +20,7 @@ func ProvideService(pluginRegistry registry.Service, pluginSources sources.Regis
 	pluginLoader loader.Service) (*Service, error) {
 	ctx := context.Background()
 	for _, ps := range pluginSources.List(ctx) {
-		if _, err := pluginLoader.Load(ctx, ps.Class, ps.Paths); err != nil {
+		if _, err := pluginLoader.Load(ctx, ps); err != nil {
 			return nil, err
 		}
 	}

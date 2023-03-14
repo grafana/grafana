@@ -33,13 +33,13 @@ func NewLocalFinder() *Local {
 	}
 }
 
-func (l *Local) Find(_ context.Context, pluginPaths ...string) ([]*plugins.FoundBundle, error) {
-	if len(pluginPaths) == 0 {
+func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
+	if len(src.PluginURIs(ctx)) == 0 {
 		return []*plugins.FoundBundle{}, nil
 	}
 
 	var pluginJSONPaths []string
-	for _, path := range pluginPaths {
+	for _, path := range src.PluginURIs(ctx) {
 		exists, err := fs.Exists(path)
 		if err != nil {
 			l.log.Warn("Skipping finding plugins as an error occurred", "path", path, "err", err)

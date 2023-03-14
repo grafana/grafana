@@ -69,16 +69,16 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 	}
 }
 
-func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
-	found, err := l.pluginFinder.Find(ctx, paths...)
+func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+	found, err := l.pluginFinder.Find(ctx, src)
 	if err != nil {
 		return nil, err
 	}
 
-	return l.loadPlugins(ctx, class, found)
+	return l.loadPlugins(ctx, src, found)
 }
 
-func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
+func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	var loadedPlugins []*plugins.Plugin
 	for _, p := range found {
 		if _, exists := l.pluginRegistry.Plugin(ctx, p.Primary.JSONData.ID); exists {
@@ -92,12 +92,13 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, found []*
 			sig = plugins.Signature{Status: plugins.SignatureValid}
 		} else {
 			var err error
-			sig, err = signature.Calculate(l.log, class, p.Primary)
+			sig, err = signature.Calculate(ctx, l.log, src, p.Primary)
 			if err != nil {
 				l.log.Warn("Could not calculate plugin signature state", "pluginID", p.Primary.JSONData.ID, "err", err)
 				continue
 			}
 		}
+		class := src.PluginClass(ctx)
 		plugin, err := l.createPluginBase(p.Primary.JSONData, class, p.Primary.FS)
 		if err != nil {
 			l.log.Error("Could not create primary plugin base", "pluginID", p.Primary.JSONData.ID, "err", err)

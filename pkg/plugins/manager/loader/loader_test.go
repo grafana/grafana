@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -517,7 +518,7 @@ func TestLoader_Load(t *testing.T) {
 		})
 
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := l.Load(context.Background(), tt.class, tt.pluginPaths)
+			got, err := l.Load(context.Background(), sources.NewLocalSource(tt.class, tt.pluginPaths))
 			require.NoError(t, err)
 			if !cmp.Equal(got, tt.want, compareOpts...) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))
@@ -680,7 +681,14 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				})
 				setting.AppUrl = tt.appURL
 
-				got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths)
+				got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+					PluginClassFunc: func(ctx context.Context) plugins.Class {
+						return plugins.External
+					},
+					PluginURIsFunc: func(ctx context.Context) []string {
+						return tt.pluginPaths
+					},
+				})
 				require.NoError(t, err)
 				sort.SliceStable(got, func(i, j int) bool {
 					return got[i].ID < got[j].ID
@@ -793,7 +801,14 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
 		})
 
-		got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths)
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return tt.pluginPaths
+			},
+		})
 		require.NoError(t, err)
 
 		if !cmp.Equal(got, tt.want, compareOpts...) {
@@ -869,7 +884,14 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
-		got, err := l.Load(context.Background(), plugins.External, paths)
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return paths
+			},
+		})
 		require.NoError(t, err)
 
 		if !cmp.Equal(got, expected, compareOpts...) {
@@ -948,7 +970,14 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
-		got, err := l.Load(context.Background(), plugins.External, []string{pluginDir, pluginDir})
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return []string{pluginDir, pluginDir}
+			},
+		})
 		require.NoError(t, err)
 
 		if !cmp.Equal(got, expected, compareOpts...) {
@@ -1047,7 +1076,14 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
 
-		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"})
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return []string{"../testdata/nested-plugins"}
+			},
+		})
 		require.NoError(t, err)
 
 		// to ensure we can compare with expected
@@ -1063,7 +1099,14 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
 
 		t.Run("Load will exclude plugins that already exist", func(t *testing.T) {
-			got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"})
+			got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+				PluginClassFunc: func(ctx context.Context) plugins.Class {
+					return plugins.External
+				},
+				PluginURIsFunc: func(ctx context.Context) []string {
+					return []string{"../testdata/nested-plugins"}
+				},
+			})
 			require.NoError(t, err)
 
 			// to ensure we can compare with expected
@@ -1214,7 +1257,14 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
-		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/app-with-child"})
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return []string{"../testdata/app-with-child"}
+			},
+		})
 		require.NoError(t, err)
 
 		// to ensure we can compare with expected
