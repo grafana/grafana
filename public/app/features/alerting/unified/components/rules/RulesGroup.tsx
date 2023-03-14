@@ -238,7 +238,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           showSummaryColumn={true}
           className={styles.rulesTable}
           showGuidelines={true}
-          showNextEvaluationColumn={true}
+          showNextEvaluationColumn={Boolean(group.interval)}
           rules={group.rules}
         />
       )}

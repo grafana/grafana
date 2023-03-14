@@ -159,7 +159,7 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
         label: 'Name',
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: rule }) => rule.name,
-        size: 4,
+        size: showNextEvaluationColumn ? 4 : 5,
       },
       {
         id: 'provisioned',
@@ -200,7 +200,7 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
         renderCell: ({ data: rule }) => {
           return <Tokenize input={rule.annotations[Annotation.summary] ?? ''} />;
         },
-        size: 4,
+        size: showNextEvaluationColumn ? 4 : 5,
       });
     }
 
