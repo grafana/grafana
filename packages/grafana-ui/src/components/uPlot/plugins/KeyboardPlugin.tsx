@@ -1,5 +1,5 @@
 import { clamp } from 'lodash';
-import React, { useLayoutEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import uPlot from 'uplot';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
