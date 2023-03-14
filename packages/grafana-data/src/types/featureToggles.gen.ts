@@ -27,7 +27,6 @@ export interface FeatureToggles {
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
-  azLegacyTemplateVariables?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;

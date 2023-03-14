@@ -66,13 +66,6 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:         "azLegacyTemplateVariables",
-			Description:  "Azure Legacy Template Variables",
-			State:        FeatureStateBeta,
-			Owner:        grafanaPartnerPluginsSquad,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,

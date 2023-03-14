@@ -321,10 +321,7 @@ export const migrateQuery = async (
 ): Promise<AzureMonitorQuery> => {
   let query = await migrateStringQueriesToObjectQueries(rawQuery, options);
 
-  if (
-    !config.featureToggles.azLegacyTemplateVariables &&
-    query.queryType === AzureQueryType.GrafanaTemplateVariableFn
-  ) {
+  if (query.queryType === AzureQueryType.GrafanaTemplateVariableFn) {
     query = migrateGrafanaTemplateVariableFn(query);
   }
 
