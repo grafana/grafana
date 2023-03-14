@@ -31,7 +31,7 @@ type TracingMiddleware struct {
 // caller (deferred) and will set the span status/error and end the span.
 func (m *TracingMiddleware) traceWrap(ctx context.Context, pluginContext backend.PluginContext, opName string) (context.Context, func(error)) {
 	// Start span
-	ctx, span := m.tracer.Start(ctx, opName)
+	ctx, span := m.tracer.Start(ctx, "PluginClient."+opName)
 
 	// Attach some plugin context information to span
 	span.SetAttributes("plugin_id", pluginContext.PluginID, attribute.String("plugin_id", pluginContext.PluginID))
