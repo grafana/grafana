@@ -1,18 +1,18 @@
 # Extend the Grafana UI with links and commands
 
-Grafana App plugins can add links to the Grafana UI using the Plugin extensions API. Doing so allows you to navigate users to your plugins pages from various "placements" within the Grafana application.
+Use the Plugin extensions API with your Grafana App plugins to add links to the Grafana UI. Doing so allows you to direct users to your plugins pages from various "placements" within the Grafana application.
 
 For a plugin to successfully register links it must:
 
-- be an App plugin.
-- be preloaded.
-- be installed and enabled.
+- Be an App plugin.
+- Be preloaded.
+- Be installed and enabled.
 
 ## Add a link extension within Grafana
 
 Here's how you can add a link to the dashboard panel menus in Grafana via your plugin:
 
-Define the link extension in your plugin's `module.ts` file. You will need to define a new instance of the `AppPlugin` class and make use of the `configureExtensionLink` method. This method takes an object that describes your link extension, including a `title` property for the link text, a `placement` that tells Grafana where the link should appear, and a `path` to navigate the user to your plugin.
+Define the link extension in your plugin's `module.ts` file. First, define a new instance of the `AppPlugin` class by using the `configureExtensionLink` method. This method takes an object that describes your link extension, including a `title` property for the link text, a `placement` that tells Grafana where the link should appear, and a `path` for the user to navigate to your plugin.
 
 ```typescript
 new AppPlugin().configureExtensionLink({
@@ -23,7 +23,7 @@ new AppPlugin().configureExtensionLink({
 });
 ```
 
-That's it! Your link will be displayed in dashboard panel menus. When the user clicks on the link, they will be navigated to the path you defined earlier.
+That's it! Your link will be displayed in dashboard panel menus. When the user clicks the link, they will be navigated to the path you defined earlier.
 
 _Note: Each plugin is limited to a maximum of two links per placement._
 
@@ -34,7 +34,7 @@ The above example works for simple cases however you may want to act on informat
 ```typescript
 new AppPlugin().configureExtensionLink({
   title: 'Go to basic app',
-  description: 'Will navigate the user to the basic app',
+  description: 'Will send the user to the basic app',
   placement: 'grafana/dashboard/panel/menu',
   path: '/a/myorg-basic-app/one',
   configure: (link: AppPluginLinkExtension, context: PanelContext) => {
@@ -60,17 +60,20 @@ new AppPlugin().configureExtensionLink({
 });
 ```
 
-The above example demonstrates how to return a different link `path` based on the plugin the dashboard panel is using. If the panel the user clicks on is neither a timeseries or piechart panel the configure function returns `undefined` and the link isn't rendered.
+The above example demonstrates how to return a different link `path` based on which plugin the dashboard panel is using. If the clicked-upon panel is neither a timeseries nor a piechart panel, then the configure function returns `undefined` and the link isn't rendered.
 
-_Note: The context passed to the `configure` function is bound by the `placement` the link is inserted into. Different placements will contain different contexts._
+_Note: The context passed to the `configure` function is bound by the `placement` the link is inserted into. Different placements contain different contexts._
 
 ## Add a command extension within Grafana
 
-Link extensions provide the means to navigate users to a plugin page via href links within the Grafana UI. Commands on the other hand perform dynamic actions when clicked.
+Link extensions provide the means to direct users to a plugin page via href links within the Grafana UI. Commands, on the other hand, perform dynamic actions when clicked.
 
 Here's how you can add a command link to the dashboard panel menus in Grafana via your plugin:
 
-Define the command extension in the plugin's `module.ts` file. Create a new instance of the `AppPlugin` class and this time make use of the `configureExtensionCommand` method. This method takes a `context` object that contains information about the panel where the menu was clicked, and a `helpers` object to help perform various actions. In this example we will open a modal
+1. Define the command extension in the plugin's `module.ts` file. 
+1. Create a new instance of the `AppPlugin` class, and this time use the `configureExtensionCommand` method. This method takes a `context` object that contains information about the panel where the menu was clicked, and a `helpers` object to help perform various actions. 
+
+In the following example, we open a modal.
 
 ```typescript
 new AppPlugin().configureExtensionCommand({
@@ -100,4 +103,4 @@ const SampleModal = ({ onDismiss, pluginId }: Props) => {
 };
 ```
 
-The plugin extensions API is a powerful feature allowing plugin developers to insert links into the Grafana applications user interface to navigate users to plugin features or trigger actions based on where the user clicked. This feature can also be used for [cross plugin linking](./cross-plugin-linking.md).
+The plugin extensions API is a powerful feature for you to insert links into the UI of Grafana applications that send users to plugin features or trigger actions based on where the user clicked. This feature can also be used for [cross plugin linking](./cross-plugin-linking.md).
