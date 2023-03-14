@@ -140,8 +140,8 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   const defaultTopNav = css`
     color: ${theme.colors.text.secondary};
-    background: ${theme.colors.background.primary};
-    border: 1px solid ${theme.colors.background.primary};
+    background: transparent;
+    border: 1px solid transparent;
 
     &:hover {
       color: ${theme.colors.text.primary};

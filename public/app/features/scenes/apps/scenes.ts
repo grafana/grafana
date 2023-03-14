@@ -145,7 +145,25 @@ export function getHttpHandlerListScene(): EmbeddedScene {
             placement: { width: 200 },
             title: 'Last',
             pluginId: 'stat',
-            fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
+            fieldConfig: {
+              defaults: {
+                displayName: 'Last',
+                links: [
+                  {
+                    title: 'Go to handler drilldown view',
+                    url: ``,
+                    onBuildUrl: () => {
+                      const params = locationService.getSearchObject();
+                      return getLinkUrlWithAppUrlState(
+                        '/scenes/grafana-monitoring/handlers/${__field.labels.handler:percentencode}',
+                        params
+                      );
+                    },
+                  },
+                ],
+              },
+              overrides: [],
+            },
             options: {
               graphMode: 'none',
               textMode: 'value',
