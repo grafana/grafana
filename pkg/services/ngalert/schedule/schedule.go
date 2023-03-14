@@ -29,16 +29,10 @@ import (
 
 // ScheduleService is an interface for a service that schedules the evaluation
 // of alert rules.
-//
-//go:generate mockery --name ScheduleService --structname FakeScheduleService --inpackage --filename schedule_mock.go --unroll-variadic=False
 type ScheduleService interface {
 	// Run the scheduler until the context is canceled or the scheduler returns
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
-	// UpdateAlertRule notifies scheduler that a rule has been changed
-	UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64, isPaused bool)
-	// DeleteAlertRule notifies scheduler that rules have been deleted
-	DeleteAlertRule(keys ...ngmodels.AlertRuleKey)
 }
 
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
@@ -148,17 +142,8 @@ func (sch *schedule) Run(ctx context.Context) error {
 	return nil
 }
 
-// UpdateAlertRule looks for the active rule evaluation and commands it to update the rule
-func (sch *schedule) UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64, isPaused bool) {
-	ruleInfo, err := sch.registry.get(key)
-	if err != nil {
-		return
-	}
-	ruleInfo.update(ruleVersionAndPauseStatus{ruleVersion(lastVersion), isPaused})
-}
-
-// DeleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
-func (sch *schedule) DeleteAlertRule(keys ...ngmodels.AlertRuleKey) {
+// deleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
+func (sch *schedule) deleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 	for _, key := range keys {
 		// It can happen that the scheduler has deleted the alert rule before the
 		// Ruler API has called DeleteAlertRule. This can happen as requests to
@@ -354,7 +339,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	for key := range registeredDefinitions {
 		toDelete = append(toDelete, key)
 	}
-	sch.DeleteAlertRule(toDelete...)
+	sch.deleteAlertRule(toDelete...)
 	return readyToRun, registeredDefinitions, needToUpdate
 }
 
