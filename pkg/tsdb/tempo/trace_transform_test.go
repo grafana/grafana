@@ -7,8 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
-	otlp "go.opentelemetry.io/collector/model/otlp"
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
@@ -22,7 +21,8 @@ func TestTraceToFrame(t *testing.T) {
 		proto, err := os.ReadFile("testData/tempo_proto_response")
 		require.NoError(t, err)
 
-		otTrace, err := otlp.NewProtobufTracesUnmarshaler().UnmarshalTraces(proto)
+		protoUnmarshaler := ptrace.ProtoUnmarshaler{}
+		otTrace, err := protoUnmarshaler.UnmarshalTraces(proto)
 		require.NoError(t, err)
 
 		frame, err := TraceToFrame(otTrace)
@@ -58,18 +58,19 @@ func TestTraceToFrame(t *testing.T) {
 		proto, err := os.ReadFile("testData/tempo_proto_response")
 		require.NoError(t, err)
 
-		otTrace, err := otlp.NewProtobufTracesUnmarshaler().UnmarshalTraces(proto)
+		protoUnmarshaler := ptrace.ProtoUnmarshaler{}
+		otTrace, err := protoUnmarshaler.UnmarshalTraces(proto)
 		require.NoError(t, err)
 
 		var index int
-		otTrace.ResourceSpans().RemoveIf(func(rsp pdata.ResourceSpans) bool {
+		otTrace.ResourceSpans().RemoveIf(func(rsp ptrace.ResourceSpans) bool {
 			rsp.ScopeSpans().RemoveIf(func(sp ptrace.ScopeSpans) bool {
 				sp.Spans().RemoveIf(func(span ptrace.Span) bool {
 					if index == 0 {
-						span.SetTraceID(pdata.NewTraceID([16]byte{0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7}))
+						span.SetTraceID(pcommon.TraceID([16]byte{0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7}))
 					}
 					if index == 1 {
-						span.SetTraceID(pdata.NewTraceID([16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7}))
+						span.SetTraceID(pcommon.TraceID([16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7}))
 					}
 					index++
 					return false

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"go.opentelemetry.io/collector/model/pdata"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.18.0"
@@ -64,7 +63,7 @@ type TraceReference struct {
 	Tags    []*KeyValue `json:"tags"`
 }
 
-func TraceToFrame(td pdata.Traces) (*data.Frame, error) {
+func TraceToFrame(td ptrace.Traces) (*data.Frame, error) {
 	// In open telemetry format the spans are grouped first by resource/service they originated in and inside that
 	// resource they are grouped by the instrumentation library which created them.
 
@@ -111,7 +110,7 @@ func TraceToFrame(td pdata.Traces) (*data.Frame, error) {
 }
 
 // resourceSpansToRows processes all the spans for a particular resource/service
-func resourceSpansToRows(rs pdata.ResourceSpans) ([][]interface{}, error) {
+func resourceSpansToRows(rs ptrace.ResourceSpans) ([][]interface{}, error) {
 	resource := rs.Resource()
 	ilss := rs.ScopeSpans()
 
@@ -144,7 +143,7 @@ func resourceSpansToRows(rs pdata.ResourceSpans) ([][]interface{}, error) {
 	return rows, nil
 }
 
-func spanToSpanRow(span pdata.Span, libraryTags pcommon.InstrumentationScope, resource pdata.Resource) ([]interface{}, error) {
+func spanToSpanRow(span ptrace.Span, libraryTags pcommon.InstrumentationScope, resource pcommon.Resource) ([]interface{}, error) {
 	// If the id representation changed from hexstring to something else we need to change the transformBase64IDToHexString in the frontend code
 	traceID := span.TraceID().HexString()
 	traceID = strings.TrimPrefix(traceID, strings.Repeat("0", 16))
@@ -192,7 +191,7 @@ func spanToSpanRow(span pdata.Span, libraryTags pcommon.InstrumentationScope, re
 	}, nil
 }
 
-func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {
+func resourceToProcess(resource pcommon.Resource) (string, []*KeyValue) {
 	attrs := resource.Attributes()
 	serviceName := ResourceNoServiceName
 	if attrs.Len() == 0 {
@@ -200,9 +199,9 @@ func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {
 	}
 
 	tags := make([]*KeyValue, 0, attrs.Len()-1)
-	attrs.Range(func(key string, attr pdata.Value) bool {
+	attrs.Range(func(key string, attr pcommon.Value) bool {
 		if key == string(semconv.ServiceNameKey) {
-			serviceName = attr.StringVal()
+			serviceName = attr.Str()
 		}
 		tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
 		return true
@@ -211,16 +210,16 @@ func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {
 	return serviceName, tags
 }
 
-func getAttributeVal(attr pdata.Value) interface{} {
+func getAttributeVal(attr pcommon.Value) interface{} {
 	switch attr.Type() {
-	case pcommon.ValueTypeString:
-		return attr.StringVal()
+	case pcommon.ValueTypeStr:
+		return attr.Str()
 	case pcommon.ValueTypeInt:
-		return attr.IntVal()
+		return attr.Int()
 	case pcommon.ValueTypeBool:
-		return attr.BoolVal()
+		return attr.Bool()
 	case pcommon.ValueTypeDouble:
-		return attr.DoubleVal()
+		return attr.Double()
 	case pcommon.ValueTypeMap, pcommon.ValueTypeSlice:
 		return attr.AsString()
 	default:
@@ -228,14 +227,14 @@ func getAttributeVal(attr pdata.Value) interface{} {
 	}
 }
 
-func getSpanTags(span pdata.Span, instrumentationLibrary pcommon.InstrumentationScope) []*KeyValue {
+func getSpanTags(span ptrace.Span, instrumentationLibrary pcommon.InstrumentationScope) []*KeyValue {
 	var tags []*KeyValue
 
 	libraryTags := getTagsFromInstrumentationLibrary(instrumentationLibrary)
 	if libraryTags != nil {
 		tags = append(tags, libraryTags...)
 	}
-	span.Attributes().Range(func(key string, attr pdata.Value) bool {
+	span.Attributes().Range(func(key string, attr pcommon.Value) bool {
 		tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
 		return true
 	})
@@ -300,14 +299,14 @@ func getTagFromSpanKind(spanKind ptrace.SpanKind) *KeyValue {
 	}
 }
 
-func getTagFromStatusCode(statusCode pdata.StatusCode) *KeyValue {
+func getTagFromStatusCode(statusCode ptrace.StatusCode) *KeyValue {
 	return &KeyValue{
 		Key:   TagStatusCode,
 		Value: int64(statusCode),
 	}
 }
 
-func getErrorTagFromStatusCode(statusCode pdata.StatusCode) *KeyValue {
+func getErrorTagFromStatusCode(statusCode ptrace.StatusCode) *KeyValue {
 	if statusCode == ptrace.StatusCodeError {
 		return &KeyValue{
 			Key:   TagError,
@@ -327,17 +326,17 @@ func getTagFromStatusMsg(statusMsg string) *KeyValue {
 	}
 }
 
-func getTagFromTraceState(traceState pdata.TraceState) *KeyValue {
-	if traceState != pdata.TraceStateEmpty {
+func getTagFromTraceState(traceState pcommon.TraceState) *KeyValue {
+	if traceState != pcommon.NewTraceState() {
 		return &KeyValue{
 			Key:   TagW3CTraceState,
-			Value: string(traceState),
+			Value: traceState,
 		}
 	}
 	return nil
 }
 
-func spanEventsToLogs(events pdata.SpanEventSlice) []*TraceLog {
+func spanEventsToLogs(events ptrace.SpanEventSlice) []*TraceLog {
 	if events.Len() == 0 {
 		return nil
 	}
@@ -352,7 +351,7 @@ func spanEventsToLogs(events pdata.SpanEventSlice) []*TraceLog {
 				Value: event.Name(),
 			})
 		}
-		event.Attributes().Range(func(key string, attr pdata.Value) bool {
+		event.Attributes().Range(func(key string, attr pcommon.Value) bool {
 			fields = append(fields, &KeyValue{Key: key, Value: getAttributeVal(attr)})
 			return true
 		})
@@ -365,7 +364,7 @@ func spanEventsToLogs(events pdata.SpanEventSlice) []*TraceLog {
 	return logs
 }
 
-func spanLinksToReferences(links pdata.SpanLinkSlice) []*TraceReference {
+func spanLinksToReferences(links ptrace.SpanLinkSlice) []*TraceReference {
 	if links.Len() == 0 {
 		return nil
 	}
@@ -380,7 +379,7 @@ func spanLinksToReferences(links pdata.SpanLinkSlice) []*TraceReference {
 		spanId := link.SpanID().HexString()
 
 		tags := make([]*KeyValue, 0, link.Attributes().Len())
-		link.Attributes().Range(func(key string, attr pdata.Value) bool {
+		link.Attributes().Range(func(key string, attr pcommon.Value) bool {
 			tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
 			return true
 		})

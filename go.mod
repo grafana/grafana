@@ -263,8 +263,7 @@ require (
 	github.com/hmarr/codeowners v1.1.1
 	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
-	go.opentelemetry.io/collector/model v0.50.0
-	go.opentelemetry.io/collector/pdata v0.50.0
+	go.opentelemetry.io/collector/pdata v0.66.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.40.0
 	go.opentelemetry.io/contrib/propagators/autoprop v0.40.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.14.0

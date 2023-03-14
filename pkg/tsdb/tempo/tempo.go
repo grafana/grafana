@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"go.opentelemetry.io/collector/model/otlp"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -99,7 +99,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return result, nil
 	}
 
-	otTrace, err := otlp.NewProtobufTracesUnmarshaler().UnmarshalTraces(body)
+	unmarshaler := ptrace.ProtoUnmarshaler{}
+	otTrace, err := unmarshaler.UnmarshalTraces(body)
 
 	if err != nil {
 		return &backend.QueryDataResponse{}, fmt.Errorf("failed to convert tempo response to Otlp: %w", err)

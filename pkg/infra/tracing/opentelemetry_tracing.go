@@ -48,6 +48,14 @@ type OpenTelemetry struct {
 	exporters map[string]ExporterConfig
 }
 
+func (ots OpenTelemetry) Unwrap() interface{} {
+	return ots.tracer
+}
+
+func (ots OpenTelemetry) UnwrapExporter() (tracesdk.SpanExporter, error) {
+	return ots.exporters[ots.enabled].ToExporter()
+}
+
 func NewOpenTelemetry(cfg *setting.Cfg, logger log.Logger) *OpenTelemetry {
 
 	return &OpenTelemetry{

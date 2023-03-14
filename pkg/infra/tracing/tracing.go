@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 	"github.com/uber/jaeger-client-go/zipkin"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	trace "go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -46,6 +48,12 @@ type Tracer interface {
 	// Both the context and span must be derived from the same call to
 	// [Tracer.Start].
 	Inject(context.Context, http.Header, Span)
+
+	// returns the inner tracer
+	Unwrap() interface{}
+
+	// returns the tracers transport
+	UnwrapExporter() (tracesdk.SpanExporter, error)
 }
 
 // Span defines a time range for an operation. This is equivalent to a
@@ -146,6 +154,19 @@ type OpenTracing struct {
 	disableSharedZipkinSpans bool
 
 	Cfg *setting.Cfg
+}
+
+func (ot OpenTracing) Unwrap() interface{} {
+	return opentracing.GlobalTracer()
+}
+
+type NoopExporter struct{}
+
+func (NoopExporter) ExportSpans(context.Context, []tracesdk.ReadOnlySpan) error { return nil }
+func (NoopExporter) Shutdown(context.Context) error                             { return nil }
+
+func (ot OpenTracing) UnwrapExporter() (tracesdk.SpanExporter, error) {
+	return NoopExporter{}, errors.New("OpenTracing does not support exporter")
 }
 
 type OpenTracingSpan struct {
