@@ -10,18 +10,18 @@ import (
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
-type backend interface {
+type Backend interface {
 	Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error
 	Query(ctx context.Context, query ngmodels.HistoryQuery) (*data.Frame, error)
 }
 
 type FanoutBackend struct {
-	targets []backend
+	targets []Backend
 }
 
-func NewFanoutBackend(primary backend, secondaries ...backend) *FanoutBackend {
+func NewFanoutBackend(primary Backend, secondaries ...Backend) *FanoutBackend {
 	return &FanoutBackend{
-		targets: append([]backend{primary}, secondaries...),
+		targets: append([]Backend{primary}, secondaries...),
 	}
 }
 

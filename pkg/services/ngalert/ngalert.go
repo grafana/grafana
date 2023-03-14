@@ -387,6 +387,27 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	}
 
 	met.Info.WithLabelValues(cfg.Backend).Set(1)
+	if cfg.Backend == "fanout" {
+		primaryCfg := cfg
+		primaryCfg.Backend = cfg.FanoutPrimary
+		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l)
+		if err != nil {
+			return nil, fmt.Errorf("fanout target \"%s\" was misconfigured: %w", cfg.FanoutPrimary, err)
+		}
+
+		var secondaries []historian.Backend
+		for _, b := range cfg.FanoutSecondaries {
+			secCfg := cfg
+			secCfg.Backend = b
+			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l)
+			if err != nil {
+				return nil, fmt.Errorf("fanout target \"%s\"was miconfigured: %w", b, err)
+			}
+			secondaries = append(secondaries, sec)
+		}
+
+		return historian.NewFanoutBackend(primary, secondaries...), nil
+	}
 	if cfg.Backend == "annotations" {
 		return historian.NewAnnotationBackend(ar, ds, rs, met), nil
 	}
