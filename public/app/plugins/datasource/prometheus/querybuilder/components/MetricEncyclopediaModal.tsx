@@ -615,7 +615,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
         </InlineField>
         <InlineField
           label="# results per page"
-          labelWidth={25}
+          labelWidth={20}
           className="query-keyword"
           grow={true}
           tooltip={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}
