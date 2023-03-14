@@ -640,7 +640,7 @@ describe('getLinksSupplier', () => {
               },
             ],
           },
-          display: (v) => ({ numeric: v, text: String(v) }),
+          display: (v) => ({ numeric: Number(v), text: String(v) }),
         },
       ],
     });
