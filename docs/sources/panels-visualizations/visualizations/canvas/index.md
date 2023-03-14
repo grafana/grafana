@@ -95,7 +95,6 @@ Canvas supports [data links](https://grafana.com/docs/grafana/latest/panels-visu
 1. Hover over the element to display the data link tooltip.
 1. Click on the element to be able to open the data link.
 
-
 If multiple elements use the same field name, and you want to control which elements display the data link, you can create a unique field name using the [add field from calculation transform](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation). The alias you create in the transformation will appear as a field you can use with an element.
 
 1. In the panel editor for the canvas panel, click the **Transform** tab.
