@@ -19,7 +19,7 @@ To install Grafana on macOS using Homebrew, complete the following steps:
 
    The last stable and released version is listed.
 
-1. Open a terminal and run the following commads:
+1. Open a terminal and run the following commands:
 
    ```
    brew update
