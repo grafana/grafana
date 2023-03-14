@@ -36,6 +36,9 @@ export const joinByFieldTransformer: SynchronousDataTransformerInfo<JoinByFieldO
     return (data: DataFrame[]) => {
       if (data.length > 1) {
         if (options.byField && !joinBy) {
+          if (options.byField.toLowerCase() === 'time') {
+            options.byField = 'Time';
+          }
           joinBy = fieldMatchers.get(FieldMatcherID.byName).get(options.byField);
         }
         const joined = joinDataFrames({ frames: data, joinBy, mode: options.mode });
