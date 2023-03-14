@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { CoreApp, createTheme, DataFrame, Field, FieldType, getDisplayProcessor } from '@grafana/data';
-import { RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { CoreApp, DataFrame, Field, FieldType, getDisplayProcessor } from '@grafana/data';
+import { useStyles2, useTheme2, RadioButtonGroup } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
 import { SampleUnit, SelectedView, TableData, TopTableData } from '../types';
@@ -44,6 +44,7 @@ const FlameGraphTopTableContainer = ({
   onSelectFilename,
 }: Props) => {
   const styles = useStyles2(() => getStyles(selectedView, app));
+  const theme = useTheme2();
   const [topTable, setTopTable] = useState<TopTableData[]>();
   const valueField =
     data.fields.find((f) => f.name === 'value') ?? data.fields.find((f) => f.type === FieldType.number);
@@ -80,26 +81,29 @@ const FlameGraphTopTableContainer = ({
     return table;
   }, [getLabelValue, selfField, valueField, labelsField, filenameField, grouping, getFileNameValue]);
 
-  const getTopTableData = (field: Field, value: number) => {
-    const processor = getDisplayProcessor({ field, theme: createTheme() /* theme does not matter for us here */ });
-    const displayValue = processor(value);
-    let unitValue = displayValue.text + displayValue.suffix;
+  const getTopTableData = useCallback(
+    (field: Field, value: number) => {
+      const processor = getDisplayProcessor({ field, theme });
+      const displayValue = processor(value);
+      let unitValue = displayValue.text + displayValue.suffix;
 
-    switch (field.config.unit) {
-      case SampleUnit.Bytes:
-        break;
-      case SampleUnit.Nanoseconds:
-        break;
-      default:
-        if (!displayValue.suffix) {
-          // Makes sure we don't show 123undefined or something like that if suffix isn't defined
-          unitValue = displayValue.text;
-        }
-        break;
-    }
+      switch (field.config.unit) {
+        case SampleUnit.Bytes:
+          break;
+        case SampleUnit.Nanoseconds:
+          break;
+        default:
+          if (!displayValue.suffix) {
+            // Makes sure we don't show 123undefined or something like that if suffix isn't defined
+            unitValue = displayValue.text;
+          }
+          break;
+      }
 
-    return unitValue;
-  };
+      return unitValue;
+    },
+    [theme]
+  );
 
   useEffect(() => {
     const table = sortLevelsIntoTable();
@@ -117,7 +121,7 @@ const FlameGraphTopTableContainer = ({
     }
 
     setTopTable(topTable);
-  }, [data.fields, selfField, sortLevelsIntoTable, valueField]);
+  }, [data.fields, selfField, sortLevelsIntoTable, valueField, getTopTableData]);
 
   return (
     <>

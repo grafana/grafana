@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, DataFrameView, CoreApp, getEnumDisplayProcessor, createTheme, DataSourceApi } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { DataFrame, DataFrameView, CoreApp, getEnumDisplayProcessor, DataSourceApi } from '@grafana/data';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { PhlareDataSource } from '../../../datasource/phlare/datasource';
 import { CodeLocation } from '../../../datasource/phlare/types';
@@ -36,6 +36,7 @@ const FlameGraphContainer = (props: Props) => {
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+  const theme = useTheme2();
 
   // State for the selected filename/func/line
   const [selectedLocation, setSelectedLocation] = useState<CodeLocation>();
@@ -55,7 +56,7 @@ const FlameGraphContainer = (props: Props) => {
         return label.toString();
       }
     },
-    [labelField]
+    [labelField, theme]
   );
 
   const getFileNameValue = useCallback(
@@ -67,7 +68,7 @@ const FlameGraphContainer = (props: Props) => {
         return label.toString();
       }
     },
-    [fileNameField]
+    [fileNameField, theme]
   );
 
   // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular

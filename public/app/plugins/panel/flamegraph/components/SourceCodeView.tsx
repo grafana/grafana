@@ -1,9 +1,11 @@
 import { StreamLanguage } from '@codemirror/language';
 import { go } from '@codemirror/legacy-modes/mode/go';
-import { gutter, GutterMarker, lineNumbers } from '@codemirror/view';
+import { EditorView, gutter, GutterMarker, lineNumbers } from '@codemirror/view';
 import { css, cx } from '@emotion/css';
-import CodeMirror, { minimalSetup } from '@uiw/react-codemirror';
-import React, { useEffect, useState } from 'react';
+import CodeMirror, { minimalSetup, ReactCodeMirrorRef } from '@uiw/react-codemirror';
+import React, { createRef, useEffect, useState } from 'react';
+
+import { useTheme2 } from '@grafana/ui';
 
 import { PhlareDataSource } from '../../../datasource/phlare/datasource';
 import { CodeLocation } from '../../../datasource/phlare/types';
@@ -39,6 +41,8 @@ const heatGutterClass = cx(
 export function SourceCodeView(props: Props) {
   const { datasource, location, getLabelValue, getFileNameValue } = props;
   const [source, setSource] = useState<string>('');
+  const editorRef = createRef<ReactCodeMirrorRef>();
+  const theme = useTheme2();
 
   const lineHeats = [
     195, 116, 90, 193, 63, 71, 129, 168, 198, 177, 197, 167, 216, 205, 11, 220, 12, 12, 74, 107, 211, 145, 85, 142, 208,
@@ -96,7 +100,16 @@ export function SourceCodeView(props: Props) {
       const sourceCode = await datasource.getSource(getLabelValue(location.func), getFileNameValue(location.fileName));
       setSource(sourceCode);
     })();
-  }, [datasource, location, getLabelValue, getFileNameValue]);
+  }, [editorRef, datasource, location, getLabelValue, getFileNameValue]);
+
+  useEffect(() => {
+    const line = editorRef.current?.view?.state.doc.line(location.line);
+    editorRef.current?.view?.dispatch({
+      selection: { anchor: line?.from || 0 },
+      scrollIntoView: true,
+      effects: EditorView.scrollIntoView(line?.from || 0, { y: 'start' }),
+    });
+  }, [source]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <CodeMirror
@@ -104,6 +117,8 @@ export function SourceCodeView(props: Props) {
       height={'630px'}
       extensions={[StreamLanguage.define(go), minimalSetup(), lineNumbers(), heatGutter]}
       readOnly={true}
+      theme={theme.name === 'Dark' ? 'dark' : 'light'}
+      ref={editorRef}
     />
   );
 }
