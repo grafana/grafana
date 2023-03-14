@@ -1,13 +1,9 @@
 import { StreamLanguage } from '@codemirror/language';
 import { go } from '@codemirror/legacy-modes/mode/go';
-import { oneDark } from '@codemirror/theme-one-dark';
 import { gutter, GutterMarker, lineNumbers } from '@codemirror/view';
 import { css, cx } from '@emotion/css';
-import { minimalSetup, EditorView } from 'codemirror';
-import React, { createRef, useEffect, useState } from 'react';
-
-// import { GrafanaTheme2 } from '@grafana/data';
-// import { CodeEditor, useTheme2 } from '@grafana/ui';
+import CodeMirror, { minimalSetup } from '@uiw/react-codemirror';
+import React, { useEffect, useState } from 'react';
 
 import { PhlareDataSource } from '../../../datasource/phlare/datasource';
 import { CodeLocation } from '../../../datasource/phlare/types';
@@ -41,29 +37,20 @@ const heatGutterClass = cx(
 );
 
 export function SourceCodeView(props: Props) {
-  // const { datasource, location, getLabelValue, getFileNameValue } = props;
-  // const [source, setSource] = useState<string>('');
-  // const theme = useTheme2();
-  // const styles = getStyles(theme);
+  const { datasource, location, getLabelValue, getFileNameValue } = props;
+  const [source, setSource] = useState<string>('');
 
-  const root = createRef<HTMLDivElement>();
-
-  //------------REPLACE WITH VALUES FROM PROPS & FETCH---------------
-  const srcCode = `package main
-import "fmt"
-
-func main() {
-  fmt.Println("Hello, 世界")
-}`;
-
-  const lineHeats = [0, 0, 0, 215, 35, 0];
+  const lineHeats = [
+    195, 116, 90, 193, 63, 71, 129, 168, 198, 177, 197, 167, 216, 205, 11, 220, 12, 12, 74, 107, 211, 145, 85, 142, 208,
+    48, 239, 5, 100, 25, 93, 206, 46, 36, 127, 94, 147, 176, 18, 224, 41, 69, 230, 45, 118, 92, 126, 152, 8, 185,
+  ];
 
   const maxRawVal = 350;
-  //------------REPLACE WITH VALUES FROM PROPS & FETCH---------------
 
   // TODO: create pre-defined pallete of heat markers (maybe 32?)
   class HeatMarker extends GutterMarker {
     rawValue: number;
+
     // heatPct: number;
 
     constructor(rawValue: number /*heatPct: number*/) {
@@ -95,7 +82,8 @@ func main() {
     // TODO: replace this with a pre-computed markers: GutterMarker[] ?
     lineMarker(view, line) {
       let lineNum = view.state.doc.lineAt(line.from).number;
-      let heatRawVal = lineHeats[lineNum - 1];
+      const index = lineNum % 70 || 0;
+      let heatRawVal = lineHeats[index] || 0;
       let heatPct = heatRawVal / maxRawVal;
       let marker =
         heatPct === 0 ? null : heatPct > 0.5 ? new HighHeatMarker(heatRawVal) : new MedHeatMarker(heatRawVal);
@@ -104,28 +92,6 @@ func main() {
   });
 
   useEffect(() => {
-    let view = new EditorView({
-      doc: srcCode,
-      extensions: [
-        minimalSetup,
-        lineNumbers(),
-        heatGutter,
-        EditorView.editable.of(false),
-        StreamLanguage.define(go),
-        oneDark,
-      ],
-      parent: root.current!,
-    });
-
-    return () => {
-      view.destroy();
-    };
-  }, []);
-
-  return <div ref={root}></div>;
-
-  /*
-  useEffect(() => {
     (async () => {
       const sourceCode = await datasource.getSource(getLabelValue(location.func), getFileNameValue(location.fileName));
       setSource(sourceCode);
@@ -133,30 +99,11 @@ func main() {
   }, [datasource, location, getLabelValue, getFileNameValue]);
 
   return (
-    <CodeEditor
+    <CodeMirror
       value={source}
-      language={'go'}
-      containerStyles={styles.queryField}
+      height={'630px'}
+      extensions={[StreamLanguage.define(go), minimalSetup(), lineNumbers(), heatGutter]}
       readOnly={true}
-      showLineNumbers={true}
-      monacoOptions={{
-        fontSize: 14,
-      }}
     />
   );
-  */
 }
-
-// interface EditorStyles {
-//   queryField: string;
-// }
-
-// const getStyles = (theme: GrafanaTheme2): EditorStyles => {
-//   return {
-//     queryField: css`
-//       float: left;
-//       width: 50%;
-//       height: 100%;
-//     `,
-//   };
-// };
