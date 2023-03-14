@@ -256,7 +256,6 @@
   "dependencies": {
     "@codemirror/language": "^6.6.0",
     "@codemirror/legacy-modes": "^6.3.1",
-    "@codemirror/theme-one-dark": "^6.1.1",
     "@codemirror/view": "^6.9.2",
     "@daybrush/utils": "1.10.2",
     "@emotion/css": "11.10.6",
@@ -300,6 +299,9 @@
     "@sentry/utils": "6.19.7",
     "@types/react-resizable": "3.0.3",
     "@types/webpack-env": "1.18.0",
+    "@uiw/codemirror-extensions-langs": "^4.19.9",
+    "@uiw/codemirror-themes-all": "^4.19.9",
+    "@uiw/react-codemirror": "^4.19.9",
     "@visx/event": "3.0.1",
     "@visx/gradient": "3.0.0",
     "@visx/group": "3.0.0",
