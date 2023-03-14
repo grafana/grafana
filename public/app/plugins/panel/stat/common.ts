@@ -113,6 +113,21 @@ export function addOrientationOption<T extends SingleStatBaseOptions>(
   });
 }
 
+/**
+ * This function prepends/appends custom prefixes/suffixes to a `BigValue` display value
+ * NOTE: this will prepend/append to any already-chosen `Units` from the `Standard Options` field config
+ *
+ * @example
+ * config.prefix: `^`
+ * config.suffix: `*`
+ * fieldValues[0].display.text: `23%`
+ *
+ * New custom display final output -> `^23%*`
+ *
+ * @param fieldValues - An array of `FieldDisplay` objects
+ * @param config - The `PanelFieldConfig` options, which consist of a custom `prefix` and/or `suffix`
+ * @returns An updated array of `FieldDisplay` objects with new custom `fieldValue.display` values
+ */
 export function formatDisplayValuesWithCustomUnits(
   fieldValues: FieldDisplay[],
   config: PanelFieldConfig
@@ -147,6 +162,13 @@ export function formatDisplayValuesWithCustomUnits(
   });
 }
 
+/**
+ * This function builds two text inputs for the `FieldConfigEditorBuilder`;
+ * these inputs will add custom prefixes and suffixes to `BigValue` values
+ *
+ * @param builder - The `FieldConfigEditorBuilder<PanelFieldConfig>` on which to add the two text inputs
+ * @returns A prefix and suffix text input
+ */
 export function addCustomUnitTextInputs(builder: FieldConfigEditorBuilder<PanelFieldConfig>) {
   const category = ['Custom units'];
   return builder
