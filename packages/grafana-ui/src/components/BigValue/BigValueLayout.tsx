@@ -145,9 +145,8 @@ export abstract class BigValueLayout {
 
     switch (colorMode) {
       case BigValueColorMode.Background:
-        hasGradient
-          ? (panelStyles.background = buildGradientBackground(this.valueColor))
-          : (panelStyles.background = `none ${this.valueColor}`);
+        panelStyles.background =
+          hasGradient === false ? `none ${this.valueColor}` : buildGradientBackground(this.valueColor);
         break;
       case BigValueColorMode.Value:
         panelStyles.background = `transparent`;

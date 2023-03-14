@@ -37,9 +37,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
         count={count}
         sparkline={sparkline}
         colorMode={options.colorMode}
-        // To preserve previous behavior, if other Panels use BigValue but don't pass a value,
-        // we default `hasGradient` to true, i.e. the background gradient WILL display.
-        hasGradient={options.hasGradient ?? true}
+        hasGradient={options.hasGradient}
         graphMode={options.graphMode}
         justifyMode={options.justifyMode}
         textMode={this.getTextMode()}
