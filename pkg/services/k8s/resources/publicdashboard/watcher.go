@@ -2,6 +2,7 @@ package publicdashboard
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -36,6 +37,8 @@ func (w *watcher) Add(ctx context.Context, obj *PublicDashboard) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("%#v", pdModel)
 
 	// convert to cmd
 	cmd := publicdashboardModels.SavePublicDashboardCommand{

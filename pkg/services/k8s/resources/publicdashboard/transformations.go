@@ -156,7 +156,6 @@ func k8sAnnotationsToModel(pd *PublicDashboard, pdModel *publicdashboardModels.P
 
 // toUnstructured converts a PublicDashboard to an *unstructured.Unstructured.
 func k8sObjectToUnstructured(obj *PublicDashboard) (*unstructured.Unstructured, error) {
-
 	p := obj.Base
 
 	out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&p)

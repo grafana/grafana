@@ -3,6 +3,7 @@ package publicdashboard
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 
 	//jsonpatch "github.com/evanphx/json-patch"
@@ -175,6 +176,7 @@ func (api *WebhooksAPI) AdmissionCreate(c *contextmodel.ReqContext) response.Res
 }
 
 func (api *WebhooksAPI) MutationCreate(c *contextmodel.ReqContext) response.Response {
+	fmt.Println("POTATO")
 	api.Log.Debug("mutation controller create fired")
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
