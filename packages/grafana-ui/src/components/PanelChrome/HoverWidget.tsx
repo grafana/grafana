@@ -52,7 +52,7 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
       </div>
       {!title && <h6 className={classnames(styles.untitled, styles.draggable, dragClass)}>Untitled</h6>}
       {children}
-      <div className={styles.square}>
+      <div>
         <PanelMenu
           menu={menu}
           title={title}
@@ -78,7 +78,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'absolute',
       zIndex: 1,
       right: 0,
-      boxSizing: 'border-box',
+      boxSizing: 'content-box',
       alignItems: 'center',
       background: theme.colors.background.secondary,
       color: theme.colors.text.primary,
@@ -93,6 +93,7 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       width: theme.spacing(4),
       height: '100%',
+      paddingRight: theme.spacing(0.5),
     }),
     draggable: css({
       cursor: 'move',
@@ -102,9 +103,8 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     menuButton: css({
-      color: theme.colors.text.primary,
       '&:hover': {
-        background: 'inherit',
+        background: theme.colors.secondary.main,
       },
     }),
     title: css({
@@ -117,6 +117,10 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     draggableIcon: css({
       transform: 'rotate(45deg)',
+      color: theme.colors.text.secondary,
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
     }),
   };
 }
