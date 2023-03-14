@@ -11,6 +11,7 @@ package publicdashboard
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/kinds/publicdashboard"
@@ -22,9 +23,10 @@ import (
 )
 
 var coreReg = corekind.NewBase(nil)
+var Kind = coreReg.PublicDashboard()
 
 var CRD = crd.Kind{
-	GrafanaKind: coreReg.PublicDashboard(),
+	GrafanaKind: Kind,
 	Object:      &PublicDashboard{},
 	ObjectList:  &PublicDashboardList{},
 }
@@ -38,6 +40,22 @@ var CRDYaml []byte
 // It implements [runtime.Object], and is used in k8s scheme construction.
 type PublicDashboard struct {
 	crd.Base[publicdashboard.PublicDashboard]
+}
+
+func (publicdashboardCRD *PublicDashboard) UnmarshalJSON(data []byte) error {
+	m := make(map[string]interface{})
+	json.Unmarshal(data, &m)
+
+	u := &unstructured.Unstructured{}
+	u.SetUnstructuredContent(m)
+
+	obj, err := fromUnstructured(u)
+	if err != nil {
+		return err
+	}
+
+	*publicdashboardCRD = *obj
+	return nil
 }
 
 // PublicDashboardList is the Go CRD representation of a list PublicDashboard objects.

@@ -11,6 +11,7 @@ package playlist
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/kinds/playlist"
@@ -22,9 +23,10 @@ import (
 )
 
 var coreReg = corekind.NewBase(nil)
+var Kind = coreReg.Playlist()
 
 var CRD = crd.Kind{
-	GrafanaKind: coreReg.Playlist(),
+	GrafanaKind: Kind,
 	Object:      &Playlist{},
 	ObjectList:  &PlaylistList{},
 }
@@ -38,6 +40,22 @@ var CRDYaml []byte
 // It implements [runtime.Object], and is used in k8s scheme construction.
 type Playlist struct {
 	crd.Base[playlist.Playlist]
+}
+
+func (playlistCRD *Playlist) UnmarshalJSON(data []byte) error {
+	m := make(map[string]interface{})
+	json.Unmarshal(data, &m)
+
+	u := &unstructured.Unstructured{}
+	u.SetUnstructuredContent(m)
+
+	obj, err := fromUnstructured(u)
+	if err != nil {
+		return err
+	}
+
+	*playlistCRD = *obj
+	return nil
 }
 
 // PlaylistList is the Go CRD representation of a list Playlist objects.

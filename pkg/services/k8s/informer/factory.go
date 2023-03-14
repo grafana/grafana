@@ -107,7 +107,7 @@ func (f *factory) initializeWatchers(ctx context.Context) {
 					},
 					UpdateFunc: func(oldObj, newObj any) {
 						if err := watcher.Update(ctx, oldObj, newObj); err != nil {
-							f.log.Error("error updating resource", "err", err)
+							f.log.Error("error updating resource", "kind", gvr.Resource, "err", err)
 						}
 					},
 					DeleteFunc: func(obj any) {

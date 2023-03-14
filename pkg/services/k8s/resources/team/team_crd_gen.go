@@ -11,6 +11,7 @@ package team
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/kinds/team"
@@ -22,9 +23,10 @@ import (
 )
 
 var coreReg = corekind.NewBase(nil)
+var Kind = coreReg.Team()
 
 var CRD = crd.Kind{
-	GrafanaKind: coreReg.Team(),
+	GrafanaKind: Kind,
 	Object:      &Team{},
 	ObjectList:  &TeamList{},
 }
@@ -38,6 +40,22 @@ var CRDYaml []byte
 // It implements [runtime.Object], and is used in k8s scheme construction.
 type Team struct {
 	crd.Base[team.Team]
+}
+
+func (teamCRD *Team) UnmarshalJSON(data []byte) error {
+	m := make(map[string]interface{})
+	json.Unmarshal(data, &m)
+
+	u := &unstructured.Unstructured{}
+	u.SetUnstructuredContent(m)
+
+	obj, err := fromUnstructured(u)
+	if err != nil {
+		return err
+	}
+
+	*teamCRD = *obj
+	return nil
 }
 
 // TeamList is the Go CRD representation of a list Team objects.

@@ -11,6 +11,7 @@ package librarypanel
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
@@ -22,9 +23,10 @@ import (
 )
 
 var coreReg = corekind.NewBase(nil)
+var Kind = coreReg.LibraryPanel()
 
 var CRD = crd.Kind{
-	GrafanaKind: coreReg.LibraryPanel(),
+	GrafanaKind: Kind,
 	Object:      &LibraryPanel{},
 	ObjectList:  &LibraryPanelList{},
 }
@@ -38,6 +40,22 @@ var CRDYaml []byte
 // It implements [runtime.Object], and is used in k8s scheme construction.
 type LibraryPanel struct {
 	crd.Base[librarypanel.LibraryPanel]
+}
+
+func (librarypanelCRD *LibraryPanel) UnmarshalJSON(data []byte) error {
+	m := make(map[string]interface{})
+	json.Unmarshal(data, &m)
+
+	u := &unstructured.Unstructured{}
+	u.SetUnstructuredContent(m)
+
+	obj, err := fromUnstructured(u)
+	if err != nil {
+		return err
+	}
+
+	*librarypanelCRD = *obj
+	return nil
 }
 
 // LibraryPanelList is the Go CRD representation of a list LibraryPanel objects.
