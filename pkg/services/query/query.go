@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -75,14 +76,21 @@ func (s *Service) Run(ctx context.Context) error {
 func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 	// First look in the query cache if enabled
 	var updateCacheFn caching.CacheResponseFn
+	cacheMiss := false
 	if !skipQueryCache {
-		resp, found, fn, err := s.cachingService.HandleQueryRequest(ctx, reqDTO)
-		if found {
+		resp, fn, err := s.cachingService.HandleQueryRequest(ctx, reqDTO)
+		if err == nil {
+			caching.MarkCacheHit(resp)
 			return resp, err
 		}
 		if err != nil {
-			// Log but continue
-			s.log.Error("error checking cache for metrics request", "error", err.Error())
+			if errors.Is(err, caching.ErrCacheNotFound) {
+				// Expected error, register this as a cache miss but nothing else
+				cacheMiss = true
+			} else {
+				// An unexpected error occurred - log but continue
+				s.log.Error("error checking cache for metrics request", "error", err.Error())
+			}
 		}
 		updateCacheFn = fn
 	}
@@ -94,21 +102,29 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipDS
 	}
 
 	var resp *backend.QueryDataResponse
-	var respErr error
 	if parsedReq.hasExpression {
 		// If there are expressions, handle them and return
-		resp, respErr = s.handleExpressions(ctx, user, parsedReq)
+		resp, err = s.handleExpressions(ctx, user, parsedReq)
 	} else if len(parsedReq.parsedQueries) == 1 {
 		// If there is only one datasource, query it and return
-		resp, respErr = s.handleQuerySingleDatasource(ctx, user, parsedReq)
+		resp, err = s.handleQuerySingleDatasource(ctx, user, parsedReq)
 	} else {
 		// If there are multiple datasources, handle their queries concurrently and return the aggregate result
-		resp, respErr = s.executeConcurrentQueries(ctx, user, skipDSCache, skipQueryCache, reqDTO, parsedReq.parsedQueries)
+		resp, err = s.executeConcurrentQueries(ctx, user, skipDSCache, skipQueryCache, reqDTO, parsedReq.parsedQueries)
 	}
-	if respErr == nil && updateCacheFn != nil {
+
+	// This updates the query cache with the result for this metrics request
+	if err == nil && updateCacheFn != nil {
 		updateCacheFn(ctx, resp)
 	}
-	return resp, respErr
+	// Update cache response headers
+	if skipQueryCache {
+		caching.MarkCacheBypass(resp)
+	} else if cacheMiss {
+		caching.MarkCacheMiss(resp)
+	}
+
+	return resp, err
 }
 
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
