@@ -124,13 +124,14 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 
 func (l *Local) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
 	reader, err := l.readFile(pluginJSONPath)
-	if reader != nil {
-		defer func() {
-			if err = reader.Close(); err != nil {
-				l.log.Warn("Failed to close plugin JSON file", "path", pluginJSONPath, "err", err)
-			}
-		}()
-	}
+	defer func() {
+		if reader == nil {
+			return
+		}
+		if err = reader.Close(); err != nil {
+			l.log.Warn("Failed to close plugin JSON file", "path", pluginJSONPath, "err", err)
+		}
+	}()
 	if err != nil {
 		l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
 		return plugins.JSONData{}, err
