@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"context"
+	"net"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/services/k8s/kine"
@@ -51,6 +52,7 @@ func (s *service) GetRestConfig() *rest.Config {
 
 func (s *service) start(ctx context.Context) error {
 	serverRunOptions := options.NewServerRunOptions()
+	serverRunOptions.SecureServing.BindAddress = net.ParseIP("127.0.0.1")
 	serverRunOptions.SecureServing.ServerCert.CertDirectory = "data/k8s"
 	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{"https://127.0.0.1:6443"}
 	etcdConfig := s.etcdProvider.GetConfig()
