@@ -53,7 +53,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipDSCache, c.SkipQueryCache, reqDTO)
+	resp, err := hs.queryDataService.QueryDataWithCache(c.Req.Context(), c.SignedInUser, c.SkipDSCache, c.SkipQueryCache, reqDTO)
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}

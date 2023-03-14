@@ -72,8 +72,8 @@ func (s *Service) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-// QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
-func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+// QueryDataWithCache processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
+func (s *Service) QueryDataWithCache(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 	// First look in the query cache if enabled
 	var updateCacheFn caching.CacheResponseFn
 	cacheMiss := false
@@ -95,23 +95,8 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipDS
 		updateCacheFn = fn
 	}
 
-	// Parse the request into parsed queries grouped by datasource uid
-	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO)
-	if err != nil {
-		return nil, err
-	}
-
-	var resp *backend.QueryDataResponse
-	if parsedReq.hasExpression {
-		// If there are expressions, handle them and return
-		resp, err = s.handleExpressions(ctx, user, parsedReq)
-	} else if len(parsedReq.parsedQueries) == 1 {
-		// If there is only one datasource, query it and return
-		resp, err = s.handleQuerySingleDatasource(ctx, user, parsedReq)
-	} else {
-		// If there are multiple datasources, handle their queries concurrently and return the aggregate result
-		resp, err = s.executeConcurrentQueries(ctx, user, skipDSCache, skipQueryCache, reqDTO, parsedReq.parsedQueries)
-	}
+	// do the actual queries
+	resp, err := s.queryData(ctx, user, skipDSCache, reqDTO)
 
 	// This updates the query cache with the result for this metrics request
 	if err == nil && updateCacheFn != nil {
@@ -127,8 +112,30 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipDS
 	return resp, err
 }
 
+// QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
+func (s *Service) queryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	// Parse the request into parsed queries grouped by datasource uid
+	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp *backend.QueryDataResponse
+	if parsedReq.hasExpression {
+		// If there are expressions, handle them and return
+		resp, err = s.handleExpressions(ctx, user, parsedReq)
+	} else if len(parsedReq.parsedQueries) == 1 {
+		// If there is only one datasource, query it and return
+		resp, err = s.handleQuerySingleDatasource(ctx, user, parsedReq)
+	} else {
+		// If there are multiple datasources, handle their queries concurrently and return the aggregate result
+		resp, err = s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
+	}
+	return resp, err
+}
+
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
-func (s *Service) executeConcurrentQueries(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest, queriesbyDs map[string][]parsedQuery) (*backend.QueryDataResponse, error) {
+func (s *Service) executeConcurrentQueries(ctx context.Context, user *user.SignedInUser, skipDSCache bool, reqDTO dtos.MetricRequest, queriesbyDs map[string][]parsedQuery) (*backend.QueryDataResponse, error) {
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(8) // arbitrary limit to prevent too many concurrent requests
 	rchan := make(chan backend.Responses, len(queriesbyDs))
@@ -161,7 +168,7 @@ func (s *Service) executeConcurrentQueries(ctx context.Context, user *user.Signe
 			// Handle panics in the datasource qery
 			defer recoveryFn(subDTO.Queries)
 
-			subResp, err := s.QueryData(ctx, user, skipDSCache, skipQueryCache, subDTO)
+			subResp, err := s.queryData(ctx, user, skipDSCache, subDTO)
 			if err == nil {
 				rchan <- subResp.Responses
 			} else {

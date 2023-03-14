@@ -609,7 +609,7 @@ func (g *GrafanaLive) handleOnRPC(client *centrifuge.Client, e centrifuge.RPCEve
 	if err != nil {
 		return centrifuge.RPCReply{}, centrifuge.ErrorBadRequest
 	}
-	resp, err := g.queryDataService.QueryData(client.Context(), user, false, false, req)
+	resp, err := g.queryDataService.QueryDataWithCache(client.Context(), user, false, false, req)
 	if err != nil {
 		logger.Error("Error query data", "user", client.UserID(), "client", client.ID(), "method", e.Method, "error", err)
 		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {

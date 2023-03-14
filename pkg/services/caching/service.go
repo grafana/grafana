@@ -24,6 +24,12 @@ type CachingService interface {
 
 type CacheResponseFn func(context.Context, *backend.QueryDataResponse)
 
+// type cachedDataResponse struct {
+// 	response      *backend.QueryDataResponse
+// 	status        string
+// 	updateCacheFn caching.CacheResponseFn
+// }
+
 type OSSCachingService struct {
 }
 
