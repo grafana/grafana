@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { FieldConfigSource, GrafanaTheme2, PanelData, ThresholdsConfig } from '@grafana/data';
@@ -23,13 +23,13 @@ interface Props {
 
 type PanelFieldConfig = FieldConfigSource<GraphFieldConfig>;
 
-export const VizWrapper: FC<Props> = ({
+export const VizWrapper = ({
   data,
   currentPanel,
   changePanel,
   thresholds,
   thresholdsType = GraphTresholdsStyleMode.Line,
-}) => {
+}: Props) => {
   const [options, setOptions] = useState<PanelOptions>({
     frameIndex: 0,
     showHeader: true,

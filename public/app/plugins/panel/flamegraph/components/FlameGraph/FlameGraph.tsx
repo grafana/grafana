@@ -18,7 +18,7 @@
 // THIS SOFTWARE.
 import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from '@grafana/data';
@@ -113,67 +113,62 @@ const FlameGraph = ({
     return foundLabels;
   }, [ufuzzy, search, uniqueLabels]);
 
-  const render = useCallback(
-    (pixelsPerTick: number) => {
-      if (!levels.length) {
-        return;
+  useEffect(() => {
+    if (!levels.length) {
+      return;
+    }
+    const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
+    const ctx = graphRef.current?.getContext('2d')!;
+    const graph = graphRef.current!;
+
+    const height = PIXELS_PER_LEVEL * levels.length;
+    graph.width = Math.round(wrapperWidth * window.devicePixelRatio);
+    graph.height = Math.round(height * window.devicePixelRatio);
+    graph.style.width = `${wrapperWidth}px`;
+    graph.style.height = `${height}px`;
+
+    ctx.textBaseline = 'middle';
+    ctx.font = 12 * window.devicePixelRatio + 'px monospace';
+    ctx.strokeStyle = 'white';
+
+    const processor = getDisplayProcessor({
+      field: valueField,
+      theme: createTheme() /* theme does not matter for us here */,
+    });
+
+    for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
+      const level = levels[levelIndex];
+      // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
+      // sometimes we collapse multiple bars into single rect.
+      const dimensions = getRectDimensionsForLevel(
+        level,
+        levelIndex,
+        totalTicks,
+        rangeMin,
+        pixelsPerTick,
+        processor,
+        getLabelValue
+      );
+      for (const rect of dimensions) {
+        // Render each rectangle based on the computed dimensions
+        renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex, foundLabels);
       }
-      const ctx = graphRef.current?.getContext('2d')!;
-      const graph = graphRef.current!;
-
-      const height = PIXELS_PER_LEVEL * levels.length;
-      graph.width = Math.round(wrapperWidth * window.devicePixelRatio);
-      graph.height = Math.round(height * window.devicePixelRatio);
-      graph.style.width = `${wrapperWidth}px`;
-      graph.style.height = `${height}px`;
-
-      ctx.textBaseline = 'middle';
-      ctx.font = 12 * window.devicePixelRatio + 'px monospace';
-      ctx.strokeStyle = 'white';
-
-      const processor = getDisplayProcessor({
-        field: valueField,
-        theme: createTheme() /* theme does not matter for us here */,
-      });
-
-      for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
-        const level = levels[levelIndex];
-        // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
-        // sometimes we collapse multiple bars into single rect.
-        const dimensions = getRectDimensionsForLevel(
-          level,
-          levelIndex,
-          totalTicks,
-          rangeMin,
-          pixelsPerTick,
-          processor,
-          getLabelValue
-        );
-        for (const rect of dimensions) {
-          // Render each rectangle based on the computed dimensions
-          renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex, foundLabels);
-        }
-      }
-    },
-    [
-      levels,
-      wrapperWidth,
-      valueField,
-      totalTicks,
-      rangeMin,
-      rangeMax,
-      search,
-      topLevelIndex,
-      foundLabels,
-      getLabelValue,
-    ]
-  );
+    }
+  }, [
+    levels,
+    wrapperWidth,
+    valueField,
+    totalTicks,
+    rangeMin,
+    rangeMax,
+    search,
+    topLevelIndex,
+    foundLabels,
+    getLabelValue,
+  ]);
 
   useEffect(() => {
     if (graphRef.current) {
-      const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
-      render(pixelsPerTick);
-
       graphRef.current.onclick = (e) => {
         setTooltipData(undefined);
         const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
@@ -222,7 +217,6 @@ const FlameGraph = ({
       };
     }
   }, [
-    render,
     levels,
     rangeMin,
     rangeMax,
