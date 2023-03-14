@@ -94,6 +94,7 @@ Alpha features might be changed or removed without prior notice.
 | `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component      |
 | `timeSeriesTable`                  | Enable time series table transformer & sparkline cell type                                                |
 | `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                 |
+| `frontendTokenRotation`            | Replaces the current in-request token rotation                                                                                                                               |
 
 ## Development feature toggles
 
