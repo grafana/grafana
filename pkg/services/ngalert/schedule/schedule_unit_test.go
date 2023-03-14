@@ -330,7 +330,11 @@ func TestProcessTicks(t *testing.T) {
 	t.Run("on 11th tick rule2 should be updated", func(t *testing.T) {
 		newRule2 := models.CopyRule(alertRule2)
 		newRule2.Version++
-		expectedVersion := newRule2.Version
+		expectedUpdated := models.AlertRuleKeyWithVersion{
+			Version:      newRule2.Version,
+			AlertRuleKey: newRule2.GetKey(),
+		}
+
 		ruleStore.PutRule(context.Background(), newRule2)
 
 		tick = tick.Add(cfg.BaseInterval)
@@ -343,8 +347,7 @@ func TestProcessTicks(t *testing.T) {
 		require.Emptyf(t, stopped, "None rules are expected to be stopped")
 
 		require.Len(t, updated, 1)
-		require.Equal(t, expectedVersion, int64(updated[0].Version))
-		require.Equal(t, newRule2.IsPaused, updated[0].IsPaused)
+		require.Equal(t, expectedUpdated, updated[0])
 	})
 }
 

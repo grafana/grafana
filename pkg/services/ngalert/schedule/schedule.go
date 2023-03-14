@@ -193,11 +193,6 @@ type readyToRunItem struct {
 	evaluation
 }
 
-type readyToUpdateItem struct {
-	ruleInfo *alertRuleInfo
-	ruleVersionAndPauseStatus
-}
-
 func (sch *schedule) updateRulesMetrics(alertRules []*ngmodels.AlertRule) {
 	orgs := make(map[int64]int64, len(alertRules))
 	orgsPaused := make(map[int64]int64, len(alertRules))
@@ -220,11 +215,17 @@ func (sch *schedule) updateRulesMetrics(alertRules []*ngmodels.AlertRule) {
 	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 }
 
-func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.Group, tick time.Time) ([]readyToRunItem, map[ngmodels.AlertRuleKey]struct{}, []readyToUpdateItem) {
+// TODO refactor to accept a callback for tests that will be called with things that are returned currently, and return nothing.
+// Returns a slice of rules that were scheduled for evaluation, map of stopped rules, and a slice of updated rules
+func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.Group, tick time.Time) ([]readyToRunItem, map[ngmodels.AlertRuleKey]struct{}, []ngmodels.AlertRuleKeyWithVersion) {
 	tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
 
 	// update the local registry. If there was a difference between the previous state and the current new state, rulesDiff will contains keys of rules that were updated.
 	rulesDiff, err := sch.updateSchedulableAlertRules(ctx)
+	updated := rulesDiff.updated
+	if updated == nil { // make sure map is not nil
+		updated = map[ngmodels.AlertRuleKey]struct{}{}
+	}
 	if err != nil {
 		sch.log.Error("Failed to update alert rules", "error", err)
 	}
@@ -241,7 +242,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	sch.updateRulesMetrics(alertRules)
 
 	readyToRun := make([]readyToRunItem, 0)
-	needToUpdate := make([]readyToUpdateItem, 0, len(rulesDiff.updated))
+	updatedRules := make([]ngmodels.AlertRuleKeyWithVersion, 0, len(updated)) // this is needed for tests only
 	missingFolder := make(map[string][]string)
 	for _, item := range alertRules {
 		key := item.GetKey()
@@ -269,7 +270,8 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 
 		itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
-		if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
+		isReadyToRun := item.IntervalSeconds != 0 && tickNum%itemFrequency == 0
+		if isReadyToRun {
 			var folderTitle string
 			if !sch.disableGrafanaFolder {
 				title, ok := folderTitles[item.NamespaceUID]
@@ -284,17 +286,20 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 				rule:        item,
 				folderTitle: folderTitle,
 			}})
-		} else if !rulesDiff.IsEmpty() {
+		}
+		if _, isUpdated := updated[key]; isUpdated && !isReadyToRun {
 			// if we do not need to eval the rule, check the whether rule was just updated and if it was, notify evaluation routine about that
-			_, isUpdated := rulesDiff.updated[key]
-			if isUpdated {
-				sch.log.Debug("Rule has been updated. Notifying evaluation routine", key.LogContext()...)
-				needToUpdate = append(needToUpdate, readyToUpdateItem{ruleInfo: ruleInfo,
-					ruleVersionAndPauseStatus: ruleVersionAndPauseStatus{
-						Version:  ruleVersion(item.Version),
-						IsPaused: item.IsPaused,
-					}})
-			}
+			sch.log.Debug("Rule has been updated. Notifying evaluation routine", key.LogContext()...)
+			go func(ri *alertRuleInfo, rule *ngmodels.AlertRule) {
+				ri.update(ruleVersionAndPauseStatus{
+					Version:  ruleVersion(rule.Version),
+					IsPaused: rule.IsPaused,
+				})
+			}(ruleInfo, item)
+			updatedRules = append(updatedRules, ngmodels.AlertRuleKeyWithVersion{
+				Version:      item.Version,
+				AlertRuleKey: item.GetKey(),
+			})
 		}
 
 		// remove the alert rule from the registered alert rules
@@ -328,19 +333,13 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		})
 	}
 
-	for _, item := range needToUpdate {
-		go func(i readyToUpdateItem) {
-			i.ruleInfo.update(i.ruleVersionAndPauseStatus)
-		}(item)
-	}
-
 	// unregister and stop routines of the deleted alert rules
 	toDelete := make([]ngmodels.AlertRuleKey, 0, len(registeredDefinitions))
 	for key := range registeredDefinitions {
 		toDelete = append(toDelete, key)
 	}
 	sch.deleteAlertRule(toDelete...)
-	return readyToRun, registeredDefinitions, needToUpdate
+	return readyToRun, registeredDefinitions, updatedRules
 }
 
 func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersionAndPauseStatus) error {
