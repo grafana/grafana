@@ -1,5 +1,3 @@
-import { config } from '@grafana/runtime';
-
 import { isGUIDish } from './components/ResourcePicker/utils';
 import DataSource from './datasource';
 import { AzureMonitorQuery, AzureQueryType } from './types';
