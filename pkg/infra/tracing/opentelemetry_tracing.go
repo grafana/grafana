@@ -299,6 +299,10 @@ func (ots *Opentelemetry) Inject(ctx context.Context, header http.Header, _ Span
 	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(header))
 }
 
+func (s OpentelemetrySpan) TraceIDString() string {
+	return s.span.SpanContext().TraceID().String()
+}
+
 func (s OpentelemetrySpan) End() {
 	s.span.End()
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace"
 )
 
 func TestTracingMiddleware(t *testing.T) {
@@ -48,6 +47,9 @@ func TestTracingMiddleware(t *testing.T) {
 	})
 
 	t.Run("GET request that returns 200 OK should propagate parent span", func(t *testing.T) {
+		type withTraceID interface {
+			TraceIDString() string
+		}
 		expectedTraceID := "<unset>"
 
 		finalRoundTripper := httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
@@ -59,7 +61,7 @@ func TestTracingMiddleware(t *testing.T) {
 			defer span.End()
 
 			// child span should have the same trace ID as the parent span
-			require.Equal(t, expectedTraceID, span.(trace.Span).SpanContext().TraceID().String())
+			require.Equal(t, expectedTraceID, span.(withTraceID).TraceIDString())
 
 			return &http.Response{StatusCode: http.StatusOK, Request: req}, nil
 		})
@@ -79,7 +81,7 @@ func TestTracingMiddleware(t *testing.T) {
 		ctx, span := tracer.Start(context.Background(), "testspan")
 		defer span.End()
 
-		expectedTraceID = span.(trace.Span).SpanContext().TraceID().String()
+		expectedTraceID = span.(withTraceID).TraceIDString()
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://test.com/query", nil)
 		require.NoError(t, err)
