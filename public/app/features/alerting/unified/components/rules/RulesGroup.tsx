@@ -234,7 +234,13 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         )}
       </div>
       {!isCollapsed && (
-        <RulesTable showSummaryColumn={true} className={styles.rulesTable} showGuidelines={true} rules={group.rules} />
+        <RulesTable
+          showSummaryColumn={true}
+          className={styles.rulesTable}
+          showGuidelines={true}
+          showNextEvaluationColumn={Boolean(group.interval)}
+          rules={group.rules}
+        />
       )}
       {isEditingGroup && (
         <EditCloudGroupModal
