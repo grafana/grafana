@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-kit/log/level"
@@ -29,6 +30,8 @@ const (
 	otlpHttpExporter string = "otlphttp"
 	noopExporter     string = "noop"
 )
+
+var registerPropagatorsOnce sync.Once
 
 type OpenTelemetry struct {
 	enabled       string
@@ -189,11 +192,13 @@ func (ots *OpenTelemetry) createResource() (*resource.Resource, error) {
 	)
 }
 
-func (ots *OpenTelemetry) createPropagatorMap(propagators []string) propagation.TextMapPropagator {
-	// register fallback for known value of "w3c"
-	autoprop.RegisterTextMapPropagator("w3c", propagation.TraceContext{})
+func (ots *OpenTelemetry) createPropagatorMap(propagators []string) (propagation.TextMapPropagator, error) {
+	// register fallback for known value of "w3c"; this is static and duplicates will panic - let's do it once
+	registerPropagatorsOnce.Do(func() {
+		autoprop.RegisterTextMapPropagator("w3c", propagation.TraceContext{})
+	})
 
-	return autoprop.NewTextMapPropagator()
+	return autoprop.TextMapPropagator(propagators...)
 }
 
 func (ots *OpenTelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
@@ -275,33 +280,40 @@ func (ots *OpenTelemetry) initOpenTelemetryTracer() error {
 		if err != nil {
 			return err
 		}
-		propagation = ots.createPropagatorMap(ots.exporters[jaegerExporter].(JaegerExporterConfig).Propagation)
+		propagation, err = ots.createPropagatorMap(ots.exporters[jaegerExporter].(JaegerExporterConfig).Propagation)
+		if err != nil {
+			return err
+		}
 	case otlpExporter:
 		tp, err = ots.initOTLPTracerProvider()
 		if err != nil {
 			return err
 		}
-		propagation = ots.createPropagatorMap(ots.exporters[otlpExporter].(OTLPExporterConfig).Propagation)
+		propagation, err = ots.createPropagatorMap(ots.exporters[otlpExporter].(OTLPExporterConfig).Propagation)
+		if err != nil {
+			return err
+		}
 	case otlpHttpExporter:
 		tp, err = ots.initOTLPHTTPTracerProvider()
 		if err != nil {
 			return err
 		}
-		propagation = ots.createPropagatorMap(ots.exporters[otlpHttpExporter].(OTLPHTTPExporterConfig).Propagation)
+		propagation, err = ots.createPropagatorMap(ots.exporters[otlpHttpExporter].(OTLPHTTPExporterConfig).Propagation)
+		if err != nil {
+			return err
+		}
 	default:
 		tp, err = ots.initNoopTracerProvider()
 		if err != nil {
 			return err
 		}
-		propagation = ots.createPropagatorMap(strings.Split("none", ""))
+		propagation, err = ots.createPropagatorMap(strings.Split("none", " "))
+		if err != nil {
+			return err
+		}
 	}
 
-	// Register our TracerProvider as the global so any imported
-	// instrumentation in the future will default to using it
-	// only if tracing is enabled
-	if ots.enabled != "" {
-		otel.SetTracerProvider(tp)
-	}
+	otel.SetTracerProvider(tp)
 
 	otel.SetTextMapPropagator(propagation)
 

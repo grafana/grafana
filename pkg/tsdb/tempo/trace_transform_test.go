@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	otlp "go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
 func TestTraceToFrame(t *testing.T) {
@@ -62,8 +63,8 @@ func TestTraceToFrame(t *testing.T) {
 
 		var index int
 		otTrace.ResourceSpans().RemoveIf(func(rsp pdata.ResourceSpans) bool {
-			rsp.InstrumentationLibrarySpans().RemoveIf(func(sp pdata.InstrumentationLibrarySpans) bool {
-				sp.Spans().RemoveIf(func(span pdata.Span) bool {
+			rsp.ScopeSpans().RemoveIf(func(sp ptrace.ScopeSpans) bool {
+				sp.Spans().RemoveIf(func(span ptrace.Span) bool {
 					if index == 0 {
 						span.SetTraceID(pdata.NewTraceID([16]byte{0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7}))
 					}

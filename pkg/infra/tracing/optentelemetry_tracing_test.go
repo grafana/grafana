@@ -61,6 +61,7 @@ func TestOptentelemetry_ParseSettingsOpentelemetry(t *testing.T) {
 	otelsect := cfg.Raw.Section("tracing.opentelemetry")
 	jaegersect := cfg.Raw.Section("tracing.opentelemetry.jaeger")
 	otlpsect := cfg.Raw.Section("tracing.opentelemetry.otlp")
+	cfg.Raw.Section("tracing.opentelemetry.otlphttp")
 
 	assert.NoError(t, otel.parseSettingsOpentelemetry())
 	assert.Equal(t, noopExporter, otel.enabled)
