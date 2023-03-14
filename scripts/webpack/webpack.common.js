@@ -8,11 +8,18 @@ module.exports = {
   target: 'web',
   entry: {
     app: './public/app/index.ts',
+    sandboxRuntime: './public/app/features/plugins/sandbox/runtime/runtime.ts',
   },
   output: {
     clean: true,
     path: path.resolve(__dirname, '../../public/build'),
-    filename: '[name].[contenthash].js',
+    filename: (pathData) => {
+      console.log(pathData.chunk.name);
+      if (pathData.chunk.name.includes('sandboxRuntime')) {
+        return '[name].js';
+      }
+      return '[name].[contenthash].js';
+    },
     // Keep publicPath relative for host.com/grafana/ deployments
     publicPath: 'public/build/',
   },
