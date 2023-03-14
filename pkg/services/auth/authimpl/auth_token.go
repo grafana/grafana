@@ -210,7 +210,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	return &userToken, err
 }
 
-func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.RotateResponse, error) {
+func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
 	if cmd.UnHashedToken == "" {
 		return nil, auth.ErrInvalidSessionToken
 	}
@@ -224,21 +224,21 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		newToken, err := s.rotateToken(ctx, token, cmd.IP, cmd.UserAgent)
 
 		if errors.Is(err, errTokenNotRotated) {
-			return &auth.RotateResponse{Token: cmd.UnHashedToken}, nil
+			return token, nil
 		}
 
 		if err != nil {
 			return nil, err
 		}
 
-		return &auth.RotateResponse{Token: newToken.UnhashedToken}, nil
+		return newToken, nil
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return res.(*auth.RotateResponse), nil
+	return res.(*auth.UserToken), nil
 }
 
 func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
@@ -284,6 +284,8 @@ func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.User
 
 	token.AuthToken = hashedToken
 	token.UnhashedToken = newToken
+	token.AuthTokenSeen = false
+	token.RotatedAt = now.Unix()
 
 	return token, nil
 }

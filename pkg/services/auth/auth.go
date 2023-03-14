@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/registry"
@@ -66,17 +65,12 @@ type RotateCommand struct {
 	UserAgent     string
 }
 
-type RotateResponse struct {
-	Token   string
-	Expires time.Time
-}
-
 // UserTokenService are used for generating and validating user tokens
 type UserTokenService interface {
 	CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*UserToken, error)
 	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)
 	// RotateToken will always rotate a valid token
-	RotateToken(ctx context.Context, cmd RotateCommand) (*RotateResponse, error)
+	RotateToken(ctx context.Context, cmd RotateCommand) (*UserToken, error)
 	TryRotateToken(ctx context.Context, token *UserToken, clientIP net.IP, userAgent string) (bool, *UserToken, error)
 	RevokeToken(ctx context.Context, token *UserToken, soft bool) error
 	RevokeAllUserTokens(ctx context.Context, userId int64) error
