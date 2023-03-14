@@ -31,17 +31,21 @@ func (c *Clientset) RegisterValidation(ctx context.Context, webhooks []ShortWebh
 
 // Converts shortwebhookconfig into a validatingwebhookconfiguration
 func convertShortWebhookToValidationWebhook(swc ShortWebhookConfig) *admissionregistrationV1.ValidatingWebhookConfiguration {
-	metaname := fmt.Sprintf("validation.%s.core.grafana.com", swc.Resource)
+	metaName := fmt.Sprintf("validation.%s.core.grafana.com", swc.Kind.MachineName())
+	fmt.Println(metaName)
+
+	resourcePlural := swc.Kind.Props().Common().PluralMachineName
+	fmt.Println(resourcePlural)
 
 	return &admissionregistrationV1.ValidatingWebhookConfiguration{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ValidatingWebhookConfiguration",
 			APIVersion: "admissionregistration.k8s.io/v1",
 		},
-		ObjectMeta: metav1.ObjectMeta{Name: metaname},
+		ObjectMeta: metav1.ObjectMeta{Name: metaName},
 		Webhooks: []admissionregistrationV1.ValidatingWebhook{
 			{
-				Name: metaname,
+				Name: metaName,
 				ClientConfig: admissionregistrationV1.WebhookClientConfig{
 					URL:      &swc.Url,
 					CABundle: caBundle,
@@ -54,7 +58,7 @@ func convertShortWebhookToValidationWebhook(swc ShortWebhookConfig) *admissionre
 						Rule: admissionregistrationV1.Rule{
 							APIGroups:   []string{"*"},
 							APIVersions: []string{"*"},
-							Resources:   []string{swc.Resource},
+							Resources:   []string{resourcePlural},
 							Scope:       pontificate(admissionregistrationV1.NamespacedScope),
 						},
 					},

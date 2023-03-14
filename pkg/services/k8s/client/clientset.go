@@ -7,6 +7,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
@@ -56,7 +57,7 @@ var _ registry.CanBeDisabled = (*Clientset)(nil)
 
 // ShortWebhookConfig is a simple struct that is converted to a full k8s webhook config for an action on a resource.
 type ShortWebhookConfig struct {
-	Resource   string
+	Kind       kindsys.Kind
 	Url        string
 	Operations []admissionregistrationV1.OperationType
 	Timeout    int32

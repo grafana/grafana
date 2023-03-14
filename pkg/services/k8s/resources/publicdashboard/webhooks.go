@@ -33,7 +33,7 @@ type WebhooksAPI struct {
 
 var ValidationWebhookConfigs = []client.ShortWebhookConfig{
 	{
-		Resource:   "publicdashboard",
+		Kind:       Kind,
 		Operations: []admissionregistrationV1.OperationType{admissionregistrationV1.Create},
 		Url:        "https://host.docker.internal:3443/k8s/publicdashboards/admission/create",
 		Timeout:    int32(5),
@@ -42,7 +42,7 @@ var ValidationWebhookConfigs = []client.ShortWebhookConfig{
 
 var MutationWebhookConfigs = []client.ShortWebhookConfig{
 	{
-		Resource:   "publicdashboard",
+		Kind:       Kind,
 		Operations: []admissionregistrationV1.OperationType{admissionregistrationV1.Create},
 		Url:        "https://host.docker.internal:3443/k8s/publicdashboards/mutation/create",
 		Timeout:    int32(5),
