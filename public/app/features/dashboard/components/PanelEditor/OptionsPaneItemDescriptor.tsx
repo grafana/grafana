@@ -13,7 +13,7 @@ export interface OptionsPaneItemProps {
   value?: any;
   description?: string;
   popularRank?: number;
-  render: () => React.ReactNode;
+  render: () => React.ReactElement;
   skipField?: boolean;
   showIf?: () => boolean;
   overrides?: OptionPaneItemOverrideInfo[];
@@ -94,7 +94,7 @@ export class OptionsPaneItemDescriptor {
         key={key}
         aria-label={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
       >
-        {render() as React.ReactElement}
+        {render()}
       </Field>
     );
   }
