@@ -1,6 +1,6 @@
 import { DataFrameView } from '@grafana/data';
 
-export type Item = { level: number; value: number; label: string; self: number, fileName: string, line: number };
+export type Item = { level: number; value: number; label: number; self: number, fileName: string, line: number };
 export type ItemWithStart = Item & { start: number, index: number };
 
 /**

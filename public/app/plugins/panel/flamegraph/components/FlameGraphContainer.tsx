@@ -26,6 +26,8 @@ type Props = {
   flameGraphHeight?: number;
 };
 
+const theme = createTheme();
+
 const FlameGraphContainer = (props: Props) => {
   const [topLevelIndex, setTopLevelIndex] = useState(0);
   const [selectedBarIndex, setSelectedBarIndex] = useState(0);
@@ -48,7 +50,7 @@ const FlameGraphContainer = (props: Props) => {
     (label: string | number) => {
       const enumConfig = labelField?.config?.type?.enum;
       if (enumConfig) {
-        return getEnumDisplayProcessor(createTheme(), enumConfig)(label).text;
+        return getEnumDisplayProcessor(theme, enumConfig)(label).text;
       } else {
         return label.toString();
       }
@@ -60,7 +62,7 @@ const FlameGraphContainer = (props: Props) => {
     (label: string | number) => {
       const enumConfig = fileNameField?.config?.type?.enum;
       if (enumConfig) {
-        return getEnumDisplayProcessor(createTheme(), enumConfig)(label).text;
+        return getEnumDisplayProcessor(theme, enumConfig)(label).text;
       } else {
         return label.toString();
       }
@@ -76,6 +78,7 @@ const FlameGraphContainer = (props: Props) => {
       return [];
     }
     const dataView = new DataFrameView<Item>(props.data);
+
     return nestedSetToLevels(dataView);
   }, [props.data]);
 
@@ -129,6 +132,12 @@ const FlameGraphContainer = (props: Props) => {
               setRangeMin={setRangeMin}
               setRangeMax={setRangeMax}
               getLabelValue={getLabelValue}
+              getFileNameValue={getFileNameValue}
+              onSelectFilename={(name: string) => {
+                setSelectedLocation({
+                  fileName: name,
+                });
+              }}
             />
           )}
 

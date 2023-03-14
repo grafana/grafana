@@ -4,7 +4,7 @@ import { oneDark } from '@codemirror/theme-one-dark';
 import { gutter, GutterMarker, lineNumbers } from '@codemirror/view';
 import { css, cx } from '@emotion/css';
 import { minimalSetup, EditorView } from 'codemirror';
-import React, { createRef, useEffect, useState } from 'react';
+import React, { createRef, useEffect } from 'react';
 
 // import { GrafanaTheme2 } from '@grafana/data';
 // import { CodeEditor, useTheme2 } from '@grafana/ui';

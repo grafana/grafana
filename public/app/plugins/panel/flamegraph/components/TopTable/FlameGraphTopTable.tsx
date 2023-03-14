@@ -19,6 +19,8 @@ type Props = {
   setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
+  grouping: 'label' | 'filename';
+  onSelectFilename: (filename: string) => void;
 };
 
 const FlameGraphTopTable = ({
@@ -31,6 +33,8 @@ const FlameGraphTopTable = ({
   setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
+  grouping,
+  onSelectFilename,
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme));
 
@@ -87,18 +91,22 @@ const FlameGraphTopTable = ({
 
   const rowClicked = useCallback(
     (symbol: string) => {
-      if (search === symbol) {
-        setSearch('');
+      if (grouping === 'filename') {
+        onSelectFilename(symbol);
       } else {
-        setSearch(symbol);
-        // Reset selected level in flamegraph when selecting row in top table
-        setTopLevelIndex(0);
-        setSelectedBarIndex(0);
-        setRangeMin(0);
-        setRangeMax(1);
+        if (search === symbol) {
+          setSearch('');
+        } else {
+          setSearch(symbol);
+          // Reset selected level in flamegraph when selecting row in top table
+          setTopLevelIndex(0);
+          setSelectedBarIndex(0);
+          setRangeMin(0);
+          setRangeMax(1);
+        }
       }
     },
-    [search, setRangeMax, setRangeMin, setSearch, setTopLevelIndex, setSelectedBarIndex]
+    [search, setRangeMax, setRangeMin, setSearch, setTopLevelIndex, setSelectedBarIndex, grouping, onSelectFilename]
   );
 
   const { headerGroups, rows, prepareRow } = useTable(options, useSortBy, useAbsoluteLayout);
