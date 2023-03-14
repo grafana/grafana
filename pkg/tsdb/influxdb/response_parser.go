@@ -85,8 +85,13 @@ func transformRows(rows []Row, query Query) data.Frames {
 			field := data.NewField("value", nil, values)
 			frames = append(frames, data.NewFrame(row.Name, field))
 		} else {
+			var (
+				timeIndex string
+			)
+			timeIndex = "Time"
 			for colIndex, column := range row.Columns {
 				if strings.ToLower(column) == "time" {
+					timeIndex = column
 					continue
 				}
 
@@ -128,7 +133,7 @@ func transformRows(rows []Row, query Query) data.Frames {
 					}
 				}
 
-				timeField := data.NewField("Time", nil, timeArray)
+				timeField := data.NewField(timeIndex, nil, timeArray)
 				if valType == "string" {
 					valueField := data.NewField("value", row.Tags, stringArray)
 					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
