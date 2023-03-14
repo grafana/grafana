@@ -234,7 +234,13 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
         )}
       </div>
       {!isCollapsed && (
-        <RulesTable showSummaryColumn={true} className={styles.rulesTable} showGuidelines={true} rules={group.rules} />
+        <RulesTable
+          showSummaryColumn={true}
+          className={styles.rulesTable}
+          showGuidelines={true}
+          showNextEvaluationColumn={Boolean(group.interval)}
+          rules={group.rules}
+        />
       )}
       {isEditingGroup && (
         <EditCloudGroupModal
