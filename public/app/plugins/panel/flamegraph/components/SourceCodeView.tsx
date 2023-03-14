@@ -5,6 +5,7 @@ import { css, cx } from '@emotion/css';
 import CodeMirror, { minimalSetup, ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import React, { createRef, useEffect, useState } from 'react';
 
+import { DataFrameView } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
 import { PhlareDataSource } from '../../../datasource/phlare/datasource';
@@ -17,7 +18,7 @@ interface Props {
   location: CodeLocation;
   getLabelValue: (label: string | number) => string;
   getFileNameValue: (label: string | number) => string;
-  fileProfile: Record<number, Item>;
+  data: DataFrameView<Item>;
 }
 
 const highHeat = cx(
@@ -42,12 +43,13 @@ const heatGutterClass = cx(
 );
 
 export function SourceCodeView(props: Props) {
-  const { datasource, location, getLabelValue, getFileNameValue, fileProfile } = props;
+  const { datasource, location, getLabelValue, getFileNameValue, data } = props;
   const [source, setSource] = useState<string>('');
   const editorRef = createRef<ReactCodeMirrorRef>();
   const theme = useTheme2();
 
-  const maxRawVal = Object.values(fileProfile).reduce((acc, val) => (val.value > acc ? val.value : acc), 0);
+  const fileData = data.toArray().filter((d) => d.fileName === location.fileName);
+  const maxRawVal = fileData.reduce((acc, val) => (val.value > acc ? val.value : acc), 0);
 
   // TODO: create pre-defined pallete of heat markers (maybe 32?)
   class HeatMarker extends GutterMarker {
@@ -84,7 +86,7 @@ export function SourceCodeView(props: Props) {
     // TODO: replace this with a pre-computed markers: GutterMarker[] ?
     lineMarker(view, line) {
       let lineNum = view.state.doc.lineAt(line.from).number;
-      let heatRawVal = fileProfile[lineNum]?.value || 0;
+      let heatRawVal = fileData.find((d) => d.line === lineNum)?.value || 0;
       let heatPct = heatRawVal / maxRawVal;
       let marker =
         heatPct === 0 ? null : heatPct > 0.5 ? new HighHeatMarker(heatRawVal) : new MedHeatMarker(heatRawVal);

@@ -100,17 +100,6 @@ const FlameGraphContainer = (props: Props) => {
     setRangeMax(1);
   }, [props.data]);
 
-  const fileProfile: Record<number, Item> = {};
-  const view = new DataFrameView<Item>(props.data!);
-  if (selectedLocation) {
-    for (let i = 0; i < view.length; i++) {
-      const item = view.get(i);
-      if (item.fileName === selectedLocation.fileName) {
-        fileProfile[item.line] = item;
-      }
-    }
-  }
-
   return (
     <>
       {props.data && (
@@ -180,7 +169,7 @@ const FlameGraphContainer = (props: Props) => {
               datasource={props.datasource! as PhlareDataSource}
               getLabelValue={getLabelValue}
               getFileNameValue={getFileNameValue}
-              fileProfile={fileProfile}
+              data={new DataFrameView<Item>(props.data!)}
             />
           )}
         </div>
