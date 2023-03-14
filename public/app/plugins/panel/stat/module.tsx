@@ -48,6 +48,7 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
           ],
         },
       })
+      // Boolean toggle for removing the gradient panel background
       .addBooleanSwitch({
         path: 'hasGradient',
         name: 'Background gradient',
