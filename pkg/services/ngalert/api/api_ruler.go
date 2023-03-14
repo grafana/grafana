@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,7 +36,6 @@ type RulerSrv struct {
 	provenanceStore    provisioning.ProvisioningStore
 	store              RuleStore
 	QuotaService       quota.Service
-	scheduleService    schedule.ScheduleService
 	log                log.Logger
 	cfg                *setting.UnifiedAlertingSettings
 	ac                 accesscontrol.AccessControl
