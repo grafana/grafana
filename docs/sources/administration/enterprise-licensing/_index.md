@@ -12,7 +12,6 @@ cascade:
   labels:
     products:
       - enterprise
-      - oss
 description: Activate and manage a Grafana Enterprise license
 keywords:
   - grafana
