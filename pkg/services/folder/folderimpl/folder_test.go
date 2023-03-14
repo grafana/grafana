@@ -355,7 +355,7 @@ func TestIntegrationDeleteNestedFolders(t *testing.T) {
 		origNewGuardian := guardian.New
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
-		ancestorUIDs := CreateLegacySubtree(t, nestedFolderStore, serviceWithFlagOn, 3, "", createCmd)
+		ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, 3, "", createCmd)
 
 		deleteCmd := folder.DeleteFolderCommand{
 			UID:          ancestorUIDs[0],
@@ -397,7 +397,7 @@ func TestIntegrationDeleteNestedFolders(t *testing.T) {
 		origNewGuardian := guardian.New
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
-		ancestorUIDs := CreateLegacySubtree(t, nestedFolderStore, serviceWithFlagOn, 1, "", createCmd)
+		ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, 1, "", createCmd)
 
 		deleteCmd := folder.DeleteFolderCommand{
 			UID:          ancestorUIDs[0],
@@ -856,7 +856,7 @@ func TestNestedFolderService(t *testing.T) {
 	})
 }
 
-func CreateLegacySubtree(t *testing.T, store *sqlStore, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []string {
+func CreateSubtreeInStore(t *testing.T, store *sqlStore, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []string {
 	t.Helper()
 
 	ancestorUIDs := []string{}
