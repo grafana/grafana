@@ -12,7 +12,7 @@ const fixedColorOption: SelectableValue<string> = {
   value: '_____fixed_____',
 };
 
-export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, any, any>> = (props) => {
+export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig>> = (props) => {
   const { value, context, onChange } = props;
 
   const defaultColor = 'dark-green';

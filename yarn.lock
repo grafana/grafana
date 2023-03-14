@@ -5115,25 +5115,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:1.0.0, @grafana/faro-core@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@grafana/faro-core@npm:1.0.0"
+"@grafana/faro-core@npm:1.0.2, @grafana/faro-core@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@grafana/faro-core@npm:1.0.2"
   dependencies:
     "@opentelemetry/api": ^1.4.0
     "@opentelemetry/api-metrics": ^0.33.0
     "@opentelemetry/otlp-transformer": ^0.35.0
-  checksum: 6debd3f85e1fd9b4a48c6327fdf5b603356ac4e9da25ea861e04741b3e4cc4539e8c2e8ab9f34a33321df0f5f13fdb1371b6d67d493980befd300acd8b8acc9b
+  checksum: 09c3c6687b955aacd17de73dca319dbb2abda8dd26f5c038618266ffefbc1f915cfe12167cd4b49db5c639ab70b7141bb9794c3cbdc682bb63174f95df9d9dfd
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:1.0.0":
-  version: 1.0.0
-  resolution: "@grafana/faro-web-sdk@npm:1.0.0"
+"@grafana/faro-web-sdk@npm:1.0.2":
+  version: 1.0.2
+  resolution: "@grafana/faro-web-sdk@npm:1.0.2"
   dependencies:
-    "@grafana/faro-core": ^1.0.0
+    "@grafana/faro-core": ^1.0.2
     ua-parser-js: ^1.0.32
     web-vitals: ^3.1.1
-  checksum: 63734db13f3ccef08c46e638c8f62d0bdcc265c7926d80bbe6637152d34fd2f08be5eebfb74521e55e2be306062bc5126eace1ef3453b0a8dfe72952fd23a2ff
+  checksum: ca04add8469778d73e1bc15f057d063d93a88b9d76325c79060848ad3211fa929e30b6a85365981f7bcef023704f9f92f67678311bfed13dd521399c0f00e92f
   languageName: node
   linkType: hard
 
@@ -5168,7 +5168,7 @@ __metadata:
   dependencies:
     "@grafana/data": 9.5.0-pre
     "@grafana/e2e-selectors": 9.5.0-pre
-    "@grafana/faro-web-sdk": 1.0.0
+    "@grafana/faro-web-sdk": 1.0.2
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 9.5.0-pre
     "@rollup/plugin-commonjs": 23.0.2
@@ -22112,8 +22112,8 @@ __metadata:
     "@grafana/eslint-config": 5.1.0
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
     "@grafana/experimental": 1.1.0
-    "@grafana/faro-core": 1.0.0
-    "@grafana/faro-web-sdk": 1.0.0
+    "@grafana/faro-core": 1.0.2
+    "@grafana/faro-web-sdk": 1.0.2
     "@grafana/google-sdk": 0.0.4
     "@grafana/lezer-logql": 0.1.2
     "@grafana/monaco-logql": ^0.0.7
