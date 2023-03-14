@@ -10,11 +10,14 @@ import { useTheme2 } from '@grafana/ui';
 import { PhlareDataSource } from '../../../datasource/phlare/datasource';
 import { CodeLocation } from '../../../datasource/phlare/types';
 
+import { Item } from './FlameGraph/dataTransform';
+
 interface Props {
   datasource: PhlareDataSource;
   location: CodeLocation;
   getLabelValue: (label: string | number) => string;
   getFileNameValue: (label: string | number) => string;
+  fileProfile: Record<number, Item>;
 }
 
 const highHeat = cx(
@@ -39,17 +42,12 @@ const heatGutterClass = cx(
 );
 
 export function SourceCodeView(props: Props) {
-  const { datasource, location, getLabelValue, getFileNameValue } = props;
+  const { datasource, location, getLabelValue, getFileNameValue, fileProfile } = props;
   const [source, setSource] = useState<string>('');
   const editorRef = createRef<ReactCodeMirrorRef>();
   const theme = useTheme2();
 
-  const lineHeats = [
-    195, 116, 90, 193, 63, 71, 129, 168, 198, 177, 197, 167, 216, 205, 11, 220, 12, 12, 74, 107, 211, 145, 85, 142, 208,
-    48, 239, 5, 100, 25, 93, 206, 46, 36, 127, 94, 147, 176, 18, 224, 41, 69, 230, 45, 118, 92, 126, 152, 8, 185,
-  ];
-
-  const maxRawVal = 350;
+  const maxRawVal = Object.values(fileProfile).reduce((acc, val) => (val.value > acc ? val.value : acc), 0);
 
   // TODO: create pre-defined pallete of heat markers (maybe 32?)
   class HeatMarker extends GutterMarker {
@@ -86,8 +84,7 @@ export function SourceCodeView(props: Props) {
     // TODO: replace this with a pre-computed markers: GutterMarker[] ?
     lineMarker(view, line) {
       let lineNum = view.state.doc.lineAt(line.from).number;
-      const index = lineNum % 70 || 0;
-      let heatRawVal = lineHeats[index] || 0;
+      let heatRawVal = fileProfile[lineNum]?.value || 0;
       let heatPct = heatRawVal / maxRawVal;
       let marker =
         heatPct === 0 ? null : heatPct > 0.5 ? new HighHeatMarker(heatRawVal) : new MedHeatMarker(heatRawVal);
