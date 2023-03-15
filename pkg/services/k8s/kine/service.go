@@ -10,6 +10,8 @@ import (
 	"github.com/k3s-io/kine/pkg/endpoint"
 )
 
+const DEFAULT_HOST = "tcp://127.0.0.1:2379"
+
 // Service is the interface for the kine service.
 type Service interface {
 	services.Service
@@ -43,7 +45,7 @@ func (s *service) GetConfig() *endpoint.ETCDConfig {
 func (s *service) start(ctx context.Context) error {
 	config := endpoint.Config{
 		Endpoint: s.connectionString,
-		Listener: "tcp://127.0.0.1:2379",
+		Listener: DEFAULT_HOST,
 	}
 	etcdConfig, err := endpoint.Listen(ctx, config)
 	if err != nil {

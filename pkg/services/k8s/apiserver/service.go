@@ -17,7 +17,7 @@ import (
 
 const (
 	DEFAULT_IP   = "127.0.0.1"
-	DEFAULT_HOST = DEFAULT_IP + ":6443"
+	DEFAULT_HOST = "https://" + DEFAULT_IP + ":6443"
 )
 
 var (
@@ -64,7 +64,7 @@ func (s *service) start(ctx context.Context) error {
 	serverRunOptions := options.NewServerRunOptions()
 	serverRunOptions.SecureServing.BindAddress = net.ParseIP(DEFAULT_IP)
 	serverRunOptions.SecureServing.ServerCert.CertDirectory = s.dataPath
-	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{"https://" + DEFAULT_HOST}
+	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{DEFAULT_HOST}
 	etcdConfig := s.etcdProvider.GetConfig()
 	serverRunOptions.Etcd.StorageConfig.Transport.ServerList = etcdConfig.Endpoints
 	serverRunOptions.Etcd.StorageConfig.Transport.CertFile = etcdConfig.TLSConfig.CertFile
@@ -82,7 +82,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	s.restConfig = server.GenericAPIServer.LoopbackClientConfig
-	s.restConfig.Host = "https://" + DEFAULT_HOST
+	s.restConfig.Host = DEFAULT_HOST
 	s.writeKubeConfiguration(s.restConfig)
 
 	prepared, err := server.PrepareRun()
