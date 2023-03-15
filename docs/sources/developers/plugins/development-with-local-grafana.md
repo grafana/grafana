@@ -81,3 +81,86 @@ Finally start your plugin in development mode. Go to your plugin root directory 
    ```
 
 After this, you should be able to see your plugin listed in Grafana and test your changes. Note that any change in the fronted will require you to refresh your browser while changes in the backend may require to rebuild your plugin binaries and reload the plugin (`mage && mage reloadPlugin` for local development or `docker-compose up` again if you are using docker-compose).
+
+## Run your backend plugin with a debugger
+
+> The following method only works with a local Grafana instance and does not work with Docker for the time being.
+
+You can run a backend plugin and attach a debugger to it directly from your IDE. This allows you to set breakpoints and debug your backend plugin directly from your IDE of choice.
+
+We support Visual Studio Code and GoLand out of the box, but this feature can also work with any other IDE or debugger.
+
+1. Make sure you are using the latest version of `grafana-plugin-sdk-go`
+   - If not, you can update it with:
+     ```
+     go get -u github.com/grafana/grafana-plugin-sdk-go
+     ```
+1. Build your plugin at least once with:
+   ```
+   yarn build && mage
+   ```
+1. Install your plugin into your local Grafana instance
+1. Configure your IDE by following those instructions:
+
+### Visual Studio Code
+
+1. Place the following file inside `.vscode/launch.json`, in your plugin's folder, if it's not already present:
+
+   ```json
+   {
+     "version": "0.2.0",
+     "configurations": [
+       {
+         "name": "Standalone debug mode",
+         "type": "go",
+         "request": "launch",
+         "mode": "debug",
+         "program": "${workspaceFolder}/pkg",
+         "env": {},
+         "args": ["-standalone"]
+       }
+     ]
+   }
+   ```
+
+1. Press `F5` to run your plugin in debug mode
+1. Start Grafana
+
+(if you re-run the configuration, the plugin will be automatically reloaded in Grafana).
+
+### GoLand
+
+1. Create a new Run/Debug configuration:
+
+   - **Run kind**: Package
+   - **Package path**: your `pkg` package
+   - **Program arguments**: `-standalone`
+
+1. Run the config (with or without the debugger)
+
+1. Start Grafana
+
+(if you re-run the configuration, the plugin will be automatically reloaded in Grafana).
+
+### Other IDEs
+
+Configure your code editor to run the following steps:
+
+1. Build the executable with debug flags
+   ```
+   mage build:debug
+   ```
+1. Run the plugin's executable (inside `dist`) with `-standalone -debug` flags
+   ```
+   ./gpx_xyz_linux_amd64 -standalone -debug
+   ```
+1. Attach a debugger to the process
+
+Then, you can start Grafana.
+
+### Notes
+
+- When restarting the debug mode plugin from the IDE, it will be automatically be reloaded in Grafana
+- All logs will be printed in the plugin's stdout rather than in Grafana logs
+- If the backend plugin does not serve requests after turning off debug mode, you can force reset the standalone mode by deleting the files `standalone.txt` and `pid.txt` alongside the executable, then restart Grafana
+- We currently do not support debugging backend plugins running inside Docker
