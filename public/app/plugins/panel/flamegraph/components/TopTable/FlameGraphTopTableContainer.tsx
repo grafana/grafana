@@ -21,7 +21,7 @@ type Props = {
   setRangeMax: (range: number) => void;
   getLabelValue: (label: string | number) => string;
   getFileNameValue: (label: string | number) => string;
-  onSelectFilename: (filename: string) => void,
+  onSelectFilename: (filename: string) => void;
 };
 
 const FlameGraphTopTableContainer = ({
@@ -120,34 +120,37 @@ const FlameGraphTopTableContainer = ({
     <>
       {topTable && (
         <div className={styles.topTableContainer}>
-          <RadioButtonGroup<Grouping>
-            options={[
-              { value: 'label', label: 'Function', description: 'Group by function' },
-              { value: 'filename', label: 'File name', description: 'Group by file name' },
-            ]}
-            value={grouping}
-            onChange={(value) => {
-              setGrouping(value);
-            }}
-          />
-
-          <AutoSizer style={{ width: '100%', height: '100%' }}>
-            {({ width, height }) => (
-              <FlameGraphTopTable
-                width={width}
-                height={height}
-                data={topTable}
-                search={search}
-                setSearch={setSearch}
-                setTopLevelIndex={setTopLevelIndex}
-                setSelectedBarIndex={setSelectedBarIndex}
-                setRangeMin={setRangeMin}
-                setRangeMax={setRangeMax}
-                grouping={grouping}
-                onSelectFilename={onSelectFilename}
-              />
-            )}
-          </AutoSizer>
+          <div className={styles.top}>
+            <RadioButtonGroup<Grouping>
+              options={[
+                { value: 'label', label: 'Function', description: 'Group by function' },
+                { value: 'filename', label: 'File name', description: 'Group by file name' },
+              ]}
+              value={grouping}
+              onChange={(value) => {
+                setGrouping(value);
+              }}
+            />
+          </div>
+          <div className={styles.bottom}>
+            <AutoSizer style={{ width: '100%', height: '100%' }}>
+              {({ width, height }) => (
+                <FlameGraphTopTable
+                  width={width}
+                  height={height}
+                  data={topTable}
+                  search={search}
+                  setSearch={setSearch}
+                  setTopLevelIndex={setTopLevelIndex}
+                  setSelectedBarIndex={setSelectedBarIndex}
+                  setRangeMin={setRangeMin}
+                  setRangeMax={setRangeMax}
+                  grouping={grouping}
+                  onSelectFilename={onSelectFilename}
+                />
+              )}
+            </AutoSizer>
+          </div>
         </div>
       )}
     </>
@@ -159,10 +162,22 @@ const getStyles = () => {
 
   return {
     topTableContainer: css`
+      label: topTableContainer;
       cursor: pointer;
       width: 100%;
       height: 100%;
       margin-right: ${marginRight};
+      display: flex;
+      flex-direction: column;
+    `,
+
+    top: css`
+      flex: 0;
+      margin-bottom: 4px;
+    `,
+
+    bottom: css`
+      flex: 1;
     `,
   };
 };

@@ -185,6 +185,8 @@ const FlameGraphContainer = (props: Props) => {
                   onSelectFilename={(name: string) => {
                     setSelectedFileName(name);
                     setSelectedLocation(undefined);
+                    setCodeVisible(true);
+                    setGraphVisible(false);
                   }}
                 />
               </div>
