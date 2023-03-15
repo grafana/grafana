@@ -1,6 +1,7 @@
 package common
 
 // Optional formats for the template variable replace functions
+// See also https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#advanced-variable-format-options
 VariableFormatID: 
     // Values are lucene escaped and multi-valued variables generate an OR expression
     "lucene" | 

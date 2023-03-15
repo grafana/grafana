@@ -750,7 +750,8 @@ export type TimeZoneUtc = 'utc';
 export type TimeZoneBrowser = 'browser';
 
 /**
- * The variable format is used while
+ * Optional formats for the template variable replace functions
+ * See also https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#advanced-variable-format-options
  */
 export enum VariableFormatID {
   Csv = 'csv',
