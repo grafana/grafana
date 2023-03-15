@@ -9,7 +9,6 @@ import { EchoEvent, EchoEventType } from '../services/EchoSrv';
  * @public
  */
 export interface DashboardInfo {
-  dashboardId: number;
   dashboardUid: string;
   dashboardName: string;
   folderName?: string;
@@ -24,7 +23,6 @@ export interface DashboardInfo {
 export interface DataRequestInfo extends Partial<DashboardInfo> {
   source?: CoreApp | string;
   datasourceName: string;
-  datasourceId: number;
   datasourceUid: string;
   datasourceType: string;
   panelId?: number;

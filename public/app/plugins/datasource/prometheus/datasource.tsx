@@ -182,7 +182,6 @@ export class PrometheusDatasource
   _addTracingHeaders(httpOptions: PromQueryRequest, options: DataQueryRequest<PromQuery>) {
     httpOptions.headers = {};
     if (this.access === 'proxy') {
-      httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
       httpOptions.headers['X-Dashboard-UID'] = options.dashboardUID;
       httpOptions.headers['X-Panel-Id'] = options.panelId;
     }
@@ -1033,7 +1032,6 @@ export class PrometheusDatasource
       targets: [{ refId: 'test', expr: '1+1', instant: true }],
       requestId: `${this.id}-health`,
       scopedVars: {},
-      dashboardId: 0,
       panelId: 0,
       interval: '1m',
       intervalMs: 60000,

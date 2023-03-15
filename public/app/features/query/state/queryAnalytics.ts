@@ -1,7 +1,6 @@
 import { PanelData, LoadingState, DataSourceApi, CoreApp, urlUtil } from '@grafana/data';
 import { reportMetaAnalytics, MetaAnalyticsEventName, DataRequestEventPayload } from '@grafana/runtime';
-
-import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 export function emitDataRequestEvent(datasource: DataSourceApi) {
   let done = false;
@@ -24,7 +23,6 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       eventName: MetaAnalyticsEventName.DataRequest,
       source: data.request.app,
       datasourceName: datasource.name,
-      datasourceId: datasource.id,
       datasourceUid: datasource.uid,
       datasourceType: datasource.type,
       dataSize: 0,
@@ -65,17 +63,17 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
     const totalQueries = Object.keys(queryCacheStatus).length;
     const cachedQueries = Object.values(queryCacheStatus).filter((val) => val === true).length;
 
-    eventData.panelId = data.request!.panelId;
-    eventData.dashboardId = data.request!.dashboardId;
+    eventData.panelId = data.request?.panelId;
     eventData.totalQueries = totalQueries;
     eventData.cachedQueries = cachedQueries;
 
     const dashboard = getDashboardSrv().getCurrent();
     if (dashboard) {
-      eventData.dashboardId = dashboard.id;
       eventData.dashboardName = dashboard.title;
       eventData.dashboardUid = dashboard.uid;
       eventData.folderName = dashboard.meta.folderTitle;
+    } else {
+      eventData.dashboardUid = data.request?.dashboardUID;
     }
 
     if (data.error) {
