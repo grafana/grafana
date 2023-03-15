@@ -173,9 +173,9 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float
 
 func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger log.Logger, reason string) {
 	if state.State == eval.Normal && state.StateReason == reason {
-		logger.Debug("Keeping state", "state", state.State)
+		logger.Debug("Keeping state", "state", state.State, "reason", reason)
 	} else {
-		logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Normal)
+		logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Normal, "reason", reason)
 		// Normal states have the same start and end timestamps
 		state.SetNormal(reason, result.EvaluatedAt, result.EvaluatedAt, result.Error)
 	}
@@ -189,16 +189,16 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 	case state.State == eval.Pending && state.StateReason == reason:
 		// If the previous state is Pending then check if the For duration has been observed
 		if result.EvaluatedAt.Sub(state.StartsAt) >= rule.For {
-			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Alerting)
+			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Alerting, "reason", reason)
 			state.SetAlerting(reason, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), result.Error)
 		}
 	default:
 		if rule.For > 0 {
 			// If the alert rule has a For duration that should be observed then the state should be set to Pending
-			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending)
+			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending, "reason", reason)
 			state.SetPending(reason, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), result.Error)
 		} else {
-			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Alerting)
+			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Alerting, "reason", reason)
 			state.SetAlerting(reason, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), result.Error)
 		}
 	}
@@ -216,17 +216,17 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		} else if state.State == eval.Pending && state.StateReason == models.StateReasonError {
 			// If the previous state is Pending then check if the ForError duration has been observed
 			if result.EvaluatedAt.Sub(state.StartsAt) >= rule.ForError {
-				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Error)
+				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Error, "reason", models.StateReasonError)
 				state.SetError(result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), result.Error)
 			}
 		} else {
 			// This is the first occurrence of an error
 			if rule.ForError > 0 {
 				// If the alert rule has a For duration that should be observed then the state should be set to Pending
-				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending)
+				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending, "reason", models.StateReasonError)
 				state.SetPending(models.StateReasonError, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), result.Error)
 			} else {
-				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Error)
+				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Error, "reason", models.StateReasonError)
 				state.SetError(result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), result.Error)
 			}
 
@@ -256,7 +256,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 	}
 }
 
-func resultNoData(state *State, rule *models.AlertRule, result eval.Result, _ log.Logger) {
+func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
 	startsAt := state.StartsAt
 	if startsAt.IsZero() {
 		startsAt = result.EvaluatedAt
@@ -266,11 +266,34 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, _ lo
 
 	switch rule.NoDataState {
 	case models.Alerting:
+		logger.Debug("No data state is Alerting", "handler", "setAlerting", "previous_handler", "resultNoData")
 		state.SetAlerting(models.StateReasonNoData, startsAt, endsAt, err)
 	case models.NoData:
-		state.SetNoData(startsAt, endsAt, err)
+		if state.State == eval.NoData {
+			logger.Debug("Keeping state", "state", state.State)
+			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+		} else if state.State == eval.Pending && state.StateReason == models.StateReasonNoData {
+			if result.EvaluatedAt.Sub(state.StartsAt) >= rule.ForNoData {
+				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.NoData, "reason", models.StateReasonNoData)
+				state.SetNoData(startsAt, endsAt, err)
+			}
+		} else {
+			// This is the first occurrence of a NoData
+			if rule.ForNoData > 0 {
+				// If the alert rule has a ForNoData duration that should be observed then the state should be set to Pending
+				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending, "reason", models.StateReasonNoData)
+				state.SetPending(models.StateReasonNoData, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), err)
+			} else {
+				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.NoData, "reason", models.StateReasonNoData)
+				state.SetNoData(startsAt, endsAt, err)
+			}
+		}
 	case models.OK:
-		state.SetNormal(models.StateReasonNoData, startsAt, endsAt, err)
+		logger.Debug("No data state is Normal", "handler", "resultNormal", "previous_handler", "resultNoData")
+		resultNormal(state, rule, result, logger, models.StateReasonNoData)
+	default:
+		err := fmt.Errorf("unsupported no data state: %s", rule.NoDataState)
+		state.SetNoData(state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), err)
 	}
 }
 

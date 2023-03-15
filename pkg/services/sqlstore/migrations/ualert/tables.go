@@ -291,6 +291,16 @@ func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 		},
 	))
 
+	mg.AddMigration("add for_no_data column to alert_rule table", migrator.NewAddColumnMigration(
+		alertRule,
+		&migrator.Column{
+			Name:     "for_no_data",
+			Type:     migrator.DB_BigInt,
+			Nullable: false,
+			Default:  "0",
+		},
+	))
+
 	// This migration fixes a bug where "false" for the default value created a column with default "true" in PostgreSQL databases
 	mg.AddMigration("fix is_paused column for alert_rule table", migrator.NewRawSQLMigration("").
 		Postgres(`ALTER TABLE alert_rule ALTER COLUMN is_paused SET DEFAULT false;
@@ -365,6 +375,16 @@ func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
 		&migrator.Column{
 			Name:     "is_paused",
 			Type:     migrator.DB_Bool,
+			Nullable: false,
+			Default:  "0",
+		},
+	))
+
+	mg.AddMigration("add for_no_data column to alert_rule_version table", migrator.NewAddColumnMigration(
+		alertRuleVersion,
+		&migrator.Column{
+			Name:     "for_no_data",
+			Type:     migrator.DB_BigInt,
 			Nullable: false,
 			Default:  "0",
 		},

@@ -160,6 +160,7 @@ type AlertRule struct {
 	// but this is currently not possible because of circular dependencies
 	For         time.Duration
 	ForError    time.Duration
+	ForNoData   time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
 	IsPaused    bool
@@ -357,6 +358,7 @@ type AlertRuleVersion struct {
 	// but this is currently not possible because of circular dependencies
 	For         time.Duration
 	ForError    time.Duration
+	ForNoData   time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
 	IsPaused    bool
