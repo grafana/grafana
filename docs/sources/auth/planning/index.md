@@ -122,6 +122,10 @@ Service account access tokens inherit permissions from the service account.
 
 ### 🚧 API keys
 
+Grafana API keys can be used to interact with data sources via HTTP APIs. API keys can have a well-defined and limited scope to resources with the help of [Roles].
+
+> **Note:** If you use Grafana v8.5 or newer, use service accounts instead of API keys. For more information, refer to [Grafana service accounts]({{< relref "../service-accounts/" >}}).
+
 ## How to work with roles?
 
 Roles are used to regulate which resources each user or service account can access within Grafana and what actions they're allowed to carry out.
