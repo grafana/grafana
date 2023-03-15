@@ -5,7 +5,7 @@ import { css, cx } from '@emotion/css';
 import CodeMirror, { minimalSetup, ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import React, { createRef, useEffect, useMemo, useState } from 'react';
 
-import { createTheme, DataFrame } from '@grafana/data';
+import { createTheme, DataFrame, Field, getDisplayProcessor } from '@grafana/data';
 // import { getContrastRatio } from '@grafana/data/src/themes/colorManipulator';
 import { useTheme2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -15,6 +15,7 @@ import { PhlareDataSource } from '../../../datasource/phlare/datasource';
 import { quantizeScheme } from '../../heatmap/palettes';
 
 import { oneDarkGrafana } from './one-dark-grafana';
+import { SampleUnit } from './types';
 
 // import { Item } from './FlameGraph/dataTransform';
 
@@ -44,9 +45,9 @@ const heatGutterClass = cx(
 );
 
 class HeatMarker extends GutterMarker {
-  rawValue: number;
+  rawValue: string;
 
-  constructor(rawValue: number, heatFactor: number) {
+  constructor(rawValue: string, heatFactor: number) {
     super();
     this.rawValue = rawValue;
 
@@ -62,7 +63,7 @@ class HeatMarker extends GutterMarker {
   }
 
   toDOM() {
-    return document.createTextNode(this.rawValue.toPrecision(3));
+    return document.createTextNode(this.rawValue);
   }
 }
 
@@ -87,22 +88,26 @@ export function SourceCodeView(props: Props) {
   const editorRef = createRef<ReactCodeMirrorRef>();
   const theme = useTheme2();
 
-  const { lineData, valueData, selfData, fileNameData, fileNameEnum, labelData } = useMemo(() => {
-    let fileNameField = data.fields.find((f) => f.name === 'fileName')!;
-    let labelField = data.fields.find((f) => f.name === 'label')!;
+  const { lineData, valueData, selfData, fileNameData, fileNameEnum, labelData, valueField, selfField } =
+    useMemo(() => {
+      let fileNameField = data.fields.find((f) => f.name === 'fileName')!;
+      let labelField = data.fields.find((f) => f.name === 'label')!;
 
-    return {
-      fileNameEnum: fileNameField.config.type!.enum?.text!,
-      fileNameData: fileNameField.values.toArray(),
+      return {
+        fileNameEnum: fileNameField.config.type!.enum?.text!,
+        fileNameData: fileNameField.values.toArray(),
 
-      // labelEnum: labelField.config.type!.enum?.text,
-      labelData: labelField.values.toArray(),
+        // labelEnum: labelField.config.type!.enum?.text,
+        labelData: labelField.values.toArray(),
 
-      lineData: data.fields.find((f) => f.name === 'line')!.values.toArray(),
-      valueData: data.fields.find((f) => f.name === 'value')!.values.toArray(),
-      selfData: data.fields.find((f) => f.name === 'self')!.values.toArray(),
-    };
-  }, [data]);
+        lineData: data.fields.find((f) => f.name === 'line')!.values.toArray(),
+        valueData: data.fields.find((f) => f.name === 'value')!.values.toArray(),
+        selfData: data.fields.find((f) => f.name === 'self')!.values.toArray(),
+
+        valueField: data.fields.find((f) => f.name === 'value')!,
+        selfField: data.fields.find((f) => f.name === 'self')!,
+      };
+    }, [data]);
 
   // these are the field.values idxs of stuff in this file
   const dataIdxs = useMemo(() => {
@@ -154,7 +159,8 @@ export function SourceCodeView(props: Props) {
       let lineNum = view.state.doc.lineAt(line.from).number;
       let rawValue = byLineData.value.get(lineNum) ?? 0;
       let heatFactor = rawValue > 0 ? (rawValue - minRawVal) / (maxRawVal - minRawVal) : 0;
-      let marker = heatFactor === 0 ? null : new HeatMarker(rawValue, heatFactor);
+      const unitValue = getUnitValue(valueField, rawValue);
+      let marker = heatFactor === 0 ? null : new HeatMarker(unitValue, heatFactor);
       return marker;
     },
   });
@@ -168,7 +174,8 @@ export function SourceCodeView(props: Props) {
       let lineNum = view.state.doc.lineAt(line.from).number;
       let rawValue = byLineData.self.get(lineNum) ?? 0;
       let heatFactor = rawValue > 0 ? (rawValue - minRawSelf) / (maxRawSelf - minRawSelf) : 0;
-      let marker = heatFactor === 0 ? null : new HeatMarker(rawValue, heatFactor);
+      const unitValue = getUnitValue(selfField, rawValue);
+      let marker = heatFactor === 0 ? null : new HeatMarker(unitValue, heatFactor);
       return marker;
     },
   });
@@ -199,6 +206,27 @@ export function SourceCodeView(props: Props) {
     props.fileName,
   ]);
 
+  const getUnitValue = (field: Field, value: number) => {
+    const processor = getDisplayProcessor({ field, theme });
+    const displayValue = processor(value);
+    let unitValue = displayValue.text + displayValue.suffix;
+
+    switch (field.config.unit) {
+      case SampleUnit.Bytes:
+        break;
+      case SampleUnit.Nanoseconds:
+        break;
+      default:
+        if (!displayValue.suffix) {
+          // Makes sure we don't show 123undefined or something like that if suffix isn't defined
+          unitValue = displayValue.text;
+        }
+        break;
+    }
+
+    return unitValue;
+  };
+
   useEffect(() => {
     if (!source || !locationIdx) {
       return;
@@ -219,7 +247,7 @@ export function SourceCodeView(props: Props) {
   return (
     <CodeMirror
       value={source}
-      height={'630px'}
+      height={'800px'}
       extensions={[StreamLanguage.define(go), minimalSetup(), lineNumbers(), selfGutter, valueGutter]}
       readOnly={true}
       theme={theme.name === 'Dark' ? oneDarkGrafana : 'light'}

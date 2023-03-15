@@ -16,7 +16,7 @@ type Props = {
   setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
-  setSelectedLocation: (index: number) => void
+  setSelectedLocation: (index: number) => void;
 };
 
 const FlameGraphContextMenu = ({
@@ -38,7 +38,7 @@ const FlameGraphContextMenu = ({
           label="Show me code"
           icon={'file-alt'}
           onClick={() => {
-            setSelectedLocation(contextMenuData.index)
+            setSelectedLocation(contextMenuData.index);
             setContextMenuData(undefined);
           }}
         />
@@ -65,7 +65,7 @@ const FlameGraphContextMenu = ({
           onClick={() => {
             if (graphRef.current && contextMenuData) {
               const bar = levels[contextMenuData.levelIndex][contextMenuData.barIndex];
-              navigator.clipboard.writeText(bar.label).then(() => {
+              navigator.clipboard.writeText('' + bar.label).then(() => {
                 setContextMenuData(undefined);
               });
             }
