@@ -22,10 +22,11 @@ func ProvidePluginsModule(cfg *setting.Cfg, moduleManager modules.Manager, grpcS
 	coreRegistry *coreplugin.Registry, internalRegistry *registry.InMemory,
 	pluginClient *client.Decorator) (*PluginsModule, error) {
 	m := &PluginsModule{
-		cfg:              cfg,
-		coreRegistry:     coreRegistry,
-		internalRegistry: internalRegistry,
-		pluginClient:     pluginClient,
+		cfg:                cfg,
+		coreRegistry:       coreRegistry,
+		internalRegistry:   internalRegistry,
+		pluginClient:       pluginClient,
+		grpcServerProvider: grpcServerProvider,
 	}
 
 	moduleManager.RegisterModule(modules.PluginManagerServer, m.initServer)

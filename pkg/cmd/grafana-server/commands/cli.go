@@ -112,6 +112,7 @@ func ServerCommand(version, commit, buildBranch, buildstamp string) *cli.Command
 
 func RunServer(opt ServerOptions) error {
 	var (
+		target     = opt.Context.String("target")
 		configFile = opt.Context.String("config")
 		homePath   = opt.Context.String("homepath")
 		pidFile    = opt.Context.String("pidfile")
@@ -235,7 +236,8 @@ func RunServer(opt ServerOptions) error {
 			Config:   configFile,
 			HomePath: homePath,
 			// tailing arguments have precedence over the options string
-			Args: append(configOptions, opt.Context.Args().Slice()...),
+			Args:   append(configOptions, opt.Context.Args().Slice()...),
+			Target: target,
 		},
 		server.Options{
 			PidFile:     pidFile,
