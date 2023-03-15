@@ -11,6 +11,7 @@ import {
   ScopedVar,
   ScopedVars,
 } from '@grafana/data';
+import { FormatRegistryID } from '@grafana/scenes';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { getLinkSrv } from './link_srv';
@@ -129,7 +130,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
           ...(scopedVars as ScopedVars),
           ...vars,
         };
-        return replaceVariables(value, finalVars, fmt);
+        return replaceVariables(value, finalVars, fmt ?? FormatRegistryID.percentEncode);
       };
 
       return links.map((link: DataLink) => {
