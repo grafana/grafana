@@ -518,3 +518,22 @@ func (s *SocialGenericOAuth) AuthCodeURL(state string, opts ...oauth2.AuthCodeOp
 	}
 	return s.SocialBase.AuthCodeURL(state, opts...)
 }
+
+func (s *SocialGenericOAuth) SupportBundleContent(bf *bytes.Buffer) error {
+	bf.WriteString("## GenericOAuth specific configuration\n\n")
+	bf.WriteString("```ini\n")
+	bf.WriteString(fmt.Sprintf("name_attribute_path = %s", s.nameAttributePath))
+	bf.WriteString(fmt.Sprintf("login_attribute_path = %s", s.loginAttributePath))
+	bf.WriteString(fmt.Sprintf("id_token_attribute_name = %s", s.idTokenAttributeName))
+	bf.WriteString(fmt.Sprintf("team_ids_attribute_path = %s", s.teamIdsAttributePath))
+	bf.WriteString(fmt.Sprintf("team_ids = %v", s.teamIds))
+	bf.WriteString(fmt.Sprintf("allowed_organizations = %v", s.allowedOrganizations))
+	bf.WriteString("```\n\n")
+
+	err := s.SocialBase.SupportBundleContent(bf)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -262,3 +262,18 @@ func groupsGraphAPIURL(claims azureClaims, token *oauth2.Token) (string, error) 
 	}
 	return endpoint, nil
 }
+
+func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
+	bf.WriteString("## AzureAD specific configuration\n\n")
+	bf.WriteString("```ini\n")
+	bf.WriteString(fmt.Sprintf("allowed_groups = %v\n", s.allowedGroups))
+	bf.WriteString(fmt.Sprintf("forceUseGraphAPI = %v\n", s.forceUseGraphAPI))
+	bf.WriteString("```\n\n")
+
+	err := s.SocialBase.SupportBundleContent(bf)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
