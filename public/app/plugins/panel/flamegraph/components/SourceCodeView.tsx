@@ -2,7 +2,6 @@ import { StreamLanguage } from '@codemirror/language';
 import { go } from '@codemirror/legacy-modes/mode/go';
 import { EditorView, gutter, GutterMarker, lineNumbers } from '@codemirror/view';
 import { css, cx } from '@emotion/css';
-import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import CodeMirror, { minimalSetup, ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import React, { createRef, useEffect, useMemo, useState } from 'react';
 
@@ -13,6 +12,8 @@ import { useTheme2 } from '@grafana/ui';
 import { PhlareDataSource } from '../../../datasource/phlare/datasource';
 // import { CodeLocation } from '../../../datasource/phlare/types';
 import { quantizeScheme } from '../../heatmap/palettes';
+
+import { oneDarkGrafana } from './one-dark-grafana';
 
 // import { Item } from './FlameGraph/dataTransform';
 
@@ -181,6 +182,9 @@ export function SourceCodeView(props: Props) {
   }, [editorRef, datasource, locationIdx, fileNameEnum, labelData, fileNameData, getLabelValue]);
 
   useEffect(() => {
+    if (!lineData[locationIdx] || lineData[locationIdx] > (editorRef.current?.view?.state.doc.length || 0)) {
+      return;
+    }
     const line = editorRef.current?.view?.state.doc.line(lineData[locationIdx]);
 
     editorRef.current?.view?.dispatch({
@@ -188,15 +192,17 @@ export function SourceCodeView(props: Props) {
       scrollIntoView: true,
       effects: EditorView.scrollIntoView(line?.from || 0, { y: 'center' }),
     });
-  }, [source, lineData, editorRef, locationIdx]);
+    // we need to ignore some deps to avoid setting the line before we have a new source document
+    // which causes invalid line errors
+  }, [source]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <CodeMirror
       value={source}
       height={'630px'}
-      extensions={[StreamLanguage.define(go), minimalSetup(), lineNumbers(), valueGutter, selfGutter]}
+      extensions={[StreamLanguage.define(go), minimalSetup(), lineNumbers(), selfGutter, valueGutter]}
       readOnly={true}
-      theme={theme.name === 'Dark' ? vscodeDark : 'light'}
+      theme={theme.name === 'Dark' ? oneDarkGrafana : 'light'}
       ref={editorRef}
     />
   );

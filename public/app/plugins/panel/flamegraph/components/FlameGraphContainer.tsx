@@ -96,6 +96,7 @@ const FlameGraphContainer = (props: Props) => {
     setSelectedBarIndex(0);
     setRangeMin(0);
     setRangeMax(1);
+    setSelectedLocation(undefined);
   }, [props.data]);
 
   const globalDataRanges = useMemo<GloblDataRanges>(() => {
