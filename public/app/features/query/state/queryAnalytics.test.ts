@@ -222,7 +222,6 @@ describe('emitDataRequestEvent - from Explore', () => {
         eventName: MetaAnalyticsEventName.DataRequest,
         source: 'explore',
         datasourceName: 'test',
-        datasourceId: 1,
         datasourceUid: 'test',
         dataSize: 0,
         duration: 1,
