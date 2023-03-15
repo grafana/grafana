@@ -27,6 +27,8 @@ import { promQueryModeller } from '../PromQueryModeller';
 import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
 import { PromVisualQuery } from '../types';
 
+import { FeedbackLink } from './FeedbackLink';
+
 type Props = {
   datasource: PrometheusDatasource;
   isOpen: boolean;
@@ -90,8 +92,6 @@ const uf = new uFuzzy({
 });
 
 function fuzzySearch(haystack: string[], query: string, setter: React.Dispatch<React.SetStateAction<number[]>>) {
-  // console.log('fuzzySearch');
-
   const idxs = uf.filter(haystack, query);
   idxs && setter(idxs);
 }
@@ -125,6 +125,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
   const [letterSearch, setLetterSearch] = useState<string | null>(null);
 
+  const [totalMetricCount, setTotalMetricCount] = useState<number>(0);
+  const [filteredMetricCount, setFilteredMetricCount] = useState<number>();
   // backend search metric names by text
   const [useBackend, setUseBackend] = useState<boolean>(false);
 
@@ -186,6 +188,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
       })
     );
 
+    setTotalMetricCount(metricsData.length);
+    setFilteredMetricCount(metricsData.length);
     setIsLoading(false);
   }, [query, datasource]);
 
@@ -230,51 +234,41 @@ export const MetricEncyclopediaModal = (props: Props) => {
    * Filter
    *
    * @param metrics
-   * @param skipLetterSearch
+   * @param skipLetterSearch used to show the alphabet letters as clickable before filtering out letters (needs to be refactored)
    * @returns
    */
   function filterMetrics(metrics: MetricsData, skipLetterSearch?: boolean): MetricsData {
     let filteredMetrics: MetricsData = metrics;
 
-    if (fuzzySearchQuery || excludeNullMetadata || (letterSearch && !skipLetterSearch) || selectedTypes.length > 0) {
+    if (fuzzySearchQuery) {
       filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
-        let keepMetric = false;
-
-        // search by text
-        if (fuzzySearchQuery) {
-          if (useBackend) {
-            // skip for backend!
-            keepMetric = true;
-          } else if (fullMetaSearch) {
-            keepMetric = fuzzyMetaSearchResults.includes(idx);
-          } else {
-            keepMetric = fuzzyNameSearchResults.includes(idx);
-          }
+        if (useBackend) {
+          // skip for backend!
+          return true;
+        } else if (fullMetaSearch) {
+          return fuzzyMetaSearchResults.includes(idx);
+        } else {
+          return fuzzyNameSearchResults.includes(idx);
         }
+      });
+    }
 
-        // user clicks the alphabet search
-        // backend and frontend
-        if (letterSearch && !skipLetterSearch) {
-          const letters: string[] = [letterSearch, letterSearch.toLowerCase()];
-          keepMetric = letters.includes(m.value[0]);
-        }
+    if (letterSearch && !skipLetterSearch) {
+      filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
+        const letters: string[] = [letterSearch, letterSearch.toLowerCase()];
+        return letters.includes(m.value[0]);
+      });
+    }
 
-        // select by type, counter, gauge, etc
-        // skip for backend because no metadata is returned
-        if (selectedTypes.length > 0 && !useBackend) {
-          // return the metric that matches the type
-          // return the metric if it has no type AND we are NOT excluding metrics without metadata
+    if (selectedTypes.length > 0 && !useBackend) {
+      filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
+        // Matches type
+        const matchesSelectedType = selectedTypes.some((t) => t.value === m.type);
 
-          // Matches type
-          const matchesSelectedType = selectedTypes.some((t) => t.value === m.type);
+        // missing type
+        const hasNoType = !m.type;
 
-          // missing type
-          const hasNoType = !m.type;
-
-          return matchesSelectedType || (hasNoType && !excludeNullMetadata);
-        }
-
-        return keepMetric;
+        return matchesSelectedType || (hasNoType && !excludeNullMetadata);
       });
     }
 
@@ -287,6 +281,10 @@ export const MetricEncyclopediaModal = (props: Props) => {
   function displayedMetrics(metrics: MetricsData) {
     const filteredSorted: MetricsData = filterMetrics(metrics).sort(alphabetically(true, hasMetaDataFilters()));
 
+    if (filteredMetricCount !== filteredSorted.length && filteredSorted.length !== 0) {
+      setFilteredMetricCount(filteredSorted.length);
+    }
+
     const displayedMetrics: MetricsData = sliceMetrics(filteredSorted, pageNum, resultsPerPage);
 
     return displayedMetrics;
@@ -297,6 +295,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
   const debouncedBackendSearch = useMemo(
     () =>
       debounce(async (metricText: string) => {
+        setIsLoading(true);
         const queryString = regexifyLabelValuesQueryString(metricText);
 
         const labelsParams = query.labels.map((label) => {
@@ -318,10 +317,85 @@ export const MetricEncyclopediaModal = (props: Props) => {
         });
 
         setMetrics(metrics);
+        setFilteredMetricCount(metrics.length);
         setIsLoading(false);
       }, 300),
     [datasource, query.labels]
   );
+
+  function letterSearchComponent() {
+    const alphabetCheck: { [char: string]: number } = {
+      A: 0,
+      B: 0,
+      C: 0,
+      D: 0,
+      E: 0,
+      F: 0,
+      G: 0,
+      H: 0,
+      I: 0,
+      J: 0,
+      K: 0,
+      L: 0,
+      M: 0,
+      N: 0,
+      O: 0,
+      P: 0,
+      Q: 0,
+      R: 0,
+      S: 0,
+      T: 0,
+      U: 0,
+      V: 0,
+      W: 0,
+      X: 0,
+      Y: 0,
+      Z: 0,
+    };
+
+    filterMetrics(metrics, true).forEach((m: MetricData, idx) => {
+      const metricFirstLetter = m.value[0].toUpperCase();
+
+      if (alphabet.includes(metricFirstLetter) && !alphabetCheck[metricFirstLetter]) {
+        alphabetCheck[metricFirstLetter] += 1;
+      }
+    });
+
+    // return the alphabet components with the correct style and behavior
+    return Object.keys(alphabetCheck).map((letter: string) => {
+      // const active: boolean = .some((m: MetricData) => {
+      //   return m.value[0] === letter || m.value[0] === letter?.toLowerCase();
+      // });
+      const active: boolean = alphabetCheck[letter] > 0;
+      // starts with letter search
+      // filter by starts with letter
+      // if same letter searched null out remove letter search
+      function updateLetterSearch() {
+        if (letterSearch === letter) {
+          setLetterSearch(null);
+        } else {
+          setLetterSearch(letter);
+        }
+        setPageNum(1);
+      }
+      // selected letter to filter by
+      const selectedClass: string = letterSearch === letter ? styles.selAlpha : '';
+      // these letters are represented in the list of metrics
+      const activeClass: string = active ? styles.active : styles.gray;
+
+      return (
+        <span
+          onClick={active ? updateLetterSearch : () => {}}
+          className={`${selectedClass} ${activeClass}`}
+          key={letter}
+          data-testid={'letter-' + letter}
+        >
+          {letter + ' '}
+          {/* {idx !== coll.length - 1 ? '|': ''} */}
+        </span>
+      );
+    });
+  }
 
   return (
     <Modal
@@ -331,8 +405,9 @@ export const MetricEncyclopediaModal = (props: Props) => {
       onDismiss={onClose}
       aria-label="Metric Encyclopedia"
     >
+      <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
       <div className={styles.spacing}>
-        Browse {metrics.length} metric{metrics.length > 1 ? 's' : ''} by text, by type, alphabetically or select a
+        Browse {totalMetricCount} metric{totalMetricCount > 1 ? 's' : ''} by text, by type, alphabetically or select a
         variable.
         {isLoading && (
           <div className={styles.inlineSpinner}>
@@ -358,7 +433,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
               // get all metrics data if a user erases everything in the input
               updateMetricsMetadata();
             } else if (useBackend) {
-              setIsLoading(true);
               debouncedBackendSearch(value);
             } else {
               // search either the names or all metadata
@@ -462,69 +536,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
           }}
         />
       </div>
-      <h5 className={`${styles.center} ${styles.topPadding}`}>Results</h5>
-      <div className={`${styles.center} ${styles.bottomPadding}`}>
-        {[
-          'A',
-          'B',
-          'C',
-          'D',
-          'E',
-          'F',
-          'G',
-          'H',
-          'I',
-          'J',
-          'K',
-          'L',
-          'M',
-          'N',
-          'O',
-          'P',
-          'Q',
-          'R',
-          'S',
-          'T',
-          'U',
-          'V',
-          'W',
-          'X',
-          'Y',
-          'Z',
-        ].map((letter, idx, coll) => {
-          const active: boolean = filterMetrics(metrics, true).some((m: MetricData) => {
-            return m.value[0] === letter || m.value[0] === letter?.toLowerCase();
-          });
-
-          // starts with letter search
-          // filter by starts with letter
-          // if same letter searched null out remove letter search
-          function updateLetterSearch() {
-            if (letterSearch === letter) {
-              setLetterSearch(null);
-            } else {
-              setLetterSearch(letter);
-            }
-            setPageNum(1);
-          }
-          // selected letter to filter by
-          const selectedClass: string = letterSearch === letter ? styles.selAlpha : '';
-          // these letters are represented in the list of metrics
-          const activeClass: string = active ? styles.active : styles.gray;
-
-          return (
-            <span
-              onClick={active ? updateLetterSearch : () => {}}
-              className={`${selectedClass} ${activeClass}`}
-              key={letter}
-              data-testid={'letter-' + letter}
-            >
-              {letter + ' '}
-              {/* {idx !== coll.length - 1 ? '|': ''} */}
-            </span>
-          );
-        })}
-      </div>
+      <h5 className={`${styles.center} ${styles.topPadding}`}>{filteredMetricCount} Results</h5>
+      <div className={`${styles.center} ${styles.bottomPadding}`}>{letterSearchComponent()}</div>
       {metrics &&
         displayedMetrics(metrics).map((metric: MetricData, idx) => {
           return (
@@ -717,3 +730,32 @@ export const testIds = {
   resultsPerPage: 'results-per-page',
   setUseBackend: 'set-use-backend',
 };
+
+const alphabet = [
+  'A',
+  'B',
+  'C',
+  'D',
+  'E',
+  'F',
+  'G',
+  'H',
+  'I',
+  'J',
+  'K',
+  'L',
+  'M',
+  'N',
+  'O',
+  'P',
+  'Q',
+  'R',
+  'S',
+  'T',
+  'U',
+  'V',
+  'W',
+  'X',
+  'Y',
+  'Z',
+];
