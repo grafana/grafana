@@ -55,7 +55,7 @@ func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusInternalServerError, "Failed to get user stars", err)
 	}
 
-	var uids []string
+	uids := []string{}
 	if len(iuserstars.UserStars) > 0 {
 		var ids []int64
 		for id := range iuserstars.UserStars {
