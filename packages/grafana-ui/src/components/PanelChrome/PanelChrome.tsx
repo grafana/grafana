@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, ReactElement, ReactNode, useMemo } from 'react';
+import React, { CSSProperties, ReactElement, ReactNode } from 'react';
 import { useMedia } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
