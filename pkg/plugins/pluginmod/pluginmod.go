@@ -12,13 +12,15 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var errPluginManagerUnavailable = errors.New("plugins unavailable")
 
-func ProvidePluginsModule(cfg *setting.Cfg, moduleManager modules.Manager, coreRegistry *coreplugin.Registry,
-	internalRegistry *registry.InMemory, pluginClient *client.Decorator) (*PluginsModule, error) {
+func ProvidePluginsModule(cfg *setting.Cfg, moduleManager modules.Manager, grpcServerProvider grpcserver.Provider,
+	coreRegistry *coreplugin.Registry, internalRegistry *registry.InMemory,
+	pluginClient *client.Decorator) (*PluginsModule, error) {
 	m := &PluginsModule{
 		cfg:              cfg,
 		coreRegistry:     coreRegistry,
@@ -40,15 +42,16 @@ func ProvidePluginsModule(cfg *setting.Cfg, moduleManager modules.Manager, coreR
 }
 
 type PluginsModule struct {
-	pm               PluginManager
-	cfg              *setting.Cfg
-	coreRegistry     *coreplugin.Registry
-	internalRegistry *registry.InMemory
-	pluginClient     *client.Decorator
+	pm                 PluginManager
+	cfg                *setting.Cfg
+	coreRegistry       *coreplugin.Registry
+	internalRegistry   *registry.InMemory
+	pluginClient       *client.Decorator
+	grpcServerProvider grpcserver.Provider
 }
 
 func (m *PluginsModule) initServer() (services.Service, error) {
-	return NewServer(), nil
+	return newPluginManagerServer(m.cfg, m.grpcServerProvider, m.coreRegistry, m.internalRegistry, m.pluginClient), nil
 }
 
 func (m *PluginsModule) initClient() (services.Service, error) {
