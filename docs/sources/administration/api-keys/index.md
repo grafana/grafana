@@ -77,18 +77,13 @@ This section shows you how to migrate API keys to Grafana service accounts using
 
 #### Before you begin
 
-To follow these instructions, you need:
+To follow these instructions, you need one of the following:
 
-Either
-
-- Admin/Editor
-
-Or
-
-- API keys writer
+- Administrator permissions
+- Editor permissions
 - Service account writer
 
-- To ensure you have permission to create Grafana service accounts. For more information about permissions, refer to [Roles and permissions]({{< relref "../roles-and-permissions/#" >}}).
+For more information about permissions, refer to [Roles and permissions]({{< relref "../roles-and-permissions/#" >}}).
 
 #### Steps
 
