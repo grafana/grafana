@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { PopValueActionMeta, RemoveValueActionMeta } from 'react-select';
 
 import {
@@ -17,7 +17,7 @@ export interface MultipleDataSourcePickerProps extends Omit<DataSourcePickerProp
   current: string[] | undefined;
 }
 
-export const MultipleDataSourcePicker: FC<MultipleDataSourcePickerProps> = (props) => {
+export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) => {
   const dataSourceSrv = getDataSourceSrv();
 
   const [state, setState] = useState<DataSourcePickerState>();

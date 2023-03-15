@@ -130,7 +130,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     <div className={styles.container}>
       <Stack direction="column" gap={1}>
         <Stack direction="row" gap={1}>
-          <Field className={styles.dsPickerContainer} label="Search by data source">
+          <Field className={styles.dsPickerContainer} label="Search by data sources">
             <MultipleDataSourcePicker
               key={dataSourceKey}
               alerting
