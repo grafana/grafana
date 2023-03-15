@@ -115,6 +115,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 	if !query.IsStarred {
 		query.Result = hits
 	} else {
+		query.Result = model.HitList{}
 		for _, dashboard := range hits {
 			if dashboard.IsStarred {
 				query.Result = append(query.Result, dashboard)
