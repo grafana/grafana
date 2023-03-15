@@ -94,42 +94,40 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     };
 
     return (
-      <React.StrictMode>
-        <Provider store={store}>
-          <ErrorBoundaryAlert style="page">
-            <GrafanaContext.Provider value={app.context}>
-              <ThemeProvider value={config.theme2}>
-                <KBarProvider
-                  actions={[]}
-                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-                >
-                  <ModalsProvider>
-                    <GlobalStyles />
-                    <div className="grafana-app">
-                      <Router history={locationService.getHistory()}>
-                        <AppChrome>
-                          {pageBanners.map((Banner, index) => (
-                            <Banner key={index.toString()} />
-                          ))}
-                          <AngularRoot />
-                          <AppNotificationList />
-                          {ready && this.renderRoutes()}
-                          {bodyRenderHooks.map((Hook, index) => (
-                            <Hook key={index.toString()} />
-                          ))}
-                        </AppChrome>
-                      </Router>
-                    </div>
-                    <LiveConnectionWarning />
-                    <ModalRoot />
-                    <PortalContainer />
-                  </ModalsProvider>
-                </KBarProvider>
-              </ThemeProvider>
-            </GrafanaContext.Provider>
-          </ErrorBoundaryAlert>
-        </Provider>
-      </React.StrictMode>
+      <Provider store={store}>
+        <ErrorBoundaryAlert style="page">
+          <GrafanaContext.Provider value={app.context}>
+            <ThemeProvider value={config.theme2}>
+              <KBarProvider
+                actions={[]}
+                options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+              >
+                <ModalsProvider>
+                  <GlobalStyles />
+                  <div className="grafana-app">
+                    <Router history={locationService.getHistory()}>
+                      <AppChrome>
+                        {pageBanners.map((Banner, index) => (
+                          <Banner key={index.toString()} />
+                        ))}
+                        <AngularRoot />
+                        <AppNotificationList />
+                        {ready && this.renderRoutes()}
+                        {bodyRenderHooks.map((Hook, index) => (
+                          <Hook key={index.toString()} />
+                        ))}
+                      </AppChrome>
+                    </Router>
+                  </div>
+                  <LiveConnectionWarning />
+                  <ModalRoot />
+                  <PortalContainer />
+                </ModalsProvider>
+              </KBarProvider>
+            </ThemeProvider>
+          </GrafanaContext.Provider>
+        </ErrorBoundaryAlert>
+      </Provider>
     );
   }
 }
