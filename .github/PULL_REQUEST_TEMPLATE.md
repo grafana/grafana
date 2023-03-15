@@ -44,16 +44,9 @@ Fixes #
 
 **Special notes for your reviewer:**
 
-Please remember to:
-- [ ] Test the feature from a user's perspective
-- [ ] If this is a preview feature, make sure it is behind a feature toggle
-- [ ] Check to make sure the docs are updated and if [relevant](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/#how-to-determine-if-content-belongs-in-a-whats-new-document), added to [What's New](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/)
-- [ ] Check for compatibility issues with older supported versions of Grafana, and plugins
-- [ ] Conduct a [Hosted Grafana feature readiness review](https://docs.google.com/document/d/1QL9Ly8KnXzpb6ISbg49pTODRO5mhA5tkkfIZVX6pqQU/edit#heading=h.nmhrirqphdnu) for observability, scalability, performance, and security.
-
-For bigger PRs, or when turning a feature on by default:
-- [ ] Make sure the sales and support team has a training on this improvement. That's a 5-10 minute video explaining its benefits and giving a demo of how it works.
-<!-- TODO: better description or a link on how to do training -->
-- [ ] Organize a [bug bash](https://docs.google.com/document/d/14ZzpE-BWV3MQtULu8XHPR-8AMc_gArV-GXcYg3bx2zg/edit)
-- [ ] Get a [#security](https://raintank-corp.slack.com/archives/CHQDPC970) review or threat modeling
-- [ ] Check for telemetry, like usage stats or Rudderstack events
+Please check that:
+- [ ] It works as expected from a user's perspective.
+- [ ] If this is a pre-GA feature, it is behind a feature toggle.
+- [ ] The docs are updated, and if this is a [notable improvement](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/#how-to-determine-if-content-belongs-in-a-whats-new-document), it's added to our [What's New](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/) doc.
+- [ ] There are no known compatibility issues with older supported versions of Grafana, or plugins.
+- [ ] It passes the [Hosted Grafana feature readiness review](https://docs.google.com/document/d/1QL9Ly8KnXzpb6ISbg49pTODRO5mhA5tkkfIZVX6pqQU/edit) for observability, scalability, performance, and security.
