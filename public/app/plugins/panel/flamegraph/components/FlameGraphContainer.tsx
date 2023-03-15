@@ -26,8 +26,6 @@ type Props = {
   flameGraphHeight?: number;
 };
 
-const theme = createTheme();
-
 const FlameGraphContainer = (props: Props) => {
   const [topLevelIndex, setTopLevelIndex] = useState(0);
   const [selectedBarIndex, setSelectedBarIndex] = useState(0);
@@ -61,6 +59,9 @@ const FlameGraphContainer = (props: Props) => {
 
   const getFileNameValue = useCallback(
     (label: string | number) => {
+      if (typeof label === 'string') {
+        return label;
+      }
       const enumConfig = fileNameField?.config?.type?.enum;
       if (enumConfig) {
         return getEnumDisplayProcessor(theme, enumConfig)(label).text;

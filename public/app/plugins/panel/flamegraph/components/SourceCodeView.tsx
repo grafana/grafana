@@ -97,12 +97,18 @@ export function SourceCodeView(props: Props) {
 
   useEffect(() => {
     (async () => {
-      const sourceCode = await datasource.getSource(getLabelValue(location.func), getFileNameValue(location.fileName));
+      const sourceCode = await datasource.getSource(
+        getFileNameValue(location.fileName),
+        location.func ? getLabelValue(location.func) : undefined
+      );
       setSource(sourceCode);
     })();
   }, [editorRef, datasource, location, getLabelValue, getFileNameValue]);
 
   useEffect(() => {
+    if (!location.line) {
+      return;
+    }
     const line = editorRef.current?.view?.state.doc.line(location.line);
     editorRef.current?.view?.dispatch({
       selection: { anchor: line?.from || 0 },
