@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -70,6 +71,10 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 			if err != nil {
 				hs.log.Error("could not write to response", "err", err)
 			}
+		}
+
+		if event.Traces != nil && event.Traces.ResourceSpans().Len() > 0 {
+			hs.TelemetryExporter.ExportTraces(context.Background(), event.Traces.Traces)
 		}
 
 		// Meta object is standard across event types, adding it globally.

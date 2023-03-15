@@ -133,6 +133,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
+	"github.com/grafana/grafana/pkg/services/telemetryexport"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/thumbs"
@@ -375,6 +376,7 @@ var wireSet = wire.NewSet(
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
+	telemetryexport.ProvideTelemetryExporterService,
 )
 
 var wireTestSet = wire.NewSet(
@@ -392,6 +394,7 @@ var wireTestSet = wire.NewSet(
 	oauthtoken.ProvideService,
 	oauthtokentest.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
+	telemetryexport.ProvideTelemetryExporterServiceForTest,
 )
 
 func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*Server, error) {

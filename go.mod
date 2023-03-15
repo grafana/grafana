@@ -72,7 +72,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.2.0
 	github.com/hashicorp/go-plugin v1.4.3
-	github.com/hashicorp/go-version v1.3.0
+	github.com/hashicorp/go-version v1.6.0
 	github.com/influxdata/influxdb-client-go/v2 v2.6.0
 	github.com/influxdata/line-protocol v0.0.0-20210311194329-9aa0e372d097
 	github.com/jmespath/go-jmespath v0.4.0
@@ -112,7 +112,7 @@ require (
 	golang.org/x/oauth2 v0.5.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/time v0.2.0
-	golang.org/x/tools v0.5.0
+	golang.org/x/tools v0.6.0
 	gonum.org/v1/gonum v0.12.0
 	google.golang.org/api v0.104.0
 	google.golang.org/grpc v1.53.0
@@ -221,7 +221,7 @@ require (
 	go.uber.org/atomic v1.10.0
 	go.uber.org/goleak v1.2.1 // indirect
 	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/text v0.7.0
+	golang.org/x/text v0.8.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f
@@ -257,13 +257,18 @@ require (
 	buf.build/gen/go/parca-dev/parca/bufbuild/connect-go v1.4.1-20221222094228-8b1d3d0f62e6.1
 	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.28.1-20221222094228-8b1d3d0f62e6.4
 	github.com/Masterminds/semver/v3 v3.1.1
+	github.com/XSAM/otelsql v0.20.0
 	github.com/dave/dst v0.27.2
 	github.com/go-jose/go-jose/v3 v3.0.0
 	github.com/grafana/thema v0.0.0-20230224141623-cb20887cb028
 	github.com/hmarr/codeowners v1.1.1
 	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
-	go.opentelemetry.io/collector/pdata v0.66.0
+	go.opentelemetry.io/collector v0.73.0
+	go.opentelemetry.io/collector/component v0.73.0
+	go.opentelemetry.io/collector/exporter v0.73.0
+	go.opentelemetry.io/collector/exporter/otlphttpexporter v0.73.0
+	go.opentelemetry.io/collector/pdata v1.0.0-rc7
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.40.0
 	go.opentelemetry.io/contrib/propagators/autoprop v0.40.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.14.0
@@ -299,6 +304,7 @@ require (
 	github.com/drone/runner-go v1.12.0 // indirect
 	github.com/envoyproxy/go-control-plane v0.10.3 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.6.13 // indirect
+	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.4 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
@@ -311,6 +317,7 @@ require (
 	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/hetznercloud/hcloud-go v1.35.3 // indirect
 	github.com/invopop/yaml v0.1.0 // indirect
+	github.com/knadh/koanf v1.5.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/linode/linodego v1.9.3 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -331,6 +338,11 @@ require (
 	github.com/unknwon/com v1.0.1 // indirect
 	github.com/unknwon/log v0.0.0-20150304194804-e617c87089d3 // indirect
 	github.com/weaveworks/promrus v1.2.0 // indirect
+	go.opentelemetry.io/collector/confmap v0.73.0 // indirect
+	go.opentelemetry.io/collector/consumer v0.73.0 // indirect
+	go.opentelemetry.io/collector/featuregate v0.73.0 // indirect
+	go.opentelemetry.io/collector/receiver v0.73.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.39.0 // indirect
 	go.opentelemetry.io/contrib/propagators/aws v1.15.0 // indirect
 	go.opentelemetry.io/contrib/propagators/b3 v1.15.0 // indirect
 	go.opentelemetry.io/contrib/propagators/jaeger v1.15.0 // indirect
@@ -340,6 +352,7 @@ require (
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 	go.uber.org/multierr v1.9.0 // indirect
+	go.uber.org/zap v1.24.0 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/klog/v2 v2.80.0 // indirect
@@ -400,7 +413,7 @@ require (
 	github.com/xlab/treeprint v1.1.0
 	github.com/yudai/pp v2.0.1+incompatible // indirect
 	go.opentelemetry.io/otel v1.14.0
-	golang.org/x/mod v0.7.0 // indirect
+	golang.org/x/mod v0.8.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 

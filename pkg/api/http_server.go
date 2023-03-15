@@ -94,6 +94,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
+	"github.com/grafana/grafana/pkg/services/telemetryexport"
 	tempUser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -210,6 +211,8 @@ type HTTPServer struct {
 	statsService           stats.Service
 	authnService           authn.Service
 	starApi                *starApi.API
+
+	TelemetryExporter telemetryexport.Service
 }
 
 type ServerOptions struct {
@@ -253,7 +256,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
-	starApi *starApi.API,
+	starApi *starApi.API, telemetryExporter telemetryexport.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -359,6 +362,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		authnService:                 authnService,
 		pluginsCDNService:            pluginsCDNService,
 		starApi:                      starApi,
+
+		TelemetryExporter: telemetryExporter,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
