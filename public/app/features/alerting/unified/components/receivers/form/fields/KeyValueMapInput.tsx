@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Input, useStyles2 } from '@grafana/ui';
@@ -12,7 +12,7 @@ interface Props {
   onChange: (value: Record<string, string>) => void;
 }
 
-export const KeyValueMapInput: FC<Props> = ({ value, onChange, readOnly = false }) => {
+export const KeyValueMapInput = ({ value, onChange, readOnly = false }: Props) => {
   const styles = useStyles2(getStyles);
   const [pairs, setPairs] = useState(recordToPairs(value));
   useEffect(() => setPairs(recordToPairs(value)), [value]);

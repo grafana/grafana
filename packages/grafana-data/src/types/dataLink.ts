@@ -1,6 +1,7 @@
 import { ExplorePanelsState } from './explore';
 import { InterpolateFunction } from './panel';
 import { DataQuery } from './query';
+import { TimeRange } from './time';
 
 /**
  * Callback info for DataLink click events
@@ -61,6 +62,7 @@ export interface InternalDataLink<T extends DataQuery = any> {
   datasourceName: string; // used as a title if `DataLink.title` is empty
   panelsState?: ExplorePanelsState;
   transformations?: DataLinkTransformationConfig[];
+  range?: TimeRange;
 }
 
 export type LinkTarget = '_blank' | '_self' | undefined;

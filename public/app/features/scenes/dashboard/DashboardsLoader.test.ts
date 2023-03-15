@@ -2,6 +2,7 @@ import {
   CustomVariable,
   DataSourceVariable,
   QueryVariable,
+  SceneDataTransformer,
   SceneGridLayout,
   SceneGridRow,
   SceneQueryRunner,
@@ -301,9 +302,13 @@ describe('DashboardLoader', () => {
       expect(vizPanelSceneObject.state.options).toEqual(panel.options);
       expect(vizPanelSceneObject.state.fieldConfig).toEqual(panel.fieldConfig);
       expect(vizPanelSceneObject.state.pluginVersion).toBe('1.0.0');
-      expect((vizPanelSceneObject.state.$data as SceneQueryRunner)?.state.queries).toEqual(panel.targets);
-      expect((vizPanelSceneObject.state.$data as SceneQueryRunner)?.state.maxDataPoints).toEqual(100);
-      expect((vizPanelSceneObject.state.$data as SceneQueryRunner)?.state.transformations).toEqual(
+      expect(
+        ((vizPanelSceneObject.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.queries
+      ).toEqual(panel.targets);
+      expect(
+        ((vizPanelSceneObject.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.maxDataPoints
+      ).toEqual(100);
+      expect((vizPanelSceneObject.state.$data as SceneDataTransformer)?.state.transformations).toEqual(
         panel.transformations
       );
     });

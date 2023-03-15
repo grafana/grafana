@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -69,6 +69,14 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
   const dataSourceKey = `dataSource-${filterKey}`;
   const queryStringKey = `queryString-${filterKey}`;
 
+  const searchQueryRef = useRef<HTMLInputElement | null>(null);
+  const { handleSubmit, register, setValue } = useForm<{ searchQuery: string }>({ defaultValues: { searchQuery } });
+  const { ref, ...rest } = register('searchQuery');
+
+  useEffect(() => {
+    setValue('searchQuery', searchQuery);
+  }, [searchQuery, setValue]);
+
   const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings) => {
     updateFilters({ ...filterState, dataSourceName: dataSourceValue.name });
     setFilterKey((key) => key + 1);
@@ -105,10 +113,6 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
 
     setTimeout(() => setFilterKey(filterKey + 1), 100);
   };
-
-  const searchQueryRef = useRef<HTMLInputElement | null>(null);
-  const { handleSubmit, register } = useForm<{ searchQuery: string }>({ defaultValues: { searchQuery } });
-  const { ref, ...rest } = register('searchQuery');
 
   const searchIcon = <Icon name={'search'} />;
   return (
@@ -158,7 +162,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
             >
               <Field
                 label={
-                  <Label>
+                  <Label htmlFor="rulesSearchInput">
                     <Stack gap={0.5}>
                       <span>Search</span>
                       <HoverCard content={<SearchQueryHelp />}>
@@ -169,6 +173,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
                 }
               >
                 <Input
+                  id="rulesSearchInput"
                   key={queryStringKey}
                   prefix={searchIcon}
                   ref={(e) => {
