@@ -2,19 +2,15 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { CoreApp, DataFrame, Field, FieldType, getDisplayProcessor } from '@grafana/data';
+import { DataFrame, Field, FieldType, getDisplayProcessor } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
-import { PIXELS_PER_LEVEL } from '../../constants';
-import { SampleUnit, SelectedView, TableData, TopTableData } from '../types';
+import { SampleUnit, TableData, TopTableData } from '../types';
 
 import FlameGraphTopTable from './FlameGraphTopTable';
 
 type Props = {
   data: DataFrame;
-  app: CoreApp;
-  totalLevels: number;
-  selectedView: SelectedView;
   search: string;
   setSearch: (search: string) => void;
   setTopLevelIndex: (level: number) => void;
@@ -26,9 +22,6 @@ type Props = {
 
 const FlameGraphTopTableContainer = ({
   data,
-  app,
-  totalLevels,
-  selectedView,
   search,
   setSearch,
   setTopLevelIndex,
@@ -37,7 +30,7 @@ const FlameGraphTopTableContainer = ({
   setRangeMax,
   getLabelValue,
 }: Props) => {
-  const styles = useStyles2(() => getStyles(selectedView, app));
+  const styles = useStyles2(() => getStyles());
   const theme = useTheme2();
   const [topTable, setTopTable] = useState<TopTableData[]>();
   const valueField =
@@ -114,7 +107,7 @@ const FlameGraphTopTableContainer = ({
     <>
       {topTable && (
         <div className={styles.topTableContainer}>
-          <AutoSizer style={{ width: '100%', height: PIXELS_PER_LEVEL * totalLevels + 'px' }}>
+          <AutoSizer style={{ width: '100%', height: '100%' }}>
             {({ width, height }) => (
               <FlameGraphTopTable
                 width={width}
@@ -135,18 +128,15 @@ const FlameGraphTopTableContainer = ({
   );
 };
 
-const getStyles = (selectedView: SelectedView, app: CoreApp) => {
+const getStyles = () => {
   const marginRight = '20px';
 
   return {
     topTableContainer: css`
       cursor: pointer;
-      float: left;
+      width: 100%;
+      height: 100%;
       margin-right: ${marginRight};
-      width: ${selectedView === SelectedView.TopTable ? '100%' : `calc(50% - ${marginRight})`};
-      ${app !== CoreApp.Explore
-        ? 'height: calc(100% - 50px)'
-        : 'height: calc(100% + 50px)'}; // 50px to adjust for header pushing content down
     `,
   };
 };

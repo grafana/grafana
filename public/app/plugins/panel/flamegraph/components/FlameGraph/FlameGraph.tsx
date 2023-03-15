@@ -24,7 +24,7 @@ import { useMeasure } from 'react-use';
 import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from '@grafana/data';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { TooltipData, SelectedView, ContextMenuData } from '../types';
+import { TooltipData, ContextMenuData } from '../types';
 
 import FlameGraphContextMenu from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
@@ -46,7 +46,6 @@ type Props = {
   setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
-  selectedView: SelectedView;
   style?: React.CSSProperties;
   setSelectedLocation: (index: number) => void;
   className?: string;
@@ -67,12 +66,11 @@ const FlameGraph = ({
   setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
-  selectedView,
   setSelectedLocation,
   className,
   getLabelValue,
 }: Props) => {
-  const styles = getStyles(selectedView, app, flameGraphHeight);
+  const styles = getStyles(app, flameGraphHeight);
   const totalTicks = data.fields[1].values.get(0);
   const valueField =
     data.fields.find((f) => f.name === 'value') ?? data.fields.find((f) => f.type === FieldType.number);
@@ -231,7 +229,6 @@ const FlameGraph = ({
     setTopLevelIndex,
     setRangeMin,
     setRangeMax,
-    selectedView,
     valueField,
     setSelectedBarIndex,
     setContextMenuData,
@@ -281,11 +278,10 @@ const FlameGraph = ({
   );
 };
 
-const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: number | undefined) => ({
+const getStyles = (app: CoreApp, flameGraphHeight: number | undefined) => ({
   graph: css`
-    float: left;
     overflow: scroll;
-    width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
+    width: 100%;
     ${app !== CoreApp.Explore
       ? `height: calc(${flameGraphHeight}px - 50px)`
       : ''}; // 50px to adjust for header pushing content down

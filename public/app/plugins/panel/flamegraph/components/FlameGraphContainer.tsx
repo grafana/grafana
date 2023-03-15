@@ -6,14 +6,13 @@ import { DataFrame, DataFrameView, CoreApp, DataSourceApi } from '@grafana/data'
 import { useStyles2 } from '@grafana/ui';
 
 import { PhlareDataSource } from '../../../datasource/phlare/datasource';
-import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH, PIXELS_PER_LEVEL } from '../constants';
+import { PIXELS_PER_LEVEL } from '../constants';
 
 import FlameGraph from './FlameGraph/FlameGraph';
 import { Item, nestedSetToLevels } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import { GloblDataRanges, SourceCodeView } from './SourceCodeView';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
-import { SelectedView } from './types';
 
 type Props = {
   data?: DataFrame;
@@ -31,7 +30,18 @@ const FlameGraphContainer = (props: Props) => {
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
   const [search, setSearch] = useState('');
-  const [selectedView, setSelectedView] = useState(SelectedView.Both);
+
+  const [codeVisible, setCodeVisible] = useState(false);
+  const [graphVisible, setGraphVisible] = useState(true);
+  const [tableVisible, setTableVisible] = useState(true);
+
+  useEffect(() => {
+    if (!(codeVisible || graphVisible || tableVisible)) {
+      // Make sure we always have something visible
+      setGraphVisible(true);
+    }
+  }, [codeVisible, graphVisible, tableVisible]);
+
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
 
   // State for the selected filename/func/line
@@ -71,15 +81,15 @@ const FlameGraphContainer = (props: Props) => {
   const styles = useStyles2(() => getStyles(props.app, PIXELS_PER_LEVEL * levels.length));
 
   // If user resizes window with both as the selected view
-  useEffect(() => {
-    if (
-      containerWidth > 0 &&
-      containerWidth < MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH &&
-      selectedView === SelectedView.Both
-    ) {
-      setSelectedView(SelectedView.FlameGraph);
-    }
-  }, [selectedView, setSelectedView, containerWidth]);
+  // useEffect(() => {
+  //   if (
+  //     containerWidth > 0 &&
+  //     containerWidth < MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH &&
+  //     selectedView === SelectedView.Both
+  //   ) {
+  //     setSelectedView(SelectedView.FlameGraph);
+  //   }
+  // }, [selectedView, setSelectedView, containerWidth]);
 
   useEffect(() => {
     setTopLevelIndex(0);
@@ -131,58 +141,73 @@ const FlameGraphContainer = (props: Props) => {
             setRangeMax={setRangeMax}
             search={search}
             setSearch={setSearch}
-            selectedView={selectedView}
-            setSelectedView={setSelectedView}
             containerWidth={containerWidth}
+            codeVisible={codeVisible}
+            graphVisible={graphVisible}
+            tableVisible={tableVisible}
+            toggleGraphVisible={() => setGraphVisible(!graphVisible)}
+            toggleTableVisible={() => setTableVisible(!tableVisible)}
+            toggleCodeVisible={() => setCodeVisible(!codeVisible)}
           />
 
-          {selectedView !== SelectedView.FlameGraph && selectedLocation == null && (
-            <FlameGraphTopTableContainer
-              data={props.data}
-              app={props.app}
-              totalLevels={levels.length}
-              selectedView={selectedView}
-              search={search}
-              setSearch={setSearch}
-              setTopLevelIndex={setTopLevelIndex}
-              setSelectedBarIndex={setSelectedBarIndex}
-              setRangeMin={setRangeMin}
-              setRangeMax={setRangeMax}
-              getLabelValue={getLabelValue}
-            />
-          )}
+          <div className={styles.panes}>
+            {tableVisible && (
+              <div className={styles.pane}>
+                <FlameGraphTopTableContainer
+                  data={props.data}
+                  search={search}
+                  setSearch={setSearch}
+                  setTopLevelIndex={setTopLevelIndex}
+                  setSelectedBarIndex={setSelectedBarIndex}
+                  setRangeMin={setRangeMin}
+                  setRangeMax={setRangeMax}
+                  getLabelValue={getLabelValue}
+                />
+              </div>
+            )}
 
-          {selectedView !== SelectedView.TopTable && (
-            <FlameGraph
-              className={SelectedView.Both || selectedLocation != null ? styles.flameGraphHalf : styles.flameGraphFull}
-              data={props.data}
-              app={props.app}
-              flameGraphHeight={props.flameGraphHeight}
-              levels={levels}
-              topLevelIndex={topLevelIndex}
-              selectedBarIndex={selectedBarIndex}
-              rangeMin={rangeMin}
-              rangeMax={rangeMax}
-              search={search}
-              setTopLevelIndex={setTopLevelIndex}
-              setSelectedBarIndex={setSelectedBarIndex}
-              setRangeMin={setRangeMin}
-              setRangeMax={setRangeMax}
-              selectedView={selectedView}
-              getLabelValue={getLabelValue}
-              setSelectedLocation={setSelectedLocation}
-            />
-          )}
+            {graphVisible && (
+              <div className={styles.pane}>
+                <FlameGraph
+                  data={props.data}
+                  app={props.app}
+                  flameGraphHeight={props.flameGraphHeight}
+                  levels={levels}
+                  topLevelIndex={topLevelIndex}
+                  selectedBarIndex={selectedBarIndex}
+                  rangeMin={rangeMin}
+                  rangeMax={rangeMax}
+                  search={search}
+                  setTopLevelIndex={setTopLevelIndex}
+                  setSelectedBarIndex={setSelectedBarIndex}
+                  setRangeMin={setRangeMin}
+                  setRangeMax={setRangeMax}
+                  getLabelValue={getLabelValue}
+                  setSelectedLocation={(location) => {
+                    setSelectedLocation(location);
+                    setCodeVisible(true);
+                    setTableVisible(false);
+                  }}
+                />
+              </div>
+            )}
 
-          {selectedLocation != null && (
-            <SourceCodeView
-              locationIdx={selectedLocation}
-              getLabelValue={getLabelValue}
-              datasource={props.datasource! as PhlareDataSource}
-              data={props.data}
-              globalDataRanges={globalDataRanges}
-            />
-          )}
+            {codeVisible && (
+              <div className={styles.pane}>
+                {selectedLocation ? (
+                  <SourceCodeView
+                    locationIdx={selectedLocation}
+                    getLabelValue={getLabelValue}
+                    datasource={props.datasource! as PhlareDataSource}
+                    data={props.data}
+                    globalDataRanges={globalDataRanges}
+                  />
+                ) : (
+                  <div>No code to show</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </>
@@ -191,20 +216,16 @@ const FlameGraphContainer = (props: Props) => {
 
 const getStyles = (app: CoreApp, height: number) => ({
   container: css`
-    height: ${app === CoreApp.Explore ? height + 'px' : '100%'};
+    height: 100%;
   `,
 
-  flameGraphFull: css`
-    width: 100%;
+  panes: css`
+    display: flex;
   `,
 
-  flameGraphHalf: css`
-    width: 50%;
-  `,
-
-  code: css`
-    width: 50%;
-    float: left;
+  pane: css`
+    flex: 1;
+    min-width: 0;
   `,
 });
 
