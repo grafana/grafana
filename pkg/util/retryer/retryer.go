@@ -7,8 +7,7 @@ import (
 type RetrySignal = int
 
 const (
-	FuncSuccess RetrySignal = iota
-	FuncFailure
+	FuncFailure RetrySignal = iota
 	FuncComplete
 	FuncError
 )
@@ -28,10 +27,6 @@ func Retry(body func() (RetrySignal, error), maxRetries int, minDelay time.Durat
 		}
 
 		switch response {
-		case FuncSuccess:
-			currentDelay = minDelay
-			ticker.Reset(currentDelay)
-			retries = 0
 		case FuncFailure:
 			currentDelay = minDuration(currentDelay*2, maxDelay)
 			ticker.Reset(currentDelay)
