@@ -10,12 +10,18 @@ import { getRangeChunks as getMetricRangeChunks } from './metricTimeSplit';
 import { combineResponses, isLogsQuery } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
+declare global {
+  interface Window {
+    lokiChunkDuration: number;
+  }
+}
+
 /**
  * Purposely exposing it to support doing tests without needing to update the repo.
  * TODO: remove.
  * Hardcoded to 1 day.
  */
-(window as any).lokiChunkDuration = 24 * 60 * 60 * 1000;
+window.lokiChunkDuration = 24 * 60 * 60 * 1000;
 
 export function partitionTimeRange(
   isLogsQuery: boolean,
@@ -35,7 +41,7 @@ export function partitionTimeRange(
   const safeStep = Math.ceil((end - start) / 11000);
   const step = Math.max(intervalMs * resolution, safeStep);
 
-  const duration: number = (window as any).lokiChunkDuration;
+  const duration = window.lokiChunkDuration;
 
   const ranges = isLogsQuery
     ? getLogsRangeChunks(start, end, duration)

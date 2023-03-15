@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
@@ -17,7 +17,7 @@ interface Props {
   isPaused?: boolean;
 }
 
-export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating, isPaused }) => {
+export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => {
   const style = useStyles2(getStyle);
   const { promRule } = rule;
 
