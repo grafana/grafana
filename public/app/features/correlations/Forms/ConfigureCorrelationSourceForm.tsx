@@ -25,7 +25,11 @@ export const ConfigureCorrelationSourceForm = () => {
 
   return (
     <>
-      <h3>Step 3: Attach link to origin data source results</h3>
+      <h3>Step 3: Configure origin data source</h3>
+      <p>
+        Links are shown in panels with results of the selected origin source data source. They are displayed in data
+        point next to the value of the provided field.
+      </p>
       <Controller
         control={control}
         name="sourceUID"
@@ -39,7 +43,7 @@ export const ConfigureCorrelationSourceForm = () => {
         render={({ field: { onChange, value } }) => (
           <Field
             label="Origin data source"
-            description="Results from selected origin data source will have links displayed in the panel"
+            description="Results from selected origin data source have links displayed in the panel"
             htmlFor="source"
             invalid={!!formState.errors.sourceUID}
             error={formState.errors.sourceUID?.message}

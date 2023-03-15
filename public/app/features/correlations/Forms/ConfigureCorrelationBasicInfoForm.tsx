@@ -19,25 +19,28 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export const ConfigureCorrelationBasicInfoForm = () => {
-  const { register } = useFormContext<FormDTO>();
+  const { register, formState } = useFormContext<FormDTO>();
   const styles = useStyles2(getStyles);
   const { correlation, readOnly } = useCorrelationsFormContext();
 
   return (
     <>
-      <h3>Step 1: Define link name</h3>
+      <h3>Step 1: Define correlation name</h3>
+      <p>The name of the correlation is used to display data link button text.</p>
       <input type="hidden" {...register('config.type')} />
 
       <Field
         label="Label"
-        description="This name will be used as the label of the link button"
+        description="This name is be used as the label of the link button"
         className={styles.label}
+        invalid={!!formState.errors.label}
+        error={formState.errors.label?.message}
       >
         <Input
           id={getInputId('label', correlation)}
           {...register('label', { required: { value: true, message: 'This field is required.' } })}
           readOnly={readOnly}
-          placeholder="i.e. Tempo traces"
+          placeholder="e.g. Tempo traces"
         />
       </Field>
 

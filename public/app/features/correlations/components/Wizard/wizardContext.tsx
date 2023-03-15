@@ -19,12 +19,18 @@ export const WizardContext = createContext<WizardContextProps<FieldValues>>({
   CurrentPageComponent: () => null,
 });
 
-type WizardContextProviderProps<T> = {
+/**
+ * Dependencies provided to Wizard component required to build WizardContext
+ */
+type WizardContextProviderDeps<T> = {
   pages: React.ComponentType[];
   onSubmit: (data: T) => void;
 };
 
-export function WizardContextProvider<T>(props: PropsWithChildren<WizardContextProviderProps<T>>) {
+/**
+ * Context providing current state and logic of a Wizard. Can be used by pages and navigation components.
+ */
+export function WizardContextProvider<T>(props: PropsWithChildren<WizardContextProviderDeps<T>>) {
   const [currentPage, setCurrentPage] = useState(0);
   const { pages, onSubmit, children } = props;
 

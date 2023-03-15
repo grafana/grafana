@@ -105,7 +105,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
       label="Query"
       description={
         <span>
-          Define query that will be run when the link is clicked. You can use{' '}
+          Define the query that is run when the link is clicked. You can use{' '}
           <a
             href="https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/"
             target="_blank"

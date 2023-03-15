@@ -21,6 +21,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(1)};
     margin-bottom: ${theme.spacing(2)};
   `,
+  infoBox: css`
+    margin-top: 20px; // give space for close button
+  `,
 });
 
 interface Props {
@@ -46,15 +49,10 @@ export const AddCorrelationForm = ({ onClose, onCreated }: Props) => {
   return (
     <PanelContainer className={styles.panelContainer}>
       <CloseButton onClick={onClose} />
-      <InfoBox title="Add a new correlation" urlTitle="Documentation" url="about:blank">
+      <InfoBox title="Add a new correlation" urlTitle="Documentation" url="about:blank" className={styles.infoBox}>
         <p>
-          This wizard will guide you through setting up a new correlation. Based on the setup Grafana will create
-          interactive links in the result panels in Explore.
-        </p>
-        <p>
-          You can specify the behavior of these links. Link will be shown in results of selected origin data source. The
-          link will be attached to the field with provided name. Clicking on a link will run a provided target query. To
-          build a target query you can extract data from the origin results.
+          This wizard will guide you through setting up a new correlation. Based on your setup Grafana creates
+          interactive links in result panels in Explore.
         </p>
       </InfoBox>
       <CorrelationsFormContextProvider data={{ loading, readOnly: false, correlation: undefined }}>

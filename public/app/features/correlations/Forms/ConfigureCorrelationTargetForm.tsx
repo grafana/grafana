@@ -17,6 +17,10 @@ export const ConfigureCorrelationTargetForm = () => {
   return (
     <>
       <h3>Step 2: Setup target query</h3>
+      <p>
+        Clicking on a link runs a provided target query. Transformations allow to parse origin result field values to
+        access more granular values.
+      </p>
       <Controller
         control={control}
         name="targetUID"
@@ -24,7 +28,7 @@ export const ConfigureCorrelationTargetForm = () => {
         render={({ field: { onChange, value } }) => (
           <Field
             label="Target data source"
-            description="Specify which data source should be queried when the link is clicked"
+            description="Specify which data source is queried when the link is clicked"
             htmlFor="target"
             invalid={!!formState.errors.targetUID}
             error={formState.errors.targetUID?.message}
