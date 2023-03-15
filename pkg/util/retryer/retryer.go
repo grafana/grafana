@@ -17,31 +17,33 @@ const (
 // `maxDelay` after each failure. Stops when the provided function returns `FuncComplete`, or `maxRetries` is reached.
 func Retry(body func() (RetrySignal, error), maxRetries int, minDelay time.Duration, maxDelay time.Duration) error {
 	currentDelay := minDelay
-	ticker := time.NewTicker(currentDelay)
-	defer ticker.Stop()
+	var ticker *time.Ticker
 
 	retries := 0
-	for range ticker.C {
+	for {
 		response, err := body()
 		if err != nil {
 			return err
 		}
-
-		switch response {
-		case FuncFailure:
-			currentDelay = minDuration(currentDelay*2, maxDelay)
-			ticker.Reset(currentDelay)
-			retries++
-		case FuncComplete:
+		if response == FuncComplete {
 			return nil
 		}
 
+		retries++
 		if retries >= maxRetries {
 			return errors.New("max retries exceeded")
 		}
-	}
 
-	return nil
+		if ticker == nil {
+			ticker = time.NewTicker(currentDelay)
+			defer ticker.Stop()
+		} else {
+			currentDelay = minDuration(currentDelay*2, maxDelay)
+			ticker.Reset(currentDelay)
+		}
+
+		<-ticker.C
+	}
 }
 
 func minDuration(a time.Duration, b time.Duration) time.Duration {
