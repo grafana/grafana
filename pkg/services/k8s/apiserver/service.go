@@ -15,8 +15,15 @@ import (
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
 )
 
-var _ Service = (*service)(nil)
-var _ RestConfigProvider = (*service)(nil)
+const (
+	DEFAULT_IP   = "127.0.0.1"
+	DEFAULT_HOST = DEFAULT_IP + ":6443"
+)
+
+var (
+	_ Service            = (*service)(nil)
+	_ RestConfigProvider = (*service)(nil)
+)
 
 type Service interface {
 	services.Service
@@ -55,10 +62,9 @@ func (s *service) GetRestConfig() *rest.Config {
 
 func (s *service) start(ctx context.Context) error {
 	serverRunOptions := options.NewServerRunOptions()
-	serverRunOptions.SecureServing.BindAddress = net.ParseIP("127.0.0.1")
+	serverRunOptions.SecureServing.BindAddress = net.ParseIP(DEFAULT_IP)
 	serverRunOptions.SecureServing.ServerCert.CertDirectory = s.dataPath
-	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{"https://127.0.0.1:6443"}
-
+	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{"https://" + DEFAULT_HOST}
 	etcdConfig := s.etcdProvider.GetConfig()
 	serverRunOptions.Etcd.StorageConfig.Transport.ServerList = etcdConfig.Endpoints
 	serverRunOptions.Etcd.StorageConfig.Transport.CertFile = etcdConfig.TLSConfig.CertFile
@@ -76,6 +82,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	s.restConfig = server.GenericAPIServer.LoopbackClientConfig
+	s.restConfig.Host = "https://" + DEFAULT_HOST
 	s.writeKubeConfiguration(s.restConfig)
 
 	prepared, err := server.PrepareRun()
