@@ -268,38 +268,40 @@ export function getPanelMenu(
     });
   }
 
-  const { extensions } = getPluginExtensions({
-    placement: PluginExtensionPlacements.DashboardPanelMenu,
-    context: createExtensionContext(panel, dashboard),
-  });
-
-  if (extensions.length > 0) {
-    const extensionsMenu: PanelMenuItem[] = [];
-
-    for (const extension of extensions) {
-      if (isPluginExtensionLink(extension)) {
-        extensionsMenu.push({
-          text: truncateTitle(extension.title, 25),
-          href: extension.path,
-        });
-        continue;
-      }
-
-      if (isPluginExtensionCommand(extension)) {
-        extensionsMenu.push({
-          text: truncateTitle(extension.title, 25),
-          onClick: extension.callHandlerWithContext,
-        });
-        continue;
-      }
-    }
-
-    menu.push({
-      text: 'Extensions',
-      iconClassName: 'plug',
-      type: 'submenu',
-      subMenu: extensionsMenu,
+  if (!config.featureToggles.newPanelChromeUI) {
+    const { extensions } = getPluginExtensions({
+      placement: PluginExtensionPlacements.DashboardPanelMenu,
+      context: createExtensionContext(panel, dashboard),
     });
+
+    if (extensions.length > 0) {
+      const extensionsMenu: PanelMenuItem[] = [];
+
+      for (const extension of extensions) {
+        if (isPluginExtensionLink(extension)) {
+          extensionsMenu.push({
+            text: truncateTitle(extension.title, 25),
+            href: extension.path,
+          });
+          continue;
+        }
+
+        if (isPluginExtensionCommand(extension)) {
+          extensionsMenu.push({
+            text: truncateTitle(extension.title, 25),
+            onClick: extension.callHandlerWithContext,
+          });
+          continue;
+        }
+      }
+
+      menu.push({
+        text: 'Extensions',
+        iconClassName: 'plug',
+        type: 'submenu',
+        subMenu: extensionsMenu,
+      });
+    }
   }
 
   if (dashboard.canEditPanel(panel) && !panel.isEditing && !panel.isViewing) {
@@ -316,7 +318,7 @@ export function getPanelMenu(
   return menu;
 }
 
-function truncateTitle(title: string, length: number): string {
+export function truncateTitle(title: string, length: number): string {
   if (title.length < length) {
     return title;
   }
@@ -324,7 +326,7 @@ function truncateTitle(title: string, length: number): string {
   return `${part.trimEnd()}...`;
 }
 
-function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): PluginExtensionPanelContext {
+export function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): PluginExtensionPanelContext {
   const timeRange = Object.assign({}, dashboard.time);
 
   return Object.freeze({
