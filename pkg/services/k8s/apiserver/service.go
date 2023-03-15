@@ -11,6 +11,8 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
+	authzmodes "k8s.io/kubernetes/pkg/kubeapiserver/authorizer/modes"
+	kubeoptions "k8s.io/kubernetes/pkg/kubeapiserver/options"
 )
 
 var _ Service = (*service)(nil)
@@ -52,9 +54,22 @@ func (s *service) GetRestConfig() *rest.Config {
 
 func (s *service) start(ctx context.Context) error {
 	serverRunOptions := options.NewServerRunOptions()
+	serverRunOptions.Admission.GenericAdmission.EnablePlugins = []string{
+		"MutatingAdmissionWebhook",
+		"ValidatingAdmissionWebhook",
+	}
 	serverRunOptions.SecureServing.BindAddress = net.ParseIP("127.0.0.1")
 	serverRunOptions.SecureServing.ServerCert.CertDirectory = "data/k8s"
+
+	serverRunOptions.Authentication = kubeoptions.NewBuiltInAuthenticationOptions().WithWebHook()
+	// TODO: incomplete. Need to implement the authn endpoint as specified in this config
+	serverRunOptions.Authentication.WebHook.ConfigFile = "data/k8s/authn-kubeconfig"
 	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{"https://127.0.0.1:6443"}
+	// TODO: determine if including ModeRBAC is a great idea. It ends up including a lot of cluster roles
+	// that wont be of use to us. It may be a necessary evil.
+	// e.g. I needed system:service-account-issuer-discovery in order to to access the OIDC endpoint of the apiserver's issuer
+	serverRunOptions.Authorization.Modes = []string{authzmodes.ModeRBAC, authzmodes.ModeWebhook}
+
 	etcdConfig := s.etcdProvider.GetConfig()
 	serverRunOptions.Etcd.StorageConfig.Transport.ServerList = etcdConfig.Endpoints
 	serverRunOptions.Etcd.StorageConfig.Transport.CertFile = etcdConfig.TLSConfig.CertFile
