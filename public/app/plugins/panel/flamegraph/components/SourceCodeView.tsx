@@ -2,7 +2,6 @@ import { StreamLanguage } from '@codemirror/language';
 import { go } from '@codemirror/legacy-modes/mode/go';
 import { EditorView, gutter, GutterMarker, lineNumbers } from '@codemirror/view';
 import { css, cx } from '@emotion/css';
-import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import CodeMirror, { minimalSetup, ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import React, { createRef, useEffect, useMemo, useState } from 'react';
 
@@ -15,6 +14,8 @@ import { PhlareDataSource } from '../../../datasource/phlare/datasource';
 import { quantizeScheme } from '../../heatmap/palettes';
 import appEvents from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
+
+import { oneDarkGrafana } from './one-dark-grafana';
 
 // import { Item } from './FlameGraph/dataTransform';
 
@@ -205,9 +206,9 @@ export function SourceCodeView(props: Props) {
     <CodeMirror
       value={source}
       height={'630px'}
-      extensions={[StreamLanguage.define(go), minimalSetup(), lineNumbers(), valueGutter, selfGutter]}
+      extensions={[StreamLanguage.define(go), minimalSetup(), lineNumbers(), selfGutter, valueGutter]}
       readOnly={true}
-      theme={theme.name === 'Dark' ? vscodeDark : 'light'}
+      theme={theme.name === 'Dark' ? oneDarkGrafana : 'light'}
       ref={editorRef}
     />
   );
