@@ -300,6 +300,7 @@
     "@types/react-resizable": "3.0.3",
     "@types/webpack-env": "1.18.0",
     "@uiw/codemirror-extensions-langs": "^4.19.9",
+    "@uiw/codemirror-theme-vscode": "^4.19.9",
     "@uiw/codemirror-themes-all": "^4.19.9",
     "@uiw/react-codemirror": "^4.19.9",
     "@visx/event": "3.0.1",

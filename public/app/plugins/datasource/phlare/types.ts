@@ -25,8 +25,8 @@ export interface PhlareDataSourceOptions extends DataSourceJsonData {
 }
 
 export type CodeLocation = {
-  fileName: string;
-  func: string;
+  fileNameIdx: number;
+  funcIdx: number;
   line: number;
 };
 
