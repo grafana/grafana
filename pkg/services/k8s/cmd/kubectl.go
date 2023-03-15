@@ -23,7 +23,10 @@ func CLICommand(version string) *cli.Command {
 		SkipFlagParsing: true,
 		UsageText:       cmd.NewDefaultKubectlCommand().UsageString(),
 		Action: func(c *cli.Context) error {
-			cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{})
+			args := setting.CommandLineArgs{
+				Args: []string{"cfg:log.level=error"},
+			}
+			cfg, err := setting.NewCfgFromArgs(args)
 			if err != nil {
 				return err
 			}
