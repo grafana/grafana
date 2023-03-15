@@ -81,7 +81,7 @@
 /pkg/infra/metrics/ @grafana/backend-platform
 /pkg/infra/network/ @grafana/backend-platform
 /pkg/infra/process/ @grafana/backend-platform
-/pkg/infra/proxy/ @grafana/hosted-grafana-team @grafana/backend-platform
+/pkg/infra/proxy/ @grafana/hosted-grafana-team
 /pkg/infra/remotecache/ @grafana/backend-platform
 /pkg/infra/serverlock/ @grafana/backend-platform
 /pkg/infra/slugify/ @grafana/backend-platform
