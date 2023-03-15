@@ -450,7 +450,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
       { id: '', header: ' ', cell: ButtonCell },
     ];
 
-    return <InteractiveTable columns={columns} data={tableData} getRowId={(r) => r.value} />;
+    return <InteractiveTable className={styles.table} columns={columns} data={tableData} getRowId={(r) => r.value} />;
   }
 
   return (
@@ -602,9 +602,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
         </div>
       </div>
 
-      <div className={styles.results}>      
-        {metrics && tableResults(displayedMetrics(metrics))}
-      </div>
+      <div className={styles.results}>{metrics && tableResults(displayedMetrics(metrics))}</div>
 
       <div className={styles.pageSettingsWrapper}>
         <div className={styles.pageSettings}>
