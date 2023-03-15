@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, CoreApp } from '@grafana/data';
-import { Button, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Input, useStyles2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
@@ -16,9 +16,13 @@ type Props = {
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   setSearch: (search: string) => void;
-  selectedView: SelectedView;
-  setSelectedView: (view: SelectedView) => void;
   containerWidth: number;
+  toggleTableVisible: () => void;
+  toggleCodeVisible: () => void;
+  toggleGraphVisible: () => void;
+  tableVisible: boolean;
+  codeVisible: boolean;
+  graphVisible: boolean;
 };
 
 const FlameGraphHeader = ({
@@ -29,9 +33,13 @@ const FlameGraphHeader = ({
   setRangeMin,
   setRangeMax,
   setSearch,
-  selectedView,
-  setSelectedView,
   containerWidth,
+  toggleTableVisible,
+  toggleCodeVisible,
+  toggleGraphVisible,
+  tableVisible,
+  codeVisible,
+  graphVisible,
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme, app));
 
@@ -77,13 +85,15 @@ const FlameGraphHeader = ({
       </div>
 
       <div className={styles.rightContainer}>
-        <RadioButtonGroup<SelectedView>
-          options={viewOptions}
-          value={selectedView}
-          onChange={(view) => {
-            setSelectedView(view);
-          }}
-        />
+        <Button variant={'secondary'} fill={tableVisible ? 'solid' : 'outline'} onClick={() => toggleTableVisible()}>
+          Top Table
+        </Button>
+        <Button variant={'secondary'} fill={graphVisible ? 'solid' : 'outline'} onClick={() => toggleGraphVisible()}>
+          Flame Graph
+        </Button>
+        <Button variant={'secondary'} fill={codeVisible ? 'solid' : 'outline'} onClick={() => toggleCodeVisible()}>
+          Code
+        </Button>
       </div>
     </div>
   );

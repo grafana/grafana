@@ -2,19 +2,17 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, DataFrameView, CoreApp, getEnumDisplayProcessor, DataSourceApi } from '@grafana/data';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { DataFrame, DataFrameView, CoreApp, DataSourceApi } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { PhlareDataSource } from '../../../datasource/phlare/datasource';
-import { CodeLocation } from '../../../datasource/phlare/types';
-import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH, PIXELS_PER_LEVEL } from '../constants';
+import { PIXELS_PER_LEVEL } from '../constants';
 
 import FlameGraph from './FlameGraph/FlameGraph';
 import { Item, nestedSetToLevels } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
-import { SourceCodeView } from './SourceCodeView';
+import { GloblDataRanges, SourceCodeView } from './SourceCodeView';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
-import { SelectedView } from './types';
 
 type Props = {
   data?: DataFrame;
@@ -32,29 +30,43 @@ const FlameGraphContainer = (props: Props) => {
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
   const [search, setSearch] = useState('');
-  const [selectedView, setSelectedView] = useState(SelectedView.Both);
+
+  const [codeVisible, setCodeVisible] = useState(false);
+  const [graphVisible, setGraphVisible] = useState(true);
+  const [tableVisible, setTableVisible] = useState(true);
+
+  useEffect(() => {
+    if (!(codeVisible || graphVisible || tableVisible)) {
+      // Make sure we always have something visible
+      setGraphVisible(true);
+    }
+  }, [codeVisible, graphVisible, tableVisible]);
+
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
-  const theme = useTheme2();
 
   // State for the selected filename/func/line
-  const [selectedLocation, setSelectedLocation] = useState<CodeLocation>();
+  const [selectedLocation, setSelectedLocation] = useState<number>();
+  const [selectedFileName, setSelectedFileName] = useState<string>();
 
   const labelField = props.data?.fields.find((f) => f.name === 'label');
   const fileNameField = props.data?.fields.find((f) => f.name === 'fileName');
 
   // Label can actually be an enum field so depending on that we have to access it through display processor. This is
   // both a backward compatibility but also to allow using a simple dataFrame without enum config. This would allow
-  // users to use this panel with correct query from data sources that do not return profiles natively.
+  // users to use this panel with correct query from data sources that do not return profiles natively....Leon: this should just be a transformation then and not handled here?
   const getLabelValue = useCallback(
     (label: string | number) => {
+      if (typeof label === 'string') {
+        return label;
+      }
       const enumConfig = labelField?.config?.type?.enum;
       if (enumConfig) {
-        return getEnumDisplayProcessor(theme, enumConfig)(label).text;
+        return enumConfig.text![label];
       } else {
         return label.toString();
       }
     },
-    [labelField, theme]
+    [labelField]
   );
 
   const getFileNameValue = useCallback(
@@ -64,12 +76,12 @@ const FlameGraphContainer = (props: Props) => {
       }
       const enumConfig = fileNameField?.config?.type?.enum;
       if (enumConfig) {
-        return getEnumDisplayProcessor(theme, enumConfig)(label).text;
+        return enumConfig.text![label];
       } else {
         return label.toString();
       }
     },
-    [fileNameField, theme]
+    [fileNameField]
   );
 
   // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular
@@ -87,21 +99,53 @@ const FlameGraphContainer = (props: Props) => {
   const styles = useStyles2(() => getStyles(props.app, PIXELS_PER_LEVEL * levels.length));
 
   // If user resizes window with both as the selected view
-  useEffect(() => {
-    if (
-      containerWidth > 0 &&
-      containerWidth < MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH &&
-      selectedView === SelectedView.Both
-    ) {
-      setSelectedView(SelectedView.FlameGraph);
-    }
-  }, [selectedView, setSelectedView, containerWidth]);
+  // useEffect(() => {
+  //   if (
+  //     containerWidth > 0 &&
+  //     containerWidth < MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH &&
+  //     selectedView === SelectedView.Both
+  //   ) {
+  //     setSelectedView(SelectedView.FlameGraph);
+  //   }
+  // }, [selectedView, setSelectedView, containerWidth]);
 
   useEffect(() => {
     setTopLevelIndex(0);
     setSelectedBarIndex(0);
     setRangeMin(0);
     setRangeMax(1);
+    setSelectedLocation(undefined);
+  }, [props.data]);
+
+  const globalDataRanges = useMemo<GloblDataRanges>(() => {
+    let valuesFieldData = props.data?.fields.find((f) => f.name === 'value')?.values.toArray()!;
+    let selfFieldData = props.data?.fields.find((f) => f.name === 'self')?.values.toArray()!;
+
+    // to make sure we use the full color scale, we exclude the root total which
+    // will eat up most of the high color range, since next size blocks are typically 30% or less
+    // so we treat the next highest as the deepest red and everything else is relative to it
+    let valuesFieldData2 = valuesFieldData.slice(1);
+    let selfFieldData2 = selfFieldData.slice(1);
+
+    let dataLen = props.data!.length;
+
+    if (dataLen < 65e3) {
+      return {
+        value: [Math.min(...valuesFieldData2), Math.max(...valuesFieldData2)],
+        self: [Math.min(...selfFieldData2), Math.max(...selfFieldData2)],
+      };
+    }
+
+    return {
+      value: [
+        valuesFieldData2.reduce((acc, val) => (val < acc ? val : acc), Infinity),
+        valuesFieldData2.reduce((acc, val) => (val > acc ? val : acc), 0),
+      ],
+      self: [
+        selfFieldData2.reduce((acc, val) => (val < acc ? val : acc), Infinity),
+        selfFieldData2.reduce((acc, val) => (val > acc ? val : acc), 0),
+      ],
+    };
   }, [props.data]);
 
   return (
@@ -116,71 +160,80 @@ const FlameGraphContainer = (props: Props) => {
             setRangeMax={setRangeMax}
             search={search}
             setSearch={setSearch}
-            selectedView={selectedView}
-            setSelectedView={setSelectedView}
             containerWidth={containerWidth}
+            codeVisible={codeVisible}
+            graphVisible={graphVisible}
+            tableVisible={tableVisible}
+            toggleGraphVisible={() => setGraphVisible(!graphVisible)}
+            toggleTableVisible={() => setTableVisible(!tableVisible)}
+            toggleCodeVisible={() => setCodeVisible(!codeVisible)}
           />
 
-          {selectedView !== SelectedView.FlameGraph && !selectedLocation && (
-            <FlameGraphTopTableContainer
-              data={props.data}
-              app={props.app}
-              totalLevels={levels.length}
-              selectedView={selectedView}
-              search={search}
-              setSearch={setSearch}
-              setTopLevelIndex={setTopLevelIndex}
-              setSelectedBarIndex={setSelectedBarIndex}
-              setRangeMin={setRangeMin}
-              setRangeMax={setRangeMax}
-              getLabelValue={getLabelValue}
-              getFileNameValue={getFileNameValue}
-              onSelectFilename={(name: string) => {
-                setSelectedLocation({
-                  fileName: name,
-                });
-              }}
-            />
-          )}
+          <div className={styles.panes}>
+            {tableVisible && (
+              <div className={styles.pane}>
+                <FlameGraphTopTableContainer
+                  data={props.data}
+                  search={search}
+                  setSearch={setSearch}
+                  setTopLevelIndex={setTopLevelIndex}
+                  setSelectedBarIndex={setSelectedBarIndex}
+                  setRangeMin={setRangeMin}
+                  setRangeMax={setRangeMax}
+                  getLabelValue={getLabelValue}
+                  getFileNameValue={getFileNameValue}
+                  onSelectFilename={(name: string) => {
+                    setSelectedFileName(name);
+                    setSelectedLocation(undefined);
+                  }}
+                />
+              </div>
+            )}
 
-          {selectedView !== SelectedView.TopTable && (
-            <FlameGraph
-              className={SelectedView.Both || selectedLocation ? styles.flameGraphHalf : styles.flameGraphFull}
-              data={props.data}
-              app={props.app}
-              flameGraphHeight={props.flameGraphHeight}
-              levels={levels}
-              topLevelIndex={topLevelIndex}
-              selectedBarIndex={selectedBarIndex}
-              rangeMin={rangeMin}
-              rangeMax={rangeMax}
-              search={search}
-              setTopLevelIndex={setTopLevelIndex}
-              setSelectedBarIndex={setSelectedBarIndex}
-              setRangeMin={setRangeMin}
-              setRangeMax={setRangeMax}
-              selectedView={selectedView}
-              getLabelValue={getLabelValue}
-              setSelectedLocation={(index: number) => {
-                const view = new DataFrameView<Item>(props.data!);
-                const row = view.get(index);
-                setSelectedLocation({
-                  fileName: row.fileName,
-                  func: row.label,
-                  line: row.line,
-                });
-              }}
-            />
-          )}
+            {graphVisible && (
+              <div className={styles.pane}>
+                <FlameGraph
+                  data={props.data}
+                  app={props.app}
+                  flameGraphHeight={props.flameGraphHeight}
+                  levels={levels}
+                  topLevelIndex={topLevelIndex}
+                  selectedBarIndex={selectedBarIndex}
+                  rangeMin={rangeMin}
+                  rangeMax={rangeMax}
+                  search={search}
+                  setTopLevelIndex={setTopLevelIndex}
+                  setSelectedBarIndex={setSelectedBarIndex}
+                  setRangeMin={setRangeMin}
+                  setRangeMax={setRangeMax}
+                  getLabelValue={getLabelValue}
+                  setSelectedLocation={(location) => {
+                    setSelectedLocation(location);
+                    setSelectedFileName(undefined);
+                    setCodeVisible(true);
+                    setTableVisible(false);
+                  }}
+                />
+              </div>
+            )}
 
-          {selectedLocation && (
-            <SourceCodeView
-              location={selectedLocation}
-              datasource={props.datasource! as PhlareDataSource}
-              getLabelValue={getLabelValue}
-              getFileNameValue={getFileNameValue}
-            />
-          )}
+            {codeVisible && (
+              <div className={styles.pane}>
+                {selectedLocation || selectedFileName ? (
+                  <SourceCodeView
+                    locationIdx={selectedLocation}
+                    fileName={selectedFileName}
+                    getLabelValue={getLabelValue}
+                    datasource={props.datasource! as PhlareDataSource}
+                    data={props.data}
+                    globalDataRanges={globalDataRanges}
+                  />
+                ) : (
+                  <div>No code to show</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </>
@@ -189,20 +242,16 @@ const FlameGraphContainer = (props: Props) => {
 
 const getStyles = (app: CoreApp, height: number) => ({
   container: css`
-    height: ${app === CoreApp.Explore ? height + 'px' : '100%'};
+    height: 100%;
   `,
 
-  flameGraphFull: css`
-    width: 100%;
+  panes: css`
+    display: flex;
   `,
 
-  flameGraphHalf: css`
-    width: 50%;
-  `,
-
-  code: css`
-    width: 50%;
-    float: left;
+  pane: css`
+    flex: 1;
+    min-width: 0;
   `,
 });
 
