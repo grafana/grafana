@@ -86,8 +86,7 @@ export function PanelChrome({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  const pointerQuery = useMemo(() => '(pointer: coarse)', []); // memoize the media query string
-
+  const pointerQuery = '(pointer: coarse)';
   // detect if we are on touch devices
   const isTouchDevice = useMedia(pointerQuery);
   const hasHeader = !hoverHeader || isTouchDevice;

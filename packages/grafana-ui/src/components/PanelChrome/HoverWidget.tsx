@@ -1,5 +1,4 @@
-import { css } from '@emotion/css';
-import classnames from 'classnames';
+import { css, cx } from '@emotion/css';
 import React, { ReactElement, useCallback, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -38,21 +37,21 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
 
   return (
     <div
-      className={classnames(styles.container, { 'show-on-hover': !menuOpen })}
+      className={cx(styles.container, { 'show-on-hover': !menuOpen })}
       style={{ top: `${offset}px` }}
       data-testid="hover-header-container"
     >
       <div
-        className={classnames(styles.square, styles.draggable, dragClass)}
+        className={cx(styles.square, styles.draggable, dragClass)}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         ref={draggableRef}
       >
         <Icon name="expand-arrows" className={styles.draggableIcon} />
       </div>
-      {!title && <h6 className={classnames(styles.untitled, styles.draggable, dragClass)}>Untitled</h6>}
+      {!title && <h6 className={cx(styles.untitled, styles.draggable, dragClass)}>Untitled</h6>}
       {children}
-      <div>
+      <div className={styles.square}>
         <PanelMenu
           menu={menu}
           title={title}
@@ -103,6 +102,9 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     menuButton: css({
+      // Background and border are overriden when topnav toggle is disabled
+      background: 'inherit',
+      border: 'none',
       '&:hover': {
         background: theme.colors.secondary.main,
       },
