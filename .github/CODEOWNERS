@@ -258,6 +258,7 @@
 /pkg/infra/filestorage/ @grafana/grafana-app-platform-squad
 /pkg/util/converter/ @grafana/grafana-app-platform-squad
 /pkg/modules/ @grafana/grafana-app-platform-squad
+/pkg/kindsysreport/ @grafana/grafana-app-platform-squad
 
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-squad-backend
