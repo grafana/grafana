@@ -46,7 +46,7 @@ function addRowNumberField(frame: DataFrame): Field[] {
   if (rowNumberFieldIndex > -1) {
     frame.fields[rowNumberFieldIndex] = newField;
   } else {
-    frame.fields.unshift(newField);
+    frame.fields = [newField, ...frame.fields];
   }
 
   return frame.fields;
