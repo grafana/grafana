@@ -27,7 +27,7 @@ This API allows you to interact programmatically with the [Reporting]({{< relref
 
 #### Required permissions
 
-See note in the [introduction]({{< relref "./#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< relref "#reporting-api" >}}) for an explanation.
 
 | Action       | Scope                       |
 | ------------ | --------------------------- |
@@ -108,7 +108,7 @@ Content-Length: 1840
 
 #### Required permissions
 
-See note in the [introduction]({{< relref "./#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< relref "#reporting-api" >}}) for an explanation.
 
 | Action       | Scope                                                      |
 | ------------ | ---------------------------------------------------------- |
@@ -194,7 +194,7 @@ Content-Length: 940
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "./#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
 | Action         | Scope |
 | -------------- | ----- |
@@ -304,7 +304,7 @@ Content-Length: 35
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "./#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
 | Action        | Scope                                                     |
 | ------------- | --------------------------------------------------------- |
@@ -388,7 +388,7 @@ Content-Length: 28
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "./#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
 | Action         | Scope                                                     |
 | -------------- | --------------------------------------------------------- |
@@ -431,7 +431,7 @@ Generate and send a report. This API waits for the report to be generated before
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "./#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
 | Action       | Scope |
 | ------------ | ----- |
@@ -486,7 +486,7 @@ Returns reports branding settings that are global and used across all the report
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "./#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
 | Action                | Scope |
 | --------------------- | ----- |
@@ -536,7 +536,7 @@ Creates settings if they don't exist, otherwise updates them. These settings are
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "./#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
 | Action                 | Scope |
 | ---------------------- | ----- |
@@ -598,7 +598,7 @@ Sends a test email with a report without persisting it in the database.
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "./#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
 | Action       | Scope |
 | ------------ | ----- |
