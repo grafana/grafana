@@ -418,6 +418,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
     return (
       <Button
         size="sm"
+        variant={'secondary'}
+        fill={'solid'}
         aria-label="use this metric button"
         data-testid={testIds.useMetric}
         onClick={() => {
@@ -747,17 +749,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex-direction: row;
       align-items: center;
     `,
-    cardsContainer: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: space-between;
-    `,
-    card: css`
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-    `,
     selAlpha: css`
       cursor: pointer;
       color: #6e9fff;
@@ -767,9 +758,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     gray: css`
       color: grey;
-    `,
-    metadata: css`
-      color: rgb(204, 204, 220);
     `,
     loadingSpinner: css`
       display: inline-block;
