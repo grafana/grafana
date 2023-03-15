@@ -73,6 +73,37 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		require.ErrorContains(t, err, "unrecognized")
 	})
 
+	t.Run("fail initialization if invalid fanout primary", func(t *testing.T) {
+		met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+		logger := log.NewNopLogger()
+		cfg := setting.UnifiedAlertingStateHistorySettings{
+			Enabled:       true,
+			Backend:       "fanout",
+			FanoutPrimary: "invalid-backend",
+		}
+
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger)
+
+		require.ErrorContains(t, err, "fanout target")
+		require.ErrorContains(t, err, "unrecognized")
+	})
+
+	t.Run("fail initialization if invalid fanout secondary", func(t *testing.T) {
+		met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+		logger := log.NewNopLogger()
+		cfg := setting.UnifiedAlertingStateHistorySettings{
+			Enabled:           true,
+			Backend:           "fanout",
+			FanoutPrimary:     "annotations",
+			FanoutSecondaries: []string{"sql", "invalid-backend"},
+		}
+
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger)
+
+		require.ErrorContains(t, err, "fanout target")
+		require.ErrorContains(t, err, "unrecognized")
+	})
+
 	t.Run("do not fail initialization if pinging Loki fails", func(t *testing.T) {
 		met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
 		logger := log.NewNopLogger()

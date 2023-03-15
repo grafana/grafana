@@ -386,8 +386,13 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		return historian.NewNopHistorian(), nil
 	}
 
-	met.Info.WithLabelValues(cfg.Backend).Set(1)
-	if cfg.Backend == "fanout" {
+	backend, err := historian.ParseBackendType(cfg.Backend)
+	if err != nil {
+		return nil, err
+	}
+
+	met.Info.WithLabelValues(backend.String()).Set(1)
+	if backend == historian.BackendTypeFanout {
 		primaryCfg := cfg
 		primaryCfg.Backend = cfg.FanoutPrimary
 		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l)
@@ -409,10 +414,10 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		l.Info("State history is operating in fanout mode", "primary", cfg.FanoutPrimary, "secondaries", cfg.FanoutSecondaries)
 		return historian.NewFanoutBackend(primary, secondaries...), nil
 	}
-	if cfg.Backend == "annotations" {
+	if backend == historian.BackendTypeAnnotations {
 		return historian.NewAnnotationBackend(ar, ds, rs, met), nil
 	}
-	if cfg.Backend == "loki" {
+	if backend == historian.BackendTypeLoki {
 		lcfg, err := historian.NewLokiConfig(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
@@ -427,9 +432,9 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		}
 		return backend, nil
 	}
-	if cfg.Backend == "sql" {
+	if backend == historian.BackendTypeSQL {
 		return historian.NewSqlBackend(), nil
 	}
 
-	return nil, fmt.Errorf("unrecognized state history backend: %s", cfg.Backend)
+	return nil, fmt.Errorf("unrecognized state history backend: %s", backend)
 }
