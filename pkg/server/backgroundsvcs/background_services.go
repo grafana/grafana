@@ -99,8 +99,7 @@ func ProvideBackgroundServiceRegistry(
 	)
 
 	moduleManager.RegisterModule(modules.Core, func() (services.Service, error) {
-		r.BasicService = services.NewBasicService(r.start, r.run, r.stop)
-		return r, nil
+		return services.NewBasicService(r.start, r.run, r.stop), nil
 	}, modules.AccessControl, modules.Plugins)
 
 	r.usageStatsProvidersRegistry = usageStatsProvidersRegistry
@@ -112,7 +111,6 @@ func ProvideBackgroundServiceRegistry(
 
 // BackgroundServiceRegistry provides background services.
 type BackgroundServiceRegistry struct {
-	*services.BasicService
 	statsCollectorService       *statscollector.Service
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry
 	provisioningService         provisioning.ProvisioningService

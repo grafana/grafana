@@ -52,8 +52,7 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 		moduleManager: moduleManager,
 	}
 	s.moduleManager.RegisterModule(modules.AccessControl, func() (services.Service, error) {
-		s.BasicService = services.NewBasicService(s.start, s.run, nil)
-		return s, nil
+		return services.NewBasicService(s.start, s.run, nil), nil
 	})
 	return s, nil
 }
@@ -67,7 +66,6 @@ type store interface {
 
 // Service is the service implementing role based access control.
 type Service struct {
-	*services.BasicService
 	log           log.Logger
 	cfg           *setting.Cfg
 	store         store

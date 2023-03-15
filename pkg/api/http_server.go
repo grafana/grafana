@@ -106,7 +106,6 @@ import (
 )
 
 type HTTPServer struct {
-	*services.BasicService
 	log              log.Logger
 	web              *web.Mux
 	httpSrv          *http.Server
@@ -373,8 +372,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
 
 	hs.moduleManager.RegisterModule(modules.HTTPServer, func() (services.Service, error) {
-		hs.BasicService = services.NewBasicService(hs.start, hs.run, nil)
-		return hs, nil
+		return services.NewBasicService(hs.start, hs.run, nil), nil
 	}, modules.Core, modules.Plugins)
 
 	if err := hs.declareFixedRoles(); err != nil {
