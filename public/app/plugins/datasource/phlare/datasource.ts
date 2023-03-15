@@ -67,7 +67,7 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
   }
 
   async getSource(func: string, path: string): Promise<string> {
-    return await super.getResource('sourceCode', { function: func, path, revision: 'latest' });
+    return await super.getResource('sourceCode', { function: func, path, revision: 'main' });
   }
 
   applyTemplateVariables(query: Query, scopedVars: ScopedVars): Query {
