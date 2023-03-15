@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/k8s/client"
 	"github.com/grafana/grafana/pkg/services/k8s/informer"
 	"github.com/grafana/grafana/pkg/services/k8s/resources"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard/webhooks"
 )
 
-var WireSet = wire.NewSet(resources.WireSet, client.WireSet, informer.WireSet)
+var WireSet = wire.NewSet(resources.WireSet, client.WireSet, informer.WireSet, webhooks.WireSet)

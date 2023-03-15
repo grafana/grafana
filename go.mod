@@ -272,6 +272,7 @@ require (
 	github.com/hmarr/codeowners v1.1.1
 	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
+	gomodules.xyz/jsonpatch/v2 v2.2.0
 	k8s.io/api v0.25.3
 	k8s.io/client-go v12.0.0+incompatible
 )

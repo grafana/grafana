@@ -31,7 +31,7 @@ func (c *Clientset) RegisterMutation(ctx context.Context, webhooks []ShortWebhoo
 
 // Converts shortwebhookconfig into a validatingwebhookconfiguration
 func convertShortWebhookToMutationWebhook(swc ShortWebhookConfig) *admissionregistrationV1.MutatingWebhookConfiguration {
-	metaName := fmt.Sprintf("validation.%s.core.grafana.com", swc.Kind.MachineName())
+	metaName := fmt.Sprintf("mutation.%s.core.grafana.com", swc.Kind.MachineName())
 	fmt.Println(metaName)
 
 	resourcePlural := swc.Kind.Props().Common().PluralMachineName
