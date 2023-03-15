@@ -20,6 +20,12 @@ var (
 )
 
 func (rp *ResponseParser) Parse(buf io.ReadCloser, queries []Query) *backend.QueryDataResponse {
+	return rp.parse(buf, queries)
+}
+
+// parse is the same as Parse, but without the io.ReadCloser (we don't need to
+// close the buffer)
+func (*ResponseParser) parse(buf io.Reader, queries []Query) *backend.QueryDataResponse {
 	resp := backend.NewQueryDataResponse()
 
 	response, jsonErr := parseJSON(buf)
@@ -45,7 +51,7 @@ func (rp *ResponseParser) Parse(buf io.ReadCloser, queries []Query) *backend.Que
 	return resp
 }
 
-func parseJSON(buf io.ReadCloser) (Response, error) {
+func parseJSON(buf io.Reader) (Response, error) {
 	var response Response
 
 	dec := json.NewDecoder(buf)
@@ -57,7 +63,17 @@ func parseJSON(buf io.ReadCloser) (Response, error) {
 }
 
 func transformRows(rows []Row, query Query) data.Frames {
-	frames := data.Frames{}
+	// pre-allocate frames - this can save many allocations
+	cols := 0
+	for _, row := range rows {
+		cols += len(row.Columns)
+	}
+	frames := make([]*data.Frame, 0, len(rows)+cols)
+
+	// frameName is pre-allocated so we can reuse it, saving memory.
+	// It's sized for a reasonably-large name, but will grow if needed.
+	frameName := make([]byte, 0, 128)
+
 	for _, row := range rows {
 		var hasTimeCol = false
 
@@ -85,7 +101,6 @@ func transformRows(rows []Row, query Query) data.Frames {
 			field := data.NewField("value", nil, values)
 			frames = append(frames, data.NewFrame(row.Name, field))
 		} else {
-			frameName := make([]byte, 0, 40)
 			for colIndex, column := range row.Columns {
 				if column == "time" {
 					continue
