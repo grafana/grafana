@@ -36,32 +36,32 @@ type SocialService struct {
 }
 
 type OAuthInfo struct {
+	ApiUrl                  string   `toml:"api_url"`
+	AuthUrl                 string   `toml:"auth_url"`
 	ClientId                string   `toml:"client_id"`
 	ClientSecret            string   `toml:"-"`
-	Scopes                  []string `toml:"scopes"`
-	AuthUrl                 string   `toml:"auth_url"`
-	TokenUrl                string   `toml:"token_url"`
-	Enabled                 bool     `toml:"enabled"`
 	EmailAttributeName      string   `toml:"email_attribute_name"`
 	EmailAttributePath      string   `toml:"email_attribute_path"`
-	RoleAttributePath       string   `toml:"role_attribute_path"`
-	RoleAttributeStrict     bool     `toml:"role_attribute_strict"`
 	GroupsAttributePath     string   `toml:"groups_attribute_path"`
-	TeamIdsAttributePath    string   `toml:"team_ids_attribute_path"`
-	AllowedDomains          []string `toml:"allowed_domains"`
-	AllowAssignGrafanaAdmin bool     `toml:"allow_assign_grafana_admin"`
 	HostedDomain            string   `toml:"hosted_domain"`
-	ApiUrl                  string   `toml:"api_url"`
-	TeamsUrl                string   `toml:"teams_url"`
-	AllowSignup             bool     `toml:"allow_signup"`
-	Name                    string   `toml:"name"`
 	Icon                    string   `toml:"icon"`
+	Name                    string   `toml:"name"`
+	RoleAttributePath       string   `toml:"role_attribute_path"`
+	TeamIdsAttributePath    string   `toml:"team_ids_attribute_path"`
+	TeamsUrl                string   `toml:"teams_url"`
+	TlsClientCa             string   `toml:"tls_client_ca"`
 	TlsClientCert           string   `toml:"tls_client_cert"`
 	TlsClientKey            string   `toml:"tls_client_key"`
-	TlsClientCa             string   `toml:"tls_client_ca"`
+	TokenUrl                string   `toml:"token_url"`
+	AllowedDomains          []string `toml:"allowed_domains"`
+	Scopes                  []string `toml:"scopes"`
+	AllowAssignGrafanaAdmin bool     `toml:"allow_assign_grafana_admin"`
+	AllowSignup             bool     `toml:"allow_signup"`
+	AutoLogin               bool     `toml:"auto_login"`
+	Enabled                 bool     `toml:"enabled"`
+	RoleAttributeStrict     bool     `toml:"role_attribute_strict"`
 	TlsSkipVerify           bool     `toml:"tls_skip_verify"`
 	UsePKCE                 bool     `toml:"use_pkce"`
-	AutoLogin               bool     `toml:"auto_login"`
 }
 
 func ProvideService(cfg *setting.Cfg,
