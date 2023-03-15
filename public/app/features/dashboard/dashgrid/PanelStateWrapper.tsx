@@ -54,6 +54,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
+import { PanelHeaderExtensionsMenu } from './PanelHeader/PanelHeaderExtensionsMenu';
 import { PanelHeaderMenuWrapperNew } from './PanelHeader/PanelHeaderMenuWrapper';
 import { PanelHeaderTitleItems } from './PanelHeader/PanelHeaderTitleItems';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
@@ -693,6 +694,12 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         </div>
       );
 
+      const extensions = (
+        <div data-testid="extensions-panel-dropdown">
+          <PanelHeaderExtensionsMenu panel={panel} dashboard={dashboard} />
+        </div>
+      );
+
       return (
         <PanelChrome
           width={width}
@@ -704,6 +711,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           description={!!panel.description ? this.onShowPanelDescription : undefined}
           titleItems={titleItems}
           menu={this.props.hideMenu ? undefined : menu}
+          extensions={this.props.hideMenu ? undefined : extensions}
           dragClass={dragClass}
           dragClassCancel="grid-drag-cancel"
           padding={padding}
