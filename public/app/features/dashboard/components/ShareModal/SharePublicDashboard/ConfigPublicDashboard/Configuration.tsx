@@ -45,7 +45,12 @@ export const Configuration = ({
             <Switch
               {...register('isTimeSelectionEnabled')}
               data-testid={selectors.EnableTimeRangeSwitch}
-              onChange={(e) => onChange('isTimeSelectionEnabled', e.currentTarget.checked)}
+              onChange={(e) => {
+                reportInteraction('grafana_dashboards_public_time_selection_clicked', {
+                  action: e.currentTarget.checked ? 'disable' : 'enable',
+                });
+                onChange('isTimeSelectionEnabled', e.currentTarget.checked);
+              }}
             />
             <Label description="Allow viewers to change time range">Time range picker enabled</Label>
           </Layout>
@@ -53,7 +58,7 @@ export const Configuration = ({
             <Switch
               {...register('isAnnotationsEnabled')}
               onChange={(e) => {
-                reportInteraction('grafana_dashboards_annotations_clicked', {
+                reportInteraction('grafana_dashboards_public_annotations_clicked', {
                   action: e.currentTarget.checked ? 'enable' : 'disable',
                 });
                 onChange('isAnnotationsEnabled', e.currentTarget.checked);
