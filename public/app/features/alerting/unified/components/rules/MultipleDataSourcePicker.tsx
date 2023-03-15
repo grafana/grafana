@@ -88,20 +88,22 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
     const { alerting, tracing, metrics, mixed, dashboard, variables, annotations, pluginId, type, filter, logs } =
       props;
 
-    const options = dataSourceSrv
-      .getList({
-        alerting,
-        tracing,
-        metrics,
-        logs,
-        dashboard,
-        mixed,
-        variables,
-        annotations,
-        pluginId,
-        filter,
-        type,
-      })
+    const dataSources = dataSourceSrv.getList({
+      alerting,
+      tracing,
+      metrics,
+      logs,
+      dashboard,
+      mixed,
+      variables,
+      annotations,
+      pluginId,
+      filter,
+      type,
+    });
+
+    const alertManagingDs = dataSources
+      .filter((ds) => ds.jsonData.manageAlerts)
       .map((ds) => ({
         value: ds.name,
         label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
@@ -109,7 +111,21 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
         meta: ds.meta,
       }));
 
-    return options;
+    const nonAlertManagingDs = dataSources
+      .filter((ds) => !ds.jsonData.manageAlerts)
+      .map((ds) => ({
+        value: ds.name,
+        label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
+        imgUrl: ds.meta.info.logos.small,
+        meta: ds.meta,
+      }));
+
+    const groupedOptions = [
+      { label: 'Data sources that manage Alert rules', options: alertManagingDs, expanded: true },
+      { label: 'Other datasources', options: nonAlertManagingDs, expanded: true },
+    ];
+
+    return groupedOptions;
   };
 
   const {
