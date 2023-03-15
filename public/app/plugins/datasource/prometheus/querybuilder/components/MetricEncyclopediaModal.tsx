@@ -419,12 +419,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
       aria-label="Metric Encyclopedia"
       className={styles.modal}
     >
-      {isLoading && (
-        <div className={styles.loadingSpinner}>
-          <Spinner /> Loading metrics...
-        </div>
-      )}
-
       <div className={styles.inputWrapper}>
         <div className={cx(styles.inputItem, styles.inputItemFirst)}>
           <EditorField label="Search metrics">
@@ -541,7 +535,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
       <h4 className={styles.resultsHeading}>Results</h4>
       <div className={styles.resultsData}>
         <p className={styles.resultsDataCount}>
-          Showing {filteredMetricCount} of {totalMetricCount} total metrics.
+          Showing {filteredMetricCount} of {totalMetricCount} total metrics.{' '}
+          {isLoading && <Spinner className={styles.loadingSpinner} />}
         </p>
         {query.labels.length > 0 && (
           <p className={styles.resultsDataFiltered}>
@@ -746,7 +741,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     resultsDataFiltered: css`
       margin: 0;
-      color: ${theme.colors.text.secondary};
+      color: ${theme.colors.warning.main};
     `,
     alphabetRow: css`
       display: flex;
@@ -795,12 +790,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: rgb(204, 204, 220);
     `,
     loadingSpinner: css`
-      margin-bottom: ${theme.spacing(1.5)};
-      padding: ${theme.spacing(0.5)} 0;
-      display: flex;
-      align-items: center;
-      gap: ${theme.spacing(1)};
-      background-color: ${theme.colors.background.secondary};
+      display: inline-block;
     `,
   };
 };
