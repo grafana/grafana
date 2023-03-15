@@ -534,10 +534,10 @@ export const MetricEncyclopediaModal = (props: Props) => {
 
       <h4 className={styles.resultsHeading}>Results</h4>
       <div className={styles.resultsData}>
-        <p className={styles.resultsDataCount}>
+        <div className={styles.resultsDataCount}>
           Showing {filteredMetricCount} of {totalMetricCount} total metrics.{' '}
           {isLoading && <Spinner className={styles.loadingSpinner} />}
-        </p>
+        </div>
         {query.labels.length > 0 && (
           <p className={styles.resultsDataFiltered}>
             These metrics have been pre-filtered by labels chosen in the label filters.
