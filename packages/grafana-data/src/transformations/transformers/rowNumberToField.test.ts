@@ -1,7 +1,7 @@
 import { toDataFrame } from '../../dataframe';
 import { DataTransformerConfig, FieldType } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { ArrayVector } from '../../vector';
+import { ArrayVector, IndexVector } from '../../vector';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
@@ -28,10 +28,10 @@ describe('RowNumberToField Transformer', () => {
       const organized = data[0];
       expect(organized.fields).toEqual([
         {
-          config: {},
-          name: 'row number',
+          config: { min: 0, max: 3 },
+          name: 'row_number',
           type: FieldType.number,
-          values: new ArrayVector([1, 2, 3, 4]),
+          values: new IndexVector(4),
         },
         {
           config: {},
@@ -48,9 +48,9 @@ describe('RowNumberToField Transformer', () => {
       name: 'A',
       fields: [
         {
-          name: 'row number',
+          name: 'row_number',
           type: FieldType.number,
-          values: [1, 2, 3, 4],
+          values: [0, 1, 2, 3],
         },
         {
           name: 'temperature',
@@ -65,10 +65,10 @@ describe('RowNumberToField Transformer', () => {
       const organized = data[0];
       expect(organized.fields).toEqual([
         {
-          config: {},
-          name: 'row number',
+          config: { min: 0, max: 3 },
+          name: 'row_number',
           type: FieldType.number,
-          values: new ArrayVector([1, 2, 3, 4]),
+          values: new IndexVector(4),
         },
         {
           config: {},
@@ -85,9 +85,9 @@ describe('RowNumberToField Transformer', () => {
       name: 'A',
       fields: [
         {
-          name: 'row number',
+          name: 'row_number',
           type: FieldType.number,
-          values: [1],
+          values: [0],
         },
         {
           name: 'temperature',
@@ -102,10 +102,10 @@ describe('RowNumberToField Transformer', () => {
       const organized = data[0];
       expect(organized.fields).toEqual([
         {
-          config: {},
-          name: 'row number',
+          config: { min: 0, max: 3 },
+          name: 'row_number',
           type: FieldType.number,
-          values: new ArrayVector([1, 2, 3, 4]),
+          values: new IndexVector(4),
         },
         {
           config: {},

@@ -2,7 +2,7 @@ import { map } from 'rxjs/operators';
 
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
-import { ArrayVector } from '../../vector';
+import { IndexVector } from '../../vector';
 
 import { DataTransformerID } from './ids';
 
@@ -30,14 +30,17 @@ export const rowNumberToFieldTransformer: DataTransformerInfo<RowNumberToFieldTr
 };
 
 function addRowNumberField(frame: DataFrame): Field[] {
-  const rowNumberFieldIndex = frame.fields.findIndex((field) => field.name === 'row number');
-  const rowNumbers = frame.fields[0].values.toArray().map((_, index) => index + 1);
+  const rowFieldName = 'row_number';
+  const rowNumberFieldIndex = frame.fields.findIndex((field) => field.name === rowFieldName);
 
   const newField = {
-    name: 'row number',
+    name: rowFieldName,
     type: FieldType.number,
-    values: new ArrayVector(rowNumbers),
-    config: {},
+    values: new IndexVector(frame.length),
+    config: {
+      min: 0,
+      max: frame.length - 1,
+    },
   };
 
   if (rowNumberFieldIndex > -1) {
