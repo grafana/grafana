@@ -1,7 +1,7 @@
 import { DecoratorFn } from '@storybook/react';
 import React from 'react';
 
-const RightAlignedStory = ({ children }: React.PropsWithChildren) => {
+const RightAlignedStory = ({ children }: React.PropsWithChildren<{}>) => {
   return (
     <div
       style={{

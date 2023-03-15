@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GlobalStyles, useTheme2 } from '../../themes';
 
-const PaddedStory = ({ children }: React.PropsWithChildren) => {
+const PaddedStory = ({ children }: React.PropsWithChildren<{}>) => {
   const theme = useTheme2();
 
   return (
