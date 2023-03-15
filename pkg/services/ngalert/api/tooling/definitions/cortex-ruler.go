@@ -393,7 +393,7 @@ type GettableGrafanaRule struct {
 	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
 	Provenance      Provenance          `json:"provenance,omitempty" yaml:"provenance,omitempty"`
-	ForError        *model.Duration     `json:"for_error" json:"for_error"`
+	ForError        *model.Duration     `json:"for_error" yaml:"for_error"`
 	IsPaused        bool                `json:"is_paused" yaml:"is_paused"`
 }
 
