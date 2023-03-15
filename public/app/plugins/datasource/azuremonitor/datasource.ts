@@ -90,7 +90,8 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     }
 
     const observables: Array<Observable<DataQueryResponse>> = Array.from(byType.entries()).map(([queryType, req]) => {
-      const ds = this.pseudoDatasource[queryType];
+      const mappedQueryType = queryType === AzureQueryType.AzureTraces ? AzureQueryType.LogAnalytics : queryType;
+      const ds = this.pseudoDatasource[mappedQueryType];
       if (!ds) {
         throw new Error('Data source not created for query type ' + queryType);
       }
@@ -212,6 +213,9 @@ function hasQueryForType(query: AzureMonitorQuery): boolean {
 
     case AzureQueryType.AzureResourceGraph:
       return !!query.azureResourceGraph;
+
+    case AzureQueryType.AzureTraces:
+      return !!query.azureLogAnalytics;
 
     case AzureQueryType.GrafanaTemplateVariableFn:
       return !!query.grafanaTemplateVariableFn;

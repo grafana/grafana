@@ -56,7 +56,7 @@ composableKinds: DataQuery: {
 						} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 						// Defines the supported queryTypes. GrafanaTemplateVariableFn is deprecated
-						#AzureQueryType: "Azure Monitor" | "Azure Log Analytics" | "Azure Resource Graph" | "Azure Subscriptions" | "Azure Resource Groups" | "Azure Namespaces" | "Azure Resource Names" | "Azure Metric Names" | "Azure Workspaces" | "Azure Regions" | "Grafana Template Variable Function" @cuetsy(kind="enum", memberNames="AzureMonitor|LogAnalytics|AzureResourceGraph|SubscriptionsQuery|ResourceGroupsQuery|NamespacesQuery|ResourceNamesQuery|MetricNamesQuery|WorkspacesQuery|LocationsQuery|GrafanaTemplateVariableFn")
+						#AzureQueryType: "Azure Monitor" | "Azure Log Analytics" | "Azure Resource Graph" | "Azure Traces" | "Azure Subscriptions" | "Azure Resource Groups" | "Azure Namespaces" | "Azure Resource Names" | "Azure Metric Names" | "Azure Workspaces" | "Azure Regions" | "Grafana Template Variable Function" @cuetsy(kind="enum", memberNames="AzureMonitor|LogAnalytics|AzureResourceGraph|AzureTraces|SubscriptionsQuery|ResourceGroupsQuery|NamespacesQuery|ResourceNamesQuery|MetricNamesQuery|WorkspacesQuery|LocationsQuery|GrafanaTemplateVariableFn")
 
 						#AzureMetricQuery: {
 							// Array of resource URIs to be queried.
@@ -116,6 +116,8 @@ composableKinds: DataQuery: {
 							resources?: [...string]
 							// Workspace ID. This was removed in Grafana 8, but remains for backwards compat
 							workspace?: string
+							// Operation ID. Used only for Traces queries.
+							operationId?: string
 
 							// @deprecated Use resources instead 
 							resource?: string

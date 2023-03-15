@@ -10,6 +10,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { TimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { isGUIDish } from '../components/ResourcePicker/utils';
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
@@ -44,6 +45,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   azureMonitorPath: string;
   firstWorkspace?: string;
   cache: Map<string, any>;
+
+  readonly timeSrv: TimeSrv = getTimeSrv();
 
   constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
@@ -135,7 +138,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     return {
       ...target,
-      queryType: AzureQueryType.LogAnalytics,
+      queryType: target.queryType || AzureQueryType.LogAnalytics,
 
       azureLogAnalytics: {
         resultFormat: item.resultFormat,

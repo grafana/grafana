@@ -60,6 +60,7 @@ export const defaultAzureMonitorQuery: Partial<AzureMonitorQuery> = {
 export enum AzureQueryType {
   AzureMonitor = 'Azure Monitor',
   AzureResourceGraph = 'Azure Resource Graph',
+  AzureTraces = 'Azure Traces',
   GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
   LocationsQuery = 'Azure Regions',
   LogAnalytics = 'Azure Log Analytics',
@@ -158,6 +159,10 @@ export const defaultAzureMetricQuery: Partial<AzureMetricQuery> = {
  * Azure Monitor Logs sub-query properties
  */
 export interface AzureLogsQuery {
+  /**
+   * Operation ID. Used only for Traces queries.
+   */
+  operationId?: string;
   /**
    * KQL query to be executed.
    */

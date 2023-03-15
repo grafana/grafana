@@ -159,7 +159,7 @@ export function setResources(
   type: ResourcePickerQueryType,
   resources: Array<string | AzureMonitorResource>
 ): AzureMonitorQuery {
-  if (type === 'logs') {
+  if (type === 'logs' || type === 'traces') {
     // Resource URI for LogAnalytics
     return {
       ...query,

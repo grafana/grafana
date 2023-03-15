@@ -46,6 +46,7 @@ const (
 	AzureQueryTypeAzureResourceGroups             AzureQueryType = "Azure Resource Groups"
 	AzureQueryTypeAzureResourceNames              AzureQueryType = "Azure Resource Names"
 	AzureQueryTypeAzureSubscriptions              AzureQueryType = "Azure Subscriptions"
+	AzureQueryTypeAzureTraces                     AzureQueryType = "Azure Traces"
 	AzureQueryTypeAzureWorkspaces                 AzureQueryType = "Azure Workspaces"
 	AzureQueryTypeGrafanaTemplateVariableFunction AzureQueryType = "Grafana Template Variable Function"
 )
@@ -132,6 +133,9 @@ type AppInsightsMetricNameQueryKind string
 
 // Azure Monitor Logs sub-query properties
 type AzureLogsQuery struct {
+	// Operation ID. Used only for Traces queries.
+	OperationId *string `json:"operationId,omitempty"`
+
 	// KQL query to be executed.
 	Query *string `json:"query,omitempty"`
 
@@ -250,6 +254,9 @@ type AzureMonitorDataQuery = map[string]interface{}
 type AzureMonitorQuery struct {
 	// Azure Monitor Logs sub-query properties.
 	AzureLogAnalytics *struct {
+		// Operation ID. Used only for Traces queries.
+		OperationId *string `json:"operationId,omitempty"`
+
 		// KQL query to be executed.
 		Query *string `json:"query,omitempty"`
 
