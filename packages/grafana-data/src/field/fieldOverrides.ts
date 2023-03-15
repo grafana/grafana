@@ -463,7 +463,7 @@ export const getLinksSupplier =
         : link.url;
 
       if (href) {
-        locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
+        href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
         href = replaceVariables(href, variables, 'percentencode'); // TODO: https://github.com/grafana/grafana/pull/64846
         href = locationUtil.processUrl(href);
       }
