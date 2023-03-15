@@ -33,7 +33,6 @@ var (
 	ErrCRDAlreadyRegistered = errors.New("error registering duplicate CRD")
 	// TODO not actually sure if this is correct
 	GrafanaFieldManager = "core.grafana.com"
-	caBundle            = getCABundle()
 )
 
 type Resource interface {
@@ -220,6 +219,7 @@ func (c *Clientset) RegisterValidation(ctx context.Context, webhooks []ShortWebh
 
 // Converts shortwebhookconfig into a validatingwebhookconfiguration
 func convertShortWebhookToWebhook(swc ShortWebhookConfig) *admissionregistrationV1.ValidatingWebhookConfiguration {
+	caBundle := getCABundle()
 	metaname := fmt.Sprintf("validation.%s.core.grafana.com", swc.Resource)
 
 	return &admissionregistrationV1.ValidatingWebhookConfiguration{
@@ -256,6 +256,8 @@ func convertShortWebhookToWebhook(swc ShortWebhookConfig) *admissionregistration
 	}
 }
 
+// TODO: figure out a new strategy for the ca bundle
+// webhooks are disableed for now
 func getCABundle() []byte {
 	filename := "devenv/docker/blocks/apiserver/certs/ca.pem"
 	caBytes, err := os.ReadFile(filename)
