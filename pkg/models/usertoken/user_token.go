@@ -51,5 +51,5 @@ const rotationLeeway = 10 * time.Second
 
 func (t *UserToken) NextRotation(rotationInterval time.Duration) time.Time {
 	rotatedAt := time.Unix(t.RotatedAt, 0)
-	return rotatedAt.Add(rotationInterval - rotationInterval)
+	return rotatedAt.Add(rotationInterval - rotationLeeway)
 }
