@@ -48,7 +48,7 @@ interface ComponentAProps {
   isActive: boolean;
 }
 
-const ComponentA: React.FC<ComponentAProps> = ({ isActive }) => {
+const ComponentA = ({ isActive }: ComponentAProps) => {
   const theme = useTheme();
   const styles = useStyles2(theme);
 

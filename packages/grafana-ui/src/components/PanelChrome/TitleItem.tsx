@@ -27,7 +27,7 @@ export const TitleItem = forwardRef<HTMLAnchorElement, TitleItemProps>(
           onClick={onClick}
           target={target}
           title={title}
-          className={cx(styles.item, className)}
+          className={cx(styles.linkItem, className)}
           {...rest}
         >
           {children}
@@ -46,29 +46,33 @@ export const TitleItem = forwardRef<HTMLAnchorElement, TitleItemProps>(
 TitleItem.displayName = 'TitleItem';
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const item = css({
+    color: `${theme.colors.text.secondary}`,
+    label: 'panel-header-item',
+    cursor: 'auto',
+    border: 'none',
+    borderRadius: `${theme.shape.borderRadius()}`,
+    padding: `${theme.spacing(0, 1)}`,
+    height: `${theme.spacing(theme.components.panel.headerHeight)}`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    '&:focus, &:focus-visible': {
+      ...getFocusStyles(theme),
+      zIndex: 1,
+    },
+    '&: focus:not(:focus-visible)': getMouseFocusStyles(theme),
+
+    '&:hover ': {
+      boxShadow: `${theme.shadows.z1}`,
+      background: `${theme.colors.background.secondary}`,
+      color: `${theme.colors.text.primary}`,
+    },
+  });
+
   return {
-    item: css({
-      color: `${theme.colors.text.secondary}`,
-      label: 'panel-header-item',
-      cursor: 'auto',
-      border: 'none',
-      borderRadius: `${theme.shape.borderRadius()}`,
-      padding: `${theme.spacing(0, 1)}`,
-      height: `${theme.spacing(theme.components.panel.headerHeight)}`,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-
-      '&:focus, &:focus-visible': {
-        ...getFocusStyles(theme),
-        zIndex: 1,
-      },
-      '&: focus:not(:focus-visible)': getMouseFocusStyles(theme),
-
-      '&:hover ': {
-        boxShadow: `${theme.shadows.z1}`,
-        background: `${theme.colors.background.secondary}`,
-      },
-    }),
+    item,
+    linkItem: cx(item, css({ cursor: 'pointer' })),
   };
 };
