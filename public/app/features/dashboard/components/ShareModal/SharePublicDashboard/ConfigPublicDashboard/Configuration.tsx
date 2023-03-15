@@ -47,7 +47,7 @@ export const Configuration = ({
               data-testid={selectors.EnableTimeRangeSwitch}
               onChange={(e) => {
                 reportInteraction('grafana_dashboards_public_time_selection_clicked', {
-                  action: e.currentTarget.checked ? 'disable' : 'enable',
+                  action: e.currentTarget.checked ? 'enable' : 'disable',
                 });
                 onChange('isTimeSelectionEnabled', e.currentTarget.checked);
               }}
