@@ -353,6 +353,13 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "{{ .ExternalURL }}",
 					PropertyName: "client_url",
 				},
+				{ // New in 9.5.
+					Label:        "Details",
+					Description:  "A set of arbitrary key/value pairs that provide further detail about the incident.",
+					Element:      ElementTypeKeyValueMap,
+					InputType:    InputTypeText,
+					PropertyName: "details",
+				},
 			},
 		},
 		{

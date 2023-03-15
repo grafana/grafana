@@ -61,7 +61,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	for _, r := range c.Receivers {
 		greceivers := make([]*alertingNotify.GrafanaReceiver, 0, len(r.GrafanaManagedReceivers))
 		for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			var settings map[string]interface{}
+			var settings json.RawMessage
 			//TODO: We shouldn't need to do this marshalling.
 			j, err := gr.Settings.MarshalJSON()
 			if err != nil {
