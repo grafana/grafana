@@ -48,8 +48,6 @@ export interface QueryRunnerOptions<
   datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId?: number;
-  /** @deprecate */
-  dashboardId?: number;
   dashboardUID?: string;
   publicDashboardAccessToken?: string;
   timezone: TimeZone;
