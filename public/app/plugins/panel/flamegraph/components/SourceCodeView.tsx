@@ -13,6 +13,8 @@ import { useTheme2 } from '@grafana/ui';
 import { PhlareDataSource } from '../../../datasource/phlare/datasource';
 // import { CodeLocation } from '../../../datasource/phlare/types';
 import { quantizeScheme } from '../../heatmap/palettes';
+import appEvents from 'app/core/app_events';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
 // import { Item } from './FlameGraph/dataTransform';
 
@@ -170,17 +172,26 @@ export function SourceCodeView(props: Props) {
     },
   });
 
-  useEffect(() => {
-    (async () => {
-      const sourceCode = await datasource.getSource(
-        getLabelValue(labelData[locationIdx]),
-        fileNameEnum[fileNameData[locationIdx]]
-      );
-      setSource(sourceCode);
-    })();
-  }, [editorRef, datasource, locationIdx, fileNameEnum, labelData, fileNameData, getLabelValue]);
+  const notifyApp = useAppNotification();
 
   useEffect(() => {
+    (async () => {
+      try {
+        const sourceCode = await datasource.getSource(
+          getLabelValue(labelData[locationIdx]),
+          fileNameEnum[fileNameData[locationIdx]]
+        );
+        setSource(sourceCode);
+      } catch (e: any) {
+        notifyApp.error('Error getting source file', e.message || e.data?.error);
+      }
+    })();
+  }, [editorRef, datasource, locationIdx, fileNameEnum, labelData, fileNameData, getLabelValue, notifyApp]);
+
+  useEffect(() => {
+    if (!source) {
+      return;
+    }
     const line = editorRef.current?.view?.state.doc.line(lineData[locationIdx]);
 
     editorRef.current?.view?.dispatch({
