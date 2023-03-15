@@ -68,6 +68,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 
 	// No starred dashboards will be found
 	if query.IsStarred && len(staredDashIDs.UserStars) == 0 {
+		query.Result = model.HitList{}
 		return nil
 	}
 
