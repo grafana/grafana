@@ -1,6 +1,7 @@
 package retryer
 
 import (
+	"errors"
 	"time"
 )
 
@@ -36,7 +37,7 @@ func Retry(body func() (RetrySignal, error), maxRetries int, minDelay time.Durat
 		}
 
 		if retries >= maxRetries {
-			return nil
+			return errors.New("max retries exceeded")
 		}
 	}
 
