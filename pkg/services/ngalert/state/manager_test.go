@@ -770,8 +770,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.NoData,
+					Values:      make(map[string]float64),
+					State:       eval.NoData,
+					StateReason: models.StateReasonNoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(20 * time.Second),
@@ -1031,8 +1032,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.NoData,
+					Values:      make(map[string]float64),
+					State:       eval.NoData,
+					StateReason: models.StateReasonNoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1121,8 +1123,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"alertname":                    "test_title",
 						"label":                        "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.NoData,
+					Values:      make(map[string]float64),
+					State:       eval.NoData,
+					StateReason: models.StateReasonNoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
@@ -1238,8 +1241,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"alertname":                    "test_title",
 						"label":                        "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.NoData,
+					Values:      make(map[string]float64),
+					State:       eval.NoData,
+					StateReason: models.StateReasonNoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
@@ -1336,8 +1340,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"alertname":                    "test_title",
 						"label":                        "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.NoData,
+					Values:      make(map[string]float64),
+					State:       eval.NoData,
+					StateReason: models.StateReasonNoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
@@ -1706,8 +1711,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"datasource_uid":               "datasource_uid_1",
 						"ref_id":                       "A",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Error,
+					Values:      make(map[string]float64),
+					State:       eval.Error,
+					StateReason: models.StateReasonError,
 					Error: expr.QueryError{
 						RefID: "A",
 						Err:   errors.New("this is an error"),
@@ -1966,8 +1972,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Error,
+					Values:      make(map[string]float64),
+					State:       eval.Error,
+					StateReason: models.StateReasonError,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(40 * time.Second),
@@ -2136,8 +2143,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.NoData,
+					Values:      make(map[string]float64),
+					State:       eval.NoData,
+					StateReason: models.StateReasonNoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),

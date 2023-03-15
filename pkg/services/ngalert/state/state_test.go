@@ -210,9 +210,10 @@ func TestNoData(t *testing.T) {
 		startsAt: mock.Now(),
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
-			State:    eval.NoData,
-			StartsAt: mock.Now(),
-			EndsAt:   mock.Now().Add(time.Minute),
+			State:       eval.NoData,
+			StateReason: ngmodels.StateReasonNoData,
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
 		},
 	}, {
 		name: "previous state is removed",
@@ -224,9 +225,10 @@ func TestNoData(t *testing.T) {
 		startsAt: mock.Now(),
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
-			State:    eval.NoData,
-			StartsAt: mock.Now(),
-			EndsAt:   mock.Now().Add(time.Minute),
+			State:       eval.NoData,
+			StateReason: ngmodels.StateReasonNoData,
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
 		},
 	}}
 
@@ -255,7 +257,7 @@ func TestSetError(t *testing.T) {
 		error:    errors.New("this is an error"),
 		expected: State{
 			State:       eval.Error,
-			StateReason: "",
+			StateReason: ngmodels.StateReasonError,
 			Error:       errors.New("this is an error"),
 			StartsAt:    mock.Now(),
 			EndsAt:      mock.Now().Add(time.Minute),
@@ -272,7 +274,7 @@ func TestSetError(t *testing.T) {
 		error:    errors.New("this is another error"),
 		expected: State{
 			State:       eval.Error,
-			StateReason: "",
+			StateReason: ngmodels.StateReasonError,
 			Error:       errors.New("this is another error"),
 			StartsAt:    mock.Now(),
 			EndsAt:      mock.Now().Add(time.Minute),

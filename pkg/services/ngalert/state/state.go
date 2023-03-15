@@ -101,12 +101,12 @@ func (a *State) SetPending(reason string, startsAt, endsAt time.Time, err error)
 
 // SetNoData sets the state to NoData. It changes both the start and end time.
 func (a *State) SetNoData(startsAt, endsAt time.Time, err error) {
-	a.setState(eval.NoData, models.StateReasonEmpty, startsAt, endsAt, err)
+	a.setState(eval.NoData, models.StateReasonNoData, startsAt, endsAt, err)
 }
 
 // SetError sets the state to Error. It changes both the start and end time.
 func (a *State) SetError(startsAt, endsAt time.Time, err error) {
-	a.setState(eval.Error, models.StateReasonEmpty, startsAt, endsAt, err)
+	a.setState(eval.Error, models.StateReasonError, startsAt, endsAt, err)
 }
 
 // SetNormal sets the state to Normal. It changes both the start and end time.
@@ -369,7 +369,7 @@ func takeImage(ctx context.Context, s ImageCapturer, r *models.AlertRule) (*mode
 
 func FormatStateAndReason(state eval.State, reason string) string {
 	s := fmt.Sprintf("%v", state)
-	if len(reason) > 0 {
+	if len(reason) > 0 && state.String() != reason {
 		s += fmt.Sprintf(" (%v)", reason)
 	}
 	return s
