@@ -52,9 +52,9 @@ Grafana supports the following databases:
 - [MySQL 5.7+](https://www.mysql.com/support/supportedplatforms/database.html)
 - [PostgreSQL 10+](https://www.postgresql.org/support/versioning/)
 
-By default, Grafana installs with and uses SQLite, which is stored in the Grafana installation location.
+By default, Grafana installs SQLite, which is stored in the Grafana installation location.
 
-Grafana will support the versions of these databases that are officially supported by the project at the time of a Grafana version's release. When a version becomes unsupported, Grafana might also drop support for that database version. See the links above for the support policies for each project.
+Grafana supports the versions of these databases that are officially supported by the project at the time a version of Grafana is released. When a Grafana version becomes unsupported, Grafana Labs might also drop support for that database version. See the links above for the support policies for each project.
 
 > **Note:** PostgreSQL versions 10.9, 11.4, and 12-beta2 are affected by a bug (tracked by the PostgreSQL project as [bug #15865](https://www.postgresql.org/message-id/flat/15865-17940eacc8f8b081%40postgresql.org)) which prevents those versions from being used with Grafana. The bug has been fixed in more recent versions of PostgreSQL.
 
@@ -64,9 +64,9 @@ Grafana will support the versions of these databases that are officially support
 
 Grafana supports the current version of the following browsers. Older versions of these browsers might not be supported, so you should always upgrade to the latest browser version when using Grafana.
 
+> **Note:** Enable JavaScript in your browser. Running Grafana without JavaScript enabled in the browser is not supported.
+
 - Chrome/Chromium
 - Firefox
 - Safari
 - Microsoft Edge
-
-> **Note:** Enable JavaScript in your browser. Running Grafana without JavaScript enabled in the browser is not supported.
