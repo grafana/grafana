@@ -476,6 +476,40 @@ describe('combineResponses', () => {
     expect(combineResponses(null, responseB)).not.toBe(responseB);
   });
 
+  it('does not combine when first param has errors', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA, metricFrameA, metricFrameA],
+      error: {
+        message: 'errorA',
+      },
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB, metricFrameB],
+    };
+
+    const combined = combineResponses(responseA, responseB);
+    expect(combined.data).toHaveLength(3);
+    expect(combined.error?.message).toBe('errorA');
+  });
+
+  it('does not combine when second param has errors', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA, metricFrameA, metricFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB, metricFrameB],
+      error: {
+        message: 'errorB',
+      },
+    };
+
+    const combined = combineResponses(responseA, responseB);
+    expect(combined.data).toHaveLength(2);
+    expect(combined.error?.message).toBe('errorB');
+  });
+
   describe('combine stats', () => {
     const { metricFrameA } = getMockFrames();
     const makeResponse = (stats?: QueryResultMetaStat[]): DataQueryResponse => ({

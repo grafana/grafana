@@ -321,8 +321,28 @@ function shouldCombine(frame1: DataFrame, frame2: DataFrame): boolean {
   return frame1.name === frame2.name;
 }
 
+export function responseHasErrors(response: DataQueryResponse): boolean {
+  return (response.errors ?? []).length > 0 || response.error != null;
+}
+
 export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
   if (!currentResult) {
+    return cloneQueryResponse(newResult);
+  }
+
+  // we need to handle responses with errors.
+  // our current approach is very conservative,
+  // if either current or new result
+  // has errors, we use that result,
+  // and we do not merge anything into them.
+  // (we do not want to merge responses-with-errors
+  // with responses-without-errors)
+
+  if (responseHasErrors(currentResult)) {
+    return currentResult;
+  }
+
+  if (responseHasErrors(newResult)) {
     return cloneQueryResponse(newResult);
   }
 

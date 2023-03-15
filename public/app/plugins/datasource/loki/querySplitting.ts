@@ -7,7 +7,7 @@ import { LoadingState } from '@grafana/schema';
 import { LokiDatasource } from './datasource';
 import { getRangeChunks as getLogsRangeChunks } from './logsTimeSplit';
 import { getRangeChunks as getMetricRangeChunks } from './metricTimeSplit';
-import { combineResponses, isLogsQuery } from './queryUtils';
+import { combineResponses, isLogsQuery, responseHasErrors } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
 declare global {
@@ -131,10 +131,10 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
       .runQuery({ ...requests[requestGroup].request, range, requestId, targets })
       .subscribe({
         next: (partialResponse) => {
-          if (partialResponse.error) {
-            subscriber.error(partialResponse.error);
-          }
           mergedResponse = combineResponses(mergedResponse, partialResponse);
+          if (responseHasErrors(mergedResponse)) {
+            shouldStop = true;
+          }
         },
         complete: () => {
           subscriber.next(mergedResponse);
