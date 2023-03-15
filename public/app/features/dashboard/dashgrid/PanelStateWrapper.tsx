@@ -348,7 +348,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         this.setState({ refreshWhenInView: false });
       }
       panel.runAllPanelQueries({
-        dashboardId: dashboard.id,
         dashboardUID: dashboard.uid,
         dashboardTimezone: dashboard.getTimezone(),
         publicDashboardAccessToken: dashboard.meta.publicDashboardAccessToken,
