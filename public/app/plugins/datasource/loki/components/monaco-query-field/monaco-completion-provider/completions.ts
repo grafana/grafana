@@ -233,7 +233,7 @@ export async function getAfterSelectorCompletions(
   if (afterPipe) {
     // If we have space after pipeline, we need to remove it as well
     const trailingPipeline = hasSpace ? '| ' : '|';
-    query = trimEnd(logQuery, trailingPipeline);
+    query = trimEnd(logQuery, '| ');
   }
 
   const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(query);
