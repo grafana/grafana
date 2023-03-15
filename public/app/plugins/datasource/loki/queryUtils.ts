@@ -25,12 +25,11 @@ import {
   MetricExpr,
   Matcher,
   Identifier,
-  PipelineStage,
 } from '@grafana/lezer-logql';
 
 import { ErrorId } from '../prometheus/querybuilder/shared/parsingUtils';
 
-import { getStreamSelectorPositions, Position } from './modifyQuery';
+import { getStreamSelectorPositions } from './modifyQuery';
 import { LokiQuery, LokiQueryType } from './types';
 
 export function formatQuery(selector: string | undefined): string {

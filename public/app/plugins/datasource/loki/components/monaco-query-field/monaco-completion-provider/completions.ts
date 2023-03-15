@@ -231,8 +231,6 @@ export async function getAfterSelectorCompletions(
 ): Promise<Completion[]> {
   let query = logQuery;
   if (afterPipe) {
-    // If we have space after pipeline, we need to remove it as well
-    const trailingPipeline = hasSpace ? '| ' : '|';
     query = trimEnd(logQuery, '| ');
   }
 
