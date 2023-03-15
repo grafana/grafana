@@ -3,11 +3,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { DataFrame, Field, FieldType, getDisplayProcessor } from '@grafana/data';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { useStyles2, useTheme2, RadioButtonGroup } from '@grafana/ui';
 
 import { SampleUnit, TableData, TopTableData } from '../types';
 
 import FlameGraphTopTable from './FlameGraphTopTable';
+
+type Grouping = 'label' | 'filename';
 
 type Props = {
   data: DataFrame;
@@ -18,6 +20,8 @@ type Props = {
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   getLabelValue: (label: string | number) => string;
+  getFileNameValue: (label: string | number) => string;
+  onSelectFilename: (filename: string) => void;
 };
 
 const FlameGraphTopTableContainer = ({
@@ -29,6 +33,8 @@ const FlameGraphTopTableContainer = ({
   setRangeMin,
   setRangeMax,
   getLabelValue,
+  getFileNameValue,
+  onSelectFilename,
 }: Props) => {
   const styles = useStyles2(() => getStyles());
   const theme = useTheme2();
@@ -38,28 +44,35 @@ const FlameGraphTopTableContainer = ({
 
   const selfField = data.fields.find((f) => f.name === 'self') ?? data.fields.find((f) => f.type === FieldType.number);
   const labelsField = data.fields.find((f) => f.name === 'label');
+  const filenameField = data.fields.find((f) => f.name === 'fileName');
+
+  const [grouping, setGrouping] = useState<Grouping>('label');
 
   const sortLevelsIntoTable = useCallback(() => {
-    let label, self, value;
+    let group, self, value;
     let table: { [key: string]: TableData } = {};
 
-    if (valueField && selfField && labelsField) {
+    if (valueField && selfField && labelsField && filenameField) {
+      const groupField = grouping === 'label' ? labelsField : filenameField;
+
       const valueValues = valueField.values;
       const selfValues = selfField.values;
-      const labelValues = labelsField.values;
+      const groupValues = groupField.values;
 
       for (let i = 0; i < valueValues.length; i++) {
         value = valueValues.get(i);
         self = selfValues.get(i);
-        label = getLabelValue(labelValues.get(i));
-        table[label] = table[label] || {};
-        table[label].self = table[label].self ? table[label].self + self : self;
-        table[label].total = table[label].total ? table[label].total + value : value;
+        group = (grouping === 'label' ? getLabelValue : getFileNameValue)(groupValues.get(i));
+        if (group) {
+          table[group] = table[group] || {};
+          table[group].self = table[group].self ? table[group].self + self : self;
+          table[group].total = table[group].total ? table[group].total + value : value;
+        }
       }
     }
 
     return table;
-  }, [getLabelValue, selfField, valueField, labelsField]);
+  }, [getLabelValue, selfField, valueField, labelsField, filenameField, grouping, getFileNameValue]);
 
   const getTopTableData = useCallback(
     (field: Field, value: number) => {
@@ -107,21 +120,37 @@ const FlameGraphTopTableContainer = ({
     <>
       {topTable && (
         <div className={styles.topTableContainer}>
-          <AutoSizer style={{ width: '100%', height: '100%' }}>
-            {({ width, height }) => (
-              <FlameGraphTopTable
-                width={width}
-                height={height}
-                data={topTable}
-                search={search}
-                setSearch={setSearch}
-                setTopLevelIndex={setTopLevelIndex}
-                setSelectedBarIndex={setSelectedBarIndex}
-                setRangeMin={setRangeMin}
-                setRangeMax={setRangeMax}
-              />
-            )}
-          </AutoSizer>
+          <div className={styles.top}>
+            <RadioButtonGroup<Grouping>
+              options={[
+                { value: 'label', label: 'Function', description: 'Group by function' },
+                { value: 'filename', label: 'File name', description: 'Group by file name' },
+              ]}
+              value={grouping}
+              onChange={(value) => {
+                setGrouping(value);
+              }}
+            />
+          </div>
+          <div className={styles.bottom}>
+            <AutoSizer style={{ width: '100%', height: '100%' }}>
+              {({ width, height }) => (
+                <FlameGraphTopTable
+                  width={width}
+                  height={height}
+                  data={topTable}
+                  search={search}
+                  setSearch={setSearch}
+                  setTopLevelIndex={setTopLevelIndex}
+                  setSelectedBarIndex={setSelectedBarIndex}
+                  setRangeMin={setRangeMin}
+                  setRangeMax={setRangeMax}
+                  grouping={grouping}
+                  onSelectFilename={onSelectFilename}
+                />
+              )}
+            </AutoSizer>
+          </div>
         </div>
       )}
     </>
@@ -133,10 +162,22 @@ const getStyles = () => {
 
   return {
     topTableContainer: css`
+      label: topTableContainer;
       cursor: pointer;
       width: 100%;
       height: 100%;
       margin-right: ${marginRight};
+      display: flex;
+      flex-direction: column;
+    `,
+
+    top: css`
+      flex: 0;
+      margin-bottom: 4px;
+    `,
+
+    bottom: css`
+      flex: 1;
     `,
   };
 };

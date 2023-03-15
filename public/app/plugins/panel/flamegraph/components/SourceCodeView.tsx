@@ -8,12 +8,11 @@ import React, { createRef, useEffect, useMemo, useState } from 'react';
 import { createTheme, DataFrame } from '@grafana/data';
 // import { getContrastRatio } from '@grafana/data/src/themes/colorManipulator';
 import { useTheme2 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { PhlareDataSource } from '../../../datasource/phlare/datasource';
 // import { CodeLocation } from '../../../datasource/phlare/types';
 import { quantizeScheme } from '../../heatmap/palettes';
-import appEvents from 'app/core/app_events';
-import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { oneDarkGrafana } from './one-dark-grafana';
 
@@ -75,7 +74,8 @@ export type GloblDataRanges = {
 
 interface Props {
   datasource: PhlareDataSource;
-  locationIdx: number;
+  locationIdx?: number;
+  fileName?: string;
   data: DataFrame;
   globalDataRanges: GloblDataRanges;
   getLabelValue: (label: string | number) => string;
@@ -108,7 +108,7 @@ export function SourceCodeView(props: Props) {
   const dataIdxs = useMemo(() => {
     let idxs = [];
 
-    let fileIdx = fileNameData[locationIdx];
+    let fileIdx = locationIdx ? fileNameData[locationIdx] : fileNameEnum.findIndex((val) => val === props.fileName!);
 
     for (let i = 0; i < fileNameData.length; i++) {
       if (fileNameData[i] === fileIdx) {
@@ -117,7 +117,7 @@ export function SourceCodeView(props: Props) {
     }
 
     return idxs;
-  }, [locationIdx, fileNameData]);
+  }, [locationIdx, fileNameData, props.fileName, fileNameEnum]);
 
   const byLineData = useMemo(() => {
     let byLineData = {
@@ -179,18 +179,28 @@ export function SourceCodeView(props: Props) {
     (async () => {
       try {
         const sourceCode = await datasource.getSource(
-          getLabelValue(labelData[locationIdx]),
-          fileNameEnum[fileNameData[locationIdx]]
+          locationIdx ? fileNameEnum[fileNameData[locationIdx]] : props.fileName!,
+          locationIdx ? getLabelValue(labelData[locationIdx]) : undefined
         );
         setSource(sourceCode);
       } catch (e: any) {
         notifyApp.error('Error getting source file', e.message || e.data?.error);
       }
     })();
-  }, [editorRef, datasource, locationIdx, fileNameEnum, labelData, fileNameData, getLabelValue, notifyApp]);
+  }, [
+    editorRef,
+    datasource,
+    locationIdx,
+    fileNameEnum,
+    labelData,
+    fileNameData,
+    getLabelValue,
+    notifyApp,
+    props.fileName,
+  ]);
 
   useEffect(() => {
-    if (!source) {
+    if (!source || !locationIdx) {
       return;
     }
 

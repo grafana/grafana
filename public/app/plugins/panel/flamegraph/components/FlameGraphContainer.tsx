@@ -46,25 +46,42 @@ const FlameGraphContainer = (props: Props) => {
 
   // State for the selected filename/func/line
   const [selectedLocation, setSelectedLocation] = useState<number>();
+  const [selectedFileName, setSelectedFileName] = useState<string>();
 
   const labelField = props.data?.fields.find((f) => f.name === 'label');
+  const fileNameField = props.data?.fields.find((f) => f.name === 'fileName');
 
   // Label can actually be an enum field so depending on that we have to access it through display processor. This is
   // both a backward compatibility but also to allow using a simple dataFrame without enum config. This would allow
   // users to use this panel with correct query from data sources that do not return profiles natively....Leon: this should just be a transformation then and not handled here?
   const getLabelValue = useCallback(
     (label: string | number) => {
+      if (typeof label === 'string') {
+        return label;
+      }
       const enumConfig = labelField?.config?.type?.enum;
-
-      // console.log(label);
-
-      if (enumConfig && typeof label === 'number') {
+      if (enumConfig) {
         return enumConfig.text![label];
       } else {
         return label.toString();
       }
     },
     [labelField]
+  );
+
+  const getFileNameValue = useCallback(
+    (label: string | number) => {
+      if (typeof label === 'string') {
+        return label;
+      }
+      const enumConfig = fileNameField?.config?.type?.enum;
+      if (enumConfig) {
+        return enumConfig.text![label];
+      } else {
+        return label.toString();
+      }
+    },
+    [fileNameField]
   );
 
   // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular
@@ -75,6 +92,7 @@ const FlameGraphContainer = (props: Props) => {
       return [];
     }
     const dataView = new DataFrameView<Item>(props.data);
+
     return nestedSetToLevels(dataView);
   }, [props.data]);
 
@@ -163,6 +181,13 @@ const FlameGraphContainer = (props: Props) => {
                   setRangeMin={setRangeMin}
                   setRangeMax={setRangeMax}
                   getLabelValue={getLabelValue}
+                  getFileNameValue={getFileNameValue}
+                  onSelectFilename={(name: string) => {
+                    setSelectedFileName(name);
+                    setSelectedLocation(undefined);
+                    setCodeVisible(true);
+                    setGraphVisible(false);
+                  }}
                 />
               </div>
             )}
@@ -186,6 +211,7 @@ const FlameGraphContainer = (props: Props) => {
                   getLabelValue={getLabelValue}
                   setSelectedLocation={(location) => {
                     setSelectedLocation(location);
+                    setSelectedFileName(undefined);
                     setCodeVisible(true);
                     setTableVisible(false);
                   }}
@@ -195,9 +221,10 @@ const FlameGraphContainer = (props: Props) => {
 
             {codeVisible && (
               <div className={styles.pane}>
-                {selectedLocation ? (
+                {selectedLocation || selectedFileName ? (
                   <SourceCodeView
                     locationIdx={selectedLocation}
+                    fileName={selectedFileName}
                     getLabelValue={getLabelValue}
                     datasource={props.datasource! as PhlareDataSource}
                     data={props.data}

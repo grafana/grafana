@@ -66,7 +66,7 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
     return await super.getResource('labelNames');
   }
 
-  async getSource(func: string, path: string): Promise<string> {
+  async getSource(path: string, func?: string): Promise<string> {
     return await super.getResource('sourceCode', { function: func, path, revision: 'main' });
   }
 
