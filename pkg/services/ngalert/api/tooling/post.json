@@ -103,9 +103,7 @@
    "description": "Alert alert"
   },
   "alertGroup": {},
-  "alertGroups": {
-   "description": "AlertGroups alert groups"
-  },
+  "alertGroups": {},
   "alertStatus": {
    "description": "AlertStatus alert status"
   },
@@ -119,7 +117,9 @@
    "description": "ClusterStatus cluster status"
   },
   "gettableAlert": {},
-  "gettableAlerts": {},
+  "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts"
+  },
   "gettableSilence": {},
   "gettableSilences": {
    "description": "GettableSilences gettable silences"
@@ -146,9 +146,7 @@
   "postableAlerts": {
    "description": "PostableAlerts postable alerts"
   },
-  "postableSilence": {
-   "description": "PostableSilence postable silence"
-  },
+  "postableSilence": {},
   "receiver": {},
   "silence": {
    "description": "Silence silence"
@@ -2937,7 +2935,7 @@
   "application/json"
  ],
  "responses": {
-  "RouteGetStateHistory": {
+  "StateHistory": {
    "description": "",
    "headers": {
     "results": {}
