@@ -64,3 +64,4 @@ drawerDataSourcePicker,alpha,@grafana/grafana-bi-squad,false,false,false,true
 traceqlSearch,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
 prometheusMetricEncyclopedia,alpha,@grafana/observability-metrics,false,false,false,true
 timeSeriesTable,alpha,@grafana/app-o11y,false,false,false,true
+influxdbBackendMigration,alpha,@grafana/observability-metrics,false,false,false,true
