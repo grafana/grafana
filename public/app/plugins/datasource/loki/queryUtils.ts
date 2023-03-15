@@ -330,22 +330,6 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
     return cloneQueryResponse(newResult);
   }
 
-  // we need to handle responses with errors.
-  // our current approach is very conservative,
-  // if either current or new result
-  // has errors, we use that result,
-  // and we do not merge anything into them.
-  // (we do not want to merge responses with errors
-  // with responses without errors)
-
-  if (responseHasErrors(currentResult)) {
-    return currentResult;
-  }
-
-  if (responseHasErrors(newResult)) {
-    return cloneQueryResponse(newResult);
-  }
-
   newResult.data.forEach((newFrame) => {
     const currentFrame = currentResult.data.find((frame) => shouldCombine(frame, newFrame));
     if (!currentFrame) {
@@ -354,6 +338,22 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
     }
     combineFrames(currentFrame, newFrame);
   });
+
+  const mergedErrors = [...(currentResult.errors ?? []), ...(newResult.errors ?? [])];
+
+  // we make sure to have `.errors` as undefined, instead of empty-array
+  // when no errors.
+
+  if (mergedErrors.length > 0) {
+    currentResult.errors = mergedErrors;
+  }
+
+  // the `.error` attribute is obsolete now,
+  // but we have to maintain it, otherwise
+  // some grafana parts do not behave well.
+  // we just choose the old error, if it exists,
+  // otherwise the new error, if it exists.
+  currentResult.error = currentResult.error ?? newResult.error;
 
   return currentResult;
 }
