@@ -132,7 +132,7 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
       .subscribe({
         next: (partialResponse) => {
           mergedResponse = combineResponses(mergedResponse, partialResponse);
-          if (responseHasErrors(mergedResponse)) {
+          if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
             shouldStop = true;
           }
         },

@@ -321,10 +321,6 @@ function shouldCombine(frame1: DataFrame, frame2: DataFrame): boolean {
   return frame1.name === frame2.name;
 }
 
-export function responseHasErrors(response: DataQueryResponse): boolean {
-  return (response.errors ?? []).length > 0 || response.error != null;
-}
-
 export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
   if (!currentResult) {
     return cloneQueryResponse(newResult);
