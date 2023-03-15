@@ -50,7 +50,9 @@ export function AppChrome({ children }: Props) {
   if (state.chromeless) {
     return (
       <main className="main-view">
-        <div className={contentClass}>{children}</div>
+        <div key="content-container" className={contentClass}>
+          {children}
+        </div>
       </main>
     );
   }
@@ -69,7 +71,9 @@ export function AppChrome({ children }: Props) {
           onToggleKioskMode={chrome.onToggleKioskMode}
         />
       </div>
-      <div className={contentClass}>{children}</div>
+      <div key="content-container" className={contentClass}>
+        {children}
+      </div>
       <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
       <CommandPalette />
     </main>
