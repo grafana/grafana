@@ -1,4 +1,6 @@
-import { config, setAngularLoader } from '@grafana/runtime';
+import { deprecationWarning } from '@grafana/data';
+import { config, setAngularLoader, setLegacyAngularInjector } from '@grafana/runtime';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 export async function loadAndInitAngularIfEnabled() {
   if (config.angularSupportEnabled) {
@@ -18,5 +20,18 @@ export async function loadAndInitAngularIfEnabled() {
         };
       },
     });
+
+    // Temporary path to allow access to services exposed directly by the angular injector
+    setLegacyAngularInjector({
+      get: (key: string) => {
+        switch (key) {
+          case 'dashboardSrv': {
+            deprecationWarning('getLegacyAngularInjector', 'getDashboardSrv'); // any suggestions?
+            return getDashboardSrv();
+          }
+        }
+        throw 'Angular is disabled.  Unable to expose: ' + key;
+      },
+    } as any);
   }
 }
