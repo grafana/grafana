@@ -193,13 +193,17 @@ export function SourceCodeView(props: Props) {
     if (!source) {
       return;
     }
-    const line = editorRef.current?.view?.state.doc.line(lineData[locationIdx]);
 
-    editorRef.current?.view?.dispatch({
-      selection: { anchor: line?.from || 0 },
-      scrollIntoView: true,
-      effects: EditorView.scrollIntoView(line?.from || 0, { y: 'center' }),
-    });
+    try {
+      const line = editorRef.current?.view?.state.doc.line(lineData[locationIdx]);
+      editorRef.current?.view?.dispatch({
+        selection: { anchor: line?.from || 0 },
+        scrollIntoView: true,
+        effects: EditorView.scrollIntoView(line?.from || 0, { y: 'center' }),
+      });
+    } catch (e) {
+      console.error('Error scrolling to line', e);
+    }
   }, [source, lineData, editorRef, locationIdx]);
 
   return (
