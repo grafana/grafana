@@ -9,11 +9,12 @@ import { EditorField } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
-  Card,
-  Collapse,
+  CellProps,
+  Column,
   InlineField,
   InlineSwitch,
   Input,
+  InteractiveTable,
   Modal,
   MultiSelect,
   Select,
@@ -110,7 +111,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
   const [hasMetadata, setHasMetadata] = useState<boolean>(true);
   const [metaHaystack, setMetaHaystack] = useState<string[]>([]);
   const [nameHaystack, setNameHaystack] = useState<string[]>([]);
-  const [openTabs, setOpenTabs] = useState<string[]>([]);
 
   // pagination
   const [resultsPerPage, setResultsPerPage] = useState<number>(DEFAULT_RESULTS_PER_PAGE);
@@ -410,6 +410,49 @@ export const MetricEncyclopediaModal = (props: Props) => {
     return results ?? 10;
   };
 
+  const ButtonCell = ({
+    row: {
+      original: { value },
+    },
+  }: CellProps<MetricData, void>) => {
+    return (
+      <Button
+        size="sm"
+        aria-label="use this metric button"
+        data-testid={testIds.useMetric}
+        onClick={() => {
+          onChange({ ...query, metric: value });
+          reportInteraction('grafana_prom_metric_encycopedia_tracking', {
+            metric: value,
+            hasVariables: variables.length > 0,
+            hasMetadata: hasMetadata,
+            totalMetricCount: metrics.length,
+            fuzzySearchQuery: fuzzySearchQuery,
+            fullMetaSearch: fullMetaSearch,
+            selectedTypes: selectedTypes,
+            letterSearch: letterSearch,
+          });
+          onClose();
+        }}
+      >
+        Use this metric
+      </Button>
+    );
+  };
+
+  function tableResults(metrics: MetricsData) {
+    const tableData: MetricsData = metrics;
+
+    const columns: Array<Column<MetricData>> = [
+      { id: 'value', header: 'Name' },
+      { id: 'type', header: 'Type' },
+      { id: 'description', header: 'Description' },
+      { id: '', header: ' ', cell: ButtonCell },
+    ];
+
+    return <InteractiveTable columns={columns} data={tableData} getRowId={(r) => r.value} />;
+  }
+
   return (
     <Modal
       data-testid={testIds.metricModal}
@@ -531,7 +574,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
           </>
         </EditorField>
       </div>
-
       <h4 className={styles.resultsHeading}>Results</h4>
       <div className={styles.resultsData}>
         <div className={styles.resultsDataCount}>
@@ -560,66 +602,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
         </div>
       </div>
 
-      <div className={styles.results}>
-        {metrics &&
-          displayedMetrics(metrics).map((metric: MetricData, idx) => {
-            return (
-              <Collapse
-                aria-label={`open and close ${metric.value} query starter card`}
-                data-testid={testIds.metricCard}
-                key={metric.value}
-                label={metric.value}
-                isOpen={openTabs.includes(metric.value)}
-                collapsible={true}
-                onToggle={() =>
-                  setOpenTabs((tabs) =>
-                    // close tab if it's already open, otherwise open it
-                    tabs.includes(metric.value) ? tabs.filter((t) => t !== metric.value) : [...tabs, metric.value]
-                  )
-                }
-              >
-                <div className={styles.cardsContainer}>
-                  <Card className={styles.card}>
-                    <Card.Description>
-                      {metric.description && metric.type ? (
-                        <>
-                          Type: <span className={styles.metadata}>{metric.type}</span>
-                          <br />
-                          Description: <span className={styles.metadata}>{metric.description}</span>
-                        </>
-                      ) : (
-                        <i>No metadata available</i>
-                      )}
-                    </Card.Description>
-                    <Card.Actions>
-                      {/* *** Make selecting a metric easier, consider click on text */}
-                      <Button
-                        size="sm"
-                        aria-label="use this metric button"
-                        data-testid={testIds.useMetric}
-                        onClick={() => {
-                          onChange({ ...query, metric: metric.value });
-                          reportInteraction('grafana_prom_metric_encycopedia_tracking', {
-                            metric: metric.value,
-                            hasVariables: variables.length > 0,
-                            hasMetadata: hasMetadata,
-                            totalMetricCount: metrics.length,
-                            fuzzySearchQuery: fuzzySearchQuery,
-                            fullMetaSearch: fullMetaSearch,
-                            selectedTypes: selectedTypes,
-                            letterSearch: letterSearch,
-                          });
-                          onClose();
-                        }}
-                      >
-                        Use this metric
-                      </Button>
-                    </Card.Actions>
-                  </Card>
-                </div>
-              </Collapse>
-            );
-          })}
+      <div className={styles.results}>      
+        {metrics && tableResults(displayedMetrics(metrics))}
       </div>
 
       <div className={styles.pageSettingsWrapper}>
@@ -791,6 +775,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     loadingSpinner: css`
       display: inline-block;
+    `,
+    table: css`
+      td {
+        vertical-align: baseline;
+      }
     `,
   };
 };
