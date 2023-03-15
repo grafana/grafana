@@ -44,6 +44,7 @@ type remoteLokiClient interface {
 	rangeQuery(ctx context.Context, selectors []Selector, start, end int64) (queryRes, error)
 }
 
+// RemoteLokibackend is a state.Historian that records state history to an external Loki instance.
 type RemoteLokiBackend struct {
 	client         remoteLokiClient
 	externalLabels map[string]string

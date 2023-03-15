@@ -15,6 +15,8 @@ type Backend interface {
 	Query(ctx context.Context, query ngmodels.HistoryQuery) (*data.Frame, error)
 }
 
+// FanoutBackend is a state.Historian that records history to multiple other backends at once.
+// Only one backend is used for reads. The backend selected for read traffic is called the primary and all others are called secondaries.
 type FanoutBackend struct {
 	targets []Backend
 }
