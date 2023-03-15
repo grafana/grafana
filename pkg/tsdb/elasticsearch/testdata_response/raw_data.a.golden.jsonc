@@ -2,18 +2,18 @@
 //  
 //  Frame[0] 
 //  Name: 
-//  Dimensions: 17 Fields by 5 Rows
-//  +--------------------------+----------------------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+-----------------+------------------+--------------------+--------------------------+---------------+-----------------+-----------------+---------------------------+-----------------------------------------+------------------------------------+---------------------------------------------------------------------------------+--------------------------+
-//  | Name: @timestamp         | Name: _id            | Name: _index    | Name: _source                                                                                                                                                                                                                                                                                                                                                   | Name: _type              | Name: abc       | Name: counter    | Name: float        | Name: highlight          | Name: is_true | Name: label     | Name: level     | Name: line                | Name: location                          | Name: nested_field.internal.nested | Name: shapes                                                                    | Name: sort               |
-//  | Labels:                  | Labels:              | Labels:         | Labels:                                                                                                                                                                                                                                                                                                                                                         | Labels:                  | Labels:         | Labels:          | Labels:            | Labels:                  | Labels:       | Labels:         | Labels:         | Labels:                   | Labels:                                 | Labels:                            | Labels:                                                                         | Labels:                  |
-//  | Type: []*string          | Type: []*string      | Type: []*string | Type: []*json.RawMessage                                                                                                                                                                                                                                                                                                                                        | Type: []*json.RawMessage | Type: []*string | Type: []*float64 | Type: []*float64   | Type: []*json.RawMessage | Type: []*bool | Type: []*string | Type: []*string | Type: []*string           | Type: []*string                         | Type: []*string                    | Type: []*json.RawMessage                                                        | Type: []*json.RawMessage |
-//  +--------------------------+----------------------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+-----------------+------------------+--------------------+--------------------------+---------------+-----------------+-----------------+---------------------------+-----------------------------------------+------------------------------------+---------------------------------------------------------------------------------+--------------------------+
-//  | 2023-02-09T14:40:01.475Z | g2aeNoYB7vaC3bq-ezfK | logs-2023.02.09 | {"@timestamp":"2023-02-09T14:40:01.475Z","abc":null,"counter":81,"float":10.911972180833306,"is_true":true,"label":"val3","level":"info","line":"log text  [106619125]","location":"-42.73465234425797, -14.097854057104112","nested_field.internal.nested":"value1","shapes":[{"type":"triangle"},{"type":"triangle"},{"type":"triangle"},{"type":"square"}]}  | null                     | null            | 81               | 10.911972180833306 | null                     | true          | val3            | info            | log text  [106619125]     | -42.73465234425797, -14.097854057104112 | value1                             | [{"type":"triangle"},{"type":"triangle"},{"type":"triangle"},{"type":"square"}] | [1675953601475,4]        |
-//  | 2023-02-09T14:40:00.513Z | gmaeNoYB7vaC3bq-eDcN | logs-2023.02.09 | {"@timestamp":"2023-02-09T14:40:00.513Z","abc":null,"counter":80,"float":62.94120607636795,"is_true":false,"label":"val3","level":"error","line":"log text with [781660944]","location":"42.07571917624318, 15.95725088484611","nested_field.internal.nested":"value2","shapes":[{"type":"triangle"},{"type":"square"}]}                                        | null                     | null            | 80               | 62.94120607636795  | null                     | false         | val3            | error           | log text with [781660944] | 42.07571917624318, 15.95725088484611    | value2                             | [{"type":"triangle"},{"type":"square"}]                                         | [1675953600513,7]        |
-//  | 2023-02-09T14:39:59.556Z | gWaeNoYB7vaC3bq-dDdL | logs-2023.02.09 | {"@timestamp":"2023-02-09T14:39:59.556Z","abc":"def","counter":79,"float":53.323706427230455,"is_true":true,"label":"val1","level":"info","line":"log text  [894867430]","location":"-38.27341566189766, -23.66739642570781","nested_field.internal.nested":"value3","shapes":[{"type":"triangle"},{"type":"square"}]}                                          | null                     | def             | 79               | 53.323706427230455 | null                     | true          | val1            | info            | log text  [894867430]     | -38.27341566189766, -23.66739642570781  | value3                             | [{"type":"triangle"},{"type":"square"}]                                         | [1675953599556,10]       |
-//  | 2023-02-09T14:39:58.608Z | gGaeNoYB7vaC3bq-cDeY | logs-2023.02.09 | {"@timestamp":"2023-02-09T14:39:58.608Z","abc":"def","counter":78,"float":82.72012623471589,"is_true":false,"label":"val1","level":"info","line":"log text  [478598889]","location":"12.373240290451287, 43.265493464362024","nested_field.internal.nested":"value4","shapes":[{"type":"triangle"},{"type":"triangle"},{"type":"triangle"},{"type":"square"}]}  | null                     | def             | 78               | 82.72012623471589  | null                     | false         | val1            | info            | log text  [478598889]     | 12.373240290451287, 43.265493464362024  | value4                             | [{"type":"triangle"},{"type":"triangle"},{"type":"triangle"},{"type":"square"}] | [1675953598608,15]       |
-//  | 2023-02-09T14:39:57.665Z | f2aeNoYB7vaC3bq-bDf7 | logs-2023.02.09 | {"@timestamp":"2023-02-09T14:39:57.665Z","abc":"def","counter":77,"float":35.05784443331803,"is_true":false,"label":"val3","level":"info","line":"log text  [526995818]","location":"-31.524344042228194, -32.11254790120572","nested_field.internal.nested":"value5","shapes":[{"type":"triangle"},{"type":"triangle"},{"type":"triangle"},{"type":"square"}]} | null                     | def             | 77               | 35.05784443331803  | null                     | false         | val3            | info            | log text  [526995818]     | -31.524344042228194, -32.11254790120572 | value5                             | [{"type":"triangle"},{"type":"triangle"},{"type":"triangle"},{"type":"square"}] | [1675953597665,20]       |
-//  +--------------------------+----------------------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+-----------------+------------------+--------------------+--------------------------+---------------+-----------------+-----------------+---------------------------+-----------------------------------------+------------------------------------+---------------------------------------------------------------------------------+--------------------------+
+//  Dimensions: 16 Fields by 5 Rows
+//  +--------------------------+----------------------+-----------------+--------------------------+-----------------+------------------+--------------------+--------------------------+---------------+-----------------+-----------------+---------------------------+-----------------------------------------+------------------------------------+---------------------------------------------------------------------------------+--------------------------+
+//  | Name: @timestamp         | Name: _id            | Name: _index    | Name: _type              | Name: abc       | Name: counter    | Name: float        | Name: highlight          | Name: is_true | Name: label     | Name: level     | Name: line                | Name: location                          | Name: nested_field.internal.nested | Name: shapes                                                                    | Name: sort               |
+//  | Labels:                  | Labels:              | Labels:         | Labels:                  | Labels:         | Labels:          | Labels:            | Labels:                  | Labels:       | Labels:         | Labels:         | Labels:                   | Labels:                                 | Labels:                            | Labels:                                                                         | Labels:                  |
+//  | Type: []*string          | Type: []*string      | Type: []*string | Type: []*json.RawMessage | Type: []*string | Type: []*float64 | Type: []*float64   | Type: []*json.RawMessage | Type: []*bool | Type: []*string | Type: []*string | Type: []*string           | Type: []*string                         | Type: []*string                    | Type: []*json.RawMessage                                                        | Type: []*json.RawMessage |
+//  +--------------------------+----------------------+-----------------+--------------------------+-----------------+------------------+--------------------+--------------------------+---------------+-----------------+-----------------+---------------------------+-----------------------------------------+------------------------------------+---------------------------------------------------------------------------------+--------------------------+
+//  | 2023-02-09T14:40:01.475Z | g2aeNoYB7vaC3bq-ezfK | logs-2023.02.09 | null                     | null            | 81               | 10.911972180833306 | null                     | true          | val3            | info            | log text  [106619125]     | -42.73465234425797, -14.097854057104112 | value1                             | [{"type":"triangle"},{"type":"triangle"},{"type":"triangle"},{"type":"square"}] | [1675953601475,4]        |
+//  | 2023-02-09T14:40:00.513Z | gmaeNoYB7vaC3bq-eDcN | logs-2023.02.09 | null                     | null            | 80               | 62.94120607636795  | null                     | false         | val3            | error           | log text with [781660944] | 42.07571917624318, 15.95725088484611    | value2                             | [{"type":"triangle"},{"type":"square"}]                                         | [1675953600513,7]        |
+//  | 2023-02-09T14:39:59.556Z | gWaeNoYB7vaC3bq-dDdL | logs-2023.02.09 | null                     | def             | 79               | 53.323706427230455 | null                     | true          | val1            | info            | log text  [894867430]     | -38.27341566189766, -23.66739642570781  | value3                             | [{"type":"triangle"},{"type":"square"}]                                         | [1675953599556,10]       |
+//  | 2023-02-09T14:39:58.608Z | gGaeNoYB7vaC3bq-cDeY | logs-2023.02.09 | null                     | def             | 78               | 82.72012623471589  | null                     | false         | val1            | info            | log text  [478598889]     | 12.373240290451287, 43.265493464362024  | value4                             | [{"type":"triangle"},{"type":"triangle"},{"type":"triangle"},{"type":"square"}] | [1675953598608,15]       |
+//  | 2023-02-09T14:39:57.665Z | f2aeNoYB7vaC3bq-bDf7 | logs-2023.02.09 | null                     | def             | 77               | 35.05784443331803  | null                     | false         | val3            | info            | log text  [526995818]     | -31.524344042228194, -32.11254790120572 | value5                             | [{"type":"triangle"},{"type":"triangle"},{"type":"triangle"},{"type":"square"}] | [1675953597665,20]       |
+//  +--------------------------+----------------------+-----------------+--------------------------+-----------------+------------------+--------------------+--------------------------+---------------+-----------------+-----------------+---------------------------+-----------------------------------------+------------------------------------+---------------------------------------------------------------------------------+--------------------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -50,17 +50,6 @@
             "type": "string",
             "typeInfo": {
               "frame": "string",
-              "nullable": true
-            },
-            "config": {
-              "filterable": true
-            }
-          },
-          {
-            "name": "_source",
-            "type": "other",
-            "typeInfo": {
-              "frame": "json.RawMessage",
               "nullable": true
             },
             "config": {
@@ -234,126 +223,6 @@
             "logs-2023.02.09",
             "logs-2023.02.09",
             "logs-2023.02.09"
-          ],
-          [
-            {
-              "@timestamp": "2023-02-09T14:40:01.475Z",
-              "abc": null,
-              "counter": 81,
-              "float": 10.911972180833306,
-              "is_true": true,
-              "label": "val3",
-              "level": "info",
-              "line": "log text  [106619125]",
-              "location": "-42.73465234425797, -14.097854057104112",
-              "nested_field.internal.nested": "value1",
-              "shapes": [
-                {
-                  "type": "triangle"
-                },
-                {
-                  "type": "triangle"
-                },
-                {
-                  "type": "triangle"
-                },
-                {
-                  "type": "square"
-                }
-              ]
-            },
-            {
-              "@timestamp": "2023-02-09T14:40:00.513Z",
-              "abc": null,
-              "counter": 80,
-              "float": 62.94120607636795,
-              "is_true": false,
-              "label": "val3",
-              "level": "error",
-              "line": "log text with [781660944]",
-              "location": "42.07571917624318, 15.95725088484611",
-              "nested_field.internal.nested": "value2",
-              "shapes": [
-                {
-                  "type": "triangle"
-                },
-                {
-                  "type": "square"
-                }
-              ]
-            },
-            {
-              "@timestamp": "2023-02-09T14:39:59.556Z",
-              "abc": "def",
-              "counter": 79,
-              "float": 53.323706427230455,
-              "is_true": true,
-              "label": "val1",
-              "level": "info",
-              "line": "log text  [894867430]",
-              "location": "-38.27341566189766, -23.66739642570781",
-              "nested_field.internal.nested": "value3",
-              "shapes": [
-                {
-                  "type": "triangle"
-                },
-                {
-                  "type": "square"
-                }
-              ]
-            },
-            {
-              "@timestamp": "2023-02-09T14:39:58.608Z",
-              "abc": "def",
-              "counter": 78,
-              "float": 82.72012623471589,
-              "is_true": false,
-              "label": "val1",
-              "level": "info",
-              "line": "log text  [478598889]",
-              "location": "12.373240290451287, 43.265493464362024",
-              "nested_field.internal.nested": "value4",
-              "shapes": [
-                {
-                  "type": "triangle"
-                },
-                {
-                  "type": "triangle"
-                },
-                {
-                  "type": "triangle"
-                },
-                {
-                  "type": "square"
-                }
-              ]
-            },
-            {
-              "@timestamp": "2023-02-09T14:39:57.665Z",
-              "abc": "def",
-              "counter": 77,
-              "float": 35.05784443331803,
-              "is_true": false,
-              "label": "val3",
-              "level": "info",
-              "line": "log text  [526995818]",
-              "location": "-31.524344042228194, -32.11254790120572",
-              "nested_field.internal.nested": "value5",
-              "shapes": [
-                {
-                  "type": "triangle"
-                },
-                {
-                  "type": "triangle"
-                },
-                {
-                  "type": "triangle"
-                },
-                {
-                  "type": "square"
-                }
-              ]
-            }
           ],
           [
             null,

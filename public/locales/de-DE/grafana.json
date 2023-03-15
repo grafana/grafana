@@ -32,7 +32,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "Aktionen",
       "data-tab": "Daten",
       "error-tab": "Fehler",
       "json-tab": "JSON",

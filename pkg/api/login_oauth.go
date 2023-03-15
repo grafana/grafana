@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -90,7 +89,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 		if code == "" {
 			redirect, err := hs.authnService.RedirectURL(ctx.Req.Context(), authn.ClientWithPrefix(name), req)
 			if err != nil {
-				hs.handleAuthnOAuthErr(ctx, "failed to generate oauth redirect url", err)
+				ctx.Redirect(hs.redirectURLWithErrorCookie(ctx, err))
 				return
 			}
 
@@ -109,20 +108,12 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 		cookies.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.CookieOptionsFromCfg)
 
 		if err != nil {
-			hs.handleAuthnOAuthErr(ctx, "failed to perform login for oauth request", err)
+			ctx.Redirect(hs.redirectURLWithErrorCookie(ctx, err))
 			return
 		}
 
 		metrics.MApiLoginOAuth.Inc()
-		cookies.WriteSessionCookie(ctx, hs.Cfg, identity.SessionToken.UnhashedToken, hs.Cfg.LoginMaxLifetime)
-
-		redirectURL := setting.AppSubUrl + "/"
-		if redirectTo := ctx.GetCookie("redirect_to"); len(redirectTo) > 0 && hs.ValidateRedirectTo(redirectTo) == nil {
-			redirectURL = redirectTo
-			cookies.DeleteCookie(ctx.Resp, "redirect_to", hs.CookieOptionsFromCfg)
-		}
-
-		ctx.Redirect(redirectURL)
+		authn.HandleLoginRedirect(ctx.Req, ctx.Resp, hs.Cfg, identity, hs.ValidateRedirectTo)
 		return
 	}
 
@@ -386,19 +377,6 @@ func (hs *HTTPServer) SyncUser(
 func (hs *HTTPServer) hashStatecode(code, seed string) string {
 	hashBytes := sha256.Sum256([]byte(code + hs.Cfg.SecretKey + seed))
 	return hex.EncodeToString(hashBytes[:])
-}
-
-func (hs *HTTPServer) handleAuthnOAuthErr(c *contextmodel.ReqContext, msg string, err error) {
-	gfErr := &errutil.Error{}
-	if errors.As(err, gfErr) {
-		if gfErr.Public().Message != "" {
-			c.Handle(hs.Cfg, gfErr.Public().StatusCode, gfErr.Public().Message, err)
-			return
-		}
-	}
-
-	c.Logger.Warn(msg, "err", err)
-	c.Redirect(hs.Cfg.AppSubURL + "/login")
 }
 
 type LoginError struct {

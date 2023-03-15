@@ -13,7 +13,7 @@ const labels = [
   { key: 'key2', value: 'value2' },
 ];
 
-const FormProviderWrapper: React.FC = ({ children }) => {
+const FormProviderWrapper = ({ children }: React.PropsWithChildren<{}>) => {
   const methods = useForm({ defaultValues: { labels } });
   return <FormProvider {...methods}>{children}</FormProvider>;
 };
