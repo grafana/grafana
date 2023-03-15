@@ -7,21 +7,22 @@ import (
 
 const (
 	cacheStatusKey = "X-CACHE-STATUS"
-	cacheMissValue = "MISS"
-	cacheHitValue  = "HIT"
 	cacheSkipValue = "BYPASS"
+	cacheNoneValue = "NONE"
 )
 
-func MarkCacheHit(r *backend.QueryDataResponse) {
-	populateCacheMeta(r, cacheHitValue)
+var statusToValue map[CacheStatus]string = map[CacheStatus]string{
+	StatusNotFound:   "MISS",
+	StatusCacheHit:   "HIT",
+	StatusCacheError: "ERROR",
 }
 
-func MarkCacheMiss(r *backend.QueryDataResponse) {
-	populateCacheMeta(r, cacheMissValue)
-}
-
-func MarkCacheBypass(r *backend.QueryDataResponse) {
-	populateCacheMeta(r, cacheSkipValue)
+func MarkCacheStatus(isSkip bool, resp CachedDataResponse) {
+	if isSkip {
+		populateCacheMeta(resp.Response, cacheSkipValue)
+	} else {
+		populateCacheMeta(resp.Response, statusToValue[resp.Status])
+	}
 }
 
 func GetCacheHeaders(r *backend.QueryDataResponse) map[string]string {
@@ -43,17 +44,15 @@ func GetCacheHeaders(r *backend.QueryDataResponse) map[string]string {
 			}
 		}
 	}
-
-	if len(h) == 0 {
-		h["X-Cache"] = "NONE"
-	}
-
 	return h
 }
 
 func populateCacheMeta(r *backend.QueryDataResponse, value string) {
 	if r == nil || r.Responses == nil {
 		return
+	}
+	if value == "" {
+		value = cacheNoneValue
 	}
 	for k, v := range r.Responses {
 		if len(v.Frames) > 0 {

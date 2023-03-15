@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -75,38 +74,29 @@ func (s *Service) Run(ctx context.Context) error {
 // QueryDataWithCache processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
 func (s *Service) QueryDataWithCache(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 	// First look in the query cache if enabled
-	var updateCacheFn caching.CacheResponseFn
-	cacheMiss := false
+	var cr caching.CachedDataResponse
 	if !skipQueryCache {
-		resp, fn, err := s.cachingService.HandleQueryRequest(ctx, reqDTO)
-		if err == nil {
-			caching.MarkCacheHit(resp)
-			return resp, err
-		}
-		if err != nil {
-			if errors.Is(err, caching.ErrCacheNotFound) {
-				// Expected error, register this as a cache miss but nothing else
-				cacheMiss = true
-			} else {
-				// An unexpected error occurred - log but continue
-				s.log.Error("error checking cache for metrics request", "error", err.Error())
+		if r, err := s.cachingService.HandleQueryRequest(ctx, reqDTO); err != nil {
+			if err != nil {
+				return nil, err
 			}
+		} else if r.Status == caching.StatusCacheHit {
+			caching.MarkCacheStatus(skipQueryCache, r)
+			return r.Response, nil
+		} else {
+			cr = r
 		}
-		updateCacheFn = fn
 	}
 
 	// do the actual queries
 	resp, err := s.queryData(ctx, user, skipDSCache, reqDTO)
-
-	// This updates the query cache with the result for this metrics request
-	if err == nil && updateCacheFn != nil {
-		updateCacheFn(ctx, resp)
-	}
-	// Update cache response headers
-	if skipQueryCache {
-		caching.MarkCacheBypass(resp)
-	} else if cacheMiss {
-		caching.MarkCacheMiss(resp)
+	if err == nil {
+		// This updates the query cache with the result for this metrics request
+		if cr.UpdateCacheFn != nil {
+			cr.UpdateCacheFn(ctx, resp)
+		}
+		// Update cache response headers
+		caching.MarkCacheStatus(skipQueryCache, cr)
 	}
 
 	return resp, err
