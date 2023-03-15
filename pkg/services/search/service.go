@@ -66,6 +66,11 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 		return err
 	}
 
+	// No starred dashboards will be found
+	if query.IsStarred && len(staredDashIDs.UserStars) == 0 {
+		return nil
+	}
+
 	// filter by starred dashboard IDs when starred dashboards are requested and no UID or ID filters are specified to improve query performance
 	if query.IsStarred && len(query.DashboardIds) == 0 && len(query.DashboardUIDs) == 0 {
 		for id := range staredDashIDs.UserStars {

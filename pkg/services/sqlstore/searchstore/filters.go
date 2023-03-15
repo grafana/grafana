@@ -68,7 +68,6 @@ func (f OrgFilter) Where() (string, []interface{}) {
 	return "dashboard.org_id=?", []interface{}{f.OrgId}
 }
 
-
 type TitleFilter struct {
 	Dialect migrator.Dialect
 	Title   string
