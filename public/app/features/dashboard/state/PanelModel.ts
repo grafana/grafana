@@ -50,8 +50,6 @@ export interface GridPos {
 }
 
 type RunPanelQueryOptions = {
-  /** @deprecate */
-  dashboardId: number;
   dashboardUID: string;
   dashboardTimezone: string;
   timeData: TimeOverrideResult;
@@ -348,7 +346,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   runAllPanelQueries({
-    dashboardId,
     dashboardUID,
     dashboardTimezone,
     timeData,
