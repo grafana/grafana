@@ -209,6 +209,9 @@ datasources:
         enabled: true
       lokiSearch:
         datasourceUid: 'loki'
+      spanBar:
+        type: 'Tag'
+        tag: 'status.code'
 ```
 
 ## Query the data source
