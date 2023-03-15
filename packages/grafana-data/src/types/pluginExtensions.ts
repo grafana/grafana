@@ -2,13 +2,10 @@
  * These types are exposed when rendering extension points
  */
 
-export interface PluginExtensionContext {
-  /**
-   * Version number of the context to make it easier for plugin developers
-   * to manage multiple versions of the context when supporting multiple
-   * versions of Grafana.
-   */
-  version: number;
+export interface PluginExtensionContext {}
+
+export enum PluginExtensionPlacements {
+  DashboardPanelMenu = 'grafana/dashboard/panel/menu',
 }
 
 export enum PluginExtensionTypes {

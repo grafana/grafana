@@ -18,6 +18,7 @@ export enum FieldType {
   geo = 'geo',
   enum = 'enum',
   other = 'other', // Object, Array, etc
+  frame = 'frame', // DataFrame
 }
 
 /**

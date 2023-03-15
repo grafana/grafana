@@ -62,8 +62,6 @@ Alpha features might be changed or removed without prior notice.
 | `publicDashboardsEmailSharing`     | Enables public dashboard sharing to be restricted to only allowed emails                                                                                                     |
 | `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                                                                                       |
 | `lokiDataframeApi`                 | Use experimental loki api for WebSocket streaming (early prototype)                                                                                                          |
-| `dashboardComments`                | Enable dashboard-wide comments                                                                                                                                               |
-| `annotationComments`               | Enable annotation comments                                                                                                                                                   |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                                                                              |
 | `exploreMixedDatasource`           | Enable mixed datasource in Explore                                                                                                                                           |
 | `tracing`                          | Adds trace ID to error notifications                                                                                                                                         |
@@ -94,6 +92,7 @@ Alpha features might be changed or removed without prior notice.
 | `drawerDataSourcePicker`           | Changes the user experience for data source selection to a drawer.                                                                                                           |
 | `traceqlSearch`                    | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries                                                                    |
 | `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component                                                                         |
+| `timeSeriesTable`                  | Enable time series table transformer & sparkline cell type                                                                                                                   |
 
 ## Development feature toggles
 

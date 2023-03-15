@@ -62,4 +62,5 @@ export {
   isPluginExtensionCommand,
   assertPluginExtensionCommand,
   PluginExtensionTypes,
+  PluginExtensionPlacements,
 } from './pluginExtensions';
