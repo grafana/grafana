@@ -13,12 +13,12 @@ To access the theme in your styles, use the `useStyles` hook. It provides basic 
 > Please remember to put `getStyles` function at the end of the file!
 
 ```tsx
-import React, { FC } from 'react';
+import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 
-const Foo: FC<FooProps> = () => {
+const Foo = (props: FooProps) => {
   const styles = useStyles2(getStyles);
 
   // Use styles with classNames

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -32,7 +32,7 @@ const getIconFromMeta = (meta = ''): IconName => {
 };
 
 /** @deprecated */
-export const SearchItem: FC<Props> = ({ item, isSelected, editable, onToggleChecked, onTagSelected, onClickItem }) => {
+export const SearchItem = ({ item, isSelected, editable, onToggleChecked, onTagSelected, onClickItem }: Props) => {
   const styles = useStyles2(getStyles);
   const tagSelected = useCallback(
     (tag: string, event: React.MouseEvent<HTMLElement>) => {

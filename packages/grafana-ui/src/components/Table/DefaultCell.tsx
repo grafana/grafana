@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { FC, ReactElement } from 'react';
+import React, { ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
@@ -15,7 +15,7 @@ import { TableStyles } from './styles';
 import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
 import { getCellOptions } from './utils';
 
-export const DefaultCell: FC<TableCellProps> = (props) => {
+export const DefaultCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps } = props;
 
   const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);

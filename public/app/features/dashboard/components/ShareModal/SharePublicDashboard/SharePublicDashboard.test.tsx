@@ -1,4 +1,5 @@
-import { fireEvent, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
 
@@ -198,11 +199,11 @@ describe('SharePublic - New config setup', () => {
   it('when checkboxes are filled, then create button is enabled', async () => {
     await renderSharePublicDashboard();
 
-    fireEvent.click(screen.getByTestId(selectors.WillBePublicCheckbox));
-    fireEvent.click(screen.getByTestId(selectors.LimitedDSCheckbox));
-    fireEvent.click(screen.getByTestId(selectors.CostIncreaseCheckbox));
+    await userEvent.click(screen.getByTestId(selectors.WillBePublicCheckbox));
+    await userEvent.click(screen.getByTestId(selectors.LimitedDSCheckbox));
+    await userEvent.click(screen.getByTestId(selectors.CostIncreaseCheckbox));
 
-    await waitFor(() => expect(screen.getByTestId(selectors.CreateButton)).toBeEnabled());
+    expect(screen.getByTestId(selectors.CreateButton)).toBeEnabled();
   });
   alertTests();
 });
@@ -214,14 +215,16 @@ describe('SharePublic - Already persisted', () => {
 
   it('when modal is opened, then delete button is enabled', async () => {
     await renderSharePublicDashboard();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
-    expect(screen.getByTestId(selectors.DeleteButton)).toBeEnabled();
+    await waitFor(() => {
+      expect(screen.getByTestId(selectors.DeleteButton)).toBeEnabled();
+    });
   });
   it('when fetch is done, then inputs are checked and delete button is enabled', async () => {
     await renderSharePublicDashboard();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
-    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeEnabled();
+    await waitFor(() => {
+      expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeEnabled();
+    });
     expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeChecked();
 
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeEnabled();
@@ -236,7 +239,7 @@ describe('SharePublic - Already persisted', () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
     await renderSharePublicDashboard();
 
-    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeDisabled();
+    expect(await screen.findByTestId(selectors.EnableTimeRangeSwitch)).toBeDisabled();
     expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeChecked();
 
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeDisabled();
@@ -261,11 +264,12 @@ describe('SharePublic - Already persisted', () => {
     );
 
     await renderSharePublicDashboard();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
-    const enableTimeRangeSwitch = screen.getByTestId(selectors.EnableTimeRangeSwitch);
-    expect(enableTimeRangeSwitch).toBeEnabled();
-    expect(enableTimeRangeSwitch).not.toBeChecked();
+    const enableTimeRangeSwitch = await screen.findByTestId(selectors.EnableTimeRangeSwitch);
+    await waitFor(() => {
+      expect(enableTimeRangeSwitch).toBeEnabled();
+      expect(enableTimeRangeSwitch).not.toBeChecked();
+    });
   });
   it('when pubdash is enabled, then link url is available', async () => {
     await renderSharePublicDashboard();
@@ -288,9 +292,8 @@ describe('SharePublic - Already persisted', () => {
     );
 
     await renderSharePublicDashboard();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
-    expect(screen.queryByTestId(selectors.CopyUrlInput)).toBeInTheDocument();
+    expect(await screen.findByTestId(selectors.CopyUrlInput)).toBeInTheDocument();
     expect(screen.queryByTestId(selectors.CopyUrlButton)).not.toBeChecked();
 
     expect(screen.getByTestId(selectors.PauseSwitch)).toBeChecked();
