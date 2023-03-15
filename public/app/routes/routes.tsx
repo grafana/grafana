@@ -185,15 +185,14 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/f/:uid/:slug/permissions',
-      component:
-        config.rbacEnabled && contextSrv.hasPermission(AccessControlAction.FoldersPermissionsRead)
-          ? SafeDynamicImport(
-              () =>
-                import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/AccessControlFolderPermissions')
-            )
-          : SafeDynamicImport(
-              () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')
-            ),
+      component: config.rbacEnabled
+        ? SafeDynamicImport(
+            () =>
+              import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/AccessControlFolderPermissions')
+          )
+        : SafeDynamicImport(
+            () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')
+          ),
     },
     {
       path: '/dashboards/f/:uid/:slug/settings',
@@ -364,13 +363,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/admin/orgs/edit/:id',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminEditOrgPage" */ 'app/features/admin/AdminEditOrgPage')
-      ),
-    },
-    {
-      path: '/admin/storage/export',
-      roles: () => ['Admin'],
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "ExportPage" */ 'app/features/storage/ExportPage')
       ),
     },
     {

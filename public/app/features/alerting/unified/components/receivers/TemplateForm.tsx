@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import { Location } from 'history';
+import React from 'react';
 import { useForm, Validate } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -37,14 +39,18 @@ interface Props {
   alertManagerSourceName: string;
   provenance?: string;
 }
+export const isDuplicating = (location: Location) => location.pathname.endsWith('/duplicate');
 
-export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, config, provenance }) => {
+export const TemplateForm = ({ existing, alertManagerSourceName, config, provenance }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
   const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
+
+  const location = useLocation();
+  const isduplicating = isDuplicating(location);
 
   const submit = (values: Values) => {
     // wrap content in "define" if it's not already wrapped, in case user did not do it/
@@ -102,10 +108,9 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
       ? true
       : 'Another template with this name already exists.';
   };
-
   return (
     <form onSubmit={handleSubmit(submit)}>
-      <h4>{existing ? 'Edit notification template' : 'Create notification template'}</h4>
+      <h4>{existing && !isduplicating ? 'Edit notification template' : 'Create notification template'}</h4>
       {error && (
         <Alert severity="error" title="Error saving template">
           {error.message || (error as any)?.data?.message || String(error)}

@@ -9,13 +9,15 @@
  * conf/custom.ini to enable features under development or not yet available in
  * stable version.
  *
- * Only enabled values will be returned in this interface
+ * Only enabled values will be returned in this interface.
+ *
+ * NOTE: the possible values may change between versions without notice, although
+ * this may cause compilation issues when depending on removed feature keys, the
+ * runtime state will continue to work.
  *
  * @public
  */
 export interface FeatureToggles {
-  [name: string]: boolean | undefined; // support any string value
-
   alertingBigTransactions?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
@@ -30,17 +32,14 @@ export interface FeatureToggles {
   publicDashboardsEmailSharing?: boolean;
   lokiLive?: boolean;
   lokiDataframeApi?: boolean;
-  swaggerUi?: boolean;
   featureHighlights?: boolean;
-  dashboardComments?: boolean;
-  annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
   k8s?: boolean;
   dashboardsFromStorage?: boolean;
-  export?: boolean;
   exploreMixedDatasource?: boolean;
   tracing?: boolean;
+  newTraceView?: boolean;
   correlations?: boolean;
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
@@ -58,7 +57,6 @@ export interface FeatureToggles {
   topnav?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
-  flameGraph?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
@@ -81,4 +79,9 @@ export interface FeatureToggles {
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
   individualCookiePreferences?: boolean;
+  drawerDataSourcePicker?: boolean;
+  traceqlSearch?: boolean;
+  prometheusMetricEncyclopedia?: boolean;
+  timeSeriesTable?: boolean;
+  influxdbBackendMigration?: boolean;
 }

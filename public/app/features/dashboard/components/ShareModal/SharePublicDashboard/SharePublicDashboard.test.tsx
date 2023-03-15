@@ -1,8 +1,7 @@
-import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
-import React from 'react';
-import { Provider } from 'react-redux';
 
 import 'whatwg-fetch';
 import { BootData, DataQuery } from '@grafana/data/src';
@@ -13,14 +12,15 @@ import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
-import { configureStore } from 'app/store/configureStore';
-
-import { DashboardInitPhase } from '../../../../../types';
-import { ShareModal } from '../ShareModal';
 
 import * as sharePublicDashboardUtils from './SharePublicDashboardUtils';
+import {
+  getExistentPublicDashboardResponse,
+  mockDashboard,
+  pubdashResponse,
+  renderSharePublicDashboard,
+} from './utilsTest';
 
 const server = setupServer();
 
@@ -29,46 +29,9 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
-const renderSharePublicDashboard = async (
-  props?: Partial<React.ComponentProps<typeof ShareModal>>,
-  isEnabled = true
-) => {
-  const store = configureStore({
-    dashboard: {
-      getModel: () => props?.dashboard || mockDashboard,
-      permissions: [],
-      initError: null,
-      initPhase: DashboardInitPhase.Completed,
-    },
-  });
-
-  const newProps = Object.assign(
-    {
-      panel: mockPanel,
-      dashboard: mockDashboard,
-      onDismiss: () => {},
-    },
-    props
-  );
-
-  render(
-    <Provider store={store}>
-      <ShareModal {...newProps} />
-    </Provider>
-  );
-
-  await waitFor(() => screen.getByText('Link'));
-  if (isEnabled) {
-    fireEvent.click(screen.getByText('Public dashboard'));
-    await waitForElementToBeRemoved(screen.getByText('Loading configuration'));
-  }
-};
-
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
 let originalBootData: BootData;
-let mockDashboard: DashboardModel;
-let mockPanel: PanelModel;
 
 beforeAll(() => {
   setEchoSrv(new Echo());
@@ -96,14 +59,6 @@ beforeAll(() => {
 
 beforeEach(() => {
   config.featureToggles.publicDashboards = true;
-  mockDashboard = createDashboardModelFixture({
-    uid: 'mockDashboardUid',
-    timezone: 'utc',
-  });
-
-  mockPanel = new PanelModel({
-    id: 'mockPanelId',
-  });
 
   jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
@@ -120,25 +75,6 @@ afterEach(() => {
   server.resetHandlers();
 });
 
-const pubdashResponse: sharePublicDashboardUtils.PublicDashboard = {
-  isEnabled: true,
-  annotationsEnabled: true,
-  timeSelectionEnabled: true,
-  uid: 'a-uid',
-  dashboardUid: '',
-  accessToken: 'an-access-token',
-};
-
-const getExistentPublicDashboardResponse = () =>
-  rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json({
-        ...pubdashResponse,
-        dashboardUid: req.params.dashboardUid,
-      })
-    );
-  });
 const getNonExistentPublicDashboardResponse = () =>
   rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
     return res(
@@ -263,11 +199,11 @@ describe('SharePublic - New config setup', () => {
   it('when checkboxes are filled, then create button is enabled', async () => {
     await renderSharePublicDashboard();
 
-    fireEvent.click(screen.getByTestId(selectors.WillBePublicCheckbox));
-    fireEvent.click(screen.getByTestId(selectors.LimitedDSCheckbox));
-    fireEvent.click(screen.getByTestId(selectors.CostIncreaseCheckbox));
+    await userEvent.click(screen.getByTestId(selectors.WillBePublicCheckbox));
+    await userEvent.click(screen.getByTestId(selectors.LimitedDSCheckbox));
+    await userEvent.click(screen.getByTestId(selectors.CostIncreaseCheckbox));
 
-    await waitFor(() => expect(screen.getByTestId(selectors.CreateButton)).toBeEnabled());
+    expect(screen.getByTestId(selectors.CreateButton)).toBeEnabled();
   });
   alertTests();
 });
@@ -279,14 +215,16 @@ describe('SharePublic - Already persisted', () => {
 
   it('when modal is opened, then delete button is enabled', async () => {
     await renderSharePublicDashboard();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
-    expect(screen.getByTestId(selectors.DeleteButton)).toBeEnabled();
+    await waitFor(() => {
+      expect(screen.getByTestId(selectors.DeleteButton)).toBeEnabled();
+    });
   });
   it('when fetch is done, then inputs are checked and delete button is enabled', async () => {
     await renderSharePublicDashboard();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
-    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeEnabled();
+    await waitFor(() => {
+      expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeEnabled();
+    });
     expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeChecked();
 
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeEnabled();
@@ -301,7 +239,7 @@ describe('SharePublic - Already persisted', () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
     await renderSharePublicDashboard();
 
-    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeDisabled();
+    expect(await screen.findByTestId(selectors.EnableTimeRangeSwitch)).toBeDisabled();
     expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeChecked();
 
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeDisabled();
@@ -326,11 +264,12 @@ describe('SharePublic - Already persisted', () => {
     );
 
     await renderSharePublicDashboard();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
-    const enableTimeRangeSwitch = screen.getByTestId(selectors.EnableTimeRangeSwitch);
-    expect(enableTimeRangeSwitch).toBeEnabled();
-    expect(enableTimeRangeSwitch).not.toBeChecked();
+    const enableTimeRangeSwitch = await screen.findByTestId(selectors.EnableTimeRangeSwitch);
+    await waitFor(() => {
+      expect(enableTimeRangeSwitch).toBeEnabled();
+      expect(enableTimeRangeSwitch).not.toBeChecked();
+    });
   });
   it('when pubdash is enabled, then link url is available', async () => {
     await renderSharePublicDashboard();
@@ -353,12 +292,18 @@ describe('SharePublic - Already persisted', () => {
     );
 
     await renderSharePublicDashboard();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
-    expect(screen.queryByTestId(selectors.CopyUrlInput)).toBeInTheDocument();
+    expect(await screen.findByTestId(selectors.CopyUrlInput)).toBeInTheDocument();
     expect(screen.queryByTestId(selectors.CopyUrlButton)).not.toBeChecked();
 
     expect(screen.getByTestId(selectors.PauseSwitch)).toBeChecked();
+  });
+  it('does not render email sharing section', async () => {
+    await renderSharePublicDashboard();
+
+    expect(screen.queryByTestId(selectors.EmailSharingConfiguration.EmailSharingInput)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.EmailSharingConfiguration.EmailSharingInviteButton)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.EmailSharingConfiguration.EmailSharingList)).not.toBeInTheDocument();
   });
   alertTests();
 });

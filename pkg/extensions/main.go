@@ -11,6 +11,7 @@ import (
 	_ "github.com/blugelabs/bluge"
 	_ "github.com/blugelabs/bluge_segment_api"
 	_ "github.com/crewjam/saml"
+	_ "github.com/go-jose/go-jose/v3"
 	_ "github.com/gobwas/glob"
 	_ "github.com/googleapis/gax-go/v2"
 	_ "github.com/grafana/dskit/backoff"
@@ -19,14 +20,12 @@ import (
 	_ "github.com/jung-kurt/gofpdf"
 	_ "github.com/linkedin/goavro/v2"
 	_ "github.com/m3db/prometheus_remote_client_golang/promremote"
-	_ "github.com/pkg/errors"
 	_ "github.com/robfig/cron/v3"
 	_ "github.com/russellhaering/goxmldsig"
 	_ "github.com/stretchr/testify/require"
 	_ "github.com/vectordotdev/go-datemath"
 	_ "golang.org/x/time/rate"
 	_ "google.golang.org/genproto/googleapis/cloud/kms/v1"
-	_ "gopkg.in/square/go-jose.v2"
 )
 
 var IsEnterprise bool = false

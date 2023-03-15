@@ -18,7 +18,7 @@ COPY .yarn .yarn
 COPY packages packages
 COPY plugins-bundled plugins-bundled
 
-RUN yarn install
+RUN yarn install --immutable
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json .linguirc ./
 COPY public public
@@ -30,6 +30,10 @@ RUN yarn build
 
 FROM ${GO_IMAGE} as go-builder
 
+ARG GO_BUILD_TAGS="oss"
+ARG WIRE_TAGS="oss"
+ARG BINGO="true"
+
 # Install build dependencies
 RUN if grep -i -q alpine /etc/issue; then \
       apk add --no-cache gcc g++ make; \
@@ -40,13 +44,16 @@ WORKDIR /tmp/grafana
 COPY go.* ./
 COPY .bingo .bingo
 
-RUN go mod download && \
-    go install github.com/bwplotka/bingo@latest && \
-    bingo get
+RUN go mod download
+RUN if [[ "$BINGO" = "true" ]]; then \
+      go install github.com/bwplotka/bingo@latest && \
+      bingo get -v; \
+    fi
 
 COPY embed.go Makefile build.go package.json ./
 COPY cue.mod cue.mod
 COPY kinds kinds
+COPY local local
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins
 COPY public/api-merged.json public/api-merged.json
@@ -55,7 +62,7 @@ COPY scripts scripts
 COPY conf conf
 COPY .github .github
 
-RUN make build-go
+RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
 FROM ${BASE_IMAGE} as tgz-builder
 

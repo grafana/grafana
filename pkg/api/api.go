@@ -218,10 +218,8 @@ func (hs *HTTPServer) registerRoutes() {
 	// expose plugin file system assets
 	r.Get("/public/plugins/:pluginId/*", hs.getPluginAssets)
 
-	if hs.Features.IsEnabled(featuremgmt.FlagSwaggerUi) {
-		r.Get("/swagger-ui", swaggerUI)
-		r.Get("/openapi3", openapi3)
-	}
+	r.Get("/swagger-ui", swaggerUI)
+	r.Get("/openapi3", openapi3)
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
@@ -619,11 +617,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// short urls
 		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
-
-		apiRoute.Group("/comments", func(commentRoute routing.RouteRegister) {
-			commentRoute.Post("/get", routing.Wrap(hs.commentsGet))
-			commentRoute.Post("/create", routing.Wrap(hs.commentsCreate))
-		})
 	}, reqSignedIn)
 
 	// admin api
@@ -631,13 +624,6 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/settings", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetSettings))
 		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(hs.AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(hs.PauseAllAlerts(setting.AlertingEnabled)))
-
-		if hs.Features.IsEnabled(featuremgmt.FlagExport) {
-			adminRoute.Get("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleGetStatus))
-			adminRoute.Post("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleRequestExport))
-			adminRoute.Post("/export/stop", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleRequestStop))
-			adminRoute.Get("/export/options", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleGetOptions))
-		}
 
 		adminRoute.Post("/encryption/rotate-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminRotateDataEncryptionKeys))
 		adminRoute.Post("/encryption/reencrypt-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminReEncryptEncryptionKeys))

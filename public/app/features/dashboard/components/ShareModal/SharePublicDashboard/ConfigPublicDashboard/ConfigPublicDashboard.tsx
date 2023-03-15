@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { reportInteraction } from '@grafana/runtime/src';
+import { config, featureEnabled, reportInteraction } from '@grafana/runtime/src';
 import {
   ClipboardButton,
   Field,
@@ -37,6 +37,7 @@ import {
 } from '../SharePublicDashboardUtils';
 
 import { Configuration } from './Configuration';
+import { EmailSharingConfiguration } from './EmailSharingConfiguration';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
@@ -52,6 +53,8 @@ const ConfigPublicDashboard = () => {
   const isDesktop = useIsDesktop();
 
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
+  const hasEmailSharingEnabled =
+    !!config.featureToggles.publicDashboardsEmailSharing && featureEnabled('publicDashboardsEmailSharing');
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
   const dashboardVariables = dashboard.getVariables();
@@ -114,6 +117,7 @@ const ConfigPublicDashboard = () => {
       </div>
       <Configuration disabled={disableInputs} onChange={onChange} register={register} />
       <hr />
+      {hasEmailSharingEnabled && <EmailSharingConfiguration />}
       <Field label="Dashboard URL" className={styles.publicUrl}>
         <Input
           value={generatePublicDashboardUrl(publicDashboard!)}
@@ -194,10 +198,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(3)};
   `,
   deleteButton: css`
-    margin-left: ${theme.spacing(3)}; ;
+    margin-left: ${theme.spacing(3)};
   `,
   deleteButtonMobile: css`
-    margin-top: ${theme.spacing(2)}; ;
+    margin-top: ${theme.spacing(2)};
   `,
 });
 

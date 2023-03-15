@@ -52,7 +52,7 @@ const (
 	FlagPublicDashboards = "publicDashboards"
 
 	// FlagPublicDashboardsEmailSharing
-	// Allows public dashboard sharing to be restricted to only allowed emails
+	// Enables public dashboard sharing to be restricted to only allowed emails
 	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
 
 	// FlagLokiLive
@@ -63,21 +63,9 @@ const (
 	// Use experimental loki api for WebSocket streaming (early prototype)
 	FlagLokiDataframeApi = "lokiDataframeApi"
 
-	// FlagSwaggerUi
-	// Serves swagger UI
-	FlagSwaggerUi = "swaggerUi"
-
 	// FlagFeatureHighlights
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
-
-	// FlagDashboardComments
-	// Enable dashboard-wide comments
-	FlagDashboardComments = "dashboardComments"
-
-	// FlagAnnotationComments
-	// Enable annotation comments
-	FlagAnnotationComments = "annotationComments"
 
 	// FlagMigrationLocking
 	// Lock database during migrations
@@ -87,17 +75,13 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagK8s
+	// FlagK8S
 	// Explore native k8s integrations
-	FlagK8s = "k8s"
+	FlagK8S = "k8s"
 
 	// FlagDashboardsFromStorage
 	// Load dashboards from the generic storage interface
 	FlagDashboardsFromStorage = "dashboardsFromStorage"
-
-	// FlagExport
-	// Export grafana instance (to git, etc)
-	FlagExport = "export"
 
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
@@ -106,6 +90,10 @@ const (
 	// FlagTracing
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
+
+	// FlagNewTraceView
+	// Shows the new trace view design
+	FlagNewTraceView = "newTraceView"
 
 	// FlagCorrelations
 	// Correlations page
@@ -174,10 +162,6 @@ const (
 	// FlagEntityStore
 	// SQL-based entity store (requires storage flag also)
 	FlagEntityStore = "entityStore"
-
-	// FlagFlameGraph
-	// Show the flame graph
-	FlagFlameGraph = "flameGraph"
 
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
@@ -266,4 +250,24 @@ const (
 	// FlagIndividualCookiePreferences
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
+
+	// FlagDrawerDataSourcePicker
+	// Changes the user experience for data source selection to a drawer.
+	FlagDrawerDataSourcePicker = "drawerDataSourcePicker"
+
+	// FlagTraceqlSearch
+	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries
+	FlagTraceqlSearch = "traceqlSearch"
+
+	// FlagPrometheusMetricEncyclopedia
+	// Replaces the Prometheus query builder metric select option with a paginated and filterable component
+	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
+
+	// FlagTimeSeriesTable
+	// Enable time series table transformer &amp; sparkline cell type
+	FlagTimeSeriesTable = "timeSeriesTable"
+
+	// FlagInfluxdbBackendMigration
+	// Query InfluxDB InfluxQL without the proxy
+	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 )

@@ -122,8 +122,10 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		defer span.End()
 
 		reqContext := &contextmodel.ReqContext{
-			Context:        mContext,
-			SignedInUser:   &user.SignedInUser{},
+			Context: mContext,
+			SignedInUser: &user.SignedInUser{
+				Permissions: map[int64]map[string][]string{},
+			},
 			IsSignedIn:     false,
 			AllowAnonymous: false,
 			SkipCache:      false,
@@ -150,9 +152,9 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 				// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 				reqContext.LookupTokenErr = err
 			} else {
-				reqContext.IsSignedIn = true
 				reqContext.UserToken = identity.SessionToken
 				reqContext.SignedInUser = identity.SignedInUser()
+				reqContext.IsSignedIn = !identity.IsAnonymous
 				reqContext.AllowAnonymous = identity.IsAnonymous
 				reqContext.IsRenderCall = identity.AuthModule == login.RenderModule
 			}

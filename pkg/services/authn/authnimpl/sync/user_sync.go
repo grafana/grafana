@@ -83,16 +83,12 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 			s.log.FromContext(ctx).Error("Failed to create user", "error", errCreate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
 			return errSyncUserInternal.Errorf("unable to create user")
 		}
-	}
-
-	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthModule); errProtection != nil {
-		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)
-	}
-
-	// update user
-	if errUpdate := s.updateUserAttributes(ctx, usr, id, userAuth); errUpdate != nil {
-		s.log.FromContext(ctx).Error("Failed to update user", "error", errUpdate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
-		return errSyncUserInternal.Errorf("unable to update user")
+	} else {
+		// update user
+		if errUpdate := s.updateUserAttributes(ctx, usr, id, userAuth); errUpdate != nil {
+			s.log.FromContext(ctx).Error("Failed to update user", "error", errUpdate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
+			return errSyncUserInternal.Errorf("unable to update user")
+		}
 	}
 
 	syncUserToIdentity(usr, id)
@@ -191,6 +187,9 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 }
 
 func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id *authn.Identity, userAuth *login.UserAuth) error {
+	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthModule); errProtection != nil {
+		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)
+	}
 	// sync user info
 	updateCmd := &user.UpdateUserCommand{
 		UserID: usr.ID,
@@ -277,7 +276,12 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	if identity.AuthID != "" && identity.AuthModule != "" {
 		query := &login.GetAuthInfoQuery{AuthId: identity.AuthID, AuthModule: identity.AuthModule}
 		errGetAuthInfo := s.authInfoService.GetAuthInfo(ctx, query)
-		if errGetAuthInfo == nil {
+
+		if errGetAuthInfo != nil && !errors.Is(errGetAuthInfo, user.ErrUserNotFound) {
+			return nil, nil, errGetAuthInfo
+		}
+
+		if !errors.Is(errGetAuthInfo, user.ErrUserNotFound) {
 			usr, errGetByID := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: query.Result.UserId})
 			if errGetByID == nil {
 				return usr, query.Result, nil
@@ -286,10 +290,13 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 			if !errors.Is(errGetByID, user.ErrUserNotFound) {
 				return nil, nil, errGetByID
 			}
-		}
 
-		if !errors.Is(errGetAuthInfo, user.ErrUserNotFound) {
-			return nil, nil, errGetAuthInfo
+			// if the user connected to user auth does not exist try to clean it up
+			if errors.Is(errGetByID, user.ErrUserNotFound) {
+				if err := s.authInfoService.DeleteUserAuthInfo(ctx, query.Result.UserId); err != nil {
+					s.log.FromContext(ctx).Error("Failed to clean up user auth", "error", err, "auth_module", identity.AuthModule, "auth_id", identity.AuthID)
+				}
+			}
 		}
 	}
 

@@ -12,7 +12,7 @@ import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
 import { unByKey } from 'ol/Observable';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
-import { ComparisonOperation, FeatureRuleConfig, FeatureStyleConfig } from '../../types';
+import { FeatureRuleConfig, FeatureStyleConfig } from '../../types';
 import { Fill, Stroke, Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
 import { defaultStyleConfig, StyleConfig, StyleConfigState } from '../../style/types';
@@ -24,6 +24,7 @@ import { map as rxjsmap, first } from 'rxjs/operators';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { findField } from 'app/features/dimensions';
 import { getStyleDimension, getPublicGeoJSONFiles } from '../../utils/utils';
+import { ComparisonOperation } from '@grafana/schema';
 
 export interface DynamicGeoJSONMapperConfig {
   // URL for a geojson file
