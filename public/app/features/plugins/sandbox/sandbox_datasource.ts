@@ -30,10 +30,14 @@ export class SandboxProxyDataSource extends DataSourceApi<SandboxQuery, SandboxO
   }
 
   async query(options: DataQueryRequest<SandboxQuery>): Promise<DataQueryResponse> {
-    return this.iframeController.sendMessage({
+    const response = await this.iframeController.sendRequest({
       type: SandboxMessageType.DatasourceQuery,
       options: fromDataQueryRequestToSandboxDataQueryRequest(options),
     });
+    if (response.type === SandboxMessageType.DatasourceQueryResponse) {
+      return response.payload;
+    }
+    throw new Error('unknown response');
   }
 
   async testDatasource() {

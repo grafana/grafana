@@ -1,56 +1,69 @@
 import { DataFrame, dataFrameToJSON, DataQueryResponse, DataSourceApi, GrafanaPlugin } from '@grafana/data';
 
+import { IFrameBus } from '../iframeBus/iframeBus';
 import { fromSandboxDataQueryRequestToDataQueryRequest } from '../sandboxSerializer';
 import {
   SandboxDatasourceQueryMessage,
   SandboxDatasourceQueryResponse,
   SandboxGrafanaBootData,
+  SandboxMessage,
   SandboxMessageType,
-  SandboxMessageWrapper,
 } from '../types';
 
-class SandboxRuntime {
+export class SandboxRuntime {
   private port: MessagePort;
   private bootData: SandboxGrafanaBootData;
   private isHandShakeDone = false;
   private isReady = false;
   private plugin?: GrafanaPlugin;
   private datasourceInstance?: DataSourceApi;
+  private iframeBus: IFrameBus<SandboxMessage>;
 
   constructor({ port, bootData }: { port: MessagePort; bootData: SandboxGrafanaBootData }) {
     this.port = port;
     this.bootData = bootData;
-    this.port.onmessage = this.onMessage.bind(this);
+    this.iframeBus = new IFrameBus<SandboxMessage>({
+      port: this.port,
+      onMessage: this.handleMessage.bind(this),
+    });
   }
 
-  async onMessage(event: MessageEvent) {
-    if (this.handleHandshake(event)) {
-      return;
+  async handleMessage(message: SandboxMessage): Promise<SandboxMessage> {
+    if (!this.isHandShakeDone) {
+      return Promise.reject('not ready');
     }
 
-    const messageWrapper: SandboxMessageWrapper = event.data;
-    console.log('iframe got a message message', messageWrapper);
+    let response: SandboxMessage | undefined;
 
-    switch (messageWrapper.message.type) {
+    response = await this.handleGrafanaRequest(message);
+    if (response) {
+      console.log('iframe replying with response', response);
+      return response;
+    }
+
+    response = await this.handleGrafanaResponse(message);
+    if (response) {
+      console.log('iframe replying with response', response);
+      return response;
+    }
+
+    throw new Error('unknown message');
+  }
+
+  async handleGrafanaRequest(message: SandboxMessage): Promise<SandboxMessage | undefined> {
+    switch (message.type) {
       case SandboxMessageType.DatasourceQuery: {
-        const dataQueryResponse = await this.handleDatasourceQuery(messageWrapper.message);
-        const response = {
-          uid: messageWrapper.uid,
-          message: dataQueryResponse,
-        };
-        console.log('iframe replying with response', response);
-        this.postMessage(response);
-        break;
+        return await this.handleDatasourceQuery(message);
       }
+      // not a grafana request. Maybe a response to a request?
       default: {
-        console.log('unknown message', messageWrapper);
-        break;
+        return;
       }
     }
   }
 
-  postMessage(message: SandboxMessageWrapper) {
-    this.port.postMessage(message);
+  async handleGrafanaResponse(message: SandboxMessage): Promise<SandboxMessage | undefined> {
+    return;
   }
 
   async handleDatasourceQuery(message: SandboxDatasourceQueryMessage): Promise<SandboxDatasourceQueryResponse> {
@@ -72,23 +85,13 @@ class SandboxRuntime {
     };
   }
 
-  handleHandshake(event: MessageEvent) {
-    // do not process messages before handshake
-    if (!this.isHandShakeDone && event.data.type !== SandboxMessageType.Handshake) {
-      return true;
-    }
-
-    if (!this.isHandShakeDone && event.data.type === SandboxMessageType.Handshake) {
-      console.log('handshake done (iframe side)');
+  async handshake() {
+    const response = await this.iframeBus.postMessage({ type: SandboxMessageType.Handshake, id: this.bootData.id });
+    if (response.type === SandboxMessageType.Handshake) {
+      console.log('handshake done (plugin side)');
       this.isHandShakeDone = true;
       this.initPlugin();
-      return true;
     }
-    return false;
-  }
-
-  snedHandShake() {
-    this.port.postMessage({ type: SandboxMessageType.Handshake, id: this.bootData.id });
   }
 
   async initPlugin() {
@@ -182,7 +185,7 @@ function main() {
     if (event.data.type === SandboxMessageType.Init) {
       window.removeEventListener('message', messageHandler, false);
       const runtime = new SandboxRuntime({ port: event.ports[0], bootData: bootData });
-      runtime.snedHandShake();
+      runtime.handshake();
     }
   }
   window.addEventListener('message', messageHandler, false);

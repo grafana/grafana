@@ -1,25 +1,17 @@
-import { v4 as uuidv4 } from 'uuid';
-
 import { DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
 import { config, GrafanaBootConfig } from '@grafana/runtime';
 
-import { SandboxGrafanaBootData, SandboxMessage, SandboxMessageType, SandboxMessageWrapper } from './types';
+import { IFrameBus } from './iframeBus/iframeBus';
+import { SandboxGrafanaBootData, SandboxMessage, SandboxMessageType } from './types';
 
 export class IframeController {
+  private id: string;
   private iframe: HTMLIFrameElement;
   private channel: MessageChannel;
   private isHandShakeDone = false;
   private pluginMeta: PluginMeta;
   private instanceSettings?: DataSourceInstanceSettings;
-  private outboundMessages: Record<
-    string,
-    {
-      resolve: (value: any) => void;
-      reject: (reason?: any) => void;
-      timestamp: number;
-    }
-  > = {};
-  id: string;
+  private iframeBus: IFrameBus<SandboxMessage>;
 
   constructor({
     pluginMeta,
@@ -30,79 +22,60 @@ export class IframeController {
   }) {
     this.iframe = document.createElement('iframe');
     this.channel = new MessageChannel();
-    this.id = uuidv4();
+    this.id = pluginMeta.id;
     this.pluginMeta = pluginMeta;
     this.instanceSettings = instanceSettings;
-    this.sendMessage = this.sendMessage.bind(this);
-  }
-
-  async sendMessage(message: SandboxMessage): Promise<any> {
-    await this.waitForIframeReady();
-    return new Promise((resolve, reject) => {
-      const uid = uuidv4();
-
-      const wrappedMessage: SandboxMessageWrapper = {
-        uid: uid,
-        message,
-      };
-
-      this.outboundMessages[uid] = {
-        resolve,
-        reject,
-        timestamp: Date.now(),
-      };
-
-      console.log('grafana sending message', wrappedMessage);
-
-      this.channel.port1.postMessage(wrappedMessage);
+    this.iframeBus = new IFrameBus<SandboxMessage>({
+      port: this.channel.port1,
+      onMessage: this.handleMessage.bind(this),
     });
   }
 
-  onIframeMessage(event: MessageEvent) {
-    if (this.handleHandshake(event)) {
-      return;
+  async handleMessage(message: SandboxMessage): Promise<SandboxMessage> {
+    // reject all messages before handshake is done except handshake
+    if (!this.isHandShakeDone && message.type !== SandboxMessageType.Handshake) {
+      throw new Error('Handshake not done. Cannot handle message');
     }
-    const data: SandboxMessageWrapper = event.data;
-    console.log('grafana got a message', event.data);
 
-    const { uid, message } = data;
-
-    if (this.outboundMessages[uid]) {
-      const { resolve, reject } = this.outboundMessages[uid];
-      delete this.outboundMessages[uid];
-
-      if (message.type === SandboxMessageType.Error) {
-        reject(message.payload);
-      } else {
-        switch (message.type) {
-          case SandboxMessageType.DatasourceQueryResponse: {
-            resolve(message.payload);
-            break;
-          }
-          default: {
-            resolve([]);
-            break;
-          }
-        }
-      }
+    // handle handshake message
+    if (!this.isHandShakeDone && message.type === SandboxMessageType.Handshake) {
+      return this.handleHandshake(message);
     }
+
+    let response: SandboxMessage | undefined;
+    response = await this.handleIframeRequest(message);
+    if (response) {
+      return response;
+    }
+
+    throw new Error('unknown message');
   }
 
-  handleHandshake(event: MessageEvent) {
-    // do not process any messages before handshake
-    if (!this.isHandShakeDone && event.data.type !== SandboxMessageType.Handshake) {
-      return true;
+  async sendRequest(message: SandboxMessage): Promise<SandboxMessage> {
+    await this.waitForIframeReady();
+    return this.iframeBus.postMessage(message);
+  }
+
+  async handleIframeRequest(message: SandboxMessage): Promise<SandboxMessage | undefined> {
+    throw new Error('not implemented');
+  }
+
+  async handleHandshake(message: SandboxMessage): Promise<SandboxMessage> {
+    if (message.type !== SandboxMessageType.Handshake) {
+      throw new Error('not a handshake message');
     }
 
-    if (!this.isHandShakeDone && event.data.type === SandboxMessageType.Handshake && event.data.id === this.id) {
-      this.isHandShakeDone = true;
-      this.channel.port1.postMessage({
-        type: SandboxMessageType.Handshake,
-      });
-      console.log('handshake done (grafana side)');
-      return true;
+    if (message.id !== this.id) {
+      throw new Error('handshake id does not match');
     }
-    return false;
+
+    console.log('handshake done (grafana side)');
+    this.isHandShakeDone = true;
+
+    return {
+      type: SandboxMessageType.Handshake,
+      id: this.id,
+    };
   }
 
   setupSandbox() {
@@ -118,7 +91,6 @@ export class IframeController {
     this.iframe.id = 'sandbox-iframe-' + this.id;
 
     this.iframe.addEventListener('load', () => {
-      this.channel.port1.onmessage = this.onIframeMessage.bind(this);
       this.iframe.contentWindow?.postMessage(
         {
           type: SandboxMessageType.Init,

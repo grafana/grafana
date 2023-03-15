@@ -1,5 +1,3 @@
-import { Observable } from 'rxjs';
-
 import {
   DataFrameJSON,
   DataQueryRequest,
@@ -7,6 +5,7 @@ import {
   DataSourceInstanceSettings,
   PluginMeta,
 } from '@grafana/data';
+import { BackendSrv, BackendSrvRequest } from '@grafana/runtime';
 
 import { SandboxQuery } from './sandbox_datasource';
 
@@ -19,22 +18,19 @@ export type SandboxGrafanaBootData = {
   modulePath: string;
 };
 
-export type SandboxMessageWrapper = {
-  message: SandboxMessage;
-  uid: string;
-};
-
 export enum SandboxMessageType {
   Handshake = 'handshake',
   Init = 'init',
   DatasourceQuery = 'datasource-query',
   DatasourceQueryResponse = 'datasource-query-response',
+  DatasourceBackendSrvRequest = 'datasource-backend-srv-request',
   Error = 'error',
+  Empty = 'empty',
 }
 
 export type SandboxHandshakeMessage = {
   type: SandboxMessageType.Handshake;
-  uid?: string;
+  id?: string;
 };
 
 export type SandboxInitMessage = {
@@ -73,8 +69,26 @@ export type SandboxErrorMessage = {
   payload: Error;
 };
 
+export type SandboxDatasourceBackendSrvRequest = {
+  type: SandboxMessageType.DatasourceBackendSrvRequest;
+  payload: BackendSrvRequest;
+};
+
+export type SandboxEmptyMessage = {
+  type: SandboxMessageType.Empty;
+};
+
 export type SandboxMessage =
   | SandboxDatasourceQueryMessage
   | SandboxErrorMessage
   | SandboxHandshakeMessage
-  | SandboxDatasourceQueryResponse;
+  | SandboxDatasourceQueryResponse
+  | SandboxDatasourceBackendSrvRequest
+  | SandboxInitMessage
+  | SandboxHandshakeMessage
+  | SandboxEmptyMessage
+  | SandboxErrorMessage;
+
+export type SandboxGrafanaRunTime = {
+  getBackendSrv: () => Partial<BackendSrv>;
+};
