@@ -189,7 +189,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
     const styles = getOrgRowStyles(theme);
     const labelClass = cx('width-16', styles.label);
     const canChangeRole = contextSrv.hasPermission(AccessControlAction.OrgUsersWrite);
-    const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
+    const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove) && !isExternalUser;
     const rolePickerDisabled = isExternalUser || !canChangeRole;
 
     const inputId = `${org.name}-input`;
@@ -485,6 +485,7 @@ const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
 
   return (
     <div className={styles.disabledTooltip}>
+      <span className={styles.lockMessageClass}>{lockMessage}</span>
       <Tooltip
         placement="right-end"
         interactive={true}
@@ -506,7 +507,6 @@ const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
       >
         <Icon name="question-circle" />
       </Tooltip>
-      <span className={styles.lockMessageClass}>{lockMessage}</span>
     </div>
   );
 };
