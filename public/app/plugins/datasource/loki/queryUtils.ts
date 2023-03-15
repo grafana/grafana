@@ -335,7 +335,7 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
   // if either current or new result
   // has errors, we use that result,
   // and we do not merge anything into them.
-  // (we do not want to merge responses-with-errors
+  // (we do not want to merge responses with errors
   // with responses-without-errors)
 
   if (responseHasErrors(currentResult)) {
