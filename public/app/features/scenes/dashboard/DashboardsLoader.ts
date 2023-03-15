@@ -20,6 +20,7 @@ import {
   DataSourceVariable,
   QueryVariable,
   ConstantVariable,
+  SceneDataTransformer,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -263,10 +264,12 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
     options: panel.options,
     fieldConfig: panel.fieldConfig,
     pluginVersion: panel.pluginVersion,
-    $data: new SceneQueryRunner({
-      transformations: panel.transformations,
-      queries: panel.targets,
-      maxDataPoints: panel.maxDataPoints ?? undefined,
+    $data: new SceneDataTransformer({
+      $data: new SceneQueryRunner({
+        queries: panel.targets,
+        maxDataPoints: panel.maxDataPoints ?? undefined,
+      }),
+      transformations: panel.transformations ?? [],
     }),
   });
 }
