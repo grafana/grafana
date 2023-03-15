@@ -7,12 +7,13 @@ import (
 	"github.com/go-sql-driver/mysql"
 	iproxy "github.com/grafana/grafana/pkg/infra/proxy"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/net/proxy"
 )
 
 // registerProxyDialerContext registers a new dialer context to be used by mysql when the proxy network is
 // specified in the connection string
-func registerProxyDialerContext(settings *setting.SecureSocksDSProxySettings, protocol, dsUID string) (string, error) {
+func registerProxyDialerContext(settings *setting.SecureSocksDSProxySettings, protocol, cnnstr string) (string, error) {
 	// the dialer contains the true network used behind the scenes
 	dialer, err := getProxyDialerContext(settings, protocol)
 	if err != nil {
@@ -20,8 +21,12 @@ func registerProxyDialerContext(settings *setting.SecureSocksDSProxySettings, pr
 	}
 
 	// the dialer context can be updated everytime the datasource is updated
-	// have a unique network per datasource
-	network := "proxy-" + dsUID
+	// have a unique network per connection string
+	hash, err := util.Md5SumString(cnnstr)
+	if err != nil {
+		return "", err
+	}
+	network := "proxy-" + hash
 	mysql.RegisterDialContext(network, dialer.DialContext)
 
 	return network, nil

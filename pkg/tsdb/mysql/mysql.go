@@ -86,7 +86,9 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 
 		// register the secure socks proxy dialer context, if enabled
 		if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
-			protocol, err = registerProxyDialerContext(&cfg.SecureSocksDSProxy, protocol, dsInfo.UID)
+			// UID is only unique per org, the only way to ensure uniqueness is to do it by connection information
+			uniqueIdentifier := dsInfo.User + dsInfo.DecryptedSecureJSONData["password"] + dsInfo.URL + dsInfo.Database
+			protocol, err = registerProxyDialerContext(&cfg.SecureSocksDSProxy, protocol, uniqueIdentifier)
 			if err != nil {
 				return nil, err
 			}
