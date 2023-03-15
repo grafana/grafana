@@ -2,6 +2,8 @@ package database
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -492,11 +494,11 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
+	// the maximux nested folder hierarchy starting from parent down to subfolders
+	nestedFolders := make([]*folder.Folder, 0, folder.MaxNestedFolderDepth+1)
+
 	var sqlStore *sqlstore.SQLStore
-	var parent, subfolder *folder.Folder
 	const (
-		parentTitle          = "parent"
-		subfolderTitle       = "subfolder"
 		dashInRootTitle      = "dashboard in root"
 		dashInParentTitle    = "dashboard in parent"
 		dashInSubfolderTitle = "dashboard in subfolder"
@@ -547,24 +549,30 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 
 		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features)
 
-		// create parent folder
-		parent, err = folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-			UID:          "parent",
-			OrgID:        admin.OrgID,
-			Title:        parentTitle,
-			SignedInUser: &admin,
-		})
-		require.NoError(t, err)
+		parentUID := ""
+		for i := 0; ; i++ {
+			uid := fmt.Sprintf("f%d", i)
+			f, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+				UID:          uid,
+				OrgID:        admin.OrgID,
+				Title:        uid,
+				SignedInUser: &admin,
+				ParentUID:    parentUID,
+			})
+			if err != nil {
+				if errors.Is(err, folder.ErrMaximumDepthReached) {
+					break
+				}
 
-		// create subfolder
-		subfolder, err = folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-			UID:          "subfolder",
-			ParentUID:    "parent",
-			OrgID:        admin.OrgID,
-			Title:        subfolderTitle,
-			SignedInUser: &admin,
-		})
-		require.NoError(t, err)
+				t.Log("unexpected error", "error", err)
+				t.Fail()
+			}
+
+			nestedFolders = append(nestedFolders, f)
+
+			parentUID = f.UID
+		}
+		require.LessOrEqual(t, 2, len(nestedFolders))
 
 		saveDashboardCmd := dashboards.SaveDashboardCommand{
 			UserID:   admin.UserID,
@@ -584,8 +592,8 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
 				"title": dashInParentTitle,
 			}),
-			FolderID:  parent.ID,
-			FolderUID: parent.UID,
+			FolderID:  nestedFolders[0].ID,
+			FolderUID: nestedFolders[0].UID,
 		}
 		_, err = dashboardWriteStore.SaveDashboard(context.Background(), saveDashboardCmd)
 		require.NoError(t, err)
@@ -597,13 +605,20 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
 				"title": dashInSubfolderTitle,
 			}),
-			FolderID:  subfolder.ID,
-			FolderUID: subfolder.UID,
+			FolderID:  nestedFolders[1].ID,
+			FolderUID: nestedFolders[1].UID,
 		}
 		_, err = dashboardWriteStore.SaveDashboard(context.Background(), saveDashboardCmd)
 		require.NoError(t, err)
 
 		role = setupRBACRole(t, *sqlStore, &viewer)
+	}
+
+	setup()
+
+	nestedFolderTitles := make([]string, 0, len(nestedFolders))
+	for _, f := range nestedFolders {
+		nestedFolderTitles = append(nestedFolderTitles, f.Title)
 	}
 
 	testCases := []struct {
@@ -622,7 +637,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			desc:     "it should not return dashboard in subfolder if nested folders are disabled and the user has permission to read dashboards under parent folder",
 			features: featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch),
 			permissions: map[string][]string{
-				dashboards.ActionDashboardsRead: {"folders:uid:parent"},
+				dashboards.ActionDashboardsRead: {fmt.Sprintf("folders:uid:%s", nestedFolders[0].UID)},
 			},
 			expectedTitles: []string{dashInParentTitle},
 		},
@@ -630,7 +645,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			desc:     "it should return dashboard in subfolder if nested folders are enabled and the user has permission to read dashboards under parent folder",
 			features: featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch, featuremgmt.FlagNestedFolders),
 			permissions: map[string][]string{
-				dashboards.ActionDashboardsRead: {"folders:uid:parent"},
+				dashboards.ActionDashboardsRead: {fmt.Sprintf("folders:uid:%s", nestedFolders[0].UID)},
 			},
 			expectedTitles: []string{dashInParentTitle, dashInSubfolderTitle},
 		},
@@ -638,23 +653,22 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			desc:     "it should not return subfolder if nested folders are disabled and the user has permission to read folders under parent folder",
 			features: featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch),
 			permissions: map[string][]string{
-				dashboards.ActionFoldersRead: {"folders:uid:parent"},
+				dashboards.ActionFoldersRead: {fmt.Sprintf("folders:uid:%s", nestedFolders[0].UID)},
 			},
-			expectedTitles: []string{parentTitle},
+			expectedTitles: []string{nestedFolders[0].Title},
 		},
 		{
 			desc:     "it should return subfolder if nested folders are enabled and the user has permission to read folders under parent folder",
 			features: featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch, featuremgmt.FlagNestedFolders),
 			permissions: map[string][]string{
-				dashboards.ActionFoldersRead: {"folders:uid:parent"},
+				dashboards.ActionFoldersRead: {fmt.Sprintf("folders:uid:%s", nestedFolders[0].UID)},
 			},
-			expectedTitles: []string{parentTitle, subfolderTitle},
+			expectedTitles: nestedFolderTitles,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			setup()
 
 			dashboardReadStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, tc.features, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
 			require.NoError(t, err)

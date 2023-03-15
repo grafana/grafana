@@ -2,6 +2,7 @@ package annotationsimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -647,12 +648,10 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		OrgID:  orgID,
 	}
 
-	annotation1Text := "annotation 1"
-	annotation2Text := "annotation 2"
 	var role *accesscontrol.Role
 
-	var parent, subfolder *folder.Folder
-	var dashboard, dashboard2 *dashboards.Dashboard
+	dashboardIDs := make([]int64, 0, folder.MaxNestedFolderDepth+1)
+	annotationsTexts := make([]string, 0, folder.MaxNestedFolderDepth+1)
 
 	setupFolderStructure := func() *sqlstore.SQLStore {
 		db := db.InitTestDB(t)
@@ -672,78 +671,63 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 
 		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), db.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(db), db, features)
 
-		// create parent folder
-		parent, err = folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-			UID:          "parent",
-			OrgID:        orgID,
-			Title:        "parent",
-			SignedInUser: usr,
-		})
-		require.NoError(t, err)
+		var maximumTagsLength int64 = 60
+		repo := xormRepositoryImpl{db: db, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(db, db.Cfg), maximumTagsLength: maximumTagsLength, features: features}
 
-		// create subfolder
-		subfolder, err = folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-			UID:          "subfolder",
-			ParentUID:    "parent",
-			OrgID:        orgID,
-			Title:        "subfolder",
-			SignedInUser: usr,
-		})
-		require.NoError(t, err)
+		parentUID := ""
+		for i := 0; ; i++ {
+			uid := fmt.Sprintf("f%d", i)
+			f, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+				UID:          uid,
+				OrgID:        orgID,
+				Title:        uid,
+				SignedInUser: usr,
+				ParentUID:    parentUID,
+			})
+			if err != nil {
+				if errors.Is(err, folder.ErrMaximumDepthReached) {
+					break
+				}
 
-		testDashboard1 := dashboards.SaveDashboardCommand{
-			UserID:   1,
-			OrgID:    1,
-			IsFolder: false,
-			Dashboard: simplejson.NewFromAny(map[string]interface{}{
-				"title": "Dashboard under parent",
-			}),
-			FolderID:  parent.ID,
-			FolderUID: parent.UID,
+				t.Log("unexpected error", "error", err)
+				t.Fail()
+			}
+
+			dashInFolder := dashboards.SaveDashboardCommand{
+				UserID:   usr.UserID,
+				OrgID:    orgID,
+				IsFolder: false,
+				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+					"title": fmt.Sprintf("Dashboard under %s", f.UID),
+				}),
+				FolderID:  f.ID,
+				FolderUID: f.UID,
+			}
+			dashboard, err := dashStore.SaveDashboard(context.Background(), dashInFolder)
+			require.NoError(t, err)
+
+			dashboardIDs = append(dashboardIDs, dashboard.ID)
+
+			parentUID = f.UID
+
+			annotationTxt := fmt.Sprintf("annotation %d", i)
+			dash1Annotation := &annotations.Item{
+				OrgID:       orgID,
+				DashboardID: dashboard.ID,
+				Epoch:       10,
+				Text:        annotationTxt,
+			}
+			err = repo.Add(context.Background(), dash1Annotation)
+			require.NoError(t, err)
+
+			annotationsTexts = append(annotationsTexts, annotationTxt)
 		}
-		dashboard, err = dashStore.SaveDashboard(context.Background(), testDashboard1)
-		require.NoError(t, err)
-
-		testDashboard2 := dashboards.SaveDashboardCommand{
-			UserID: 1,
-			OrgID:  1,
-			Dashboard: simplejson.NewFromAny(map[string]interface{}{
-				"title": "Dashboard under subfolder",
-			}),
-			FolderID:  subfolder.ID,
-			FolderUID: subfolder.UID,
-		}
-		dashboard2, err = dashStore.SaveDashboard(context.Background(), testDashboard2)
-		require.NoError(t, err)
 
 		role = setupRBACRole(t, db, usr)
 		return db
 	}
 
-	setupRepo := func(db *sqlstore.SQLStore, features featuremgmt.FeatureToggles) xormRepositoryImpl {
-		var maximumTagsLength int64 = 60
-		repo := xormRepositoryImpl{db: db, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(db, db.Cfg), maximumTagsLength: maximumTagsLength, features: features}
-
-		dash1Annotation := &annotations.Item{
-			OrgID:       1,
-			DashboardID: dashboard.ID,
-			Epoch:       10,
-			Text:        annotation1Text,
-		}
-		err := repo.Add(context.Background(), dash1Annotation)
-		require.NoError(t, err)
-
-		dash2Annotation := &annotations.Item{
-			OrgID:       1,
-			DashboardID: dashboard2.ID,
-			Epoch:       10,
-			Text:        annotation2Text,
-		}
-		err = repo.Add(context.Background(), dash2Annotation)
-		require.NoError(t, err)
-
-		return repo
-	}
+	db := setupFolderStructure()
 
 	testCases := []struct {
 		desc                   string
@@ -757,25 +741,26 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			features: featuremgmt.WithFeatures(),
 			permissions: map[string][]string{
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
-				dashboards.ActionDashboardsRead:     {"folders:uid:parent"},
+				dashboards.ActionDashboardsRead:     {"folders:uid:f0"},
 			},
-			expectedAnnotationText: []string{annotation1Text},
+			expectedAnnotationText: annotationsTexts[:1],
 		},
 		{
 			desc:     "Should find only annotations from dashboards under inherited folders if nested folder are enabled",
 			features: featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 			permissions: map[string][]string{
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
-				dashboards.ActionDashboardsRead:     {"folders:uid:parent"},
+				dashboards.ActionDashboardsRead:     {"folders:uid:f0"},
 			},
-			expectedAnnotationText: []string{annotation1Text, annotation2Text},
+			expectedAnnotationText: annotationsTexts[:],
 		},
 	}
 
 	for _, tc := range testCases {
-		db := setupFolderStructure()
-		repo := setupRepo(db, tc.features)
 		t.Run(tc.desc, func(t *testing.T) {
+			var maximumTagsLength int64 = 60
+			repo := xormRepositoryImpl{db: db, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(db, db.Cfg), maximumTagsLength: maximumTagsLength, features: tc.features}
+
 			usr.Permissions = map[int64]map[string][]string{1: tc.permissions}
 			setupRBACPermission(t, db, role, usr)
 
@@ -788,7 +773,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Len(t, results, len(tc.expectedAnnotationText))
+			require.Len(t, results, len(tc.expectedAnnotationText))
 			for _, r := range results {
 				assert.Contains(t, tc.expectedAnnotationText, r.Text)
 			}
