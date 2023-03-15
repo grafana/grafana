@@ -92,4 +92,5 @@ export interface FeatureToggles {
   logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;
   prometheusMetricEncyclopedia?: boolean;
+  influxdbBackendMigration?: boolean;
 }

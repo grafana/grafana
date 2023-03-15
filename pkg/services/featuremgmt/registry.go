@@ -294,7 +294,7 @@ var (
 			Name:        "cloudWatchCrossAccountQuerying",
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			State:       FeatureStateStable,
-			Expression:  "true", //enabled by default
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "redshiftAsyncQueryDataSupport",
@@ -414,7 +414,7 @@ var (
 			Name:         "logsSampleInExplore",
 			Description:  "Enables access to the logs sample feature in Explore",
 			State:        FeatureStateStable,
-			Expression:   "true", //turned on by default
+			Expression:   "true", // turned on by default
 			FrontendOnly: true,
 		},
 		{
@@ -426,6 +426,12 @@ var (
 		{
 			Name:         "prometheusMetricEncyclopedia",
 			Description:  "Replaces the Prometheus query builder metric select option with a paginated and filterable component",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "influxdbBackendMigration",
+			Description:  "Query InfluxDB InfluxQL without the proxy",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
