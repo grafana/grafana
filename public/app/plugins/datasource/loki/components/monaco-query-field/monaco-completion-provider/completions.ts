@@ -1,5 +1,7 @@
+import { trimEnd } from 'lodash';
+
 import { escapeLabelValueInExactSelector } from '../../../languageUtils';
-import { isQueryWithParser, removeTrailingPipelines } from '../../../queryUtils';
+import { isQueryWithParser } from '../../../queryUtils';
 import { explainOperator } from '../../../querybuilder/operations';
 import { LokiOperationId } from '../../../querybuilder/types';
 import { AGGREGATION_OPERATORS, RANGE_VEC_FUNCTIONS, BUILT_IN_FUNCTIONS } from '../../../syntax';
@@ -229,7 +231,9 @@ export async function getAfterSelectorCompletions(
 ): Promise<Completion[]> {
   let query = logQuery;
   if (afterPipe) {
-    query = removeTrailingPipelines(logQuery).trim();
+    // If we have space after pipeline, we need to remove it as well
+    const trailingPipeline = hasSpace ? '| ' : '|';
+    query = trimEnd(logQuery, trailingPipeline);
   }
 
   const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(query);

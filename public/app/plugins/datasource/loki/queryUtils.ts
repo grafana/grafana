@@ -305,30 +305,6 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
   return labelMatchers;
 }
 
-export function removeTrailingPipelines(query: string): string {
-  const trailingPipelinePositions: Position[] = [];
-  const tree = parser.parse(query);
-  tree.iterate({
-    enter: ({ type, from, to }): false | void => {
-      if (type.id === PipelineStage) {
-        const pipelineExpr = query.substring(from, to).trim();
-        if (pipelineExpr === '|') {
-          trailingPipelinePositions.push({ from, to });
-        }
-      }
-    },
-  });
-
-  let lastFrom = 0;
-  let finalQuery = '';
-  trailingPipelinePositions.forEach((position) => {
-    finalQuery += query.substring(lastFrom, position.from);
-    lastFrom = position.to;
-  });
-
-  return finalQuery;
-}
-
 export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
   const queries = allQueries
     .filter((query) => !query.hide)

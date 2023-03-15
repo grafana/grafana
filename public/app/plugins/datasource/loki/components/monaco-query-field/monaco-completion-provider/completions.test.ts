@@ -420,13 +420,21 @@ describe('getAfterSelectorCompletions', () => {
     expect(parsersInSuggestions).toStrictEqual(['json', 'logfmt', 'pattern', 'regexp', 'unpack']);
   });
 
-  it('should show label filter options if query has parser', async () => {
+  it('should show label filter options if query has parser and trailing pipeline', async () => {
     const suggestions = await getAfterSelectorCompletions(
       `{job="grafana"} | logfmt | `,
       true,
       true,
       completionProvider
     );
+    const labelFiltersInSuggestions = suggestions
+      .filter((suggestion) => suggestion.type === 'LABEL_NAME')
+      .map((label) => label.label);
+    expect(labelFiltersInSuggestions).toStrictEqual(['abc (detected)', 'def (detected)']);
+  });
+
+  it('should show label filter options if query has parser and no trailing pipeline', async () => {
+    const suggestions = await getAfterSelectorCompletions(`{job="grafana"} | logfmt`, true, true, completionProvider);
     const labelFiltersInSuggestions = suggestions
       .filter((suggestion) => suggestion.type === 'LABEL_NAME')
       .map((label) => label.label);
