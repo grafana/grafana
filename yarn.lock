@@ -13541,7 +13541,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uiw/codemirror-theme-vscode@npm:4.19.9":
+"@uiw/codemirror-theme-vscode@npm:4.19.9, @uiw/codemirror-theme-vscode@npm:^4.19.9":
   version: 4.19.9
   resolution: "@uiw/codemirror-theme-vscode@npm:4.19.9"
   dependencies:
@@ -23006,6 +23006,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": 5.42.0
     "@typescript-eslint/parser": 5.42.0
     "@uiw/codemirror-extensions-langs": ^4.19.9
+    "@uiw/codemirror-theme-vscode": ^4.19.9
     "@uiw/codemirror-themes-all": ^4.19.9
     "@uiw/react-codemirror": ^4.19.9
     "@visx/event": 3.0.1

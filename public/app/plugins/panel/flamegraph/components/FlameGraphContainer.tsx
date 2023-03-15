@@ -2,17 +2,16 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, DataFrameView, CoreApp, getEnumDisplayProcessor, DataSourceApi } from '@grafana/data';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { DataFrame, DataFrameView, CoreApp, DataSourceApi } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { PhlareDataSource } from '../../../datasource/phlare/datasource';
-import { CodeLocation } from '../../../datasource/phlare/types';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH, PIXELS_PER_LEVEL } from '../constants';
 
 import FlameGraph from './FlameGraph/FlameGraph';
 import { Item, nestedSetToLevels } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
-import { SourceCodeView } from './SourceCodeView';
+import { GloblDataRanges, SourceCodeView } from './SourceCodeView';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { SelectedView } from './types';
 
@@ -34,39 +33,28 @@ const FlameGraphContainer = (props: Props) => {
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
-  const theme = useTheme2();
 
   // State for the selected filename/func/line
-  const [selectedLocation, setSelectedLocation] = useState<CodeLocation>();
+  const [selectedLocation, setSelectedLocation] = useState<number>();
 
   const labelField = props.data?.fields.find((f) => f.name === 'label');
-  const fileNameField = props.data?.fields.find((f) => f.name === 'fileName');
 
   // Label can actually be an enum field so depending on that we have to access it through display processor. This is
   // both a backward compatibility but also to allow using a simple dataFrame without enum config. This would allow
-  // users to use this panel with correct query from data sources that do not return profiles natively.
+  // users to use this panel with correct query from data sources that do not return profiles natively....Leon: this should just be a transformation then and not handled here?
   const getLabelValue = useCallback(
     (label: string | number) => {
       const enumConfig = labelField?.config?.type?.enum;
-      if (enumConfig) {
-        return getEnumDisplayProcessor(theme, enumConfig)(label).text;
-      } else {
-        return label.toString();
-      }
-    },
-    [labelField, theme]
-  );
 
-  const getFileNameValue = useCallback(
-    (label: string | number) => {
-      const enumConfig = fileNameField?.config?.type?.enum;
-      if (enumConfig) {
-        return getEnumDisplayProcessor(theme, enumConfig)(label).text;
+      // console.log(label);
+
+      if (enumConfig && typeof label === 'number') {
+        return enumConfig.text![label];
       } else {
         return label.toString();
       }
     },
-    [fileNameField, theme]
+    [labelField]
   );
 
   // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular
@@ -100,6 +88,37 @@ const FlameGraphContainer = (props: Props) => {
     setRangeMax(1);
   }, [props.data]);
 
+  const globalDataRanges = useMemo<GloblDataRanges>(() => {
+    let valuesFieldData = props.data?.fields.find((f) => f.name === 'value')?.values.toArray()!;
+    let selfFieldData = props.data?.fields.find((f) => f.name === 'self')?.values.toArray()!;
+
+    // to make sure we use the full color scale, we exclude the root total which
+    // will eat up most of the high color range, since next size blocks are typically 30% or less
+    // so we treat the next highest as the deepest red and everything else is relative to it
+    let valuesFieldData2 = valuesFieldData.slice(1);
+    let selfFieldData2 = selfFieldData.slice(1);
+
+    let dataLen = props.data!.length;
+
+    if (dataLen < 65e3) {
+      return {
+        value: [Math.min(...valuesFieldData2), Math.max(...valuesFieldData2)],
+        self: [Math.min(...selfFieldData2), Math.max(...selfFieldData2)],
+      };
+    }
+
+    return {
+      value: [
+        valuesFieldData2.reduce((acc, val) => (val < acc ? val : acc), Infinity),
+        valuesFieldData2.reduce((acc, val) => (val > acc ? val : acc), 0),
+      ],
+      self: [
+        selfFieldData2.reduce((acc, val) => (val < acc ? val : acc), Infinity),
+        selfFieldData2.reduce((acc, val) => (val > acc ? val : acc), 0),
+      ],
+    };
+  }, [props.data]);
+
   return (
     <>
       {props.data && (
@@ -117,7 +136,7 @@ const FlameGraphContainer = (props: Props) => {
             containerWidth={containerWidth}
           />
 
-          {selectedView !== SelectedView.FlameGraph && !selectedLocation && (
+          {selectedView !== SelectedView.FlameGraph && selectedLocation == null && (
             <FlameGraphTopTableContainer
               data={props.data}
               app={props.app}
@@ -135,7 +154,7 @@ const FlameGraphContainer = (props: Props) => {
 
           {selectedView !== SelectedView.TopTable && (
             <FlameGraph
-              className={SelectedView.Both || selectedLocation ? styles.flameGraphHalf : styles.flameGraphFull}
+              className={SelectedView.Both || selectedLocation != null ? styles.flameGraphHalf : styles.flameGraphFull}
               data={props.data}
               app={props.app}
               flameGraphHeight={props.flameGraphHeight}
@@ -151,25 +170,17 @@ const FlameGraphContainer = (props: Props) => {
               setRangeMax={setRangeMax}
               selectedView={selectedView}
               getLabelValue={getLabelValue}
-              setSelectedLocation={(index: number) => {
-                const view = new DataFrameView<Item>(props.data!);
-                const row = view.get(index);
-                setSelectedLocation({
-                  fileName: row.fileName,
-                  func: row.label,
-                  line: row.line,
-                });
-              }}
+              setSelectedLocation={setSelectedLocation}
             />
           )}
 
-          {selectedLocation && (
+          {selectedLocation != null && (
             <SourceCodeView
-              location={selectedLocation}
-              datasource={props.datasource! as PhlareDataSource}
+              locationIdx={selectedLocation}
               getLabelValue={getLabelValue}
-              getFileNameValue={getFileNameValue}
-              data={new DataFrameView<Item>(props.data!)}
+              datasource={props.datasource! as PhlareDataSource}
+              data={props.data}
+              globalDataRanges={globalDataRanges}
             />
           )}
         </div>
