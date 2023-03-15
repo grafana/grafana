@@ -1,5 +1,5 @@
 import { DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
-import { config, GrafanaBootConfig } from '@grafana/runtime';
+import { config, getBackendSrv, GrafanaBootConfig } from '@grafana/runtime';
 
 import { IFrameBus } from './iframeBus/iframeBus';
 import { SandboxGrafanaBootData, SandboxMessage, SandboxMessageType } from './types';
@@ -45,6 +45,7 @@ export class IframeController {
     let response: SandboxMessage | undefined;
     response = await this.handleIframeRequest(message);
     if (response) {
+      console.log('grafana replying with response', response);
       return response;
     }
 
@@ -57,7 +58,27 @@ export class IframeController {
   }
 
   async handleIframeRequest(message: SandboxMessage): Promise<SandboxMessage | undefined> {
+    console.log('handling iframe request', message);
+    switch (message.type) {
+      case SandboxMessageType.DatasourceBackendSrvRequest:
+        return this.handleDatasourceBackendSrvRequest(message);
+    }
     throw new Error('not implemented');
+  }
+
+  async handleDatasourceBackendSrvRequest(message: SandboxMessage): Promise<SandboxMessage> {
+    if (message.type !== SandboxMessageType.DatasourceBackendSrvRequest) {
+      throw new Error('not a datasource backend srv request');
+    }
+    try {
+      const response = await getBackendSrv().request(message.payload);
+      return {
+        type: SandboxMessageType.DatasourceBackendSrvResponse,
+        payload: response,
+      };
+    } catch (err) {
+      throw err;
+    }
   }
 
   async handleHandshake(message: SandboxMessage): Promise<SandboxMessage> {

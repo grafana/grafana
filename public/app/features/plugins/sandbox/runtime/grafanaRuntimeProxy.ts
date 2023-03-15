@@ -1,11 +1,14 @@
 import { BackendSrv, BackendSrvRequest } from '@grafana/runtime';
 
-import { SandboxRuntime } from './runtime';
+import { IFrameBus } from '../iframeBus/iframeBus';
+import { SandboxMessage, SandboxMessageType } from '../types';
 
 export class GrafanaRuntimeProxy {
-  private sandboxRuntime: SandboxRuntime;
-  constructor(sandboxRuntime: SandboxRuntime) {
-    this.sandboxRuntime = sandboxRuntime;
+  private iframeBus: IFrameBus<SandboxMessage>;
+
+  constructor(iframeBus: IFrameBus<SandboxMessage>) {
+    this.iframeBus = iframeBus;
+    this.getBackendSrv = this.getBackendSrv.bind(this);
   }
 
   getBackendSrv(): Partial<BackendSrv> {
@@ -14,7 +17,14 @@ export class GrafanaRuntimeProxy {
     };
   }
 
-  request(options: BackendSrvRequest): Promise<any> {
-    return Promise.reject('not implemented');
+  async request<T>(options: BackendSrvRequest): Promise<T> {
+    const response = await this.iframeBus.postMessage({
+      type: SandboxMessageType.DatasourceBackendSrvRequest,
+      payload: options,
+    });
+    if (response.type === SandboxMessageType.DatasourceBackendSrvResponse) {
+      return response.payload;
+    }
+    throw new Error('unknown response');
   }
 }

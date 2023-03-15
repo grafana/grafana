@@ -6,9 +6,12 @@ import {
   SandboxDatasourceQueryMessage,
   SandboxDatasourceQueryResponse,
   SandboxGrafanaBootData,
+  SandboxGrafanaRunTime,
   SandboxMessage,
   SandboxMessageType,
 } from '../types';
+
+import { GrafanaRuntimeProxy } from './grafanaRuntimeProxy';
 
 export class SandboxRuntime {
   private port: MessagePort;
@@ -18,6 +21,7 @@ export class SandboxRuntime {
   private plugin?: GrafanaPlugin;
   private datasourceInstance?: DataSourceApi;
   private iframeBus: IFrameBus<SandboxMessage>;
+  private grafanaRunTime: SandboxGrafanaRunTime = {};
 
   constructor({ port, bootData }: { port: MessagePort; bootData: SandboxGrafanaBootData }) {
     this.port = port;
@@ -26,6 +30,14 @@ export class SandboxRuntime {
       port: this.port,
       onMessage: this.handleMessage.bind(this),
     });
+    this.mockGrafanaRuntime();
+  }
+
+  mockGrafanaRuntime() {
+    this.grafanaRunTime = new GrafanaRuntimeProxy(this.iframeBus);
+    this.grafanaRunTime.getBackendSrv = this.grafanaRunTime.getBackendSrv;
+    //@ts-ignore
+    window.grafanaRuntime = this.grafanaRunTime;
   }
 
   async handleMessage(message: SandboxMessage): Promise<SandboxMessage> {
@@ -33,15 +45,11 @@ export class SandboxRuntime {
       return Promise.reject('not ready');
     }
 
+    console.log('handling request from grafana', message);
+
     let response: SandboxMessage | undefined;
 
     response = await this.handleGrafanaRequest(message);
-    if (response) {
-      console.log('iframe replying with response', response);
-      return response;
-    }
-
-    response = await this.handleGrafanaResponse(message);
     if (response) {
       console.log('iframe replying with response', response);
       return response;
@@ -60,10 +68,6 @@ export class SandboxRuntime {
         return;
       }
     }
-  }
-
-  async handleGrafanaResponse(message: SandboxMessage): Promise<SandboxMessage | undefined> {
-    return;
   }
 
   async handleDatasourceQuery(message: SandboxDatasourceQueryMessage): Promise<SandboxDatasourceQueryResponse> {

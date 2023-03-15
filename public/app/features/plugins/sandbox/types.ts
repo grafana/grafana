@@ -24,6 +24,7 @@ export enum SandboxMessageType {
   DatasourceQuery = 'datasource-query',
   DatasourceQueryResponse = 'datasource-query-response',
   DatasourceBackendSrvRequest = 'datasource-backend-srv-request',
+  DatasourceBackendSrvResponse = 'datasource-backend-srv-response',
   Error = 'error',
   Empty = 'empty',
 }
@@ -74,21 +75,26 @@ export type SandboxDatasourceBackendSrvRequest = {
   payload: BackendSrvRequest;
 };
 
+export type SandboxDatasourceBackendSrvResponse = {
+  type: SandboxMessageType.DatasourceBackendSrvResponse;
+  payload: any;
+};
+
 export type SandboxEmptyMessage = {
   type: SandboxMessageType.Empty;
 };
 
 export type SandboxMessage =
-  | SandboxDatasourceQueryMessage
-  | SandboxErrorMessage
-  | SandboxHandshakeMessage
-  | SandboxDatasourceQueryResponse
-  | SandboxDatasourceBackendSrvRequest
   | SandboxInitMessage
   | SandboxHandshakeMessage
   | SandboxEmptyMessage
-  | SandboxErrorMessage;
+  | SandboxErrorMessage
+  | SandboxDatasourceQueryMessage
+  | SandboxHandshakeMessage
+  | SandboxDatasourceQueryResponse
+  | SandboxDatasourceBackendSrvRequest
+  | SandboxDatasourceBackendSrvResponse;
 
 export type SandboxGrafanaRunTime = {
-  getBackendSrv: () => Partial<BackendSrv>;
+  getBackendSrv?: () => Partial<BackendSrv>;
 };
