@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { CoreApp, SelectableValue } from '@grafana/data';
+import { CoreApp, isValidDuration, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
-import { reportInteraction } from '@grafana/runtime';
-import { RadioButtonGroup, Select, AutoSizeInput } from '@grafana/ui';
+import { config, reportInteraction } from '@grafana/runtime';
+import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
@@ -19,11 +19,13 @@ export interface Props {
   maxLines: number;
   app?: CoreApp;
   datasource: LokiDatasource;
+  experimentalChunkRange?: string;
 }
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
-  ({ app, query, onChange, onRunQuery, maxLines, datasource }) => {
+  ({ app, query, onChange, onRunQuery, maxLines, datasource, experimentalChunkRange }) => {
     const [queryStats, setQueryStats] = useState<QueryStats>();
+    const [chunkRangeValid, setChunkRangeValid] = useState(true);
     const prevQuery = usePrevious(query);
 
     const onQueryTypeChange = (value: LokiQueryType) => {
@@ -37,6 +39,17 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
         resolution: option.value,
       });
       onChange({ ...query, resolution: option.value });
+      onRunQuery();
+    };
+
+    const onChunkRangeChange = (evt: React.FormEvent<HTMLInputElement>) => {
+      const value = evt.currentTarget.value;
+      if (!isValidDuration(value)) {
+        setChunkRangeValid(false);
+        return;
+      }
+      setChunkRangeValid(true);
+      onChange({ ...query, experimentalChunkRange: value });
       onRunQuery();
     };
 
@@ -119,6 +132,21 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               aria-label="Select resolution"
             />
           </EditorField>
+          {config.featureToggles.lokiQuerySplitting && (
+            <EditorField
+              label="Chunk Range"
+              tooltip="Experimental: Defines the range of a single query chunk when query chunking is used."
+            >
+              <AutoSizeInput
+                minWidth={14}
+                type="string"
+                min={0}
+                defaultValue={query.experimentalChunkRange?.toString() ?? '1d'}
+                onCommitChange={onChunkRangeChange}
+                invalid={!chunkRangeValid}
+              />
+            </EditorField>
+          )}
         </QueryOptionGroup>
       </EditorRow>
     );
