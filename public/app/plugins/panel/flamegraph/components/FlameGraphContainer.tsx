@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, DataFrameView, CoreApp, getEnumDisplayProcessor, createTheme } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { DataFrame, DataFrameView, CoreApp, getEnumDisplayProcessor } from '@grafana/data';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH, PIXELS_PER_LEVEL } from '../constants';
 
@@ -33,6 +33,8 @@ const FlameGraphContainer = (props: Props) => {
 
   const labelField = props.data?.fields.find((f) => f.name === 'label');
 
+  const theme = useTheme2();
+
   // Label can actually be an enum field so depending on that we have to access it through display processor. This is
   // both a backward compatibility but also to allow using a simple dataFrame without enum config. This would allow
   // users to use this panel with correct query from data sources that do not return profiles natively.
@@ -40,12 +42,12 @@ const FlameGraphContainer = (props: Props) => {
     (label: string | number) => {
       const enumConfig = labelField?.config?.type?.enum;
       if (enumConfig) {
-        return getEnumDisplayProcessor(createTheme(), enumConfig)(label).text;
+        return getEnumDisplayProcessor(theme, enumConfig)(label).text;
       } else {
         return label.toString();
       }
     },
-    [labelField]
+    [labelField, theme]
   );
 
   // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular

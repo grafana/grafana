@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 
 import { PanelMenuItem, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,7 +9,7 @@ interface Props {
   children?: React.ReactNode;
 }
 
-export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = (props) => {
+export const PanelHeaderMenuItem = (props: Props & PanelMenuItem) => {
   const [ref, setRef] = useState<HTMLLIElement | null>(null);
   const isSubMenu = props.type === 'submenu';
   const isDivider = props.type === 'divider';
