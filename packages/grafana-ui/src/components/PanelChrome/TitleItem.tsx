@@ -5,7 +5,6 @@ import { GrafanaTheme2, LinkModel, LinkTarget } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { Button } from '../Button';
 
 type TitleItemProps = {
   className?: string;
@@ -16,9 +15,7 @@ type TitleItemProps = {
   title?: string;
 };
 
-type TitleItemElement = HTMLAnchorElement & HTMLButtonElement;
-
-export const TitleItem = forwardRef<TitleItemElement, TitleItemProps>(
+export const TitleItem = forwardRef<HTMLAnchorElement, TitleItemProps>(
   ({ className, children, href, onClick, target, title, ...rest }, ref) => {
     const styles = useStyles2(getStyles);
 
@@ -35,12 +32,6 @@ export const TitleItem = forwardRef<TitleItemElement, TitleItemProps>(
         >
           {children}
         </a>
-      );
-    } else if (onClick) {
-      return (
-        <Button ref={ref} className={cx(styles.item, className)} variant="secondary" fill="text" onClick={onClick}>
-          {children}
-        </Button>
       );
     } else {
       return (
