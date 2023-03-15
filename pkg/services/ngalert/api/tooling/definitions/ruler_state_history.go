@@ -6,12 +6,13 @@ import "github.com/grafana/grafana-plugin-sdk-go/data"
 //
 // Query state history.
 //
-//     Produces:
-//     - application/json
+//	Produces:
+//	- application/json
 //
-//     Responses:
-//       200: StateHistory
-
+//	Responses:
+//	  200: StateHistory
+//
+// swagger:response RouteGetStateHistory
 type StateHistory struct {
 	Results *data.Frame `json:"results"`
 }
