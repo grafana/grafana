@@ -40,7 +40,7 @@ export class TemplateSrvMock implements TemplateSrv {
     });
   }
 
-  getVariablesMapInTemplate(target: string, scopedVars: ScopedVars): Record<string, string> {
+  getAllVariablesInTarget(target: string, scopedVars: ScopedVars): Record<string, string> {
     const regexp = new RegExp(this.regex);
     const values: Record<string, string> = {};
 

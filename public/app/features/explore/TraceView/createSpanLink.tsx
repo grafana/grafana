@@ -194,7 +194,7 @@ function legacyCreateSpanLinkFactory(
           dataLinkHasAllVariablesDefined(
             dataLink.internal!.query,
             scopedVars,
-            getTemplateSrv().getVariablesMapInTemplate.bind(getTemplateSrv())
+            getTemplateSrv().getAllVariablesInTarget.bind(getTemplateSrv())
           ).allVariablesDefined
         ) {
           const link = mapInternalLinkToExplore({

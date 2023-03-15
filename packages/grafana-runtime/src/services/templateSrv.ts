@@ -21,7 +21,7 @@ export interface TemplateSrv {
   /*
   Return the variables and values only
   */
-  getVariablesMapInTemplate(
+  getAllVariablesInTarget(
     target: string,
     scopedVars: ScopedVars,
     format?: string | Function

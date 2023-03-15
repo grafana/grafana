@@ -69,12 +69,12 @@ class UnThemedLogDetails extends PureComponent<Props> {
     hiddenFieldsWithLinks.forEach((linkField) => {
       // links can be from anywhere, but Explore Links extend LinkModel
       linkField.links?.forEach((link: ExploreFieldLinkModel) => {
-        if (link.variableMap) {
+        if (link.variables) {
           fieldsWithLinksFromVariableMap.push({
             key: linkField.key,
             value: linkField.value,
-            keyArr: Object.keys(link.variableMap),
-            valArr: Object.keys(link.variableMap).map((key) => link.variableMap?.[key]?.toString() || ''),
+            keyArr: Object.keys(link.variables),
+            valArr: Object.keys(link.variables).map((key) => link.variables?.[key]?.toString() || ''),
             links: [link],
             fieldIndex: linkField.fieldIndex,
           });

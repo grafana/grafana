@@ -349,7 +349,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     });
   }
 
-  getVariablesMapInTemplate(
+  getAllVariablesInTarget(
     target: string,
     scopedVars: ScopedVars,
     format?: string | Function

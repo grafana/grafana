@@ -32,7 +32,7 @@ const dataLinkHasRequiredPermissionsFilter = (link: DataLink) => {
 const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasRequiredPermissionsFilter];
 
 export interface ExploreFieldLinkModel extends LinkModel<Field> {
-  variableMap?: Record<string, string | number | boolean | undefined>;
+  variables?: Record<string, string | number | boolean | undefined>;
 }
 
 /**
@@ -126,17 +126,17 @@ export const getFieldLinksForExplore = (options: {
         }
 
         const allVars = { ...scopedVars, ...internalLinkSpecificVars };
-        const varMapFn = getTemplateSrv().getVariablesMapInTemplate.bind(getTemplateSrv());
-        const variableMapData = dataLinkHasAllVariablesDefined(link, allVars, varMapFn);
-        let variableMap: Record<string, string | number | boolean | undefined> = {};
-        if (Object.keys(variableMapData.variableMap).length === 0) {
+        const varMapFn = getTemplateSrv().getAllVariablesInTarget.bind(getTemplateSrv());
+        const variableData = dataLinkHasAllVariablesDefined(link, allVars, varMapFn);
+        let variables: Record<string, string | number | boolean | undefined> = {};
+        if (Object.keys(variableData.variables).length === 0) {
           const fieldName = field.name.toString();
-          variableMap[fieldName] = '';
+          variables[fieldName] = '';
         } else {
-          variableMap = variableMapData.variableMap;
+          variables = variableData.variables;
         }
 
-        if (variableMapData.allVariablesDefined) {
+        if (variableData.allVariablesDefined) {
           const internalLink = mapInternalLinkToExplore({
             link,
             internalLink: link.internal,
@@ -146,7 +146,7 @@ export const getFieldLinksForExplore = (options: {
             onClickFn: splitOpenFn,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
-          return { ...internalLink, variableMap: variableMap };
+          return { ...internalLink, variables: variables };
         } else {
           return undefined;
         }
@@ -210,11 +210,11 @@ export function dataLinkHasAllVariablesDefined<T extends DataLink>(
   query: T,
   scopedVars: ScopedVars,
   getVarMap: Function
-): { variableMap: Record<string, string | number | boolean | undefined>; allVariablesDefined: boolean } {
+): { variables: Record<string, string | number | boolean | undefined>; allVariablesDefined: boolean } {
   const vars = getVarMap(getStringsFromObject(query), scopedVars);
   // the string processor will convert null to '' but is not ran in all scenarios
   return {
-    variableMap: vars,
+    variables: vars,
     allVariablesDefined: Object.values(vars).every((val) => val !== undefined && val !== null && val !== ''),
   };
 }
