@@ -31,8 +31,6 @@ func (s *LocalSource) DefaultSignature(_ context.Context) (plugins.Signature, bo
 	case plugins.Core:
 		return plugins.Signature{
 			Status: plugins.SignatureInternal,
-			//Type:       plugins.GrafanaSignature,
-			//SigningOrg: "Grafana Labs",
 		}, true
 	default:
 		return plugins.Signature{}, false
