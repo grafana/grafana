@@ -170,7 +170,7 @@ type HTTPServer struct {
 	pluginsUpdateChecker         *updatechecker.PluginsService
 	searchUsersService           searchusers.Service
 	teamGuardian                 teamguardian.TeamGuardian
-	queryDataService             *query.Service
+	queryDataService             query.Service
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
 	authenticator                loginpkg.Authenticator
@@ -233,7 +233,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	quotaService quota.Service, socialService social.Service, tracer tracing.Tracer,
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
-	dataSourcesService datasources.DataSourceService, queryDataService *query.Service,
+	dataSourcesService datasources.DataSourceService, queryDataService query.Service,
 	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService, httpEntityStore httpentitystore.HTTPEntityStore,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,

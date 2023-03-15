@@ -172,6 +172,7 @@ var wireBasicSet = wire.NewSet(
 	New,
 	api.ProvideHTTPServer,
 	query.ProvideService,
+	wire.Bind(new(query.Service), new(*query.ServiceImpl)),
 	bus.ProvideBus,
 	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
 	thumbs.ProvideService,
