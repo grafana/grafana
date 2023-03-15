@@ -749,6 +749,28 @@ export type TimeZoneUtc = 'utc';
  */
 export type TimeZoneBrowser = 'browser';
 
+/**
+ * The variable format is used while
+ */
+export enum VariableFormatID {
+  Csv = 'csv',
+  Date = 'date',
+  Distributed = 'distributed',
+  Doublequote = 'doublequote',
+  Glob = 'glob',
+  Html = 'html',
+  Json = 'json',
+  Lucene = 'lucene',
+  Percentencode = 'percentencode',
+  Pipe = 'pipe',
+  Queryparam = 'queryparam',
+  Raw = 'raw',
+  Regex = 'regex',
+  Singlequote = 'singlequote',
+  Sqlstring = 'sqlstring',
+  Text = 'text',
+}
+
 export interface DataSourceRef {
   /**
    * The plugin type-id
