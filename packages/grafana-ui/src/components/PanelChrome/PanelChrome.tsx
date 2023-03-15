@@ -127,7 +127,7 @@ export function PanelChrome({
       {loadingState === LoadingState.Loading && onCancelQuery && (
         <Tooltip content="Cancel query">
           <TitleItem className={dragClassCancel} data-testid="panel-cancel-query" onClick={onCancelQuery}>
-            <Icon name="times-circle" size="md" />
+            <Icon name="sync-slash" size="md" />
           </TitleItem>
         </Tooltip>
       )}
