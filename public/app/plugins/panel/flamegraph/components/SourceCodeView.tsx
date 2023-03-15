@@ -163,7 +163,7 @@ export function SourceCodeView(props: Props) {
     // should switch to the static gutter.markers: API
     lineMarker(view, line) {
       let lineNum = view.state.doc.lineAt(line.from).number;
-      let rawValue = byLineData.value.get(lineNum) ?? 0;
+      let rawValue = byLineData.self.get(lineNum) ?? 0;
       let heatFactor = rawValue > 0 ? (rawValue - minRawSelf) / (maxRawSelf - minRawSelf) : 0;
       let marker = heatFactor === 0 ? null : new HeatMarker(rawValue, heatFactor);
       return marker;
