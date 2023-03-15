@@ -1,9 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createBrowserHistory, createMemoryHistory } from 'history';
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
-import { TestProvider, TestProviderMemoryRouter } from 'test/helpers/TestProvider';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { locationService, logInfo, setDataSourceSrv } from '@grafana/runtime';
