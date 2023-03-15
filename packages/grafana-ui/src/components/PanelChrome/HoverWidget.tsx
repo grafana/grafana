@@ -95,10 +95,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     draggable: css({
       cursor: 'move',
-      // mobile do not support draggable panels
-      [theme.breakpoints.down('md')]: {
-        display: 'none',
-      },
     }),
     menuButton: css({
       color: theme.colors.text.primary,
