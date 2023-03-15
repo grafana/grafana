@@ -120,7 +120,8 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 						  "namespace_id":1,
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
-						  "exec_err_state":"Alerting"
+						  "exec_err_state":"Alerting",
+						  "for_error": "0s"
 					   }
 					}
 				 ]
@@ -171,7 +172,8 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 						"namespace_id":2,
 						"rule_group":"arulegroup",
 						"no_data_state":"NoData",
-						"exec_err_state":"Alerting"
+						"exec_err_state":"Alerting",
+						"for_error": "0s"
 					 }
 				  }
 			   ]
@@ -245,7 +247,8 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 						  "namespace_id":1,
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
-						  "exec_err_state":"Alerting"
+						  "exec_err_state":"Alerting",
+						  "for_error": "0s"
 					   }
 					}
 				 ]
@@ -520,7 +523,8 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"namespace_id": 1,
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
-				"exec_err_state": "Alerting"
+				"exec_err_state": "Alerting",
+				"for_error": "0s"
 			}
 		}, {
 			"expr": "",
@@ -554,7 +558,8 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"namespace_id": 1,
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "Alerting",
-				"exec_err_state": "Alerting"
+				"exec_err_state": "Alerting",
+				"for_error": "0s"
 			}
 		}]
 	}]
@@ -600,7 +605,8 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"namespace_id": 1,
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
-				"exec_err_state": "Alerting"
+				"exec_err_state": "Alerting",
+				"for_error": "0s"
 			}
 		}]
 	}]
