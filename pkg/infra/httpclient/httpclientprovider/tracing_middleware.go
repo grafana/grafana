@@ -26,7 +26,7 @@ func TracingMiddleware(logger log.Logger, tracer tracing.Tracer) httpclient.Midd
 			ctx, span := tracer.Start(req.Context(), "HTTP Outgoing Request", trace.WithSpanKind(trace.SpanKindClient))
 			defer span.End()
 
-			ctx = httptrace.WithClientTrace(ctx, otelhttptrace.NewClientTrace(ctx, otelhttptrace.WithoutSubSpans()))
+			ctx = httptrace.WithClientTrace(ctx, otelhttptrace.NewClientTrace(ctx, otelhttptrace.WithoutSubSpans(), otelhttptrace.WithoutHeaders()))
 			req = req.WithContext(ctx)
 			for k, v := range opts.Labels {
 				span.SetAttributes(k, v, attribute.Key(k).String(v))
