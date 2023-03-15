@@ -565,30 +565,3 @@ func protoRole(r org.RoleType) pluginProto.PluginData_JsonData_Role {
 	}
 	return pluginProto.PluginData_JsonData_VIEWER
 }
-
-func toGrafanaDTO(gDTO plugins.PluginDTO) plugins.PluginDTO {
-	dto := plugins.PluginDTO{
-		JSONData:        gDTO.JSONData,
-		Class:           gDTO.Class,
-		IncludedInAppID: gDTO.IncludedInAppID,
-		DefaultNavURL:   gDTO.DefaultNavURL,
-		Pinned:          gDTO.Pinned,
-		Signature:       gDTO.Signature,
-		SignatureType:   gDTO.SignatureType,
-		SignatureOrg:    gDTO.SignatureOrg,
-		SignatureError:  gDTO.SignatureError,
-		Module:          gDTO.Module,
-		BaseURL:         gDTO.BaseURL,
-		//StreamHandler:   nil,
-	}
-
-	return dto
-}
-
-func toLibTypes(types []plugins.Type) []plugins.Type {
-	var libTypes []plugins.Type
-	for _, t := range types {
-		libTypes = append(libTypes, plugins.Type(t))
-	}
-	return libTypes
-}

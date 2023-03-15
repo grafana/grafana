@@ -22,9 +22,7 @@ import (
 
 type Server struct {
 	*services.BasicService
-
 	pm  *core
-	cfg *setting.Cfg
 	log log.Logger
 }
 
@@ -63,38 +61,6 @@ func (s *Server) stop(failure error) error {
 	return failure
 }
 
-//func (s *Server) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
-//	libDTO, exists := s.pm.Plugin(ctx, pluginID)
-//	if !exists {
-//		return plugins.PluginDTO{}, false
-//	}
-//
-//	return toGrafanaDTO(libDTO), true
-//}
-//
-//func (s *Server) Plugins(ctx context.Context, types ...plugins.Type) []plugins.PluginDTO {
-//	libTypes := toLibTypes(types)
-//
-//	var res []plugins.PluginDTO
-//	for _, p := range s.pm.Plugins(ctx, libTypes...) {
-//		res = append(res, toGrafanaDTO(p))
-//	}
-//
-//	return res
-//}
-//
-//func (s *Server) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
-//	return s.pm.Add(ctx, pluginID, version, plugins.CompatOpts{
-//		GrafanaVersion: opts.GrafanaVersion,
-//		OS:             opts.OS,
-//		Arch:           opts.OS,
-//	})
-//}
-//
-//func (s *Server) Remove(ctx context.Context, pluginID string) error {
-//	return s.pm.Remove(ctx, pluginID)
-//}
-
 func (s *Server) GetPlugin(ctx context.Context, req *pluginProto.GetPluginRequest) (*pluginProto.GetPluginResponse, error) {
 	p, exists := s.pm.Plugin(ctx, req.Id)
 	if !exists {
@@ -115,7 +81,7 @@ func (s *Server) GetPlugins(ctx context.Context, req *pluginProto.GetPluginsRequ
 	}
 
 	var ps []*pluginProto.PluginData
-	for _, p := range s.pm.Plugins(ctx, toLibTypes(types)...) {
+	for _, p := range s.pm.Plugins(ctx, types...) {
 		ps = append(ps, toProto(p))
 	}
 
