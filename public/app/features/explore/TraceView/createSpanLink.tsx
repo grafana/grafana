@@ -13,7 +13,6 @@ import {
   ScopedVars,
   SplitOpen,
   TimeRange,
-  dataLinkHasAllVariablesDefined,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -24,7 +23,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { getFieldLinksForExplore } from '../utils/links';
+import { getFieldLinksForExplore, dataLinkHasAllVariablesDefined } from '../utils/links';
 
 import { SpanLinkFunc, Trace, TraceSpan } from './components';
 import { SpanLinks } from './components/types/links';

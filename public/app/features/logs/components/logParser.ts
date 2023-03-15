@@ -1,11 +1,12 @@
 import memoizeOne from 'memoize-one';
 
 import { DataFrame, Field, FieldType, LinkModel, LogRowModel } from '@grafana/data';
+import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 
 export type FieldDef = {
   key: string;
   value: string;
-  links?: Array<LinkModel<Field>>;
+  links?: Array<LinkModel<Field>> | ExploreFieldLinkModel[];
   fieldIndex: number;
 };
 
@@ -16,7 +17,11 @@ export type FieldDef = {
 export const getAllFields = memoizeOne(
   (
     row: LogRowModel,
-    getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>
+    getFieldLinks?: (
+      field: Field,
+      rowIndex: number,
+      dataFrame: DataFrame
+    ) => Array<LinkModel<Field>> | ExploreFieldLinkModel[]
   ) => {
     const dataframeFields = getDataframeFields(row, getFieldLinks);
 

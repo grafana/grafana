@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 
 import { CoreApp, DataFrame, Field, LinkModel, LogRowModel } from '@grafana/data';
 import { Themeable2, withTheme2 } from '@grafana/ui';
+import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';
 
@@ -66,7 +67,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
 
     // create route for log line links to be displayed
     hiddenFieldsWithLinks.forEach((linkField) => {
-      linkField.links?.forEach((link) => {
+      // links can be from anywhere, but Explore Links extend LinkModel
+      linkField.links?.forEach((link: ExploreFieldLinkModel) => {
         if (link.variableMap) {
           fieldsWithLinksFromVariableMap.push({
             key: linkField.key,

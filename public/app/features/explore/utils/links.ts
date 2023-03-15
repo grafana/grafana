@@ -12,7 +12,6 @@ import {
   SplitOpen,
   DataLink,
   DisplayValue,
-  dataLinkHasAllVariablesDefined,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -32,6 +31,10 @@ const dataLinkHasRequiredPermissionsFilter = (link: DataLink) => {
  */
 const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasRequiredPermissionsFilter];
 
+export interface ExploreFieldLinkModel extends LinkModel<Field> {
+  variableMap?: Record<string, string | number | boolean | undefined>;
+}
+
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
  * metadata with datasource in which case we will add onClick to open the link in new split window. This assumes
@@ -46,7 +49,7 @@ export const getFieldLinksForExplore = (options: {
   range: TimeRange;
   vars?: ScopedVars;
   dataFrame?: DataFrame;
-}): Array<LinkModel<Field>> => {
+}): ExploreFieldLinkModel[] => {
   const { field, vars, splitOpenFn, range, rowIndex, dataFrame } = options;
   const scopedVars: ScopedVars = { ...(vars || {}) };
   scopedVars['__value'] = {
@@ -134,7 +137,7 @@ export const getFieldLinksForExplore = (options: {
         }
 
         if (variableMapData.allVariablesDefined) {
-          return mapInternalLinkToExplore({
+          const internalLink = mapInternalLinkToExplore({
             link,
             internalLink: link.internal,
             scopedVars: allVars,
@@ -142,14 +145,14 @@ export const getFieldLinksForExplore = (options: {
             field,
             onClickFn: splitOpenFn,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-            variableMap: variableMap,
           });
+          return { ...internalLink, variableMap: variableMap };
         } else {
           return undefined;
         }
       }
     });
-    return fieldLinks.filter((link): link is LinkModel<Field> => !!link);
+    return fieldLinks.filter((link): link is ExploreFieldLinkModel => !!link);
   }
   return [];
 };
@@ -195,4 +198,37 @@ export function useLinks(range: TimeRange, splitOpenFn?: SplitOpen) {
     },
     [range, splitOpenFn]
   );
+}
+
+/**
+ * Use variable map from templateSrv to determine if all variables have values
+ * @param query
+ * @param scopedVars
+ * @param getVarMap
+ */
+export function dataLinkHasAllVariablesDefined<T extends DataLink>(
+  query: T,
+  scopedVars: ScopedVars,
+  getVarMap: Function
+): { variableMap: Record<string, string | number | boolean | undefined>; allVariablesDefined: boolean } {
+  const vars = getVarMap(getStringsFromObject(query), scopedVars);
+  // the string processor will convert null to '' but is not ran in all scenarios
+  return {
+    variableMap: vars,
+    allVariablesDefined: Object.values(vars).every((val) => val !== undefined && val !== null && val !== ''),
+  };
+}
+
+function getStringsFromObject(obj: Object): string {
+  let acc = '';
+  let k: keyof typeof obj;
+
+  for (k in obj) {
+    if (typeof obj[k] === 'string') {
+      acc += ' ' + obj[k];
+    } else if (typeof obj[k] === 'object') {
+      acc += ' ' + getStringsFromObject(obj[k]);
+    }
+  }
+  return acc;
 }

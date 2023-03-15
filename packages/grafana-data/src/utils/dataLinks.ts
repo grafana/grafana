@@ -38,11 +38,10 @@ export type LinkToExploreOptions = {
   internalLink: InternalDataLink;
   onClickFn?: SplitOpen;
   replaceVariables: InterpolateFunction;
-  variableMap?: Record<string, string | number | boolean | undefined>;
 };
 
 export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkModel<Field> {
-  const { onClickFn, replaceVariables, link, scopedVars, range, field, internalLink, variableMap } = options;
+  const { onClickFn, replaceVariables, link, scopedVars, range, field, internalLink } = options;
 
   const interpolatedQuery = interpolateObject(link.internal?.query, scopedVars, replaceVariables);
   const interpolatedPanelsState = interpolateObject(link.internal?.panelsState, scopedVars, replaceVariables);
@@ -65,7 +64,6 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
       : undefined,
     target: link?.targetBlank ? '_blank' : '_self',
     origin: field,
-    variableMap,
   };
 }
 
@@ -124,37 +122,4 @@ function interpolateObjectRecursive<T extends Object>(
     }
   }
   return obj;
-}
-
-/**
- * Use variable map from templateSrv to determine if all variables have values
- * @param query
- * @param scopedVars
- * @param getVarMap
- */
-export function dataLinkHasAllVariablesDefined<T extends DataLink>(
-  query: T,
-  scopedVars: ScopedVars,
-  getVarMap: Function
-): { variableMap: Record<string, string | number | boolean | undefined>; allVariablesDefined: boolean } {
-  const vars = getVarMap(getStringsFromObject(query), scopedVars);
-  // the string processor will convert null to '' but is not ran in all scenarios
-  return {
-    variableMap: vars,
-    allVariablesDefined: Object.values(vars).every((val) => val !== undefined && val !== null && val !== ''),
-  };
-}
-
-function getStringsFromObject(obj: Object): string {
-  let acc = '';
-  let k: keyof typeof obj;
-
-  for (k in obj) {
-    if (typeof obj[k] === 'string') {
-      acc += ' ' + obj[k];
-    } else if (typeof obj[k] === 'object') {
-      acc += ' ' + getStringsFromObject(obj[k]);
-    }
-  }
-  return acc;
 }
