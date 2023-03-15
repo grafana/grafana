@@ -1,0 +1,252 @@
+syntax = "proto3";
+package plugins;
+
+option go_package = "./;plugins";
+
+message PluginData {
+
+  JsonData jsonData = 1;
+  string class = 2;
+
+  string includedInAppID = 3;
+  string defaultNavURL = 4;
+  bool pinned = 5;
+
+  string signature = 6;
+  string signatureType = 7;
+  string signatureOrg = 8;
+  string signatureError = 9;
+  string module = 10;
+  string baseUrl = 11;
+
+  message JsonData {
+    string id = 1;
+    string type = 2;
+    string name = 3;
+    Info info = 4;
+    Dependencies dependencies = 5;
+    repeated Includes includes = 6;
+    string category = 7;
+    bool preload = 8;
+    bool backend = 9;
+    repeated Route routes = 10;
+    bool skipDataQuery = 11;
+    bool autoEnabled = 12;
+    bool annotations = 13;
+    bool metrics = 14;
+    bool alerting = 15;
+    bool explore = 16;
+    bool tables = 17;
+    bool logs = 18;
+    bool tracing = 19;
+    bool streaming = 20;
+    string signature = 21;
+    string module = 22;
+    string baseUrl = 23;
+    string state = 24;
+    bool builtIn = 25;
+    bool mixed = 26;
+    bool sdk = 27;
+    string executable = 28;
+    bool hideFromList = 29;
+    repeated RoleRegistration roles = 30;
+    map<string, bool> queryOptions = 31;
+
+    message Info {
+      Author author = 1;
+      string description = 2;
+      repeated Link links = 3;
+      Logos logos = 4;
+      Build build = 5;
+      repeated Screenshot screenshots = 6;
+      string version = 7;
+      string updated = 8;
+
+      message Author {
+        string name = 1;
+        string url = 2;
+      }
+
+      message Logos {
+        string small = 1;
+        string large = 2;
+      }
+
+      message Build {
+        int64 time = 1;
+        string repo = 2;
+        string branch = 3;
+        string hash = 4;
+      }
+
+      message Link {
+        string name = 1;
+        string url = 2;
+      }
+
+      message Screenshot {
+        string name = 1;
+        string path = 2;
+      }
+    }
+
+    message RoleRegistration {
+      RBACRole   Role = 1;
+      repeated string Grants = 2;
+
+      message RBACRole {
+        string name = 1;
+        string description = 2;
+        repeated Permission permissions = 3;
+      }
+
+      message Permission {
+        string action = 1;
+        string   scope = 2;
+      }
+    }
+
+    enum Role {
+      VIEWER = 0;
+      EDITOR = 1;
+      ADMIN = 2;
+    }
+
+    message Dependencies {
+      string grafanaDependency = 1;
+      string grafanaVersion = 2;
+      repeated PluginDependency plugins = 3;
+
+      message PluginDependency {
+        string id = 1;
+        string type = 2;
+        string name = 3;
+        string version = 4;
+      }
+    }
+
+    message Includes {
+      string name = 1;
+      string Path = 2;
+      string type = 3;
+      string component = 4;
+      Role role = 5;
+      string action = 6;
+      bool addToNav = 7;
+      bool defaultNav = 8;
+      string slug = 9;
+      string icon = 10;
+      string uid = 11;
+      string id = 12;
+    }
+
+    message Route {
+      string path = 1;
+      string method = 2;
+      Role reqRole = 3;
+      string url = 4;
+      repeated URLParam urlParams = 5;
+      repeated Header      headers = 6;
+      string authType = 7;
+      JWTTokenAuth tokenAuth = 8;
+      JWTTokenAuth jwtTokenAuth = 9;
+      bytes body = 10;
+
+      message Header {
+        string name = 1;
+        string content = 2;
+      }
+
+      message URLParam {
+        string name = 1;
+        string content = 2;
+      }
+
+      message JWTTokenAuth {
+        string url = 1;
+        repeated string scopes = 2;
+        map<string, string> params = 3;
+      }
+    }
+  }
+}
+
+message GetPluginRequest {
+  string id = 1;
+}
+
+message GetPluginResponse {
+  PluginData plugin = 1;
+}
+
+message GetPluginsRequest {
+  repeated string types = 1;
+}
+
+message GetPluginsResponse {
+  repeated PluginData plugins = 1;
+}
+
+message AddPluginRequest {
+  string id = 1;
+
+  string version = 2;
+
+  AddPluginOpts opts = 3;
+}
+
+message AddPluginOpts {
+  string grafanaVersion = 1;
+
+  string os = 2;
+
+  string arch = 3;
+}
+
+message AddPluginResponse {
+  bool OK = 1;
+}
+
+message RemovePluginRequest {
+  string id = 1;
+}
+
+message RemovePluginResponse {
+  bool OK = 1;
+}
+
+message GetPluginErrorsRequest {
+
+}
+
+message GetPluginErrorsResponse {
+  repeated PluginError pluginErrors = 1;
+}
+
+message PluginError {
+  string id = 1;
+  string error = 2;
+}
+
+message GetStaticRoutesRequest {
+
+}
+
+message GetStaticRoutesResponse {
+  repeated StaticRoute staticRoutes = 1;
+}
+
+message StaticRoute {
+  string id = 1;
+  string directory = 2;
+}
+
+service PluginManager {
+  rpc GetPlugin(GetPluginRequest) returns (GetPluginResponse);
+  rpc GetPlugins(GetPluginsRequest) returns (GetPluginsResponse);
+  rpc AddPlugin(AddPluginRequest) returns (AddPluginResponse);
+  rpc RemovePlugin(RemovePluginRequest) returns (RemovePluginResponse);
+
+  rpc PluginErrors(GetPluginErrorsRequest) returns (GetPluginErrorsResponse); // Can we attach error to a plugin instead?
+  rpc StaticRoute(GetStaticRoutesRequest) returns (GetStaticRoutesResponse); // Can we attach routes to a plugin instead?
+}

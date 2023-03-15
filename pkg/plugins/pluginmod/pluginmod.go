@@ -52,7 +52,7 @@ func (m *PluginsModule) initServer() (services.Service, error) {
 }
 
 func (m *PluginsModule) initClient() (services.Service, error) {
-	c := NewClient()
+	c := NewClient(m.cfg)
 	m.registerPluginManager(c)
 
 	return c, nil
