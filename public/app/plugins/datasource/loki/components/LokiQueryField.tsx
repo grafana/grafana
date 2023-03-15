@@ -76,7 +76,6 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
         >
           <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
             <MonacoQueryFieldWrapper
-              runQueryOnBlur={false}
               datasource={datasource}
               history={history ?? []}
               onChange={this.onChangeQuery}
