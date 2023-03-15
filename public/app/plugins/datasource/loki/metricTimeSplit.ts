@@ -19,17 +19,15 @@ function expandTimeRange(startTime: number, endTime: number, step: number): [num
   return [newStartTime, newEndTime];
 }
 
-const MAX_CHUNK_COUNT = 50;
-
 export function getRangeChunks(
   startTime: number,
   endTime: number,
   step: number,
   idealRangeDuration: number
-): Array<[number, number]> | null {
+): Array<[number, number]> {
   if (idealRangeDuration < step) {
     // we cannot create chunks smaller than `step`
-    return null;
+    return [[startTime, endTime]];
   }
 
   // we make the duration a multiple of `step`, lowering it if necessary
@@ -45,10 +43,6 @@ export function getRangeChunks(
     // to cross over the startTime
     const chunkStartTime = Math.max(chunkEndTime - alignedDuration, alignedStartTime);
     result.push([chunkStartTime, chunkEndTime]);
-
-    if (result.length > MAX_CHUNK_COUNT) {
-      return null;
-    }
   }
 
   // because we walked backwards, we need to reverse the array

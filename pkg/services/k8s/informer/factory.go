@@ -46,7 +46,7 @@ func ProvideFactory(
 	restConfigProvider apiserver.RestConfigProvider,
 	features featuremgmt.FeatureToggles,
 ) (*factory, error) {
-	enabled := features.IsEnabled(featuremgmt.FlagK8s)
+	enabled := features.IsEnabled(featuremgmt.FlagK8S)
 	if !enabled {
 		return &factory{}, nil
 	}

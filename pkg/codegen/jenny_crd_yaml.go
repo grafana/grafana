@@ -10,8 +10,8 @@ import (
 	"cuelang.org/go/encoding/openapi"
 	cueyaml "cuelang.org/go/pkg/encoding/yaml"
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 	goyaml "gopkg.in/yaml.v3"
 )

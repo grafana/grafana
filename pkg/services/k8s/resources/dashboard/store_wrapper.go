@@ -33,7 +33,7 @@ func ProvideStoreWrapper(
 	clientset client.ClientSetProvider,
 ) (dashboards.Store, error) {
 	// When feature is disabled, resolve the upstream SQL store
-	if !features.IsEnabled(featuremgmt.FlagK8s) {
+	if !features.IsEnabled(featuremgmt.FlagK8S) {
 		return store, nil
 	}
 	return &StoreWrapper{

@@ -78,7 +78,7 @@ type ShortWebhookConfig struct {
 
 // ProvideClientset returns a new Clientset configured with cfg.
 func ProvideClientsetProvier(toggles featuremgmt.FeatureToggles, restConfigProvider apiserver.RestConfigProvider) (*service, error) {
-	if !toggles.IsEnabled(featuremgmt.FlagK8s) {
+	if !toggles.IsEnabled(featuremgmt.FlagK8S) {
 		return &service{}, nil
 	}
 

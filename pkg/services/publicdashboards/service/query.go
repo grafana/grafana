@@ -239,8 +239,21 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.Json {
 	result := make(map[int64][]*simplejson.Json)
 
-	for _, panelObj := range dashboard.Get("panels").MustArray() {
+	extractQueriesFromPanels(dashboard.Get("panels").MustArray(), result)
+
+	return result
+}
+
+func extractQueriesFromPanels(panels []interface{}, result map[int64][]*simplejson.Json) {
+	for _, panelObj := range panels {
 		panel := simplejson.NewFromAny(panelObj)
+
+		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
+		if panel.Get("type").MustString() == "row" && panel.Get("collapsed").MustBool() {
+			// recursive call to get queries from panels inside a row
+			extractQueriesFromPanels(panel.Get("panels").MustArray(), result)
+			continue
+		}
 
 		var panelQueries []*simplejson.Json
 
@@ -257,15 +270,12 @@ func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.J
 					datasource := map[string]interface{}{"type": "public-ds", "uid": uid}
 					query.Set("datasource", datasource)
 				}
-
 				panelQueries = append(panelQueries, query)
 			}
 		}
 
 		result[panel.Get("id").MustInt64()] = panelQueries
 	}
-
-	return result
 }
 
 func getDataSourceUidFromJson(query *simplejson.Json) string {

@@ -1,4 +1,10 @@
-import { PanelMenuItem, PluginExtension, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
+import {
+  PanelMenuItem,
+  PluginExtension,
+  PluginExtensionLink,
+  PluginExtensionTypes,
+  PluginExtensionPlacements,
+} from '@grafana/data';
 import {
   PluginExtensionPanelContext,
   PluginExtensionRegistryItem,
@@ -7,7 +13,6 @@ import {
 import { LoadingState } from '@grafana/schema';
 import config from 'app/core/config';
 import * as actions from 'app/features/explore/state/main';
-import { GrafanaExtensions } from 'app/features/plugins/extensions/placements';
 import { setStore } from 'app/store/store';
 
 import { PanelModel } from '../state';
@@ -138,7 +143,7 @@ describe('getPanelMenu()', () => {
   describe('when extending panel menu from plugins', () => {
     it('should contain menu item from link extension', () => {
       setPluginsExtensionRegistry({
-        [GrafanaExtensions.DashboardPanelMenu]: [
+        [PluginExtensionPlacements.DashboardPanelMenu]: [
           createRegistryItem<PluginExtensionLink>({
             type: PluginExtensionTypes.link,
             title: 'Declare incident',
@@ -166,7 +171,7 @@ describe('getPanelMenu()', () => {
 
     it('should truncate menu item title to 25 chars', () => {
       setPluginsExtensionRegistry({
-        [GrafanaExtensions.DashboardPanelMenu]: [
+        [PluginExtensionPlacements.DashboardPanelMenu]: [
           createRegistryItem<PluginExtensionLink>({
             type: PluginExtensionTypes.link,
             title: 'Declare incident when pressing this amazing menu item',
@@ -202,7 +207,7 @@ describe('getPanelMenu()', () => {
       });
 
       setPluginsExtensionRegistry({
-        [GrafanaExtensions.DashboardPanelMenu]: [
+        [PluginExtensionPlacements.DashboardPanelMenu]: [
           createRegistryItem<PluginExtensionLink>(
             {
               type: PluginExtensionTypes.link,
@@ -233,7 +238,7 @@ describe('getPanelMenu()', () => {
 
     it('should hide menu item if configure function returns undefined', () => {
       setPluginsExtensionRegistry({
-        [GrafanaExtensions.DashboardPanelMenu]: [
+        [PluginExtensionPlacements.DashboardPanelMenu]: [
           createRegistryItem<PluginExtensionLink>(
             {
               type: PluginExtensionTypes.link,
@@ -266,7 +271,7 @@ describe('getPanelMenu()', () => {
       const configure = jest.fn();
 
       setPluginsExtensionRegistry({
-        [GrafanaExtensions.DashboardPanelMenu]: [
+        [PluginExtensionPlacements.DashboardPanelMenu]: [
           createRegistryItem<PluginExtensionLink>(
             {
               type: PluginExtensionTypes.link,
@@ -348,7 +353,7 @@ describe('getPanelMenu()', () => {
       };
 
       setPluginsExtensionRegistry({
-        [GrafanaExtensions.DashboardPanelMenu]: [
+        [PluginExtensionPlacements.DashboardPanelMenu]: [
           createRegistryItem<PluginExtensionLink>(
             {
               type: PluginExtensionTypes.link,

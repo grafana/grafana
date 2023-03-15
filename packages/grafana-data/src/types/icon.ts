@@ -29,6 +29,7 @@ export const availableIconsIndex = {
   'arrow-up': true,
   'arrows-h': true,
   'arrows-v': true,
+  'expand-arrows': true,
   at: true,
   backward: true,
   bars: true,
