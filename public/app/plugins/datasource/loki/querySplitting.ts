@@ -7,7 +7,7 @@ import { LoadingState } from '@grafana/schema';
 import { LokiDatasource } from './datasource';
 import { getRangeChunks as getLogsRangeChunks } from './logsTimeSplit';
 import { getRangeChunks as getMetricRangeChunks } from './metricTimeSplit';
-import { combineResponses, isLogsQuery, responseHasErrors } from './queryUtils';
+import { combineResponses, isLogsQuery } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
 declare global {
