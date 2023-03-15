@@ -115,7 +115,7 @@ func templateForTests(t *testing.T) *template.Template {
 	_, err = f.WriteString(TemplateForTestsString)
 	require.NoError(t, err)
 
-	tmpl, err := template.FromGlobs(f.Name())
+	tmpl, err := template.FromGlobs([]string{f.Name()})
 	require.NoError(t, err)
 
 	return tmpl

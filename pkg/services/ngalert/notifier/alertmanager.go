@@ -49,8 +49,8 @@ const (
 	silencesFilename        = "silences"
 
 	workingDir = "alerting"
-	// maintenanceNotificationAndSilences how often should we flush and gargabe collect notifications and silences
-	maintenanceNotificationAndSilences = 15 * time.Minute
+	// maintenanceNotificationAndSilences how often should we flush and gargabe collect notifications
+	notificationLogMaintenanceInterval = 15 * time.Minute
 	// defaultResolveTimeout is the default timeout used for resolving an alert
 	// if the end time is not specified.
 	defaultResolveTimeout = 5 * time.Minute
@@ -165,14 +165,13 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	}
 
 	// Initialize the notification log
-	am.wg.Add(1)
-	am.notificationLog, err = nflog.New(
-		nflog.WithRetention(retentionNotificationsAndSilences),
-		nflog.WithSnapshot(nflogFilepath),
-		nflog.WithMaintenance(maintenanceNotificationAndSilences, am.stopc, am.wg.Done, func() (int64, error) {
-			return am.fileStore.Persist(ctx, notificationLogFilename, am.notificationLog)
-		}),
-	)
+	am.notificationLog, err = nflog.New(nflog.Options{
+		SnapshotFile: nflogFilepath,
+		Retention:    retentionNotificationsAndSilences,
+		Logger:       am.logger,
+		Metrics:      m.Registerer,
+	})
+
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the notification log component of alerting: %w", err)
 	}
@@ -191,6 +190,17 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 
 	c = am.peer.AddState(fmt.Sprintf("silences:%d", am.orgID), am.silences, m.Registerer)
 	am.silences.SetBroadcast(c.Broadcast)
+
+	am.wg.Add(1)
+	go func() {
+		am.notificationLog.Maintenance(notificationLogMaintenanceInterval, nflogFilepath, am.stopc, func() (int64, error) {
+			if _, err := am.notificationLog.GC(); err != nil {
+				am.logger.Error("notification log garbage collection", "err", err)
+			}
+			return am.fileStore.Persist(ctx, notificationLogFilename, am.notificationLog)
+		})
+		am.wg.Done()
+	}()
 
 	am.wg.Add(1)
 	go func() {
@@ -338,7 +348,7 @@ func (am *Alertmanager) getTemplate() (*template.Template, error) {
 }
 
 func (am *Alertmanager) templateFromPaths(paths ...string) (*template.Template, error) {
-	tmpl, err := template.FromGlobs(paths...)
+	tmpl, err := template.FromGlobs(paths)
 	if err != nil {
 		return nil, err
 	}
