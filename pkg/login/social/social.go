@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
-	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -37,36 +36,38 @@ type SocialService struct {
 }
 
 type OAuthInfo struct {
-	ClientId, ClientSecret  string   `toml:"client_id,omitempty"`
-	Scopes                  []string `toml:"scopes,omitempty"`
-	AuthUrl, TokenUrl       string   `toml:"auth_url,omitempty"`
-	Enabled                 bool     `toml:"enabled,omitempty"`
-	EmailAttributeName      string   `toml:"email_attribute_name,omitempty"`
-	EmailAttributePath      string   `toml:"email_attribute_path,omitempty"`
-	RoleAttributePath       string   `toml:"role_attribute_path,omitempty"`
-	RoleAttributeStrict     bool     `toml:"role_attribute_strict,omitempty"`
-	GroupsAttributePath     string   `toml:"groups_attribute_path,omitempty"`
-	TeamIdsAttributePath    string   `toml:"team_ids_attribute_path,omitempty"`
-	AllowedDomains          []string `toml:"allowed_domains,omitempty"`
-	AllowAssignGrafanaAdmin bool     `toml:"allow_assign_grafana_admin,omitempty"`
-	HostedDomain            string   `toml:"hosted_domain,omitempty"`
-	ApiUrl                  string   `toml:"api_url,omitempty"`
-	TeamsUrl                string   `toml:"teams_url,omitempty"`
-	AllowSignup             bool     `toml:"allow_signup,omitempty"`
-	Name                    string   `toml:"name,omitempty"`
-	Icon                    string   `toml:"icon,omitempty"`
-	TlsClientCert           string   `toml:"tls_client_cert,omitempty"`
-	TlsClientKey            string   `toml:"tls_client_key,omitempty"`
-	TlsClientCa             string   `toml:"tls_client_ca,omitempty"`
-	TlsSkipVerify           bool     `toml:"tls_skip_verify,omitempty"`
-	UsePKCE                 bool     `toml:"use_pkce,omitempty"`
-	AutoLogin               bool     `toml:"auto_login,omitempty"`
+	ClientId                string   `toml:"client_id"`
+	ClientSecret            string   `toml:"-"`
+	Scopes                  []string `toml:"scopes"`
+	AuthUrl                 string   `toml:"auth_url"`
+	TokenUrl                string   `toml:"token_url"`
+	Enabled                 bool     `toml:"enabled"`
+	EmailAttributeName      string   `toml:"email_attribute_name"`
+	EmailAttributePath      string   `toml:"email_attribute_path"`
+	RoleAttributePath       string   `toml:"role_attribute_path"`
+	RoleAttributeStrict     bool     `toml:"role_attribute_strict"`
+	GroupsAttributePath     string   `toml:"groups_attribute_path"`
+	TeamIdsAttributePath    string   `toml:"team_ids_attribute_path"`
+	AllowedDomains          []string `toml:"allowed_domains"`
+	AllowAssignGrafanaAdmin bool     `toml:"allow_assign_grafana_admin"`
+	HostedDomain            string   `toml:"hosted_domain"`
+	ApiUrl                  string   `toml:"api_url"`
+	TeamsUrl                string   `toml:"teams_url"`
+	AllowSignup             bool     `toml:"allow_signup"`
+	Name                    string   `toml:"name"`
+	Icon                    string   `toml:"icon"`
+	TlsClientCert           string   `toml:"tls_client_cert"`
+	TlsClientKey            string   `toml:"tls_client_key"`
+	TlsClientCa             string   `toml:"tls_client_ca"`
+	TlsSkipVerify           bool     `toml:"tls_skip_verify"`
+	UsePKCE                 bool     `toml:"use_pkce"`
+	AutoLogin               bool     `toml:"auto_login"`
 }
 
 func ProvideService(cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
 	usageStats usagestats.Service,
-	bundleRegistry bundleregistry.Service,
+	bundleRegistry supportbundles.Service,
 ) *SocialService {
 	ss := &SocialService{
 		cfg:           cfg,
@@ -238,20 +239,7 @@ func ProvideService(cfg *setting.Cfg,
 		}
 	}
 
-	if len(ss.socialMap) > 0 {
-		keys := make([]string, 0, len(ss.socialMap))
-		for k := range ss.socialMap {
-			keys = append(keys, k)
-		}
-
-		bundleRegistry.RegisterSupportItemCollector(supportbundles.Collector{
-			DisplayName:       fmt.Sprintf("OAuth Providers, (%s)", strings.Join(keys, ", ")),
-			UID:               "oauth-providers",
-			Description:       "OAuth providers configuration and health checks",
-			IncludedByDefault: false,
-			Default:           false,
-		})
-	}
+	ss.registerSupportBundleCollectors(bundleRegistry)
 
 	return ss
 }
@@ -280,6 +268,7 @@ type SocialConnector interface {
 	Exchange(ctx context.Context, code string, authOptions ...oauth2.AuthCodeOption) (*oauth2.Token, error)
 	Client(ctx context.Context, t *oauth2.Token) *http.Client
 	TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource
+	SupportBundleContent(*bytes.Buffer) error
 }
 
 type SocialBase struct {
@@ -350,8 +339,8 @@ type groupStruct struct {
 	Groups []string `json:"groups"`
 }
 
-func (s *SocialBase) supportBundleContent(bf *bytes.Buffer) {
-	bf.WriteString("## Base config\n\n")
+func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
+	bf.WriteString("## Client configuration\n\n")
 	bf.WriteString("```ini\n")
 	bf.WriteString(fmt.Sprintf("allow_assign_grafana_admin = %v\n", s.allowAssignGrafanaAdmin))
 	bf.WriteString(fmt.Sprintf("allow_sign_up = %v\n", s.allowSignup))
@@ -360,15 +349,15 @@ func (s *SocialBase) supportBundleContent(bf *bytes.Buffer) {
 	bf.WriteString(fmt.Sprintf("role_attribute_path = %v\n", s.roleAttributePath))
 	bf.WriteString(fmt.Sprintf("role_attribute_strict = %v\n", s.roleAttributeStrict))
 	bf.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", s.skipOrgRoleSync))
-	bf.WriteString("==== OAuth2 config ====\n")
 	bf.WriteString(fmt.Sprintf("client_id = %v\n", s.Config.ClientID))
-	bf.WriteString(fmt.Sprintf("client_secret = %v // issue if empty\n", strings.Repeat("*", len(s.Config.ClientSecret))))
+	bf.WriteString(fmt.Sprintf("client_secret = %v ; issue if empty\n", strings.Repeat("*", len(s.Config.ClientSecret))))
 	bf.WriteString(fmt.Sprintf("auth_url = %v\n", s.Config.Endpoint.AuthURL))
 	bf.WriteString(fmt.Sprintf("token_url = %v\n", s.Config.Endpoint.TokenURL))
 	bf.WriteString(fmt.Sprintf("auth_style = %v\n", s.Config.Endpoint.AuthStyle))
 	bf.WriteString(fmt.Sprintf("redirect_url = %v\n", s.Config.RedirectURL))
 	bf.WriteString(fmt.Sprintf("scopes = %v\n", s.Config.Scopes))
 	bf.WriteString("```\n\n")
+	return nil
 }
 
 func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy bool) (org.RoleType, bool) {
