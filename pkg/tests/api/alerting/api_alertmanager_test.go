@@ -774,7 +774,8 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 								"namespace_id": 1,
 								"rule_group": "arulegroup",
 								"no_data_state": "NoData",
-								"exec_err_state": "Alerting"
+								"exec_err_state": "Alerting",
+								"for_error": "0s"
 							}
 						}
 					]
@@ -1231,7 +1232,8 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "namespace_id":1,
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
-						  "exec_err_state":"Alerting"
+						  "exec_err_state":"Alerting",
+						  "for_error": "0s"
 					   }
 					},
 					{
@@ -1268,7 +1270,8 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "namespace_id":1,
 						  "rule_group":"arulegroup",
 						  "no_data_state":"Alerting",
-						  "exec_err_state":"Alerting"
+						  "exec_err_state":"Alerting",
+						  "for_error": "0s"
 					   }
 					}
 				 ]
@@ -1576,7 +1579,8 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                  "namespace_id":1,
 		                  "rule_group":"arulegroup",
 		                  "no_data_state":"Alerting",
-		                  "exec_err_state":"Alerting"
+		                  "exec_err_state":"Alerting",
+						  "for_error": "0s"
 		               }
 		            }
 		         ]
@@ -1686,7 +1690,8 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "namespace_id":1,
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
-					  "exec_err_state":"Alerting"
+					  "exec_err_state":"Alerting",
+					  "for_error": "0s"
 				       }
 				    }
 				 ]
@@ -1772,7 +1777,8 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "namespace_id":1,
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
-					  "exec_err_state":"Alerting"
+					  "exec_err_state":"Alerting",
+					  "for_error": "0s"
 				       }
 				    }
 				 ]
@@ -2079,7 +2085,8 @@ func TestIntegrationQuota(t *testing.T) {
 						  "namespace_id":1,
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
-						  "exec_err_state":"Alerting"
+						  "exec_err_state":"Alerting",
+						  "for_error": "0s"
 					       }
 					    }
 					 ]
