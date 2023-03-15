@@ -455,7 +455,6 @@ export const getLinksSupplier =
           replaceVariables,
         });
       }
-
       let href = link.onBuildUrl
         ? link.onBuildUrl({
             origin: field,
@@ -465,7 +464,7 @@ export const getLinksSupplier =
 
       if (href) {
         locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-        href = replaceVariables(href, variables);
+        href = replaceVariables(href, variables, 'percentencode'); // TODO: https://github.com/grafana/grafana/pull/64846
         href = locationUtil.processUrl(href);
       }
 
