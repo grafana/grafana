@@ -643,6 +643,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
   onCancelQuery = () => {
     this.props.panel.getQueryRunner().cancelQuery();
+    reportInteraction('dashboards_panelheader_cancelquery_clicked', { data_state: this.state.data.state });
   };
 
   render() {
