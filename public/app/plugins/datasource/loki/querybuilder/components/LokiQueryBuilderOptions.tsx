@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { CoreApp, isValidDuration, SelectableValue } from '@grafana/data';
+import { CoreApp, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
-import { config, reportInteraction } from '@grafana/runtime';
-import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { RadioButtonGroup, Select, AutoSizeInput } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
@@ -24,7 +24,6 @@ export interface Props {
 export const LokiQueryBuilderOptions = React.memo<Props>(
   ({ app, query, onChange, onRunQuery, maxLines, datasource }) => {
     const [queryStats, setQueryStats] = useState<QueryStats>();
-    const [chunkRangeValid, setChunkRangeValid] = useState(true);
     const prevQuery = usePrevious(query);
 
     const onQueryTypeChange = (value: LokiQueryType) => {
@@ -38,17 +37,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
         resolution: option.value,
       });
       onChange({ ...query, resolution: option.value });
-      onRunQuery();
-    };
-
-    const onChunkRangeChange = (evt: React.FormEvent<HTMLInputElement>) => {
-      const value = evt.currentTarget.value;
-      if (!isValidDuration(value)) {
-        setChunkRangeValid(false);
-        return;
-      }
-      setChunkRangeValid(true);
-      onChange({ ...query, chunkDuration: value });
       onRunQuery();
     };
 
@@ -131,21 +119,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               aria-label="Select resolution"
             />
           </EditorField>
-          {config.featureToggles.lokiQuerySplitting && (
-            <EditorField
-              label="Chunk Duration"
-              tooltip="Defines the duration of a single query chunk when query chunking is used."
-            >
-              <AutoSizeInput
-                minWidth={14}
-                type="string"
-                min={0}
-                defaultValue={query.chunkDuration ?? '1d'}
-                onCommitChange={onChunkRangeChange}
-                invalid={!chunkRangeValid}
-              />
-            </EditorField>
-          )}
         </QueryOptionGroup>
       </EditorRow>
     );
