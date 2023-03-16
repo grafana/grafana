@@ -530,10 +530,5 @@ func (s *SocialGenericOAuth) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString(fmt.Sprintf("allowed_organizations = %v\n", s.allowedOrganizations))
 	bf.WriteString("```\n\n")
 
-	err := s.SocialBase.SupportBundleContent(bf)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.SocialBase.SupportBundleContent(bf)
 }
