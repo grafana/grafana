@@ -83,4 +83,5 @@ export interface FeatureToggles {
   traceqlSearch?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
+  influxdbBackendMigration?: boolean;
 }
