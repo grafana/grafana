@@ -232,6 +232,7 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 				}
 			}
 		}
+
 		docs = append(docs, doc)
 	}
 	return docs

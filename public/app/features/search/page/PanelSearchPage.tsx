@@ -3,17 +3,15 @@ import React, { useRef, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { config } from '@grafana/runtime';
+import { SceneGridLayout, SceneTimeRange, SceneTimePicker } from '@grafana/scenes';
 import { Input, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { PanelModel } from 'app/features/dashboard/state';
-import { Scene, SceneGridLayout, VizPanel } from 'app/features/scenes/components';
-import { EmbeddedScene } from 'app/features/scenes/components/Scene';
-import { SceneTimeRange } from 'app/features/scenes/core/SceneTimeRange';
-import { SceneQueryRunner } from 'app/features/scenes/querying/SceneQueryRunner';
-import { getQueryRunnerWithRandomWalkQuery } from 'app/features/scenes/scenes/queries';
-import { TextMode } from 'app/plugins/panel/text/models.gen';
+import { DashboardScene } from 'app/features/scenes/dashboard/DashboardScene';
+import { createVizPanelFromPanelModel } from 'app/features/scenes/dashboard/DashboardsLoader';
+import { TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 import { DashboardDTO } from 'app/types';
 
 import { DashboardQueryResult, getGrafanaSearcher } from '../service';
@@ -79,7 +77,7 @@ export default function PanelSearchPage(props: Props) {
 interface PanelSearchResults {
   totalRows: number;
   panels: PanelModel[];
-  scene: Scene;
+  scene: DashboardScene;
 }
 
 class PanelModelSearcher {
@@ -98,6 +96,10 @@ class PanelModelSearcher {
     for (let i = 0; i < panelResults.view.length; i++) {
       const p = panelResults.view.get(i);
       const panel = await this.findPanel(p);
+      panel.links = [
+        { title: p.location, url: p.url },
+        { title: 'HELLO', url: 'http://grafana.com/' },
+      ];
       panels.push(panel);
     }
     return {
@@ -178,13 +180,13 @@ class PanelModelSearcher {
   }
 }
 
-export function panelsToScene(results: PanelModel[]): Scene {
+export function panelsToScene(results: PanelModel[]): DashboardScene {
   let x = 0;
   let panelW = 24 / 3; //8
 
-  const state = {
+  return new DashboardScene({
     title: 'Search results',
-    layout: new SceneGridLayout({
+    body: new SceneGridLayout({
       children: results.map((panel, idx) => {
         if (idx > 0) {
           x += panelW;
@@ -192,34 +194,23 @@ export function panelsToScene(results: PanelModel[]): Scene {
         if (x > 20) {
           x = 0;
         }
-        return new VizPanel({
-          isResizable: false,
-          isDraggable: false,
-          size: {
+        const viz = createVizPanelFromPanelModel(panel);
+        viz.setState({
+          placement: {
+            isResizable: false,
+            isDraggable: false,
             x,
             y: 0,
             width: panelW,
             height: 8, // grid pos
             minHeight: '200px',
           },
-
-          // Standard fields
-          title: panel.title,
-          pluginId: panel.type,
-          options: panel.options,
-          fieldConfig: panel.fieldConfig,
-          pluginVersion: panel.pluginVersion,
-          $data: panel.targets
-            ? new SceneQueryRunner({
-                queries: panel.targets,
-              })
-            : undefined,
         });
+        return viz;
       }),
     }),
     $timeRange: new SceneTimeRange(),
-    $data: getQueryRunnerWithRandomWalkQuery(),
-  };
-
-  return new EmbeddedScene(state);
+    // $data: getQueryRunnerWithRandomWalkQuery(),
+    actions: [new SceneTimePicker({})],
+  });
 }
