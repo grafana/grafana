@@ -11,11 +11,7 @@ import { SeriesTable } from '../../VizTooltip';
 
 import { GraphTooltipContentProps } from './types';
 
-export const SingleModeGraphTooltip: React.FC<GraphTooltipContentProps> = ({
-  dimensions,
-  activeDimensions,
-  timeZone,
-}) => {
+export const SingleModeGraphTooltip = ({ dimensions, activeDimensions, timeZone }: GraphTooltipContentProps) => {
   // not hovering over a point, skip rendering
   if (
     activeDimensions.yAxis === null ||
