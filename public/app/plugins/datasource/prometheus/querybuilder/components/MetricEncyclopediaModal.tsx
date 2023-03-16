@@ -274,6 +274,12 @@ export const MetricEncyclopediaModal = (props: Props) => {
       });
     }
 
+    if (excludeNullMetadata) {
+      filteredMetrics = filteredMetrics.filter((m: MetricData) => {
+        return m.type !== undefined && m.description !== undefined;
+      });
+    }
+
     return filteredMetrics;
   }
 
