@@ -100,7 +100,7 @@ You can change the order of received logs from the default descending order (new
 
 ## Labels and detected fields
 
-Each log row has an extendable area with its labels and detected fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
+Each log row has an extendable area with its labels and detected fields, for more robust interaction. You can filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
 ## Escaping newlines
 
