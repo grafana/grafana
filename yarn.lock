@@ -4924,7 +4924,6 @@ __metadata:
     "@testing-library/dom": 9.0.1
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 14.0.0
-    "@testing-library/react-hooks": 8.0.1
     "@testing-library/user-event": 14.4.3
     "@types/d3-interpolate": ^3.0.0
     "@types/history": 4.7.11
@@ -5176,7 +5175,6 @@ __metadata:
     "@sentry/browser": 6.19.7
     "@testing-library/dom": 9.0.1
     "@testing-library/react": 14.0.0
-    "@testing-library/react-hooks": 8.0.1
     "@testing-library/user-event": 14.4.3
     "@types/angular": 1.8.4
     "@types/history": 4.7.11
@@ -5383,7 +5381,6 @@ __metadata:
     "@testing-library/dom": 9.0.1
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 14.0.0
-    "@testing-library/react-hooks": 8.0.1
     "@testing-library/user-event": 14.4.3
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.4.0
@@ -10602,7 +10599,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/react-hooks@npm:8.0.1":
+"@testing-library/react-hooks@npm:^8.0.1":
   version: 8.0.1
   resolution: "@testing-library/react-hooks@npm:8.0.1"
   dependencies:
@@ -22129,7 +22126,7 @@ __metadata:
     "@testing-library/dom": 9.0.1
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 14.0.0
-    "@testing-library/react-hooks": 8.0.1
+    "@testing-library/react-hooks": ^8.0.1
     "@testing-library/user-event": 14.4.3
     "@types/angular": 1.8.4
     "@types/angular-route": 1.7.2
@@ -32980,13 +32977,13 @@ __metadata:
   linkType: hard
 
 "react-error-boundary@npm:^3.1.0":
-  version: 3.1.3
-  resolution: "react-error-boundary@npm:3.1.3"
+  version: 3.1.4
+  resolution: "react-error-boundary@npm:3.1.4"
   dependencies:
     "@babel/runtime": ^7.12.5
   peerDependencies:
     react: ">=16.13.1"
-  checksum: 0a05af404aa054c54d7bc65a1814810093bf136c3ad4b3576a51d8509ee8fc302adfb66405da501fc01e839db557dd0d994b487e651897e36293907bb61458cf
+  checksum: f36270a5d775a25c8920f854c0d91649ceea417b15b5bc51e270a959b0476647bb79abb4da3be7dd9a4597b029214e8fe43ea914a7f16fa7543c91f784977f1b
   languageName: node
   linkType: hard
 

@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import React, { PropsWithChildren } from 'react';
 import { from } from 'rxjs';
 
