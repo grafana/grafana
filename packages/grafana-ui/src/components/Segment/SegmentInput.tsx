@@ -12,7 +12,7 @@ import { useExpandableLabel, SegmentProps } from '.';
 
 export interface SegmentInputProps
   extends Omit<SegmentProps, 'allowCustomValue' | 'allowEmptyValue'>,
-  Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
+    Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
   value: string | number;
   onChange: (text: string | number) => void;
 }
