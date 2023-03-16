@@ -4,7 +4,8 @@ import { PanelFieldConfig } from './panelcfg.gen';
 
 export function addDisplayOverrideOptions(builder: FieldConfigEditorBuilder<PanelFieldConfig>) {
   const category = ['Override display'];
-  const hideFromDefaults = true; // ???
+  // This value indicates that the option should not be available in the Field config tab
+  const hideFromDefaults = true;
   return builder
     .addTextInput({
       path: 'prefix',
@@ -57,9 +58,13 @@ export function applyDisplayOverrides(
   const cfg = disp.field?.custom as PanelFieldConfig;
   if (cfg) {
     let changed = false;
-    const display = { ...disp.display }; // ?? avoid check if any exist first?
+    // Copy the display object
+    const display = { ...disp.display };
+    // Test for existing display values
     if (cfg.prefix?.length) {
+      // Replace all values that exist with the custom config values
       display.prefix = replace(cfg.prefix);
+      // Update our `changed` value
       changed = true;
     }
     if (cfg.suffix?.length) {
@@ -74,6 +79,7 @@ export function applyDisplayOverrides(
       display.color = theme.visualization.getColorByName(cfg.color);
       changed = true;
     }
+    // If any changes were made, update the prev display object with the new values
     if (changed) {
       return { ...disp, display };
     }
