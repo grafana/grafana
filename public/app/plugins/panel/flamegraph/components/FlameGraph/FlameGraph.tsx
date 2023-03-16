@@ -209,7 +209,7 @@ const FlameGraph = ({
             tooltipRef.current.style.top = e.clientY + 'px';
 
             const bar = levels[levelIndex][barIndex];
-            const tooltipData = getTooltipData(valueField, '' + bar.label, bar.value, bar.self, totalTicks);
+            const tooltipData = getTooltipData(valueField, '' + getLabelValue(bar.label), bar.value, bar.self, totalTicks);
             setTooltipData(tooltipData);
           }
         }
@@ -233,6 +233,7 @@ const FlameGraph = ({
     setSelectedBarIndex,
     setContextMenuData,
     contextMenuData,
+    getLabelValue,
   ]);
 
   // hide context menu if outside of the flame graph canvas is clicked
