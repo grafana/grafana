@@ -21,5 +21,3 @@ export * from './nodeGraph';
 export { fuzzyMatch } from './fuzzy';
 
 export { ReactUtils };
-
-export { DelayRender } from './DelayRender';
