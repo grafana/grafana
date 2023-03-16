@@ -214,6 +214,16 @@ export class IframeController {
     return srcDoc;
   }
 
+  async maybeUnmountEditor() {
+    this.shouldShowIframe = false;
+    setTimeout(() => {
+      if (!this.shouldShowIframe) {
+        console.log('unmounting editor');
+        this.hideIframe();
+      }
+    }, 100);
+  }
+
   async mountQueryEditor(parent: HTMLDivElement, props: SandboxDatasourceQueryEditorProps) {
     await this.waitForIframeReady();
     this.shouldShowIframe = true;

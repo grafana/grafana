@@ -42,6 +42,9 @@ export class SandboxProxyDataSource extends DataSourceApi<SandboxQuery, SandboxO
           if (ref.current) {
             iframeController.mountQueryEditor(ref.current, props);
           }
+          return () => {
+            iframeController.maybeUnmountEditor();
+          };
         }, [props]);
         return <div style={{ height: '500px' }} ref={ref}></div>;
       },
