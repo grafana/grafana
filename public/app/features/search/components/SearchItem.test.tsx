@@ -11,7 +11,7 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-const dashboardResult: DashboardViewItem = {
+const data: DashboardViewItem = {
   kind: 'dashboard' as const,
   uid: 'lBdLINUWk',
   title: 'Test 1',
@@ -21,7 +21,7 @@ const dashboardResult: DashboardViewItem = {
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
-    item: dashboardResult,
+    item: data,
     onTagSelected: jest.fn(),
     editable: false,
   };
@@ -45,7 +45,7 @@ describe('SearchItem', () => {
     expect(checkbox).not.toBeChecked();
     fireEvent.click(checkbox);
     expect(mockedOnToggleChecked).toHaveBeenCalledTimes(1);
-    expect(mockedOnToggleChecked).toHaveBeenCalledWith(dashboardResult);
+    expect(mockedOnToggleChecked).toHaveBeenCalledWith(data);
   });
 
   it('should mark items as checked', () => {
