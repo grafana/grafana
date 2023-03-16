@@ -6,7 +6,7 @@ interface CenteredStoryProps {
   horizontal?: boolean;
   vertical?: boolean;
 }
-const CenteredStory: React.FunctionComponent<CenteredStoryProps> = ({ horizontal, vertical, children }) => {
+const CenteredStory = ({ horizontal, vertical, children }: CenteredStoryProps) => {
   return (
     <div
       style={{
