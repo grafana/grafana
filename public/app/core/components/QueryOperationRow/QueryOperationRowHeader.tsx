@@ -18,7 +18,7 @@ interface QueryOperationRowHeaderProps {
   id: string;
 }
 
-export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = ({
+export const QueryOperationRowHeader = ({
   actionsElement,
   disabled,
   draggable,

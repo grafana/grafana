@@ -25,8 +25,8 @@ import (
 )
 
 type Service struct {
-	store store
-
+	store                store
+	db                   db.DB
 	log                  log.Logger
 	cfg                  *setting.Cfg
 	dashboardStore       dashboards.Store
@@ -57,6 +57,7 @@ func ProvideService(
 		features:             features,
 		accessControl:        ac,
 		bus:                  bus,
+		db:                   db,
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		srv.DBMigration(db)
@@ -423,33 +424,44 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	if cmd.SignedInUser == nil {
 		return folder.ErrBadRequest.Errorf("missing signed in user")
 	}
+	result := []string{cmd.UID}
+	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
+		if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+			subfolders, err := s.nestedFolderDelete(ctx, cmd)
 
-	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		err := s.nestedFolderDelete(ctx, cmd)
-		if err != nil {
-			logger.Error("the delete folder on folder table failed with err: ", "error", err)
-			return err
+			if err != nil {
+				logger.Error("the delete folder on folder table failed with err: ", "error", err)
+				return err
+			}
+			result = append(result, subfolders...)
 		}
-	}
 
-	dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, cmd.UID)
-	if err != nil {
-		return err
-	}
+		for _, folder := range result {
+			dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, folder)
+			if err != nil {
+				return err
+			}
 
-	guard, err := guardian.NewByUID(ctx, dashFolder.UID, cmd.OrgID, cmd.SignedInUser)
-	if err != nil {
-		return err
-	}
+			guard, err := guardian.NewByUID(ctx, dashFolder.UID, cmd.OrgID, cmd.SignedInUser)
+			if err != nil {
+				return err
+			}
 
-	if canSave, err := guard.CanDelete(); err != nil || !canSave {
-		if err != nil {
-			return toFolderError(err)
+			if canSave, err := guard.CanDelete(); err != nil || !canSave {
+				if err != nil {
+					return toFolderError(err)
+				}
+				return dashboards.ErrFolderAccessDenied
+			}
+			err = s.legacyDelete(ctx, cmd, dashFolder)
+			if err != nil {
+				return err
+			}
 		}
-		return dashboards.ErrFolderAccessDenied
-	}
+		return nil
+	})
 
-	return s.legacyDelete(ctx, cmd, dashFolder)
+	return err
 }
 
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, dashFolder *folder.Folder) error {
@@ -508,10 +520,14 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	})
 }
 
-func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+// nestedFolderDelete inspects the folder referenced by the cmd argument, deletes all the entries for
+// its descendant folders (folders which are nested within it either directly or indirectly) from
+// the folder store and returns the UIDs for all its descendants.
+func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFolderCommand) ([]string, error) {
 	logger := s.log.FromContext(ctx)
+	result := []string{}
 	if cmd.SignedInUser == nil {
-		return folder.ErrBadRequest.Errorf("missing signed in user")
+		return result, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
 	_, err := s.Get(ctx, &folder.GetFolderQuery{
@@ -520,28 +536,30 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 		SignedInUser: cmd.SignedInUser,
 	})
 	if err != nil {
-		return err
+		return result, err
 	}
 
 	folders, err := s.store.GetChildren(ctx, folder.GetChildrenQuery{UID: cmd.UID, OrgID: cmd.OrgID})
 	if err != nil {
-		return err
+		return result, err
 	}
 	for _, f := range folders {
+		result = append(result, f.UID)
 		logger.Info("deleting subfolder", "org_id", f.OrgID, "uid", f.UID)
-		err := s.nestedFolderDelete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules, SignedInUser: cmd.SignedInUser})
+		subfolders, err := s.nestedFolderDelete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules, SignedInUser: cmd.SignedInUser})
 		if err != nil {
 			logger.Error("failed deleting subfolder", "org_id", f.OrgID, "uid", f.UID, "error", err)
-			return err
+			return result, err
 		}
+		result = append(result, subfolders...)
 	}
 	logger.Info("deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID)
 	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
 	if err != nil {
 		logger.Info("failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
-		return err
+		return result, err
 	}
-	return nil
+	return result, nil
 }
 
 // MakeUserAdmin is copy of DashboardServiceImpl.MakeUserAdmin

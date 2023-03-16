@@ -27,7 +27,7 @@ e2e.scenario({
       `Server:pipe = A'A"A|BB\\B|CCC`,
       `Server:distributed = A'A"A,Server=BB\\B,Server=CCC`,
       `Server:csv = A'A"A,BB\\B,CCC`,
-      `Server:html = A'A&quot;A, BB\\B, CCC`,
+      `Server:html = A&#39;A&quot;A, BB\\B, CCC`,
       `Server:json = ["A'A\\"A","BB\\\\B","CCC"]`,
       `Server:percentencode = %7BA%27A%22A%2CBB%5CB%2CCCC%7D`,
       `Server:singlequote = 'A\\'A"A','BB\\B','CCC'`,
