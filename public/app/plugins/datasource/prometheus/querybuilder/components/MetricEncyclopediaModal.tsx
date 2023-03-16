@@ -554,10 +554,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
               />
               <p className={styles.selectItemLabel}>{placeholders.metadataSearchSwitch}</p>
             </div>
-            {/* <div className={styles.selectItem}>
-                  <InlineSwitch data-testid={'im not sure what this toggle does.'} value={false} onChange={() => {}} />
-                  <p className={styles.selectItemLabel}>Disable fuzzy search metadata browsing (HELP!)</p>
-                </div> */}
             <div className={styles.selectItem}>
               <InlineSwitch
                 data-testid={testIds.setUseBackend}
