@@ -73,10 +73,7 @@ func TestRequestParser(t *testing.T) {
 			Hide:      &false,
 		}
 
-		var query QueryJson
-		err := json.Unmarshal(fixtureJSON, &query)
-		require.NoError(t, err)
-		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2")
 		require.NoError(t, err)
 		assert.Equal(t, "us-east-1", res.Region)
 		assert.Equal(t, "ref1", res.RefId)
@@ -110,7 +107,7 @@ func TestRequestParser(t *testing.T) {
 			Hide:      &false,
 		}
 
-		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2")
 		require.NoError(t, err)
 		assert.Equal(t, "us-east-1", res.Region)
 		assert.Equal(t, "ref1", res.RefId)
@@ -144,7 +141,7 @@ func TestRequestParser(t *testing.T) {
 			Hide:      &false,
 		}
 
-		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2")
 		require.NoError(t, err)
 		assert.Equal(t, 900, res.Period)
 	})
@@ -171,7 +168,7 @@ func TestRequestParser(t *testing.T) {
 			to := time.Now()
 			from := to.Local().Add(time.Minute * time.Duration(5))
 
-			res, err := parseRequestQuery(query, "ref1", from, to)
+			res, err := parseRequestQuery(query, "ref1", from, to, "us-east-2")
 			require.NoError(t, err)
 			assert.Equal(t, 60, res.Period)
 		})
@@ -181,7 +178,7 @@ func TestRequestParser(t *testing.T) {
 			to := time.Now()
 			from := to.AddDate(0, 0, -1)
 
-			res, err := parseRequestQuery(query, "ref1", from, to)
+			res, err := parseRequestQuery(query, "ref1", from, to, "us-east-2")
 			require.NoError(t, err)
 			assert.Equal(t, 60, res.Period)
 		})
@@ -190,7 +187,7 @@ func TestRequestParser(t *testing.T) {
 			query.Period = "auto"
 			to := time.Now()
 			from := to.AddDate(0, 0, -2)
-			res, err := parseRequestQuery(query, "ref1", from, to)
+			res, err := parseRequestQuery(query, "ref1", from, to, "us-east-2")
 			require.NoError(t, err)
 			assert.Equal(t, 300, res.Period)
 		})
@@ -200,7 +197,7 @@ func TestRequestParser(t *testing.T) {
 			to := time.Now()
 			from := to.AddDate(0, 0, -7)
 
-			res, err := parseRequestQuery(query, "ref1", from, to)
+			res, err := parseRequestQuery(query, "ref1", from, to, "us-east-2")
 			require.NoError(t, err)
 			assert.Equal(t, 900, res.Period)
 		})
@@ -210,7 +207,7 @@ func TestRequestParser(t *testing.T) {
 			to := time.Now()
 			from := to.AddDate(0, 0, -30)
 
-			res, err := parseRequestQuery(query, "ref1", from, to)
+			res, err := parseRequestQuery(query, "ref1", from, to, "us-east-2")
 			require.NoError(t, err)
 			assert.Equal(t, 3600, res.Period)
 		})
@@ -220,7 +217,7 @@ func TestRequestParser(t *testing.T) {
 			to := time.Now()
 			from := to.AddDate(0, 0, -90)
 
-			res, err := parseRequestQuery(query, "ref1", from, to)
+			res, err := parseRequestQuery(query, "ref1", from, to, "us-east-2")
 			require.NoError(t, err)
 			assert.Equal(t, 21600, res.Period)
 		})
@@ -230,7 +227,7 @@ func TestRequestParser(t *testing.T) {
 			to := time.Now()
 			from := to.AddDate(-1, 0, 0)
 
-			res, err := parseRequestQuery(query, "ref1", from, to)
+			res, err := parseRequestQuery(query, "ref1", from, to, "us-east-2")
 			require.Nil(t, err)
 			assert.Equal(t, 21600, res.Period)
 		})
@@ -240,7 +237,7 @@ func TestRequestParser(t *testing.T) {
 			to := time.Now()
 			from := to.AddDate(-2, 0, 0)
 
-			res, err := parseRequestQuery(query, "ref1", from, to)
+			res, err := parseRequestQuery(query, "ref1", from, to, "us-east-2")
 			require.NoError(t, err)
 			assert.Equal(t, 86400, res.Period)
 		})
@@ -249,7 +246,7 @@ func TestRequestParser(t *testing.T) {
 			query.Period = "auto"
 			to := time.Now().AddDate(0, 0, -14)
 			from := to.AddDate(0, 0, -2)
-			res, err := parseRequestQuery(query, "ref1", from, to)
+			res, err := parseRequestQuery(query, "ref1", from, to, "us-east-2")
 			require.NoError(t, err)
 			assert.Equal(t, 300, res.Period)
 		})
@@ -258,7 +255,7 @@ func TestRequestParser(t *testing.T) {
 			query.Period = "auto"
 			to := time.Now().AddDate(0, 0, -88)
 			from := to.AddDate(0, 0, -2)
-			res, err := parseRequestQuery(query, "ref1", from, to)
+			res, err := parseRequestQuery(query, "ref1", from, to, "us-east-2")
 			require.NoError(t, err)
 			assert.Equal(t, 3600, res.Period)
 		})
@@ -267,7 +264,7 @@ func TestRequestParser(t *testing.T) {
 			query.Period = "auto"
 			to := time.Now().AddDate(0, 0, -454)
 			from := to.AddDate(0, 0, -2)
-			res, err := parseRequestQuery(query, "ref1", from, to)
+			res, err := parseRequestQuery(query, "ref1", from, to, "us-east-2")
 			require.NoError(t, err)
 			assert.Equal(t, 21600, res.Period)
 		})
@@ -277,7 +274,7 @@ func TestRequestParser(t *testing.T) {
 		t.Run("when metric query type and metric editor mode is not specified", func(t *testing.T) {
 			t.Run("it should be metric search builder", func(t *testing.T) {
 				query := getBaseJsonQuery()
-				res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+				res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2")
 				require.NoError(t, err)
 				assert.Equal(t, MetricQueryTypeSearch, res.MetricQueryType)
 				assert.Equal(t, MetricEditorModeBuilder, res.MetricEditorMode)
@@ -287,7 +284,7 @@ func TestRequestParser(t *testing.T) {
 			t.Run("and an expression is specified it should be metric search builder", func(t *testing.T) {
 				query := getBaseJsonQuery()
 				query.Expression = "SUM(a)"
-				res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+				res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2")
 				require.NoError(t, err)
 				assert.Equal(t, MetricQueryTypeSearch, res.MetricQueryType)
 				assert.Equal(t, MetricEditorModeRaw, res.MetricEditorMode)
@@ -298,7 +295,7 @@ func TestRequestParser(t *testing.T) {
 		t.Run("and an expression is specified it should be metric search builder", func(t *testing.T) {
 			query := getBaseJsonQuery()
 			query.Expression = "SUM(a)"
-			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2")
 			require.NoError(t, err)
 			assert.Equal(t, MetricQueryTypeSearch, res.MetricQueryType)
 			assert.Equal(t, MetricEditorModeRaw, res.MetricEditorMode)
@@ -310,7 +307,7 @@ func TestRequestParser(t *testing.T) {
 		t.Run("default", func(t *testing.T) {
 			query := getBaseJsonQuery()
 			query.QueryType = "timeSeriesQuery"
-			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2")
 			require.NoError(t, err)
 			require.True(t, res.ReturnData)
 		})
@@ -319,7 +316,7 @@ func TestRequestParser(t *testing.T) {
 			query.QueryType = "timeSeriesQuery"
 			true := true
 			query.Hide = &true
-			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2")
 			require.NoError(t, err)
 			require.False(t, res.ReturnData)
 		})
@@ -328,7 +325,7 @@ func TestRequestParser(t *testing.T) {
 			query.QueryType = "timeSeriesQuery"
 			false := false
 			query.Hide = &false
-			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2")
 			require.NoError(t, err)
 			require.True(t, res.ReturnData)
 		})
@@ -336,7 +333,7 @@ func TestRequestParser(t *testing.T) {
 
 	t.Run("ID is the string `query` appended with refId if refId is a valid MetricData ID", func(t *testing.T) {
 		query := getBaseJsonQuery()
-		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2")
 		require.NoError(t, err)
 		assert.Equal(t, "ref1", res.RefId)
 		assert.Equal(t, "queryref1", res.Id)
@@ -345,7 +342,7 @@ func TestRequestParser(t *testing.T) {
 	t.Run("Valid id is generated if ID is not provided and refId is not a valid MetricData ID", func(t *testing.T) {
 		query := getBaseJsonQuery()
 		query.RefId = "$$"
-		res, err := parseRequestQuery(query, "$$", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+		res, err := parseRequestQuery(query, "$$", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2")
 		require.NoError(t, err)
 		assert.Equal(t, "$$", res.RefId)
 		assert.Regexp(t, validMetricDataID, res.Id)
@@ -359,11 +356,20 @@ func TestRequestParser(t *testing.T) {
 		label := "some label"
 		query.Label = &label
 
-		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2")
 
 		assert.NoError(t, err)
 		assert.Equal(t, "some alias", res.Alias) // alias is unmodified
 		assert.Equal(t, "some label", res.Label)
+	})
+
+	t.Run("default region is used when when region not set", func(t *testing.T) {
+		query := getBaseJsonQuery()
+		query.Region = defaultRegion
+		region := "us-east-2"
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), region)
+		assert.NoError(t, err)
+		assert.Equal(t, region, res.Region)
 	})
 }
 

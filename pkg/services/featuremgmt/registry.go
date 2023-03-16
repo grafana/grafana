@@ -10,6 +10,11 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "returnUnameHeader",
+			Description: "Return user login as header for authenticated requests",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
@@ -265,6 +270,36 @@ var (
 		{
 			Name:        "traceqlEditor",
 			Description: "Show the TraceQL editor in the explore page",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "redshiftAsyncQueryDataSupport",
+			Description:  "Enable async query data support for Redshift",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "athenaAsyncQueryDataSupport",
+			Description:  "Enable async query data support for Athena",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "increaseInMemDatabaseQueryCache",
+			Description: "Enable more in memory caching for database queries",
+		},
+		{
+			Name:        "userRemoteCache",
+			Description: "Enable using remote cache for users",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "datasourceLogger",
+			Description: "Logs all datasource requests",
+		},
+		{
+			Name:        "sessionRemoteCache",
+			Description: "Enable using remote cache for user sessions",
 			State:       FeatureStateAlpha,
 		},
 		{

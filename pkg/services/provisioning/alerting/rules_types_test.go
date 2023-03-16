@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
@@ -50,6 +51,16 @@ func TestRuleGroup(t *testing.T) {
 		rg.Interval = interval
 		_, err = rg.MapToModel()
 		require.Error(t, err)
+	})
+	t.Run("a rule group with an interval containing 'd' should work", func(t *testing.T) {
+		rg := validRuleGroupV1(t)
+		var interval values.StringValue
+		err := yaml.Unmarshal([]byte("2d"), &interval)
+		require.NoError(t, err)
+		rg.Interval = interval
+		rgMapped, err := rg.MapToModel()
+		require.NoError(t, err)
+		require.Equal(t, 48*time.Hour, rgMapped.Interval)
 	})
 	t.Run("a rule group with an empty org id should default to 1", func(t *testing.T) {
 		rg := validRuleGroupV1(t)
@@ -102,6 +113,16 @@ func TestRules(t *testing.T) {
 		require.NoError(t, err)
 		_, err = rule.mapToModel(1)
 		require.Error(t, err)
+	})
+	t.Run("a rule with a for duration containing 'd' should work", func(t *testing.T) {
+		rule := validRuleV1(t)
+		forDuration := values.StringValue{}
+		err := yaml.Unmarshal([]byte("2d"), &forDuration)
+		rule.For = forDuration
+		require.NoError(t, err)
+		ruleMapped, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Equal(t, 48*time.Hour, ruleMapped.For)
 	})
 	t.Run("a rule with out a condition should error", func(t *testing.T) {
 		rule := validRuleV1(t)

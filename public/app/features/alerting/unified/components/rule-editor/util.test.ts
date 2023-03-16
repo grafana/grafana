@@ -20,7 +20,7 @@ describe('rule-editor', () => {
 
   const classicCondition = {
     refId: 'B',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     queryType: '',
     model: {
       refId: 'B',
@@ -50,7 +50,7 @@ describe('rule-editor', () => {
 
   const mathExpression = {
     refId: 'B',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     queryType: '',
     model: {
       refId: 'B',
@@ -63,7 +63,7 @@ describe('rule-editor', () => {
 
   const reduceExpression = {
     refId: 'B',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     queryType: '',
     model: {
       refId: 'B',
@@ -77,7 +77,7 @@ describe('rule-editor', () => {
 
   const resampleExpression = {
     refId: 'A',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     model: {
       refId: 'A',
       type: 'resample',

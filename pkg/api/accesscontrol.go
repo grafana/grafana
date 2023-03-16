@@ -114,7 +114,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	}
 
 	// when running oss or enterprise without a license all users should be able to query data sources
-	if !hs.License.FeatureEnabled("accesscontrol.enforcement") {
+	if !hs.License.FeatureEnabled("dspermissions.enforcement") {
 		datasourcesReaderRole.Grants = []string{string(org.RoleViewer)}
 	}
 

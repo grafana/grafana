@@ -1,25 +1,24 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/working-with-panels/navigate-panel-editor/
-  - /docs/grafana/latest/panels/working-with-panels/navigate-inspector-panel/
-  - /docs/grafana/latest/dashboards/dashboard-create/
-  - /docs/grafana/latest/features/dashboard/dashboards/
-  - /docs/grafana/latest/panels/working-with-panels/add-panel/
-  - /docs/grafana/latest/dashboards/add-organize-panels/
-  - /docs/grafana/latest/panels/add-panels-dynamically/about-repeating-panels-rows/
-  - /docs/grafana/latest/panels/add-panels-dynamically/configure-repeating-rows/
-  - /docs/grafana/latest/panels/add-panels-dynamically/configure-repeating-panels/
-  - /docs/grafana/next/dashboards/build-dashboards/add-organize-panels/
-  - /docs/grafana/latest/panels-visualizations/add-organize-panels/
-title: Panel editor overview
-menuTitle: Panel editor overview
-weight: 1
+  - ../dashboards/add-organize-panels/
+  - ../dashboards/dashboard-create/
+  - ../features/dashboard/dashboards/
+  - ../panels/add-panels-dynamically/about-repeating-panels-rows/
+  - ../panels/add-panels-dynamically/configure-repeating-panels/
+  - ../panels/add-panels-dynamically/configure-repeating-rows/
+  - ../panels/working-with-panels/add-panel/
+  - ../panels/working-with-panels/navigate-inspector-panel/
+  - ../panels/working-with-panels/navigate-panel-editor/
+  - add-organize-panels/
 keywords:
   - panel
   - dashboard
   - dynamic
   - rows
   - add
+menuTitle: Panel editor overview
+title: Panel editor overview
+weight: 1
 ---
 
 # Panel editor overview

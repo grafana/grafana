@@ -1,11 +1,11 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/
-  - /docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/
-  - /docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/write-an-expression/
-  - docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries/
-title: Write expression queries
+  - ../../panels/query-a-data-source/use-expressions-to-manipulate-data/
+  - ../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/
+  - ../../panels/query-a-data-source/use-expressions-to-manipulate-data/write-an-expression/
+  - ./
 menuTitle: Write expression queries
+title: Write expression queries
 weight: 40
 ---
 

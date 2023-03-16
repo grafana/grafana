@@ -123,6 +123,12 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
+	// Clear permission cache for the user who's created the folder, so that new permissions are fetched for their next call
+	// Required for cases when caller wants to immediately interact with the newly created object
+	if !hs.AccessControl.IsDisabled() {
+		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
+	}
+
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
 	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
 }

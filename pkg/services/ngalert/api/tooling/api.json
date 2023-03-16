@@ -99,7 +99,7 @@
   "AlertQuery": {
    "properties": {
     "datasourceUid": {
-     "description": "Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.",
+     "description": "Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.",
      "type": "string"
     },
     "model": {
@@ -177,6 +177,9 @@
    },
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "AlertStateType": {
+   "type": "string"
   },
   "AlertStateType": {
    "type": "string"
@@ -2074,7 +2077,7 @@
     "data": {
      "example": [
       {
-       "datasourceUid": "-100",
+       "datasourceUid": "__expr__",
        "model": {
         "conditions": [
          {
@@ -3538,12 +3541,44 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array",
    "x-go-name": "GettableSilences",
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+  },
+  "integration": {
+   "description": "Integration integration",
+   "properties": {
+    "lastNotifyAttempt": {
+     "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
+     "format": "date-time",
+     "type": "string"
+    },
+    "lastNotifyAttemptDuration": {
+     "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+     "type": "string"
+    },
+    "lastNotifyAttemptError": {
+     "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+     "type": "string"
+    },
+    "name": {
+     "description": "name",
+     "type": "string"
+    },
+    "sendResolved": {
+     "description": "send resolved",
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "name",
+    "sendResolved"
+   ],
+   "type": "object"
   },
   "integration": {
    "description": "Integration integration",

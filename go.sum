@@ -1377,8 +1377,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.139.0 h1:2RQKM2QpSaWTtaGN6sK+R7LO7zy
 github.com/grafana/grafana-plugin-sdk-go v0.139.0/go.mod h1:Y+Ps2sesZ62AyCnX+hzrYnyDQYe/ZZl+A8yKLOBm12c=
 github.com/grafana/prometheus-alertmanager v0.24.1-0.20221012142027-823cd9150293 h1:dJIdfHqu+XjKz+w9zXLqXKPdp6Jjx/UPSOwdeSfWdeQ=
 github.com/grafana/prometheus-alertmanager v0.24.1-0.20221012142027-823cd9150293/go.mod h1:HVHqK+BVPa/tmL8EMhLCCrPt2a1GdJpEyxr5hgur2UI=
-github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc h1:1PY8n+rXuBNr3r1JQhoytWDCpc+pq+BibxV0SZv+Cr4=
-github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc/go.mod h1:9Zh6dWPtB3MSzTRt8fIFH60Z351QQ+s7hCU3J/tTlA4=
+github.com/grafana/saml v0.4.9-0.20230102094056-b61b9eb7c8b7 h1:cujJQ3XV6IK7Y96VpYurd2EpI5rfMRFcuyGqUlk+030=
+github.com/grafana/saml v0.4.9-0.20230102094056-b61b9eb7c8b7/go.mod h1:9Zh6dWPtB3MSzTRt8fIFH60Z351QQ+s7hCU3J/tTlA4=
 github.com/grafana/thema v0.0.0-20220817114012-ebeee841c104 h1:dYpwFYIChrMfpq3wDa/ZBxAbUGSW5NYmYBeSezhaoao=
 github.com/grafana/thema v0.0.0-20220817114012-ebeee841c104/go.mod h1:fCV1rqv6XRQg2GfIQ7pU9zdxd5fLRcEBCnrDVwlK+ZY=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6 h1:I9dh1MXGX0wGyxdV/Sl7+ugnki4Dfsy8lv2s5Yf887o=
@@ -1830,8 +1830,6 @@ github.com/mattn/go-shellwords v1.0.3/go.mod h1:3xCvwCdWdlDJUrvuMn7Wuy9eWs4pE8vq
 github.com/mattn/go-sqlite3 v1.10.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOqkbpncsNc=
 github.com/mattn/go-sqlite3 v1.11.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOqkbpncsNc=
 github.com/mattn/go-sqlite3 v1.14.6/go.mod h1:NyWgC/yNuGj7Q9rpYnZvas74GogHl5/Z4A/KQRfk6bU=
-github.com/mattn/go-sqlite3 v1.14.7 h1:fxWBnXkxfM6sRiuH3bqJ4CfzZojMOLVc0UTsTglEghA=
-github.com/mattn/go-sqlite3 v1.14.7/go.mod h1:NyWgC/yNuGj7Q9rpYnZvas74GogHl5/Z4A/KQRfk6bU=
 github.com/mattn/go-sqlite3 v1.14.16 h1:yOQRA0RpS5PFz/oikGwBEqvAWhWg5ufRz4ETLjwpU1Y=
 github.com/mattn/go-sqlite3 v1.14.16/go.mod h1:2eHXhiwb8IkHr+BDWZGa96P6+rkvnG63S2DGjv9HUNg=
 github.com/mattn/go-tty v0.0.0-20180907095812-13ff1204f104/go.mod h1:XPvLUNfbS4fJH25nqRHfWLMa1ONC8Amw+mIA639KxkE=

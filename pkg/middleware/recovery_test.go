@@ -48,6 +48,7 @@ func panicHandler(c *models.ReqContext) {
 func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
 		cfg := setting.NewCfg()
+		cfg.IsFeatureToggleEnabled = func(key string) bool { return true }
 		cfg.ErrTemplateName = "error-template"
 		sc := &scenarioContext{
 			t:   t,
@@ -67,7 +68,7 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		sc.userAuthTokenService = auth.NewFakeUserAuthTokenService()
 		sc.remoteCacheService = remotecache.NewFakeStore(t)
 
-		contextHandler := getContextHandler(t, nil, nil, nil, nil, nil)
+		contextHandler := getContextHandler(t, cfg, nil, nil, nil, nil)
 		sc.m.Use(contextHandler.Middleware)
 		// mock out gc goroutine
 		sc.m.Use(OrgRedirect(cfg, sc.mockSQLStore))

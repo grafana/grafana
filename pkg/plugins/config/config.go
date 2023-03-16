@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,6 +30,8 @@ type Cfg struct {
 	Azure *azsettings.AzureSettings
 
 	BuildVersion string // TODO Remove
+
+	LogDatasourceRequests bool
 }
 
 func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
@@ -67,6 +70,7 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 			ManagedIdentityEnabled:  azure.KeyValue("managed_identity_enabled").MustBool(grafanaCfg.Azure.ManagedIdentityEnabled),
 			ManagedIdentityClientId: azure.KeyValue("managed_identity_client_id").MustString(grafanaCfg.Azure.ManagedIdentityClientId),
 		},
+		LogDatasourceRequests: grafanaCfg.IsFeatureToggleEnabled(featuremgmt.FlagDatasourceLogger),
 	}
 }
 

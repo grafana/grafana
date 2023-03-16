@@ -362,6 +362,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 				hs.userService = userimpl.ProvideService(
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					nil, featuremgmt.WithFeatures(),
 				)
 				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})
@@ -467,6 +468,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				hs.userService = userimpl.ProvideService(
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					nil, featuremgmt.WithFeatures(),
 				)
 				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})
@@ -573,6 +575,7 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				hs.userService = userimpl.ProvideService(
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					nil, featuremgmt.WithFeatures(),
 				)
 			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
@@ -699,6 +702,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 				hs.userService = userimpl.ProvideService(
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					nil, featuremgmt.WithFeatures(),
 				)
 			})
 			setInitCtxSignedInViewer(sc.initCtx)
@@ -818,6 +822,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				hs.userService = userimpl.ProvideService(
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					nil, featuremgmt.WithFeatures(),
 				)
 				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})
@@ -946,6 +951,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				hs.userService = userimpl.ProvideService(
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					nil, featuremgmt.WithFeatures(),
 				)
 			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)

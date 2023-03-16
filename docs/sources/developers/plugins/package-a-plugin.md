@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/package-a-plugin/
-  - /docs/grafana/latest/developers/plugins/share-a-plugin/
+  - share-a-plugin/
 title: Package a plugin
 type: docs
 ---
@@ -99,9 +98,29 @@ To speed up the time it takes to review your plugin:
 
 - We're not able to give an estimate at this time, though we're constantly working on improving the time it takes to review a plugin.
 
+**Can I see metrics of my plugin installs, downloads or usage?**
+
+- No. We don't offer this information at the moment to plugin authors.
+
+**How can I update my plugin's catalog page?**
+
+- The plugin's catalog page content is extracted from the plugin README file. To update the plugin's catalog page, it is necessary to submit an updated plugin with the new content included in the README file.
+
+**Can I unlist my plugin from the Grafana Plugin's Catalog in case of a bug?**
+
+- In the event of a bug, unlisting the plugin from the Grafana Plugin's Catalog may be possible in exceptional cases, such as security concerns. However, we do not have control over the specific instances where the plugin is installed.
+
+**Can I distribute my plugin somewhere else than the Grafana Catalog?**
+
+- The official method for distributing Grafana plugins is through the Grafana Catalog. Alternative methods, such as installing private or development plugins on local Grafana instances, are available as per the guidelines provided in [this guide](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-plugin-on-local-grafana).
+
 ## Publishing your plugin for the first time
 
-{{< figure src="/static/img/docs/plugins/plugins-submission-create.png" class="docs-image--no-shadow" max-width="850px" >}}
+**Do plugin signatures expire?**
+
+- Plugin signatures do not currently expire.
+
+{{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
 
 1. [Sign in](https://grafana.com/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
@@ -111,6 +130,7 @@ To speed up the time it takes to review your plugin:
      - Select **Single** if your plugin archive contains binaries for multiple architectures.
      - Select **Multiple** if you'd like to submit separate plugin archives for each architecture. This can lead to faster downloads since users can select the specific architecture on which they want to install the plugin.
    - **URL:** A URL that points to a ZIP archive of your packaged plugin.
+   - **Source Code URL:** A URL that points to a public git repository or ZIP archive of your complete plugin source code.
    - **MD5:** The MD5 hash of the plugin specified by the **URL**.
    - The remaining questions help us determine the [signature level](https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/#plugin-signature-levels) for your plugin.
 1. Click **Submit**.
@@ -133,5 +153,6 @@ To submit an **update** for an already published plugin:
      - Select **Single** if your plugin archive contains binaries for multiple architectures.
      - Select **Multiple** if you'd like to submit separate plugin archives for each architecture. This can lead to faster downloads since users can select the specific architecture they want to install the plugin on.
    - **URL:** A URL that points to a ZIP archive of your packaged plugin.
+   - **Source Code URL:** A URL that points to a public git repository or ZIP archive of your complete plugin source code.
    - **MD5:** The MD5 hash of the plugin specified by the **URL**.
 1. Click **Submit**.

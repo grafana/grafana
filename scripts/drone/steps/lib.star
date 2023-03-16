@@ -1,14 +1,14 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
 grabpl_version = 'v3.0.15'
-build_image = 'grafana/build-container:1.6.4'
+build_image = 'grafana/build-container:1.6.6'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15.6'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
-go_image = 'golang:1.19.3'
+go_image = 'golang:1.19.4'
 
 disable_tests = False
 trigger_oss = {
@@ -527,19 +527,6 @@ def betterer_frontend_step(edition="oss"):
         'failure': 'ignore',
     }
 
-def betterer_frontend_step():
-    return {
-        'name': 'betterer-frontend',
-        'image': build_image,
-        'depends_on': [
-            'yarn-install',
-        ],
-        'commands': [
-            'yarn betterer ci',
-        ],
-        'failure': 'ignore',
-    }
-
 
 
 def test_frontend_step(edition="oss"):
@@ -667,9 +654,9 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
         sign_args = ' --sign'
         env = {
             'GRAFANA_API_KEY': from_secret('grafana_api_key'),
-            'GPG_PRIV_KEY': from_secret('gpg_priv_key'),
-            'GPG_PUB_KEY': from_secret('gpg_pub_key'),
-            'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
+            'GPG_PRIV_KEY': from_secret('packages_gpg_private_key'),
+            'GPG_PUB_KEY': from_secret('packages_gpg_public_key'),
+            'GPG_KEY_PASSWORD': from_secret('packages_gpg_passphrase'),
         }
         test_args = ''
     else:
@@ -1016,9 +1003,9 @@ def publish_packages_step(edition, ver_mode):
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
             'GCP_KEY': from_secret('gcp_key'),
-            'GPG_PRIV_KEY': from_secret('gpg_priv_key'),
-            'GPG_PUB_KEY': from_secret('gpg_pub_key'),
-            'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
+            'GPG_PRIV_KEY': from_secret('packages_gpg_private_key'),
+            'GPG_PUB_KEY': from_secret('packages_gpg_public_key'),
+            'GPG_KEY_PASSWORD': from_secret('packages_gpg_passphrase'),
         },
         'commands': [
             cmd,

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/alerting/alerting-limitations/
 title: Limitations
 weight: 552
 ---

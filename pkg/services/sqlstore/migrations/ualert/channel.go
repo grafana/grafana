@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"regexp"
 	"sort"
@@ -15,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type notificationChannel struct {
@@ -177,22 +175,9 @@ func (m *migration) getNotificationChannelMap() (channelsPerOrg, defaultChannels
 
 // Create a notifier (PostableGrafanaReceiver) from a legacy notification channel
 func (m *migration) createNotifier(c *notificationChannel) (*PostableGrafanaReceiver, error) {
-	uid := c.Uid
-	if uid == "" {
-		new, err := m.generateChannelUID()
-		if err != nil {
-			return nil, err
-		}
-		m.mg.Logger.Info("Legacy notification had an empty uid, generating a new one", "id", c.ID, "uid", new)
-		uid = new
-	}
-	if _, seen := m.seenChannelUIDs[uid]; seen {
-		new, err := m.generateChannelUID()
-		if err != nil {
-			return nil, err
-		}
-		m.mg.Logger.Warn("Legacy notification had a UID that collides with a migrated record, generating a new one", "id", c.ID, "old", uid, "new", new)
-		uid = new
+	uid, err := m.determineChannelUid(c)
+	if err != nil {
+		return nil, err
 	}
 
 	settings, secureSettings, err := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
@@ -350,16 +335,27 @@ func (m *migration) filterReceiversForAlert(name string, channelIDs []uidOrID, r
 	return filteredReceiverNames
 }
 
-func (m *migration) generateChannelUID() (string, error) {
-	for i := 0; i < 5; i++ {
-		gen := util.GenerateShortUID()
-		if _, ok := m.seenChannelUIDs[gen]; !ok {
-			m.seenChannelUIDs[gen] = struct{}{}
-			return gen, nil
+func (m *migration) determineChannelUid(c *notificationChannel) (string, error) {
+	legacyUid := c.Uid
+	if legacyUid == "" {
+		newUid, err := m.seenUIDs.generateUid()
+		if err != nil {
+			return "", err
 		}
+		m.mg.Logger.Info("Legacy notification had an empty uid, generating a new one", "id", c.ID, "uid", newUid)
+		return newUid, nil
 	}
 
-	return "", errors.New("failed to generate UID for notification channel")
+	if m.seenUIDs.contains(legacyUid) {
+		newUid, err := m.seenUIDs.generateUid()
+		if err != nil {
+			return "", err
+		}
+		m.mg.Logger.Warn("Legacy notification had a UID that collides with a migrated record, generating a new one", "id", c.ID, "old", legacyUid, "new", newUid)
+		return newUid, nil
+	}
+
+	return legacyUid, nil
 }
 
 // Some settings were migrated from settings to secure settings in between.

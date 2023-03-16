@@ -62,6 +62,22 @@ export function isGUIDish(input: string) {
   return !!input.match(/^[A-Z0-9]+/i);
 }
 
+function compareNamespaceAndName(
+  rowNamespace?: string,
+  rowName?: string,
+  resourceNamespace?: string,
+  resourceName?: string
+) {
+  // StorageAccounts subresources are not listed independently
+  if (resourceNamespace?.startsWith('microsoft.storage/storageaccounts')) {
+    resourceNamespace = 'microsoft.storage/storageaccounts';
+    if (resourceName?.endsWith('/default')) {
+      resourceName = resourceName.slice(0, -'/default'.length);
+    }
+  }
+  return rowNamespace === resourceNamespace && rowName === resourceName;
+}
+
 function matchURI(rowURI: string, resourceURI: string) {
   const targetParams = parseResourceDetails(resourceURI);
   const rowParams = parseResourceDetails(rowURI);
@@ -69,11 +85,12 @@ function matchURI(rowURI: string, resourceURI: string) {
   return (
     rowParams?.subscription === targetParams?.subscription &&
     rowParams?.resourceGroup?.toLowerCase() === targetParams?.resourceGroup?.toLowerCase() &&
-    // metricNamespace may include a subresource that we don't need to compare
-    rowParams?.metricNamespace?.toLowerCase().split('/')[0] ===
-      targetParams?.metricNamespace?.toLowerCase().split('/')[0] &&
-    // resourceName may include a subresource that we don't need to compare
-    rowParams?.resourceName?.split('/')[0] === targetParams?.resourceName?.split('/')[0]
+    compareNamespaceAndName(
+      rowParams?.metricNamespace?.toLowerCase(),
+      rowParams?.resourceName,
+      targetParams?.metricNamespace?.toLowerCase(),
+      targetParams?.resourceName
+    )
   );
 }
 

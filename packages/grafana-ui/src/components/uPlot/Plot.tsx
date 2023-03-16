@@ -65,8 +65,8 @@ export class UPlotChart extends Component<PlotProps, UPlotChartState> {
     });
 
     const config: Options = {
-      width: this.props.width,
-      height: this.props.height,
+      width: Math.floor(this.props.width),
+      height: Math.floor(this.props.height),
       ...this.props.config.getConfig(),
     };
 
@@ -93,8 +93,8 @@ export class UPlotChart extends Component<PlotProps, UPlotChartState> {
 
     if (!sameDims(prevProps, this.props)) {
       plot?.setSize({
-        width: this.props.width,
-        height: this.props.height,
+        width: Math.floor(this.props.width),
+        height: Math.floor(this.props.height),
       });
     } else if (!sameConfig(prevProps, this.props)) {
       this.reinitPlot();

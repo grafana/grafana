@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/access-control/rbac-provisioning/rbac-terraform-provisioning
-description: Learn about RBAC Terraform provisioning and view an example of provisioning configuration
-  for Grafana roles and role assignments.
+  - ../../../enterprise/access-control/rbac-provisioning/rbac-terraform-provisioning/
+description: Learn about RBAC Terraform provisioning and view an example of provisioning
+  configuration for Grafana roles and role assignments.
 menuTitle: Provisioning RBAC with Terraform
 title: Provisioning RBAC with Terraform
 weight: 60

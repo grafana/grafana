@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/configuration/
-  - /docs/grafana/latest/installation/configuration/
-  - /docs/grafana/latest/setup-grafana/configure-grafana/
+  - ../administration/configuration/
+  - ../installation/configuration/
 description: Configuration documentation
 title: Configure Grafana
 weight: 200
@@ -1754,6 +1753,12 @@ This option does not require any configuration.
 ## [rendering]
 
 Options to configure a remote HTTP image rendering service, e.g. using https://github.com/grafana/grafana-image-renderer.
+
+#### renderer_token
+
+> **Note**: Available in Grafana v9.1.2 and Image Renderer v3.6.1 or later.
+
+An auth token will be sent to and verified by the renderer. The renderer will deny any request without an auth token matching the one configured on the renderer.
 
 ### server_url
 

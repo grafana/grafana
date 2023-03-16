@@ -94,6 +94,7 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
             const queryResp = await lastValueFrom(this.datasource.query(request));
             return {
               data: queryResp.data,
+              error: queryResp.error ? new Error(messageFromError(queryResp.error)) : undefined,
             };
         }
       } catch (err) {

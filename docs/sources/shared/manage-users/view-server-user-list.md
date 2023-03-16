@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/shared/manage-users/view-server-user-list/
 title: View user list as server admin
 ---
 

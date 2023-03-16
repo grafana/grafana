@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/enterprise/
 description: Grafana Enterprise overview
 keywords:
   - grafana

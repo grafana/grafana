@@ -13,6 +13,7 @@ import (
 	"runtime/debug"
 	"runtime/trace"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -32,6 +33,7 @@ type ServerOptions struct {
 	Commit      string
 	BuildBranch string
 	BuildStamp  string
+	Args        []string
 }
 
 type exitWithCode struct {
@@ -54,6 +56,8 @@ func RunServer(opt ServerOptions) int {
 		pidFile    = serverFs.String("pidfile", "", "path to pid file")
 		packaging  = serverFs.String("packaging", "unknown", "describes the way Grafana was installed")
 
+		configOverrides = serverFs.String("configOverrides", "", "Configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null")
+
 		v           = serverFs.Bool("v", false, "prints current version and exits")
 		vv          = serverFs.Bool("vv", false, "prints current version, all dependencies and exits")
 		profile     = serverFs.Bool("profile", false, "Turn on pprof profiling")
@@ -63,7 +67,7 @@ func RunServer(opt ServerOptions) int {
 		tracingFile = serverFs.String("tracing-file", "trace.out", "Define tracing output file")
 	)
 
-	if err := serverFs.Parse(os.Args[1:]); err != nil {
+	if err := serverFs.Parse(opt.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		return 1
 	}
@@ -108,7 +112,7 @@ func RunServer(opt ServerOptions) int {
 		}()
 	}
 
-	if err := executeServer(*configFile, *homePath, *pidFile, *packaging, traceDiagnostics, opt); err != nil {
+	if err := executeServer(*configFile, *homePath, *pidFile, *packaging, *configOverrides, traceDiagnostics, opt); err != nil {
 		code := 1
 		var ewc exitWithCode
 		if errors.As(err, &ewc) {
@@ -124,7 +128,7 @@ func RunServer(opt ServerOptions) int {
 	return 0
 }
 
-func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnostics *tracingDiagnostics, opt ServerOptions) error {
+func executeServer(configFile, homePath, pidFile, packaging, configOverrides string, traceDiagnostics *tracingDiagnostics, opt ServerOptions) error {
 	defer func() {
 		if err := log.Close(); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
@@ -185,11 +189,23 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 		fmt.Println("Grafana server is running with elevated privileges. This is not recommended")
 	}
 
-	s, err := server.Initialize(setting.CommandLineArgs{
-		Config: configFile, HomePath: homePath, Args: serverFs.Args(),
-	}, server.Options{
-		PidFile: pidFile, Version: opt.Version, Commit: opt.Commit, BuildBranch: opt.BuildBranch,
-	}, api.ServerOptions{})
+	configOptions := strings.Split(configOverrides, " ")
+
+	s, err := server.Initialize(
+		setting.CommandLineArgs{
+			Config:   configFile,
+			HomePath: homePath,
+			// tailing arguments have precedence over the options string
+			Args: append(configOptions, serverFs.Args()...),
+		},
+		server.Options{
+			PidFile:     pidFile,
+			Version:     opt.Version,
+			Commit:      opt.Commit,
+			BuildBranch: opt.BuildBranch,
+		},
+		api.ServerOptions{},
+	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to start grafana. error: %s\n", err.Error())
 		return err

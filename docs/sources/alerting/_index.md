@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting/
-  - /docs/grafana/latest/about-alerting
+  - about-alerting/
+  - unified-alerting/alerting/
 title: Alerting
 weight: 114
 ---

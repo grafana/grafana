@@ -1,4 +1,6 @@
-import { EditorMode, QueryFormat, SQLQuery } from './types';
+import { EditorMode } from '@grafana/experimental';
+
+import { QueryFormat, SQLQuery } from './types';
 import { createFunctionField, setGroupByField } from './utils/sql.utils';
 
 export function applyQueryDefaults(q?: SQLQuery): SQLQuery {

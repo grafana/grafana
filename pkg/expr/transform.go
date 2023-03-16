@@ -35,7 +35,11 @@ type Request struct {
 	Debug   bool
 	OrgId   int64
 	Queries []Query
+	User    *backend.User
 }
+
+// QueryDataRequestEnricher function definition for enriching a backend.QueryDataRequest request.
+type QueryDataRequestEnricher func(ctx context.Context, req *backend.QueryDataRequest) context.Context
 
 // Query is like plugins.DataSubQuery, but with a a time range, and only the UID
 // for the data source. Also interval is a time.Duration.
@@ -43,6 +47,7 @@ type Query struct {
 	RefID         string
 	TimeRange     TimeRange
 	DataSource    *datasources.DataSource `json:"datasource"`
+	QueryEnricher QueryDataRequestEnricher
 	JSON          json.RawMessage
 	Interval      time.Duration
 	QueryType     string

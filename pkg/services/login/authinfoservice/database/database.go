@@ -29,7 +29,9 @@ func ProvideAuthInfoStore(sqlStore sqlstore.Store, secretsService secrets.Servic
 		logger:         log.New("login.authinfo.store"),
 		userService:    userService,
 	}
-	InitMetrics()
+	// FIXME: disabled the metric collection for duplicate user entries
+	// due to query performance issues that is clogging the users Grafana instance
+	// InitDuplicateUserMetrics()
 	return store
 }
 

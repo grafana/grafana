@@ -24,15 +24,16 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { VariableWithMultiSupport } from '../../../variables/types';
 import { getSearchFilterScopedVar, SearchFilterOptions } from '../../../variables/utils';
+import { SqlQueryEditor } from '../components/QueryEditor';
 import { MACRO_NAMES } from '../constants';
-import { DB, SQLQuery, SQLOptions, ResponseParser, SqlQueryModel, QueryFormat } from '../types';
+import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat, ResponseParser } from '../types';
+import migrateAnnotation from '../utils/migration';
 
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
   id: number;
   name: string;
   interval: string;
   db: DB;
-  annotations = {};
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<SQLOptions>,
@@ -44,6 +45,10 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
     this.db = this.getDB();
+    this.annotations = {
+      prepareAnnotation: migrateAnnotation,
+      QueryEditor: SqlQueryEditor,
+    };
   }
 
   abstract getDB(dsID?: number): DB;

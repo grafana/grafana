@@ -77,6 +77,7 @@ jest.mock('@grafana/runtime', () => ({
       get: (uid?: string) => datasources.find((ds) => ds.uid === uid) || datasources[0],
     };
   },
+  reportMetaAnalytics: jest.fn(),
 }));
 
 function setupQueryResponse(state: StoreState) {

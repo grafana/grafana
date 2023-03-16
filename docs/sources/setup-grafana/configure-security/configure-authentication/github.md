@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/github/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/github/
+  - ../../../auth/github/
 description: Grafana OAuthentication Guide
 keywords:
   - grafana

@@ -1,4 +1,4 @@
-import { Observable, from, mergeMap } from 'rxjs';
+import { from, mergeMap, Observable } from 'rxjs';
 
 import {
   DataQueryRequest,
@@ -61,10 +61,9 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
 }
 
 /**
- * MATCHES a constant in DataSourceWithBackend, this should be '__expr__'
- * @deprecated
+ * MATCHES a constant in DataSourceWithBackend
  */
-export const ExpressionDatasourceUID = '-100';
+export const ExpressionDatasourceUID = '__expr__';
 
 export const instanceSettings: DataSourceInstanceSettings = {
   id: -100,

@@ -16,7 +16,9 @@ const usePerconaTour = () => {
   const tourSteps = useMemo(() => (tour ? steps[tour] : []), [tour, steps]);
 
   useEffect(() => {
-    reactTour.setSteps(tour ? steps[tour] : []);
+    if (reactTour.setSteps) {
+      reactTour.setSteps(tour ? steps[tour] : []);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [steps, tour]);
 

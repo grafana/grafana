@@ -457,7 +457,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.NotNil(t, query4.Result)
 		require.Equal(t, query4.Result.OrgID, users[0].OrgID)
 
-		cacheKey := newSignedInUserCacheKey(query4.Result.OrgID, query4.UserId)
+		cacheKey := NewSignedInUserCacheKey(query4.Result.OrgID, query4.UserId)
 		_, found := ss.CacheService.Get(cacheKey)
 		require.True(t, found)
 

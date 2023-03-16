@@ -30,7 +30,7 @@ require (
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
 	github.com/centrifugal/centrifuge v0.25.0
 	github.com/cortexproject/cortex v1.10.1-0.20211014125347-85c378182d0d
-	github.com/crewjam/saml v0.4.8
+	github.com/crewjam/saml v0.4.9
 	github.com/davecgh/go-spew v1.1.1
 	github.com/denisenkom/go-mssqldb v0.12.0
 	github.com/dop251/goja v0.0.0-20210804101310-32956a348b49
@@ -341,7 +341,7 @@ require (
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
-replace github.com/crewjam/saml => github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc
+replace github.com/crewjam/saml => github.com/grafana/saml v0.4.9-0.20230102094056-b61b9eb7c8b7
 
 replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
 

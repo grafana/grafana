@@ -9,7 +9,7 @@ export interface BrandComponentProps {
   children?: JSX.Element | JSX.Element[];
 }
 
-const LoginLogo: FC<BrandComponentProps> = ({ className }) => {
+const LoginLogo: FC<BrandComponentProps & { logo?: string }> = ({ className }) => {
   return <img className={className} src="public/img/percona-logo.svg" alt="PMM" />;
 };
 

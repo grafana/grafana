@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/query_history/
-  - /docs/grafana/latest/http_api/query_history/
+  - ../../http_api/query_history/
 description: Grafana Query History HTTP API
 keywords:
   - grafana

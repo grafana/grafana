@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/jaeger/
-  - /docs/grafana/latest/features/datasources/jaeger/
+  - ../features/datasources/jaeger/
 description: Guide for using Jaeger in Grafana
 keywords:
   - grafana

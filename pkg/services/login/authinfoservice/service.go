@@ -25,7 +25,9 @@ func ProvideAuthInfoService(userProtectionService login.UserProtectionService, a
 		authInfoStore:         authInfoStore,
 		logger:                log.New("login.authinfo"),
 	}
-	usageStats.RegisterMetricsFunc(authInfoStore.CollectLoginStats)
+	// FIXME: disabled metrics until further notice
+	// query performance is slow for more than 20000 users
+	// usageStats.RegisterMetricsFunc(authInfoStore.CollectLoginStats)
 	return s
 }
 

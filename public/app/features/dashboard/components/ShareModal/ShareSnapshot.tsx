@@ -98,6 +98,8 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       timestamp: new Date(),
     };
 
+    // @PERCONA
+    // TODO: check window.forceRefresh
     if (!external) {
       this.dashboard.snapshot.originalUrl = window.location.href;
     }

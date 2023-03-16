@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/silences/
-  - /docs/grafana/latest/alerting/unified-alerting/silences/
+  - unified-alerting/silences/
 description: Silences
 keywords:
   - grafana

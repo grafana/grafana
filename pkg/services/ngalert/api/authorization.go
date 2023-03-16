@@ -227,7 +227,9 @@ func (api *API) authorize(method, path string) web.Handler {
 // authorizeDatasourceAccessForRule checks that user has access to all data sources declared by the rule
 func authorizeDatasourceAccessForRule(rule *ngmodels.AlertRule, evaluator func(evaluator ac.Evaluator) bool) bool {
 	for _, query := range rule.Data {
-		if query.QueryType == expr.DatasourceType || query.DatasourceUID == expr.OldDatasourceUID {
+		if query.QueryType == expr.DatasourceType || query.DatasourceUID == expr.DatasourceUID || query.
+			DatasourceUID == expr.
+			OldDatasourceUID {
 			continue
 		}
 		if !evaluator(ac.EvalPermission(datasources.ActionQuery, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))) {

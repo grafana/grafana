@@ -81,6 +81,7 @@ export const NavBar = React.memo(() => {
     location
   )
     .map((item) => enrichWithInteractionTracking(item, menuOpen))
+    // @PERCONA
     .map((item) => enrichWithClickDispatch(item, dispatch, dispatchOffset));
 
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);

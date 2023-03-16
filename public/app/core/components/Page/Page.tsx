@@ -25,8 +25,10 @@ export const OldPage: PageType = ({
   toolbar,
   scrollRef,
   scrollTop,
+  // @PERCONA
   vertical = false,
   tabsDataTestId = '',
+  //
   layout = PageLayoutType.Standard,
   renderTitle,
   subTitle,

@@ -1,5 +1,6 @@
 ---
 aliases:
+<<<<<<<< HEAD:docs/sources/panels-visualizations/create-reports/index.md
   - /docs/grafana/latest/administration/reports/
   - /docs/grafana/latest/enterprise/reporting/
   - /docs/grafana/latest/administration/reports/
@@ -10,11 +11,24 @@ aliases:
 title: Create and manage reports
 menuTitle: Reporting
 weight: 85
+========
+  - ../administration/reports/
+  - ../enterprise/export-pdf/
+  - ../enterprise/reporting/
+  - ../panels/create-reports/
+  - reporting/
+>>>>>>>> release-9.2.13:docs/sources/dashboards/create-reports/index.md
 keywords:
   - grafana
   - reporting
   - export
   - pdf
+<<<<<<<< HEAD:docs/sources/panels-visualizations/create-reports/index.md
+========
+menuTitle: Reporting
+title: Create and manage reports
+weight: 85
+>>>>>>>> release-9.2.13:docs/sources/dashboards/create-reports/index.md
 ---
 
 # Create and manage reports

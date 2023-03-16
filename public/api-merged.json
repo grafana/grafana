@@ -2924,6 +2924,45 @@
         }
       }
     },
+    "/dashboards/import": {
+      "post": {
+        "tags": [
+          "dashboards"
+        ],
+        "summary": "Import dashboard.",
+        "operationId": "importDashboard",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ImportDashboardRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/importDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "412": {
+            "$ref": "#/responses/preconditionFailedError"
+          },
+          "422": {
+            "$ref": "#/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/dashboards/tags": {
       "get": {
         "tags": [
@@ -8739,7 +8778,7 @@
       "title": "AlertQuery represents a single query associated with an alert definition.",
       "properties": {
         "datasourceUid": {
-          "description": "Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.",
+          "description": "Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.",
           "type": "string"
         },
         "model": {
@@ -11083,6 +11122,107 @@
         }
       }
     },
+    "ImportDashboardInput": {
+      "type": "object",
+      "title": "ImportDashboardInput definition of input parameters when importing a dashboard.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "pluginId": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "ImportDashboardRequest": {
+      "type": "object",
+      "title": "ImportDashboardRequest request object for importing a dashboard.",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/Json"
+        },
+        "folderId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "folderUid": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ImportDashboardInput"
+          }
+        },
+        "overwrite": {
+          "type": "boolean"
+        },
+        "path": {
+          "type": "string"
+        },
+        "pluginId": {
+          "type": "string"
+        }
+      }
+    },
+    "ImportDashboardResponse": {
+      "type": "object",
+      "title": "ImportDashboardResponse response object returned when importing a dashboard.",
+      "properties": {
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "description": {
+          "type": "string"
+        },
+        "folderId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "imported": {
+          "type": "boolean"
+        },
+        "importedRevision": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "importedUri": {
+          "type": "string"
+        },
+        "importedUrl": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "pluginId": {
+          "type": "string"
+        },
+        "removed": {
+          "type": "boolean"
+        },
+        "revision": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
     "InhibitRule": {
       "description": "InhibitRule defines an inhibition rule that mutes alerts that match the\ntarget labels if an alert matching the source labels exists.\nBoth alerts have to have a set of labels being equal.",
       "type": "object",
@@ -12718,7 +12858,7 @@
           },
           "example": [
             {
-              "datasourceUid": "-100",
+              "datasourceUid": "__expr__",
               "model": {
                 "conditions": [
                   {
@@ -15377,6 +15517,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -16407,6 +16548,12 @@
             "type": "string"
           }
         }
+      }
+    },
+    "importDashboardResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/ImportDashboardResponse"
       }
     },
     "internalServerError": {

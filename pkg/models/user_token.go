@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 
 	"github.com/grafana/grafana/pkg/registry"
@@ -11,7 +12,8 @@ import (
 
 // Typed errors
 var (
-	ErrUserTokenNotFound = errors.New("user token not found")
+	ErrUserTokenNotFound   = errors.New("user token not found")
+	ErrInvalidSessionToken = errors.New("invalid session token")
 )
 
 // CreateTokenErr represents a token creation error; used in Enterprise
@@ -33,7 +35,11 @@ type TokenExpiredError struct {
 	TokenID int64
 }
 
-func (e *TokenExpiredError) Error() string { return "user token expired" }
+func (e *TokenExpiredError) Unwrap() error { return ErrInvalidSessionToken }
+
+func (e *TokenExpiredError) Error() string {
+	return fmt.Sprintf("%s: user token expired", ErrInvalidSessionToken)
+}
 
 type TokenRevokedError struct {
 	UserID                int64
@@ -41,7 +47,11 @@ type TokenRevokedError struct {
 	MaxConcurrentSessions int64
 }
 
-func (e *TokenRevokedError) Error() string { return "user token revoked" }
+func (e *TokenRevokedError) Error() string {
+	return fmt.Sprintf("%s: user token revoked", ErrInvalidSessionToken)
+}
+
+func (e *TokenRevokedError) Unwrap() error { return ErrInvalidSessionToken }
 
 // UserToken represents a user token
 type UserToken struct {

@@ -2,11 +2,11 @@ import React, { useCallback, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorHeader, EditorRow, FlexItem, InlineSelect, Space } from '@grafana/experimental';
+import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { Button, InlineField, InlineSwitch, RadioButtonGroup, Select, Tooltip } from '@grafana/ui';
 
 import { QueryWithDefaults } from '../defaults';
-import { SQLQuery, QueryFormat, QueryRowFilter, QUERY_FORMAT_OPTIONS, DB, EditorMode } from '../types';
+import { SQLQuery, QueryFormat, QueryRowFilter, QUERY_FORMAT_OPTIONS, DB } from '../types';
 import { defaultToRawSql } from '../utils/sql.utils';
 
 import { ConfirmModal } from './ConfirmModal';

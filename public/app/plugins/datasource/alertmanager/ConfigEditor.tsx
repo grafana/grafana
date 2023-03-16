@@ -17,12 +17,6 @@ const IMPL_OPTIONS: Array<SelectableValue<AlertManagerImplementation>> = [
     description: `https://grafana.com/oss/mimir/. An open source, horizontally scalable, highly available, multi-tenant, long-term storage for Prometheus.`,
   },
   {
-    value: AlertManagerImplementation.mimir,
-    icon: 'public/img/alerting/mimir_logo.svg',
-    label: 'Mimir',
-    description: `https://grafana.com/oss/mimir/. An open source, horizontally scalable, highly available, multi-tenant, long-term storage for Prometheus.`,
-  },
-  {
     value: AlertManagerImplementation.cortex,
     label: 'Cortex',
     description: `https://cortexmetrics.io/`,

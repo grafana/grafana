@@ -9,6 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
+
+	"github.com/prometheus/common/model"
 )
 
 type RuleDelete struct {
@@ -39,11 +41,11 @@ func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (AlertRuleGroup, error) {
 	if ruleGroup.OrgID < 1 {
 		ruleGroup.OrgID = 1
 	}
-	interval, err := time.ParseDuration(ruleGroupV1.Interval.Value())
+	interval, err := model.ParseDuration(ruleGroupV1.Interval.Value())
 	if err != nil {
 		return AlertRuleGroup{}, err
 	}
-	ruleGroup.Interval = interval
+	ruleGroup.Interval = time.Duration(interval)
 	ruleGroup.Folder = ruleGroupV1.Folder.Value()
 	if strings.TrimSpace(ruleGroup.Folder) == "" {
 		return AlertRuleGroup{}, errors.New("rule group has no folder set")
@@ -91,11 +93,11 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no UID set", alertRule.Title)
 	}
 	alertRule.OrgID = orgID
-	duration, err := time.ParseDuration(rule.For.Value())
+	duration, err := model.ParseDuration(rule.For.Value())
 	if err != nil {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
 	}
-	alertRule.For = duration
+	alertRule.For = time.Duration(duration)
 	dashboardUID := rule.DashboardUID.Value()
 	alertRule.DashboardUID = &dashboardUID
 	panelID := rule.PanelID.Value()

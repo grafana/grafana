@@ -8,6 +8,8 @@ on:
     branches-ignore:
       - dependabot/**
       - backport-*
+      # @PERCONA - disable workflow
+      - '*'
 
 jobs:
   workflow-call:

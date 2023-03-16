@@ -79,7 +79,7 @@ type ProvisionedAlertRule struct {
 	// example: A
 	Condition string `json:"condition"`
 	// required: true
-	// example: [{"refId":"A","queryType":"","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"-100","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}]
+	// example: [{"refId":"A","queryType":"","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}]
 	Data []models.AlertQuery `json:"data"`
 	// readonly: true
 	Updated time.Time `json:"updated,omitempty"`
@@ -98,10 +98,6 @@ type ProvisionedAlertRule struct {
 }
 
 func (a *ProvisionedAlertRule) UpstreamModel() (models.AlertRule, error) {
-	forDur, err := time.ParseDuration(a.For.String())
-	if err != nil {
-		return models.AlertRule{}, err
-	}
 	return models.AlertRule{
 		ID:           a.ID,
 		UID:          a.UID,
@@ -114,7 +110,7 @@ func (a *ProvisionedAlertRule) UpstreamModel() (models.AlertRule, error) {
 		Updated:      a.Updated,
 		NoDataState:  a.NoDataState,
 		ExecErrState: a.ExecErrState,
-		For:          forDur,
+		For:          time.Duration(a.For),
 		Annotations:  a.Annotations,
 		Labels:       a.Labels,
 	}, nil

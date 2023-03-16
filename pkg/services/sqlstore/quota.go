@@ -294,7 +294,7 @@ func (ss *SQLStore) GetGlobalQuotaByTarget(ctx context.Context, query *models.Ge
 				rawSQL += fmt.Sprintf(" WHERE is_folder=%s", dialect.BooleanStr(false))
 			}
 			// removing service accounts from count
-			if query.Target == dialect.Quote("user") {
+			if query.Target == "user" {
 				rawSQL += fmt.Sprintf(" WHERE is_service_account=%s", dialect.BooleanStr(false))
 			}
 			resp := make([]*targetCount, 0)

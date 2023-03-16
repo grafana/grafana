@@ -1,13 +1,12 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/add-a-data-source/
-  - /docs/grafana/latest/features/datasources/add-a-data-source/
-  - /docs/grafana/latest/enterprise/datasource_permissions/
-  - /docs/grafana/latest/permissions/datasource_permissions/
-  - /docs/grafana/latest/administration/data-source-management/
-  - /docs/grafana/latest/enterprise/query-caching/
-title: Data source management
+  - ../datasources/add-a-data-source/
+  - ../enterprise/datasource_permissions/
+  - ../enterprise/query-caching/
+  - ../features/datasources/add-a-data-source/
+  - ../permissions/datasource_permissions/
 description: Data source management information for Grafana administrators
+title: Data source management
 weight: 100
 ---
 
@@ -23,11 +22,8 @@ Before you can create your first dashboard, you need to add your data source.
 
 To add a data source:
 
-1. Move your cursor to the cog icon on the side menu which will show the configuration options.
-
-   {{< figure src="/static/img/docs/v75/sidemenu-datasource-7-5.png" max-width="150px" class="docs-image--no-shadow">}}
-
-1. Click on **Data sources**. The data sources page opens showing a list of previously configured data sources for the Grafana instance.
+1. Select the cog icon on the side menu to show the configuration options.
+1. Select **Data sources**.
 
 1. Click **Add data source** to see a list of all supported data sources.
 
@@ -37,9 +33,7 @@ To add a data source:
 
 1. Move the cursor over the data source you want to add.
 
-   {{< figure src="/static/img/docs/v75/select-data-source-7-5.png" max-width="700px" class="docs-image--no-shadow">}}
-
-1. Click **Select**. The data source configuration page opens.
+1. Click **Select**.
 
 1. Configure the data source following instructions specific to that data source. See [Data sources]({{< relref "../../datasources" >}}) for links to configuration instructions for all supported data sources.
 
@@ -50,8 +44,6 @@ Data source permissions allow you to restrict access for users to query a data s
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
 ### Enable data source permissions
-
-{{< figure src="/static/img/docs/enterprise/datasource_permissions_enable_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/static/img/docs/enterprise/datasource_permissions_enable.gif" >}}
 
 By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just
 queries that exist on dashboards they have access to.
@@ -70,8 +62,6 @@ When permissions are enabled for a data source in an organization, the user who 
 
 ### Allow users and teams to query a data source
 
-{{< figure src="/static/img/docs/enterprise/datasource_permissions_add_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/static/img/docs/enterprise/datasource_permissions_add.gif" >}}
-
 After you have enabled permissions for a data source you can assign query permissions to users and teams which will allow access to query the data source.
 
 **Assign query permission to users and teams:**
@@ -85,8 +75,6 @@ After you have enabled permissions for a data source you can assign query permis
 <div class="clearfix"></div>
 
 ### Disable data source permissions
-
-{{< figure src="/static/img/docs/enterprise/datasource_permissions_disable_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/static/img/docs/enterprise/datasource_permissions_disable.gif" >}}
 
 If you have enabled permissions for a data source and want to return data source permissions to the default, then you can disable permissions with a click of a button.
 

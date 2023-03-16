@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/shared/panels/repeat-panel-intro/
 title: Repeat panel intro
 ---
 

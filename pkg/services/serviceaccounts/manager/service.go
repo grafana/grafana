@@ -45,7 +45,7 @@ func ProvideServiceAccountsService(
 
 	usageStats.RegisterMetricsFunc(s.getUsageMetrics)
 
-	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, s.store, permissionService)
+	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, s.store, permissionService)
 	serviceaccountsAPI.RegisterAPIEndpoints()
 
 	return s, nil

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/shared/preferences/select-ui-theme-list/
 title: Select the UI theme
 ---
 

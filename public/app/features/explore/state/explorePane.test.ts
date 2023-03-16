@@ -23,6 +23,7 @@ jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: () => ({
     updateTimeRange: jest.fn(),
   }),
+  reportMetaAnalytics: jest.fn(),
 }));
 
 function setupStore(state?: any) {
