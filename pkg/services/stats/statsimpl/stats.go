@@ -266,7 +266,7 @@ func (ss *sqlStatsService) GetSystemUserCountStats(ctx context.Context, query *s
 }
 
 func (ss *sqlStatsService) IsUnifiedAlertingEnabled() bool {
-	return ss.cfg.UnifiedAlerting.IsEnabled()
+	return ss.cfg != nil && ss.cfg.UnifiedAlerting.IsEnabled()
 }
 
 func (ss *sqlStatsService) updateUserRoleCountsIfNecessary(ctx context.Context, forced bool) error {
