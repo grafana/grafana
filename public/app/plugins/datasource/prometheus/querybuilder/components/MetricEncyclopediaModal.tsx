@@ -834,13 +834,3 @@ const alphabet = [
   'Y',
   'Z',
 ];
-
-// some things i would like to show/discuss in standup. posting here so i don’t forget!
-
-// Encyclopadia improvements:
-// 1. make all components responsive with                     | this improves the visuals on smaller devices
-// 2. move the button to the first position in the table  | on larger screens you no longer have to scroll to “Use this metric”.
-// 3. add a wrap text toggle (?)                                          | this improves the amount of visible results on smaller screens.
-
-// Encyclopadia discussions:
-// 1. how should “Exclude results with no metadata” work? leave as is? disable unless have a type...
