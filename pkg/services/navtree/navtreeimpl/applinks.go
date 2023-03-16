@@ -179,6 +179,10 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *contextmodel
 func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot, plugin plugins.PluginDTO, appLink *navtree.NavLink) {
 	// Handle moving apps into specific navtree sections
 	alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
+	if alertingNode == nil {
+		// Search for legacy alerting node just in case
+		alertingNode = treeRoot.FindById(navtree.NavIDAlertingLegacy)
+	}
 	sectionID := navtree.NavIDApps
 
 	if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride {
