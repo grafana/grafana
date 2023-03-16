@@ -26,8 +26,8 @@ func TestAdminStats(t *testing.T) {
 			AppModeProduction:     true,
 		})
 
-		resp, err := http.Get(url)
 		// nolint:gosec
+		resp, err := http.Get(url)
 		defer func() {
 			_ = resp.Body.Close()
 		}()
@@ -42,8 +42,8 @@ func TestAdminStats(t *testing.T) {
 			AppModeProduction:     true,
 		})
 
-		resp, err := http.Get(url)
 		// nolint:gosec
+		resp, err := http.Get(url)
 		defer func() {
 			_ = resp.Body.Close()
 		}()
@@ -60,9 +60,6 @@ func grafanaSetup(t *testing.T, opts testinfra.GrafanaOpts) string {
 
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, opts)
-
-	if opts.EnableUnifiedAlerting {
-	}
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
