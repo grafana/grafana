@@ -353,7 +353,7 @@ static defaultProps: Partial<Props> = { ... }
 
 ### How to declare functional components
 
-We prefer using function expressions over function declarations when creating a new react functional component.
+We prefer using function declarations over function expressions when creating a new react functional component.
 
 ```typescript
 // bad
