@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';
@@ -12,7 +12,7 @@ interface Props {
   isAdhoc: boolean;
 }
 
-export const VariableUsagesButton: FC<Props> = ({ id, usages, isAdhoc }) => {
+export const VariableUsagesButton = ({ id, usages, isAdhoc }: Props) => {
   const network = useMemo(() => usages.find((n) => n.variable.id === id), [usages, id]);
   if (usages.length === 0 || isAdhoc || !network) {
     return null;

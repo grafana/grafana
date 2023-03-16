@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { FC, ReactNode, useState } from 'react';
+import React, { ReactNode, useState } from 'react';
 
 import { Collapse, Field, Form, Input, InputControl, Link, MultiSelect, Select, useStyles2 } from '@grafana/ui';
 import { RouteWithID } from 'app/plugins/datasource/alertmanager/types';
@@ -28,13 +28,13 @@ export interface AmRootRouteFormProps {
   route: RouteWithID;
 }
 
-export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
+export const AmRootRouteForm = ({
   actionButtons,
   alertManagerSourceName,
   onSubmit,
   receivers,
   route,
-}) => {
+}: AmRootRouteFormProps) => {
   const styles = useStyles2(getFormStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route.group_by));

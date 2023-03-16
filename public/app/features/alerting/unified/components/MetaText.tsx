@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import React, { FC, HTMLAttributes } from 'react';
+import React, { HTMLAttributes } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Icon, IconName, useStyles2 } from '@grafana/ui';
 
-interface MetaTextProps extends HTMLAttributes<HTMLDivElement> {
+interface Props extends HTMLAttributes<HTMLDivElement> {
   icon?: IconName;
 }
 
-const MetaText: FC<MetaTextProps> = ({ children, icon, ...rest }) => {
+const MetaText = ({ children, icon, ...rest }: Props) => {
   const styles = useStyles2(getStyles);
   const interactive = typeof rest.onClick === 'function';
 
