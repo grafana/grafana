@@ -1,6 +1,6 @@
 import { StreamLanguage } from '@codemirror/language';
 import { go } from '@codemirror/legacy-modes/mode/go';
-import { EditorView, gutter, GutterMarker, lineNumbers } from '@codemirror/view';
+import { EditorView, gutter, GutterMarker, lineNumbers, ViewPlugin, ViewUpdate } from '@codemirror/view';
 import { css, cx } from '@emotion/css';
 import CodeMirror, { minimalSetup, ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import React, { createRef, useEffect, useMemo, useState } from 'react';
@@ -18,6 +18,84 @@ import { oneDarkGrafana } from './one-dark-grafana';
 import { SampleUnit } from './types';
 
 // import { Item } from './FlameGraph/dataTransform';
+
+const GutterHeaders = [
+  {
+    label: '',
+    // label: 'Line',
+    // background: 'red',
+    // color: 'white',
+  },
+
+  // narrow cm-foldGutter (ignored)
+  {
+    label: '',
+    // background: '',
+    // color: '',
+  },
+
+  {
+    label: 'Self',
+    // background: 'green',
+    // color: 'white',
+  },
+  {
+    label: 'Total',
+    // background: 'purple',
+    // color: 'white',
+  },
+];
+
+const gutterHeadersPlugin = ViewPlugin.fromClass(
+  class {
+    doms: HTMLDivElement[] = [];
+
+    constructor(view: EditorView) {
+      GutterHeaders.forEach((props) => {
+        let dom = document.createElement('div');
+
+        dom.textContent = props.label;
+
+        Object.assign(dom.style, {
+          // background: props.background,
+          // color: props.color,
+          position: 'absolute',
+          top: '0',
+          zIndex: '1',
+          textAlign: 'center',
+          translate: '0 -100%',
+          padding: '5px',
+        });
+
+        view.dom.appendChild(dom);
+        this.doms.push(dom);
+      });
+    }
+
+    update(update: ViewUpdate) {
+      if (update.docChanged) {
+        const gutters = update.view.dom.querySelectorAll('.cm-gutter')!;
+
+        let left = 0;
+
+        gutters.forEach((el, i) => {
+          let gutterRect = el.getBoundingClientRect();
+
+          Object.assign(this.doms[i].style, {
+            left: left + 'px',
+            width: gutterRect.width + 'px',
+          });
+
+          left += gutterRect.width;
+        });
+      }
+    }
+
+    destroy() {
+      this.doms.forEach((el) => el.remove());
+    }
+  }
+);
 
 const heatColors = quantizeScheme(
   { steps: 32, exponent: 1, reverse: true, fill: '#0000', scheme: 'YlOrRd' },
@@ -37,8 +115,17 @@ const heatClasses = heatColors.map((color) => {
   );
 });
 
-const heatGutterClass = cx(
+const valueGutterClass = cx(
   css({
+    background: '#ffc10724',
+    minWidth: 80,
+    textAlign: 'right',
+  })
+);
+
+const selfGutterClass = cx(
+  css({
+    background: '#00bcd42e',
     minWidth: 80,
     textAlign: 'right',
   })
@@ -56,10 +143,6 @@ class HeatMarker extends GutterMarker {
     const heatColorIdx = Math.floor(heatFactor * (heatClasses.length - 1));
 
     this.elementClass = heatClasses[heatColorIdx];
-  }
-
-  eq(other: HeatMarker) {
-    return this.rawValue === other.rawValue;
   }
 
   toDOM() {
@@ -97,7 +180,7 @@ export function SourceCodeView(props: Props) {
         fileNameEnum: fileNameField.config.type!.enum?.text!,
         fileNameData: fileNameField.values.toArray(),
 
-        // labelEnum: labelField.config.type!.enum?.text,
+        // labelEnum: labelField.config.type!.enum?.text!,
         labelData: labelField.values.toArray(),
 
         lineData: data.fields.find((f) => f.name === 'line')!.values.toArray(),
@@ -142,6 +225,99 @@ export function SourceCodeView(props: Props) {
     return byLineData;
   }, [dataIdxs, lineData, valueData, selfData]);
 
+  // this can't be outside cause needs data to be in scope
+  // TODO: investigate if CM6 plugins can accept opts into their constructors (like Rollup plugins)
+  const miniMapPlugin = ViewPlugin.fromClass(
+    class {
+      dom: HTMLDivElement;
+
+      constructor(view: EditorView) {
+        let dom = document.createElement('div');
+
+        Object.assign(dom.style, {
+          background: '#61616138',
+          position: 'absolute',
+          height: '100%',
+          width: '20px',
+          top: '0',
+          right: '0',
+          pointerEvents: 'none',
+        });
+
+        view.dom.appendChild(dom);
+        this.dom = dom;
+      }
+
+      update(update: ViewUpdate) {
+        if (update.docChanged) {
+          let editorHeight = update.view.dom.getBoundingClientRect().height;
+
+          let totalLines = update.state.doc.lines;
+          // let lineHeightPct = 100 * (1 / totalLines);
+
+          let sortedLineNums = [...byLineData.value.keys()].sort((a, b) => a - b);
+
+          // console.log(sortedLineNums);
+
+          // not good: creates dom element for every marked line, should use bg gradient with hard stops (see below)
+          sortedLineNums.forEach((lineNum) => {
+            let rawValue = byLineData.value.get(lineNum) ?? 0;
+
+            if (rawValue > 0) {
+              let line = document.createElement('div');
+              line.style.position = 'absolute';
+              line.style.top = (lineNum / totalLines) * editorHeight + 'px';
+              line.style.height = '1px';
+              line.style.width = '20px';
+
+              let heatFactor = (rawValue - minRawVal) / (maxRawVal - minRawVal);
+              const heatColorIdx = Math.floor(heatFactor * (heatColors.length - 1));
+
+              line.style.background = heatColors[heatColorIdx];;
+
+              this.dom.appendChild(line);
+            }
+
+            // console.log(
+            //   lineNum,
+            //   byLineData.label.get(lineNum),
+            //   byLineData.self.get(lineNum),
+            //   byLineData.value.get(lineNum)
+            // );
+          });
+
+          /*
+
+          // gradient-based attempt...has logic bug, need to fix
+
+          let prevEnd = 0;
+
+          let gradStops = sortedLineNums.map((lineNum, i) => {
+            let curStart = 100 * lineNum / totalLines;
+            let stops = `#0000 ${prevEnd}%, #0000 ${curStart}%, #fff ${curStart}%, #fff ${curStart + lineHeightPct}%`;
+            prevEnd = curStart + lineHeightPct;
+            return stops;
+          });
+
+          gradStops.push(`#0000 ${prevEnd}%, #0000 100%`);
+
+          let heatGrad = `linear-gradient(to bottom, ${gradStops.join()})`;
+
+          console.log(heatGrad);
+
+          Object.assign(this.dom.style, {
+            background: heatGrad
+          });
+          */
+        }
+      }
+
+      destroy() {
+        this.dom.remove();
+      }
+    }
+  );
+
   const [minRawVal, maxRawVal] = globalDataRanges.value;
   const [minRawSelf, maxRawSelf] = globalDataRanges.self;
 
@@ -151,32 +327,40 @@ export function SourceCodeView(props: Props) {
   // });
 
   const valueGutter = gutter({
-    class: heatGutterClass,
+    class: valueGutterClass,
 
     // TODO: optimize, this is recreated each time you navigate through source doc
     // should switch to the static gutter.markers: API
     lineMarker(view, line) {
       let lineNum = view.state.doc.lineAt(line.from).number;
       let rawValue = byLineData.value.get(lineNum) ?? 0;
-      let heatFactor = rawValue > 0 ? (rawValue - minRawVal) / (maxRawVal - minRawVal) : 0;
+
+      if (rawValue === 0) {
+        return null;
+      }
+
+      let heatFactor = (rawValue - minRawVal) / (maxRawVal - minRawVal);
       const unitValue = getUnitValue(valueField, rawValue);
-      let marker = heatFactor === 0 ? null : new HeatMarker(unitValue, heatFactor);
-      return marker;
+      return new HeatMarker(unitValue, heatFactor);
     },
   });
 
   const selfGutter = gutter({
-    class: heatGutterClass,
+    class: selfGutterClass,
 
     // TODO: optimize, this is recreated each time you navigate through source doc
     // should switch to the static gutter.markers: API
     lineMarker(view, line) {
       let lineNum = view.state.doc.lineAt(line.from).number;
       let rawValue = byLineData.self.get(lineNum) ?? 0;
-      let heatFactor = rawValue > 0 ? (rawValue - minRawSelf) / (maxRawSelf - minRawSelf) : 0;
+
+      if (rawValue === 0) {
+        return null;
+      }
+
+      let heatFactor = (rawValue - minRawSelf) / (maxRawSelf - minRawSelf);
       const unitValue = getUnitValue(selfField, rawValue);
-      let marker = heatFactor === 0 ? null : new HeatMarker(unitValue, heatFactor);
-      return marker;
+      return new HeatMarker(unitValue, heatFactor);
     },
   });
 
@@ -248,8 +432,17 @@ export function SourceCodeView(props: Props) {
     <CodeMirror
       value={source}
       height={'800px'}
-      extensions={[StreamLanguage.define(go), minimalSetup(), lineNumbers(), selfGutter, valueGutter, EditorView.editable.of(false),]}
+      extensions={[
+        StreamLanguage.define(go),
+        minimalSetup(),
+        lineNumbers(),
+        selfGutter,
+        valueGutter,
+        gutterHeadersPlugin,
+        miniMapPlugin,
+      ]}
       readOnly={true}
+      editable={false}
       theme={theme.name === 'Dark' ? oneDarkGrafana : 'light'}
       ref={editorRef}
     />

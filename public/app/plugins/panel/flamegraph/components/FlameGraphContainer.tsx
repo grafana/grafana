@@ -220,7 +220,7 @@ const FlameGraphContainer = (props: Props) => {
             )}
 
             {codeVisible && (
-              <div className={styles.pane}>
+              <div className={styles.pane} style={{ paddingTop: '38px' }}>
                 {selectedLocation || selectedFileName ? (
                   <SourceCodeView
                     locationIdx={selectedLocation}
