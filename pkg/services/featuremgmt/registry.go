@@ -136,13 +136,6 @@ var (
 			Owner:        grafanaExploreSquad,
 		},
 		{
-			Name:         "tracing",
-			Description:  "Adds trace ID to error notifications",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        grafanaUserEssentialsSquad,
-		},
-		{
 			Name:         "newTraceView",
 			Description:  "Shows the new trace view design",
 			State:        FeatureStateAlpha,
