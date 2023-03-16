@@ -13,13 +13,7 @@ export interface QueryOperationActionProps {
   active?: boolean;
 }
 
-export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({
-  icon,
-  active,
-  disabled,
-  title,
-  onClick,
-}) => {
+export const QueryOperationAction = ({ icon, active, disabled, title, onClick }: QueryOperationActionProps) => {
   const styles = useStyles2(getStyles);
 
   return (

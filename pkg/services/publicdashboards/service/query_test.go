@@ -352,6 +352,85 @@ const (
   ],
   "schemaVersion": 35
 }`
+
+	dashboardWithRows = `
+{
+  "panels": [
+    {
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "_yxMP8Ynk"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "promds2"
+          },
+          "exemplar": true,
+          "expr": "query2",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    },
+    {
+      "id": 3,
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "title": "This panel is a Row",
+      "type": "row",
+"panels": [
+    {
+      "id": 4,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "_yxMP8Ynk"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "promds2"
+          },
+          "exemplar": true,
+          "expr": "query2",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
+        }
+      ],
+      "title": "Panel inside a row",
+      "type": "timeseries"
+    }
+  ]
+    }
+  ],
+  "schemaVersion": 35
+}`
 )
 
 func TestGetQueryDataResponse(t *testing.T) {
@@ -1179,6 +1258,18 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		queries := groupQueriesByPanelId(json)[2]
 
 		require.Len(t, queries, 0)
+	})
+
+	t.Run("queries inside panels inside rows are returned", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(dashboardWithRows))
+		require.NoError(t, err)
+
+		queries := groupQueriesByPanelId(json)
+		for idx := range queries {
+			assert.NotNil(t, queries[idx])
+		}
+
+		assert.Len(t, queries, 2)
 	})
 }
 
