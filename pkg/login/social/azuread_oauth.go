@@ -270,10 +270,5 @@ func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString(fmt.Sprintf("forceUseGraphAPI = %v\n", s.forceUseGraphAPI))
 	bf.WriteString("```\n\n")
 
-	err := s.SocialBase.SupportBundleContent(bf)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.SocialBase.SupportBundleContent(bf)
 }
