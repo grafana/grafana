@@ -259,6 +259,8 @@ service PluginManager {
   rpc AddPlugin(AddPluginRequest) returns (AddPluginResponse);
   rpc RemovePlugin(RemovePluginRequest) returns (RemovePluginResponse);
 
+  rpc File(GetPluginFileRequest) returns (GetPluginFileResponse);
+
   rpc PluginErrors(GetPluginErrorsRequest) returns (GetPluginErrorsResponse); // Can we attach error to a plugin instead?
   rpc StaticRoute(GetStaticRoutesRequest) returns (GetStaticRoutesResponse); // Can we attach routes to a plugin instead?
 }
