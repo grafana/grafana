@@ -1,6 +1,6 @@
 import moment from 'moment';
 
-import { DataQueryRequest, DateTime } from '@grafana/data';
+import { DataQueryRequest, DateTime, TimeRange } from '@grafana/data';
 
 import { SandboxQuery } from './sandbox_datasource';
 import { SandboxDataQueryRequest } from './types';
@@ -8,25 +8,9 @@ import { SandboxDataQueryRequest } from './types';
 export function fromDataQueryRequestToSandboxDataQueryRequest(
   dataQueryRequest: DataQueryRequest<SandboxQuery>
 ): SandboxDataQueryRequest {
-  const rawFrom =
-    typeof dataQueryRequest.range.raw.from === 'string'
-      ? dataQueryRequest.range.raw.from
-      : dataQueryRequest.range.raw.from.toISOString();
-  const rawTo =
-    typeof dataQueryRequest.range.raw.to === 'string'
-      ? dataQueryRequest.range.raw.to
-      : dataQueryRequest.range.raw.to.toISOString();
-
   return {
     ...dataQueryRequest,
-    range: {
-      from: dataQueryRequest.range.from.toISOString(),
-      to: dataQueryRequest.range.to.toISOString(),
-      raw: {
-        from: rawFrom,
-        to: rawTo,
-      },
-    },
+    range: serializeRangeToString(dataQueryRequest.range),
   };
 }
 
@@ -35,10 +19,32 @@ export function fromSandboxDataQueryRequestToDataQueryRequest(
 ): DataQueryRequest<SandboxQuery> {
   return {
     ...sandboxDataQueryRequest,
-    range: {
-      from: moment(sandboxDataQueryRequest.range.from) as DateTime,
-      to: moment(sandboxDataQueryRequest.range.to) as DateTime,
-      raw: sandboxDataQueryRequest.range.raw,
+    range: deserializeRangeFromString(sandboxDataQueryRequest.range),
+  };
+}
+
+export function serializeRangeToString(range: TimeRange) {
+  const rawFrom = typeof range.raw.from === 'string' ? range.raw.from : range.raw.from.toISOString();
+  const rawTo = typeof range.raw.to === 'string' ? range.raw.to : range.raw.to.toISOString();
+
+  return {
+    from: range.from.toISOString(),
+    to: range.to.toISOString(),
+    raw: {
+      from: rawFrom,
+      to: rawTo,
     },
+  };
+}
+
+export function deserializeRangeFromString(range: {
+  from: string;
+  to: string;
+  raw: { from: string; to: string };
+}): TimeRange {
+  return {
+    from: moment(range.from) as DateTime,
+    to: moment(range.to) as DateTime,
+    raw: range.raw,
   };
 }

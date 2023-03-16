@@ -8,7 +8,7 @@ module.exports = {
   target: 'web',
   entry: {
     app: './public/app/index.ts',
-    sandboxRuntime: './public/app/features/plugins/sandbox/runtime/runtime.ts',
+    sandboxRuntime: './public/app/features/plugins/sandbox/runtime/runtime.tsx',
   },
   output: {
     clean: true,

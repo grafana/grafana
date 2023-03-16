@@ -1,3 +1,6 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
+
 import { DataFrame, dataFrameToJSON, DataQueryResponse, DataSourceApi, GrafanaPlugin } from '@grafana/data';
 
 import { IFrameBus } from '../iframeBus/iframeBus';
@@ -22,6 +25,7 @@ export class SandboxRuntime {
   private datasourceInstance?: DataSourceApi;
   private iframeBus: IFrameBus<SandboxMessage>;
   private grafanaRunTime: SandboxGrafanaRunTime = {};
+  private appRoot: HTMLElement;
 
   constructor({ port, bootData }: { port: MessagePort; bootData: SandboxGrafanaBootData }) {
     this.port = port;
@@ -31,6 +35,7 @@ export class SandboxRuntime {
       onMessage: this.handleMessage.bind(this),
     });
     this.mockGrafanaRuntime();
+    this.appRoot = document.getElementById('app') || document.body;
   }
 
   mockGrafanaRuntime() {
@@ -63,11 +68,62 @@ export class SandboxRuntime {
       case SandboxMessageType.DatasourceQuery: {
         return await this.handleDatasourceQuery(message);
       }
+
+      case SandboxMessageType.DatasourceRenderQueryEditor: {
+        return await this.handleDatasourceRenderQueryEditor(message);
+      }
       // not a grafana request. Maybe a response to a request?
       default: {
         return;
       }
     }
+  }
+
+  async handleDatasourceRenderQueryEditor(message: SandboxMessage): Promise<SandboxMessage> {
+    await this.waitForPluginReady();
+    if (message.type !== SandboxMessageType.DatasourceRenderQueryEditor) {
+      throw new Error('[never] no datasource instance');
+    }
+
+    const props = {
+      ...message.payload,
+      onChange: this.sendOnChangeQueryEditor.bind(this),
+      onRunQuery: this.sendOnRunQueryEditor.bind(this),
+    };
+
+    //@ts-ignore
+    const QueryEditor = this.plugin.components?.QueryEditor;
+
+    ReactDOM.render(
+      <div>
+        <QueryEditor {...props} />
+      </div>,
+      this.appRoot
+    );
+
+    return {
+      type: SandboxMessageType.Empty,
+    };
+  }
+
+  async sendOnChangeQueryEditor(data: unknown) {
+    this.iframeBus.postMessage({
+      type: SandboxMessageType.DatasourceRenderQueryEditorEvent,
+      payload: {
+        event: 'onChange',
+        args: data,
+      },
+    });
+  }
+
+  async sendOnRunQueryEditor() {
+    this.iframeBus.postMessage({
+      type: SandboxMessageType.DatasourceRenderQueryEditorEvent,
+      payload: {
+        event: 'onRunQuery',
+        args: [],
+      },
+    });
   }
 
   async handleDatasourceQuery(message: SandboxDatasourceQueryMessage): Promise<SandboxDatasourceQueryResponse> {

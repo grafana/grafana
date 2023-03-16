@@ -1,3 +1,5 @@
+import React, { useEffect, useRef } from 'react';
+
 import {
   DataQueryRequest,
   DataQueryResponse,
@@ -9,7 +11,7 @@ import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
 import { IframeController } from './sandboxIframeController';
 import { fromDataQueryRequestToSandboxDataQueryRequest } from './sandboxSerializer';
-import { SandboxMessageType } from './types';
+import { SandboxDatasourceQueryEditorProps, SandboxMessageType } from './types';
 
 export interface SandboxQuery extends DataQuery {}
 export interface SandboxOptions extends DataSourceJsonData {}
@@ -27,6 +29,28 @@ export class SandboxProxyDataSource extends DataSourceApi<SandboxQuery, SandboxO
       instanceSettings,
     });
     this.iframeController.setupSandbox();
+  }
+
+  //@ts-ignore -- this is a hack to get the components to load
+  get components() {
+    const iframeController = this.iframeController;
+    return {
+      QueryEditor: (props: SandboxDatasourceQueryEditorProps) => {
+        const ref = useRef<HTMLDivElement>(null);
+
+        useEffect(() => {
+          if (ref.current) {
+            iframeController.mountQueryEditor(ref.current, props);
+          }
+        }, [props]);
+        return <div style={{ height: '500px' }} ref={ref}></div>;
+      },
+    };
+  }
+
+  //@ts-ignore -- this is a hack to get the components to load
+  set components(_: any) {
+    // don't overwrite
   }
 
   async query(options: DataQueryRequest<SandboxQuery>): Promise<DataQueryResponse> {

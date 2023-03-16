@@ -1,8 +1,16 @@
 import { DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
 import { config, getBackendSrv, GrafanaBootConfig } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 
 import { IFrameBus } from './iframeBus/iframeBus';
-import { SandboxGrafanaBootData, SandboxMessage, SandboxMessageType } from './types';
+import { serializeRangeToString } from './sandboxSerializer';
+import {
+  SandboxDatasourceIframeQueryEditorProps,
+  SandboxDatasourceQueryEditorProps,
+  SandboxGrafanaBootData,
+  SandboxMessage,
+  SandboxMessageType,
+} from './types';
 
 export class IframeController {
   private id: string;
@@ -12,6 +20,10 @@ export class IframeController {
   private pluginMeta: PluginMeta;
   private instanceSettings?: DataSourceInstanceSettings;
   private iframeBus: IFrameBus<SandboxMessage>;
+  private shouldShowIframe = false;
+
+  private onEditorChange: (query: DataQuery) => void = () => {};
+  private onEditorRunQuery: () => void = () => {};
 
   constructor({
     pluginMeta,
@@ -62,8 +74,31 @@ export class IframeController {
     switch (message.type) {
       case SandboxMessageType.DatasourceBackendSrvRequest:
         return this.handleDatasourceBackendSrvRequest(message);
+      case SandboxMessageType.DatasourceRenderQueryEditorEvent:
+        return this.handleDatasourceRenderQueryEditorEvent(message);
     }
     throw new Error('not implemented');
+  }
+
+  async handleDatasourceRenderQueryEditorEvent(message: SandboxMessage): Promise<SandboxMessage> {
+    if (message.type !== SandboxMessageType.DatasourceRenderQueryEditorEvent) {
+      throw new Error('not a datasource render query editor event');
+    }
+
+    switch (message.payload.event) {
+      case 'onChange':
+        this.onEditorChange(message.payload.args as DataQuery);
+        break;
+      case 'onRunQuery':
+        this.onEditorRunQuery();
+        break;
+      default:
+        throw new Error('unknown event');
+    }
+
+    return {
+      type: SandboxMessageType.Empty,
+    };
   }
 
   async handleDatasourceBackendSrvRequest(message: SandboxMessage): Promise<SandboxMessage> {
@@ -110,6 +145,8 @@ export class IframeController {
     this.iframe.srcdoc = srcDoc;
     this.iframe.style.display = 'none';
     this.iframe.id = 'sandbox-iframe-' + this.id;
+    this.iframe.style.border = 'none';
+    this.iframe.style.padding = '5px';
 
     this.iframe.addEventListener('load', () => {
       this.iframe.contentWindow?.postMessage(
@@ -154,6 +191,10 @@ export class IframeController {
       isDev: bootConfig.buildInfo.env === 'development',
       modulePath: bootConfig.appSubUrl + '/public/' + pluginMeta.module + '.js',
     };
+
+    // get all document.styleSheets that have a href
+    const styleSheets = Array.from(document.styleSheets).filter((sheet) => sheet.href);
+
     const srcDoc = `
       <html>
         <head>
@@ -163,10 +204,62 @@ export class IframeController {
           <script src="${bootConfig.appSubUrl}/public/build/runtime~sandboxRuntime.js"></script>
           <script src="${bootConfig.appSubUrl}/public/build/sandboxRuntime.js"></script>
           <link rel="preload" href="${bootConfig.appSubUrl}/public/${pluginMeta.module}.js"></script>
+          ${styleSheets.map((sheet) => `<link rel="stylesheet" href="${sheet.href}">`).join('\n')}
         </head>
         <body>
+        <div id="app"></div>
+        </body>
       </html>
       `;
     return srcDoc;
+  }
+
+  async mountQueryEditor(parent: HTMLDivElement, props: SandboxDatasourceQueryEditorProps) {
+    await this.waitForIframeReady();
+    this.shouldShowIframe = true;
+
+    const messageProps: SandboxDatasourceIframeQueryEditorProps = {
+      range: props.range ? serializeRangeToString(props.range) : undefined,
+      query: props.query,
+    };
+
+    this.onEditorChange = props.onChange;
+    this.onEditorRunQuery = props.onRunQuery;
+
+    await this.iframeBus.postMessage({
+      type: SandboxMessageType.DatasourceRenderQueryEditor,
+      payload: messageProps,
+    });
+
+    if (this.shouldShowIframe) {
+      this.displayIframeAt(parent);
+    }
+  }
+
+  async unmountQueryEditor() {
+    this.shouldShowIframe = false;
+    console.log('unmounting query editor');
+    this.hideIframe();
+  }
+
+  private displayIframeAt(parent: HTMLDivElement) {
+    // get parent top and left absolute position and assign to iframe
+    let parentRect = parent.getBoundingClientRect();
+    const top = parentRect.top + window.scrollY;
+    const left = parentRect.left + window.scrollX;
+    this.iframe.style.top = top + 'px';
+    this.iframe.style.left = left + 'px';
+    this.iframe.style.width = parent.offsetWidth + 'px';
+    this.iframe.style.height = '500px';
+    parent.style.height = '500px';
+    this.iframe.style.display = 'block';
+    this.iframe.style.position = 'absolute';
+  }
+
+  private hideIframe() {
+    this.iframe.style.display = 'none';
+    this.iframe.style.position = 'static';
+    this.iframe.style.top = '0px';
+    this.iframe.style.left = '0px';
   }
 }
