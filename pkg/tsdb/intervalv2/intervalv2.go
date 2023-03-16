@@ -63,11 +63,13 @@ func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval
 
 	calculatedInterval := time.Duration((to - from) / resolution)
 
-	if calculatedInterval < minInterval {
-		return Interval{Text: FormatDuration(minInterval), Value: minInterval}
-	}
-
 	rounded := roundInterval(calculatedInterval)
+
+	if calculatedInterval < minInterval {
+		rounded = minInterval
+	} else if minInterval > 0 {
+		rounded = rounded / minInterval * minInterval
+	}
 
 	return Interval{Text: FormatDuration(rounded), Value: rounded}
 }
