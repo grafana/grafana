@@ -59,6 +59,11 @@ func ReadPrometheusStyleResult(iter *jsoniter.Iterator, opt Options) backend.Dat
 			Error: fmt.Errorf("%s: %s", errorType, err),
 		}
 	}
+	if status == "unknown" {
+		return backend.DataResponse{
+			Error: fmt.Errorf("unknown status"),
+		}
+	}
 
 	if len(warnings) > 0 {
 		for _, frame := range rsp.Frames {
