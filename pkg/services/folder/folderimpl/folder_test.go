@@ -501,7 +501,6 @@ func TestNestedFolderService(t *testing.T) {
 	})
 
 	t.Run("with nested folder feature flag on", func(t *testing.T) {
-
 		t.Run("Should be able to create a nested folder under the root", func(t *testing.T) {
 			g := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
