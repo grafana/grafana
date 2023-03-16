@@ -151,18 +151,6 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 	cmd.OrgID = c.OrgID
 	cmd.SignedInUser = c.SignedInUser
 
-	if !hs.AccessControl.IsDisabled() && hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
-		// Check that the user is allowed to create a subfolder in this folder
-		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.ParentUID))
-		hasAccess, evalErr := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
-		if evalErr != nil {
-			return response.Error(http.StatusInternalServerError, "failed to check folder permissions", evalErr)
-		}
-		if !hasAccess {
-			return response.Error(http.StatusForbidden, "missing write access to the destination folder", nil)
-		}
-	}
-
 	folder, err := hs.folderService.Create(c.Req.Context(), &cmd)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
@@ -221,19 +209,8 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 		}
 		var theFolder *folder.Folder
 		var err error
-		if cmd.NewParentUID != "" {
-			if !hs.AccessControl.IsDisabled() {
-				// Check that the user is allowed to create a subfolder in this folder
-				evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.NewParentUID))
-				hasAccess, evalErr := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
-				if evalErr != nil {
-					return response.Error(http.StatusInternalServerError, "failed to check folder permissions", evalErr)
-				}
-				if !hasAccess {
-					return response.Error(http.StatusForbidden, "missing write access to the destination folder", nil)
-				}
-			}
 
+		if cmd.NewParentUID != "" {
 			cmd.OrgID = c.OrgID
 			cmd.UID = web.Params(c.Req)[":uid"]
 			cmd.SignedInUser = c.SignedInUser

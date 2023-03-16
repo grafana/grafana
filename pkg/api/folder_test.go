@@ -31,7 +31,6 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 	setUpRBACGuardian(t)
 
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
-	folderWithParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\", \"parentUid\": \"Parent\"}"
 
 	type testCase struct {
 		description            string
@@ -111,36 +110,6 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 			expectedCode:           http.StatusPreconditionFailed,
 			expectedFolderSvcError: dashboards.ErrFolderVersionMismatch,
 			permissions:            []accesscontrol.Permission{{Action: dashboards.ActionFoldersCreate}},
-		},
-		{
-			description:    "can create folder in another folder with the right permissions",
-			input:          folderWithParentInput,
-			expectedCode:   http.StatusOK,
-			expectedFolder: &folder.Folder{ID: 1, UID: "uid", Title: "Folder", ParentUID: "Parent"},
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersCreate},
-				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
-			},
-			withNestedFolders: true,
-		},
-		{
-			description:  "forbidden to create folder in another folder without the write access to the parent folder",
-			input:        folderWithParentInput,
-			expectedCode: http.StatusForbidden,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersCreate},
-			},
-			withNestedFolders: true,
-		},
-		{
-			description:    "can create folder on the root level without requiring folder write permissions",
-			input:          folderWithoutParentInput,
-			expectedCode:   http.StatusOK,
-			expectedFolder: &folder.Folder{ID: 1, UID: "uid", Title: "Folder"},
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersCreate},
-			},
-			withNestedFolders: true,
 		},
 	}
 
@@ -401,14 +370,6 @@ func TestFolderMoveAPIEndpoint(t *testing.T) {
 	}
 	tcs := []testCase{
 		{
-			description:  "can move folder to another folder with the right permissions",
-			newParentUid: "newParentUid",
-			expectedCode: http.StatusOK,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
-			},
-		},
-		{
 			description:  "can move folder to another folder with specific permissions",
 			newParentUid: "newParentUid",
 			expectedCode: http.StatusOK,
@@ -418,27 +379,11 @@ func TestFolderMoveAPIEndpoint(t *testing.T) {
 			},
 		},
 		{
-			description:  "can move folder to root folder with write permissions on the folder being moved",
-			newParentUid: "",
-			expectedCode: http.StatusOK,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
-			},
-		},
-		{
 			description:  "forbidden to move folder to another folder without the write access on the folder being moved",
 			newParentUid: "newParentUid",
 			expectedCode: http.StatusForbidden,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("newParentUid")},
-			},
-		},
-		{
-			description:  "forbidden to move folder to another folder without the write access to the parent folder",
-			newParentUid: "newParentUid",
-			expectedCode: http.StatusForbidden,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
 			},
 		},
 	}
