@@ -248,7 +248,7 @@ export function SourceCodeView(props: Props) {
     <CodeMirror
       value={source}
       height={'800px'}
-      extensions={[StreamLanguage.define(go), minimalSetup(), lineNumbers(), selfGutter, valueGutter]}
+      extensions={[StreamLanguage.define(go), minimalSetup(), lineNumbers(), selfGutter, valueGutter, EditorView.editable.of(false),]}
       readOnly={true}
       theme={theme.name === 'Dark' ? oneDarkGrafana : 'light'}
       ref={editorRef}
