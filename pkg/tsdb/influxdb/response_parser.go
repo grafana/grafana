@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	json "github.com/json-iterator/go"
+	jsoniter "github.com/json-iterator/go"
 )
 
 type ResponseParser struct{}
@@ -54,7 +54,7 @@ func (*ResponseParser) parse(buf io.Reader, queries []Query) *backend.QueryDataR
 func parseJSON(buf io.Reader) (Response, error) {
 	var response Response
 
-	dec := json.NewDecoder(buf)
+	dec := jsoniter.NewDecoder(buf)
 	dec.UseNumber()
 
 	err := dec.Decode(&response)
@@ -245,7 +245,7 @@ func buildFrameNameFromQuery(row Row, column string, frameName []byte) []byte {
 }
 
 func parseTimestamp(value interface{}) (time.Time, error) {
-	timestampNumber, ok := value.(json.Number)
+	timestampNumber, ok := value.(jsoniter.Number)
 	if !ok {
 		return time.Time{}, fmt.Errorf("timestamp-value has invalid type: %#v", value)
 	}
@@ -280,7 +280,7 @@ func parseNumber(value interface{}) *float64 {
 		return nil
 	}
 
-	number, ok := value.(json.Number)
+	number, ok := value.(jsoniter.Number)
 	if !ok {
 		// in the current inmplementation, errors become nils
 		return nil
