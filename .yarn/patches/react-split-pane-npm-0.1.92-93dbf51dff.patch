@@ -1,0 +1,12 @@
+diff --git a/index.d.ts b/index.d.ts
+index d116f54d6da12d24b48e24ff3636c9066059aa58..93290945d8b1818cab893d6466179b33869a47b9 100644
+--- a/index.d.ts
++++ b/index.d.ts
+@@ -25,6 +25,7 @@ export type SplitPaneProps = {
+   pane2Style?: React.CSSProperties;
+   resizerClassName?: string;
+   step?: number;
++  children?: React.ReactNode;
+ };
+ 
+ export type SplitPaneState = {

@@ -33389,6 +33389,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-split-pane@patch:react-split-pane@npm:0.1.92#.yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch::locator=grafana%40workspace%3A.":
+  version: 0.1.92
+  resolution: "react-split-pane@patch:react-split-pane@npm%3A0.1.92#.yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch::version=0.1.92&hash=23e19a&locator=grafana%40workspace%3A."
+  dependencies:
+    prop-types: ^15.7.2
+    react-lifecycles-compat: ^3.0.4
+    react-style-proptype: ^3.2.2
+  peerDependencies:
+    react: ^16.0.0-0
+    react-dom: ^16.0.0-0
+  checksum: 4cdcc9e5a03ee1534100ddd6d5a5cce9e083ffe1a0acf7adf085d71d003d0ac475192964e0d63b2887392871dd687ec5340e2122eb588b5685de0a219cb00b11
+  languageName: node
+  linkType: hard
+
 "react-style-proptype@npm:^3.2.2":
   version: 3.2.2
   resolution: "react-style-proptype@npm:3.2.2"
