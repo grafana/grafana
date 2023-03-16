@@ -10,16 +10,16 @@ import { getSegmentStyles } from './styles';
 
 import { useExpandableLabel, SegmentProps } from '.';
 
-export interface SegmentInputProps<T>
-  extends Omit<SegmentProps<T>, 'allowCustomValue' | 'allowEmptyValue'>,
-    Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
+export interface SegmentInputProps
+  extends Omit<SegmentProps, 'allowCustomValue' | 'allowEmptyValue'>,
+  Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
   value: string | number;
   onChange: (text: string | number) => void;
 }
 
 const FONT_SIZE = 14;
 
-export function SegmentInput<T>({
+export function SegmentInput({
   value: initialValue,
   onChange,
   Component,
@@ -30,7 +30,7 @@ export function SegmentInput<T>({
   autofocus = false,
   onExpandedChange,
   ...rest
-}: React.PropsWithChildren<SegmentInputProps<T>>) {
+}: React.PropsWithChildren<SegmentInputProps>) {
   const ref = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState<number | string>(initialValue);
   const [inputWidth, setInputWidth] = useState<number>(measureText((initialValue || '').toString(), FONT_SIZE).width);

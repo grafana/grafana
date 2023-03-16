@@ -117,7 +117,7 @@ export const Basic: ComponentStory<React.ComponentType<SegmentInputProps<string 
 
   return (
     <SegmentSection label="Segment:">
-      <SegmentInput<string | number> {...props} />
+      <SegmentInput {...props} />
     </SegmentSection>
   );
 };

@@ -15,7 +15,7 @@ import { getSegmentStyles } from './styles';
 
 import { useExpandableLabel, SegmentProps } from '.';
 
-export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
+export interface SegmentAsyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
   loadOptions: (query?: string) => Promise<Array<SelectableValue<T>>>;
   /**
