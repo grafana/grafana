@@ -12,24 +12,17 @@ const buildTracesQuery = (operationId: string): string =>
     | project operation_Id, operation_ParentId, itemType, spanID, duration, timestamp, serviceName, customDimensions
     | project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions`;
 
-export function setKustoQuery(query: AzureMonitorQuery, operationId: string): AzureMonitorQuery {
-  const kustoQuery = buildTracesQuery(operationId);
+export function setKustoQuery(query: AzureMonitorQuery, operationId?: string): AzureMonitorQuery {
+  let kustoQuery;
+  if (operationId) {
+    kustoQuery = buildTracesQuery(operationId);
+  }
   return {
     ...query,
     azureLogAnalytics: {
       ...query.azureLogAnalytics,
       operationId,
       query: kustoQuery,
-    },
-  };
-}
-
-export function setFormatAs(query: AzureMonitorQuery, formatAs: ResultFormat): AzureMonitorQuery {
-  return {
-    ...query,
-    azureLogAnalytics: {
-      ...query.azureLogAnalytics,
-      resultFormat: formatAs,
     },
   };
 }

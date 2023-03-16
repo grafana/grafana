@@ -27,12 +27,14 @@ const (
 const (
 	AzureLogsQueryResultFormatTable      AzureLogsQueryResultFormat = "table"
 	AzureLogsQueryResultFormatTimeSeries AzureLogsQueryResultFormat = "time_series"
+	AzureLogsQueryResultFormatTrace      AzureLogsQueryResultFormat = "trace"
 )
 
 // Defines values for AzureMonitorQueryAzureLogAnalyticsResultFormat.
 const (
 	AzureMonitorQueryAzureLogAnalyticsResultFormatTable      AzureMonitorQueryAzureLogAnalyticsResultFormat = "table"
 	AzureMonitorQueryAzureLogAnalyticsResultFormatTimeSeries AzureMonitorQueryAzureLogAnalyticsResultFormat = "time_series"
+	AzureMonitorQueryAzureLogAnalyticsResultFormatTrace      AzureMonitorQueryAzureLogAnalyticsResultFormat = "trace"
 )
 
 // Defines values for AzureQueryType.
@@ -93,6 +95,7 @@ const (
 const (
 	ResultFormatTable      ResultFormat = "table"
 	ResultFormatTimeSeries ResultFormat = "time_series"
+	ResultFormatTrace      ResultFormat = "trace"
 )
 
 // Defines values for SubscriptionsQueryKind.
