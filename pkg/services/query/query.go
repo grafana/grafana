@@ -81,6 +81,9 @@ func (s *ServiceImpl) Run(ctx context.Context) error {
 }
 
 // QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
+// By default, it will attempt to retrieve a cached response for the given query, unless `skipQueryCache` = true.
+// This is distinct from the `skipDSCache` argument, which only determines if the datasource metadata is cached.
+// Query caching is only implemented in Grafana Enterprise.
 func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 	// First look in the query cache if enabled
 	var cr caching.CachedDataResponse
@@ -95,6 +98,7 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, sk
 
 	// do the actual queries
 	resp, err := s.queryData(ctx, user, skipDSCache, reqDTO)
+
 	if err == nil {
 		// This updates the query cache with the result for this metrics request
 		if cr.UpdateCacheFn != nil {
@@ -107,6 +111,7 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, sk
 	return resp, err
 }
 
+// queryData contains the logic for processing and executing queries
 func (s *ServiceImpl) queryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 	// Parse the request into parsed queries grouped by datasource uid
 	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO)
