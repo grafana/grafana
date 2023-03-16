@@ -73,6 +73,10 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
     this.cache[rsp.dashboard.uid] = dashboard;
     this.setState({ dashboard, isLoading: false });
   }
+
+  public clearState() {
+    this.setState({ dashboard: undefined, loadError: undefined, isLoading: false });
+  }
 }
 
 export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObject[] {
@@ -264,6 +268,9 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
     options: panel.options,
     fieldConfig: panel.fieldConfig,
     pluginVersion: panel.pluginVersion,
+    displayMode: panel.transparent ? 'transparent' : undefined,
+    // To be replaced with it's own option persited option instead derived
+    hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
     $data: new SceneDataTransformer({
       $data: new SceneQueryRunner({
         queries: panel.targets,
