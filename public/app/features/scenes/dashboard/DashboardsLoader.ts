@@ -25,7 +25,7 @@ import {
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { flotToGraphOptions } from 'app/plugins/panel/timeseries/migrations';
+import { graphToTimeseriesOptions } from 'app/plugins/panel/timeseries/migrations';
 import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
@@ -264,7 +264,7 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
 
   // Migrate graph to timeseries
   if (panel.type === 'graph') {
-    const { fieldConfig, options } = flotToGraphOptions(panel);
+    const { fieldConfig, options } = graphToTimeseriesOptions(panel);
     panel.fieldConfig = fieldConfig;
     panel.options = options;
     panel.type = 'timeseries';
