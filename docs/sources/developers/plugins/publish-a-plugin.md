@@ -146,8 +146,10 @@ To speed up the time it takes to review your plugin:
 1. In the left menu, under **Org settings**, click **My Plugins**.
 1. Click **Submit Plugin**.
 1. Enter the information requested by the form.
-   - **OS & Architecture:** - Select **Single** if your plugin archive contains binaries for multiple architectures. - Select **Multiple** if you'd like to submit separate plugin archives for each architecture.
-     This can lead to faster downloads since users can select the specific architecture on which they want to install the plugin.
+   - **OS & Architecture:**
+     - Select **Single** if your plugin archive contains binaries for multiple architectures.
+     - Select **Multiple** if you'd like to submit separate plugin archives for each architecture.
+       This can lead to faster downloads since users can select the specific architecture on which they want to install the plugin.
    - **URL:** A URL that points to a ZIP archive of your packaged plugin.
    - **Source Code URL:** A URL that points to a public git repository or ZIP archive of your complete plugin source code.
    - **MD5:** The MD5 hash of the plugin specified by the **URL**.
@@ -173,8 +175,10 @@ To submit an **update** for an already published plugin:
 1. In the left menu, under **Org settings**, click **My Plugins**.
 1. Click **Submit Update** for the plugin you want to update.
 1. Enter the information requested by the form.
-   - **OS & Architecture:** - Select **Single** if your plugin archive contains binaries for multiple architectures. - Select **Multiple** if you'd like to submit separate plugin archives for each architecture.
-     This can lead to faster downloads since users can select the specific architecture they want to install the plugin on.
+   - **OS & Architecture:**
+     - Select **Single** if your plugin archive contains binaries for multiple architectures.
+     - Select **Multiple** if you'd like to submit separate plugin archives for each architecture.
+       This can lead to faster downloads since users can select the specific architecture they want to install the plugin on.
    - **URL:** A URL that points to a ZIP archive of your packaged plugin.
    - **Source Code URL:** A URL that points to a public git repository or ZIP archive of your complete plugin source code.
    - **MD5:** The MD5 hash of the plugin specified by the **URL**.
