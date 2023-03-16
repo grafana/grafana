@@ -1,4 +1,4 @@
-import { AzureMonitorQuery, ResultFormat } from '../../types';
+import { AzureMonitorQuery } from '../../types';
 
 const buildTracesQuery = (operationId: string): string =>
   `set truncationmaxrecords=10000;
