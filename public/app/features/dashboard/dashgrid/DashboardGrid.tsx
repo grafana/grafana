@@ -8,6 +8,7 @@ import { config } from '@grafana/runtime';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
+import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget';
 import { AddPanelWidget } from '../components/AddPanelWidget';
 import { DashboardRow } from '../components/DashboardRow';
 import { DashboardModel, PanelModel } from '../state';
@@ -187,6 +188,10 @@ export class DashboardGrid extends PureComponent<Props, State> {
       return <AddPanelWidget key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
 
+    if (panel.type === 'add-library-panel') {
+      return <AddLibraryPanelWidget key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
+    }
+
     return (
       <DashboardPanel
         key={panel.key}
@@ -249,6 +254,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
                   onResizeStop={this.onResizeStop}
                   onLayoutChange={this.onLayoutChange}
                 >
+                  {/* // todo: if there are no panels, show empty page */}
                   {this.renderPanels(width)}
                 </ReactGridLayout>
               </div>
