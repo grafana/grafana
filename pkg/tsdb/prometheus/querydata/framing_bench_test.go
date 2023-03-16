@@ -15,9 +15,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/kindsys"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
+	"github.com/grafana/kindsys"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
 
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )

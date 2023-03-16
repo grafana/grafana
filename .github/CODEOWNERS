@@ -258,6 +258,7 @@
 /pkg/infra/filestorage/ @grafana/grafana-app-platform-squad
 /pkg/util/converter/ @grafana/grafana-app-platform-squad
 /pkg/modules/ @grafana/grafana-app-platform-squad
+/pkg/kindsysreport/ @grafana/grafana-app-platform-squad
 
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-squad-backend
@@ -548,8 +549,6 @@ embed.go @grafana/grafana-as-code
 /pkg/cuectx/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/codegen/ @grafana/grafana-as-code
-/pkg/kindsys/ @grafana/grafana-as-code
-/pkg/kindsys/kindcat_custom.cue @grafana/cloud-app-platform-squad
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
 /pkg/registry/corekind/ @grafana/grafana-as-code
 /public/app/plugins/*gen.go @grafana/grafana-as-code
