@@ -15,7 +15,7 @@ weight: 1400
 
 # Tempo data source
 
-Grafana ships with built-in support for Tempo, a high-volume, minimal-dependency trace storage, open-source tracing solution from Grafana Labs.
+Grafana ships with built-in support for [Tempo](https://grafana.com/docs/tempo/latest/), a high-volume, minimal-dependency trace storage, open-source tracing solution from Grafana Labs. This topic explains configuration and queries specific to the Tempo data source.
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.
@@ -112,7 +112,7 @@ The following table describes the ways in which you can configure your trace to 
 
 The **Trace to metrics** setting configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Tempo.
 
-**To configure trace to metrics:**
+To configure trace to metrics:
 
 1. Select the target data source.
 1. Create any desired linked queries.
@@ -141,7 +141,7 @@ To use the Service Graph, refer to the [Service Graph documentation]({{< relref 
 
 The **Node Graph** setting enables the [node graph visualization]({{< relref "../../panels-visualizations/visualizations/node-graph/" >}}), which is disabled by default.
 
-Once enabled, Grafana displays the node graph after loading the trace view.
+Once enabled, Grafana displays the node graph above the trace view.
 
 ### Tempo search
 

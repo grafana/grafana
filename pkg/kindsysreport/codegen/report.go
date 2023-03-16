@@ -17,14 +17,14 @@ import (
 	"strings"
 
 	"cuelang.org/go/cue"
-
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/kindsys"
-	"github.com/grafana/grafana/pkg/kindsys/kindsysreport"
+	"github.com/grafana/kindsys"
+	"github.com/grafana/thema"
+
+	"github.com/grafana/grafana/pkg/kindsysreport"
 	"github.com/grafana/grafana/pkg/plugins/pfs/corelist"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/registry/corekind"
-	"github.com/grafana/thema"
 )
 
 const (
@@ -187,7 +187,7 @@ func buildKindStateReport() *KindStateReport {
 	r := emptyKindStateReport()
 	b := corekind.NewBase(nil)
 
-	groot := filepath.Join(elsedie(os.Getwd())("cannot get cwd"), "..", "..")
+	groot := filepath.Join(elsedie(os.Getwd())("cannot get cwd"), "..", "..", "..")
 	of := elsedie(kindsysreport.NewCodeOwnersFinder(groot))("cannot parse .github/codeowners")
 
 	seen := make(map[string]bool)

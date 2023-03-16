@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ButtonHTMLAttributes, FC } from 'react';
+import React, { ButtonHTMLAttributes } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ButtonVariant, IconName, LinkButton, useStyles2 } from '@grafana/ui';
@@ -18,7 +18,7 @@ export interface EmptyAreaWithCTAProps {
   showButton?: boolean;
 }
 
-export const EmptyAreaWithCTA: FC<EmptyAreaWithCTAProps> = ({
+export const EmptyAreaWithCTA = ({
   buttonIcon,
   buttonLabel,
   buttonSize = 'lg',
@@ -27,7 +27,7 @@ export const EmptyAreaWithCTA: FC<EmptyAreaWithCTAProps> = ({
   text,
   href,
   showButton = true,
-}) => {
+}: EmptyAreaWithCTAProps) => {
   const styles = useStyles2(getStyles);
 
   const commonProps = {

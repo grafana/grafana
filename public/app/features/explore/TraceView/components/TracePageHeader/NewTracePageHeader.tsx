@@ -106,7 +106,7 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
   );
 
   let statusColor: BadgeColor = 'green';
-  if (status && status.length > 0 && Number.isInteger(status[0].value)) {
+  if (status && status.length > 0) {
     if (status[0].value.toString().charAt(0) === '4') {
       statusColor = 'orange';
     } else if (status[0].value.toString().charAt(0) === '5') {

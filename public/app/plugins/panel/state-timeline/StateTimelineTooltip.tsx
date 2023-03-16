@@ -21,14 +21,14 @@ interface StateTimelineTooltipProps {
   onAnnotationAdd?: () => void;
 }
 
-export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
+export const StateTimelineTooltip = ({
   data,
   alignedData,
   seriesIdx,
   datapointIdx,
   timeZone,
   onAnnotationAdd,
-}) => {
+}: StateTimelineTooltipProps) => {
   const theme = useTheme2();
 
   if (!data || datapointIdx == null) {
