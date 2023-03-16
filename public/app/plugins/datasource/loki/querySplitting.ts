@@ -131,10 +131,10 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
       .runQuery({ ...requests[requestGroup].request, range, requestId, targets })
       .subscribe({
         next: (partialResponse) => {
-          if (partialResponse.error) {
-            subscriber.error(partialResponse.error);
-          }
           mergedResponse = combineResponses(mergedResponse, partialResponse);
+          if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
+            shouldStop = true;
+          }
         },
         complete: () => {
           subscriber.next(mergedResponse);

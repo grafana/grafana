@@ -15,13 +15,13 @@ weight: 1600
 
 # Zipkin data source
 
-Grafana ships with built-in support for Zipkin, an open source, distributed tracing system.
+Grafana ships with built-in support for Zipkin, an open source, distributed tracing system. This topic explains configuration and queries specific to the Zipkin data source.
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
-Once you've added the Zipkin data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "#query-traces" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
+Once you've added the Zipkin data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "#query-the-data-source" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
 
 ## Configure the data source
 
@@ -42,46 +42,76 @@ Set the data source's basic configuration options carefully:
 | **User**       | Defines the user name for basic authentication.                          |
 | **Password**   | Defines the password for basic authentication.                           |
 
-### Configure trace to logs
+### Trace to logs
 
-{{< figure src="/static/img/docs/explore/traces-to-logs-settings-8-2.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
+![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
 
 > **Note:** Available in Grafana v7.4 and higher.
+> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
 
 The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration" >}}) that is available when you integrate Grafana with Zipkin.
 
-**To configure trace to logs:**
+There are two ways to configure the trace to logs feature:
+
+- Use a simplified configuration with default query, or
+- Configure a custom query where you can use a [template language]({{< relref "../../dashboards/variables/variable-syntax">}}) to interpolate variables from the trace or span.
+
+#### Use a simple configuration
 
 1. Select the target data source.
-1. Select which tags to use in the logs query. The tags you configure must be present in the spans attributes or resources for a trace to logs span link to appear.
+1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in trace it may be necessary to search in larger or shifted time range to find the desired logs.
+1. Select which tags to use in the logs query. The tags you configure must be present in the spans attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful if the tag has dots in the name and the target data source does not allow using dots in labels. In that case, you can for example remap `http.status` to `http_status`.
+1. Optionally, switch on the **Filter by trace ID** and/or **Filter by span ID** setting to further filter the logs if your logs consistently contain trace or span IDs.
 
-   - **Single tag**
-     - Configuring `job` as a tag and clicking on a span link will take you to your configured logs datasource with the query `{job='value from clicked span'}`.
-   - **Multiple tags**
-     - If multiple tags are used they will be concatenated so the logs query would look like `{job='value from clicked span', service='value from clicked span'}`.
-   - **Mapped tags**
-     - For a mapped tag `service.name` with value `service`, clicking on a span link will take you to your configured logs datasource with the query `{service='value from clicked span'}` instead of `{service.name='value from clicked span'}`.
-     - This is useful for instances where your tracing datasource tags and your logs datasource tags don't match one-to-one.
+#### Configure a custom query
+
+1. Select the target data source.
+1. Set start and end time shift. Since the logs timestamps may not exactly match the timestamps of the spans in the trace, you may need to widen or shift the time range to find the desired logs.
+1. Optionally, select tags to map. These tags can be used in the custom query with `${__tags}` variable. This variable will interpolate the mapped tags as list in an appropriate syntax for the data source and will only include the tags that were present in the span omitting those that weren't present. You can optionally configure a new name for the tag. This is useful when the tag has dots in the name and the target data source does not allow using dots in labels. For example, you can remap `http.status` to `http_status`. If you don't map any tags here, you can still use any tag in the query like this `method="${__span.tags.method}"`.
+1. Skip **Filter by trace ID** and **Filter by span ID** settings as these cannot be used with a custom query.
+1. Switch on **Use custom query**.
+1. Specify a custom query to be used to query the logs. You can use various variables to make that query relevant for current span. The link will only be shown only if all the variables are interpolated with non-empty values to prevent creating an invalid query.
+
+#### Variables that can be used in a custom query
+
+To use a variable you need to wrap it in `${}`. For example `${__span.name}`.
+
+| Variable name          | Description                                                                                                                                                                                                                                                                                                                              |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **\_\_tags**           | This variable uses the tag mapping from the UI to create a label matcher string in the specific data source syntax. The variable only uses tags that are present in the span. The link is still created even if only one of those tags is present in the span. You can use this if all tags are not required for the query to be useful. |
+| **\_\_span.spanId**    | The ID of the span.                                                                                                                                                                                                                                                                                                                      |
+| **\_\_span.traceId**   | The ID of the trace.                                                                                                                                                                                                                                                                                                                     |
+| **\_\_span.duration**  | The duration of the span.                                                                                                                                                                                                                                                                                                                |
+| **\_\_span.name**      | Name of the span.                                                                                                                                                                                                                                                                                                                        |
+| **\_\_span.tags**      | Namespace for the tags in the span. To access a specific tag named `version`, you would use `${__span.tags.version}`. In case the tag contains dot, you have to access it as `${__span.tags["http.status"]}`.                                                                                                                            |
+| **\_\_trace.traceId**  | The ID of the trace.                                                                                                                                                                                                                                                                                                                     |
+| **\_\_trace.duration** | The duration of the trace.                                                                                                                                                                                                                                                                                                               |
+| **\_\_trace.name**     | The name of the trace.                                                                                                                                                                                                                                                                                                                   |
 
 The following table describes the ways in which you can configure your trace to logs settings:
 
-| Name                      | Description                                                                                                                                                                        |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Data source**           | Sets the target data source.                                                                                                                                                       |
-| **Tags**                  | Defines the tags to use in the logs query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.                                                                                 |
-| **Map tag names**         | Enables configuring how Jaeger tag names map to logs label names. For example, map `service.name` to `service`.                                                                    |
-| **Span start time shift** | Shifts the start time for the logs query based on the span start time. To extend to the past, use a negative value. Use time interval units like `5s`, `1m`, `3h`. Default is `0`. |
-| **Span end time shift**   | Shifts the end time for the logs query based on the span end time. Use time interval units. Default is `0`.                                                                        |
-| **Filter by Trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                          |
-| **Filter by Span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                           |
+| Setting name              | Description                                                                                                                                                                                                                                                                  |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data source**           | Defines the target data source. You can select only Loki or Splunk \[logs\] data sources.                                                                                                                                                                                    |
+| **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default: `0`.                                                                              |
+| **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default: `0`.                                                                                                                                                                  |
+| **Tags**                  | Defines the the tags to use in the logs query. Default is `cluster`, `hostname`, `namespace`, `pod`. You can change the tag name for example to remove dots from the name if they are not allowed in the target data source. For example map `http.status` to `http_status`. |
+| **Filter by trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                                                                                                                    |
+| **Filter by span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                                                                                                                     |
+| **Use custom query**      | Toggles use of custom query with interpolation.                                                                                                                                                                                                                              |
+| **Query**                 | Input to write custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                                            |
 
-### Configure trace to metrics
+### Trace to metrics
 
 > **Note:** This feature is behind the `traceToMetrics` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
+> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
 
-The **Trace to metrics** section configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/).
+The **Trace to metrics** section configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Zipkin.
 
-Use the settings to select the target Prometheus data source, and create any desired linked queries.
+To configure trace to metrics:
+
+1. Select the target data source.
+1. Create any desired linked queries.
 
 | Setting name    | Description                                                                                                                                                                                                                                                     |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -95,13 +125,13 @@ Each linked query consists of:
   Interpolate tags using the `$__tags` keyword.
   For example, when you configure the query `requests_total{$__tags}`with the tags `k8s.pod=pod` and `cluster`, the result looks like `requests_total{pod="nginx-554b9", cluster="us-east-1"}`.
 
-### Enable Node Graph
+### Node Graph
 
 The **Node Graph** setting enables the [Node Graph visualization]({{< relref "../../panels-visualizations/visualizations/node-graph/" >}}), which is disabled by default.
 
 Once enabled, Grafana displays the Node Graph after loading the trace view.
 
-### Configure the span bar label
+### Span bar label
 
 The **Span bar label** section helps you display additional information in the span bar row.
 
@@ -113,18 +143,23 @@ You can choose one of three options:
 | **Duration** | _(Default)_ Displays the span duration on the span bar row.                                                                      |
 | **Tag**      | Displays the span tag on the span bar row. You must also specify which tag key to use to get the tag value, such as `span.kind`. |
 
-## Query traces
+## Query the data source
 
 You can query and display traces from Zipkin via [Explore]({{< relref "../../explore/" >}}).
 
 This topic explains configuration and queries specific to the Zipkin data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualizations/query-transform-data" >}}).
 
+### Query by trace ID
+
+To query a particular trace:
+
+1. Select the **TraceID** query type.
+1. Enter the trace's ID into the **Trace ID** field.
+
 {{< figure src="/static/img/docs/v70/zipkin-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor" >}}
 
-To query by trace ID, enter it.
-
-{{< figure src="/static/img/docs/v70/zipkin-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor with trace selector expanded" >}}
+### Query by trace selector
 
 To select a particular trace from all traces logged in the time range you have selected in Explore, you can also query by trace selector.
 The trace selector has three levels of nesting:
@@ -132,6 +167,8 @@ The trace selector has three levels of nesting:
 - The service you're interested in.
 - Particular operation, part of the selected service
 - Specific trace in which the selected operation occurred, represented by the root operation name and trace duration
+
+{{< figure src="/static/img/docs/v70/zipkin-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor with trace selector expanded" >}}
 
 ## View data mapping in the trace UI
 
