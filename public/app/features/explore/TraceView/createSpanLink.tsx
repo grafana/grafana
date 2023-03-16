@@ -164,6 +164,9 @@ function legacyCreateSpanLinkFactory(
           tags = getFormattedTags(span, tagsToUse, { labelValueSign: ':', joinBy: ' AND ' });
           query = getQueryForElasticsearchOrOpensearch(span, traceToLogsOptions, tags, customQuery);
           break;
+        case 'grafana-falconlogscale-datasource':
+          tags = getFormattedTags(span, tagsToUse, { joinBy: ' OR ' });
+          query = getQueryForFalconLogScale(span, traceToLogsOptions, tags, customQuery);
       }
 
       // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
@@ -401,6 +404,35 @@ function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2, tags:
 
   return {
     query: query,
+    refId: '',
+  };
+}
+
+function getQueryForFalconLogScale(span: TraceSpan, options: TraceToLogsOptionsV2, tags: string, customQuery?: string) {
+  const { filterByTraceID, filterBySpanID } = options;
+
+  if (customQuery) {
+    return {
+      lsql: customQuery,
+      refId: '',
+    };
+  }
+
+  if (!tags) {
+    return undefined;
+  }
+
+  let lsql = '${__tags}';
+  if (filterByTraceID && span.traceID) {
+    lsql += ' or "${__span.traceId}"';
+  }
+
+  if (filterBySpanID && span.spanID) {
+    lsql += ' or "${__span.spanId}"';
+  }
+
+  return {
+    lsql,
     refId: '',
   };
 }

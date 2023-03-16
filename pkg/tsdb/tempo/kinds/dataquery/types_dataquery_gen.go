@@ -69,10 +69,9 @@ type TempoQuery struct {
 	} `json:"filters"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
 	Hide *bool `json:"hide,omitempty"`
-
-	// Unique, guid like, string used in explore mode
-	Key *string `json:"key,omitempty"`
 
 	// Defines the maximum number of traces that are returned from Tempo
 	Limit *int64 `json:"limit,omitempty"`
@@ -90,7 +89,9 @@ type TempoQuery struct {
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
 
-	// A - Z
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
 
 	// Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true

@@ -42,7 +42,7 @@ describe('runPartitionedQueries()', () => {
       .spyOn(datasource, 'runQuery')
       .mockReturnValue(of({ state: LoadingState.Error, error: { refId: 'A', message: 'Error' }, data: [] }));
     await expect(runPartitionedQueries(datasource, request)).toEmitValuesWith((values) => {
-      expect(values).toEqual([{ refId: 'A', message: 'Error' }]);
+      expect(values).toEqual([{ error: { refId: 'A', message: 'Error' }, data: [], state: LoadingState.Streaming }]);
     });
   });
 
