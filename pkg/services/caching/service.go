@@ -16,9 +16,11 @@ type CacheResponseFn func(context.Context, *backend.QueryDataResponse)
 type CacheStatus int
 
 const (
-	StatusNotFound CacheStatus = iota + 1
-	StatusCacheHit
-	StatusCacheError
+	StatusNotFound      CacheStatus = iota + 1 // No cached data found for query
+	StatusCacheHit                             // Cached data found for query
+	StatusCacheError                           // Error occurred while processing query or checking cache
+	StatusDisabled                             // Caching is implemented but disabled via config or licensing
+	StatusUnimplemented                        // Caching is not implemented
 )
 
 type CachedDataResponse struct {
@@ -32,7 +34,7 @@ func ProvideCachingService() *OSSCachingService {
 }
 
 type CachingService interface {
-	HandleQueryRequest(context.Context, dtos.MetricRequest) (CachedDataResponse, error)
+	HandleQueryRequest(context.Context, dtos.MetricRequest) CachedDataResponse
 	HandleResourceRequest(context.Context) (*backend.QueryDataResponse, bool, CacheResponseFn, error)
 }
 
@@ -40,8 +42,10 @@ type CachingService interface {
 type OSSCachingService struct {
 }
 
-func (s *OSSCachingService) HandleQueryRequest(ctx context.Context, req dtos.MetricRequest) (CachedDataResponse, error) {
-	return CachedDataResponse{}, ErrCachingNotAvailable
+func (s *OSSCachingService) HandleQueryRequest(ctx context.Context, req dtos.MetricRequest) CachedDataResponse {
+	return CachedDataResponse{
+		Status: StatusUnimplemented,
+	}
 }
 
 func (s *OSSCachingService) HandleResourceRequest(ctx context.Context) (*backend.QueryDataResponse, bool, CacheResponseFn, error) {

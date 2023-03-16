@@ -85,11 +85,7 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, sk
 	// First look in the query cache if enabled
 	var cr caching.CachedDataResponse
 	if !skipQueryCache {
-		if r, err := s.cachingService.HandleQueryRequest(ctx, reqDTO); err != nil {
-			if err != nil {
-				return nil, err
-			}
-		} else if r.Status == caching.StatusCacheHit {
+		if r := s.cachingService.HandleQueryRequest(ctx, reqDTO); r.Status == caching.StatusCacheHit {
 			caching.MarkCacheStatus(skipQueryCache, r)
 			return r.Response, nil
 		} else {

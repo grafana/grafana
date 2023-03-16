@@ -15,6 +15,7 @@ var statusToValue map[CacheStatus]string = map[CacheStatus]string{
 	StatusNotFound:   "MISS",
 	StatusCacheHit:   "HIT",
 	StatusCacheError: "ERROR",
+	StatusDisabled:   "DISABLED",
 }
 
 func MarkCacheStatus(isSkip bool, resp CachedDataResponse) {
