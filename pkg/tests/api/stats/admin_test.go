@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestAdminStats(t *testing.T) {
+func TestIntegrationAdminStats(t *testing.T) {
 	t.Run("with unified alerting enabled", func(t *testing.T) {
 		url := grafanaSetup(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
