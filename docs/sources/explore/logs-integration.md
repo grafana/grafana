@@ -53,6 +53,7 @@ For logs where a level label is specified, we use the value of the label to dete
 | warning               |  warning  |     yellow |
 | info                  |   info    |      green |
 | information           |   info    |      green |
+| informational         |   info    |      green |
 | notice                |   info    |      green |
 | dbug                  |   debug   |       blue |
 | debug                 |   debug   |       blue |
