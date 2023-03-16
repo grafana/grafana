@@ -5,6 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { FolderDTO } from 'app/types';
@@ -147,7 +148,15 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
     );
   };
 
-  if (folderDTO && !state.loading && !state.result?.totalRows && !stateManager.hasSearchFilters()) {
+  if (
+    folderDTO &&
+    // With nested folders, SearchView doesn't know if it's fetched all children
+    // of a folder so don't show empty state here.
+    !config.featureToggles.nestedFolders &&
+    !state.loading &&
+    !state.result?.totalRows &&
+    !stateManager.hasSearchFilters()
+  ) {
     return (
       <EmptyListCTA
         title="This folder doesn't have any dashboards yet"

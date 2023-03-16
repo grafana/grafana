@@ -4,10 +4,10 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DEFAULT_MAX_VALUES, TYPE_KIND_MAP } from '../constants';
-import { DashboardSearchHit, DashboardSearchItemType, DashboardViewItem } from '../types';
+import { DashboardSearchHit, DashboardSearchItemType } from '../types';
 
-import { LocationInfo, NestedFolderDTO } from './types';
-import { queryResultToViewItem, replaceCurrentFolderQuery } from './utils';
+import { LocationInfo } from './types';
+import { replaceCurrentFolderQuery } from './utils';
 
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
 

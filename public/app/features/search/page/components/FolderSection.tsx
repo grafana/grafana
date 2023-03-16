@@ -11,7 +11,6 @@ import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqu
 
 import { SearchItem } from '../..';
 import { GENERAL_FOLDER_UID } from '../../constants';
-import { getGrafanaSearcher } from '../../service';
 import { getFolderChildren } from '../../service/folders';
 import { DashboardViewItem } from '../../types';
 import { SelectionChecker, SelectionToggle } from '../selection';
@@ -44,7 +43,7 @@ export const FolderSection = ({
       return Promise.resolve([]);
     }
 
-    const childItems = getFolderChildren(section.uid, section.title);
+    const childItems = await getFolderChildren(section.uid, section.title);
 
     return childItems;
   }, [sectionExpanded, tags]);
