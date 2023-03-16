@@ -186,14 +186,18 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 	sectionID := navtree.NavIDApps
 
 	if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride {
-		appLink.SortWeight = navConfig.SortWeight
-		sectionID = navConfig.SectionID
+		// Check to see if there's a matching section
+		isValidOverride := navConfig.SectionID == navtree.NavIDRoot || treeRoot.FindById(navConfig.SectionID) != nil
+		if isValidOverride {
+			appLink.SortWeight = navConfig.SortWeight
+			sectionID = navConfig.SectionID
 
-		if len(navConfig.Text) > 0 {
-			appLink.Text = navConfig.Text
-		}
-		if len(navConfig.Icon) > 0 {
-			appLink.Icon = navConfig.Icon
+			if len(navConfig.Text) > 0 {
+				appLink.Text = navConfig.Text
+			}
+			if len(navConfig.Icon) > 0 {
+				appLink.Icon = navConfig.Icon
+			}
 		}
 	}
 
