@@ -54,7 +54,7 @@ export function LabelFilters({
   return (
     <EditorFieldGroup>
       <EditorField
-        label="Label filters"
+        label="2. Label filters"
         error={MISSING_LABEL_FILTER_ERROR_MESSAGE}
         invalid={labelFilterRequired && !hasLabelFilter}
       >

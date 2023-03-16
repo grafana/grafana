@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 
 import { DataSourceApi, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
-import { EditorRow } from '@grafana/experimental';
+import { EditorField, EditorRow, Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Button, Tag, useStyles2 } from '@grafana/ui';
 
@@ -16,7 +16,6 @@ import { OperationList } from '../shared/OperationList';
 import { OperationListExplained } from '../shared/OperationListExplained';
 import { OperationsEditorRow } from '../shared/OperationsEditorRow';
 import { QueryBuilderHints } from '../shared/QueryBuilderHints';
-import { RawQuery } from '../shared/RawQuery';
 import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../shared/types';
 import { PromVisualQuery } from '../types';
@@ -25,7 +24,6 @@ import { LabelFilters } from './LabelFilters';
 import { MetricEncyclopediaModal } from './MetricEncyclopediaModal';
 import { MetricSelect, PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './MetricSelect';
 import { NestedQueryList } from './NestedQueryList';
-import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
 
 export interface Props {
   query: PromVisualQuery;
@@ -214,37 +212,39 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     <>
       <EditorRow>
         {MetricEncyclopedia ? (
-          <>
-            <Button
-              className={styles.button}
-              variant="secondary"
-              size="sm"
-              onClick={() => setMetricEncyclopediaModalOpen((prevValue) => !prevValue)}
-            >
-              Metric Encyclopedia
-            </Button>
-            {query.metric && (
-              <Tag
-                name={' ' + query.metric}
-                color="#3D71D9"
-                icon="times"
-                onClick={() => {
-                  onChange({ ...query, metric: '' });
-                }}
-                title="Click to remove metric"
-                className={styles.metricTag}
-              />
-            )}
-            {metricEncyclopediaModalOpen && (
-              <MetricEncyclopediaModal
-                datasource={datasource}
-                isOpen={metricEncyclopediaModalOpen}
-                onClose={() => setMetricEncyclopediaModalOpen(false)}
-                query={query}
-                onChange={onChange}
-              />
-            )}
-          </>
+          <EditorField label="1. Metric select">
+            <Stack gap={1}>
+              <Button
+                className={styles.button}
+                variant="secondary"
+                size="sm"
+                onClick={() => setMetricEncyclopediaModalOpen((prevValue) => !prevValue)}
+              >
+                Metric Encyclopedia
+              </Button>
+              {query.metric && (
+                <Tag
+                  name={' ' + query.metric}
+                  color="#3D71D9"
+                  icon="times"
+                  onClick={() => {
+                    onChange({ ...query, metric: '' });
+                  }}
+                  title="Click to remove metric"
+                  className={styles.metricTag}
+                />
+              )}
+              {metricEncyclopediaModalOpen && (
+                <MetricEncyclopediaModal
+                  datasource={datasource}
+                  isOpen={metricEncyclopediaModalOpen}
+                  onClose={() => setMetricEncyclopediaModalOpen(false)}
+                  query={query}
+                  onChange={onChange}
+                />
+              )}
+            </Stack>
+          </EditorField>
         ) : (
           <MetricSelect
             query={query}
@@ -254,6 +254,13 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
             labelsFilters={query.labels}
           />
         )}
+      </EditorRow>
+      {showExplain && (
+        <OperationExplainedBox stepNumber={1} title={'Add a meaningful title here.'}>
+          Add a description of what this section of the query builder does.
+        </OperationExplainedBox>
+      )}
+      <EditorRow>
         <LabelFilters
           getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
           labelsFilters={query.labels}
@@ -264,42 +271,52 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
         />
       </EditorRow>
       {showExplain && (
-        <OperationExplainedBox
-          stepNumber={1}
-          title={<RawQuery query={`${query.metric} ${promQueryModeller.renderLabels(query.labels)}`} lang={lang} />}
-        >
-          {EXPLAIN_LABEL_FILTER_CONTENT}
+        <OperationExplainedBox stepNumber={2} title={'Add a meaningful title here.'}>
+          Add a description of what this section of the query builder does.
         </OperationExplainedBox>
       )}
       <OperationsEditorRow>
-        <OperationList<PromVisualQuery>
-          queryModeller={promQueryModeller}
-          // eslint-ignore
-          datasource={datasource as DataSourceApi}
-          query={query}
-          onChange={onChange}
-          onRunQuery={onRunQuery}
-          highlightedOp={highlightedOp}
-        />
-        <QueryBuilderHints<PromVisualQuery>
-          datasource={datasource}
-          query={query}
-          onChange={onChange}
-          data={data}
-          queryModeller={promQueryModeller}
-          buildVisualQueryFromString={buildVisualQueryFromString}
-        />
+        <EditorField label="3. Operations">
+          <OperationList<PromVisualQuery>
+            queryModeller={promQueryModeller}
+            // eslint-ignore
+            datasource={datasource as DataSourceApi}
+            query={query}
+            onChange={onChange}
+            onRunQuery={onRunQuery}
+            highlightedOp={highlightedOp}
+          />
+        </EditorField>
       </OperationsEditorRow>
+      {showExplain && (
+        <OperationExplainedBox stepNumber={3} title={'Add a meaningful title here.'}>
+          Add a description of what this section of the query builder does.
+        </OperationExplainedBox>
+      )}
       {showExplain && (
         <OperationListExplained<PromVisualQuery>
           lang={lang}
           query={query}
-          stepNumber={2}
+          stepNumber={4}
           queryModeller={promQueryModeller}
           onMouseEnter={(op) => setHighlightedOp(op)}
           onMouseLeave={() => setHighlightedOp(undefined)}
         />
       )}
+
+      <EditorRow>
+        <EditorField label="4. Hints">
+          <QueryBuilderHints<PromVisualQuery>
+            datasource={datasource}
+            query={query}
+            onChange={onChange}
+            data={data}
+            queryModeller={promQueryModeller}
+            buildVisualQueryFromString={buildVisualQueryFromString}
+          />
+        </EditorField>
+      </EditorRow>
+
       {query.binaryQueries && query.binaryQueries.length > 0 && (
         <NestedQueryList
           query={query}

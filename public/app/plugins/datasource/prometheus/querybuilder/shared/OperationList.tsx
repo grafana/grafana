@@ -126,9 +126,7 @@ export function OperationList<T extends QueryWithOperations>({
               placeholder={'Search'}
             />
           ) : (
-            <Button icon={'plus'} variant={'secondary'} onClick={() => setCascaderOpen(true)} title={'Add operation'}>
-              Operations
-            </Button>
+            <Button icon={'plus'} variant={'secondary'} onClick={() => setCascaderOpen(true)} title={'Add operation'} />
           )}
         </div>
       </Stack>
