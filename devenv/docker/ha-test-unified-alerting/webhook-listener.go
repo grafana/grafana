@@ -173,7 +173,7 @@ const landingPage = `
 <body>
 	<h1>Webhook Listener<h1>
 
-	<p> For setup, please use the "/listen" endpoint. </p>
+	<p> For setup, please point your webhook configuration to the "/listen" endpoint. </p>
 	<p> For debugging, please use the "/fingerprints" endpoint. </p>
 </body>
 </html>
