@@ -19,7 +19,7 @@ import {
   MultiSelect,
   Select,
   Spinner,
-  useStyles2,
+  useTheme2,
 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
@@ -129,6 +129,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
   const [filteredMetricCount, setFilteredMetricCount] = useState<number>();
   // backend search metric names by text
   const [useBackend, setUseBackend] = useState<boolean>(false);
+  const [disableTextWrap, setDisableTextWrap] = useState<boolean>(false);
 
   const updateMetricsMetadata = useCallback(async () => {
     // *** Loading Gif
@@ -197,7 +198,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
     updateMetricsMetadata();
   }, [updateMetricsMetadata]);
 
-  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const styles = getStyles(theme, disableTextWrap);
 
   const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
     return {
@@ -446,10 +448,10 @@ export const MetricEncyclopediaModal = (props: Props) => {
     const tableData: MetricsData = metrics;
 
     const columns: Array<Column<MetricData>> = [
+      { id: '', header: 'Select', cell: ButtonCell },
       { id: 'value', header: 'Name' },
       { id: 'type', header: 'Type' },
       { id: 'description', header: 'Description' },
-      { id: '', header: ' ', cell: ButtonCell },
     ];
 
     return <InteractiveTable className={styles.table} columns={columns} data={tableData} getRowId={(r) => r.value} />;
@@ -591,16 +593,22 @@ export const MetricEncyclopediaModal = (props: Props) => {
 
       <div className={styles.alphabetRow}>
         <div>{letterSearchComponent()}</div>
-        <div className={styles.selectItem}>
-          <InlineSwitch
-            value={excludeNullMetadata}
-            disabled={useBackend || !hasMetadata}
-            onChange={() => {
-              setExcludeNullMetadata(!excludeNullMetadata);
-              setPageNum(1);
-            }}
-          />
-          <p className={styles.selectItemLabel}>{placeholders.excludeNoMetadata}</p>
+        <div className={styles.alphabetRowToggles}>
+          <div className={styles.selectItem}>
+            <InlineSwitch value={disableTextWrap} onChange={() => setDisableTextWrap((p) => !p)} />
+            <p className={styles.selectItemLabel}>Disable text wrap</p>
+          </div>
+          <div className={styles.selectItem}>
+            <InlineSwitch
+              value={excludeNullMetadata}
+              disabled={useBackend || !hasMetadata}
+              onChange={() => {
+                setExcludeNullMetadata(!excludeNullMetadata);
+                setPageNum(1);
+              }}
+            />
+            <p className={styles.selectItemLabel}>{placeholders.excludeNoMetadata}</p>
+          </div>
         </div>
       </div>
 
@@ -682,7 +690,7 @@ function alphabetically(ascending: boolean, metadataFilters: boolean) {
   };
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
   return {
     modal: css`
       width: 85vw;
@@ -693,6 +701,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     inputWrapper: css`
       display: flex;
       flex-direction: row;
+      flex-wrap: wrap;
       gap: ${theme.spacing(2)};
       margin-bottom: ${theme.spacing(2)};
     `,
@@ -701,6 +710,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     inputItem: css`
       flex-grow: 1;
+      flex-basis: 20%;
+      ${theme.breakpoints.down('md')} {
+        min-width: 100%;
+      }
     `,
     selectWrapper: css`
       margin-bottom: ${theme.spacing(2)};
@@ -730,8 +743,16 @@ const getStyles = (theme: GrafanaTheme2) => {
     alphabetRow: css`
       display: flex;
       flex-direction: row;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
+      column-gap: ${theme.spacing(1)};
+    `,
+    alphabetRowToggles: css`
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      column-gap: ${theme.spacing(1)};
     `,
     results: css`
       height: 300px;
@@ -741,12 +762,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding-top: ${theme.spacing(1.5)};
       display: flex;
       flex-direction: row;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
     `,
     pageSettings: css`
       display: flex;
       flex-direction: row;
+      flex-wrap: wrap;
       align-items: center;
     `,
     selAlpha: css`
@@ -763,6 +786,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: inline-block;
     `,
     table: css`
+      white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
       td {
         vertical-align: baseline;
       }
@@ -810,3 +834,13 @@ const alphabet = [
   'Y',
   'Z',
 ];
+
+// some things i would like to show/discuss in standup. posting here so i don’t forget!
+
+// Encyclopadia improvements:
+// 1. make all components responsive with                     | this improves the visuals on smaller devices
+// 2. move the button to the first position in the table  | on larger screens you no longer have to scroll to “Use this metric”.
+// 3. add a wrap text toggle (?)                                          | this improves the amount of visible results on smaller screens.
+
+// Encyclopadia discussions:
+// 1. how should “Exclude results with no metadata” work? leave as is? disable unless have a type...
