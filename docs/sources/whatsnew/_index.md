@@ -70,6 +70,10 @@ For release highlights, deprecations, and breaking changes in Grafana releases, 
 
 For a complete list of every change, with links to pull requests and related issues when available, see the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
+## Grafana 10
+
+- [What's new in 10.0]({{< relref "whats-new-in-v10-0/" >}})
+
 ## Grafana 9
 
 - [What's new in 9.4]({{< relref "whats-new-in-v9-4/" >}})
