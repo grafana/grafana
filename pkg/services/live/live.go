@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -76,7 +75,7 @@ type CoreGrafanaScope struct {
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	pluginStore plugins.Store, pluginClient plugins.Client, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore db.DB, secretsService secrets.Service,
-	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles,
+	usageStatsService usagestats.Service, queryDataService query.Service, toggles featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService, annotationsRepo annotations.Repository,
 	orgService org.Service) (*GrafanaLive, error) {
 	g := &GrafanaLive{
@@ -247,7 +246,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
-	g.GrafanaScope.Features["comment"] = features.NewCommentHandler(commentmodel.NewPermissionChecker(g.SQLStore, g.Features, accessControl, dashboardService, annotationsRepo))
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
@@ -410,7 +408,7 @@ type GrafanaLive struct {
 	SecretsService        secrets.Service
 	pluginStore           plugins.Store
 	pluginClient          plugins.Client
-	queryDataService      *query.Service
+	queryDataService      query.Service
 	orgService            org.Service
 
 	node         *centrifuge.Node

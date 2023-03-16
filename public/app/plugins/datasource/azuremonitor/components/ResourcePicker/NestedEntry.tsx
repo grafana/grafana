@@ -21,7 +21,7 @@ interface NestedEntryProps {
   onSelectedChange: (row: ResourceRow, selected: boolean) => void;
 }
 
-export const NestedEntry: React.FC<NestedEntryProps> = ({
+export const NestedEntry = ({
   entry,
   isSelected,
   isDisabled,
@@ -31,7 +31,7 @@ export const NestedEntry: React.FC<NestedEntryProps> = ({
   scrollIntoView,
   onToggleCollapse,
   onSelectedChange,
-}) => {
+}: NestedEntryProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const hasChildren = !!entry.children;

@@ -386,12 +386,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return [];
   }
 
-  async refreshLogLabels(forceRefresh?: boolean) {
-    if ((this.labelKeys && Date.now().valueOf() - this.labelFetchTs > LABEL_REFRESH_INTERVAL) || forceRefresh) {
-      await this.fetchLabels();
-    }
-  }
-
   /**
    * Fetch labels for a selector. This is cached by its args but also by the global timeRange currently selected as
    * they can change over requested time.
