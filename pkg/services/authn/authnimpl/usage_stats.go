@@ -17,6 +17,8 @@ func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, er
 	authTypes["auth_proxy"] = s.cfg.AuthProxyEnabled
 	authTypes["anonymous"] = s.cfg.AnonymousEnabled
 	authTypes["jwt"] = s.cfg.JWTAuthEnabled
+	authTypes["grafana_password"] = !s.cfg.DisableLogin
+	authTypes["login_form"] = !s.cfg.DisableLoginForm
 
 	for authType, enabled := range authTypes {
 		enabledValue := 0
