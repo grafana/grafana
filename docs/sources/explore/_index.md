@@ -51,7 +51,7 @@ To access Explore:
 
 ## Split and compare
 
-The split view provides an easy way to compare graphs and tables side-by-side or to look at related data together on one page.
+The split view provides an easy way to compare visualizations side-by-side or to look at related data together on one page.
 
 To open the split view:
 
