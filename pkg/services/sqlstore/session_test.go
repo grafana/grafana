@@ -10,6 +10,53 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestRetryingDisabled(t *testing.T) {
+	store := InitTestDB(t)
+	require.Equal(t, 0, store.dbCfg.QueryRetries)
+
+	funcToTest := map[string]func(ctx context.Context, callback DBTransactionFunc) error{
+		"WithDbSession":    store.WithDbSession,
+		"WithNewDbSession": store.WithNewDbSession,
+	}
+
+	for name, f := range funcToTest {
+		t.Run(fmt.Sprintf("%s should return the error immediately", name), func(t *testing.T) {
+			i := 0
+			callback := func(sess *DBSession) error {
+				i++
+				return errors.New("some error")
+			}
+			err := f(context.Background(), callback)
+			require.Error(t, err)
+			require.Equal(t, 1, i)
+		})
+
+		t.Run(fmt.Sprintf("%s should return the sqlite3.Error immediately", name), func(t *testing.T) {
+			i := 0
+			callback := func(sess *DBSession) error {
+				i++
+				return sqlite3.Error{Code: sqlite3.ErrBusy}
+			}
+			err := f(context.Background(), callback)
+			require.Error(t, err)
+			var driverErr sqlite3.Error
+			require.ErrorAs(t, err, &driverErr)
+			require.Equal(t, 1, i)
+		})
+
+		t.Run(fmt.Sprintf("%s should not return error if the callback succeeds", name), func(t *testing.T) {
+			i := 0
+			callback := func(sess *DBSession) error {
+				i++
+				return nil
+			}
+			err := f(context.Background(), callback)
+			require.NoError(t, err)
+			require.Equal(t, 1, i)
+		})
+	}
+}
+
 func TestRetryingOnFailures(t *testing.T) {
 	store := InitTestDB(t)
 	store.dbCfg.QueryRetries = 5
