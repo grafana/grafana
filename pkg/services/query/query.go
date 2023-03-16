@@ -71,8 +71,8 @@ func (s *Service) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-// QueryDataWithCache processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
-func (s *Service) QueryDataWithCache(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+// QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
+func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 	// First look in the query cache if enabled
 	var cr caching.CachedDataResponse
 	if !skipQueryCache {
