@@ -12,7 +12,7 @@ import {
   CellProps,
   Column,
   InlineField,
-  InlineSwitch,
+  Switch,
   Input,
   InteractiveTable,
   Modal,
@@ -543,7 +543,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
         <EditorField label="Search Settings">
           <>
             <div className={styles.selectItem}>
-              <InlineSwitch
+              <Switch
                 data-testid={testIds.searchWithMetadata}
                 value={fullMetaSearch}
                 disabled={useBackend || !hasMetadata}
@@ -555,7 +555,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
               <p className={styles.selectItemLabel}>{placeholders.metadataSearchSwitch}</p>
             </div>
             <div className={styles.selectItem}>
-              <InlineSwitch
+              <Switch
                 data-testid={testIds.setUseBackend}
                 value={useBackend}
                 onChange={() => {
@@ -597,11 +597,11 @@ export const MetricEncyclopediaModal = (props: Props) => {
         <div>{letterSearchComponent()}</div>
         <div className={styles.alphabetRowToggles}>
           <div className={styles.selectItem}>
-            <InlineSwitch value={disableTextWrap} onChange={() => setDisableTextWrap((p) => !p)} />
+            <Switch value={disableTextWrap} onChange={() => setDisableTextWrap((p) => !p)} />
             <p className={styles.selectItemLabel}>Disable text wrap</p>
           </div>
           <div className={styles.selectItem}>
-            <InlineSwitch
+            <Switch
               value={excludeNullMetadata}
               disabled={useBackend || !hasMetadata}
               onChange={() => {
@@ -723,6 +723,7 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     selectItem: css`
       display: flex;
       flex-direction: row;
+      align-items: center;
     `,
     selectItemLabel: css`
       margin: 0 0 0 ${theme.spacing(1)};
@@ -749,10 +750,12 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       justify-content: space-between;
       align-items: center;
       column-gap: ${theme.spacing(1)};
+      margin-bottom: ${theme.spacing(1)};
     `,
     alphabetRowToggles: css`
       display: flex;
       flex-direction: row;
+      align-items: center;
       flex-wrap: wrap;
       column-gap: ${theme.spacing(1)};
     `,
