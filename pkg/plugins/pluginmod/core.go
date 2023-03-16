@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	plicensing "github.com/grafana/grafana/pkg/plugins/licensing"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
@@ -33,11 +34,12 @@ var _ PluginManager = (*core)(nil)
 type core struct {
 	*services.BasicService
 
-	i *manager.PluginInstaller
-	s *store.Service
-	c *client.Decorator
-	l *loader.Loader
-	p *process.Manager
+	i   *manager.PluginInstaller
+	s   *store.Service
+	c   *client.Decorator
+	l   *loader.Loader
+	p   *process.Manager
+	log log.Logger
 }
 
 func NewCore(cfg *setting.Cfg, coreRegistry *coreplugin.Registry, reg *registry.InMemory,
@@ -53,17 +55,19 @@ func NewCore(cfg *setting.Cfg, coreRegistry *coreplugin.Registry, reg *registry.
 	srcs := sources.ProvideService(cfg, pCfg)
 
 	c := &core{
-		i: manager.ProvideInstaller(pCfg, reg, l, r),
-		s: store.ProvideService(reg, srcs, l),
-		c: cl,
-		l: l,
-		p: proc,
+		i:   manager.ProvideInstaller(pCfg, reg, l, r),
+		s:   store.ProvideService(reg, srcs, l),
+		c:   cl,
+		l:   l,
+		p:   proc,
+		log: log.New("plugin.manager"),
 	}
 	c.BasicService = services.NewBasicService(c.start, c.run, c.stop)
 	return c
 }
 
 func (c *core) start(ctx context.Context) error {
+	c.log.Info("Starting plugin manager...")
 	err := c.s.Run(ctx)
 	if err != nil {
 		return err
@@ -72,11 +76,13 @@ func (c *core) start(ctx context.Context) error {
 }
 
 func (c *core) run(ctx context.Context) error {
+	c.log.Info("Running plugin manager...")
 	<-ctx.Done()
 	return ctx.Err()
 }
 
 func (c *core) stop(failure error) error {
+	c.log.Info("Stopping plugin manager...")
 	err := c.p.Shutdown(context.Background())
 	if err != nil {
 		return err

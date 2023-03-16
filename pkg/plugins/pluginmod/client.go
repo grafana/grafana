@@ -42,7 +42,7 @@ type Client struct {
 	rc pluginv2.ResourceClient
 }
 
-func NewClient(cfg *setting.Cfg) *Client {
+func newPluginManagerClient(cfg *setting.Cfg) *Client {
 	c := &Client{
 		cfg: cfg,
 		log: log.New("plugins.client"),
@@ -52,11 +52,11 @@ func NewClient(cfg *setting.Cfg) *Client {
 	return c
 }
 
-func (c *Client) start(ctx context.Context) error {
+func (c *Client) start(_ context.Context) error {
 	c.log.Info("Starting client...")
 
 	conn, err := grpc.Dial(
-		c.cfg.PluginManager.Address,
+		fmt.Sprintf(":%d", c.cfg.PluginManager.Port),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
@@ -108,7 +108,7 @@ func (c *Client) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []plu
 
 	var res []plugins.PluginDTO
 	for _, p := range resp.Plugins {
-		res = append(res, FromProto(p))
+		res = append(res, fromProto(p))
 	}
 	return res
 }
@@ -181,7 +181,7 @@ func (c *Client) PluginErrors() []*plugins.Error {
 		return []*plugins.Error{}
 	}
 
-	var res []*plugins.Error
+	res := make([]*plugins.Error, 0)
 	for _, pluginError := range pluginErrs.PluginErrors {
 		res = append(res, &plugins.Error{
 			ErrorCode: plugins.ErrorCode(pluginError.Error),

@@ -511,12 +511,14 @@ type Cfg struct {
 
 type PluginManagerServiceSettings struct {
 	Address string
+	Port    int
 }
 
 func readPluginManagerServiceSettings(cfg *Cfg, iniFile *ini.File) error {
 	ps := iniFile.Section("plugin_service")
-	address := ps.Key("address").MustString("127.0.0.1:10000")
-	cfg.PluginManager = PluginManagerServiceSettings{Address: address}
+	address := ps.Key("address").MustString("127.0.0.1")
+	port := ps.Key("address").MustInt(10000)
+	cfg.PluginManager = PluginManagerServiceSettings{Address: address, Port: port}
 	return nil
 }
 

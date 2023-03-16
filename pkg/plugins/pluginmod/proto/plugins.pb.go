@@ -20,6 +20,61 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type PluginData_SignatureErr_SignatureStatus int32
+
+const (
+	PluginData_SignatureErr_SignatureInternal PluginData_SignatureErr_SignatureStatus = 0
+	PluginData_SignatureErr_SignatureValid    PluginData_SignatureErr_SignatureStatus = 1
+	PluginData_SignatureErr_SignatureInvalid  PluginData_SignatureErr_SignatureStatus = 2
+	PluginData_SignatureErr_SignatureModified PluginData_SignatureErr_SignatureStatus = 3
+	PluginData_SignatureErr_SignatureUnsigned PluginData_SignatureErr_SignatureStatus = 4
+)
+
+// Enum value maps for PluginData_SignatureErr_SignatureStatus.
+var (
+	PluginData_SignatureErr_SignatureStatus_name = map[int32]string{
+		0: "SignatureInternal",
+		1: "SignatureValid",
+		2: "SignatureInvalid",
+		3: "SignatureModified",
+		4: "SignatureUnsigned",
+	}
+	PluginData_SignatureErr_SignatureStatus_value = map[string]int32{
+		"SignatureInternal": 0,
+		"SignatureValid":    1,
+		"SignatureInvalid":  2,
+		"SignatureModified": 3,
+		"SignatureUnsigned": 4,
+	}
+)
+
+func (x PluginData_SignatureErr_SignatureStatus) Enum() *PluginData_SignatureErr_SignatureStatus {
+	p := new(PluginData_SignatureErr_SignatureStatus)
+	*p = x
+	return p
+}
+
+func (x PluginData_SignatureErr_SignatureStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PluginData_SignatureErr_SignatureStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_plugins_proto_enumTypes[0].Descriptor()
+}
+
+func (PluginData_SignatureErr_SignatureStatus) Type() protoreflect.EnumType {
+	return &file_plugins_proto_enumTypes[0]
+}
+
+func (x PluginData_SignatureErr_SignatureStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PluginData_SignatureErr_SignatureStatus.Descriptor instead.
+func (PluginData_SignatureErr_SignatureStatus) EnumDescriptor() ([]byte, []int) {
+	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 0}
+}
+
 type PluginData_JsonData_Role int32
 
 const (
@@ -53,11 +108,11 @@ func (x PluginData_JsonData_Role) String() string {
 }
 
 func (PluginData_JsonData_Role) Descriptor() protoreflect.EnumDescriptor {
-	return file_plugins_proto_enumTypes[0].Descriptor()
+	return file_plugins_proto_enumTypes[1].Descriptor()
 }
 
 func (PluginData_JsonData_Role) Type() protoreflect.EnumType {
-	return &file_plugins_proto_enumTypes[0]
+	return &file_plugins_proto_enumTypes[1]
 }
 
 func (x PluginData_JsonData_Role) Number() protoreflect.EnumNumber {
@@ -66,7 +121,7 @@ func (x PluginData_JsonData_Role) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use PluginData_JsonData_Role.Descriptor instead.
 func (PluginData_JsonData_Role) EnumDescriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 0}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 0}
 }
 
 type PluginData struct {
@@ -74,17 +129,18 @@ type PluginData struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	JsonData        *PluginData_JsonData `protobuf:"bytes,1,opt,name=jsonData,proto3" json:"jsonData,omitempty"`
-	Class           string               `protobuf:"bytes,2,opt,name=class,proto3" json:"class,omitempty"`
-	IncludedInAppID string               `protobuf:"bytes,3,opt,name=includedInAppID,proto3" json:"includedInAppID,omitempty"`
-	DefaultNavURL   string               `protobuf:"bytes,4,opt,name=defaultNavURL,proto3" json:"defaultNavURL,omitempty"`
-	Pinned          bool                 `protobuf:"varint,5,opt,name=pinned,proto3" json:"pinned,omitempty"`
-	Signature       string               `protobuf:"bytes,6,opt,name=signature,proto3" json:"signature,omitempty"`
-	SignatureType   string               `protobuf:"bytes,7,opt,name=signatureType,proto3" json:"signatureType,omitempty"`
-	SignatureOrg    string               `protobuf:"bytes,8,opt,name=signatureOrg,proto3" json:"signatureOrg,omitempty"`
-	SignatureError  string               `protobuf:"bytes,9,opt,name=signatureError,proto3" json:"signatureError,omitempty"`
-	Module          string               `protobuf:"bytes,10,opt,name=module,proto3" json:"module,omitempty"`
-	BaseUrl         string               `protobuf:"bytes,11,opt,name=baseUrl,proto3" json:"baseUrl,omitempty"`
+	JsonData          *PluginData_JsonData     `protobuf:"bytes,1,opt,name=jsonData,proto3" json:"jsonData,omitempty"`
+	Class             string                   `protobuf:"bytes,2,opt,name=class,proto3" json:"class,omitempty"`
+	IncludedInAppID   string                   `protobuf:"bytes,3,opt,name=includedInAppID,proto3" json:"includedInAppID,omitempty"`
+	DefaultNavURL     string                   `protobuf:"bytes,4,opt,name=defaultNavURL,proto3" json:"defaultNavURL,omitempty"`
+	Pinned            bool                     `protobuf:"varint,5,opt,name=pinned,proto3" json:"pinned,omitempty"`
+	Signature         string                   `protobuf:"bytes,6,opt,name=signature,proto3" json:"signature,omitempty"`
+	SignatureType     string                   `protobuf:"bytes,7,opt,name=signatureType,proto3" json:"signatureType,omitempty"`
+	SignatureOrg      string                   `protobuf:"bytes,8,opt,name=signatureOrg,proto3" json:"signatureOrg,omitempty"`
+	SignatureError    *PluginData_SignatureErr `protobuf:"bytes,9,opt,name=signatureError,proto3" json:"signatureError,omitempty"`
+	Module            string                   `protobuf:"bytes,10,opt,name=module,proto3" json:"module,omitempty"`
+	BaseUrl           string                   `protobuf:"bytes,11,opt,name=baseUrl,proto3" json:"baseUrl,omitempty"`
+	SupportsStreaming bool                     `protobuf:"varint,12,opt,name=supportsStreaming,proto3" json:"supportsStreaming,omitempty"`
 }
 
 func (x *PluginData) Reset() {
@@ -175,11 +231,11 @@ func (x *PluginData) GetSignatureOrg() string {
 	return ""
 }
 
-func (x *PluginData) GetSignatureError() string {
+func (x *PluginData) GetSignatureError() *PluginData_SignatureErr {
 	if x != nil {
 		return x.SignatureError
 	}
-	return ""
+	return nil
 }
 
 func (x *PluginData) GetModule() string {
@@ -194,6 +250,13 @@ func (x *PluginData) GetBaseUrl() string {
 		return x.BaseUrl
 	}
 	return ""
+}
+
+func (x *PluginData) GetSupportsStreaming() bool {
+	if x != nil {
+		return x.SupportsStreaming
+	}
+	return false
 }
 
 type GetPluginRequest struct {
@@ -931,6 +994,61 @@ func (x *StaticRoute) GetDirectory() string {
 	return ""
 }
 
+type PluginData_SignatureErr struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id              string                                  `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	SignatureStatus PluginData_SignatureErr_SignatureStatus `protobuf:"varint,2,opt,name=signatureStatus,proto3,enum=plugins.PluginData_SignatureErr_SignatureStatus" json:"signatureStatus,omitempty"`
+}
+
+func (x *PluginData_SignatureErr) Reset() {
+	*x = PluginData_SignatureErr{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_plugins_proto_msgTypes[16]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PluginData_SignatureErr) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PluginData_SignatureErr) ProtoMessage() {}
+
+func (x *PluginData_SignatureErr) ProtoReflect() protoreflect.Message {
+	mi := &file_plugins_proto_msgTypes[16]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PluginData_SignatureErr.ProtoReflect.Descriptor instead.
+func (*PluginData_SignatureErr) Descriptor() ([]byte, []int) {
+	return file_plugins_proto_rawDescGZIP(), []int{0, 0}
+}
+
+func (x *PluginData_SignatureErr) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *PluginData_SignatureErr) GetSignatureStatus() PluginData_SignatureErr_SignatureStatus {
+	if x != nil {
+		return x.SignatureStatus
+	}
+	return PluginData_SignatureErr_SignatureInternal
+}
+
 type PluginData_JsonData struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -956,23 +1074,20 @@ type PluginData_JsonData struct {
 	Logs          bool                                    `protobuf:"varint,18,opt,name=logs,proto3" json:"logs,omitempty"`
 	Tracing       bool                                    `protobuf:"varint,19,opt,name=tracing,proto3" json:"tracing,omitempty"`
 	Streaming     bool                                    `protobuf:"varint,20,opt,name=streaming,proto3" json:"streaming,omitempty"`
-	Signature     string                                  `protobuf:"bytes,21,opt,name=signature,proto3" json:"signature,omitempty"`
-	Module        string                                  `protobuf:"bytes,22,opt,name=module,proto3" json:"module,omitempty"`
-	BaseUrl       string                                  `protobuf:"bytes,23,opt,name=baseUrl,proto3" json:"baseUrl,omitempty"`
-	State         string                                  `protobuf:"bytes,24,opt,name=state,proto3" json:"state,omitempty"`
-	BuiltIn       bool                                    `protobuf:"varint,25,opt,name=builtIn,proto3" json:"builtIn,omitempty"`
-	Mixed         bool                                    `protobuf:"varint,26,opt,name=mixed,proto3" json:"mixed,omitempty"`
-	Sdk           bool                                    `protobuf:"varint,27,opt,name=sdk,proto3" json:"sdk,omitempty"`
-	Executable    string                                  `protobuf:"bytes,28,opt,name=executable,proto3" json:"executable,omitempty"`
-	HideFromList  bool                                    `protobuf:"varint,29,opt,name=hideFromList,proto3" json:"hideFromList,omitempty"`
-	Roles         []*PluginData_JsonData_RoleRegistration `protobuf:"bytes,30,rep,name=roles,proto3" json:"roles,omitempty"`
-	QueryOptions  map[string]bool                         `protobuf:"bytes,31,rep,name=queryOptions,proto3" json:"queryOptions,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
+	State         string                                  `protobuf:"bytes,21,opt,name=state,proto3" json:"state,omitempty"`
+	BuiltIn       bool                                    `protobuf:"varint,22,opt,name=builtIn,proto3" json:"builtIn,omitempty"`
+	Mixed         bool                                    `protobuf:"varint,23,opt,name=mixed,proto3" json:"mixed,omitempty"`
+	Sdk           bool                                    `protobuf:"varint,24,opt,name=sdk,proto3" json:"sdk,omitempty"`
+	Executable    string                                  `protobuf:"bytes,25,opt,name=executable,proto3" json:"executable,omitempty"`
+	HideFromList  bool                                    `protobuf:"varint,26,opt,name=hideFromList,proto3" json:"hideFromList,omitempty"`
+	Roles         []*PluginData_JsonData_RoleRegistration `protobuf:"bytes,27,rep,name=roles,proto3" json:"roles,omitempty"`
+	QueryOptions  map[string]bool                         `protobuf:"bytes,28,rep,name=queryOptions,proto3" json:"queryOptions,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 }
 
 func (x *PluginData_JsonData) Reset() {
 	*x = PluginData_JsonData{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[16]
+		mi := &file_plugins_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -985,7 +1100,7 @@ func (x *PluginData_JsonData) String() string {
 func (*PluginData_JsonData) ProtoMessage() {}
 
 func (x *PluginData_JsonData) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[16]
+	mi := &file_plugins_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -998,7 +1113,7 @@ func (x *PluginData_JsonData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginData_JsonData.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *PluginData_JsonData) GetId() string {
@@ -1141,27 +1256,6 @@ func (x *PluginData_JsonData) GetStreaming() bool {
 	return false
 }
 
-func (x *PluginData_JsonData) GetSignature() string {
-	if x != nil {
-		return x.Signature
-	}
-	return ""
-}
-
-func (x *PluginData_JsonData) GetModule() string {
-	if x != nil {
-		return x.Module
-	}
-	return ""
-}
-
-func (x *PluginData_JsonData) GetBaseUrl() string {
-	if x != nil {
-		return x.BaseUrl
-	}
-	return ""
-}
-
 func (x *PluginData_JsonData) GetState() string {
 	if x != nil {
 		return x.State
@@ -1236,7 +1330,7 @@ type PluginData_JsonData_Info struct {
 func (x *PluginData_JsonData_Info) Reset() {
 	*x = PluginData_JsonData_Info{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[18]
+		mi := &file_plugins_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1249,7 +1343,7 @@ func (x *PluginData_JsonData_Info) String() string {
 func (*PluginData_JsonData_Info) ProtoMessage() {}
 
 func (x *PluginData_JsonData_Info) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[18]
+	mi := &file_plugins_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1262,7 +1356,7 @@ func (x *PluginData_JsonData_Info) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginData_JsonData_Info.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_Info) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 1}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 1}
 }
 
 func (x *PluginData_JsonData_Info) GetAuthor() *PluginData_JsonData_Info_Author {
@@ -1333,7 +1427,7 @@ type PluginData_JsonData_RoleRegistration struct {
 func (x *PluginData_JsonData_RoleRegistration) Reset() {
 	*x = PluginData_JsonData_RoleRegistration{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[19]
+		mi := &file_plugins_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1346,7 +1440,7 @@ func (x *PluginData_JsonData_RoleRegistration) String() string {
 func (*PluginData_JsonData_RoleRegistration) ProtoMessage() {}
 
 func (x *PluginData_JsonData_RoleRegistration) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[19]
+	mi := &file_plugins_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1359,7 +1453,7 @@ func (x *PluginData_JsonData_RoleRegistration) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use PluginData_JsonData_RoleRegistration.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_RoleRegistration) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 2}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 2}
 }
 
 func (x *PluginData_JsonData_RoleRegistration) GetRole() *PluginData_JsonData_RoleRegistration_RBACRole {
@@ -1389,7 +1483,7 @@ type PluginData_JsonData_Dependencies struct {
 func (x *PluginData_JsonData_Dependencies) Reset() {
 	*x = PluginData_JsonData_Dependencies{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[20]
+		mi := &file_plugins_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1402,7 +1496,7 @@ func (x *PluginData_JsonData_Dependencies) String() string {
 func (*PluginData_JsonData_Dependencies) ProtoMessage() {}
 
 func (x *PluginData_JsonData_Dependencies) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[20]
+	mi := &file_plugins_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1415,7 +1509,7 @@ func (x *PluginData_JsonData_Dependencies) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginData_JsonData_Dependencies.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_Dependencies) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 3}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 3}
 }
 
 func (x *PluginData_JsonData_Dependencies) GetGrafanaDependency() string {
@@ -1461,7 +1555,7 @@ type PluginData_JsonData_Includes struct {
 func (x *PluginData_JsonData_Includes) Reset() {
 	*x = PluginData_JsonData_Includes{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[21]
+		mi := &file_plugins_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1474,7 +1568,7 @@ func (x *PluginData_JsonData_Includes) String() string {
 func (*PluginData_JsonData_Includes) ProtoMessage() {}
 
 func (x *PluginData_JsonData_Includes) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[21]
+	mi := &file_plugins_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1487,7 +1581,7 @@ func (x *PluginData_JsonData_Includes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginData_JsonData_Includes.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_Includes) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 4}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 4}
 }
 
 func (x *PluginData_JsonData_Includes) GetName() string {
@@ -1594,7 +1688,7 @@ type PluginData_JsonData_Route struct {
 func (x *PluginData_JsonData_Route) Reset() {
 	*x = PluginData_JsonData_Route{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[22]
+		mi := &file_plugins_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1607,7 +1701,7 @@ func (x *PluginData_JsonData_Route) String() string {
 func (*PluginData_JsonData_Route) ProtoMessage() {}
 
 func (x *PluginData_JsonData_Route) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[22]
+	mi := &file_plugins_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1620,7 +1714,7 @@ func (x *PluginData_JsonData_Route) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginData_JsonData_Route.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_Route) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 5}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 5}
 }
 
 func (x *PluginData_JsonData_Route) GetPath() string {
@@ -1705,7 +1799,7 @@ type PluginData_JsonData_Info_Author struct {
 func (x *PluginData_JsonData_Info_Author) Reset() {
 	*x = PluginData_JsonData_Info_Author{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[23]
+		mi := &file_plugins_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1718,7 +1812,7 @@ func (x *PluginData_JsonData_Info_Author) String() string {
 func (*PluginData_JsonData_Info_Author) ProtoMessage() {}
 
 func (x *PluginData_JsonData_Info_Author) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[23]
+	mi := &file_plugins_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1731,7 +1825,7 @@ func (x *PluginData_JsonData_Info_Author) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginData_JsonData_Info_Author.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_Info_Author) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 1, 0}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 1, 0}
 }
 
 func (x *PluginData_JsonData_Info_Author) GetName() string {
@@ -1760,7 +1854,7 @@ type PluginData_JsonData_Info_Logos struct {
 func (x *PluginData_JsonData_Info_Logos) Reset() {
 	*x = PluginData_JsonData_Info_Logos{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[24]
+		mi := &file_plugins_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1773,7 +1867,7 @@ func (x *PluginData_JsonData_Info_Logos) String() string {
 func (*PluginData_JsonData_Info_Logos) ProtoMessage() {}
 
 func (x *PluginData_JsonData_Info_Logos) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[24]
+	mi := &file_plugins_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1786,7 +1880,7 @@ func (x *PluginData_JsonData_Info_Logos) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginData_JsonData_Info_Logos.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_Info_Logos) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 1, 1}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 1, 1}
 }
 
 func (x *PluginData_JsonData_Info_Logos) GetSmall() string {
@@ -1817,7 +1911,7 @@ type PluginData_JsonData_Info_Build struct {
 func (x *PluginData_JsonData_Info_Build) Reset() {
 	*x = PluginData_JsonData_Info_Build{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[25]
+		mi := &file_plugins_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1830,7 +1924,7 @@ func (x *PluginData_JsonData_Info_Build) String() string {
 func (*PluginData_JsonData_Info_Build) ProtoMessage() {}
 
 func (x *PluginData_JsonData_Info_Build) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[25]
+	mi := &file_plugins_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1843,7 +1937,7 @@ func (x *PluginData_JsonData_Info_Build) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginData_JsonData_Info_Build.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_Info_Build) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 1, 2}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 1, 2}
 }
 
 func (x *PluginData_JsonData_Info_Build) GetTime() int64 {
@@ -1886,7 +1980,7 @@ type PluginData_JsonData_Info_Link struct {
 func (x *PluginData_JsonData_Info_Link) Reset() {
 	*x = PluginData_JsonData_Info_Link{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[26]
+		mi := &file_plugins_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1899,7 +1993,7 @@ func (x *PluginData_JsonData_Info_Link) String() string {
 func (*PluginData_JsonData_Info_Link) ProtoMessage() {}
 
 func (x *PluginData_JsonData_Info_Link) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[26]
+	mi := &file_plugins_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1912,7 +2006,7 @@ func (x *PluginData_JsonData_Info_Link) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginData_JsonData_Info_Link.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_Info_Link) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 1, 3}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 1, 3}
 }
 
 func (x *PluginData_JsonData_Info_Link) GetName() string {
@@ -1941,7 +2035,7 @@ type PluginData_JsonData_Info_Screenshot struct {
 func (x *PluginData_JsonData_Info_Screenshot) Reset() {
 	*x = PluginData_JsonData_Info_Screenshot{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[27]
+		mi := &file_plugins_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1954,7 +2048,7 @@ func (x *PluginData_JsonData_Info_Screenshot) String() string {
 func (*PluginData_JsonData_Info_Screenshot) ProtoMessage() {}
 
 func (x *PluginData_JsonData_Info_Screenshot) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[27]
+	mi := &file_plugins_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1967,7 +2061,7 @@ func (x *PluginData_JsonData_Info_Screenshot) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use PluginData_JsonData_Info_Screenshot.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_Info_Screenshot) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 1, 4}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 1, 4}
 }
 
 func (x *PluginData_JsonData_Info_Screenshot) GetName() string {
@@ -1997,7 +2091,7 @@ type PluginData_JsonData_RoleRegistration_RBACRole struct {
 func (x *PluginData_JsonData_RoleRegistration_RBACRole) Reset() {
 	*x = PluginData_JsonData_RoleRegistration_RBACRole{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[28]
+		mi := &file_plugins_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2010,7 +2104,7 @@ func (x *PluginData_JsonData_RoleRegistration_RBACRole) String() string {
 func (*PluginData_JsonData_RoleRegistration_RBACRole) ProtoMessage() {}
 
 func (x *PluginData_JsonData_RoleRegistration_RBACRole) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[28]
+	mi := &file_plugins_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2023,7 +2117,7 @@ func (x *PluginData_JsonData_RoleRegistration_RBACRole) ProtoReflect() protorefl
 
 // Deprecated: Use PluginData_JsonData_RoleRegistration_RBACRole.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_RoleRegistration_RBACRole) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 2, 0}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 2, 0}
 }
 
 func (x *PluginData_JsonData_RoleRegistration_RBACRole) GetName() string {
@@ -2059,7 +2153,7 @@ type PluginData_JsonData_RoleRegistration_Permission struct {
 func (x *PluginData_JsonData_RoleRegistration_Permission) Reset() {
 	*x = PluginData_JsonData_RoleRegistration_Permission{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[29]
+		mi := &file_plugins_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2072,7 +2166,7 @@ func (x *PluginData_JsonData_RoleRegistration_Permission) String() string {
 func (*PluginData_JsonData_RoleRegistration_Permission) ProtoMessage() {}
 
 func (x *PluginData_JsonData_RoleRegistration_Permission) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[29]
+	mi := &file_plugins_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2085,7 +2179,7 @@ func (x *PluginData_JsonData_RoleRegistration_Permission) ProtoReflect() protore
 
 // Deprecated: Use PluginData_JsonData_RoleRegistration_Permission.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_RoleRegistration_Permission) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 2, 1}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 2, 1}
 }
 
 func (x *PluginData_JsonData_RoleRegistration_Permission) GetAction() string {
@@ -2116,7 +2210,7 @@ type PluginData_JsonData_Dependencies_PluginDependency struct {
 func (x *PluginData_JsonData_Dependencies_PluginDependency) Reset() {
 	*x = PluginData_JsonData_Dependencies_PluginDependency{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[30]
+		mi := &file_plugins_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2129,7 +2223,7 @@ func (x *PluginData_JsonData_Dependencies_PluginDependency) String() string {
 func (*PluginData_JsonData_Dependencies_PluginDependency) ProtoMessage() {}
 
 func (x *PluginData_JsonData_Dependencies_PluginDependency) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[30]
+	mi := &file_plugins_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2142,7 +2236,7 @@ func (x *PluginData_JsonData_Dependencies_PluginDependency) ProtoReflect() proto
 
 // Deprecated: Use PluginData_JsonData_Dependencies_PluginDependency.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_Dependencies_PluginDependency) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 3, 0}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 3, 0}
 }
 
 func (x *PluginData_JsonData_Dependencies_PluginDependency) GetId() string {
@@ -2185,7 +2279,7 @@ type PluginData_JsonData_Route_Header struct {
 func (x *PluginData_JsonData_Route_Header) Reset() {
 	*x = PluginData_JsonData_Route_Header{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[31]
+		mi := &file_plugins_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2198,7 +2292,7 @@ func (x *PluginData_JsonData_Route_Header) String() string {
 func (*PluginData_JsonData_Route_Header) ProtoMessage() {}
 
 func (x *PluginData_JsonData_Route_Header) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[31]
+	mi := &file_plugins_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2211,7 +2305,7 @@ func (x *PluginData_JsonData_Route_Header) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginData_JsonData_Route_Header.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_Route_Header) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 5, 0}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 5, 0}
 }
 
 func (x *PluginData_JsonData_Route_Header) GetName() string {
@@ -2240,7 +2334,7 @@ type PluginData_JsonData_Route_URLParam struct {
 func (x *PluginData_JsonData_Route_URLParam) Reset() {
 	*x = PluginData_JsonData_Route_URLParam{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[32]
+		mi := &file_plugins_proto_msgTypes[33]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2253,7 +2347,7 @@ func (x *PluginData_JsonData_Route_URLParam) String() string {
 func (*PluginData_JsonData_Route_URLParam) ProtoMessage() {}
 
 func (x *PluginData_JsonData_Route_URLParam) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[32]
+	mi := &file_plugins_proto_msgTypes[33]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2266,7 +2360,7 @@ func (x *PluginData_JsonData_Route_URLParam) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use PluginData_JsonData_Route_URLParam.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_Route_URLParam) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 5, 1}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 5, 1}
 }
 
 func (x *PluginData_JsonData_Route_URLParam) GetName() string {
@@ -2296,7 +2390,7 @@ type PluginData_JsonData_Route_JWTTokenAuth struct {
 func (x *PluginData_JsonData_Route_JWTTokenAuth) Reset() {
 	*x = PluginData_JsonData_Route_JWTTokenAuth{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugins_proto_msgTypes[33]
+		mi := &file_plugins_proto_msgTypes[34]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2309,7 +2403,7 @@ func (x *PluginData_JsonData_Route_JWTTokenAuth) String() string {
 func (*PluginData_JsonData_Route_JWTTokenAuth) ProtoMessage() {}
 
 func (x *PluginData_JsonData_Route_JWTTokenAuth) ProtoReflect() protoreflect.Message {
-	mi := &file_plugins_proto_msgTypes[33]
+	mi := &file_plugins_proto_msgTypes[34]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2322,7 +2416,7 @@ func (x *PluginData_JsonData_Route_JWTTokenAuth) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use PluginData_JsonData_Route_JWTTokenAuth.ProtoReflect.Descriptor instead.
 func (*PluginData_JsonData_Route_JWTTokenAuth) Descriptor() ([]byte, []int) {
-	return file_plugins_proto_rawDescGZIP(), []int{0, 0, 5, 2}
+	return file_plugins_proto_rawDescGZIP(), []int{0, 1, 5, 2}
 }
 
 func (x *PluginData_JsonData_Route_JWTTokenAuth) GetUrl() string {
@@ -2350,7 +2444,7 @@ var File_plugins_proto protoreflect.FileDescriptor
 
 var file_plugins_proto_rawDesc = []byte{
 	0x0a, 0x0d, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12,
-	0x07, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x73, 0x22, 0xdb, 0x1f, 0x0a, 0x0a, 0x50, 0x6c, 0x75,
+	0x07, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x73, 0x22, 0xdb, 0x21, 0x0a, 0x0a, 0x50, 0x6c, 0x75,
 	0x67, 0x69, 0x6e, 0x44, 0x61, 0x74, 0x61, 0x12, 0x38, 0x0a, 0x08, 0x6a, 0x73, 0x6f, 0x6e, 0x44,
 	0x61, 0x74, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x70, 0x6c, 0x75, 0x67,
 	0x69, 0x6e, 0x73, 0x2e, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x44, 0x61, 0x74, 0x61, 0x2e, 0x4a,
@@ -2369,13 +2463,34 @@ var file_plugins_proto_rawDesc = []byte{
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x54,
 	0x79, 0x70, 0x65, 0x12, 0x22, 0x0a, 0x0c, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65,
 	0x4f, 0x72, 0x67, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x73, 0x69, 0x67, 0x6e, 0x61,
-	0x74, 0x75, 0x72, 0x65, 0x4f, 0x72, 0x67, 0x12, 0x26, 0x0a, 0x0e, 0x73, 0x69, 0x67, 0x6e, 0x61,
-	0x74, 0x75, 0x72, 0x65, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x0e, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x12,
-	0x16, 0x0a, 0x06, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x06, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x62, 0x61, 0x73, 0x65, 0x55,
-	0x72, 0x6c, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x62, 0x61, 0x73, 0x65, 0x55, 0x72,
-	0x6c, 0x1a, 0xd2, 0x1c, 0x0a, 0x08, 0x4a, 0x73, 0x6f, 0x6e, 0x44, 0x61, 0x74, 0x61, 0x12, 0x0e,
+	0x74, 0x75, 0x72, 0x65, 0x4f, 0x72, 0x67, 0x12, 0x48, 0x0a, 0x0e, 0x73, 0x69, 0x67, 0x6e, 0x61,
+	0x74, 0x75, 0x72, 0x65, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x09, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x20, 0x2e, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x73, 0x2e, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e,
+	0x44, 0x61, 0x74, 0x61, 0x2e, 0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x45, 0x72,
+	0x72, 0x52, 0x0e, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x45, 0x72, 0x72, 0x6f,
+	0x72, 0x12, 0x16, 0x0a, 0x06, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x18, 0x0a, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x06, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x62, 0x61, 0x73,
+	0x65, 0x55, 0x72, 0x6c, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x62, 0x61, 0x73, 0x65,
+	0x55, 0x72, 0x6c, 0x12, 0x2c, 0x0a, 0x11, 0x73, 0x75, 0x70, 0x70, 0x6f, 0x72, 0x74, 0x73, 0x53,
+	0x74, 0x72, 0x65, 0x61, 0x6d, 0x69, 0x6e, 0x67, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x08, 0x52, 0x11,
+	0x73, 0x75, 0x70, 0x70, 0x6f, 0x72, 0x74, 0x73, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x69, 0x6e,
+	0x67, 0x1a, 0xfd, 0x01, 0x0a, 0x0c, 0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x45,
+	0x72, 0x72, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02,
+	0x69, 0x64, 0x12, 0x5a, 0x0a, 0x0f, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x53,
+	0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x30, 0x2e, 0x70, 0x6c,
+	0x75, 0x67, 0x69, 0x6e, 0x73, 0x2e, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x44, 0x61, 0x74, 0x61,
+	0x2e, 0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x45, 0x72, 0x72, 0x2e, 0x53, 0x69,
+	0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x0f, 0x73,
+	0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x80,
+	0x01, 0x0a, 0x0f, 0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x53, 0x74, 0x61, 0x74,
+	0x75, 0x73, 0x12, 0x15, 0x0a, 0x11, 0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x49,
+	0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x10, 0x00, 0x12, 0x12, 0x0a, 0x0e, 0x53, 0x69, 0x67,
+	0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x10, 0x01, 0x12, 0x14, 0x0a,
+	0x10, 0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x49, 0x6e, 0x76, 0x61, 0x6c, 0x69,
+	0x64, 0x10, 0x02, 0x12, 0x15, 0x0a, 0x11, 0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65,
+	0x4d, 0x6f, 0x64, 0x69, 0x66, 0x69, 0x65, 0x64, 0x10, 0x03, 0x12, 0x15, 0x0a, 0x11, 0x53, 0x69,
+	0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x55, 0x6e, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x10,
+	0x04, 0x1a, 0x82, 0x1c, 0x0a, 0x08, 0x4a, 0x73, 0x6f, 0x6e, 0x44, 0x61, 0x74, 0x61, 0x12, 0x0e,
 	0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12,
 	0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x79,
 	0x70, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
@@ -2418,27 +2533,22 @@ var file_plugins_proto_rawDesc = []byte{
 	0x73, 0x12, 0x18, 0x0a, 0x07, 0x74, 0x72, 0x61, 0x63, 0x69, 0x6e, 0x67, 0x18, 0x13, 0x20, 0x01,
 	0x28, 0x08, 0x52, 0x07, 0x74, 0x72, 0x61, 0x63, 0x69, 0x6e, 0x67, 0x12, 0x1c, 0x0a, 0x09, 0x73,
 	0x74, 0x72, 0x65, 0x61, 0x6d, 0x69, 0x6e, 0x67, 0x18, 0x14, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09,
-	0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x69, 0x6e, 0x67, 0x12, 0x1c, 0x0a, 0x09, 0x73, 0x69, 0x67,
-	0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x18, 0x15, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x73, 0x69,
-	0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x6d, 0x6f, 0x64, 0x75, 0x6c,
-	0x65, 0x18, 0x16, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x12,
-	0x18, 0x0a, 0x07, 0x62, 0x61, 0x73, 0x65, 0x55, 0x72, 0x6c, 0x18, 0x17, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x07, 0x62, 0x61, 0x73, 0x65, 0x55, 0x72, 0x6c, 0x12, 0x14, 0x0a, 0x05, 0x73, 0x74, 0x61,
-	0x74, 0x65, 0x18, 0x18, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x12,
-	0x18, 0x0a, 0x07, 0x62, 0x75, 0x69, 0x6c, 0x74, 0x49, 0x6e, 0x18, 0x19, 0x20, 0x01, 0x28, 0x08,
+	0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x69, 0x6e, 0x67, 0x12, 0x14, 0x0a, 0x05, 0x73, 0x74, 0x61,
+	0x74, 0x65, 0x18, 0x15, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x12,
+	0x18, 0x0a, 0x07, 0x62, 0x75, 0x69, 0x6c, 0x74, 0x49, 0x6e, 0x18, 0x16, 0x20, 0x01, 0x28, 0x08,
 	0x52, 0x07, 0x62, 0x75, 0x69, 0x6c, 0x74, 0x49, 0x6e, 0x12, 0x14, 0x0a, 0x05, 0x6d, 0x69, 0x78,
-	0x65, 0x64, 0x18, 0x1a, 0x20, 0x01, 0x28, 0x08, 0x52, 0x05, 0x6d, 0x69, 0x78, 0x65, 0x64, 0x12,
-	0x10, 0x0a, 0x03, 0x73, 0x64, 0x6b, 0x18, 0x1b, 0x20, 0x01, 0x28, 0x08, 0x52, 0x03, 0x73, 0x64,
+	0x65, 0x64, 0x18, 0x17, 0x20, 0x01, 0x28, 0x08, 0x52, 0x05, 0x6d, 0x69, 0x78, 0x65, 0x64, 0x12,
+	0x10, 0x0a, 0x03, 0x73, 0x64, 0x6b, 0x18, 0x18, 0x20, 0x01, 0x28, 0x08, 0x52, 0x03, 0x73, 0x64,
 	0x6b, 0x12, 0x1e, 0x0a, 0x0a, 0x65, 0x78, 0x65, 0x63, 0x75, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x18,
-	0x1c, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x65, 0x78, 0x65, 0x63, 0x75, 0x74, 0x61, 0x62, 0x6c,
+	0x19, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x65, 0x78, 0x65, 0x63, 0x75, 0x74, 0x61, 0x62, 0x6c,
 	0x65, 0x12, 0x22, 0x0a, 0x0c, 0x68, 0x69, 0x64, 0x65, 0x46, 0x72, 0x6f, 0x6d, 0x4c, 0x69, 0x73,
-	0x74, 0x18, 0x1d, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0c, 0x68, 0x69, 0x64, 0x65, 0x46, 0x72, 0x6f,
-	0x6d, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x43, 0x0a, 0x05, 0x72, 0x6f, 0x6c, 0x65, 0x73, 0x18, 0x1e,
+	0x74, 0x18, 0x1a, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0c, 0x68, 0x69, 0x64, 0x65, 0x46, 0x72, 0x6f,
+	0x6d, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x43, 0x0a, 0x05, 0x72, 0x6f, 0x6c, 0x65, 0x73, 0x18, 0x1b,
 	0x20, 0x03, 0x28, 0x0b, 0x32, 0x2d, 0x2e, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x73, 0x2e, 0x50,
 	0x6c, 0x75, 0x67, 0x69, 0x6e, 0x44, 0x61, 0x74, 0x61, 0x2e, 0x4a, 0x73, 0x6f, 0x6e, 0x44, 0x61,
 	0x74, 0x61, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74,
 	0x69, 0x6f, 0x6e, 0x52, 0x05, 0x72, 0x6f, 0x6c, 0x65, 0x73, 0x12, 0x52, 0x0a, 0x0c, 0x71, 0x75,
-	0x65, 0x72, 0x79, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x1f, 0x20, 0x03, 0x28, 0x0b,
+	0x65, 0x72, 0x79, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x1c, 0x20, 0x03, 0x28, 0x0b,
 	0x32, 0x2e, 0x2e, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x73, 0x2e, 0x50, 0x6c, 0x75, 0x67, 0x69,
 	0x6e, 0x44, 0x61, 0x74, 0x61, 0x2e, 0x4a, 0x73, 0x6f, 0x6e, 0x44, 0x61, 0x74, 0x61, 0x2e, 0x51,
 	0x75, 0x65, 0x72, 0x79, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79,
@@ -2703,91 +2813,95 @@ func file_plugins_proto_rawDescGZIP() []byte {
 	return file_plugins_proto_rawDescData
 }
 
-var file_plugins_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_plugins_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
+var file_plugins_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_plugins_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_plugins_proto_goTypes = []interface{}{
-	(PluginData_JsonData_Role)(0),                             // 0: plugins.PluginData.JsonData.Role
-	(*PluginData)(nil),                                        // 1: plugins.PluginData
-	(*GetPluginRequest)(nil),                                  // 2: plugins.GetPluginRequest
-	(*GetPluginResponse)(nil),                                 // 3: plugins.GetPluginResponse
-	(*GetPluginsRequest)(nil),                                 // 4: plugins.GetPluginsRequest
-	(*GetPluginsResponse)(nil),                                // 5: plugins.GetPluginsResponse
-	(*AddPluginRequest)(nil),                                  // 6: plugins.AddPluginRequest
-	(*AddPluginOpts)(nil),                                     // 7: plugins.AddPluginOpts
-	(*AddPluginResponse)(nil),                                 // 8: plugins.AddPluginResponse
-	(*RemovePluginRequest)(nil),                               // 9: plugins.RemovePluginRequest
-	(*RemovePluginResponse)(nil),                              // 10: plugins.RemovePluginResponse
-	(*GetPluginErrorsRequest)(nil),                            // 11: plugins.GetPluginErrorsRequest
-	(*GetPluginErrorsResponse)(nil),                           // 12: plugins.GetPluginErrorsResponse
-	(*PluginError)(nil),                                       // 13: plugins.PluginError
-	(*GetStaticRoutesRequest)(nil),                            // 14: plugins.GetStaticRoutesRequest
-	(*GetStaticRoutesResponse)(nil),                           // 15: plugins.GetStaticRoutesResponse
-	(*StaticRoute)(nil),                                       // 16: plugins.StaticRoute
-	(*PluginData_JsonData)(nil),                               // 17: plugins.PluginData.JsonData
-	nil,                                                       // 18: plugins.PluginData.JsonData.QueryOptionsEntry
-	(*PluginData_JsonData_Info)(nil),                          // 19: plugins.PluginData.JsonData.Info
-	(*PluginData_JsonData_RoleRegistration)(nil),              // 20: plugins.PluginData.JsonData.RoleRegistration
-	(*PluginData_JsonData_Dependencies)(nil),                  // 21: plugins.PluginData.JsonData.Dependencies
-	(*PluginData_JsonData_Includes)(nil),                      // 22: plugins.PluginData.JsonData.Includes
-	(*PluginData_JsonData_Route)(nil),                         // 23: plugins.PluginData.JsonData.Route
-	(*PluginData_JsonData_Info_Author)(nil),                   // 24: plugins.PluginData.JsonData.Info.Author
-	(*PluginData_JsonData_Info_Logos)(nil),                    // 25: plugins.PluginData.JsonData.Info.Logos
-	(*PluginData_JsonData_Info_Build)(nil),                    // 26: plugins.PluginData.JsonData.Info.Build
-	(*PluginData_JsonData_Info_Link)(nil),                     // 27: plugins.PluginData.JsonData.Info.Link
-	(*PluginData_JsonData_Info_Screenshot)(nil),               // 28: plugins.PluginData.JsonData.Info.Screenshot
-	(*PluginData_JsonData_RoleRegistration_RBACRole)(nil),     // 29: plugins.PluginData.JsonData.RoleRegistration.RBACRole
-	(*PluginData_JsonData_RoleRegistration_Permission)(nil),   // 30: plugins.PluginData.JsonData.RoleRegistration.Permission
-	(*PluginData_JsonData_Dependencies_PluginDependency)(nil), // 31: plugins.PluginData.JsonData.Dependencies.PluginDependency
-	(*PluginData_JsonData_Route_Header)(nil),                  // 32: plugins.PluginData.JsonData.Route.Header
-	(*PluginData_JsonData_Route_URLParam)(nil),                // 33: plugins.PluginData.JsonData.Route.URLParam
-	(*PluginData_JsonData_Route_JWTTokenAuth)(nil),            // 34: plugins.PluginData.JsonData.Route.JWTTokenAuth
-	nil, // 35: plugins.PluginData.JsonData.Route.JWTTokenAuth.ParamsEntry
+	(PluginData_SignatureErr_SignatureStatus)(0),              // 0: plugins.PluginData.SignatureErr.SignatureStatus
+	(PluginData_JsonData_Role)(0),                             // 1: plugins.PluginData.JsonData.Role
+	(*PluginData)(nil),                                        // 2: plugins.PluginData
+	(*GetPluginRequest)(nil),                                  // 3: plugins.GetPluginRequest
+	(*GetPluginResponse)(nil),                                 // 4: plugins.GetPluginResponse
+	(*GetPluginsRequest)(nil),                                 // 5: plugins.GetPluginsRequest
+	(*GetPluginsResponse)(nil),                                // 6: plugins.GetPluginsResponse
+	(*AddPluginRequest)(nil),                                  // 7: plugins.AddPluginRequest
+	(*AddPluginOpts)(nil),                                     // 8: plugins.AddPluginOpts
+	(*AddPluginResponse)(nil),                                 // 9: plugins.AddPluginResponse
+	(*RemovePluginRequest)(nil),                               // 10: plugins.RemovePluginRequest
+	(*RemovePluginResponse)(nil),                              // 11: plugins.RemovePluginResponse
+	(*GetPluginErrorsRequest)(nil),                            // 12: plugins.GetPluginErrorsRequest
+	(*GetPluginErrorsResponse)(nil),                           // 13: plugins.GetPluginErrorsResponse
+	(*PluginError)(nil),                                       // 14: plugins.PluginError
+	(*GetStaticRoutesRequest)(nil),                            // 15: plugins.GetStaticRoutesRequest
+	(*GetStaticRoutesResponse)(nil),                           // 16: plugins.GetStaticRoutesResponse
+	(*StaticRoute)(nil),                                       // 17: plugins.StaticRoute
+	(*PluginData_SignatureErr)(nil),                           // 18: plugins.PluginData.SignatureErr
+	(*PluginData_JsonData)(nil),                               // 19: plugins.PluginData.JsonData
+	nil,                                                       // 20: plugins.PluginData.JsonData.QueryOptionsEntry
+	(*PluginData_JsonData_Info)(nil),                          // 21: plugins.PluginData.JsonData.Info
+	(*PluginData_JsonData_RoleRegistration)(nil),              // 22: plugins.PluginData.JsonData.RoleRegistration
+	(*PluginData_JsonData_Dependencies)(nil),                  // 23: plugins.PluginData.JsonData.Dependencies
+	(*PluginData_JsonData_Includes)(nil),                      // 24: plugins.PluginData.JsonData.Includes
+	(*PluginData_JsonData_Route)(nil),                         // 25: plugins.PluginData.JsonData.Route
+	(*PluginData_JsonData_Info_Author)(nil),                   // 26: plugins.PluginData.JsonData.Info.Author
+	(*PluginData_JsonData_Info_Logos)(nil),                    // 27: plugins.PluginData.JsonData.Info.Logos
+	(*PluginData_JsonData_Info_Build)(nil),                    // 28: plugins.PluginData.JsonData.Info.Build
+	(*PluginData_JsonData_Info_Link)(nil),                     // 29: plugins.PluginData.JsonData.Info.Link
+	(*PluginData_JsonData_Info_Screenshot)(nil),               // 30: plugins.PluginData.JsonData.Info.Screenshot
+	(*PluginData_JsonData_RoleRegistration_RBACRole)(nil),     // 31: plugins.PluginData.JsonData.RoleRegistration.RBACRole
+	(*PluginData_JsonData_RoleRegistration_Permission)(nil),   // 32: plugins.PluginData.JsonData.RoleRegistration.Permission
+	(*PluginData_JsonData_Dependencies_PluginDependency)(nil), // 33: plugins.PluginData.JsonData.Dependencies.PluginDependency
+	(*PluginData_JsonData_Route_Header)(nil),                  // 34: plugins.PluginData.JsonData.Route.Header
+	(*PluginData_JsonData_Route_URLParam)(nil),                // 35: plugins.PluginData.JsonData.Route.URLParam
+	(*PluginData_JsonData_Route_JWTTokenAuth)(nil),            // 36: plugins.PluginData.JsonData.Route.JWTTokenAuth
+	nil, // 37: plugins.PluginData.JsonData.Route.JWTTokenAuth.ParamsEntry
 }
 var file_plugins_proto_depIdxs = []int32{
-	17, // 0: plugins.PluginData.jsonData:type_name -> plugins.PluginData.JsonData
-	1,  // 1: plugins.GetPluginResponse.plugin:type_name -> plugins.PluginData
-	1,  // 2: plugins.GetPluginsResponse.plugins:type_name -> plugins.PluginData
-	7,  // 3: plugins.AddPluginRequest.opts:type_name -> plugins.AddPluginOpts
-	13, // 4: plugins.GetPluginErrorsResponse.pluginErrors:type_name -> plugins.PluginError
-	16, // 5: plugins.GetStaticRoutesResponse.staticRoutes:type_name -> plugins.StaticRoute
-	19, // 6: plugins.PluginData.JsonData.info:type_name -> plugins.PluginData.JsonData.Info
-	21, // 7: plugins.PluginData.JsonData.dependencies:type_name -> plugins.PluginData.JsonData.Dependencies
-	22, // 8: plugins.PluginData.JsonData.includes:type_name -> plugins.PluginData.JsonData.Includes
-	23, // 9: plugins.PluginData.JsonData.routes:type_name -> plugins.PluginData.JsonData.Route
-	20, // 10: plugins.PluginData.JsonData.roles:type_name -> plugins.PluginData.JsonData.RoleRegistration
-	18, // 11: plugins.PluginData.JsonData.queryOptions:type_name -> plugins.PluginData.JsonData.QueryOptionsEntry
-	24, // 12: plugins.PluginData.JsonData.Info.author:type_name -> plugins.PluginData.JsonData.Info.Author
-	27, // 13: plugins.PluginData.JsonData.Info.links:type_name -> plugins.PluginData.JsonData.Info.Link
-	25, // 14: plugins.PluginData.JsonData.Info.logos:type_name -> plugins.PluginData.JsonData.Info.Logos
-	26, // 15: plugins.PluginData.JsonData.Info.build:type_name -> plugins.PluginData.JsonData.Info.Build
-	28, // 16: plugins.PluginData.JsonData.Info.screenshots:type_name -> plugins.PluginData.JsonData.Info.Screenshot
-	29, // 17: plugins.PluginData.JsonData.RoleRegistration.Role:type_name -> plugins.PluginData.JsonData.RoleRegistration.RBACRole
-	31, // 18: plugins.PluginData.JsonData.Dependencies.plugins:type_name -> plugins.PluginData.JsonData.Dependencies.PluginDependency
-	0,  // 19: plugins.PluginData.JsonData.Includes.role:type_name -> plugins.PluginData.JsonData.Role
-	0,  // 20: plugins.PluginData.JsonData.Route.reqRole:type_name -> plugins.PluginData.JsonData.Role
-	33, // 21: plugins.PluginData.JsonData.Route.urlParams:type_name -> plugins.PluginData.JsonData.Route.URLParam
-	32, // 22: plugins.PluginData.JsonData.Route.headers:type_name -> plugins.PluginData.JsonData.Route.Header
-	34, // 23: plugins.PluginData.JsonData.Route.tokenAuth:type_name -> plugins.PluginData.JsonData.Route.JWTTokenAuth
-	34, // 24: plugins.PluginData.JsonData.Route.jwtTokenAuth:type_name -> plugins.PluginData.JsonData.Route.JWTTokenAuth
-	30, // 25: plugins.PluginData.JsonData.RoleRegistration.RBACRole.permissions:type_name -> plugins.PluginData.JsonData.RoleRegistration.Permission
-	35, // 26: plugins.PluginData.JsonData.Route.JWTTokenAuth.params:type_name -> plugins.PluginData.JsonData.Route.JWTTokenAuth.ParamsEntry
-	2,  // 27: plugins.PluginManager.GetPlugin:input_type -> plugins.GetPluginRequest
-	4,  // 28: plugins.PluginManager.GetPlugins:input_type -> plugins.GetPluginsRequest
-	6,  // 29: plugins.PluginManager.AddPlugin:input_type -> plugins.AddPluginRequest
-	9,  // 30: plugins.PluginManager.RemovePlugin:input_type -> plugins.RemovePluginRequest
-	11, // 31: plugins.PluginManager.PluginErrors:input_type -> plugins.GetPluginErrorsRequest
-	14, // 32: plugins.PluginManager.StaticRoute:input_type -> plugins.GetStaticRoutesRequest
-	3,  // 33: plugins.PluginManager.GetPlugin:output_type -> plugins.GetPluginResponse
-	5,  // 34: plugins.PluginManager.GetPlugins:output_type -> plugins.GetPluginsResponse
-	8,  // 35: plugins.PluginManager.AddPlugin:output_type -> plugins.AddPluginResponse
-	10, // 36: plugins.PluginManager.RemovePlugin:output_type -> plugins.RemovePluginResponse
-	12, // 37: plugins.PluginManager.PluginErrors:output_type -> plugins.GetPluginErrorsResponse
-	15, // 38: plugins.PluginManager.StaticRoute:output_type -> plugins.GetStaticRoutesResponse
-	33, // [33:39] is the sub-list for method output_type
-	27, // [27:33] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	19, // 0: plugins.PluginData.jsonData:type_name -> plugins.PluginData.JsonData
+	18, // 1: plugins.PluginData.signatureError:type_name -> plugins.PluginData.SignatureErr
+	2,  // 2: plugins.GetPluginResponse.plugin:type_name -> plugins.PluginData
+	2,  // 3: plugins.GetPluginsResponse.plugins:type_name -> plugins.PluginData
+	8,  // 4: plugins.AddPluginRequest.opts:type_name -> plugins.AddPluginOpts
+	14, // 5: plugins.GetPluginErrorsResponse.pluginErrors:type_name -> plugins.PluginError
+	17, // 6: plugins.GetStaticRoutesResponse.staticRoutes:type_name -> plugins.StaticRoute
+	0,  // 7: plugins.PluginData.SignatureErr.signatureStatus:type_name -> plugins.PluginData.SignatureErr.SignatureStatus
+	21, // 8: plugins.PluginData.JsonData.info:type_name -> plugins.PluginData.JsonData.Info
+	23, // 9: plugins.PluginData.JsonData.dependencies:type_name -> plugins.PluginData.JsonData.Dependencies
+	24, // 10: plugins.PluginData.JsonData.includes:type_name -> plugins.PluginData.JsonData.Includes
+	25, // 11: plugins.PluginData.JsonData.routes:type_name -> plugins.PluginData.JsonData.Route
+	22, // 12: plugins.PluginData.JsonData.roles:type_name -> plugins.PluginData.JsonData.RoleRegistration
+	20, // 13: plugins.PluginData.JsonData.queryOptions:type_name -> plugins.PluginData.JsonData.QueryOptionsEntry
+	26, // 14: plugins.PluginData.JsonData.Info.author:type_name -> plugins.PluginData.JsonData.Info.Author
+	29, // 15: plugins.PluginData.JsonData.Info.links:type_name -> plugins.PluginData.JsonData.Info.Link
+	27, // 16: plugins.PluginData.JsonData.Info.logos:type_name -> plugins.PluginData.JsonData.Info.Logos
+	28, // 17: plugins.PluginData.JsonData.Info.build:type_name -> plugins.PluginData.JsonData.Info.Build
+	30, // 18: plugins.PluginData.JsonData.Info.screenshots:type_name -> plugins.PluginData.JsonData.Info.Screenshot
+	31, // 19: plugins.PluginData.JsonData.RoleRegistration.Role:type_name -> plugins.PluginData.JsonData.RoleRegistration.RBACRole
+	33, // 20: plugins.PluginData.JsonData.Dependencies.plugins:type_name -> plugins.PluginData.JsonData.Dependencies.PluginDependency
+	1,  // 21: plugins.PluginData.JsonData.Includes.role:type_name -> plugins.PluginData.JsonData.Role
+	1,  // 22: plugins.PluginData.JsonData.Route.reqRole:type_name -> plugins.PluginData.JsonData.Role
+	35, // 23: plugins.PluginData.JsonData.Route.urlParams:type_name -> plugins.PluginData.JsonData.Route.URLParam
+	34, // 24: plugins.PluginData.JsonData.Route.headers:type_name -> plugins.PluginData.JsonData.Route.Header
+	36, // 25: plugins.PluginData.JsonData.Route.tokenAuth:type_name -> plugins.PluginData.JsonData.Route.JWTTokenAuth
+	36, // 26: plugins.PluginData.JsonData.Route.jwtTokenAuth:type_name -> plugins.PluginData.JsonData.Route.JWTTokenAuth
+	32, // 27: plugins.PluginData.JsonData.RoleRegistration.RBACRole.permissions:type_name -> plugins.PluginData.JsonData.RoleRegistration.Permission
+	37, // 28: plugins.PluginData.JsonData.Route.JWTTokenAuth.params:type_name -> plugins.PluginData.JsonData.Route.JWTTokenAuth.ParamsEntry
+	3,  // 29: plugins.PluginManager.GetPlugin:input_type -> plugins.GetPluginRequest
+	5,  // 30: plugins.PluginManager.GetPlugins:input_type -> plugins.GetPluginsRequest
+	7,  // 31: plugins.PluginManager.AddPlugin:input_type -> plugins.AddPluginRequest
+	10, // 32: plugins.PluginManager.RemovePlugin:input_type -> plugins.RemovePluginRequest
+	12, // 33: plugins.PluginManager.PluginErrors:input_type -> plugins.GetPluginErrorsRequest
+	15, // 34: plugins.PluginManager.StaticRoute:input_type -> plugins.GetStaticRoutesRequest
+	4,  // 35: plugins.PluginManager.GetPlugin:output_type -> plugins.GetPluginResponse
+	6,  // 36: plugins.PluginManager.GetPlugins:output_type -> plugins.GetPluginsResponse
+	9,  // 37: plugins.PluginManager.AddPlugin:output_type -> plugins.AddPluginResponse
+	11, // 38: plugins.PluginManager.RemovePlugin:output_type -> plugins.RemovePluginResponse
+	13, // 39: plugins.PluginManager.PluginErrors:output_type -> plugins.GetPluginErrorsResponse
+	16, // 40: plugins.PluginManager.StaticRoute:output_type -> plugins.GetStaticRoutesResponse
+	35, // [35:41] is the sub-list for method output_type
+	29, // [29:35] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_plugins_proto_init() }
@@ -2989,6 +3103,18 @@ func file_plugins_proto_init() {
 			}
 		}
 		file_plugins_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PluginData_SignatureErr); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_plugins_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData); i {
 			case 0:
 				return &v.state
@@ -3000,7 +3126,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_Info); i {
 			case 0:
 				return &v.state
@@ -3012,7 +3138,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_RoleRegistration); i {
 			case 0:
 				return &v.state
@@ -3024,7 +3150,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_Dependencies); i {
 			case 0:
 				return &v.state
@@ -3036,7 +3162,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_Includes); i {
 			case 0:
 				return &v.state
@@ -3048,7 +3174,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_Route); i {
 			case 0:
 				return &v.state
@@ -3060,7 +3186,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_Info_Author); i {
 			case 0:
 				return &v.state
@@ -3072,7 +3198,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_Info_Logos); i {
 			case 0:
 				return &v.state
@@ -3084,7 +3210,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_Info_Build); i {
 			case 0:
 				return &v.state
@@ -3096,7 +3222,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_Info_Link); i {
 			case 0:
 				return &v.state
@@ -3108,7 +3234,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_Info_Screenshot); i {
 			case 0:
 				return &v.state
@@ -3120,7 +3246,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_RoleRegistration_RBACRole); i {
 			case 0:
 				return &v.state
@@ -3132,7 +3258,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_RoleRegistration_Permission); i {
 			case 0:
 				return &v.state
@@ -3144,7 +3270,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_Dependencies_PluginDependency); i {
 			case 0:
 				return &v.state
@@ -3156,7 +3282,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_Route_Header); i {
 			case 0:
 				return &v.state
@@ -3168,7 +3294,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_Route_URLParam); i {
 			case 0:
 				return &v.state
@@ -3180,7 +3306,7 @@ func file_plugins_proto_init() {
 				return nil
 			}
 		}
-		file_plugins_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
+		file_plugins_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginData_JsonData_Route_JWTTokenAuth); i {
 			case 0:
 				return &v.state
@@ -3198,8 +3324,8 @@ func file_plugins_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_plugins_proto_rawDesc,
-			NumEnums:      1,
-			NumMessages:   35,
+			NumEnums:      2,
+			NumMessages:   36,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

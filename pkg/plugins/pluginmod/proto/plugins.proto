@@ -15,9 +15,24 @@ message PluginData {
   string signature = 6;
   string signatureType = 7;
   string signatureOrg = 8;
-  string signatureError = 9;
+  SignatureErr signatureError = 9;
   string module = 10;
   string baseUrl = 11;
+
+  bool supportsStreaming = 12;
+
+  message SignatureErr {
+    string id = 1;
+    SignatureStatus signatureStatus = 2;
+
+    enum SignatureStatus {
+      SignatureInternal = 0;
+      SignatureValid    = 1;
+      SignatureInvalid  = 2;
+      SignatureModified = 3;
+      SignatureUnsigned = 4;
+    }
+  }
 
   message JsonData {
     string id = 1;
@@ -40,17 +55,14 @@ message PluginData {
     bool logs = 18;
     bool tracing = 19;
     bool streaming = 20;
-    string signature = 21;
-    string module = 22;
-    string baseUrl = 23;
-    string state = 24;
-    bool builtIn = 25;
-    bool mixed = 26;
-    bool sdk = 27;
-    string executable = 28;
-    bool hideFromList = 29;
-    repeated RoleRegistration roles = 30;
-    map<string, bool> queryOptions = 31;
+    string state = 21;
+    bool builtIn = 22;
+    bool mixed = 23;
+    bool sdk = 24;
+    string executable = 25;
+    bool hideFromList = 26;
+    repeated RoleRegistration roles = 27;
+    map<string, bool> queryOptions = 28;
 
     message Info {
       Author author = 1;

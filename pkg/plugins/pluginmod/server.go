@@ -3,8 +3,12 @@ package pluginmod
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 
@@ -16,21 +20,27 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	pluginProto "github.com/grafana/grafana/pkg/plugins/pluginmod/proto"
-	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Server struct {
 	*services.BasicService
+
+	srv *grpc.Server
 	pm  *core
+	cfg *setting.Cfg
 	log log.Logger
 }
 
-func newPluginManagerServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, coreRegistry *coreplugin.Registry,
+func newPluginManagerServer(cfg *setting.Cfg, coreRegistry *coreplugin.Registry,
 	internalRegistry *registry.InMemory, pluginClient *client.Decorator) *Server {
-	grpcSrv := grpcServerProvider.GetServer()
+	grpcSrv := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
+
+	pluginManager := NewCore(cfg, coreRegistry, internalRegistry, pluginClient)
 	s := &Server{
-		pm:  NewCore(cfg, coreRegistry, internalRegistry, pluginClient),
+		cfg: cfg,
+		pm:  pluginManager,
+		srv: grpcSrv,
 		log: log.New("plugin.manager.server"),
 	}
 
@@ -45,20 +55,49 @@ func newPluginManagerServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Prov
 	return s
 }
 
-func (s *Server) start(_ context.Context) error {
+func (s *Server) start(ctx context.Context) error {
 	s.log.Info("Starting server...")
-	return nil
+
+	return s.pm.start(ctx)
 }
 
 func (s *Server) run(ctx context.Context) error {
 	s.log.Info("Running server...")
-	<-ctx.Done()
-	return ctx.Err()
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.PluginManager.Port))
+	if err != nil {
+		return err
+	}
+
+	runErr := make(chan error, 1)
+	go func() {
+		s.log.Info("GRPC server: starting")
+		err := s.srv.Serve(lis)
+		if err != nil {
+			runErr <- err
+		}
+	}()
+
+	go func() {
+		err := s.pm.run(ctx)
+		if err != nil {
+			runErr <- err
+		}
+	}()
+
+	select {
+	case err = <-runErr:
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (s *Server) stop(failure error) error {
 	s.log.Info("Stopping server...")
-	return failure
+	s.srv.GracefulStop()
+	err := s.pm.stop(failure)
+	return err
 }
 
 func (s *Server) GetPlugin(ctx context.Context, req *pluginProto.GetPluginRequest) (*pluginProto.GetPluginResponse, error) {
@@ -111,7 +150,7 @@ func (s *Server) RemovePlugin(ctx context.Context, req *pluginProto.RemovePlugin
 }
 
 func (s *Server) PluginErrors(_ context.Context, _ *pluginProto.GetPluginErrorsRequest) (*pluginProto.GetPluginErrorsResponse, error) {
-	var res []*pluginProto.PluginError
+	res := make([]*pluginProto.PluginError, 0)
 	for _, err := range s.pm.PluginErrors() {
 		res = append(res, &pluginProto.PluginError{
 			Id:    err.PluginID,

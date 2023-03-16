@@ -33,10 +33,12 @@ func ProvidePluginsModule(cfg *setting.Cfg, moduleManager modules.Manager, grpcS
 	moduleManager.RegisterInvisibleModule(modules.PluginManagerClient, m.initClient)
 	moduleManager.RegisterInvisibleModule(modules.PluginManagement, m.initLocalPluginManagement)
 
-	if moduleManager.IsModuleEnabled(modules.All) {
-		moduleManager.RegisterInvisibleModule(modules.Plugins, nil, modules.PluginManagement)
-	} else {
+	if moduleManager.IsModuleEnabled(modules.PluginManagerServer) {
+		moduleManager.RegisterInvisibleModule(modules.Plugins, nil)
+	} else if moduleManager.IsModuleEnabled(modules.PluginManagerClient) {
 		moduleManager.RegisterInvisibleModule(modules.Plugins, nil, modules.PluginManagerClient)
+	} else {
+		moduleManager.RegisterInvisibleModule(modules.Plugins, nil, modules.PluginManagement)
 	}
 
 	return m, nil
@@ -52,11 +54,11 @@ type PluginsModule struct {
 }
 
 func (m *PluginsModule) initServer() (services.Service, error) {
-	return newPluginManagerServer(m.cfg, m.grpcServerProvider, m.coreRegistry, m.internalRegistry, m.pluginClient), nil
+	return newPluginManagerServer(m.cfg, m.coreRegistry, m.internalRegistry, m.pluginClient), nil
 }
 
 func (m *PluginsModule) initClient() (services.Service, error) {
-	c := NewClient(m.cfg)
+	c := newPluginManagerClient(m.cfg)
 	m.registerPluginManager(c)
 
 	return c, nil

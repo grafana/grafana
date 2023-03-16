@@ -76,6 +76,31 @@ type PluginDTO struct {
 	BaseURL string
 }
 
+func NewDTO(jsonData JSONData, class Class,
+	includedInAppID string, defaultNavURL string, pinned bool,
+	signature SignatureStatus, signatureType SignatureType,
+	signatureOrg string, signatureError *SignatureError,
+	module string, baseURL string,
+	supportsStreaming bool,
+) PluginDTO {
+	return PluginDTO{
+		JSONData:          jsonData,
+		fs:                nil,
+		logger:            log.New(jsonData.ID),
+		supportsStreaming: supportsStreaming,
+		Class:             class,
+		IncludedInAppID:   includedInAppID,
+		DefaultNavURL:     defaultNavURL,
+		Pinned:            pinned,
+		Signature:         signature,
+		SignatureType:     signatureType,
+		SignatureOrg:      signatureOrg,
+		SignatureError:    signatureError,
+		Module:            module,
+		BaseURL:           baseURL,
+	}
+}
+
 func (p PluginDTO) SupportsStreaming() bool {
 	return p.supportsStreaming
 }
