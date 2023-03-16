@@ -37,8 +37,8 @@ func (f *FakeClient) Priority() uint {
 	return f.ExpectedPriority
 }
 
-func (a *FakeClient) UsageStatFn(ctx context.Context) (map[string]interface{}, error) {
-	return a.ExpectedStats, a.ExpectedErr
+func (f *FakeClient) UsageStatFn(ctx context.Context) (map[string]interface{}, error) {
+	return f.ExpectedStats, f.ExpectedErr
 }
 
 var _ authn.PasswordClient = new(FakePasswordClient)
