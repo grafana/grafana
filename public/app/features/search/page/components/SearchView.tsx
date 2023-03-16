@@ -19,6 +19,7 @@ import { ActionRow, getValidQueryLayout } from './ActionRow';
 import { FolderSection } from './FolderSection';
 import { FolderView } from './FolderView';
 import { ManageActions } from './ManageActions';
+import { PanelSearchGrid } from './PanelSearchGrid';
 import { SearchResultsCards } from './SearchResultsCards';
 import { SearchResultsGrid } from './SearchResultsGrid';
 import { SearchResultsTable, SearchResultsProps } from './SearchResultsTable';
@@ -130,6 +131,10 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
               onDatasourceChange: state.datasource ? stateManager.onDatasourceChange : undefined,
               onClickItem: stateManager.onSearchItemClicked,
             };
+
+            if (state.includePanels) {
+              return <PanelSearchGrid {...props} />;
+            }
 
             if (layout === SearchLayout.Grid) {
               return <SearchResultsGrid {...props} />;
