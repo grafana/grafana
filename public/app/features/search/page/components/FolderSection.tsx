@@ -42,7 +42,7 @@ async function getChildren(section: DashboardViewItem, tags: string[] | undefine
         kind: ['dashboard'],
         location: section.uid,
         sort: 'name_sort',
-        limit: 1000, // this component does not have infinate scroll, so we need to load everything upfront
+        limit: 1000, // this component does not have infinite scroll, so we need to load everything upfront
       };
 
   const raw = await getGrafanaSearcher().search({ ...query, tags });
