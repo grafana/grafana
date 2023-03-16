@@ -463,6 +463,24 @@ export const MetricEncyclopediaModal = (props: Props) => {
     return <InteractiveTable className={styles.table} columns={columns} data={tableData} getRowId={(r) => r.value} />;
   }
 
+  function fuzzySearchCallback(query: string, fullMetaSearchVal: boolean) {
+    if (useBackend && query === '') {
+      // get all metrics data if a user erases everything in the input
+      updateMetricsMetadata();
+    } else if (useBackend) {
+      debouncedBackendSearch(query);
+    } else {
+      // search either the names or all metadata
+      // fuzzy search go!
+
+      if (fullMetaSearchVal) {
+        debouncedFuzzySearch(metaHaystack, query, setFuzzyMetaSearchResults);
+      } else {
+        debouncedFuzzySearch(nameHaystack, query, setFuzzyNameSearchResults);
+      }
+    }
+  }
+
   return (
     <Modal
       data-testid={testIds.metricModal}
@@ -482,21 +500,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
               onInput={(e) => {
                 const value = e.currentTarget.value ?? '';
                 setFuzzySearchQuery(value);
-                if (useBackend && value === '') {
-                  // get all metrics data if a user erases everything in the input
-                  updateMetricsMetadata();
-                } else if (useBackend) {
-                  debouncedBackendSearch(value);
-                } else {
-                  // search either the names or all metadata
-                  // fuzzy search go!
 
-                  if (fullMetaSearch) {
-                    debouncedFuzzySearch(metaHaystack, value, setFuzzyMetaSearchResults);
-                  } else {
-                    debouncedFuzzySearch(nameHaystack, value, setFuzzyNameSearchResults);
-                  }
-                }
+                fuzzySearchCallback(value, fullMetaSearch);
 
                 setPageNum(1);
               }}
@@ -548,7 +553,11 @@ export const MetricEncyclopediaModal = (props: Props) => {
                 value={fullMetaSearch}
                 disabled={useBackend || !hasMetadata}
                 onChange={() => {
-                  setFullMetaSearch(!fullMetaSearch);
+                  const newVal = !fullMetaSearch;
+                  setFullMetaSearch(newVal);
+
+                  fuzzySearchCallback(fuzzySearchQuery, newVal);
+
                   setPageNum(1);
                 }}
               />
