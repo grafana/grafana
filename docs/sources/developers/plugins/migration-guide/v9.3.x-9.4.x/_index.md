@@ -10,6 +10,7 @@ keywords:
   - documentation
 title: Migrating plugins from Grafana 9.3.x to 9.4.x
 menutitle: v9.3.x to v9.4.x
+weight: 2000
 ---
 
 # Migrating plugins from Grafana 9.3.x to 9.4.x

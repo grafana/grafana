@@ -7,9 +7,11 @@ keywords:
   - migration
   - plugin
   - documentation
-title: Plugin migration guide
+title: Migration guides
 ---
 
-The following guides help you identify the steps required to update a plugin from the Grafana version it currently supports to newer versions of Grafana.
+# Plugin migration guides
+
+The following guides help you identify the steps required to update a plugin following changes between versions of Grafana.
 
 {{< section menuTitle="true">}}

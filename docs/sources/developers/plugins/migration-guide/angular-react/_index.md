@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../../plugins/developing/migration-guide#migrate-a-plugin-from-angular-to-react)
+  - ../../plugins/developing/migration-guide#migrate-a-plugin-from-angular-to-react
 description: Guide for migrating plugins from AngularJS to React
 keywords:
   - grafana
@@ -10,6 +10,7 @@ keywords:
   - documentation
 title: Migrating plugins from AngularJS to React
 menutitle: Angular to React
+weight: 1000
 ---
 
 # Migrate a plugin from AngularJS to React

@@ -10,6 +10,7 @@ keywords:
   - documentation
 title: Migrating plugins from Grafana version 8.3.x to 8.4.x
 menutitle: v8.3.x to v8.4.x
+weight: 2200
 ---
 
 # Migrating plugins from Grafana version 8.3.x to 8.4.x
