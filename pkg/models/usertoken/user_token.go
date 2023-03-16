@@ -47,7 +47,7 @@ func (t *UserToken) NeedRotation(rotationInterval time.Duration) bool {
 	return rotatedAt.Before(time.Now().Add(-UrgentRotateTime))
 }
 
-const rotationLeeway = 10 * time.Second
+const rotationLeeway = 5 * time.Second
 
 func (t *UserToken) NextRotation(rotationInterval time.Duration) time.Time {
 	rotatedAt := time.Unix(t.RotatedAt, 0)
