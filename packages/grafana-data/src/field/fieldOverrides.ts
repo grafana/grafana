@@ -2,6 +2,8 @@ import { isNumber, set, unset, get, cloneDeep } from 'lodash';
 import { useMemo, useRef } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 
+import { VariableFormatID } from '@grafana/schema';
+
 import { compareArrayValues, compareDataFrameStructures, guessFieldTypeForField } from '../dataframe';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { PanelPlugin } from '../panel/PanelPlugin';
@@ -464,7 +466,7 @@ export const getLinksSupplier =
 
       if (href) {
         href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-        href = replaceVariables(href, variables, 'percentencode'); // TODO: https://github.com/grafana/grafana/pull/64846
+        href = replaceVariables(href, variables, VariableFormatID.PercentEncode);
         href = locationUtil.processUrl(href);
       }
 
