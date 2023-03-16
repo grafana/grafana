@@ -9209,6 +9209,53 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@storybook/addon-docs@patch:@storybook/addon-docs@npm:6.5.16#.yarn/patches/@storybook-addon-docs-npm-6.5.16-56ecbd77e7.patch::locator=grafana%40workspace%3A.":
+  version: 6.5.16
+  resolution: "@storybook/addon-docs@patch:@storybook/addon-docs@npm%3A6.5.16#.yarn/patches/@storybook-addon-docs-npm-6.5.16-56ecbd77e7.patch::version=6.5.16&hash=1c984c&locator=grafana%40workspace%3A."
+  dependencies:
+    "@babel/plugin-transform-react-jsx": ^7.12.12
+    "@babel/preset-env": ^7.12.11
+    "@jest/transform": ^26.6.2
+    "@mdx-js/react": ^1.6.22
+    "@storybook/addons": 6.5.16
+    "@storybook/api": 6.5.16
+    "@storybook/components": 6.5.16
+    "@storybook/core-common": 6.5.16
+    "@storybook/core-events": 6.5.16
+    "@storybook/csf": 0.0.2--canary.4566f4d.1
+    "@storybook/docs-tools": 6.5.16
+    "@storybook/mdx1-csf": ^0.0.1
+    "@storybook/node-logger": 6.5.16
+    "@storybook/postinstall": 6.5.16
+    "@storybook/preview-web": 6.5.16
+    "@storybook/source-loader": 6.5.16
+    "@storybook/store": 6.5.16
+    "@storybook/theming": 6.5.16
+    babel-loader: ^8.0.0
+    core-js: ^3.8.2
+    fast-deep-equal: ^3.1.3
+    global: ^4.4.0
+    lodash: ^4.17.21
+    regenerator-runtime: ^0.13.7
+    remark-external-links: ^8.0.0
+    remark-slug: ^6.0.0
+    ts-dedent: ^2.0.0
+    util-deprecate: ^1.0.2
+  peerDependencies:
+    "@storybook/mdx2-csf": ^0.0.3
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+  peerDependenciesMeta:
+    "@storybook/mdx2-csf":
+      optional: true
+    react:
+      optional: true
+    react-dom:
+      optional: true
+  checksum: de675ef948051275255c1430e114a6bcdb7fabc48f747c3d8d79a062679790208d8c6814809d8747068c5ee8a5f5425ca1c5d87f495fe80bcff99cbd45e72832
+  languageName: node
+  linkType: hard
+
 "@storybook/addon-essentials@npm:6.5.16":
   version: 6.5.16
   resolution: "@storybook/addon-essentials@npm:6.5.16"
