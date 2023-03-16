@@ -1,6 +1,5 @@
+import { DecoratorFn } from '@storybook/react';
 import React from 'react';
-
-import { RenderFunction } from '../../types';
 
 const RightAlignedStory = ({ children }: React.PropsWithChildren<{}>) => {
   return (
@@ -18,4 +17,4 @@ const RightAlignedStory = ({ children }: React.PropsWithChildren<{}>) => {
   );
 };
 
-export const withRightAlignedStory = (story: RenderFunction) => <RightAlignedStory>{story()}</RightAlignedStory>;
+export const withRightAlignedStory: DecoratorFn = (story) => <RightAlignedStory>{story()}</RightAlignedStory>;

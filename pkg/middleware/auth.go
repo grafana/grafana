@@ -83,9 +83,11 @@ func removeForceLoginParams(str string) string {
 	return forceLoginParamsRegexp.ReplaceAllString(str, "")
 }
 
-func EnsureEditorOrViewerCanEdit(c *contextmodel.ReqContext) {
-	if !c.SignedInUser.HasRole(org.RoleEditor) && !setting.ViewersCanEdit {
-		accessForbidden(c)
+func EnsureEditorOrViewerCanEdit(cfg *setting.Cfg) func(c *contextmodel.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
+		if !c.SignedInUser.HasRole(org.RoleEditor) && !cfg.ViewersCanEdit {
+			accessForbidden(c)
+		}
 	}
 }
 

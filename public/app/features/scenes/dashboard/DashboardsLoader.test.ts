@@ -312,6 +312,20 @@ describe('DashboardLoader', () => {
         panel.transformations
       );
     });
+
+    it('should initalize the VizPanel without title and transparent true', () => {
+      const panel = {
+        title: '',
+        type: 'test-plugin',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        transparent: true,
+      };
+
+      const vizPanelSceneObject = createVizPanelFromPanelModel(new PanelModel(panel));
+
+      expect(vizPanelSceneObject.state.displayMode).toEqual('transparent');
+      expect(vizPanelSceneObject.state.hoverHeader).toEqual(true);
+    });
   });
 
   describe('when creating variables objects', () => {
