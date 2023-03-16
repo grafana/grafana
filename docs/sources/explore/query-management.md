@@ -54,7 +54,7 @@ Filter query history in Query history and Starred tab by data source name:
 In **Query history** tab it is also possible to filter queries by date using the slider:
 
 - Use vertical slider to filter queries by date.
-- By dragging top handle, adjust start date.
+- By dragging bottom handle, adjust start date.
 - By dragging top handle, adjust end date.
 
 ### Search in query history
