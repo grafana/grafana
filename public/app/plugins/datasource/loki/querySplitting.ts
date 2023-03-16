@@ -6,7 +6,6 @@ import {
   DataQueryResponse,
   dateTime,
   durationToMilliseconds,
-  isValidDuration,
   parseDuration,
   TimeRange,
 } from '@grafana/data';
@@ -175,14 +174,10 @@ export function runPartitionedQueries(datasource: LokiDatasource, request: DataQ
 
   const oneDayMs = 24 * 60 * 60 * 1000;
   const rangePartitionedLogQueries = groupBy(logQueries, (query) =>
-    query.experimentalChunkRange && isValidDuration(query.experimentalChunkRange)
-      ? durationToMilliseconds(parseDuration(query.experimentalChunkRange!))
-      : oneDayMs
+    query.experimentalChunkRange ? durationToMilliseconds(parseDuration(query.experimentalChunkRange)) : oneDayMs
   );
   const rangePartitionedMetricQueries = groupBy(metricQueries, (query) =>
-    query.experimentalChunkRange && isValidDuration(query.experimentalChunkRange)
-      ? durationToMilliseconds(parseDuration(query.experimentalChunkRange!))
-      : oneDayMs
+    query.experimentalChunkRange ? durationToMilliseconds(parseDuration(query.experimentalChunkRange)) : oneDayMs
   );
 
   const requests: LokiGroupedRequest = [];
