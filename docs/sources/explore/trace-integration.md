@@ -22,7 +22,7 @@ For information on how to configure queries for the data sources listed above, r
 
 ## Trace View
 
-This section explains the elements of the Trace View Panel.
+This section explains the elements of the Trace View.
 
 {{< figure src="/static/img/docs/explore/explore-trace-view-full-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
 

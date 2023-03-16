@@ -46,7 +46,7 @@ To access Explore:
 
 2. Choose your data source from the dropdown in the top left.
 3. Write the query using a query editor provided by the selected data source. Please check [data sources documentation]({{< relref "../datasources" >}}) to see how to use various query editors.
-4. For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "./panels-visualizations/query-transform-data" >}}).
+4. For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../panels-visualizations/query-transform-data" >}}).
 5. Run the query using the button in the top right corner.
 
 ## Split and compare
