@@ -5,13 +5,16 @@ import { useAsync, useLocalStorage } from 'react-use';
 import { GrafanaTheme2, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Card, Checkbox, CollapsableSection, Icon, Spinner, useStyles2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 import { SearchItem } from '../..';
 import { GENERAL_FOLDER_UID } from '../../constants';
+import { getGrafanaSearcher } from '../../service';
 import { getFolderChildren } from '../../service/folders';
+import { queryResultToViewItem } from '../../service/utils';
 import { DashboardViewItem } from '../../types';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
@@ -23,6 +26,27 @@ interface SectionHeaderProps {
   section: DashboardViewItem;
   renderStandaloneBody?: boolean; // render the body on its own
   tags?: string[];
+}
+
+async function getChildren(section: DashboardViewItem, tags: string[] | undefined): Promise<DashboardViewItem[]> {
+  if (config.featureToggles.nestedFolders) {
+    return getFolderChildren(section.uid, section.title);
+  }
+
+  const query = section.itemsUIDs
+    ? {
+        uid: section.itemsUIDs,
+      }
+    : {
+        query: '*',
+        kind: ['dashboard'],
+        location: section.uid,
+        sort: 'name_sort',
+        limit: 1000, // this component does not have infinate scroll, so we need to load everything upfront
+      };
+
+  const raw = await getGrafanaSearcher().search({ ...query, tags });
+  return raw.view.map((v) => queryResultToViewItem(v, raw.view));
 }
 
 export const FolderSection = ({
@@ -43,7 +67,7 @@ export const FolderSection = ({
       return Promise.resolve([]);
     }
 
-    const childItems = await getFolderChildren(section.uid, section.title);
+    const childItems = getChildren(section, tags);
 
     return childItems;
   }, [sectionExpanded, tags]);

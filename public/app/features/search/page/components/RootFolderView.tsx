@@ -6,14 +6,33 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getBackendSrv } from '@grafana/runtime';
 import { Alert, Spinner, useStyles2 } from '@grafana/ui';
+import config from 'app/core/config';
 
 import { contextSrv } from '../../../../core/services/context_srv';
 import impressionSrv from '../../../../core/services/impression_srv';
 import { GENERAL_FOLDER_UID } from '../../constants';
+import { getGrafanaSearcher } from '../../service';
 import { getFolderChildren } from '../../service/folders';
+import { queryResultToViewItem } from '../../service/utils';
 
 import { FolderSection } from './FolderSection';
 import { SearchResultsProps } from './SearchResultsTable';
+
+async function getChildren() {
+  if (config.featureToggles.nestedFolders) {
+    return getFolderChildren();
+  }
+
+  const searcher = getGrafanaSearcher();
+  const results = await searcher.search({
+    query: '*',
+    kind: ['folder'],
+    sort: searcher.getFolderViewSort(),
+    limit: 1000,
+  });
+
+  return results.view.map((v) => queryResultToViewItem(v, results.view));
+}
 
 type Props = Pick<SearchResultsProps, 'selection' | 'selectionToggle' | 'onTagSelected' | 'onClickItem'> & {
   tags?: string[];
@@ -30,7 +49,7 @@ export const RootFolderView = ({
   const styles = useStyles2(getStyles);
 
   const results = useAsync(async () => {
-    const folders = await getFolderChildren();
+    const folders = await getChildren();
 
     if (!hidePseudoFolders) {
       if (contextSrv.isSignedIn) {

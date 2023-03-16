@@ -1,4 +1,5 @@
-import { config, getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
+import config from 'app/core/config';
 
 import { DashboardViewItem } from '../types';
 
@@ -8,7 +9,8 @@ import { queryResultToViewItem } from './utils';
 
 export async function getFolderChildren(parentUid?: string, parentTitle?: string): Promise<DashboardViewItem[]> {
   if (!config.featureToggles.nestedFolders) {
-    throw new Error('PR TODO: Require nestedFolders enabled');
+    console.error('getFolderChildren requires nestedFolders feature toggle');
+    return [];
   }
 
   if (!parentUid) {
