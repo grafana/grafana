@@ -140,7 +140,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
                 minWidth={14}
                 type="string"
                 min={0}
-                defaultValue={query.chunkDuration?.toString() ?? '1d'}
+                defaultValue={query.chunkDuration ?? '1d'}
                 onCommitChange={onChunkRangeChange}
                 invalid={!chunkRangeValid}
               />
