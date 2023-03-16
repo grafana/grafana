@@ -336,7 +336,7 @@ describe('templateSrv', () => {
         { type: 'query', name: 'test', current: { value: '<script>alert(asd)</script>' } },
       ]);
       const target = _templateSrv.replace('$test', {}, 'html');
-      expect(target).toBe('&lt;script&gt;alert(asd)&lt;/script&gt;');
+      expect(target).toBe('&lt;script&gt;alert(asd)&lt;&#47;script&gt;');
     });
   });
 
