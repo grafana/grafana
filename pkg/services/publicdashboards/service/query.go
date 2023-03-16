@@ -178,7 +178,7 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 func buildAnonymousUser(ctx context.Context, dashboard *dashboards.Dashboard) *user.SignedInUser {
 	datasourceUids := getUniqueDashboardDatasourceUids(dashboard.Data)
 
-	// Create a user with blank permissions
+	// Create a user with blank permissions - query metrics uses the lack of login or userID as an indication that this is a pubdash user
 	anonymousUser := &user.SignedInUser{OrgID: dashboard.OrgID, Permissions: make(map[int64]map[string][]string)}
 
 	// Scopes needed for Annotation queries

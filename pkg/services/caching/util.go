@@ -7,6 +7,7 @@ import (
 
 const (
 	cacheStatusKey = "X-CACHE-STATUS"
+	cacheHeader    = "X-Cache"
 	cacheSkipValue = "BYPASS"
 	cacheNoneValue = "NONE"
 )
@@ -27,7 +28,7 @@ func MarkCacheStatus(isSkip bool, resp CachedDataResponse) {
 }
 
 func GetCacheHeaders(r *backend.QueryDataResponse) map[string]string {
-	h := map[string]string{}
+	h := map[string]string{cacheHeader: cacheNoneValue}
 	if r == nil || r.Responses == nil {
 		return h
 	}
@@ -39,7 +40,7 @@ func GetCacheHeaders(r *backend.QueryDataResponse) map[string]string {
 			}
 			if m, ok := f.Meta.Custom.(map[string]any); ok {
 				if v, ok := m[cacheStatusKey]; ok {
-					h["X-Cache"] = v.(string)
+					h[cacheHeader] = v.(string)
 					break
 				}
 			}

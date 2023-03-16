@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -50,6 +51,9 @@ func ProvideService(
 		cachingService:         cachingService,
 		log:                    log.New("query_data"),
 	}
+	if err := prometheus.Register(QueryRequestHistogram); err != nil {
+		g.log.Error("error registering prometheus collector", "error", err)
+	}
 	g.log.Info("Query Service initialization")
 	return g
 }
@@ -85,6 +89,8 @@ func (s *ServiceImpl) Run(ctx context.Context) error {
 // This is distinct from the `skipDSCache` argument, which only determines if the datasource metadata is cached.
 // Query caching is only implemented in Grafana Enterprise.
 func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	start := time.Now() // time how long this request takes
+
 	// First look in the query cache if enabled
 	var cr caching.CachedDataResponse
 	if !skipQueryCache {
@@ -99,14 +105,23 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, sk
 	// do the actual queries
 	resp, err := s.queryData(ctx, user, skipDSCache, reqDTO)
 
+	// Update the query cache with the result for this metrics request
 	if err == nil {
-		// This updates the query cache with the result for this metrics request
 		if cr.UpdateCacheFn != nil {
 			cr.UpdateCacheFn(ctx, resp)
 		}
 		// Update cache response headers
 		caching.MarkCacheStatus(skipQueryCache, cr)
 	}
+
+	duration := time.Since(start)
+
+	// record request duration
+	QueryRequestHistogram.With(prometheus.Labels{
+		"datasource_type": getDatasourceType(reqDTO.GetUniqueDatasourceTypes()),
+		"cache":           caching.GetCacheHeaders(resp)["X-Cache"],
+		"query_type":      getQueryType(user),
+	}).Observe(duration.Seconds())
 
 	return resp, err
 }
