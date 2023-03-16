@@ -38,7 +38,7 @@ There are three steps needed to package a plugin:
 
    make sure that all the binaries are executable and have a `0755` (`-rwxr-xr-x`) permission
 
-1. [Sign the plugin]({{< relref "sign-a-plugin/" >}}).
+1. [Sign the plugin]({{< relref "./sign-a-plugin" >}}).
 
 1. Rename `dist` directory to match your plugin id and create a ZIP archive
 
@@ -82,7 +82,7 @@ drwxr-xr-x          0 bx stor 22-Mar-24 23:23 grafana-clickhouse-datasource/img/
 
 ## Publish your plugin on Grafana.com
 
-The best way to share your plugin with the world is to publish it on [Grafana Plugins](https://grafana.com/plugins).
+The best way to share your plugin with the world is to publish it on [Grafana Plugins](/plugins).
 By having your plugin published on Grafana.com, more users will be able to discover your plugin.
 
 Before you submit your plugin, we ask that you read our guidelines and frequently asked questions.
@@ -91,9 +91,9 @@ Before you submit your plugin, we ask that you read our guidelines and frequentl
 
 To speed up the time it takes to review your plugin:
 
-- Get familiar with our plugin [publishing and signing criteria](publishing-and-signing-criteria.md)
+- Get familiar with our plugin [publishing and signing criteria]({{< relref "./publishing-and-signing-criteria" >}})
 - Check that your plugin is ready for review using the [plugin validator](https://github.com/grafana/plugin-validator).
-- Read our [6 tips for improving your Grafana plugin before you publish](https://grafana.com/blog/2021/01/21/6-tips-for-improving-your-grafana-plugin-before-you-publish/).
+- Read our [6 tips for improving your Grafana plugin before you publish](/blog/2021/01/21/6-tips-for-improving-your-grafana-plugin-before-you-publish/).
 - Refer to [plugin-examples](https://github.com/grafana/grafana-plugin-examples) to review best practices for building your plugin.
 
 ### Frequently Asked Questions
@@ -127,12 +127,12 @@ To speed up the time it takes to review your plugin:
 **Can I distribute my plugin somewhere else than the Grafana Catalog?**
 
 - The official method for distributing Grafana plugins is through the Grafana Catalog.
-  Alternative methods, such as installing private or development plugins on local Grafana instances, are available as per the guidelines provided in [this guide](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-plugin-on-local-grafana).
+  Alternative methods, such as installing private or development plugins on local Grafana instances, are available as per the guidelines provided in [this guide]({{< relref "../../administration/plugin-management#install-plugin-on-local-grafana" >}}).
 
 **Can I still use Angular for my plugin?**
 
 - No. We will not accept any new plugin submissions written in angular.
-  Please take a look at our [angular support deprecation documentation](https://grafana.com/docs/grafana/latest/developers/angular_deprecation/).
+  Please take a look at our [angular support deprecation documentation]({{< relref "../angular_deprecation" >}}).
 
 ### Publishing your plugin for the first time
 
@@ -142,7 +142,7 @@ To speed up the time it takes to review your plugin:
 
 {{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
 
-1. [Sign in](https://grafana.com/auth/sign-in) to your Grafana Cloud account.
+1. [Sign in](/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
 1. Click **Submit Plugin**.
 1. Enter the information requested by the form.
@@ -151,7 +151,7 @@ To speed up the time it takes to review your plugin:
    - **URL:** A URL that points to a ZIP archive of your packaged plugin.
    - **Source Code URL:** A URL that points to a public git repository or ZIP archive of your complete plugin source code.
    - **MD5:** The MD5 hash of the plugin specified by the **URL**.
-   - The remaining questions help us determine the [signature level](https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/#plugin-signature-levels) for your plugin.
+   - The remaining questions help us determine the [signature level]({{< relref "./sign-a-plugin#plugin-signature-levels" >}}) for your plugin.
 1. Click **Submit**.
    After you have submitted your plugin, we run an automated validation to make sure it adheres to our guidelines.
    Once your submission passes the validation, it's placed in a review queue.
@@ -169,7 +169,7 @@ For every new plugin, we perform a manual review that includes the following che
 
 To submit an **update** for an already published plugin:
 
-1. [Sign in](https://grafana.com/auth/sign-in) to your Grafana Cloud account.
+1. [Sign in](/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
 1. Click **Submit Update** for the plugin you want to update.
 1. Enter the information requested by the form.
