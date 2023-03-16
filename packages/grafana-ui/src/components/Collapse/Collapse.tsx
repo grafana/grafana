@@ -105,7 +105,7 @@ export interface Props {
   className?: string;
 }
 
-export const ControlledCollapse = ({ isOpen, onToggle, ...otherProps }: Props) => {
+export const ControlledCollapse = ({ isOpen, onToggle, ...otherProps }: React.PropsWithChildren<Props>) => {
   const [open, setOpen] = useState(isOpen);
   return (
     <Collapse
