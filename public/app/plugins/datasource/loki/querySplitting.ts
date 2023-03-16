@@ -174,10 +174,10 @@ export function runPartitionedQueries(datasource: LokiDatasource, request: DataQ
 
   const oneDayMs = 24 * 60 * 60 * 1000;
   const rangePartitionedLogQueries = groupBy(logQueries, (query) =>
-    query.experimentalChunkRange ? durationToMilliseconds(parseDuration(query.experimentalChunkRange)) : oneDayMs
+    query.chunkDuration ? durationToMilliseconds(parseDuration(query.chunkDuration)) : oneDayMs
   );
   const rangePartitionedMetricQueries = groupBy(metricQueries, (query) =>
-    query.experimentalChunkRange ? durationToMilliseconds(parseDuration(query.experimentalChunkRange)) : oneDayMs
+    query.chunkDuration ? durationToMilliseconds(parseDuration(query.chunkDuration)) : oneDayMs
   );
 
   const requests: LokiGroupedRequest = [];

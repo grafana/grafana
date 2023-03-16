@@ -172,7 +172,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           app={app}
           maxLines={datasource.maxLines}
           datasource={datasource}
-          experimentalChunkRange={query.experimentalChunkRange}
         />
       </EditorRows>
     </>

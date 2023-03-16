@@ -19,11 +19,10 @@ export interface Props {
   maxLines: number;
   app?: CoreApp;
   datasource: LokiDatasource;
-  experimentalChunkRange?: string;
 }
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
-  ({ app, query, onChange, onRunQuery, maxLines, datasource, experimentalChunkRange }) => {
+  ({ app, query, onChange, onRunQuery, maxLines, datasource }) => {
     const [queryStats, setQueryStats] = useState<QueryStats>();
     const [chunkRangeValid, setChunkRangeValid] = useState(true);
     const prevQuery = usePrevious(query);
@@ -49,7 +48,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
         return;
       }
       setChunkRangeValid(true);
-      onChange({ ...query, experimentalChunkRange: value });
+      onChange({ ...query, chunkDuration: value });
       onRunQuery();
     };
 
@@ -134,14 +133,14 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
           </EditorField>
           {config.featureToggles.lokiQuerySplitting && (
             <EditorField
-              label="Chunk Range"
-              tooltip="Defines the range of a single query chunk when query chunking is used."
+              label="Chunk Duration"
+              tooltip="Defines the duration of a single query chunk when query chunking is used."
             >
               <AutoSizeInput
                 minWidth={14}
                 type="string"
                 min={0}
-                defaultValue={query.experimentalChunkRange?.toString() ?? '1d'}
+                defaultValue={query.chunkDuration?.toString() ?? '1d'}
                 onCommitChange={onChunkRangeChange}
                 invalid={!chunkRangeValid}
               />
