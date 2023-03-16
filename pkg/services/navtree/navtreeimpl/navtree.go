@@ -346,25 +346,20 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 		return nil, err
 	}
 
-	starredDashboards := []*dashboards.Dashboard{}
-	starredDashboardsCounter := 0
-	for dashboardId := range starredDashboardResult.UserStars {
+	if len(starredDashboardResult.UserStars) > 0 {
+		var ids []int64
+		for id := range starredDashboardResult.UserStars {
+			ids = append(ids, id)
+		}
+		starredDashboards, err := s.dashboardService.GetDashboards(c.Req.Context(), &dashboards.GetDashboardsQuery{DashboardIDs: ids, OrgID: c.OrgID})
+		if err != nil {
+			return nil, err
+		}
 		// Set a loose limit to the first 50 starred dashboards found
-		if starredDashboardsCounter > 50 {
-			break
+		if len(starredDashboards) > 50 {
+			starredDashboards = starredDashboards[:50]
 		}
-		starredDashboardsCounter++
-		query := &dashboards.GetDashboardQuery{
-			ID:    dashboardId,
-			OrgID: c.OrgID,
-		}
-		queryResult, err := s.dashboardService.GetDashboard(c.Req.Context(), query)
-		if err == nil {
-			starredDashboards = append(starredDashboards, queryResult)
-		}
-	}
 
-	if len(starredDashboards) > 0 {
 		sort.Slice(starredDashboards, func(i, j int) bool {
 			return starredDashboards[i].Title < starredDashboards[j].Title
 		})

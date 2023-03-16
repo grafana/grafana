@@ -417,7 +417,6 @@ type FindPersistedDashboardsQuery struct {
 	Title         string
 	OrgId         int64
 	SignedInUser  *user.SignedInUser
-	IsStarred     bool
 	DashboardIds  []int64
 	DashboardUIDs []string
 	Type          string
