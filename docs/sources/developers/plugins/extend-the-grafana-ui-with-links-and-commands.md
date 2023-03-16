@@ -70,8 +70,8 @@ Link extensions provide the means to direct users to a plugin page via href link
 
 Here's how you can add a command link to the dashboard panel menus in Grafana via your plugin:
 
-1. Define the command extension in the plugin's `module.ts` file. 
-1. Create a new instance of the `AppPlugin` class, and this time use the `configureExtensionCommand` method. This method takes a `context` object that contains information about the panel where the menu was clicked, and a `helpers` object to help perform various actions. 
+1. Define the command extension in the plugin's `module.ts` file.
+1. Create a new instance of the `AppPlugin` class, and this time use the `configureExtensionCommand` method. This method takes a `context` object that contains information about the panel where the menu was clicked, and a `helpers` object to help perform various actions.
 
 In the following example, we open a modal.
 
