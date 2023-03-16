@@ -11,7 +11,7 @@ import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import { useSelector } from '../../../../../../types';
 
-import { ConfigPublicDashoardForm } from './ConfigPublicDashboard';
+import { ConfigPublicDashboardForm } from './ConfigPublicDashboard';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
@@ -21,8 +21,8 @@ export const Configuration = ({
   register,
 }: {
   disabled: boolean;
-  onChange: (name: keyof ConfigPublicDashoardForm, value: boolean) => void;
-  register: UseFormRegister<ConfigPublicDashoardForm>;
+  onChange: (name: keyof ConfigPublicDashboardForm, value: boolean) => void;
+  register: UseFormRegister<ConfigPublicDashboardForm>;
 }) => {
   const styles = useStyles2(getStyles);
 

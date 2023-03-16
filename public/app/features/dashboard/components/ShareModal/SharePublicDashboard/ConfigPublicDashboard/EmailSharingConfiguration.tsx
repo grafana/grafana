@@ -66,7 +66,7 @@ const EmailList = ({
   return (
     <table className={styles.table} data-testid={selectors.EmailSharingList}>
       <tbody>
-        {recipients!.map((recipient) => (
+        {recipients!.map((recipient, idx) => (
           <tr key={recipient.uid}>
             <td>{recipient.recipient}</td>
             <td>
@@ -80,6 +80,7 @@ const EmailList = ({
                   size="sm"
                   disabled={isLoading}
                   onClick={() => onDeleteEmail(recipient.uid)}
+                  data-testid={`${selectors.DeleteEmail}-${idx}`}
                 >
                   Revoke
                 </Button>
@@ -92,6 +93,7 @@ const EmailList = ({
                   size="sm"
                   disabled={isLoading}
                   onClick={() => onReshare(recipient.uid)}
+                  data-testid={`${selectors.ReshareLink}-${idx}`}
                 >
                   Resend
                 </Button>
