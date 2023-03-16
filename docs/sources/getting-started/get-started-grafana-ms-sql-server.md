@@ -26,7 +26,8 @@ If you are on a Windows host but want to use Grafana and MS SQL data source on a
 
 #### Add the MS SQL data source
 
-1. In the Grafana side menu, hover your cursor over the **Configuration** (gear) icon and then click **Data Sources**.
+1. Click **Administration** in the left-side menu and select **Data sources**.
+<!--should step 2 be go to Plugins, select MSQL, and click "Create a Microsoft SQL Server data source" -->
 1. Filter by `mssql` and select the **Microsoft SQL Server** option.
 1. Click **Add data source** in the top right header to open the configuration page.
 1. Enter the information specified in the table below, then click **Save & Test**.
