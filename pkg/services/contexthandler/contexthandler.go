@@ -492,6 +492,13 @@ func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContex
 		return false
 	}
 
+	if h.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+		if token.NeedRotation(time.Duration(h.Cfg.TokenRotationIntervalMinutes) * time.Minute) {
+			reqContext.LookupTokenErr = authn.ErrTokenNeedRotation.Errorf("token needs to be rotated")
+			return false
+		}
+	}
+
 	query := user.GetSignedInUserQuery{UserID: token.UserId, OrgID: orgID}
 	queryResult, err := h.userService.GetSignedInUserWithCacheCtx(ctx, &query)
 	if err != nil {

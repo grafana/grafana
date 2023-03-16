@@ -210,9 +210,9 @@ export class ContextSrv {
       // get the time token is going to expire
       let expires = this.getSessionExpiry();
 
-      // if expires is 0 we run rotation rotation now and reschedule the job
+      // if expires is 0 we run rotation now and reschedule the job
       // this can happen if user was signed in before upgrade
-      // after a successfult rotation the expiry cookie will be present
+      // after a successful rotation the expiry cookie will be present
       if (expires === 0) {
         console.log('Schedule job to run now');
         // @ts-ignore
