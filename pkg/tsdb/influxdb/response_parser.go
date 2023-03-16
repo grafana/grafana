@@ -1,7 +1,6 @@
 package influxdb
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"regexp"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	json "github.com/json-iterator/go"
 )
 
 type ResponseParser struct{}
