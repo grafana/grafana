@@ -111,6 +111,7 @@ export class ContextSrv {
     this.cancelTokenRotationJob();
     this.user.isSignedIn = false;
     this.isSignedIn = false;
+    window.location.reload();
   }
 
   hasRole(role: string) {
