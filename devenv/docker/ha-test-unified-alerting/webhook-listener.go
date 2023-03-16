@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -18,8 +19,8 @@ var (
 	mu           sync.Mutex
 	waitSeconds  int
 	logFile      bool
-	logFileName  string = "/tmp/logs/webhook-listener.log"
-	dumpDir      string = "/tmp/logs/dumps"
+	logFileName  = filepath.Join(os.TempDir(), "/logs/webhook-listener.log")
+	dumpDir      = filepath.Join(os.TempDir(), "/logs/dumps")
 )
 
 type Alert struct {
@@ -157,7 +158,7 @@ func main() {
 			return
 		}
 		w.Header().Add("Content-Type", "application/json")
-		fmt.Fprint(w, string(b))
+		w.Write(b)
 	})
 	log.Println("Listening")
 	log.Printf("Wait Duration %v\n", waitDuration)
