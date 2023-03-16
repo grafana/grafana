@@ -61,6 +61,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	k8sauthentication "github.com/grafana/grafana/pkg/services/k8s/authentication"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -309,6 +310,8 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
 	tagimpl.ProvideService,
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
+	k8sauthentication.ProvideService,
+	wire.Bind(new(k8sauthentication.K8sAuthnAPI), new(*k8sauthentication.K8sAuthnAPIImpl)),
 )
 
 func Initialize(cfg *setting.Cfg) (Runner, error) {
