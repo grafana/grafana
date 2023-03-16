@@ -8,9 +8,11 @@ type: docs
 
 # Publish a plugin
 
-You've just built your first plugin, and now you want to share it with the world. In this guide, you'll learn how to package and share your plugin with others.
+You've just built your first plugin, and now you want to share it with the world.
+In this guide, you'll learn how to package and share your plugin with others.
 
-For Grafana to be able to load a plugin, it first needs to be built. When you build a plugin from source, a `dist` directory is created that contains the production build, or _plugin assets_, for your plugin.
+For Grafana to be able to load a plugin, it first needs to be built.
+When you build a plugin from source, a `dist` directory is created that contains the production build, or _plugin assets_, for your plugin.
 
 When the Grafana server starts, it recursively looks in the plugin directory for any directory that contains a `plugin.json` file and tries to load the plugin assets in the same directory.
 
@@ -44,7 +46,8 @@ There are three steps needed to package a plugin:
    zip myorg-simple-panel-1.0.0.zip myorg-simple-panel -r
    ```
 
-1. (Optional) Verify your plugin is packaged correctly using [zipinfo](https://linux.die.net/man/1/zipinfo). It should look like this:
+1. (Optional) Verify your plugin is packaged correctly using [zipinfo](https://linux.die.net/man/1/zipinfo).
+   It should look like this:
 
 ```
 zipinfo grafana-clickhouse-datasource-1.1.2.zip
@@ -78,7 +81,8 @@ drwxr-xr-x          0 bx stor 22-Mar-24 23:23 grafana-clickhouse-datasource/img/
 
 # Publish your plugin on Grafana.com
 
-The best way to share your plugin with the world is to publish it on [Grafana Plugins](https://grafana.com/plugins). By having your plugin published on Grafana.com, more users will be able to discover your plugin.
+The best way to share your plugin with the world is to publish it on [Grafana Plugins](https://grafana.com/plugins).
+By having your plugin published on Grafana.com, more users will be able to discover your plugin.
 
 Before you submit your plugin, we ask that you read our guidelines and frequently asked questions.
 
@@ -111,19 +115,23 @@ To speed up the time it takes to review your plugin:
 
 **How can I update my plugin's catalog page?**
 
-- The plugin's catalog page content is extracted from the plugin README file. To update the plugin's catalog page, it is necessary to submit an updated plugin with the new content included in the README file.
+- The plugin's catalog page content is extracted from the plugin README file.
+  To update the plugin's catalog page, it is necessary to submit an updated plugin with the new content included in the README file.
 
 **Can I unlist my plugin from the Grafana Plugin's Catalog in case of a bug?**
 
-- In the event of a bug, unlisting the plugin from the Grafana Plugin's Catalog may be possible in exceptional cases, such as security concerns. However, we do not have control over the specific instances where the plugin is installed.
+- In the event of a bug, unlisting the plugin from the Grafana Plugin's Catalog may be possible in exceptional cases, such as security concerns.
+  However, we do not have control over the specific instances where the plugin is installed.
 
 **Can I distribute my plugin somewhere else than the Grafana Catalog?**
 
-- The official method for distributing Grafana plugins is through the Grafana Catalog. Alternative methods, such as installing private or development plugins on local Grafana instances, are available as per the guidelines provided in [this guide](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-plugin-on-local-grafana).
+- The official method for distributing Grafana plugins is through the Grafana Catalog.
+  Alternative methods, such as installing private or development plugins on local Grafana instances, are available as per the guidelines provided in [this guide](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-plugin-on-local-grafana).
 
 **Can I still use Angular for my plugin?**
 
-- No. We will not accept any new plugin submissions written in angular. Please take a look at our [angular support deprecation documentation](https://grafana.com/docs/grafana/latest/developers/angular_deprecation/).
+- No. We will not accept any new plugin submissions written in angular.
+  Please take a look at our [angular support deprecation documentation](https://grafana.com/docs/grafana/latest/developers/angular_deprecation/).
 
 ## Publishing your plugin for the first time
 
@@ -137,20 +145,24 @@ To speed up the time it takes to review your plugin:
 1. In the left menu, under **Org settings**, click **My Plugins**.
 1. Click **Submit Plugin**.
 1. Enter the information requested by the form.
-   - **OS & Architecture:**
-     - Select **Single** if your plugin archive contains binaries for multiple architectures.
-     - Select **Multiple** if you'd like to submit separate plugin archives for each architecture. This can lead to faster downloads since users can select the specific architecture on which they want to install the plugin.
+   - **OS & Architecture:** - Select **Single** if your plugin archive contains binaries for multiple architectures. - Select **Multiple** if you'd like to submit separate plugin archives for each architecture.
+     This can lead to faster downloads since users can select the specific architecture on which they want to install the plugin.
    - **URL:** A URL that points to a ZIP archive of your packaged plugin.
    - **Source Code URL:** A URL that points to a public git repository or ZIP archive of your complete plugin source code.
    - **MD5:** The MD5 hash of the plugin specified by the **URL**.
    - The remaining questions help us determine the [signature level](https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/#plugin-signature-levels) for your plugin.
 1. Click **Submit**.
-   After you have submitted your plugin, we run an automated validation to make sure it adheres to our guidelines. Once your submission passes the validation, it's placed in a review queue.
+   After you have submitted your plugin, we run an automated validation to make sure it adheres to our guidelines.
+   Once your submission passes the validation, it's placed in a review queue.
 
-All submissions are manually inspected by a plugin reviewer. For every new plugin, we perform a manual review that includes the following checks:
+All submissions are manually inspected by a plugin reviewer.
+For every new plugin, we perform a manual review that includes the following checks:
 
-- **Code review:** For quality and security purposes, we review the source code for the plugin. If you're unable to make the source code publicly available, let us know in a comment on your plugin submission.
-- **Tests:** We install your plugin on one of our Grafana instances to test it for basic use. For more advanced plugins, we may ask you to assist us in configuring a test environment for the plugin. This test environment will be used whenever you submit an plugin update.
+- **Code review:** For quality and security purposes, we review the source code for the plugin.
+  If you're unable to make the source code publicly available, let us know in a comment on your plugin submission.
+- **Tests:** We install your plugin on one of our Grafana instances to test it for basic use.
+  For more advanced plugins, we may ask you to assist us in configuring a test environment for the plugin.
+  This test environment will be used whenever you submit an plugin update.
 
 ## Submit a plugin update
 
@@ -160,9 +172,8 @@ To submit an **update** for an already published plugin:
 1. In the left menu, under **Org settings**, click **My Plugins**.
 1. Click **Submit Update** for the plugin you want to update.
 1. Enter the information requested by the form.
-   - **OS & Architecture:**
-     - Select **Single** if your plugin archive contains binaries for multiple architectures.
-     - Select **Multiple** if you'd like to submit separate plugin archives for each architecture. This can lead to faster downloads since users can select the specific architecture they want to install the plugin on.
+   - **OS & Architecture:** - Select **Single** if your plugin archive contains binaries for multiple architectures. - Select **Multiple** if you'd like to submit separate plugin archives for each architecture.
+     This can lead to faster downloads since users can select the specific architecture they want to install the plugin on.
    - **URL:** A URL that points to a ZIP archive of your packaged plugin.
    - **Source Code URL:** A URL that points to a public git repository or ZIP archive of your complete plugin source code.
    - **MD5:** The MD5 hash of the plugin specified by the **URL**.
