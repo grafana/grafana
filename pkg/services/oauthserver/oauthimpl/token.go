@@ -94,7 +94,7 @@ func (s *OAuth2ServiceImpl) handleClientCredentials(ctx context.Context, accessR
 		}
 
 		currentOAuthSessionData.Username = sa.Login
-		saProfile := s.profileFromServiceAccount(client.SignedInUser, sa)
+		saProfile := s.profileFromServiceAccount(client, sa)
 
 		// If one of the requested scopes wasn't granted we wouldn't have reached this point
 		// so we can safely grant all of them
@@ -150,7 +150,7 @@ func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest f
 			}
 		}
 		currentOAuthSessionData.Username = dbUser.Login
-		userProfile := s.profileFromUser(client.SignedInUser, dbUser)
+		userProfile := s.profileFromUser(client, dbUser)
 
 		// If one of the requested scopes wasn't granted we wouldn't have reached this point
 		// so we can safely grant all of them
@@ -180,17 +180,15 @@ type Profile struct {
 	TeamsFunc       func(context.Context) ([]string, error)
 }
 
-func (s *OAuth2ServiceImpl) profileFromUser(siu *user.SignedInUser, up *user.User) *Profile {
+func (s *OAuth2ServiceImpl) profileFromUser(client *oauthserver.Client, up *user.User) *Profile {
 	return &Profile{
 		Name:      up.Name,
 		Email:     up.Email,
 		Login:     up.Login,
 		UpdatedAt: up.Updated,
 		PermissionsFunc: func(ctx context.Context) (map[string][]string, error) {
-			permissions, err := s.acService.SearchUsersPermissions(ctx, siu, 1, ac.SearchOptions{
-				ActionPrefix: "dashboards",
-				UserID:       up.ID,
-			})
+			permissions, err := s.acService.SearchUsersPermissions(ctx, client.SignedInUser,
+				oauthserver.TmpOrgID, ac.SearchOptions{UserID: up.ID})
 			if err != nil {
 				return nil, &fosite.RFC6749Error{
 					DescriptionField: "The permissions scope could not be processed.",
@@ -199,7 +197,7 @@ func (s *OAuth2ServiceImpl) profileFromUser(siu *user.SignedInUser, up *user.Use
 				}
 			}
 			if len(permissions) > 0 {
-				return ac.Reduce(permissions[up.ID]), nil
+				return ac.Intersect(permissions[up.ID], client.ImpersonatePermissions), nil
 			}
 			return nil, nil
 		},
@@ -207,7 +205,7 @@ func (s *OAuth2ServiceImpl) profileFromUser(siu *user.SignedInUser, up *user.Use
 			teams, err := s.teamService.GetTeamsByUser(ctx, &team.GetTeamsByUserQuery{
 				OrgID:        1,
 				UserID:       up.ID,
-				SignedInUser: siu,
+				SignedInUser: client.SignedInUser,
 			})
 			if err != nil {
 				return nil, &fosite.RFC6749Error{
@@ -228,28 +226,23 @@ func (s *OAuth2ServiceImpl) profileFromUser(siu *user.SignedInUser, up *user.Use
 	}
 }
 
-func (s *OAuth2ServiceImpl) profileFromServiceAccount(siu *user.SignedInUser, sa *serviceaccounts.ServiceAccountProfileDTO) *Profile {
+// profileFromServiceAccount returns a Profile from a ServiceAccountProfileDTO
+func (s *OAuth2ServiceImpl) profileFromServiceAccount(client *oauthserver.Client, sa *serviceaccounts.ServiceAccountProfileDTO) *Profile {
 	return &Profile{
 		Name:      sa.Name,
 		Email:     fmt.Sprintf("%s@grafana.serviceaccounts.local", sa.Login),
 		Login:     sa.Login,
 		UpdatedAt: sa.Updated,
 		PermissionsFunc: func(ctx context.Context) (map[string][]string, error) {
-			permissions, err := s.acService.SearchUsersPermissions(ctx, siu, 1, ac.SearchOptions{
-				ActionPrefix: "dashboards",
-				UserID:       sa.Id,
-			})
-			if err != nil {
+			if client.SignedInUser == nil || client.SignedInUser.Permissions == nil {
 				return nil, &fosite.RFC6749Error{
 					DescriptionField: "The permissions scope could not be processed.",
 					ErrorField:       "server_error",
 					CodeField:        http.StatusInternalServerError,
 				}
 			}
-			if len(permissions) > 0 {
-				return ac.Reduce(permissions[sa.Id]), nil
-			}
-			return nil, nil
+			permissions := client.SignedInUser.Permissions[oauthserver.TmpOrgID]
+			return permissions, nil
 		},
 		TeamsFunc: func(ctx context.Context) ([]string, error) {
 			return sa.Teams, nil
