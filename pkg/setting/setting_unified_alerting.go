@@ -332,8 +332,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		LokiTenantID:          stateHistory.Key("loki_tenant_id").MustString(""),
 		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
 		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
-		MultiPrimary:          stateHistory.Key("multi_primary").MustString(""),
-		MultiSecondaries:      splitTrim(stateHistory.Key("multi_secondaries").MustString(""), ","),
+		MultiPrimary:          stateHistory.Key("primary").MustString(""),
+		MultiSecondaries:      splitTrim(stateHistory.Key("secondaries").MustString(""), ","),
 		ExternalLabels:        stateHistoryLabels.KeysHash(),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
