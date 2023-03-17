@@ -20,7 +20,7 @@ interface TransformationOperationRowProps {
   id: string;
   index: number;
   data: DataFrame[];
-  uiConfig: TransformerRegistryItem<string>;
+  uiConfig: TransformerRegistryItem<null>;
   configs: TransformationsEditorTransformation[];
   onRemove: (index: number) => void;
   onChange: (index: number, config: DataTransformerConfig) => void;
@@ -68,13 +68,14 @@ export const TransformationOperationRow = ({
 
   // Instrument toggle callback
   const instrumentToggleCallback = useCallback(
-    (callback: (e: React.MouseEvent) => void, toggleId: string, active: boolean) => (e: React.MouseEvent) => {
-      reportInteraction('panel_editor_tabs_transformations_toggle', {
-        action: active ? 'off' : 'on',
-        toggleId,
-        transformationId: configs[index].transformation.id,
-      });
-    },
+    (callback: (e: React.MouseEvent) => void, toggleId: string, active: boolean | undefined) =>
+      (e: React.MouseEvent) => {
+        reportInteraction('panel_editor_tabs_transformations_toggle', {
+          action: active ? 'off' : 'on',
+          toggleId,
+          transformationId: configs[index].transformation.id,
+        });
+      },
     [configs, index]
   );
 
@@ -106,7 +107,7 @@ export const TransformationOperationRow = ({
         <QueryOperationAction
           title="Disable/Enable transformation"
           icon={disabled ? 'eye-slash' : 'eye'}
-          onClick={instrumentToggleCallback(() => onDisableToggle(index), 'disabled', disabled as boolean)}
+          onClick={instrumentToggleCallback(() => onDisableToggle(index), 'disabled', disabled)}
           active={disabled}
         />
         <QueryOperationAction title="Remove" icon="trash-alt" onClick={() => onRemove(index)} />
@@ -139,7 +140,7 @@ export const TransformationOperationRow = ({
   );
 };
 
-function prepMarkdown(uiConfig: TransformerRegistryItem<string>) {
+function prepMarkdown(uiConfig: TransformerRegistryItem<null>) {
   let helpMarkdown = uiConfig.help ?? uiConfig.description;
 
   return `
