@@ -17,11 +17,10 @@ export function getPluginExtensions<T extends object = {}>(
   const { placement, context } = options;
   const registry = getPluginsExtensionRegistry();
   const configureFuncs = registry[placement] ?? [];
+  const frozenContext = deepFreeze({ ...context });
 
   const extensions = configureFuncs.reduce<PluginExtension[]>((result, configure) => {
-    const extension = configure(context);
-
-    // If the configure() function returns `undefined`, the extension is not displayed
+    const extension = configure(frozenContext);
     if (extension) {
       result.push(extension);
     }
@@ -32,4 +31,31 @@ export function getPluginExtensions<T extends object = {}>(
   return {
     extensions: extensions,
   };
+}
+
+// Freezes an object and all its properties recursively
+// (Returns with the frozen object, however it's not a copy, the original object becomes frozen, too.)
+export function deepFreeze(object: object, frozenProps = new Set()) {
+  if (!object || typeof object !== 'object' || Object.isFrozen(object)) {
+    return object;
+  }
+
+  // Prevent infinite recursion by looking for cycles inside an object
+  if (frozenProps.has(object)) {
+    return object;
+  }
+  frozenProps.add(object);
+
+  const propNames = Reflect.ownKeys(object);
+
+  for (const name of propNames) {
+    // @ts-ignore
+    const value = object[name];
+
+    if (value && (typeof value === 'object' || typeof value === 'function') && !Object.isFrozen(value)) {
+      deepFreeze(value, frozenProps);
+    }
+  }
+
+  return Object.freeze(object);
 }
