@@ -47,6 +47,7 @@ describe('FlameGraph', () => {
         setRangeMin={setRangeMin}
         setRangeMax={setRangeMax}
         selectedView={selectedView}
+        getLabelValue={(val) => val.toString()}
       />
     );
   };
