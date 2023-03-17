@@ -63,12 +63,6 @@ Clicking anywhere on the span row shows span details.
 - Process metadata: Metadata about the process that logged this span.
 - Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
 
-### Node Graph
-
-You can optionally expand the node graph for the displayed trace. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service graph based on the current trace.
-
-![Node graph](/static/img/docs/explore/explore-trace-view-node-graph-8-0.png 'Node graph')
-
 ### Trace to logs
 
 > **Note:** Available in Grafana 7.4 and later versions.
@@ -78,6 +72,12 @@ You can navigate from a span in a trace view directly to logs relevant for that 
 {{< figure src="/static/img/docs/explore/trace-to-log-7-4.png" class="docs-image--no-shadow" max-width= "600px"  caption="Screenshot of the trace view in Explore with icon next to the spans" >}}
 
 Click the document icon to open a split view in Explore with the configured data source and query relevant logs for the span.
+
+## Node Graph
+
+You can optionally expand the node graph for the displayed trace. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service graph based on the current trace.
+
+![Node graph](/static/img/docs/explore/explore-trace-view-node-graph-8-0.png 'Node graph')
 
 ## Service Graph
 
