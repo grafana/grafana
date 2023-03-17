@@ -68,11 +68,10 @@ func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComma
 		}
 		p.Id = existingPlaylist.Id
 
-		dto = playlist.PlaylistDTO{
-			Uid:      p.UID,
-			Name:     p.Name,
-			Interval: p.Interval,
-		}
+		dto := &playlist.PlaylistDTO{}
+		dto.Spec.Uid = p.UID
+		dto.Spec.Name = p.Name
+		dto.Spec.Interval = p.Interval
 
 		_, err = sess.Where("id=?", p.Id).Cols("name", "interval").Update(&p)
 		if err != nil {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -532,7 +533,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.AnnotationTarget{
+			Target: &dashboard2.SpecAnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     nil,
@@ -545,7 +546,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.AnnotationTarget{
+			Target: &dashboard2.SpecAnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     []string{"tag1"},
@@ -605,7 +606,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.AnnotationTarget{
+			Target: &dashboard2.SpecAnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     []string{"tag1"},
@@ -671,7 +672,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.AnnotationTarget{
+			Target: &dashboard2.SpecAnnotationTarget{
 				Limit:    100,
 				MatchAny: true,
 				Tags:     nil,
@@ -764,7 +765,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.AnnotationTarget{
+			Target: &dashboard2.SpecAnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     nil,
@@ -799,7 +800,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.AnnotationTarget{
+			Target: &dashboard2.SpecAnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     []string{"tag1"},

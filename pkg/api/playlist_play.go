@@ -74,11 +74,11 @@ func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, s
 	result := make(dtos.PlaylistDashboardsSlice, 0)
 	dto, err := hs.playlistService.Get(ctx,
 		&playlist.GetPlaylistByUidQuery{UID: playlistUID, OrgId: orgID})
-	if err != nil || dto == nil || dto.Items == nil {
+	if err != nil || dto == nil || dto.Spec.Items == nil {
 		return result, err
 	}
 
-	playlistItems := dto.Items
+	playlistItems := dto.Spec.Items
 
 	dashboardByIDs := make([]int64, 0)
 	dashboardByTag := make([]string, 0)

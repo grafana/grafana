@@ -29,33 +29,33 @@ func summaryBuilder(ctx context.Context, uid string, body []byte) (*entity.Entit
 	}
 
 	// TODO: fix model so this is not possible
-	if obj.Items == nil {
-		temp := make([]playlist.Item, 0)
-		obj.Items = temp
+	if obj.Spec.Items == nil {
+		temp := make([]playlist.SpecPlaylistItem, 0)
+		obj.Spec.Items = temp
 	}
 
-	obj.Uid = uid // make sure they are consistent
+	obj.Spec.Uid = uid // make sure they are consistent
 	summary := &entity.EntitySummary{
 		UID:         uid,
-		Name:        obj.Name,
-		Description: fmt.Sprintf("%d items, refreshed every %s", len(obj.Items), obj.Interval),
+		Name:        obj.Spec.Name,
+		Description: fmt.Sprintf("%d items, refreshed every %s", len(obj.Spec.Items), obj.Spec.Interval),
 	}
 
-	for _, item := range obj.Items {
+	for _, item := range obj.Spec.Items {
 		switch item.Type {
-		case playlist.ItemTypeDashboardByUid:
+		case playlist.SpecPlaylistItemTypeDashboardByUid:
 			summary.References = append(summary.References, &entity.EntityExternalReference{
 				Family:     entity.StandardKindDashboard,
 				Identifier: item.Value,
 			})
 
-		case playlist.ItemTypeDashboardByTag:
+		case playlist.SpecPlaylistItemTypeDashboardByTag:
 			if summary.Labels == nil {
 				summary.Labels = make(map[string]string, 0)
 			}
 			summary.Labels[item.Value] = ""
 
-		case playlist.ItemTypeDashboardById:
+		case playlist.SpecPlaylistItemTypeDashboardById:
 			// obviously insufficient long term... but good to have an example :)
 			summary.Error = &entity.EntityErrorInfo{
 				Message: "Playlist uses deprecated internal id system",

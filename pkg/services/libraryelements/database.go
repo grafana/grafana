@@ -167,12 +167,12 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 			ConnectedDashboards: 0,
 			Created:             element.Created,
 			Updated:             element.Updated,
-			CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+			CreatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 				Id:        element.CreatedBy,
 				Name:      signedInUser.Login,
 				AvatarUrl: dtos.GetGravatarUrl(signedInUser.Email),
 			},
-			UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+			UpdatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 				Id:        element.UpdatedBy,
 				Name:      signedInUser.Login,
 				AvatarUrl: dtos.GetGravatarUrl(signedInUser.Email),
@@ -280,12 +280,12 @@ func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signed
 				ConnectedDashboards: libraryElement.ConnectedDashboards,
 				Created:             libraryElement.Created,
 				Updated:             libraryElement.Updated,
-				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+				CreatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 					Id:        libraryElement.CreatedBy,
 					Name:      libraryElement.CreatedByName,
 					AvatarUrl: dtos.GetGravatarUrl(libraryElement.CreatedByEmail),
 				},
-				UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+				UpdatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 					Id:        libraryElement.UpdatedBy,
 					Name:      libraryElement.UpdatedByName,
 					AvatarUrl: dtos.GetGravatarUrl(libraryElement.UpdatedByEmail),
@@ -393,12 +393,12 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 					ConnectedDashboards: element.ConnectedDashboards,
 					Created:             element.Created,
 					Updated:             element.Updated,
-					CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+					CreatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 						Id:        element.CreatedBy,
 						Name:      element.CreatedByName,
 						AvatarUrl: dtos.GetGravatarUrl(element.CreatedByEmail),
 					},
-					UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+					UpdatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 						Id:        element.UpdatedBy,
 						Name:      element.UpdatedByName,
 						AvatarUrl: dtos.GetGravatarUrl(element.UpdatedByEmail),
@@ -542,12 +542,12 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 				ConnectedDashboards: elementInDB.ConnectedDashboards,
 				Created:             libraryElement.Created,
 				Updated:             libraryElement.Updated,
-				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+				CreatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 					Id:        elementInDB.CreatedBy,
 					Name:      elementInDB.CreatedByName,
 					AvatarUrl: dtos.GetGravatarUrl(elementInDB.CreatedByEmail),
 				},
-				UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+				UpdatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 					Id:        libraryElement.UpdatedBy,
 					Name:      signedInUser.Login,
 					AvatarUrl: dtos.GetGravatarUrl(signedInUser.Email),
@@ -590,7 +590,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser *
 				ConnectionID:  connection.ConnectionID,
 				ConnectionUID: connection.ConnectionUID,
 				Created:       connection.Created,
-				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+				CreatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 					Id:        connection.CreatedBy,
 					Name:      connection.CreatedByName,
 					AvatarUrl: dtos.GetGravatarUrl(connection.CreatedByEmail),
@@ -639,12 +639,12 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 					ConnectedDashboards: element.ConnectedDashboards,
 					Created:             element.Created,
 					Updated:             element.Updated,
-					CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+					CreatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 						Id:        element.CreatedBy,
 						Name:      element.CreatedByName,
 						AvatarUrl: dtos.GetGravatarUrl(element.CreatedByEmail),
 					},
-					UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+					UpdatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 						Id:        element.UpdatedBy,
 						Name:      element.UpdatedByName,
 						AvatarUrl: dtos.GetGravatarUrl(element.UpdatedByEmail),

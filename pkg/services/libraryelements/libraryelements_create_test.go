@@ -46,12 +46,12 @@ func TestCreateLibraryElement(t *testing.T) {
 						ConnectedDashboards: 0,
 						Created:             sc.initialResult.Result.Meta.Created,
 						Updated:             sc.initialResult.Result.Meta.Updated,
-						CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+						CreatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
 							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
-						UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+						UpdatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
 							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
@@ -95,12 +95,12 @@ func TestCreateLibraryElement(t *testing.T) {
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
-						CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+						CreatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
 							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
-						UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+						UpdatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
 							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
@@ -170,12 +170,12 @@ func TestCreateLibraryElement(t *testing.T) {
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
-						CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+						CreatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
 							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
-						UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+						UpdatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
 							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",

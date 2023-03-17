@@ -79,12 +79,13 @@ func (s *Service) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*
 			items[i].Title = &title
 		}
 	}
-	return &playlist.PlaylistDTO{
-		Uid:      v.UID,
-		Name:     v.Name,
-		Interval: v.Interval,
-		Items:    items,
-	}, nil
+
+	ret := &playlist.PlaylistDTO{}
+	ret.Spec.Uid = v.UID
+	ret.Spec.Name = v.Name
+	ret.Spec.Interval = v.Interval
+	ret.Spec.Items = items
+	return ret, nil
 }
 
 func (s *Service) Search(ctx context.Context, q *playlist.GetPlaylistsQuery) (playlist.Playlists, error) {

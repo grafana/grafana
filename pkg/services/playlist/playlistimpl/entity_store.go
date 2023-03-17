@@ -95,7 +95,7 @@ func (s *entityStoreImpl) Update(ctx context.Context, cmd *playlist.UpdatePlayli
 		}
 		_, err = s.store.Write(ctx, &entity.WriteEntityRequest{
 			GRN: &entity.GRN{
-				UID:  rsp.Uid,
+				UID:  rsp.Spec.Uid,
 				Kind: entity.StandardKindPlaylist,
 			},
 			Body: body,
@@ -133,10 +133,10 @@ func (s *entityStoreImpl) GetWithoutItems(ctx context.Context, q *playlist.GetPl
 		return nil, err
 	}
 	return &playlist.Playlist{
-		UID:      p.Uid,
+		UID:      p.Spec.Uid,
 		OrgId:    q.OrgId,
-		Name:     p.Name,
-		Interval: p.Interval,
+		Name:     p.Spec.Name,
+		Interval: p.Spec.Interval,
 	}, nil
 }
 
@@ -180,7 +180,7 @@ func (s *entityStoreImpl) Search(ctx context.Context, q *playlist.GetPlaylistsQu
 		playlists = append(playlists, &playlist.Playlist{
 			UID:      res.GRN.UID,
 			Name:     res.Name,
-			Interval: found.Interval,
+			Interval: found.Spec.Interval,
 		})
 	}
 	return playlists, err

@@ -167,7 +167,7 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 							ConnectionID:  dashInDB.ID,
 							ConnectionUID: dashInDB.UID,
 							Created:       res.Result[0].Created,
-							CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+							CreatedBy: librarypanel.SpecLibraryElementDTOMetaUser{
 								Id:        1,
 								Name:      userInDbName,
 								AvatarUrl: userInDbAvatar,

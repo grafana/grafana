@@ -17,16 +17,16 @@ func TestPlaylistSummary(t *testing.T) {
 	_, _, err := builder(context.Background(), "abc", []byte("{invalid json"))
 	require.Error(t, err)
 
-	playlist := playlist.Playlist{
-		Interval: "30s",
-		Name:     "test",
-		Items: []playlist.Item{
-			{Type: playlist.ItemTypeDashboardByUid, Value: "D1"},
-			{Type: playlist.ItemTypeDashboardByTag, Value: "tagA"},
-			{Type: playlist.ItemTypeDashboardByUid, Value: "D3"},
-		},
+	plist := playlist.Playlist{}
+	plist.Spec.Interval = "30s"
+	plist.Spec.Name = "test"
+	plist.Spec.Items = []playlist.SpecPlaylistItem{
+		{Type: playlist.SpecPlaylistItemTypeDashboardById, Value: "D1"},
+		{Type: playlist.SpecPlaylistItemTypeDashboardByTag, Value: "tagA"},
+		{Type: playlist.SpecPlaylistItemTypeDashboardByUid, Value: "D3"},
 	}
-	out, err := json.Marshal(playlist)
+
+	out, err := json.Marshal(plist)
 	require.NoError(t, err)
 	require.NotNil(t, out)
 

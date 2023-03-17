@@ -101,7 +101,7 @@ func (hs *HTTPServer) GetPlaylistItems(c *contextmodel.ReqContext) response.Resp
 		return response.Error(500, "Playlist not found", err)
 	}
 
-	return response.JSON(http.StatusOK, dto.Items)
+	return response.JSON(http.StatusOK, dto.Spec.Items)
 }
 
 // swagger:route GET /playlists/{uid}/dashboards playlists getPlaylistDashboards

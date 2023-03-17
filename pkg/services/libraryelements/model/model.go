@@ -95,8 +95,8 @@ type LibraryElementDTOMeta struct {
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
 
-	CreatedBy librarypanel.LibraryElementDTOMetaUser `json:"createdBy"`
-	UpdatedBy librarypanel.LibraryElementDTOMetaUser `json:"updatedBy"`
+	CreatedBy librarypanel.SpecLibraryElementDTOMetaUser `json:"createdBy"`
+	UpdatedBy librarypanel.SpecLibraryElementDTOMetaUser `json:"updatedBy"`
 }
 
 // libraryElementConnection is the model for library element connections.
@@ -124,13 +124,13 @@ type LibraryElementConnectionWithMeta struct {
 
 // LibraryElementConnectionDTO is the frontend DTO for element connections.
 type LibraryElementConnectionDTO struct {
-	ID            int64                                  `json:"id"`
-	Kind          int64                                  `json:"kind"`
-	ElementID     int64                                  `json:"elementId"`
-	ConnectionID  int64                                  `json:"connectionId"`
-	ConnectionUID string                                 `json:"connectionUid"`
-	Created       time.Time                              `json:"created"`
-	CreatedBy     librarypanel.LibraryElementDTOMetaUser `json:"createdBy"`
+	ID            int64                                      `json:"id"`
+	Kind          int64                                      `json:"kind"`
+	ElementID     int64                                      `json:"elementId"`
+	ConnectionID  int64                                      `json:"connectionId"`
+	ConnectionUID string                                     `json:"connectionUid"`
+	Created       time.Time                                  `json:"created"`
+	CreatedBy     librarypanel.SpecLibraryElementDTOMetaUser `json:"createdBy"`
 }
 
 var (

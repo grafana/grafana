@@ -88,25 +88,25 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 	dto := preferences.Preferences{}
 
 	if preference.WeekStart != nil && *preference.WeekStart != "" {
-		dto.WeekStart = preference.WeekStart
+		dto.Spec.WeekStart = preference.WeekStart
 	}
 	if preference.Theme != "" {
-		dto.Theme = &preference.Theme
+		dto.Spec.Theme = &preference.Theme
 	}
 	if dashboardUID != "" {
-		dto.HomeDashboardUID = &dashboardUID
+		dto.Spec.HomeDashboardUID = &dashboardUID
 	}
 	if preference.Timezone != "" {
-		dto.Timezone = &preference.Timezone
+		dto.Spec.Timezone = &preference.Timezone
 	}
 
 	if preference.JSONData != nil {
 		if preference.JSONData.Language != "" {
-			dto.Language = &preference.JSONData.Language
+			dto.Spec.Language = &preference.JSONData.Language
 		}
 
 		if preference.JSONData.QueryHistory.HomeTab != "" {
-			dto.QueryHistory = &preferences.QueryHistoryPreference{
+			dto.Spec.QueryHistory = &preferences.SpecQueryHistoryPreference{
 				HomeTab: &preference.JSONData.QueryHistory.HomeTab,
 			}
 		}
