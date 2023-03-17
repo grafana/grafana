@@ -24,9 +24,6 @@ interface Props {
   onDuplicateQuery: (query: AlertQuery) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
-  filter?: (ds: DataSourceInstanceSettings) => boolean;
-  renderHeaderExtras?: boolean;
-  renderActions?: boolean;
 }
 
 export class QueryRows extends PureComponent<Props> {
@@ -194,9 +191,6 @@ export class QueryRows extends PureComponent<Props> {
                       onRunQueries={this.props.onRunQueries}
                       condition={this.props.condition}
                       onSetCondition={this.props.onSetCondition}
-                      filter={this.props.filter}
-                      renderHeaderExtras={this.props.renderHeaderExtras}
-                      renderActions={this.props.renderActions}
                     />
                   );
                 })}

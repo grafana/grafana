@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, PanelData, DataSourceInstanceSettings } from '@grafana/data';
+import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -16,9 +16,6 @@ interface Props {
   onDuplicateQuery: (query: AlertQuery) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
-  filter?: (ds: DataSourceInstanceSettings) => boolean;
-  renderHeaderExtras?: boolean;
-  renderActions?: boolean;
 }
 
 export const QueryEditor = ({
@@ -30,9 +27,6 @@ export const QueryEditor = ({
   onDuplicateQuery,
   condition,
   onSetCondition,
-  filter,
-  renderHeaderExtras,
-  renderActions,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -47,9 +41,6 @@ export const QueryEditor = ({
         onDuplicateQuery={onDuplicateQuery}
         condition={condition}
         onSetCondition={onSetCondition}
-        filter={filter}
-        renderHeaderExtras={renderHeaderExtras}
-        renderActions={renderActions}
       />
     </div>
   );

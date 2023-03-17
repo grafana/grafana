@@ -58,9 +58,6 @@ interface Props {
   condition: string | null;
   onSetCondition: (refId: string) => void;
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
-  filter?: (ds: DataSourceInstanceSettings) => boolean;
-  renderHeaderExtras?: boolean;
-  renderActions?: boolean;
 }
 
 export const QueryWrapper = ({
@@ -82,9 +79,6 @@ export const QueryWrapper = ({
   condition,
   onSetCondition,
   onChangeQueryOptions,
-  filter,
-  renderHeaderExtras,
-  renderActions,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const isExpression = isExpressionQuery(query.model);
@@ -167,12 +161,8 @@ export const QueryWrapper = ({
         onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
         onRunQuery={onRunQueries}
         queries={queries}
-        renderHeaderExtras={
-          renderHeaderExtras !== false ? () => <HeaderExtras query={query} index={index} error={error} /> : () => <></>
-        }
-        renderActions={renderActions}
+        renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
         app={CoreApp.UnifiedAlerting}
-        filter={filter}
         visualization={
           data.state !== LoadingState.NotStarted ? (
             <VizWrapper
