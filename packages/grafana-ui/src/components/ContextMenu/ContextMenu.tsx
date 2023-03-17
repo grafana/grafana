@@ -21,8 +21,8 @@ export interface ContextMenuProps {
   renderHeader?: () => React.ReactNode;
 }
 
-export const ContextMenu: React.FC<ContextMenuProps> = React.memo(
-  ({ x, y, onClose, focusOnOpen = true, renderMenuItems, renderHeader }) => {
+export const ContextMenu = React.memo(
+  ({ x, y, onClose, focusOnOpen = true, renderMenuItems, renderHeader }: ContextMenuProps) => {
     const menuRef = useRef<HTMLDivElement>(null);
     const [positionStyles, setPositionStyles] = useState({});
 

@@ -18,7 +18,7 @@ type DiffViewProps = {
   diffData: { lhs: unknown; rhs: unknown };
 };
 
-export const VersionHistoryComparison: React.FC<DiffViewProps> = ({ baseInfo, newInfo, diffData, isNewLatest }) => {
+export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLatest }: DiffViewProps) => {
   const diff = jsonDiff(diffData.lhs, diffData.rhs);
   const styles = useStyles2(getStyles);
 

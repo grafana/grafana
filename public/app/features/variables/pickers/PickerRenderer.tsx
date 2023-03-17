@@ -1,4 +1,4 @@
-import React, { FunctionComponent, PropsWithChildren, ReactElement, useMemo } from 'react';
+import React, { PropsWithChildren, ReactElement, useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip } from '@grafana/ui';
@@ -11,7 +11,7 @@ interface Props {
   readOnly?: boolean;
 }
 
-export const PickerRenderer: FunctionComponent<Props> = (props) => {
+export const PickerRenderer = (props: Props) => {
   const PickerToRender = useMemo(() => variableAdapters.get(props.variable.type).picker, [props.variable]);
 
   if (!props.variable) {

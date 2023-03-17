@@ -17,7 +17,7 @@ interface Props {
   secondaryPaneStyle?: React.CSSProperties;
 }
 
-export class SplitPaneWrapper extends PureComponent<Props> {
+export class SplitPaneWrapper extends PureComponent<React.PropsWithChildren<Props>> {
   //requestAnimationFrame reference
   rafToken: MutableRefObject<number | null> = createRef();
 

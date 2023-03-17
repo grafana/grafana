@@ -1,5 +1,5 @@
 import { isEmpty, uniq } from 'lodash';
-import React, { FC, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Icon, MultiSelect } from '@grafana/ui';
@@ -21,7 +21,7 @@ interface Props {
   onChange: (keys: string[]) => void;
 }
 
-export const GroupBy: FC<Props> = (props) => {
+export const GroupBy = (props: Props) => {
   const { onChange, id, defaultValue } = props;
   const dispatch = useDispatch();
 

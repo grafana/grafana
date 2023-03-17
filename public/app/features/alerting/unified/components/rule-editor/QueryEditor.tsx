@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2, PanelData, DataSourceInstanceSettings } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -21,7 +21,7 @@ interface Props {
   renderActions?: boolean;
 }
 
-export const QueryEditor: FC<Props> = ({
+export const QueryEditor = ({
   queries,
   expressions,
   panelData,
@@ -33,7 +33,7 @@ export const QueryEditor: FC<Props> = ({
   filter,
   renderHeaderExtras,
   renderActions,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
