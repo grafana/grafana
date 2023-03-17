@@ -3,17 +3,18 @@ package authentication
 import (
 	"context"
 	"errors"
+	"fmt"
+
 	// "github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"net/http"
-
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"net/http"
 )
 
 type User struct {
@@ -64,6 +65,7 @@ func ProvideService(
 		Log:           log.New("k8s.webhooks.authn"),
 	}
 
+	fmt.Println("Potato")
 	k8sAuthnAPI.RegisterAPIEndpoints()
 
 	return k8sAuthnAPI
@@ -77,7 +79,7 @@ func (api *K8sAuthnAPIImpl) validate(c *contextmodel.ReqContext) response.Respon
 	// Get userInfo from validate service account token
 	if c.SignedInUser.IsServiceAccount && c.SignedInUser.HasRole(roletype.RoleAdmin) {
 		return api.sendV1BetaResponse(context.Background(), nil, &UserInfo{
-			APIVersion: "authentication.k8s.io/v1",
+			APIVersion: "authentication.k8s.io/v1beta1",
 			Kind:       "TokenReview",
 			Status: &Status{
 				Authenticated: true,
@@ -96,7 +98,7 @@ func (api *K8sAuthnAPIImpl) validate(c *contextmodel.ReqContext) response.Respon
 			errRet = errors.New("Supplied token didn't have sufficient privileges to access the k8s apiserver")
 		}
 		return api.sendV1BetaResponse(context.Background(), errRet, &UserInfo{
-			APIVersion: "authentication.k8s.io/v1",
+			APIVersion: "authentication.k8s.io/v1beta1",
 			Kind:       "TokenReview",
 			Status: &Status{
 				Authenticated: false,

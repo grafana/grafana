@@ -4,7 +4,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/k8s/authentication"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -20,14 +19,12 @@ type Runner struct {
 	SecretsService    *manager.SecretsService
 	SecretsMigrator   secrets.Migrator
 	UserService       user.Service
-	K8sAuthnAPI       authentication.K8sAuthnAPI
 }
 
 func New(cfg *setting.Cfg, sqlStore db.DB, settingsProvider setting.Provider,
 	encryptionService encryption.Internal, features featuremgmt.FeatureToggles,
 	secretsService *manager.SecretsService, secretsMigrator secrets.Migrator,
 	userService user.Service,
-	k8sAuthnAPI authentication.K8sAuthnAPI,
 ) Runner {
 	return Runner{
 		Cfg:               cfg,
@@ -38,6 +35,5 @@ func New(cfg *setting.Cfg, sqlStore db.DB, settingsProvider setting.Provider,
 		SecretsMigrator:   secretsMigrator,
 		Features:          features,
 		UserService:       userService,
-		K8sAuthnAPI:       k8sAuthnAPI,
 	}
 }

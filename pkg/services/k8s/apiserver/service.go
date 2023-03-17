@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/services/k8s/authentication"
 	"github.com/grafana/grafana/pkg/services/k8s/kine"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -30,16 +31,18 @@ type service struct {
 	*services.BasicService
 
 	etcdProvider kine.EtcdProvider
+	k8sAuthnAPI  authentication.K8sAuthnAPI
 	restConfig   *rest.Config
 
 	stopCh    chan struct{}
 	stoppedCh chan error
 }
 
-func ProvideService(etcdProvider kine.EtcdProvider) (*service, error) {
+func ProvideService(etcdProvider kine.EtcdProvider, k8sAuthnAPI authentication.K8sAuthnAPI) (*service, error) {
 
 	s := &service{
 		etcdProvider: etcdProvider,
+		k8sAuthnAPI:  k8sAuthnAPI,
 		stopCh:       make(chan struct{}),
 	}
 
@@ -63,7 +66,7 @@ func (s *service) start(ctx context.Context) error {
 
 	serverRunOptions.Authentication = kubeoptions.NewBuiltInAuthenticationOptions().WithAll()
 	// TODO: incomplete. Need to implement the authn endpoint as specified in this config
-	// serverRunOptions.Authentication.WebHook.ConfigFile = "data/k8s/authn-kubeconfig"
+	serverRunOptions.Authentication.WebHook.ConfigFile = "data/k8s/authn-kubeconfig"
 	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{"https://127.0.0.1:6443"}
 	// TODO: determine if including ModeRBAC is a great idea. It ends up including a lot of cluster roles
 	// that wont be of use to us. It may be a necessary evil.
