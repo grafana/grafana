@@ -12,6 +12,7 @@ import {
   SplitOpen,
   DataLink,
   DisplayValue,
+  VariableMap,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -31,8 +32,15 @@ const dataLinkHasRequiredPermissionsFilter = (link: DataLink) => {
  */
 const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasRequiredPermissionsFilter];
 
+/**
+ * This extension of the LinkModel was done to support correlations, which need the variables' names
+ * and values split out for display purposes
+ *
+ * Correlations are internal links only so the variables property will always be defined (but possibly empty)
+ * for internal links and undefined for non-internal links
+ */
 export interface ExploreFieldLinkModel extends LinkModel<Field> {
-  variables?: Record<string, string | number | boolean | undefined>;
+  variables?: VariableMap;
 }
 
 /**
@@ -127,8 +135,8 @@ export const getFieldLinksForExplore = (options: {
 
         const allVars = { ...scopedVars, ...internalLinkSpecificVars };
         const varMapFn = getTemplateSrv().getAllVariablesInTarget.bind(getTemplateSrv());
-        const variableData = dataLinkHasAllVariablesDefined(link, allVars, varMapFn);
-        let variables: Record<string, string | number | boolean | undefined> = {};
+        const variableData = getVariableUsageInfo(link, allVars, varMapFn);
+        let variables: VariableMap = {};
         if (Object.keys(variableData.variables).length === 0) {
           const fieldName = field.name.toString();
           variables[fieldName] = '';
@@ -206,11 +214,11 @@ export function useLinks(range: TimeRange, splitOpenFn?: SplitOpen) {
  * @param scopedVars
  * @param getVarMap
  */
-export function dataLinkHasAllVariablesDefined<T extends DataLink>(
+export function getVariableUsageInfo<T extends DataLink>(
   query: T,
   scopedVars: ScopedVars,
   getVarMap: Function
-): { variables: Record<string, string | number | boolean | undefined>; allVariablesDefined: boolean } {
+): { variables: VariableMap; allVariablesDefined: boolean } {
   const vars = getVarMap(getStringsFromObject(query), scopedVars);
   // the string processor will convert null to '' but is not ran in all scenarios
   return {

@@ -4,8 +4,8 @@ import { DataFrame, Field, FieldType, LinkModel, LogRowModel } from '@grafana/da
 import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 
 export type FieldDef = {
-  key: string;
-  value: string;
+  keys: string[];
+  values: string[];
   links?: Array<LinkModel<Field>> | ExploreFieldLinkModel[];
   fieldIndex: number;
 };
@@ -30,6 +30,31 @@ export const getAllFields = memoizeOne(
 );
 
 /**
+ * A log line may contain many links that would all need to go on their own logs detail row
+ * This iterates through and creates a FieldDef (row) per link.
+ */
+export const createLogLineLinks = memoizeOne((hiddenFieldsWithLinks: FieldDef[]): FieldDef[] => {
+  let fieldsWithLinksFromVariableMap: FieldDef[] = [];
+  hiddenFieldsWithLinks.forEach((linkField) => {
+    linkField.links?.forEach((link: ExploreFieldLinkModel) => {
+      if (link.variables) {
+        const variableKeys = Object.keys(link.variables);
+        const variableValues = Object.keys(link.variables).map((key) =>
+          link.variables && link.variables[key] != null ? link.variables[key]!.toString() : ''
+        );
+        fieldsWithLinksFromVariableMap.push({
+          keys: variableKeys,
+          values: variableValues,
+          links: [link],
+          fieldIndex: linkField.fieldIndex,
+        });
+      }
+    });
+  });
+  return fieldsWithLinksFromVariableMap;
+});
+
+/**
  * creates fields from the dataframe-fields, adding data-links, when field.config.links exists
  */
 export const getDataframeFields = memoizeOne(
@@ -43,8 +68,8 @@ export const getDataframeFields = memoizeOne(
       .map((field) => {
         const links = getFieldLinks ? getFieldLinks(field, row.rowIndex, row.dataFrame) : [];
         return {
-          key: field.name,
-          value: field.values.get(row.rowIndex).toString(),
+          keys: [field.name],
+          values: [field.values.get(row.rowIndex).toString()],
           links: links,
           fieldIndex: field.index,
         };

@@ -1,4 +1,4 @@
-import { ScopedVars, TimeRange, TypedVariableModel } from '@grafana/data';
+import { ScopedVars, TimeRange, TypedVariableModel, VariableMap } from '@grafana/data';
 
 /**
  * Via the TemplateSrv consumers get access to all the available template variables
@@ -18,14 +18,10 @@ export interface TemplateSrv {
    */
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string;
 
-  /*
-  Return the variables and values only
-  */
-  getAllVariablesInTarget(
-    target: string,
-    scopedVars: ScopedVars,
-    format?: string | Function
-  ): Record<string, string | number | boolean | undefined>;
+  /**
+   * Return the variables and values only
+   */
+  getAllVariablesInTarget(target: string, scopedVars: ScopedVars, format?: string | Function): VariableMap;
 
   /**
    * Checks if a target contains template variables.

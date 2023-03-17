@@ -16,7 +16,7 @@ import { initTemplateSrv } from '../../../../test/helpers/initTemplateSrv';
 import { ContextSrv, setContextSrv } from '../../../core/services/context_srv';
 import { setLinkSrv } from '../../panel/panellinks/link_srv';
 
-import { getFieldLinksForExplore, dataLinkHasAllVariablesDefined } from './links';
+import { getFieldLinksForExplore, getVariableUsageInfo } from './links';
 
 describe('explore links utils', () => {
   describe('getFieldLinksForExplore', () => {
@@ -514,7 +514,7 @@ describe('explore links utils', () => {
     });
   });
 
-  describe('dataLinkHasAllVariablesDefined', () => {
+  describe('getVariableUsageInfo', () => {
     it('returns true when query contains variables and all variables are used', () => {
       const dataLink = {
         url: '',
@@ -529,7 +529,7 @@ describe('explore links utils', () => {
         testVal: { text: '', value: 'val1' },
       };
       const varMapMock = jest.fn().mockReturnValue({ testVal: scopedVars.testVal.value });
-      const dataLinkRtnVal = dataLinkHasAllVariablesDefined(dataLink, scopedVars, varMapMock).allVariablesDefined;
+      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars, varMapMock).allVariablesDefined;
 
       expect(dataLinkRtnVal).toBe(true);
     });
@@ -548,10 +548,11 @@ describe('explore links utils', () => {
         testVal: { text: '', value: 'val1' },
       };
       const varMapMock = jest.fn().mockReturnValue({ diffVar: null });
-      const dataLinkRtnVal = dataLinkHasAllVariablesDefined(dataLink, scopedVars, varMapMock).allVariablesDefined;
+      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars, varMapMock).allVariablesDefined;
 
       expect(dataLinkRtnVal).toBe(false);
     });
+
     it('returns false when query contains variables and some variables are used', () => {
       const dataLink = {
         url: '',
@@ -566,7 +567,7 @@ describe('explore links utils', () => {
         testVal: { text: '', value: 'val1' },
       };
       const varMapMock = jest.fn().mockReturnValue({ testVal: 'val1', diffVar: null });
-      const dataLinkRtnVal = dataLinkHasAllVariablesDefined(dataLink, scopedVars, varMapMock).allVariablesDefined;
+      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars, varMapMock).allVariablesDefined;
       expect(dataLinkRtnVal).toBe(false);
     });
 
@@ -584,7 +585,7 @@ describe('explore links utils', () => {
         testVal: { text: '', value: 'val1' },
       };
       const varMapMock = jest.fn().mockReturnValue({});
-      const dataLinkRtnVal = dataLinkHasAllVariablesDefined(dataLink, scopedVars, varMapMock).allVariablesDefined;
+      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars, varMapMock).allVariablesDefined;
       expect(dataLinkRtnVal).toBe(true);
     });
   });

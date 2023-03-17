@@ -23,7 +23,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { getFieldLinksForExplore, dataLinkHasAllVariablesDefined } from '../utils/links';
+import { getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
 import { SpanLinkFunc, Trace, TraceSpan } from './components';
 import { SpanLinks } from './components/types/links';
@@ -191,7 +191,7 @@ function legacyCreateSpanLinkFactory(
         // Check if all variables are defined and don't show if they aren't. This is usually handled by the
         // getQueryFor* functions but this is for case of custom query supplied by the user.
         if (
-          dataLinkHasAllVariablesDefined(
+          getVariableUsageInfo(
             dataLink.internal!.query,
             scopedVars,
             getTemplateSrv().getAllVariablesInTarget.bind(getTemplateSrv())

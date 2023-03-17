@@ -7,6 +7,7 @@ import {
   AdHocVariableFilter,
   AdHocVariableModel,
   TypedVariableModel,
+  VariableMap,
 } from '@grafana/data';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 import { sceneGraph, FormatRegistryID, formatRegistry, CustomFormatterFn } from '@grafana/scenes';
@@ -22,8 +23,6 @@ import { getVariableWrapper } from './LegacyVariableWrapper';
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
 }
-
-export type VarValue = string | number | boolean | undefined;
 
 export interface TemplateSrvDependencies {
   getFilteredVariables: typeof getFilteredVariables;
@@ -349,12 +348,8 @@ export class TemplateSrv implements BaseTemplateSrv {
     });
   }
 
-  getAllVariablesInTarget(
-    target: string,
-    scopedVars: ScopedVars,
-    format?: string | Function
-  ): Record<string, VarValue> {
-    const values: Record<string, VarValue> = {};
+  getAllVariablesInTarget(target: string, scopedVars: ScopedVars, format?: string | Function): VariableMap {
+    const values: VariableMap = {};
 
     this.replaceInVariableRegex(target, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const variableName = var1 || var2 || var3;

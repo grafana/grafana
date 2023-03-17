@@ -23,7 +23,7 @@ describe('getAllFields', () => {
 
     const fields = getAllFields(logRow);
     expect(fields.length).toBe(1);
-    expect(fields.find((field) => field.key === 'labels')).toBe(undefined);
+    expect(fields.find((field) => field.keys[0] === 'labels')).toBe(undefined);
   });
 
   it('should not filter out field with labels name and string type', () => {
@@ -44,7 +44,7 @@ describe('getAllFields', () => {
     });
     const fields = getAllFields(logRow);
     expect(fields.length).toBe(2);
-    expect(fields.find((field) => field.key === 'labels')).not.toBe(undefined);
+    expect(fields.find((field) => field.keys[0] === 'labels')).not.toBe(undefined);
   });
 
   it('should filter out field with id name', () => {
@@ -66,7 +66,7 @@ describe('getAllFields', () => {
 
     const fields = getAllFields(logRow);
     expect(fields.length).toBe(1);
-    expect(fields.find((field) => field.key === 'id')).toBe(undefined);
+    expect(fields.find((field) => field.keys[0] === 'id')).toBe(undefined);
   });
 
   it('should filter out field with config hidden field', () => {
@@ -86,7 +86,7 @@ describe('getAllFields', () => {
 
     const fields = getAllFields(logRow);
     expect(fields.length).toBe(0);
-    expect(fields.find((field) => field.key === testField.name)).toBe(undefined);
+    expect(fields.find((field) => field.keys[0] === testField.name)).toBe(undefined);
   });
 
   it('should filter out field with null values', () => {
@@ -100,7 +100,7 @@ describe('getAllFields', () => {
 
     const fields = getAllFields(logRow);
     expect(fields.length).toBe(0);
-    expect(fields.find((field) => field.key === testFieldWithNullValue.name)).toBe(undefined);
+    expect(fields.find((field) => field.keys[0] === testFieldWithNullValue.name)).toBe(undefined);
   });
 
   it('should not filter out field with string values', () => {
@@ -114,7 +114,7 @@ describe('getAllFields', () => {
 
     const fields = getAllFields(logRow);
     expect(fields.length).toBe(1);
-    expect(fields.find((field) => field.key === testStringField.name)).not.toBe(undefined);
+    expect(fields.find((field) => field.keys[0] === testStringField.name)).not.toBe(undefined);
   });
 });
 

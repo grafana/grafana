@@ -3,13 +3,12 @@ import React, { PureComponent } from 'react';
 
 import { CoreApp, DataFrame, Field, LinkModel, LogRowModel } from '@grafana/data';
 import { Themeable2, withTheme2 } from '@grafana/ui';
-import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';
 
 import { LogDetailsRow } from './LogDetailsRow';
 import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
-import { getAllFields, FieldDef } from './logParser';
+import { getAllFields, createLogLineLinks } from './logParser';
 
 export interface Props extends Themeable2 {
   row: LogRowModel;
@@ -27,14 +26,6 @@ export interface Props extends Themeable2 {
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-}
-
-// This holds multiple key/values if the field being displayed has several keys and values
-// The multiple keys/values need to be displayed together as one field
-// The index of the key will be the same as the index of the value
-interface FieldDefArr extends FieldDef {
-  keyArr: string[];
-  valArr: string[];
 }
 
 class UnThemedLogDetails extends PureComponent<Props> {
@@ -60,27 +51,11 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
     const fieldsAndLinks = getAllFields(row, getFieldLinks);
-    let fieldsWithlinks = fieldsAndLinks.filter((f) => f.links?.length);
-    const displayedFieldsWithLinks = fieldsWithlinks.filter((f) => f.fieldIndex !== row.entryFieldIndex).sort();
-    const hiddenFieldsWithLinks = fieldsWithlinks.filter((f) => f.fieldIndex === row.entryFieldIndex).sort();
-    const fieldsWithLinksFromVariableMap: FieldDefArr[] = [];
+    let fieldsWithLinks = fieldsAndLinks.filter((f) => f.links?.length);
+    const displayedFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex !== row.entryFieldIndex).sort();
+    const hiddenFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex === row.entryFieldIndex).sort();
+    const fieldsWithLinksFromVariableMap = createLogLineLinks(hiddenFieldsWithLinks);
 
-    // create route for log line links to be displayed
-    hiddenFieldsWithLinks.forEach((linkField) => {
-      // links can be from anywhere, but Explore Links extend LinkModel
-      linkField.links?.forEach((link: ExploreFieldLinkModel) => {
-        if (link.variables) {
-          fieldsWithLinksFromVariableMap.push({
-            key: linkField.key,
-            value: linkField.value,
-            keyArr: Object.keys(link.variables),
-            valArr: Object.keys(link.variables).map((key) => link.variables?.[key]?.toString() || ''),
-            links: [link],
-            fieldIndex: linkField.fieldIndex,
-          });
-        }
-      });
-    });
     // do not show the log message unless there is a link attached
     const fields = fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
     const fieldsAvailable = fields && fields.length > 0;
@@ -115,8 +90,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
                     return (
                       <LogDetailsRow
                         key={`${key}=${value}-${i}`}
-                        parsedKey={key}
-                        parsedValue={value}
+                        parsedKeys={[key]}
+                        parsedValues={[value]}
                         isLabel={true}
                         getStats={() => calculateLogsLabelStats(getRows(), key)}
                         onClickFilterOutLabel={onClickFilterOutLabel}
@@ -127,16 +102,17 @@ class UnThemedLogDetails extends PureComponent<Props> {
                         app={app}
                         wrapLogMessage={wrapLogMessage}
                         displayedFields={displayedFields}
+                        disableActions={false}
                       />
                     );
                   })}
                 {fields.map((field, i) => {
-                  const { key, value, fieldIndex } = field;
+                  const { keys, values, fieldIndex } = field;
                   return (
                     <LogDetailsRow
-                      key={`${key}=${value}-${i}`}
-                      parsedKey={key}
-                      parsedValue={value}
+                      key={`${keys[0]}=${values[0]}-${i}`}
+                      parsedKeys={keys}
+                      parsedValues={values}
                       onClickShowField={onClickShowField}
                       onClickHideField={onClickHideField}
                       onClickFilterOutLabel={onClickFilterOutLabel}
@@ -146,6 +122,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       wrapLogMessage={wrapLogMessage}
                       row={row}
                       app={app}
+                      disableActions={false}
                     />
                   );
                 })}
@@ -158,12 +135,12 @@ class UnThemedLogDetails extends PureComponent<Props> {
                   </tr>
                 )}
                 {displayedFieldsWithLinks.map((field, i) => {
-                  const { key, value, links, fieldIndex } = field;
+                  const { keys, values, links, fieldIndex } = field;
                   return (
                     <LogDetailsRow
-                      key={`${key}=${value}-${i}`}
-                      parsedKey={key}
-                      parsedValue={value}
+                      key={`${keys[0]}=${values[0]}-${i}`}
+                      parsedKeys={keys}
+                      parsedValues={values}
                       links={links}
                       onClickShowField={onClickShowField}
                       onClickHideField={onClickHideField}
@@ -172,18 +149,17 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       wrapLogMessage={wrapLogMessage}
                       row={row}
                       app={app}
+                      disableActions={false}
                     />
                   );
                 })}
                 {fieldsWithLinksFromVariableMap?.map((field, i) => {
-                  const { key, value, keyArr, valArr, links, fieldIndex } = field;
+                  const { keys, values, links, fieldIndex } = field;
                   return (
                     <LogDetailsRow
-                      key={`${key}=${value}-${i}`}
-                      parsedKey={key}
-                      parsedValue={value}
-                      parsedKeyArray={keyArr}
-                      parsedValueArray={valArr}
+                      key={`${keys[0]}=${values[0]}-${i}`}
+                      parsedKeys={keys}
+                      parsedValues={values}
                       links={links}
                       onClickShowField={onClickShowField}
                       onClickHideField={onClickHideField}
@@ -192,6 +168,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       wrapLogMessage={wrapLogMessage}
                       row={row}
                       app={app}
+                      disableActions={true}
                     />
                   );
                 })}
