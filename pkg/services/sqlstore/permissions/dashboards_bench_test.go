@@ -34,7 +34,9 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards in
 		var result int
 		err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			q, params := filter.Where()
-			_, err := sess.SQL("SELECT COUNT(*) FROM dashboard WHERE "+q, params...).Get(&result)
+			recQry, recQryParams := filter.With()
+			params = append(recQryParams, params...)
+			_, err := sess.SQL(recQry+"SELECT COUNT(*) FROM dashboard WHERE "+q, params...).Get(&result)
 			return err
 		})
 		require.NoError(b, err)
