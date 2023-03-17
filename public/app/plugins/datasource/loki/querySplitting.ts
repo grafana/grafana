@@ -1,5 +1,6 @@
 import { groupBy, partition } from 'lodash';
 import { Observable, Subscriber, Subscription } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   DataQueryRequest,
@@ -171,6 +172,8 @@ export function runPartitionedQueries(datasource: LokiDatasource, request: DataQ
   const queries = request.targets.filter((query) => !query.hide);
   const [instantQueries, normalQueries] = partition(queries, (query) => query.queryType === LokiQueryType.Instant);
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
+
+  request.queryGroupId = uuidv4();
 
   const oneDayMs = 24 * 60 * 60 * 1000;
   const rangePartitionedLogQueries = groupBy(logQueries, (query) =>
