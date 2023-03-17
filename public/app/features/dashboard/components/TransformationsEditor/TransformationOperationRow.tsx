@@ -20,7 +20,7 @@ interface TransformationOperationRowProps {
   id: string;
   index: number;
   data: DataFrame[];
-  uiConfig: TransformerRegistryItem<any>;
+  uiConfig: TransformerRegistryItem<string>;
   configs: TransformationsEditorTransformation[];
   onRemove: (index: number) => void;
   onChange: (index: number, config: DataTransformerConfig) => void;
@@ -139,7 +139,7 @@ export const TransformationOperationRow = ({
   );
 };
 
-function prepMarkdown(uiConfig: TransformerRegistryItem<any>) {
+function prepMarkdown(uiConfig: TransformerRegistryItem<string>) {
   let helpMarkdown = uiConfig.help ?? uiConfig.description;
 
   return `
