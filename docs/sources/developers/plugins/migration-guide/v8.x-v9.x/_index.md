@@ -71,7 +71,7 @@ We have removed the deprecated `getFormStyles` function from [grafana-ui](https:
 
 ### /api/ds/query replaces /api/tsdb/query
 
-We have removed the deprecated `/api/tsdb/query` metrics endpoint. Use [/api/ds/query]({{< relref "../http_api/data_source/#query-a-data-source" >}}) instead
+We have removed the deprecated `/api/tsdb/query` metrics endpoint. Use [/api/ds/query]({{< relref "../../../http_api/data_source/#query-a-data-source" >}}) instead
 
 ### selectOptionInTest has been removed
 

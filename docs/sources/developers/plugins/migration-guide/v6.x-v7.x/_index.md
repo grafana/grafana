@@ -80,7 +80,7 @@ async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
 
 ## Troubleshoot plugin migration
 
-As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../../administration/plugin-management/#allow-unsigned-plugins" >}}).
+As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../../../administration/plugin-management/#allow-unsigned-plugins" >}}).
 
 ## From version 6.5.x to 7.3.0
 
