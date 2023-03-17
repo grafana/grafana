@@ -226,19 +226,22 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Url:        s.cfg.AppSubURL + "/monitoring",
 			})
 		case navtree.NavIDAlertsAndIncidents:
+			alertsAndIncidentsChildren := []*navtree.NavLink{}
 			if alertingNode != nil {
-				treeRoot.AddSection(&navtree.NavLink{
-					Text:       "Alerts & incidents",
-					Id:         navtree.NavIDAlertsAndIncidents,
-					SubTitle:   "Alerting and incident management apps",
-					Icon:       "bell",
-					Section:    navtree.NavSectionCore,
-					SortWeight: navtree.WeightAlertsAndIncidents,
-					Children:   []*navtree.NavLink{alertingNode, appLink},
-					Url:        s.cfg.AppSubURL + "/alerts-and-incidents",
-				})
+				alertsAndIncidentsChildren = append(alertsAndIncidentsChildren, alertingNode)
 				treeRoot.RemoveSection(alertingNode)
 			}
+			alertsAndIncidentsChildren = append(alertsAndIncidentsChildren, appLink)
+			treeRoot.AddSection(&navtree.NavLink{
+				Text:       "Alerts & incidents",
+				Id:         navtree.NavIDAlertsAndIncidents,
+				SubTitle:   "Alerting and incident management apps",
+				Icon:       "bell",
+				Section:    navtree.NavSectionCore,
+				SortWeight: navtree.WeightAlertsAndIncidents,
+				Children:   alertsAndIncidentsChildren,
+				Url:        s.cfg.AppSubURL + "/alerts-and-incidents",
+			})
 		default:
 			s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", sectionID)
 		}
