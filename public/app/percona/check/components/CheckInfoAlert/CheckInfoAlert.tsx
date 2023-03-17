@@ -30,7 +30,7 @@ export const ChecksInfoAlert = () => {
           data-testid="read-more-link"
           target="_blank"
           rel="noreferrer"
-          href={'https://www.percona.com/software/percona-platform/subscription'}
+          href={'https://per.co.na/subscribemore'}
           className={styles.link}
         >
           {Messages.link}
