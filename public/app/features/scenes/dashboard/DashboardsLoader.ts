@@ -157,7 +157,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
   let variables: SceneVariableSet | undefined = undefined;
 
-  if (oldModel.templating.list.length) {
+  if (oldModel.templating?.list?.length) {
     const variableObjects = oldModel.templating.list
       .map((v) => {
         try {
