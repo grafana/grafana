@@ -4927,6 +4927,7 @@ __metadata:
     "@testing-library/react-hooks": 8.0.1
     "@testing-library/user-event": 14.4.3
     "@types/d3-interpolate": ^3.0.0
+    "@types/dompurify": ^2
     "@types/history": 4.7.11
     "@types/jest": 29.2.3
     "@types/jquery": 3.5.16
@@ -4941,6 +4942,7 @@ __metadata:
     "@types/tinycolor2": 1.4.3
     d3-interpolate: 3.0.1
     date-fns: 2.29.3
+    dompurify: ^2.4.3
     esbuild: 0.16.17
     eventemitter3: 5.0.0
     fast_array_intersect: 1.1.0
@@ -4967,7 +4969,7 @@ __metadata:
     tslib: 2.5.0
     typescript: 4.8.4
     uplot: 1.6.24
-    xss: 1.0.14
+    xss: ^1.0.14
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
     react-dom: ^16.8.0 || ^17.0.0
@@ -5115,25 +5117,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:1.0.0, @grafana/faro-core@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@grafana/faro-core@npm:1.0.0"
+"@grafana/faro-core@npm:1.0.2, @grafana/faro-core@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@grafana/faro-core@npm:1.0.2"
   dependencies:
     "@opentelemetry/api": ^1.4.0
     "@opentelemetry/api-metrics": ^0.33.0
     "@opentelemetry/otlp-transformer": ^0.35.0
-  checksum: 6debd3f85e1fd9b4a48c6327fdf5b603356ac4e9da25ea861e04741b3e4cc4539e8c2e8ab9f34a33321df0f5f13fdb1371b6d67d493980befd300acd8b8acc9b
+  checksum: 09c3c6687b955aacd17de73dca319dbb2abda8dd26f5c038618266ffefbc1f915cfe12167cd4b49db5c639ab70b7141bb9794c3cbdc682bb63174f95df9d9dfd
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:1.0.0":
-  version: 1.0.0
-  resolution: "@grafana/faro-web-sdk@npm:1.0.0"
+"@grafana/faro-web-sdk@npm:1.0.2":
+  version: 1.0.2
+  resolution: "@grafana/faro-web-sdk@npm:1.0.2"
   dependencies:
-    "@grafana/faro-core": ^1.0.0
+    "@grafana/faro-core": ^1.0.2
     ua-parser-js: ^1.0.32
     web-vitals: ^3.1.1
-  checksum: 63734db13f3ccef08c46e638c8f62d0bdcc265c7926d80bbe6637152d34fd2f08be5eebfb74521e55e2be306062bc5126eace1ef3453b0a8dfe72952fd23a2ff
+  checksum: ca04add8469778d73e1bc15f057d063d93a88b9d76325c79060848ad3211fa929e30b6a85365981f7bcef023704f9f92f67678311bfed13dd521399c0f00e92f
   languageName: node
   linkType: hard
 
@@ -5168,7 +5170,7 @@ __metadata:
   dependencies:
     "@grafana/data": 9.5.0-pre
     "@grafana/e2e-selectors": 9.5.0-pre
-    "@grafana/faro-web-sdk": 1.0.0
+    "@grafana/faro-web-sdk": 1.0.2
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 9.5.0-pre
     "@rollup/plugin-commonjs": 23.0.2
@@ -5207,9 +5209,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^0.0.18":
-  version: 0.0.18
-  resolution: "@grafana/scenes@npm:0.0.18"
+"@grafana/scenes@npm:^0.0.19":
+  version: 0.0.19
+  resolution: "@grafana/scenes@npm:0.0.19"
   dependencies:
     "@grafana/e2e-selectors": ^9.4.3
     "@grafana/experimental": 1.0.1
@@ -5217,7 +5219,7 @@ __metadata:
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
-  checksum: f863cbf410d71e579cd4e343fb7b8ad014bc66a250f4d31f9d43c43fe8e97f5b6e3e8d01ed69818c347b3db31b6ecb153d1dc7a0e2946d360e7e1806eb6f5d8c
+  checksum: e71451751523c33a72d1fe777ac37795166da44c4316a8c1a00ffff936167d49eca91cbe1557a7ffbbfa220c58112dc5c84d45058725efd5c1bf3ba32c2cfb36
   languageName: node
   linkType: hard
 
@@ -18575,10 +18577,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:^2.4.1":
-  version: 2.4.3
-  resolution: "dompurify@npm:2.4.3"
-  checksum: b440981f2a38cada2085759cc3d1e2f94571afc34343d011a8a6aa1ad91ae6abf651adbfa4994b0e2283f0ce81f7891cdb04b67d0b234c8d190cb70e9691f026
+"dompurify@npm:^2.4.3":
+  version: 2.4.5
+  resolution: "dompurify@npm:2.4.5"
+  checksum: d6d3c3b320f15cdb5b26aa1902c3275a3ab2c3705a9df4420bb94691d7c4df67959ec7b91e486c308320791b0ee000456f042734c45d76721e61c2768eac706e
   languageName: node
   linkType: hard
 
@@ -22112,13 +22114,13 @@ __metadata:
     "@grafana/eslint-config": 5.1.0
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
     "@grafana/experimental": 1.1.0
-    "@grafana/faro-core": 1.0.0
-    "@grafana/faro-web-sdk": 1.0.0
+    "@grafana/faro-core": 1.0.2
+    "@grafana/faro-web-sdk": 1.0.2
     "@grafana/google-sdk": 0.0.4
     "@grafana/lezer-logql": 0.1.2
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^0.0.18
+    "@grafana/scenes": ^0.0.19
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
@@ -22254,7 +22256,6 @@ __metadata:
     dangerously-set-html-content: 1.0.9
     date-fns: 2.29.3
     debounce-promise: 3.1.2
-    dompurify: ^2.4.1
     emotion: 11.0.0
     esbuild: 0.16.17
     esbuild-loader: 2.21.0
@@ -40045,7 +40046,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xss@npm:1.0.14":
+"xss@npm:^1.0.14":
   version: 1.0.14
   resolution: "xss@npm:1.0.14"
   dependencies:
