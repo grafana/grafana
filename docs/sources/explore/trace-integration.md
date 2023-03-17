@@ -63,7 +63,7 @@ Clicking anywhere on the span row shows span details.
 - Process metadata: Metadata about the process that logged this span.
 - Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
 
-### Node Graph View
+### Node Graph
 
 You can optionally expand the node graph for the displayed trace. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service graph based on the current trace.
 
@@ -79,9 +79,9 @@ You can navigate from a span in a trace view directly to logs relevant for that 
 
 Click the document icon to open a split view in Explore with the configured data source and query relevant logs for the span.
 
-## Service Graph View
+## Service Graph
 
-The Service Graph view visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
+The Service Graph visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
 Once the requirements are set up, this pre-configured view is immediately available.
 
 For more information, refer to the [Service Graph view table section](https://grafana.com/docs/grafana/latest/datasources/tempo/#service-graph-view-table) of the Tempo data source page and the [service graph view page](https://grafana.com/docs/tempo/latest/metrics-generator/service-graph-view/) in the Tempo documentation.
