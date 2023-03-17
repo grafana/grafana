@@ -28,7 +28,7 @@ If you are on a Windows host but want to use Grafana and MS SQL data source on a
 
 1. Click **Connections** in the left-side menu and filter by `mssql`.
 1. Select the **Microsoft SQL Server** option.
-1. Click **Create a Microsoft SQL Server data source** in the top right header to open the configuration page.
+1. Click **Create a Microsoft SQL Server data source** in the top right corner to open the configuration page.
 1. Enter the information specified in the table below, then click **Save & test**.
 
 | Name       | Description                                                                                                           |
