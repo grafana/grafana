@@ -70,7 +70,7 @@ func (d *DisabledPlugins) IsDisabled(pluginID string) bool {
 func (d *DisabledPlugins) Add(pluginIDs ...string) {
 	d.mu.Lock()
 	if d.set == nil {
-		d.set = map[string]struct{}{}
+		d.set = make(map[string]struct{}, len(pluginIDs))
 	}
 	for _, id := range pluginIDs {
 		d.set[id] = struct{}{}
