@@ -3,6 +3,8 @@ import saveAs from 'file-saver';
 import { dateTimeFormat, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { DashboardScene } from 'app/features/scenes/dashboard/DashboardScene';
+import { createDashboardSceneFromDashboardModel } from 'app/features/scenes/dashboard/DashboardsLoader';
 
 import { getTimeSrv } from '../../services/TimeSrv';
 import { PanelModel } from '../../state';
@@ -19,7 +21,6 @@ interface SupportSnapshotState {
   markdownText: string;
   snapshotSize?: string;
   randomize: Randomize;
-  iframeLoading?: boolean;
   loading?: boolean;
   error?: {
     title: string;
@@ -31,6 +32,7 @@ interface SupportSnapshotState {
   // eslint-disable-next-line
   snapshot?: any;
   snapshotUpdate: number;
+  scene?: DashboardScene;
 }
 
 export enum SnapshotTab {
@@ -70,17 +72,28 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
   }
 
   async buildDebugDashboard() {
-    const { panel, randomize, snapshotUpdate, iframeLoading, currentTab } = this.state;
+    const { panel, randomize, snapshotUpdate } = this.state;
     const snapshot = await getDebugDashboard(panel, randomize, getTimeSrv().timeRange());
     const snapshotText = JSON.stringify(snapshot, null, 2);
     const markdownText = getGithubMarkdown(panel, snapshotText);
     const snapshotSize = formattedValueToString(getValueFormat('bytes')(snapshotText?.length ?? 0));
 
-    if (iframeLoading && currentTab === SnapshotTab.Support) {
-      setDashboardToFetchFromLocalStorage({ meta: {}, dashboard: snapshot });
+    let scene: DashboardScene | undefined = undefined;
+    if (config.featureToggles.scenes) {
+      try {
+        scene = createDashboardSceneFromDashboardModel(snapshot);
+        scene.setState({
+          uid: undefined,
+          title: undefined,
+          actions: undefined,
+          controls: undefined, // remove
+        });
+      } catch (ex) {
+        console.log('Error creating scene:', ex);
+      }
     }
 
-    this.setState({ snapshot, snapshotText, markdownText, snapshotSize, snapshotUpdate: snapshotUpdate + 1 });
+    this.setState({ snapshot, snapshotText, markdownText, snapshotSize, snapshotUpdate: snapshotUpdate + 1, scene });
   }
 
   onCurrentTabChange = (value: SnapshotTab) => {
@@ -134,18 +147,4 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
       global.open(config.appUrl + 'dashboard/new', '_blank');
     }
   };
-
-  subscribeToIframeLoadingMessage() {
-    const handleEvent = (evt: MessageEvent<string>) => {
-      if (evt.data === 'GrafanaAppInit') {
-        setDashboardToFetchFromLocalStorage({ meta: {}, dashboard: this.state.snapshot });
-        this.setState({ iframeLoading: true });
-      }
-    };
-    window.addEventListener('message', handleEvent, false);
-
-    return function cleanup() {
-      window.removeEventListener('message', handleEvent);
-    };
-  }
 }
