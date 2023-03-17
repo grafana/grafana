@@ -50,7 +50,7 @@ function AppPlacementExample() {
 }
 ```
 
-In the above example, we created a component that renders `<LinkButton />` or `<Button />` components depending on the type of extension other plugins register for the `plugin/another-app-plugin/menu` placement. We pass the context as the second parameter to `getPluginExtensions`, being careful to make it immutable using the `Object.freeze` method.
+In the above example, we created a component that renders `<LinkButton />` or `<Button />` components depending on the type of extension other plugins register for the `plugin/another-app-plugin/menu` placement. We pass the context as the second parameter to `getPluginExtensions`, which will use `Object.freeze` to make the context immutable before passing it to other plugins.
 
 ## How to add links or commands from another plugin
 
