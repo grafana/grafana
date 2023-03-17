@@ -9,7 +9,7 @@ export async function fetchFeedText(url: string) {
 
 export function isAtomFeed(txt: string) {
   const domParser = new DOMParser();
-  const doc = domParser.parseFromString(txt, 'text/xml');
+  const doc = domParser.parseFromString(txt, 'text/xml'); // TT: this is considered a security risk and will cause trusted types violations
   return doc.querySelector('feed') !== null;
 }
 

@@ -295,6 +295,27 @@
       [[end]]
     </script>
 
+[[if .TrustedTypes]]
+
+<script nonce="[[.Nonce]]">
+  if (window.trustedTypes && trustedTypes.createPolicy) { // check if browser supports Trusted Types
+    trustedTypes.createPolicy('default', {
+
+      // This will sanitize the string and return a TrustedHTML object using DOMPurify.
+      createHTML: string => DOMPurify.sanitize(string, {USE_PROFILES: {html: true, svg: true, svgFilters: true}, RETURN_TRUSTED_TYPE: true }),
+
+      // TODO: figure out how to sanitize the string and return a TrustedScript object.
+      createScript: string => string, 
+
+      // This will check if the string (URL) is a data: URL and if so, return an empty string.
+      createScriptURL: string => {if (string.protocol === 'data:') {return '';}return string;},
+    });
+  }
+</script>
+<script nonce="[[.Nonce]]" src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.0/purify.min.js"></script>
+
+[[end]]
+
     [[if .GoogleTagManagerId]]
     <!-- Google Tag Manager -->
     <script nonce="[[.Nonce]]">
