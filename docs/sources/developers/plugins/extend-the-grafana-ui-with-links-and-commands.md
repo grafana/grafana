@@ -103,4 +103,4 @@ const SampleModal = ({ onDismiss, pluginId }: Props) => {
 };
 ```
 
-The plugin extensions API is a powerful feature for you to insert links into the UI of Grafana applications that send users to plugin features or trigger actions based on where the user clicked. This feature can also be used for [cross plugin linking](./cross-plugin-linking.md).
+The plugin extensions API is a powerful feature for you to insert links into the UI of Grafana applications that send users to plugin features or trigger actions based on where the user clicked. This feature can also be used for [cross plugin linking]({{< relref "./cross-plugin-linking" >}}).
