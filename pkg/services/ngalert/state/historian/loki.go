@@ -68,6 +68,7 @@ func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
 	return h.client.ping(ctx)
 }
 
+// Record writes a number of state transitions for a given rule to an external Loki instance.
 func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	streams := statesToStreams(rule, states, h.externalLabels, logger)
@@ -93,6 +94,7 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 	return errCh
 }
 
+// Query retrieves state history entries from an external Loki instance and formats the results into a dataframe.
 func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
 	selectors, err := buildSelectors(query)
 	if err != nil {

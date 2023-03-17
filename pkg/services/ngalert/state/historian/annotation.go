@@ -54,7 +54,7 @@ func NewAnnotationBackend(annotations AnnotationStore, dashboards dashboards.Das
 	}
 }
 
-// RecordStates writes a number of state transitions for a given rule to state history.
+// Record writes a number of state transitions for a given rule to state history.
 func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
@@ -69,6 +69,7 @@ func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleM
 	return errCh
 }
 
+// Query filters state history annotations and formats them into a dataframe.
 func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQuery) (*data.Frame, error) {
 	logger := h.log.FromContext(ctx)
 	if query.RuleUID == "" {
