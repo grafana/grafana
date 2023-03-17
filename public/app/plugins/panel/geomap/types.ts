@@ -5,9 +5,10 @@ import BaseLayer from 'ol/layer/Base';
 import { Subject } from 'rxjs';
 
 import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
+import { ComparisonOperation } from '@grafana/schema';
 import { LayerElement } from 'app/core/components/Layers/types';
 
-import { ControlsOptions as ControlsOptionsBase } from './models.gen';
+import { ControlsOptions as ControlsOptionsBase } from './panelcfg.gen';
 import { StyleConfig } from './style/types';
 
 export interface ControlsOptions extends ControlsOptionsBase {
@@ -40,15 +41,6 @@ export interface GeomapInstanceState {
   actions: GeomapLayerActions;
 }
 
-export enum ComparisonOperation {
-  EQ = 'eq',
-  NEQ = 'neq',
-  LT = 'lt',
-  LTE = 'lte',
-  GT = 'gt',
-  GTE = 'gte',
-}
-
 //-------------------
 // Runtime model
 //-------------------
@@ -61,4 +53,4 @@ export interface MapLayerState<TConfig = unknown> extends LayerElement {
   mouseEvents: Subject<FeatureLike | undefined>;
 }
 
-export { PanelOptions, MapViewConfig, TooltipOptions, TooltipMode, defaultMapViewConfig } from './models.gen';
+export { PanelOptions, MapViewConfig, TooltipOptions, TooltipMode, defaultMapViewConfig } from './panelcfg.gen';

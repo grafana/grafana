@@ -47,6 +47,7 @@ func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 			Name:       t.Name,
 			Role:       t.Role,
 			Expiration: expiration,
+			LastUsedAt: t.LastUsedAt,
 		}
 	}
 

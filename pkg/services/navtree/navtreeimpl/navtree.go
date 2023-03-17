@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -92,6 +92,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 			Section:        navtree.NavSectionCore,
 			Children:       starredItemsLinks,
 			EmptyMessageId: "starred-empty",
+			Url:            s.cfg.AppSubURL + "/dashboards?starred",
 		})
 	}
 
@@ -113,7 +114,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 	}
 
 	canExplore := func(context *contextmodel.ReqContext) bool {
-		return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor || setting.ViewersCanEdit
+		return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor || s.cfg.ViewersCanEdit
 	}
 
 	if setting.ExploreEnabled && hasAccess(canExplore, ac.EvalPermission(ac.ActionDatasourcesExplore)) {
@@ -213,10 +214,14 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 
 func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Preference) *navtree.NavLink {
 	homeUrl := s.cfg.AppSubURL + "/"
-	homePage := s.cfg.HomePage
+	if !c.IsSignedIn && !s.cfg.AnonymousEnabled {
+		homeUrl = s.cfg.AppSubURL + "/login"
+	} else {
+		homePage := s.cfg.HomePage
 
-	if prefs.HomeDashboardID == 0 && len(homePage) > 0 {
-		homeUrl = homePage
+		if prefs.HomeDashboardID == 0 && len(homePage) > 0 {
+			homeUrl = homePage
+		}
 	}
 
 	homeNode := &navtree.NavLink{
@@ -234,8 +239,7 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 }
 
 func isSupportBundlesEnabled(s *ServiceImpl) bool {
-	return s.cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true) &&
-		s.features.IsEnabled(featuremgmt.FlagSupportBundles)
+	return s.cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
 }
 
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) {
@@ -297,7 +301,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 		Text: "Notification history", Id: "profile/notifications", Url: s.cfg.AppSubURL + "/profile/notifications", Icon: "bell",
 	})
 
-	if setting.AddChangePasswordLink() {
+	if s.cfg.AddChangePasswordLink() {
 		children = append(children, &navtree.NavLink{
 			Text: "Change password", Id: "profile/password", Url: s.cfg.AppSubURL + "/profile/password",
 			Icon: "lock",
@@ -341,25 +345,20 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 		return nil, err
 	}
 
-	starredDashboards := []*dashboards.Dashboard{}
-	starredDashboardsCounter := 0
-	for dashboardId := range starredDashboardResult.UserStars {
+	if len(starredDashboardResult.UserStars) > 0 {
+		var ids []int64
+		for id := range starredDashboardResult.UserStars {
+			ids = append(ids, id)
+		}
+		starredDashboards, err := s.dashboardService.GetDashboards(c.Req.Context(), &dashboards.GetDashboardsQuery{DashboardIDs: ids, OrgID: c.OrgID})
+		if err != nil {
+			return nil, err
+		}
 		// Set a loose limit to the first 50 starred dashboards found
-		if starredDashboardsCounter > 50 {
-			break
+		if len(starredDashboards) > 50 {
+			starredDashboards = starredDashboards[:50]
 		}
-		starredDashboardsCounter++
-		query := &dashboards.GetDashboardQuery{
-			ID:    dashboardId,
-			OrgID: c.OrgID,
-		}
-		queryResult, err := s.dashboardService.GetDashboard(c.Req.Context(), query)
-		if err == nil {
-			starredDashboards = append(starredDashboards, queryResult)
-		}
-	}
 
-	if len(starredDashboards) > 0 {
 		sort.Slice(starredDashboards, func(i, j int) bool {
 			return starredDashboards[i].Title < starredDashboards[j].Title
 		})

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { Icon } from '@grafana/ui';
 import { LdapPermissions } from 'app/types';
@@ -7,7 +7,7 @@ interface Props {
   permissions: LdapPermissions;
 }
 
-export const LdapUserPermissions: FC<Props> = ({ permissions }) => {
+export const LdapUserPermissions = ({ permissions }: Props) => {
   return (
     <div className="gf-form-group">
       <div className="gf-form">

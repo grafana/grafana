@@ -1,5 +1,5 @@
 export interface ScopedVar<T = any> {
-  text: any;
+  text?: any;
   value: T;
   [key: string]: any;
 }

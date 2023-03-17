@@ -63,6 +63,18 @@ func (ss *sqlxStore) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.
 	return result, err
 }
 
+func (ss *sqlxStore) CountAPIKeys(ctx context.Context, orgID int64) (int64, error) {
+	type result struct {
+		Count int64
+	}
+	r := result{}
+	err := ss.sess.Get(ctx, &r, `SELECT COUNT(*) AS count FROM api_key WHERE service_account_id IS NULL and org_id = ?`, orgID)
+	if err != nil {
+		return 0, err
+	}
+	return r.Count, err
+}
+
 func (ss *sqlxStore) DeleteApiKey(ctx context.Context, cmd *apikey.DeleteCommand) error {
 	res, err := ss.sess.Exec(ctx, "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id IS NULL", cmd.ID, cmd.OrgID)
 	if err != nil {

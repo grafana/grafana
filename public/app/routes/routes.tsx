@@ -185,15 +185,14 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/f/:uid/:slug/permissions',
-      component:
-        config.rbacEnabled && contextSrv.hasPermission(AccessControlAction.FoldersPermissionsRead)
-          ? SafeDynamicImport(
-              () =>
-                import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/AccessControlFolderPermissions')
-            )
-          : SafeDynamicImport(
-              () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')
-            ),
+      component: config.rbacEnabled
+        ? SafeDynamicImport(
+            () =>
+              import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/AccessControlFolderPermissions')
+          )
+        : SafeDynamicImport(
+            () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')
+          ),
     },
     {
       path: '/dashboards/f/:uid/:slug/settings',
@@ -364,20 +363,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/admin/orgs/edit/:id',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminEditOrgPage" */ 'app/features/admin/AdminEditOrgPage')
-      ),
-    },
-    {
-      path: '/admin/storage/k8s',
-      roles: () => ['Admin'],
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "K8SStoragePage" */ 'app/features/storage/k8s/K8SPage')
-      ),
-    },
-    {
-      path: '/admin/storage/export',
-      roles: () => ['Admin'],
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "ExportPage" */ 'app/features/storage/ExportPage')
       ),
     },
     {
@@ -559,7 +544,7 @@ export function getBrowseStorageRoutes(cfg = config): RouteDescriptor[] {
 }
 
 export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
-  if (!cfg.featureToggles.supportBundles) {
+  if (!cfg.supportBundlesEnabled) {
     return [];
   }
 

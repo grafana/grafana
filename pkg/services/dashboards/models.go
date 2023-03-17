@@ -314,6 +314,7 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 	return &folder.Folder{
 		ID:        dash.ID,
 		UID:       dash.UID,
+		OrgID:     dash.OrgID,
 		Title:     dash.Title,
 		HasACL:    dash.HasACL,
 		URL:       GetFolderURL(dash.UID, dash.Slug),
@@ -404,7 +405,6 @@ type FindPersistedDashboardsQuery struct {
 	Title         string
 	OrgId         int64
 	SignedInUser  *user.SignedInUser
-	IsStarred     bool
 	DashboardIds  []int64
 	DashboardUIDs []string
 	Type          string

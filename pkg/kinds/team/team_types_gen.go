@@ -13,11 +13,8 @@ package team
 // Defines values for Permission.
 const (
 	PermissionN0 Permission = 0
-
 	PermissionN1 Permission = 1
-
 	PermissionN2 Permission = 2
-
 	PermissionN4 Permission = 4
 )
 

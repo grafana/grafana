@@ -33,18 +33,16 @@ type dataSourceMockRetriever struct {
 	res []*datasources.DataSource
 }
 
-func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
-	for _, datasource := range d.res {
-		idMatch := query.ID != 0 && query.ID == datasource.ID
-		uidMatch := query.UID != "" && query.UID == datasource.UID
-		nameMatch := query.Name != "" && query.Name == datasource.Name
+func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	for _, dataSource := range d.res {
+		idMatch := query.ID != 0 && query.ID == dataSource.ID
+		uidMatch := query.UID != "" && query.UID == dataSource.UID
+		nameMatch := query.Name != "" && query.Name == dataSource.Name
 		if idMatch || nameMatch || uidMatch {
-			query.Result = datasource
-
-			return nil
+			return dataSource, nil
 		}
 	}
-	return datasources.ErrDataSourceNotFound
+	return nil, datasources.ErrDataSourceNotFound
 }
 
 func TestService_NameScopeResolver(t *testing.T) {
@@ -428,6 +426,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, rt)
 		tr := configuredTransport
+
+		opts, err := dsService.httpClientOptions(context.Background(), &ds)
+		require.NoError(t, err)
+		require.Equal(t, ds.JsonData.MustMap()["grafanaData"], opts.CustomOptions["grafanaData"])
 
 		// make sure we can still marshal the JsonData after httpClientOptions (avoid cycles)
 		_, err = ds.JsonData.MarshalJSON()

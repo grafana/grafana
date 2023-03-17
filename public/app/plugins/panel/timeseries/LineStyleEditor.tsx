@@ -52,7 +52,9 @@ const dotOptions: Array<SelectableValue<string>> = [
   value: txt,
 }));
 
-export const LineStyleEditor: React.FC<FieldOverrideEditorProps<LineStyle, any>> = ({ value, onChange }) => {
+type Props = FieldOverrideEditorProps<LineStyle, unknown>;
+
+export const LineStyleEditor = ({ value, onChange }: Props) => {
   const options = useMemo(() => (value?.fill === 'dash' ? dashOptions : dotOptions), [value]);
   const current = useMemo(() => {
     if (!value?.dash?.length) {

@@ -151,7 +151,6 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
             onNavigate={this.onNavigate}
             aria-expanded={true}
             aria-controls={`options-${id}`}
-            currenthighlightindex={picker.highlightIndex}
           />
           <VariableOptions
             values={picker.options}

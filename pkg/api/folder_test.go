@@ -71,7 +71,6 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			{Error: dashboards.ErrFolderAccessDenied, ExpectedStatusCode: 403},
 			{Error: dashboards.ErrFolderNotFound, ExpectedStatusCode: 404},
 			{Error: dashboards.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
-			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
 		cmd := folder.CreateFolderCommand{
@@ -124,7 +123,6 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			{Error: dashboards.ErrFolderAccessDenied, ExpectedStatusCode: 403},
 			{Error: dashboards.ErrFolderNotFound, ExpectedStatusCode: 404},
 			{Error: dashboards.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
-			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
 		title := "Folder upd"
@@ -247,7 +245,7 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 		qResult := &dashboards.Dashboard{}
 		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 		store := dbtest.NewFakeDB()
-		guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
+		guardian.InitLegacyGuardian(setting.NewCfg(), store, dashSvc, teamSvc)
 		folderPermissions := acmock.NewMockedPermissionsService()
 		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 		hs := HTTPServer{

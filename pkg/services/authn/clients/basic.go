@@ -21,6 +21,10 @@ type Basic struct {
 	client authn.PasswordClient
 }
 
+func (c *Basic) String() string {
+	return c.Name()
+}
+
 func (c *Basic) Name() string {
 	return authn.ClientBasic
 }
