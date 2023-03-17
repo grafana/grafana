@@ -13,11 +13,13 @@ import {
   SceneVariableSet,
   QueryVariable,
   SceneControlsSpacer,
+  SceneDataTransformer,
 } from '@grafana/scenes';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { SceneRadioToggle } from './SceneRadioToggle';
-import { SceneSearchBox, SceneSearchFilterDataNode } from './SceneSearchBox';
+import { SceneSearchBox } from './SceneSearchBox';
+import { getTableFilterTransform, getTimeSeriesFilterTransform } from './transforms';
 import { getLinkUrlWithAppUrlState } from './utils';
 
 export function getHttpHandlerListScene(): EmbeddedScene {
@@ -27,9 +29,19 @@ export function getHttpHandlerListScene(): EmbeddedScene {
     expr: 'sort_desc(avg without(job, instance) (rate(grafana_http_request_duration_seconds_sum[$__rate_interval]) * 1e3)) ',
   });
 
-  const httpHandlerQueriesFiltered = new SceneSearchFilterDataNode({
-    sourceData: httpHandlerQueries,
-    searchBox,
+  const httpHandlerQueriesFiltered = new SceneDataTransformer({
+    $data: httpHandlerQueries,
+    transformations: [getTableFilterTransform('')],
+  });
+
+  httpHandlerQueriesFiltered.addActivationHandler(() => {
+    const sub = searchBox.subscribeToState((state) => {
+      // Update transform and re-process them
+      httpHandlerQueriesFiltered.setState({ transformations: [getTableFilterTransform(state.value)] });
+      httpHandlerQueriesFiltered.reprocessTransformations();
+    });
+
+    return () => sub.unsubscribe();
   });
 
   const httpHandlersTable = new VizPanel({
@@ -107,13 +119,23 @@ export function getHttpHandlerListScene(): EmbeddedScene {
     ],
   });
 
-  const reqDurationWithSearchFilter = new SceneSearchFilterDataNode({
-    sourceData: reqDurationTimeSeries,
-    searchBox,
+  const reqDurationTimeSeriesFiltered = new SceneDataTransformer({
+    $data: reqDurationTimeSeries,
+    transformations: [getTimeSeriesFilterTransform('')],
+  });
+
+  reqDurationTimeSeriesFiltered.addActivationHandler(() => {
+    const sub = searchBox.subscribeToState((state) => {
+      // Update transform and re-process them
+      reqDurationTimeSeriesFiltered.setState({ transformations: [getTimeSeriesFilterTransform(state.value)] });
+      reqDurationTimeSeriesFiltered.reprocessTransformations();
+    });
+
+    return () => sub.unsubscribe();
   });
 
   const graphsScene = new SceneByFrameRepeater({
-    $data: reqDurationWithSearchFilter,
+    $data: reqDurationTimeSeriesFiltered,
     body: new SceneFlexLayout({
       direction: 'column',
       children: [],

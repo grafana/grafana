@@ -1,5 +1,5 @@
 // Libraries
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import {
   SceneCanvasText,
@@ -8,6 +8,7 @@ import {
   SceneAppPage,
   SceneRouteMatch,
   EmbeddedScene,
+  SceneAppPageLike,
 } from '@grafana/scenes';
 import { usePageNav } from 'app/core/components/Page/usePageNav';
 import { PluginPageContext, PluginPageContextType } from 'app/features/plugins/components/PluginPageContext';
@@ -21,9 +22,13 @@ import {
 } from './scenes';
 
 export function GrafanaMonitoringApp() {
-  const appScene = new SceneApp({
-    pages: [getMainPageScene()],
-  });
+  const appScene = useMemo(
+    () =>
+      new SceneApp({
+        pages: [getMainPageScene()],
+      }),
+    []
+  );
 
   const sectionNav = usePageNav('scenes')!;
   const [pluginContext] = useState<PluginPageContextType>({ sectionNav });
@@ -73,7 +78,7 @@ export function getMainPageScene() {
 
 export function getHandlerDrilldownPage(
   match: SceneRouteMatch<{ handler: string; tab?: string }>,
-  parent: SceneAppPage
+  parent: SceneAppPageLike
 ) {
   const handler = decodeURIComponent(match.params.handler);
   const baseUrl = `/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}`;
@@ -111,7 +116,7 @@ export function getHandlerDrilldownPage(
 
 export function getSecondLevelDrilldown(
   match: SceneRouteMatch<{ handler: string; secondLevel: string }>,
-  parent: SceneAppPage
+  parent: SceneAppPageLike
 ) {
   const handler = decodeURIComponent(match.params.handler);
   const secondLevel = decodeURIComponent(match.params.secondLevel);
