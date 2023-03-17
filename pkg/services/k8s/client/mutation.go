@@ -29,7 +29,7 @@ func (c *Clientset) RegisterMutation(ctx context.Context, webhooks []ShortWebhoo
 	return nil
 }
 
-// Converts shortwebhookconfig into a validatingwebhookconfiguration
+// Converts shortwebhookconfig into a mutatingwebhookconfiguration
 func convertShortWebhookToMutationWebhook(swc ShortWebhookConfig) *admissionregistrationV1.MutatingWebhookConfiguration {
 	metaName := fmt.Sprintf("mutation.%s.core.grafana.com", swc.Kind.MachineName())
 	fmt.Println(metaName)
