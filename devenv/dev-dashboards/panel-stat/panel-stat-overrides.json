@@ -105,7 +105,7 @@
           "calcs": [
             "diff"
           ],
-          "fields": "/.*/",
+          "fields": "",
           "values": false
         },
         "textMode": "auto"
@@ -171,6 +171,6 @@
   "timezone": "",
   "title": "Stats panel conditional formatting",
   "uid": "gdev052a8054fe",
-  "version": 6,
+  "version": 5,
   "weekStart": ""
 }
