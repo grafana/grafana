@@ -110,10 +110,10 @@ The role you use to sign in to Grafana determines how you see team lists.
 
 The following example shows a list as it appears to an organization administrator.
 
-![Team list](/static/img/docs/manage-users/org-admin-team-list-7-3.png)
+![Team list view for org admin](/media/docs/grafana/screenshot-org-admin-team-list.png)
 
 ## Team administrator view
 
 The following example shows a list as it appears to a team administrator.
 
-![Team list](/static/img/docs/manage-users/team-admin-team-list-7-3.png)
+![Team list view for team admin](/media/docs/grafana/screenshot-team-admin-team-list.png)
