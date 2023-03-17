@@ -392,27 +392,27 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	}
 
 	met.Info.WithLabelValues(backend.String()).Set(1)
-	if backend == historian.BackendTypeFanout {
+	if backend == historian.BackendTypeMultiple {
 		primaryCfg := cfg
-		primaryCfg.Backend = cfg.FanoutPrimary
+		primaryCfg.Backend = cfg.MultiPrimary
 		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l)
 		if err != nil {
-			return nil, fmt.Errorf("fanout target \"%s\" was misconfigured: %w", cfg.FanoutPrimary, err)
+			return nil, fmt.Errorf("multi-backend target \"%s\" was misconfigured: %w", cfg.MultiPrimary, err)
 		}
 
 		var secondaries []historian.Backend
-		for _, b := range cfg.FanoutSecondaries {
+		for _, b := range cfg.MultiSecondaries {
 			secCfg := cfg
 			secCfg.Backend = b
 			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l)
 			if err != nil {
-				return nil, fmt.Errorf("fanout target \"%s\" was miconfigured: %w", b, err)
+				return nil, fmt.Errorf("multi-backend target \"%s\" was miconfigured: %w", b, err)
 			}
 			secondaries = append(secondaries, sec)
 		}
 
-		l.Info("State history is operating in fanout mode", "primary", cfg.FanoutPrimary, "secondaries", cfg.FanoutSecondaries)
-		return historian.NewFanoutBackend(primary, secondaries...), nil
+		l.Info("State history is operating in multi-backend mode", "primary", cfg.MultiPrimary, "secondaries", cfg.MultiSecondaries)
+		return historian.NewMultipleBackend(primary, secondaries...), nil
 	}
 	if backend == historian.BackendTypeAnnotations {
 		return historian.NewAnnotationBackend(ar, ds, rs, met), nil

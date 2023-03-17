@@ -110,8 +110,8 @@ type UnifiedAlertingStateHistorySettings struct {
 	// if one of them is set.
 	LokiBasicAuthPassword string
 	LokiBasicAuthUsername string
-	FanoutPrimary         string
-	FanoutSecondaries     []string
+	MultiPrimary          string
+	MultiSecondaries      []string
 	ExternalLabels        map[string]string
 }
 
@@ -332,8 +332,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		LokiTenantID:          stateHistory.Key("loki_tenant_id").MustString(""),
 		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
 		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
-		FanoutPrimary:         stateHistory.Key("fanout_primary").MustString(""),
-		FanoutSecondaries:     splitTrim(stateHistory.Key("fanout_secondaries").MustString(""), ","),
+		MultiPrimary:          stateHistory.Key("multi_primary").MustString(""),
+		MultiSecondaries:      splitTrim(stateHistory.Key("multi_secondaries").MustString(""), ","),
 		ExternalLabels:        stateHistoryLabels.KeysHash(),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory

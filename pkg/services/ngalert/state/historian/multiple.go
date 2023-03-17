@@ -15,21 +15,21 @@ type Backend interface {
 	Query(ctx context.Context, query ngmodels.HistoryQuery) (*data.Frame, error)
 }
 
-// FanoutBackend is a state.Historian that records history to multiple backends at once.
+// MultipleBackend is a state.Historian that records history to multiple backends at once.
 // Only one backend is used for reads. The backend selected for read traffic is called the primary and all others are called secondaries.
-type FanoutBackend struct {
+type MultipleBackend struct {
 	primary     Backend
 	secondaries []Backend
 }
 
-func NewFanoutBackend(primary Backend, secondaries ...Backend) *FanoutBackend {
-	return &FanoutBackend{
+func NewMultipleBackend(primary Backend, secondaries ...Backend) *MultipleBackend {
+	return &MultipleBackend{
 		primary:     primary,
 		secondaries: secondaries,
 	}
 }
 
-func (h *FanoutBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
+func (h *MultipleBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	jobs := make([]<-chan error, 0, len(h.secondaries)+1) // One extra for the primary.
 	for _, b := range append([]Backend{h.primary}, h.secondaries...) {
 		jobs = append(jobs, b.Record(ctx, rule, states))
@@ -50,6 +50,6 @@ func (h *FanoutBackend) Record(ctx context.Context, rule history_model.RuleMeta,
 	return errCh
 }
 
-func (h *FanoutBackend) Query(ctx context.Context, query ngmodels.HistoryQuery) (*data.Frame, error) {
-	return h.targets[0].Query(ctx, query)
+func (h *MultipleBackend) Query(ctx context.Context, query ngmodels.HistoryQuery) (*data.Frame, error) {
+	return h.primary.Query(ctx, query)
 }

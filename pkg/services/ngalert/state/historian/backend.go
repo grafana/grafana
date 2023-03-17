@@ -15,8 +15,8 @@ func (bt BackendType) String() string {
 
 const (
 	BackendTypeAnnotations BackendType = "annotations"
-	BackendTypeFanout      BackendType = "fanout"
 	BackendTypeLoki        BackendType = "loki"
+	BackendTypeMultiple    BackendType = "multiple"
 	BackendTypeNoop        BackendType = "noop"
 	BackendTypeSQL         BackendType = "sql"
 )
@@ -26,8 +26,8 @@ func ParseBackendType(s string) (BackendType, error) {
 
 	types := map[BackendType]struct{}{
 		BackendTypeAnnotations: {},
-		BackendTypeFanout:      {},
 		BackendTypeLoki:        {},
+		BackendTypeMultiple:    {},
 		BackendTypeNoop:        {},
 		BackendTypeSQL:         {},
 	}

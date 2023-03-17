@@ -12,12 +12,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFanoutBackend(t *testing.T) {
+func TestMultipleBackend(t *testing.T) {
 	t.Run("querying dispatches to primary", func(t *testing.T) {
 		one := &fakeBackend{resp: data.NewFrame("one")}
 		two := &fakeBackend{resp: data.NewFrame("two")}
 		three := &fakeBackend{resp: data.NewFrame("three")}
-		fan := NewFanoutBackend(one, two, three)
+		fan := NewMultipleBackend(one, two, three)
 
 		resp, err := fan.Query(context.Background(), ngmodels.HistoryQuery{})
 
@@ -29,7 +29,7 @@ func TestFanoutBackend(t *testing.T) {
 		one := &fakeBackend{}
 		two := &fakeBackend{}
 		three := &fakeBackend{}
-		fan := NewFanoutBackend(one, two, three)
+		fan := NewMultipleBackend(one, two, three)
 		rule := history_model.RuleMeta{}
 		vs := []state.StateTransition{{}}
 
@@ -45,7 +45,7 @@ func TestFanoutBackend(t *testing.T) {
 		one := &fakeBackend{err: fmt.Errorf("error one")}
 		two := &fakeBackend{err: fmt.Errorf("error two")}
 		three := &fakeBackend{}
-		fan := NewFanoutBackend(one, two, three)
+		fan := NewMultipleBackend(one, two, three)
 		rule := history_model.RuleMeta{}
 		vs := []state.StateTransition{{}}
 
