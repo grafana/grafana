@@ -216,9 +216,7 @@ export class ContextSrv {
       if (expires === 0) {
         console.log('Schedule job to run now');
         // @ts-ignore
-        this.rotateToken()
-          .then(() => this.scheduleTokenRotationJob())
-          .then();
+        this.rotateToken().then();
         return;
       }
 
@@ -241,7 +239,7 @@ export class ContextSrv {
           this.scheduleTokenRotationJob();
           return;
         }
-        this.rotateToken().then(() => this.scheduleTokenRotationJob());
+        this.rotateToken().then();
       }, nextRun);
     }
   }
@@ -257,15 +255,18 @@ export class ContextSrv {
     // We directly use fetch here to bypass the request queue from backendSvc
     return fetch('/api/user/auth-tokens/rotate', { method: 'POST' })
       .then((res) => {
+        if (res.status === 200) {
+          this.scheduleTokenRotationJob();
+          return;
+        }
+
         if (res.status === 401) {
           this.setLoggedOut();
+          return;
         }
-        console.log(res);
       })
       .catch((e) => {
-        // TODO: error handling
         console.error(e);
-        this.setLoggedOut();
       });
   }
 
