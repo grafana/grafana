@@ -2,6 +2,10 @@
 
 Using the Plugin extensions API App, plugins can register placements of their own to display other plugins links. This cross-plugin linking creates a more immersive user experience for installed plugins.
 
+## Available placements within plugins
+
+A placement is a location in another plugins UI where your plugin can insert links or commands. All placements within plugins must start with `plugins/<plugin-id>`.
+
 ## How to create a placement within a plugin
 
 The `getPluginExtensions` method in `@grafana/runtime` creates a placement within your plugin. A placement is a way of specifying where in the plugin UI other plugins links or commands are rendered. `getPluginExtensions` takes an object consisting of the `placement` name, which must begin `plugin/<pluginId>`, and include any contextual information you would like to provide for the use of other plugins. It returns a list of `extensionLinks` and `extensionCommands` that your program can loop over.
@@ -16,9 +20,9 @@ import { LinkButton } from '@grafana/ui';
 function AppPlacementExample() {
   const { extensions } = getPluginExtensions({
     placement: 'plugin/another-app-plugin/menu', // Must start with "plugin/"
-    context: Object.freeze({
+    context: {
       pluginId: 'another-app-plugin',
-    }),
+    },
   });
 
   if (extensions.length === 0) {

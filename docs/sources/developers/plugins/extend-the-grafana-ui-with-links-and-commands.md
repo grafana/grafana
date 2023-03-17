@@ -5,8 +5,14 @@ Use the Plugin extensions API with your Grafana App plugins to add links to the 
 For a plugin to successfully register links it must:
 
 - Be an App plugin.
-- Be preloaded.
+- Be [preloaded]({{< relref "./metadata" >}}).
 - Be installed and enabled.
+
+## Available placements within Grafana
+
+A placement is a location within the Grafana application UI where a plugin can insert links or commands. All placements within Grafana start with `grafana/`. The following placements are available:
+
+- `grafana/dashboard/panel/menu`: all panel menu dropdowns found in dashboards
 
 ## Add a link extension within Grafana
 
