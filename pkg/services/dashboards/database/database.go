@@ -957,10 +957,6 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		filters = append(filters, searchstore.DashboardIDFilter{IDs: query.DashboardIds})
 	}
 
-	if query.IsStarred {
-		filters = append(filters, searchstore.StarredFilter{UserId: query.SignedInUser.UserID})
-	}
-
 	if len(query.Title) > 0 {
 		filters = append(filters, searchstore.TitleFilter{Dialect: d.store.GetDialect(), Title: query.Title})
 	}

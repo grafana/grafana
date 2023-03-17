@@ -23,7 +23,11 @@ export function NodeGraphSettings({ options, onOptionsChange }: Props) {
     <div className={styles.container}>
       <h3 className="page-heading">Node graph</h3>
       <InlineFieldRow className={styles.row}>
-        <InlineField tooltip="Displays the node graph above the trace view" label="Enable node graph" labelWidth={26}>
+        <InlineField
+          tooltip="Displays the node graph above the trace view. Default: disabled"
+          label="Enable node graph"
+          labelWidth={26}
+        >
           <InlineSwitch
             id="enableNodeGraph"
             value={options.jsonData.nodeGraph?.enabled}

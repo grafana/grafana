@@ -69,6 +69,7 @@ var (
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "publicDashboards",
@@ -100,18 +101,6 @@ var (
 			Description: "Highlight Grafana Enterprise features",
 			State:       FeatureStateStable,
 			Owner:       grafanaAsCodeSquad,
-		},
-		{
-			Name:        "dashboardComments",
-			Description: "Enable dashboard-wide comments",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
-			Name:        "annotationComments",
-			Description: "Enable annotation comments",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
 		},
 		{
 			Name:        "migrationLocking",
@@ -151,6 +140,7 @@ var (
 			Description:  "Adds trace ID to error notifications",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaUserEssentialsSquad,
 		},
 		{
 			Name:         "newTraceView",
@@ -275,7 +265,7 @@ var (
 			Name:        "cloudWatchCrossAccountQuerying",
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			State:       FeatureStateStable,
-			Expression:  "true", //enabled by default
+			Expression:  "true", // enabled by default
 			Owner:       awsPluginsSquad,
 		},
 		{
@@ -297,6 +287,7 @@ var (
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:            "queryLibrary",
@@ -309,6 +300,7 @@ var (
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:        "mysqlAnsiQuotes",
@@ -345,6 +337,7 @@ var (
 			Name:        "datasourceOnboarding",
 			Description: "Enable data source onboarding page",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:        "secureSocksDatasourceProxy",
@@ -389,7 +382,7 @@ var (
 			Name:         "logsSampleInExplore",
 			Description:  "Enables access to the logs sample feature in Explore",
 			State:        FeatureStateStable,
-			Expression:   "true", //turned on by default
+			Expression:   "true", // turned on by default
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
@@ -430,6 +423,20 @@ var (
 		{
 			Name:         "prometheusMetricEncyclopedia",
 			Description:  "Replaces the Prometheus query builder metric select option with a paginated and filterable component",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "timeSeriesTable",
+			Description:  "Enable time series table transformer & sparkline cell type",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        appO11ySquad,
+		},
+		{
+			Name:         "influxdbBackendMigration",
+			Description:  "Query InfluxDB InfluxQL without the proxy",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,

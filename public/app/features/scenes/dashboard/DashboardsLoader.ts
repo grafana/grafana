@@ -20,6 +20,7 @@ import {
   DataSourceVariable,
   QueryVariable,
   ConstantVariable,
+  SceneDataTransformer,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -71,6 +72,10 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
 
     this.cache[rsp.dashboard.uid] = dashboard;
     this.setState({ dashboard, isLoading: false });
+  }
+
+  public clearState() {
+    this.setState({ dashboard: undefined, loadError: undefined, isLoading: false });
   }
 }
 
@@ -263,10 +268,15 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
     options: panel.options,
     fieldConfig: panel.fieldConfig,
     pluginVersion: panel.pluginVersion,
-    $data: new SceneQueryRunner({
-      transformations: panel.transformations,
-      queries: panel.targets,
-      maxDataPoints: panel.maxDataPoints ?? undefined,
+    displayMode: panel.transparent ? 'transparent' : undefined,
+    // To be replaced with it's own option persited option instead derived
+    hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
+    $data: new SceneDataTransformer({
+      $data: new SceneQueryRunner({
+        queries: panel.targets,
+        maxDataPoints: panel.maxDataPoints ?? undefined,
+      }),
+      transformations: panel.transformations ?? [],
     }),
   });
 }

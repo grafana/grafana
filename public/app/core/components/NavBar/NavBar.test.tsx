@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { locationService } from '@grafana/runtime';
@@ -26,7 +26,7 @@ const setup = () => {
   );
 };
 
-describe('Render', () => {
+describe('NavBar', () => {
   it('should render component', async () => {
     setup();
     const sidemenu = await screen.findByTestId('sidemenu');
@@ -36,7 +36,7 @@ describe('Render', () => {
   it('should not render when in kiosk mode is tv', async () => {
     setup();
 
-    locationService.partial({ kiosk: 'tv' });
+    act(() => locationService.partial({ kiosk: 'tv' }));
     const sidemenu = screen.queryByTestId('sidemenu');
     expect(sidemenu).not.toBeInTheDocument();
   });
@@ -44,7 +44,7 @@ describe('Render', () => {
   it('should not render when in kiosk mode is full', async () => {
     setup();
 
-    locationService.partial({ kiosk: '1' });
+    act(() => locationService.partial({ kiosk: '1' }));
     const sidemenu = screen.queryByTestId('sidemenu');
     expect(sidemenu).not.toBeInTheDocument();
   });
