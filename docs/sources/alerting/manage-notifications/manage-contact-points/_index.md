@@ -1,9 +1,10 @@
 ---
 aliases:
-  - ../contact-points/create-contact-point/
-  - ../contact-points/delete-contact-point/
-  - ../contact-points/edit-contact-point/
-  - ../contact-points/test-contact-point/
+  - ../../contact-points/create-contact-point/
+  - ../../contact-points/delete-contact-point/
+  - ../../contact-points/edit-contact-point/
+  - ../../contact-points/test-contact-point/
+  - ../create-contact-point/
 keywords:
   - grafana
   - alerting
