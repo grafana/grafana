@@ -599,7 +599,9 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 					if sec.HasKey(k.Name()) {
 						continue
 					}
-					sec.NewKey(k.Name(), k.Value())
+					if _, err := sec.NewKey(k.Name(), k.Value()); err != nil {
+						return nil, err
+					}
 				}
 			}
 		}
