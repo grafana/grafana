@@ -669,7 +669,6 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-
 			dashboardReadStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, tc.features, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
 			require.NoError(t, err)
 
