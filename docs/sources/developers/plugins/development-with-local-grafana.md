@@ -86,12 +86,14 @@ After this, you should be able to see your plugin listed in Grafana and test you
 
 > The following method only works with a local Grafana instance and does not work with Docker for the time being.
 
-You can run a backend plugin and attach a debugger to it directly from your IDE. This allows you to set breakpoints and debug your backend plugin directly from your IDE of choice.
+You can run a backend plugin and attach a debugger to it, which allows you to set breakpoints and debug your backend plugin directly from your IDE of choice.
 
 We support Visual Studio Code and GoLand out of the box, but this feature can also work with any other IDE or debugger.
 
-1. Make sure you are using the latest version of `grafana-plugin-sdk-go`
-   - If not, you can update it with:
+1. `cd` into your plugin's folder
+
+1. Check your `go.mod` and make sure `grafana-plugin-sdk-go` is at least on `v0.156.0`
+   - If not, you can update it to the latest version with:
      ```
      go get -u github.com/grafana/grafana-plugin-sdk-go
      ```
@@ -100,7 +102,8 @@ We support Visual Studio Code and GoLand out of the box, but this feature can al
    yarn build && mage
    ```
 1. Install your plugin into your local Grafana instance
-1. Configure your IDE by following those instructions:
+
+Now that your plugin is ready to run, follow the instructions bellow for your IDE of choice
 
 ### Visual Studio Code
 
@@ -124,9 +127,9 @@ We support Visual Studio Code and GoLand out of the box, but this feature can al
    ```
 
 1. Press `F5` to run your plugin in debug mode
-1. Start Grafana
+1. Start Grafana, if it's not already running
 
-(if you re-run the configuration, the plugin will be automatically reloaded in Grafana).
+> If you re-run the configuration, the plugin will be automatically reloaded in Grafana.
 
 ### GoLand
 
@@ -138,9 +141,9 @@ We support Visual Studio Code and GoLand out of the box, but this feature can al
 
 1. Run the config (with or without the debugger)
 
-1. Start Grafana
+1. Start Grafana, if it's not already running
 
-(if you re-run the configuration, the plugin will be automatically reloaded in Grafana).
+> If you re-run the configuration, the plugin will be automatically reloaded in Grafana.
 
 ### Other IDEs
 
@@ -156,11 +159,12 @@ Configure your code editor to run the following steps:
    ```
 1. Attach a debugger to the process
 
-Then, you can start Grafana.
+Then, you can start Grafana, if it's not already running.
+
+> If you re-run the plugin executable, it will be automatically reloaded in Grafana.
 
 ### Notes
 
-- When restarting the debug mode plugin from the IDE, it will be automatically be reloaded in Grafana
 - All logs will be printed in the plugin's stdout rather than in Grafana logs
-- If the backend plugin does not serve requests after turning off debug mode, you can force reset the standalone mode by deleting the files `standalone.txt` and `pid.txt` alongside the executable, then restart Grafana
+- If the backend plugin does not serve requests after turning off debug mode, you can force reset the standalone mode by deleting the files `dist/standalone.txt` and `dist/pid.txt` alongside the executable, then restart Grafana
 - We currently do not support debugging backend plugins running inside Docker
