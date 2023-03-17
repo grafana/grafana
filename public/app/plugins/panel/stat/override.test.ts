@@ -93,7 +93,7 @@ describe('formatting functions', () => {
     });
 
     it('sucessfully ignores applying formatting to unspecified types', () => {
-      // Override `FieldType.number with FieldType.time, which is not specified in the `applyToType` array arg
+      // Override `FieldType.number` with `FieldType.time`, which is not specified in the `applyToType` array arg
       const updatedMocData = {
         ...mockSharedFieldValueProps,
         display: { ...mockSharedFieldValueProps.display, valueType: FieldType.time },
