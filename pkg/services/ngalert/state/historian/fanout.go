@@ -28,15 +28,16 @@ func NewFanoutBackend(primary Backend, secondaries ...Backend) *FanoutBackend {
 }
 
 func (h *FanoutBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
-	writes := make([]<-chan error, 0, len(h.targets))
+	jobs := make([]<-chan error, 0, len(h.targets))
 	for _, b := range h.targets {
-		writes = append(writes, b.Record(ctx, rule, states))
+		jobs = append(jobs, b.Record(ctx, rule, states))
 	}
 	errCh := make(chan error, 1)
 	go func() {
 		defer close(errCh)
 		errs := make([]error, 0)
-		for _, ch := range writes {
+		// Wait for all jobs to complete. Order doesn't matter here, as we always need to wait on the slowest job regardless.
+		for _, ch := range jobs {
 			err := <-ch
 			if err != nil {
 				errs = append(errs, err)
