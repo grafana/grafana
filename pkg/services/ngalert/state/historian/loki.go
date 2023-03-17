@@ -43,6 +43,7 @@ type remoteLokiClient interface {
 	query(ctx context.Context, selectors []Selector, start, end int64) (QueryRes, error)
 }
 
+// RemoteLokibackend is a state.Historian that records state history to an external Loki instance.
 type RemoteLokiBackend struct {
 	client         remoteLokiClient
 	externalLabels map[string]string
@@ -66,7 +67,8 @@ func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
 	return h.client.ping(ctx)
 }
 
-func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
+// Record writes a number of state transitions for a given rule to an external Loki instance.
+func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	streams := statesToStreams(rule, states, h.externalLabels, logger)
 	errCh := make(chan error, 1)
@@ -91,7 +93,8 @@ func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_
 	return errCh
 }
 
-func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
+// Query retrieves state history entries from an external Loki instance and formats the results into a dataframe.
+func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
 	selectors, err := buildSelectors(query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build the provided selectors: %w", err)
