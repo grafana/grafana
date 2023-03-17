@@ -2,7 +2,7 @@ import { FormattedValue } from '../valueFormats';
 
 import { FieldType } from './dataFrame';
 
-export type DisplayProcessor = (value: any, decimals?: DecimalCount) => DisplayValue;
+export type DisplayProcessor = (value: unknown, decimals?: DecimalCount) => DisplayValue;
 
 export interface DisplayValue extends FormattedValue {
   /**
