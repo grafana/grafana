@@ -105,7 +105,6 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
       }
     }
 
-    console.log(this.props.replaceVariables, 'replaceVaqrs');
     return getFieldDisplayValues({
       fieldConfig,
       reduceOptions: options.reduceOptions,
