@@ -2,6 +2,7 @@ package historian
 
 import (
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
+
+const StateHistoryWriteTimeout = 30 * time.Second
 
 func shouldRecord(transition state.StateTransition) bool {
 	if !transition.Changed() {

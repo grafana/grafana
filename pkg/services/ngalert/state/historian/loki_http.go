@@ -17,11 +17,9 @@ import (
 	"github.com/weaveworks/common/http/client"
 )
 
-const defaultClientTimeout = 30 * time.Second
-
 func NewRequester() client.Requester {
 	return &http.Client{
-		Timeout: defaultClientTimeout,
+		Timeout: StateHistoryWriteTimeout,
 	}
 }
 
