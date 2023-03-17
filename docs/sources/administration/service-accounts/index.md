@@ -69,7 +69,7 @@ Note that the user who created a service account will also be able to read, upda
 
 ### To create a service account
 
-1. Sign in to Grafana adn click **Administration** in the left-side menu.
+1. Sign in to Grafana and click **Administration** in the left-side menu.
 1. Click **Service accounts**.
 1. Click **Add service account** .
 1. Enter a **Display name**.
@@ -94,7 +94,7 @@ By default, service account tokens don't have an expiration date, meaning they w
 
 ### To add a token to a service account
 
-1. Sign in to Grafana adn click **Administration** in the left-side menu.
+1. Sign in to Grafana and click **Administration** in the left-side menu.
 1. Click **Service accounts**.
 1. Click the service account to which you want to add a token.
 1. Click **Add service account token**.
@@ -117,7 +117,7 @@ In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}})
 
 ### To assign a role to a service account
 
-1. Sign in to Grafana adn click **Administration** in the left-side menu.
+1. Sign in to Grafana and click **Administration** in the left-side menu.
 1. Click **Service accounts**.
 1. Click the service account to which you want to assign a role. As an alternative, find the service account in the list view.
 1. Assign a role using the role picker to update.
@@ -140,7 +140,7 @@ You can assign on of the following permissions to a specific user or a team:
 
 ### To update team permissions for a service account
 
-1. Sign in to Grafana adn click **Administration** in the left-side menu.
+1. Sign in to Grafana and click **Administration** in the left-side menu.
 1. Click **Service accounts**.
 1. Click the service account for which you want to update team permissions a role.
 1. In the Permissions section at the bottom, click **Add permission**.
@@ -149,7 +149,7 @@ You can assign on of the following permissions to a specific user or a team:
 
 ### To update user permissions for a service account
 
-1. Sign in to Grafana adn click **Administration** in the left-side menu.
+1. Sign in to Grafana and click **Administration** in the left-side menu.
 1. Click **Service accounts**.
 1. Click the service account for which you want to update team permissions a role.
 1. In the Permissions section at the bottom, click **Add permission**.
