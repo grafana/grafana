@@ -25,21 +25,9 @@ Before you can create your first dashboard, you need to add your data source.
 
 **To add a data source:**
 
-1. Click **Administration** in the left-side menu.
-1. Select **Data sources**.
-
-   This opens the data sources page, which displays a list of previously configured data sources for the Grafana instance.
-
-1. Select **+ Add new data source** to see a list of all supported data sources.
-
-1. Enter the name of a specific data source in the search dialog.
-
-   You can also scroll through supported data sources grouped into time series, logging, tracing, and other categories.
-
-1. Click the data source you want to add.
-
-   This opens the data source configuration page.
-
+1. Click **Connections** in the left-side menu.
+1. Enter the name of a specific data source in the search dialog. You can filter by **Data source** to only see data sources.
+1. Click the data source you want to add to open the configuration page.
 1. Configure the data source following instructions specific to that data source.
 
    For links to data source-specific documentation, see [Data sources]({{< relref "../../datasources" >}}).
@@ -56,15 +44,15 @@ Each data source's configuration includes a permissions page where you can enabl
 By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just
 queries that exist on dashboards they have access to.
 
-When permissions are enabled for a data source in an organization, the user who created the datasource can edit the datasource and in addition, viewers can query the datasource.
+When permissions are enabled for a data source in an organization, the user who created the data source can edit the data source and in addition, viewers can query the data source.
 
 **Enable permissions for a data source:**
 
-1. Navigate to **Administration > Data sources**.
+1. Navigate to **Administration**.
 1. Select the data source you want to enable permissions for.
 1. On the Permissions tab, click **Enable**.
 
-<!-- is enabling/disabling permissions for a data source still a thing? -->
+<!-- is enabling/disabling permissions for a data source still a thing? Can't find this interaction -->
 
 <div class="clearfix"></div>
 
