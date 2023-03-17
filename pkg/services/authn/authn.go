@@ -377,6 +377,8 @@ func getRedirectURL(r *http.Request) string {
 	return v
 }
 
+const sessionExpiryCookie = "grafana_session_expiry"
+
 func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, token *usertoken.UserToken) {
 	maxAge := int(cfg.LoginMaxLifetime.Seconds())
 	if cfg.LoginMaxLifetime <= 0 {
@@ -385,7 +387,7 @@ func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, token *usertoke
 
 	cookies.WriteCookie(w, cfg.LoginCookieName, url.QueryEscape(token.UnhashedToken), maxAge, nil)
 	expiry := token.NextRotation(time.Duration(cfg.TokenRotationIntervalMinutes) * time.Minute)
-	cookies.WriteCookie(w, "grafana_session_expiry", url.QueryEscape(strconv.FormatInt(expiry.Unix(), 10)), maxAge, func() cookies.CookieOptions {
+	cookies.WriteCookie(w, sessionExpiryCookie, url.QueryEscape(strconv.FormatInt(expiry.Unix(), 10)), maxAge, func() cookies.CookieOptions {
 		opts := cookies.NewCookieOptions()
 		opts.NotHttpOnly = true
 		return opts
@@ -394,5 +396,5 @@ func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, token *usertoke
 
 func DeleteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg) {
 	cookies.DeleteCookie(w, cfg.LoginCookieName, nil)
-	cookies.DeleteCookie(w, "grafana_session_expiry", nil)
+	cookies.DeleteCookie(w, sessionExpiryCookie, nil)
 }
