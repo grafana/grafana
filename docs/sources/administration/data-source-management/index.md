@@ -27,7 +27,7 @@ Before you can create your first dashboard, you need to add your data source.
 
 1. Click **Connections** in the left-side menu.
 1. Enter the name of a specific data source in the search dialog. You can filter by **Data source** to only see data sources.
-1. Click the data source you want to add to open the configuration page.
+1. Click the data source you want to add.
 1. Configure the data source following instructions specific to that data source.
 
    For links to data source-specific documentation, see [Data sources]({{< relref "../../datasources" >}}).
