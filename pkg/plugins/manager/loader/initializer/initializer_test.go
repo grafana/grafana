@@ -227,8 +227,18 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 	}
 
 	defaultOtelCfg := tracing.OpentelemetryCfg{
-		Address:     "127.0.0.1:4317",
-		Propagation: "",
+		Address:         "127.0.0.1:4317",
+		Propagation:     "",
+		DisabledPlugins: &tracing.DisabledPlugins{},
+	}
+	newDisabledPluginOtelCfg := func(ids ...string) tracing.OpentelemetryCfg {
+		var d tracing.DisabledPlugins
+		d.Add(ids...)
+		return tracing.OpentelemetryCfg{
+			Address:         "127.0.0.1:4317",
+			Propagation:     "",
+			DisabledPlugins: &d,
+		}
 	}
 
 	expDefaultOtlp := func(t *testing.T, envVars []string) {
@@ -284,8 +294,9 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			name: "otlp propagation",
 			cfg: &config.Cfg{
 				Opentelemetry: tracing.OpentelemetryCfg{
-					Address:     "127.0.0.1:4317",
-					Propagation: "w3c",
+					Address:         "127.0.0.1:4317",
+					Propagation:     "w3c",
+					DisabledPlugins: &tracing.DisabledPlugins{},
 				},
 			},
 			exp: func(t *testing.T, envVars []string) {
@@ -298,10 +309,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "disabled on plugin",
 			cfg: &config.Cfg{
-				Opentelemetry: defaultOtelCfg,
-				PluginSettings: map[string]map[string]string{
-					pluginID: {"disable_tracing": "true"},
-				},
+				Opentelemetry: newDisabledPluginOtelCfg(pluginID),
 			},
 			exp: expNoTracing,
 		},

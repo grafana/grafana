@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-kit/log/level"
@@ -36,16 +37,45 @@ const (
 )
 
 type Opentelemetry struct {
-	enabled       string
-	address       string
-	propagation   string
-	customAttribs []attribute.KeyValue
-	log           log.Logger
+	enabled         string
+	address         string
+	propagation     string
+	customAttribs   []attribute.KeyValue
+	disabledPlugins *DisabledPlugins
+
+	log log.Logger
 
 	tracerProvider tracerProvider
 	tracer         trace.Tracer
 
 	Cfg *setting.Cfg
+}
+
+// DisabledPlugins contains a set of plugin IDs whose tracing has been disabled.
+// This struct is safe for concurrent use.
+type DisabledPlugins struct {
+	set map[string]struct{}
+	mu  sync.RWMutex
+}
+
+// IsDisabled returns true if the specified plugin has been explicitly excluded from tracing.
+func (d *DisabledPlugins) IsDisabled(pluginID string) bool {
+	d.mu.RLock()
+	_, ok := d.set[pluginID]
+	d.mu.RUnlock()
+	return ok
+}
+
+// Add adds one or more plugin ids from the set of disabled plugin ids.
+func (d *DisabledPlugins) Add(pluginIDs ...string) {
+	d.mu.Lock()
+	if d.set == nil {
+		d.set = map[string]struct{}{}
+	}
+	for _, id := range pluginIDs {
+		d.set[id] = struct{}{}
+	}
+	d.mu.Unlock()
 }
 
 type tracerProvider interface {
@@ -87,6 +117,14 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 	if err != nil {
 		return err
 	}
+
+	var disabledPlugins DisabledPlugins
+	ids := strings.Split(section.Key("disable_plugins").MustString(""), ",")
+	for i := 0; i < len(ids); i++ {
+		ids[i] = strings.TrimSpace(ids[i])
+	}
+	disabledPlugins.Add(ids...)
+	ots.disabledPlugins = &disabledPlugins
 
 	section, err = ots.Cfg.Raw.GetSection("tracing.opentelemetry.jaeger")
 	if err != nil {
