@@ -75,6 +75,8 @@ export const TransformationOperationRow = ({
           toggleId,
           transformationId: configs[index].transformation.id,
         });
+
+        callback(e);
       },
     [configs, index]
   );
