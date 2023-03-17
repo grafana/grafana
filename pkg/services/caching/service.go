@@ -24,9 +24,11 @@ const (
 )
 
 type CachedDataResponse struct {
-	Response      *backend.QueryDataResponse
-	Status        CacheStatus
+	// The cached data response associated with a query, or nil if no cached data is found
+	Response *backend.QueryDataResponse
+	// A function that should be used to cache a QueryDataResponse for a given query - can be set to nil by the method implementation
 	UpdateCacheFn CacheResponseFn
+	Status        CacheStatus
 }
 
 func ProvideCachingService() *OSSCachingService {
