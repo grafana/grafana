@@ -79,8 +79,15 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 		return errCh
 	}
 
-	go func() {
+	// New background job, so start with a completely new context to avoid pollution.
+	writeCtx := context.Background()
+	writeCtx, cancel := context.WithTimeout(writeCtx, 30*time.Second)
+	writeCtx = history_model.WithRuleData(writeCtx, rule)
+
+	go func(ctx context.Context) {
+		defer cancel()
 		defer close(errCh)
+		logger := h.log.FromContext(ctx)
 
 		org := fmt.Sprint(rule.OrgID)
 		h.metrics.WritesTotal.WithLabelValues(org, "loki").Inc()
@@ -92,7 +99,7 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 			h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(logStream.Values)))
 			errCh <- fmt.Errorf("failed to save alert state history batch: %w", err)
 		}
-	}()
+	}(writeCtx)
 	return errCh
 }
 
