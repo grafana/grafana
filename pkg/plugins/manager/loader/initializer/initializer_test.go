@@ -164,7 +164,8 @@ func TestInitializer_envVars(t *testing.T) {
 			},
 		}
 
-		envVars := i.envVars(p)
+		envVars, err := i.envVars(p)
+		assert.NoError(t, err)
 		assert.Len(t, envVars, 5)
 		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[0])
 		assert.Equal(t, "GF_VERSION=", envVars[1])

@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/storage"
+	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -54,19 +55,21 @@ type Loader struct {
 
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
-	roleRegistry plugins.RoleRegistry, pluginsCDNService *pluginscdn.Service, assetPath *assetpath.Service) *Loader {
+	roleRegistry plugins.RoleRegistry, pluginsCDNService *pluginscdn.Service, assetPath *assetpath.Service,
+	oauthServer oauthserver.OAuth2Service) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		storage.FileSystem(log.NewPrettyLogger("loader.fs"), cfg.PluginsPath), roleRegistry, pluginsCDNService, assetPath)
+		storage.FileSystem(log.NewPrettyLogger("loader.fs"), cfg.PluginsPath), roleRegistry, pluginsCDNService, assetPath,
+		oauthServer)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry,
-	pluginsCDNService *pluginscdn.Service, assetPath *assetpath.Service) *Loader {
+	pluginsCDNService *pluginscdn.Service, assetPath *assetpath.Service, oauthServer oauthserver.OAuth2Service) *Loader {
 	return &Loader{
 		pluginFinder:       finder.New(),
 		pluginRegistry:     pluginRegistry,
-		pluginInitializer:  initializer.New(cfg, backendProvider, license),
+		pluginInitializer:  initializer.New(cfg, backendProvider, license, oauthServer),
 		signatureValidator: signature.NewValidator(authorizer),
 		processManager:     processManager,
 		pluginStorage:      pluginStorage,

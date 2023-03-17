@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/oauthserver/oauthimpl"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -119,7 +120,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	lic := plicensing.ProvideLicensing(cfg, &licensing.OSSLicensingService{Cfg: cfg})
 	l := loader.ProvideService(pCfg, lic, signature.NewUnsignedAuthorizer(pCfg),
 		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry(),
-		cdn, assetpath.ProvideService(cdn))
+		cdn, assetpath.ProvideService(cdn), &oauthimpl.OAuth2ServiceImpl{})
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)

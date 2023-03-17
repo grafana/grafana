@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -155,6 +156,11 @@ type JSONData struct {
 
 	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
+
+	// Oauth App Service Registration
+	// TODO: If this were to live here, it requires to be added to the plugin.json schema
+	// and the CUE definition. This is not done yet.
+	OauthServiceRegistration *oauthserver.ExternalServiceRegistration `json:"oauthServiceRegistration,omitempty"`
 }
 
 func (d JSONData) DashboardIncludes() []*Includes {

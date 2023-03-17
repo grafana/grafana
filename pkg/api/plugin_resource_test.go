@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/oauthserver/oauthimpl"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
@@ -60,7 +61,7 @@ func TestCallResource(t *testing.T) {
 	reg := registry.ProvideService()
 	cdn := pluginscdn.ProvideService(pCfg)
 	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry(), cdn, assetpath.ProvideService(cdn))
+		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry(), cdn, assetpath.ProvideService(cdn), &oauthimpl.OAuth2ServiceImpl{})
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)

@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/services/oauthserver/oauthimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -472,7 +473,7 @@ func TestLoader_Load(t *testing.T) {
 			l.pluginRegistry = reg
 			l.pluginStorage = storage
 			l.processManager = procMgr
-			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, &fakes.FakeLicensingService{})
+			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, &fakes.FakeLicensingService{}, &oauthimpl.OAuth2ServiceImpl{})
 		})
 
 		t.Run(tt.name, func(t *testing.T) {
@@ -627,7 +628,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				l.pluginRegistry = reg
 				l.pluginStorage = storage
 				l.processManager = procMgr
-				l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
+				l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService(), &oauthimpl.OAuth2ServiceImpl{})
 			})
 			t.Run(tt.name, func(t *testing.T) {
 				origAppURL := setting.AppUrl
@@ -743,7 +744,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 			l.pluginRegistry = reg
 			l.pluginStorage = storage
 			l.processManager = procMgr
-			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
+			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService(), &oauthimpl.OAuth2ServiceImpl{})
 		})
 
 		got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths)
@@ -817,7 +818,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 			l.pluginRegistry = reg
 			l.pluginStorage = storage
 			l.processManager = procMgr
-			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService(), &oauthimpl.OAuth2ServiceImpl{})
 		})
 		got, err := l.Load(context.Background(), plugins.External, paths)
 		require.NoError(t, err)
@@ -896,7 +897,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 			l.pluginRegistry = reg
 			l.pluginStorage = storage
 			l.processManager = procMgr
-			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService(), &oauthimpl.OAuth2ServiceImpl{})
 		})
 		got, err := l.Load(context.Background(), plugins.External, []string{pluginDir, pluginDir})
 		require.NoError(t, err)
@@ -992,7 +993,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			l.pluginRegistry = reg
 			l.pluginStorage = storage
 			l.processManager = procMgr
-			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService(), &oauthimpl.OAuth2ServiceImpl{})
 		})
 
 		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"})
@@ -1158,7 +1159,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			l.pluginRegistry = reg
 			l.pluginStorage = storage
 			l.processManager = procMgr
-			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService(), &oauthimpl.OAuth2ServiceImpl{})
 		})
 		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/app-with-child"})
 		require.NoError(t, err)
@@ -1186,7 +1187,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				l.pluginRegistry = reg
 				l.pluginStorage = storage
 				l.processManager = procMgr
-				l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+				l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService(), &oauthimpl.OAuth2ServiceImpl{})
 			})
 			got, err = l.loadPlugins(context.Background(), plugins.External, []string{parentPluginJSON, childPluginJSON})
 			require.NoError(t, err)
@@ -1210,7 +1211,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				l.pluginRegistry = reg
 				l.pluginStorage = storage
 				l.processManager = procMgr
-				l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+				l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService(), &oauthimpl.OAuth2ServiceImpl{})
 			})
 			got, err = l.loadPlugins(context.Background(), plugins.External, []string{childPluginJSON, parentPluginJSON})
 			require.NoError(t, err)
@@ -1381,7 +1382,7 @@ func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	cdn := pluginscdn.ProvideService(cfg)
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
-		fakes.NewFakeRoleRegistry(), cdn, assetpath.ProvideService(cdn))
+		fakes.NewFakeRoleRegistry(), cdn, assetpath.ProvideService(cdn), &oauthimpl.OAuth2ServiceImpl{})
 
 	for _, cb := range cbs {
 		cb(l)

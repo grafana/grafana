@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
@@ -433,6 +434,7 @@ func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService sta
 
 	return ProvideService(
 		&usagestats.UsageStatsMock{},
+		&validator.FakeUsageStatsValidator{},
 		statsService,
 		cfg,
 		store,

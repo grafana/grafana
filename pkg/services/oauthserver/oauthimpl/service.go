@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthserver/api"
 	"github.com/grafana/grafana/pkg/services/oauthserver/oauthstore"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -53,7 +52,7 @@ type OAuth2ServiceImpl struct {
 	publicKey     *rsa.PublicKey
 }
 
-func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, skv kvstore.SecretsKVStore,
+func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
 	svcAccSvc serviceaccounts.Service, accessControl ac.AccessControl, acSvc ac.Service, userSvc user.Service,
 	teamSvc team.Service) (*OAuth2ServiceImpl, error) {
 
@@ -68,7 +67,7 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, sk
 		// ...
 	}
 
-	privateKey, errLoadKey := loadServerPrivateKey(skv)
+	privateKey, errLoadKey := rsa.GenerateKey(rand.Reader, 2048)
 	if errLoadKey != nil {
 		// TODO log something
 		return nil, errLoadKey
@@ -115,36 +114,6 @@ func newProvider(config *fosite.Config, storage interface{}, key interface{}) fo
 		compose.OAuth2TokenIntrospectionFactory,
 		compose.OAuth2TokenRevocationFactory,
 	)
-}
-
-func loadServerPrivateKey(skv kvstore.SecretsKVStore) (*rsa.PrivateKey, error) {
-	privatePem, ok, err := skv.Get(context.Background(), oauthserver.TmpOrgID, "OAuthServerPrivatePEM", "oauthserverpem")
-	if err != nil {
-		return nil, err
-	}
-	var privateKey *rsa.PrivateKey
-	if !ok {
-		var errGenKey error
-		privateKey, errGenKey = rsa.GenerateKey(rand.Reader, 2048)
-		if errGenKey != nil {
-			return nil, errGenKey
-		}
-		privateKeyPem := string(pem.EncodeToMemory(&pem.Block{
-			Type:  "RSA PRIVATE KEY",
-			Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
-		}))
-		if err = skv.Set(context.Background(), oauthserver.TmpOrgID, "OAuthServerPrivatePEM", "oauthserverpem", privateKeyPem); err != nil {
-			return nil, err
-		}
-	} else {
-		var errParseKey error
-		privateKeyPem, _ := pem.Decode([]byte(privatePem))
-		privateKey, errParseKey = x509.ParsePKCS1PrivateKey(privateKeyPem.Bytes)
-		if errParseKey != nil {
-			return nil, errParseKey
-		}
-	}
-	return privateKey, nil
 }
 
 // GetServerPublicKey returns the public key of the server

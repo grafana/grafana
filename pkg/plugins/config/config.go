@@ -31,6 +31,8 @@ type Cfg struct {
 	LogDatasourceRequests bool
 
 	PluginsCDNURLTemplate string
+
+	AppURL string
 }
 
 func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
@@ -65,6 +67,7 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 		Azure:                   grafanaCfg.Azure,
 		LogDatasourceRequests:   grafanaCfg.PluginLogBackendRequests,
 		PluginsCDNURLTemplate:   grafanaCfg.PluginsCDNURLTemplate,
+		AppURL:                  grafanaCfg.AppURL,
 	}
 }
 
