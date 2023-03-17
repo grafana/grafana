@@ -2,8 +2,8 @@ import saveAs from 'file-saver';
 
 import { dateTimeFormat, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { SceneObject } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import { DashboardScene } from 'app/features/scenes/dashboard/DashboardScene';
 import { createDashboardSceneFromDashboardModel } from 'app/features/scenes/dashboard/DashboardsLoader';
 
 import { getTimeSrv } from '../../services/TimeSrv';
@@ -32,7 +32,7 @@ interface SupportSnapshotState {
   // eslint-disable-next-line
   snapshot?: any;
   snapshotUpdate: number;
-  scene?: DashboardScene;
+  scene?: SceneObject;
 }
 
 export enum SnapshotTab {
@@ -78,16 +78,11 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
     const markdownText = getGithubMarkdown(panel, snapshotText);
     const snapshotSize = formattedValueToString(getValueFormat('bytes')(snapshotText?.length ?? 0));
 
-    let scene: DashboardScene | undefined = undefined;
-    if (config.featureToggles.scenes && !panel.isAngularPlugin) {
+    let scene: SceneObject | undefined = undefined;
+    if (config.featureToggles.scenes && !panel.isAngularPlugin()) {
       try {
-        scene = createDashboardSceneFromDashboardModel(snapshot);
-        scene.setState({
-          uid: undefined,
-          title: undefined,
-          actions: undefined,
-          controls: undefined, // remove
-        });
+        const dash = createDashboardSceneFromDashboardModel(snapshot);
+        scene = dash.state.body; // skip the wrappers
       } catch (ex) {
         console.log('Error creating scene:', ex);
       }
