@@ -202,11 +202,10 @@ export class ContextSrv {
     return ['Reject'];
   }
 
-  // schedules a job to perform token ration in the brachground
+  // schedules a job to perform token ration in the background
   private scheduleTokenRotationJob() {
     // only schedule job if feature toggle is enabled and user is signed in
     if (config.featureToggles.clientTokenRotation && this.isSignedIn) {
-      console.log('Schedule token rotation job');
       // get the time token is going to expire
       let expires = this.getSessionExpiry();
 
@@ -214,28 +213,22 @@ export class ContextSrv {
       // this can happen if user was signed in before upgrade
       // after a successful rotation the expiry cookie will be present
       if (expires === 0) {
-        console.log('Schedule job to run now');
-        // @ts-ignore
         this.rotateToken().then();
         return;
       }
 
       // because this job is scheduled for every tab we have open that shares a session we try
       // to distribute the scheduling of the job. For now this can be between 1 and 20 seconds
-      const expiresWithDistrobution = expires - Math.floor(Math.random() * (20 - 1) + 1);
+      const expiresWithDistribution = expires - Math.floor(Math.random() * (20 - 1) + 1);
 
-      const runAt = new Date(expiresWithDistrobution * 1000);
-      console.log('Schedule job to run: ', runAt);
-
-      let nextRun = expiresWithDistrobution * 1000 - Date.now();
+      // nextRun is when the job should be scheduled for
+      let nextRun = expiresWithDistribution * 1000 - Date.now();
 
       // @ts-ignore
       this.tokenRotationJobId = setTimeout(() => {
-        console.log('Running scheduled job: ', runAt);
         // if we have a new expiry time from the expiry cookie another tab have already performed the rotation
         // so the only thing we need to do is reschedule the job and exit
         if (this.getSessionExpiry() > expires) {
-          console.log('Already rotated');
           this.scheduleTokenRotationJob();
           return;
         }
@@ -246,7 +239,6 @@ export class ContextSrv {
 
   private cancelTokenRotationJob() {
     if (config.featureToggles.clientTokenRotation && this.tokenRotationJobId > 0) {
-      console.log('cancel token rotation job');
       clearTimeout(this.tokenRotationJobId);
     }
   }
