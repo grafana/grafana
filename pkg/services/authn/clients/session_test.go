@@ -53,16 +53,18 @@ func TestSession_Authenticate(t *testing.T) {
 	}
 	validHTTPReq.AddCookie(&http.Cookie{Name: cookieName, Value: "bob-the-high-entropy-token"})
 
-	sampleToken := &usertoken.UserToken{
+	validToken := &usertoken.UserToken{
 		Id:            1,
 		UserId:        1,
 		AuthToken:     "hashyToken",
 		PrevAuthToken: "prevHashyToken",
 		AuthTokenSeen: true,
+		RotatedAt:     time.Now().Unix(),
 	}
 
 	type fields struct {
 		sessionService auth.UserTokenService
+		features       *featuremgmt.FeatureManager
 	}
 	type args struct {
 		r *authn.Request
@@ -75,21 +77,60 @@ func TestSession_Authenticate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "cookie not found",
-			fields:  fields{sessionService: &authtest.FakeUserAuthTokenService{}},
+			name: "cookie not found",
+			fields: fields{
+				sessionService: &authtest.FakeUserAuthTokenService{},
+				features:       featuremgmt.WithFeatures(),
+			},
 			args:    args{r: &authn.Request{HTTPRequest: &http.Request{}}},
 			wantID:  nil,
 			wantErr: true,
 		},
 		{
 			name: "success",
-			fields: fields{sessionService: &authtest.FakeUserAuthTokenService{LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
-				return sampleToken, nil
-			}}},
+			fields: fields{
+				sessionService: &authtest.FakeUserAuthTokenService{LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+					return validToken, nil
+				}},
+				features: featuremgmt.WithFeatures(),
+			},
 			args: args{r: &authn.Request{HTTPRequest: validHTTPReq}},
 			wantID: &authn.Identity{
 				ID:           "user:1",
-				SessionToken: sampleToken,
+				SessionToken: validToken,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchSyncedUser: true,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return error for token that needs rotation if ClientTokenRotation is enabled",
+			fields: fields{
+				sessionService: &authtest.FakeUserAuthTokenService{LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+					return &auth.UserToken{
+						AuthTokenSeen: true,
+						RotatedAt:     time.Now().Add(-11 * time.Minute).Unix(),
+					}, nil
+				}},
+				features: featuremgmt.WithFeatures(featuremgmt.FlagClientTokenRotation),
+			},
+			args:    args{r: &authn.Request{HTTPRequest: validHTTPReq}},
+			wantErr: true,
+		},
+		{
+			name: "should return identity for token that don't need rotation if ClientTokenRotation is enabled",
+			fields: fields{
+				sessionService: &authtest.FakeUserAuthTokenService{LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+					return validToken, nil
+				}},
+				features: featuremgmt.WithFeatures(featuremgmt.FlagClientTokenRotation),
+			},
+			args: args{r: &authn.Request{HTTPRequest: validHTTPReq}},
+			wantID: &authn.Identity{
+				ID:           "user:1",
+				SessionToken: validToken,
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
 					FetchSyncedUser: true,
@@ -102,8 +143,9 @@ func TestSession_Authenticate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.LoginCookieName = cookieName
+			cfg.TokenRotationIntervalMinutes = 10
 			cfg.LoginMaxLifetime = 20 * time.Second
-			s := ProvideSession(cfg, tt.fields.sessionService, featuremgmt.WithFeatures())
+			s := ProvideSession(cfg, tt.fields.sessionService, tt.fields.features)
 
 			got, err := s.Authenticate(context.Background(), tt.args.r)
 			require.True(t, (err != nil) == tt.wantErr, err)
