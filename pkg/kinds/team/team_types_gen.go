@@ -10,41 +10,43 @@
 
 package team
 
-// Defines values for Permission.
+// Defines values for SpecPermission.
 const (
-	PermissionN0 Permission = 0
-	PermissionN1 Permission = 1
-	PermissionN2 Permission = 2
-	PermissionN4 Permission = 4
+	SpecPermissionN0 SpecPermission = 0
+	SpecPermissionN1 SpecPermission = 1
+	SpecPermissionN2 SpecPermission = 2
+	SpecPermissionN4 SpecPermission = 4
 )
-
-// Permission defines model for Permission.
-type Permission int
 
 // Team defines model for Team.
 type Team struct {
-	// AccessControl metadata associated with a given resource.
-	AccessControl map[string]bool `json:"accessControl,omitempty"`
+	Spec struct {
+		// AccessControl metadata associated with a given resource.
+		AccessControl map[string]bool `json:"accessControl,omitempty"`
 
-	// AvatarUrl is the team's avatar URL.
-	AvatarUrl *string `json:"avatarUrl,omitempty"`
+		// AvatarUrl is the team's avatar URL.
+		AvatarUrl *string `json:"avatarUrl,omitempty"`
 
-	// Created indicates when the team was created.
-	Created int64 `json:"created"`
+		// Created indicates when the team was created.
+		Created int64 `json:"created"`
 
-	// Email of the team.
-	Email *string `json:"email,omitempty"`
+		// Email of the team.
+		Email *string `json:"email,omitempty"`
 
-	// MemberCount is the number of the team members.
-	MemberCount int64 `json:"memberCount"`
+		// MemberCount is the number of the team members.
+		MemberCount int64 `json:"memberCount"`
 
-	// Name of the team.
-	Name string `json:"name"`
+		// Name of the team.
+		Name string `json:"name"`
 
-	// OrgId is the ID of an organisation the team belongs to.
-	OrgId      int64      `json:"orgId"`
-	Permission Permission `json:"permission"`
+		// OrgId is the ID of an organisation the team belongs to.
+		OrgId      int64          `json:"orgId"`
+		Permission SpecPermission `json:"permission"`
 
-	// Updated indicates when the team was updated.
-	Updated int64 `json:"updated"`
+		// Updated indicates when the team was updated.
+		Updated int64 `json:"updated"`
+	} `json:"spec"`
 }
+
+// SpecPermission defines model for spec.#Permission.
+type SpecPermission int

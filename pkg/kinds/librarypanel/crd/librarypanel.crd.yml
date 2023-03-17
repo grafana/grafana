@@ -22,94 +22,99 @@ spec:
                 properties:
                     spec:
                         properties:
-                            description:
-                                description: Panel description
-                                type: string
-                            folderUid:
-                                description: Folder UID
-                                type: string
-                            meta:
-                                description: Object storage metadata
+                            spec:
                                 properties:
-                                    connectedDashboards:
-                                        format: int64
-                                        type: integer
-                                    created:
-                                        type: string
-                                    createdBy:
-                                        properties:
-                                            avatarUrl:
-                                                type: string
-                                            id:
-                                                format: int64
-                                                type: integer
-                                            name:
-                                                type: string
-                                        required:
-                                            - id
-                                            - name
-                                            - avatarUrl
-                                        type: object
-                                    folderName:
+                                    description:
+                                        description: Panel description
                                         type: string
                                     folderUid:
+                                        description: Folder UID
                                         type: string
-                                    updated:
-                                        type: string
-                                    updatedBy:
+                                    meta:
+                                        description: Object storage metadata
                                         properties:
-                                            avatarUrl:
-                                                type: string
-                                            id:
+                                            connectedDashboards:
                                                 format: int64
                                                 type: integer
-                                            name:
+                                            created:
                                                 type: string
+                                            createdBy:
+                                                properties:
+                                                    avatarUrl:
+                                                        type: string
+                                                    id:
+                                                        format: int64
+                                                        type: integer
+                                                    name:
+                                                        type: string
+                                                required:
+                                                    - id
+                                                    - name
+                                                    - avatarUrl
+                                                type: object
+                                            folderName:
+                                                type: string
+                                            folderUid:
+                                                type: string
+                                            updated:
+                                                type: string
+                                            updatedBy:
+                                                properties:
+                                                    avatarUrl:
+                                                        type: string
+                                                    id:
+                                                        format: int64
+                                                        type: integer
+                                                    name:
+                                                        type: string
+                                                required:
+                                                    - id
+                                                    - name
+                                                    - avatarUrl
+                                                type: object
                                         required:
-                                            - id
-                                            - name
-                                            - avatarUrl
+                                            - folderName
+                                            - folderUid
+                                            - connectedDashboards
+                                            - created
+                                            - updated
+                                            - createdBy
+                                            - updatedBy
                                         type: object
+                                    model:
+                                        description: |-
+                                            TODO: should be the same panel schema defined in dashboard
+                                            Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
+                                        type: object
+                                    name:
+                                        description: Panel name (also saved in the model)
+                                        minLength: 1
+                                        type: string
+                                    schemaVersion:
+                                        description: Dashboard version when this was saved (zero if unknown)
+                                        maximum: 65535
+                                        minimum: 0
+                                        type: integer
+                                    type:
+                                        description: The panel type (from inside the model)
+                                        minLength: 1
+                                        type: string
+                                    uid:
+                                        description: Library element UID
+                                        type: string
+                                    version:
+                                        description: panel version, incremented each time the dashboard is updated.
+                                        format: int64
+                                        type: integer
                                 required:
-                                    - folderName
-                                    - folderUid
-                                    - connectedDashboards
-                                    - created
-                                    - updated
-                                    - createdBy
-                                    - updatedBy
+                                    - uid
+                                    - name
+                                    - type
+                                    - version
+                                    - model
                                 type: object
-                            model:
-                                description: |-
-                                    TODO: should be the same panel schema defined in dashboard
-                                    Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
-                                type: object
-                            name:
-                                description: Panel name (also saved in the model)
-                                minLength: 1
-                                type: string
-                            schemaVersion:
-                                description: Dashboard version when this was saved (zero if unknown)
-                                maximum: 65535
-                                minimum: 0
-                                type: integer
-                            type:
-                                description: The panel type (from inside the model)
-                                minLength: 1
-                                type: string
-                            uid:
-                                description: Library element UID
-                                type: string
-                            version:
-                                description: panel version, incremented each time the dashboard is updated.
-                                format: int64
-                                type: integer
                         required:
-                            - uid
-                            - name
-                            - type
-                            - version
-                            - model
+                            - spec
                         type: object
                 required:
                     - spec

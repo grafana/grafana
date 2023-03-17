@@ -13,14 +13,20 @@ title: Playlist kind
 
 A playlist is a series of dashboards that is automatically rotated in the browser, on a configurable interval.
 
-| Property   | Type                            | Required | Description                                                                                                                                                                         |
-|------------|---------------------------------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `interval` | string                          | **Yes**  | Interval sets the time between switching views in a playlist.<br/>FIXME: Is this based on a standardized format or what options are available? Can datemath be used? Default: `5m`. |
-| `name`     | string                          | **Yes**  | Name of the playlist.                                                                                                                                                               |
-| `uid`      | string                          | **Yes**  | Unique playlist identifier. Generated on creation, either by the<br/>creator of the playlist of by the application.                                                                 |
-| `items`    | [PlaylistItem](#playlistitem)[] | No       | The ordered list of items that the playlist will iterate over.<br/>FIXME! This should not be optional, but changing it makes the godegen awkward                                    |
+| Property | Type            | Required | Description |
+|----------|-----------------|----------|-------------|
+| `spec`   | [object](#spec) | **Yes**  |             |
 
-### PlaylistItem
+### Spec
+
+| Property   | Type                                        | Required | Description                                                                                                                                                                         |
+|------------|---------------------------------------------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `interval` | string                                      | **Yes**  | Interval sets the time between switching views in a playlist.<br/>FIXME: Is this based on a standardized format or what options are available? Can datemath be used? Default: `5m`. |
+| `name`     | string                                      | **Yes**  | Name of the playlist.                                                                                                                                                               |
+| `uid`      | string                                      | **Yes**  | Unique playlist identifier. Generated on creation, either by the<br/>creator of the playlist of by the application.                                                                 |
+| `items`    | [spec.#PlaylistItem](#spec.#playlistitem)[] | No       | The ordered list of items that the playlist will iterate over.<br/>FIXME! This should not be optional, but changing it makes the godegen awkward                                    |
+
+### Spec.#PlaylistItem
 
 | Property | Type   | Required | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 |----------|--------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

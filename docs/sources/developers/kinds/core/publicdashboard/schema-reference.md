@@ -13,6 +13,12 @@ title: PublicDashboard kind
 
 Public dashboard configuration
 
+| Property | Type            | Required | Description |
+|----------|-----------------|----------|-------------|
+| `spec`   | [object](#spec) | **Yes**  |             |
+
+### Spec
+
 | Property               | Type    | Required | Description                                                     |
 |------------------------|---------|----------|-----------------------------------------------------------------|
 | `annotationsEnabled`   | boolean | **Yes**  | Flag that indicates if annotations are enabled                  |

@@ -22,30 +22,35 @@ spec:
                 properties:
                     spec:
                         properties:
-                            accessToken:
-                                description: Unique public access token
-                                type: string
-                            annotationsEnabled:
-                                description: Flag that indicates if annotations are enabled
-                                type: boolean
-                            dashboardUid:
-                                description: Dashboard unique identifier referenced by this public dashboard
-                                type: string
-                            isEnabled:
-                                description: Flag that indicates if the public dashboard is enabled
-                                type: boolean
-                            timeSelectionEnabled:
-                                description: Flag that indicates if the time range picker is enabled
-                                type: boolean
-                            uid:
-                                description: Unique public dashboard identifier
-                                type: string
+                            spec:
+                                properties:
+                                    accessToken:
+                                        description: Unique public access token
+                                        type: string
+                                    annotationsEnabled:
+                                        description: Flag that indicates if annotations are enabled
+                                        type: boolean
+                                    dashboardUid:
+                                        description: Dashboard unique identifier referenced by this public dashboard
+                                        type: string
+                                    isEnabled:
+                                        description: Flag that indicates if the public dashboard is enabled
+                                        type: boolean
+                                    timeSelectionEnabled:
+                                        description: Flag that indicates if the time range picker is enabled
+                                        type: boolean
+                                    uid:
+                                        description: Unique public dashboard identifier
+                                        type: string
+                                required:
+                                    - uid
+                                    - dashboardUid
+                                    - isEnabled
+                                    - annotationsEnabled
+                                    - timeSelectionEnabled
+                                type: object
                         required:
-                            - uid
-                            - dashboardUid
-                            - isEnabled
-                            - annotationsEnabled
-                            - timeSelectionEnabled
+                            - spec
                         type: object
                 required:
                     - spec

@@ -8,37 +8,32 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export interface QueryHistoryPreference {
-  /**
-   * one of: '' | 'query' | 'starred';
-   */
-  homeTab?: string;
-}
-
 export interface Preferences {
-  /**
-   * UID for the home dashboard
-   */
-  homeDashboardUID?: string;
-  /**
-   * Selected language (beta)
-   */
-  language?: string;
-  /**
-   * Explore query history preferences
-   */
-  queryHistory?: QueryHistoryPreference;
-  /**
-   * light, dark, empty is default
-   */
-  theme?: string;
-  /**
-   * The timezone selection
-   * TODO: this should use the timezone defined in common
-   */
-  timezone?: string;
-  /**
-   * day of the week (sunday, monday, etc)
-   */
-  weekStart?: string;
+  spec: {
+    /**
+     * UID for the home dashboard
+     */
+    homeDashboardUID?: string;
+    /**
+     * The timezone selection
+     * TODO: this should use the timezone defined in common
+     */
+    timezone?: string;
+    /**
+     * day of the week (sunday, monday, etc)
+     */
+    weekStart?: string;
+    /**
+     * light, dark, empty is default
+     */
+    theme?: string;
+    /**
+     * Selected language (beta)
+     */
+    language?: string;
+    /**
+     * Explore query history preferences
+     */
+    queryHistory?: QueryHistoryPreference;
+  };
 }

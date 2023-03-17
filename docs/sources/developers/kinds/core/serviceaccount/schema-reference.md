@@ -13,6 +13,12 @@ title: ServiceAccount kind
 
 system account
 
+| Property | Type            | Required | Description |
+|----------|-----------------|----------|-------------|
+| `spec`   | [object](#spec) | **Yes**  |             |
+
+### Spec
+
 | Property        | Type               | Required | Description                                                                                                                             |
 |-----------------|--------------------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
 | `avatarUrl`     | string             | **Yes**  | AvatarUrl is the service account's avatar URL. It allows the frontend to display a picture in front<br/>of the service account.         |

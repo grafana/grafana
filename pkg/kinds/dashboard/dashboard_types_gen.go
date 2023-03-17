@@ -10,155 +10,265 @@
 
 package dashboard
 
-// Defines values for Style.
+// Defines values for SpecStyle.
 const (
-	StyleDark  Style = "dark"
-	StyleLight Style = "light"
+	SpecStyleDark  SpecStyle = "dark"
+	SpecStyleLight SpecStyle = "light"
 )
 
-// Defines values for CursorSync.
+// Defines values for SpecCursorSync.
 const (
-	CursorSyncN0 CursorSync = 0
-	CursorSyncN1 CursorSync = 1
-	CursorSyncN2 CursorSync = 2
+	SpecDashboardCursorSyncN0 SpecDashboardCursorSync = 0
+	SpecDashboardCursorSyncN1 SpecDashboardCursorSync = 1
+	SpecDashboardCursorSyncN2 SpecDashboardCursorSync = 2
 )
 
-// Defines values for LinkType.
+// Defines values for SpecLinkType.
 const (
-	LinkTypeDashboards LinkType = "dashboards"
-	LinkTypeLink       LinkType = "link"
+	SpecDashboardLinkTypeDashboards SpecDashboardLinkType = "dashboards"
+	SpecDashboardLinkTypeLink       SpecDashboardLinkType = "link"
 )
 
-// Defines values for FieldColorModeId.
+// Defines values for SpecFieldColorModeId.
 const (
-	FieldColorModeIdContinuousGrYlRd FieldColorModeId = "continuous-GrYlRd"
-	FieldColorModeIdFixed            FieldColorModeId = "fixed"
-	FieldColorModeIdPaletteClassic   FieldColorModeId = "palette-classic"
-	FieldColorModeIdPaletteSaturated FieldColorModeId = "palette-saturated"
-	FieldColorModeIdThresholds       FieldColorModeId = "thresholds"
+	SpecFieldColorModeIdContinuousGrYlRd SpecFieldColorModeId = "continuous-GrYlRd"
+	SpecFieldColorModeIdFixed            SpecFieldColorModeId = "fixed"
+	SpecFieldColorModeIdPaletteClassic   SpecFieldColorModeId = "palette-classic"
+	SpecFieldColorModeIdPaletteSaturated SpecFieldColorModeId = "palette-saturated"
+	SpecFieldColorModeIdThresholds       SpecFieldColorModeId = "thresholds"
 )
 
-// Defines values for FieldColorSeriesByMode.
+// Defines values for SpecFieldColorSeriesByMode.
 const (
-	FieldColorSeriesByModeLast FieldColorSeriesByMode = "last"
-	FieldColorSeriesByModeMax  FieldColorSeriesByMode = "max"
-	FieldColorSeriesByModeMin  FieldColorSeriesByMode = "min"
+	SpecFieldColorSeriesByModeLast SpecFieldColorSeriesByMode = "last"
+	SpecFieldColorSeriesByModeMax  SpecFieldColorSeriesByMode = "max"
+	SpecFieldColorSeriesByModeMin  SpecFieldColorSeriesByMode = "min"
 )
 
-// Defines values for GraphPanelType.
+// Defines values for SpecGraphPanelType.
 const (
-	GraphPanelTypeGraph GraphPanelType = "graph"
+	SpecGraphPanelTypeGraph SpecGraphPanelType = "graph"
 )
 
-// Defines values for HeatmapPanelType.
+// Defines values for SpecHeatmapPanelType.
 const (
-	HeatmapPanelTypeHeatmap HeatmapPanelType = "heatmap"
+	SpecHeatmapPanelTypeHeatmap SpecHeatmapPanelType = "heatmap"
 )
 
-// Defines values for LoadingState.
+// Defines values for SpecLoadingState.
 const (
-	LoadingStateDone       LoadingState = "Done"
-	LoadingStateError      LoadingState = "Error"
-	LoadingStateLoading    LoadingState = "Loading"
-	LoadingStateNotStarted LoadingState = "NotStarted"
-	LoadingStateStreaming  LoadingState = "Streaming"
+	SpecLoadingStateDone       SpecLoadingState = "Done"
+	SpecLoadingStateError      SpecLoadingState = "Error"
+	SpecLoadingStateLoading    SpecLoadingState = "Loading"
+	SpecLoadingStateNotStarted SpecLoadingState = "NotStarted"
+	SpecLoadingStateStreaming  SpecLoadingState = "Streaming"
 )
 
-// Defines values for MappingType.
+// Defines values for SpecMappingType.
 const (
-	MappingTypeRange   MappingType = "range"
-	MappingTypeRegex   MappingType = "regex"
-	MappingTypeSpecial MappingType = "special"
-	MappingTypeValue   MappingType = "value"
+	SpecMappingTypeRange   SpecMappingType = "range"
+	SpecMappingTypeRegex   SpecMappingType = "regex"
+	SpecMappingTypeSpecial SpecMappingType = "special"
+	SpecMappingTypeValue   SpecMappingType = "value"
 )
 
-// Defines values for PanelRepeatDirection.
+// Defines values for SpecPanelRepeatDirection.
 const (
-	PanelRepeatDirectionH PanelRepeatDirection = "h"
-	PanelRepeatDirectionV PanelRepeatDirection = "v"
+	SpecPanelRepeatDirectionH SpecPanelRepeatDirection = "h"
+	SpecPanelRepeatDirectionV SpecPanelRepeatDirection = "v"
 )
 
-// Defines values for RangeMapType.
+// Defines values for SpecRangeMapType.
 const (
-	RangeMapTypeRange   RangeMapType = "range"
-	RangeMapTypeRegex   RangeMapType = "regex"
-	RangeMapTypeSpecial RangeMapType = "special"
-	RangeMapTypeValue   RangeMapType = "value"
+	SpecRangeMapTypeRange   SpecRangeMapType = "range"
+	SpecRangeMapTypeRegex   SpecRangeMapType = "regex"
+	SpecRangeMapTypeSpecial SpecRangeMapType = "special"
+	SpecRangeMapTypeValue   SpecRangeMapType = "value"
 )
 
-// Defines values for RegexMapType.
+// Defines values for SpecRegexMapType.
 const (
-	RegexMapTypeRange   RegexMapType = "range"
-	RegexMapTypeRegex   RegexMapType = "regex"
-	RegexMapTypeSpecial RegexMapType = "special"
-	RegexMapTypeValue   RegexMapType = "value"
+	SpecRegexMapTypeRange   SpecRegexMapType = "range"
+	SpecRegexMapTypeRegex   SpecRegexMapType = "regex"
+	SpecRegexMapTypeSpecial SpecRegexMapType = "special"
+	SpecRegexMapTypeValue   SpecRegexMapType = "value"
 )
 
-// Defines values for RowPanelType.
+// Defines values for SpecRowPanelType.
 const (
-	RowPanelTypeRow RowPanelType = "row"
+	SpecRowPanelTypeRow SpecRowPanelType = "row"
 )
 
-// Defines values for SpecialValueMapOptionsMatch.
+// Defines values for SpecSpecialValueMapOptionsMatch.
 const (
-	SpecialValueMapOptionsMatchFalse SpecialValueMapOptionsMatch = "false"
-	SpecialValueMapOptionsMatchTrue  SpecialValueMapOptionsMatch = "true"
+	SpecSpecialValueMapOptionsMatchFalse SpecSpecialValueMapOptionsMatch = "false"
+	SpecSpecialValueMapOptionsMatchTrue  SpecSpecialValueMapOptionsMatch = "true"
 )
 
-// Defines values for SpecialValueMapType.
+// Defines values for SpecSpecialValueMapType.
 const (
-	SpecialValueMapTypeRange   SpecialValueMapType = "range"
-	SpecialValueMapTypeRegex   SpecialValueMapType = "regex"
-	SpecialValueMapTypeSpecial SpecialValueMapType = "special"
-	SpecialValueMapTypeValue   SpecialValueMapType = "value"
+	SpecSpecialValueMapTypeRange   SpecSpecialValueMapType = "range"
+	SpecSpecialValueMapTypeRegex   SpecSpecialValueMapType = "regex"
+	SpecSpecialValueMapTypeSpecial SpecSpecialValueMapType = "special"
+	SpecSpecialValueMapTypeValue   SpecSpecialValueMapType = "value"
 )
 
-// Defines values for SpecialValueMatch.
+// Defines values for SpecSpecialValueMatch.
 const (
-	SpecialValueMatchEmpty   SpecialValueMatch = "empty"
-	SpecialValueMatchFalse   SpecialValueMatch = "false"
-	SpecialValueMatchNan     SpecialValueMatch = "nan"
-	SpecialValueMatchNull    SpecialValueMatch = "null"
-	SpecialValueMatchNullNan SpecialValueMatch = "null+nan"
-	SpecialValueMatchTrue    SpecialValueMatch = "true"
+	SpecSpecialValueMatchEmpty   SpecSpecialValueMatch = "empty"
+	SpecSpecialValueMatchFalse   SpecSpecialValueMatch = "false"
+	SpecSpecialValueMatchNan     SpecSpecialValueMatch = "nan"
+	SpecSpecialValueMatchNull    SpecSpecialValueMatch = "null"
+	SpecSpecialValueMatchNullNan SpecSpecialValueMatch = "null+nan"
+	SpecSpecialValueMatchTrue    SpecSpecialValueMatch = "true"
 )
 
-// Defines values for ThresholdsMode.
+// Defines values for SpecThresholdsMode.
 const (
-	ThresholdsModeAbsolute   ThresholdsMode = "absolute"
-	ThresholdsModePercentage ThresholdsMode = "percentage"
+	SpecThresholdsModeAbsolute   SpecThresholdsMode = "absolute"
+	SpecThresholdsModePercentage SpecThresholdsMode = "percentage"
 )
 
-// Defines values for ValueMapType.
+// Defines values for SpecValueMapType.
 const (
-	ValueMapTypeRange   ValueMapType = "range"
-	ValueMapTypeRegex   ValueMapType = "regex"
-	ValueMapTypeSpecial ValueMapType = "special"
-	ValueMapTypeValue   ValueMapType = "value"
+	SpecValueMapTypeRange   SpecValueMapType = "range"
+	SpecValueMapTypeRegex   SpecValueMapType = "regex"
+	SpecValueMapTypeSpecial SpecValueMapType = "special"
+	SpecValueMapTypeValue   SpecValueMapType = "value"
 )
 
-// Defines values for VariableHide.
+// Defines values for SpecVariableHide.
 const (
-	VariableHideN0 VariableHide = 0
-	VariableHideN1 VariableHide = 1
-	VariableHideN2 VariableHide = 2
+	SpecVariableHideN0 SpecVariableHide = 0
+	SpecVariableHideN1 SpecVariableHide = 1
+	SpecVariableHideN2 SpecVariableHide = 2
 )
 
-// Defines values for VariableType.
+// Defines values for SpecVariableType.
 const (
-	VariableTypeAdhoc      VariableType = "adhoc"
-	VariableTypeConstant   VariableType = "constant"
-	VariableTypeCustom     VariableType = "custom"
-	VariableTypeDatasource VariableType = "datasource"
-	VariableTypeInterval   VariableType = "interval"
-	VariableTypeQuery      VariableType = "query"
-	VariableTypeSystem     VariableType = "system"
-	VariableTypeTextbox    VariableType = "textbox"
+	SpecVariableTypeAdhoc      SpecVariableType = "adhoc"
+	SpecVariableTypeConstant   SpecVariableType = "constant"
+	SpecVariableTypeCustom     SpecVariableType = "custom"
+	SpecVariableTypeDatasource SpecVariableType = "datasource"
+	SpecVariableTypeInterval   SpecVariableType = "interval"
+	SpecVariableTypeQuery      SpecVariableType = "query"
+	SpecVariableTypeSystem     SpecVariableType = "system"
+	SpecVariableTypeTextbox    SpecVariableType = "textbox"
 )
+
+// Dashboard defines model for Dashboard.
+type Dashboard struct {
+	Spec struct {
+		// TODO docs
+		Annotations *struct {
+			List []SpecAnnotationQuery `json:"list,omitempty"`
+		} `json:"annotations,omitempty"`
+
+		// Description of dashboard.
+		Description *string `json:"description,omitempty"`
+
+		// Whether a dashboard is editable or not.
+		Editable bool `json:"editable"`
+
+		// The month that the fiscal year starts on.  0 = January, 11 = December
+		FiscalYearStartMonth *int `json:"fiscalYearStartMonth,omitempty"`
+
+		// For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
+		GnetId *string `json:"gnetId,omitempty"`
+
+		// 0 for no shared crosshair or tooltip (default).
+		// 1 for shared crosshair.
+		// 2 for shared crosshair AND shared tooltip.
+		GraphTooltip SpecDashboardCursorSync `json:"graphTooltip"`
+
+		// Unique numeric identifier for the dashboard.
+		// TODO must isolate or remove identifiers local to a Grafana instance...?
+		Id *int64 `json:"id,omitempty"`
+
+		// TODO docs
+		Links []SpecDashboardLink `json:"links,omitempty"`
+
+		// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
+		// This will keep data "moving left" regardless of the query refresh rate.  This setting helps
+		// avoid dashboards presenting stale live data
+		LiveNow *bool         `json:"liveNow,omitempty"`
+		Panels  []interface{} `json:"panels,omitempty"`
+
+		// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
+		Refresh *interface{} `json:"refresh,omitempty"`
+
+		// This property should only be used in dashboards defined by plugins.  It is a quick check
+		// to see if the version has changed since the last time.  Unclear why using the version property
+		// is insufficient.
+		Revision *int64 `json:"revision,omitempty"`
+
+		// Version of the JSON schema, incremented each time a Grafana update brings
+		// changes to said schema.
+		// TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion
+		SchemaVersion int `json:"schemaVersion"`
+
+		// TODO docs
+		Snapshot *SpecSnapshot `json:"snapshot,omitempty"`
+
+		// Theme of dashboard.
+		Style SpecStyle `json:"style"`
+
+		// Tags associated with dashboard.
+		Tags []string `json:"tags,omitempty"`
+
+		// TODO docs
+		Templating *struct {
+			List []SpecVariableModel `json:"list,omitempty"`
+		} `json:"templating,omitempty"`
+
+		// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
+		Time *struct {
+			From string `json:"from"`
+			To   string `json:"to"`
+		} `json:"time,omitempty"`
+
+		// TODO docs
+		// TODO this appears to be spread all over in the frontend. Concepts will likely need tidying in tandem with schema changes
+		Timepicker *struct {
+			// Whether timepicker is collapsed or not.
+			Collapse bool `json:"collapse"`
+
+			// Whether timepicker is enabled or not.
+			Enable bool `json:"enable"`
+
+			// Whether timepicker is visible or not.
+			Hidden bool `json:"hidden"`
+
+			// Selectable intervals for auto-refresh.
+			RefreshIntervals []string `json:"refresh_intervals"`
+
+			// TODO docs
+			TimeOptions []string `json:"time_options"`
+		} `json:"timepicker,omitempty"`
+
+		// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
+		Timezone *string `json:"timezone,omitempty"`
+
+		// Title of dashboard.
+		Title *string `json:"title,omitempty"`
+
+		// Unique dashboard identifier that can be generated by anyone. string (8-40)
+		Uid *string `json:"uid,omitempty"`
+
+		// Version of the dashboard, incremented each time the dashboard is updated.
+		Version *int `json:"version,omitempty"`
+
+		// TODO docs
+		WeekStart *string `json:"weekStart,omitempty"`
+	} `json:"spec"`
+}
+
+// Theme of dashboard.
+type SpecStyle string
 
 // TODO docs
 // FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
-type AnnotationQuery struct {
+type SpecAnnotationQuery struct {
 	BuiltIn int `json:"builtIn"`
 
 	// Datasource to use for annotation.
@@ -184,134 +294,26 @@ type AnnotationQuery struct {
 	ShowIn   int     `json:"showIn"`
 
 	// TODO docs
-	Target *AnnotationTarget `json:"target,omitempty"`
-	Type   string            `json:"type"`
+	Target *SpecAnnotationTarget `json:"target,omitempty"`
+	Type   string                `json:"type"`
 }
 
 // TODO docs
-type AnnotationTarget struct {
+type SpecAnnotationTarget struct {
 	Limit    int64    `json:"limit"`
 	MatchAny bool     `json:"matchAny"`
 	Tags     []string `json:"tags"`
 	Type     string   `json:"type"`
 }
 
-// Dashboard defines model for Dashboard.
-type Dashboard struct {
-	// TODO docs
-	Annotations *struct {
-		List []AnnotationQuery `json:"list,omitempty"`
-	} `json:"annotations,omitempty"`
-
-	// Description of dashboard.
-	Description *string `json:"description,omitempty"`
-
-	// Whether a dashboard is editable or not.
-	Editable bool `json:"editable"`
-
-	// The month that the fiscal year starts on.  0 = January, 11 = December
-	FiscalYearStartMonth *int `json:"fiscalYearStartMonth,omitempty"`
-
-	// For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
-	GnetId *string `json:"gnetId,omitempty"`
-
-	// 0 for no shared crosshair or tooltip (default).
-	// 1 for shared crosshair.
-	// 2 for shared crosshair AND shared tooltip.
-	GraphTooltip CursorSync `json:"graphTooltip"`
-
-	// Unique numeric identifier for the dashboard.
-	// TODO must isolate or remove identifiers local to a Grafana instance...?
-	Id *int64 `json:"id,omitempty"`
-
-	// TODO docs
-	Links []Link `json:"links,omitempty"`
-
-	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
-	// This will keep data "moving left" regardless of the query refresh rate.  This setting helps
-	// avoid dashboards presenting stale live data
-	LiveNow *bool         `json:"liveNow,omitempty"`
-	Panels  []interface{} `json:"panels,omitempty"`
-
-	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
-	Refresh *interface{} `json:"refresh,omitempty"`
-
-	// This property should only be used in dashboards defined by plugins.  It is a quick check
-	// to see if the version has changed since the last time.  Unclear why using the version property
-	// is insufficient.
-	Revision *int64 `json:"revision,omitempty"`
-
-	// Version of the JSON schema, incremented each time a Grafana update brings
-	// changes to said schema.
-	// TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion
-	SchemaVersion int `json:"schemaVersion"`
-
-	// TODO docs
-	Snapshot *Snapshot `json:"snapshot,omitempty"`
-
-	// Theme of dashboard.
-	Style Style `json:"style"`
-
-	// Tags associated with dashboard.
-	Tags []string `json:"tags,omitempty"`
-
-	// TODO docs
-	Templating *struct {
-		List []VariableModel `json:"list,omitempty"`
-	} `json:"templating,omitempty"`
-
-	// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
-	Time *struct {
-		From string `json:"from"`
-		To   string `json:"to"`
-	} `json:"time,omitempty"`
-
-	// TODO docs
-	// TODO this appears to be spread all over in the frontend. Concepts will likely need tidying in tandem with schema changes
-	Timepicker *struct {
-		// Whether timepicker is collapsed or not.
-		Collapse bool `json:"collapse"`
-
-		// Whether timepicker is enabled or not.
-		Enable bool `json:"enable"`
-
-		// Whether timepicker is visible or not.
-		Hidden bool `json:"hidden"`
-
-		// Selectable intervals for auto-refresh.
-		RefreshIntervals []string `json:"refresh_intervals"`
-
-		// TODO docs
-		TimeOptions []string `json:"time_options"`
-	} `json:"timepicker,omitempty"`
-
-	// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
-	Timezone *string `json:"timezone,omitempty"`
-
-	// Title of dashboard.
-	Title *string `json:"title,omitempty"`
-
-	// Unique dashboard identifier that can be generated by anyone. string (8-40)
-	Uid *string `json:"uid,omitempty"`
-
-	// Version of the dashboard, incremented each time the dashboard is updated.
-	Version *int `json:"version,omitempty"`
-
-	// TODO docs
-	WeekStart *string `json:"weekStart,omitempty"`
-}
-
-// Theme of dashboard.
-type Style string
-
 // 0 for no shared crosshair or tooltip (default).
 // 1 for shared crosshair.
 // 2 for shared crosshair AND shared tooltip.
-type CursorSync int
+type SpecDashboardCursorSync int
 
 // FROM public/app/features/dashboard/state/Models.ts - ish
 // TODO docs
-type Link struct {
+type SpecDashboardLink struct {
 	AsDropdown  bool     `json:"asDropdown"`
 	Icon        string   `json:"icon"`
 	IncludeVars bool     `json:"includeVars"`
@@ -322,15 +324,15 @@ type Link struct {
 	Tooltip     string   `json:"tooltip"`
 
 	// TODO docs
-	Type LinkType `json:"type"`
-	Url  string   `json:"url"`
+	Type SpecDashboardLinkType `json:"type"`
+	Url  string                `json:"url"`
 }
 
 // TODO docs
-type LinkType string
+type SpecDashboardLinkType string
 
 // Ref to a DataSource instance
-type DataSourceRef struct {
+type SpecDataSourceRef struct {
 	// The plugin type-id
 	Type *string `json:"type,omitempty"`
 
@@ -339,10 +341,10 @@ type DataSourceRef struct {
 }
 
 // TODO docs
-type DataTransformerConfig struct {
+type SpecDataTransformerConfig struct {
 	// Disabled transformations are skipped
-	Disabled *bool          `json:"disabled,omitempty"`
-	Filter   *MatcherConfig `json:"filter,omitempty"`
+	Disabled *bool              `json:"disabled,omitempty"`
+	Filter   *SpecMatcherConfig `json:"filter,omitempty"`
 
 	// Unique identifier of transformer
 	Id string `json:"id"`
@@ -352,14 +354,14 @@ type DataTransformerConfig struct {
 	Options interface{} `json:"options"`
 }
 
-// DynamicConfigValue defines model for DynamicConfigValue.
-type DynamicConfigValue struct {
+// SpecDynamicConfigValue defines model for spec.#DynamicConfigValue.
+type SpecDynamicConfigValue struct {
 	Id    string       `json:"id"`
 	Value *interface{} `json:"value,omitempty"`
 }
 
 // TODO docs
-type FieldColor struct {
+type SpecFieldColor struct {
 	// Stores the fixed color value if mode is fixed
 	FixedColor *string `json:"fixedColor,omitempty"`
 
@@ -367,19 +369,19 @@ type FieldColor struct {
 	Mode string `json:"mode"`
 
 	// TODO docs
-	SeriesBy *FieldColorSeriesByMode `json:"seriesBy,omitempty"`
+	SeriesBy *SpecFieldColorSeriesByMode `json:"seriesBy,omitempty"`
 }
 
 // TODO docs
-type FieldColorModeId string
+type SpecFieldColorModeId string
 
 // TODO docs
-type FieldColorSeriesByMode string
+type SpecFieldColorSeriesByMode string
 
-// FieldConfig defines model for FieldConfig.
-type FieldConfig struct {
+// SpecFieldConfig defines model for spec.#FieldConfig.
+type SpecFieldConfig struct {
 	// TODO docs
-	Color *FieldColor `json:"color,omitempty"`
+	Color *SpecFieldColor `json:"color,omitempty"`
 
 	// custom is specified by the PanelFieldConfig field
 	// in panel plugin schemas.
@@ -417,8 +419,8 @@ type FieldConfig struct {
 	//
 	// When defined, this value can be used as an identifier within the datasource scope, and
 	// may be used to update the results
-	Path       *string           `json:"path,omitempty"`
-	Thresholds *ThresholdsConfig `json:"thresholds,omitempty"`
+	Path       *string               `json:"path,omitempty"`
+	Thresholds *SpecThresholdsConfig `json:"thresholds,omitempty"`
 
 	// Numeric Options
 	Unit *string `json:"unit,omitempty"`
@@ -427,31 +429,31 @@ type FieldConfig struct {
 	Writeable *bool `json:"writeable,omitempty"`
 }
 
-// FieldConfigSource defines model for FieldConfigSource.
-type FieldConfigSource struct {
-	Defaults  FieldConfig `json:"defaults"`
+// SpecFieldConfigSource defines model for spec.#FieldConfigSource.
+type SpecFieldConfigSource struct {
+	Defaults  SpecFieldConfig `json:"defaults"`
 	Overrides []struct {
-		Matcher    MatcherConfig        `json:"matcher"`
-		Properties []DynamicConfigValue `json:"properties"`
+		Matcher    SpecMatcherConfig        `json:"matcher"`
+		Properties []SpecDynamicConfigValue `json:"properties"`
 	} `json:"overrides"`
 }
 
 // Support for legacy graph and heatmap panels.
-type GraphPanel struct {
+type SpecGraphPanel struct {
 	// @deprecated this is part of deprecated graph panel
 	Legend *struct {
 		Show     bool    `json:"show"`
 		Sort     *string `json:"sort,omitempty"`
 		SortDesc *bool   `json:"sortDesc,omitempty"`
 	} `json:"legend,omitempty"`
-	Type GraphPanelType `json:"type"`
+	Type SpecGraphPanelType `json:"type"`
 }
 
-// GraphPanelType defines model for GraphPanel.Type.
-type GraphPanelType string
+// SpecGraphPanelType defines model for SpecGraphPanel.Type.
+type SpecGraphPanelType string
 
-// GridPos defines model for GridPos.
-type GridPos struct {
+// SpecGridPos defines model for spec.#GridPos.
+type SpecGridPos struct {
 	// H Panel
 	H int `json:"h"`
 
@@ -468,28 +470,28 @@ type GridPos struct {
 	Y int `json:"y"`
 }
 
-// HeatmapPanel defines model for HeatmapPanel.
-type HeatmapPanel struct {
-	Type HeatmapPanelType `json:"type"`
+// SpecHeatmapPanel defines model for spec.#HeatmapPanel.
+type SpecHeatmapPanel struct {
+	Type SpecHeatmapPanelType `json:"type"`
 }
 
-// HeatmapPanelType defines model for HeatmapPanel.Type.
-type HeatmapPanelType string
+// SpecHeatmapPanelType defines model for SpecHeatmapPanel.Type.
+type SpecHeatmapPanelType string
 
-// LibraryPanelRef defines model for LibraryPanelRef.
-type LibraryPanelRef struct {
+// SpecLibraryPanelRef defines model for spec.#LibraryPanelRef.
+type SpecLibraryPanelRef struct {
 	Name string `json:"name"`
 	Uid  string `json:"uid"`
 }
 
-// LoadingState defines model for LoadingState.
-type LoadingState string
+// SpecLoadingState defines model for spec.#LoadingState.
+type SpecLoadingState string
 
 // TODO docs
-type MappingType string
+type SpecMappingType string
 
-// MatcherConfig defines model for MatcherConfig.
-type MatcherConfig struct {
+// SpecMatcherConfig defines model for spec.#MatcherConfig.
+type SpecMatcherConfig struct {
 	Id      string       `json:"id"`
 	Options *interface{} `json:"options,omitempty"`
 }
@@ -497,7 +499,7 @@ type MatcherConfig struct {
 // Dashboard panels. Panels are canonically defined inline
 // because they share a version timeline with the dashboard
 // schema; they do not evolve independently.
-type Panel struct {
+type SpecPanel struct {
 	// The datasource used in all targets.
 	Datasource *struct {
 		Type *string `json:"type,omitempty"`
@@ -505,21 +507,21 @@ type Panel struct {
 	} `json:"datasource,omitempty"`
 
 	// Description Description.
-	Description *string           `json:"description,omitempty"`
-	FieldConfig FieldConfigSource `json:"fieldConfig"`
-	GridPos     *GridPos          `json:"gridPos,omitempty"`
+	Description *string               `json:"description,omitempty"`
+	FieldConfig SpecFieldConfigSource `json:"fieldConfig"`
+	GridPos     *SpecGridPos          `json:"gridPos,omitempty"`
 
 	// TODO docs
 	Id *int `json:"id,omitempty"`
 
 	// TODO docs
 	// TODO tighter constraint
-	Interval     *string          `json:"interval,omitempty"`
-	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
+	Interval     *string              `json:"interval,omitempty"`
+	LibraryPanel *SpecLibraryPanelRef `json:"libraryPanel,omitempty"`
 
 	// Panel links.
 	// TODO fill this out - seems there are a couple variants?
-	Links []Link `json:"links,omitempty"`
+	Links []SpecDashboardLink `json:"links,omitempty"`
 
 	// TODO docs
 	MaxDataPoints *float32 `json:"maxDataPoints,omitempty"`
@@ -537,7 +539,7 @@ type Panel struct {
 	// Direction to repeat in if 'repeat' is set.
 	// "h" for horizontal, "v" for vertical.
 	// TODO this is probably optional
-	RepeatDirection PanelRepeatDirection `json:"repeatDirection"`
+	RepeatDirection SpecPanelRepeatDirection `json:"repeatDirection"`
 
 	// Id of the repeating panel.
 	RepeatPanelId *int64 `json:"repeatPanelId,omitempty"`
@@ -546,7 +548,7 @@ type Panel struct {
 	Tags []string `json:"tags,omitempty"`
 
 	// TODO docs
-	Targets []Target `json:"targets,omitempty"`
+	Targets []SpecTarget `json:"targets,omitempty"`
 
 	// TODO docs - seems to be an old field from old dashboard alerts?
 	Thresholds []interface{} `json:"thresholds,omitempty"`
@@ -563,8 +565,8 @@ type Panel struct {
 	TimeShift *string `json:"timeShift,omitempty"`
 
 	// Panel title.
-	Title           *string                 `json:"title,omitempty"`
-	Transformations []DataTransformerConfig `json:"transformations"`
+	Title           *string                     `json:"title,omitempty"`
+	Transformations []SpecDataTransformerConfig `json:"transformations"`
 
 	// Whether to display the panel without a background.
 	Transparent bool `json:"transparent"`
@@ -576,40 +578,40 @@ type Panel struct {
 // Direction to repeat in if 'repeat' is set.
 // "h" for horizontal, "v" for vertical.
 // TODO this is probably optional
-type PanelRepeatDirection string
+type SpecPanelRepeatDirection string
 
 // TODO docs
-type RangeMap struct {
+type SpecRangeMap struct {
 	Options struct {
 		// From to and from are `number | null` in current ts, really not sure what to do
 		From float64 `json:"from"`
 
 		// TODO docs
-		Result ValueMappingResult `json:"result"`
-		To     float64            `json:"to"`
+		Result SpecValueMappingResult `json:"result"`
+		To     float64                `json:"to"`
 	} `json:"options"`
-	Type RangeMapType `json:"type"`
+	Type SpecRangeMapType `json:"type"`
 }
 
-// RangeMapType defines model for RangeMap.Type.
-type RangeMapType string
+// SpecRangeMapType defines model for SpecRangeMap.Type.
+type SpecRangeMapType string
 
 // TODO docs
-type RegexMap struct {
+type SpecRegexMap struct {
 	Options struct {
 		Pattern string `json:"pattern"`
 
 		// TODO docs
-		Result ValueMappingResult `json:"result"`
+		Result SpecValueMappingResult `json:"result"`
 	} `json:"options"`
-	Type RegexMapType `json:"type"`
+	Type SpecRegexMapType `json:"type"`
 }
 
-// RegexMapType defines model for RegexMap.Type.
-type RegexMapType string
+// SpecRegexMapType defines model for SpecRegexMap.Type.
+type SpecRegexMapType string
 
 // Row panel
-type RowPanel struct {
+type SpecRowPanel struct {
 	Collapsed bool `json:"collapsed"`
 
 	// Name of default datasource.
@@ -617,21 +619,21 @@ type RowPanel struct {
 		Type *string `json:"type,omitempty"`
 		Uid  *string `json:"uid,omitempty"`
 	} `json:"datasource,omitempty"`
-	GridPos *GridPos      `json:"gridPos,omitempty"`
+	GridPos *SpecGridPos  `json:"gridPos,omitempty"`
 	Id      int           `json:"id"`
 	Panels  []interface{} `json:"panels"`
 
 	// Name of template variable to repeat for.
-	Repeat *string      `json:"repeat,omitempty"`
-	Title  *string      `json:"title,omitempty"`
-	Type   RowPanelType `json:"type"`
+	Repeat *string          `json:"repeat,omitempty"`
+	Title  *string          `json:"title,omitempty"`
+	Type   SpecRowPanelType `json:"type"`
 }
 
-// RowPanelType defines model for RowPanel.Type.
-type RowPanelType string
+// SpecRowPanelType defines model for SpecRowPanel.Type.
+type SpecRowPanelType string
 
 // TODO docs
-type Snapshot struct {
+type SpecSnapshot struct {
 	// TODO docs
 	Created string `json:"created"`
 
@@ -667,25 +669,25 @@ type Snapshot struct {
 }
 
 // TODO docs
-type SpecialValueMap struct {
+type SpecSpecialValueMap struct {
 	Options struct {
-		Match   SpecialValueMapOptionsMatch `json:"match"`
-		Pattern string                      `json:"pattern"`
+		Match   SpecSpecialValueMapOptionsMatch `json:"match"`
+		Pattern string                          `json:"pattern"`
 
 		// TODO docs
-		Result ValueMappingResult `json:"result"`
+		Result SpecValueMappingResult `json:"result"`
 	} `json:"options"`
-	Type SpecialValueMapType `json:"type"`
+	Type SpecSpecialValueMapType `json:"type"`
 }
 
-// SpecialValueMapOptionsMatch defines model for SpecialValueMap.Options.Match.
-type SpecialValueMapOptionsMatch string
+// SpecSpecialValueMapOptionsMatch defines model for SpecSpecialValueMap.Options.Match.
+type SpecSpecialValueMapOptionsMatch string
 
-// SpecialValueMapType defines model for SpecialValueMap.Type.
-type SpecialValueMapType string
+// SpecSpecialValueMapType defines model for SpecSpecialValueMap.Type.
+type SpecSpecialValueMapType string
 
 // TODO docs
-type SpecialValueMatch string
+type SpecSpecialValueMatch string
 
 // Schema for panel targets is specified by datasource
 // plugins. We use a placeholder definition, which the Go
@@ -694,10 +696,10 @@ type SpecialValueMatch string
 // with types derived from plugins in the Instance variant.
 // When working directly from CUE, importers can extend this
 // type directly to achieve the same effect.
-type Target = map[string]interface{}
+type SpecTarget = map[string]interface{}
 
 // TODO docs
-type Threshold struct {
+type SpecThreshold struct {
 	// TODO docs
 	Color string `json:"color"`
 
@@ -714,66 +716,66 @@ type Threshold struct {
 	Value *float32 `json:"value,omitempty"`
 }
 
-// ThresholdsConfig defines model for ThresholdsConfig.
-type ThresholdsConfig struct {
-	Mode ThresholdsMode `json:"mode"`
+// SpecThresholdsConfig defines model for spec.#ThresholdsConfig.
+type SpecThresholdsConfig struct {
+	Mode SpecThresholdsMode `json:"mode"`
 
 	// Must be sorted by 'value', first value is always -Infinity
-	Steps []Threshold `json:"steps"`
+	Steps []SpecThreshold `json:"steps"`
 }
 
-// ThresholdsMode defines model for ThresholdsMode.
-type ThresholdsMode string
+// SpecThresholdsMode defines model for spec.#ThresholdsMode.
+type SpecThresholdsMode string
 
 // TODO docs
-type ValueMap struct {
-	Options map[string]ValueMappingResult `json:"options"`
-	Type    ValueMapType                  `json:"type"`
+type SpecValueMap struct {
+	Options map[string]SpecValueMappingResult `json:"options"`
+	Type    SpecValueMapType                  `json:"type"`
 }
 
-// ValueMapType defines model for ValueMap.Type.
-type ValueMapType string
+// SpecValueMapType defines model for SpecValueMap.Type.
+type SpecValueMapType string
 
 // TODO docs
-type ValueMappingResult struct {
+type SpecValueMappingResult struct {
 	Color *string `json:"color,omitempty"`
 	Icon  *string `json:"icon,omitempty"`
 	Index *int32  `json:"index,omitempty"`
 	Text  *string `json:"text,omitempty"`
 }
 
-// VariableHide defines model for VariableHide.
-type VariableHide int
+// SpecVariableHide defines model for spec.#VariableHide.
+type SpecVariableHide int
 
 // FROM: packages/grafana-data/src/types/templateVars.ts
 // TODO docs
 // TODO what about what's in public/app/features/types.ts?
 // TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
-type VariableModel struct {
+type SpecVariableModel struct {
 	// Ref to a DataSource instance
-	Datasource  *DataSourceRef         `json:"datasource,omitempty"`
+	Datasource  *SpecDataSourceRef     `json:"datasource,omitempty"`
 	Description *string                `json:"description,omitempty"`
 	Error       map[string]interface{} `json:"error,omitempty"`
 	Global      bool                   `json:"global"`
-	Hide        VariableHide           `json:"hide"`
+	Hide        SpecVariableHide       `json:"hide"`
 	Id          string                 `json:"id"`
 	Index       int                    `json:"index"`
 	Label       *string                `json:"label,omitempty"`
 	Name        string                 `json:"name"`
 
 	// TODO: Move this into a separated QueryVariableModel type
-	Query        *interface{} `json:"query,omitempty"`
-	RootStateKey *string      `json:"rootStateKey,omitempty"`
-	SkipUrlSync  bool         `json:"skipUrlSync"`
-	State        LoadingState `json:"state"`
+	Query        *interface{}     `json:"query,omitempty"`
+	RootStateKey *string          `json:"rootStateKey,omitempty"`
+	SkipUrlSync  bool             `json:"skipUrlSync"`
+	State        SpecLoadingState `json:"state"`
 
 	// FROM: packages/grafana-data/src/types/templateVars.ts
 	// TODO docs
 	// TODO this implies some wider pattern/discriminated union, probably?
-	Type VariableType `json:"type"`
+	Type SpecVariableType `json:"type"`
 }
 
 // FROM: packages/grafana-data/src/types/templateVars.ts
 // TODO docs
 // TODO this implies some wider pattern/discriminated union, probably?
-type VariableType string
+type SpecVariableType string

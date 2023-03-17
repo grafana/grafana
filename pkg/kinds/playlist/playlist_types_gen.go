@@ -10,38 +10,40 @@
 
 package playlist
 
-// Defines values for ItemType.
+// Defines values for SpecItemType.
 const (
-	ItemTypeDashboardById  ItemType = "dashboard_by_id"
-	ItemTypeDashboardByTag ItemType = "dashboard_by_tag"
-	ItemTypeDashboardByUid ItemType = "dashboard_by_uid"
+	SpecPlaylistItemTypeDashboardById  SpecPlaylistItemType = "dashboard_by_id"
+	SpecPlaylistItemTypeDashboardByTag SpecPlaylistItemType = "dashboard_by_tag"
+	SpecPlaylistItemTypeDashboardByUid SpecPlaylistItemType = "dashboard_by_uid"
 )
 
 // Playlist defines model for Playlist.
 type Playlist struct {
-	// Interval sets the time between switching views in a playlist.
-	// FIXME: Is this based on a standardized format or what options are available? Can datemath be used?
-	Interval string `json:"interval"`
+	Spec struct {
+		// Interval sets the time between switching views in a playlist.
+		// FIXME: Is this based on a standardized format or what options are available? Can datemath be used?
+		Interval string `json:"interval"`
 
-	// The ordered list of items that the playlist will iterate over.
-	// FIXME! This should not be optional, but changing it makes the godegen awkward
-	Items []Item `json:"items,omitempty"`
+		// The ordered list of items that the playlist will iterate over.
+		// FIXME! This should not be optional, but changing it makes the godegen awkward
+		Items []SpecPlaylistItem `json:"items,omitempty"`
 
-	// Name of the playlist.
-	Name string `json:"name"`
+		// Name of the playlist.
+		Name string `json:"name"`
 
-	// Unique playlist identifier. Generated on creation, either by the
-	// creator of the playlist of by the application.
-	Uid string `json:"uid"`
+		// Unique playlist identifier. Generated on creation, either by the
+		// creator of the playlist of by the application.
+		Uid string `json:"uid"`
+	} `json:"spec"`
 }
 
-// Item defines model for Item.
-type Item struct {
+// SpecItem defines model for spec.#Item.
+type SpecPlaylistItem struct {
 	// Title is an unused property -- it will be removed in the future
 	Title *string `json:"title,omitempty"`
 
 	// Type of the item.
-	Type ItemType `json:"type"`
+	Type SpecPlaylistItemType `json:"type"`
 
 	// Value depends on type and describes the playlist item.
 	//
@@ -55,4 +57,4 @@ type Item struct {
 }
 
 // Type of the item.
-type ItemType string
+type SpecPlaylistItemType string

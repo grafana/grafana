@@ -22,51 +22,56 @@ spec:
                 properties:
                     spec:
                         properties:
-                            accessControl:
-                                additionalProperties:
-                                    type: boolean
-                                description: AccessControl metadata associated with a given resource.
+                            spec:
+                                properties:
+                                    accessControl:
+                                        additionalProperties:
+                                            type: boolean
+                                        description: AccessControl metadata associated with a given resource.
+                                        type: object
+                                    avatarUrl:
+                                        description: AvatarUrl is the team's avatar URL.
+                                        type: string
+                                    created:
+                                        description: Created indicates when the team was created.
+                                        format: int64
+                                        type: integer
+                                    email:
+                                        description: Email of the team.
+                                        type: string
+                                    memberCount:
+                                        description: MemberCount is the number of the team members.
+                                        format: int64
+                                        type: integer
+                                    name:
+                                        description: Name of the team.
+                                        type: string
+                                    orgId:
+                                        description: OrgId is the ID of an organisation the team belongs to.
+                                        format: int64
+                                        type: integer
+                                    permission:
+                                        description: TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
+                                        enum:
+                                            - 0
+                                            - 1
+                                            - 2
+                                            - 4
+                                        type: integer
+                                    updated:
+                                        description: Updated indicates when the team was updated.
+                                        format: int64
+                                        type: integer
+                                required:
+                                    - orgId
+                                    - name
+                                    - memberCount
+                                    - permission
+                                    - created
+                                    - updated
                                 type: object
-                            avatarUrl:
-                                description: AvatarUrl is the team's avatar URL.
-                                type: string
-                            created:
-                                description: Created indicates when the team was created.
-                                format: int64
-                                type: integer
-                            email:
-                                description: Email of the team.
-                                type: string
-                            memberCount:
-                                description: MemberCount is the number of the team members.
-                                format: int64
-                                type: integer
-                            name:
-                                description: Name of the team.
-                                type: string
-                            orgId:
-                                description: OrgId is the ID of an organisation the team belongs to.
-                                format: int64
-                                type: integer
-                            permission:
-                                description: TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
-                                enum:
-                                    - 0
-                                    - 1
-                                    - 2
-                                    - 4
-                                type: integer
-                            updated:
-                                description: Updated indicates when the team was updated.
-                                format: int64
-                                type: integer
                         required:
-                            - orgId
-                            - name
-                            - memberCount
-                            - permission
-                            - created
-                            - updated
+                            - spec
                         type: object
                 required:
                     - spec

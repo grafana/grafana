@@ -22,30 +22,35 @@ spec:
                 properties:
                     spec:
                         properties:
-                            homeDashboardUID:
-                                description: UID for the home dashboard
-                                type: string
-                            language:
-                                description: Selected language (beta)
-                                type: string
-                            queryHistory:
-                                description: Explore query history preferences
+                            spec:
                                 properties:
-                                    homeTab:
-                                        description: 'one of: '''' | ''query'' | ''starred'';'
+                                    homeDashboardUID:
+                                        description: UID for the home dashboard
+                                        type: string
+                                    language:
+                                        description: Selected language (beta)
+                                        type: string
+                                    queryHistory:
+                                        description: Explore query history preferences
+                                        properties:
+                                            homeTab:
+                                                description: 'one of: '''' | ''query'' | ''starred'';'
+                                                type: string
+                                        type: object
+                                    theme:
+                                        description: light, dark, empty is default
+                                        type: string
+                                    timezone:
+                                        description: |-
+                                            The timezone selection
+                                            TODO: this should use the timezone defined in common
+                                        type: string
+                                    weekStart:
+                                        description: day of the week (sunday, monday, etc)
                                         type: string
                                 type: object
-                            theme:
-                                description: light, dark, empty is default
-                                type: string
-                            timezone:
-                                description: |-
-                                    The timezone selection
-                                    TODO: this should use the timezone defined in common
-                                type: string
-                            weekStart:
-                                description: day of the week (sunday, monday, etc)
-                                type: string
+                        required:
+                            - spec
                         type: object
                 required:
                     - spec

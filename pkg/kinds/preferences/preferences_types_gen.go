@@ -12,26 +12,28 @@ package preferences
 
 // Preferences defines model for Preferences.
 type Preferences struct {
-	// UID for the home dashboard
-	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
+	Spec struct {
+		// UID for the home dashboard
+		HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
 
-	// Selected language (beta)
-	Language     *string                 `json:"language,omitempty"`
-	QueryHistory *QueryHistoryPreference `json:"queryHistory,omitempty"`
+		// Selected language (beta)
+		Language     *string                     `json:"language,omitempty"`
+		QueryHistory *SpecQueryHistoryPreference `json:"queryHistory,omitempty"`
 
-	// Theme light, dark, empty is default
-	Theme *string `json:"theme,omitempty"`
+		// Theme light, dark, empty is default
+		Theme *string `json:"theme,omitempty"`
 
-	// The timezone selection
-	// TODO: this should use the timezone defined in common
-	Timezone *string `json:"timezone,omitempty"`
+		// The timezone selection
+		// TODO: this should use the timezone defined in common
+		Timezone *string `json:"timezone,omitempty"`
 
-	// WeekStart day of the week (sunday, monday, etc)
-	WeekStart *string `json:"weekStart,omitempty"`
+		// WeekStart day of the week (sunday, monday, etc)
+		WeekStart *string `json:"weekStart,omitempty"`
+	} `json:"spec"`
 }
 
-// QueryHistoryPreference defines model for QueryHistoryPreference.
-type QueryHistoryPreference struct {
+// SpecQueryHistoryPreference defines model for spec.#QueryHistoryPreference.
+type SpecQueryHistoryPreference struct {
 	// HomeTab one of: '' | 'query' | 'starred';
 	HomeTab *string `json:"homeTab,omitempty"`
 }

@@ -13,6 +13,12 @@ title: Team kind
 
 A team is a named grouping of Grafana users to which access control rules may be assigned.
 
+| Property | Type            | Required | Description |
+|----------|-----------------|----------|-------------|
+| `spec`   | [object](#spec) | **Yes**  |             |
+
+### Spec
+
 | Property        | Type               | Required | Description                                              |
 |-----------------|--------------------|----------|----------------------------------------------------------|
 | `created`       | integer            | **Yes**  | Created indicates when the team was created.             |

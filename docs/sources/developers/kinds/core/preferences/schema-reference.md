@@ -13,16 +13,22 @@ title: Preferences kind
 
 The user or team frontend preferences
 
-| Property           | Type                                              | Required | Description                                                                     |
-|--------------------|---------------------------------------------------|----------|---------------------------------------------------------------------------------|
-| `homeDashboardUID` | string                                            | No       | UID for the home dashboard                                                      |
-| `language`         | string                                            | No       | Selected language (beta)                                                        |
-| `queryHistory`     | [QueryHistoryPreference](#queryhistorypreference) | No       |                                                                                 |
-| `theme`            | string                                            | No       | light, dark, empty is default                                                   |
-| `timezone`         | string                                            | No       | The timezone selection<br/>TODO: this should use the timezone defined in common |
-| `weekStart`        | string                                            | No       | day of the week (sunday, monday, etc)                                           |
+| Property | Type            | Required | Description |
+|----------|-----------------|----------|-------------|
+| `spec`   | [object](#spec) | **Yes**  |             |
 
-### QueryHistoryPreference
+### Spec
+
+| Property           | Type                                                          | Required | Description                                                                     |
+|--------------------|---------------------------------------------------------------|----------|---------------------------------------------------------------------------------|
+| `homeDashboardUID` | string                                                        | No       | UID for the home dashboard                                                      |
+| `language`         | string                                                        | No       | Selected language (beta)                                                        |
+| `queryHistory`     | [spec.#QueryHistoryPreference](#spec.#queryhistorypreference) | No       |                                                                                 |
+| `theme`            | string                                                        | No       | light, dark, empty is default                                                   |
+| `timezone`         | string                                                        | No       | The timezone selection<br/>TODO: this should use the timezone defined in common |
+| `weekStart`        | string                                                        | No       | day of the week (sunday, monday, etc)                                           |
+
+### Spec.#QueryHistoryPreference
 
 | Property  | Type   | Required | Description                                 |
 |-----------|--------|----------|---------------------------------------------|

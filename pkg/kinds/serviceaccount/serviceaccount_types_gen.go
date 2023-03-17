@@ -10,53 +10,55 @@
 
 package serviceaccount
 
-// Defines values for OrgRole.
+// Defines values for SpecOrgRole.
 const (
-	OrgRoleAdmin  OrgRole = "Admin"
-	OrgRoleEditor OrgRole = "Editor"
-	OrgRoleViewer OrgRole = "Viewer"
+	SpecOrgRoleAdmin  SpecOrgRole = "Admin"
+	SpecOrgRoleEditor SpecOrgRole = "Editor"
+	SpecOrgRoleViewer SpecOrgRole = "Viewer"
 )
-
-// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
-type OrgRole string
 
 // ServiceAccount defines model for ServiceAccount.
 type ServiceAccount struct {
-	// AccessControl metadata associated with a given resource.
-	AccessControl map[string]bool `json:"accessControl,omitempty"`
+	Spec struct {
+		// AccessControl metadata associated with a given resource.
+		AccessControl map[string]bool `json:"accessControl,omitempty"`
 
-	// AvatarUrl is the service account's avatar URL. It allows the frontend to display a picture in front
-	// of the service account.
-	AvatarUrl string `json:"avatarUrl"`
+		// AvatarUrl is the service account's avatar URL. It allows the frontend to display a picture in front
+		// of the service account.
+		AvatarUrl string `json:"avatarUrl"`
 
-	// Created indicates when the service account was created.
-	Created *int64 `json:"created,omitempty"`
+		// Created indicates when the service account was created.
+		Created *int64 `json:"created,omitempty"`
 
-	// ID is the unique identifier of the service account in the database.
-	Id int64 `json:"id"`
+		// ID is the unique identifier of the service account in the database.
+		Id int64 `json:"id"`
 
-	// IsDisabled indicates if the service account is disabled.
-	IsDisabled bool `json:"isDisabled"`
+		// IsDisabled indicates if the service account is disabled.
+		IsDisabled bool `json:"isDisabled"`
 
-	// Login of the service account.
-	Login string `json:"login"`
+		// Login of the service account.
+		Login string `json:"login"`
 
-	// Name of the service account.
-	Name string `json:"name"`
+		// Name of the service account.
+		Name string `json:"name"`
 
-	// OrgId is the ID of an organisation the service account belongs to.
-	OrgId int64 `json:"orgId"`
+		// OrgId is the ID of an organisation the service account belongs to.
+		OrgId int64 `json:"orgId"`
 
-	// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
-	Role OrgRole `json:"role"`
+		// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
+		Role SpecOrgRole `json:"role"`
 
-	// Teams is a list of teams the service account belongs to.
-	Teams []string `json:"teams,omitempty"`
+		// Teams is a list of teams the service account belongs to.
+		Teams []string `json:"teams,omitempty"`
 
-	// Tokens is the number of active tokens for the service account.
-	// Tokens are used to authenticate the service account against Grafana.
-	Tokens int64 `json:"tokens"`
+		// Tokens is the number of active tokens for the service account.
+		// Tokens are used to authenticate the service account against Grafana.
+		Tokens int64 `json:"tokens"`
 
-	// Updated indicates when the service account was updated.
-	Updated *int64 `json:"updated,omitempty"`
+		// Updated indicates when the service account was updated.
+		Updated *int64 `json:"updated,omitempty"`
+	} `json:"spec"`
 }
+
+// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
+type SpecOrgRole string
