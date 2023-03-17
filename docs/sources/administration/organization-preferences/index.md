@@ -49,8 +49,8 @@ Follow these instructions if you are a Grafana Server Admin.
 
 If you are an Organization Admin, follow these steps:
 
-1. Hover your cursor over the **Configuration** (gear) icon.
-1. Click **Preferences**.
+1. Click **Administration** in the left-side menu.
+1. Click **Default preferences**.
 1. In **Organization name**, enter the new name.
 1. Click **Update organization name**.
 
@@ -59,11 +59,10 @@ If you are an Organization Admin, follow these steps:
 Organization administrators and team administrators can change team names and email addresses.
 To change the team name or email, follow these steps:
 
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
-1. Click **Teams**. Grafana displays the team list.
+1. Click **Administration** in the left-side menu and select **Team**.
 1. In the team list, click the name of the team that you want to change.
 1. Click the **Settings** tab.
-1. In the Team Settings section, you can edit the following:
+1. In the Team details section, you can edit the following:
    - **Name -** Edit this field to change the display name associated with the team.
    - **Email -** Edit this field to change the email address associated with the team.
 1. Click **Update**.
@@ -108,28 +107,27 @@ To see what the current settings are, refer to [View server settings]({{< relref
 
 Organization administrators can change the UI theme for all users in an organization.
 
-1. Hover your cursor over the **Configuration** (gear) icon.
-1. Click **Preferences**.
-1. In the **Preferences** section, select the **UI theme**.
+1. Click **Administration** in the left-side menu.
+1. Click **Default preferences**.
+1. In the Preferences section, select the UI theme.
 1. Click **Save**.
 
 ### Change team UI theme
 
 Organization and team administrators can change the UI theme for all users on a team.
 
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
-1. Click **Teams**. Grafana displays the team list.
+1. Click **Administration** in the left-side menu and select **Teams**.
 1. Click the team for which you want to change the UI theme.
-1. Click **Settings**.
-1. In the **Preferences** section, select the **UI theme**.
+1. Click the **Settings** tab.
+1. In the Preferences section, select the UI theme.
 1. Click **Save**.
 
 ### Change your personal UI theme
 
 You can change the UI theme for your user account. This setting overrides UI theme settings at higher levels.
 
-1. On the left menu, hover your cursor over your avatar and then click **Preferences**.
-1. In the **Preferences** section, select the **UI theme**.
+1. Click the user icon in the top right corner of the page and select **Profile**.
+1. In the Preferences section, select the UI theme.
 1. Click **Save**.
 
 ## Change the Grafana default timezone
@@ -146,8 +144,8 @@ Grafana server administrators can choose a default timezone for all users on the
 
 Organization administrators can choose a default timezone for their organization.
 
-1. Hover your cursor over the **Configuration** (gear) icon.
-1. Click **Preferences**.
+1. Click **Administration** in the left-side menu.
+1. Click **Default preferences**.
 1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level.
 1. Click **Save**.
 
@@ -155,10 +153,9 @@ Organization administrators can choose a default timezone for their organization
 
 Organization administrators and team administrators can choose a default timezone for all users on a team.
 
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
-1. Click **Teams**. Grafana displays the team list.
+1. Click **Administration** in the left-side menu and select **Teams**.
 1. Click the team for which you want to change the timezone.
-1. Click **Settings**
+1. Click the **Settings** tab.
 1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level.
 1. Click **Save**.
 
@@ -166,7 +163,7 @@ Organization administrators and team administrators can choose a default timezon
 
 You can change the timezone for your user account. This setting overrides timezone settings at higher levels.
 
-1. On the left menu, hover your cursor over your avatar and then click **Preferences**.
+1. Click the user icon in the top right corner of the page and select **Profile**.
 1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level.
 1. Click **Save**.
 
@@ -182,6 +179,8 @@ The home dashboard is the first dashboard a user sees when they sign in to Grafa
 
 1. Hover your cursor over the **Dashboards** (four squares) icon.
 1. Click **Home**.
+
+<!-- is this still a thing?-->
 
 ### Set the home dashboard for the server
 
@@ -212,8 +211,8 @@ Organization administrators can choose a default home dashboard for their organi
 
 1. Navigate to the dashboard you want to set as the home dashboard.
 1. Click the star next to the dashboard title to mark the dashboard as a favorite if it is not already.
-1. Hover your cursor over the **Configuration** (gear) icon.
-1. Click **Preferences**.
+1. Click **Administration** in the left-side menu.
+1. Click **Default preferences**.
 1. In the **Home Dashboard** field, select the dashboard that you want to use for your home dashboard. Options include all starred dashboards.
 1. Click **Save**.
 
@@ -223,10 +222,9 @@ Organization administrators and Team Admins can set a default home dashboard for
 
 1. Navigate to the dashboard you want to set as the home dashboard.
 1. Click the star next to the dashboard title to mark the dashboard as a favorite if it is not already.
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
-1. Click **Teams**. Grafana displays the team list.
+1. Click **Administration** in the left-side menu and select **Teams**.
 1. Click the team for which you want to change the home dashboard.
-1. Click **Settings**.
+1. Click the **Settings** tab.
 1. In the **Home Dashboard** field, select the dashboard that you want to use for your home dashboard. Options include all starred dashboards.
 1. Click **Save**.
 
@@ -236,7 +234,7 @@ You can choose your own personal home dashboard. This setting overrides all home
 
 1. Navigate to the dashboard you want to set as the home dashboard.
 1. Click the star next to the dashboard title to mark the dashboard as a favorite if it is not already.
-1. On the left menu, hover your cursor over your avatar and then click **Preferences**.
+1. Click the user icon in the top right corner of the page and select **Profile**.
 1. In the **Home Dashboard** field, select the dashboard that you want to use for your home dashboard. Options include all starred dashboards.
 1. Click **Save**.
 
@@ -250,26 +248,25 @@ Grafana server administrators can change the default Grafana UI language for all
 
 Organization administrators can change the language for all users in an organization.
 
-1. Hover your cursor over the **Configuration** (gear) icon.
-1. Click **Preferences**.
-1. In the **Preferences** section, select the **Language**.
+1. Click **Administration** in the left-side menu.
+1. Click **Default preferences**.
+1. In the Preferences section, select an option in the **Language** dropdown.
 1. Click **Save**.
 
 ### Change team language
 
 Organization and team administrators can set a default language for all users on a team.
 
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
-1. Click **Teams**. Grafana displays the team list.
+1. Click **Administration** in the left-side menu and select **Teams**.
 1. Click the team for which you want to change the language.
-1. Click **Settings**
-1. In the **Preferences** section, select the **Language**.
+1. Click the **Settings** tab.
+1. In the Preferences section, select an option in the **Language** dropdown.
 1. Click **Save**.
 
 ### Change your personal language
 
 You can change the language for your user account. This setting overrides language settings at higher levels.
 
-1. On the left menu, hover your cursor over your avatar and then click **Preferences**.
-1. In the **Preferences** section, select the **language**.
+1. Click the user icon in the top right corner of the page and select **Profile**.
+1. In the Preferences section, select an option in the **Language** dropdown.
 1. Click **Save**.
