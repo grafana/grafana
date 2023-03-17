@@ -84,11 +84,11 @@ describe('DataSourceWithBackend', () => {
           ],
         },
         "headers": {
-          "X-Query-Group-Id": "abc",
           "X-Dashboard-Uid": "dashA",
           "X-Datasource-Uid": "abc, <mockuid>",
           "X-Panel-Id": "123",
           "X-Plugin-Id": "dummy, sample",
+          "X-Query-Group-Id": "abc",
         },
         "hideFromInspector": false,
         "method": "POST",
