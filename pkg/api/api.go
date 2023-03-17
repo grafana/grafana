@@ -65,6 +65,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqCanAccessTeams := middleware.AdminOrEditorAndFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
+	ensureEditorOrViewerCanEdit := middleware.EnsureEditorOrViewerCanEdit(hs.Cfg)
 	authorize := ac.Middleware(hs.AccessControl)
 	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.accesscontrolService, hs.userService)
 	quota := middleware.Quota(hs.QuotaService)
@@ -177,7 +178,7 @@ func (hs *HTTPServer) registerRoutes() {
 		if f, ok := reqSignedIn.(func(c *contextmodel.ReqContext)); ok {
 			f(c)
 		}
-		middleware.EnsureEditorOrViewerCanEdit(c)
+		ensureEditorOrViewerCanEdit(c)
 	}, ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
 
 	r.Get("/playlists/", reqSignedIn, hs.Index)
