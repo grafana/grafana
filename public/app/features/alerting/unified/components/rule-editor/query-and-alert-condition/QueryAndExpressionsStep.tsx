@@ -72,8 +72,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   }, []);
 
   const runQueries = useCallback(() => {
-    const queries = getValues('queries');
-    console.log(queries);
     runner.current.run(getValues('queries'));
   }, [getValues]);
 
