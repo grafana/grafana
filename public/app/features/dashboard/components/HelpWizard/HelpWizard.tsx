@@ -203,7 +203,11 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
             </Stack>
           </Field>
 
-          {scene && <scene.Component model={scene} />}
+          <AutoSizer disableWidth>
+            {({ height }) => (
+              <div style={{ height, overflow: 'auto' }}>{scene && <scene.Component model={scene} />}</div>
+            )}
+          </AutoSizer>
         </>
       )}
     </Drawer>
