@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ../../plugins/developing/migration-guide#from-version-93x-to-94x
 description: Guide for migrating plugins from Grafana v9.3.x to v9.4.x
 keywords:
   - grafana

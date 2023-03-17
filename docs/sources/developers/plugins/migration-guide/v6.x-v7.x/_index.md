@@ -1,10 +1,4 @@
 ---
-aliases:
-  - ../../plugins/developing/migration-guide#from-version-62x-to-74x
-  - ../../plugins/developing/migration-guide#from-version-65x-to-73x
-  - ../../plugins/developing/migration-guide#from-version-6x-to-7x
-  - ../../plugins/developing/migration-guide#migrate-to-data-frames
-  - ../../plugins/developing/migration-guide#troubleshoot-plugin-migration
 description: Guide for migrating plugins from Grafana v6.x to v7.x
 keywords:
   - grafana

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ../../plugins/developing/migration-guide#from-version-8x-to-9x
 description: Guide for migrating plugins from Grafana v8.x to v9.x
 keywords:
   - grafana

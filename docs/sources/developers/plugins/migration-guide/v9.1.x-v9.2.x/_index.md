@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ../../plugins/developing/migration-guide#from-version-91x-to-92x
 description: Guide for migrating plugins from Grafana v9.1.x to v9.2.x
 keywords:
   - grafana

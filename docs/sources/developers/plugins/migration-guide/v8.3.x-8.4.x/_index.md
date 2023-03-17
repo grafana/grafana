@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ../../plugins/developing/migration-guide#from-version-83x-to-84x
 description: Guide for migrating plugins from Grafana v8.3.x to v8.4.x
 keywords:
   - grafana
