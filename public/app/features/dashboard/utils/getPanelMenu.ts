@@ -185,40 +185,6 @@ export function getPanelMenu(
     subMenu: inspectMenu,
   });
 
-  const { extensions } = getPluginExtensions({
-    placement: GrafanaExtensions.DashboardPanelMenu,
-    context: createExtensionContext(panel, dashboard),
-  });
-
-  if (extensions.length > 0) {
-    const extensionsMenu: PanelMenuItem[] = [];
-
-    for (const extension of extensions) {
-      if (isPluginExtensionLink(extension)) {
-        extensionsMenu.push({
-          text: truncateTitle(extension.title, 25),
-          href: extension.path,
-        });
-        continue;
-      }
-
-      if (isPluginExtensionCommand(extension)) {
-        extensionsMenu.push({
-          text: truncateTitle(extension.title, 25),
-          onClick: extension.callHandlerWithContext,
-        });
-        continue;
-      }
-    }
-
-    menu.push({
-      text: 'Extensions',
-      iconClassName: 'plug',
-      type: 'submenu',
-      subMenu: extensionsMenu,
-    });
-  }
-
   const subMenu: PanelMenuItem[] = [];
   const canEdit = dashboard.canEditPanel(panel);
 
@@ -299,6 +265,40 @@ export function getPanelMenu(
       iconClassName: 'cube',
       subMenu,
       onClick: onMore,
+    });
+  }
+
+  const { extensions } = getPluginExtensions({
+    placement: PluginExtensionPlacements.DashboardPanelMenu,
+    context: createExtensionContext(panel, dashboard),
+  });
+
+  if (extensions.length > 0) {
+    const extensionsMenu: PanelMenuItem[] = [];
+
+    for (const extension of extensions) {
+      if (isPluginExtensionLink(extension)) {
+        extensionsMenu.push({
+          text: truncateTitle(extension.title, 25),
+          href: extension.path,
+        });
+        continue;
+      }
+
+      if (isPluginExtensionCommand(extension)) {
+        extensionsMenu.push({
+          text: truncateTitle(extension.title, 25),
+          onClick: extension.callHandlerWithContext,
+        });
+        continue;
+      }
+    }
+
+    menu.push({
+      text: 'Extensions',
+      iconClassName: 'plug',
+      type: 'submenu',
+      subMenu: extensionsMenu,
     });
   }
 
