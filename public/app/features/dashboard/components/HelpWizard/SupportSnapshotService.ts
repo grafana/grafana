@@ -79,7 +79,7 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
     const snapshotSize = formattedValueToString(getValueFormat('bytes')(snapshotText?.length ?? 0));
 
     let scene: DashboardScene | undefined = undefined;
-    if (config.featureToggles.scenes) {
+    if (config.featureToggles.scenes && !panel.isAngularPlugin) {
       try {
         scene = createDashboardSceneFromDashboardModel(snapshot);
         scene.setState({
