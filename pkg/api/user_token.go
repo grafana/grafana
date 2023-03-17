@@ -54,18 +54,6 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.R
 	return hs.revokeUserAuthTokenInternal(c, c.UserID, cmd)
 }
 
-// swagger:route GET /user/auth-tokens/rotate
-//
-// # Rotate the auth token of the caller
-//
-// FIXME(kalleep): add longer description
-//
-// Responses:
-// 200: okResponse
-// 400: badRequestError
-// 401: unauthorisedError
-// 403: forbiddenError
-// 500: internalServerError
 func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) response.Response {
 	token := c.GetCookie(hs.Cfg.LoginCookieName)
 	if token == "" {
@@ -99,13 +87,12 @@ func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) re
 //
 // # Rotate the auth token of the caller
 //
-// FIXME(kalleep): add longer description
+// Rotate the token of caller, if successful send and new session cookie.
 //
 // Responses:
 // 200: okResponse
-// 400: badRequestError
 // 401: unauthorisedError
-// 403: forbiddenError
+// 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) RotateUserAuthToken(c *contextmodel.ReqContext) response.Response {
 	token := c.GetCookie(hs.Cfg.LoginCookieName)
