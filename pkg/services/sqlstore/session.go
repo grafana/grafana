@@ -95,7 +95,7 @@ func (ss *SQLStore) retryOnLocks(ctx context.Context, callback DBTransactionFunc
 			ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code", sqlError.Code)
 			// retryer immediately returns the error (if there is one) without checking the response
 			// therefore we only have to send it if we have reached the maximum retries
-			if retry == ss.dbCfg.QueryRetries {
+			if retry >= ss.dbCfg.QueryRetries {
 				return retryer.FuncError, ErrMaximumRetriesReached.Errorf("retry %d: %w", retry, err)
 			}
 			return retryer.FuncFailure, nil
