@@ -282,10 +282,11 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 	}
 
 	metrics.MApiLoginPost.Inc()
-	return response.JSON(http.StatusOK, map[string]any{
+	resp = response.JSON(http.StatusOK, map[string]any{
 		"message":     "Logged in",
 		"redirectUrl": hs.GetRedirectURL(c),
 	})
+	return resp
 }
 
 func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqContext) error {
