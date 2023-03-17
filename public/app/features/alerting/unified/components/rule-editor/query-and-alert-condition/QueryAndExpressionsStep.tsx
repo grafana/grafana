@@ -72,6 +72,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   }, []);
 
   const runQueries = useCallback(() => {
+    const queries = getValues('queries');
+    console.log(queries);
     runner.current.run(getValues('queries'));
   }, [getValues]);
 
@@ -222,9 +224,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       <AlertType editingExistingRule={editingExistingRule} />
 
       {/* This is the PromQL Editor for recording rules */}
-      {isRecordingRuleType && (
+      {isRecordingRuleType && dataSourceName && (
         <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
           <RecordingRuleEditor
+            dataSourceName={dataSourceName}
             queries={queries}
             runQueries={runQueries}
             onChangeQuery={onChangeRecordingRulesQueries}
