@@ -113,12 +113,12 @@ To automatically fix incorrectly escaped sequences that Explore has detected:
 
 Explore replaces these sequences. When it does so, the option will change from "Escape newlines" to "Remove escaping". Evaluate the changes as the parsing may not be accurate based on the input received. You can revert the replacements by clicking "Remove escaping".
 
-### Data links
+## Data links
 
 By using data links, you can turn any part of a log message into an internal or external link. The created link is visible as a button in the **Links** section inside the **Log details** view.
 {{< figure src="/static/img/docs/explore/data-link-9-4.png" max-width="800px" caption="Data link in Explore" >}}
 
-### Toggle field visibility
+## Toggle field visibility
 
 Expand a log line and click the eye icon to show or hide fields.
 
