@@ -14,4 +14,5 @@ export type Props = {
   onBlur: (value: string) => void;
   placeholder: string;
   datasource: LokiDatasource;
+  onQueryType?: (query: string) => void;
 };

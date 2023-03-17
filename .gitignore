@@ -79,6 +79,8 @@ public/css/*.min.css
 /devenv/docker-compose.override.yaml
 /devenv/.env
 /devenv/docker/blocks/tempo/tempo-data/
+/devenv/docker/ha-test-unified-alerting/logs/webhook/dumps/
+/devenv/docker/ha-test-unified-alerting/logs/webhook/webhook-listener.log
 
 conf/custom.ini
 /conf/provisioning/**/custom.yaml
