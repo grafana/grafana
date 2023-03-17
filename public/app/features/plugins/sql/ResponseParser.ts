@@ -14,13 +14,7 @@ export class ResponseParser implements ResponseParserType {
         values.push({ text: '' + textField.values.get(i), value: '' + valueField.values.get(i) });
       }
     } else {
-      values.push(
-        ...frame.fields
-          .flatMap((f) => f.values.toArray())
-          .map((v) => ({
-            text: v,
-          }))
-      );
+      frame.fields.flatMap((f) => f.values.toArray()).map((v) => values.push({ text: v }));
     }
 
     return uniqBy(values, 'text');
