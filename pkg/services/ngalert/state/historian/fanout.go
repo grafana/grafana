@@ -18,18 +18,20 @@ type Backend interface {
 // FanoutBackend is a state.Historian that records history to multiple backends at once.
 // Only one backend is used for reads. The backend selected for read traffic is called the primary and all others are called secondaries.
 type FanoutBackend struct {
-	targets []Backend
+	primary     Backend
+	secondaries []Backend
 }
 
 func NewFanoutBackend(primary Backend, secondaries ...Backend) *FanoutBackend {
 	return &FanoutBackend{
-		targets: append([]Backend{primary}, secondaries...),
+		primary:     primary,
+		secondaries: secondaries,
 	}
 }
 
 func (h *FanoutBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
-	jobs := make([]<-chan error, 0, len(h.targets))
-	for _, b := range h.targets {
+	jobs := make([]<-chan error, 0, len(h.secondaries)+1) // One extra for the primary.
+	for _, b := range append([]Backend{h.primary}, h.secondaries...) {
 		jobs = append(jobs, b.Record(ctx, rule, states))
 	}
 	errCh := make(chan error, 1)
