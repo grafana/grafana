@@ -1,176 +1,176 @@
 {
-    "annotations": {
-      "list": [
-        {
-          "builtIn": 1,
-          "datasource": {
-            "type": "grafana",
-            "uid": "-- Grafana --"
-          },
-          "enable": true,
-          "hide": true,
-          "iconColor": "rgba(0, 211, 255, 1)",
-          "name": "Annotations & Alerts",
-          "type": "dashboard"
-        }
-      ]
-    },
-    "editable": true,
-    "fiscalYearStartMonth": 0,
-    "graphTooltip": 0,
-    "links": [],
-    "liveNow": false,
-    "panels": [
+  "annotations": {
+    "list": [
       {
+        "builtIn": 1,
         "datasource": {
-          "type": "testdata",
-          "uid": "PD8C576611E62080A"
+          "type": "grafana",
+          "uid": "-- Grafana --"
         },
-        "fieldConfig": {
-          "defaults": {
-            "color": {
-              "mode": "thresholds"
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
-                },
-                {
-                  "color": "red",
-                  "value": 80
-                }
-              ]
-            }
-          },
-          "overrides": [
-            {
-              "matcher": {
-                "id": "byValue",
-                "options": {
-                  "op": "gte",
-                  "reducer": "diff",
-                  "value": 0
-                }
-              },
-              "properties": [
-                {
-                  "id": "custom.prefix",
-                  "value": "↑"
-                },
-                {
-                  "id": "custom.color",
-                  "value": "dark-green"
-                }
-              ]
-            },
-            {
-              "matcher": {
-                "id": "byValue",
-                "options": {
-                  "op": "lt",
-                  "reducer": "diff",
-                  "value": 0
-                }
-              },
-              "properties": [
-                {
-                  "id": "custom.prefix",
-                  "value": "↓"
-                },
-                {
-                  "id": "custom.color",
-                  "value": "dark-red"
-                }
-              ]
-            }
-          ]
-        },
-        "gridPos": {
-          "h": 11,
-          "w": 17,
-          "x": 0,
-          "y": 0
-        },
-        "id": 6,
-        "options": {
-          "colorMode": "value",
-          "graphMode": "area",
-          "justifyMode": "auto",
-          "orientation": "auto",
-          "reduceOptions": {
-            "calcs": [
-              "diff"
-            ],
-            "fields": "",
-            "values": false
-          },
-          "textMode": "auto"
-        },
-        "pluginVersion": "9.5.0-pre",
-        "targets": [
-          {
-            "datasource": {
-              "type": "testdata",
-              "uid": "PD8C576611E62080A"
-            },
-            "refId": "A",
-            "scenarioId": "random_walk",
-            "seriesCount": 8,
-            "startValue": 0
-          }
-        ],
-        "title": "Display depends on stats calculations",
-        "type": "stat"
-      },
-      {
-        "datasource": {
-          "type": "testdata",
-          "uid": "PD8C576611E62080A"
-        },
-        "gridPos": {
-          "h": 11,
-          "w": 7,
-          "x": 17,
-          "y": 0
-        },
-        "id": 8,
-        "options": {
-          "code": {
-            "language": "plaintext",
-            "showLineNumbers": false,
-            "showMiniMap": false
-          },
-          "content": "This panel shows an up arrow (↑) in green or down arrow (↓) in red depending on the difference between the first and last points in the series.",
-          "mode": "markdown"
-        },
-        "pluginVersion": "9.5.0-pre",
-        "title": "Panel Title",
-        "type": "text"
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
       }
-    ],
-    "refresh": "",
-    "schemaVersion": 38,
-    "style": "dark",
-    "tags": [
-      "gdev",
-      "panel-tests",
-      "graph-ng"
-    ],
-    "templating": {
-      "list": []
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "dark-blue",
+                "value": null
+              },
+              {
+                "color": "dark-yellow",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "diff",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.prefix",
+                "value": "↑"
+              },
+              {
+                "id": "custom.color",
+                "value": "dark-green"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "lt",
+                "reducer": "diff",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.prefix",
+                "value": "↓"
+              },
+              {
+                "id": "custom.color",
+                "value": "dark-red"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 17,
+        "x": 0,
+        "y": 0
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "diff"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 8,
+          "startValue": 0
+        }
+      ],
+      "title": "Display depends on stats calculations",
+      "type": "stat"
     },
-    "time": {
-      "from": "now-6h",
-      "to": "now"
-    },
-    "timepicker": {},
-    "timezone": "",
-    "title": "Stats panel conditional formatting",
-    "uid": "gdev052a8054fe",
-    "version": 5,
-    "weekStart": ""
-  }
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 7,
+        "x": 17,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "This panel shows an up arrow (↑) in green or down arrow (↓) in red depending on the difference between the first and last points in the series.",
+        "mode": "markdown"
+      },
+      "pluginVersion": "9.5.0-pre",
+      "title": "Panel Title",
+      "type": "text"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Stats panel conditional formatting",
+  "uid": "gdev052a8054fe",
+  "version": 6,
+  "weekStart": ""
+}

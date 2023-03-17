@@ -105,6 +105,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
       }
     }
 
+    console.log(this.props.replaceVariables, 'replaceVaqrs');
     return getFieldDisplayValues({
       fieldConfig,
       reduceOptions: options.reduceOptions,
@@ -113,7 +114,8 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
       data: data.series,
       sparkline: options.graphMode !== BigValueGraphMode.None,
       timeZone,
-    }).map((v) => applyDisplayOverrides(v, config.theme2, this.props.replaceVariables));
+      // Only apply the display overrides if the FieldType is `number`
+    }).map((v) => applyDisplayOverrides(v, config.theme2, this.props.replaceVariables, [FieldType.number]));
   };
 
   render() {

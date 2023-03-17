@@ -1,4 +1,4 @@
-import { FieldDisplay, FieldConfigEditorBuilder, InterpolateFunction, GrafanaTheme2 } from '@grafana/data';
+import { FieldDisplay, FieldConfigEditorBuilder, InterpolateFunction, GrafanaTheme2, FieldType } from '@grafana/data';
 
 import { PanelFieldConfig } from './panelcfg.gen';
 
@@ -53,35 +53,40 @@ export function addDisplayOverrideOptions(builder: FieldConfigEditorBuilder<Pane
 export function applyDisplayOverrides(
   disp: FieldDisplay,
   theme: GrafanaTheme2,
-  replace: InterpolateFunction
+  replace: InterpolateFunction,
+  applyToType: FieldType[]
 ): FieldDisplay {
-  const cfg = disp.field?.custom as PanelFieldConfig;
-  if (cfg) {
-    let changed = false;
-    // Copy the display object
-    const display = { ...disp.display };
-    // Test for existing display values
-    if (cfg.prefix?.length) {
-      // Replace all values that exist with the custom config values
-      display.prefix = replace(cfg.prefix);
-      // Update our `changed` value
-      changed = true;
-    }
-    if (cfg.suffix?.length) {
-      display.suffix = replace(cfg.suffix);
-      changed = true;
-    }
-    if (cfg.text?.length) {
-      display.text = replace(cfg.text);
-      changed = true;
-    }
-    if (cfg.color?.length) {
-      display.color = theme.visualization.getColorByName(cfg.color);
-      changed = true;
-    }
-    // If any changes were made, update the prev display object with the new values
-    if (changed) {
-      return { ...disp, display };
+  const { valueType } = disp.display;
+  // Only apply the display overrides if the valueType (FieldType) has been specified
+  if (applyToType.some((type) => type === valueType)) {
+    const cfg = disp.field?.custom as PanelFieldConfig;
+    if (cfg) {
+      let changed = false;
+      // Copy the display object
+      const display = { ...disp.display };
+      // Test for existing display values
+      if (cfg.prefix?.length) {
+        // Replace all values that exist with the custom config values
+        display.prefix = replace(cfg.prefix);
+        // Update our `changed` value
+        changed = true;
+      }
+      if (cfg.suffix?.length) {
+        display.suffix = replace(cfg.suffix);
+        changed = true;
+      }
+      if (cfg.text?.length) {
+        display.text = replace(cfg.text);
+        changed = true;
+      }
+      if (cfg.color?.length) {
+        display.color = theme.visualization.getColorByName(cfg.color);
+        changed = true;
+      }
+      // If any changes were made, update the prev display object with the new values
+      if (changed) {
+        return { ...disp, display };
+      }
     }
   }
   return disp;
