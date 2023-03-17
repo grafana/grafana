@@ -14,8 +14,6 @@ describe('formatting functions', () => {
         color: '#F2495C',
         numeric: 95.13749301705772,
         percent: 0.5197488596479736,
-        prefix: '$',
-        suffix: '%',
         text: '95.1',
         title: 'A-series',
         valueType: FieldType.number,
