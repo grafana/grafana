@@ -148,8 +148,9 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			var result int
 			err = store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 				q, params := filter.Where()
-				//q, params := filter.With()
-				_, err := sess.SQL("SELECT COUNT(*) FROM dashboard WHERE "+q, params...).Get(&result)
+				recQry, recQryParams := filter.With()
+				params = append(recQryParams, params...)
+				_, err := sess.SQL(recQry+"\nSELECT COUNT(*) FROM dashboard WHERE "+q, params...).Get(&result)
 				return err
 			})
 			require.NoError(t, err)
