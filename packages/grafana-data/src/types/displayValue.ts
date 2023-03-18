@@ -23,10 +23,6 @@ export interface DisplayValue extends FormattedValue {
   icon?: string;
   title?: string;
   /**
-   *  FieldType for use when adding custom prefixes/suffixes to specific types of values
-   */
-  valueType?: FieldType;
-  /**
    * Used in limited scenarios like legend reducer calculations
    */
   description?: string;

@@ -166,7 +166,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               ...displayValue,
               title: rowName,
               color: overrideColor ?? displayValue.color,
-              valueType,
             },
             view,
             colIndex: i,
@@ -220,7 +219,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           values.push({
             name: calc,
             field: config,
-            display: { ...displayValue, valueType },
+            display: displayValue,
             sparkline,
             view,
             colIndex: i,
