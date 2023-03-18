@@ -1,4 +1,4 @@
-import { FieldDisplay, FieldConfigEditorBuilder, InterpolateFunction, GrafanaTheme2, FieldType } from '@grafana/data';
+import { FieldDisplay, FieldConfigEditorBuilder, InterpolateFunction, GrafanaTheme2 } from '@grafana/data';
 
 import { PanelFieldConfig } from './panelcfg.gen';
 

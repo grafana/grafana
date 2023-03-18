@@ -1,4 +1,4 @@
-import { FieldDisplay, createTheme, FieldType } from '@grafana/data';
+import { FieldDisplay, createTheme } from '@grafana/data';
 
 import { applyDisplayOverrides } from './override';
 
