@@ -108,7 +108,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
     for (let i = 0; i < dataFrame.fields.length && !hitLimit; i++) {
       const field = dataFrame.fields[i];
-      const { type: valueType } = field;
       const fieldLinksSupplier = field.getLinks;
 
       // To filter out time field, need an option for this
