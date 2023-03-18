@@ -114,7 +114,6 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
       data: data.series,
       sparkline: options.graphMode !== BigValueGraphMode.None,
       timeZone,
-      // Only apply the display overrides if `FieldType.number`
     }).map((v) => applyDisplayOverrides(v, config.theme2, this.props.replaceVariables));
   };
 
