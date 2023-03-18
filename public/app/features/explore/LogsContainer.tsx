@@ -135,6 +135,8 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
                   isPaused={this.props.isPaused}
                   onPause={controls.pause}
                   onResume={controls.resume}
+                  onClear={controls.clear}
+                  clearedAt={this.props.clearedAt}
                 />
               )}
             </LiveTailControls>
@@ -194,6 +196,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     datasourceInstance,
     isLive,
     isPaused,
+    clearedAt,
     range,
     absoluteRange,
     supplementaryQueries,
@@ -213,6 +216,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     datasourceInstance,
     isLive,
     isPaused,
+    clearedAt,
     range,
     absoluteRange,
     logsVolume,

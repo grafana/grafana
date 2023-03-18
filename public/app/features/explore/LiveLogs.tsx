@@ -57,12 +57,13 @@ export interface Props extends Themeable2 {
   stopLive: () => void;
   onPause: () => void;
   onResume: () => void;
+  onClear: () => void;
+  clearedAt: number | null;
   isPaused: boolean;
 }
 
 interface State {
   logRowsToRender?: LogRowModel[];
-  clearedAt?: number;
 }
 
 class LiveLogs extends PureComponent<Props, State> {
@@ -77,20 +78,14 @@ class LiveLogs extends PureComponent<Props, State> {
   }
 
   static getDerivedStateFromProps(nextProps: Props, state: State) {
-    if (nextProps.isPaused && !state.clearedAt) {
+    if (nextProps.isPaused && nextProps.clearedAt) {
+      return {
+        logRowsToRender: state.logRowsToRender?.filter((row) => row.timeEpochMs > (nextProps.clearedAt ?? 0)),
+      };
+    }
+
+    if (nextProps.isPaused) {
       return null;
-    }
-
-    if (nextProps.isPaused && state.clearedAt) {
-      return {
-        logRowsToRender: state.logRowsToRender?.filter((row) => row.timeEpochMs > (state.clearedAt ?? 0)),
-      };
-    }
-
-    if (state.clearedAt) {
-      return {
-        logRowsToRender: nextProps.logRows?.filter((row) => row.timeEpochMs > (state.clearedAt ?? 0)),
-      };
     }
 
     return {
@@ -115,14 +110,6 @@ class LiveLogs extends PureComponent<Props, State> {
     }
   };
 
-  onClearLogs = () => {
-    const lastLogRow = this.state.logRowsToRender?.at(-1);
-    if (!lastLogRow) {
-      return;
-    }
-    this.setState({ clearedAt: lastLogRow.timeEpochMs + 1 });
-  };
-
   rowsToRender = () => {
     const { isPaused } = this.props;
     let { logRowsToRender: rowsToRender = [] } = this.state;
@@ -138,7 +125,7 @@ class LiveLogs extends PureComponent<Props, State> {
   };
 
   render() {
-    const { theme, timeZone, onPause, onResume, isPaused } = this.props;
+    const { theme, timeZone, onPause, onResume, onClear, isPaused } = this.props;
     const styles = getStyles(theme);
     const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
 
@@ -172,7 +159,7 @@ class LiveLogs extends PureComponent<Props, State> {
           </tbody>
         </table>
         <div className={styles.logsRowsIndicator}>
-          <Button variant="secondary" onClick={this.onClearLogs} className={styles.button}>
+          <Button variant="secondary" onClick={onClear} className={styles.button}>
             <Icon name={'trash-alt'} />
             &nbsp; Clear logs
           </Button>

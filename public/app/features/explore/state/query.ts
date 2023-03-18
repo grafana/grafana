@@ -179,6 +179,10 @@ export interface SetPausedStatePayload {
 }
 export const setPausedStateAction = createAction<SetPausedStatePayload>('explore/setPausedState');
 
+export interface ClearLogsPayload {
+  exploreId: ExploreId;
+}
+export const clearLogs = createAction<ClearLogsPayload>('explore/clearLogs');
 /**
  * Start a scan for more results using the given scanner.
  * @param exploreId Explore area
@@ -985,6 +989,26 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
+  if (clearLogs.match(action)) {
+    const clearedAt = Date.now();
+
+    if (!state.logsResult) {
+      return {
+        ...state,
+        clearedAt,
+      };
+    }
+
+    return {
+      ...state,
+      clearedAt,
+      logsResult: {
+        ...state.logsResult,
+        rows: [],
+      },
+    };
+  }
+
   return state;
 };
 
@@ -1008,6 +1032,25 @@ const getCorrelations = () => {
       });
     }
   });
+};
+
+const filterLogRows = (
+  state: ExploreItemState,
+  logsResult: ExplorePanelData['logsResult']
+): ExploreItemState['logsResult'] => {
+  if (!logsResult) {
+    return logsResult;
+  }
+
+  if (state.clearedAt && state.isLive) {
+    const filteredRows = logsResult.rows.filter((row) => row.timeEpochMs > (state.clearedAt ?? 0));
+    return {
+      ...logsResult,
+      rows: filteredRows,
+    };
+  }
+
+  return logsResult;
 };
 
 export const processQueryResponse = (
@@ -1065,7 +1108,7 @@ export const processQueryResponse = (
     graphResult,
     tableResult,
     rawPrometheusResult,
-    logsResult,
+    logsResult: filterLogRows(state, logsResult),
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     showLogs: !!logsResult,
     showMetrics: !!graphResult,
@@ -1074,5 +1117,6 @@ export const processQueryResponse = (
     showNodeGraph: !!nodeGraphFrames.length,
     showRawPrometheus: !!rawPrometheusFrames.length,
     showFlameGraph: !!flameGraphFrames.length,
+    clearedAt: state.isLive ? state.clearedAt : null,
   };
 };

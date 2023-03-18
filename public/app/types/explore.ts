@@ -212,6 +212,8 @@ export interface ExploreItemState {
   panelsState: ExplorePanelsState;
 
   isFromCompactUrl?: boolean;
+
+  clearedAt: number | null;
 }
 
 export interface ExploreUpdateState {
