@@ -2,19 +2,14 @@ import { css } from '@emotion/css';
 import React, { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneEditor, SceneObject } from '@grafana/scenes';
+import { SceneComponentWrapperProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-export function SceneComponentEditWrapper({
-  model,
-  editor,
-  children,
-}: {
-  model: SceneObject;
-  editor: SceneEditor;
-  children: React.ReactNode;
-}) {
+import { getEditor } from './utils';
+
+export function SceneComponentEditWrapper({ model, children }: SceneComponentWrapperProps) {
   const styles = useStyles2(getStyles);
+  const editor = getEditor(model);
   const { hoverObject, selectedObject } = editor.useState();
 
   const onMouseEnter = () => editor.onMouseEnterObject(model);
@@ -50,6 +45,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: 8,
       border: `1px dashed ${theme.colors.primary.main}`,
       cursor: 'pointer',
+      minHeight: 0,
+      position: 'relative',
     }),
     hover: css({
       border: `1px solid ${theme.colors.primary.border}`,

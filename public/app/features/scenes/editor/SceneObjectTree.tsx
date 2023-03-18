@@ -2,8 +2,10 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { sceneGraph, SceneObject, isSceneObject, SceneLayoutChild } from '@grafana/scenes';
+import { SceneObject, isSceneObject, SceneLayoutChild } from '@grafana/scenes';
 import { Icon, useStyles2 } from '@grafana/ui';
+
+import { getEditor } from './utils';
 
 export interface Props {
   node: SceneObject;
@@ -30,7 +32,7 @@ export function SceneObjectTree({ node, selectedObject }: Props) {
 
   const name = node.constructor.name;
   const isSelected = selectedObject === node;
-  const onSelectNode = () => sceneGraph.getSceneEditor(node).onSelectObject(node);
+  const onSelectNode = () => getEditor(node).onSelectObject(node);
 
   return (
     <div className={styles.node}>

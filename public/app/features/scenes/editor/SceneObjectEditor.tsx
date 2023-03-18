@@ -10,7 +10,7 @@ export interface Props {
 export function SceneObjectEditor({ model }: Props) {
   return (
     <OptionsPaneCategory id="props" title="Properties" forceOpen={1}>
-      <model.Editor model={model} key={model.state.key} />
+      {/* <model.Editor model={model} key={model.state.key} /> */}
     </OptionsPaneCategory>
   );
 }

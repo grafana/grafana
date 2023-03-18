@@ -4,17 +4,30 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   SceneObjectBase,
-  SceneEditorState,
-  SceneEditor,
   SceneObject,
   SceneComponentProps,
   SceneComponent,
+  SceneObjectStatePlain,
+  SceneObjectRef,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { SceneComponentEditWrapper } from './SceneComponentEditWrapper';
 import { SceneObjectEditor } from './SceneObjectEditor';
 import { SceneObjectTree } from './SceneObjectTree';
+
+export interface SceneEditorState extends SceneObjectStatePlain {
+  hoverObject?: SceneObjectRef;
+  selectedObject?: SceneObjectRef;
+  isEditing?: boolean;
+}
+
+export interface SceneEditor extends SceneObject<SceneEditorState> {
+  onMouseEnterObject(model: SceneObject): void;
+  onMouseLeaveObject(model: SceneObject): void;
+  onSelectObject(model: SceneObject): void;
+  //getEditComponentWrapper(): React.ComponentType<SceneComponentEditWrapperProps>;
+}
 
 export class SceneEditManager extends SceneObjectBase<SceneEditorState> implements SceneEditor {
   public static Component = SceneEditorRenderer;
@@ -44,13 +57,9 @@ export class SceneEditManager extends SceneObjectBase<SceneEditorState> implemen
   }
 }
 
-function SceneEditorRenderer({ model, isEditing }: SceneComponentProps<SceneEditManager>) {
+function SceneEditorRenderer({ model }: SceneComponentProps<SceneEditManager>) {
   const { selectedObject } = model.useState();
   const styles = useStyles2(getStyles);
-
-  if (!isEditing) {
-    return null;
-  }
 
   return (
     <div className={styles.container}>

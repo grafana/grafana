@@ -14,12 +14,17 @@ import { PageToolbar, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 
+import { SceneBodyEditWrapper } from '../editor/SceneBodyEditWrapper';
+import { SceneEditManager } from '../editor/SceneEditManager';
+
 interface DashboardSceneState extends SceneObjectStatePlain {
   title: string;
   uid?: string;
   body: SceneObject;
   actions?: SceneObject[];
   controls?: SceneObject[];
+  isEditing?: boolean;
+  editor?: SceneEditManager;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -43,6 +48,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     if (this.urlSyncManager) {
       this.urlSyncManager!.cleanUp();
+    }
+  }
+
+  public toggleEditMode() {
+    if (!this.state.isEditing) {
+      this.setState({
+        isEditing: !this.state.isEditing,
+        body: new SceneBodyEditWrapper({ body: this.state.body }),
+      });
+    } else if (this.state.body instanceof SceneBodyEditWrapper) {
+      this.setState({
+        isEditing: !this.state.isEditing,
+        body: this.state.body.state.body,
+      });
     }
   }
 }
