@@ -21,6 +21,7 @@ interface Props {
   hideVerticalTrack?: boolean;
   scrollRefCallback?: RefCallback<HTMLDivElement>;
   scrollTop?: number;
+  scrollPos?: (position: number) => void;
   setScrollTop?: (position: ScrollbarPosition) => void;
   showScrollIndicators?: boolean;
   autoHeightMin?: number | string;
@@ -46,7 +47,7 @@ export const CustomScrollbar = ({
   showScrollIndicators = false,
   updateAfterMountMs,
   scrollTop,
-  onScroll,
+  scrollPos,
   children,
 }: React.PropsWithChildren<Props>) => {
   const ref = useRef<Scrollbars & { view: HTMLDivElement; update: () => void }>(null);
@@ -118,8 +119,13 @@ export const CustomScrollbar = ({
     ref.current && setScrollTop && setScrollTop(ref.current.getValues());
   }, [setScrollTop]);
 
+  const handleScroll = useCallback(() => {
+    ref.current && scrollPos && scrollPos(ref.current.getValues().top);
+  }, [ref, scrollPos]);
+
   return (
     <Scrollbars
+      onScroll={handleScroll}
       data-testid={testId}
       ref={ref}
       className={cx(styles.customScrollbar, className, {
@@ -139,7 +145,6 @@ export const CustomScrollbar = ({
       renderThumbHorizontal={renderThumbHorizontal}
       renderThumbVertical={renderThumbVertical}
       renderView={renderView}
-      onScroll={onScroll}
     >
       {showScrollIndicators ? <ScrollIndicators>{children}</ScrollIndicators> : children}
     </Scrollbars>

@@ -57,7 +57,7 @@ export const Pages = {
       publicDashboardTag: 'data-testid public dashboard tag',
     },
     SubMenu: {
-      submenu: 'Dashboard submenu',
+      submenu: 'data-testid Dashboard submenu',
       submenuItem: 'data-testid template variable',
       submenuItemLabels: (item: string) => `data-testid Dashboard template variables submenu Label ${item}`,
       submenuItemValueDropDownValueLinkTexts: (item: string) =>

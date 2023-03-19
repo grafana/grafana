@@ -97,6 +97,8 @@ export interface State {
   viewPanel: PanelModel | null;
   updateScrollTop?: number;
   rememberScrollTop?: number;
+  prevScrollPos?: number;
+  submenuVisible?: boolean;
   showLoadingState: boolean;
   panelNotFound: boolean;
   editPanelAccessDenied: boolean;
@@ -105,12 +107,42 @@ export interface State {
   sectionNav?: NavModel;
 }
 
+function debounce(func: any, wait: number, immediate: boolean) {
+  let timeout: null | number | ReturnType<typeof setTimeout> = null;
+  return function () {
+    const args = arguments;
+    let later = function () {
+      timeout = null;
+      if (!immediate) {
+        func.apply(null, args);
+      }
+    };
+    const callNow = immediate && !timeout;
+    clearTimeout(Number(timeout));
+    timeout = setTimeout(later, wait);
+    if (callNow) {
+      func.apply(null, args);
+    }
+  };
+}
+
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
   declare context: GrafanaContextType;
   static contextType = GrafanaContext;
 
   private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
+
+  setScrollPos = debounce(
+    (scrollPos: number): void => {
+      const prevPos = this.state.prevScrollPos ? this.state.prevScrollPos : 0;
+      const isVisible = (prevPos > scrollPos && prevPos - scrollPos > 0.03) || scrollPos < 0.1;
+      this.setState({ submenuVisible: isVisible });
+      this.setState({ prevScrollPos: scrollPos });
+    },
+    100,
+    false
+  );
 
   onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
     const grafanaDS = {
@@ -173,6 +205,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       showLoadingState: false,
       panelNotFound: false,
       editPanelAccessDenied: false,
+      prevScrollPos: 0,
+      submenuVisible: true,
     };
   }
 
@@ -404,7 +438,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, initError, queryParams } = this.props;
-    const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
+    const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav, submenuVisible } = this.state;
     const kioskMode = getKioskMode(this.props.queryParams);
 
     if (!dashboard || !pageNav || !sectionNav) {
@@ -413,6 +447,14 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     const inspectPanel = this.getInspectPanel();
     const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview;
+
+    const submenuStyle = css`
+      padding: ${this.props.theme.spacing(0, 2, 0.1, 2)};
+      position: ${submenuVisible ? 'relative' : 'fixed'};
+      top: ${submenuVisible ? '0' : '-100%'};
+      z-index: -1;
+      transition: top 0.4s;
+    `;
 
     const toolbar = kioskMode !== KioskMode.Full && !queryParams.editview && (
       <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
@@ -426,6 +468,13 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           hideTimePicker={dashboard.timepicker.hidden}
           shareModalActiveTab={this.props.queryParams.shareView}
         />
+        {showSubMenu && (
+          <div className={submenuStyle}>
+            <section data-testid={selectors.pages.Dashboard.SubMenu.submenu}>
+              <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+            </section>
+          </div>
+        )}
       </header>
     );
 
@@ -444,14 +493,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           className={pageClassName}
           scrollRef={this.setScrollRef}
           scrollTop={updateScrollTop}
+          scrollPos={this.setScrollPos}
         >
           <DashboardPrompt dashboard={dashboard} />
           {initError && <DashboardFailed />}
-          {showSubMenu && (
-            <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
-              <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
-            </section>
-          )}
           {config.featureToggles.editPanelCSVDragAndDrop ? (
             <DropZone
               onDrop={this.onFileDrop}

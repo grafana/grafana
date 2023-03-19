@@ -26,6 +26,8 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   scrollRef?: RefCallback<HTMLDivElement>;
   /** Can be used to update the current scroll position */
   scrollTop?: number;
+  /** Can be used to infer the current scroll position */
+  scrollPos?: () => void;
 }
 
 export interface PageInfoItem {
