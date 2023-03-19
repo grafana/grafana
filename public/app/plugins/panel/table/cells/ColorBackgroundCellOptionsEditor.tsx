@@ -23,7 +23,11 @@ export const ColorBackgroundCellOptionsEditor = ({
 
   return (
     <Field label="Background display mode">
-      <RadioButtonGroup value={cellOptions?.mode} onChange={onCellOptionsChange} options={colorBackgroundOpts} />
+      <RadioButtonGroup
+        value={cellOptions?.mode ?? TableCellBackgroundDisplayMode.Gradient}
+        onChange={onCellOptionsChange}
+        options={colorBackgroundOpts}
+      />
     </Field>
   );
 };
