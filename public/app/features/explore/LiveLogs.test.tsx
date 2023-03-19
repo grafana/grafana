@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { LogLevel, LogRowModel, MutableDataFrame } from '@grafana/data';
+import { LogRowModel } from '@grafana/data';
 
 import { LiveLogsWithTheme } from './LiveLogs';
+import { makeLogs } from './__mocks__/makeLogs';
 
 const setup = (rows: LogRowModel[]) =>
   render(
@@ -13,36 +14,16 @@ const setup = (rows: LogRowModel[]) =>
       stopLive={() => {}}
       onPause={() => {}}
       onResume={() => {}}
+      onClear={() => {}}
+      clearedAt={null}
       isPaused={true}
     />
   );
 
-const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
-  const uid = overrides.uid || '1';
-  const entry = `log message ${uid}`;
-  return {
-    uid,
-    entryFieldIndex: 0,
-    rowIndex: 0,
-    dataFrame: new MutableDataFrame(),
-    logLevel: LogLevel.debug,
-    entry,
-    hasAnsi: false,
-    hasUnescapedContent: false,
-    labels: {},
-    raw: entry,
-    timeFromNow: '',
-    timeEpochMs: 1,
-    timeEpochNs: '1000000',
-    timeLocal: '',
-    timeUtc: '',
-    ...overrides,
-  };
-};
-
 describe('LiveLogs', () => {
   it('renders logs', () => {
-    setup([makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })]);
+    const logRows = makeLogs(3);
+    setup(logRows);
 
     expect(screen.getByRole('cell', { name: 'log message 1' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: 'log message 2' })).toBeInTheDocument();
@@ -50,14 +31,19 @@ describe('LiveLogs', () => {
   });
 
   it('renders new logs only when not paused', () => {
-    const { rerender } = setup([makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })]);
+    const logRows = makeLogs(6);
+    const firstLogs = logRows.slice(0, 3);
+    const secondLogs = logRows.slice(3, 6);
+    const { rerender } = setup(firstLogs);
 
     rerender(
       <LiveLogsWithTheme
-        logRows={[makeLog({ uid: '4' }), makeLog({ uid: '5' }), makeLog({ uid: '6' })]}
+        logRows={secondLogs}
         timeZone={'utc'}
         stopLive={() => {}}
         onPause={() => {}}
+        onClear={() => {}}
+        clearedAt={null}
         onResume={() => {}}
         isPaused={true}
       />
@@ -72,11 +58,13 @@ describe('LiveLogs', () => {
 
     rerender(
       <LiveLogsWithTheme
-        logRows={[makeLog({ uid: '4' }), makeLog({ uid: '5' }), makeLog({ uid: '6' })]}
+        logRows={secondLogs}
         timeZone={'utc'}
         stopLive={() => {}}
         onPause={() => {}}
         onResume={() => {}}
+        onClear={() => {}}
+        clearedAt={null}
         isPaused={false}
       />
     );
@@ -87,11 +75,12 @@ describe('LiveLogs', () => {
   });
 
   it('renders ansi logs', () => {
-    setup([
-      makeLog({ uid: '1' }),
-      makeLog({ hasAnsi: true, raw: 'log message \u001B[31m2\u001B[0m', uid: '2' }),
-      makeLog({ hasAnsi: true, raw: 'log message \u001B[33m3\u001B[0m', uid: '3' }),
-    ]);
+    const commonLog = makeLogs(1);
+    const firstAnsiLog = makeLogs(1, { hasAnsi: true, raw: 'log message \u001B[31m2\u001B[0m', uid: '2' });
+    const secondAnsiLog = makeLogs(1, { hasAnsi: true, raw: 'log message \u001B[33m3\u001B[0m', uid: '3' });
+    const logRows = [...commonLog, ...firstAnsiLog, ...secondAnsiLog];
+
+    setup(logRows);
 
     expect(screen.getByRole('cell', { name: 'log message 1' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: 'log message 2' })).toBeInTheDocument();
@@ -101,46 +90,5 @@ describe('LiveLogs', () => {
     expect(logList).toHaveLength(2);
     expect(logList[0]).toHaveAttribute('style', 'color: rgb(204, 0, 0);');
     expect(logList[1]).toHaveAttribute('style', 'color: rgb(204, 102, 0);');
-  });
-
-  it('clears logs', () => {
-    setup([makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })]);
-
-    expect(screen.getByRole('cell', { name: 'log message 1' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: 'log message 2' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: 'log message 3' })).toBeInTheDocument();
-
-    const clearButton = screen.getByRole('button', { name: 'Clear logs' });
-    clearButton.click();
-
-    expect(screen.queryByRole('cell', { name: 'log message 1' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('cell', { name: 'log message 2' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('cell', { name: 'log message 3' })).not.toBeInTheDocument();
-  });
-
-  it('renders new logs after cleared', () => {
-    const oldLogs = [makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })];
-    const { rerender } = setup(oldLogs);
-
-    const clearButton = screen.getByRole('button', { name: 'Clear logs' });
-    clearButton.click();
-
-    const newLogs = [...oldLogs, makeLog({ uid: '4', timeEpochMs: 5 }), makeLog({ uid: '5', timeEpochMs: 10 })];
-    rerender(
-      <LiveLogsWithTheme
-        logRows={newLogs}
-        timeZone={'utc'}
-        stopLive={() => {}}
-        onPause={() => {}}
-        onResume={() => {}}
-        isPaused={false}
-      />
-    );
-
-    expect(screen.queryByRole('cell', { name: 'log message 1' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('cell', { name: 'log message 2' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('cell', { name: 'log message 3' })).not.toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: 'log message 4' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: 'log message 5' })).toBeInTheDocument();
   });
 });
