@@ -12,6 +12,7 @@ export interface LokiQueryFieldProps extends QueryEditorProps<LokiDatasource, Lo
   ExtraFieldElement?: ReactNode;
   placeholder?: string;
   'data-testid'?: string;
+  onQueryType?: (query: string) => void;
 }
 
 interface LokiQueryFieldState {
@@ -65,7 +66,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   };
 
   render() {
-    const { ExtraFieldElement, query, datasource, history, onRunQuery } = this.props;
+    const { ExtraFieldElement, query, datasource, history, onRunQuery, onQueryType } = this.props;
     const placeholder = this.props.placeholder ?? 'Enter a Loki query (run with Shift+Enter)';
 
     return (
@@ -82,6 +83,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
               onRunQuery={onRunQuery}
               initialValue={query.expr ?? ''}
               placeholder={placeholder}
+              onQueryType={onQueryType}
             />
           </div>
         </div>

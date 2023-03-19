@@ -7,7 +7,7 @@ import { RelativeTimeRange } from '@grafana/data';
 import { RelativeTimeRangePicker } from './RelativeTimeRangePicker';
 
 function setup(initial: RelativeTimeRange = { from: 900, to: 0 }): RenderResult {
-  const StatefulPicker: React.FC<{}> = () => {
+  const StatefulPicker = () => {
     const [value, setValue] = useState<RelativeTimeRange>(initial);
     return <RelativeTimeRangePicker timeRange={value} onChange={setValue} />;
   };

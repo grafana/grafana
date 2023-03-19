@@ -641,6 +641,11 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     reportInteraction('dashboards_panelheader_statusmessage_clicked');
   };
 
+  onCancelQuery = () => {
+    this.props.panel.getQueryRunner().cancelQuery();
+    reportInteraction('dashboards_panelheader_cancelquery_clicked', { data_state: this.state.data.state });
+  };
+
   render() {
     const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
@@ -705,6 +710,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           hoverHeaderOffset={hoverHeaderOffset}
           hoverHeader={this.hasOverlayHeader()}
           displayMode={transparent ? 'transparent' : 'default'}
+          onCancelQuery={this.onCancelQuery}
         >
           {(innerWidth, innerHeight) => (
             <>

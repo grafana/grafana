@@ -2,7 +2,8 @@ import React, { PureComponent } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, SelectableValue, updateDatasourcePluginOption } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { Alert, SecureSocksProxySettings } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 import ResponseParser from '../azure_monitor/response_parser';
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
@@ -84,7 +85,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { options } = this.props;
+    const { options, onOptionsChange } = this.props;
     const { error } = this.state;
 
     return (
@@ -95,6 +96,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <p>{error.description}</p>
             {error.details && <details style={{ whiteSpace: 'pre-wrap' }}>{error.details}</details>}
           </Alert>
+        )}
+        {config.featureToggles.secureSocksDatasourceProxy && (
+          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
         )}
       </>
     );
