@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/golang/snappy"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/setting"
@@ -176,6 +177,7 @@ func (c *httpLokiClient) push(ctx context.Context, s []stream) error {
 	if err != nil {
 		return fmt.Errorf("failed to serialize Loki payload: %w", err)
 	}
+	enc = snappy.Encode(nil, enc)
 
 	uri := c.cfg.WritePathURL.JoinPath("/loki/api/v1/push")
 	req, err := http.NewRequest(http.MethodPost, uri.String(), bytes.NewBuffer(enc))
