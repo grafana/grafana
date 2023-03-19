@@ -186,6 +186,7 @@ export function buildBufferedEmptyValues(totalRows: number): ArrayVector<string>
 
 export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
   switch (displayMode) {
+    case TableCellDisplayMode.Custom:
     case TableCellDisplayMode.ColorText:
     case TableCellDisplayMode.ColorBackground:
       return DefaultCell;

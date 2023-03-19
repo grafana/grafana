@@ -4,7 +4,7 @@ package common
 // in the table such as colored text, JSON, gauge, etc.
 // The color-background-solid, gradient-gauge, and lcd-gauge
 // modes are deprecated in favor of new cell subOptions
-TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" | "sparkline" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge|Sparkline")
+TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" | "sparkline" | "custom" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge|Sparkline|Custom")
 
 // Display mode to the "Colored Background" display
 // mode for table cells. Either displays a solid color (basic mode)
@@ -67,12 +67,17 @@ TableColoredBackgroundCellOptions: {
 	mode?: TableCellBackgroundDisplayMode
 } @cuetsy(kind="interface")
 
+TableCustomCellOptions: {
+	type: TableCellDisplayMode & "custom"
+	cellComponent: string
+} @cuetsy(kind="interface")
+
 // Height of a table cell
 TableCellHeight: "sm" | "md" | "lg" @cuetsy(kind="enum")
 
 // Table cell options. Each cell has a display mode
 // and other potential options for that display.
-TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions @cuetsy(kind="type")
+TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions | TableCustomCellOptions @cuetsy(kind="type")
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
 // Generally defines alignment, filtering capabilties, display options, etc.

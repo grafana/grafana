@@ -21,19 +21,29 @@ export const DefaultCell = (props: TableCellProps) => {
   const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
   const displayValue = field.display!(cell.value);
 
-  let value: string | ReactElement;
-  if (React.isValidElement(cell.value)) {
-    value = cell.value;
-  } else {
-    value = formattedValueToString(displayValue);
-  }
-
   const showFilters = props.onCellFilterAdded && field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellOptions = getCellOptions(field);
   const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled);
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
+
+  let value: string | ReactElement;
+
+  if (cellOptions.type === TableCellDisplayMode.Custom) {
+    //@ts-ignore
+    const CustomCellComponent: React.ComponentType<TableCellProps> = cellOptions.cellComponent;
+    // TODO pass a limited set of props, not the whole TableCellProps
+    // But what to pass? can we access the raw data frame? think field, rowIndex, dataFrame would be enough,
+    // and then we don't expose internal react table types. but not sure how to access dataFrame
+    value = <CustomCellComponent {...props} />;
+  } else {
+    if (React.isValidElement(cell.value)) {
+      value = cell.value;
+    } else {
+      value = formattedValueToString(displayValue);
+    }
+  }
 
   return (
     <div {...cellProps} className={cellStyle}>

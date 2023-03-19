@@ -19,6 +19,7 @@ import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { SceneRadioToggle } from './SceneRadioToggle';
 import { SceneSearchBox } from './SceneSearchBox';
+import { StatusCell } from './StatusCell';
 import { getTableFilterTransform, getTimeSeriesFilterTransform } from './transforms';
 import { getLinkUrlWithAppUrlState } from './utils';
 
@@ -69,6 +70,37 @@ export function getHttpHandlerListScene(): EmbeddedScene {
             options: 'Time',
           },
           properties: [{ id: 'custom.hidden', value: true }],
+        },
+        {
+          matcher: {
+            id: 'byName',
+            options: 'method',
+          },
+          properties: [
+            {
+              id: 'custom.cellOptions',
+              value: {
+                type: 'custom',
+                cellComponent: StatusCell,
+              },
+            },
+            {
+              id: 'custom.width',
+              value: 100,
+            },
+          ],
+        },
+        {
+          matcher: {
+            id: 'byName',
+            options: 'status_code',
+          },
+          properties: [
+            {
+              id: 'custom.width',
+              value: 100,
+            },
+          ],
         },
         {
           matcher: {

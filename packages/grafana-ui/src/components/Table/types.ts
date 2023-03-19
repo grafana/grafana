@@ -41,6 +41,11 @@ export interface TableCellProps extends CellProps<any> {
 
 export type CellComponent = FC<TableCellProps>;
 
+export interface CustomCellRendererProps {
+  field: Field;
+  value: any;
+}
+
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
 export type GrafanaTableColumn = Column & {
