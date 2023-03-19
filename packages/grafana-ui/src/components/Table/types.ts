@@ -41,9 +41,15 @@ export interface TableCellProps extends CellProps<any> {
 
 export type CellComponent = FC<TableCellProps>;
 
+/**
+ * Not used yet
+ */
 export interface CustomCellRendererProps {
   field: Field;
   value: any;
+  // what else to pass in order to make it more agnostic to table internals?
+  // can we find the full data frame?
+  // row values?
 }
 
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
