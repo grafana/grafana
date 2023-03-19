@@ -178,6 +178,9 @@ func (c *httpLokiClient) push(ctx context.Context, s []stream) error {
 	}
 
 	uri := c.cfg.WritePathURL.JoinPath("/loki/api/v1/push")
+	if len(s) > 0 {
+		c.log.Error("pushing labels TEST TODO remove", s[0].Stream)
+	}
 	req, err := http.NewRequest(http.MethodPost, uri.String(), bytes.NewBuffer(enc))
 	if err != nil {
 		return fmt.Errorf("failed to create Loki request: %w", err)
