@@ -1,5 +1,5 @@
 import { isFunction } from 'lodash';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeValueMode } from '@grafana/schema';
@@ -24,7 +24,7 @@ const defaultScale: ThresholdsConfig = {
   ],
 };
 
-export const BarGaugeCell: FC<TableCellProps> = (props) => {
+export const BarGaugeCell = (props: TableCellProps) => {
   const { field, innerWidth, tableStyles, cell, cellProps, row } = props;
   const displayValue = field.display!(cell.value);
   const cellOptions = getCellOptions(field);

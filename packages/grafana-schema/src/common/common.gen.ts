@@ -749,6 +749,29 @@ export type TimeZoneUtc = 'utc';
  */
 export type TimeZoneBrowser = 'browser';
 
+/**
+ * Optional formats for the template variable replace functions
+ * See also https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#advanced-variable-format-options
+ */
+export enum VariableFormatID {
+  CSV = 'csv',
+  Date = 'date',
+  Distributed = 'distributed',
+  DoubleQuote = 'doublequote',
+  Glob = 'glob',
+  HTML = 'html',
+  JSON = 'json',
+  Lucene = 'lucene',
+  PercentEncode = 'percentencode',
+  Pipe = 'pipe',
+  QueryParam = 'queryparam',
+  Raw = 'raw',
+  Regex = 'regex',
+  SQLString = 'sqlstring',
+  SingleQuote = 'singlequote',
+  Text = 'text',
+}
+
 export interface DataSourceRef {
   /**
    * The plugin type-id

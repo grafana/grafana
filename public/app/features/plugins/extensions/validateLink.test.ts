@@ -30,6 +30,17 @@ describe('extension link validator', () => {
     });
   });
 
+  it('should return link configuration if path is not specified', () => {
+    const configureWithValidation = validator(() => {
+      return {
+        title: 'Go to page two',
+      };
+    });
+
+    const configured = configureWithValidation(extension, context);
+    expect(configured).toEqual({ title: 'Go to page two' });
+  });
+
   it('should return undefined if path is invalid', () => {
     const configureWithValidation = validator(() => {
       return {
