@@ -28,6 +28,7 @@ const (
 	HeaderDatasourceUID = "X-Datasource-Uid" // can be used for routing/ load balancing
 	HeaderDashboardUID  = "X-Dashboard-Uid"  // mainly useful for debuging slow queries
 	HeaderPanelID       = "X-Panel-Id"       // mainly useful for debuging slow queries
+	HeaderQueryGroupID  = "X-Query-Group-Id" // mainly useful for finding related queries with query chunking
 )
 
 func ProvideService(
