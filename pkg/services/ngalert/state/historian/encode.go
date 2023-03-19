@@ -23,3 +23,12 @@ func (e jsonEncoder) headers() map[string]string {
 		"Content-Type": "application/json",
 	}
 }
+
+type snappyProtoEncoder struct{}
+
+func (e snappyProtoEncoder) headers() map[string]string {
+	return map[string]string{
+		"Content-Type":     "application/x-protobuf",
+		"Content-Encoding": "snappy",
+	}
+}
