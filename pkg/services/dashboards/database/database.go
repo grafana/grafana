@@ -1091,7 +1091,7 @@ func (d *dashboardStore) SaveK8sDashboard(ctx context.Context, orgID int64, uid 
 	}
 
 	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		result, err = saveK8sDashboard(sess, dash, anno.FolderUID, d.emitEntityEvent())
+		result, err = saveK8sDashboard(sess, dash, &anno, d.emitEntityEvent())
 		if err == nil && anno.OriginKey != "" {
 			p := &dashboards.DashboardProvisioning{
 				Name:        anno.OriginName,
@@ -1107,11 +1107,15 @@ func (d *dashboardStore) SaveK8sDashboard(ctx context.Context, orgID int64, uid 
 	return result, err
 }
 
-func saveK8sDashboard(sess *db.Session, dash *dashboards.Dashboard, folderUID string, emitEntityEvent bool) (*dashboards.Dashboard, error) {
+func saveK8sDashboard(sess *db.Session, dash *dashboards.Dashboard, anno *crd.CommonAnnotations, emitEntityEvent bool) (*dashboards.Dashboard, error) {
 	var existing dashboards.Dashboard
 	dashWithUIDExists, err := sess.Where("uid=? AND org_id=?", dash.UID, dash.OrgID).Get(&existing)
 	if err != nil {
 		return nil, err
+	}
+
+	if anno.FolderUID != "" {
+		fmt.Printf("TODO!!!!!")
 	}
 
 	var affectedRows int64
@@ -1140,8 +1144,8 @@ func saveK8sDashboard(sess *db.Session, dash *dashboards.Dashboard, folderUID st
 		Version:   dash.Version,
 		Created:   time.Now(),
 		CreatedBy: dash.UpdatedBy,
-		//	Message:       cmd.Message, TODO!!!
-		Data: dash.Data,
+		Message:   anno.Message,
+		Data:      dash.Data,
 	}
 
 	//---------------------------------------------
