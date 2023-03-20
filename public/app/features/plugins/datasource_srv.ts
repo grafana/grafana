@@ -20,9 +20,9 @@ import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import {
   dataSource as expressionDatasource,
-  ExpressionDatasourceUID,
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
 import { importDataSourcePlugin } from './plugin_loader';
 

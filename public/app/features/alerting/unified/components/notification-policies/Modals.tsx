@@ -55,6 +55,9 @@ const useAddPolicyModal = (
         >
           <AmRoutesExpandedForm
             receivers={AmRouteReceivers}
+            defaults={{
+              groupBy: parentRoute?.group_by,
+            }}
             onSubmit={(newRoute) => parentRoute && handleAdd(newRoute, parentRoute)}
             actionButtons={
               <Modal.ButtonRow>

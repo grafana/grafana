@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { Stack } from '@grafana/experimental';
 import { Alert, LinkButton } from '@grafana/ui';
@@ -17,7 +17,7 @@ interface Props {
   alertManagerName: string;
 }
 
-export const ReceiversAndTemplatesView: FC<Props> = ({ config, alertManagerName }) => {
+export const ReceiversAndTemplatesView = ({ config, alertManagerName }: Props) => {
   const isCloud = alertManagerName !== GRAFANA_RULES_SOURCE_NAME;
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
 
