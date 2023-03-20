@@ -21,7 +21,7 @@ type GlobalQuota struct {
 	Session      int64 `target:"-"`
 	AlertRule    int64 `target:"alert_rule"`
 	File         int64 `target:"file"`
-	Correlations int64 `target"correlations"`
+	Correlations int64 `target:"correlations"`
 }
 
 type QuotaSettings struct {
