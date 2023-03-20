@@ -90,9 +90,10 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 		guardian.New = origNewGuardian
 	})
 
-	leaves := make(map[int64]*folder.Folder, numFolders)
+	rootFolders := make([]*folder.Folder, 0, numFolders)
+	dashes := make([]dashboards.Dashboard, 0, numDashboards)
 	parentUID := ""
-	for i := 1; i <= numFolders; i++ {
+	for i := 0; i < numFolders; i++ {
 		uid := fmt.Sprintf("f%d", i)
 		f, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 			UID:          uid,
@@ -102,9 +103,10 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 			ParentUID:    parentUID,
 		})
 		require.NoError(b, err)
+		rootFolders = append(rootFolders, f)
 
 		parentUID := f.UID
-		var tmp *folder.Folder
+		var leaf *folder.Folder
 		for j := 1; j <= nestingLevel; j++ {
 			uid := fmt.Sprintf("f%d_%d", i, j)
 			sf, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
@@ -116,21 +118,27 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 			})
 			require.NoError(b, err)
 			parentUID = sf.UID
-			tmp = sf
+			leaf = sf
 		}
-		leaves[tmp.ID] = tmp
+
+		str := fmt.Sprintf("dashboard under folder %s", leaf.Title)
+		now := time.Now()
+		dashes = append(dashes, dashboards.Dashboard{
+			OrgID:    usr.OrgID,
+			IsFolder: false,
+			UID:      str,
+			Slug:     str,
+			Title:    str,
+			Data:     simplejson.New(),
+			Created:  now,
+			Updated:  now,
+			FolderID: leaf.ID,
+		})
 	}
-	now := time.Now()
+
 	err = store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		dashes := make([]dashboards.Dashboard, 0, numDashboards)
-		for i := 1; i <= numDashboards; i++ {
-			var folderID int64 = 0
-			if i < len(leaves) {
-				f, ok := leaves[int64(i)]
-				if ok {
-					folderID = f.ID
-				}
-			}
+		now := time.Now()
+		for i := len(dashes); i < numDashboards; i++ {
 			str := strconv.Itoa(i)
 			dashes = append(dashes, dashboards.Dashboard{
 				OrgID:    usr.OrgID,
@@ -141,7 +149,6 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 				Data:     simplejson.New(),
 				Created:  now,
 				Updated:  now,
-				FolderID: folderID,
 			})
 		}
 
@@ -168,6 +175,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 				Created: now,
 			})
 			for _, dash := range dashes {
+				// add permission to read dashboards under the general
 				if dash.FolderID == 0 {
 					permissions = append(permissions, accesscontrol.Permission{
 						RoleID:  int64(i),
@@ -176,15 +184,18 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 						Updated: now,
 						Created: now,
 					})
-				} else {
-					permissions = append(permissions, accesscontrol.Permission{
-						RoleID:  int64(i),
-						Action:  dashboards.ActionDashboardsRead,
-						Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(leaves[dash.FolderID].UID),
-						Updated: now,
-						Created: now,
-					})
 				}
+			}
+
+			for _, f := range rootFolders {
+				// add permission to read folders under specific folders
+				permissions = append(permissions, accesscontrol.Permission{
+					RoleID:  int64(i),
+					Action:  dashboards.ActionDashboardsRead,
+					Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID),
+					Updated: now,
+					Created: now,
+				})
 			}
 		}
 
