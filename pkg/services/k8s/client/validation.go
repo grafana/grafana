@@ -34,7 +34,6 @@ func convertShortWebhookToValidationWebhook(swc ShortWebhookConfig) *admissionre
 	metaName := fmt.Sprintf("validation.%s.core.grafana.com", swc.Kind.MachineName())
 
 	resourcePlural := swc.Kind.Props().Common().PluralMachineName
-	fmt.Println(resourcePlural)
 
 	return &admissionregistrationV1.ValidatingWebhookConfiguration{
 		TypeMeta: metav1.TypeMeta{
