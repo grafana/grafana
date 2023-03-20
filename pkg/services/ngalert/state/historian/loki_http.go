@@ -75,7 +75,7 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 		BasicAuthPassword: cfg.LokiBasicAuthPassword,
 		TenantID:          cfg.LokiTenantID,
 		// Snappy-compressed protobuf is the default, same goes for Promtail.
-		Encoder: snappyProtoEncoder{},
+		Encoder: SnappyProtoEncoder{},
 	}, nil
 }
 

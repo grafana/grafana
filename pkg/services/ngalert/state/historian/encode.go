@@ -13,9 +13,9 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type jsonEncoder struct{}
+type JsonEncoder struct{}
 
-func (e jsonEncoder) encode(s []stream) ([]byte, error) {
+func (e JsonEncoder) encode(s []stream) ([]byte, error) {
 	body := struct {
 		Streams []stream `json:"streams"`
 	}{Streams: s}
@@ -26,15 +26,15 @@ func (e jsonEncoder) encode(s []stream) ([]byte, error) {
 	return enc, nil
 }
 
-func (e jsonEncoder) headers() map[string]string {
+func (e JsonEncoder) headers() map[string]string {
 	return map[string]string{
 		"Content-Type": "application/json",
 	}
 }
 
-type snappyProtoEncoder struct{}
+type SnappyProtoEncoder struct{}
 
-func (e snappyProtoEncoder) encode(s []stream) ([]byte, error) {
+func (e SnappyProtoEncoder) encode(s []stream) ([]byte, error) {
 	body := logproto.PushRequest{
 		Streams: make([]logproto.Stream, 0, len(s)),
 	}
@@ -62,7 +62,7 @@ func (e snappyProtoEncoder) encode(s []stream) ([]byte, error) {
 	return buf, nil
 }
 
-func (e snappyProtoEncoder) headers() map[string]string {
+func (e SnappyProtoEncoder) headers() map[string]string {
 	return map[string]string{
 		"Content-Type":     "application/x-protobuf",
 		"Content-Encoding": "snappy",
