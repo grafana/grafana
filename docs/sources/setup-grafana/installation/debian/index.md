@@ -152,7 +152,7 @@ To start the Grafana server, run the following command:
 
 ## Upgrade Grafana
 
-While the process for upgrading Grafana is very similar to installing Grafana, there are important backup tasks you should perform. Refer to [Upgrade Grafana]({{< relref "../../../upgrade-guide/" >}}) for guidance on updating an existing installation.
+While the process for upgrading Grafana is similar to installing Grafana, there are important backup tasks you should perform. Refer to [Upgrade Grafana]({{< relref "../../../upgrade-guide/" >}}) for guidance on updating an existing installation.
 
 ## Next steps
 
