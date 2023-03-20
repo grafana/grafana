@@ -77,7 +77,7 @@ const getTabStyles = (theme: GrafanaTheme2) => {
         width: 4px;
         bottom: 2px;
         top: 2px;
-        border-radius: ${theme.shape.borderRadius()};
+        border-radius: ${theme.shape.radius.default};
         background-image: linear-gradient(0deg, #f05a28 30%, #fbca0a 99%);
       }
     `,

@@ -95,7 +95,7 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
           left: 0;
           right: 0;
           height: 4px;
-          border-radius: ${theme.shape.borderRadius()};
+          border-radius: ${theme.shape.radius.default};
           bottom: 0px;
           background: ${theme.colors.action.hover};
         }

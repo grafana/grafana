@@ -213,7 +213,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       font-size: ${typography.size.lg};
       margin: 0;
       max-width: 300px;
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
     `,
     titleLink: css`
       &:focus-visible {

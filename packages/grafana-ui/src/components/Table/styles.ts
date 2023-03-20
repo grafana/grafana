@@ -260,7 +260,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       height: 100%;
       position: absolute;
       right: -4px;
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       top: 0;
       touch-action: none;
 
