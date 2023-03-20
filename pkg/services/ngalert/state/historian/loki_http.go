@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/golang/snappy"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,6 +23,14 @@ func NewRequester() client.Requester {
 	return &http.Client{
 		Timeout: defaultClientTimeout,
 	}
+}
+
+// encoder serializes log streams to some byte format.
+type encoder interface {
+	// encode serializes a set of log streams to bytes.
+	encode(s []stream) ([]byte, error)
+	// headers returns a set of HTTP-style headers that describes the encoding scheme used.
+	headers() map[string]string
 }
 
 type LokiConfig struct {
@@ -71,6 +78,7 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 
 type httpLokiClient struct {
 	client  client.Requester
+	encoder encoder
 	cfg     LokiConfig
 	metrics *metrics.Historian
 	log     log.Logger
@@ -102,6 +110,7 @@ func newLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Histor
 	tc := client.NewTimedClient(req, metrics.WriteDuration)
 	return &httpLokiClient{
 		client:  tc,
+		encoder: snappyProtoEncoder{},
 		cfg:     cfg,
 		metrics: metrics,
 		log:     logger.New("protocol", "http"),
@@ -170,14 +179,10 @@ func (r *sample) UnmarshalJSON(b []byte) error {
 }
 
 func (c *httpLokiClient) push(ctx context.Context, s []stream) error {
-	body := struct {
-		Streams []stream `json:"streams"`
-	}{Streams: s}
-	enc, err := json.Marshal(body)
+	enc, err := c.encoder.encode(s)
 	if err != nil {
-		return fmt.Errorf("failed to serialize Loki payload: %w", err)
+		return err
 	}
-	enc = snappy.Encode(nil, enc)
 
 	uri := c.cfg.WritePathURL.JoinPath("/loki/api/v1/push")
 	req, err := http.NewRequest(http.MethodPost, uri.String(), bytes.NewBuffer(enc))
@@ -186,7 +191,9 @@ func (c *httpLokiClient) push(ctx context.Context, s []stream) error {
 	}
 
 	c.setAuthAndTenantHeaders(req)
-	req.Header.Add("content-type", "application/json")
+	for k, v := range c.encoder.headers() {
+		req.Header.Add(k, v)
+	}
 
 	c.metrics.BytesWritten.Add(float64(len(enc)))
 	req = req.WithContext(ctx)
