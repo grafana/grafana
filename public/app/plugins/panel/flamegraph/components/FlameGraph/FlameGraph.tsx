@@ -269,6 +269,7 @@ const FlameGraph = ({
           setSelectedBarIndex={setSelectedBarIndex}
           setRangeMin={setRangeMin}
           setRangeMax={setRangeMax}
+          getLabelValue={getLabelValue}
         />
       )}
     </div>

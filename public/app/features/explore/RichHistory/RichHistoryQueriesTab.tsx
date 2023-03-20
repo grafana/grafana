@@ -17,7 +17,7 @@ import { ExploreId, RichHistoryQuery } from 'app/types/explore';
 import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
 
-export interface Props {
+export interface RichHistoryQueriesTabProps {
   queries: RichHistoryQuery[];
   totalQueries: number;
   loading: boolean;
@@ -118,7 +118,7 @@ const getStyles = (theme: GrafanaTheme2, height: number) => {
   };
 };
 
-export function RichHistoryQueriesTab(props: Props) {
+export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
   const {
     queries,
     totalQueries,
@@ -211,6 +211,7 @@ export function RichHistoryQueriesTab(props: Props) {
           )}
           <div className={styles.filterInput}>
             <FilterInput
+              escapeRegex={false}
               placeholder="Search queries"
               value={richHistorySearchFilters.search}
               onChange={(search: string) => updateFilters({ search })}
