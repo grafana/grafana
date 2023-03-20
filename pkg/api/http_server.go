@@ -136,6 +136,7 @@ type HTTPServer struct {
 	pluginClient                 plugins.Client
 	pluginStore                  plugins.Store
 	pluginInstaller              plugins.Installer
+	pluginFiles                  plugins.FileSystem
 	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
 	pluginErrorResolver          plugins.ErrorResolver

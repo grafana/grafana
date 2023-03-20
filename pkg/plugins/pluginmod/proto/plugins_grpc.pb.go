@@ -22,6 +22,7 @@ type PluginManagerClient interface {
 	GetPlugins(ctx context.Context, in *GetPluginsRequest, opts ...grpc.CallOption) (*GetPluginsResponse, error)
 	AddPlugin(ctx context.Context, in *AddPluginRequest, opts ...grpc.CallOption) (*AddPluginResponse, error)
 	RemovePlugin(ctx context.Context, in *RemovePluginRequest, opts ...grpc.CallOption) (*RemovePluginResponse, error)
+	File(ctx context.Context, in *GetPluginFileRequest, opts ...grpc.CallOption) (*GetPluginFileResponse, error)
 	PluginErrors(ctx context.Context, in *GetPluginErrorsRequest, opts ...grpc.CallOption) (*GetPluginErrorsResponse, error)
 	StaticRoute(ctx context.Context, in *GetStaticRoutesRequest, opts ...grpc.CallOption) (*GetStaticRoutesResponse, error)
 }
@@ -70,6 +71,15 @@ func (c *pluginManagerClient) RemovePlugin(ctx context.Context, in *RemovePlugin
 	return out, nil
 }
 
+func (c *pluginManagerClient) File(ctx context.Context, in *GetPluginFileRequest, opts ...grpc.CallOption) (*GetPluginFileResponse, error) {
+	out := new(GetPluginFileResponse)
+	err := c.cc.Invoke(ctx, "/plugins.PluginManager/File", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *pluginManagerClient) PluginErrors(ctx context.Context, in *GetPluginErrorsRequest, opts ...grpc.CallOption) (*GetPluginErrorsResponse, error) {
 	out := new(GetPluginErrorsResponse)
 	err := c.cc.Invoke(ctx, "/plugins.PluginManager/PluginErrors", in, out, opts...)
@@ -96,6 +106,7 @@ type PluginManagerServer interface {
 	GetPlugins(context.Context, *GetPluginsRequest) (*GetPluginsResponse, error)
 	AddPlugin(context.Context, *AddPluginRequest) (*AddPluginResponse, error)
 	RemovePlugin(context.Context, *RemovePluginRequest) (*RemovePluginResponse, error)
+	File(context.Context, *GetPluginFileRequest) (*GetPluginFileResponse, error)
 	PluginErrors(context.Context, *GetPluginErrorsRequest) (*GetPluginErrorsResponse, error)
 	StaticRoute(context.Context, *GetStaticRoutesRequest) (*GetStaticRoutesResponse, error)
 }
@@ -115,6 +126,9 @@ func (UnimplementedPluginManagerServer) AddPlugin(context.Context, *AddPluginReq
 }
 func (UnimplementedPluginManagerServer) RemovePlugin(context.Context, *RemovePluginRequest) (*RemovePluginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemovePlugin not implemented")
+}
+func (UnimplementedPluginManagerServer) File(context.Context, *GetPluginFileRequest) (*GetPluginFileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method File not implemented")
 }
 func (UnimplementedPluginManagerServer) PluginErrors(context.Context, *GetPluginErrorsRequest) (*GetPluginErrorsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PluginErrors not implemented")
@@ -206,6 +220,24 @@ func _PluginManager_RemovePlugin_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PluginManager_File_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPluginFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PluginManagerServer).File(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/plugins.PluginManager/File",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PluginManagerServer).File(ctx, req.(*GetPluginFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _PluginManager_PluginErrors_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPluginErrorsRequest)
 	if err := dec(in); err != nil {
@@ -264,6 +296,10 @@ var PluginManager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemovePlugin",
 			Handler:    _PluginManager_RemovePlugin_Handler,
+		},
+		{
+			MethodName: "File",
+			Handler:    _PluginManager_File_Handler,
 		},
 		{
 			MethodName: "PluginErrors",

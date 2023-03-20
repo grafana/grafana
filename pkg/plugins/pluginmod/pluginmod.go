@@ -138,6 +138,13 @@ func (m *PluginsModule) PluginErrors() []*plugins.Error {
 	return []*plugins.Error{}
 }
 
+func (m *PluginsModule) GetFile(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+	if pm, exists := m.manager(); exists {
+		return pm.GetFile(ctx, pluginID, filename)
+	}
+	return &plugins.File{}, nil
+}
+
 func (m *PluginsModule) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if pm, exists := m.manager(); exists {
 		return pm.QueryData(ctx, req)

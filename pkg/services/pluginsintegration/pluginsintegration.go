@@ -46,6 +46,7 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugins.Client), new(*pluginmod.PluginsModule)),
 	wire.Bind(new(plugins.Store), new(*pluginmod.PluginsModule)),
 	wire.Bind(new(plugins.Installer), new(*pluginmod.PluginsModule)),
+	wire.Bind(new(plugins.FileSystem), new(*pluginmod.PluginsModule)),
 	pluginmod.ProvidePluginsModule,
 )
 

@@ -25,7 +25,7 @@ import (
 var _ services.Service = (*Client)(nil)
 var _ PluginManager = (*Client)(nil)
 
-var ErrNotImplemented = errors.New("ErrMethodNotImplemented")
+var errNotImplemented = errors.New("ErrMethodNotImplemented")
 
 type Client struct {
 	*services.BasicService
@@ -191,9 +191,24 @@ func (c *Client) PluginErrors() []*plugins.Error {
 	return res
 }
 
+func (c *Client) GetFile(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+	res, err := c.pm.File(ctx, &pluginProto.GetPluginFileRequest{
+		Id:   pluginID,
+		File: filename,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &plugins.File{
+		Content: res.File,
+		ModTime: res.ModTime.AsTime(),
+	}, nil
+}
+
 func (c *Client) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if c.qc == nil {
-		return nil, ErrNotImplemented
+		return nil, errNotImplemented
 	}
 
 	protoReq := backend.ToProto().QueryDataRequest(req)
@@ -201,7 +216,7 @@ func (c *Client) QueryData(ctx context.Context, req *backend.QueryDataRequest) (
 
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
-			return nil, ErrNotImplemented
+			return nil, errNotImplemented
 		}
 
 		return nil, fmt.Errorf("%v: %w", "Failed to query data", err)
@@ -212,14 +227,14 @@ func (c *Client) QueryData(ctx context.Context, req *backend.QueryDataRequest) (
 
 func (c *Client) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if c.rc == nil {
-		return ErrNotImplemented
+		return errNotImplemented
 	}
 
 	protoReq := backend.ToProto().CallResourceRequest(req)
 	protoStream, err := c.rc.CallResource(ctx, protoReq)
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
-			return ErrNotImplemented
+			return errNotImplemented
 		}
 
 		return fmt.Errorf("%v: %w", "Failed to call resource", err)
@@ -229,7 +244,7 @@ func (c *Client) CallResource(ctx context.Context, req *backend.CallResourceRequ
 		protoResp, err := protoStream.Recv()
 		if err != nil {
 			if status.Code(err) == codes.Unimplemented {
-				return ErrNotImplemented
+				return errNotImplemented
 			}
 
 			if errors.Is(err, io.EOF) {
@@ -247,7 +262,7 @@ func (c *Client) CallResource(ctx context.Context, req *backend.CallResourceRequ
 
 func (c *Client) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if c.dc == nil {
-		return nil, ErrNotImplemented
+		return nil, errNotImplemented
 	}
 
 	protoContext := backend.ToProto().PluginContext(req.PluginContext)
@@ -285,7 +300,7 @@ func (c *Client) CollectMetrics(ctx context.Context, req *backend.CollectMetrics
 
 func (c *Client) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	if c.sc == nil {
-		return nil, ErrNotImplemented
+		return nil, errNotImplemented
 	}
 	protoResp, err := c.sc.SubscribeStream(ctx, backend.ToProto().SubscribeStreamRequest(req))
 	if err != nil {
@@ -296,7 +311,7 @@ func (c *Client) SubscribeStream(ctx context.Context, req *backend.SubscribeStre
 
 func (c *Client) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	if c.sc == nil {
-		return nil, ErrNotImplemented
+		return nil, errNotImplemented
 	}
 	protoResp, err := c.sc.PublishStream(ctx, backend.ToProto().PublishStreamRequest(req))
 	if err != nil {
@@ -307,14 +322,14 @@ func (c *Client) PublishStream(ctx context.Context, req *backend.PublishStreamRe
 
 func (c *Client) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	if c.sc == nil {
-		return ErrNotImplemented
+		return errNotImplemented
 	}
 
 	protoReq := backend.ToProto().RunStreamRequest(req)
 	protoStream, err := c.sc.RunStream(ctx, protoReq)
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
-			return ErrNotImplemented
+			return errNotImplemented
 		}
 		return fmt.Errorf("%v: %w", "Failed to call resource", err)
 	}
@@ -323,7 +338,7 @@ func (c *Client) RunStream(ctx context.Context, req *backend.RunStreamRequest, s
 		p, err := protoStream.Recv()
 		if err != nil {
 			if status.Code(err) == codes.Unimplemented {
-				return ErrNotImplemented
+				return errNotImplemented
 			}
 			if errors.Is(err, io.EOF) {
 				return nil

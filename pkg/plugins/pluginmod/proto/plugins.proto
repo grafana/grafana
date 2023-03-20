@@ -1,6 +1,8 @@
 syntax = "proto3";
 package plugins;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "./;plugins";
 
 message PluginData {
@@ -251,6 +253,16 @@ message GetStaticRoutesResponse {
 message StaticRoute {
   string id = 1;
   string directory = 2;
+}
+
+message GetPluginFileRequest {
+  string id = 1;
+  string file = 2;
+}
+
+message GetPluginFileResponse {
+  bytes file = 1;
+  google.protobuf.Timestamp modTime = 2;
 }
 
 service PluginManager {

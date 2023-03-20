@@ -8,6 +8,7 @@ type PluginManager interface {
 	plugins.Installer
 	plugins.Store
 	plugins.Client
+	plugins.FileSystem
 
 	plugins.RendererManager
 	plugins.SecretsPluginManager
