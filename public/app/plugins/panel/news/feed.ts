@@ -15,7 +15,7 @@ export function isAtomFeed(txt: string) {
     //@ts-ignore
     const escapeHTMLPolicy = trustedTypes.createPolicy('atom', { createHTML: (s: string) => s });
     const escaped = escapeHTMLPolicy.createHTML(txt);
-    const doc = domParser.parseFromString(escaped, 'text/xml');
+    const doc = domParser.parseFromString(escaped, 'text/xml'); // Feed parseFromString with TrustedHTML
     return doc.querySelector('feed') !== null;
   } else {
     const doc = domParser.parseFromString(txt, 'text/xml');
