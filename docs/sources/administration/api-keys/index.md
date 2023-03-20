@@ -41,8 +41,9 @@ To follow these instructions, you need one of the following:
 
 To create an API key, complete the following steps:
 
-1. Sign in to Grafana, hover your cursor over **Configuration** (the gear icon), and click **API Keys**.
-1. Click **New API key**.
+1. Sign in to Grafana.
+1. Click **Administration** in the left-side menu and select **API Keys**.
+1. Click **Add API key**.
 1. Enter a unique name for the key.
 1. In the **Role** field, select one of the following access levels you want to assign to the key.
    - **Admin**: Enables a user to use APIs at the broadest, most powerful administrative level.
@@ -92,7 +93,8 @@ To migrate all API keys to service accounts, complete the following steps:
 
 To migrate a single API key to a service account, complete the following steps:
 
-1. Sign in to Grafana, hover your cursor over **Configuration** (the gear icon), and click **API Keys**.
+1. Sign in to Grafana.
+1. Click **Administration** in the left-side menu and select **API Keys**.
 1. Find the API Key you want to migrate.
 1. Click **Migrate to service account**.
 

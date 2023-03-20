@@ -62,8 +62,6 @@ Alpha features might be changed or removed without prior notice.
 | `publicDashboardsEmailSharing`     | Enables public dashboard sharing to be restricted to only allowed emails                                                                                                     |
 | `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                                                                                       |
 | `lokiDataframeApi`                 | Use experimental loki api for WebSocket streaming (early prototype)                                                                                                          |
-| `dashboardComments`                | Enable dashboard-wide comments                                                                                                                                               |
-| `annotationComments`               | Enable annotation comments                                                                                                                                                   |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                                                                              |
 | `exploreMixedDatasource`           | Enable mixed datasource in Explore                                                                                                                                           |
 | `tracing`                          | Adds trace ID to error notifications                                                                                                                                         |
@@ -90,20 +88,21 @@ Alpha features might be changed or removed without prior notice.
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
 | `lokiQuerySplitting`               | Split large interval queries into subqueries with smaller time intervals                                                                                                     |
+| `lokiQuerySplittingConfig`         | Give users the option to configure split durations for Loki queries                                                                                                          |
 | `individualCookiePreferences`      | Support overriding cookie preferences per user                                                                                                                               |
 | `drawerDataSourcePicker`           | Changes the user experience for data source selection to a drawer.                                                                                                           |
 | `traceqlSearch`                    | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries                                                                    |
 | `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component                                                                         |
+| `timeSeriesTable`                  | Enable time series table transformer & sparkline cell type                                                                                                                   |
+| `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                                                                                    |
 
 ## Development feature toggles
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name     | Description                                         |
-| ----------------------- | --------------------------------------------------- |
-| `k8s`                   | Explore native k8s integrations                     |
-| `dashboardsFromStorage` | Load dashboards from the generic storage interface  |
-| `grpcServer`            | Run GRPC server                                     |
-| `entityStore`           | SQL-based entity store (requires storage flag also) |
-| `queryLibrary`          | Reusable query library                              |
-| `nestedFolders`         | Enable folder nesting                               |
+| Feature toggle name | Description                                         |
+| ------------------- | --------------------------------------------------- |
+| `k8s`               | Explore native k8s integrations                     |
+| `grpcServer`        | Run GRPC server                                     |
+| `entityStore`       | SQL-based entity store (requires storage flag also) |
+| `nestedFolders`     | Enable folder nesting                               |

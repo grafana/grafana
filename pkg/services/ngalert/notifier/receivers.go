@@ -61,24 +61,12 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	for _, r := range c.Receivers {
 		greceivers := make([]*alertingNotify.GrafanaReceiver, 0, len(r.GrafanaManagedReceivers))
 		for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			var settings map[string]interface{}
-			//TODO: We shouldn't need to do this marshalling.
-			j, err := gr.Settings.MarshalJSON()
-			if err != nil {
-				return nil, fmt.Errorf("unable to marshal settings to JSON: %v", err)
-			}
-
-			err = json.Unmarshal(j, &settings)
-			if err != nil {
-				return nil, fmt.Errorf("unable to marshal settings into map: %v", err)
-			}
-
 			greceivers = append(greceivers, &alertingNotify.GrafanaReceiver{
 				UID:                   gr.UID,
 				Name:                  gr.Name,
 				Type:                  gr.Type,
 				DisableResolveMessage: gr.DisableResolveMessage,
-				Settings:              settings,
+				Settings:              json.RawMessage(gr.Settings),
 				SecureSettings:        gr.SecureSettings,
 			})
 		}

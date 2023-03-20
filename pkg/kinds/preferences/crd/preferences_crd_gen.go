@@ -13,7 +13,7 @@ import (
 	_ "embed"
 
 	"github.com/grafana/grafana/pkg/kinds/preferences"
-	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
+	"github.com/grafana/kindsys/k8ssys"
 )
 
 // The CRD YAML representation of the Preferences kind.

@@ -43,6 +43,13 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 		write = cfg.LokiRemoteURL
 	}
 
+	if read == "" {
+		return LokiConfig{}, fmt.Errorf("either read path URL or remote Loki URL must be provided")
+	}
+	if write == "" {
+		return LokiConfig{}, fmt.Errorf("either write path URL or remote Loki URL must be provided")
+	}
+
 	readURL, err := url.Parse(read)
 	if err != nil {
 		return LokiConfig{}, fmt.Errorf("failed to parse loki remote read URL: %w", err)

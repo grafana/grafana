@@ -133,7 +133,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExternalUserMngInfo:                 setting.ExternalUserMngInfo,
 		ExternalUserMngLinkUrl:              setting.ExternalUserMngLinkUrl,
 		ExternalUserMngLinkName:             setting.ExternalUserMngLinkName,
-		ViewersCanEdit:                      setting.ViewersCanEdit,
+		ViewersCanEdit:                      hs.Cfg.ViewersCanEdit,
 		AngularSupportEnabled:               hs.Cfg.AngularSupportEnabled,
 		EditorsCanAdmin:                     hs.Cfg.EditorsCanAdmin,
 		DisableSanitizeHtml:                 hs.Cfg.DisableSanitizeHtml,
@@ -174,6 +174,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		},
 
 		FeatureToggles:                   hs.Features.GetEnabled(c.Req.Context()),
+		AnonymousEnabled:                 hs.Cfg.AnonymousEnabled,
 		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
 		RendererVersion:                  hs.RenderService.Version(),
 		SecretsManagerPluginEnabled:      secretsManagerPluginEnabled,
