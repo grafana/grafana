@@ -17,7 +17,6 @@ featureHighlights,stable,@grafana/grafana-as-code,false,false,false,false
 migrationLocking,beta,@grafana/backend-platform,false,false,false,false
 storage,alpha,@grafana/grafana-app-platform-squad,false,false,false,false
 k8s,alpha,@grafana/grafana-app-platform-squad,true,false,false,false
-dashboardsFromStorage,alpha,@grafana/grafana-app-platform-squad,true,false,false,false
 exploreMixedDatasource,alpha,@grafana/explore-squad,false,false,false,true
 tracing,alpha,@grafana/user-essentials,false,false,false,true
 newTraceView,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
