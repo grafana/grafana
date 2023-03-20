@@ -94,3 +94,7 @@ export function parsePrometheusDuration(duration: string): number {
 
   return totalDuration;
 }
+
+export const isNullDate = (date: string) => {
+  return date.includes('0001-01-01T00');
+};

@@ -254,12 +254,6 @@ We've added Discord as a contact point receiver for Grafana Cloud alert rules.
 
 We've made the following changes to alert administration.
 
-#### Better guidance to configure your Alertmanagers
-
-Get additional help while configuring your Alertmanager. If you enter an invalid Alertmanager configuration, an error message displays, and you can choose from a previous working configuration to restart it.
-
-{{< figure src="/media/docs/alerting/alertmanager-config.png" max-width="750px" caption="Better guidance to configure your Alertmanager" >}}
-
 #### Alerting landing page
 
 Introduces a new landing page that helps you get started quickly with Alerting. It also provides you with at a glance information on how Alerting works and a video to introduce you to key concepts.

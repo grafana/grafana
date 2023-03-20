@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { InlineFieldRow, InlineField } from '@grafana/ui';
 
@@ -7,7 +7,7 @@ interface Props {
   tooltip?: string;
   children: React.ReactElement;
 }
-const SearchField: FC<Props> = ({ label, tooltip, children }) => {
+const SearchField = ({ label, tooltip, children }: Props) => {
   return (
     <InlineFieldRow>
       <InlineField label={label} labelWidth={16} grow tooltip={tooltip}>
