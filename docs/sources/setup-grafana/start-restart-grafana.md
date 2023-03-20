@@ -89,7 +89,7 @@ sudo update-rc.d grafana-server defaults
 To restart the Grafana server, run the following commands:
 
 ```bash
-Need input
+sudo service grafana-server restart
 ```
 
 ### Start the server using the binary
@@ -99,7 +99,7 @@ The `grafana-server` binary .tar.gz needs the working directory to be the root i
 To start the Grafana server, run the following command:
 
 ```bash
-./bin/grafana-server web
+./bin/grafana-server
 ```
 
 ## Docker
@@ -182,7 +182,7 @@ To restart Grafana:
 1. Run the command:
 
 ```bash
-./bin/grafana-server web
+./bin/grafana-server
 ```
 
 ## Next steps
