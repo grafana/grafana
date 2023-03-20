@@ -1003,6 +1003,10 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		filters = append(filters, searchstore.FolderFilter{IDs: query.FolderIds})
 	}
 
+	if len(query.FolderUIDs) > 0 {
+		filters = append(filters, searchstore.FolderUIDFilter{UIDs: query.FolderUIDs})
+	}
+
 	var res []dashboards.DashboardSearchProjection
 	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters}
 

@@ -91,6 +91,14 @@ func (f FolderFilter) Where() (string, []interface{}) {
 	return sqlIDin("dashboard.folder_id", f.IDs)
 }
 
+type FolderUIDFilter struct {
+	UIDs []string
+}
+
+func (f FolderUIDFilter) Where() (string, []interface{}) {
+	return sqlUIDin("folder_uid", f.UIDs)
+}
+
 type DashboardIDFilter struct {
 	IDs []int64
 }
