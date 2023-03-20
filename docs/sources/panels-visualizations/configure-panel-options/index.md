@@ -36,11 +36,13 @@ After you add a panel to a dashboard, you can open it at any time to change chan
 
 1. Open the dashboard that contains the panel you want to edit.
 
-1. Hover over any part of the panel to display the actions menu on the top right corner. Click the menu and select **Edit**. To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
+1. Hover over any part of the panel to display the actions menu on the top right corner. Click the menu and select **Edit**.
 
-   The panel opens in edit mode.
+![Panel with menu displayed](/media/docs/grafana/screenshot-panel-menu.png)
 
-   <!-- add screenshot here? -->
+To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
+
+The panel opens in edit mode.
 
 ## Add a title and description to a panel
 
