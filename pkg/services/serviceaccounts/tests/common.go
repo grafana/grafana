@@ -94,8 +94,8 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
 			// Force setting expires to time before now to make key expired
 			var expires int64 = 1
-			key = &apikey.APIKey{Expires: &expires}
-			rowsAffected, err := sess.ID(key.ID).Update(key)
+			expiringKey := apikey.APIKey{Expires: &expires}
+			rowsAffected, err := sess.ID(key.ID).Update(&expiringKey)
 			require.Equal(t, int64(1), rowsAffected)
 			return err
 		})
