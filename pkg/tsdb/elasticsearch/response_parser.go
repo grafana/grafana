@@ -697,6 +697,26 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 					percentileValue := percentiles.Get(percentileName).MustFloat64()
 					addMetricValue(values, fmt.Sprintf("p%v %v", percentileName, metric.Field), &percentileValue)
 				}
+			case topMetricsType:
+				baseName := getMetricName(metric.Type)
+				metrics := metric.Settings.Get("metrics").MustStringArray()
+				for _, metricField := range metrics {
+					// If we selected more than one metric we also add each metric name
+					metricName := baseName
+					if len(metrics) > 1 {
+						metricName += " " + metricField
+					}
+					top := bucket.GetPath(metric.ID, "top").MustArray()
+					metrics, hasMetrics := top[0].(map[string]interface{})["metrics"]
+					if hasMetrics {
+						metrics := metrics.(map[string]interface{})
+						metricValue, hasMetricValue := metrics[metricField]
+						if hasMetricValue && metricValue != nil {
+							v := metricValue.(float64)
+							addMetricValue(values, metricName, &v)
+						}
+					}
+				}
 			default:
 				metricName := getMetricName(metric.Type)
 				otherMetrics := make([]*MetricAgg, 0)
