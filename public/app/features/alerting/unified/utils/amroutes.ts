@@ -61,7 +61,7 @@ export const emptyRoute: FormAmRoute = {
   groupBy: [],
   object_matchers: [],
   routes: [],
-  continue: false,
+  continue: true, // LOGZ.IO CHANGES
   receiver: '',
   groupWaitValue: '',
   groupWaitValueType: timeOptions[0].value,
