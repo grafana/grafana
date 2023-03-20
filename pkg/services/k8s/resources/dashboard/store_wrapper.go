@@ -61,7 +61,12 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		return s.DashboardSQLStore.SaveDashboard(ctx, cmd)
 	}
 
-	dashboardResource, err := s.clientset.GetClientset().GetResourceClient(CRD)
+	clientset := s.clientset.GetClientset()
+	if clientset == nil {
+		return nil, fmt.Errorf("not initalized yet")
+	}
+
+	dashboardResource, err := clientset.GetResourceClient(CRD)
 	if err != nil {
 		return nil, fmt.Errorf("ProvideServiceWrapper failed to get dashboard resource client: %w", err)
 	}

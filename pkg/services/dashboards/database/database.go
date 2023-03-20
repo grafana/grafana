@@ -1093,33 +1093,14 @@ func (d *dashboardStore) SaveK8sDashboard(ctx context.Context, orgID int64, uid 
 	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		result, err = saveK8sDashboard(sess, dash, anno.FolderUID, d.emitEntityEvent())
 		if err == nil && anno.OriginKey != "" {
-			fmt.Printf("TODO!!! provisioning")
-
-			// if provisioning header??? or was provisioning???
-
-			// if provisioning.Updated == 0 {
-			// 	provisioning.Updated = result.Updated.Unix()
-			// }
-
-			// js, _ = json.MarshalIndent(cmd, "", "  ")
-			// fmt.Printf("-------- COMMAND BEFORE final save ---------")
-			// fmt.Printf("%s", string(js))
-
-			// if anno.OriginKey == "" {
-			// 	_, err = c.dashboardStore.SaveDashboard(ctx, cmd)
-			// } else {
-			// 	p := &dashboards.DashboardProvisioning{
-			// 		Name:        anno.OriginName,
-			// 		ExternalID:  anno.OriginPath,
-			// 		CheckSum:    anno.OriginKey,
-			// 		Updated:     anno.OriginTime,
-			// 		DashboardID: cmd.Dashboard.Get("id").MustInt64(0), // :()
-			// 	}
-			// 	_, err = c.dashboardStore.SaveProvisionedDashboard(ctx, cmd, p)
-			// }
-			// return err
-
-			//return saveProvisionedData(sess, provisioning, result)
+			p := &dashboards.DashboardProvisioning{
+				Name:        anno.OriginName,
+				ExternalID:  anno.OriginPath,
+				CheckSum:    anno.OriginKey,
+				Updated:     anno.OriginTime,
+				DashboardID: result.ID,
+			}
+			return saveProvisionedData(sess, p, result)
 		}
 		return err
 	})
