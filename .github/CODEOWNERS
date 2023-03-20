@@ -50,10 +50,14 @@ go.sum @grafana/backend-platform
 /devenv/docker/loadtests-ts @grafana/grafana-edge-squad
 
 # Continuous Integration
-.drone.yml @grafana/grafana-release-eng
-.drone.star @grafana/grafana-release-eng
-/scripts/drone/ @grafana/grafana-release-eng
-/pkg/build/ @grafana/grafana-release-eng
+.drone.yml @grafana/grafana-delivery
+.drone.star @grafana/grafana-delivery
+/scripts/drone/ @grafana/grafana-delivery
+/pkg/build/ @grafana/grafana-delivery
+/.dockerignore @grafana/grafana-delivery
+/Dockerfile @grafana/grafana-delivery
+/Makefile @grafana/grafana-delivery
+/scripts/build/ @grafana/grafana-delivery
 
 # Cloud Datasources backend code
 /pkg/tsdb/cloudwatch @grafana/aws-plugins
