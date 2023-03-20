@@ -10,7 +10,10 @@ import (
   "github.com/grafana/grafana/pkg/services/k8s/client"
   "github.com/grafana/grafana/pkg/services/k8s/informer"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
+	"github.com/grafana/kindsys"
+	"github.com/grafana/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/registry/corekind"
+  "github.com/grafana/dskit/services"
 	"github.com/grafana/thema"
 	"gopkg.in/yaml.v3"
 )
@@ -22,17 +25,19 @@ import (
 // is passed, the singleton will be used.
 func New(
   rt *thema.Runtime,
-  clientSet *client.Clientset,
-  informerFactory *informer.Factory,{{range $i, $k := .Kinds }}
+  clientsetProvider client.ClientSetProvider,
+  informerFactory informer.Informer,{{range $i, $k := .Kinds }}
   {{ $k.Props.MachineName }}Watcher {{ $k.Props.MachineName }}.Watcher,{{end}}
 ) *Registry {
 	breg := corekind.NewBase(rt)
-	return doNewRegistry(
+	r := doNewRegistry(
     breg,
-    clientSet,
+    clientsetProvider,
     informerFactory,{{range $i, $k := .Kinds }}
     {{ $k.Props.MachineName }}Watcher,{{end}}
   )
+  r.BasicService = services.NewBasicService(r.start, r.run, nil)
+  return r
 }
 
 // All returns a slice of all core Grafana CRDs in the registry.
@@ -55,7 +60,50 @@ func (r *Registry) All() []crd.Kind {
 // that are needed are known to the caller. Prefer All() when performing operations
 // generically across all kinds.
 type Registry struct {
+  *services.BasicService
 	all [{{ len .Kinds }}]crd.Kind
+  clientsetProvider client.ClientSetProvider
+  informerFactory informer.Informer{{range $i, $k := .Kinds }}
+  {{ $k.Props.MachineName }}Watcher {{ $k.Props.MachineName }}.Watcher{{end}}
+}
+
+func (r *Registry) start(ctx context.Context) error {
+   var (
+    err error
+    b []byte
+  )
+  clientSet := r.clientsetProvider.GetClientset()
+  {{range $i, $k := .Kinds }}
+   /************************ {{ $k.Props.Name }} ************************/
+    // TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
+    map{{ $i }} := make(map[string]any)
+    err = yaml.Unmarshal({{ $k.Props.MachineName }}.CRDYaml, map{{ $i }})
+    if err != nil {
+      panic(fmt.Sprintf("generated CRD YAML for {{ $k.Props.Name }} failed to unmarshal: %s", err))
+    }
+    b, err = json.Marshal(map{{ $i }})
+    if err != nil {
+      panic(fmt.Sprintf("could not re-marshal CRD JSON for {{ $k.Props.Name }}: %s", err))
+    }
+    err = json.Unmarshal(b, &{{ $k.Props.MachineName }}.CRD.Schema)
+    if err != nil {
+      panic(fmt.Sprintf("could not unmarshal CRD JSON for {{ $k.Props.Name }}: %s", err))
+    }
+
+  err = clientSet.RegisterKind(ctx, {{ $k.Props.MachineName }}.CRD)
+  if err != nil {
+    panic(fmt.Sprintf("generated CRD for {{ $k.Props.Name }} failed to register: %s\n", err))
+  }
+
+  watcherWrapper{{ $i }} := {{ $k.Props.MachineName }}.NewWatcherWrapper(r.{{ $k.Props.MachineName }}Watcher)
+  r.informerFactory.AddWatcher({{ $k.Props.MachineName}}.CRD, watcherWrapper{{ $i }})
+{{end}}
+  return nil
+}
+
+func (r *Registry) run(ctx context.Context) error {
+  <-ctx.Done()
+  return nil
 }
 
 {{range $i, $k := .Kinds }}
@@ -67,42 +115,16 @@ func (r *Registry) {{ .Props.Name }}() crd.Kind {
 
 func doNewRegistry(
   breg *corekind.Base,
-  clientset *client.Clientset,
-  informerFactory *informer.Factory,{{range $i, $k := .Kinds }}
+  clientsetProvider client.ClientSetProvider,
+  informerFactory informer.Informer,{{range $i, $k := .Kinds }}
   {{ $k.Props.MachineName }}Watcher {{ $k.Props.MachineName }}.Watcher,{{end}}
 ) *Registry {
- var (
-    err error
-    b []byte
-    reg = &Registry{}
-    ctx = context.Background()
-  )
+reg := &Registry{}
+reg.clientsetProvider = clientsetProvider
+reg.informerFactory = informerFactory
 
 {{range $i, $k := .Kinds }}
-  /************************ {{ $k.Props.Name }} ************************/
-  // TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
-  map{{ $i }} := make(map[string]any)
-  err = yaml.Unmarshal({{ $k.Props.MachineName }}.CRDYaml, map{{ $i }})
-  if err != nil {
-    panic(fmt.Sprintf("generated CRD YAML for {{ $k.Props.Name }} failed to unmarshal: %s", err))
-  }
-  b, err = json.Marshal(map{{ $i }})
-  if err != nil {
-    panic(fmt.Sprintf("could not re-marshal CRD JSON for {{ $k.Props.Name }}: %s", err))
-  }
-  err = json.Unmarshal(b, &{{ $k.Props.MachineName }}.CRD.Schema)
-  if err != nil {
-    panic(fmt.Sprintf("could not unmarshal CRD JSON for {{ $k.Props.Name }}: %s", err))
-  }
-
-  err = clientset.RegisterKind(ctx, {{ $k.Props.MachineName }}.CRD)
-	if err != nil {
-    panic(fmt.Sprintf("generated CRD for {{ $k.Props.Name }} failed to register: %s\n", err))
-	}
-
-  watcherWrapper{{ $i }} := {{ $k.Props.MachineName }}.NewWatcherWrapper({{ $k.Props.MachineName }}Watcher)
-  informerFactory.AddWatcher({{ $k.Props.MachineName}}.CRD, watcherWrapper{{ $i }})
-
+  reg.{{ $k.Props.MachineName }}Watcher = {{ $k.Props.MachineName }}Watcher
   reg.all[{{ $i }}] = {{ $k.Props.MachineName }}.CRD
 {{end}}
 

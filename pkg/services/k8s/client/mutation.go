@@ -13,7 +13,7 @@ import (
 // Converts shortwebhookconfigs into full k8s mutationwebhookconfigurations and registers them
 func (c *Clientset) RegisterMutation(ctx context.Context, webhooks []ShortWebhookConfig) error {
 	for _, hook := range webhooks {
-		obj := convertShortWebhookToMutationWebhook(hook)
+		obj := convertShortWebhookToMutationWebhook(c.GetCABundle(), hook)
 		force := true
 		patchOpts := metav1.PatchOptions{FieldManager: GrafanaFieldManager, Force: &force}
 		data, err := json.Marshal(obj)
@@ -30,7 +30,7 @@ func (c *Clientset) RegisterMutation(ctx context.Context, webhooks []ShortWebhoo
 }
 
 // Converts shortwebhookconfig into a mutatingwebhookconfiguration
-func convertShortWebhookToMutationWebhook(swc ShortWebhookConfig) *admissionregistrationV1.MutatingWebhookConfiguration {
+func convertShortWebhookToMutationWebhook(caBundle []byte, swc ShortWebhookConfig) *admissionregistrationV1.MutatingWebhookConfiguration {
 	metaName := fmt.Sprintf("mutation.%s.core.grafana.com", swc.Kind.MachineName())
 
 	resourcePlural := swc.Kind.Props().Common().PluralMachineName

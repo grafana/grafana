@@ -22,7 +22,7 @@ type ServiceWrapper struct {
 	publicdashboards.Service
 	store     publicdashboards.Store
 	log       log.Logger
-	clientset *client.Clientset
+	clientset client.ClientSetProvider
 	namespace string
 }
 
@@ -31,7 +31,7 @@ var _ publicdashboards.Service = (*ServiceWrapper)(nil)
 func ProvideService(
 	publicDashboardService *publicdashboardService.PublicDashboardServiceImpl,
 	publicDashboardStore *publicdashboardStore.PublicDashboardStoreImpl,
-	clientset *client.Clientset,
+	clientset client.ClientSetProvider,
 ) (*ServiceWrapper, error) {
 	return &ServiceWrapper{
 		Service:   publicDashboardService,
@@ -58,7 +58,7 @@ func (s *ServiceWrapper) Create(ctx context.Context, u *user.SignedInUser, dto *
 	pd.Uid = uid
 
 	// get resource client
-	publicdashboardResource, err := s.clientset.GetResourceClient(CRD)
+	publicdashboardResource, err := s.clientset.GetClientset().GetResourceClient(CRD)
 	if err != nil {
 		return nil, fmt.Errorf("provideServiceWrapper failed to get public dashboard resource client: %w", err)
 	}

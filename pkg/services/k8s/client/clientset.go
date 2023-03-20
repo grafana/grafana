@@ -5,12 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"sync"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/kindsys"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
+	"github.com/grafana/grafana/pkg/setting"
 	admissionregistrationV1 "k8s.io/api/admissionregistration/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -31,17 +34,27 @@ var (
 	ErrCRDAlreadyRegistered = errors.New("error registering duplicate CRD")
 	// TODO not actually sure if this is correct
 	GrafanaFieldManager = "core.grafana.com"
-	caBundle            = getCABundle()
+	// NOTE use getCaBundle if you need this
+	caBundle []byte
 )
 
 type Resource interface {
 	dynamic.ResourceInterface
 }
 
+type Service interface {
+	services.Service
+}
+
+type ClientSetProvider interface {
+	GetClientset() *Clientset
+}
+
 // Clientset is the clientset for Kubernetes APIs.
 // It provides functionality to talk to the APIs as well as register new API clients for CRDs.
 type Clientset struct {
-	config *rest.Config
+	config     *rest.Config
+	grafanaCfg *setting.Cfg
 
 	admissionRegistration admissionregistrationClient.AdmissionregistrationV1Interface
 	clientset             kubernetes.Interface
@@ -53,7 +66,34 @@ type Clientset struct {
 	lock sync.RWMutex
 }
 
-var _ registry.CanBeDisabled = (*Clientset)(nil)
+func (c *Clientset) CABundlePath() string {
+	// Data path configured by us.
+	// Dir and certname by apiserver
+	return path.Join(c.grafanaCfg.DataPath, "k8s", "apiserver.crt")
+}
+
+// Gets caBundle for k8s api server
+func (c *Clientset) GetCABundle() []byte {
+	if len(caBundle) > 0 {
+		return caBundle
+	}
+
+	filename := c.CABundlePath()
+	caBytes, err := os.ReadFile(filename)
+	if err != nil {
+		// NOTE this should never happen
+		panic(fmt.Sprintf("Missing ca bundle for k8s api server \n could not get ca bundle for k8s webhooks: %s, err: %s", filename, err.Error()))
+	}
+
+	caBundle = caBytes
+	return caBundle
+}
+
+type service struct {
+	*services.BasicService
+	clientset          *Clientset
+	restConfigProvider apiserver.RestConfigProvider
+}
 
 // ShortWebhookConfig is a simple struct that is converted to a full k8s webhook config for an action on a resource.
 type ShortWebhookConfig struct {
@@ -64,11 +104,40 @@ type ShortWebhookConfig struct {
 }
 
 // ProvideClientset returns a new Clientset configured with cfg.
-func ProvideClientset(toggles featuremgmt.FeatureToggles, cfg *rest.Config) (*Clientset, error) {
-	if !toggles.IsEnabled(featuremgmt.FlagK8s) {
-		return &Clientset{}, nil
+func ProvideClientsetProvier(toggles featuremgmt.FeatureToggles, restConfigProvider apiserver.RestConfigProvider) (*service, error) {
+	if !toggles.IsEnabled(featuremgmt.FlagK8S) {
+		return &service{}, nil
 	}
 
+	s := &service{restConfigProvider: restConfigProvider}
+	s.BasicService = services.NewBasicService(s.start, s.running, nil)
+
+	return s, nil
+}
+
+func (s *service) GetClientset() *Clientset {
+	return s.clientset
+}
+
+func (s *service) start(ctx context.Context) error {
+	cfg := s.restConfigProvider.GetRestConfig()
+	clientSet, err := NewClientset(cfg)
+	if err != nil {
+		return err
+	}
+	s.clientset = clientSet
+	return nil
+}
+
+func (s *service) running(ctx context.Context) error {
+	<-ctx.Done()
+	return nil
+}
+
+// NewClientset returns a new Clientset.
+func NewClientset(
+	cfg *rest.Config,
+) (*Clientset, error) {
 	k8sset, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -91,36 +160,18 @@ func ProvideClientset(toggles featuremgmt.FeatureToggles, cfg *rest.Config) (*Cl
 
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(k8sset))
 
-	return NewClientset(cfg, k8sset, extset, dyn, mapper, admissionregistrationClient)
-}
-
-// NewClientset returns a new Clientset.
-func NewClientset(
-	cfg *rest.Config,
-	k8sset kubernetes.Interface,
-	extset apiextensionsclient.Interface,
-	dyn dynamic.Interface,
-	mapper meta.RESTMapper,
-	admissionRegistrationClient admissionregistrationClient.AdmissionregistrationV1Interface,
-) (*Clientset, error) {
-	clientSet := &Clientset{
+	return &Clientset{
 		config: cfg,
 
 		clientset:             k8sset,
-		admissionRegistration: admissionRegistrationClient,
+		admissionRegistration: admissionregistrationClient,
 		extset:                extset,
 		dynamic:               dyn,
 		mapper:                mapper,
 
 		crds: make(map[k8schema.GroupVersion]apiextensionsv1.CustomResourceDefinition),
 		lock: sync.RWMutex{},
-	}
-
-	return clientSet, nil
-}
-
-func (c *Clientset) IsDisabled() bool {
-	return c.config == nil
+	}, err
 }
 
 // RegisterSchema registers a k8ssys.Kind with the Kubernetes API.
@@ -172,16 +223,6 @@ func (c *Clientset) GetResourceClient(gcrd crd.Kind, namespace ...string) (dynam
 	}
 
 	return resourceClient, nil
-}
-
-func getCABundle() []byte {
-	filename := "devenv/docker/blocks/apiserver/certs/ca.pem"
-	caBytes, err := os.ReadFile(filename)
-	if err != nil {
-		fmt.Println("Missing ca bundle. Check devenv/docker/blocks/apiserver/make_gen.sh")
-		panic(fmt.Sprintf("could not get ca bundle for k8s webhooks: %s, err: %s", filename, err.Error()))
-	}
-	return caBytes
 }
 
 func pontificate[T any](s T) *T {

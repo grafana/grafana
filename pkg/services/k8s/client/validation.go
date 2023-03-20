@@ -13,7 +13,7 @@ import (
 // Converts shortwebhookconfigs into full k8s validationwebhookconfigurations and registers them
 func (c *Clientset) RegisterValidation(ctx context.Context, webhooks []ShortWebhookConfig) error {
 	for _, hook := range webhooks {
-		obj := convertShortWebhookToValidationWebhook(hook)
+		obj := convertShortWebhookToValidationWebhook(c.GetCABundle(), hook)
 		force := true
 		patchOpts := metav1.PatchOptions{FieldManager: GrafanaFieldManager, Force: &force}
 		data, err := json.Marshal(obj)
@@ -30,7 +30,7 @@ func (c *Clientset) RegisterValidation(ctx context.Context, webhooks []ShortWebh
 }
 
 // Converts shortwebhookconfig into a validatingwebhookconfiguration
-func convertShortWebhookToValidationWebhook(swc ShortWebhookConfig) *admissionregistrationV1.ValidatingWebhookConfiguration {
+func convertShortWebhookToValidationWebhook(caBundle []byte, swc ShortWebhookConfig) *admissionregistrationV1.ValidatingWebhookConfiguration {
 	metaName := fmt.Sprintf("validation.%s.core.grafana.com", swc.Kind.MachineName())
 
 	resourcePlural := swc.Kind.Props().Common().PluralMachineName

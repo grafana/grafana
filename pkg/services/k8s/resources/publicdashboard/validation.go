@@ -39,20 +39,12 @@ func (v *pdValidation) Validate(ctx context.Context, request *admission.Admissio
 		return fmt.Errorf("invalid dashboard ID: %v", pdModel.DashboardUid)
 	}
 
-	// SERVICE VALIDATIONS
-	// NOTE - review this later. maybe shouldn't be checking dependency
-	// ensure dashboard exists
-	dashboard, err := v.publicdashboardsService.FindDashboard(ctx, pdModel.OrgId, pdModel.DashboardUid) // TODO: should dto.OrgId be coming from the user?
-	if err != nil {
-		return err
-	}
-
 	// validate fields
 	// TODO: make validatePublicDashboard take a PublicDashboard Model
 	dto := &publicdashboardModels.SavePublicDashboardDTO{
 		PublicDashboard: pdModel,
 	}
-	err = validation.ValidatePublicDashboard(dto, dashboard)
+	err = validation.ValidatePublicDashboard(dto)
 	if err != nil {
 		return err
 	}

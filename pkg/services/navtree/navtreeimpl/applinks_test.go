@@ -240,16 +240,6 @@ func TestAddAppLinks(t *testing.T) {
 		alertsAndIncidentsNode := treeRoot.FindById(navtree.NavIDAlertsAndIncidents)
 		require.Nil(t, alertsAndIncidentsNode)
 
-		// If there is no 'Alerting' node in the navigation (= alerting not enabled) then we don't auto-create the 'Alerts and Incidents' section
-		treeRoot = navtree.NavTreeRoot{}
-		service.navigationAppConfig = map[string]NavigationAppConfig{
-			"test-app1": {SectionID: navtree.NavIDAlertsAndIncidents},
-		}
-		err = service.addAppLinks(&treeRoot, reqCtx)
-		require.NoError(t, err)
-		alertsAndIncidentsNode = treeRoot.FindById(navtree.NavIDAlertsAndIncidents)
-		require.Nil(t, alertsAndIncidentsNode)
-
 		// It should appear and once an app tries to register to it and the `Alerting` nav node is present
 		treeRoot = navtree.NavTreeRoot{}
 		treeRoot.AddSection(&navtree.NavLink{Id: navtree.NavIDAlerting, Text: "Alerting"})
@@ -263,6 +253,30 @@ func TestAddAppLinks(t *testing.T) {
 		require.Len(t, alertsAndIncidentsNode.Children, 2)
 		require.Equal(t, "Alerting", alertsAndIncidentsNode.Children[0].Text)
 		require.Equal(t, "Test app1 name", alertsAndIncidentsNode.Children[1].Text)
+	})
+
+	t.Run("Should add a 'Alerts and Incidents' section if a plugin exists that wants to live there even without an alerting node", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
+		service.navigationAppConfig = map[string]NavigationAppConfig{}
+
+		// Check if the 'Alerts and Incidents' section is not there if no apps try to register to it
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		alertsAndIncidentsNode := treeRoot.FindById(navtree.NavIDAlertsAndIncidents)
+		require.Nil(t, alertsAndIncidentsNode)
+
+		// If there is no 'Alerting' node in the navigation then we still auto-create the 'Alerts and Incidents' section when a plugin wants to live there
+		treeRoot = navtree.NavTreeRoot{}
+		service.navigationAppConfig = map[string]NavigationAppConfig{
+			"test-app1": {SectionID: navtree.NavIDAlertsAndIncidents},
+		}
+		err = service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		alertsAndIncidentsNode = treeRoot.FindById(navtree.NavIDAlertsAndIncidents)
+		require.NotNil(t, alertsAndIncidentsNode)
+		require.Len(t, alertsAndIncidentsNode.Children, 1)
+		require.Equal(t, "Test app1 name", alertsAndIncidentsNode.Children[0].Text)
 	})
 
 	t.Run("Should be able to control app sort order with SortWeight (smaller SortWeight displayed first)", func(t *testing.T) {

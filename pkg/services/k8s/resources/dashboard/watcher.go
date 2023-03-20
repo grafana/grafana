@@ -30,7 +30,7 @@ func ProvideWatcher(
 	accessControlService accesscontrol.Service,
 ) (*watcher, error) {
 	c := watcher{
-		enabled:        features.IsEnabled(featuremgmt.FlagK8s),
+		enabled:        features.IsEnabled(featuremgmt.FlagK8S),
 		log:            log.New("k8s.dashboards.controller"),
 		dashboardStore: dashboardStore,
 	}

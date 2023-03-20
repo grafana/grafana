@@ -21,7 +21,7 @@ import (
 type StoreWrapper struct {
 	database.DashboardSQLStore
 	log       log.Logger
-	clientset *client.Clientset
+	clientset client.ClientSetProvider
 	namespace string
 }
 
@@ -30,10 +30,10 @@ var _ dashboards.Store = (*StoreWrapper)(nil)
 func ProvideStoreWrapper(
 	features featuremgmt.FeatureToggles,
 	store database.DashboardSQLStore,
-	clientset *client.Clientset,
+	clientset client.ClientSetProvider,
 ) (dashboards.Store, error) {
 	// When feature is disabled, resolve the upstream SQL store
-	if !features.IsEnabled(featuremgmt.FlagK8s) {
+	if !features.IsEnabled(featuremgmt.FlagK8S) {
 		return store, nil
 	}
 	return &StoreWrapper{
@@ -60,7 +60,7 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		return s.DashboardSQLStore.SaveDashboard(ctx, cmd)
 	}
 
-	dashboardResource, err := s.clientset.GetResourceClient(CRD)
+	dashboardResource, err := s.clientset.GetClientset().GetResourceClient(CRD)
 	if err != nil {
 		return nil, fmt.Errorf("ProvideServiceWrapper failed to get dashboard resource client: %w", err)
 	}
