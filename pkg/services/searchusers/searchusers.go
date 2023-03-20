@@ -1,6 +1,7 @@
 package searchusers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -101,6 +102,7 @@ func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQue
 	}
 
 	for _, user := range res.Users {
+		fmt.Printf("user: %v", user)
 		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
 		user.AuthLabels = make([]string, 0)
 		if user.AuthModule != nil && len(user.AuthModule) > 0 {

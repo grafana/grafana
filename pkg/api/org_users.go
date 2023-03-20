@@ -314,6 +314,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	for i := range filteredUsers {
 		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
 		if module, ok := modules[filteredUsers[i].UserID]; ok {
+			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
 			filteredUsers[i].IsExternallySynced = login.IsExternallySynced(hs.Cfg, module)
 		}
 	}
