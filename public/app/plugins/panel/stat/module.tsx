@@ -20,7 +20,7 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
     builder.addSelect({
       path: 'textMode',
       name: 'Text mode',
-      description: 'Control the display of the name and value',
+      description: 'Control if name and value is displayed or just name',
       category: mainCategory,
       settings: {
         options: [
@@ -38,7 +38,7 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
       .addRadio({
         path: 'colorMode',
         name: 'Color mode',
-        defaultValue: defaultPanelOptions.colorMode,
+        defaultValue: BigValueColorMode.Value,
         category: mainCategory,
         settings: {
           options: [
@@ -47,15 +47,6 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
             { value: BigValueColorMode.Background, label: 'Background' },
           ],
         },
-      })
-      // Boolean toggle for removing the gradient panel background
-      .addBooleanSwitch({
-        path: 'hasGradient',
-        name: 'Background gradient',
-        defaultValue: defaultPanelOptions.hasGradient,
-        category: mainCategory,
-        // This toggle really only applies when the BigValueColorMode === `background`
-        showIf: (panelOptions) => panelOptions.colorMode === BigValueColorMode.Background,
       })
       .addRadio({
         path: 'graphMode',

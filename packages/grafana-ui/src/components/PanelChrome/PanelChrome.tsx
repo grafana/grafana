@@ -6,6 +6,7 @@ import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
+import { DelayRender } from '../../utils/DelayRender';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { Tooltip } from '../Tooltip';
@@ -54,6 +55,7 @@ export interface PanelChromeProps {
    */
   leftItems?: ReactNode[];
   displayMode?: 'default' | 'transparent';
+  onCancelQuery?: () => void;
 }
 
 /**
@@ -82,6 +84,7 @@ export function PanelChrome({
   statusMessage,
   statusMessageOnClick,
   leftItems,
+  onCancelQuery,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -124,11 +127,20 @@ export function PanelChrome({
       </div>
 
       {loadingState === LoadingState.Streaming && (
-        <Tooltip content="Streaming">
-          <TitleItem className={dragClassCancel} data-testid="panel-streaming">
+        <Tooltip content={onCancelQuery ? 'Stop streaming' : 'Streaming'}>
+          <TitleItem className={dragClassCancel} data-testid="panel-streaming" onClick={onCancelQuery}>
             <Icon name="circle-mono" size="md" className={styles.streaming} />
           </TitleItem>
         </Tooltip>
+      )}
+      {loadingState === LoadingState.Loading && onCancelQuery && (
+        <DelayRender delay={2000}>
+          <Tooltip content="Cancel query">
+            <TitleItem className={dragClassCancel} data-testid="panel-cancel-query" onClick={onCancelQuery}>
+              <Icon name="sync-slash" size="md" />
+            </TitleItem>
+          </Tooltip>
+        </DelayRender>
       )}
     </>
   );

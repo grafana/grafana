@@ -77,7 +77,7 @@ gen-cue: ## Do all CUE/Thema code generation
 
 gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
-	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
+	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server
 
 fix-cue: $(CUE)
 	@echo "formatting cue files"
@@ -204,7 +204,6 @@ devenv:
 	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,openldap\n'
 else
 devenv: devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
-
 	@cd devenv; \
 	./create_docker_compose.sh $(targets) || \
 	(rm -rf {docker-compose.yaml,conf.tmp,.env}; exit 1)

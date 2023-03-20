@@ -43,9 +43,16 @@ export interface AmRoutesExpandedFormProps {
   route?: RouteWithID;
   onSubmit: (route: Partial<FormAmRoute>) => void;
   actionButtons: ReactNode;
+  defaults?: Partial<FormAmRoute>;
 }
 
-export const AmRoutesExpandedForm = ({ actionButtons, receivers, route, onSubmit }: AmRoutesExpandedFormProps) => {
+export const AmRoutesExpandedForm = ({
+  actionButtons,
+  receivers,
+  route,
+  onSubmit,
+  defaults,
+}: AmRoutesExpandedFormProps) => {
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
@@ -53,7 +60,10 @@ export const AmRoutesExpandedForm = ({ actionButtons, receivers, route, onSubmit
 
   const receiversWithOnCallOnTop = receivers.sort(onCallFirst);
 
-  const formAmRoute = amRouteToFormAmRoute(route);
+  const formAmRoute = {
+    ...amRouteToFormAmRoute(route),
+    ...defaults,
+  };
 
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
 
