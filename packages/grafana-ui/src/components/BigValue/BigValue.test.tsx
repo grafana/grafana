@@ -7,7 +7,7 @@ import { BigValue, BigValueColorMode, BigValueGraphMode, Props } from './BigValu
 
 function getProps(propOverrides?: Partial<Props>): Props {
   const props: Props = {
-    colorMode: BigValueColorMode.Background,
+    colorMode: BigValueColorMode.BackgroundGradient,
     graphMode: BigValueGraphMode.Line,
     height: 300,
     width: 300,

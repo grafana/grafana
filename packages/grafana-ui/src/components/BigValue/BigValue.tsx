@@ -10,9 +10,11 @@ import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDi
 
 import { buildLayout } from './BigValueLayout';
 
+// WHy does this also exist here? It's in common?
 export enum BigValueColorMode {
   Value = 'value',
-  Background = 'background',
+  BackgroundGradient = 'backgroundGradient',
+  BackgroundSolid = 'backgroundSolid',
   None = 'none',
 }
 

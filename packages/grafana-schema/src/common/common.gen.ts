@@ -478,7 +478,8 @@ export interface OptionsWithTextFormatting {
  * TODO docs
  */
 export enum BigValueColorMode {
-  Background = 'background',
+  BackgroundGradient = 'backgroundGradient',
+  BackgroundSolid = 'backgroundSolid',
   None = 'none',
   Value = 'value',
 }
