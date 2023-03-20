@@ -165,7 +165,7 @@ func TestResponseSnapshots(t *testing.T) {
 			require.Len(t, result.response.Responses, expectedResponseCount)
 
 			for refId, dataRes := range result.response.Responses {
-				goldenFileName := fmt.Sprintf("%v.%v.golden", test.path, refId)
+				goldenFileName := fmt.Sprintf("%v.%v.golden", test.path, strings.ToLower(refId))
 				// we make a copy of the variable to avoid this linter-warning:
 				// "G601: Implicit memory aliasing in for loop."
 				dataResCopy := dataRes
