@@ -248,6 +248,9 @@ func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.User
 	}
 
 	newToken, hashedToken, err := generateAndHashToken()
+	if err != nil {
+		return nil, err
+	}
 
 	sql := `
 		UPDATE user_auth_token

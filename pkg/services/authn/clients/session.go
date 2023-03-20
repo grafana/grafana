@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -32,7 +31,6 @@ type Session struct {
 	cfg            *setting.Cfg
 	features       *featuremgmt.FeatureManager
 	sessionService auth.UserTokenService
-	userService    user.Service
 	log            log.Logger
 }
 
