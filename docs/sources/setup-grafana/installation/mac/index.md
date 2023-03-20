@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../installation/mac/
-description: How to install Grafana OSS and Enterprise on macOS
+description: How to install Grafana OSS or Enterprise on macOS
 title: Install Grafana on macOS
 menuTitle: macOS
 weight: 600
@@ -28,8 +28,8 @@ To install Grafana on macOS using Homebrew, complete the following steps:
 
    The brew page downloads and untars the files into:
 
-   - `/usr/local/Cellar/grafana/[version]` (Homebrew v2)
-   - `/opt/homebrew/Cellar/grafana/[version]` (Homebrew v3)
+   - `/usr/local/Cellar/grafana/[version]` (Intel Silicon)
+   - `/opt/homebrew/Cellar/grafana/[version]` (Apple Silicon)
 
 1. To start Grafana, run the following command:
 

@@ -19,7 +19,7 @@ You install Grafana using the Windows installer or using the standalone Windows 
    - **Enterprise:** This is the recommended version. It is functionally identical to the open source version, but includes features you can unlock with a license, if you so choose.
    - **Open Source:** This version is functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
 1. Click **Windows**.
-1. To use the Window installer, complete the following steps:
+1. To use the Windows installer, complete the following steps:
 
    a. Click **Download the installer**.
 
