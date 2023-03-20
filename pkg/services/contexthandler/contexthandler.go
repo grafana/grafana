@@ -148,6 +148,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 					// Burn the cookie in case of invalid, expired or missing token
 					reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 				}
+
 				// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 				reqContext.LookupTokenErr = err
 			} else {
@@ -494,8 +495,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContex
 
 	if h.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
 		if token.NeedRotation(time.Duration(h.Cfg.TokenRotationIntervalMinutes) * time.Minute) {
-			reqContext.LookupTokenErr = authn.ErrTokenNeedRotation.Errorf("token needs to be rotated")
-			return false
+			reqContext.LookupTokenErr = authn.ErrTokenNeedRotation.Errorf("token needs rotation")
+			return true
 		}
 	}
 

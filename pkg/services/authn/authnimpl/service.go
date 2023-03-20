@@ -2,6 +2,7 @@ package authnimpl
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -187,6 +188,12 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		if item.v.Test(ctx, r) {
 			identity, err := s.authenticate(ctx, item.v, r)
 			if err != nil {
+				// Note: special case for token rotation
+				// We don't want to fallthrough in this case
+				if errors.Is(err, authn.ErrTokenNeedRotation) {
+					return nil, err
+				}
+
 				authErr = multierror.Append(authErr, err)
 				// try next
 				continue
