@@ -25,6 +25,7 @@ import (
 	"github.com/prometheus/common/model"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
@@ -802,19 +803,18 @@ func (cfg *Cfg) loadSpecifiedConfigFile(configFile string, masterFile *ini.File)
 	return nil
 }
 
-func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
+func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (parsedFile *ini.File, err error) {
 	// load config defaults
 	defaultConfigFile := path.Join(HomePath, "conf/defaults.ini")
 	configFiles = append(configFiles, defaultConfigFile)
 
-	// check if config file exists
+	// load config file if exists; use embedded defaults if does not exist
 	if _, err := os.Stat(defaultConfigFile); os.IsNotExist(err) {
-		fmt.Println("Grafana-server Init Failed: Could not find config defaults, make sure homepath command line parameter is set or working directory is homepath")
-		os.Exit(1)
+		parsedFile, err = ini.Load(grafana.DefaultsINI)
+	} else {
+		parsedFile, err = ini.Load(defaultConfigFile)
 	}
 
-	// load defaults
-	parsedFile, err := ini.Load(defaultConfigFile)
 	if err != nil {
 		fmt.Printf("Failed to parse defaults.ini, %v\n", err)
 		os.Exit(1)
