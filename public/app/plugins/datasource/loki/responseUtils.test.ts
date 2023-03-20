@@ -288,6 +288,29 @@ describe('combineResponses', () => {
     });
   });
 
+  it('combines frames prioritizing refIds over names', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+    const dataFrameA = {
+      ...metricFrameA,
+      refId: 'A',
+      name: 'A',
+    };
+    const dataFrameB = {
+      ...metricFrameB,
+      refId: 'B',
+      name: 'A',
+    };
+    const responseA: DataQueryResponse = {
+      data: [dataFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [dataFrameB],
+    };
+    expect(combineResponses(responseA, responseB)).toEqual({
+      data: [dataFrameA, dataFrameB],
+    });
+  });
+
   it('combines frames in a new response instance', () => {
     const { metricFrameA, metricFrameB } = getMockFrames();
     const responseA: DataQueryResponse = {
