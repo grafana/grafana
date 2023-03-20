@@ -69,11 +69,10 @@ func (e SnappyProtoEncoder) headers() map[string]string {
 	}
 }
 
-// TODO: Copied from promtail, main
-// TODO: pkg/components/loki/lokihttp/batch.go contains an older (loki 2.7.4) version of this
-// TODO: Consider replacing that one, with this one
-// TODO: It appears we need this one as it properly quotes label values, thus avoiding problems with "="
-// TODO: Test this before submission!
+// Copied from promtail.
+// Modified slightly to work in terms of plain map[string]string to avoid some unnecessary copies and type casts.
+// TODO: pkg/components/loki/lokihttp/batch.go contains an older (loki 2.7.4 released) version of this.
+// TODO: Consider replacing that one, with this one.
 func labelsMapToString(ls map[string]string, without model.LabelName) string {
 	var b strings.Builder
 	totalSize := 2
