@@ -1,4 +1,4 @@
-import { TimeRange } from '@grafana/data';
+import { DateTime, isDateTime, TimeRange } from '@grafana/data';
 
 import { LokiDatasource } from '../datasource';
 import { QueryStats } from '../types';
@@ -12,13 +12,30 @@ export async function getStats(datasource: LokiDatasource, query: string): Promi
   return Object.values(response).every((v) => v === 0) ? undefined : response;
 }
 
+function compareTime(time1: DateTime | string, time2: DateTime | string | undefined) {
+  const isAbsolute = isDateTime(time1);
+
+  if (isAbsolute) {
+    return time1.isSame(time2);
+  }
+
+  return time1 === time2;
+}
+
 export function shouldUpdateStats(
   query: string,
   prevQuery: string | undefined,
   timerange: TimeRange,
   prevTimerange: TimeRange | undefined
 ): boolean {
-  if (query === prevQuery && timerange.from.isSame(prevTimerange?.from) && timerange.to.isSame(prevTimerange?.to)) {
+  if (query !== prevQuery) {
+    return true;
+  }
+
+  if (
+    compareTime(timerange.raw.from, prevTimerange?.raw.from) &&
+    compareTime(timerange.raw.to, prevTimerange?.raw.to)
+  ) {
     return false;
   }
 
