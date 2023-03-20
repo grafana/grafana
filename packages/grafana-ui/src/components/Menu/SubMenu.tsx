@@ -28,8 +28,8 @@ export interface SubMenuProps {
 }
 
 /** @internal */
-export const SubMenu: React.FC<SubMenuProps> = React.memo(
-  ({ items, isOpen, openedWithArrow, setOpenedWithArrow, close, customStyle }) => {
+export const SubMenu = React.memo(
+  ({ items, isOpen, openedWithArrow, setOpenedWithArrow, close, customStyle }: SubMenuProps) => {
     const styles = useStyles2(getStyles);
     const localRef = useRef<HTMLDivElement>(null);
     const [handleKeys] = useMenuFocus({

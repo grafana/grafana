@@ -14,6 +14,7 @@ import {
   TransformerRegistryItem,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -144,6 +145,10 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   };
 
   onTransformationAdd = (selectable: SelectableValue<string>) => {
+    reportInteraction('panel_editor_tabs_transformations_management', {
+      action: 'add',
+      transformationId: selectable.value,
+    });
     const { transformations } = this.state;
 
     const nextId = this.getTransformationNextId(selectable.value!);
@@ -163,6 +168,10 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   onTransformationChange = (idx: number, config: DataTransformerConfig) => {
     const { transformations } = this.state;
     const next = Array.from(transformations);
+    reportInteraction('panel_editor_tabs_transformations_management', {
+      action: 'change',
+      transformationId: next[idx].transformation.id,
+    });
     next[idx].transformation = config;
     this.onChange(next);
   };
@@ -170,6 +179,10 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   onTransformationRemove = (idx: number) => {
     const { transformations } = this.state;
     const next = Array.from(transformations);
+    reportInteraction('panel_editor_tabs_transformations_management', {
+      action: 'remove',
+      transformationId: next[idx].transformation.id,
+    });
     next.splice(idx, 1);
     this.onChange(next);
   };

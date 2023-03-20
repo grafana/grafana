@@ -217,6 +217,11 @@ export const Pages = {
       pausedDescription: 'public-dashboard-paused-description',
     },
   },
+  RequestViewAccess: {
+    form: 'request-view-access-form',
+    recipientInput: 'request-view-access-recipient-input',
+    submitButton: 'request-view-access-submit-button',
+  },
   Explore: {
     url: '/explore',
     General: {
