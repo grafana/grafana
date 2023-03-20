@@ -123,7 +123,7 @@ export abstract class BigValueLayout {
       width: `${width}px`,
       height: `${height}px`,
       padding: `${this.panelPadding}px`,
-      borderRadius: '3px',
+      borderRadius: theme.shape.borderRadius(),
       position: 'relative',
       display: 'flex',
     };

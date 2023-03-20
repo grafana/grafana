@@ -256,7 +256,6 @@
 /pkg/services/live/ @grafana/grafana-app-platform-squad
 /pkg/services/searchV2/ @grafana/grafana-app-platform-squad
 /pkg/services/store/ @grafana/grafana-app-platform-squad
-/pkg/services/querylibrary/ @grafana/grafana-app-platform-squad
 /pkg/infra/filestorage/ @grafana/grafana-app-platform-squad
 /pkg/util/converter/ @grafana/grafana-app-platform-squad
 /pkg/modules/ @grafana/grafana-app-platform-squad
@@ -374,7 +373,6 @@ lerna.json @grafana/frontend-ops
 /public/app/features/profile/ @grafana/user-essentials
 /public/app/features/runtime/ @ryantxu
 /public/app/features/query/ @grafana/dashboards-squad
-/public/app/features/query-library/ @grafana/dataviz-squad
 /public/app/features/sandbox/ @grafana/user-essentials
 /public/app/features/scenes/ @grafana/dashboards-squad
 /public/app/features/search/ @grafana/user-essentials
