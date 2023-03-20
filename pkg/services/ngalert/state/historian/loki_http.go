@@ -40,6 +40,7 @@ type LokiConfig struct {
 	BasicAuthPassword string
 	TenantID          string
 	ExternalLabels    map[string]string
+	Encoder           encoder
 }
 
 func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig, error) {
@@ -73,6 +74,8 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 		BasicAuthUser:     cfg.LokiBasicAuthUsername,
 		BasicAuthPassword: cfg.LokiBasicAuthPassword,
 		TenantID:          cfg.LokiTenantID,
+		// Snappy-compressed protobuf is the default, same goes for Promtail.
+		Encoder: snappyProtoEncoder{},
 	}, nil
 }
 
@@ -110,7 +113,7 @@ func newLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Histor
 	tc := client.NewTimedClient(req, metrics.WriteDuration)
 	return &httpLokiClient{
 		client:  tc,
-		encoder: snappyProtoEncoder{},
+		encoder: cfg.Encoder,
 		cfg:     cfg,
 		metrics: metrics,
 		log:     logger.New("protocol", "http"),
