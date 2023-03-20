@@ -24,9 +24,9 @@ export const languageConfiguration = {
 
 export const operators = ['=', '!=', '>', '<', '>=', '<=', '=~'];
 
-const intrinsics = ['duration', 'name', 'status', 'parent'];
+export const intrinsics = ['duration', 'kind', 'name', 'status'];
 
-const scopes: string[] = ['resource', 'span'];
+export const scopes: string[] = ['resource', 'span'];
 
 const keywords = intrinsics.concat(scopes);
 

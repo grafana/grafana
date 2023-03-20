@@ -13,8 +13,7 @@ import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
 import { TraceqlFilter } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
-import { CompletionProvider } from '../traceql/autocomplete';
-import { traceqlGrammar } from '../traceql/traceql';
+import { intrinsics, traceqlGrammar } from '../traceql/traceql';
 import { TempoQuery } from '../types';
 
 import DurationInput from './DurationInput';
@@ -154,7 +153,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
               setError={setError}
               updateFilter={updateFilter}
               deleteFilter={deleteFilter}
-              tags={[...CompletionProvider.intrinsics, ...tags]}
+              tags={[...intrinsics, ...tags]}
               isTagsLoading={isTagsLoading}
             />
           </InlineSearchField>

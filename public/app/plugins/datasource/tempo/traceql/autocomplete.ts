@@ -3,6 +3,8 @@ import type { Monaco, monacoTypes } from '@grafana/ui';
 
 import TempoLanguageProvider from '../language_provider';
 
+import { intrinsics, scopes } from './traceql';
+
 interface Props {
   languageProvider: TempoLanguageProvider;
 }
@@ -21,9 +23,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   triggerCharacters = ['{', '.', '[', '(', '=', '~', ' ', '"'];
-
-  static readonly intrinsics: string[] = ['duration', 'name', 'status'];
-  static readonly scopes: string[] = ['resource', 'span'];
   static readonly operators: string[] = ['=', '-', '+', '<', '>', '>=', '<=', '=~'];
   static readonly logicalOps: string[] = ['&&', '||'];
 
@@ -181,7 +180,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   private getIntrinsicsCompletions(prepend?: string): Completion[] {
-    return CompletionProvider.intrinsics.map((key) => ({
+    return intrinsics.map((key) => ({
       label: key,
       insertText: (prepend || '') + key,
       type: 'KEYWORD',
@@ -189,7 +188,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   private getScopesCompletions(prepend?: string): Completion[] {
-    return CompletionProvider.scopes.map((key) => ({
+    return scopes.map((key) => ({
       label: key,
       insertText: (prepend || '') + key,
       type: 'SCOPE',
@@ -242,7 +241,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       if (!op) {
         // There's no operator so we check if the name is one of the known scopes
         // { resource.|
-        if (CompletionProvider.scopes.filter((w) => w === nameMatched?.groups?.word) && nameMatched?.groups?.post_dot) {
+        if (scopes.filter((w) => w === nameMatched?.groups?.word) && nameMatched?.groups?.post_dot) {
           return {
             type: 'SPANSET_IN_NAME_SCOPE',
           };

@@ -6,6 +6,7 @@ import TempoLanguageProvider from '../language_provider';
 import { TempoJsonData } from '../types';
 
 import { CompletionProvider } from './autocomplete';
+import { intrinsics, scopes } from './traceql';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -19,8 +20,8 @@ describe('CompletionProvider', () => {
       {} as monacoTypes.Position
     );
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      ...CompletionProvider.scopes.map((s) => expect.objectContaining({ label: s, insertText: s })),
-      ...CompletionProvider.intrinsics.map((s) => expect.objectContaining({ label: s, insertText: s })),
+      ...scopes.map((s) => expect.objectContaining({ label: s, insertText: s })),
+      ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: s })),
       expect.objectContaining({ label: 'bar', insertText: '.bar' }),
       expect.objectContaining({ label: 'foo', insertText: '.foo' }),
     ]);
@@ -116,8 +117,8 @@ describe('CompletionProvider', () => {
       {} as monacoTypes.Position
     );
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      ...CompletionProvider.scopes.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
-      ...CompletionProvider.intrinsics.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
+      ...scopes.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
+      ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
       expect.objectContaining({ label: 'bar', insertText: '{ .bar' }),
       expect.objectContaining({ label: 'foo', insertText: '{ .foo' }),
     ]);
