@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/VividCortex/mysqlerr"
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -44,14 +46,15 @@ type SQLStore struct {
 	sqlxsession  *session.SessionDB
 	CacheService *localcache.CacheService
 
-	bus                         bus.Bus
-	dbCfg                       DatabaseConfig
-	engine                      *xorm.Engine
-	log                         log.Logger
-	Dialect                     migrator.Dialect
-	skipEnsureDefaultOrgAndUser bool
-	migrations                  registry.DatabaseMigrator
-	tracer                      tracing.Tracer
+	bus                          bus.Bus
+	dbCfg                        DatabaseConfig
+	engine                       *xorm.Engine
+	log                          log.Logger
+	Dialect                      migrator.Dialect
+	skipEnsureDefaultOrgAndUser  bool
+	migrations                   registry.DatabaseMigrator
+	tracer                       tracing.Tracer
+	recursiveQueriesAreSupported *bool
 }
 
 func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
@@ -474,6 +477,43 @@ func (ss *SQLStore) readConfig() error {
 	ss.dbCfg.QueryRetries = sec.Key("query_retries").MustInt()
 	ss.dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
 	return nil
+}
+
+func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
+	if ss.recursiveQueriesAreSupported != nil {
+		return *ss.recursiveQueriesAreSupported, nil
+	}
+	recursiveQueriesAreSupported := func() (bool, error) {
+		var result []int
+		if err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
+			recQry := `WITH RECURSIVE cte (n) AS
+			(
+			SELECT 1
+			UNION ALL
+			SELECT n + 1 FROM cte WHERE n < 2
+			)
+			SELECT * FROM cte;
+		`
+			err := sess.SQL(recQry).Find(&result)
+			return err
+		}); err != nil {
+			var driverErr *mysql.MySQLError
+			if errors.As(err, &driverErr) {
+				if driverErr.Number == mysqlerr.ER_PARSE_ERROR {
+					return false, nil
+				}
+			}
+			return false, err
+		}
+		return true, nil
+	}
+
+	areSupported, err := recursiveQueriesAreSupported()
+	if err != nil {
+		return false, err
+	}
+	ss.recursiveQueriesAreSupported = &areSupported
+	return *ss.recursiveQueriesAreSupported, nil
 }
 
 // ITestDB is an interface of arguments for testing db

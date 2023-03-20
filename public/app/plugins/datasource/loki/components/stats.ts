@@ -18,11 +18,7 @@ export function shouldUpdateStats(
   timerange: TimeRange,
   prevTimerange: TimeRange | undefined
 ): boolean {
-  if (
-    query === prevQuery &&
-    timerange.raw.from === prevTimerange?.raw.from &&
-    timerange.raw.to === prevTimerange?.raw.to
-  ) {
+  if (query === prevQuery && timerange.from.isSame(prevTimerange?.from) && timerange.to.isSame(prevTimerange?.to)) {
     return false;
   }
 
