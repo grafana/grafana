@@ -21,7 +21,6 @@ func newServiceListener(logger log.Logger, s *service) *serviceListener {
 }
 
 func (l *serviceListener) Healthy() {
-
 	l.log.Info("All modules healthy", "modules", l.moduleNames())
 }
 

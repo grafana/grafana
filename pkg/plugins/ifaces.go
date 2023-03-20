@@ -26,7 +26,7 @@ type Installer interface {
 }
 
 type FileSystem interface {
-	// GetFile finds a plugin file .
+	// GetFile finds a plugin file.
 	GetFile(ctx context.Context, pluginID, filename string) (*File, error)
 }
 

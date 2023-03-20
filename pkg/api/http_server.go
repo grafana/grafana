@@ -112,7 +112,6 @@ type HTTPServer struct {
 	middlewares      []web.Handler
 	namedMiddlewares []routing.RegisterNamedMiddleware
 	bus              bus.Bus
-	moduleManager    modules.Manager
 
 	PluginContextProvider        *plugincontext.Provider
 	RouteRegister                routing.RouteRegister
@@ -262,7 +261,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	m := web.New()
 
 	hs := &HTTPServer{
-		moduleManager:                moduleManager,
 		Cfg:                          cfg,
 		RouteRegister:                routeRegister,
 		bus:                          bus,
@@ -373,7 +371,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	// Register access control scope resolver for annotations
 	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
 
-	hs.moduleManager.RegisterModule(modules.HTTPServer, func() (services.Service, error) {
+	moduleManager.RegisterModule(modules.HTTPServer, func() (services.Service, error) {
 		return services.NewBasicService(hs.start, hs.run, nil), nil
 	}, modules.Core, modules.Plugins)
 
