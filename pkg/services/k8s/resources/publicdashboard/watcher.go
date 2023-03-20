@@ -13,8 +13,7 @@ import (
 var _ Watcher = (*watcher)(nil)
 
 type watcher struct {
-	log log.Logger
-	//webhooks             *WebhooksAPI
+	log                  log.Logger
 	publicDashboardStore *publicdashboardStore.PublicDashboardStoreImpl
 	userService          user.Service
 	accessControlService accesscontrol.Service
@@ -22,8 +21,7 @@ type watcher struct {
 
 func ProvideWatcher(userService user.Service, publicDashboardStore *publicdashboardStore.PublicDashboardStoreImpl, accessControlService accesscontrol.Service) *watcher {
 	return &watcher{
-		log: log.New("k8s.publicdashboard.service-watcher"),
-		//webhooks:             webhooks,
+		log:                  log.New("k8s.publicdashboard.service-watcher"),
 		publicDashboardStore: publicDashboardStore,
 		userService:          userService,
 		accessControlService: accessControlService,
