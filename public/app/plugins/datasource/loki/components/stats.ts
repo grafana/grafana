@@ -12,6 +12,12 @@ export async function getStats(datasource: LokiDatasource, query: string): Promi
   return Object.values(response).every((v) => v === 0) ? undefined : response;
 }
 
+/**
+ * This function compares two time values. If the first is absolute, it compares them using `DateTime.isSame`.
+ *
+ * @param {(DateTime | string)} time1
+ * @param {(DateTime | string | undefined)} time2
+ */
 function compareTime(time1: DateTime | string, time2: DateTime | string | undefined) {
   const isAbsolute = isDateTime(time1);
 
