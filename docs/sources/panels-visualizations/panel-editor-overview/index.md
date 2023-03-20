@@ -30,7 +30,6 @@ weight: 1
 This section describes the areas of the Grafana panel editor.
 
 1. Panel header: The header section lists the dashboard in which the panel appears and the following controls:
-   <!-- what we refer to as the panel header here is not what we mean when we talk about in terms of the feature internally -->
 
    - **Discard:** Discards changes you have made to the panel since you last saved the dashboard.
    - **Save:** Saves changes you made to the panel.
@@ -53,9 +52,9 @@ This section describes the areas of the Grafana panel editor.
 
 ## Open the panel inspect drawer
 
-<!-- does this content belong here? The only way to get to the Inspect drawer from the panel editor view is via the Query inspector which seems weird -->
-
 The inspect drawer helps you understand and troubleshoot your panels. You can view the raw data for any panel, export that data to a comma-separated values (CSV) file, view query requests, and export panel and data JSON.
+
+To access the panel inspect drawer from the edit view, hover over any part of the panel to display the actions menu on the top right corner. Click the menu and select **Inspect**.
 
 > **Note:** Not all panel types include all tabs. For example, dashboard list panels do not have raw data to inspect, so they do not display the Stats, Data, or Query tabs.
 
