@@ -44,6 +44,10 @@ var MutationWebhookConfigs = []client.ShortWebhookConfig{
 	},
 }
 
+// TODO: Figure out how to combine this with the WIP branch in the SDK:
+// https://github.com/grafana/grafana-app-sdk/pull/92.
+// We should be able to register a generic webhook endpoint to handle
+// marshaling and routing.
 func ProvideWebhooks(
 	rr routing.RouteRegister,
 	clientset *client.Clientset,
