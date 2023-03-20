@@ -53,6 +53,11 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	require.NoError(t, err)
 	require.NoError(t, env.SQLStore.Sync())
 
+	require.NotNil(t, env.SQLStore.Cfg)
+	dbSec, err := env.SQLStore.Cfg.Raw.GetSection("database")
+	require.NoError(t, err)
+	assert.Greater(t, dbSec.Key("query_retries").MustInt(), 0)
+
 	err = env.RoleRegistry.RegisterFixedRoles(ctx)
 	require.NoError(t, err)
 
