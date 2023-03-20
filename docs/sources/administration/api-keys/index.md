@@ -29,7 +29,7 @@ This topic shows you how to create an API key using the Grafana UI. You can also
 
 ### Before you begin
 
-To follow these instructions, you need:
+To follow these instructions, you need one of the following:
 
 - Administrator permissions
 - Editor permissions
