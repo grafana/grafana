@@ -20,7 +20,7 @@ export function QueryErrorAlert({ error }: Props) {
       </div>
       <div className={styles.message}>
         {message} <br />
-        (traceId: {error.traceId})
+        (Trace ID: {error.traceId})
       </div>
     </div>
   );
