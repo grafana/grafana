@@ -23,6 +23,7 @@ export interface SelectCommonProps<T> {
   /** Focus is set to the Select when rendered*/
   autoFocus?: boolean;
   backspaceRemovesValue?: boolean;
+  captureMenuScroll?: boolean;
   className?: string;
   closeMenuOnSelect?: boolean;
   /** Used for custom components. For more information, see `react-select` */
@@ -68,6 +69,8 @@ export interface SelectCommonProps<T> {
   onCreateOption?: (value: string) => void;
   onInputChange?: (value: string, actionMeta: InputActionMeta) => void;
   onKeyDown?: (event: React.KeyboardEvent) => void;
+  onMenuScrollToBottom?: (event: WheelEvent | TouchEvent) => void;
+  onMenuScrollToTop?: (event: WheelEvent | TouchEvent) => void;
   onOpenMenu?: () => void;
   onFocus?: () => void;
   openMenuOnFocus?: boolean;
