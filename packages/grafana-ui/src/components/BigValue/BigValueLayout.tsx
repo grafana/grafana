@@ -117,36 +117,30 @@ export abstract class BigValueLayout {
   }
 
   getPanelStyles(): CSSProperties {
-    const { width, height, theme, colorMode, hasGradient } = this.props;
+    const { width, height, theme, colorMode } = this.props;
 
     const panelStyles: CSSProperties = {
       width: `${width}px`,
       height: `${height}px`,
       padding: `${this.panelPadding}px`,
-      borderRadius: '3px',
+      borderRadius: theme.shape.borderRadius(),
       position: 'relative',
       display: 'flex',
     };
 
     const themeFactor = theme.isDark ? 1 : -0.7;
 
-    function buildGradientBackground(valueColor: BigValueLayout['valueColor']) {
-      const bgColor2 = tinycolor(valueColor)
-        .darken(15 * themeFactor)
-        .spin(8)
-        .toRgbString();
-      const bgColor3 = tinycolor(valueColor)
-        .darken(5 * themeFactor)
-        .spin(-8)
-        .toRgbString();
-
-      return `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
-    }
-
     switch (colorMode) {
       case BigValueColorMode.Background:
-        panelStyles.background =
-          hasGradient === false ? `none ${this.valueColor}` : buildGradientBackground(this.valueColor);
+        const bgColor2 = tinycolor(this.valueColor)
+          .darken(15 * themeFactor)
+          .spin(8)
+          .toRgbString();
+        const bgColor3 = tinycolor(this.valueColor)
+          .darken(5 * themeFactor)
+          .spin(-8)
+          .toRgbString();
+        panelStyles.background = `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
         break;
       case BigValueColorMode.Value:
         panelStyles.background = `transparent`;
