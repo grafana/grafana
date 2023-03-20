@@ -208,6 +208,7 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 		desc            string
 		SkipOrgRoleSync bool
 		AuthEnabled     bool
+		AuthModule      string
 		Body            string `json:"body"`
 		userId          int
 		orgId           int
@@ -220,6 +221,7 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 			desc:            "should be able to change basicRole when skip_org_role_sync true",
 			SkipOrgRoleSync: true,
 			AuthEnabled:     true,
+			AuthModule:      login.LDAPAuthModule,
 			Body:            `{"userId": "1", "role": "Admin", "orgId": "1"}`,
 			userId:          2,
 			orgId:           1,
@@ -236,6 +238,24 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 			desc:            "should not be able to change basicRole when skip_org_role_sync false",
 			SkipOrgRoleSync: false,
 			AuthEnabled:     true,
+			AuthModule:      login.LDAPAuthModule,
+			Body:            `{"userId": "1", "role": "Admin", "orgId": "1"}`,
+			userId:          2,
+			orgId:           1,
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
+				{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:*"},
+				{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:*"},
+				{Action: accesscontrol.ActionOrgUsersRemove, Scope: "users:*"},
+			},
+			role:         roletype.RoleAdmin,
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			desc:            "should not be able to change basicRole with a different provider",
+			SkipOrgRoleSync: false,
+			AuthEnabled:     true,
+			AuthModule:      login.GenericOAuthModule,
 			Body:            `{"userId": "1", "role": "Admin", "orgId": "1"}`,
 			userId:          2,
 			orgId:           1,
@@ -255,10 +275,17 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
+				if tt.AuthModule == login.LDAPAuthModule {
+					hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
+				} else if tt.AuthModule == login.GenericOAuthModule {
+					hs.Cfg.GenericOAuthAuthEnabled = tt.AuthEnabled
+				} else {
+					t.Errorf("invalid auth module for test: %s", tt.AuthModule)
+				}
 				hs.Cfg.LDAPSkipOrgRoleSync = tt.SkipOrgRoleSync
 
 				hs.authInfoService = &logintest.AuthInfoServiceFake{
-					ExpectedUserAuth: &login.UserAuth{AuthModule: login.LDAPAuthModule},
+					ExpectedUserAuth: &login.UserAuth{AuthModule: tt.AuthModule},
 				}
 				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagOnlyExternalOrgRoleSync, true)
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions(1, tt.permissions)}
