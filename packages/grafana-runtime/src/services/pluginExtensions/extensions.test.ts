@@ -71,11 +71,14 @@ describe('getPluginExtensions', () => {
 
 describe('deepFreeze()', () => {
   test('should not fail when called with primitive values', () => {
-    expect(deepFreeze(1)).toBe(1);
-    expect(deepFreeze('foo')).toBe('foo');
-    expect(deepFreeze(true)).toBe(true);
-    expect(deepFreeze(false)).toBe(false);
+    expect(deepFreeze<Number>(1)).toBe(1);
+    expect(deepFreeze<String>('foo')).toBe('foo');
+    expect(deepFreeze<Boolean>(true)).toBe(true);
+    expect(deepFreeze<Boolean>(false)).toBe(false);
+
+    // @ts-ignore
     expect(deepFreeze(undefined)).toBe(undefined);
+    // @ts-ignore
     expect(deepFreeze(null)).toBe(null);
   });
 
@@ -85,10 +88,11 @@ describe('deepFreeze()', () => {
       b: '2',
       c: true,
     };
-    const frozen = deepFreeze(obj);
+    const frozen = deepFreeze<typeof obj>(obj);
 
+    expect(Object.isFrozen(frozen)).toBe(true);
     expect(() => {
-      frozen = { a: 234 };
+      frozen.a = 234;
     }).toThrow(TypeError);
   });
 
@@ -98,8 +102,9 @@ describe('deepFreeze()', () => {
       b: '2',
       c: true,
     };
-    const frozen = deepFreeze(obj);
+    const frozen = deepFreeze<typeof obj>(obj);
 
+    expect(Object.isFrozen(frozen)).toBe(true);
     expect(() => {
       frozen.a = 2;
       frozen.b = '3';
@@ -119,15 +124,20 @@ describe('deepFreeze()', () => {
         },
       },
     };
-    const frozen = deepFreeze(obj);
+    const frozen = deepFreeze<typeof obj>(obj);
+
+    // Check if the object is frozen
+    expect(Object.isFrozen(frozen)).toBe(true);
 
     // Trying to override a primitive property
     expect(() => {
       frozen.a = 2;
     }).toThrow(TypeError);
 
-    // Trying to override an underlying object
+    // Trying to override an underlying object and check if it is frozen
+    expect(Object.isFrozen(frozen.b)).toBe(true);
     expect(() => {
+      // @ts-ignore
       frozen.b = {};
     }).toThrow(TypeError);
 
@@ -144,11 +154,22 @@ describe('deepFreeze()', () => {
         c: 123,
       },
     };
+    // @ts-ignore
     obj.b.d = obj;
+    let frozen: typeof obj;
 
+    // Check if it does not throw due to the cycle in the object
     expect(() => {
-      deepFreeze(obj);
+      frozen = deepFreeze<typeof obj>(obj);
     }).not.toThrow();
+
+    // Check if it did freeze the object
+    // @ts-ignore
+    expect(Object.isFrozen(frozen)).toBe(true);
+    // @ts-ignore
+    expect(Object.isFrozen(frozen.b)).toBe(true);
+    // @ts-ignore
+    expect(Object.isFrozen(frozen.b.d)).toBe(true);
   });
 });
 
