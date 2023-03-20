@@ -25,11 +25,13 @@ weight: 1
 
 {{< figure src="/static/img/docs/panel-editor/panel-editor-8-0.png" class="docs-image--no-shadow" max-width="1500px" >}}
 
+<!-- replace screenshot -->
+
 This section describes the areas of the Grafana panel editor.
 
 1. Panel header: The header section lists the dashboard in which the panel appears and the following controls:
+   <!-- what we refer to as the panel header here is not what we mean when we talk about in terms of the feature internally -->
 
-   - **Dashboard settings (gear) icon:** Click to access the dashboard settings.
    - **Discard:** Discards changes you have made to the panel since you last saved the dashboard.
    - **Save:** Saves changes you made to the panel.
    - **Apply:** Applies changes you made and closes the panel editor, returning you to the dashboard. You will have to save the dashboard to persist the applied changes.
@@ -50,6 +52,8 @@ This section describes the areas of the Grafana panel editor.
 1. Panel display options: The display options section contains tabs where you configure almost every aspect of your data visualization.
 
 ## Open the panel inspect drawer
+
+<!-- does this content belong here? The only way to get to the Inspect drawer from the panel editor view is via the Query inspector which seems weird -->
 
 The inspect drawer helps you understand and troubleshoot your panels. You can view the raw data for any panel, export that data to a comma-separated values (CSV) file, view query requests, and export panel and data JSON.
 

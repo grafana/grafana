@@ -36,9 +36,11 @@ After you add a panel to a dashboard, you can open it at any time to change chan
 
 1. Open the dashboard that contains the panel you want to edit.
 
-1. Click in the panel title and select **Edit**. To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
+1. Hover over any part of the panel to display the actions menu on the top right corner. Click the menu and select **Edit**. To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
 
    The panel opens in edit mode.
+
+   <!-- add screenshot here? -->
 
 ## Add a title and description to a panel
 
@@ -66,7 +68,7 @@ Explore and export panel, panel data, and data frame JSON models.
 
 1. Open the dashboard that contains the panel.
 
-1. Click in the panel title and select **Inspect > Panel JSON**.
+1. Hover over any part of the panel to display the actions menu on the top right corner. Click the menu and select **Inspect > Panel JSON**.
 
 1. In the **Select source** field, select one of the following options:
 
