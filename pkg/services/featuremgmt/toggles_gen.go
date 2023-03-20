@@ -179,10 +179,6 @@ const (
 	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
 	FlagNewPanelChromeUI = "newPanelChromeUI"
 
-	// FlagQueryLibrary
-	// Reusable query library
-	FlagQueryLibrary = "queryLibrary"
-
 	// FlagShowDashboardValidationWarnings
 	// Show warnings when dashboards do not validate against the schema
 	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"

@@ -290,13 +290,6 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:            "queryLibrary",
-			Description:     "Reusable query library",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			Owner:           grafanaAppPlatformSquad,
-		},
-		{
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			State:       FeatureStateAlpha,
