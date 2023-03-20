@@ -67,8 +67,8 @@ import {
   findLastPosition,
   getLabelFilterPositions,
 } from './modifyQuery';
+import { runQueryInChunks } from './queryChunking';
 import { getQueryHints } from './queryHints';
-import { runPartitionedQueries } from './querySplitting';
 import {
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
@@ -76,7 +76,7 @@ import {
   getParserFromQuery,
   isLogsQuery,
   isValidQuery,
-  requestSupportsPartitioning,
+  requestSupporsChunking,
 } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
@@ -285,8 +285,8 @@ export class LokiDatasource
       return this.runLiveQueryThroughBackend(fixedRequest);
     }
 
-    if (config.featureToggles.lokiQuerySplitting && requestSupportsPartitioning(fixedRequest.targets)) {
-      return runPartitionedQueries(this, fixedRequest);
+    if (config.featureToggles.lokiQuerySplitting && requestSupporsChunking(fixedRequest.targets)) {
+      return runQueryInChunks(this, fixedRequest);
     }
 
     return this.runQuery(fixedRequest);

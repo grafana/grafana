@@ -304,7 +304,7 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
   return labelMatchers;
 }
 
-export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
+export function requestSupporsChunking(allQueries: LokiQuery[]) {
   const queries = allQueries
     .filter((query) => !query.hide)
     .filter((query) => !query.refId.includes('do-not-chunk'))
