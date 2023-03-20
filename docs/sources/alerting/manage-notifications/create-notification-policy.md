@@ -76,6 +76,23 @@ You can configure grouping to be `group_by: [alertname]` (take note that the `en
 1. Make any changes using instructions in [Add new specific policy](#add-new-specific-policy).
 1. Click **Save policy**.
 
+## Searching for policies
+
+Grafana allows you to search within the tree of policies by the following:
+
+- **Label matchers**
+- **Contact Points**
+
+To search by contact point, simply enter a part or full name you are looking for.
+
+To search by label matchers simply enter a valid matcher in the **Search by matchers** input field. Multiple matchers can be combined with a comma (`,`).
+
+An example of a valid matchers search input is:
+
+`severity=high, region=~EMEA|NASA`
+
+> All matched policies will be **exact** matches, we currently do not support regex-style or partial matching.
+
 ## Example
 
 An example of an alert configuration.

@@ -14,9 +14,9 @@ import { emptyArrayFieldMatcher, emptyRoute } from '../../utils/amroutes';
 import { getNotificationPoliciesFilters } from '../../utils/misc';
 import { EmptyArea } from '../EmptyArea';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
-import { MatcherFilter } from '../alert-groups/MatcherFilter';
 
 import { AmRoutesTable } from './AmRoutesTable';
+import { LabelMatcherFilter } from './LabelMatcherFilter';
 
 export interface AmSpecificRoutingProps {
   alertManagerSourceName: string;
@@ -115,7 +115,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
           <div>
             {!isAddMode && (
               <div className={styles.searchContainer}>
-                <MatcherFilter
+                <LabelMatcherFilter
                   onFilterChange={(filter) =>
                     setFilters((currentFilters) => ({ ...currentFilters, queryString: filter }))
                   }

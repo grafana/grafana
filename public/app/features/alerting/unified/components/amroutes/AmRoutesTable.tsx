@@ -1,4 +1,4 @@
-import { intersectionWith, isEqual } from 'lodash';
+import { differenceWith, isEqual } from 'lodash';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button, ConfirmModal, HorizontalGroup, IconButton } from '@grafana/ui';
@@ -30,14 +30,15 @@ type RouteTableColumnProps = DynamicTableColumnProps<FormAmRoute>;
 type RouteTableItemProps = DynamicTableItemProps<FormAmRoute>;
 
 export const getFilteredRoutes = (routes: FormAmRoute[], labelMatcherQuery?: string, contactPointQuery?: string) => {
-  const matchers = parseMatchers(labelMatcherQuery ?? '');
+  const filterMatchers = parseMatchers(labelMatcherQuery ?? '');
 
   let filteredRoutes = routes;
 
-  if (matchers.length) {
+  if (filterMatchers.length) {
     filteredRoutes = routes.filter((route) => {
       const routeMatchers = route.object_matchers.map(matcherFieldToMatcher);
-      return intersectionWith(routeMatchers, matchers, isEqual).length > 0;
+      // Route matchers needs to include all filter matchers
+      return differenceWith(filterMatchers, routeMatchers, isEqual).length === 0;
     });
   }
 
