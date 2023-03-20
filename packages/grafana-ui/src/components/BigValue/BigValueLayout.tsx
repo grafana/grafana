@@ -68,7 +68,7 @@ export abstract class BigValueLayout {
     }
 
     if (
-      this.props.colorMode === BigValueColorMode.BackgroundGradient ||
+      this.props.colorMode === BigValueColorMode.Background ||
       this.props.colorMode === BigValueColorMode.BackgroundSolid
     ) {
       styles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
@@ -94,7 +94,7 @@ export abstract class BigValueLayout {
       case BigValueColorMode.Value:
         styles.color = this.valueColor;
         break;
-      case BigValueColorMode.BackgroundGradient:
+      case BigValueColorMode.Background:
       case BigValueColorMode.BackgroundSolid:
         styles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
         break;
@@ -135,7 +135,7 @@ export abstract class BigValueLayout {
     const themeFactor = theme.isDark ? 1 : -0.7;
 
     switch (colorMode) {
-      case BigValueColorMode.BackgroundGradient:
+      case BigValueColorMode.Background:
         const bgColor2 = tinycolor(this.valueColor)
           .darken(15 * themeFactor)
           .spin(8)
@@ -173,7 +173,7 @@ export abstract class BigValueLayout {
     let lineColor: string;
 
     switch (colorMode) {
-      case BigValueColorMode.BackgroundGradient:
+      case BigValueColorMode.Background:
       case BigValueColorMode.BackgroundSolid:
         fillColor = 'rgba(255,255,255,0.4)';
         lineColor = tinycolor(this.valueColor).brighten(40).toRgbString();

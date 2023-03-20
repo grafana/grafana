@@ -23,7 +23,7 @@ export const statPanelChangedHandler = (
     }
 
     if (oldOptions.colorBackground) {
-      options.colorMode = BigValueColorMode.BackgroundGradient;
+      options.colorMode = BigValueColorMode.Background;
     } else if (oldOptions.colorValue) {
       options.colorMode = BigValueColorMode.Value;
     } else {

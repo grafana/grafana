@@ -5,7 +5,7 @@ import { buildLayout, StackedWithChartLayout, StackedWithNoChartLayout, WideWith
 
 function getProps(propOverrides?: Partial<Props>): Props {
   const props: Props = {
-    colorMode: BigValueColorMode.BackgroundGradient,
+    colorMode: BigValueColorMode.Background,
     graphMode: BigValueGraphMode.Area,
     height: 300,
     width: 300,

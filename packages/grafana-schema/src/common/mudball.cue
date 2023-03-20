@@ -178,7 +178,7 @@ OptionsWithTextFormatting: {
 } @cuetsy(kind="interface")
 
 // TODO docs
-BigValueColorMode: "value" | "backgroundSolid" | "backgroundGradient" | "none" @cuetsy(kind="enum")
+BigValueColorMode: "value" | "backgroundSolid" | "background" | "none" @cuetsy(kind="enum")
 
 // TODO docs
 BigValueGraphMode: "none" | "line" | "area" @cuetsy(kind="enum")
