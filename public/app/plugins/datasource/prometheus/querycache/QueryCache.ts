@@ -14,6 +14,7 @@ type TargetSig = string;
 type TimestampMs = number;
 
 type StringInterpolator = (expr: string) => string;
+export const defaultPrometheusQueryOverlapWindowSeconds = 10 * 60 * 1000;
 
 interface TargetCache {
   sig: TargetSig;
@@ -51,6 +52,11 @@ function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ
  * Sig: Signature: the string that is expected to change, upon which we wipe the cache fields
  */
 export class QueryCache {
+  private overlapWindowInSeconds: number;
+  constructor(overlapInSeconds?: number) {
+    this.overlapWindowInSeconds = overlapInSeconds ?? defaultPrometheusQueryOverlapWindowSeconds;
+  }
+
   cache = new Map<TargetIdent, TargetCache>();
 
   // can be used to change full range request to partial, split into multiple requests
@@ -100,10 +106,9 @@ export class QueryCache {
 
     if (doPartialQuery) {
       // 10m re-query overlap
-      const requeryLastMs = 10 * 60 * 1000;
 
       // clamp to make sure we don't re-query previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
-      let newFromPartial = Math.max(prevTo! - requeryLastMs, newFrom);
+      let newFromPartial = Math.max(prevTo! - this.overlapWindowInSeconds, newFrom);
 
       // modify to partial query
       request = {

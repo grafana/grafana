@@ -22,6 +22,7 @@ import {
 import { useUpdateDatasource } from '../../../../features/datasources/state';
 import { PromApplication, PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
 import { QueryEditorMode } from '../querybuilder/shared/types';
+import { defaultPrometheusQueryOverlapWindowSeconds } from '../querycache/QueryCache';
 import { PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
@@ -351,6 +352,25 @@ export const PromSettings = (props: Props) => {
               }
             />
           </div>
+        </div>
+
+        <div className="gf-form-inline">
+          {options.jsonData.incrementalQuerying && (
+            <FormField
+              label="Query overlap seconds"
+              labelWidth={14}
+              tooltip="Sets the overlap duration in seconds"
+              inputEl={
+                <Input
+                  className="width-25"
+                  value={options.jsonData.incrementalQueryOverlapDuration ?? defaultPrometheusQueryOverlapWindowSeconds}
+                  onChange={onChangeHandler('incrementalQueryOverlapDuration', options, onOptionsChange)}
+                  spellCheck={false}
+                  disabled={options.readOnly}
+                />
+              }
+            />
+          )}
         </div>
       </div>
       <ExemplarsSettings

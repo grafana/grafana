@@ -51,7 +51,7 @@ import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
 import { QueryEditorMode } from './querybuilder/shared/types';
-import { CacheRequestInfo, QueryCache } from './querycache/QueryCache';
+import { CacheRequestInfo, defaultPrometheusQueryOverlapWindowSeconds, QueryCache } from './querycache/QueryCache';
 import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
 import { trackQuery } from './tracking';
 import {
@@ -101,8 +101,7 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   subType: PromApplication;
   rulerEnabled: boolean;
-
-  cache = new QueryCache();
+  cache: QueryCache;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -138,6 +137,9 @@ export class PrometheusDatasource
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
+    this.cache = new QueryCache(
+      instanceSettings.jsonData.incrementalQueryOverlapDuration ?? defaultPrometheusQueryOverlapWindowSeconds
+    );
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
     // objects to DataSourceApi types.
