@@ -47,7 +47,7 @@ describe('Stat Panel Migrations', () => {
 
     const panel = {} as PanelModel;
     const options = statPanelChangedHandler(panel, 'singlestat', old);
-    expect(options.colorMode).toBe(BigValueColorMode.Background);
+    expect(options.colorMode).toBe(BigValueColorMode.BackgroundGradient);
   });
 
   it('change from angular singlestat with name stat', () => {
@@ -82,6 +82,6 @@ describe('Stat Panel Migrations', () => {
 
     panel = {} as PanelModel;
     options = statPanelChangedHandler(panel, 'singlestat', oldWithColorBackground);
-    expect(options.colorMode).toBe(BigValueColorMode.Background);
+    expect(options.colorMode).toBe(BigValueColorMode.BackgroundGradient);
   });
 });
