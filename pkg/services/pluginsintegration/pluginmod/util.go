@@ -2,8 +2,8 @@ package pluginmod
 
 import (
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginProto "github.com/grafana/grafana/pkg/plugins/pluginmod/proto"
 	"github.com/grafana/grafana/pkg/services/org"
+	pluginProto "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginmod/proto"
 )
 
 func fromProto(p *pluginProto.PluginData) plugins.PluginDTO {

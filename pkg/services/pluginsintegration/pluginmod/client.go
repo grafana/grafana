@@ -18,7 +18,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	pluginProto "github.com/grafana/grafana/pkg/plugins/pluginmod/proto"
+	pluginProto "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginmod/proto"
 	"github.com/grafana/grafana/pkg/setting"
 )
 

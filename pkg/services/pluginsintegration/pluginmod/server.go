@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	pluginProto "github.com/grafana/grafana/pkg/plugins/pluginmod/proto"
+	pluginProto "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginmod/proto"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
