@@ -106,5 +106,4 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `dashboardsFromStorage` | Load dashboards from the generic storage interface  |
 | `grpcServer`            | Run GRPC server                                     |
 | `entityStore`           | SQL-based entity store (requires storage flag also) |
-| `queryLibrary`          | Reusable query library                              |
 | `nestedFolders`         | Enable folder nesting                               |
