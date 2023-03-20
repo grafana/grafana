@@ -102,7 +102,7 @@ This section shows you how to migrate API keys to Grafana service accounts using
 
 #### Before you begin
 
-To follow these instructions, you need:
+To follow these instructions, you need one of the following:
 
 - Administrator permissions
 - Editor permissions
