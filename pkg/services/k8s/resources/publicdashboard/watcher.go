@@ -2,7 +2,6 @@ package publicdashboard
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"

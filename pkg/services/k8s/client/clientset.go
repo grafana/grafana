@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"sync"
 
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/kindsys"
 	admissionregistrationV1 "k8s.io/api/admissionregistration/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -79,7 +80,7 @@ func (c *Clientset) GetCABundle() []byte {
 	}
 
 	filename := c.CABundlePath()
-	caBytes, err := os.ReadFile(filename)
+	caBytes, err := os.ReadFile(filepath.Clean(filename))
 	if err != nil {
 		// NOTE this should never happen
 		panic(fmt.Sprintf("Missing ca bundle for k8s api server \n could not get ca bundle for k8s webhooks: %s, err: %s", filename, err.Error()))
@@ -104,11 +105,7 @@ type ShortWebhookConfig struct {
 }
 
 // ProvideClientset returns a new Clientset configured with cfg.
-func ProvideClientsetProvier(toggles featuremgmt.FeatureToggles, restConfigProvider apiserver.RestConfigProvider) (*service, error) {
-	if !toggles.IsEnabled(featuremgmt.FlagK8S) {
-		return &service{}, nil
-	}
-
+func ProvideClientsetProvider(toggles featuremgmt.FeatureToggles, restConfigProvider apiserver.RestConfigProvider) (*service, error) {
 	s := &service{restConfigProvider: restConfigProvider}
 	s.BasicService = services.NewBasicService(s.start, s.running, nil)
 

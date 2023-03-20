@@ -32,8 +32,6 @@ type Informer interface {
 type factory struct {
 	*services.BasicService
 	dynamicinformer.DynamicSharedInformerFactory
-
-	enabled   bool
 	log       log.Logger
 	watchers  map[schema.GroupVersionResource][]ResourceWatcher
 	informers map[schema.GroupVersionResource]cache.SharedIndexInformer
@@ -46,14 +44,9 @@ func ProvideFactory(
 	restConfigProvider apiserver.RestConfigProvider,
 	features featuremgmt.FeatureToggles,
 ) (*factory, error) {
-	enabled := features.IsEnabled(featuremgmt.FlagK8S)
-	if !enabled {
-		return &factory{}, nil
-	}
 
 	f := &factory{
 		log:                log.New("k8s.informer.factory"),
-		enabled:            enabled,
 		watchers:           make(map[schema.GroupVersionResource][]ResourceWatcher),
 		informers:          make(map[schema.GroupVersionResource]cache.SharedIndexInformer),
 		stopCh:             make(chan struct{}),
