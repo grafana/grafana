@@ -1,5 +1,6 @@
 import { parseAtomFeed } from './atom';
 import { parseRSSFeed } from './rss';
+//import {trustedTypes }from 'trusted-types';
 
 export async function fetchFeedText(url: string) {
   const rsp = await fetch(url);
@@ -9,8 +10,18 @@ export async function fetchFeedText(url: string) {
 
 export function isAtomFeed(txt: string) {
   const domParser = new DOMParser();
-  const doc = domParser.parseFromString(txt, 'text/xml'); // TT: this is considered a security risk and will cause trusted types violations
-  return doc.querySelector('feed') !== null;
+
+  //@ts-ignore
+  if (trustedTypes.createPolicy) {
+    //@ts-ignore
+    const escapeHTMLPolicy = trustedTypes.createPolicy('atom', { createHTML: (s: string) => s });
+    const escaped = escapeHTMLPolicy.createHTML(txt);
+    const doc = domParser.parseFromString(escaped, 'text/xml');
+    return doc.querySelector('feed') !== null;
+  } else {
+    const doc = domParser.parseFromString(txt, 'text/xml');
+    return doc.querySelector('feed') !== null;
+  }
 }
 
 export function getProperty(node: Element, property: string): string {
