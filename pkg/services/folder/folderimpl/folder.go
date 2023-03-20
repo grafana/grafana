@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/registryentity"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -36,6 +38,9 @@ type Service struct {
 
 	// bus is currently used to publish event in case of title change
 	bus bus.Bus
+
+	mutex    sync.RWMutex
+	registry map[string]registryentity.RegistryEntityService
 }
 
 func ProvideService(
@@ -58,6 +63,7 @@ func ProvideService(
 		accessControl:        ac,
 		bus:                  bus,
 		db:                   db,
+		registry:             make(map[string]registryentity.RegistryEntityService),
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		srv.DBMigration(db)
@@ -466,6 +472,12 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 				}
 				return dashboards.ErrFolderAccessDenied
 			}
+
+			err = s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID)
+			if err != nil {
+				return err
+			}
+
 			err = s.legacyDelete(ctx, cmd, dashFolder)
 			if err != nil {
 				return err
@@ -475,6 +487,16 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	})
 
 	return err
+}
+
+func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, UID string) error {
+	for _, v := range s.registry {
+		err := v.DeleteInFolder(ctx, orgID, UID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, dashFolder *folder.Folder) error {
@@ -588,7 +610,12 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 		}
 		result = append(result, subfolders...)
 	}
-	logger.Info("deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID)
+
+	err = s.deleteChildrenInFolder(ctx, cmd.OrgID, cmd.UID)
+	if err != nil {
+		return result, err
+	}
+	logger.Info("deleting folder and its contents", "org_id", cmd.OrgID, "uid", cmd.UID)
 	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
 	if err != nil {
 		logger.Info("failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
@@ -793,4 +820,18 @@ func toFolderError(err error) error {
 	}
 
 	return err
+}
+
+func (s *Service) RegisterEntityService(r registryentity.RegistryEntityService) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	_, ok := s.registry[r.Kind()]
+	if ok {
+		return registryentity.ErrTargetSrvConflict
+	}
+
+	s.registry[r.Kind()] = r
+
+	return nil
 }

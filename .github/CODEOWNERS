@@ -120,6 +120,7 @@
 /pkg/services/queryhistory/ @grafana/backend-platform
 /pkg/services/quota/ @grafana/backend-platform
 /pkg/services/rendering/ @grafana/backend-platform
+/pkg/services/registryentity/ @grafana/backend-platform
 /pkg/services/screenshot/ @grafana/backend-platform
 /pkg/services/search/ @grafana/backend-platform
 /pkg/services/searchusers/ @grafana/backend-platform

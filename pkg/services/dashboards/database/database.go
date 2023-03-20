@@ -1045,6 +1045,23 @@ func (d *dashboardStore) CountDashboardsInFolder(
 	return count, err
 }
 
+func (d *dashboardStore) DeleteDashboardsInFolder(
+	ctx context.Context, req *dashboards.DeleteDashboardsInFolderRequest) error {
+	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		dashboard := dashboards.Dashboard{OrgID: req.OrgID}
+		has, err := sess.Where("uid = ? AND org_id = ?", req.FolderUID, req.OrgID).Get(&dashboard)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return dashboards.ErrFolderNotFound
+		}
+
+		_, err = sess.Where("folder_id = ? AND org_id = ? AND is_folder = ?", dashboard.ID, dashboard.OrgID, false).Delete(&dashboards.Dashboard{})
+		return err
+	})
+}
+
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits := &quota.Map{}
 

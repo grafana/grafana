@@ -62,6 +62,10 @@ func (_m *FakeDashboardStore) CountDashboardsInFolder(ctx context.Context, reque
 	return r0, r1
 }
 
+func (_m *FakeDashboardStore) DeleteDashboardsInFolder(ctx context.Context, request *DeleteDashboardsInFolderRequest) error {
+	return nil
+}
+
 // DeleteACLByUser provides a mock function with given fields: _a0, _a1
 func (_m *FakeDashboardStore) DeleteACLByUser(_a0 context.Context, _a1 int64) error {
 	ret := _m.Called(_a0, _a1)

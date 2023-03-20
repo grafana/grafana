@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/registryentity"
 )
 
 type FakeService struct {
@@ -44,4 +45,8 @@ func (s *FakeService) MakeUserAdmin(ctx context.Context, orgID int64, userID, fo
 
 func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
+}
+
+func (s *FakeService) RegisterEntityService(service registryentity.RegistryEntityService) error {
+	return nil
 }
