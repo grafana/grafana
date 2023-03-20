@@ -38,8 +38,6 @@ func (w *watcher) Add(ctx context.Context, obj *PublicDashboard) error {
 		return err
 	}
 
-	fmt.Printf("%#v", pdModel)
-
 	// convert to cmd
 	cmd := publicdashboardModels.SavePublicDashboardCommand{
 		PublicDashboard: *pdModel,
