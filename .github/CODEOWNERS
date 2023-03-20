@@ -372,7 +372,6 @@ lerna.json @grafana/frontend-ops
 /public/app/features/profile/ @grafana/user-essentials
 /public/app/features/runtime/ @ryantxu
 /public/app/features/query/ @grafana/dashboards-squad
-/public/app/features/query-library/ @grafana/dataviz-squad
 /public/app/features/sandbox/ @grafana/user-essentials
 /public/app/features/scenes/ @grafana/dashboards-squad
 /public/app/features/search/ @grafana/user-essentials
