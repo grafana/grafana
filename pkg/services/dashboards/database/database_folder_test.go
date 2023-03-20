@@ -538,6 +538,14 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			UserID:  u.ID,
 			OrgID:   u.OrgID,
 			OrgRole: org.RoleAdmin,
+			Permissions: map[int64]map[string][]string{u.OrgID: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+				{
+					Action: dashboards.ActionFoldersCreate,
+				}, {
+					Action: dashboards.ActionFoldersWrite,
+					Scope:  dashboards.ScopeFoldersAll,
+				}}),
+			},
 		}
 		require.NotEqual(t, viewer.UserID, admin.UserID)
 

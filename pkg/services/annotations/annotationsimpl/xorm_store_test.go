@@ -643,9 +643,18 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	}
 
 	orgID := int64(1)
+	permissions := []accesscontrol.Permission{
+		{
+			Action: dashboards.ActionFoldersCreate,
+		}, {
+			Action: dashboards.ActionFoldersWrite,
+			Scope:  dashboards.ScopeFoldersAll,
+		},
+	}
 	usr := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  orgID,
+		UserID:      1,
+		OrgID:       orgID,
+		Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)},
 	}
 
 	var role *accesscontrol.Role

@@ -241,7 +241,13 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tc.permissions)}}
+			tc.permissions = append(tc.permissions, accesscontrol.Permission{
+				Action: dashboards.ActionFoldersCreate,
+			}, accesscontrol.Permission{
+				Action: dashboards.ActionFoldersWrite,
+				Scope:  dashboards.ScopeFoldersAll,
+			})
+			usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(tc.permissions)}}
 			db := setupNestedTest(t, usr, tc.permissions, orgID, tc.features)
 			recursiveQueriesAreSupported, err := db.RecursiveQueriesAreSupported()
 			require.NoError(t, err)

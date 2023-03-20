@@ -31,7 +31,18 @@ import (
 )
 
 func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, numFolders, nestingLevel int) {
-	usr := user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: {}}}
+	usr := user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{
+		1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+			{
+				Action: dashboards.ActionFoldersCreate,
+			},
+			{
+				Action: dashboards.ActionFoldersWrite,
+				Scope:  dashboards.ScopeFoldersAll,
+			},
+		}),
+	}}
+
 	features := featuremgmt.WithFeatures()
 	// if nestingLevel > 0 enable nested folders
 	if nestingLevel > 0 {
