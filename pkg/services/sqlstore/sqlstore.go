@@ -84,8 +84,8 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 	return s, nil
 }
 
-func ProvideServiceForTests(migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+func ProvideServiceForTests(cfg *setting.Cfg, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+	return initTestDB(cfg, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
 func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine *xorm.Engine,
@@ -503,7 +503,7 @@ var featuresEnabledDuringTests = []string{
 // InitTestDBWithMigration initializes the test DB given custom migrations.
 func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
-	store, err := initTestDB(migration, opts...)
+	store, err := initTestDB(setting.NewCfg(), migration, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -513,7 +513,7 @@ func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opt
 // InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
-	store, err := initTestDB(&migrations.OSSMigrations{}, opts...)
+	store, err := initTestDB(setting.NewCfg(), &migrations.OSSMigrations{}, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -525,7 +525,8 @@ func InitTestDBWithCfg(t ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cf
 	return store, store.Cfg
 }
 
-func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
+//nolint:gocyclo
+func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
 
@@ -559,10 +560,12 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 			}
 			return false
 		}
+
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
 			return nil, err
 		}
+
 		if _, err := sec.NewKey("type", dbType); err != nil {
 			return nil, err
 		}
@@ -586,6 +589,21 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		if _, present := os.LookupEnv("SKIP_MIGRATIONS"); present {
 			if _, err := sec.NewKey("skip_migrations", "true"); err != nil {
 				return nil, err
+			}
+		}
+
+		if testCfg.Raw.HasSection("database") {
+			testSec, err := testCfg.Raw.GetSection("database")
+			if err == nil {
+				// copy from testCfg to the Cfg keys that do not exist
+				for _, k := range testSec.Keys() {
+					if sec.HasKey(k.Name()) {
+						continue
+					}
+					if _, err := sec.NewKey(k.Name(), k.Value()); err != nil {
+						return nil, err
+					}
+				}
 			}
 		}
 

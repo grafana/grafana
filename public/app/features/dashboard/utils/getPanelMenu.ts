@@ -268,6 +268,40 @@ export function getPanelMenu(
     });
   }
 
+  const { extensions } = getPluginExtensions({
+    placement: PluginExtensionPlacements.DashboardPanelMenu,
+    context: createExtensionContext(panel, dashboard),
+  });
+
+  if (extensions.length > 0) {
+    const extensionsMenu: PanelMenuItem[] = [];
+
+    for (const extension of extensions) {
+      if (isPluginExtensionLink(extension)) {
+        extensionsMenu.push({
+          text: truncateTitle(extension.title, 25),
+          href: extension.path,
+        });
+        continue;
+      }
+
+      if (isPluginExtensionCommand(extension)) {
+        extensionsMenu.push({
+          text: truncateTitle(extension.title, 25),
+          onClick: extension.callHandlerWithContext,
+        });
+        continue;
+      }
+    }
+
+    menu.push({
+      text: 'Extensions',
+      iconClassName: 'plug',
+      type: 'submenu',
+      subMenu: extensionsMenu,
+    });
+  }
+
   if (dashboard.canEditPanel(panel) && !panel.isEditing && !panel.isViewing) {
     menu.push({ type: 'divider', text: '' });
 
@@ -277,29 +311,6 @@ export function getPanelMenu(
       onClick: onRemovePanel,
       shortcut: 'p r',
     });
-  }
-
-  const { extensions } = getPluginExtensions({
-    placement: PluginExtensionPlacements.DashboardPanelMenu,
-    context: createExtensionContext(panel, dashboard),
-  });
-
-  for (const extension of extensions) {
-    if (isPluginExtensionLink(extension)) {
-      subMenu.push({
-        text: truncateTitle(extension.title, 25),
-        href: extension.path,
-      });
-      continue;
-    }
-
-    if (isPluginExtensionCommand(extension)) {
-      subMenu.push({
-        text: truncateTitle(extension.title, 25),
-        onClick: extension.callHandlerWithContext,
-      });
-      continue;
-    }
   }
 
   return menu;
