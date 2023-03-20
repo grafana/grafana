@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/kindsys"
 )
 
 // LatestMajorsOrXJenny returns a jenny that repeats the input for the latest in each major version,
