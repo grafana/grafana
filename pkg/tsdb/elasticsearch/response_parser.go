@@ -605,10 +605,6 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 		for _, propKey := range propKeys {
 			fields = append(fields, data.NewField(propKey, nil, []*string{}))
 		}
-		filterable := true
-		aggDefField := data.NewField(aggDef.Field, nil, []*string{})
-		aggDefField.Config = &data.FieldConfig{Filterable: &filterable}
-		fields = append(fields, aggDefField)
 	}
 
 	addMetricValue := func(values []interface{}, metricName string, value *float64) {
