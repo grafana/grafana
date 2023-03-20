@@ -401,6 +401,13 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:         "lokiQuerySplittingConfig",
+			Description:  "Give users the option to configure split durations for Loki queries",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:        "individualCookiePreferences",
 			Description: "Support overriding cookie preferences per user",
 			State:       FeatureStateAlpha,
