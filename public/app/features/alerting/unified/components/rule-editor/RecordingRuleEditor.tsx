@@ -34,12 +34,12 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
     timeRange: getTimeSrv().timeRange(),
   });
 
-  const isExpression = isExpressionQuery(queries[0].model);
+  const isExpression = isExpressionQuery(queries[0]?.model);
 
   const [pluginId, changePluginId] = useState<SupportedPanelPlugins>(isExpression ? TABLE : TIMESERIES);
 
   useEffect(() => {
-    setData(panelData?.[queries[0].refId]);
+    setData(panelData?.[queries[0]?.refId]);
   }, [panelData, queries]);
 
   const {
@@ -84,14 +84,16 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
 
   return (
     <>
-      <QueryEditor
-        query={queries[0]}
-        queries={queries}
-        app={CoreApp.UnifiedAlerting}
-        onChange={handleChangedQuery}
-        onRunQuery={() => runQueries(queries)}
-        datasource={dataSource}
-      />
+      {queries.length && (
+        <QueryEditor
+          query={queries[0]}
+          queries={queries}
+          app={CoreApp.UnifiedAlerting}
+          onChange={handleChangedQuery}
+          onRunQuery={() => runQueries(queries)}
+          datasource={dataSource}
+        />
+      )}
 
       {data && <VizWrapper data={data} currentPanel={pluginId} changePanel={changePluginId} />}
     </>

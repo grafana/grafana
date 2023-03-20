@@ -112,7 +112,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   useEffect(() => {
     const currentCondition = getValues('condition');
 
-    if (!currentCondition) {
+    if (!currentCondition || RuleFormType.cloudRecording) {
       return;
     }
 
