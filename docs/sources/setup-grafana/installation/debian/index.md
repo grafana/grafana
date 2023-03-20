@@ -147,7 +147,7 @@ The `grafana-server` binary .tar.gz needs the working directory to be the root i
 To start the Grafana server, run the following command:
 
 ```bash
-./bin/grafana-server web
+./bin/grafana-server
 ```
 
 ## Upgrade Grafana
