@@ -258,7 +258,7 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 				hs.Cfg.LDAPSkipOrgRoleSync = tt.SkipOrgRoleSync
 
 				hs.authInfoService = &logintest.AuthInfoServiceFake{
-					ExpectedUserAuth: &login.UserAuth{AuthModule: login.LDAPLabel},
+					ExpectedUserAuth: &login.UserAuth{AuthModule: login.LDAPAuthModule},
 				}
 				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagOnlyExternalOrgRoleSync, true)
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions(1, tt.permissions)}

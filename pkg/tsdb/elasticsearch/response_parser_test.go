@@ -1164,6 +1164,77 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, data.FieldTypeNullableString, frame.Fields[15].Type())
 		})
 
+		t.Run("Log query with highlight", func(t *testing.T) {
+			targets := map[string]string{
+				"A": `{
+					"metrics": [{ "type": "logs" }]
+				}`,
+			}
+
+			response := `{
+  			"responses":[
+  			  {
+  			    "hits":{
+  			      "total":{
+  			        "value":109,
+  			        "relation":"eq"
+  			      },
+  			      "max_score":null,
+  			      "hits":[
+  			        {
+  			          "_index":"logs-2023.02.08",
+  			          "_id":"GB2UMYYBfCQ-FCMjayJa",
+  			          "_score":null,
+									"highlight": {
+										"line": [
+					  					"@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
+										],
+										"duplicated": ["@HIGHLIGHT@hello@/HIGHLIGHT@"]
+				  				},
+  			          "_source":{
+  			            "@timestamp":"2023-02-08T15:10:55.830Z",
+  			            "line":"log text  [479231733]"
+									}
+  			        },
+  			        {
+  			          "_index":"logs-2023.02.08",
+  			          "_id":"GB2UMYYBfCQ-FCMjayJa",
+  			          "_score":null,
+									"highlight": {
+										"line": [
+					  					"@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
+										],
+										"duplicated": ["@HIGHLIGHT@hello@/HIGHLIGHT@"]
+				  				},
+  			          "_source":{
+  			            "@timestamp":"2023-02-08T15:10:55.830Z",
+  			            "line":"log text  [479231733]"
+									}
+  			        }
+  			      ]
+  			    },
+  			    "status":200
+  			  }
+  			]
+			}`
+
+			result, err := parseTestResponse(targets, response)
+			require.NoError(t, err)
+			require.Len(t, result.Responses, 1)
+
+			queryRes := result.Responses["A"]
+			require.NotNil(t, queryRes)
+			dataframes := queryRes.Frames
+			require.Len(t, dataframes, 1)
+			frame := dataframes[0]
+
+			customMeta := frame.Meta.Custom
+
+			require.Equal(t, map[string]interface{}{
+				"searchWords": []string{"hello", "message"},
+			}, customMeta)
+		})
+
 		t.Run("Raw document query", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{

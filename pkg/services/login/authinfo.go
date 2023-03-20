@@ -72,18 +72,18 @@ const (
 // https://github.com/grafana/grafana/blob/4181acec72f76df7ad02badce13769bae4a1f840/pkg/services/login/authinfoservice/database/database.go#L61
 // this means that if the user has multiple auth providers and one of them is set to sync org roles
 // then IsExternallySynced will be true for this one provider and false for the others
-func IsExternallySynced(cfg *setting.Cfg, authProviderLabel string) bool {
+func IsExternallySynced(cfg *setting.Cfg, authModule string) bool {
 	// provider enabled in config
-	if !IsProviderEnabled(cfg, authProviderLabel) {
+	if !IsProviderEnabled(cfg, authModule) {
 		return false
 	}
 	// first check SAML, LDAP and JWT
-	switch authProviderLabel {
-	case SAMLLabel:
+	switch authModule {
+	case SAMLAuthModule:
 		return !cfg.SAMLSkipOrgRoleSync
-	case LDAPLabel:
+	case LDAPAuthModule:
 		return !cfg.LDAPSkipOrgRoleSync
-	case JWTLabel:
+	case JWTModule:
 		return !cfg.JWTAuthSkipOrgRoleSync
 	}
 	// then check the rest of the oauth providers
@@ -92,51 +92,52 @@ func IsExternallySynced(cfg *setting.Cfg, authProviderLabel string) bool {
 	if cfg.OAuthSkipOrgRoleUpdateSync {
 		return false
 	}
-	switch authProviderLabel {
-	case GoogleLabel:
+	switch authModule {
+	case GoogleAuthModule:
 		return !cfg.GoogleSkipOrgRoleSync
-	case OktaLabel:
+	case OktaAuthModule:
 		return !cfg.OktaSkipOrgRoleSync
-	case AzureADLabel:
+	case AzureADAuthModule:
 		return !cfg.AzureADSkipOrgRoleSync
-	case GitLabLabel:
+	case GitLabAuthModule:
 		return !cfg.GitLabSkipOrgRoleSync
-	case GithubLabel:
+	case GithubAuthModule:
 		return !cfg.GitHubSkipOrgRoleSync
-	case GrafanaComLabel:
+	case GrafanaComAuthModule:
 		return !cfg.GrafanaComSkipOrgRoleSync
-	case GenericOAuthLabel:
+	case GenericOAuthModule:
 		return !cfg.GenericOAuthSkipOrgRoleSync
 	}
 	return true
 }
 
-func IsProviderEnabled(cfg *setting.Cfg, authProviderLabel string) bool {
-	switch authProviderLabel {
-	case SAMLLabel:
+func IsProviderEnabled(cfg *setting.Cfg, authModule string) bool {
+	switch authModule {
+	case SAMLAuthModule:
 		return cfg.SAMLAuthEnabled
-	case LDAPLabel:
+	case LDAPAuthModule:
 		return cfg.LDAPAuthEnabled
-	case JWTLabel:
+	case JWTModule:
 		return cfg.JWTAuthEnabled
-	case GoogleLabel:
+	case GoogleAuthModule:
 		return cfg.GoogleAuthEnabled
-	case OktaLabel:
+	case OktaAuthModule:
 		return cfg.OktaAuthEnabled
-	case AzureADLabel:
+	case AzureADAuthModule:
 		return cfg.AzureADEnabled
-	case GitLabLabel:
+	case GitLabAuthModule:
 		return cfg.GitLabAuthEnabled
-	case GithubLabel:
+	case GithubAuthModule:
 		return cfg.GitHubAuthEnabled
-	case GrafanaComLabel:
+	case GrafanaComAuthModule:
 		return cfg.GrafanaComAuthEnabled
-	case GenericOAuthLabel:
+	case GenericOAuthModule:
 		return cfg.GenericOAuthAuthEnabled
 	}
 	return false
 }
 
+// used for frontend to display a more user friendly label
 func GetAuthProviderLabel(authModule string) string {
 	switch authModule {
 	case GithubAuthModule:

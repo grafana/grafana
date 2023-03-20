@@ -3,7 +3,7 @@ import $ from 'jquery';
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 
 import { AppEvent } from '@grafana/data';
-import { setLegacyAngularInjector, setAppEvents, setAngularLoader } from '@grafana/runtime';
+import { setLegacyAngularInjector, setAngularLoader } from '@grafana/runtime';
 import { colors } from '@grafana/ui';
 import coreModule from 'app/angular/core_module';
 import { AngularLoader } from 'app/angular/services/AngularLoader';
@@ -31,7 +31,6 @@ export class GrafanaCtrl {
     // make angular loader service available to react components
     setAngularLoader(angularLoader);
     setLegacyAngularInjector($injector);
-    setAppEvents(appEvents);
 
     initGrafanaLive();
 

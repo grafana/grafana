@@ -197,7 +197,10 @@ describe('getExploreUrl', () => {
   const args = {
     panel: {
       getSavedId: () => 1,
-      targets: [{ refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' }],
+      targets: [
+        { refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' },
+        { refId: 'B', expr: 'query2', datasource: { type: '__expr__', uid: '__expr__' } },
+      ],
     },
     datasourceSrv: {
       get() {
@@ -214,6 +217,9 @@ describe('getExploreUrl', () => {
 
   it('should omit legendFormat in explore url', () => {
     expect(getExploreUrl(args).then((data) => expect(data).not.toMatch(/legendFormat1/g)));
+  });
+  it('should omit expression target in explore url', () => {
+    expect(getExploreUrl(args).then((data) => expect(data).not.toMatch(/__expr__/g)));
   });
 });
 

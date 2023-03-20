@@ -102,7 +102,6 @@ var (
 	ExternalUserMngLinkUrl  string
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
-	ViewersCanEdit          bool
 
 	// HTTP auth
 	SigV4AuthEnabled bool
@@ -330,6 +329,7 @@ type Cfg struct {
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
 
+	ViewersCanEdit  bool
 	EditorsCanAdmin bool
 
 	ApiKeyMaxSecondsToLive int64
@@ -1416,6 +1416,7 @@ func readAuthGitlabSettings(iniFile *ini.File, cfg *Cfg) {
 
 func readGenericOAuthSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.generic_oauth")
+	cfg.GenericOAuthAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GenericOAuthSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
@@ -1583,7 +1584,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
 	ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
 
-	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
+	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
 
 	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
