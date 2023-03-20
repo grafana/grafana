@@ -594,6 +594,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-grafana
 /.github/workflows/remove-milestone.yml @grafana/user-essentials
 /.github/workflows/sbom-report.yml @grafana/security-team
+/.github/secret_scanning.yml @grafana/security-team
+/.github/workflows/snyk.yml @grafana/security-team
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
 /.github/workflows/scripts/pr-get-job-link.js @grafana/plugins-platform-frontend
 /.github/workflows/stale.yml @grafana/user-essentials
