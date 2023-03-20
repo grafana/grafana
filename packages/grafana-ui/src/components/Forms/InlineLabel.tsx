@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FunctionComponent, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -24,7 +24,7 @@ export interface Props extends Omit<LabelProps, 'css' | 'description' | 'categor
   as?: React.ElementType;
 }
 
-export const InlineLabel: FunctionComponent<Props> = ({
+export const InlineLabel = ({
   children,
   className,
   tooltip,
@@ -33,7 +33,7 @@ export const InlineLabel: FunctionComponent<Props> = ({
   interactive,
   as: Component = 'label',
   ...rest
-}) => {
+}: Props) => {
   const styles = useStyles2(
     useCallback((theme) => getInlineLabelStyles(theme, transparent, width), [transparent, width])
   );

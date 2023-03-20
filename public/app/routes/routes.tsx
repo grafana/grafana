@@ -185,15 +185,14 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/f/:uid/:slug/permissions',
-      component:
-        config.rbacEnabled && contextSrv.hasPermission(AccessControlAction.FoldersPermissionsRead)
-          ? SafeDynamicImport(
-              () =>
-                import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/AccessControlFolderPermissions')
-            )
-          : SafeDynamicImport(
-              () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')
-            ),
+      component: config.rbacEnabled
+        ? SafeDynamicImport(
+            () =>
+              import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/AccessControlFolderPermissions')
+          )
+        : SafeDynamicImport(
+            () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')
+          ),
     },
     {
       path: '/dashboards/f/:uid/:slug/settings',
@@ -581,9 +580,10 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/scenes/embedded/:name',
+      path: '/scenes/grafana-monitoring',
+      exact: false,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/SceneEmbeddedPage')
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/apps/GrafanaMonitoringApp')
       ),
     },
     {

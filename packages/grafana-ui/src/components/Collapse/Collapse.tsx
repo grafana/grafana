@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FunctionComponent, useState } from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -105,7 +105,7 @@ export interface Props {
   className?: string;
 }
 
-export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle, ...otherProps }) => {
+export const ControlledCollapse = ({ isOpen, onToggle, ...otherProps }: React.PropsWithChildren<Props>) => {
   const [open, setOpen] = useState(isOpen);
   return (
     <Collapse

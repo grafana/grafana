@@ -12,12 +12,7 @@ export interface CallToActionCardProps {
   className?: string;
 }
 
-export const CallToActionCard: React.FunctionComponent<CallToActionCardProps> = ({
-  message,
-  callToActionElement,
-  footer,
-  className,
-}) => {
+export const CallToActionCard = ({ message, callToActionElement, footer, className }: CallToActionCardProps) => {
   const css = useStyles2(getStyles);
 
   return (

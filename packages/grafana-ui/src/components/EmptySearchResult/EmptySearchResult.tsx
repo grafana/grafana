@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -9,7 +9,7 @@ export interface Props {
   children: JSX.Element | string;
 }
 
-const EmptySearchResult: FC<Props> = ({ children }) => {
+const EmptySearchResult = ({ children }: Props) => {
   const styles = useStyles2(getStyles);
   return <div className={styles.container}>{children}</div>;
 };

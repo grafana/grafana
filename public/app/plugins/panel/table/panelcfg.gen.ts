@@ -14,6 +14,10 @@ export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
 export interface PanelOptions {
   /**
+   * Controls the height of the rows
+   */
+  cellHeight?: ui.TableCellHeight;
+  /**
    * Controls footer options
    */
   footer?: ui.TableFooterOptions;
@@ -40,6 +44,7 @@ export interface PanelOptions {
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
+  cellHeight: ui.TableCellHeight.Sm,
   footer: {
     /**
      * Controls whether the footer should be shown

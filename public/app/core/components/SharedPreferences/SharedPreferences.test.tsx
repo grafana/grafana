@@ -133,9 +133,11 @@ describe('SharedPreferences', () => {
     expect(lightThemeRadio.checked).toBeTruthy();
   });
 
-  it('renders the home dashboard preference', () => {
+  it('renders the home dashboard preference', async () => {
     const dashboardSelect = getSelectParent(screen.getByLabelText('Home Dashboard'));
-    expect(dashboardSelect).toHaveTextContent('My Dashboard');
+    await waitFor(() => {
+      expect(dashboardSelect).toHaveTextContent('My Dashboard');
+    });
   });
 
   it('renders the timezone preference', () => {

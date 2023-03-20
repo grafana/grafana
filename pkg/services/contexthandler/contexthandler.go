@@ -122,8 +122,10 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		defer span.End()
 
 		reqContext := &contextmodel.ReqContext{
-			Context:        mContext,
-			SignedInUser:   &user.SignedInUser{},
+			Context: mContext,
+			SignedInUser: &user.SignedInUser{
+				Permissions: map[int64]map[string][]string{},
+			},
 			IsSignedIn:     false,
 			AllowAnonymous: false,
 			SkipCache:      false,
