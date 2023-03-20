@@ -20,7 +20,6 @@ import { getConfig } from 'app/core/config';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
-import { getGrafanaStorage } from 'app/features/storage/storage';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
 
