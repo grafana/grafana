@@ -809,7 +809,7 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (parsedFile *ini.File, e
 	configFiles = append(configFiles, defaultConfigFile)
 
 	// load config file if exists; use embedded defaults if does not exist
-	if _, err := os.Stat(defaultConfigFile); os.IsNotExist(err) {
+	if _, err = os.Stat(defaultConfigFile); os.IsNotExist(err) {
 		parsedFile, err = ini.Load(grafana.DefaultsINI)
 	} else {
 		parsedFile, err = ini.Load(defaultConfigFile)
