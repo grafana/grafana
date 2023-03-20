@@ -401,8 +401,8 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "lokiQueryChunkingOption",
-			Description:  "Give users the option to configure chunk durations for Loki queries",
+			Name:         "lokiQuerySplittingConfig",
+			Description:  "Give users the option to configure split durations for Loki queries",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,

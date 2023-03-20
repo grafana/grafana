@@ -247,9 +247,9 @@ const (
 	// Split large interval queries into subqueries with smaller time intervals
 	FlagLokiQuerySplitting = "lokiQuerySplitting"
 
-	// FlagLokiQueryChunkingOption
-	// Give users the option to configure chunk durations for Loki queries
-	FlagLokiQueryChunkingOption = "lokiQueryChunkingOption"
+	// FlagLokiQuerySplittingConfig
+	// Give users the option to configure split durations for Loki queries
+	FlagLokiQuerySplittingConfig = "lokiQuerySplittingConfig"
 
 	// FlagIndividualCookiePreferences
 	// Support overriding cookie preferences per user
