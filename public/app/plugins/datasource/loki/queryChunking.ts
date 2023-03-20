@@ -15,7 +15,8 @@ import { LoadingState } from '@grafana/schema';
 import { LokiDatasource } from './datasource';
 import { getRangeChunks as getLogsRangeChunks } from './logsTimeChunking';
 import { getRangeChunks as getMetricRangeChunks } from './metricTimeChunking';
-import { combineResponses, isLogsQuery } from './queryUtils';
+import { isLogsQuery } from './queryUtils';
+import { combineResponses } from './responseUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
 export function partitionTimeRange(

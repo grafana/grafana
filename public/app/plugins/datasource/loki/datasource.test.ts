@@ -45,7 +45,7 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-jest.mock('./querySplitting');
+jest.mock('./queryChunking');
 
 const templateSrvStub = {
   getAdhocFilters: jest.fn(() => [] as unknown[]),
