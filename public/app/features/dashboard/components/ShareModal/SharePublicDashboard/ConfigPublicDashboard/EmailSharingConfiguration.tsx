@@ -116,14 +116,14 @@ export const EmailSharingConfiguration = () => {
     control,
     watch,
     handleSubmit,
-    formState: { isValid, errors },
+    formState: { errors },
     reset,
   } = useForm<EmailSharingConfigurationForm>({
     defaultValues: {
       shareType: publicDashboard?.share || PublicDashboardShareType.PUBLIC,
       email: '',
     },
-    mode: 'onChange',
+    mode: 'onSubmit',
   });
 
   const onShareTypeChange = (shareType: PublicDashboardShareType) => {
@@ -144,7 +144,7 @@ export const EmailSharingConfiguration = () => {
   };
 
   return (
-    <form className={styles.container} onSubmit={handleSubmit(onSubmit)}>
+    <form data-testid={selectors.Container} className={styles.container} onSubmit={handleSubmit(onSubmit)}>
       <Field label="Can view dashboard">
         <InputControl
           name="shareType"
@@ -186,7 +186,7 @@ export const EmailSharingConfiguration = () => {
               <Button
                 type="submit"
                 variant="primary"
-                disabled={!isValid || isAddEmailLoading}
+                disabled={isAddEmailLoading}
                 data-testid={selectors.EmailSharingInviteButton}
               >
                 Invite {isAddEmailLoading && <Spinner />}

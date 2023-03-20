@@ -8,12 +8,12 @@ import { getMultiSeriesGraphHoverInfo } from '../utils';
 
 import { GraphTooltipContentProps } from './types';
 
-export const MultiModeGraphTooltip: React.FC<
-  GraphTooltipContentProps & {
-    // We expect position to figure out correct values when not hovering over a datapoint
-    pos: FlotPosition;
-  }
-> = ({ dimensions, activeDimensions, pos, timeZone }) => {
+type Props = GraphTooltipContentProps & {
+  // We expect position to figure out correct values when not hovering over a datapoint
+  pos: FlotPosition;
+};
+
+export const MultiModeGraphTooltip = ({ dimensions, activeDimensions, pos, timeZone }: Props) => {
   let activeSeriesIndex: number | null = null;
   // when no x-axis provided, skip rendering
   if (activeDimensions.xAxis === null) {

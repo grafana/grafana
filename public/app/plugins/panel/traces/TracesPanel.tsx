@@ -17,7 +17,7 @@ const styles = {
   `,
 };
 
-export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
+export const TracesPanel = ({ data }: PanelProps) => {
   const topOfViewRef = createRef<HTMLDivElement>();
   const traceProp = useMemo(() => transformDataFrames(data.series[0]), [data.series]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);

@@ -62,7 +62,7 @@ func ProvideService(
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, registerer prometheus.Registerer,
-) *Service {
+) authn.Service {
 	s := &Service{
 		log:            log.New("authn.service"),
 		cfg:            cfg,
@@ -155,6 +155,7 @@ func ProvideService(
 	}
 
 	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
+	s.RegisterPostAuthHook(sync.ProvidePermissionsSync(accessControlService).SyncPermissionsHook, 110)
 
 	return s
 }
