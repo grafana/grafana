@@ -479,7 +479,7 @@ export interface OptionsWithTextFormatting {
  */
 export enum BigValueColorMode {
   Background = 'background',
-  BackgroundSolid = 'backgroundSolid',
+  BackgroundSolid = 'background_solid',
   None = 'none',
   Value = 'value',
 }
