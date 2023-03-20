@@ -510,9 +510,10 @@ func TestLoginInternal(t *testing.T) {
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
-		Cfg:     setting.NewCfg(),
-		License: &licensing.OSSLicensingService{},
-		log:     log.New("test"),
+		Cfg:      setting.NewCfg(),
+		License:  &licensing.OSSLicensingService{},
+		log:      log.New("test"),
+		Features: featuremgmt.WithFeatures(),
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -565,6 +566,7 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		log:              log.New("hello"),
 		SocialService:    &mockSocialService{},
+		Features:         featuremgmt.WithFeatures(),
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
