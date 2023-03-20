@@ -122,13 +122,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
-			Name:            "dashboardsFromStorage",
-			Description:     "Load dashboards from the generic storage interface",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true, // Also a gate on automatic git storage (for now)
-			Owner:           grafanaAppPlatformSquad,
-		},
-		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,

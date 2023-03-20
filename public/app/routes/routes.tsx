@@ -501,7 +501,6 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
       ),
     },
-    ...getBrowseStorageRoutes(),
     ...getDynamicDashboardRoutes(),
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
@@ -518,28 +517,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     // TODO[Router]
     // ...playlistRoutes,
-  ];
-}
-
-export function getBrowseStorageRoutes(cfg = config): RouteDescriptor[] {
-  if (!cfg.featureToggles.dashboardsFromStorage) {
-    return [];
-  }
-  return [
-    {
-      path: '/g/:slug*.json', // suffix will eventually include dashboard
-      pageClass: 'page-dashboard',
-      routeName: DashboardRoutes.Path,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
-      ),
-    },
-    {
-      path: '/g/:slug*',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "StorageFolderPage" */ '../features/storage/StorageFolderPage')
-      ),
-    },
   ];
 }
 

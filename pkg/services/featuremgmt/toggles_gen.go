@@ -79,10 +79,6 @@ const (
 	// Explore native k8s integrations
 	FlagK8S = "k8s"
 
-	// FlagDashboardsFromStorage
-	// Load dashboards from the generic storage interface
-	FlagDashboardsFromStorage = "dashboardsFromStorage"
-
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
