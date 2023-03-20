@@ -5,8 +5,8 @@ import { dateTime } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
 
 import { LokiDatasource } from './datasource';
-import * as logsTimeSplit from './logsTimeSplit';
-import * as metricTimeSplit from './metricTimeSplit';
+import * as logsTimeSplit from './logsTimeChunking';
+import * as metricTimeSplit from './metricTimeChunking';
 import { createLokiDatasource, getMockFrames } from './mocks';
 import { runQueryInChunks } from './queryChunking';
 import { LokiQuery, LokiQueryType } from './types';

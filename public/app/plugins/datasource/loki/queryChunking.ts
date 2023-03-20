@@ -13,8 +13,8 @@ import {
 import { LoadingState } from '@grafana/schema';
 
 import { LokiDatasource } from './datasource';
-import { getRangeChunks as getLogsRangeChunks } from './logsTimeSplit';
-import { getRangeChunks as getMetricRangeChunks } from './metricTimeSplit';
+import { getRangeChunks as getLogsRangeChunks } from './logsTimeChunking';
+import { getRangeChunks as getMetricRangeChunks } from './metricTimeChunking';
 import { combineResponses, isLogsQuery } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -84,7 +84,7 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
 
 type LokiGroupedRequest = Array<{ request: DataQueryRequest<LokiQuery>; partition: TimeRange[] }>;
 
-export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest) {
+export function runGroupedQueriesInChunks(datasource: LokiDatasource, requests: LokiGroupedRequest) {
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
 
@@ -217,5 +217,5 @@ export function runQueryInChunks(datasource: LokiDatasource, request: DataQueryR
     });
   }
 
-  return runGroupedQueries(datasource, requests);
+  return runGroupedQueriesInChunks(datasource, requests);
 }
