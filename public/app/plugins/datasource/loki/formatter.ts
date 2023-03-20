@@ -70,7 +70,7 @@ export function transformForFormatting(
         return;
       }
 
-      // 4. We record a transformation from oringinal to replaced and the node where it happened
+      // 4. We record a transformation from original to replaced and the node where it happened
       transformations.push({
         original,
         replaced,
