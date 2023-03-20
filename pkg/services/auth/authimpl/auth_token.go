@@ -282,6 +282,7 @@ func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.User
 		return nil, errTokenNotRotated
 	}
 
+	token.PrevAuthToken = token.AuthToken
 	token.AuthToken = hashedToken
 	token.UnhashedToken = newToken
 	token.AuthTokenSeen = false
