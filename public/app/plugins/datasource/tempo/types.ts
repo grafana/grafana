@@ -4,7 +4,7 @@ import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsS
 
 import { LokiQuery } from '../loki/types';
 
-import { Tempo as TempoBase, TempoQueryType } from './dataquery.gen';
+import { TempoQuery as TempoBase, TempoQueryType } from './dataquery.gen';
 
 export interface SearchQueryParams {
   minDuration?: string;

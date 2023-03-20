@@ -43,6 +43,13 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 		write = cfg.LokiRemoteURL
 	}
 
+	if read == "" {
+		return LokiConfig{}, fmt.Errorf("either read path URL or remote Loki URL must be provided")
+	}
+	if write == "" {
+		return LokiConfig{}, fmt.Errorf("either write path URL or remote Loki URL must be provided")
+	}
+
 	readURL, err := url.Parse(read)
 	if err != nil {
 		return LokiConfig{}, fmt.Errorf("failed to parse loki remote read URL: %w", err)
@@ -62,9 +69,10 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 }
 
 type httpLokiClient struct {
-	client client.Requester
-	cfg    LokiConfig
-	log    log.Logger
+	client  client.Requester
+	cfg     LokiConfig
+	metrics *metrics.Historian
+	log     log.Logger
 }
 
 // Kind of Operation (=, !=, =~, !~)
@@ -92,9 +100,10 @@ type Selector struct {
 func newLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger) *httpLokiClient {
 	tc := client.NewTimedClient(req, metrics.WriteDuration)
 	return &httpLokiClient{
-		client: tc,
-		cfg:    cfg,
-		log:    logger.New("protocol", "http"),
+		client:  tc,
+		cfg:     cfg,
+		metrics: metrics,
+		log:     logger.New("protocol", "http"),
 	}
 }
 
@@ -177,6 +186,7 @@ func (c *httpLokiClient) push(ctx context.Context, s []stream) error {
 	c.setAuthAndTenantHeaders(req)
 	req.Header.Add("content-type", "application/json")
 
+	c.metrics.BytesWritten.Add(float64(len(enc)))
 	req = req.WithContext(ctx)
 	resp, err := c.client.Do(req)
 	if resp != nil {

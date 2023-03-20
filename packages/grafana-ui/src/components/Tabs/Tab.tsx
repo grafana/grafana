@@ -66,6 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       list-style: none;
       position: relative;
       display: flex;
+      white-space: nowrap;
     `,
     link: css`
       color: ${theme.colors.text.secondary};

@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -208,22 +209,8 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 			return response.Err(err)
 		}
 
-		cookies.WriteSessionCookie(c, hs.Cfg, identity.SessionToken.UnhashedToken, hs.Cfg.LoginMaxLifetime)
-		result := map[string]interface{}{
-			"message": "Logged in",
-		}
-
-		if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
-			if err := hs.ValidateRedirectTo(redirectTo); err == nil {
-				result["redirectUrl"] = redirectTo
-			} else {
-				c.Logger.Info("Ignored invalid redirect_to cookie value.", "url", redirectTo)
-			}
-			cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
-		}
-
 		metrics.MApiLoginPost.Inc()
-		return response.JSON(http.StatusOK, result)
+		return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo)
 	}
 
 	cmd := dtos.LoginCommand{}
@@ -453,6 +440,11 @@ func getLoginExternalError(err error) string {
 	var createTokenErr *auth.CreateTokenErr
 	if errors.As(err, &createTokenErr) {
 		return createTokenErr.ExternalErr
+	}
+
+	gfErr := &errutil.Error{}
+	if errors.As(err, gfErr) {
+		return gfErr.Public().Message
 	}
 
 	return err.Error()

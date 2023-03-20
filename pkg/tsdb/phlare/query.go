@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 	"time"
 
@@ -14,10 +15,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/phlare/kinds/dataquery"
-	"github.com/xlab/treeprint"
-
 	googlev1 "github.com/grafana/phlare/api/gen/proto/go/google/v1"
 	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
+	"github.com/xlab/treeprint"
 )
 
 type queryModel struct {
@@ -91,7 +91,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 			response.Error = err
 			return response
 		}
-		frame := responseToDataFrames(resp, qm.ProfileTypeId)
+		frame := responseToDataFrames(resp.Msg, qm.ProfileTypeId)
 		response.Frames = append(response.Frames, frame)
 
 		// If query called with streaming on then return a channel
@@ -124,8 +124,8 @@ func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querie
 // responseToDataFrames turns Phlare response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
-func responseToDataFrames(resp *connect.Response[googlev1.Profile], profileTypeID string) *data.Frame {
-	tree := profileAsTree(resp.Msg)
+func responseToDataFrames(prof *googlev1.Profile, profileTypeID string) *data.Frame {
+	tree := profileAsTree(prof)
 	return treeToNestedSetDataFrame(tree, profileTypeID)
 }
 
@@ -151,13 +151,13 @@ func (f Function) String() string {
 	return fmt.Sprintf("%s:%s:%d", f.FileName, f.FunctionName, f.Line)
 }
 
-func (pt ProfileTree) String() string {
+func (pt *ProfileTree) String() string {
 	type branch struct {
 		nodes []*ProfileTree
 		treeprint.Tree
 	}
 	tree := treeprint.New()
-	for _, n := range []ProfileTree{pt} {
+	for _, n := range []*ProfileTree{pt} {
 		b := tree.AddBranch(fmt.Sprintf("%s: level %d self %d total %d", n.Function, n.Level, n.Self, n.Value))
 		remaining := append([]*branch{}, &branch{nodes: n.Nodes, Tree: b})
 		for len(remaining) > 0 {
@@ -179,111 +179,122 @@ func (pt ProfileTree) String() string {
 	return tree.String()
 }
 
-// merge merges the node into the tree.
-// it assumes src has only one leaf.
-func (pt *ProfileTree) merge(src *ProfileTree) {
-	// find the node path where n should be inserted.
-	var parent, found *ProfileTree
-	// visit depth first the dst tree following the src tree
-	remaining := []*ProfileTree{pt}
-	for len(remaining) > 0 {
-		n := remaining[0]
-		remaining = remaining[1:]
-		if src.locationID == n.locationID {
-			if len(src.Nodes) == 0 {
-				// we have found the leaf
-				found = n
-				break
-			}
-			// move src and last parent visited
-			parent = n
-			src = src.Nodes[0]
-			remaining = n.Nodes
-			continue
-		}
-	}
-	if found == nil {
-		if parent == nil {
-			// Nothing in common can't be merged.
-			return
-		}
-		src.Parent = parent
-		parent.Nodes = append(parent.Nodes, src)
-		for p := parent; p != nil; p = p.Parent {
-			p.Value = p.Value + src.Value
-		}
+// addSample adds a sample to the tree. As sample is just a single stack we just have to traverse the tree until it
+// starts to differ from the sample and add a new branch if needed. For example if we have a tree:
+//
+//	root --> func1 -> func2 -> func3
+//		 \-> func4
+//
+// And we add a sample:
+//
+//	func1 -> func2 -> func5
+//
+// We will get:
+//
+//	root --> func1 --> func2 --> func3
+//	     \                   \-> func5
+//	      \-> func4
+//
+// While we add the current sample value to root -> func1 -> func2.
+func (pt *ProfileTree) addSample(profile *googlev1.Profile, sample *googlev1.Sample) {
+	if len(sample.LocationId) == 0 {
 		return
 	}
-	found.Value = found.Value + src.Self
-	for p := found.Parent; p != nil; p = p.Parent {
-		p.Value = p.Value + src.Self
+
+	locations := getReversedLocations(profile, sample)
+
+	// Extend root
+	pt.Value = pt.Value + sample.Value[0]
+	current := pt
+
+	for index, location := range locations {
+		if len(current.Nodes) > 0 {
+			var foundNode *ProfileTree
+			for _, node := range current.Nodes {
+				if node.locationID == location.Id {
+					foundNode = node
+				}
+			}
+
+			if foundNode != nil {
+				// We found node with the same locationID so just add the value it
+				foundNode.Value = foundNode.Value + sample.Value[0]
+				current = foundNode
+				// Continue to next locationID in the sample
+				continue
+			}
+		}
+		// Either current has no children we can compare to or we have location that does not exist yet in the tree.
+
+		// Create sample with only the locations we did not already attributed to the tree.
+		subSample := &googlev1.Sample{
+			LocationId: sample.LocationId[:len(sample.LocationId)-index],
+			Value:      sample.Value,
+			Label:      sample.Label,
+		}
+		newTree := treeFromSample(profile, subSample, index)
+		// Append the new subtree in the correct place in the tree
+		current.Nodes = append(current.Nodes, newTree.Nodes[0])
+		sort.SliceStable(current.Nodes, func(i, j int) bool {
+			return current.Nodes[i].Function.String() < current.Nodes[j].Function.String()
+		})
+		newTree.Nodes[0].Parent = current
+		break
 	}
-	found.Self = found.Self + src.Self
+
+	// Adjust self of the current node as we may need to add value to its self if we just extended it and did not
+	// add children
+	var childrenVal int64 = 0
+	for _, node := range current.Nodes {
+		childrenVal += node.Value
+	}
+	current.Self = current.Value - childrenVal
 }
 
-func treeFromSample(profile *googlev1.Profile, sample *googlev1.Sample) *ProfileTree {
-	if len(sample.LocationId) == 0 {
-		return &ProfileTree{
-			Level: 0,
-			Value: sample.Value[0],
-			Function: &Function{
-				FunctionName: "root",
-			},
-		}
-	}
-
-	// The leaf is at locations[0].
-	locations := sample.LocationId
-
-	current := &ProfileTree{
-		Self:  sample.Value[0],
-		Level: 0,
-	}
-	for len(locations) > 0 {
-		current.locationID = locations[0]
-		current.Value = sample.Value[0]
-		current.Level = len(locations)
-
-		// Ids in pprof format are 1 based. So to get the index in array from the id we need to subtract one.
-		lines := profile.Location[locations[0]-1].Line
-		if len(lines) == 0 {
-			locations = locations[1:]
-			continue
-		}
-		// The leaf is at lines[len(lines)-1].
-		current.Function = &Function{
-			FunctionName: profile.StringTable[profile.Function[lines[len(lines)-1].FunctionId-1].Name],
-			FileName:     profile.StringTable[profile.Function[lines[len(lines)-1].FunctionId-1].Filename],
-			Line:         lines[len(lines)-1].Line,
-		}
-		lines = lines[:len(lines)-1]
-
-		// If there are more than one line, each line inlined into the next line.
-		for len(lines) > 0 {
-			current.Inlined = append(current.Inlined, &Function{
-				FunctionName: profile.StringTable[profile.Function[lines[0].FunctionId-1].Name],
-				FileName:     profile.StringTable[profile.Function[lines[0].FunctionId-1].Filename],
-				Line:         lines[0].Line,
-			})
-			lines = lines[1:]
-		}
-		parent := &ProfileTree{
-			Nodes: []*ProfileTree{current},
-		}
-		current.Parent = parent
-		current = parent
-		locations = locations[1:]
-	}
-	if current.Function == nil {
-		current.Function = &Function{
+// treeFromSample creates a linked tree form a single pprof sample. As a single sample is just a single stack the tree
+// will also be just a simple linked list at this point.
+func treeFromSample(profile *googlev1.Profile, sample *googlev1.Sample, startLevel int) *ProfileTree {
+	root := &ProfileTree{
+		Value:      sample.Value[0],
+		Level:      startLevel,
+		locationID: 0,
+		Function: &Function{
 			FunctionName: "root",
-		}
-		current.Value = sample.Value[0]
-		current.locationID = 0
-		current.Self = 0
-		current.Level = 0
+		},
 	}
-	return current
+
+	if len(sample.LocationId) == 0 {
+		// Empty profile
+		return root
+	}
+
+	locations := getReversedLocations(profile, sample)
+	parent := root
+
+	// Loop over locations and add a node to the tree for each location
+	for index, location := range locations {
+		node := &ProfileTree{
+			Self:       0,
+			Value:      sample.Value[0],
+			Level:      index + startLevel + 1,
+			locationID: location.Id,
+			Parent:     parent,
+		}
+
+		parent.Nodes = []*ProfileTree{node}
+		parent = node
+
+		functions := getFunctions(profile, location)
+		// Last in the list is the main function
+		node.Function = functions[len(functions)-1]
+		// If there are more, other are inlined functions
+		if len(functions) > 1 {
+			node.Inlined = functions[:len(functions)-1]
+		}
+	}
+	// Last parent is a leaf and as it does not have any children it's value is also self
+	parent.Self = sample.Value[0]
+	return root
 }
 
 func profileAsTree(profile *googlev1.Profile) *ProfileTree {
@@ -293,11 +304,48 @@ func profileAsTree(profile *googlev1.Profile) *ProfileTree {
 	if len(profile.Sample) == 0 {
 		return nil
 	}
-	n := treeFromSample(profile, profile.Sample[0])
+	n := treeFromSample(profile, profile.Sample[0], 0)
 	for _, sample := range profile.Sample[1:] {
-		n.merge(treeFromSample(profile, sample))
+		n.addSample(profile, sample)
 	}
 	return n
+}
+
+// getReversedLocations returns all locations from a sample. Location is a one level in the stack trace so single row in
+// flamegraph. Returned locations are reversed (so root is 0, leaf is len - 1) which makes it easier to the use with
+// tree structure starting from root.
+func getReversedLocations(profile *googlev1.Profile, sample *googlev1.Sample) []*googlev1.Location {
+	locations := make([]*googlev1.Location, len(sample.LocationId))
+	for index, locationId := range sample.LocationId {
+		// profile.Location[locationId-1] is because locationId (and other IDs) is 1 based, so
+		// locationId == array index + 1
+		locations[len(sample.LocationId)-1-index] = profile.Location[locationId-1]
+	}
+	return locations
+}
+
+// getFunctions returns all functions for a location. First one is the main function and the rest are inlined functions.
+// If there is no info it just returns single placeholder function.
+func getFunctions(profile *googlev1.Profile, location *googlev1.Location) []*Function {
+	if len(location.Line) == 0 {
+		return []*Function{{
+			FunctionName: "<unknown>",
+			FileName:     "",
+			Line:         0,
+		}}
+	}
+	functions := make([]*Function, len(location.Line))
+
+	for index, line := range location.Line {
+		function := profile.Function[line.FunctionId-1]
+
+		functions[index] = &Function{
+			FunctionName: profile.StringTable[function.Name],
+			FileName:     profile.StringTable[function.Filename],
+			Line:         line.Line,
+		}
+	}
+	return functions
 }
 
 type CustomMeta struct {
@@ -305,8 +353,8 @@ type CustomMeta struct {
 }
 
 // treeToNestedSetDataFrame walks the tree depth first and adds items into the dataframe. This is a nested set format
-// where by ordering the items in depth first order and knowing the level/depth of each item we can recreate the
-// parent - child relationship without explicitly needing parent/child column and we can later just iterate over the
+// where ordering the items in depth first order and knowing the level/depth of each item we can recreate the
+// parent - child relationship without explicitly needing parent/child column, and we can later just iterate over the
 // dataFrame to again basically walking depth first over the tree/profile.
 func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Frame {
 	frame := data.NewFrame("response")
@@ -320,22 +368,68 @@ func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Fra
 	parts := strings.Split(profileTypeID, ":")
 	valueField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
 	selfField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
-	labelField := data.NewField("label", nil, []string{})
 	lineNumberField := data.NewField("line", nil, []int64{})
-	fileNameField := data.NewField("fileName", nil, []string{})
-	frame.Fields = data.Fields{levelField, valueField, selfField, labelField, lineNumberField, fileNameField}
+	frame.Fields = data.Fields{levelField, valueField, selfField, lineNumberField}
 
-	walkTree(tree, func(tree *ProfileTree) {
-		levelField.Append(int64(tree.Level))
-		valueField.Append(tree.Value)
-		selfField.Append(tree.Self)
-		// todo: inline functions
-		// tree.Inlined
-		labelField.Append(tree.Function.FunctionName)
-		lineNumberField.Append(tree.Function.Line)
-		fileNameField.Append(tree.Function.FileName)
-	})
+	labelField := NewEnumField("label", nil)
+	fileNameField := NewEnumField("fileName", nil)
+
+	// Tree can be nil if profile was empty, we can still send empty frame in that case
+	if tree != nil {
+		walkTree(tree, func(tree *ProfileTree) {
+			levelField.Append(int64(tree.Level))
+			valueField.Append(tree.Value)
+			selfField.Append(tree.Self)
+			// todo: inline functions
+			// tree.Inlined
+			lineNumberField.Append(tree.Function.Line)
+			labelField.Append(tree.Function.FunctionName)
+			fileNameField.Append(tree.Function.FileName)
+		})
+	}
+
+	frame.Fields = append(frame.Fields, labelField.GetField(), fileNameField.GetField())
 	return frame
+}
+
+type EnumField struct {
+	field     *data.Field
+	valuesMap map[string]int64
+	counter   int64
+}
+
+func NewEnumField(name string, labels data.Labels) *EnumField {
+	return &EnumField{
+		field:     data.NewField(name, labels, []int64{}),
+		valuesMap: make(map[string]int64),
+	}
+}
+
+func (e *EnumField) Append(value string) {
+	if valueIndex, ok := e.valuesMap[value]; ok {
+		e.field.Append(valueIndex)
+	} else {
+		e.valuesMap[value] = e.counter
+		e.field.Append(e.counter)
+		e.counter++
+	}
+}
+
+func (e *EnumField) GetField() *data.Field {
+	s := make([]string, len(e.valuesMap))
+	for k, v := range e.valuesMap {
+		s[v] = k
+	}
+
+	e.field.SetConfig(&data.FieldConfig{
+		TypeConfig: &data.FieldTypeConfig{
+			Enum: &data.EnumFieldConfig{
+				Text: s,
+			},
+		},
+	})
+
+	return e.field
 }
 
 func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {

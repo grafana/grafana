@@ -34,7 +34,7 @@ describe('useStyles', () => {
   });
 
   it('passes in theme and returns style object', (done) => {
-    const Dummy: React.FC = function () {
+    const Dummy = function () {
       const styles = useStyles2((theme) => {
         return {
           someStyle: css`
