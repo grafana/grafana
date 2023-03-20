@@ -105,5 +105,4 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `k8s`               | Explore native k8s integrations                     |
 | `grpcServer`        | Run GRPC server                                     |
 | `entityStore`       | SQL-based entity store (requires storage flag also) |
-| `queryLibrary`      | Reusable query library                              |
 | `nestedFolders`     | Enable folder nesting                               |
