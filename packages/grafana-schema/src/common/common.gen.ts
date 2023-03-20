@@ -479,6 +479,7 @@ export interface OptionsWithTextFormatting {
  */
 export enum BigValueColorMode {
   Background = 'background',
+  BackgroundSolid = 'background_solid',
   None = 'none',
   Value = 'value',
 }
@@ -725,6 +726,15 @@ export interface TableColoredBackgroundCellOptions {
 }
 
 /**
+ * Height of a table cell
+ */
+export enum TableCellHeight {
+  Lg = 'lg',
+  Md = 'md',
+  Sm = 'sm',
+}
+
+/**
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
@@ -739,6 +749,29 @@ export type TimeZoneUtc = 'utc';
  * Use the timezone defined by end user web browser
  */
 export type TimeZoneBrowser = 'browser';
+
+/**
+ * Optional formats for the template variable replace functions
+ * See also https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#advanced-variable-format-options
+ */
+export enum VariableFormatID {
+  CSV = 'csv',
+  Date = 'date',
+  Distributed = 'distributed',
+  DoubleQuote = 'doublequote',
+  Glob = 'glob',
+  HTML = 'html',
+  JSON = 'json',
+  Lucene = 'lucene',
+  PercentEncode = 'percentencode',
+  Pipe = 'pipe',
+  QueryParam = 'queryparam',
+  Raw = 'raw',
+  Regex = 'regex',
+  SQLString = 'sqlstring',
+  SingleQuote = 'singlequote',
+  Text = 'text',
+}
 
 export interface DataSourceRef {
   /**
@@ -790,12 +823,15 @@ export enum LogsDedupStrategy {
 }
 
 /**
- * Height of a table cell
+ * Compare two values
  */
-export enum TableCellHeight {
-  Lg = 'lg',
-  Md = 'md',
-  Sm = 'sm',
+export enum ComparisonOperation {
+  EQ = 'eq',
+  GT = 'gt',
+  GTE = 'gte',
+  LT = 'lt',
+  LTE = 'lte',
+  NEQ = 'neq',
 }
 
 /**

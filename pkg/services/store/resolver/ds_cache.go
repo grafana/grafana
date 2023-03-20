@@ -43,12 +43,12 @@ func (c *dsCache) refreshCache(ctx context.Context) error {
 	defaultDS := make(map[int64]*dsVal, 0)
 
 	q := &datasources.GetAllDataSourcesQuery{}
-	err := c.ds.GetAllDataSources(ctx, q)
+	dsList, err := c.ds.GetAllDataSources(ctx, q)
 	if err != nil {
 		return err
 	}
 
-	for _, ds := range q.Result {
+	for _, ds := range dsList {
 		val := &dsVal{
 			InternalID: ds.ID,
 			Name:       ds.Name,

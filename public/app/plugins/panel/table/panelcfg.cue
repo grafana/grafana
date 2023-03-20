@@ -46,7 +46,7 @@ composableKinds: PanelCfg: {
 								reducer: []
 							}
 							// Controls the height of the rows
-							cellHeight?: ui.TableCellHeight | *"md"
+							cellHeight?: ui.TableCellHeight | *"sm"
 						} @cuetsy(kind="interface")
 					},
 				]

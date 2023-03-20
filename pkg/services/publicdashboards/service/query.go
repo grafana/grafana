@@ -239,33 +239,41 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.Json {
 	result := make(map[int64][]*simplejson.Json)
 
-	for _, panelObj := range dashboard.Get("panels").MustArray() {
+	extractQueriesFromPanels(dashboard.Get("panels").MustArray(), result)
+
+	return result
+}
+
+func extractQueriesFromPanels(panels []interface{}, result map[int64][]*simplejson.Json) {
+	for _, panelObj := range panels {
 		panel := simplejson.NewFromAny(panelObj)
+
+		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
+		if panel.Get("type").MustString() == "row" && panel.Get("collapsed").MustBool() {
+			// recursive call to get queries from panels inside a row
+			extractQueriesFromPanels(panel.Get("panels").MustArray(), result)
+			continue
+		}
 
 		var panelQueries []*simplejson.Json
 
 		for _, queryObj := range panel.Get("targets").MustArray() {
 			query := simplejson.NewFromAny(queryObj)
 
-			if hideAttr, exists := query.CheckGet("hide"); !exists || !hideAttr.MustBool() {
-				// We dont support exemplars for public dashboards currently
-				query.Del("exemplar")
+			// We dont support exemplars for public dashboards currently
+			query.Del("exemplar")
 
-				// if query target has no datasource, set it to have the datasource on the panel
-				if _, ok := query.CheckGet("datasource"); !ok {
-					uid := getDataSourceUidFromJson(panel)
-					datasource := map[string]interface{}{"type": "public-ds", "uid": uid}
-					query.Set("datasource", datasource)
-				}
-
-				panelQueries = append(panelQueries, query)
+			// if query target has no datasource, set it to have the datasource on the panel
+			if _, ok := query.CheckGet("datasource"); !ok {
+				uid := getDataSourceUidFromJson(panel)
+				datasource := map[string]interface{}{"type": "public-ds", "uid": uid}
+				query.Set("datasource", datasource)
 			}
+			panelQueries = append(panelQueries, query)
 		}
 
 		result[panel.Get("id").MustInt64()] = panelQueries
 	}
-
-	return result
 }
 
 func getDataSourceUidFromJson(query *simplejson.Json) string {
