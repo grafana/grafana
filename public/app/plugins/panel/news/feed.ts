@@ -1,6 +1,5 @@
 import { parseAtomFeed } from './atom';
 import { parseRSSFeed } from './rss';
-//import {trustedTypes }from 'trusted-types';
 
 export async function fetchFeedText(url: string) {
   const rsp = await fetch(url);
