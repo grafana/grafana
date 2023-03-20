@@ -1,4 +1,4 @@
-import { dateTime, getDefaultTimeRange, TimeRange } from '@grafana/data';
+import { dateTime, getDefaultTimeRange } from '@grafana/data';
 
 import { createLokiDatasource } from '../mocks';
 
