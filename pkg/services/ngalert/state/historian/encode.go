@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gogo/protobuf/proto"
+	"github.com/golang/snappy"
+	"github.com/grafana/grafana/pkg/components/loki/logproto"
 	"github.com/prometheus/common/model"
 	"golang.org/x/exp/slices"
 )
@@ -31,6 +34,34 @@ func (e jsonEncoder) headers() map[string]string {
 
 type snappyProtoEncoder struct{}
 
+func (e snappyProtoEncoder) encode(s []stream) ([]byte, error) {
+	body := logproto.PushRequest{
+		Streams: make([]logproto.Stream, 0, len(s)),
+	}
+
+	for _, str := range s {
+		entries := make([]logproto.Entry, 0, len(str.Values))
+		for _, sample := range str.Values {
+			entries = append(entries, logproto.Entry{
+				Timestamp: sample.T,
+				Line:      sample.V,
+			})
+		}
+		body.Streams = append(body.Streams, logproto.Stream{
+			Labels:  labelsMapToString(str.Stream, ""),
+			Entries: entries,
+			// Hash seems to be mainly used for query responses. Promtail does not seem to calculate this field on push.
+		})
+	}
+
+	buf, err := proto.Marshal(&body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize Loki payload to proto: %w", err)
+	}
+	buf = snappy.Encode(nil, buf)
+	return buf, nil
+}
+
 func (e snappyProtoEncoder) headers() map[string]string {
 	return map[string]string{
 		"Content-Type":     "application/x-protobuf",
@@ -43,13 +74,13 @@ func (e snappyProtoEncoder) headers() map[string]string {
 // TODO: Consider replacing that one, with this one
 // TODO: It appears we need this one as it properly quotes label values, thus avoiding problems with "="
 // TODO: Test this before submission!
-func labelsMapToString(ls model.LabelSet, without model.LabelName) string {
+func labelsMapToString(ls map[string]string, without model.LabelName) string {
 	var b strings.Builder
 	totalSize := 2
-	lstrs := make([]model.LabelName, 0, len(ls))
+	lstrs := make([]string, 0, len(ls))
 
 	for l, v := range ls {
-		if l == without {
+		if l == string(without) {
 			continue
 		}
 
