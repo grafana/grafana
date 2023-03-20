@@ -35,7 +35,7 @@ export function GrafanaMonitoringApp() {
 
   return (
     <PluginPageContext.Provider value={pluginContext}>
-      <appScene.Component model={appScene} />;
+      <appScene.Component model={appScene} />
     </PluginPageContext.Provider>
   );
 }
