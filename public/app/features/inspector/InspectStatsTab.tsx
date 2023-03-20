@@ -60,7 +60,7 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
 
   const statsTableName = t('dashboard.inspect-stats.table-title', 'Stats');
   const dataStatsTableName = t('dashboard.inspect-stats.data-title', 'Data source stats');
-  const traceIdsStatsTableName = t('dashboard.inspect-stats.data-traceids', 'Trace ids');
+  const traceIdsStatsTableName = t('dashboard.inspect-stats.data-traceids', 'Trace IDs');
 
   return (
     <div aria-label={selectors.components.PanelInspector.Stats.content}>
