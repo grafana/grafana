@@ -58,7 +58,7 @@ export function transformForFormatting(
     };
   }
 
-  // 2. We walk throught the parse errors and keep the ones that look like variables.
+  // 2. We walk through the parse errors and keep the ones that look like variables.
   const transformations: Transformation[] = [];
   errors.forEach((parseError, parent) => {
     if (parseError[0].text === '$' && parent) {
