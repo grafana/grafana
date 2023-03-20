@@ -1,6 +1,7 @@
 import { dateTime, TimeRange } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { FormatRegistryID, TestVariable } from '@grafana/scenes';
+import { VariableFormatID } from '@grafana/schema';
 
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
 import { initTemplateSrv } from '../../../test/helpers/initTemplateSrv';
@@ -388,12 +389,12 @@ describe('templateSrv', () => {
     });
 
     it('multi value and csv format should render csv string', () => {
-      const result = _templateSrv.formatValue(['test', 'test2'], 'csv');
+      const result = _templateSrv.formatValue(['test', 'test2'], VariableFormatID.CSV);
       expect(result).toBe('test,test2');
     });
 
     it('multi value and percentencode format should render percent-encoded string', () => {
-      const result = _templateSrv.formatValue(['foo()bar BAZ', 'test2'], 'percentencode');
+      const result = _templateSrv.formatValue(['foo()bar BAZ', 'test2'], VariableFormatID.PercentEncode);
       expect(result).toBe('%7Bfoo%28%29bar%20BAZ%2Ctest2%7D');
     });
 

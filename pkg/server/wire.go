@@ -168,7 +168,6 @@ var wireBasicSet = wire.NewSet(
 	alerting.ProvideAlertStore,
 	alerting.ProvideAlertEngine,
 	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
-	setting.NewCfgFromArgs,
 	New,
 	api.ProvideHTTPServer,
 	query.ProvideService,
@@ -338,6 +337,7 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
+	setting.NewCfgFromArgs,
 	kind.ProvideService, // The registry of known kinds
 	sqlstash.ProvideSQLEntityServer,
 	resolver.ProvideEntityReferenceResolver,
@@ -376,6 +376,20 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 )
 
+var wireCLISet = wire.NewSet(
+	NewRunner,
+	wireBasicSet,
+	sqlstore.ProvideService,
+	ngmetrics.ProvideService,
+	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
+	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
+	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
+	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	prefimpl.ProvideService,
+	oauthtoken.ProvideService,
+	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
+)
+
 var wireTestSet = wire.NewSet(
 	wireBasicSet,
 	ProvideTestEnv,
@@ -401,4 +415,9 @@ func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOpt
 func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
 	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}}, nil
+}
+
+func InitializeForCLI(cla setting.CommandLineArgs) (Runner, error) {
+	wire.Build(wireExtsCLISet)
+	return Runner{}, nil
 }

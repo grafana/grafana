@@ -386,11 +386,38 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		return historian.NewNopHistorian(), nil
 	}
 
-	met.Info.WithLabelValues(cfg.Backend).Set(1)
-	if cfg.Backend == "annotations" {
+	backend, err := historian.ParseBackendType(cfg.Backend)
+	if err != nil {
+		return nil, err
+	}
+
+	met.Info.WithLabelValues(backend.String()).Set(1)
+	if backend == historian.BackendTypeMultiple {
+		primaryCfg := cfg
+		primaryCfg.Backend = cfg.MultiPrimary
+		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l)
+		if err != nil {
+			return nil, fmt.Errorf("multi-backend target \"%s\" was misconfigured: %w", cfg.MultiPrimary, err)
+		}
+
+		var secondaries []historian.Backend
+		for _, b := range cfg.MultiSecondaries {
+			secCfg := cfg
+			secCfg.Backend = b
+			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l)
+			if err != nil {
+				return nil, fmt.Errorf("multi-backend target \"%s\" was miconfigured: %w", b, err)
+			}
+			secondaries = append(secondaries, sec)
+		}
+
+		l.Info("State history is operating in multi-backend mode", "primary", cfg.MultiPrimary, "secondaries", cfg.MultiSecondaries)
+		return historian.NewMultipleBackend(primary, secondaries...), nil
+	}
+	if backend == historian.BackendTypeAnnotations {
 		return historian.NewAnnotationBackend(ar, ds, rs, met), nil
 	}
-	if cfg.Backend == "loki" {
+	if backend == historian.BackendTypeLoki {
 		lcfg, err := historian.NewLokiConfig(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
@@ -405,9 +432,9 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		}
 		return backend, nil
 	}
-	if cfg.Backend == "sql" {
+	if backend == historian.BackendTypeSQL {
 		return historian.NewSqlBackend(), nil
 	}
 
-	return nil, fmt.Errorf("unrecognized state history backend: %s", cfg.Backend)
+	return nil, fmt.Errorf("unrecognized state history backend: %s", backend)
 }

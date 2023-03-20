@@ -44,7 +44,7 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
       e2eSelectors.configEditor.loadSubscriptions.button().click().wait('@subscriptions').wait(500);
       e2eSelectors.configEditor.defaultSubscription.input().find('input').type('datasources{enter}');
       // Wait for 15s so that credentials are ready. 5s has been tested locally before and seemed insufficient.
-      e2e().wait(15000);
+      e2e().wait(30000);
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
     // Reduce the timeout from 30s to error faster when an invalid alert message is presented
