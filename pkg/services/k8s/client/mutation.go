@@ -34,7 +34,6 @@ func convertShortWebhookToMutationWebhook(swc ShortWebhookConfig) *admissionregi
 	metaName := fmt.Sprintf("mutation.%s.core.grafana.com", swc.Kind.MachineName())
 
 	resourcePlural := swc.Kind.Props().Common().PluralMachineName
-	fmt.Println(resourcePlural)
 
 	return &admissionregistrationV1.MutatingWebhookConfiguration{
 		TypeMeta: metav1.TypeMeta{
