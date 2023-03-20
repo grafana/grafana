@@ -5,6 +5,7 @@ import (
 
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/k8s/crd"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
 
@@ -83,4 +84,7 @@ type Store interface {
 	// CountDashboardsInFolder returns the number of dashboards associated with
 	// the given parent folder ID.
 	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
+
+	// Save a k8s resource directly
+	SaveK8sDashboard(ctx context.Context, dash *crd.Base[any]) (*Dashboard, error)
 }

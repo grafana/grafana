@@ -2,12 +2,14 @@ package database
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -16,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/k8s/crd"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -1054,4 +1057,136 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits.Set(globalQuotaTag, cfg.Quota.Global.Dashboard)
 	limits.Set(orgQuotaTag, cfg.Quota.Org.Dashboard)
 	return limits, nil
+}
+
+func (d *dashboardStore) SaveK8sDashboard(ctx context.Context, k8dash *crd.Base[any]) (*dashboards.Dashboard, error) {
+	var result *dashboards.Dashboard
+	var err error
+
+	raw, err := json.Marshal(k8dash.Spec)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal dashboard spec: %w", err)
+	}
+	data, err := simplejson.NewJson(raw)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert dashboard spec to simplejson %w", err)
+	}
+	data.Set("resourceVersion", k8dash.ResourceVersion)
+	data.Del("id") // ignore any internal id
+	anno := crd.CommonAnnotations{}
+	anno.Read(k8dash.Annotations)
+
+	uid := data.Get("uid").MustString()
+	if uid == "" {
+		uid = k8dash.GetName()
+		data.Set("uid", uid)
+	} else if k8dash.GetName() != crd.GrafanaUIDToK8sName(uid) {
+		return nil, fmt.Errorf("UID and k8s name do not match")
+	}
+
+	if anno.CreatedAt < 1 {
+		anno.CreatedAt = time.Now().UnixMilli()
+	}
+	if anno.UpdatedAt < 1 {
+		anno.UpdatedAt = time.Now().UnixMilli()
+	}
+	if anno.OrgID < 1 {
+		anno.OrgID = 1 // TODO, set from namespace?
+	}
+
+	dash := dashboards.Dashboard{
+		UID:       uid,
+		OrgID:     anno.OrgID,
+		Data:      data,
+		Created:   time.UnixMilli(anno.CreatedAt),
+		CreatedBy: anno.CreatedBy,
+		Updated:   time.UnixMilli(anno.UpdatedAt),
+		UpdatedBy: anno.UpdatedBy,
+
+		// Plugin provisioning
+		PluginID: anno.PluginID,
+	}
+
+	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		result, err = saveK8sDashboard(sess, dash, anno.FolderUID, d.emitEntityEvent())
+		if err == nil {
+			// if provisioning header??? or was provisioning???
+
+			// if provisioning.Updated == 0 {
+			// 	provisioning.Updated = result.Updated.Unix()
+			// }
+
+			//return saveProvisionedData(sess, provisioning, result)
+		}
+		return err
+	})
+	return result, err
+}
+
+func saveK8sDashboard(sess *db.Session, dash *dashboards.Dashboard, folderUID string, emitEntityEvent bool) (*dashboards.Dashboard, error) {
+	var existing dashboards.Dashboard
+	dashWithUIDExists, err := sess.Where("uid=? AND org_id=?", dash.ID, dash.OrgID).Get(&existing)
+	if err != nil {
+		return nil, err
+	}
+
+	var affectedRows int64
+	if dashWithUIDExists {
+		dash.ID = existing.ID
+		dash.SetVersion(existing.Version + 1)
+		affectedRows, err = sess.MustCols("folder_id").ID(dash.ID).Update(dash)
+	} else {
+		dash.SetVersion(1)
+		metrics.MApiDashboardInsert.Inc()
+		affectedRows, err = sess.Insert(dash)
+	}
+
+	if affectedRows == 0 {
+		return nil, dashboards.ErrDashboardNotFound
+	}
+
+	dashVersion := &dashver.DashboardVersion{
+		DashboardID:   dash.ID,
+		ParentVersion: existing.Version,
+		//	RestoredFrom:  cmd.RestoredFrom, ???
+		Version:   dash.Version,
+		Created:   time.Now(),
+		CreatedBy: dash.UpdatedBy,
+		//	Message:       cmd.Message, TODO!!!
+		Data: dash.Data,
+	}
+
+	//---------------------------------------------
+	// Past here is the same as saveDashboard(...)
+	//---------------------------------------------
+
+	// insert version entry
+	if affectedRows, err = sess.Insert(dashVersion); err != nil {
+		return nil, err
+	} else if affectedRows == 0 {
+		return nil, dashboards.ErrDashboardNotFound
+	}
+
+	// delete existing tags
+	if _, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.ID); err != nil {
+		return nil, err
+	}
+
+	// insert new tags
+	tags := dash.GetTags()
+	if len(tags) > 0 {
+		for _, tag := range tags {
+			if _, err := sess.Insert(dashboardTag{DashboardId: dash.ID, Term: tag}); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if emitEntityEvent {
+		_, err := sess.Insert(createEntityEvent(dash, store.EntityEventTypeUpdate))
+		if err != nil {
+			return dash, err
+		}
+	}
+	return dash, nil
 }
