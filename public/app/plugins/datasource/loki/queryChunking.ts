@@ -31,7 +31,6 @@ export function partitionTimeRange(
   // we need to replicate this algo:
   //
   // https://github.com/grafana/grafana/blob/main/pkg/tsdb/loki/step.go#L23
-
   const start = originalTimeRange.from.toDate().getTime();
   const end = originalTimeRange.to.toDate().getTime();
 
@@ -59,7 +58,6 @@ export function partitionTimeRange(
  * At the end, we will filter the targets that don't need to be executed in the next request batch,
  * becasue, for example, the `maxLines` have been reached.
  */
-
 function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQueryResponse | null): LokiQuery[] {
   if (!response) {
     return targets;
