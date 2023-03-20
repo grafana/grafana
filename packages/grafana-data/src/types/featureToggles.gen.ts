@@ -77,6 +77,7 @@ export interface FeatureToggles {
   logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
+  lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
   drawerDataSourcePicker?: boolean;
   traceqlSearch?: boolean;
