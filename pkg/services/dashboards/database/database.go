@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -29,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type dashboardStore struct {
@@ -1059,30 +1059,13 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	return limits, nil
 }
 
-func (d *dashboardStore) SaveK8sDashboard(ctx context.Context, k8dash *crd.Base[any]) (*dashboards.Dashboard, error) {
+func (d *dashboardStore) SaveK8sDashboard(ctx context.Context, orgID int64, uid string, meta metav1.ObjectMeta, data *simplejson.Json) (*dashboards.Dashboard, error) {
 	var result *dashboards.Dashboard
 	var err error
 
-	raw, err := json.Marshal(k8dash.Spec)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal dashboard spec: %w", err)
-	}
-	data, err := simplejson.NewJson(raw)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert dashboard spec to simplejson %w", err)
-	}
-	data.Set("resourceVersion", k8dash.ResourceVersion)
 	data.Del("id") // ignore any internal id
 	anno := crd.CommonAnnotations{}
-	anno.Read(k8dash.Annotations)
-
-	uid := data.Get("uid").MustString()
-	if uid == "" {
-		uid = k8dash.GetName()
-		data.Set("uid", uid)
-	} else if k8dash.GetName() != crd.GrafanaUIDToK8sName(uid) {
-		return nil, fmt.Errorf("UID and k8s name do not match")
-	}
+	anno.Read(meta.Annotations)
 
 	if anno.CreatedAt < 1 {
 		anno.CreatedAt = time.Now().UnixMilli()
@@ -1094,7 +1077,7 @@ func (d *dashboardStore) SaveK8sDashboard(ctx context.Context, k8dash *crd.Base[
 		anno.OrgID = 1 // TODO, set from namespace?
 	}
 
-	dash := dashboards.Dashboard{
+	dash := &dashboards.Dashboard{
 		UID:       uid,
 		OrgID:     anno.OrgID,
 		Data:      data,
@@ -1109,12 +1092,32 @@ func (d *dashboardStore) SaveK8sDashboard(ctx context.Context, k8dash *crd.Base[
 
 	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		result, err = saveK8sDashboard(sess, dash, anno.FolderUID, d.emitEntityEvent())
-		if err == nil {
+		if err == nil && anno.OriginKey != "" {
+			fmt.Printf("TODO!!! provisioning")
+
 			// if provisioning header??? or was provisioning???
 
 			// if provisioning.Updated == 0 {
 			// 	provisioning.Updated = result.Updated.Unix()
 			// }
+
+			// js, _ = json.MarshalIndent(cmd, "", "  ")
+			// fmt.Printf("-------- COMMAND BEFORE final save ---------")
+			// fmt.Printf("%s", string(js))
+
+			// if anno.OriginKey == "" {
+			// 	_, err = c.dashboardStore.SaveDashboard(ctx, cmd)
+			// } else {
+			// 	p := &dashboards.DashboardProvisioning{
+			// 		Name:        anno.OriginName,
+			// 		ExternalID:  anno.OriginPath,
+			// 		CheckSum:    anno.OriginKey,
+			// 		Updated:     anno.OriginTime,
+			// 		DashboardID: cmd.Dashboard.Get("id").MustInt64(0), // :()
+			// 	}
+			// 	_, err = c.dashboardStore.SaveProvisionedDashboard(ctx, cmd, p)
+			// }
+			// return err
 
 			//return saveProvisionedData(sess, provisioning, result)
 		}
@@ -1125,7 +1128,7 @@ func (d *dashboardStore) SaveK8sDashboard(ctx context.Context, k8dash *crd.Base[
 
 func saveK8sDashboard(sess *db.Session, dash *dashboards.Dashboard, folderUID string, emitEntityEvent bool) (*dashboards.Dashboard, error) {
 	var existing dashboards.Dashboard
-	dashWithUIDExists, err := sess.Where("uid=? AND org_id=?", dash.ID, dash.OrgID).Get(&existing)
+	dashWithUIDExists, err := sess.Where("uid=? AND org_id=?", dash.UID, dash.OrgID).Get(&existing)
 	if err != nil {
 		return nil, err
 	}
@@ -1139,6 +1142,10 @@ func saveK8sDashboard(sess *db.Session, dash *dashboards.Dashboard, folderUID st
 		dash.SetVersion(1)
 		metrics.MApiDashboardInsert.Inc()
 		affectedRows, err = sess.Insert(dash)
+	}
+
+	if err != nil {
+		return nil, err // error inserting rows
 	}
 
 	if affectedRows == 0 {

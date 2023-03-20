@@ -70,10 +70,13 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		return nil, fmt.Errorf("dashboard data is nil")
 	}
 
+	if cmd.FolderID > 0 && cmd.FolderUID == "" {
+		return nil, fmt.Errorf("folder must be specified with folder UID, not ID")
+	}
+
 	anno := crd.CommonAnnotations{
 		OrgID:     cmd.OrgID,
 		Message:   cmd.Message,
-		FolderID:  cmd.FolderID,
 		FolderUID: cmd.FolderUID,
 		PluginID:  cmd.PluginID,
 		UpdatedAt: cmd.UpdatedAt.UnixMilli(),
@@ -119,10 +122,10 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		}
 	}
 
-	// HACK, remove empty ID!!
-	// dto.Data.Del("id") <<<<< MUST KEEP UID since this is the real key
+	dto.Data.Del("id") // internal ID should not be saved in k8s
 	dto.Data.Set("uid", uid)
 	dto.UID = uid
+
 	// strip nulls...
 	stripNulls(dto.Data)
 

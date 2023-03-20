@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -12,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/k8s/crd"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -40,10 +40,6 @@ func ProvideWatcher(
 func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 	c.log.Debug("adding dashboard", "dash", dash)
 
-	js, _ := json.MarshalIndent(dash, "", "  ")
-	fmt.Printf("-------- WATCHER ---------")
-	fmt.Printf("%s", string(js))
-
 	raw, err := json.Marshal(dash.Spec)
 	if err != nil {
 		return fmt.Errorf("failed to marshal dashboard spec: %w", err)
@@ -53,40 +49,20 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 		return fmt.Errorf("failed to convert dashboard spec to simplejson %w", err)
 	}
 	data.Set("resourceVersion", dash.ResourceVersion)
-
-	cmd := dashboards.SaveDashboardCommand{
-		Dashboard: data,
+	uid := data.Get("uid").MustString()
+	if uid == "" {
+		uid = dash.GetName()
+		data.Set("uid", uid)
+	} else if dash.GetName() != crd.GrafanaUIDToK8sName(uid) {
+		return fmt.Errorf("UID and k8s name do not match")
 	}
-	anno := entityAnnotations{}
-	anno.Read(dash.Annotations)
 
-	cmd.UserID = anno.UpdatedBy    // UserID       int64            `json:"userId" xorm:"user_id"`
-	cmd.Overwrite = true           // Overwrite    bool             `json:"overwrite"`
-	cmd.Message = anno.Message     // Message      string           `json:"message"`
-	cmd.OrgID = anno.OrgID         // OrgID        int64            `json:"-" xorm:"org_id"`
-	cmd.RestoredFrom = 0           // RestoredFrom int              `json:"-"`
-	cmd.PluginID = anno.PluginID   // PluginID     string           `json:"-" xorm:"plugin_id"`
-	cmd.FolderID = anno.FolderID   // FolderID     int64            `json:"folderId" xorm:"folder_id"`
-	cmd.FolderUID = anno.FolderUID // FolderUID    string           `json:"folderUid" xorm:"folder_uid"`
-	cmd.IsFolder = false           // IsFolder     bool             `json:"isFolder"`
-	cmd.UpdatedAt = time.UnixMilli(anno.UpdatedAt)
+	orgId := int64(1) // TODO, from namespace?
+	out, err := c.dashboardStore.SaveK8sDashboard(ctx, orgId, uid, dash.ObjectMeta, data)
 
-	js, _ = json.MarshalIndent(cmd, "", "  ")
-	fmt.Printf("-------- COMMAND BEFORE final save ---------")
+	js, _ := json.MarshalIndent(out, "", "  ")
+	fmt.Printf("-------- WATCHER ---------")
 	fmt.Printf("%s", string(js))
-
-	if anno.OriginKey == "" {
-		_, err = c.dashboardStore.SaveDashboard(ctx, cmd)
-	} else {
-		p := &dashboards.DashboardProvisioning{
-			Name:        anno.OriginName,
-			ExternalID:  anno.OriginPath,
-			CheckSum:    anno.OriginKey,
-			Updated:     anno.OriginTime,
-			DashboardID: cmd.Dashboard.Get("id").MustInt64(0), // :()
-		}
-		_, err = c.dashboardStore.SaveProvisionedDashboard(ctx, cmd, p)
-	}
 	return err
 }
 
@@ -95,7 +71,7 @@ func (c *watcher) Update(ctx context.Context, oldObj, newObj *Dashboard) error {
 }
 
 func (c *watcher) Delete(ctx context.Context, dash *Dashboard) error {
-	anno := entityAnnotations{}
+	anno := crd.CommonAnnotations{}
 	anno.Read(dash.Annotations)
 
 	existing, err := c.dashboardStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{
