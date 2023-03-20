@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"os"
+	"path"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/urfave/cli/v2"
 
 	k8scli "k8s.io/component-base/cli"
@@ -21,8 +23,16 @@ func CLICommand(version string) *cli.Command {
 		SkipFlagParsing: true,
 		UsageText:       cmd.NewDefaultKubectlCommand().UsageString(),
 		Action: func(c *cli.Context) error {
+			args := setting.CommandLineArgs{
+				Args: []string{"cfg:log.level=error"},
+			}
+			cfg, err := setting.NewCfgFromArgs(args)
+			if err != nil {
+				return err
+			}
+			kubeconfigPath := path.Join(cfg.DataPath, "k8s", "grafana.kubeconfig")
 			originalArgs := os.Args[2:]
-			os.Args = []string{"kubectl", "--insecure-skip-tls-verify", "--kubeconfig=data/k8s/grafana.kubeconfig"}
+			os.Args = []string{"kubectl", "--insecure-skip-tls-verify", "--kubeconfig=" + kubeconfigPath}
 			os.Args = append(os.Args, originalArgs...)
 			command := cmd.NewDefaultKubectlCommand()
 			if err := k8scli.RunNoErrOutput(command); err != nil {

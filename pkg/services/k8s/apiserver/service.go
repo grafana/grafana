@@ -3,9 +3,11 @@ package apiserver
 import (
 	"context"
 	"net"
+	"path"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/services/k8s/kine"
+	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -13,8 +15,15 @@ import (
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
 )
 
-var _ Service = (*service)(nil)
-var _ RestConfigProvider = (*service)(nil)
+const (
+	DEFAULT_IP   = "127.0.0.1"
+	DEFAULT_HOST = "https://" + DEFAULT_IP + ":6443"
+)
+
+var (
+	_ Service            = (*service)(nil)
+	_ RestConfigProvider = (*service)(nil)
+)
 
 type Service interface {
 	services.Service
@@ -30,13 +39,14 @@ type service struct {
 	etcdProvider kine.EtcdProvider
 	restConfig   *rest.Config
 
+	dataPath  string
 	stopCh    chan struct{}
 	stoppedCh chan error
 }
 
-func ProvideService(etcdProvider kine.EtcdProvider) (*service, error) {
-
+func ProvideService(etcdProvider kine.EtcdProvider, cfg *setting.Cfg) (*service, error) {
 	s := &service{
+		dataPath:     path.Join(cfg.DataPath, "k8s"),
 		etcdProvider: etcdProvider,
 		stopCh:       make(chan struct{}),
 	}
@@ -52,14 +62,15 @@ func (s *service) GetRestConfig() *rest.Config {
 
 func (s *service) start(ctx context.Context) error {
 	serverRunOptions := options.NewServerRunOptions()
-	serverRunOptions.SecureServing.BindAddress = net.ParseIP("127.0.0.1")
-	serverRunOptions.SecureServing.ServerCert.CertDirectory = "data/k8s"
-	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{"https://127.0.0.1:6443"}
+	serverRunOptions.SecureServing.BindAddress = net.ParseIP(DEFAULT_IP)
+	serverRunOptions.SecureServing.ServerCert.CertDirectory = s.dataPath
+	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{DEFAULT_HOST}
 	etcdConfig := s.etcdProvider.GetConfig()
 	serverRunOptions.Etcd.StorageConfig.Transport.ServerList = etcdConfig.Endpoints
 	serverRunOptions.Etcd.StorageConfig.Transport.CertFile = etcdConfig.TLSConfig.CertFile
 	serverRunOptions.Etcd.StorageConfig.Transport.KeyFile = etcdConfig.TLSConfig.KeyFile
 	serverRunOptions.Etcd.StorageConfig.Transport.TrustedCAFile = etcdConfig.TLSConfig.CAFile
+
 	completedOptions, err := app.Complete(serverRunOptions)
 	if err != nil {
 		return err
@@ -71,6 +82,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	s.restConfig = server.GenericAPIServer.LoopbackClientConfig
+	s.restConfig.Host = DEFAULT_HOST
 	s.writeKubeConfiguration(s.restConfig)
 
 	prepared, err := server.PrepareRun()
@@ -126,5 +138,5 @@ func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 		CurrentContext: "default-context",
 		AuthInfos:      authinfos,
 	}
-	return clientcmd.WriteToFile(clientConfig, "data/k8s/grafana.kubeconfig")
+	return clientcmd.WriteToFile(clientConfig, path.Join(s.dataPath, "grafana.kubeconfig"))
 }
