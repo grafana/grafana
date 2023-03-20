@@ -169,18 +169,9 @@ You can change the timezone for your user account. This setting overrides timezo
 
 ## Change the default home dashboard
 
-The home dashboard you set is the one all users will see by default when they log in. You can set the home dashboard for the server, an organization, a team, or your personal user account. This topic provides instructions for each task.
+The home dashboard you set is the one all users will see by default when they log in. Click the Grafana icon or **Home** in the breadcrumb to return to it. You can set the home dashboard for the server, an organization, a team, or your personal user account. This topic provides instructions for each task.
 
 Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions/" >}}).
-
-### Navigate to the home dashboard
-
-The home dashboard is the first dashboard a user sees when they sign in to Grafana. You can also navigate to the home dashboard manually.
-
-1. Hover your cursor over the **Dashboards** (four squares) icon.
-1. Click **Home**.
-
-<!-- is this still a thing?-->
 
 ### Set the home dashboard for the server
 
