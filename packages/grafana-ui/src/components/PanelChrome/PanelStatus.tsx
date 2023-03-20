@@ -40,7 +40,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(padding),
       width: theme.spacing(headerHeight),
       height: theme.spacing(headerHeight),
-      borderRadius: 0,
+      borderRadius: theme.shape.radius.default,
     }),
   };
 };
