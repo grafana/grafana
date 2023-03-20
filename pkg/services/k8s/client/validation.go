@@ -32,7 +32,6 @@ func (c *Clientset) RegisterValidation(ctx context.Context, webhooks []ShortWebh
 // Converts shortwebhookconfig into a validatingwebhookconfiguration
 func convertShortWebhookToValidationWebhook(swc ShortWebhookConfig) *admissionregistrationV1.ValidatingWebhookConfiguration {
 	metaName := fmt.Sprintf("validation.%s.core.grafana.com", swc.Kind.MachineName())
-	fmt.Println(metaName)
 
 	resourcePlural := swc.Kind.Props().Common().PluralMachineName
 	fmt.Println(resourcePlural)
