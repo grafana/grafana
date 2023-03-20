@@ -39,7 +39,7 @@ function renderError(error: DataQueryError) {
           {error.traceId != null && (
             <>
               <br />
-              (traceId: {error.traceId})
+              (Trace ID: {error.traceId})
             </>
           )}
         </>
