@@ -37,7 +37,7 @@ export function getPluginExtensions<T extends object = {}>(
 // (Returns with the frozen object, however it's not a copy, the original object becomes frozen, too.)
 // @param `object` The object to freeze
 // @param `frozenProps` A set of objects that have already been frozen (used to prevent infinite recursion)
-export function deepFreeze<T extends object>(object: T, frozenProps = new Set()): T {
+export function deepFreeze<T extends object = {}>(object: T, frozenProps = new Set()): T {
   if (!object || typeof object !== 'object' || Object.isFrozen(object)) {
     return object;
   }
