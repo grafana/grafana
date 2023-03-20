@@ -26,20 +26,20 @@ export interface TabProps extends HTMLProps<HTMLAnchorElement> {
 
 export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
   ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, ...otherProps }, ref) => {
-    const styles = useStyles2(getStyles);
+    const tabsStyles = useStyles2(getStyles);
     const content = () => (
       <>
         {icon && <Icon name={icon} />}
         {label}
         {typeof counter === 'number' && <Counter value={counter} />}
-        {Suffix && <Suffix className={styles.suffix} />}
+        {Suffix && <Suffix className={tabsStyles.suffix} />}
       </>
     );
 
-    const linkClass = cx(styles.link, active ? styles.activeStyle : styles.notActive);
+    const linkClass = cx(tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
 
     return (
-      <div className={styles.item}>
+      <div className={tabsStyles.item}>
         <a
           // in case there is no href '#' is set in order to maintain a11y
           href={href ? href : '#'}
