@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Button, HorizontalGroup, ConfirmModal } from '@grafana/ui';
+import { Button, HorizontalGroup, ConfirmModal, Alert, VerticalGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
@@ -45,8 +45,8 @@ export function InstallControlsButton({
 
   const onInstall = async () => {
     trackPluginInstalled(trackingProps);
-    await install(plugin.id, latestCompatibleVersion?.version);
-    if (!errorInstalling) {
+    const result = await install(plugin.id, latestCompatibleVersion?.version);
+    if (!errorInstalling && !('error' in result)) {
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
       if (plugin.type === 'app') {
         setNeedReload(true);
@@ -115,8 +115,15 @@ export function InstallControlsButton({
   }
 
   return (
-    <Button disabled={isInstalling} onClick={onInstall}>
-      {isInstalling ? 'Installing' : 'Install'}
-    </Button>
+    <VerticalGroup>
+      {errorInstalling && (
+        <Alert title={'message' in errorInstalling ? errorInstalling.message : ''}>
+          {typeof errorInstalling === 'string' ? errorInstalling : errorInstalling.error}
+        </Alert>
+      )}
+      <Button disabled={isInstalling || errorInstalling} onClick={onInstall}>
+        {isInstalling ? 'Installing' : 'Install'}
+      </Button>
+    </VerticalGroup>
   );
 }

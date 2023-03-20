@@ -87,6 +87,9 @@ export const install = createAsyncThunk(
       return { id, changes } as Update<CatalogPlugin>;
     } catch (e) {
       console.error(e);
+      if (isFetchError(e)) {
+        return thunkApi.rejectWithValue(e.data);
+      }
 
       return thunkApi.rejectWithValue('Unknown error.');
     }
