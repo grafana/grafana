@@ -3,11 +3,9 @@ package dashboards
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // DashboardService is a service for operating on dashboards.
@@ -86,6 +84,6 @@ type Store interface {
 	// the given parent folder ID.
 	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
 
-	// Save a k8s resource directly
-	SaveK8sDashboard(ctx context.Context, orgID int64, uid string, meta metav1.ObjectMeta, body *simplejson.Json) (*Dashboard, error)
+	// Unlike the standard SaveDashboard, this will keep the metadata as is
+	SaveDirectly(ctx context.Context, msg string, dash *Dashboard, provisioning *DashboardProvisioning) (*Dashboard, error)
 }

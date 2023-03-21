@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -21,6 +23,7 @@ type watcher struct {
 	enabled        bool
 	log            log.Logger
 	dashboardStore database.DashboardSQLStore
+	folders        folder.FolderStore
 }
 
 func ProvideWatcher(
@@ -28,11 +31,13 @@ func ProvideWatcher(
 	dashboardStore database.DashboardSQLStore,
 	userService user.Service,
 	accessControlService accesscontrol.Service,
+	folders folder.FolderStore,
 ) (*watcher, error) {
 	c := watcher{
 		enabled:        features.IsEnabled(featuremgmt.FlagK8S),
 		log:            log.New("k8s.dashboards.controller"),
 		dashboardStore: dashboardStore,
+		folders:        folders,
 	}
 	return &c, nil
 }
@@ -56,8 +61,52 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 	}
 	c.log.Debug("adding dashboard", "dash", uid)
 
-	orgID := crd.GetOrgIDFromNamespace(dash.Namespace)
-	out, err := c.dashboardStore.SaveK8sDashboard(ctx, orgID, uid, dash.ObjectMeta, data)
+	data.Del("id") // ignore any internal id
+	data.Del("version")
+	anno := crd.CommonAnnotations{}
+	anno.Read(dash.Annotations)
+
+	if anno.CreatedAt < 1 {
+		anno.CreatedAt = time.Now().UnixMilli()
+	}
+	if anno.UpdatedAt < 1 {
+		anno.UpdatedAt = time.Now().UnixMilli()
+	}
+
+	save := &dashboards.Dashboard{
+		UID:       uid,
+		OrgID:     crd.GetOrgIDFromNamespace(dash.Namespace),
+		Data:      data,
+		Created:   time.UnixMilli(anno.CreatedAt),
+		CreatedBy: anno.CreatedBy,
+		Updated:   time.UnixMilli(anno.UpdatedAt),
+		UpdatedBy: anno.UpdatedBy,
+
+		// Plugin provisioning
+		PluginID: anno.PluginID,
+	}
+	save.UpdateSlug()
+
+	if anno.FolderUID != "" {
+		f, err := c.folders.GetFolderByUID(ctx, save.OrgID, anno.FolderUID)
+		if err != nil {
+			return err // error getting folder?
+		}
+		save.FolderID = f.ID
+	}
+
+	var p *dashboards.DashboardProvisioning
+
+	if anno.OriginName != "" {
+		p = &dashboards.DashboardProvisioning{
+			Name:       anno.OriginName,
+			ExternalID: anno.OriginPath,
+			CheckSum:   anno.OriginKey,
+			Updated:    anno.OriginTime,
+		}
+	}
+
+	out, err := c.dashboardStore.SaveDirectly(ctx, anno.Message, save, p)
 	if out != nil {
 		fmt.Printf("ADDED: %s/%s", out.UID, out.Slug)
 	}

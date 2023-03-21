@@ -120,8 +120,7 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		meta.Name = crd.GrafanaUIDToK8sName(uid)
 		r, err := dashboardResource.Get(ctx, meta.Name, metav1.GetOptions{})
 		if err != nil || r == nil {
-			//return nil, fmt.Errorf("unable to find k8s dashboard: " + uid)
-			fmt.Printf("UNABLE TO FIND: " + uid)
+			fmt.Printf("did not find: %s\n", uid)
 		} else {
 			if !cmd.Overwrite {
 				fmt.Printf("TODO... verify SQL version: %s\n", r.GetResourceVersion())

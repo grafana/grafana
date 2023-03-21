@@ -8,7 +8,6 @@ import (
 
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -17,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/k8s/crd"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -28,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type dashboardStore struct {
@@ -1059,62 +1056,26 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	return limits, nil
 }
 
-func (d *dashboardStore) SaveK8sDashboard(ctx context.Context, orgID int64, uid string, meta metav1.ObjectMeta, data *simplejson.Json) (*dashboards.Dashboard, error) {
+func (d *dashboardStore) SaveDirectly(ctx context.Context, msg string, dash *dashboards.Dashboard, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
 	var result *dashboards.Dashboard
 	var err error
 
-	data.Del("id") // ignore any internal id
-	data.Del("version")
-	anno := crd.CommonAnnotations{}
-	anno.Read(meta.Annotations)
-
-	if anno.CreatedAt < 1 {
-		anno.CreatedAt = time.Now().UnixMilli()
-	}
-	if anno.UpdatedAt < 1 {
-		anno.UpdatedAt = time.Now().UnixMilli()
-	}
-
-	dash := &dashboards.Dashboard{
-		UID:       uid,
-		OrgID:     orgID,
-		Data:      data,
-		Created:   time.UnixMilli(anno.CreatedAt),
-		CreatedBy: anno.CreatedBy,
-		Updated:   time.UnixMilli(anno.UpdatedAt),
-		UpdatedBy: anno.UpdatedBy,
-
-		// Plugin provisioning
-		PluginID: anno.PluginID,
-	}
-	dash.UpdateSlug()
-
 	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		result, err = saveK8sDashboard(sess, dash, &anno, d.emitEntityEvent())
-		if err == nil && anno.OriginKey != "" {
-			p := &dashboards.DashboardProvisioning{
-				Name:        anno.OriginName,
-				ExternalID:  anno.OriginPath,
-				CheckSum:    anno.OriginKey,
-				Updated:     anno.OriginTime,
-				DashboardID: result.ID,
-			}
-			return saveProvisionedData(sess, p, result)
+		result, err = saveK8sDashboard(sess, msg, dash, d.emitEntityEvent())
+		if err == nil && provisioning != nil {
+			provisioning.DashboardID = result.ID
+			return saveProvisionedData(sess, provisioning, result)
 		}
 		return err
 	})
 	return result, err
 }
 
-func saveK8sDashboard(sess *db.Session, dash *dashboards.Dashboard, anno *crd.CommonAnnotations, emitEntityEvent bool) (*dashboards.Dashboard, error) {
+func saveK8sDashboard(sess *db.Session, msg string, dash *dashboards.Dashboard, emitEntityEvent bool) (*dashboards.Dashboard, error) {
 	var existing dashboards.Dashboard
 	dashWithUIDExists, err := sess.Where("uid=? AND org_id=?", dash.UID, dash.OrgID).Get(&existing)
 	if err != nil {
 		return nil, err
-	}
-
-	if anno.FolderUID != "" {
-		fmt.Printf("TODO!!!!!")
 	}
 
 	var affectedRows int64
@@ -1143,7 +1104,7 @@ func saveK8sDashboard(sess *db.Session, dash *dashboards.Dashboard, anno *crd.Co
 		Version:   dash.Version,
 		Created:   time.Now(),
 		CreatedBy: dash.UpdatedBy,
-		Message:   anno.Message,
+		Message:   msg,
 		Data:      dash.Data,
 	}
 
