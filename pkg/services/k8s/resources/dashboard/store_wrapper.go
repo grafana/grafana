@@ -2,14 +2,16 @@ package dashboard
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/k8s/client"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
 	"github.com/grafana/grafana/pkg/util"
@@ -24,6 +26,7 @@ type StoreWrapper struct {
 	log       log.Logger
 	clientset client.ClientSetProvider
 	namespace string
+	folders   folder.FolderStore
 }
 
 var _ dashboards.Store = (*StoreWrapper)(nil)
@@ -32,6 +35,7 @@ func ProvideStoreWrapper(
 	features featuremgmt.FeatureToggles,
 	store database.DashboardSQLStore,
 	clientset client.ClientSetProvider,
+	folders folder.FolderStore,
 ) (dashboards.Store, error) {
 	// When feature is disabled, resolve the upstream SQL store
 	if !features.IsEnabled(featuremgmt.FlagK8S) {
@@ -42,6 +46,7 @@ func ProvideStoreWrapper(
 		log:               log.New("k8s.dashboards.service-wrapper"),
 		clientset:         clientset,
 		namespace:         "default",
+		folders:           folders,
 	}, nil
 }
 
@@ -63,7 +68,7 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 
 	clientset := s.clientset.GetClientset()
 	if clientset == nil {
-		return nil, fmt.Errorf("not initalized yet")
+		return nil, fmt.Errorf("not initialized yet")
 	}
 
 	dashboardResource, err := clientset.GetResourceClient(CRD)
@@ -75,12 +80,16 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		return nil, fmt.Errorf("dashboard data is nil")
 	}
 
+	// Convert folder ID to UID
 	if cmd.FolderID > 0 && cmd.FolderUID == "" {
-		return nil, fmt.Errorf("folder must be specified with folder UID, not ID")
+		f, err := s.folders.GetFolderByID(ctx, cmd.OrgID, cmd.FolderID)
+		if err != nil {
+			return nil, err
+		}
+		cmd.FolderID = f.ID
 	}
 
 	anno := crd.CommonAnnotations{
-		OrgID:     cmd.OrgID,
 		Message:   cmd.Message,
 		FolderUID: cmd.FolderUID,
 		PluginID:  cmd.PluginID,
@@ -134,6 +143,11 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 	// strip nulls...
 	stripNulls(dto.Data)
 
+	schemaVersion := dto.Data.Get("schemaVersion").MustInt()
+	if schemaVersion < dashboard.HandoffSchemaVersion {
+		return nil, fmt.Errorf("dashboard %s can not be parsed by thema (schemaVersion:%d)", uid, schemaVersion)
+	}
+
 	dashbytes, err := dto.Data.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -166,9 +180,9 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		return nil, err
 	}
 
-	js, _ := json.MarshalIndent(uObj, "", "  ")
-	fmt.Printf("-------- WRAPPER BEFORE SAVE ---------")
-	fmt.Printf("%s", string(js))
+	// js, _ := json.MarshalIndent(uObj, "", "  ")
+	// fmt.Printf("-------- WRAPPER BEFORE SAVE ---------")
+	// fmt.Printf("%s", string(js))
 
 	if meta.ResourceVersion == "" {
 		s.log.Debug("k8s action: create")
@@ -183,9 +197,9 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		return nil, err
 	}
 
-	js, _ = json.MarshalIndent(uObj, "", "  ")
-	fmt.Printf("-------- WRAPPER AFTER SAVE ---------")
-	fmt.Printf("%s", string(js))
+	// js, _ = json.MarshalIndent(uObj, "", "  ")
+	// fmt.Printf("-------- WRAPPER AFTER SAVE ---------")
+	// fmt.Printf("%s", string(js))
 
 	rv := uObj.GetResourceVersion()
 	s.log.Debug("wait for revision", "revision", rv)
@@ -197,7 +211,9 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		time.Sleep(175 * time.Millisecond)
 		out, err := s.DashboardSQLStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: uid, OrgID: dto.OrgID})
 		if err != nil {
-			fmt.Printf("ERROR: %v", err)
+			if !errors.Is(err, dashboards.ErrDashboardNotFound) {
+				fmt.Printf("ERROR: %v", err)
+			}
 			continue
 		}
 		if out != nil && out.Data != nil {
@@ -211,5 +227,5 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 	}
 
 	// too many loops?
-	return nil, fmt.Errorf("controller never ran?")
+	return nil, fmt.Errorf("controller never ran? " + uid)
 }

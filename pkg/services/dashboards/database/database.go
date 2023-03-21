@@ -1073,13 +1073,10 @@ func (d *dashboardStore) SaveK8sDashboard(ctx context.Context, orgID int64, uid 
 	if anno.UpdatedAt < 1 {
 		anno.UpdatedAt = time.Now().UnixMilli()
 	}
-	if anno.OrgID < 1 {
-		anno.OrgID = 1 // TODO, set from namespace?
-	}
 
 	dash := &dashboards.Dashboard{
 		UID:       uid,
-		OrgID:     anno.OrgID,
+		OrgID:     orgID,
 		Data:      data,
 		Created:   time.UnixMilli(anno.CreatedAt),
 		CreatedBy: anno.CreatedBy,
@@ -1089,6 +1086,7 @@ func (d *dashboardStore) SaveK8sDashboard(ctx context.Context, orgID int64, uid 
 		// Plugin provisioning
 		PluginID: anno.PluginID,
 	}
+	dash.UpdateSlug()
 
 	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		result, err = saveK8sDashboard(sess, dash, &anno, d.emitEntityEvent())

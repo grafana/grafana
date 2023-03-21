@@ -38,8 +38,6 @@ func ProvideWatcher(
 }
 
 func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
-	c.log.Debug("adding dashboard", "dash", dash)
-
 	raw, err := json.Marshal(dash.Spec)
 	if err != nil {
 		return fmt.Errorf("failed to marshal dashboard spec: %w", err)
@@ -56,13 +54,17 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 	} else if dash.GetName() != crd.GrafanaUIDToK8sName(uid) {
 		return fmt.Errorf("UID and k8s name do not match")
 	}
+	c.log.Debug("adding dashboard", "dash", uid)
 
-	orgId := int64(1) // TODO, from namespace?
-	out, err := c.dashboardStore.SaveK8sDashboard(ctx, orgId, uid, dash.ObjectMeta, data)
+	orgID := crd.GetOrgIDFromNamespace(dash.Namespace)
+	out, err := c.dashboardStore.SaveK8sDashboard(ctx, orgID, uid, dash.ObjectMeta, data)
+	if out != nil {
+		fmt.Printf("ADDED: %s/%s", out.UID, out.Slug)
+	}
 
-	js, _ := json.MarshalIndent(out, "", "  ")
-	fmt.Printf("-------- WATCHER ---------")
-	fmt.Printf("%s", string(js))
+	// js, _ := json.MarshalIndent(out, "", "  ")
+	// fmt.Printf("-------- WATCHER ---------")
+	// fmt.Printf("%s", string(js))
 	return err
 }
 
@@ -74,9 +76,10 @@ func (c *watcher) Delete(ctx context.Context, dash *Dashboard) error {
 	anno := crd.CommonAnnotations{}
 	anno.Read(dash.Annotations)
 
+	orgID := crd.GetOrgIDFromNamespace(dash.Namespace)
 	existing, err := c.dashboardStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{
 		UID:   dash.Name, // Assumes same as UID!
-		OrgID: anno.OrgID,
+		OrgID: orgID,
 	})
 
 	// no dashboard found, nothing to delete

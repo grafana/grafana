@@ -4,7 +4,6 @@ import "strconv"
 
 // Metadata annotations that can be used on any CRD object
 type CommonAnnotations struct {
-	OrgID   int64  // should come from the namespace
 	Message string // commit message, version message  ¯\_(ツ)_/¯
 
 	// General
@@ -22,7 +21,6 @@ type CommonAnnotations struct {
 	OriginTime int64
 }
 
-const keyOrgID = "orgID"
 const keyCreatedBy = "createdBy"
 const keyCreatedAt = "createdAt"
 const keyUpdatedBy = "updatedBy"
@@ -54,13 +52,6 @@ func (a *CommonAnnotations) Read(anno map[string]string) {
 	a.OriginName = anno[keyOriginName]
 	a.OriginPath = anno[keyOriginPath]
 	a.OriginKey = anno[keyOriginKey]
-
-	if v, ok := anno[keyOrgID]; ok {
-		p, err := strconv.ParseInt(v, 10, 64)
-		if err == nil {
-			a.OrgID = p
-		}
-	}
 
 	if v, ok := anno[keyCreatedBy]; ok {
 		p, err := strconv.ParseInt(v, 10, 64)
@@ -100,9 +91,6 @@ func (a *CommonAnnotations) Read(anno map[string]string) {
 
 func (a *CommonAnnotations) ToMap() map[string]string {
 	anno := map[string]string{}
-	if a.OrgID > 0 {
-		anno[keyOrgID] = strconv.FormatInt(a.OrgID, 10)
-	}
 	if a.Message != "" {
 		anno[keyMessage] = a.Message
 	}
