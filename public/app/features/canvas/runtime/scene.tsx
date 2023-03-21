@@ -144,6 +144,8 @@ export class Scene {
         this.initMoveable(destroySelecto, enableEditing);
         this.currentLayer = this.root;
         this.selection.next([]);
+        this.connections.select(undefined);
+        this.connections.updateState();
       }
     });
     return this.root;
