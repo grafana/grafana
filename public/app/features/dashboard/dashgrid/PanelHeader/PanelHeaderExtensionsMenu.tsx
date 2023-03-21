@@ -1,8 +1,13 @@
 import React from 'react';
 
-import { isPluginExtensionCommand, isPluginExtensionLink, PanelMenuItem, PluginExtension } from '@grafana/data';
+import {
+  isPluginExtensionCommand,
+  isPluginExtensionLink,
+  PanelMenuItem,
+  PluginExtension,
+  PluginExtensionPlacements,
+} from '@grafana/data';
 import { getPluginExtensions } from '@grafana/runtime';
-import { GrafanaExtensions } from 'app/features/plugins/extensions/placements';
 
 import { PanelModel, DashboardModel } from '../../state';
 import { createExtensionContext, truncateTitle } from '../../utils/getPanelMenu';
@@ -16,7 +21,7 @@ interface Props {
 
 export function PanelHeaderExtensionsMenu({ panel, dashboard }: Props) {
   const { extensions } = getPluginExtensions({
-    placement: GrafanaExtensions.DashboardPanelMenu,
+    placement: PluginExtensionPlacements.DashboardPanelMenu,
     context: createExtensionContext(panel, dashboard),
   });
 
