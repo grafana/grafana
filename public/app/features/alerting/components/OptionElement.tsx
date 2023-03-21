@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { FormAPI, Input, InputControl, Select, TextArea } from '@grafana/ui';
 
@@ -9,7 +9,7 @@ interface Props extends Pick<FormAPI<any>, 'register' | 'control'> {
   invalid?: boolean;
 }
 
-export const OptionElement: FC<Props> = ({ control, option, register, invalid }) => {
+export const OptionElement = ({ control, option, register, invalid }: Props) => {
   const modelValue = option.secure ? `secureSettings.${option.propertyName}` : `settings.${option.propertyName}`;
   switch (option.element) {
     case 'input':

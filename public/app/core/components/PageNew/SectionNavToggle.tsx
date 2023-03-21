@@ -36,7 +36,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   icon: css({
     alignSelf: 'center',
     margin: theme.spacing(1, 0),
-    top: theme.spacing(0),
     transform: 'rotate(90deg)',
     transition: theme.transitions.create('opacity'),
     color: theme.colors.text.secondary,
@@ -61,6 +60,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     [theme.breakpoints.up('md')]: {
       opacity: 0,
       margin: 0,
+      position: 'absolute',
+      right: 0,
+      left: 'initial',
     },
   }),
 });

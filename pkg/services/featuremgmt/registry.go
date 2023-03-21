@@ -122,13 +122,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
-			Name:            "dashboardsFromStorage",
-			Description:     "Load dashboards from the generic storage interface",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true, // Also a gate on automatic git storage (for now)
-			Owner:           grafanaAppPlatformSquad,
-		},
-		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,
@@ -265,7 +258,7 @@ var (
 			Name:        "cloudWatchCrossAccountQuerying",
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			State:       FeatureStateStable,
-			Expression:  "true", //enabled by default
+			Expression:  "true", // enabled by default
 			Owner:       awsPluginsSquad,
 		},
 		{
@@ -288,13 +281,6 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-		},
-		{
-			Name:            "queryLibrary",
-			Description:     "Reusable query library",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			Owner:           grafanaAppPlatformSquad,
 		},
 		{
 			Name:        "showDashboardValidationWarnings",
@@ -382,7 +368,7 @@ var (
 			Name:         "logsSampleInExplore",
 			Description:  "Enables access to the logs sample feature in Explore",
 			State:        FeatureStateStable,
-			Expression:   "true", //turned on by default
+			Expression:   "true", // turned on by default
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
@@ -396,6 +382,13 @@ var (
 		{
 			Name:         "lokiQuerySplitting",
 			Description:  "Split large interval queries into subqueries with smaller time intervals",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "lokiQuerySplittingConfig",
+			Description:  "Give users the option to configure split durations for Loki queries",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
@@ -433,6 +426,13 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        appO11ySquad,
+		},
+		{
+			Name:         "influxdbBackendMigration",
+			Description:  "Query InfluxDB InfluxQL without the proxy",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 	}
 )

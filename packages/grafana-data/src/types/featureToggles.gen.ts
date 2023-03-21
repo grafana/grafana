@@ -9,13 +9,15 @@
  * conf/custom.ini to enable features under development or not yet available in
  * stable version.
  *
- * Only enabled values will be returned in this interface
+ * Only enabled values will be returned in this interface.
+ *
+ * NOTE: the possible values may change between versions without notice, although
+ * this may cause compilation issues when depending on removed feature keys, the
+ * runtime state will continue to work.
  *
  * @public
  */
 export interface FeatureToggles {
-  [name: string]: boolean | undefined; // support any string value
-
   alertingBigTransactions?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
@@ -34,7 +36,6 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   storage?: boolean;
   k8s?: boolean;
-  dashboardsFromStorage?: boolean;
   exploreMixedDatasource?: boolean;
   tracing?: boolean;
   newTraceView?: boolean;
@@ -59,7 +60,6 @@ export interface FeatureToggles {
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   newPanelChromeUI?: boolean;
-  queryLibrary?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
@@ -76,9 +76,11 @@ export interface FeatureToggles {
   logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
+  lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
   drawerDataSourcePicker?: boolean;
   traceqlSearch?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
+  influxdbBackendMigration?: boolean;
 }

@@ -60,7 +60,7 @@ interface UPlotConfigOptions {
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
   mergeValues?: boolean;
-  getValueColor: (frameIdx: number, fieldIdx: number, value: any) => string;
+  getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
 }
 
 /**
@@ -113,7 +113,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     return !(mode && field.display && mode.startsWith('continuous-'));
   };
 
-  const getValueColorFn = (seriesIdx: number, value: any) => {
+  const getValueColorFn = (seriesIdx: number, value: unknown) => {
     const field = frame.fields[seriesIdx];
 
     if (
@@ -404,9 +404,9 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
     },
     type: FieldType.string,
     values: new ArrayVector(vals),
-    display: (value: string) => ({
-      text: value,
-      color: textToColor.get(value),
+    display: (value) => ({
+      text: String(value),
+      color: textToColor.get(String(value)),
       numeric: NaN,
     }),
   };

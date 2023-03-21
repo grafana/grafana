@@ -44,14 +44,14 @@ function selectSubscriptions(
   return querySubscriptions;
 }
 
-const ArgQueryEditor: React.FC<ArgQueryEditorProps> = ({
+const ArgQueryEditor = ({
   query,
   datasource,
   subscriptionId,
   variableOptionGroup,
   onChange,
   setError,
-}) => {
+}: ArgQueryEditorProps) => {
   const [subscriptions, setSubscriptions] = useState<AzureMonitorOption[]>([]);
   useMemo(() => {
     datasource

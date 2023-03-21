@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
@@ -17,6 +16,8 @@ func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, er
 	authTypes["auth_proxy"] = s.cfg.AuthProxyEnabled
 	authTypes["anonymous"] = s.cfg.AnonymousEnabled
 	authTypes["jwt"] = s.cfg.JWTAuthEnabled
+	authTypes["grafana_password"] = !s.cfg.DisableLogin
+	authTypes["login_form"] = !s.cfg.DisableLoginForm
 
 	for authType, enabled := range authTypes {
 		enabledValue := 0
@@ -30,7 +31,7 @@ func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, er
 	// FIXME: Move this to accesscontrol OSS.
 	// FIXME: Access Control OSS usage stats is currently disabled if Enterprise is enabled.
 	m["stats.authz.viewers_can_edit.count"] = 0
-	if setting.ViewersCanEdit {
+	if s.cfg.ViewersCanEdit {
 		m["stats.authz.viewers_can_edit.count"] = 1
 	}
 
