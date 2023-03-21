@@ -46,6 +46,7 @@ describe('createPluginExtensionRegistry()', () => {
     const placement1 = 'grafana/dashboard/panel/menu';
     const placement2 = 'plugins/grafana-slo-app/slo-breached';
     const pluginId = 'belugacdn-app';
+    const pluginName = 'Beluga App';
     // Sample link configurations that can be used in tests
     const linkConfig = {
       placement: placement1,
@@ -58,6 +59,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [linkConfig],
           commandExtensions: [],
         },
@@ -70,6 +72,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [linkConfig],
           commandExtensions: [],
         },
@@ -83,6 +86,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [
             { ...linkConfig, placement: placement1 },
             { ...linkConfig, placement: placement2 },
@@ -100,6 +104,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [
             { ...linkConfig, placement: placement1 },
             { ...linkConfig, placement: placement2 },
@@ -108,6 +113,7 @@ describe('createPluginExtensionRegistry()', () => {
         },
         {
           pluginId: 'grafana-monitoring-app',
+          pluginName: 'Grafana Monitoring Appƒ',
           linkExtensions: [
             { ...linkConfig, placement: placement1, path: '/a/grafana-monitoring-app/incidents/declare' },
           ],
@@ -128,6 +134,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [
             { ...linkConfig, title: 'Link 1' },
             { ...linkConfig, title: 'Link 2' },
@@ -154,6 +161,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [
             {
               ...linkConfig,
@@ -171,6 +179,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [linkConfig],
           commandExtensions: [],
         },
@@ -193,6 +202,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [
             {
               ...linkConfig,
@@ -215,6 +225,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [
             {
               ...linkConfig,
@@ -237,6 +248,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [
             {
               ...linkConfig,
@@ -258,6 +270,7 @@ describe('createPluginExtensionRegistry()', () => {
   // ------------------
   describe('when registering commands', () => {
     const pluginId = 'belugacdn-app';
+    const pluginName = 'Beluga App';
     // Sample command configurations to be used in tests
     let commandConfig1: AppPluginExtensionCommandConfig, commandConfig2: AppPluginExtensionCommandConfig;
 
@@ -280,6 +293,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [],
           commandExtensions: [commandConfig1],
         },
@@ -297,6 +311,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [],
           commandExtensions: [commandConfig1, commandConfig2],
         },
@@ -319,11 +334,13 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [],
           commandExtensions: [commandConfig1, commandConfig2],
         },
         {
           pluginId: 'grafana-monitoring-app',
+          pluginName: 'Grafana Monitoring App',
           linkExtensions: [],
           commandExtensions: [commandConfig1],
         },
@@ -350,6 +367,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [],
           commandExtensions: [commandConfig1],
         },
@@ -372,6 +390,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [],
           commandExtensions: [
             {
@@ -395,6 +414,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [],
           commandExtensions: [
             {
@@ -415,6 +435,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [],
           commandExtensions: [
             {
@@ -443,6 +464,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [],
           commandExtensions: [commandConfig1],
         },
@@ -466,6 +488,7 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
+          pluginName,
           linkExtensions: [],
           commandExtensions: [commandConfig1, { ...commandConfig2, configure: () => ({}) }],
         },
