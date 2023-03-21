@@ -1064,6 +1064,7 @@ func (d *dashboardStore) SaveK8sDashboard(ctx context.Context, orgID int64, uid 
 	var err error
 
 	data.Del("id") // ignore any internal id
+	data.Del("version")
 	anno := crd.CommonAnnotations{}
 	anno.Read(meta.Annotations)
 
