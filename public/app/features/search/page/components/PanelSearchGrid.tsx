@@ -41,18 +41,15 @@ export const PanelSearchGrid = ({
   const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, numColumns, response);
 
   return (
-    <InfiniteLoader isItemLoaded={response.isItemLoaded} itemCount={itemCount} loadMoreItems={response.loadMoreItems}>
-      {({ onItemsRendered, ref }) => (
+    <InfiniteLoader
+      itemCount={itemCount}
+      isItemLoaded={response.isItemLoaded}
+      loadMoreItems={response.loadMoreItems}
+      threshold={1}
+    >
+      {({ ref }) => (
         <FixedSizeGrid
           ref={ref}
-          onItemsRendered={(v) => {
-            onItemsRendered({
-              visibleStartIndex: v.visibleRowStartIndex * numColumns,
-              visibleStopIndex: v.visibleRowStopIndex * numColumns,
-              overscanStartIndex: v.overscanRowStartIndex * numColumns,
-              overscanStopIndex: v.overscanColumnStopIndex * numColumns,
-            });
-          }}
           columnCount={numColumns}
           columnWidth={cellWidth}
           rowCount={numRows}
@@ -65,13 +62,19 @@ export const PanelSearchGrid = ({
           {({ columnIndex, rowIndex, style }) => {
             const index = rowIndex * numColumns + columnIndex;
             if (index >= view.length) {
+              console.log('SKIP', { rowIndex, columnIndex });
               return null;
             }
+            // console.log("???", {rowIndex, columnIndex, hide: hideRowsAfter.current});
+
             const item = { ...view.get(index) }; // spread avoidds issue with dynamic views
             let className = styles.virtualizedGridItemWrapper;
             if (rowIndex === highlightIndex.y && columnIndex === highlightIndex.x) {
               className += ' ' + styles.selectedItem;
             }
+
+            //   const key = `${rowIndex}/${columnIndex}/${item.uid}`;
+            //   console.log("RENDER", key);
 
             // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
             // And without this wrapper there is no room for that margin
@@ -81,7 +84,7 @@ export const PanelSearchGrid = ({
                   <PanelView width={cellWidth} height={cellHeight} item={item} loader={loader.current} />
                 ) : (
                   <div>
-                    TODO: show: {item.kind}/{item.uid}
+                    TODO?: show: {item.kind}/{item.uid}
                   </div>
                 )}
               </div>

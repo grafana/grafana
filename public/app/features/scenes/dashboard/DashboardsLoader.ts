@@ -258,7 +258,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
 
 export function createVizPanelFromPanelModel(panel: PanelModel) {
   const queryRunner = new SceneQueryRunner({
-    queries: panel.targets,
+    queries: panel.targets ?? [],
     maxDataPoints: panel.maxDataPoints ?? undefined,
   });
 
@@ -269,15 +269,16 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
     panel.options = options;
     panel.type = 'timeseries';
   }
+  const gridPos = panel.gridPos ?? {};
 
   return new VizPanel({
     title: panel.title,
     pluginId: panel.type,
     placement: {
-      x: panel.gridPos.x,
-      y: panel.gridPos.y,
-      width: panel.gridPos.w,
-      height: panel.gridPos.h,
+      x: gridPos.x,
+      y: gridPos.y,
+      width: gridPos.w,
+      height: gridPos.h,
     },
     options: panel.options ?? {},
     fieldConfig: panel.fieldConfig,
