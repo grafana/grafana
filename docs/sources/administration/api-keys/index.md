@@ -63,7 +63,7 @@ The service account endpoints generate a machine user for authentication instead
 
 > **Note:** If you are using API keys for authentication, we recommend that you migrate your integration to the service account authentication method. The API key will continue to work. You can locate the API key in the [Grafana service account tokens]({{< relref "../service-accounts/#service-account-tokens" >}}) details.
 
-## This section shows you how to migrate Grafana to using service accounts.
+## Ways of migrating API keys to service accounts
 
 If you are currently using API keys in your environment, you need to reconfigure your setup to use service accounts.
 
