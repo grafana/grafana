@@ -62,7 +62,6 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 	c.log.Debug("adding dashboard", "dash", uid)
 
 	data.Del("id") // ignore any internal id
-	data.Del("version")
 	anno := crd.CommonAnnotations{}
 	anno.Read(dash.Annotations)
 
@@ -108,7 +107,7 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 
 	out, err := c.dashboardStore.SaveDirectly(ctx, anno.Message, save, p)
 	if out != nil {
-		fmt.Printf("ADDED: %s/%s", out.UID, out.Slug)
+		fmt.Printf("ADDED: %s/%s\n", out.UID, out.Slug)
 	}
 
 	// js, _ := json.MarshalIndent(out, "", "  ")

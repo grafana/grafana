@@ -167,12 +167,13 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		d.Title = &dto.Title
 	}
 
-	if anno.CreatedAt < 100 {
+	if anno.CreatedAt < 1 {
 		anno.CreatedAt = time.Now().UnixMilli()
 	}
 	if anno.CreatedBy < 1 {
 		anno.CreatedBy = anno.UpdatedBy
 	}
+	anno.Message = fmt.Sprintf("%s (previous resourceVersion: %s)", cmd.Message, meta.ResourceVersion)
 	meta.Annotations = anno.ToMap()
 	uObj, err := toUnstructured(d, meta)
 	if err != nil {
