@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
 import debounce from 'debounce-promise';
 import { debounce as debounceLodash } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -26,6 +26,8 @@ import { getMetadataHelp, getMetadataType } from '../../language_provider';
 import { promQueryModeller } from '../PromQueryModeller';
 import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
 import { PromVisualQuery } from '../types';
+
+import { FeedbackLink } from './FeedbackLink';
 
 type Props = {
   datasource: PrometheusDatasource;
@@ -81,9 +83,22 @@ export const placeholders = {
 
 export const DEFAULT_RESULTS_PER_PAGE = 10;
 
-export const MetricEncyclopediaModal = (props: Props) => {
-  const uf = UseUfuzzy();
+const uf = new uFuzzy({
+  intraMode: 1,
+  intraIns: 1,
+  intraSub: 1,
+  intraTrn: 1,
+  intraDel: 1,
+});
 
+function fuzzySearch(haystack: string[], query: string, setter: React.Dispatch<React.SetStateAction<number[]>>) {
+  const idxs = uf.filter(haystack, query);
+  idxs && setter(idxs);
+}
+
+const debouncedFuzzySearch = debounceLodash(fuzzySearch, 300);
+
+export const MetricEncyclopediaModal = (props: Props) => {
   const { datasource, isOpen, onClose, onChange, query } = props;
 
   const [variables, setVariables] = useState<Array<SelectableValue<string>>>([]);
@@ -93,7 +108,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
   // metric list
   const [metrics, setMetrics] = useState<MetricsData>([]);
   const [hasMetadata, setHasMetadata] = useState<boolean>(true);
-  const [haystack, setHaystack] = useState<string[]>([]);
+  const [metaHaystack, setMetaHaystack] = useState<string[]>([]);
   const [nameHaystack, setNameHaystack] = useState<string[]>([]);
   const [openTabs, setOpenTabs] = useState<string[]>([]);
 
@@ -104,12 +119,14 @@ export const MetricEncyclopediaModal = (props: Props) => {
   // filters
   const [fuzzySearchQuery, setFuzzySearchQuery] = useState<string>('');
   const [fuzzyMetaSearchResults, setFuzzyMetaSearchResults] = useState<number[]>([]);
-  const [fuzzyNameSearchResults, setNameFuzzySearchResults] = useState<number[]>([]);
+  const [fuzzyNameSearchResults, setFuzzyNameSearchResults] = useState<number[]>([]);
   const [fullMetaSearch, setFullMetaSearch] = useState<boolean>(false);
   const [excludeNullMetadata, setExcludeNullMetadata] = useState<boolean>(false);
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
   const [letterSearch, setLetterSearch] = useState<string | null>(null);
 
+  const [totalMetricCount, setTotalMetricCount] = useState<number>(0);
+  const [filteredMetricCount, setFilteredMetricCount] = useState<number>();
   // backend search metric names by text
   const [useBackend, setUseBackend] = useState<boolean>(false);
 
@@ -159,7 +176,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
 
     // setting this by the backend if useBackend is true
     setMetrics(metricsData);
-    setHaystack(haystackData);
+    setMetaHaystack(haystackData);
     setNameHaystack(haystackNameData);
 
     setVariables(
@@ -171,6 +188,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
       })
     );
 
+    setTotalMetricCount(metricsData.length);
+    setFilteredMetricCount(metricsData.length);
     setIsLoading(false);
   }, [query, datasource]);
 
@@ -211,76 +230,45 @@ export const MetricEncyclopediaModal = (props: Props) => {
     return selectedTypes.length > 0;
   }
 
-  function fuzzySearch(query: string) {
-    // search either the names or all metadata
-    // fuzzy search go!
-
-    if (fullMetaSearch) {
-      // considered simply filtering indexes with reduce and includes
-      // Performance comparison with 13,000 metrics searching metadata
-      // Fuzzy 6326ms
-      // Reduce & Includes 5541ms
-      const metaIdxs = uf.filter(haystack, query.toLowerCase());
-      setFuzzyMetaSearchResults(metaIdxs);
-    } else {
-      const nameIdxs = uf.filter(nameHaystack, query.toLowerCase());
-      setNameFuzzySearchResults(nameIdxs);
-    }
-  }
-
-  const debouncedFuzzySearch = debounceLodash((query: string) => {
-    fuzzySearch(query);
-  }, 300);
-
   /**
    * Filter
    *
    * @param metrics
-   * @param skipLetterSearch
+   * @param skipLetterSearch used to show the alphabet letters as clickable before filtering out letters (needs to be refactored)
    * @returns
    */
   function filterMetrics(metrics: MetricsData, skipLetterSearch?: boolean): MetricsData {
     let filteredMetrics: MetricsData = metrics;
 
-    if (fuzzySearchQuery || excludeNullMetadata || (letterSearch && !skipLetterSearch) || selectedTypes.length > 0) {
+    if (fuzzySearchQuery) {
       filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
-        let keepMetric = false;
-
-        // search by text
-        if (fuzzySearchQuery) {
-          if (useBackend) {
-            // skip for backend!
-            keepMetric = true;
-          } else if (fullMetaSearch) {
-            keepMetric = fuzzyMetaSearchResults.includes(idx);
-          } else {
-            keepMetric = fuzzyNameSearchResults.includes(idx);
-          }
+        if (useBackend) {
+          // skip for backend!
+          return true;
+        } else if (fullMetaSearch) {
+          return fuzzyMetaSearchResults.includes(idx);
+        } else {
+          return fuzzyNameSearchResults.includes(idx);
         }
+      });
+    }
 
-        // user clicks the alphabet search
-        // backend and frontend
-        if (letterSearch && !skipLetterSearch) {
-          const letters: string[] = [letterSearch, letterSearch.toLowerCase()];
-          keepMetric = letters.includes(m.value[0]);
-        }
+    if (letterSearch && !skipLetterSearch) {
+      filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
+        const letters: string[] = [letterSearch, letterSearch.toLowerCase()];
+        return letters.includes(m.value[0]);
+      });
+    }
 
-        // select by type, counter, gauge, etc
-        // skip for backend because no metadata is returned
-        if (selectedTypes.length > 0 && !useBackend) {
-          // return the metric that matches the type
-          // return the metric if it has no type AND we are NOT excluding metrics without metadata
+    if (selectedTypes.length > 0 && !useBackend) {
+      filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
+        // Matches type
+        const matchesSelectedType = selectedTypes.some((t) => t.value === m.type);
 
-          // Matches type
-          const matchesSelectedType = selectedTypes.some((t) => t.value === m.type);
+        // missing type
+        const hasNoType = !m.type;
 
-          // missing type
-          const hasNoType = !m.type;
-
-          return matchesSelectedType || (hasNoType && !excludeNullMetadata);
-        }
-
-        return keepMetric;
+        return matchesSelectedType || (hasNoType && !excludeNullMetadata);
       });
     }
 
@@ -293,6 +281,10 @@ export const MetricEncyclopediaModal = (props: Props) => {
   function displayedMetrics(metrics: MetricsData) {
     const filteredSorted: MetricsData = filterMetrics(metrics).sort(alphabetically(true, hasMetaDataFilters()));
 
+    if (filteredMetricCount !== filteredSorted.length && filteredSorted.length !== 0) {
+      setFilteredMetricCount(filteredSorted.length);
+    }
+
     const displayedMetrics: MetricsData = sliceMetrics(filteredSorted, pageNum, resultsPerPage);
 
     return displayedMetrics;
@@ -303,6 +295,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
   const debouncedBackendSearch = useMemo(
     () =>
       debounce(async (metricText: string) => {
+        setIsLoading(true);
         const queryString = regexifyLabelValuesQueryString(metricText);
 
         const labelsParams = query.labels.map((label) => {
@@ -324,10 +317,85 @@ export const MetricEncyclopediaModal = (props: Props) => {
         });
 
         setMetrics(metrics);
+        setFilteredMetricCount(metrics.length);
         setIsLoading(false);
       }, 300),
     [datasource, query.labels]
   );
+
+  function letterSearchComponent() {
+    const alphabetCheck: { [char: string]: number } = {
+      A: 0,
+      B: 0,
+      C: 0,
+      D: 0,
+      E: 0,
+      F: 0,
+      G: 0,
+      H: 0,
+      I: 0,
+      J: 0,
+      K: 0,
+      L: 0,
+      M: 0,
+      N: 0,
+      O: 0,
+      P: 0,
+      Q: 0,
+      R: 0,
+      S: 0,
+      T: 0,
+      U: 0,
+      V: 0,
+      W: 0,
+      X: 0,
+      Y: 0,
+      Z: 0,
+    };
+
+    filterMetrics(metrics, true).forEach((m: MetricData, idx) => {
+      const metricFirstLetter = m.value[0].toUpperCase();
+
+      if (alphabet.includes(metricFirstLetter) && !alphabetCheck[metricFirstLetter]) {
+        alphabetCheck[metricFirstLetter] += 1;
+      }
+    });
+
+    // return the alphabet components with the correct style and behavior
+    return Object.keys(alphabetCheck).map((letter: string) => {
+      // const active: boolean = .some((m: MetricData) => {
+      //   return m.value[0] === letter || m.value[0] === letter?.toLowerCase();
+      // });
+      const active: boolean = alphabetCheck[letter] > 0;
+      // starts with letter search
+      // filter by starts with letter
+      // if same letter searched null out remove letter search
+      function updateLetterSearch() {
+        if (letterSearch === letter) {
+          setLetterSearch(null);
+        } else {
+          setLetterSearch(letter);
+        }
+        setPageNum(1);
+      }
+      // selected letter to filter by
+      const selectedClass: string = letterSearch === letter ? styles.selAlpha : '';
+      // these letters are represented in the list of metrics
+      const activeClass: string = active ? styles.active : styles.gray;
+
+      return (
+        <span
+          onClick={active ? updateLetterSearch : () => {}}
+          className={`${selectedClass} ${activeClass}`}
+          key={letter}
+          data-testid={'letter-' + letter}
+        >
+          {letter + ' '}
+          {/* {idx !== coll.length - 1 ? '|': ''} */}
+        </span>
+      );
+    });
+  }
 
   return (
     <Modal
@@ -337,8 +405,9 @@ export const MetricEncyclopediaModal = (props: Props) => {
       onDismiss={onClose}
       aria-label="Metric Encyclopedia"
     >
+      <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
       <div className={styles.spacing}>
-        Browse {metrics.length} metric{metrics.length > 1 ? 's' : ''} by text, by type, alphabetically or select a
+        Browse {totalMetricCount} metric{totalMetricCount > 1 ? 's' : ''} by text, by type, alphabetically or select a
         variable.
         {isLoading && (
           <div className={styles.inlineSpinner}>
@@ -364,11 +433,16 @@ export const MetricEncyclopediaModal = (props: Props) => {
               // get all metrics data if a user erases everything in the input
               updateMetricsMetadata();
             } else if (useBackend) {
-              setIsLoading(true);
               debouncedBackendSearch(value);
             } else {
-              // do the search on the frontend
-              debouncedFuzzySearch(value);
+              // search either the names or all metadata
+              // fuzzy search go!
+
+              if (fullMetaSearch) {
+                debouncedFuzzySearch(metaHaystack, value, setFuzzyMetaSearchResults);
+              } else {
+                debouncedFuzzySearch(nameHaystack, value, setFuzzyNameSearchResults);
+              }
             }
 
             setPageNum(1);
@@ -462,69 +536,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
           }}
         />
       </div>
-      <h5 className={`${styles.center} ${styles.topPadding}`}>Results</h5>
-      <div className={`${styles.center} ${styles.bottomPadding}`}>
-        {[
-          'A',
-          'B',
-          'C',
-          'D',
-          'E',
-          'F',
-          'G',
-          'H',
-          'I',
-          'J',
-          'K',
-          'L',
-          'M',
-          'N',
-          'O',
-          'P',
-          'Q',
-          'R',
-          'S',
-          'T',
-          'U',
-          'V',
-          'W',
-          'X',
-          'Y',
-          'Z',
-        ].map((letter, idx, coll) => {
-          const active: boolean = filterMetrics(metrics, true).some((m: MetricData) => {
-            return m.value[0] === letter || m.value[0] === letter?.toLowerCase();
-          });
-
-          // starts with letter search
-          // filter by starts with letter
-          // if same letter searched null out remove letter search
-          function updateLetterSearch() {
-            if (letterSearch === letter) {
-              setLetterSearch(null);
-            } else {
-              setLetterSearch(letter);
-            }
-            setPageNum(1);
-          }
-          // selected letter to filter by
-          const selectedClass: string = letterSearch === letter ? styles.selAlpha : '';
-          // these letters are represented in the list of metrics
-          const activeClass: string = active ? styles.active : styles.gray;
-
-          return (
-            <span
-              onClick={active ? updateLetterSearch : () => {}}
-              className={`${selectedClass} ${activeClass}`}
-              key={letter}
-              data-testid={'letter-' + letter}
-            >
-              {letter + ' '}
-              {/* {idx !== coll.length - 1 ? '|': ''} */}
-            </span>
-          );
-        })}
-      </div>
+      <h5 className={`${styles.center} ${styles.topPadding}`}>{filteredMetricCount} Results</h5>
+      <div className={`${styles.center} ${styles.bottomPadding}`}>{letterSearchComponent()}</div>
       {metrics &&
         displayedMetrics(metrics).map((metric: MetricData, idx) => {
           return (
@@ -656,22 +669,6 @@ function alphabetically(ascending: boolean, metadataFilters: boolean) {
   };
 }
 
-function UseUfuzzy(): uFuzzy {
-  const ref = useRef<uFuzzy>();
-
-  if (!ref.current) {
-    ref.current = new uFuzzy({
-      intraMode: 1,
-      intraIns: 1,
-      intraSub: 1,
-      intraTrn: 1,
-      intraDel: 1,
-    });
-  }
-
-  return ref.current;
-}
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     cardsContainer: css`
@@ -733,3 +730,32 @@ export const testIds = {
   resultsPerPage: 'results-per-page',
   setUseBackend: 'set-use-backend',
 };
+
+const alphabet = [
+  'A',
+  'B',
+  'C',
+  'D',
+  'E',
+  'F',
+  'G',
+  'H',
+  'I',
+  'J',
+  'K',
+  'L',
+  'M',
+  'N',
+  'O',
+  'P',
+  'Q',
+  'R',
+  'S',
+  'T',
+  'U',
+  'V',
+  'W',
+  'X',
+  'Y',
+  'Z',
+];
