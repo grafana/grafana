@@ -599,7 +599,7 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 	}
 	sort.Strings(propKeys)
 	frames := data.Frames{}
-	fields := createFieldsFromPropKeys(queryResult.Frames, propKeys)
+	fields := createFields(queryResult.Frames, propKeys, aggDef.Field)
 
 	addMetricValue := func(values []interface{}, metricName string, value *float64) {
 		index := -1
@@ -628,7 +628,8 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 		for _, field := range fields {
 			for _, propKey := range propKeys {
 				if field.Name == propKey {
-					field.Append(props[propKey])
+					value := props[propKey]
+					field.Append(&value)
 				}
 			}
 			if field.Name == aggDef.Field {
@@ -1120,9 +1121,15 @@ func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
 	}
 }
 
-func createFieldsFromPropKeys(frames data.Frames, propKeys []string) []*data.Field {
+func createFields(frames data.Frames, propKeys []string, aggField string) []*data.Field {
 	var fields []*data.Field
-	if frames == nil {
+	// If we have no frames, we create fields from propKeys
+	if frames != nil {
+		for _, frame := range frames {
+			fields = append(fields, frame.Fields...)
+		}
+	// Otherwise use the fields from frames
+	} else {
 		for _, propKey := range propKeys {
 			fields = append(fields, data.NewField(propKey, nil, []*string{}))
 		}
