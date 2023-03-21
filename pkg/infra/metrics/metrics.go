@@ -143,7 +143,7 @@ var (
 	// MStatTotalUsers is a metric total amount of users
 	MStatTotalUsers prometheus.Gauge
 
-	// MStatTotalUsers is a metric total amount of teams
+	// MStatTotalTeams is a metric total amount of teams
 	MStatTotalTeams prometheus.Gauge
 
 	// MStatActiveUsers is a metric number of active users
