@@ -311,6 +311,18 @@ grafana_alerting_state_history_writes_total{org="1"} 2
 		)
 		require.NoError(t, err)
 	})
+
+	t.Run("elides request if nothing to send", func(t *testing.T) {
+		req := NewFakeRequester()
+		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
+		rule := createTestRule()
+		states := []state.StateTransition{}
+
+		err := <-loki.Record(context.Background(), rule, states)
+
+		require.NoError(t, err)
+		require.Nil(t, req.lastRequest)
+	})
 }
 
 func createTestLokiBackend(req client.Requester, met *metrics.Historian) *RemoteLokiBackend {
