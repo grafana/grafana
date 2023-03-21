@@ -196,11 +196,12 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		return nil, err
 	}
 
-	// js, _ = json.MarshalIndent(uObj, "", "  ")
-	// fmt.Printf("-------- WRAPPER AFTER SAVE ---------")
-	// fmt.Printf("%s", string(js))
+	return s.waitForRevision(ctx,
+		&dashboards.GetDashboardQuery{UID: uid, OrgID: dto.OrgID},
+		uObj.GetResourceVersion())
+}
 
-	rv := uObj.GetResourceVersion()
+func (s *StoreWrapper) waitForRevision(ctx context.Context, query *dashboards.GetDashboardQuery, rv string) (*dashboards.Dashboard, error) {
 	s.log.Debug("wait for revision", "revision", rv)
 
 	// TODO: rather than polling the dashboard service,
@@ -208,7 +209,7 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 	// however, this is likely better since it is checking the SQL instance that needs to be valid
 	for i := 0; i < 9; i++ {
 		time.Sleep(175 * time.Millisecond)
-		out, err := s.DashboardSQLStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: uid, OrgID: dto.OrgID})
+		out, err := s.DashboardSQLStore.GetDashboard(ctx, query)
 		if err != nil {
 			if !errors.Is(err, dashboards.ErrDashboardNotFound) {
 				fmt.Printf("ERROR: %v", err)
@@ -226,5 +227,5 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 	}
 
 	// too many loops?
-	return nil, fmt.Errorf("controller never ran? " + uid)
+	return nil, fmt.Errorf("controller never ran? " + query.UID)
 }

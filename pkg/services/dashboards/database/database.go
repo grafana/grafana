@@ -1061,7 +1061,7 @@ func (d *dashboardStore) SaveDirectly(ctx context.Context, msg string, dash *das
 	var err error
 
 	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		result, err = saveK8sDashboard(sess, msg, dash, d.emitEntityEvent())
+		result, err = saveDashboardWithUID(sess, msg, dash, d.emitEntityEvent())
 		if err == nil && provisioning != nil {
 			provisioning.DashboardID = result.ID
 			return saveProvisionedData(sess, provisioning, result)
@@ -1071,7 +1071,7 @@ func (d *dashboardStore) SaveDirectly(ctx context.Context, msg string, dash *das
 	return result, err
 }
 
-func saveK8sDashboard(sess *db.Session, msg string, dash *dashboards.Dashboard, emitEntityEvent bool) (*dashboards.Dashboard, error) {
+func saveDashboardWithUID(sess *db.Session, msg string, dash *dashboards.Dashboard, emitEntityEvent bool) (*dashboards.Dashboard, error) {
 	var existing dashboards.Dashboard
 	dashWithUIDExists, err := sess.Where("uid=? AND org_id=?", dash.UID, dash.OrgID).Get(&existing)
 	if err != nil {
