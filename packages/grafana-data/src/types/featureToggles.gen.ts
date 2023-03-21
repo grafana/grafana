@@ -23,7 +23,6 @@ export interface FeatureToggles {
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
-  ['live-pipeline']?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
