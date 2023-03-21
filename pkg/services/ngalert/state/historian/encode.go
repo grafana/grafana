@@ -96,9 +96,9 @@ func labelsMapToString(ls map[string]string, without model.LabelName) string {
 			b.WriteString(", ")
 		}
 
-		b.WriteString(string(l))
+		b.WriteString(l)
 		b.WriteString(`=`)
-		b.WriteString(strconv.Quote(string(ls[l])))
+		b.WriteString(strconv.Quote(ls[l]))
 	}
 	b.WriteByte('}')
 
