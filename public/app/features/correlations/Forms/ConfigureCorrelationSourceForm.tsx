@@ -25,7 +25,7 @@ export const ConfigureCorrelationSourceForm = () => {
 
   return (
     <>
-      <h4>Step 3: Configure origin data source</h4>
+      <h4>Step 3: Configure source data source</h4>
       <p>
         Links are displayed with results of the selected origin source data. They shown along with the value of the
         provided <em>results field</em>.
@@ -42,8 +42,8 @@ export const ConfigureCorrelationSourceForm = () => {
         }}
         render={({ field: { onChange, value } }) => (
           <Field
-            label="Origin data source"
-            description="Results from selected origin data source have links displayed in the panel"
+            label="Source"
+            description="Results from selected source data source have links displayed in the panel"
             htmlFor="source"
             invalid={!!formState.errors.sourceUID}
             error={formState.errors.sourceUID?.message}

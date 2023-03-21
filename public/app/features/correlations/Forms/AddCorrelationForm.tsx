@@ -50,14 +50,16 @@ export const AddCorrelationForm = ({ onClose, onCreated }: Props) => {
     <PanelContainer className={styles.panelContainer}>
       <CloseButton onClick={onClose} />
       <h3>Add a new correlation</h3>
-      <p>
-        This wizard will guide you through setting up a new correlation. Based on your setup Grafana creates interactive
-        links in result panels in Explore. Links run new queries correlated with the data in the panel and shows results
-        in the split view.{' '}
+      <div>
+        <span>
+          This wizard will guide you through setting up a new correlation. Based on your setup Grafana creates
+          interactive links in result panels in Explore. Links run new queries correlated with the data in the panel and
+          shows results in the split view.
+        </span>
         <LinkButton href="about:blank" size="sm" variant="secondary" target="_blank" icon="external-link-alt">
           Learn more about Correlations
         </LinkButton>
-      </p>
+      </div>
       <CorrelationsFormContextProvider data={{ loading, readOnly: false, correlation: undefined }}>
         <Wizard<FormDTO>
           defaultValues={defaultValues}

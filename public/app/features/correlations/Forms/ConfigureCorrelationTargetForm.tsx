@@ -24,7 +24,7 @@ export const ConfigureCorrelationTargetForm = () => {
         rules={{ required: { value: true, message: 'This field is required.' } }}
         render={({ field: { onChange, value } }) => (
           <Field
-            label="Target data source"
+            label="Target"
             description="Specify which data source is queried when the link is clicked"
             htmlFor="target"
             invalid={!!formState.errors.targetUID}
