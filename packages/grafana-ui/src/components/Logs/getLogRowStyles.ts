@@ -141,7 +141,7 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       label: logs-row-details-table;
       border: 1px solid ${theme.colors.border.medium};
       padding: 0 ${theme.spacing(1)} ${theme.spacing(1)};
-      border-radius: 3px;
+      border-radius: ${theme.shape.radius.default};
       margin: 20px 8px 20px 16px;
       cursor: default;
     `,

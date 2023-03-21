@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import React, { FC, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-interface LabelProps {
+interface Props {
   icon?: IconName;
   label?: ReactNode;
   value: ReactNode;
@@ -13,7 +13,7 @@ interface LabelProps {
 }
 
 // TODO allow customization with color prop
-const Label: FC<LabelProps> = ({ label, value, icon }) => {
+const Label = ({ label, value, icon }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (

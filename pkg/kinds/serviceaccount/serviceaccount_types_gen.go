@@ -10,6 +10,10 @@
 
 package serviceaccount
 
+import (
+	"time"
+)
+
 // Defines values for OrgRole.
 const (
 	OrgRoleAdmin  OrgRole = "Admin"
@@ -30,7 +34,7 @@ type ServiceAccount struct {
 	AvatarUrl string `json:"avatarUrl"`
 
 	// Created indicates when the service account was created.
-	Created *int64 `json:"created,omitempty"`
+	Created *time.Time `json:"created,omitempty"`
 
 	// ID is the unique identifier of the service account in the database.
 	Id int64 `json:"id"`
@@ -58,5 +62,5 @@ type ServiceAccount struct {
 	Tokens int64 `json:"tokens"`
 
 	// Updated indicates when the service account was updated.
-	Updated *int64 `json:"updated,omitempty"`
+	Updated *time.Time `json:"updated,omitempty"`
 }

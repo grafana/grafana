@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
@@ -17,7 +17,7 @@ const options: SelectableValue[] = [
   { value: GrafanaAlertStateDecision.Error, label: 'Error' },
 ];
 
-export const GrafanaAlertStatePicker: FC<Props> = ({ includeNoData, includeError, ...props }) => {
+export const GrafanaAlertStatePicker = ({ includeNoData, includeError, ...props }: Props) => {
   const opts = useMemo(() => {
     if (!includeNoData) {
       return options.filter((opt) => opt.value !== GrafanaAlertStateDecision.NoData);
