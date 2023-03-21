@@ -353,6 +353,7 @@ func createTestLokiBackend(req client.Requester, met *metrics.Historian) *Remote
 	cfg := LokiConfig{
 		WritePathURL: url,
 		ReadPathURL:  url,
+		Encoder:      JsonEncoder{},
 	}
 	return NewRemoteLokiBackend(cfg, req, met)
 }
