@@ -16,7 +16,7 @@ This page lists the minimum hardware and software requirements to install Grafan
 
 To run Grafana, you must have a supported operating system, hardware that meets or exceeds minimum requirements, a supported database, and a supported browser.
 
-Grafana relies other open source software to operate. For a list of open source software that Grafana uses, refer to [package.json](https://github.com/grafana/grafana/blob/main/package.json).
+Grafana relies on other open source software to operate. For a list of open source software that Grafana uses, refer to [package.json](https://github.com/grafana/grafana/blob/main/package.json).
 
 ## Supported operating systems
 
@@ -52,7 +52,7 @@ Grafana supports the following databases:
 - [MySQL 5.7+](https://www.mysql.com/support/supportedplatforms/database.html)
 - [PostgreSQL 10+](https://www.postgresql.org/support/versioning/)
 
-By default, Grafana installs SQLite, which is stored in the Grafana installation location.
+By default Grafana uses an embedded SQLite database, which is stored in the Grafana installation location.
 
 Grafana supports the versions of these databases that are officially supported by the project at the time a version of Grafana is released. When a Grafana version becomes unsupported, Grafana Labs might also drop support for that database version. See the links above for the support policies for each project.
 
