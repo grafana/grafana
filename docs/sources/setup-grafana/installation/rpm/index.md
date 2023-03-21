@@ -22,7 +22,7 @@ The old URLs will still work, serving the content from the new repository, but y
 
 While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "../../../upgrade-guide/" >}}) for tips and guidance on updating an existing installation.
 
-## 1. Download and install
+## Install Grafana using YUM
 
 You can install Grafana from a YUM repository, manually using YUM, manually using RPM, or by downloading a binary `.tar.gz` file.
 
@@ -168,26 +168,6 @@ sudo systemctl enable grafana-server
 
 When serving Grafana behind a proxy, you need to configure the `http_proxy` and `https_proxy` environment variables.
 
-##### Centos 6
-
-If you are on Centos 6, add the following lines to the `/etc/sysconfig/grafana-server` file.
-
-```
-export no_proxy=internal.domain,127.0.0.1
-export http_proxy=http://proxy.domain:3128/
-export https_proxy=http://proxy.domain:3128/
-```
-
-##### Centos 7
-
-If you are on Centos 7, add the following lines to the `/etc/sysconfig/grafana-server` file.
-
-```
-http_proxy=http://proxy.domain:3128/
-https_proxy=http://proxy.domain:3128/
-no_proxy=internal.domain,127.0.0.1
-```
-
 ### Start the server with init.d
 
 To start the service and verify that the service has started:
@@ -212,16 +192,6 @@ Start Grafana by running:
 ```bash
 ./bin/grafana-server web
 ```
-
-## Package details
-
-- Installs binary to `/usr/sbin/grafana-server`
-- Copies init.d script to `/etc/init.d/grafana-server`
-- Installs default file (environment vars) to `/etc/sysconfig/grafana-server`
-- Copies configuration file to `/etc/grafana/grafana.ini`
-- Installs systemd service (if systemd is available) name `grafana-server.service`
-- The default configuration uses a log file at `/var/log/grafana/grafana.log`
-- The default configuration specifies an sqlite3 database at `/var/lib/grafana/grafana.db`
 
 ## Next steps
 
