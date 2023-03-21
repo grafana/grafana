@@ -109,14 +109,6 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.storage.title', 'Storage');
     case 'upgrading':
       return t('nav.upgrading.title', 'Stats and license');
-    case 'live':
-      return t('nav.live.title', 'Event streaming');
-    case 'live-status':
-      return t('nav.live-status.title', 'Status');
-    case 'live-pipeline':
-      return t('nav.live-pipeline.title', 'Pipeline');
-    case 'live-cloud':
-      return t('nav.live-cloud.title', 'Cloud');
     case 'monitoring':
       return t('nav.monitoring.title', 'Monitoring');
     case 'apps':
