@@ -43,8 +43,8 @@ func (e SnappyProtoEncoder) encode(s []stream) ([]byte, error) {
 		entries := make([]logproto.Entry, 0, len(str.Values))
 		for _, sample := range str.Values {
 			entries = append(entries, logproto.Entry{
-				Timestamp: sample.T,
-				Line:      sample.V,
+				Timestamp: sample.At,
+				Line:      sample.Val,
 			})
 		}
 		body.Streams = append(body.Streams, logproto.Stream{
