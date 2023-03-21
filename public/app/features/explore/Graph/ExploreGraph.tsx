@@ -54,7 +54,7 @@ interface Props {
   onChangeTime: (timeRange: AbsoluteTimeRange) => void;
   graphStyle: ExploreGraphStyle;
   anchorToZero?: boolean;
-  maximum?: number;
+  yAxisMaximum?: number;
   eventBus: EventBus;
 }
 
@@ -72,7 +72,7 @@ export function ExploreGraph({
   graphStyle,
   tooltipDisplayMode = TooltipDisplayMode.Single,
   anchorToZero = false,
-  maximum,
+  yAxisMaximum,
   eventBus,
 }: Props) {
   const theme = useTheme2();
@@ -96,7 +96,7 @@ export function ExploreGraph({
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
     defaults: {
       min: anchorToZero ? 0 : undefined,
-      max: maximum || undefined,
+      max: yAxisMaximum || undefined,
       color: {
         mode: FieldColorModeId.PaletteClassic,
       },
@@ -110,8 +110,8 @@ export function ExploreGraph({
   });
 
   const styledFieldConfig = useMemo(
-    () => applyGraphStyle(fieldConfig, graphStyle, maximum),
-    [fieldConfig, graphStyle, maximum]
+    () => applyGraphStyle(fieldConfig, graphStyle, yAxisMaximum),
+    [fieldConfig, graphStyle, yAxisMaximum]
   );
 
   const dataWithConfig = useMemo(() => {

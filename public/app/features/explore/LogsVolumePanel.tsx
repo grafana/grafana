@@ -70,7 +70,7 @@ export function LogsVolumePanel(props: Props) {
           tooltipDisplayMode={TooltipDisplayMode.Multi}
           onHiddenSeriesChanged={onHiddenSeriesChanged}
           anchorToZero
-          maximum={allLogsVolumeMaximum}
+          yAxisMaximum={allLogsVolumeMaximum}
           eventBus={props.eventBus}
         />
       );
