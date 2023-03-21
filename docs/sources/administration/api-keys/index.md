@@ -55,7 +55,9 @@ To create an API key, complete the following steps:
 
 ## Migrate API keys to Grafana service accounts
 
-As an alternative to using API keys for authentication, you can use a service account-based authentication system. When compared to API keys, service accounts have limited scopes which provides more security than using API keys. For more information about the benefits of service accounts, refer to [Grafana service account benefits]({{< relref "../service-accounts/#service-account-benefits" >}}).
+As an alternative to using API keys for authentication, you can use a service account-based authentication system. When compared to API keys, service accounts have limited scopes that provide more security than using API keys. 
+
+For more information about the benefits of service accounts, refer to [Grafana service account benefits]({{< relref "../service-accounts/#service-account-benefits" >}}).
 
 The service account endpoints generate a machine-user for authentication instead of using API keys. When you migrate an API key to a service account, a service account will be created with a service account token.
 
