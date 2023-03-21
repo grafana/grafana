@@ -70,7 +70,7 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
       white-space: nowrap;
       text-shadow: none;
       padding: 3px 6px;
-      border-radius: ${theme.shape.borderRadius(2)};
+      border-radius: ${theme.shape.radius.default};
     `,
     hover: css`
       &:hover {

@@ -122,25 +122,11 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
-			Name:            "dashboardsFromStorage",
-			Description:     "Load dashboards from the generic storage interface",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true, // Also a gate on automatic git storage (for now)
-			Owner:           grafanaAppPlatformSquad,
-		},
-		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaExploreSquad,
-		},
-		{
-			Name:         "tracing",
-			Description:  "Adds trace ID to error notifications",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        grafanaUserEssentialsSquad,
 		},
 		{
 			Name:         "newTraceView",
@@ -291,13 +277,6 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:            "queryLibrary",
-			Description:     "Reusable query library",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			Owner:           grafanaAppPlatformSquad,
-		},
-		{
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			State:       FeatureStateAlpha,
@@ -397,6 +376,13 @@ var (
 		{
 			Name:         "lokiQuerySplitting",
 			Description:  "Split large interval queries into subqueries with smaller time intervals",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "lokiQuerySplittingConfig",
+			Description:  "Give users the option to configure split durations for Loki queries",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
