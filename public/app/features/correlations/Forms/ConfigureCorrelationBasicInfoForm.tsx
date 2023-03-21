@@ -3,7 +3,7 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Field, Input, TextArea, useStyles2 } from '@grafana/ui';
+import { Field, FieldSet, Input, TextArea, useStyles2 } from '@grafana/ui';
 
 import { useCorrelationsFormContext } from './correlationsFormContext';
 import { FormDTO } from './types';
@@ -25,33 +25,33 @@ export const ConfigureCorrelationBasicInfoForm = () => {
 
   return (
     <>
-      <h4>Step 1: Define correlation name</h4>
-      <p>The name of the correlation is used as the label of the link.</p>
-      <input type="hidden" {...register('config.type')} />
+      <FieldSet label="Define correlation name (1/3)">
+        <p>The name of the correlation is used as the label of the link.</p>
+        <input type="hidden" {...register('config.type')} />
+        <Field
+          label="Label"
+          description="This name is be used as the label of the link button"
+          className={styles.label}
+          invalid={!!formState.errors.label}
+          error={formState.errors.label?.message}
+        >
+          <Input
+            id={getInputId('label', correlation)}
+            {...register('label', { required: { value: true, message: 'This field is required.' } })}
+            readOnly={readOnly}
+            placeholder="e.g. Tempo traces"
+          />
+        </Field>
 
-      <Field
-        label="Label"
-        description="This name is be used as the label of the link button"
-        className={styles.label}
-        invalid={!!formState.errors.label}
-        error={formState.errors.label?.message}
-      >
-        <Input
-          id={getInputId('label', correlation)}
-          {...register('label', { required: { value: true, message: 'This field is required.' } })}
-          readOnly={readOnly}
-          placeholder="e.g. Tempo traces"
-        />
-      </Field>
-
-      <Field
-        label="Description"
-        description="Optional description with more information about the link"
-        // the Field component automatically adds margin to itself, so we are forced to workaround it by overriding  its styles
-        className={cx(styles.description)}
-      >
-        <TextArea id={getInputId('description', correlation)} {...register('description')} readOnly={readOnly} />
-      </Field>
+        <Field
+          label="Description"
+          description="Optional description with more information about the link"
+          // the Field component automatically adds margin to itself, so we are forced to workaround it by overriding  its styles
+          className={cx(styles.description)}
+        >
+          <TextArea id={getInputId('description', correlation)} {...register('description')} readOnly={readOnly} />
+        </Field>
+      </FieldSet>
     </>
   );
 };

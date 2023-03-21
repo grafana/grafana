@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { PanelContainer, useStyles2, LinkButton } from '@grafana/ui';
+import { PanelContainer, useStyles2 } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { Wizard } from '../components/Wizard';
@@ -49,17 +49,6 @@ export const AddCorrelationForm = ({ onClose, onCreated }: Props) => {
   return (
     <PanelContainer className={styles.panelContainer}>
       <CloseButton onClick={onClose} />
-      <h3>Add a new correlation</h3>
-      <div>
-        <span>
-          This wizard will guide you through setting up a new correlation. Based on your setup Grafana creates
-          interactive links in result panels in Explore. Links run new queries correlated with the data in the panel and
-          shows results in the split view.
-        </span>
-        <LinkButton href="about:blank" size="sm" variant="secondary" target="_blank" icon="external-link-alt">
-          Learn more about Correlations
-        </LinkButton>
-      </div>
       <CorrelationsFormContextProvider data={{ loading, readOnly: false, correlation: undefined }}>
         <Wizard<FormDTO>
           defaultValues={defaultValues}
