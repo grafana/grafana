@@ -14,7 +14,9 @@ type TargetSig = string;
 type TimestampMs = number;
 
 type StringInterpolator = (expr: string) => string;
-export const defaultPrometheusQueryOverlapWindowSeconds = 10 * 60 * 1000;
+
+type Milliseconds = number;
+export const defaultPrometheusQueryOverlapWindow: Milliseconds = 10 * 60 * 1000;
 
 interface TargetCache {
   sig: TargetSig;
@@ -54,7 +56,7 @@ function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ
 export class QueryCache {
   private overlapWindowInSeconds: number;
   constructor(overlapInSeconds?: number) {
-    this.overlapWindowInSeconds = overlapInSeconds ?? defaultPrometheusQueryOverlapWindowSeconds;
+    this.overlapWindowInSeconds = overlapInSeconds ?? defaultPrometheusQueryOverlapWindow;
   }
 
   cache = new Map<TargetIdent, TargetCache>();

@@ -22,7 +22,7 @@ import {
 import { useUpdateDatasource } from '../../../../features/datasources/state';
 import { PromApplication, PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
 import { QueryEditorMode } from '../querybuilder/shared/types';
-import { defaultPrometheusQueryOverlapWindowSeconds } from '../querycache/QueryCache';
+import { defaultPrometheusQueryOverlapWindow } from '../querycache/QueryCache';
 import { PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
@@ -363,8 +363,8 @@ export const PromSettings = (props: Props) => {
               inputEl={
                 <Input
                   className="width-25"
-                  value={options.jsonData.incrementalQueryOverlapDuration ?? defaultPrometheusQueryOverlapWindowSeconds}
-                  onChange={onChangeHandler('incrementalQueryOverlapDuration', options, onOptionsChange)}
+                  value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
+                  onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
                   spellCheck={false}
                   disabled={options.readOnly}
                 />
