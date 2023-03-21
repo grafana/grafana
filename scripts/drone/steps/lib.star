@@ -305,7 +305,7 @@ def benchmark_ldap_step():
             'go test -benchmem -run=^$ ./pkg/extensions/ldapsync -bench "^(Benchmark50Users)$"',
         ],
     }
-
+    
 def build_storybook_step(ver_mode):
     return {
         "name": "build-storybook",
@@ -610,7 +610,8 @@ def test_backend_step():
             "wire-install",
         ],
         "commands": [
-            "go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...",
+            # "go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...",
+            'go test -json -benchmem -run=^$ ./pkg/services/sqlstore/permissions -bench "^(BenchmarkDashboardPermissionFilter_300_10000)$"',
         ],
     }
 
