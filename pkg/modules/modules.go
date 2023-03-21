@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/k8s/client"
 	"github.com/grafana/grafana/pkg/services/k8s/informer"
 	"github.com/grafana/grafana/pkg/services/k8s/kine"
+	publicDashboardWebhooks "github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard/webhooks"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -27,6 +28,8 @@ const (
 	KubernetesInformers string = "kubernetes-informers"
 	KubernetesClientset string = "kubernetes-clientset"
 	Kubernetes          string = "kubernetes"
+
+	PublicDashboardWebhooks string = "public-dashboard-webhooks"
 )
 
 type Engine interface {
@@ -54,12 +57,13 @@ type service struct {
 	ServiceManager *services.Manager
 	ServiceMap     map[string]services.Service
 
-	apiServer        apiserver.Service
-	crdRegistry      *corecrd.Registry
-	kineService      kine.Service
-	intormerService  informer.Service
-	clientsetService client.Service
-	httpServer       *api.HTTPServer
+	publicDashboardWebhooks *publicDashboardWebhooks.WebhooksAPI
+	apiServer               apiserver.Service
+	crdRegistry             *corecrd.Registry
+	kineService             kine.Service
+	intormerService         informer.Service
+	clientsetService        client.Service
+	httpServer              *api.HTTPServer
 }
 
 func ProvideService(
@@ -69,19 +73,21 @@ func ProvideService(
 	kineService kine.Service,
 	informerService informer.Service,
 	clientsetService client.Service,
+	publicDashboardWebhooks *publicDashboardWebhooks.WebhooksAPI,
 	httpServer *api.HTTPServer,
 ) *service {
 	logger := log.New("modules")
 
 	dependencyMap := map[string][]string{
-		HTTPServer:          {KubernetesAPIServer},
-		Kine:                {},
-		KubernetesAPIServer: {Kine},
-		KubernetesClientset: {KubernetesAPIServer},
-		KubernetesCRDs:      {KubernetesClientset},
-		KubernetesInformers: {KubernetesCRDs},
-		Kubernetes:          {KubernetesInformers},
-		All:                 {HTTPServer, Kubernetes},
+		HTTPServer:              {KubernetesAPIServer},
+		Kine:                    {},
+		KubernetesAPIServer:     {Kine},
+		KubernetesClientset:     {KubernetesAPIServer},
+		KubernetesCRDs:          {KubernetesClientset},
+		KubernetesInformers:     {KubernetesCRDs},
+		Kubernetes:              {KubernetesInformers},
+		PublicDashboardWebhooks: {KubernetesClientset},
+		All:                     {HTTPServer, Kubernetes, PublicDashboardWebhooks},
 	}
 
 	return &service{
@@ -93,12 +99,13 @@ func ProvideService(
 		ModuleManager: modules.NewManager(logger),
 		ServiceMap:    map[string]services.Service{},
 
-		apiServer:        apiServer,
-		crdRegistry:      crdRegistry,
-		kineService:      kineService,
-		intormerService:  informerService,
-		clientsetService: clientsetService,
-		httpServer:       httpServer,
+		publicDashboardWebhooks: publicDashboardWebhooks,
+		apiServer:               apiServer,
+		crdRegistry:             crdRegistry,
+		kineService:             kineService,
+		intormerService:         informerService,
+		clientsetService:        clientsetService,
+		httpServer:              httpServer,
 	}
 }
 
@@ -113,6 +120,7 @@ func (m *service) Init(_ context.Context) error {
 	m.RegisterModule(KubernetesClientset, m.k8sClientsetInit)
 	m.RegisterModule(KubernetesCRDs, m.k8sCRDsInit)
 	m.RegisterModule(KubernetesInformers, m.k8sInformersInit)
+	m.RegisterModule(PublicDashboardWebhooks, m.publicDashboardWebhooksInit)
 	m.RegisterModule(Kubernetes, nil)
 	m.RegisterModule(All, nil)
 
@@ -231,6 +239,10 @@ func (m *service) k8sClientsetInit() (services.Service, error) {
 
 func (m *service) kineInit() (services.Service, error) {
 	return m.kineService, nil
+}
+
+func (m *service) publicDashboardWebhooksInit() (services.Service, error) {
+	return m.publicDashboardWebhooks, nil
 }
 
 func (m *service) httpServerInit() (services.Service, error) {

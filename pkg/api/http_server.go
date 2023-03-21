@@ -453,22 +453,23 @@ func (hs *HTTPServer) start(ctx context.Context) error {
 
 func (hs *HTTPServer) k8sWebhookServer() error {
 	httpSrv := &http.Server{
-		Addr:        net.JoinHostPort("0.0.0.0", "2999"),
+		Addr:        net.JoinHostPort("127.0.0.1", "2999"),
 		Handler:     hs.web,
 		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
 
-	listener, err := net.Listen("tcp", "0.0.0.0:2999")
+	listener, err := net.Listen("tcp", "127.0.0.1:2999")
 	if err != nil {
-		return fmt.Errorf("failed to open listener on address 0.0.0.0:2999 - %w", err)
+		return fmt.Errorf("failed to open listener on address 127.0.0.1:2999 - %w", err)
 	}
+
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
 		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
 
-	certFile := path.Join(hs.Cfg.DataPath, "k8s", "apiserver.crt")
-	keyFile := path.Join(hs.Cfg.DataPath, "k8s", "apiserver.key")
+	certpath := path.Join(hs.Cfg.DataPath, "k8s", "apiserver.crt")
+	keypath := path.Join(hs.Cfg.DataPath, "k8s", "apiserver.key")
 
-	return httpSrv.ServeTLS(listener, certFile, keyFile)
+	return httpSrv.ServeTLS(listener, certpath, keypath)
 }
 
 func (hs *HTTPServer) running(ctx context.Context) error {
