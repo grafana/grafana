@@ -66,7 +66,6 @@ export const BarGaugeCell = (props: TableCellProps) => {
 
   const hasLinks = Boolean(getLinks().length);
   const alignmentFactors = getAlignmentFactor(field, displayValue, cell.row.index);
-  console.log('alignmentFactors', alignmentFactors);
 
   const renderComponent = (menuProps: DataLinksContextMenuApi) => {
     const { openMenu, targetClassName } = menuProps;
