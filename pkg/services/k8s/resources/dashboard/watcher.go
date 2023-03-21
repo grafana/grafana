@@ -38,10 +38,6 @@ func ProvideWatcher(
 func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 	c.log.Debug("adding dashboard", "dash", dash)
 
-	js, _ := json.MarshalIndent(dash, "", "  ")
-	fmt.Printf("-------- WATCHER ---------")
-	fmt.Printf("%s", string(js))
-
 	raw, err := json.Marshal(dash.Spec)
 	if err != nil {
 		return fmt.Errorf("failed to marshal dashboard spec: %w", err)
@@ -68,10 +64,6 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 	cmd.FolderUID = anno.FolderUID // FolderUID    string           `json:"folderUid" xorm:"folder_uid"`
 	cmd.IsFolder = false           // IsFolder     bool             `json:"isFolder"`
 	cmd.UpdatedAt = time.UnixMilli(anno.UpdatedAt)
-
-	js, _ = json.MarshalIndent(cmd, "", "  ")
-	fmt.Printf("-------- COMMAND BEFORE final save ---------")
-	fmt.Printf("%s", string(js))
 
 	if anno.OriginKey == "" {
 		_, err = c.dashboardStore.SaveDashboard(ctx, cmd)

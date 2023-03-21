@@ -11,11 +11,11 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
@@ -103,6 +103,8 @@ import (
 )
 
 type HTTPServer struct {
+	*services.BasicService
+
 	log              log.Logger
 	web              *web.Mux
 	context          context.Context
@@ -207,6 +209,8 @@ type HTTPServer struct {
 	statsService           stats.Service
 	authnService           authn.Service
 	starApi                *starApi.API
+
+	errs chan error
 }
 
 type ServerOptions struct {
@@ -353,6 +357,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		authnService:                 authnService,
 		pluginsCDNService:            pluginsCDNService,
 		starApi:                      starApi,
+
+		errs: make(chan error),
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -365,6 +371,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err
 	}
+
+	hs.BasicService = services.NewBasicService(hs.start, hs.running, hs.stop)
 	return hs, nil
 }
 
@@ -376,7 +384,7 @@ func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddlew
 	hs.namedMiddlewares = append(hs.namedMiddlewares, middleware)
 }
 
-func (hs *HTTPServer) Run(ctx context.Context) error {
+func (hs *HTTPServer) start(ctx context.Context) error {
 	hs.context = ctx
 
 	hs.applyRoutes()
@@ -405,46 +413,82 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		return err
 	}
 
+	if hs.Features.IsEnabled(featuremgmt.FlagK8S) {
+		go func() {
+			hs.errs <- hs.k8sWebhookServer()
+		}()
+	}
+
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
 		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	// handle http shutdown on server context done
-	go func() {
-		defer wg.Done()
-
-		<-ctx.Done()
-		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
-			hs.log.Error("Failed to shutdown server", "error", err)
-		}
-	}()
-
 	switch hs.Cfg.Protocol {
 	case setting.HTTPScheme, setting.SocketScheme:
-		if err := hs.httpSrv.Serve(listener); err != nil {
-			if errors.Is(err, http.ErrServerClosed) {
-				hs.log.Debug("server was shutdown gracefully")
-				return nil
+		go func() {
+			if err := hs.httpSrv.Serve(listener); err != nil {
+				if errors.Is(err, http.ErrServerClosed) {
+					hs.log.Debug("server was shutdown gracefully")
+					close(hs.errs)
+					return
+				}
+				hs.errs <- err
 			}
-			return err
-		}
+		}()
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
-		if err := hs.httpSrv.ServeTLS(listener, hs.Cfg.CertFile, hs.Cfg.KeyFile); err != nil {
-			if errors.Is(err, http.ErrServerClosed) {
-				hs.log.Debug("server was shutdown gracefully")
-				return nil
+		go func() {
+			if err := hs.httpSrv.ServeTLS(listener, hs.Cfg.CertFile, hs.Cfg.KeyFile); err != nil {
+				if errors.Is(err, http.ErrServerClosed) {
+					hs.log.Debug("server was shutdown gracefully")
+					close(hs.errs)
+					return
+				}
+				hs.errs <- err
 			}
-			return err
-		}
+		}()
 	default:
 		panic(fmt.Sprintf("Unhandled protocol %q", hs.Cfg.Protocol))
 	}
 
-	wg.Wait()
+	return nil
+}
+
+func (hs *HTTPServer) k8sWebhookServer() error {
+	httpSrv := &http.Server{
+		Addr:        net.JoinHostPort("0.0.0.0", "2999"),
+		Handler:     hs.web,
+		ReadTimeout: hs.Cfg.ReadTimeout,
+	}
+
+	listener, err := net.Listen("tcp", "0.0.0.0:2999")
+	if err != nil {
+		return fmt.Errorf("failed to open listener on address 0.0.0.0:2999 - %w", err)
+	}
+	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
+		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
+
+	certFile := path.Join(hs.Cfg.DataPath, "k8s", "apiserver.crt")
+	keyFile := path.Join(hs.Cfg.DataPath, "k8s", "apiserver.key")
+
+	return httpSrv.ServeTLS(listener, certFile, keyFile)
+}
+
+func (hs *HTTPServer) running(ctx context.Context) error {
+	select {
+	case err, ok := <-hs.errs:
+		if !ok {
+			return nil
+		}
+		return err
+	case <-ctx.Done():
+	}
 
 	return nil
+}
+
+func (hs *HTTPServer) stop(failureReason error) error {
+	if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
+		hs.log.Error("Failed to shutdown server", "error", err)
+	}
+	return failureReason
 }
 
 func (hs *HTTPServer) getListener() (net.Listener, error) {

@@ -693,7 +693,7 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 				}
 			case percentilesType:
 				percentiles := bucket.GetPath(metric.ID, "values")
-				for percentileName := range percentiles.MustMap() {
+				for _, percentileName := range getSortedKeys(percentiles.MustMap()) {
 					percentileValue := percentiles.Get(percentileName).MustFloat64()
 					addMetricValue(values, fmt.Sprintf("p%v %v", percentileName, metric.Field), &percentileValue)
 				}
@@ -1128,4 +1128,15 @@ func createFieldsFromPropKeys(frames data.Frames, propKeys []string) []*data.Fie
 		}
 	}
 	return fields
+}
+
+func getSortedKeys(data map[string]interface{}) []string {
+	keys := make([]string, 0, len(data))
+
+	for k := range data {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+	return keys
 }
