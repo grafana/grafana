@@ -23,7 +23,7 @@ export interface QueryOperationRowProps {
   disabled?: boolean;
 }
 
-export type QueryOperationRowRenderProp = ((props: QueryOperationRowRenderProps) => React.ReactNode) | React.ReactNode;
+export type QueryOperationRowRenderProp = ((props?: QueryOperationRowRenderProps) => React.ReactNode) | React.ReactNode;
 
 export interface QueryOperationRowRenderProps {
   isOpen: boolean;
