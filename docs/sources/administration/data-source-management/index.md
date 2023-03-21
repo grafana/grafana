@@ -38,11 +38,11 @@ You can configure data source permissions to allow or deny certain users the abi
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
-By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just queries that exist on dashboards they have access to.
+By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just queries that exist on dashboards to which they have access. Additionally, by default, data sources can be edited by the user who created the data source, as well as users with the `Admin` role. 
 
 <div class="clearfix"></div>
 
-### Allow users, teams, or roles to query or edit a data source
+### Assign data source permissions to users, teams, or roles
 
 You can assign data source permissions to users, teams, and roles which will allow access to query or edit the data source.
 
@@ -56,7 +56,7 @@ You can assign data source permissions to users, teams, and roles which will all
 
 <div class="clearfix"></div>
 
-### Edit user, team, or role permissions
+### Edit data source permissions for users, teams, or roles
 
 1. Navigate to **Administration > Data sources**.
 1. Select the data source for which you want to edit permissions.
@@ -65,7 +65,7 @@ You can assign data source permissions to users, teams, and roles which will all
 
 <div class="clearfix"></div>
 
-### Remove user, team, or role permissions
+### Remove data source permissions for users, teams, or roles
 
 1. Navigate to **Administration > Data sources**.
 1. Select the data source from which you want to remove permissions.
