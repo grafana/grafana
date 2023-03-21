@@ -238,7 +238,7 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 }
 
 func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) []stream {
-	buckets := make(map[string][]row) // label repr -> entries
+	buckets := make(map[string][]row) // label repr (JSON) -> entries
 	for _, state := range states {
 		if !shouldRecord(state) {
 			continue
@@ -250,7 +250,12 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 		labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
 		labels[GroupLabel] = fmt.Sprint(rule.Group)
 		labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
-		repr := labels.String()
+		lblJsn, err := json.Marshal(labels)
+		if err != nil {
+			logger.Error("Failed to marshal labels to JSON", "error", err)
+			continue
+		}
+		repr := string(lblJsn)
 
 		entry := lokiEntry{
 			SchemaVersion: 1,
