@@ -1,4 +1,13 @@
-import { ArrayVector, DataFrame, DataQueryRequest, dateTime, Field } from '@grafana/data/src';
+import {
+  ArrayVector,
+  DataFrame,
+  DataQueryRequest,
+  dateTime,
+  durationToMilliseconds,
+  Field,
+  isValidDuration,
+  parseDuration,
+} from '@grafana/data/src';
 import { amendTable, Table, trimTable } from 'app/features/live/data/amendTimeSeries';
 
 import { PromQuery } from '../types';
@@ -15,8 +24,8 @@ type TimestampMs = number;
 
 type StringInterpolator = (expr: string) => string;
 
-type Milliseconds = number;
-export const defaultPrometheusQueryOverlapWindow: Milliseconds = 10 * 60 * 1000;
+// string matching requirements defined in durationutil.ts
+export const defaultPrometheusQueryOverlapWindow = '10m';
 
 interface TargetCache {
   sig: TargetSig;
@@ -53,10 +62,18 @@ function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ
  * Ident: Identity: the string that is not expected to change
  * Sig: Signature: the string that is expected to change, upon which we wipe the cache fields
  */
+type Milliseconds = number;
 export class QueryCache {
-  private overlapWindowInSeconds: number;
-  constructor(overlapInSeconds?: number) {
-    this.overlapWindowInSeconds = overlapInSeconds ?? defaultPrometheusQueryOverlapWindow;
+  private overlapWindow: Milliseconds;
+  constructor(overlapString?: string) {
+    const unverifiedOverlap = overlapString ?? defaultPrometheusQueryOverlapWindow;
+    if (isValidDuration(unverifiedOverlap)) {
+      const duration = parseDuration(unverifiedOverlap);
+      this.overlapWindow = durationToMilliseconds(duration);
+    } else {
+      const duration = parseDuration(defaultPrometheusQueryOverlapWindow);
+      this.overlapWindow = durationToMilliseconds(duration);
+    }
   }
 
   cache = new Map<TargetIdent, TargetCache>();
@@ -110,7 +127,7 @@ export class QueryCache {
       // 10m re-query overlap
 
       // clamp to make sure we don't re-query previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
-      let newFromPartial = Math.max(prevTo! - this.overlapWindowInSeconds, newFrom);
+      let newFromPartial = Math.max(prevTo! - this.overlapWindow, newFrom);
 
       // modify to partial query
       request = {

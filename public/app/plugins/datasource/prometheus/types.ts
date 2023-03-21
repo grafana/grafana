@@ -33,7 +33,7 @@ export interface PromOptions extends DataSourceJsonData {
   prometheusVersion?: string;
   defaultEditor?: QueryEditorMode;
   incrementalQuerying?: boolean;
-  incrementalQueryOverlapWindow?: number; // ms
+  incrementalQueryOverlapWindow?: string; // ms
 }
 
 export type ExemplarTraceIdDestination = {

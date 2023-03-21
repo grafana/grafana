@@ -4,6 +4,7 @@ import semver from 'semver/preload';
 import {
   DataSourcePluginOptionsEditorProps,
   DataSourceSettings as DataSourceSettingsType,
+  isValidDuration,
   onUpdateDatasourceJsonDataOptionChecked,
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
@@ -148,6 +149,13 @@ export const PromSettings = (props: Props) => {
   if (!options.jsonData.httpMethod) {
     options.jsonData.httpMethod = 'POST';
   }
+
+  const onDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // if(isValidDuration(e.target.value)){
+    //
+    // }
+    onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange);
+  };
 
   return (
     <>
@@ -357,11 +365,19 @@ export const PromSettings = (props: Props) => {
         <div className="gf-form-inline">
           {options.jsonData.incrementalQuerying && (
             <FormField
-              label="Query overlap seconds"
+              label="Query overlap window."
               labelWidth={14}
-              tooltip="Sets the overlap duration in seconds"
+              tooltip="Set a duration like 10m or 120s or 0s. Default of 10 minutes. This duration will be added to the duration of each incremental request."
               inputEl={
                 <Input
+                  validationEvents={{
+                    onBlur: [
+                      {
+                        rule: (value) => isValidDuration(value),
+                        errorMessage: 'Invalid duration. Example values: 100s, 10m',
+                      },
+                    ],
+                  }}
                   className="width-25"
                   value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
                   onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
