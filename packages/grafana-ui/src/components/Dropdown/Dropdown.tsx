@@ -71,7 +71,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
                 timeout={{ appear: animationDuration, exit: 0, enter: 0 }}
                 classNames={animationStyles}
               >
-                <div ref={transitionRef}>{ReactUtils.renderOrCallToRender(overlay)}</div>
+                <div ref={transitionRef}>{ReactUtils.renderOrCallToRender(overlay, {})}</div>
               </CSSTransition>
             </div>
           </FocusScope>
