@@ -1,4 +1,14 @@
-import { DataFrame, FieldType, isValidGoDuration, Labels } from '@grafana/data';
+import {
+  ArrayVector,
+  DataFrame,
+  DataQueryResponse,
+  DataQueryResponseData,
+  Field,
+  FieldType,
+  isValidGoDuration,
+  Labels,
+  QueryResultMetaStat,
+} from '@grafana/data';
 
 import { isBytesString } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt } from './lineParser';
@@ -99,4 +109,103 @@ export function extractLevelLikeLabelFromDataFrame(frame: DataFrame): string | n
     }
   }
   return levelLikeLabel;
+}
+
+function shouldCombine(frame1: DataFrame, frame2: DataFrame): boolean {
+  if (frame1.refId !== frame2.refId) {
+    return false;
+  }
+
+  return frame1.name === frame2.name;
+}
+
+export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
+  if (!currentResult) {
+    return cloneQueryResponse(newResult);
+  }
+
+  newResult.data.forEach((newFrame) => {
+    const currentFrame = currentResult.data.find((frame) => shouldCombine(frame, newFrame));
+    if (!currentFrame) {
+      currentResult.data.push(cloneDataFrame(newFrame));
+      return;
+    }
+    combineFrames(currentFrame, newFrame);
+  });
+
+  const mergedErrors = [...(currentResult.errors ?? []), ...(newResult.errors ?? [])];
+
+  // we make sure to have `.errors` as undefined, instead of empty-array
+  // when no errors.
+
+  if (mergedErrors.length > 0) {
+    currentResult.errors = mergedErrors;
+  }
+
+  // the `.error` attribute is obsolete now,
+  // but we have to maintain it, otherwise
+  // some grafana parts do not behave well.
+  // we just choose the old error, if it exists,
+  // otherwise the new error, if it exists.
+  currentResult.error = currentResult.error ?? newResult.error;
+
+  return currentResult;
+}
+
+function combineFrames(dest: DataFrame, source: DataFrame) {
+  const totalFields = dest.fields.length;
+  for (let i = 0; i < totalFields; i++) {
+    dest.fields[i].values = new ArrayVector(
+      [].concat.apply(source.fields[i].values.toArray(), dest.fields[i].values.toArray())
+    );
+  }
+  dest.length += source.length;
+  dest.meta = {
+    ...dest.meta,
+    stats: getCombinedMetadataStats(dest.meta?.stats ?? [], source.meta?.stats ?? []),
+  };
+}
+
+const TOTAL_BYTES_STAT = 'Summary: total bytes processed';
+
+function getCombinedMetadataStats(
+  destStats: QueryResultMetaStat[],
+  sourceStats: QueryResultMetaStat[]
+): QueryResultMetaStat[] {
+  // in the current approach, we only handle a single stat
+  const destStat = destStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
+  const sourceStat = sourceStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
+
+  if (sourceStat != null && destStat != null) {
+    return [{ value: sourceStat.value + destStat.value, displayName: TOTAL_BYTES_STAT, unit: destStat.unit }];
+  }
+
+  // maybe one of them exist
+  const eitherStat = sourceStat ?? destStat;
+  if (eitherStat != null) {
+    return [eitherStat];
+  }
+
+  return [];
+}
+
+/**
+ * Deep clones a DataQueryResponse
+ */
+export function cloneQueryResponse(response: DataQueryResponse): DataQueryResponse {
+  const newResponse = {
+    ...response,
+    data: response.data.map(cloneDataFrame),
+  };
+  return newResponse;
+}
+
+function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
+  return {
+    ...frame,
+    fields: frame.fields.map((field: Field<unknown, ArrayVector>) => ({
+      ...field,
+      values: new ArrayVector(field.values.buffer),
+    })),
+  };
 }
