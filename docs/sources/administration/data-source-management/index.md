@@ -34,57 +34,43 @@ Before you can create your first dashboard, you need to add your data source.
 
 ## Data source permissions
 
-You can configure data source permissions to allow or deny certain users the ability to query a data source.
-Each data source's configuration includes a permissions page where you can enable permissions and restrict query permissions to specific **Users** and **Teams**.
+You can configure data source permissions to allow or deny certain users the ability to query or edit a data source. Each data source’s configuration includes a Permissions tab where you can restrict data source permissions to specific users, teams, or roles.
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
-### Enable data source permissions
-
-By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just
-queries that exist on dashboards they have access to.
-
-When permissions are enabled for a data source in an organization, the user who created the data source can edit the data source and in addition, viewers can query the data source.
-
-**Enable permissions for a data source:**
-
-1. Navigate to **Administration**.
-1. Select the data source you want to enable permissions for.
-1. On the Permissions tab, click **Enable**.
-
-<!-- is enabling/disabling permissions for a data source still a thing? Can't find this interaction -->
+By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just queries that exist on dashboards they have access to.
 
 <div class="clearfix"></div>
 
-> **Caution:** Enabling permissions for the default data source makes users not listed in the permissions unable to invoke queries. Panels using default data source will return `Access denied to data source` error for those users.
+### Allow users, teams, or roles to query or edit a data source
 
-### Allow users and teams to query a data source
-
-After you have enabled permissions for a data source you can assign query permissions to users and teams which will allow access to query the data source.
-
-**Assign query permission to users and teams:**
+You can assign data source permissions to users, teams, and roles which will allow access to query or edit the data source.
 
 1. Navigate to **Administration > Data sources**.
-1. Select the data source you want to assign query permissions to.
+1. Select the data source to which you want to assign permissions.
 1. On the Permissions tab, click **Add a permission**.
-1. Select **Team**, **User**, or **Role**.
-1. Select the entity you want to modify permissions for.
+1. Select **User**, **Team**, or **Role**.
+1. Select the entity for which you want to modify permissions.
 1. Select the **Query** or **Edit** permission.
 1. Click **Save**.
 
 <div class="clearfix"></div>
 
-### Disable data source permissions
-
-If you have enabled permissions for a data source and want to return data source permissions to the default, then you can disable permissions with a click of a button.
-
-Note that _all_ existing permissions created for the data source will be deleted.
-
-**Disable permissions for a data source:**
+### Edit user, team, or role permissions
 
 1. Navigate to **Administration > Data sources**.
-1. Select the data source you want to disable permissions for.
-1. On the Permissions tab, click **Disable Permissions**.
+1. Select the data source for which you want to edit permissions.
+1. On the Permissions tab, find the user, team, or role permission you want to update.
+1. Select a different option in the **Permission** dropdown.
+
+<div class="clearfix"></div>
+
+### Remove user, team, or role permissions
+
+1. Navigate to **Administration > Data sources**.
+1. Select the data source from which you want to remove permissions.
+1. On the Permissions tab, find the user, team, or role permission you want to remove.
+1. Click the **X** next to the permission.
 
 <div class="clearfix"></div>
 
