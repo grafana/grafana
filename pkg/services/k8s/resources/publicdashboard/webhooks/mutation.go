@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/k8s/admission"
-	. "github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard"
 	"gomodules.xyz/jsonpatch/v2"
 	k8sAdmission "k8s.io/api/admission/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,7 +36,7 @@ func (api *WebhooksAPI) MutationCreate(c *contextmodel.ReqContext) response.Resp
 	}
 
 	// Current state of object
-	obj := &PublicDashboard{}
+	obj := &publicdashboard.PublicDashboard{}
 	err = obj.UnmarshalJSON(rev.Request.Object.Raw)
 	if err != nil {
 		api.Log.Error("error unmarshalling request body")

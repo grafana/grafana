@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/k8s/admission"
-	. "github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard"
 	k8sAdmission "k8s.io/api/admission/v1"
 )
 
@@ -28,14 +28,14 @@ func (api *WebhooksAPI) AdmissionCreate(c *contextmodel.ReqContext) response.Res
 		return response.Error(500, "error unmarshalling request body", err)
 	}
 
-	obj := &PublicDashboard{}
+	obj := &publicdashboard.PublicDashboard{}
 	err = obj.UnmarshalJSON(rev.Request.Object.Raw)
 	if err != nil {
 		api.Log.Error("error unmarshalling request body")
 		return response.Error(500, "error unmarshalling request body", err)
 	}
 
-	oldObj := &PublicDashboard{}
+	oldObj := &publicdashboard.PublicDashboard{}
 	err = oldObj.UnmarshalJSON(rev.Request.OldObject.Raw)
 	if err != nil {
 		api.Log.Error("error unmarshalling request body")

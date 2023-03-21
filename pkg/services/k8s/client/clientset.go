@@ -94,6 +94,7 @@ type service struct {
 	*services.BasicService
 	clientset          *Clientset
 	restConfigProvider apiserver.RestConfigProvider
+	grafanaCfg         *setting.Cfg
 }
 
 // ShortWebhookConfig is a simple struct that is converted to a full k8s webhook config for an action on a resource.
@@ -105,8 +106,8 @@ type ShortWebhookConfig struct {
 }
 
 // ProvideClientset returns a new Clientset configured with cfg.
-func ProvideClientsetProvider(toggles featuremgmt.FeatureToggles, restConfigProvider apiserver.RestConfigProvider) (*service, error) {
-	s := &service{restConfigProvider: restConfigProvider}
+func ProvideClientsetProvider(toggles featuremgmt.FeatureToggles, restConfigProvider apiserver.RestConfigProvider, cfg *setting.Cfg) (*service, error) {
+	s := &service{restConfigProvider: restConfigProvider, grafanaCfg: cfg}
 	s.BasicService = services.NewBasicService(s.start, s.running, nil)
 
 	return s, nil
@@ -117,8 +118,8 @@ func (s *service) GetClientset() *Clientset {
 }
 
 func (s *service) start(ctx context.Context) error {
-	cfg := s.restConfigProvider.GetRestConfig()
-	clientSet, err := NewClientset(cfg)
+	resetCfg := s.restConfigProvider.GetRestConfig()
+	clientSet, err := NewClientset(resetCfg, s.grafanaCfg)
 	if err != nil {
 		return err
 	}
@@ -133,24 +134,25 @@ func (s *service) running(ctx context.Context) error {
 
 // NewClientset returns a new Clientset.
 func NewClientset(
-	cfg *rest.Config,
+	restCfg *rest.Config,
+	grafanaCfg *setting.Cfg,
 ) (*Clientset, error) {
-	k8sset, err := kubernetes.NewForConfig(cfg)
+	k8sset, err := kubernetes.NewForConfig(restCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	extset, err := apiextensionsclient.NewForConfig(cfg)
+	extset, err := apiextensionsclient.NewForConfig(restCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	admissionregistrationClient, err := admissionregistrationClient.NewForConfig(cfg)
+	admissionregistrationClient, err := admissionregistrationClient.NewForConfig(restCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	dyn, err := dynamic.NewForConfig(cfg)
+	dyn, err := dynamic.NewForConfig(restCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +160,8 @@ func NewClientset(
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(k8sset))
 
 	return &Clientset{
-		config: cfg,
+		config:     restCfg,
+		grafanaCfg: grafanaCfg,
 
 		clientset:             k8sset,
 		admissionRegistration: admissionregistrationClient,

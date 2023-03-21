@@ -3,7 +3,8 @@ package webhooks
 import (
 	"context"
 
-	. "github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard"
+	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard"
 	k8sTypes "k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -18,17 +19,19 @@ import (
 )
 
 type WebhooksAPI struct {
+	*services.BasicService
 	RouteRegister        routing.RouteRegister
 	AccessControl        accesscontrol.AccessControl
 	Features             *featuremgmt.FeatureManager
 	Log                  log.Logger
 	ValidationController admission.ValidatingAdmissionController
 	MutationController   admission.MutatingAdmissionController
+	clientSetProvider    client.ClientSetProvider
 }
 
 var ValidationWebhookConfigs = []client.ShortWebhookConfig{
 	{
-		Kind:       Kind,
+		Kind:       publicdashboard.Kind,
 		Operations: []admissionregistrationV1.OperationType{admissionregistrationV1.Create},
 		Url:        "https://host.docker.internal:3443/k8s/publicdashboards/admission/create",
 		Timeout:    int32(5),
@@ -37,7 +40,7 @@ var ValidationWebhookConfigs = []client.ShortWebhookConfig{
 
 var MutationWebhookConfigs = []client.ShortWebhookConfig{
 	{
-		Kind:       Kind,
+		Kind:       publicdashboard.Kind,
 		Operations: []admissionregistrationV1.OperationType{admissionregistrationV1.Create},
 		Url:        "https://host.docker.internal:3443/k8s/publicdashboards/mutation/create",
 		Timeout:    int32(5),
@@ -50,7 +53,7 @@ var MutationWebhookConfigs = []client.ShortWebhookConfig{
 // marshaling and routing.
 func ProvideWebhooks(
 	rr routing.RouteRegister,
-	clientset *client.Clientset,
+	clientset client.ClientSetProvider,
 	ac accesscontrol.AccessControl,
 	features *featuremgmt.FeatureManager,
 	vc admission.ValidatingAdmissionController,
@@ -62,22 +65,13 @@ func ProvideWebhooks(
 		Log:                  log.New("k8s.publicdashboard.webhooks"),
 		ValidationController: vc,
 		MutationController:   mc,
+		clientSetProvider:    clientset,
 	}
 
 	// Register webhooks on grafana api server
 	webhooksAPI.RegisterAPIEndpoints()
 
-	// Register admission hooks with k8s api server
-	err := clientset.RegisterValidation(context.Background(), ValidationWebhookConfigs)
-	if err != nil {
-		panic(err)
-	}
-
-	// Register mutation hooks with k8s api server
-	err = clientset.RegisterMutation(context.Background(), MutationWebhookConfigs)
-	if err != nil {
-		panic(err)
-	}
+	webhooksAPI.BasicService = services.NewBasicService(webhooksAPI.start, webhooksAPI.running, nil)
 
 	return webhooksAPI
 }
@@ -85,6 +79,23 @@ func ProvideWebhooks(
 func (api *WebhooksAPI) RegisterAPIEndpoints() {
 	api.RouteRegister.Post("/k8s/publicdashboards/admission/create", api.AdmissionCreate)
 	api.RouteRegister.Post("/k8s/publicdashboards/mutation/create", api.MutationCreate)
+}
+
+func (api *WebhooksAPI) start(ctx context.Context) error {
+	clientset := api.clientSetProvider.GetClientset()
+	// Register admission hooks with k8s api server
+	err := clientset.RegisterValidation(context.Background(), ValidationWebhookConfigs)
+	if err != nil {
+		return err
+	}
+
+	// Register mutation hooks with k8s api server
+	return clientset.RegisterMutation(context.Background(), MutationWebhookConfigs)
+}
+
+func (api *WebhooksAPI) running(ctx context.Context) error {
+	<-ctx.Done()
+	return nil
 }
 
 func makeSuccessfulAdmissionReview(uid k8sTypes.UID, typeMeta metaV1.TypeMeta) *k8sAdmission.AdmissionReview {
