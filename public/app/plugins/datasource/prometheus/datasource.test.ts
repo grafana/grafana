@@ -435,7 +435,8 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  describe('DontQuantizeTimeSteps', () => {
+  // Remove when prometheusResourceBrowserCache is removed
+  describe('When prometheusResourceBrowserCache feature flag is off, there should be no change to the query intervals ', () => {
     beforeEach(() => {
       config.featureToggles.prometheusResourceBrowserCache = false;
     });
@@ -450,8 +451,10 @@ describe('PrometheusDatasource', () => {
         timeSrvStub as unknown as TimeSrv
       );
       const quantizedRange = dataSource.getAdjustedInterval();
+      const oldRange = dataSource.getTimeRangeParams();
       // For "1 minute" the window is unchanged
       expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(60);
+      expect(parseInt(oldRange.end, 10) - parseInt(oldRange.start, 10)).toBe(60);
     });
 
     it('test 10 minute quantization', () => {
@@ -464,23 +467,14 @@ describe('PrometheusDatasource', () => {
         timeSrvStub as unknown as TimeSrv
       );
       const quantizedRange = dataSource.getAdjustedInterval();
-      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(60);
-    });
+      const oldRange = dataSource.getTimeRangeParams();
 
-    it('test 60 minute quantization', () => {
-      const dataSource = new PrometheusDatasource(
-        {
-          ...instanceSettings,
-          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.High },
-        },
-        templateSrvStub as unknown as TemplateSrv,
-        timeSrvStub as unknown as TimeSrv
-      );
-      const quantizedRange = dataSource.getAdjustedInterval();
       expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(60);
+      expect(parseInt(oldRange.end, 10) - parseInt(oldRange.start, 10)).toBe(60);
     });
   });
-  describe('QuantizeTimeSteps', () => {
+
+  describe('Test query range snapping', () => {
     beforeEach(() => {
       config.featureToggles.prometheusResourceBrowserCache = true;
     });
