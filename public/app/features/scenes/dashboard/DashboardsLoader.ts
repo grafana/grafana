@@ -25,6 +25,8 @@ import {
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { DashboardQuery } from 'app/plugins/datasource/dashboard/types';
 import { graphToTimeseriesOptions } from 'app/plugins/panel/timeseries/migrations';
 import { DashboardDTO } from 'app/types';
 
@@ -89,6 +91,19 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
   // collects panels in the currently processed, expanded row
   let currentRowPanels: SceneObject[] = [];
 
+  // Find shared queries within dashboard
+  const panelsByID = new Map<number, VizPanel>();
+  const sharedQueries = new Map<number, DashboardQuery>();
+  const createVizPanel = (panel: PanelModel): VizPanel => {
+    const viz = createVizPanelFromPanelModel(panel);
+    panelsByID.set(panel.id, viz);
+    const firstQuery = panel.targets?.[0] as DashboardQuery;
+    if (firstQuery?.datasource?.uid === SHARED_DASHBOARD_QUERY && firstQuery.panelId) {
+      sharedQueries.set(panel.id, firstQuery);
+    }
+    return viz;
+  };
+
   for (const panel of oldPanels) {
     if (panel.type === 'row') {
       if (!currentRow) {
@@ -101,7 +116,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
               placement: {
                 y: panel.gridPos.y,
               },
-              children: panel.panels ? panel.panels.map(createVizPanelFromPanelModel) : [],
+              children: panel.panels ? panel.panels.map(createVizPanel) : [],
             })
           );
         } else {
@@ -127,7 +142,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
         }
       }
     } else {
-      const panelObject = createVizPanelFromPanelModel(panel);
+      const panelObject = createVizPanel(panel);
 
       // when processing an expanded row, collect its panels
       if (currentRow) {
@@ -151,6 +166,22 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
     );
   }
 
+  // Manually link shared query runners
+  for (let [panelId, query] of sharedQueries) {
+    const a = panelsByID.get(panelId);
+    const b = panelsByID.get(query.panelId!);
+    if (a && b) {
+      let data = b.state.$data;
+      // Remove the transformation wrapper
+      if (query.withTransforms === false && data instanceof SceneDataTransformer) {
+        data = data.state.$data;
+      }
+      if (query.topic) {
+        // TODO? filter based on topic?
+      }
+      a.setState({ $data: data });
+    }
+  }
   return panels;
 }
 
@@ -258,7 +289,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
 
 export function createVizPanelFromPanelModel(panel: PanelModel) {
   const queryRunner = new SceneQueryRunner({
-    queries: panel.targets,
+    queries: panel.targets ?? [],
     maxDataPoints: panel.maxDataPoints ?? undefined,
   });
 
@@ -270,14 +301,16 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
     panel.type = 'timeseries';
   }
 
+  const gridPos = panel.gridPos ?? {};
   return new VizPanel({
+    key: `#${panel.id}`,
     title: panel.title,
     pluginId: panel.type,
     placement: {
-      x: panel.gridPos.x,
-      y: panel.gridPos.y,
-      width: panel.gridPos.w,
-      height: panel.gridPos.h,
+      x: gridPos.x,
+      y: gridPos.y,
+      width: gridPos.w,
+      height: gridPos.h,
     },
     options: panel.options ?? {},
     fieldConfig: panel.fieldConfig,
