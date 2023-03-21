@@ -427,5 +427,12 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:         "prometheusResourceBrowserCache",
+			Description:  "Displays browser caching options in Prometheus data source configuration.",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
 	}
 )

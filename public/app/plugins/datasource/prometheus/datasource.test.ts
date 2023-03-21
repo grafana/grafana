@@ -15,6 +15,7 @@ import {
   LoadingState,
   toDataFrame,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { QueryOptions } from 'app/types';
@@ -434,7 +435,56 @@ describe('PrometheusDatasource', () => {
     });
   });
 
+  describe('DontQuantizeTimeSteps', () => {
+    beforeEach(() => {
+      config.featureToggles.prometheusResourceBrowserCache = false;
+    });
+
+    it('test default 1 minute quantization', () => {
+      const dataSource = new PrometheusDatasource(
+        {
+          ...instanceSettings,
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.Low },
+        },
+        templateSrvStub as unknown as TemplateSrv,
+        timeSrvStub as unknown as TimeSrv
+      );
+      const quantizedRange = dataSource.getAdjustedInterval();
+      // For "1 minute" the window is unchanged
+      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(60);
+    });
+
+    it('test 10 minute quantization', () => {
+      const dataSource = new PrometheusDatasource(
+        {
+          ...instanceSettings,
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.Medium },
+        },
+        templateSrvStub as unknown as TemplateSrv,
+        timeSrvStub as unknown as TimeSrv
+      );
+      const quantizedRange = dataSource.getAdjustedInterval();
+      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(60);
+    });
+
+    it('test 60 minute quantization', () => {
+      const dataSource = new PrometheusDatasource(
+        {
+          ...instanceSettings,
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.High },
+        },
+        templateSrvStub as unknown as TemplateSrv,
+        timeSrvStub as unknown as TimeSrv
+      );
+      const quantizedRange = dataSource.getAdjustedInterval();
+      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(60);
+    });
+  });
   describe('QuantizeTimeSteps', () => {
+    beforeEach(() => {
+      config.featureToggles.prometheusResourceBrowserCache = true;
+    });
+
     it('test default 1 minute quantization', () => {
       const dataSource = new PrometheusDatasource(
         {

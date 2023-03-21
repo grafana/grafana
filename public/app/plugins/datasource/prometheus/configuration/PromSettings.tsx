@@ -19,6 +19,7 @@ import {
   Select,
 } from '@grafana/ui';
 
+import config from '../../../../core/config';
 import { useUpdateDatasource } from '../../../../features/datasources/state';
 import { PromApplication, PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
 import { QueryEditorMode } from '../querybuilder/shared/types';
@@ -342,23 +343,25 @@ export const PromSettings = (props: Props) => {
             />
           </div>
         </div>
-        <div className="gf-form-inline">
-          <div className="gf-form max-width-30">
-            <FormField
-              label="Cache level"
-              labelWidth={14}
-              tooltip="Sets the browser caching level. Setting a value higher then 'low' will result in editor values from a different range then the active query range."
-              inputEl={
-                <Select
-                  className={`width-25`}
-                  onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
-                  options={cacheValueOptions}
-                  value={cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel)}
-                />
-              }
-            />
+        {config.featureToggles.prometheusResourceBrowserCache && (
+          <div className="gf-form-inline">
+            <div className="gf-form max-width-30">
+              <FormField
+                label="Cache level"
+                labelWidth={14}
+                tooltip="Sets the browser caching level. Setting a value higher then 'low' will result in editor values from a different range then the active query range."
+                inputEl={
+                  <Select
+                    className={`width-25`}
+                    onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
+                    options={cacheValueOptions}
+                    value={cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel)}
+                  />
+                }
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
       <ExemplarsSettings
         options={options.jsonData.exemplarTraceIdDestinations}

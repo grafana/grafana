@@ -10,7 +10,7 @@ import {
   HistoryItem,
   LanguageProvider,
 } from '@grafana/data';
-import { BackendSrvRequest } from '@grafana/runtime';
+import { BackendSrvRequest, config } from '@grafana/runtime';
 import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
@@ -165,7 +165,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   async loadMetricsMetadata() {
-    const headers = buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * 86400);
+    const headers = config.featureToggles.prometheusResourceBrowserCache
+      ? buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * 86400)
+      : {};
     this.metricsMetadata = fixSummariesMetadata(
       await this.request(
         '/api/v1/metadata',
