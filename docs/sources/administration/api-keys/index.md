@@ -87,7 +87,7 @@ For more information about permissions, refer to [Roles and permissions]({{< rel
 
 To migrate all API keys to service accounts, complete the following steps:
 
-1. Sign in to Grafana, hover your cursor over **Configuration** (the gear icon), and click **API Keys**.
+1. Sign in to Grafana, point to **Configuration** (the gear icon), and click **API Keys**.
 1. In the top of the page, find the section which says **Switch from API keys to service accounts**
 1. Click **Migrate to service accounts now**.
 1. A confirmation window will appear, asking to confirm the migration. Click **Yes, migrate now** if you are willing to continue.
