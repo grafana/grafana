@@ -10,6 +10,7 @@ import (
   "github.com/grafana/grafana/pkg/services/k8s/client"
   "github.com/grafana/grafana/pkg/services/k8s/informer"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/registry/corekind"
@@ -36,7 +37,7 @@ func New(
     informerFactory,{{range $i, $k := .Kinds }}
     {{ $k.Props.MachineName }}Watcher,{{end}}
   )
-  r.BasicService = services.NewBasicService(r.start, r.run, nil)
+  r.BasicService = services.NewBasicService(r.start, r.run, nil).WithName(modules.KubernetesCRDs)
   return r
 }
 

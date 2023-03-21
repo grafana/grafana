@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
@@ -22,7 +23,7 @@ type ResourceWatcher interface {
 }
 
 type Service interface {
-	services.Service
+	services.NamedService
 }
 
 type Informer interface {
@@ -60,7 +61,7 @@ func ProvideFactory(
 		restConfigProvider: restConfigProvider,
 	}
 
-	f.BasicService = services.NewBasicService(f.start, f.running, nil)
+	f.BasicService = services.NewBasicService(f.start, f.running, nil).WithName(modules.KubernetesInformers)
 
 	return f, nil
 }
