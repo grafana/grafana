@@ -878,7 +878,7 @@
         0
       ],
       "description": "A standalone panel",
-      "grafanaMaturityCount": 10,
+      "grafanaMaturityCount": 8,
       "lineageIsGroup": false,
       "links": {
         "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/librarypanel/schema-reference",
@@ -1492,7 +1492,7 @@
         0
       ],
       "description": "system account",
-      "grafanaMaturityCount": 9,
+      "grafanaMaturityCount": 7,
       "lineageIsGroup": false,
       "links": {
         "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/serviceaccount/schema-reference",
@@ -1642,7 +1642,7 @@
         0
       ],
       "description": "A team is a named grouping of Grafana users to which access control rules may be assigned.",
-      "grafanaMaturityCount": 7,
+      "grafanaMaturityCount": 5,
       "lineageIsGroup": false,
       "links": {
         "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/team/schema-reference",

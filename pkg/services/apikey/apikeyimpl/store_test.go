@@ -43,7 +43,7 @@ func seedApiKeys(t *testing.T, store store, num int) {
 	t.Helper()
 
 	for i := 0; i < num; i++ {
-		err := store.AddAPIKey(context.Background(), &apikey.AddCommand{
+		_, err := store.AddAPIKey(context.Background(), &apikey.AddCommand{
 			Name:  fmt.Sprintf("key:%d", i),
 			Key:   fmt.Sprintf("key:%d", i),
 			OrgID: 1,
@@ -64,15 +64,15 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 
 		t.Run("Given saved api key", func(t *testing.T) {
 			cmd := apikey.AddCommand{OrgID: 1, Name: "hello", Key: "asd"}
-			err := ss.AddAPIKey(context.Background(), &cmd)
+			_, err := ss.AddAPIKey(context.Background(), &cmd)
 			assert.Nil(t, err)
 
 			t.Run("Should be able to get key by name", func(t *testing.T) {
 				query := apikey.GetByNameQuery{KeyName: "hello", OrgID: 1}
-				err = ss.GetApiKeyByName(context.Background(), &query)
+				key, err := ss.GetApiKeyByName(context.Background(), &query)
 
 				assert.Nil(t, err)
-				assert.NotNil(t, query.Result)
+				assert.NotNil(t, key)
 			})
 
 			t.Run("Should be able to get key by hash", func(t *testing.T) {
@@ -91,77 +91,77 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 
 		t.Run("Add non expiring key", func(t *testing.T) {
 			cmd := apikey.AddCommand{OrgID: 1, Name: "non-expiring", Key: "asd1", SecondsToLive: 0}
-			err := ss.AddAPIKey(context.Background(), &cmd)
+			_, err := ss.AddAPIKey(context.Background(), &cmd)
 			assert.Nil(t, err)
 
 			query := apikey.GetByNameQuery{KeyName: "non-expiring", OrgID: 1}
-			err = ss.GetApiKeyByName(context.Background(), &query)
+			key, err := ss.GetApiKeyByName(context.Background(), &query)
 			assert.Nil(t, err)
-			assert.Nil(t, query.Result.Expires)
+			assert.Nil(t, key.Expires)
 		})
 
 		t.Run("Add an expiring key", func(t *testing.T) {
 			// expires in one hour
 			cmd := apikey.AddCommand{OrgID: 1, Name: "expiring-in-an-hour", Key: "asd2", SecondsToLive: 3600}
-			err := ss.AddAPIKey(context.Background(), &cmd)
+			_, err := ss.AddAPIKey(context.Background(), &cmd)
 			assert.Nil(t, err)
 
 			query := apikey.GetByNameQuery{KeyName: "expiring-in-an-hour", OrgID: 1}
-			err = ss.GetApiKeyByName(context.Background(), &query)
+			key, err := ss.GetApiKeyByName(context.Background(), &query)
 			assert.Nil(t, err)
 
-			assert.True(t, *query.Result.Expires >= timeNow().Unix())
+			assert.True(t, *key.Expires >= timeNow().Unix())
 
 			// timeNow() has been called twice since creation; once by AddAPIKey and once by GetApiKeyByName
 			// therefore two seconds should be subtracted by next value returned by timeNow()
 			// that equals the number by which timeSeed has been advanced
 			then := timeNow().Add(-2 * time.Second)
 			expected := then.Add(1 * time.Hour).UTC().Unix()
-			assert.Equal(t, *query.Result.Expires, expected)
+			assert.Equal(t, *key.Expires, expected)
 		})
 
 		t.Run("Last Used At datetime update", func(t *testing.T) {
 			// expires in one hour
 			cmd := apikey.AddCommand{OrgID: 1, Name: "last-update-at", Key: "asd3", SecondsToLive: 3600}
-			err := ss.AddAPIKey(context.Background(), &cmd)
+			key, err := ss.AddAPIKey(context.Background(), &cmd)
 			require.NoError(t, err)
 
-			assert.Nil(t, cmd.Result.LastUsedAt)
+			assert.Nil(t, key.LastUsedAt)
 
-			err = ss.UpdateAPIKeyLastUsedDate(context.Background(), cmd.Result.ID)
+			err = ss.UpdateAPIKeyLastUsedDate(context.Background(), key.ID)
 			require.NoError(t, err)
 
 			query := apikey.GetByNameQuery{KeyName: "last-update-at", OrgID: 1}
-			err = ss.GetApiKeyByName(context.Background(), &query)
+			key, err = ss.GetApiKeyByName(context.Background(), &query)
 			assert.Nil(t, err)
-			assert.NotNil(t, query.Result.LastUsedAt)
+			assert.NotNil(t, key.LastUsedAt)
 		})
 
 		t.Run("Add a key with negative lifespan", func(t *testing.T) {
 			// expires in one day
 			cmd := apikey.AddCommand{OrgID: 1, Name: "key-with-negative-lifespan", Key: "asd3", SecondsToLive: -3600}
-			err := ss.AddAPIKey(context.Background(), &cmd)
+			_, err := ss.AddAPIKey(context.Background(), &cmd)
 			assert.EqualError(t, err, apikey.ErrInvalidExpiration.Error())
 
 			query := apikey.GetByNameQuery{KeyName: "key-with-negative-lifespan", OrgID: 1}
-			err = ss.GetApiKeyByName(context.Background(), &query)
+			_, err = ss.GetApiKeyByName(context.Background(), &query)
 			assert.EqualError(t, err, "invalid API key")
 		})
 
 		t.Run("Add keys", func(t *testing.T) {
 			// never expires
 			cmd := apikey.AddCommand{OrgID: 1, Name: "key1", Key: "key1", SecondsToLive: 0}
-			err := ss.AddAPIKey(context.Background(), &cmd)
+			_, err := ss.AddAPIKey(context.Background(), &cmd)
 			assert.Nil(t, err)
 
 			// expires in 1s
 			cmd = apikey.AddCommand{OrgID: 1, Name: "key2", Key: "key2", SecondsToLive: 1}
-			err = ss.AddAPIKey(context.Background(), &cmd)
+			_, err = ss.AddAPIKey(context.Background(), &cmd)
 			assert.Nil(t, err)
 
 			// expires in one hour
 			cmd = apikey.AddCommand{OrgID: 1, Name: "key3", Key: "key3", SecondsToLive: 3600}
-			err = ss.AddAPIKey(context.Background(), &cmd)
+			_, err = ss.AddAPIKey(context.Background(), &cmd)
 			assert.Nil(t, err)
 
 			// advance mocked getTime by 1s
@@ -174,21 +174,21 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 				},
 			}
 			query := apikey.GetApiKeysQuery{OrgID: 1, IncludeExpired: false, User: testUser}
-			err = ss.GetAPIKeys(context.Background(), &query)
+			keys, err := ss.GetAPIKeys(context.Background(), &query)
 			assert.Nil(t, err)
 
-			for _, k := range query.Result {
+			for _, k := range keys {
 				if k.Name == "key2" {
 					t.Fatalf("key2 should not be there")
 				}
 			}
 
 			query = apikey.GetApiKeysQuery{OrgID: 1, IncludeExpired: true, User: testUser}
-			err = ss.GetAPIKeys(context.Background(), &query)
+			keys, err = ss.GetAPIKeys(context.Background(), &query)
 			assert.Nil(t, err)
 
 			found := false
-			for _, k := range query.Result {
+			for _, k := range keys {
 				if k.Name == "key2" {
 					found = true
 				}
@@ -211,12 +211,12 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 		t.Run("Testing API Duplicate Key Errors", func(t *testing.T) {
 			t.Run("Given saved api key", func(t *testing.T) {
 				cmd := apikey.AddCommand{OrgID: 0, Name: "duplicate", Key: "asd"}
-				err := ss.AddAPIKey(context.Background(), &cmd)
+				_, err := ss.AddAPIKey(context.Background(), &cmd)
 				assert.Nil(t, err)
 
 				t.Run("Add API Key with existing Org ID and Name", func(t *testing.T) {
 					cmd := apikey.AddCommand{OrgID: 0, Name: "duplicate", Key: "asd"}
-					err = ss.AddAPIKey(context.Background(), &cmd)
+					_, err = ss.AddAPIKey(context.Background(), &cmd)
 					assert.EqualError(t, err, apikey.ErrDuplicate.Error())
 				})
 			})
@@ -258,9 +258,9 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 				seedApiKeys(t, store, 10)
 
 				query := &apikey.GetApiKeysQuery{OrgID: 1, User: tt.user}
-				err := store.GetAPIKeys(context.Background(), query)
+				keys, err := store.GetAPIKeys(context.Background(), query)
 				require.NoError(t, err)
-				assert.Len(t, query.Result, tt.expectedNumKeys)
+				assert.Len(t, keys, tt.expectedNumKeys)
 
 				res, err := store.GetAllAPIKeys(context.Background(), 1)
 				require.NoError(t, err)
