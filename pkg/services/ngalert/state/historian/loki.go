@@ -72,7 +72,13 @@ func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
 func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	streams := statesToStreams(rule, states, h.externalLabels, logger)
+
 	errCh := make(chan error, 1)
+	if len(streams) == 0 {
+		close(errCh)
+		return errCh
+	}
+
 	go func() {
 		defer close(errCh)
 
@@ -236,7 +242,7 @@ func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 }
 
 func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) []stream {
-	buckets := make(map[string][]sample) // label repr -> entries
+	buckets := make(map[string][]sample) // label repr (JSON) -> entries
 	for _, state := range states {
 		if !shouldRecord(state) {
 			continue
@@ -248,7 +254,12 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 		labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
 		labels[GroupLabel] = fmt.Sprint(rule.Group)
 		labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
-		repr := labels.String()
+		lblJsn, err := json.Marshal(labels)
+		if err != nil {
+			logger.Error("Failed to marshal labels to JSON", "error", err)
+			continue
+		}
+		repr := string(lblJsn)
 
 		entry := lokiEntry{
 			SchemaVersion: 1,

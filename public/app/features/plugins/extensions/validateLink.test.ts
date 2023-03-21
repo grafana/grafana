@@ -1,5 +1,3 @@
-import type { AppPluginExtensionLink } from '@grafana/data';
-
 import { createLinkValidator } from './validateLink';
 
 describe('extension link validator', () => {
@@ -11,11 +9,6 @@ describe('extension link validator', () => {
   });
 
   const context = {};
-  const extension: AppPluginExtensionLink = {
-    title: 'Go to page one',
-    description: 'Will navigate the user to page one',
-    path: `/a/${pluginId}/one`,
-  };
 
   it('should return link configuration if path is valid', () => {
     const configureWithValidation = validator(() => {
@@ -24,7 +17,7 @@ describe('extension link validator', () => {
       };
     });
 
-    const configured = configureWithValidation(extension, context);
+    const configured = configureWithValidation(context);
     expect(configured).toEqual({
       path: `/a/${pluginId}/other`,
     });
@@ -37,7 +30,7 @@ describe('extension link validator', () => {
       };
     });
 
-    const configured = configureWithValidation(extension, context);
+    const configured = configureWithValidation(context);
     expect(configured).toEqual({ title: 'Go to page two' });
   });
 
@@ -48,7 +41,7 @@ describe('extension link validator', () => {
       };
     });
 
-    const configured = configureWithValidation(extension, context);
+    const configured = configureWithValidation(context);
     expect(configured).toBeUndefined();
   });
 
@@ -57,7 +50,7 @@ describe('extension link validator', () => {
       return undefined;
     });
 
-    const configured = configureWithValidation(extension, context);
+    const configured = configureWithValidation(context);
     expect(configured).toBeUndefined();
   });
 });

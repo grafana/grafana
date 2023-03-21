@@ -110,7 +110,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               aria-label="Select resolution"
             />
           </EditorField>
-          {config.featureToggles.lokiQuerySplitting && (
+          {config.featureToggles.lokiQuerySplittingConfig && config.featureToggles.lokiQuerySplitting && (
             <EditorField
               label="Chunk Duration"
               tooltip="Defines the duration of a single query chunk when query chunking is used."

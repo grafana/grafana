@@ -82,7 +82,7 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.secondary,
       color: theme.colors.text.primary,
       border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: '1px',
+      borderRadius: theme.shape.radius.default,
       height: theme.spacing(4),
       boxShadow: theme.shadows.z1,
     }),
