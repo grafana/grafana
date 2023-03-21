@@ -16,7 +16,7 @@ import {
   checkLogsError,
   getLogLevel,
   getLogLevelFromKey,
-  getLogsVolumeDimensions,
+  getLogsVolumeMaximum,
   logRowsToReadableJson,
   sortLogsResult,
 } from './utils';
@@ -273,7 +273,7 @@ describe('logRowsToReadableJson', () => {
   });
 });
 
-describe('getLogsVolumeDimensions', () => {
+describe('getLogsVolumeMax', () => {
   function mockLogVolumeDataFrame(values: number[], absoluteRange: AbsoluteTimeRange) {
     return new MutableDataFrame({
       meta: {
@@ -296,18 +296,12 @@ describe('getLogsVolumeDimensions', () => {
     });
   }
 
-  it('calculates the widest range covering all log volumes', () => {
-    const dimensions = getLogsVolumeDimensions(
-      [
-        mockLogVolumeDataFrame([0, 20, 10, 5, 30, 10, 5], { from: 5, to: 20 }),
-        mockLogVolumeDataFrame([0, 10, 20, 5, 10, 0, 20], { from: 10, to: 25 }),
-      ],
-      { from: 10, to: 20 }
-    );
+  it('calculates the maximum value of all log volumes', () => {
+    const maximum = getLogsVolumeMaximum([
+      mockLogVolumeDataFrame([0, 20, 10, 5, 30, 10, 5], { from: 5, to: 20 }),
+      mockLogVolumeDataFrame([0, 10, 20, 5, 10, 0, 20], { from: 10, to: 25 }),
+    ]);
 
-    expect(dimensions).toEqual({
-      maximum: 30,
-      range: { from: 5, to: 25 },
-    });
+    expect(maximum).toEqual(30);
   });
 });

@@ -695,6 +695,10 @@ function canReuseSupplementaryQueryData(
     head
   );
 
+  const allSupportZoomingIn = supplementaryQueryData.data.every((data: DataFrame) => {
+    return data.meta?.custom?.reuseWhenZoomingIn;
+  });
+
   const allQueriesAreTheSame = deepEqual(newQueriesByRefId, existingDataByRefId);
 
   const allResultsHaveWiderRange = supplementaryQueryData.data.every((data: DataFrame) => {
@@ -707,7 +711,7 @@ function canReuseSupplementaryQueryData(
     return hasWiderRange;
   });
 
-  return allQueriesAreTheSame && allResultsHaveWiderRange;
+  return allSupportZoomingIn && allQueriesAreTheSame && allResultsHaveWiderRange;
 }
 
 /**

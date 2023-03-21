@@ -7,7 +7,6 @@ import {
   LogsModel,
   LogsSortOrder,
   DataFrame,
-  AbsoluteTimeRange,
   FieldCache,
   FieldType,
   LogsVolumeType,
@@ -161,24 +160,10 @@ export function logRowsToReadableJson(logs: LogRowModel[]) {
   });
 }
 
-export const getLogsVolumeDimensions = (
-  dataFrames: DataFrame[],
-  defaultRange: AbsoluteTimeRange
-): { maximum: number; range: AbsoluteTimeRange } => {
-  let widestRange: AbsoluteTimeRange | undefined;
+export const getLogsVolumeMaximum = (dataFrames: DataFrame[]) => {
   let maximumValue = -Infinity;
 
   dataFrames.forEach((dataFrame: DataFrame) => {
-    const dataFrameRange = dataFrame.meta?.custom?.absoluteRange || defaultRange;
-    if (dataFrameRange) {
-      if (!widestRange) {
-        widestRange = dataFrameRange;
-      } else {
-        widestRange.to = Math.max(dataFrameRange.to, widestRange.to);
-        widestRange.from = Math.min(dataFrameRange.from, widestRange.from);
-      }
-    }
-
     const fieldCache = new FieldCache(dataFrame);
     const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
     if (valueField) {
@@ -186,10 +171,7 @@ export const getLogsVolumeDimensions = (
     }
   });
 
-  return {
-    maximum: maximumValue,
-    range: widestRange || defaultRange,
-  };
+  return maximumValue;
 };
 
 export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: string; refId: string } | null => {

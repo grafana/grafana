@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { Button, InlineField, useStyles2 } from '@grafana/ui';
 
-import { getLogsVolumeDimensions, isLogsVolumeLimited } from '../logs/utils';
+import { getLogsVolumeMaximum, isLogsVolumeLimited } from '../logs/utils';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
 import { SupplementaryResultError } from './SupplementaryResultError';
@@ -42,18 +42,14 @@ export const LogsVolumePanelList = ({
   splitOpen,
   timeZone,
 }: Props) => {
-  const {
-    logVolumes,
-    maximum: allLogsVolumeMaximum,
-    range: alignedAbsoluteRange,
-  } = useMemo(() => {
+  const { logVolumes, maximum: allLogsVolumeMaximum } = useMemo(() => {
     const data = logsVolumeData?.data || [];
     const logVolumes = groupBy(data, 'meta.custom.sourceQuery.refId');
     return {
-      ...getLogsVolumeDimensions(data, absoluteRange),
+      maximum: getLogsVolumeMaximum(data),
       logVolumes,
     };
-  }, [logsVolumeData, absoluteRange]);
+  }, [logsVolumeData]);
 
   const styles = useStyles2(getStyles);
 
@@ -77,7 +73,7 @@ export const LogsVolumePanelList = ({
         return (
           <LogsVolumePanel
             key={index}
-            absoluteRange={alignedAbsoluteRange}
+            absoluteRange={absoluteRange}
             allLogsVolumeMaximum={allLogsVolumeMaximum}
             width={width}
             logsVolumeData={logsVolumeData}
