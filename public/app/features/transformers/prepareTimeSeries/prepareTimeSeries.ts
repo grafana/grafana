@@ -29,9 +29,11 @@ import { partitionByValues } from '../partitionByValues/partitionByValues';
 
 export enum timeSeriesFormat {
   TimeSeriesWide = 'wide',
-  TimeSeriesMany = 'many',
   TimeSeriesLong = 'long',
   TimeSeriesMulti = 'multi',
+
+  /** @deprecated use multi */
+  TimeSeriesMany = 'many',
 }
 
 export type PrepareTimeSeriesOptions = {
@@ -309,7 +311,7 @@ export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<Prepar
 
   transformer: (options: PrepareTimeSeriesOptions) => {
     const format = options?.format ?? timeSeriesFormat.TimeSeriesWide;
-    if (format === timeSeriesFormat.TimeSeriesMany || timeSeriesFormat.TimeSeriesMulti) {
+    if (format === timeSeriesFormat.TimeSeriesMany || format === timeSeriesFormat.TimeSeriesMulti) {
       return toTimeSeriesMulti;
     } else if (format === timeSeriesFormat.TimeSeriesLong) {
       return toTimeSeriesLong;
