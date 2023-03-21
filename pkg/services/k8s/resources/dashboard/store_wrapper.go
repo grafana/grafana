@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/k8s/client"
-	"github.com/grafana/grafana/pkg/services/k8s/crd"
 	"github.com/grafana/grafana/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -89,7 +88,7 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		cmd.FolderID = f.ID
 	}
 
-	anno := crd.CommonAnnotations{
+	anno := CommonAnnotations{
 		Message:   cmd.Message,
 		FolderUID: cmd.FolderUID,
 		PluginID:  cmd.PluginID,
@@ -114,10 +113,10 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 	uid := dto.UID
 	if uid == "" {
 		uid = util.GenerateShortUID()
-		meta.Name = crd.GrafanaUIDToK8sName(uid)
+		meta.Name = GrafanaUIDToK8sName(uid)
 	} else {
 		// Get the previous version
-		meta.Name = crd.GrafanaUIDToK8sName(uid)
+		meta.Name = GrafanaUIDToK8sName(uid)
 		r, err := dashboardResource.Get(ctx, meta.Name, metav1.GetOptions{})
 		if err != nil || r == nil {
 			fmt.Printf("did not find: %s\n", uid)

@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/k8s/crd"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -56,13 +55,13 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 	if uid == "" {
 		uid = dash.GetName()
 		data.Set("uid", uid)
-	} else if dash.GetName() != crd.GrafanaUIDToK8sName(uid) {
+	} else if dash.GetName() != GrafanaUIDToK8sName(uid) {
 		return fmt.Errorf("UID and k8s name do not match")
 	}
 	c.log.Debug("adding dashboard", "dash", uid)
 
 	data.Del("id") // ignore any internal id
-	anno := crd.CommonAnnotations{}
+	anno := CommonAnnotations{}
 	anno.Read(dash.Annotations)
 
 	if anno.CreatedAt < 1 {
@@ -74,7 +73,7 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 
 	save := &dashboards.Dashboard{
 		UID:       uid,
-		OrgID:     crd.GetOrgIDFromNamespace(dash.Namespace),
+		OrgID:     GetOrgIDFromNamespace(dash.Namespace),
 		Data:      data,
 		Created:   time.UnixMilli(anno.CreatedAt),
 		CreatedBy: anno.CreatedBy,
@@ -121,10 +120,10 @@ func (c *watcher) Update(ctx context.Context, oldObj, newObj *Dashboard) error {
 }
 
 func (c *watcher) Delete(ctx context.Context, dash *Dashboard) error {
-	anno := crd.CommonAnnotations{}
+	anno := CommonAnnotations{}
 	anno.Read(dash.Annotations)
 
-	orgID := crd.GetOrgIDFromNamespace(dash.Namespace)
+	orgID := GetOrgIDFromNamespace(dash.Namespace)
 	existing, err := c.dashboardStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{
 		UID:   dash.Name, // Assumes same as UID!
 		OrgID: orgID,
