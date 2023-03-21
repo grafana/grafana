@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -47,9 +48,6 @@ func TestTracingMiddleware(t *testing.T) {
 	})
 
 	t.Run("GET request that returns 200 OK should propagate parent span", func(t *testing.T) {
-		type withTraceID interface {
-			TraceIDString() string
-		}
 		expectedTraceID := "<unset>"
 
 		finalRoundTripper := httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
@@ -57,11 +55,11 @@ func TestTracingMiddleware(t *testing.T) {
 			require.NotEmpty(t, req.Header.Get("Uber-Trace-Id"))
 			require.NotEmpty(t, req.Header.Get("Traceparent"))
 
-			_, span := tracer.Start(req.Context(), "inner")
+			ctx, span := tracer.Start(req.Context(), "inner")
 			defer span.End()
 
 			// child span should have the same trace ID as the parent span
-			require.Equal(t, expectedTraceID, span.(withTraceID).TraceIDString())
+			require.Equal(t, expectedTraceID, tracing.TraceIDFromContext(ctx, false))
 
 			return &http.Response{StatusCode: http.StatusOK, Request: req}, nil
 		})
@@ -81,7 +79,8 @@ func TestTracingMiddleware(t *testing.T) {
 		ctx, span := tracer.Start(context.Background(), "testspan")
 		defer span.End()
 
-		expectedTraceID = span.(withTraceID).TraceIDString()
+		expectedTraceID = tracing.TraceIDFromContext(ctx, false)
+		assert.NotEmpty(t, expectedTraceID)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://test.com/query", nil)
 		require.NoError(t, err)
