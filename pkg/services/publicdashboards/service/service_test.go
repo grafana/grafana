@@ -67,15 +67,15 @@ func TestGetPublicDashboard(t *testing.T) {
 			DashResp: &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
 		},
 		{
-			Name:        "returns ErrPublicDashboardNotFound when isEnabled is false",
+			Name:        "returns dashboard when isEnabled is false",
 			AccessToken: "abc123",
 			StoreResp: &storeResp{
 				pd:  &PublicDashboard{AccessToken: "abcdToken", IsEnabled: false},
-				d:   &dashboards.Dashboard{UID: "mydashboard"},
+				d:   &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
 				err: nil,
 			},
-			ErrResp:  ErrPublicDashboardNotFound,
-			DashResp: nil,
+			ErrResp:  nil,
+			DashResp: &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
 		},
 		{
 			Name:        "returns ErrPublicDashboardNotFound if PublicDashboard missing",
@@ -105,6 +105,72 @@ func TestGetPublicDashboard(t *testing.T) {
 			fakeStore.On("FindDashboard", mock.Anything, mock.Anything, mock.Anything).Return(test.StoreResp.d, test.StoreResp.err)
 
 			pdc, dash, err := service.FindPublicDashboardAndDashboardByAccessToken(context.Background(), test.AccessToken)
+			if test.ErrResp != nil {
+				assert.Error(t, test.ErrResp, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			assert.Equal(t, test.DashResp, dash)
+
+			if test.DashResp != nil {
+				assert.NotNil(t, dash.CreatedBy)
+				assert.Equal(t, test.StoreResp.pd, pdc)
+			}
+		})
+	}
+}
+
+func TestGetEnabledPublicDashboard(t *testing.T) {
+	type storeResp struct {
+		pd  *PublicDashboard
+		d   *dashboards.Dashboard
+		err error
+	}
+
+	testCases := []struct {
+		Name        string
+		AccessToken string
+		StoreResp   *storeResp
+		ErrResp     error
+		DashResp    *dashboards.Dashboard
+	}{
+		{
+			Name:        "returns a dashboard",
+			AccessToken: "abc123",
+			StoreResp: &storeResp{
+				pd:  &PublicDashboard{AccessToken: "abcdToken", IsEnabled: true},
+				d:   &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
+				err: nil,
+			},
+			ErrResp:  nil,
+			DashResp: &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
+		},
+		{
+			Name:        "returns ErrPublicDashboardNotFound when isEnabled is false",
+			AccessToken: "abc123",
+			StoreResp: &storeResp{
+				pd:  &PublicDashboard{AccessToken: "abcdToken", IsEnabled: false},
+				d:   &dashboards.Dashboard{UID: "mydashboard"},
+				err: nil,
+			},
+			ErrResp:  ErrPublicDashboardNotFound,
+			DashResp: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.Name, func(t *testing.T) {
+			fakeStore := FakePublicDashboardStore{}
+			service := &PublicDashboardServiceImpl{
+				log:   log.New("test.logger"),
+				store: &fakeStore,
+			}
+
+			fakeStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(test.StoreResp.pd, test.StoreResp.err)
+			fakeStore.On("FindDashboard", mock.Anything, mock.Anything, mock.Anything).Return(test.StoreResp.d, test.StoreResp.err)
+
+			pdc, dash, err := service.FindEnabledPublicDashboardAndDashboardByAccessToken(context.Background(), test.AccessToken)
 			if test.ErrResp != nil {
 				assert.Error(t, test.ErrResp, err)
 			} else {
@@ -212,7 +278,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		assert.Equal(t, defaultPubdashTimeSettings, pubdash.TimeSettings)
 	})
 
-	t.Run("Validate pubdash whose dashboard has template variables returns error", func(t *testing.T) {
+	t.Run("Creates pubdash whose dashboard has template variables successfully", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
 		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
@@ -220,10 +286,12 @@ func TestCreatePublicDashboard(t *testing.T) {
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		templateVars := make([]map[string]interface{}, 1)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, templateVars, nil)
+		serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 
 		service := &PublicDashboardServiceImpl{
-			log:   log.New("test.logger"),
-			store: publicdashboardStore,
+			log:            log.New("test.logger"),
+			store:          publicdashboardStore,
+			serviceWrapper: serviceWrapper,
 		}
 
 		dto := &SavePublicDashboardDTO{
@@ -238,7 +306,13 @@ func TestCreatePublicDashboard(t *testing.T) {
 		}
 
 		_, err = service.Create(context.Background(), SignedInUser, dto)
-		require.Error(t, err)
+		require.NoError(t, err)
+
+		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgID, dashboard.UID)
+		require.NoError(t, err)
+
+		assert.Equal(t, dashboard.UID, pubdash.DashboardUid)
+		assert.Equal(t, dashboard.OrgID, pubdash.OrgId)
 	})
 
 	t.Run("Throws an error when pubdash with generated access token already exists", func(t *testing.T) {
@@ -498,13 +572,13 @@ func TestDeletePublicDashboard(t *testing.T) {
 		{
 			Name:             "Public dashboard not found",
 			AffectedRowsResp: 0,
-			ExpectedErrResp:  ErrPublicDashboardNotFound.Errorf("Delete: Public dashboard not found by orgId: 13 and Uid: uid"),
+			ExpectedErrResp:  nil,
 			StoreRespErr:     nil,
 		},
 		{
 			Name:             "Database error",
 			AffectedRowsResp: 0,
-			ExpectedErrResp:  ErrInternalServerError.Errorf("Delete: failed to delete a public dashboard by orgId: 13 and Uid: uid db error!"),
+			ExpectedErrResp:  ErrInternalServerError.Errorf("Delete: failed to delete a public dashboard by Uid: uid db error!"),
 			StoreRespErr:     errors.New("db error!"),
 		},
 	}
@@ -512,14 +586,18 @@ func TestDeletePublicDashboard(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.Name, func(t *testing.T) {
 			store := NewFakePublicDashboardStore(t)
-			store.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.AffectedRowsResp, tt.StoreRespErr)
-
-			service := &PublicDashboardServiceImpl{
+			store.On("Delete", mock.Anything, mock.Anything).Return(tt.AffectedRowsResp, tt.StoreRespErr)
+			serviceWrapper := &PublicDashboardServiceWrapperImpl{
 				log:   log.New("test.logger"),
 				store: store,
 			}
+			service := &PublicDashboardServiceImpl{
+				log:            log.New("test.logger"),
+				store:          store,
+				serviceWrapper: serviceWrapper,
+			}
 
-			err := service.Delete(context.Background(), 13, "uid")
+			err := service.Delete(context.Background(), "uid")
 			if tt.ExpectedErrResp != nil {
 				assert.Equal(t, tt.ExpectedErrResp.Error(), err.Error())
 				assert.Equal(t, tt.ExpectedErrResp.Error(), err.Error())
@@ -966,6 +1044,56 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardAccessToken(t *testing.T) 
 	}
 }
 
+func TestDeleteByDashboard(t *testing.T) {
+	t.Run("will return nil when pubdash not found", func(t *testing.T) {
+		store := NewFakePublicDashboardStore(t)
+		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
+		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: false}
+		store.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+
+		err := pd.DeleteByDashboard(context.Background(), dashboard)
+		assert.Nil(t, err)
+	})
+	t.Run("will delete pubdash when dashboard deleted", func(t *testing.T) {
+		store := NewFakePublicDashboardStore(t)
+		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
+		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: false}
+		pubdash := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: dashboard.UID}
+		store.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(pubdash, nil)
+		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
+
+		err := pd.DeleteByDashboard(context.Background(), dashboard)
+		require.NoError(t, err)
+	})
+
+	t.Run("will delete pubdashes when dashboard folder deleted", func(t *testing.T) {
+		store := NewFakePublicDashboardStore(t)
+		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
+		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: true}
+		pubdash1 := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: dashboard.UID}
+		pubdash2 := &PublicDashboard{Uid: "3", OrgId: 1, DashboardUid: dashboard.UID}
+		store.On("FindByDashboardFolder", mock.Anything, mock.Anything).Return([]*PublicDashboard{pubdash1, pubdash2}, nil)
+		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
+		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
+
+		err := pd.DeleteByDashboard(context.Background(), dashboard)
+		require.NoError(t, err)
+	})
+}
+
+func TestGenerateAccessToken(t *testing.T) {
+	accessToken, err := GenerateAccessToken()
+
+	t.Run("length", func(t *testing.T) {
+		require.NoError(t, err)
+		assert.Equal(t, 32, len(accessToken))
+	})
+
+	t.Run("no - ", func(t *testing.T) {
+		assert.False(t, strings.Contains("-", accessToken))
+	})
+}
+
 func CreateDatasource(dsType string, uid string) struct {
 	Type *string `json:"type,omitempty"`
 	Uid  *string `json:"uid,omitempty"`
@@ -1069,17 +1197,4 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 	dash.Data.Set("id", dash.ID)
 	dash.Data.Set("uid", dash.UID)
 	return dash
-}
-
-func TestGenerateAccessToken(t *testing.T) {
-	accessToken, err := GenerateAccessToken()
-
-	t.Run("length", func(t *testing.T) {
-		require.NoError(t, err)
-		assert.Equal(t, 32, len(accessToken))
-	})
-
-	t.Run("no - ", func(t *testing.T) {
-		assert.False(t, strings.Contains("-", accessToken))
-	})
 }

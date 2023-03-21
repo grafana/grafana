@@ -67,8 +67,8 @@ import {
   findLastPosition,
   getLabelFilterPositions,
 } from './modifyQuery';
+import { runQueryInChunks } from './queryChunking';
 import { getQueryHints } from './queryHints';
-import { runPartitionedQueries } from './querySplitting';
 import {
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
@@ -76,7 +76,7 @@ import {
   getParserFromQuery,
   isLogsQuery,
   isValidQuery,
-  requestSupportsPartitioning,
+  requestSupporsChunking,
 } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
@@ -257,7 +257,7 @@ export class LokiDatasource
       .map(getNormalizedLokiQuery) // "fix" the `.queryType` prop
       .map((q) => ({ ...q, maxLines: q.maxLines ?? this.maxLines }));
 
-    const fixedRequest: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] } = {
+    const fixedRequest: DataQueryRequest<LokiQuery> = {
       ...request,
       targets: queries,
     };
@@ -285,8 +285,8 @@ export class LokiDatasource
       return this.runLiveQueryThroughBackend(fixedRequest);
     }
 
-    if (config.featureToggles.lokiQuerySplitting && requestSupportsPartitioning(fixedRequest.targets)) {
-      return runPartitionedQueries(this, fixedRequest);
+    if (config.featureToggles.lokiQuerySplitting && requestSupporsChunking(fixedRequest.targets)) {
+      return runQueryInChunks(this, fixedRequest);
     }
 
     return this.runQuery(fixedRequest);
@@ -424,9 +424,9 @@ export class LokiDatasource
     return res.data ?? (res || []);
   }
 
-  async getQueryStats(query: LokiQuery): Promise<QueryStats> {
+  async getQueryStats(query: string): Promise<QueryStats> {
     const { start, end } = this.getTimeRangeParams();
-    const labelMatchers = getStreamSelectorsFromQuery(query.expr);
+    const labelMatchers = getStreamSelectorsFromQuery(query);
 
     let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
 

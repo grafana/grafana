@@ -1,16 +1,19 @@
 package signature
 
 import (
+	"context"
 	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestReadPluginManifest(t *testing.T) {
@@ -152,7 +155,11 @@ func TestCalculate(t *testing.T) {
 			setting.AppUrl = tc.appURL
 
 			basePath := filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin")
-			sig, err := Calculate(log.NewTestLogger(), plugins.External, plugins.FoundPlugin{
+			sig, err := Calculate(context.Background(), log.NewTestLogger(), &fakes.FakePluginSource{
+				PluginClassFunc: func(ctx context.Context) plugins.Class {
+					return plugins.External
+				},
+			}, plugins.FoundPlugin{
 				JSONData: plugins.JSONData{
 					ID: "test-datasource",
 					Info: plugins.Info{
@@ -178,7 +185,11 @@ func TestCalculate(t *testing.T) {
 		basePath := "../testdata/renderer-added-file/plugin"
 
 		runningWindows = true
-		sig, err := Calculate(log.NewTestLogger(), plugins.External, plugins.FoundPlugin{
+		sig, err := Calculate(context.Background(), log.NewTestLogger(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+		}, plugins.FoundPlugin{
 			JSONData: plugins.JSONData{
 				ID:   "test-renderer",
 				Type: plugins.Renderer,

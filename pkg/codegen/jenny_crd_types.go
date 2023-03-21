@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/kindsys"
 )
 
 // CRDTypesJenny generates the OpenAPI CRD representation for a core

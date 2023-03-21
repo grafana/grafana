@@ -1,19 +1,26 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { css } from '@emotion/css';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 import { FetchError, isFetchError } from '@grafana/runtime';
-import { Select, HorizontalGroup } from '@grafana/ui';
+import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
-import { TraceqlFilter } from '../dataquery.gen';
+import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
-import { operators as allOperators } from '../traceql/traceql';
+import { operators as allOperators, stringOperators, numberOperators } from '../traceql/traceql';
 
-import { operatorSelectableValue } from './utils';
+import { operatorSelectableValue, scopeHelper } from './utils';
+
+const getStyles = () => ({
+  dropdown: css`
+    box-shadow: none;
+  `,
+});
 
 interface Props {
   filter: TraceqlFilter;
@@ -23,21 +30,13 @@ interface Props {
   setError: (error: FetchError) => void;
   isTagsLoading?: boolean;
   tags: string[];
-  operators?: string[];
 }
-const SearchField = ({
-  filter,
-  datasource,
-  updateFilter,
-  deleteFilter,
-  isTagsLoading,
-  tags,
-  setError,
-  operators,
-}: Props) => {
+const SearchField = ({ filter, datasource, updateFilter, deleteFilter, isTagsLoading, tags, setError }: Props) => {
+  const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [isLoadingValues, setIsLoadingValues] = useState(false);
   const [options, setOptions] = useState<Array<SelectableValue<string>>>([]);
+  const [scopedTag, setScopedTag] = useState(scopeHelper(filter) + filter.tag);
   // We automatically change the operator to the regex op when users select 2 or more values
   // However, they expect this to be automatically rolled back to the previous operator once
   // there's only one value selected, so we store the previous operator and value
@@ -58,53 +57,69 @@ const SearchField = ({
     setPrevValue(filter.value);
   }, [filter.value]);
 
-  const loadOptions = useCallback(
-    async (name: string) => {
-      setIsLoadingValues(true);
+  useEffect(() => {
+    const newScopedTag = scopeHelper(filter) + filter.tag;
+    if (newScopedTag !== scopedTag) {
+      setScopedTag(newScopedTag);
+    }
+  }, [filter, scopedTag]);
 
-      try {
-        const options = await languageProvider.getOptionsV2(name);
-        return options;
-      } catch (error) {
-        if (isFetchError(error) && error?.status === 404) {
-          setError(error);
-        } else if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
-        }
-        return [];
-      } finally {
-        setIsLoadingValues(false);
+  const updateOptions = useCallback(async () => {
+    try {
+      setIsLoadingValues(true);
+      setOptions(await languageProvider.getOptionsV2(scopedTag));
+    } catch (error) {
+      // Display message if Tempo is connected but search 404's
+      if (isFetchError(error) && error?.status === 404) {
+        setError(error);
+      } else if (error instanceof Error) {
+        dispatch(notifyApp(createErrorNotification('Error', error)));
       }
-    },
-    [setError, languageProvider]
-  );
+    } finally {
+      setIsLoadingValues(false);
+    }
+  }, [scopedTag, languageProvider, setError]);
 
   useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        if (filter.tag) {
-          setOptions(await loadOptions(filter.tag));
-        }
-      } catch (error) {
-        // Display message if Tempo is connected but search 404's
-        if (isFetchError(error) && error?.status === 404) {
-          setError(error);
-        } else if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
-        }
-      }
-    };
-    fetchOptions();
-  }, [languageProvider, loadOptions, setError, filter.tag]);
+    updateOptions();
+  }, [updateOptions]);
+
+  const scopeOptions = Object.values(TraceqlSearchScope).map((t) => ({ label: t, value: t }));
+
+  // If all values have type string or int/float use a focused list of operators instead of all operators
+  const optionsOfFirstType = options.filter((o) => o.type === options[0]?.type);
+  const uniqueOptionType = options.length === optionsOfFirstType.length ? options[0]?.type : undefined;
+  let operatorList = allOperators;
+  switch (uniqueOptionType) {
+    case 'string':
+      operatorList = stringOperators;
+      break;
+    case 'int':
+    case 'float':
+      operatorList = numberOperators;
+  }
 
   return (
-    <HorizontalGroup spacing={'none'}>
+    <HorizontalGroup spacing={'none'} width={'auto'}>
       {filter.type === 'dynamic' && (
         <Select
+          className={styles.dropdown}
+          inputId={`${filter.id}-scope`}
+          options={scopeOptions}
+          value={filter.scope}
+          onChange={(v) => {
+            updateFilter({ ...filter, scope: v?.value });
+          }}
+          placeholder="Select scope"
+          aria-label={`select ${filter.id} scope`}
+        />
+      )}
+      {filter.type === 'dynamic' && (
+        <Select
+          className={styles.dropdown}
           inputId={`${filter.id}-tag`}
           isLoading={isTagsLoading}
           options={tags.map((t) => ({ label: t, value: t }))}
-          onOpenMenu={() => tags}
           value={filter.tag}
           onChange={(v) => {
             updateFilter({ ...filter, tag: v?.value });
@@ -116,8 +131,9 @@ const SearchField = ({
         />
       )}
       <Select
+        className={styles.dropdown}
         inputId={`${filter.id}-operator`}
-        options={(operators || allOperators).map(operatorSelectableValue)}
+        options={operatorList.map(operatorSelectableValue)}
         value={filter.operator}
         onChange={(v) => {
           updateFilter({ ...filter, operator: v?.value });
@@ -128,14 +144,10 @@ const SearchField = ({
         width={8}
       />
       <Select
+        className={styles.dropdown}
         inputId={`${filter.id}-value`}
         isLoading={isLoadingValues}
         options={options}
-        onOpenMenu={() => {
-          if (filter.tag) {
-            loadOptions(filter.tag);
-          }
-        }}
         value={filter.value}
         onChange={(val) => {
           if (Array.isArray(val)) {

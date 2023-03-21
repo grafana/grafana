@@ -205,7 +205,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           subQueries.push(
             this._request('/api/search', {
               q: queryValue,
-              limit: options.targets[0].limit,
+              limit: options.targets[0].limit ?? DEFAULT_LIMIT,
               start: options.range.from.unix(),
               end: options.range.to.unix(),
             }).pipe(
@@ -236,7 +236,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         subQueries.push(
           this._request('/api/search', {
             q: queryValue,
-            limit: options.targets[0].limit,
+            limit: options.targets[0].limit ?? DEFAULT_LIMIT,
             start: options.range.from.unix(),
             end: options.range.to.unix(),
           }).pipe(

@@ -39,7 +39,7 @@
   "dependencies": {
     "@grafana/data": "9.5.0-pre",
     "@grafana/e2e-selectors": "9.5.0-pre",
-    "@grafana/faro-web-sdk": "1.0.0",
+    "@grafana/faro-web-sdk": "1.0.2",
     "@grafana/ui": "9.5.0-pre",
     "@sentry/browser": "6.19.7",
     "history": "4.10.1",
@@ -67,7 +67,7 @@
     "lodash": "4.17.21",
     "react": "17.0.2",
     "react-dom": "17.0.2",
-    "rimraf": "4.2.0",
+    "rimraf": "4.4.0",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",

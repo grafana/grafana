@@ -14,7 +14,7 @@ export interface PluginSignatureBadgeProps extends HTMLAttributes<HTMLDivElement
 /**
  * @public
  */
-export const PluginSignatureBadge: React.FC<PluginSignatureBadgeProps> = ({ status, ...otherProps }) => {
+export const PluginSignatureBadge = ({ status, ...otherProps }: PluginSignatureBadgeProps) => {
   const display = getSignatureDisplayModel(status);
   return (
     <Badge
