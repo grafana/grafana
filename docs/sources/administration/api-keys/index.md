@@ -139,11 +139,7 @@ Complete the following steps to migrate from API keys to service accounts using 
 
 This section shows you how to migrate API keys to Grafana service accounts using Terraform.
 
-#### Before you begin
 
-To follow these instructions, you need at least one of the following:
-
-- N/A
 
 #### Steps
 
