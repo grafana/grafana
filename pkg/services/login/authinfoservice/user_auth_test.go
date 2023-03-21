@@ -520,10 +520,10 @@ func newFakeAuthInfoStore() *FakeAuthInfoStore {
 	return &FakeAuthInfoStore{}
 }
 
-func (f *FakeAuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) error {
+func (f *FakeAuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) (*ExternalUserInfo, error) {
 	return f.ExpectedError
 }
-func (f *FakeAuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) error {
+func (f *FakeAuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*UserAuth, error) {
 	query.Result = f.ExpectedOAuth
 	return f.ExpectedError
 }

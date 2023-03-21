@@ -9,7 +9,7 @@ import (
 
 type LoginServiceFake struct{}
 
-func (l *LoginServiceFake) UpsertUser(ctx context.Context, cmd *login.UpsertUserCommand) error {
+func (l *LoginServiceFake) UpsertUser(ctx context.Context, cmd *login.UpsertUserCommand) (*user.User, error) {
 	return nil
 }
 func (l *LoginServiceFake) DisableExternalUser(ctx context.Context, username string) error {
@@ -39,7 +39,7 @@ func (a *AuthInfoServiceFake) LookupAndUpdate(ctx context.Context, query *login.
 	return a.ExpectedUser, a.ExpectedError
 }
 
-func (a *AuthInfoServiceFake) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) error {
+func (a *AuthInfoServiceFake) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*UserAuth, error) {
 	a.LatestUserID = query.UserId
 	query.Result = a.ExpectedUserAuth
 	return a.ExpectedError
@@ -65,7 +65,7 @@ func (a *AuthInfoServiceFake) UpdateAuthInfo(ctx context.Context, cmd *login.Upd
 	return a.ExpectedError
 }
 
-func (a *AuthInfoServiceFake) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) error {
+func (a *AuthInfoServiceFake) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) (*ExternalUserInfo, error) {
 	query.Result = a.ExpectedExternalUser
 	return a.ExpectedError
 }

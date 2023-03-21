@@ -91,8 +91,6 @@ type UpsertUserCommand struct {
 	ExternalUser *ExternalUserInfo
 	UserLookupParams
 	SignupAllowed bool
-
-	Result *user.User
 }
 
 type SetAuthInfoCommand struct {
@@ -141,16 +139,12 @@ type UserLookupParams struct {
 
 type GetExternalUserInfoByLoginQuery struct {
 	LoginOrEmail string
-
-	Result *ExternalUserInfo
 }
 
 type GetAuthInfoQuery struct {
 	UserId     int64
 	AuthModule string
 	AuthId     string
-
-	Result *UserAuth
 }
 
 type GetUserLabelsQuery struct {

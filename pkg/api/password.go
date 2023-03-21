@@ -38,8 +38,8 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *contextmodel.ReqContext) respons
 	}
 
 	getAuthQuery := login.GetAuthInfoQuery{UserId: usr.ID}
-	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-		authModule := getAuthQuery.Result.AuthModule
+	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
+		authModule := authInfo.AuthModule
 		if authModule == login.LDAPAuthModule || authModule == login.AuthProxyAuthModule {
 			return response.Error(401, "Not allowed to reset password for LDAP or Auth Proxy user", nil)
 		}

@@ -59,10 +59,6 @@ var loginUsingLDAP = func(ctx context.Context, query *login.LoginUserQuery,
 			UserID: nil,
 		},
 	}
-	if err = loginService.UpsertUser(ctx, upsert); err != nil {
-		return true, err
-	}
-	query.User = upsert.Result
-
-	return true, nil
+	query.User, err = loginService.UpsertUser(ctx, upsert)
+	return true, err
 }
