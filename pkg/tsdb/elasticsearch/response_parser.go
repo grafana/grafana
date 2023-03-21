@@ -150,7 +150,7 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
-	setPreferredVisType(frame, "logs")
+	setPreferredVisType(frame, data.VisTypeLogs)
 	setSearchWords(frame, searchWords)
 	frames = append(frames, frame)
 
@@ -599,13 +599,7 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 	}
 	sort.Strings(propKeys)
 	frames := data.Frames{}
-	var fields []*data.Field
-
-	if queryResult.Frames == nil {
-		for _, propKey := range propKeys {
-			fields = append(fields, data.NewField(propKey, nil, []*string{}))
-		}
-	}
+	fields := createFieldsFromPropKeys(queryResult.Frames, propKeys)
 
 	addMetricValue := func(values []interface{}, metricName string, value *float64) {
 		index := -1
@@ -631,22 +625,22 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 		var values []interface{}
 
 		found := false
-		for _, e := range fields {
+		for _, field := range fields {
 			for _, propKey := range propKeys {
-				if e.Name == propKey {
-					e.Append(props[propKey])
+				if field.Name == propKey {
+					field.Append(props[propKey])
 				}
 			}
-			if e.Name == aggDef.Field {
+			if field.Name == aggDef.Field {
 				found = true
 				if key, err := bucket.Get("key").String(); err == nil {
-					e.Append(&key)
+					field.Append(&key)
 				} else {
 					f, err := bucket.Get("key").Float64()
 					if err != nil {
 						return err
 					}
-					e.Append(&f)
+					field.Append(&f)
 				}
 			}
 		}
@@ -697,6 +691,12 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 					addMetricValue(values, getMetricName(metric.Type), value)
 					break
 				}
+			case percentilesType:
+				percentiles := bucket.GetPath(metric.ID, "values")
+				for _, percentileName := range getSortedKeys(percentiles.MustMap()) {
+					percentileValue := percentiles.Get(percentileName).MustFloat64()
+					addMetricValue(values, fmt.Sprintf("p%v %v", percentileName, metric.Field), &percentileValue)
+				}
 			default:
 				metricName := getMetricName(metric.Type)
 				otherMetrics := make([]*MetricAgg, 0)
@@ -732,14 +732,18 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 }
 
 func extractDataField(name string, v interface{}) *data.Field {
+	var field *data.Field
 	switch v.(type) {
 	case *string:
-		return data.NewField(name, nil, []*string{})
+		field = data.NewField(name, nil, []*string{})
 	case *float64:
-		return data.NewField(name, nil, []*float64{})
+		field = data.NewField(name, nil, []*float64{})
 	default:
-		return &data.Field{}
+		field = &data.Field{}
 	}
+	isFilterable := true
+	field.Config = &data.FieldConfig{Filterable: &isFilterable}
+	return field
 }
 
 func trimDatapoints(queryResult backend.DataResponse, target *Query) {
@@ -1114,4 +1118,25 @@ func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
 	frame.Meta.Custom = map[string]interface{}{
 		"searchWords": searchWordsList,
 	}
+}
+
+func createFieldsFromPropKeys(frames data.Frames, propKeys []string) []*data.Field {
+	var fields []*data.Field
+	if frames == nil {
+		for _, propKey := range propKeys {
+			fields = append(fields, data.NewField(propKey, nil, []*string{}))
+		}
+	}
+	return fields
+}
+
+func getSortedKeys(data map[string]interface{}) []string {
+	keys := make([]string, 0, len(data))
+
+	for k := range data {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+	return keys
 }

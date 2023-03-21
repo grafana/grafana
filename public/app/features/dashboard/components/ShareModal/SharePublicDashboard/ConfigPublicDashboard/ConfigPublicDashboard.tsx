@@ -4,9 +4,8 @@ import React, { useContext } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { config, reportInteraction } from '@grafana/runtime/src';
+import { config, featureEnabled, reportInteraction } from '@grafana/runtime/src';
 import {
   ClipboardButton,
   Field,
@@ -55,7 +54,7 @@ const ConfigPublicDashboard = () => {
 
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const hasEmailSharingEnabled =
-    config.licenseInfo.edition === GrafanaEdition.Enterprise && !!config.featureToggles.publicDashboardsEmailSharing;
+    !!config.featureToggles.publicDashboardsEmailSharing && featureEnabled('publicDashboardsEmailSharing');
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
   const dashboardVariables = dashboard.getVariables();

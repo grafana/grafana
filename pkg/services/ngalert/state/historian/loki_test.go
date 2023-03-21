@@ -269,7 +269,7 @@ func TestRecordStates(t *testing.T) {
 			Labels: data.Labels{"a": "b"},
 		})
 
-		err := <-loki.RecordStatesAsync(context.Background(), rule, states)
+		err := <-loki.Record(context.Background(), rule, states)
 
 		require.NoError(t, err)
 		require.Contains(t, "/loki/api/v1/push", req.lastRequest.URL.Path)
@@ -286,8 +286,8 @@ func TestRecordStates(t *testing.T) {
 			Labels: data.Labels{"a": "b"},
 		})
 
-		<-loki.RecordStatesAsync(context.Background(), rule, states)
-		<-errLoki.RecordStatesAsync(context.Background(), rule, states)
+		<-loki.Record(context.Background(), rule, states)
+		<-errLoki.Record(context.Background(), rule, states)
 
 		exp := bytes.NewBufferString(`
 # HELP grafana_alerting_state_history_transitions_failed_total The total number of state transitions that failed to be written - they are not retried.
@@ -310,6 +310,18 @@ grafana_alerting_state_history_writes_total{org="1"} 2
 			"grafana_alerting_state_history_writes_failed_total",
 		)
 		require.NoError(t, err)
+	})
+
+	t.Run("elides request if nothing to send", func(t *testing.T) {
+		req := NewFakeRequester()
+		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
+		rule := createTestRule()
+		states := []state.StateTransition{}
+
+		err := <-loki.Record(context.Background(), rule, states)
+
+		require.NoError(t, err)
+		require.Nil(t, req.lastRequest)
 	})
 }
 

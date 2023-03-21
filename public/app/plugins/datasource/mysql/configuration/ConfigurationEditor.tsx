@@ -7,7 +7,18 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { Alert, FieldSet, InlineField, InlineFieldRow, InlineSwitch, Input, Link, SecretInput } from '@grafana/ui';
+import {
+  Alert,
+  FieldSet,
+  InlineField,
+  InlineFieldRow,
+  InlineSwitch,
+  Input,
+  Link,
+  SecretInput,
+  SecureSocksProxySettings,
+} from '@grafana/ui';
+import { config } from 'app/core/config';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
 import { useMigrateDatabaseField } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseField';
@@ -141,6 +152,9 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         </InlineField>
       </FieldSet>
 
+      {config.featureToggles.secureSocksDatasourceProxy && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
       {jsonData.tlsAuth || jsonData.tlsAuthWithCACert ? (
         <FieldSet label="TLS/SSL Auth Details">
           <TLSSecretsConfig

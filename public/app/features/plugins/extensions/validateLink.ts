@@ -1,3 +1,5 @@
+import { isString } from 'lodash';
+
 import type { AppPluginExtensionLink } from '@grafana/data';
 
 import type { ConfigureFunc } from './types';
@@ -12,8 +14,12 @@ export function createLinkValidator(options: Options) {
   const { pluginId, title, logger } = options;
 
   return (configure: ConfigureFunc<AppPluginExtensionLink>): ConfigureFunc<AppPluginExtensionLink> => {
-    return function validateLink(link, context) {
-      const configured = configure(link, context);
+    return function validateLink(context) {
+      const configured = configure(context);
+
+      if (!isString(configured?.path)) {
+        return configured;
+      }
 
       if (!isValidLinkPath(pluginId, configured?.path)) {
         logger(

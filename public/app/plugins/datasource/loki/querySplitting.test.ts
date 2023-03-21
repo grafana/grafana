@@ -42,7 +42,7 @@ describe('runPartitionedQueries()', () => {
       .spyOn(datasource, 'runQuery')
       .mockReturnValue(of({ state: LoadingState.Error, error: { refId: 'A', message: 'Error' }, data: [] }));
     await expect(runPartitionedQueries(datasource, request)).toEmitValuesWith((values) => {
-      expect(values).toEqual([{ refId: 'A', message: 'Error' }]);
+      expect(values).toEqual([{ error: { refId: 'A', message: 'Error' }, data: [], state: LoadingState.Streaming }]);
     });
   });
 
@@ -187,6 +187,76 @@ describe('runPartitionedQueries()', () => {
       await expect(runPartitionedQueries(datasource, request)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 3x Logs + 3x Metric + 1x Instant, 7 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(7);
+      });
+    });
+  });
+
+  describe('Splitting targets based on chunkDuration', () => {
+    const range1h = {
+      from: dateTime('2023-02-08T05:00:00.000Z'),
+      to: dateTime('2023-02-08T06:00:00.000Z'),
+      raw: {
+        from: dateTime('2023-02-08T05:00:00.000Z'),
+        to: dateTime('2023-02-08T06:00:00.000Z'),
+      },
+    };
+    beforeEach(() => {
+      jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [], refId: 'A' }));
+    });
+    test('with 30m chunkDuration runs 2 queries', async () => {
+      const request = getQueryOptions<LokiQuery>({
+        targets: [{ expr: '{a="b"}', refId: 'A', chunkDuration: '30m' }],
+        range: range1h,
+      });
+      await expect(runPartitionedQueries(datasource, request)).toEmitValuesWith(() => {
+        expect(datasource.runQuery).toHaveBeenCalledTimes(2);
+      });
+    });
+    test('with 1h chunkDuration runs 1 queries', async () => {
+      const request = getQueryOptions<LokiQuery>({
+        targets: [{ expr: '{a="b"}', refId: 'A', chunkDuration: '1h' }],
+        range: range1h,
+      });
+      await expect(runPartitionedQueries(datasource, request)).toEmitValuesWith(() => {
+        expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+      });
+    });
+    test('with 1h chunkDuration and 2 targets runs 1 queries', async () => {
+      const request = getQueryOptions<LokiQuery>({
+        targets: [
+          { expr: '{a="b"}', refId: 'A', chunkDuration: '1h' },
+          { expr: '{a="b"}', refId: 'B', chunkDuration: '1h' },
+        ],
+        range: range1h,
+      });
+      await expect(runPartitionedQueries(datasource, request)).toEmitValuesWith(() => {
+        expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+      });
+    });
+    test('with 1h/30m chunkDuration and 2 targets runs 3 queries', async () => {
+      const request = getQueryOptions<LokiQuery>({
+        targets: [
+          { expr: '{a="b"}', refId: 'A', chunkDuration: '1h' },
+          { expr: '{a="b"}', refId: 'B', chunkDuration: '30m' },
+        ],
+        range: range1h,
+      });
+      await expect(runPartitionedQueries(datasource, request)).toEmitValuesWith(() => {
+        // 2 x 30m + 1 x 1h
+        expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+      });
+    });
+    test('with 1h/30m chunkDuration and 1 log and 2 metric target runs 3 queries', async () => {
+      const request = getQueryOptions<LokiQuery>({
+        targets: [
+          { expr: '{a="b"}', refId: 'A', chunkDuration: '1h' },
+          { expr: 'count_over_time({c="d"}[1m])', refId: 'C', chunkDuration: '30m' },
+        ],
+        range: range1h,
+      });
+      await expect(runPartitionedQueries(datasource, request)).toEmitValuesWith(() => {
+        // 2 x 30m + 1 x 1h
+        expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
     });
   });
