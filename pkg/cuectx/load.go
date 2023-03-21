@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"strings"
 	"testing/fstest"
 
 	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/ast"
 	"cuelang.org/go/cue/build"
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/kindsys"
@@ -158,6 +160,10 @@ func BuildGrafanaInstance(ctx *cue.Context, relpath string, pkg string, overlay 
 		return cue.Value{}, err
 	}
 
+	if err := validateFiles(bi.Dir, bi.Files); err != nil {
+		return cue.Value{}, err
+	}
+
 	if ctx == nil {
 		ctx = GrafanaCUEContext()
 	}
@@ -166,6 +172,76 @@ func BuildGrafanaInstance(ctx *cue.Context, relpath string, pkg string, overlay 
 		return v, fmt.Errorf("%s not a valid CUE instance: %w", relpath, v.Err())
 	}
 	return v, nil
+}
+
+func validateFiles(dir string, files []*ast.File) error {
+	if files == nil {
+		return nil
+	}
+
+	for _, f := range files {
+		if !strings.HasPrefix(f.Filename, dir) {
+			continue
+		}
+
+		if err := validateDecls(f.Decls); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// validateDecls looks for the lineage in declaration and searches for reserved `kind` keyword
+func validateDecls(decls []ast.Decl) error {
+	for _, d := range decls {
+		if lin := toLineageField(d); lin != nil {
+			pos, found := searchKeyword(lin)
+			if found {
+				return fmt.Errorf("schema must not use reserved `kind` keyword present at %s", pos)
+			}
+		}
+	}
+
+	return nil
+}
+
+func toLineageField(d ast.Decl) *ast.Field {
+	f, ok := d.(*ast.Field)
+	if !ok {
+		return nil
+	}
+
+	l, ok := f.Label.(*ast.Ident)
+	if !ok {
+		return nil
+	}
+
+	if l.Name == "lineage" {
+		return f
+	}
+
+	return nil
+}
+
+func searchKeyword(node ast.Node) (string, bool) {
+	found := false
+	pos := ""
+
+	ast.Walk(node, func(n ast.Node) bool {
+		if x, is := n.(*ast.Field); is {
+			if label, is := x.Label.(*ast.Ident); is {
+				if strings.ToLower(label.String()) == "kind" {
+					found = true
+					pos = label.Pos().Position().String()
+					return false
+				}
+			}
+		}
+		return true
+	}, nil)
+
+	return pos, found
 }
 
 // LoadInstanceWithGrafana loads a [*build.Instance] from .cue files
