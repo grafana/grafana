@@ -15,20 +15,26 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
+import { toOption, GrafanaTheme2 } from '@grafana/data';
+import { TimeZone } from '@grafana/schema';
+import { Badge, BadgeColor, Collapse, InlineField, InlineFieldRow, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { TagsFilterField } from 'app/plugins/datasource/tempo/SpanFilters/TagsFilterField';
 
+import { SearchProps } from '../../useSearch';
 import { autoColor } from '../Theme';
+import { ViewRangeTimeUpdate, TUpdateViewRangeTimeFunction, ViewRange } from '../TraceTimelineViewer/types';
 import ExternalLinks from '../common/ExternalLinks';
 import TraceName from '../common/TraceName';
 import { getTraceLinks } from '../model/link-patterns';
 import { getHeaderTags, getTraceName } from '../model/trace-viewer';
+import { Trace } from '../types';
 import { formatDuration } from '../utils/date';
 
 import TracePageActions from './Actions/TracePageActions';
 import SpanGraph from './SpanGraph';
-import { TracePageHeaderEmbedProps, timestamp, getStyles } from './TracePageHeader';
+import { timestamp, getStyles } from './TracePageHeader';
 
 const getNewStyles = (theme: GrafanaTheme2) => {
   return {
@@ -78,10 +84,66 @@ const getNewStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
-  const { trace, updateNextViewRangeTime, updateViewRangeTime, viewRange, timeZone } = props;
+export type NewTracePageHeaderProps = {
+  trace: Trace | null;
+  updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
+  updateViewRangeTime: TUpdateViewRangeTimeFunction;
+  viewRange: ViewRange;
+  timeZone: TimeZone;
+  search: SearchProps;
+  setSearch: (value: SearchProps) => void;
+  // spanFindMatches: Set<string> | undefined;
+  // focusedSpanIdForSearch: string;
+  setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>; // TODO JOEY: rename to setSearchMatches or just useSearch
+};
 
+export function NewTracePageHeader(props: NewTracePageHeaderProps) {
+  const {
+    trace,
+    updateNextViewRangeTime,
+    updateViewRangeTime,
+    viewRange,
+    timeZone,
+    search,
+    setSearch,
+    setFocusedSpanIdForSearch,
+  } = props;
   const styles = { ...useStyles2(getStyles), ...useStyles2(getNewStyles) };
+  const [tags, setTags] = useState('');
+
+  const handleSpanNameChange = useCallback(
+    (e) => {
+      setFocusedSpanIdForSearch('');
+      // setSearchBarSuffix('');
+      setSearch({
+        ...search,
+        spanName: e?.value || '',
+      });
+    },
+    [search, setFocusedSpanIdForSearch, setSearch]
+  );
+
+  const handleServiceNameChange = useCallback(
+    (e) => {
+      setFocusedSpanIdForSearch('');
+      // setSearchBarSuffix('');
+      setSearch({
+        ...search,
+        serviceName: e?.value || '',
+      });
+    },
+    [search, setFocusedSpanIdForSearch, setSearch]
+  );
+
+  useEffect(() => {
+    if (tags !== search.tags) {
+      setSearch({
+        ...search,
+        tags: tags,
+      })
+    }
+  }, [tags, search, setSearch]);
+
   const links = React.useMemo(() => {
     if (!trace) {
       return [];
@@ -145,6 +207,50 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
           </Tooltip>
         )}
       </div>
+
+      <Collapse label="Span Filters" isOpen={true} collapsible={true}>
+        <InlineFieldRow>
+          <InlineField label="Service Name" labelWidth={14}>
+            <Select
+              placeholder="All services"
+              options={[...new Set(trace.spans.map((span) => {
+                return span.process.serviceName;
+              }))].map((name) => {
+                return toOption(name);
+              })}
+              onChange={handleServiceNameChange}
+              isClearable
+              aria-label={'select-service-name'}
+            />
+          </InlineField>
+          <InlineField label="Span Name" labelWidth={14}>
+            <Select
+              placeholder="All spans"
+              options={[...new Set(trace.spans.map((span) => {
+                return span.operationName;
+              }))].map((name) => {
+                return toOption(name);
+              })}
+              onChange={handleSpanNameChange}
+              isClearable
+              aria-label={'select-span-name'}
+            />
+          </InlineField>
+          <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in logfmt.">
+            <TagsFilterField
+              placeholder="http.status_code=200 error=true"
+              value={tags}
+              onChange={x => {
+                  setTags(x);
+                }
+              }
+              tags={trace.spans.map((span) => {
+                return span.tags;
+              }).flat()}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      </Collapse>
 
       <SpanGraph
         trace={trace}

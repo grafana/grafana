@@ -43,8 +43,8 @@ export function TraceViewContainer(props: Props) {
   const style = useStyles2(getStyles);
   const { dataFrames, splitOpenFn, exploreId, scrollElement, topOfViewRef, queryResponse } = props;
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
-  const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
-  const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
+  const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans); // TODO JOEY: rename to searchMatches
+  const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState(''); // TODO JOEY: rename to focusedMatches
   const [searchBarSuffix, setSearchBarSuffix] = useState('');
   const datasource = useSelector(
     (state: StoreState) => state.explore[props.exploreId!]?.datasourceInstance ?? undefined
@@ -59,12 +59,11 @@ export function TraceViewContainer(props: Props) {
     <div className={style.container}>
       {!config.featureToggles.newTraceView && (
         <TracePageSearchBar
-          navigable={true}
-          searchValue={search}
-          setSearch={setSearch}
+          // searchValue={search}
+          // setSearch={setSearch}
           spanFindMatches={spanFindMatches}
-          searchBarSuffix={searchBarSuffix}
-          setSearchBarSuffix={setSearchBarSuffix}
+          // searchBarSuffix={searchBarSuffix}
+          // setSearchBarSuffix={setSearchBarSuffix}
           focusedSpanIdForSearch={focusedSpanIdForSearch}
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
           datasourceType={datasourceType}
@@ -78,7 +77,9 @@ export function TraceViewContainer(props: Props) {
         traceProp={traceProp}
         spanFindMatches={spanFindMatches}
         search={search}
+        setSearch={setSearch}
         focusedSpanIdForSearch={focusedSpanIdForSearch}
+        setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
         queryResponse={queryResponse}
         datasource={datasource}
         topOfViewRef={topOfViewRef}

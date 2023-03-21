@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { RefObject, useMemo, useState } from 'react';
+import React, { Dispatch, RefObject, SetStateAction, useMemo, useState } from 'react';
 
 import {
   DataFrame,
@@ -39,6 +39,7 @@ import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
+import { SearchProps } from './useSearch';
 import { useViewRange } from './useViewRange';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -63,8 +64,10 @@ type Props = {
   scrollElement?: Element;
   traceProp: Trace;
   spanFindMatches?: Set<string>;
-  search: string;
+  search: SearchProps;
+  setSearch: (value: SearchProps) => void;
   focusedSpanIdForSearch: string;
+  setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
   queryResponse: PanelData;
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef: RefObject<HTMLDivElement>;
@@ -72,7 +75,16 @@ type Props = {
 };
 
 export function TraceView(props: Props) {
-  const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType } = props;
+  const {
+    spanFindMatches,
+    traceProp,
+    datasource,
+    topOfViewRef,
+    topOfViewRefType,
+    search,
+    setSearch,
+    setFocusedSpanIdForSearch,
+  } = props;
 
   const {
     detailStates,
@@ -148,6 +160,9 @@ export function TraceView(props: Props) {
               updateViewRangeTime={updateViewRangeTime}
               viewRange={viewRange}
               timeZone={timeZone}
+              search={search}
+              setSearch={setSearch}
+              setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
             />
           ) : (
             <TracePageHeader
@@ -190,7 +205,7 @@ export function TraceView(props: Props) {
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
             linksGetter={() => []}
-            uiFind={props.search}
+            uiFind={props.search.text}
             createSpanLink={createSpanLink}
             scrollElement={props.scrollElement}
             focusedSpanId={focusedSpanId}

@@ -42,12 +42,11 @@ export const TracesPanel = ({ data }: PanelProps) => {
       <div ref={topOfViewRef}></div>
       {data.series[0]?.meta?.preferredVisualisationType === 'trace' && !config.featureToggles.newTraceView ? (
         <TracePageSearchBar
-          navigable={true}
-          searchValue={search}
-          setSearch={setSearch}
+          // searchValue={search}
+          // setSearch={setSearch}
           spanFindMatches={spanFindMatches}
-          searchBarSuffix={searchBarSuffix}
-          setSearchBarSuffix={setSearchBarSuffix}
+          // searchBarSuffix={searchBarSuffix}
+          // setSearchBarSuffix={setSearchBarSuffix}
           focusedSpanIdForSearch={focusedSpanIdForSearch}
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
           datasourceType={datasourceType}
@@ -60,7 +59,9 @@ export const TracesPanel = ({ data }: PanelProps) => {
         traceProp={traceProp}
         spanFindMatches={spanFindMatches}
         search={search}
+        setSearch={setSearch}
         focusedSpanIdForSearch={focusedSpanIdForSearch}
+        setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
         queryResponse={data}
         datasource={dataSource.value}
         topOfViewRef={topOfViewRef}

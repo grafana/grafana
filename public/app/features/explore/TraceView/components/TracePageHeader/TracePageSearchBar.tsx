@@ -20,10 +20,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import UiFindInput from '../common/UiFindInput';
-import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
-
-// eslint-disable-next-line no-duplicate-imports
+import { ubJustifyEnd } from '../uberUtilityStyles';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -70,49 +67,48 @@ export const getStyles = (theme: GrafanaTheme2) => {
 };
 
 export type TracePageSearchBarProps = {
-  navigable: boolean;
-  searchValue: string;
-  setSearch: (value: string) => void;
-  searchBarSuffix: string;
+  // searchValue: string;
+  // setSearch: (value: string) => void;
+  // searchBarSuffix: string;
   spanFindMatches: Set<string> | undefined;
   focusedSpanIdForSearch: string;
-  setSearchBarSuffix: Dispatch<SetStateAction<string>>;
+  // setSearchBarSuffix: Dispatch<SetStateAction<string>>;
   setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
   datasourceType: string;
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
   const {
-    navigable,
-    setSearch,
-    searchValue,
-    searchBarSuffix,
+    // setSearch,
+    // searchValue,
+    // searchBarSuffix,
     spanFindMatches,
     focusedSpanIdForSearch,
-    setSearchBarSuffix,
+    // setSearchBarSuffix,
     setFocusedSpanIdForSearch,
     datasourceType,
   } = props;
   const styles = useStyles2(getStyles);
 
-  const suffix = searchValue ? (
-    <span className={styles.TracePageSearchBarSuffix} aria-label="Search bar suffix">
-      {searchBarSuffix}
-    </span>
-  ) : null;
+  // const suffix = searchValue ? (
+  //   <span className={styles.TracePageSearchBarSuffix} aria-label="Search bar suffix">
+  //     {searchBarSuffix}
+  //   </span>
+  // ) : null;
 
-  const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
-  const uiFindInputInputProps = {
-    className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
-    name: 'search',
-    suffix,
-  };
+  // const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
+  const btnClass = cx(styles.TracePageSearchBarBtn);
+  // const uiFindInputInputProps = {
+  //   className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
+  //   name: 'search',
+  //   suffix,
+  // };
 
-  const setTraceSearch = (value: string) => {
-    setFocusedSpanIdForSearch('');
-    setSearchBarSuffix('');
-    setSearch(value);
-  };
+  // const setTraceSearch = (value: string) => {
+  //   setFocusedSpanIdForSearch('');
+  //   setSearchBarSuffix('');
+  //   setSearch(value);
+  // };
 
   const nextResult = () => {
     reportInteraction('grafana_traces_trace_view_find_next_prev_clicked', {
@@ -129,13 +125,13 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     // new query || at end, go to start
     if (prevMatchedIndex === -1 || prevMatchedIndex === spanMatches.length - 1) {
       setFocusedSpanIdForSearch(spanMatches[0]);
-      setSearchBarSuffix(getSearchBarSuffix(1));
+      // setSearchBarSuffix(getSearchBarSuffix(1));
       return;
     }
 
     // get next
     setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex + 1]);
-    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex + 2));
+    // setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex + 2));
   };
 
   const prevResult = () => {
@@ -153,54 +149,52 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     // new query || at start, go to end
     if (prevMatchedIndex === -1 || prevMatchedIndex === 0) {
       setFocusedSpanIdForSearch(spanMatches[spanMatches.length - 1]);
-      setSearchBarSuffix(getSearchBarSuffix(spanMatches.length));
+      // setSearchBarSuffix(getSearchBarSuffix(spanMatches.length));
       return;
     }
 
     // get prev
     setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex - 1]);
-    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex));
+    // setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex));
   };
 
-  const getSearchBarSuffix = (index: number): string => {
-    if (spanFindMatches?.size && spanFindMatches?.size > 0) {
-      return index + ' of ' + spanFindMatches?.size;
-    }
-    return '';
-  };
+  // const getSearchBarSuffix = (index: number): string => {
+  //   if (spanFindMatches?.size && spanFindMatches?.size > 0) {
+  //     return index + ' of ' + spanFindMatches?.size;
+  //   }
+  //   return '';
+  // };
 
   return (
     <div className={styles.TracePageSearchBar}>
       <span className={ubJustifyEnd} style={{ display: 'flex' }}>
-        <UiFindInput
+        {/* <UiFindInput
           onChange={setTraceSearch}
           value={searchValue}
           inputProps={uiFindInputInputProps}
           allowClear={true}
-        />
+        /> */}
         <>
-          {navigable && (
-            <>
-              <Button
-                className={btnClass}
-                variant="secondary"
-                disabled={!searchValue}
-                type="button"
-                icon="arrow-down"
-                aria-label="Next results button"
-                onClick={nextResult}
-              />
-              <Button
-                className={btnClass}
-                variant="secondary"
-                disabled={!searchValue}
-                type="button"
-                icon="arrow-up"
-                aria-label="Prev results button"
-                onClick={prevResult}
-              />
-            </>
-          )}
+          <Button
+            className={btnClass}
+            variant="secondary"
+            // disabled={!searchValue}
+            disabled={false}
+            type="button"
+            icon="arrow-down"
+            aria-label="Next results button"
+            onClick={nextResult}
+          />
+          <Button
+            className={btnClass}
+            variant="secondary"
+            // disabled={!searchValue}
+            disabled={false}
+            type="button"
+            icon="arrow-up"
+            aria-label="Prev results button"
+            onClick={prevResult}
+          />
         </>
       </span>
     </div>
