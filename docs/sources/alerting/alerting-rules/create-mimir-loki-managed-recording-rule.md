@@ -34,8 +34,8 @@ You can create and manage recording rules for an external Grafana Mimir or Loki 
 
 To create a Grafana Mimir or Loki managed recording rule
 
-1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
-1. Click **Create alert rule**. The new alerting rule page opens where the **Grafana managed alert** option is selected by default.
+1. In the left-side menu, click **Alerts & incidents**, and then **Alerting > Alert rules** to open the page listing existing alerts.
+1. Click **+ Create alert rule**. The new alerting rule page opens where the **Grafana managed alert** option is selected by default.
 1. In Step 1, add the rule name. The recording name must be a Prometheus metric name and contain no whitespace.
    - In **Rule name**, add a descriptive name.
 1. In Step 2, select **Mimir or Loki recording rule** option.
@@ -47,6 +47,8 @@ To create a Grafana Mimir or Loki managed recording rule
 1. In Step 4, add the custom labels.
    - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
 1. Click **Save** to save the recording rule or **Save and exit** to save the recording rule and go back to the Alerting page.
+
+<!-- delete-->
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. Click **Create alert rule**.

@@ -20,12 +20,12 @@ Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
 
 ## Add Grafana managed rule
 
-1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
-1. Click **Create alert rule**. The new alerting rule page opens where the Grafana managed alerts option is selected by default.
+1. In the left-side menu, click **Alerts & incidents**, and then **Alerting > Alert rules** to open the page listing existing alerts.
+1. Click **+ Create alert rule**. The new alerting rule page opens where the Grafana managed alerts option is selected by default.
 1. In Step 1, add the rule name.
    - In **Rule name**, add a descriptive name. This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
 1. In Step 2, add queries and expressions to evaluate, and then select the alert condition.
-   - For queries, select a data source from the drop-down.
+   - For queries, select a data source from the dropdown.
    - Add one or more [queries]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data#add-a-query" >}}) or [expressions]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries" >}}).
    - For each expression, select either **Classic condition** to create a single alert rule, or choose from **Math**, **Reduce**, **Resample** options to generate separate alert for each series. For details on these options, see [Single and multi dimensional rule](#single-and-multi-dimensional-rule).
    - Click **Run queries** to verify that the query is successful.
@@ -37,7 +37,7 @@ Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
    - For **Evaluate for**, specify the duration for which the condition must be true before an alert fires.
      > **Note:** Once a condition is breached, the alert goes into the Pending state. If the condition remains breached for the duration specified, the alert transitions to the `Firing` state, otherwise it reverts back to the `Normal` state.
    - In **Configure no data and error handling**, configure alerting behavior in the absence of data. Use the guidelines in [No data and error handling](#no-data-and-error-handling).
-   - Click **Preview alerts** to check the result of running the query at this moment. Preview excludes no data and error handling.
+   - Click **Preview** to check the result of running the query at this moment. Preview excludes no data and error handling.
 
      **Note:**
 
