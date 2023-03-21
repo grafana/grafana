@@ -41,7 +41,26 @@ func ProvideWatcher(
 	return &c, nil
 }
 
+// UID is currently saved in the dashboard body and the name may be a hash
+func getValidUID(dash *Dashboard) (string, error) {
+	uid := ""
+	if dash.Spec.Uid != nil {
+		uid = *dash.Spec.Uid
+	}
+	if uid == "" {
+		uid = dash.GetName()
+	} else if dash.GetName() != GrafanaUIDToK8sName(uid) {
+		return uid, fmt.Errorf("UID and k8s name do not match")
+	}
+	return uid, nil
+}
+
 func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
+	uid, err := getValidUID(dash)
+	if err != nil {
+		return err
+	}
+	c.log.Debug("adding dashboard", "dash", uid)
 	raw, err := json.Marshal(dash.Spec)
 	if err != nil {
 		return fmt.Errorf("failed to marshal dashboard spec: %w", err)
@@ -51,19 +70,10 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 		return fmt.Errorf("failed to convert dashboard spec to simplejson %w", err)
 	}
 	data.Set("resourceVersion", dash.ResourceVersion)
-	uid := data.Get("uid").MustString()
-	if uid == "" {
-		uid = dash.GetName()
-		data.Set("uid", uid)
-	} else if dash.GetName() != GrafanaUIDToK8sName(uid) {
-		return fmt.Errorf("UID and k8s name do not match")
-	}
-	c.log.Debug("adding dashboard", "dash", uid)
 
 	data.Del("id") // ignore any internal id
 	anno := CommonAnnotations{}
 	anno.Read(dash.Annotations)
-
 	if anno.CreatedAt < 1 {
 		anno.CreatedAt = time.Now().UnixMilli()
 	}
@@ -72,7 +82,6 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 	}
 
 	save := &dashboards.Dashboard{
-		UID:       uid,
 		OrgID:     GetOrgIDFromNamespace(dash.Namespace),
 		Data:      data,
 		Created:   time.UnixMilli(anno.CreatedAt),
@@ -83,6 +92,7 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 		// Plugin provisioning
 		PluginID: anno.PluginID,
 	}
+	save.SetUID(uid)
 	save.UpdateSlug()
 
 	if anno.FolderUID != "" {
@@ -94,7 +104,6 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 	}
 
 	var p *dashboards.DashboardProvisioning
-
 	if anno.OriginName != "" {
 		p = &dashboards.DashboardProvisioning{
 			Name:       anno.OriginName,
@@ -106,7 +115,7 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 
 	out, err := c.dashboardStore.SaveDashboardWithMetadata(ctx, anno.Message, save, p)
 	if out != nil {
-		fmt.Printf("ADDED: %s/%s\n", out.UID, out.Slug)
+		c.log.Debug("added", "dash", out.UID, "slug", out.Slug)
 	}
 
 	// js, _ := json.MarshalIndent(out, "", "  ")
@@ -123,10 +132,14 @@ func (c *watcher) Delete(ctx context.Context, dash *Dashboard) error {
 	anno := CommonAnnotations{}
 	anno.Read(dash.Annotations)
 
-	orgID := GetOrgIDFromNamespace(dash.Namespace)
+	uid, err := getValidUID(dash)
+	if err != nil {
+		return err
+	}
+
 	existing, err := c.dashboardStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-		UID:   dash.Name, // Assumes same as UID!
-		OrgID: orgID,
+		UID:   uid, // Assumes same as UID!
+		OrgID: GetOrgIDFromNamespace(dash.Namespace),
 	})
 
 	// no dashboard found, nothing to delete
