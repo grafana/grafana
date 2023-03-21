@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import {
+  arrayUtils,
   DataFrame,
   Field,
   formattedValueToString,
@@ -10,7 +11,15 @@ import {
   LinkModel,
   TimeRange,
 } from '@grafana/data';
-import { LinkButton, usePanelContext, useStyles2, VerticalGroup, VizTooltipOptions } from '@grafana/ui';
+import { SortOrder } from '@grafana/schema';
+import {
+  LinkButton,
+  TooltipDisplayMode,
+  usePanelContext,
+  useStyles2,
+  VerticalGroup,
+  VizTooltipOptions,
+} from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
 import { ScatterSeriesConfig, SeriesMapping } from './models.gen';
@@ -69,8 +78,42 @@ export const TooltipView = ({
     range,
   });
 
+  let tooltipMultiYValues: YValue[] = [];
   let yValue: YValue | null = null;
   let extraFacets: ExtraFacets | null = null;
+
+  if (options.mode === TooltipDisplayMode.Multi) {
+    for (const s of allSeries) {
+      const frame = s.frame(data);
+      const currXField = s.x(frame);
+      const yField = s.y(s.frame(data));
+
+      for (let i = 0; i < yField.values.length; i++) {
+        if (currXField.values.get(i) === xField.values.get(rowIndex)) {
+          tooltipMultiYValues.push({
+            name: getFieldDisplayName(yField, frame),
+            val: yField.values.get(i),
+            field: yField,
+            color: s.pointColor(frame) as string,
+          });
+        }
+      }
+    }
+
+    if (options.sort !== SortOrder.None) {
+      const sortFn = arrayUtils.sortValues(options.sort);
+
+      tooltipMultiYValues = tooltipMultiYValues.sort((a, b) => sortFn(a.val, b.val));
+    }
+  } else {
+    yValue = {
+      name: getFieldDisplayName(yField, frame),
+      val: yField.values.get(rowIndex),
+      field: yField,
+      color: series.pointColor(frame) as string,
+    };
+  }
+
   if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
     const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointColor?.field ?? '';
     const sizeFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointSize?.field ?? '';
@@ -95,54 +138,59 @@ export const TooltipView = ({
 
   return (
     <>
-      <table className={style.infoWrap}>
-        <tr>
-          <th colSpan={2} style={{ backgroundColor: yValue.color }}></th>
-        </tr>
-        <tbody>
+      {options.mode === TooltipDisplayMode.Single && (
+        <table className={style.infoWrap}>
           <tr>
-            <th>{xField.name}</th>
-            <td>{fmt(frame.fields[0], xField.values.get(rowIndex))}</td>
+            <th colSpan={2} style={{ backgroundColor: yValue.color }}></th>
           </tr>
-          <tr>
-            <th>{yValue.name}:</th>
-            <td>{fmt(yValue.field, yValue.val)}</td>
-          </tr>
-          {extraFacets !== null && extraFacets.colorFacetFieldName && (
+          <tbody>
             <tr>
-              <th>{extraFacets.colorFacetFieldName}:</th>
-              <td>{extraFacets.colorFacetValue}</td>
+              <th>{xField.name}</th>
+              <td>{fmt(frame.fields[0], xField.values.get(rowIndex))}</td>
             </tr>
-          )}
-          {extraFacets !== null && extraFacets.sizeFacetFieldName && (
             <tr>
-              <th>{extraFacets.sizeFacetFieldName}:</th>
-              <td>{extraFacets.sizeFacetValue}</td>
+              <th>{yValue.name}:</th>
+              <td>{fmt(yValue.field, yValue.val)}</td>
             </tr>
-          )}
-          {links.length > 0 && (
-            <tr>
-              <td colSpan={2}>
-                <VerticalGroup>
-                  {links.map((link, i) => (
-                    <LinkButton
-                      key={i}
-                      icon={'external-link-alt'}
-                      target={link.target}
-                      href={link.href}
-                      onClick={link.onClick}
-                      fill="text"
-                      style={{ width: '100%' }}
-                    >
-                      {link.title}
-                    </LinkButton>
-                  ))}
-                </VerticalGroup>
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            {extraFacets !== null && extraFacets.colorFacetFieldName && (
+              <tr>
+                <th>{extraFacets.colorFacetFieldName}:</th>
+                <td>{extraFacets.colorFacetValue}</td>
+              </tr>
+            )}
+            {extraFacets !== null && extraFacets.sizeFacetFieldName && (
+              <tr>
+                <th>{extraFacets.sizeFacetFieldName}:</th>
+                <td>{extraFacets.sizeFacetValue}</td>
+              </tr>
+            )}
+            {links.length > 0 && renderLinks(links)}
+          </tbody>
+        </table>
+      )}
+      {options.mode === TooltipDisplayMode.Multi && (
+        <>
+          <p style={{ marginBottom: '10px' }}>
+            <b>{getFieldDisplayName(xField, frame)}:</b> {fmt(frame.fields[0], xField.values.get(rowIndex))}
+          </p>
+          <table className={style.infoWrap}>
+            <tbody>
+              {tooltipMultiYValues.map((yValue, i) => (
+                <>
+                  <tr>
+                    <th colSpan={2} style={{ backgroundColor: yValue.color }}></th>
+                  </tr>
+                  <tr key={i}>
+                    <th>{yValue.name}:</th>
+                    <td>{fmt(yValue.field, yValue.val)}</td>
+                  </tr>
+                </>
+              ))}
+              {links.length > 0 && renderLinks(links)}
+            </tbody>
+          </table>
+        </>
+      )}
     </>
   );
 };
@@ -152,6 +200,30 @@ function fmt(field: Field, val: number): string {
     return formattedValueToString(field.display(val));
   }
   return `${val}`;
+}
+
+function renderLinks(links: Array<LinkModel<Field>>) {
+  return (
+    <tr>
+      <td colSpan={2}>
+        <VerticalGroup>
+          {links.map((link, i) => (
+            <LinkButton
+              key={i}
+              icon={'external-link-alt'}
+              target={link.target}
+              href={link.href}
+              onClick={link.onClick}
+              fill="text"
+              style={{ width: '100%' }}
+            >
+              {link.title}
+            </LinkButton>
+          ))}
+        </VerticalGroup>
+      </td>
+    </tr>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
