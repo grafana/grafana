@@ -47,12 +47,6 @@ $(JB): $(BINGO_DIR)/jb.mod
 	@echo "(re)installing $(GOBIN)/jb-v0.5.1"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=jb.mod -o=$(GOBIN)/jb-v0.5.1 "github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb"
 
-KIND := $(GOBIN)/kind-v0.17.0
-$(KIND): $(BINGO_DIR)/kind.mod
-	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/kind-v0.17.0"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kind.mod -o=$(GOBIN)/kind-v0.17.0 "sigs.k8s.io/kind"
-
 SWAGGER := $(GOBIN)/swagger-v0.30.2
 $(SWAGGER): $(BINGO_DIR)/swagger.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.

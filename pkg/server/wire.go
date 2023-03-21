@@ -39,10 +39,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
-	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/correlations"
@@ -99,7 +97,6 @@ import (
 	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
-	"github.com/grafana/grafana/pkg/services/querylibrary/querylibraryimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -170,10 +167,10 @@ var wireBasicSet = wire.NewSet(
 	alerting.ProvideAlertStore,
 	alerting.ProvideAlertEngine,
 	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
-	setting.NewCfgFromArgs,
 	New,
 	api.ProvideHTTPServer,
 	query.ProvideService,
+	wire.Bind(new(query.Service), new(*query.ServiceImpl)),
 	bus.ProvideBus,
 	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
 	thumbs.ProvideService,
@@ -265,8 +262,6 @@ var wireBasicSet = wire.NewSet(
 	secretsManager.ProvideSecretsService,
 	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)),
 	secretsDatabase.ProvideSecretsStore,
-	querylibraryimpl.ProvideService,
-	querylibraryimpl.ProvideHTTPService,
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
 	secretsMigrator.ProvideSecretsMigrator,
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
@@ -290,13 +285,13 @@ var wireBasicSet = wire.NewSet(
 	teamguardianManager.ProvideService,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
-	dashboardservice.ProvideDashboardService, // DashboardServiceImpl
+	dashboardservice.ProvideDashboardServiceImpl,
+	dashboardservice.ProvideDashboardService,
+	dashboardservice.ProvideDashboardProvisioningService,
+	dashboardservice.ProvideDashboardPluginService,
 	dashboardstore.ProvideDashboardStore,
 	folderimpl.ProvideService,
 	folderimpl.ProvideDashboardFolderStore,
-	dashboardservice.ProvideSimpleDashboardService,
-	dashboardservice.ProvideDashboardProvisioningService,
-	dashboardservice.ProvideDashboardPluginService,
 	wire.Bind(new(folder.FolderStore), new(*folderimpl.DashboardFolderStoreImpl)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
@@ -305,7 +300,6 @@ var wireBasicSet = wire.NewSet(
 	plugindashboardsservice.ProvideDashboardUpdater,
 	alerting.ProvideDashAlertExtractorService,
 	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
-	comments.ProvideService,
 	guardian.ProvideService,
 	sanitizer.ProvideService,
 	secretsStore.ProvideService,
@@ -340,6 +334,7 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
+	setting.NewCfgFromArgs,
 	kind.ProvideService, // The registry of known kinds
 	sqlstash.ProvideSQLEntityServer,
 	resolver.ProvideEntityReferenceResolver,
@@ -360,7 +355,6 @@ var wireBasicSet = wire.NewSet(
 	tagimpl.ProvideService,
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 	authnimpl.ProvideService,
-	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
 	supportbundlesimpl.ProvideService,
 	modules.WireSet,
 )
@@ -368,6 +362,20 @@ var wireBasicSet = wire.NewSet(
 var wireSet = wire.NewSet(
 	wireBasicSet,
 	metrics.ProvideRegisterer,
+	sqlstore.ProvideService,
+	ngmetrics.ProvideService,
+	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
+	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
+	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
+	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	prefimpl.ProvideService,
+	oauthtoken.ProvideService,
+	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
+)
+
+var wireCLISet = wire.NewSet(
+	NewRunner,
+	wireBasicSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -404,4 +412,9 @@ func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOpt
 func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
 	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}}, nil
+}
+
+func InitializeForCLI(cla setting.CommandLineArgs) (Runner, error) {
+	wire.Build(wireExtsCLISet)
+	return Runner{}, nil
 }

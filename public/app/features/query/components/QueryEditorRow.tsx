@@ -64,7 +64,7 @@ interface Props<TQuery extends DataQuery> {
 
 interface State<TQuery extends DataQuery> {
   /** DatasourceUid or ds variable expression used to resolve current datasource */
-  loadedDataSourceIdentifier?: string | null;
+  queriedDataSourceIdentifier?: string | null;
   datasource: DataSourceApi<TQuery> | null;
   datasourceUid?: string | null;
   hasTextEditMode: boolean;
@@ -158,18 +158,19 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     try {
       datasource = await this.dataSourceSrv.get(interpolatedUID);
     } catch (error) {
+      // If the DS doesn't exist, it fails. Getting with no args returns the default DS.
       datasource = await this.dataSourceSrv.get();
     }
 
     this.setState({
       datasource: datasource as unknown as DataSourceApi<TQuery>,
-      loadedDataSourceIdentifier: interpolatedUID,
+      queriedDataSourceIdentifier: interpolatedUID,
       hasTextEditMode: has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
     });
   }
 
   componentDidUpdate(prevProps: Props<TQuery>) {
-    const { datasource, loadedDataSourceIdentifier } = this.state;
+    const { datasource, queriedDataSourceIdentifier } = this.state;
     const { data, query } = this.props;
 
     if (prevProps.id !== this.props.id) {
@@ -191,7 +192,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
 
     // check if we need to load another datasource
-    if (datasource && loadedDataSourceIdentifier !== this.getInterpolatedDataSourceUID()) {
+    if (datasource && queriedDataSourceIdentifier !== this.getInterpolatedDataSourceUID()) {
       if (this.angularQueryEditor) {
         this.angularQueryEditor.destroy();
         this.angularQueryEditor = null;
@@ -252,7 +253,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   isWaitingForDatasourceToLoad(): boolean {
     // if we not yet have loaded the datasource in state the
     // ds in props and the ds in state will have different values.
-    return this.getInterpolatedDataSourceUID() !== this.state.loadedDataSourceIdentifier;
+    return this.getInterpolatedDataSourceUID() !== this.state.queriedDataSourceIdentifier;
   }
 
   renderPluginEditor = () => {

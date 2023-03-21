@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { Menu, Dropdown, Button, Icon } from '@grafana/ui';
@@ -10,7 +10,7 @@ export interface Props {
   canCreateDashboards?: boolean;
 }
 
-export const DashboardActions: FC<Props> = ({ folderUid, canCreateFolders = false, canCreateDashboards = false }) => {
+export const DashboardActions = ({ folderUid, canCreateFolders = false, canCreateDashboards = false }: Props) => {
   const actionUrl = (type: string) => {
     let url = `dashboard/${type}`;
     const isTypeNewFolder = type === 'new_folder';
