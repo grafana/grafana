@@ -6,6 +6,7 @@ def integration_test_services_volumes():
     return [
         {"name": "postgres", "temp": {"medium": "memory"}},
         {"name": "mysql", "temp": {"medium": "memory"}},
+        {"name": "mysql-8", "temp": {"medium": "memory"}},
     ]
 
 def integration_test_services(edition):
@@ -33,6 +34,17 @@ def integration_test_services(edition):
                 "MYSQL_PASSWORD": "password",
             },
             "volumes": [{"name": "mysql", "path": "/var/lib/mysql"}],
+        },
+        {
+            "name": "mysql-8",
+            "image": "mysql:8.0.32",
+            "environment": {
+                "MYSQL_ROOT_PASSWORD": "rootpass",
+                "MYSQL_DATABASE": "grafana_tests",
+                "MYSQL_USER": "grafana",
+                "MYSQL_PASSWORD": "password",
+            },
+            "volumes": [{"name": "mysql-8", "path": "/var/lib/mysql"}],
         },
     ]
 
