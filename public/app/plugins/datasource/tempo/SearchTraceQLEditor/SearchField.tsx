@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
@@ -36,6 +36,7 @@ const SearchField = ({ filter, datasource, updateFilter, deleteFilter, isTagsLoa
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [isLoadingValues, setIsLoadingValues] = useState(false);
   const [options, setOptions] = useState<Array<SelectableValue<string>>>([]);
+  const [scopedTag, setScopedTag] = useState(scopeHelper(filter) + filter.tag);
   // We automatically change the operator to the regex op when users select 2 or more values
   // However, they expect this to be automatically rolled back to the previous operator once
   // there's only one value selected, so we store the previous operator and value
@@ -56,42 +57,32 @@ const SearchField = ({ filter, datasource, updateFilter, deleteFilter, isTagsLoa
     setPrevValue(filter.value);
   }, [filter.value]);
 
-  const loadOptions = useCallback(async () => {
-    setIsLoadingValues(true);
+  useEffect(() => {
+    const newScopedTag = scopeHelper(filter) + filter.tag;
+    if (newScopedTag !== scopedTag) {
+      setScopedTag(newScopedTag);
+    }
+  }, [filter, scopedTag]);
 
+  const updateOptions = useCallback(async () => {
     try {
-      const name = scopeHelper(filter) + filter.tag;
-      const options = await languageProvider.getOptionsV2(name);
-      return options;
+      setIsLoadingValues(true);
+      setOptions(await languageProvider.getOptionsV2(scopedTag));
     } catch (error) {
+      // Display message if Tempo is connected but search 404's
       if (isFetchError(error) && error?.status === 404) {
         setError(error);
       } else if (error instanceof Error) {
         dispatch(notifyApp(createErrorNotification('Error', error)));
       }
-      return [];
     } finally {
       setIsLoadingValues(false);
     }
-  }, [setError, languageProvider, filter]);
+  }, [scopedTag, languageProvider, setError]);
 
   useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        if (filter.tag) {
-          setOptions(await loadOptions());
-        }
-      } catch (error) {
-        // Display message if Tempo is connected but search 404's
-        if (isFetchError(error) && error?.status === 404) {
-          setError(error);
-        } else if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
-        }
-      }
-    };
-    fetchOptions();
-  }, [languageProvider, loadOptions, setError, filter.tag, filter.scope]);
+    updateOptions();
+  }, [updateOptions]);
 
   const scopeOptions = Object.values(TraceqlSearchScope).map((t) => ({ label: t, value: t }));
 
