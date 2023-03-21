@@ -56,7 +56,7 @@ def integration_benchmarks(trigger, prefix):
     	wire_install_step(),
     ]
     
-    cmd = ["go test -run=^$ -bench=. -benchmem ./pkg/services/sqlstore/permissions"]
+    cmd = ["go test -run=^$ -bench=. -benctime=5s -benchmem ./pkg/services/sqlstore/permissions"]
     
     benchmark_steps = [
     	{
@@ -83,6 +83,16 @@ def integration_benchmarks(trigger, prefix):
     		"environment": {
     		    "GRAFANA_TEST_DB": "mysql",
     		    "MYSQL_HOST": "mysql",
+    		},
+    		"commands": cmd,
+    	},
+	{
+    		"name": "mysql8-integration-benchmarks",
+    		"image": build_image,
+    		"depends_on": ["wire-install"],
+    		"environment": {
+    		    "GRAFANA_TEST_DB": "mysql",
+    		    "MYSQL_HOST": "mysql-8",
     		},
     		"commands": cmd,
     	}

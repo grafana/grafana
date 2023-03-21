@@ -809,6 +809,16 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:8.0.32
+  name: mysql-8
+  volumes:
+  - name: mysql-8
+    path: /var/lib/mysql
 steps:
 - commands:
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
@@ -928,6 +938,9 @@ volumes:
   temp:
     medium: memory
 - name: mysql
+  temp:
+    medium: memory
+- name: mysql-8
   temp:
     medium: memory
 ---
@@ -1083,6 +1096,16 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:8.0.32
+  name: mysql-8
+  volumes:
+  - name: mysql-8
+    path: /var/lib/mysql
 steps:
 - commands:
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
@@ -1137,13 +1160,13 @@ steps:
   image: grafana/build-container:1.7.2
   name: wire-install
 - commands:
-  - go test -run=^$ -bench=. -benchmem ./pkg/services/sqlstore/permissions
+  - go test -run=^$ -bench=. -benctime=5s -benchmem ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.2
   name: sqlite-integration-benchmarks
 - commands:
-  - go test -run=^$ -bench=. -benchmem ./pkg/services/sqlstore/permissions
+  - go test -run=^$ -bench=. -benctime=5s -benchmem ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   environment:
@@ -1153,7 +1176,7 @@ steps:
   image: grafana/build-container:1.7.2
   name: postgres-integration-benchmarks
 - commands:
-  - go test -run=^$ -bench=. -benchmem ./pkg/services/sqlstore/permissions
+  - go test -run=^$ -bench=. -benctime=5s -benchmem ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   environment:
@@ -1161,6 +1184,15 @@ steps:
     MYSQL_HOST: mysql
   image: grafana/build-container:1.7.2
   name: mysql-integration-benchmarks
+- commands:
+  - go test -run=^$ -bench=. -benctime=5s -benchmem ./pkg/services/sqlstore/permissions
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql-8
+  image: grafana/build-container:1.7.2
+  name: mysql8-integration-benchmarks
 trigger:
   event:
   - pull_request
@@ -1179,6 +1211,9 @@ volumes:
   temp:
     medium: memory
 - name: mysql
+  temp:
+    medium: memory
+- name: mysql-8
   temp:
     medium: memory
 ---
@@ -1955,6 +1990,16 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:8.0.32
+  name: mysql-8
+  volumes:
+  - name: mysql-8
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -2046,6 +2091,9 @@ volumes:
   temp:
     medium: memory
 - name: mysql
+  temp:
+    medium: memory
+- name: mysql-8
   temp:
     medium: memory
 ---
@@ -2536,6 +2584,9 @@ volumes:
 - name: mysql
   temp:
     medium: memory
+- name: mysql-8
+  temp:
+    medium: memory
 ---
 clone:
   retries: 3
@@ -2703,6 +2754,16 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:8.0.32
+  name: mysql-8
+  volumes:
+  - name: mysql-8
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -2784,6 +2845,9 @@ volumes:
   temp:
     medium: memory
 - name: mysql
+  temp:
+    medium: memory
+- name: mysql-8
   temp:
     medium: memory
 ---
@@ -3147,6 +3211,9 @@ volumes:
 - name: mysql
   temp:
     medium: memory
+- name: mysql-8
+  temp:
+    medium: memory
 ---
 clone:
   disable: true
@@ -3376,6 +3443,16 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:8.0.32
+  name: mysql-8
+  volumes:
+  - name: mysql-8
+    path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.1-alpine
   name: redis
@@ -3512,6 +3589,9 @@ volumes:
   temp:
     medium: memory
 - name: mysql
+  temp:
+    medium: memory
+- name: mysql-8
   temp:
     medium: memory
 ---
@@ -3848,6 +3928,9 @@ volumes:
 - name: mysql
   temp:
     medium: memory
+- name: mysql-8
+  temp:
+    medium: memory
 ---
 clone:
   disable: true
@@ -4093,6 +4176,9 @@ volumes:
   temp:
     medium: memory
 - name: mysql
+  temp:
+    medium: memory
+- name: mysql-8
   temp:
     medium: memory
 ---
@@ -5257,6 +5343,9 @@ volumes:
 - name: mysql
   temp:
     medium: memory
+- name: mysql-8
+  temp:
+    medium: memory
 ---
 clone:
   retries: 3
@@ -5418,6 +5507,16 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:8.0.32
+  name: mysql-8
+  volumes:
+  - name: mysql-8
+    path: /var/lib/mysql
 steps:
 - commands:
   - mkdir -p bin
@@ -5496,6 +5595,9 @@ volumes:
   temp:
     medium: memory
 - name: mysql
+  temp:
+    medium: memory
+- name: mysql-8
   temp:
     medium: memory
 ---
@@ -5855,6 +5957,9 @@ volumes:
 - name: mysql
   temp:
     medium: memory
+- name: mysql-8
+  temp:
+    medium: memory
 ---
 clone:
   disable: true
@@ -6076,6 +6181,16 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:8.0.32
+  name: mysql-8
+  volumes:
+  - name: mysql-8
+    path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.1-alpine
   name: redis
@@ -6208,6 +6323,9 @@ volumes:
   temp:
     medium: memory
 - name: mysql
+  temp:
+    medium: memory
+- name: mysql-8
   temp:
     medium: memory
 ---
@@ -6535,6 +6653,9 @@ volumes:
 - name: mysql
   temp:
     medium: memory
+- name: mysql-8
+  temp:
+    medium: memory
 ---
 clone:
   retries: 3
@@ -6822,6 +6943,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 533a106338fb182ba416e039c3c70643d89cf509bf8f99b4aa304af8841c8377
+hmac: 73d7b6e731ebb052cbe42b3c2a7016f6318fff0472d7fd16501a051fbcd97f5a
 
 ...
