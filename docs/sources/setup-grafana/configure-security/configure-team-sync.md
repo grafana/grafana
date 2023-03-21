@@ -5,6 +5,10 @@ aliases:
   - ../../enterprise/team-sync/
 description: Learn how to use Team Sync to synchronize between your authentication
   provider teams and Grafana teams.
+labels:
+  products:
+    - cloud
+    - enterprise
 title: Configure Team Sync
 weight: 1000
 ---
@@ -38,16 +42,16 @@ If you have already grouped some users into a team, then you can synchronize tha
 
 {{< figure src="/static/img/docs/enterprise/team_add_external_group.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
 
-1. In Grafana, navigate to **Configuration > Teams**.
+1. In Grafana, navigate to **Administration > Teams**.
 1. Select a team.
-1. On the External group sync tab, and click **Add group**.
+1. Go to the External group sync tab, and click **Add group**.
 1. Insert the value of the group you want to sync with. This becomes the Grafana `GroupID`.
    Examples:
 
    - For LDAP, this is the LDAP distinguished name (DN) of LDAP group you want to synchronize with the team.
    - For Auth Proxy, this is the value we receive as part of the custom `Groups` header.
 
-1. Click `Add group` to save.
+1. Click **Add group** to save.
 
 > Group matching is case insensitive.
 

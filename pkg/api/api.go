@@ -65,6 +65,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqCanAccessTeams := middleware.AdminOrEditorAndFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
+	ensureEditorOrViewerCanEdit := middleware.EnsureEditorOrViewerCanEdit(hs.Cfg)
 	authorize := ac.Middleware(hs.AccessControl)
 	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.accesscontrolService, hs.userService)
 	quota := middleware.Quota(hs.QuotaService)
@@ -156,10 +157,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
-	if hs.Features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
-		r.Get("/g/*", reqSignedIn, hs.Index)
-	}
-
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		// list public dashboards
 		r.Get("/public-dashboards/list", reqSignedIn, hs.Index)
@@ -177,7 +174,7 @@ func (hs *HTTPServer) registerRoutes() {
 		if f, ok := reqSignedIn.(func(c *contextmodel.ReqContext)); ok {
 			f(c)
 		}
-		middleware.EnsureEditorOrViewerCanEdit(c)
+		ensureEditorOrViewerCanEdit(c)
 	}, ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
 
 	r.Get("/playlists/", reqSignedIn, hs.Index)
@@ -306,10 +303,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		if hs.Features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {
 			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
-		}
-
-		if hs.QueryLibraryHTTPService != nil && !hs.QueryLibraryHTTPService.IsDisabled() {
-			apiRoute.Group("/query-library", hs.QueryLibraryHTTPService.RegisterHTTPRoutes)
 		}
 
 		// current org
