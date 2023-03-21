@@ -5,12 +5,7 @@ import { createLokiDatasource } from '../../mocks';
 
 import { MonacoQueryFieldWrapper, Props } from './MonacoQueryFieldWrapper';
 
-function renderComponent({
-  initialValue = '',
-  onChange = jest.fn(),
-  onRunQuery = jest.fn(),
-  runQueryOnBlur = false,
-}: Partial<Props> = {}) {
+function renderComponent({ initialValue = '', onChange = jest.fn(), onRunQuery = jest.fn() }: Partial<Props> = {}) {
   const datasource = createLokiDatasource();
 
   render(
@@ -20,7 +15,6 @@ function renderComponent({
       initialValue={initialValue}
       onChange={onChange}
       onRunQuery={onRunQuery}
-      runQueryOnBlur={runQueryOnBlur}
       placeholder="Enter a Loki query (run with Shift+Enter)"
     />
   );
