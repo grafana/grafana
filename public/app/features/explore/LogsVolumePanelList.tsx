@@ -28,6 +28,7 @@ type Props = {
   onLoadLogsVolume: () => void;
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
+  onClose?(): void;
 };
 
 export const LogsVolumePanelList = ({
@@ -40,6 +41,7 @@ export const LogsVolumePanelList = ({
   eventBus,
   splitOpen,
   timeZone,
+  onClose,
 }: Props) => {
   const logVolumes = useMemo(
     () => groupBy(logsVolumeData?.data || [], 'meta.custom.sourceQuery.refId'),
@@ -67,7 +69,8 @@ export const LogsVolumePanelList = ({
       <SupplementaryResultError
         title="The logs volume query is taking too long"
         suggestion="Continue executing"
-        onSuggestionClicked={retry}
+        onSuggestion={retry}
+        onRemove={onClose}
       />
     );
   } else if (logsVolumeData?.error !== undefined) {
