@@ -38,18 +38,19 @@ Every commit to main that has changes within the `packages` directory is a subje
 
 > Make sure you are logged in to npm in your terminal and that you are a part of Grafana org on npm.
 
-1. Run `yarn packages:prepare` script from the root directory. This performs tests on the packages and prompts for the version of the packages. The version should be the same as the one being released.
+1. Run `yarn packages:clean` script from the root directory. This will delete any previous builds of the packages.
+2. Run `yarn packages:prepare` script from the root directory. This performs tests on the packages and prompts for the version of the packages. The version should be the same as the one being released.
    - Make sure you use semver convention. So, _place a dot between prerelease id and prerelease number_, i.e. 6.3.0-alpha.1
    - Make sure you confirm the version bump when prompted!
-2. Run `yarn packages:build` script that compiles distribution code in `packages/grafana-*/dist`.
-3. Run `yarn packages:pack` script to zip each package into `.tgz`. This is required for yarn berry to replace properties in the package.json files declared in `publishConfig`.
-4. Depending whether or not it's a prerelease:
+3. Run `yarn packages:build` script that compiles distribution code in `packages/grafana-*/dist`.
+4. Run `yarn packages:pack` script to zip each package into `.tgz`. This is required for yarn to replace properties in the package.json files declared in `publishConfig` property.
+5. Depending whether or not it's a prerelease:
 
-   - When releasing a prerelease run `packages:publishNext` to publish new versions.
-   - When releasing a stable version run `packages:publishLatest` to publish new versions.
-   - When releasing a test version run `packages:publishTest` to publish test versions.
+   - When releasing a prerelease run `./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org/'` to publish new versions.
+   - When releasing a stable version run `./scripts/publish-npm-packages.sh --dist-tag 'latest' --registry 'https://registry.npmjs.org/'` to publish new versions.
+   - When releasing a test version run `./scripts/publish-npm-packages.sh --dist-tag 'test' --registry 'https://registry.npmjs.org/'` to publish test versions.
 
-5. Push version commit to the release branch.
+6. Revert any changes made by the `packages:prepare` script.
 
 ### Building individual packages
 
