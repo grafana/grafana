@@ -43,7 +43,7 @@ env:
       fieldPath: status.podIP
 ```
 
-1. Add the port 9094 to the Grafana deployment.
+1. Add the port 9094 to the Grafana deployment:
 
 ```yaml
 ports:
@@ -55,7 +55,7 @@ ports:
     protocol: TCP
 ```
 
-2. Add the environment variables to the Grafana deployment.
+2. Add the environment variables to the Grafana deployment:
 
 ```yaml
 env:
@@ -65,7 +65,7 @@ env:
         fieldPath: status.podIP
 ```
 
-3. Create a headless service that returns the pod IP instead of the service IP, which is what the `ha_peers` need.
+3. Create a headless service that returns the pod IP instead of the service IP, which is what the `ha_peers` need:
 
 ```yaml
 apiVersion: v1
@@ -85,7 +85,7 @@ spec:
     app: grafana
 ```
 
-4. Make sure your grafana deployment has the label matching the selector, e.g. `app:grafana`.
+4. Make sure your grafana deployment has the label matching the selector, e.g. `app:grafana`:
 
 5. Add in the grafana.ini:
 
