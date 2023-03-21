@@ -83,10 +83,6 @@ const (
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
 
-	// FlagTracing
-	// Adds trace ID to error notifications
-	FlagTracing = "tracing"
-
 	// FlagNewTraceView
 	// Shows the new trace view design
 	FlagNewTraceView = "newTraceView"
