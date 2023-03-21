@@ -10,7 +10,18 @@ import { t, Trans } from 'app/core/internationalization';
 
 import { SearchLayout, SearchState } from '../../types';
 
-function getLayoutOptions() {
+function getLayoutOptions(includePanels: boolean) {
+  if (includePanels) {
+    return [
+      { value: SearchLayout.List, icon: 'list-ul', ariaLabel: t('search.actions.view-as-list', 'View as list') },
+      {
+        value: SearchLayout.Grid,
+        icon: 'apps',
+        ariaLabel: t('search.actions.view-as-grid', 'Grid view'),
+      },
+    ];
+  }
+
   const layoutOptions = [
     { value: SearchLayout.Folders, icon: 'folder', ariaLabel: t('search.actions.view-as-folders', 'View by folders') },
     { value: SearchLayout.List, icon: 'list-ul', ariaLabel: t('search.actions.view-as-list', 'View as list') },
@@ -54,9 +65,9 @@ export function getValidQueryLayout(q: SearchState): SearchLayout {
     }
   }
 
-  if (layout === SearchLayout.Grid && !config.featureToggles.dashboardPreviews) {
-    return SearchLayout.List;
-  }
+  // if (layout === SearchLayout.Grid && !config.featureToggles.dashboardPreviews) {
+  //   return SearchLayout.List;
+  // }
   return layout;
 }
 
@@ -122,7 +133,7 @@ export const ActionRow = ({
         <HorizontalGroup spacing="md" width="auto">
           {!hideLayout && (
             <RadioButtonGroup
-              options={getLayoutOptions()}
+              options={getLayoutOptions(state.includePanels === true)}
               disabledOptions={disabledOptions}
               onChange={onLayoutChange}
               value={layout}

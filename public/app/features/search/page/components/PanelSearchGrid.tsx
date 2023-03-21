@@ -67,11 +67,7 @@ export const PanelSearchGrid = ({
             if (index >= view.length) {
               return null;
             }
-            const item = view.get(index);
-            if (!item) {
-              return null; // ???
-            }
-
+            const item = { ...view.get(index) }; // spread avoidds issue with dynamic views
             let className = styles.virtualizedGridItemWrapper;
             if (rowIndex === highlightIndex.y && columnIndex === highlightIndex.x) {
               className += ' ' + styles.selectedItem;
@@ -106,6 +102,7 @@ interface PanelViewProps {
 
 const PanelView = ({ width, height, item, loader }: PanelViewProps) => {
   const viz = useAsync(async () => {
+    console.log('LOADING', item.uid);
     const m = await loader.findPanel(item);
     const v = createVizPanelFromPanelModel(m);
 
@@ -115,9 +112,10 @@ const PanelView = ({ width, height, item, loader }: PanelViewProps) => {
     }); // lost reference?
 
     return v;
-  }, [width, height, item, loader]);
+  }, [width, height, item.uid, loader]);
 
   if (viz.error) {
+    console.log('ERROR', { ...item }, viz.error);
     return (
       <div>
         Error loading: {item.uid} {viz.error && JSON.stringify(viz.error)}

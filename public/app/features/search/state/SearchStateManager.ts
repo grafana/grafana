@@ -190,8 +190,8 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       }
     }
 
-    if (!this.state.includePanels && !q.kind) {
-      q.kind = ['dashboard', 'folder']; // skip panels
+    if (this.state.includePanels) {
+      q.kind = ['panel']; //['dashboard', 'folder']; // skip panels
     }
 
     if (q.panel_type?.length) {

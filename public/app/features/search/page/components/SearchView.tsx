@@ -132,7 +132,7 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
               onClickItem: stateManager.onSearchItemClicked,
             };
 
-            if (state.includePanels) {
+            if (state.includePanels && layout === SearchLayout.Grid) {
               return <PanelSearchGrid {...props} />;
             }
 
