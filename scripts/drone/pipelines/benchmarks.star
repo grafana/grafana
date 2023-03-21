@@ -56,7 +56,7 @@ def integration_benchmarks(trigger, prefix):
     	wire_install_step(),
     ]
     
-    cmd = ["go test -run=^$ -bench=. -benchtime=5s -benchmem ./pkg/services/sqlstore/permissions"]
+    cmd = ["go test -run=^$ -timeout=20m -bench=. -benchtime=5s -benchmem ./pkg/services/sqlstore/permissions"]
     
     benchmark_steps = [
     	{

@@ -1160,13 +1160,13 @@ steps:
   image: grafana/build-container:1.7.2
   name: wire-install
 - commands:
-  - go test -run=^$ -bench=. -benchtime=5s -benchmem ./pkg/services/sqlstore/permissions
+  - go test -run=^$ -timeout=20m -bench=. -benchtime=5s -benchmem ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.2
   name: sqlite-integration-benchmarks
 - commands:
-  - go test -run=^$ -bench=. -benchtime=5s -benchmem ./pkg/services/sqlstore/permissions
+  - go test -run=^$ -timeout=20m -bench=. -benchtime=5s -benchmem ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   environment:
@@ -1176,7 +1176,7 @@ steps:
   image: grafana/build-container:1.7.2
   name: postgres-integration-benchmarks
 - commands:
-  - go test -run=^$ -bench=. -benchtime=5s -benchmem ./pkg/services/sqlstore/permissions
+  - go test -run=^$ -timeout=20m -bench=. -benchtime=5s -benchmem ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   environment:
@@ -1185,7 +1185,7 @@ steps:
   image: grafana/build-container:1.7.2
   name: mysql-integration-benchmarks
 - commands:
-  - go test -run=^$ -bench=. -benchtime=5s -benchmem ./pkg/services/sqlstore/permissions
+  - go test -run=^$ -timeout=20m -bench=. -benchtime=5s -benchmem ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   environment:
@@ -6943,6 +6943,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 55ba63c89cccd740944ca6e5ec2d489f85010fa9d4082447c84f7e55ee1dde95
+hmac: 9936b10fb1d236c9b4a5e4d441a5ac04cd771b1380d8ed01c2172761d7a1c7e9
 
 ...
