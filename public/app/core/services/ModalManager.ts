@@ -97,7 +97,6 @@ export class ModalManager {
 
     const elem = React.createElement(provideTheme(AngularModalProxy, config.theme2), modalProps);
     this.reactModalRoot.appendChild(this.reactModalNode);
-    const root = createRoot(this.reactModalNode);
-    root.render(elem);
+    this.root.render(elem);
   }
 }
