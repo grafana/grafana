@@ -115,6 +115,7 @@ describe('getPanelMenu()', () => {
         [PluginExtensionPlacements.DashboardPanelMenu]: [
           createRegistryItem<PluginExtensionLink>({
             type: PluginExtensionTypes.link,
+            pluginName: 'Grafana Basic App',
             title: 'Declare incident',
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
@@ -143,6 +144,7 @@ describe('getPanelMenu()', () => {
         [PluginExtensionPlacements.DashboardPanelMenu]: [
           createRegistryItem<PluginExtensionLink>({
             type: PluginExtensionTypes.link,
+            pluginName: 'Grafana Basic App',
             title: 'Declare incident when pressing this amazing menu item',
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
@@ -169,6 +171,7 @@ describe('getPanelMenu()', () => {
     it('should use extension for panel menu returned by configure function', () => {
       const configure: PluginExtensionRegistryItem<PluginExtensionLink> = () => ({
         title: 'Wohoo',
+        pluginName: 'Grafana Basic App',
         type: PluginExtensionTypes.link,
         description: 'Declaring an incident in the app',
         path: '/a/grafana-basic-app/declare-incident',
@@ -180,6 +183,7 @@ describe('getPanelMenu()', () => {
           createRegistryItem<PluginExtensionLink>(
             {
               type: PluginExtensionTypes.link,
+              pluginName: 'Grafana Basic App',
               title: 'Declare incident when pressing this amazing menu item',
               description: 'Declaring an incident in the app',
               path: '/a/grafana-basic-app/declare-incident',
@@ -211,6 +215,7 @@ describe('getPanelMenu()', () => {
           createRegistryItem<PluginExtensionLink>(
             {
               type: PluginExtensionTypes.link,
+              pluginName: 'Grafana Basic App',
               title: 'Declare incident when pressing this amazing menu item',
               description: 'Declaring an incident in the app',
               path: '/a/grafana-basic-app/declare-incident',
@@ -244,6 +249,7 @@ describe('getPanelMenu()', () => {
           createRegistryItem<PluginExtensionLink>(
             {
               type: PluginExtensionTypes.link,
+              pluginName: 'Grafana Basic App',
               title: 'Declare incident when pressing this amazing menu item',
               description: 'Declaring an incident in the app',
               path: '/a/grafana-basic-app/declare-incident',
@@ -314,6 +320,7 @@ describe('getPanelMenu()', () => {
 
         return {
           type: PluginExtensionTypes.link,
+          pluginName: 'Grafana Basic App',
           title: 'Declare incident when pressing this amazing menu item',
           description: 'Declaring an incident in the app',
           path: '/a/grafana-basic-app/declare-incident',
@@ -326,6 +333,7 @@ describe('getPanelMenu()', () => {
           createRegistryItem<PluginExtensionLink>(
             {
               type: PluginExtensionTypes.link,
+              pluginName: 'Grafana Basic App',
               title: 'Declare incident when pressing this amazing menu item',
               description: 'Declaring an incident in the app',
               path: '/a/grafana-basic-app/declare-incident',
