@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
@@ -66,7 +67,7 @@ type AlertRuleV1 struct {
 	Title                values.StringValue      `json:"title" yaml:"title"`
 	Condition            values.StringValue      `json:"condition" yaml:"condition"`
 	Data                 []QueryV1               `json:"data" yaml:"data"`
-	DashboardUID         values.StringValue      `json:"dasboardUid" yaml:"dashboardUid"`
+	DashboardUID         values.StringValue      `json:"dashboardUid" yaml:"dashboardUid"`
 	PanelID              values.Int64Value       `json:"panelId" yaml:"panelId"`
 	NoDataState          values.StringValue      `json:"noDataState" yaml:"noDataState"`
 	ExecErrState         values.StringValue      `json:"execErrState" yaml:"execErrState"`
@@ -76,6 +77,45 @@ type AlertRuleV1 struct {
 	IsPaused             values.BoolValue        `json:"isPaused" yaml:"isPaused"`
 	NotificationSettings *NotificationSettingsV1 `json:"notification_settings" yaml:"notification_settings"`
 	Record               *RecordV1               `json:"record" yaml:"record"`
+}
+
+// UnmarshalJSON supports the grandfathered typo dashboardUid. This should be removed in V2.
+func (rule *AlertRuleV1) UnmarshalJSON(b []byte) error {
+	var t struct {
+		AlertRuleV1 `json:",inline" yaml:",inline"`
+		DasboardUID values.StringValue `json:"dasboardUid" yaml:"dasboardUid"`
+	}
+	if err := yaml.Unmarshal(b, &t); err != nil {
+		return err
+	}
+	*rule = t.AlertRuleV1
+
+	if rule.DashboardUID.Value() == "" && t.DasboardUID.Value() != "" {
+		rule.DashboardUID = t.DasboardUID
+	}
+
+	return nil
+}
+
+// UnmarshalYAML supports the grandfathered typo dashboardUid. Even though the typo only existed in the json tag, we need
+// support in YAML as well since we use yaml.UnmarshalYAML when parsing. This should be removed in V2.
+func (rule *AlertRuleV1) UnmarshalYAML(value *yaml.Node) error {
+	type plain AlertRuleV1
+	var t struct {
+		plain       `json:",inline" yaml:",inline"`
+		DasboardUID values.StringValue `json:"dasboardUid" yaml:"dasboardUid"`
+	}
+
+	if err := value.Decode(&t); err != nil {
+		return err
+	}
+	*rule = AlertRuleV1(t.plain)
+
+	if rule.DashboardUID.Value() == "" && t.DasboardUID.Value() != "" {
+		rule.DashboardUID = t.DasboardUID
+	}
+
+	return nil
 }
 
 func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
