@@ -1056,7 +1056,7 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	return limits, nil
 }
 
-func (d *dashboardStore) SaveDirectly(ctx context.Context, msg string, dash *dashboards.Dashboard, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
+func (d *dashboardStore) SaveDashboardWithMetadata(ctx context.Context, msg string, dash *dashboards.Dashboard, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
 	var result *dashboards.Dashboard
 	var err error
 

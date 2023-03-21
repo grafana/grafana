@@ -105,7 +105,7 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 		}
 	}
 
-	out, err := c.dashboardStore.SaveDirectly(ctx, anno.Message, save, p)
+	out, err := c.dashboardStore.SaveDashboardWithMetadata(ctx, anno.Message, save, p)
 	if out != nil {
 		fmt.Printf("ADDED: %s/%s\n", out.UID, out.Slug)
 	}

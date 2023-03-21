@@ -458,8 +458,8 @@ func (_m *FakeDashboardStore) SaveDashboard(ctx context.Context, cmd SaveDashboa
 	return r0, r1
 }
 
-// SaveDirectly provides a mock function with given fields: ctx, msg, dash, provisioning
-func (_m *FakeDashboardStore) SaveDirectly(ctx context.Context, msg string, dash *Dashboard, provisioning *DashboardProvisioning) (*Dashboard, error) {
+// SaveDashboardWithMetadata provides a mock function with given fields: ctx, msg, dash, provisioning
+func (_m *FakeDashboardStore) SaveDashboardWithMetadata(ctx context.Context, msg string, dash *Dashboard, provisioning *DashboardProvisioning) (*Dashboard, error) {
 	ret := _m.Called(ctx, msg, dash, provisioning)
 
 	var r0 *Dashboard
