@@ -55,10 +55,22 @@ export const LogsVolumePanelList = ({
     return !isLogsVolumeLimited(data) && zoomRatio && zoomRatio < 1;
   });
 
+  const timeoutError = logsVolumeData?.error?.message?.includes('timeout');
+  const retry = () => {
+    onLoadLogsVolume();
+  };
+
   if (logsVolumeData?.state === LoadingState.Loading) {
     return <span>Loading...</span>;
-  }
-  if (logsVolumeData?.error !== undefined) {
+  } else if (timeoutError) {
+    return (
+      <SupplementaryResultError
+        title="The logs volume query is taking too long"
+        suggestion="Continue executing"
+        onSuggestionClicked={retry}
+      />
+    );
+  } else if (logsVolumeData?.error !== undefined) {
     return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
   }
   return (
