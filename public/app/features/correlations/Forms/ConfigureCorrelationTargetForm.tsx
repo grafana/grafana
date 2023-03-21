@@ -16,11 +16,8 @@ export const ConfigureCorrelationTargetForm = () => {
 
   return (
     <>
-      <h3>Step 2: Setup target query</h3>
-      <p>
-        Clicking on a link runs a provided target query. Transformations allow to parse origin result field values to
-        access more granular values.
-      </p>
+      <h4>Step 2: Setup target query</h4>
+      <p>Clicking on a link runs a provided target query.</p>
       <Controller
         control={control}
         name="targetUID"

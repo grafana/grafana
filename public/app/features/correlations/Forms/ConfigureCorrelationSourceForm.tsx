@@ -25,10 +25,10 @@ export const ConfigureCorrelationSourceForm = () => {
 
   return (
     <>
-      <h3>Step 3: Configure origin data source</h3>
+      <h4>Step 3: Configure origin data source</h4>
       <p>
-        Links are shown in panels with results of the selected origin source data source. They are displayed in data
-        point next to the value of the provided field.
+        Links are displayed with results of the selected origin source data. They shown along with the value of the
+        provided <em>results field</em>.
       </p>
       <Controller
         control={control}
