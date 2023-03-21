@@ -62,6 +62,11 @@ func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleM
 	panel := parsePanelKey(rule, logger)
 
 	errCh := make(chan error, 1)
+	if len(annotations) == 0 {
+		close(errCh)
+		return errCh
+	}
+
 	go func() {
 		defer close(errCh)
 		errCh <- h.recordAnnotations(ctx, panel, annotations, rule.OrgID, logger)
@@ -180,10 +185,6 @@ func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransitio
 }
 
 func (h *AnnotationBackend) recordAnnotations(ctx context.Context, panel *panelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error {
-	if len(annotations) == 0 {
-		return nil
-	}
-
 	if panel != nil {
 		dashID, err := h.dashboards.getID(ctx, panel.orgID, panel.dashUID)
 		if err != nil {
