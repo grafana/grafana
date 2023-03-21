@@ -1,5 +1,4 @@
 import { isUndefined, omitBy } from 'lodash';
-import { Validate } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
 import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
@@ -9,9 +8,7 @@ import { MatcherFieldValue } from '../types/silence-form';
 
 import { matcherToMatcherField, parseMatcher } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
-import { parseInterval, timeOptions } from './time';
-
-const defaultValueAndType: [string, string] = ['', ''];
+import { isValidPrometheusDuration } from './time';
 
 const matchersToArrayFieldMatchers = (
   matchers: Record<string, string> | undefined,
@@ -28,25 +25,6 @@ const matchersToArrayFieldMatchers = (
     ],
     [] as MatcherFieldValue[]
   );
-
-const intervalToValueAndType = (
-  strValue: string | undefined,
-  defaultValue?: typeof defaultValueAndType
-): [string, string] => {
-  if (!strValue) {
-    return defaultValue ?? defaultValueAndType;
-  }
-
-  const [value, valueType] = strValue ? parseInterval(strValue) : [undefined, undefined];
-
-  const timeOption = timeOptions.find((opt) => opt.value === valueType);
-
-  if (!value || !timeOption) {
-    return defaultValueAndType;
-  }
-
-  return [String(value), timeOption.value];
-};
 
 const selectableValueToString = (selectableValue: SelectableValue<string>): string => selectableValue.value!;
 
@@ -79,11 +57,8 @@ export const emptyRoute: FormAmRoute = {
   receiver: '',
   overrideTimings: false,
   groupWaitValue: '',
-  groupWaitValueType: timeOptions[0].value,
   groupIntervalValue: '',
-  groupIntervalValueType: timeOptions[0].value,
   repeatIntervalValue: '',
-  repeatIntervalValueType: timeOptions[0].value,
   muteTimeIntervals: [],
 };
 
@@ -117,10 +92,6 @@ export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Re
         (matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] } as MatcherFieldValue)
       ) ?? [];
 
-  const [groupWaitValue, groupWaitValueType] = intervalToValueAndType(route.group_wait, ['', 's']);
-  const [groupIntervalValue, groupIntervalValueType] = intervalToValueAndType(route.group_interval, ['', 'm']);
-  const [repeatIntervalValue, repeatIntervalValueType] = intervalToValueAndType(route.repeat_interval, ['', 'h']);
-
   return [
     {
       id,
@@ -133,13 +104,10 @@ export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Re
       receiver: route.receiver ?? '',
       overrideGrouping: Array.isArray(route.group_by) && route.group_by.length !== 0,
       groupBy: route.group_by ?? [],
-      overrideTimings: [groupWaitValue, groupIntervalValue, repeatIntervalValue].some(Boolean),
-      groupWaitValue,
-      groupWaitValueType,
-      groupIntervalValue,
-      groupIntervalValueType,
-      repeatIntervalValue,
-      repeatIntervalValueType,
+      overrideTimings: [route.group_wait, route.group_interval, route.repeat_interval].some(Boolean),
+      groupWaitValue: route.group_wait ?? '',
+      groupIntervalValue: route.group_interval ?? '',
+      repeatIntervalValue: route.repeat_interval ?? '',
       routes: formRoutes,
       muteTimeIntervals: route.mute_time_intervals ?? [],
     },
@@ -154,28 +122,19 @@ export const formAmRouteToAmRoute = (
 ): Route => {
   const existing: Route | undefined = id2ExistingRoute[formAmRoute.id];
 
-  const {
-    overrideGrouping,
-    groupBy,
-    overrideTimings,
-    groupWaitValue,
-    groupWaitValueType,
-    groupIntervalValue,
-    groupIntervalValueType,
-    repeatIntervalValue,
-    repeatIntervalValueType,
-  } = formAmRoute;
+  const { overrideGrouping, groupBy, overrideTimings, groupWaitValue, groupIntervalValue, repeatIntervalValue } =
+    formAmRoute;
 
   const group_by = overrideGrouping && groupBy ? groupBy : [];
 
   const overrideGroupWait = overrideTimings && groupWaitValue;
-  const group_wait = overrideGroupWait ? `${groupWaitValue}${groupWaitValueType}` : undefined;
+  const group_wait = overrideGroupWait ? groupWaitValue : undefined;
 
   const overrideGroupInterval = overrideTimings && groupIntervalValue;
-  const group_interval = overrideGroupInterval ? `${groupIntervalValue}${groupIntervalValueType}` : undefined;
+  const group_interval = overrideGroupInterval ? groupIntervalValue : undefined;
 
   const overrideRepeatInterval = overrideTimings && repeatIntervalValue;
-  const repeat_interval = overrideRepeatInterval ? `${repeatIntervalValue}${repeatIntervalValueType}` : undefined;
+  const repeat_interval = overrideRepeatInterval ? repeatIntervalValue : undefined;
 
   const amRoute: Route = {
     ...(existing ?? {}),
@@ -235,10 +194,10 @@ export const mapMultiSelectValueToStrings = (
   return selectableValuesToStrings(selectableValues);
 };
 
-export const optionalPositiveInteger: Validate<string> = (value) => {
-  if (!value) {
-    return undefined;
+export function promDurationValidator(duration: string) {
+  if (duration.length === 0) {
+    return true;
   }
 
-  return !/^\d+$/.test(value) ? 'Must be a positive integer.' : undefined;
-};
+  return isValidPrometheusDuration(duration) || 'Invalid duration format. Must be {number}{time_unit}';
+}
