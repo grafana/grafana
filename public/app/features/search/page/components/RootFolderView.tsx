@@ -52,20 +52,20 @@ export const RootFolderView = ({
     const folders = await getChildren();
 
     if (!hidePseudoFolders) {
+      folders.unshift({ title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID });
+
+      const itemsUIDs = await impressionSrv.getDashboardOpened();
+      if (itemsUIDs.length) {
+        folders.unshift({ title: 'Recent', icon: 'clock-nine', kind: 'folder', uid: '__recent', itemsUIDs });
+      }
+
       if (contextSrv.isSignedIn) {
         const stars = await getBackendSrv().get('api/user/stars');
         if (stars.length > 0) {
           folders.unshift({ title: 'Starred', icon: 'star', kind: 'folder', uid: '__starred', itemsUIDs: stars });
         }
       }
-
-      const itemsUIDs = await impressionSrv.getDashboardOpened();
-      if (itemsUIDs.length) {
-        folders.unshift({ title: 'Recent', icon: 'clock-nine', kind: 'folder', uid: '__recent', itemsUIDs });
-      }
     }
-
-    folders.unshift({ title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID });
 
     return folders;
   }, []);
