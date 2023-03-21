@@ -61,16 +61,16 @@ func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleM
 	annotations := buildAnnotations(rule, states, logger)
 	panel := parsePanelKey(rule, logger)
 
-	// New background job, so start with a completely new context to avoid pollution.
-	writeCtx := context.Background()
-	writeCtx, cancel := context.WithTimeout(writeCtx, StateHistoryWriteTimeout)
-	writeCtx = history_model.WithRuleData(writeCtx, rule)
-
 	errCh := make(chan error, 1)
 	if len(annotations) == 0 {
 		close(errCh)
 		return errCh
 	}
+
+	// New background job, so start with a completely new context to avoid pollution.
+	writeCtx := context.Background()
+	writeCtx, cancel := context.WithTimeout(writeCtx, StateHistoryWriteTimeout)
+	writeCtx = history_model.WithRuleData(writeCtx, rule)
 
 	go func(ctx context.Context) {
 		defer cancel()
