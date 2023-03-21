@@ -1179,7 +1179,7 @@ def release_canary_npm_packages_step(trigger = None):
             "NPM_TOKEN": from_secret("npm_token"),
         },
         "commands": [
-            "./scripts/circle-release-canary-packages.sh",
+            "./scripts/publish-npm-packages.sh --dist-tag 'latest' --registry 'https://registry.npmjs.org/'",
         ],
     }
     if trigger:
