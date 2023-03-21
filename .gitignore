@@ -139,7 +139,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 /packages/**/package.tgz
 /packages/grafana-toolkit/sass
 ## CI places the packages in a different location
-/npm-artifacts/*.tgz
+/npm-artifacts
 
 # Ignore frontend build manifest
 manifest.json
