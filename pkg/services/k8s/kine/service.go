@@ -65,7 +65,7 @@ func buildConnectionString(dbconfig sqlstore.DatabaseConfig) (string, error) {
 
 	switch dbconfig.Type {
 	case "sqlite3", "sqlite":
-		connectionString = endpoint.SQLiteBackend + "://" + path.Join(path.Dir(dbconfig.Path), "kubernetes.db")
+		connectionString = endpoint.SQLiteBackend + "://" + path.Join(path.Dir(dbconfig.Path), "k8s", "kubernetes.db")
 	case endpoint.PostgresBackend:
 		// TODO: support additional options
 		connectionString = endpoint.PostgresBackend + "://" + dbconfig.Host + "/kubernetes"
