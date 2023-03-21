@@ -55,29 +55,12 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.R
 }
 
 func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) response.Response {
-	token := c.GetCookie(hs.Cfg.LoginCookieName)
-	if token == "" {
-		hs.log.FromContext(c.Req.Context()).Debug("Rotate called without session cookie")
-		return response.Redirect(hs.Cfg.AppSubURL + "/login")
-	}
-
-	ip, _ := network.GetIPFromAddress(c.RemoteAddr())
-	res, err := hs.AuthTokenService.RotateToken(c.Req.Context(), auth.RotateCommand{
-		UnHashedToken: token,
-		IP:            ip,
-		UserAgent:     c.Req.UserAgent(),
-	})
-
-	if err != nil {
+	if err := hs.rotateToken(c); err != nil {
 		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
 		if errors.Is(err, auth.ErrInvalidSessionToken) {
 			authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 		}
 		return response.Redirect(hs.Cfg.AppSubURL + "/login")
-	}
-
-	if res.UnhashedToken != token {
-		authn.WriteSessionCookie(c.Resp, hs.Cfg, res)
 	}
 
 	return response.Redirect(hs.GetRedirectURL(c))
@@ -95,20 +78,7 @@ func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) re
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) RotateUserAuthToken(c *contextmodel.ReqContext) response.Response {
-	token := c.GetCookie(hs.Cfg.LoginCookieName)
-	if token == "" {
-		hs.log.FromContext(c.Req.Context()).Debug("Rotate called without session cookie")
-		return response.Error(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), nil)
-	}
-
-	ip, _ := network.GetIPFromAddress(c.RemoteAddr())
-	res, err := hs.AuthTokenService.RotateToken(c.Req.Context(), auth.RotateCommand{
-		UnHashedToken: token,
-		IP:            ip,
-		UserAgent:     c.Req.UserAgent(),
-	})
-
-	if err != nil {
+	if err := hs.rotateToken(c); err != nil {
 		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
 		if errors.Is(err, auth.ErrInvalidSessionToken) {
 			authn.DeleteSessionCookie(c.Resp, hs.Cfg)
@@ -122,11 +92,28 @@ func (hs *HTTPServer) RotateUserAuthToken(c *contextmodel.ReqContext) response.R
 		return response.ErrOrFallback(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), err)
 	}
 
+	return response.JSON(http.StatusOK, map[string]any{})
+}
+
+func (hs *HTTPServer) rotateToken(c *contextmodel.ReqContext) error {
+	token := c.GetCookie(hs.Cfg.LoginCookieName)
+	ip, _ := network.GetIPFromAddress(c.RemoteAddr())
+
+	res, err := hs.AuthTokenService.RotateToken(c.Req.Context(), auth.RotateCommand{
+		UnHashedToken: token,
+		IP:            ip,
+		UserAgent:     c.Req.UserAgent(),
+	})
+
+	if err != nil {
+		return err
+	}
+
 	if res.UnhashedToken != token {
 		authn.WriteSessionCookie(c.Resp, hs.Cfg, res)
 	}
 
-	return response.JSON(http.StatusOK, map[string]any{})
+	return nil
 }
 
 func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, userID int64) response.Response {

@@ -164,22 +164,6 @@ func TestHTTPServer_RotateUserAuthToken(t *testing.T) {
 
 	tests := []testCase{
 		{
-			desc:           "Should return 401 when missing cookie",
-			expectedStatus: http.StatusUnauthorized,
-		},
-		{
-			desc:           "Should return 401 when missing value in cookie",
-			cookie:         &http.Cookie{Name: "grafana_session", Value: ""},
-			expectedStatus: http.StatusUnauthorized,
-		},
-		{
-			desc:                 "Should return 401 and delete cookie if the token is invalid",
-			cookie:               &http.Cookie{Name: "grafana_session", Value: "123", Path: "/"},
-			rotatedErr:           auth.ErrInvalidSessionToken,
-			expectSessionDeleted: true,
-			expectedStatus:       http.StatusUnauthorized,
-		},
-		{
 			desc:                 "Should return 401 and delete cookie if the token is invalid",
 			cookie:               &http.Cookie{Name: "grafana_session", Value: "123", Path: "/"},
 			rotatedErr:           auth.ErrInvalidSessionToken,
