@@ -18,7 +18,6 @@ import (
 var _ Watcher = (*watcher)(nil)
 
 type watcher struct {
-	enabled        bool
 	log            log.Logger
 	dashboardStore database.DashboardSQLStore
 }
@@ -30,7 +29,6 @@ func ProvideWatcher(
 	accessControlService accesscontrol.Service,
 ) (*watcher, error) {
 	c := watcher{
-		enabled:        features.IsEnabled(featuremgmt.FlagK8S),
 		log:            log.New("k8s.dashboards.controller"),
 		dashboardStore: dashboardStore,
 	}
@@ -39,10 +37,6 @@ func ProvideWatcher(
 
 func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 	c.log.Debug("adding dashboard", "dash", dash)
-
-	js, _ := json.MarshalIndent(dash, "", "  ")
-	fmt.Printf("-------- WATCHER ---------")
-	fmt.Printf("%s", string(js))
 
 	raw, err := json.Marshal(dash.Spec)
 	if err != nil {
@@ -70,10 +64,6 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 	cmd.FolderUID = anno.FolderUID // FolderUID    string           `json:"folderUid" xorm:"folder_uid"`
 	cmd.IsFolder = false           // IsFolder     bool             `json:"isFolder"`
 	cmd.UpdatedAt = time.UnixMilli(anno.UpdatedAt)
-
-	js, _ = json.MarshalIndent(cmd, "", "  ")
-	fmt.Printf("-------- COMMAND BEFORE final save ---------")
-	fmt.Printf("%s", string(js))
 
 	if anno.OriginKey == "" {
 		_, err = c.dashboardStore.SaveDashboard(ctx, cmd)
@@ -112,9 +102,4 @@ func (c *watcher) Delete(ctx context.Context, dash *Dashboard) error {
 		ID:    existing.ID,
 		OrgID: existing.OrgID,
 	})
-}
-
-// only run service if feature toggle is enabled
-func (c *watcher) IsDisabled() bool {
-	return !c.enabled
 }

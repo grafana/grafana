@@ -1,13 +1,16 @@
 package modules
 
 const (
-	All                 string = "all"
+	All string = "all"
+
 	Kine                string = "kine"
 	KubernetesCRDs      string = "kubernetes-crds"
 	KubernetesAPIServer string = "kubernetes-apiserver"
 	KubernetesInformers string = "kubernetes-informers"
 	KubernetesClientset string = "kubernetes-clientset"
 	Kubernetes          string = "kubernetes"
+
+	PublicDashboardWebhooks string = "public-dashboard-webhooks"
 )
 
 var DependencyMap = map[string][]string{

@@ -2,10 +2,11 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+	"path"
+	"path/filepath"
 	"sync"
 
 	"github.com/grafana/dskit/services"
@@ -13,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/kindsys"
 	admissionregistrationV1 "k8s.io/api/admissionregistration/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -20,7 +23,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8schema "k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	memory "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -34,6 +36,8 @@ var (
 	ErrCRDAlreadyRegistered = errors.New("error registering duplicate CRD")
 	// TODO not actually sure if this is correct
 	GrafanaFieldManager = "core.grafana.com"
+	// NOTE use getCaBundle if you need this
+	caBundle []byte
 )
 
 type Resource interface {
@@ -51,7 +55,8 @@ type ClientSetProvider interface {
 // Clientset is the clientset for Kubernetes APIs.
 // It provides functionality to talk to the APIs as well as register new API clients for CRDs.
 type Clientset struct {
-	config *rest.Config
+	config     *rest.Config
+	grafanaCfg *setting.Cfg
 
 	admissionRegistration admissionregistrationClient.AdmissionregistrationV1Interface
 	clientset             kubernetes.Interface
@@ -63,29 +68,42 @@ type Clientset struct {
 	lock sync.RWMutex
 }
 
+// Gets caBundle for k8s api server
+func (c *Clientset) GetCABundle() []byte {
+	if len(caBundle) > 0 {
+		return caBundle
+	}
+
+	filename := path.Join(c.grafanaCfg.DataPath, "k8s", "apiserver.crt")
+	caBytes, err := os.ReadFile(filepath.Clean(filename))
+	if err != nil {
+		// NOTE this should never happen
+		panic(fmt.Sprintf("Missing ca bundle for k8s api server \n could not get ca bundle for k8s webhooks: %s, err: %s", filename, err.Error()))
+	}
+
+	caBundle = caBytes
+	return caBundle
+}
+
 type service struct {
 	*services.BasicService
 	clientset          *Clientset
 	restConfigProvider apiserver.RestConfigProvider
+	grafanaCfg         *setting.Cfg
 }
 
 // ShortWebhookConfig is a simple struct that is converted to a full k8s webhook config for an action on a resource.
 type ShortWebhookConfig struct {
-	Resource   string
+	Kind       kindsys.Kind
 	Url        string
 	Operations []admissionregistrationV1.OperationType
 	Timeout    int32
 }
 
 // ProvideClientset returns a new Clientset configured with cfg.
-func ProvideClientsetProvider(toggles featuremgmt.FeatureToggles, restConfigProvider apiserver.RestConfigProvider) (*service, error) {
-	if !toggles.IsEnabled(featuremgmt.FlagK8S) {
-		return &service{}, nil
-	}
-
-	s := &service{restConfigProvider: restConfigProvider}
+func ProvideClientsetProvider(toggles featuremgmt.FeatureToggles, restConfigProvider apiserver.RestConfigProvider, cfg *setting.Cfg) (*service, error) {
+	s := &service{restConfigProvider: restConfigProvider, grafanaCfg: cfg}
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.KubernetesClientset)
-
 	return s, nil
 }
 
@@ -94,8 +112,8 @@ func (s *service) GetClientset() *Clientset {
 }
 
 func (s *service) start(ctx context.Context) error {
-	cfg := s.restConfigProvider.GetRestConfig()
-	clientSet, err := NewClientset(cfg)
+	resetCfg := s.restConfigProvider.GetRestConfig()
+	clientSet, err := NewClientset(resetCfg, s.grafanaCfg)
 	if err != nil {
 		return err
 	}
@@ -110,24 +128,25 @@ func (s *service) running(ctx context.Context) error {
 
 // NewClientset returns a new Clientset.
 func NewClientset(
-	cfg *rest.Config,
+	restCfg *rest.Config,
+	grafanaCfg *setting.Cfg,
 ) (*Clientset, error) {
-	k8sset, err := kubernetes.NewForConfig(cfg)
+	k8sset, err := kubernetes.NewForConfig(restCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	extset, err := apiextensionsclient.NewForConfig(cfg)
+	extset, err := apiextensionsclient.NewForConfig(restCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	admissionregistrationClient, err := admissionregistrationClient.NewForConfig(cfg)
+	admissionregistrationClient, err := admissionregistrationClient.NewForConfig(restCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	dyn, err := dynamic.NewForConfig(cfg)
+	dyn, err := dynamic.NewForConfig(restCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +154,8 @@ func NewClientset(
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(k8sset))
 
 	return &Clientset{
-		config: cfg,
+		config:     restCfg,
+		grafanaCfg: grafanaCfg,
 
 		clientset:             k8sset,
 		admissionRegistration: admissionregistrationClient,
@@ -197,76 +217,6 @@ func (c *Clientset) GetResourceClient(gcrd crd.Kind, namespace ...string) (dynam
 	}
 
 	return resourceClient, nil
-}
-
-// Converts shortwebhookconfigs into full k8s validationwebhookconfigurations and registers them
-func (c *Clientset) RegisterValidation(ctx context.Context, webhooks []ShortWebhookConfig) error {
-	for _, hook := range webhooks {
-		obj := convertShortWebhookToWebhook(hook)
-		force := true
-		patchOpts := metav1.PatchOptions{FieldManager: GrafanaFieldManager, Force: &force}
-		data, err := json.Marshal(obj)
-		if err != nil {
-			return err
-		}
-		_, err = c.admissionRegistration.ValidatingWebhookConfigurations().Patch(context.Background(), obj.Name, types.ApplyPatchType, data, patchOpts)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// Converts shortwebhookconfig into a validatingwebhookconfiguration
-func convertShortWebhookToWebhook(swc ShortWebhookConfig) *admissionregistrationV1.ValidatingWebhookConfiguration {
-	caBundle := getCABundle()
-	metaname := fmt.Sprintf("validation.%s.core.grafana.com", swc.Resource)
-
-	return &admissionregistrationV1.ValidatingWebhookConfiguration{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ValidatingWebhookConfiguration",
-			APIVersion: "admissionregistration.k8s.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{Name: metaname},
-		Webhooks: []admissionregistrationV1.ValidatingWebhook{
-			{
-				Name: metaname,
-				ClientConfig: admissionregistrationV1.WebhookClientConfig{
-					URL:      &swc.Url,
-					CABundle: caBundle,
-				},
-				Rules: []admissionregistrationV1.RuleWithOperations{
-					{
-						Operations: []admissionregistrationV1.OperationType{
-							admissionregistrationV1.Create,
-						},
-						Rule: admissionregistrationV1.Rule{
-							APIGroups:   []string{"*"},
-							APIVersions: []string{"*"},
-							Resources:   []string{swc.Resource},
-							Scope:       pontificate(admissionregistrationV1.NamespacedScope),
-						},
-					},
-				},
-				TimeoutSeconds:          &swc.Timeout,
-				AdmissionReviewVersions: []string{"v1"},
-				SideEffects:             pontificate(admissionregistrationV1.SideEffectClassNone),
-			},
-		},
-	}
-}
-
-// TODO: figure out a new strategy for the ca bundle
-// webhooks are disableed for now
-func getCABundle() []byte {
-	filename := "devenv/docker/blocks/apiserver/certs/ca.pem"
-	caBytes, err := os.ReadFile(filename)
-	if err != nil {
-		fmt.Println("Missing ca bundle. Check devenv/docker/blocks/apiserver/make_gen.sh")
-		panic(fmt.Sprintf("could not get ca bundle for k8s webhooks: %s, err: %s", filename, err.Error()))
-	}
-	return caBytes
 }
 
 func pontificate[T any](s T) *T {

@@ -279,6 +279,7 @@ require (
 	github.com/hmarr/codeowners v1.1.2
 	github.com/k3s-io/kine v0.9.9
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
+	gomodules.xyz/jsonpatch/v2 v2.2.0
 	k8s.io/apiextensions-apiserver v0.26.2
 	k8s.io/kubectl v0.0.0
 	k8s.io/kubernetes v1.26.2
