@@ -110,11 +110,11 @@ To delete an existing dashboard link, click the trash icon next to the duplicate
 
 ## Panel links
 
-Each panel can have its own set of links that are shown in the upper left corner of the panel. You can link to any available URL, including dashboards, panels, or external sites. You can even control the time range to ensure the user is zoomed in on the right data in Grafana.
+Each panel can have its own set of links that are shown in the upper left of the panel after the panel title. You can link to any available URL, including dashboards, panels, or external sites. You can even control the time range to ensure the user is zoomed in on the right data in Grafana.
 
-Click the icon on the top left corner of a panel to see available panel links.
+Click the icon next to the panel title to see available panel links.
 
-{{< figure src="/static/img/docs/linking/panel-links.png" width="200px" >}}
+{{< figure src="/media/docs/grafana/screenshot-panel-links.png" width="200px" >}}
 
 ### Add a panel link
 
