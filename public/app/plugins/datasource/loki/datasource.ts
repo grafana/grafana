@@ -52,6 +52,7 @@ import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { LokiContextUi } from './components/LokiContextUi';
+import { transformForFormatting, revertTransformations } from './formatter';
 import { escapeLabelValueInExactSelector, escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
@@ -452,28 +453,19 @@ export class LokiDatasource
   }
 
   async formatQuery(query: string) {
-    const placeHolderScopedVars: any = {
-      __interval: { value: '200y' },
-      __range: { value: '201y' },
-    };
+    const transformedQuery = transformForFormatting(query, this.interpolateString.bind(this));
 
-    this.templateSrv.getVariables().forEach((variable) => {
-      if (query.includes(variable.name) === false) {
-        return;
-      }
+    let formatted = query;
 
-      placeHolderScopedVars[variable.name] = { value: variable.query };
-    });
-
-    const interpolated = this.interpolateString(query, placeHolderScopedVars);
-    let response = await this.metadataRequest('format_query', { query: interpolated });
-
-    for (const variable in placeHolderScopedVars) {
-      const value = placeHolderScopedVars[variable].value;
-      response = response.replace(new RegExp(`\\[${value}\\]`, 'g'), `[$${variable}]`);
+    try {
+      // Try because this might error
+      formatted = await this.metadataRequest('format_query', { query: transformedQuery.query });
+    } catch (error) {
+      console.log(error);
+      return formatted;
     }
 
-    return response;
+    return revertTransformations(formatted, transformedQuery.transformations);
   }
 
   async metricFindQuery(query: LokiVariableQuery | string) {
