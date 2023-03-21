@@ -79,10 +79,6 @@ const (
 	// Explore native k8s integrations
 	FlagK8S = "k8s"
 
-	// FlagDashboardsFromStorage
-	// Load dashboards from the generic storage interface
-	FlagDashboardsFromStorage = "dashboardsFromStorage"
-
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
@@ -179,10 +175,6 @@ const (
 	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
 	FlagNewPanelChromeUI = "newPanelChromeUI"
 
-	// FlagQueryLibrary
-	// Reusable query library
-	FlagQueryLibrary = "queryLibrary"
-
 	// FlagShowDashboardValidationWarnings
 	// Show warnings when dashboards do not validate against the schema
 	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
@@ -246,6 +238,10 @@ const (
 	// FlagLokiQuerySplitting
 	// Split large interval queries into subqueries with smaller time intervals
 	FlagLokiQuerySplitting = "lokiQuerySplitting"
+
+	// FlagLokiQuerySplittingConfig
+	// Give users the option to configure split durations for Loki queries
+	FlagLokiQuerySplittingConfig = "lokiQuerySplittingConfig"
 
 	// FlagIndividualCookiePreferences
 	// Support overriding cookie preferences per user
