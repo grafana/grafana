@@ -28,15 +28,12 @@ import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/dataso
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 
-import { isQueryWithMixedDatasource } from '../../query-library/api/SavedQueriesApi';
-import { getSavedQuerySrv } from '../../query-library/api/SavedQueriesSrv';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
 
 import { GroupActionComponents } from './QueryActionComponent';
 import { QueryEditorRows } from './QueryEditorRows';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
-import { SavedQueryPicker } from './SavedQueryPicker';
 
 export interface Props {
   queryRunner: PanelQueryRunner;
@@ -164,69 +161,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     });
   };
 
-  onChangeSavedQuery = async (savedQueryUid: string | null) => {
-    if (!savedQueryUid?.length) {
-      // leave the queries, remove the link
-      this.onChange({
-        queries: this.state.queries,
-        savedQueryUid: null,
-        dataSource: {
-          name: this.state.dsSettings?.name,
-          uid: this.state.dsSettings?.uid,
-          type: this.state.dsSettings?.meta.id,
-          default: this.state.dsSettings?.isDefault,
-        },
-      });
-
-      this.setState({
-        queries: this.state.queries,
-        savedQueryUid: null,
-        dataSource: this.state.dataSource,
-        dsSettings: this.state.dsSettings,
-      });
-      return;
-    }
-
-    const { dsSettings } = this.state;
-    const currentDS = dsSettings ? await getDataSourceSrv().get(dsSettings.uid) : undefined;
-
-    const resp = await getSavedQuerySrv().getSavedQueries([{ uid: savedQueryUid }]);
-    if (!resp?.length) {
-      throw new Error('TODO error handling');
-    }
-    const savedQuery = resp[0];
-    const isMixedDatasource = isQueryWithMixedDatasource(savedQuery);
-
-    const nextDS = isMixedDatasource
-      ? await getDataSourceSrv().get('-- Mixed --')
-      : await getDataSourceSrv().get(savedQuery.queries[0].datasource?.uid);
-
-    // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
-    const queries = await updateQueries(nextDS, nextDS.uid, savedQuery.queries, currentDS);
-
-    const newDsSettings = await getDataSourceSrv().getInstanceSettings(nextDS.uid);
-    if (!newDsSettings) {
-      throw new Error('TODO error handling');
-    }
-    this.onChange({
-      queries,
-      savedQueryUid: savedQueryUid,
-      dataSource: {
-        name: newDsSettings.name,
-        uid: newDsSettings.uid,
-        type: newDsSettings.meta.id,
-        default: newDsSettings.isDefault,
-      },
-    });
-
-    this.setState({
-      queries,
-      savedQueryUid,
-      dataSource: nextDS,
-      dsSettings: newDsSettings,
-    });
-  };
-
   onAddQueryClick = () => {
     const { queries } = this.state;
     this.onQueriesChange(addQuery(queries, this.newQuery()));
@@ -340,18 +274,6 @@ export class QueryGroup extends PureComponent<Props, State> {
             </>
           )}
         </div>
-        {config.featureToggles.queryLibrary && (
-          <>
-            <div className={styles.dataSourceRow}>
-              <InlineFormLabel htmlFor="saved-query-picker" width={'auto'}>
-                Saved query
-              </InlineFormLabel>
-              <div className={styles.dataSourceRowItem}>
-                <SavedQueryPicker current={this.state.savedQueryUid} onChange={this.onChangeSavedQuery} />
-              </div>
-            </div>
-          </>
-        )}
       </div>
     );
   }
