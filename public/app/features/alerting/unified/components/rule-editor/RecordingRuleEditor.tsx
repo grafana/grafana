@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
 import React, { FC, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { PanelData, CoreApp } from '@grafana/data';
+import { PanelData, CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery, LoadingState } from '@grafana/schema';
+import { useStyles2 } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -33,6 +35,8 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
     state: LoadingState.NotStarted,
     timeRange: getTimeSrv().timeRange(),
   });
+
+  const styles = useStyles2(getStyles);
 
   const isExpression = isExpressionQuery(queries[0]?.model);
 
@@ -95,7 +99,17 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
         />
       )}
 
-      {data && <VizWrapper data={data} currentPanel={pluginId} changePanel={changePluginId} />}
+      {data && (
+        <div className={styles.vizWrapper}>
+          <VizWrapper data={data} currentPanel={pluginId} changePanel={changePluginId} />
+        </div>
+      )}
     </>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  vizWrapper: css`
+    margin: ${theme.spacing(1, 0)};
+  `,
+});
