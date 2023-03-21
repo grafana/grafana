@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
@@ -113,7 +113,6 @@ describe('LokiContextUi', () => {
   });
 
   it('calls updateFilter when selecting a label', async () => {
-    jest.useFakeTimers();
     const props = setupProps();
     render(<LokiContextUi {...props} />);
     await waitFor(() => {
@@ -121,12 +120,13 @@ describe('LokiContextUi', () => {
     });
     const select = await screen.findAllByRole('combobox');
     await selectOptionInTest(select[1], 'label3');
-    act(() => {
-      jest.runAllTimers();
-    });
-    expect(props.updateFilter).toHaveBeenCalled();
-
-    jest.useRealTimers();
+    // TODO whyyyy do we have a 1500ms timeout in the component?!
+    await waitFor(
+      () => {
+        expect(props.updateFilter).toHaveBeenCalled();
+      },
+      { timeout: 2000 }
+    );
   });
 
   it('unmounts and calls onClose', async () => {

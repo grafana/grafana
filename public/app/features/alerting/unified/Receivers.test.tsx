@@ -189,7 +189,7 @@ describe('Receivers', () => {
     mocks.api.fetchConfig.mockImplementation((name) =>
       Promise.resolve(name === GRAFANA_RULES_SOURCE_NAME ? someGrafanaAlertManagerConfig : someCloudAlertManagerConfig)
     );
-    await renderReceivers();
+    renderReceivers();
 
     // check that by default grafana templates & receivers are fetched rendered in appropriate tables
     await ui.receiversTable.find();
@@ -234,7 +234,7 @@ describe('Receivers', () => {
 
     mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
 
-    await renderReceivers();
+    renderReceivers();
 
     // go to new contact point page
     await userEvent.click(await ui.newContactPointButton.find());
@@ -292,7 +292,7 @@ describe('Receivers', () => {
 
     mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
-    await renderReceivers();
+    renderReceivers();
 
     // go to new contact point page
     await userEvent.click(await ui.newContactPointButton.find());
@@ -351,18 +351,19 @@ describe('Receivers', () => {
     });
   });
 
-  it('Hides create contact point button for users without permission', () => {
+  it('Hides create contact point button for users without permission', async () => {
     mockAlertmanagerChoiceResponse(server, alertmanagerChoiceMockedResponse);
 
     mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
-    mocks.contextSrv.hasAccess.mockImplementation((action) =>
+    mocks.contextSrv.hasPermission.mockImplementation((action) =>
       [AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsExternalRead].some(
         (a) => a === action
       )
     );
     mocks.hooks.useGetContactPointsState.mockReturnValue(emptyContactPointsState);
     renderReceivers();
+    await ui.receiversTable.find();
 
     expect(ui.newContactPointButton.query()).not.toBeInTheDocument();
   });
@@ -372,7 +373,7 @@ describe('Receivers', () => {
 
     mocks.api.fetchConfig.mockResolvedValue(someCloudAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
-    await renderReceivers('CloudManager');
+    renderReceivers('CloudManager');
 
     // click edit button for the receiver
     await ui.receiversTable.find();
@@ -404,7 +405,7 @@ describe('Receivers', () => {
     // delete a field
     await userEvent.click(byText(/Fields \(2\)/i).get(slackContainer));
     await userEvent.click(byTestId('items.1.settings.fields.0.delete-button').get());
-    await byText(/Fields \(1\)/i).get(slackContainer);
+    byText(/Fields \(1\)/i).get(slackContainer);
 
     // add another channel
     await userEvent.click(ui.newContactPointIntegrationButton.get());
@@ -470,7 +471,7 @@ describe('Receivers', () => {
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,
     });
-    await renderReceivers(dataSources.promAlertManager.name);
+    renderReceivers(dataSources.promAlertManager.name);
 
     await ui.receiversTable.find();
     // there's no templates table for vanilla prom, API does not return templates
@@ -510,7 +511,7 @@ describe('Receivers', () => {
       alertmanager_config: {},
     });
     mocks.api.fetchStatus.mockResolvedValue(someCloudAlertManagerStatus);
-    await renderReceivers('CloudManager');
+    renderReceivers('CloudManager');
 
     // check that receiver from the default config is represented
     await ui.receiversTable.find();
@@ -530,7 +531,7 @@ describe('Receivers', () => {
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: true });
     mocks.api.fetchConfig.mockRejectedValue({ message: 'alertmanager storage object not found' });
 
-    await renderReceivers('CloudManager');
+    renderReceivers('CloudManager');
 
     const templatesTable = await ui.templatesTable.find();
     const receiversTable = await ui.receiversTable.find();
@@ -588,7 +589,7 @@ describe('Receivers', () => {
       };
 
       mocks.hooks.useGetContactPointsState.mockReturnValue(receiversMock);
-      await renderReceivers();
+      renderReceivers();
 
       //
       await ui.receiversTable.find();
@@ -660,7 +661,7 @@ describe('Receivers', () => {
       };
 
       mocks.hooks.useGetContactPointsState.mockReturnValue(receiversMock);
-      await renderReceivers();
+      renderReceivers();
 
       //
       await ui.receiversTable.find();
@@ -696,7 +697,7 @@ describe('Receivers', () => {
       mocks.api.updateConfig.mockResolvedValue();
 
       mocks.hooks.useGetContactPointsState.mockReturnValue(emptyContactPointsState);
-      await renderReceivers();
+      renderReceivers();
 
       await ui.receiversTable.find();
       //should not render notification error
