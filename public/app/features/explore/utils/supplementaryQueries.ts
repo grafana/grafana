@@ -92,6 +92,7 @@ const createFallbackLogVolumeProvider = (
               absoluteRange: exploreData.logsResult?.visibleRange!,
               datasourceName,
               sourceQuery: queryTargets.find((query) => query.refId === refId)!,
+              reuseWhenZoomingIn: false,
             };
 
             observer.next({
