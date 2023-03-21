@@ -2,7 +2,6 @@ package initializer
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -71,10 +70,13 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) ([]string, error) {
 		hostEnv = append(hostEnv, i.license.Environment()...)
 	}
 
-	// Note: This has been disabled in favor of using the plugin settings
-	// if plugin.OauthServiceRegistration != nil {
-	// 	hostEnv = append(hostEnv, i.oauth2OnBehalfOfVars(plugin.ID, plugin.OauthServiceRegistration)...)
-	// }
+	if plugin.OauthServiceRegistration != nil {
+		vars, err := i.oauth2OnBehalfOfVars(plugin.ID, plugin.OauthServiceRegistration)
+		if err != nil {
+			return nil, err
+		}
+		hostEnv = append(hostEnv, vars...)
+	}
 
 	hostEnv = append(hostEnv, i.awsEnvVars()...)
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(i.cfg.Azure)...)
@@ -142,22 +144,23 @@ func (i *Initializer) getPluginSettings(pluginID string, cfg *config.Cfg) (plugi
 		if k == "path" || strings.ToLower(k) == "id" {
 			continue
 		}
-		if k == "oauth_service_registration" {
-			oauthAppInfo := &oauthserver.ExternalServiceRegistration{}
-			err := json.Unmarshal([]byte(v), oauthAppInfo)
-			if err != nil {
-				return nil, err
-			}
+		// Note: This has been disabled in favor of using the plugin.json file
+		// if k == "oauth_service_registration" {
+		// 	oauthAppInfo := &oauthserver.ExternalServiceRegistration{}
+		// 	err := json.Unmarshal([]byte(v), oauthAppInfo)
+		// 	if err != nil {
+		// 		return nil, err
+		// 	}
 
-			cli, err := i.registerService(pluginID, oauthAppInfo)
-			if err != nil {
-				return nil, err
-			}
-			ps["app_client_id"] = cli.ID
-			ps["app_client_secret"] = cli.Secret
-			ps["app_private_key"] = cli.KeyResult.PrivatePem
-			continue
-		}
+		// 	cli, err := i.registerService(pluginID, oauthAppInfo)
+		// 	if err != nil {
+		// 		return nil, err
+		// 	}
+		// 	ps["app_client_id"] = cli.ID
+		// 	ps["app_client_secret"] = cli.Secret
+		// 	ps["app_private_key"] = cli.KeyResult.PrivatePem
+		// 	continue
+		// }
 		ps[k] = v
 	}
 
