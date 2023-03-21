@@ -18,6 +18,7 @@ import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
 import { PromDurationInput } from './PromDurationInput';
 import { getFormStyles } from './formStyles';
+import { TIMING_OPTIONS_DEFAULTS } from './timingOptions';
 
 export interface AmRootRouteFormProps {
   alertManagerSourceName: string;
@@ -115,7 +116,7 @@ export const AmRootRouteForm = ({
               >
                 <PromDurationInput
                   {...register('groupWaitValue', { validate: promDurationValidator })}
-                  placeholder="30s"
+                  placeholder={TIMING_OPTIONS_DEFAULTS.group_wait}
                   className={styles.promDurationInput}
                   aria-label="Group wait"
                 />
@@ -129,7 +130,7 @@ export const AmRootRouteForm = ({
               >
                 <PromDurationInput
                   {...register('groupIntervalValue', { validate: promDurationValidator })}
-                  placeholder="5m"
+                  placeholder={TIMING_OPTIONS_DEFAULTS.group_interval}
                   className={styles.promDurationInput}
                   aria-label="Group interval"
                 />
@@ -143,7 +144,7 @@ export const AmRootRouteForm = ({
               >
                 <PromDurationInput
                   {...register('repeatIntervalValue', { validate: promDurationValidator })}
-                  placeholder="4h"
+                  placeholder={TIMING_OPTIONS_DEFAULTS.repeat_interval}
                   className={styles.promDurationInput}
                   aria-label="Repeat interval"
                 />
