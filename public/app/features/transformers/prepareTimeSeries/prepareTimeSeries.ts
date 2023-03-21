@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 import { Labels } from 'app/types/unified-alerting-dto';
 
-import { partitionByValuesTransformer } from '../partitionByValues/partitionByValues';
+import { partitionByValues } from '../partitionByValues/partitionByValues';
 
 /**
  * There is currently an effort to figure out consistent names
@@ -29,9 +29,11 @@ import { partitionByValuesTransformer } from '../partitionByValues/partitionByVa
 
 export enum timeSeriesFormat {
   TimeSeriesWide = 'wide',
-  TimeSeriesMany = 'many',
   TimeSeriesLong = 'long',
   TimeSeriesMulti = 'multi',
+
+  /** @deprecated use multi */
+  TimeSeriesMany = 'many',
 }
 
 export type PrepareTimeSeriesOptions = {
@@ -284,21 +286,18 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
   return result;
 }
 
-export function longToWideTimeSeries(series: DataFrame[]): DataFrame[] {
-  // Transform each dataframe of the series
-  // to handle different field names in different frames
-  return series.reduce((acc: DataFrame[], dataFrame: DataFrame) => {
-    // these could be different in each frame
-    const stringFields = dataFrame.fields.filter((field) => field.type === FieldType.string).map((field) => field.name);
+export function longToMultiTimeSeries(frame: DataFrame): DataFrame[] {
+  // All the string fields
+  const matcher = (field: Field) => field.type === FieldType.string;
 
-    // transform one dataFrame at a time and concat into DataFrame[]
-    const transformedSeries = partitionByValuesTransformer.transformer(
-      { fields: stringFields },
-      { interpolate: (value: string) => value }
-    )([dataFrame]);
-
-    return acc.concat(transformedSeries);
-  }, []);
+  // transform one dataFrame at a time and concat into DataFrame[]
+  return partitionByValues(frame, matcher).map((frame) => {
+    if (!frame.meta) {
+      frame.meta = {};
+    }
+    frame.meta.type = DataFrameType.TimeSeriesMulti;
+    return frame;
+  });
 }
 
 export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<PrepareTimeSeriesOptions> = {
@@ -312,25 +311,43 @@ export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<Prepar
 
   transformer: (options: PrepareTimeSeriesOptions) => {
     const format = options?.format ?? timeSeriesFormat.TimeSeriesWide;
-    if (format === timeSeriesFormat.TimeSeriesMany || timeSeriesFormat.TimeSeriesMulti) {
+    if (format === timeSeriesFormat.TimeSeriesMany || format === timeSeriesFormat.TimeSeriesMulti) {
       return toTimeSeriesMulti;
     } else if (format === timeSeriesFormat.TimeSeriesLong) {
       return toTimeSeriesLong;
     }
+    const joinBy = fieldMatchers.get(FieldMatcherID.firstTimeField).get({});
 
+    // Single TimeSeriesWide frame (joined by time)
     return (data: DataFrame[]) => {
+      if (!data.length) {
+        return [];
+      }
+
       // Convert long to wide first
-      if (data.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
-        data = longToWideTimeSeries(data);
+      const join: DataFrame[] = [];
+      for (const df of data) {
+        if (df.meta?.type === DataFrameType.TimeSeriesLong) {
+          longToMultiTimeSeries(df).forEach((v) => join.push(v));
+        } else {
+          join.push(df);
+        }
       }
 
       // Join by the first frame
       const frame = outerJoinDataFrames({
-        frames: data,
-        joinBy: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+        frames: join,
+        joinBy,
         keepOriginIndices: true,
       });
-      return frame ? [frame] : [];
+      if (frame) {
+        if (!frame.meta) {
+          frame.meta = {};
+        }
+        frame.meta.type = DataFrameType.TimeSeriesWide;
+        return [frame];
+      }
+      return [];
     };
   },
 };

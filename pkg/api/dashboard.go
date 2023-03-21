@@ -227,12 +227,6 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	// make sure db version is in sync with json model version
 	dash.Data.Set("version", dash.Version)
 
-	if hs.QueryLibraryService != nil && !hs.QueryLibraryService.IsDisabled() {
-		if err := hs.QueryLibraryService.UpdateDashboardQueries(c.Req.Context(), c.SignedInUser, dash); err != nil {
-			return response.Error(500, "Error while loading saved queries", err)
-		}
-	}
-
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
 		Meta:      meta,

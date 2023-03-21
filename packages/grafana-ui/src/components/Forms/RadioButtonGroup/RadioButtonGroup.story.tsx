@@ -21,7 +21,7 @@ const meta: Meta = {
       control: { type: 'select' },
       options: ['', 'graphite', 'prometheus', 'elastic'],
     },
-    size: { control: { type: 'select' }, options: ['xs', 'sm', 'md', 'lg'] },
+    size: { control: { type: 'select' }, options: ['sm', 'md'] },
   },
 };
 

@@ -1,10 +1,10 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { Alert } from '@grafana/ui';
 
 export const LOCAL_STORAGE_KEY = 'grafana.legacyalerting.unifiedalertingpromo';
 
-const DeprecationNotice: FC<{}> = () => (
+const DeprecationNotice = () => (
   <Alert severity="warning" title="Grafana legacy alerting is going away soon">
     <p>
       You are using Grafana legacy alerting, it has been deprecated and will be removed in the next major version of

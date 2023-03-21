@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { ConnectionConfig } from '@grafana/aws-sdk';
@@ -25,7 +25,7 @@ export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, Cloud
 
 type LogGroupFieldState = Pick<FieldProps, 'invalid'> & { error?: string | null };
 
-export const ConfigEditor: FC<Props> = (props: Props) => {
+export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
   const { defaultLogGroups, logsTimeout, defaultRegion, logGroups } = options.jsonData;
   const datasource = useDatasource(props);

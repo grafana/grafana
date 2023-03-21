@@ -8,7 +8,7 @@ load(
     "prerelease_bucket",
 )
 
-grabpl_version = "v3.0.21"
+grabpl_version = "v3.0.30"
 build_image = "grafana/build-container:1.7.2"
 publish_image = "grafana/grafana-ci-deploy:1.3.3"
 deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
@@ -1481,7 +1481,6 @@ def trigger_test_release():
         "image": build_image,
         "environment": {
             "GITHUB_TOKEN": from_secret("github_token_pr"),
-            "DOWNSTREAM_REPO": from_secret("downstream"),
             "TEST_TAG": "v0.0.0-test",
         },
         "commands": [
