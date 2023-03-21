@@ -50,8 +50,8 @@ func ProvideProxy(cfg *setting.Cfg, cache proxyCache, userSrv user.Service, clie
 }
 
 type proxyCache interface {
-	GetByteArray(ctx context.Context, key string) ([]byte, error)
-	SetByteArray(ctx context.Context, key string, value []byte, expire time.Duration) error
+	Get(ctx context.Context, key string) ([]byte, error)
+	Set(ctx context.Context, key string, value []byte, expire time.Duration) error
 }
 
 type Proxy struct {
@@ -83,7 +83,7 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	if ok {
 		// See if we have cached the user id, in that case we can fetch the signed-in user and skip sync.
 		// Error here means that we could not find anything in cache, so we can proceed as usual
-		if entry, err := c.cache.GetByteArray(ctx, cacheKey); err == nil {
+		if entry, err := c.cache.Get(ctx, cacheKey); err == nil {
 			uid := int64(binary.LittleEndian.Uint64(entry))
 
 			usr, err := c.userSrv.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
@@ -138,7 +138,7 @@ func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Req
 	c.log.FromContext(ctx).Debug("Cache proxy user", "userId", id)
 	bytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(bytes, uint64(id))
-	if err := c.cache.SetByteArray(ctx, identity.ClientParams.CacheAuthProxyKey, bytes, time.Duration(c.cfg.AuthProxySyncTTL)*time.Minute); err != nil {
+	if err := c.cache.Set(ctx, identity.ClientParams.CacheAuthProxyKey, bytes, time.Duration(c.cfg.AuthProxySyncTTL)*time.Minute); err != nil {
 		c.log.Warn("failed to cache proxy user", "error", err, "userId", id)
 	}
 

@@ -335,6 +335,22 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
     combineFrames(currentFrame, newFrame);
   });
 
+  const mergedErrors = [...(currentResult.errors ?? []), ...(newResult.errors ?? [])];
+
+  // we make sure to have `.errors` as undefined, instead of empty-array
+  // when no errors.
+
+  if (mergedErrors.length > 0) {
+    currentResult.errors = mergedErrors;
+  }
+
+  // the `.error` attribute is obsolete now,
+  // but we have to maintain it, otherwise
+  // some grafana parts do not behave well.
+  // we just choose the old error, if it exists,
+  // otherwise the new error, if it exists.
+  currentResult.error = currentResult.error ?? newResult.error;
+
   return currentResult;
 }
 

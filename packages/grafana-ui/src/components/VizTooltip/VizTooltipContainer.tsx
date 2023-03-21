@@ -22,14 +22,14 @@ export interface VizTooltipContainerProps extends HTMLAttributes<HTMLDivElement>
 /**
  * @public
  */
-export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
+export const VizTooltipContainer = ({
   position: { x: positionX, y: positionY },
   offset: { x: offsetX, y: offsetY },
   children,
   allowPointerEvents = false,
   className,
   ...otherProps
-}) => {
+}: VizTooltipContainerProps) => {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipMeasurement, setTooltipMeasurement] = useState<Dimensions2D>({ width: 0, height: 0 });
   const { width, height } = useWindowSize();

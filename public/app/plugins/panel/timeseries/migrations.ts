@@ -46,7 +46,7 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
 ) => {
   // Changing from angular/flot panel to react/uPlot
   if (prevPluginId === 'graph' && prevOptions.angular) {
-    const { fieldConfig, options } = flotToGraphOptions({
+    const { fieldConfig, options } = graphToTimeseriesOptions({
       ...prevOptions.angular,
       fieldConfig: prevFieldConfig,
     });
@@ -61,7 +61,7 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
   return {};
 };
 
-export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSource; options: TimeSeriesOptions } {
+export function graphToTimeseriesOptions(angular: any): { fieldConfig: FieldConfigSource; options: TimeSeriesOptions } {
   const overrides: ConfigOverrideRule[] = angular.fieldConfig?.overrides ?? [];
   const yaxes = angular.yaxes ?? [];
   let y1 = getFieldConfigFromOldAxis(yaxes[0]);
