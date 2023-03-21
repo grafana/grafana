@@ -593,32 +593,9 @@ func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataRe
 
 func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query,
 	queryResult *backend.DataResponse, props map[string]string) error {
-	propKeys := make([]string, 0)
-	for k := range props {
-		propKeys = append(propKeys, k)
-	}
-	sort.Strings(propKeys)
+	propKeys := createPropKeys(props)
 	frames := data.Frames{}
 	fields := createFieldsFromPropKeys(queryResult.Frames, propKeys)
-
-	addMetricValue := func(values []interface{}, metricName string, value *float64) {
-		index := -1
-		for i, f := range fields {
-			if f.Name == metricName {
-				index = i
-				break
-			}
-		}
-
-		var field data.Field
-		if index == -1 {
-			field = *data.NewField(metricName, nil, []*float64{})
-			fields = append(fields, &field)
-		} else {
-			field = *fields[index]
-		}
-		field.Append(value)
-	}
 
 	for _, v := range esAgg.Get("buckets").MustArray() {
 		bucket := simplejson.NewFromAny(v)
@@ -664,78 +641,15 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 		for _, metric := range target.Metrics {
 			switch metric.Type {
 			case countType:
-				addMetricValue(values, getMetricName(metric.Type), castToFloat(bucket.Get("doc_count")))
+				addMetricValueToFields(&fields, values, getMetricName(metric.Type), castToFloat(bucket.Get("doc_count")))
 			case extendedStatsType:
-				metaKeys := make([]string, 0)
-				meta := metric.Meta.MustMap()
-				for k := range meta {
-					metaKeys = append(metaKeys, k)
-				}
-				sort.Strings(metaKeys)
-				for _, statName := range metaKeys {
-					v := meta[statName]
-					if enabled, ok := v.(bool); !ok || !enabled {
-						continue
-					}
-
-					var value *float64
-					switch statName {
-					case "std_deviation_bounds_upper":
-						value = castToFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "upper"))
-					case "std_deviation_bounds_lower":
-						value = castToFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "lower"))
-					default:
-						value = castToFloat(bucket.GetPath(metric.ID, statName))
-					}
-
-					addMetricValue(values, getMetricName(metric.Type), value)
-					break
-				}
+				addExtendedStatsToFields(&fields, bucket, metric, values)
 			case percentilesType:
-				percentiles := bucket.GetPath(metric.ID, "values")
-				for _, percentileName := range getSortedKeys(percentiles.MustMap()) {
-					percentileValue := percentiles.Get(percentileName).MustFloat64()
-					addMetricValue(values, fmt.Sprintf("p%v %v", percentileName, metric.Field), &percentileValue)
-				}
+				addPercentilesToFields(&fields, bucket, metric, values)
 			case topMetricsType:
-				baseName := getMetricName(metric.Type)
-				metrics := metric.Settings.Get("metrics").MustStringArray()
-				for _, metricField := range metrics {
-					// If we selected more than one metric we also add each metric name
-					metricName := baseName
-					if len(metrics) > 1 {
-						metricName += " " + metricField
-					}
-					top := bucket.GetPath(metric.ID, "top").MustArray()
-					metrics, hasMetrics := top[0].(map[string]interface{})["metrics"]
-					if hasMetrics {
-						metrics := metrics.(map[string]interface{})
-						metricValue, hasMetricValue := metrics[metricField]
-						if hasMetricValue && metricValue != nil {
-							v := metricValue.(float64)
-							addMetricValue(values, metricName, &v)
-						}
-					}
-				}
+				addTopMetricsToFields(&fields, bucket, metric, values)
 			default:
-				metricName := getMetricName(metric.Type)
-				otherMetrics := make([]*MetricAgg, 0)
-
-				for _, m := range target.Metrics {
-					if m.Type == metric.Type {
-						otherMetrics = append(otherMetrics, m)
-					}
-				}
-
-				if len(otherMetrics) > 1 {
-					metricName += " " + metric.Field
-					if metric.Type == "bucket_script" {
-						// Use the formula in the column name
-						metricName = metric.Settings.Get("script").MustString("")
-					}
-				}
-
-				addMetricValue(values, metricName, castToFloat(bucket.GetPath(metric.ID, "value")))
+				addOtherMetricsToFields(&fields, bucket, metric, values, target)
 			}
 		}
 
@@ -1159,4 +1073,109 @@ func getSortedKeys(data map[string]interface{}) []string {
 
 	sort.Strings(keys)
 	return keys
+}
+
+func createPropKeys(props map[string]string) []string {
+	propKeys := make([]string, 0)
+	for k := range props {
+		propKeys = append(propKeys, k)
+	}
+	sort.Strings(propKeys)
+	return propKeys
+}
+
+func addMetricValueToFields(fields *[]*data.Field, values []interface{}, metricName string, value *float64) {
+	index := -1
+	for i, f := range *fields {
+		if f.Name == metricName {
+			index = i
+			break
+		}
+	}
+
+	var field data.Field
+	if index == -1 {
+		field = *data.NewField(metricName, nil, []*float64{})
+		*fields = append(*fields, &field)
+	} else {
+		field = *(*fields)[index]
+	}
+	field.Append(value)
+}
+
+func addPercentilesToFields(fields *[]*data.Field, bucket *simplejson.Json, metric *MetricAgg, values []interface{}) {
+	percentiles := bucket.GetPath(metric.ID, "values")
+	for _, percentileName := range getSortedKeys(percentiles.MustMap()) {
+		percentileValue := percentiles.Get(percentileName).MustFloat64()
+		addMetricValueToFields(fields, values, fmt.Sprintf("p%v %v", percentileName, metric.Field), &percentileValue)
+	}
+}
+
+func addExtendedStatsToFields(fields *[]*data.Field, bucket *simplejson.Json, metric *MetricAgg, values []interface{}) {
+	metaKeys := make([]string, 0)
+	meta := metric.Meta.MustMap()
+	for k := range meta {
+		metaKeys = append(metaKeys, k)
+	}
+	sort.Strings(metaKeys)
+	for _, statName := range metaKeys {
+		v := meta[statName]
+		if enabled, ok := v.(bool); !ok || !enabled {
+			continue
+		}
+		var value *float64
+		switch statName {
+		case "std_deviation_bounds_upper":
+			value = castToFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "upper"))
+		case "std_deviation_bounds_lower":
+			value = castToFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "lower"))
+		default:
+			value = castToFloat(bucket.GetPath(metric.ID, statName))
+		}
+
+		addMetricValueToFields(fields, values, getMetricName(metric.Type), value)
+		break
+	}
+}
+
+func addTopMetricsToFields(fields *[]*data.Field, bucket *simplejson.Json, metric *MetricAgg, values []interface{}) {
+	baseName := getMetricName(metric.Type)
+	metrics := metric.Settings.Get("metrics").MustStringArray()
+	for _, metricField := range metrics {
+		// If we selected more than one metric we also add each metric name
+		metricName := baseName
+		if len(metrics) > 1 {
+			metricName += " " + metricField
+		}
+		top := bucket.GetPath(metric.ID, "top").MustArray()
+		metrics, hasMetrics := top[0].(map[string]interface{})["metrics"]
+		if hasMetrics {
+			metrics := metrics.(map[string]interface{})
+			metricValue, hasMetricValue := metrics[metricField]
+			if hasMetricValue && metricValue != nil {
+				v := metricValue.(float64)
+				addMetricValueToFields(fields, values, metricName, &v)
+			}
+		}
+	}
+}
+
+func addOtherMetricsToFields(fields *[]*data.Field, bucket *simplejson.Json, metric *MetricAgg, values []interface{}, target *Query) {
+	metricName := getMetricName(metric.Type)
+	otherMetrics := make([]*MetricAgg, 0)
+
+	for _, m := range target.Metrics {
+		if m.Type == metric.Type {
+			otherMetrics = append(otherMetrics, m)
+		}
+	}
+
+	if len(otherMetrics) > 1 {
+		metricName += " " + metric.Field
+		if metric.Type == "bucket_script" {
+			// Use the formula in the column name
+			metricName = metric.Settings.Get("script").MustString("")
+		}
+	}
+	addMetricValueToFields(fields, values, metricName, castToFloat(bucket.GetPath(metric.ID, "value")))
 }
