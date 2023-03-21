@@ -1056,6 +1056,140 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
+name: pr-integration-benchmarks
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services:
+- environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
+    POSTGRES_DB: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+    POSTGRES_USER: grafanatest
+  image: postgres:12.3-alpine
+  name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:5.7.39
+  name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
+steps:
+- commands:
+  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+    | jq .head.repo.fork)
+  - if [ "$is_fork" != false ]; then return 1; fi
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterprise
+  - cd ../grafana-enterprise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd ./grafana-enterprise
+  - ./build.sh
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: grafana/build-container:1.7.2
+  name: clone-enterprise
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.20.1
+  name: compile-build-cmd
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on:
+  - clone-enterprise
+  image: grafana/build-container:1.7.2
+  name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - clone-enterprise
+  image: grafana/build-container:1.7.2
+  name: verify-gen-jsonnet
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.7.2
+  name: wire-install
+- commands:
+  - go test -run=^$ -bench=. -benchmem ./pkg/services/sqlstore/permissions
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.7.2
+  name: sqlite-integration-benchmarks
+- commands:
+  - go test -run=^$ -bench=. -benchmem ./pkg/services/sqlstore/permissions
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.7.2
+  name: postgres-integration-benchmarks
+- commands:
+  - go test -run=^$ -bench=. -benchmem ./pkg/services/sqlstore/permissions
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.7.2
+  name: mysql-integration-benchmarks
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - pkg/**
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
 name: main-docs
 node:
   type: no-parallel
@@ -6688,6 +6822,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: c97e54e16b8399bef42b71fda9826579f274c537ced6124682cbd29a986332c9
+hmac: 533a106338fb182ba416e039c3c70643d89cf509bf8f99b4aa304af8841c8377
 
 ...
