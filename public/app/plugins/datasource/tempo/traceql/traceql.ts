@@ -23,6 +23,8 @@ export const languageConfiguration = {
 };
 
 export const operators = ['=', '!=', '>', '<', '>=', '<=', '=~'];
+export const stringOperators = ['=', '!=', '=~'];
+export const numberOperators = ['=', '!=', '>', '<', '>=', '<='];
 
 const intrinsics = ['duration', 'name', 'status', 'parent'];
 
