@@ -18,6 +18,7 @@ type FakeClient struct {
 	ExpectedTest     bool
 	ExpectedPriority uint
 	ExpectedIdentity *authn.Identity
+	ExpectedStats    map[string]interface{}
 }
 
 func (f *FakeClient) Name() string {
@@ -34,6 +35,10 @@ func (f *FakeClient) Test(ctx context.Context, r *authn.Request) bool {
 
 func (f *FakeClient) Priority() uint {
 	return f.ExpectedPriority
+}
+
+func (f *FakeClient) UsageStatFn(ctx context.Context) (map[string]interface{}, error) {
+	return f.ExpectedStats, f.ExpectedErr
 }
 
 var _ authn.PasswordClient = new(FakePasswordClient)

@@ -60,6 +60,7 @@ You can assign an **Alias** to each scenario, and many have their own options th
 - **CSV Metric Values**
 - **Datapoints Outside Range**
 - **Exponential heatmap bucket data**
+- **Flame Graph**
 - **Grafana API**
 - **Grafana Live**
 - **Linear heatmap bucket data**
@@ -77,6 +78,7 @@ You can assign an **Alias** to each scenario, and many have their own options th
 - **Slow Query**
 - **Streaming Client**
 - **Table Static**
+- **Trace**
 - **USA generated data**
 
 ## Import a pre-configured dashboard

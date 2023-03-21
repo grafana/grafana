@@ -318,3 +318,53 @@ func TestSchedulableAlertRulesRegistry(t *testing.T) {
 	assert.False(t, ok)
 	assert.Nil(t, deleted)
 }
+
+func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
+	_, initialRules := models.GenerateUniqueAlertRules(100, models.AlertRuleGen())
+	init := make(map[models.AlertRuleKey]*models.AlertRule, len(initialRules))
+	for _, rule := range initialRules {
+		init[rule.GetKey()] = rule
+	}
+	r := alertRulesRegistry{rules: init}
+	t.Run("should return empty diff if exactly the same rules", func(t *testing.T) {
+		newRules := make([]*models.AlertRule, 0, len(initialRules))
+		for _, rule := range initialRules {
+			newRules = append(newRules, models.CopyRule(rule))
+		}
+		diff := r.set(newRules, map[string]string{})
+		require.Truef(t, diff.IsEmpty(), "Diff is not empty. Probably we check something else than key + version")
+	})
+	t.Run("should return empty diff if version does not change", func(t *testing.T) {
+		newRules := make([]*models.AlertRule, 0, len(initialRules))
+		// generate random and then override rule key + version
+		_, randomNew := models.GenerateUniqueAlertRules(len(initialRules), models.AlertRuleGen())
+		for i := 0; i < len(initialRules); i++ {
+			rule := randomNew[i]
+			oldRule := initialRules[i]
+			rule.UID = oldRule.UID
+			rule.OrgID = oldRule.OrgID
+			rule.Version = oldRule.Version
+			newRules = append(newRules, rule)
+		}
+
+		diff := r.set(newRules, map[string]string{})
+		require.Truef(t, diff.IsEmpty(), "Diff is not empty. Probably we check something else than key + version")
+	})
+	t.Run("should return key in diff if version changes", func(t *testing.T) {
+		newRules := make([]*models.AlertRule, 0, len(initialRules))
+		expectedUpdated := map[models.AlertRuleKey]struct{}{}
+		for i, rule := range initialRules {
+			cp := models.CopyRule(rule)
+			if i%2 == 0 {
+				cp.Version++
+				expectedUpdated[cp.GetKey()] = struct{}{}
+			}
+			newRules = append(newRules, cp)
+		}
+		require.NotEmptyf(t, expectedUpdated, "Input parameters have changed. Nothing to assert")
+
+		diff := r.set(newRules, map[string]string{})
+		require.Falsef(t, diff.IsEmpty(), "Diff is empty but should not be")
+		require.Equal(t, expectedUpdated, diff.updated)
+	})
+}

@@ -57,7 +57,7 @@
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
-    "webpack": "5.75.0"
+    "webpack": "5.76.0"
   },
   "dependencies": {
     "@babel/core": "7.20.5",
@@ -77,7 +77,7 @@
     "lodash": "4.17.21",
     "mocha": "10.2.0",
     "resolve-bin": "1.0.1",
-    "rimraf": "4.2.0",
+    "rimraf": "4.4.0",
     "tracelib": "1.0.1",
     "ts-loader": "8.4.0",
     "tslib": "2.5.0",

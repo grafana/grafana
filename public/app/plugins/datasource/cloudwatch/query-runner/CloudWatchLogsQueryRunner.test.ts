@@ -195,7 +195,7 @@ describe('CloudWatchLogsQueryRunner', () => {
 
   const legacyLogGroupNamesQuery: CloudWatchLogsQuery = {
     queryMode: 'Logs',
-    logGroupNames: ['group-A', 'templatedGroup-1', logGroupNamesVariable.name],
+    logGroupNames: ['group-A', 'templatedGroup-1', `$${logGroupNamesVariable.name}`],
     hide: false,
     id: '',
     region: 'us-east-2',
@@ -207,7 +207,7 @@ describe('CloudWatchLogsQueryRunner', () => {
     queryMode: 'Logs',
     logGroups: [
       { arn: 'arn:aws:logs:us-east-2:123456789012:log-group:group-A:*', name: 'group-A' },
-      { arn: logGroupNamesVariable.name, name: logGroupNamesVariable.name },
+      { arn: `$${logGroupNamesVariable.name}`, name: logGroupNamesVariable.name },
     ],
     hide: false,
     id: '',
@@ -218,7 +218,7 @@ describe('CloudWatchLogsQueryRunner', () => {
 
   const logsScopedVarQuery: CloudWatchLogsQuery = {
     queryMode: 'Logs',
-    logGroups: [{ arn: logGroupNamesVariable.name, name: logGroupNamesVariable.name }],
+    logGroups: [{ arn: `$${logGroupNamesVariable.name}`, name: logGroupNamesVariable.name }],
     hide: false,
     id: '',
     region: '$' + regionVariable.name,
@@ -237,6 +237,7 @@ describe('CloudWatchLogsQueryRunner', () => {
             logsTimeout: '500ms',
           },
         },
+        mockGetVariableName: false,
       });
       const spy = jest.spyOn(runner, 'makeLogActionRequest');
       await lastValueFrom(

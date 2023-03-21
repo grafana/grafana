@@ -49,6 +49,7 @@ describe('DataSourceWithBackend', () => {
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
       dashboardUID: 'dashA',
       panelId: 123,
+      queryGroupId: 'abc',
     } as DataQueryRequest);
 
     const args = mock.calls[0][0];
@@ -87,6 +88,7 @@ describe('DataSourceWithBackend', () => {
           "X-Datasource-Uid": "abc, <mockuid>",
           "X-Panel-Id": "123",
           "X-Plugin-Id": "dummy, sample",
+          "X-Query-Group-Id": "abc",
         },
         "hideFromInspector": false,
         "method": "POST",
