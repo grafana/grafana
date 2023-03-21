@@ -79,14 +79,15 @@ func ProvideService(
 	logger := log.New("modules")
 
 	dependencyMap := map[string][]string{
-		HTTPServer:          {KubernetesAPIServer},
-		Kine:                {},
-		KubernetesAPIServer: {Kine},
-		KubernetesClientset: {KubernetesAPIServer},
-		KubernetesCRDs:      {KubernetesClientset},
-		KubernetesInformers: {KubernetesCRDs},
-		Kubernetes:          {KubernetesInformers},
-		All:                 {HTTPServer, Kubernetes, PublicDashboardWebhooks},
+		HTTPServer:              {KubernetesAPIServer},
+		Kine:                    {},
+		KubernetesAPIServer:     {Kine},
+		KubernetesClientset:     {KubernetesAPIServer},
+		KubernetesCRDs:          {KubernetesClientset},
+		KubernetesInformers:     {KubernetesCRDs},
+		Kubernetes:              {KubernetesInformers},
+		PublicDashboardWebhooks: {KubernetesClientset},
+		All:                     {HTTPServer, Kubernetes, PublicDashboardWebhooks},
 	}
 
 	return &service{

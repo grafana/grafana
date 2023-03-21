@@ -33,7 +33,7 @@ var ValidationWebhookConfigs = []client.ShortWebhookConfig{
 	{
 		Kind:       publicdashboard.Kind,
 		Operations: []admissionregistrationV1.OperationType{admissionregistrationV1.Create},
-		Url:        "https://host.docker.internal:3443/k8s/publicdashboards/admission/create",
+		Url:        "https://192.168.0.193:2999/k8s/publicdashboards/admission/create",
 		Timeout:    int32(5),
 	},
 }
@@ -42,7 +42,7 @@ var MutationWebhookConfigs = []client.ShortWebhookConfig{
 	{
 		Kind:       publicdashboard.Kind,
 		Operations: []admissionregistrationV1.OperationType{admissionregistrationV1.Create},
-		Url:        "https://host.docker.internal:3443/k8s/publicdashboards/mutation/create",
+		Url:        "https://192.168.0.193:2999/k8s/publicdashboards/mutation/create",
 		Timeout:    int32(5),
 	},
 }

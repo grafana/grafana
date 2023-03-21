@@ -79,7 +79,15 @@ func (c *Clientset) GetCABundle() []byte {
 		return caBundle
 	}
 
-	filename := c.CABundlePath()
+	//certPath := path.Join(c.grafanaCfg.DataPath, "k8s", "grafana_api.crt")
+	//keyPath := path.Join(c.grafanaCfg.DataPath, "k8s", "grafana_api.key")
+
+	//cert, err := tls.LoadX509KeyPair(certPath, keyPath)
+	//if err != nil {
+	//panic("potatoes")
+	//}
+
+	filename := path.Join(c.grafanaCfg.DataPath, "k8s", "apiserver.crt")
 	caBytes, err := os.ReadFile(filepath.Clean(filename))
 	if err != nil {
 		// NOTE this should never happen
