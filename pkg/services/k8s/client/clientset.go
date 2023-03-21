@@ -67,25 +67,11 @@ type Clientset struct {
 	lock sync.RWMutex
 }
 
-func (c *Clientset) CABundlePath() string {
-	// Data path configured by us.
-	// Dir and certname by apiserver
-	return path.Join(c.grafanaCfg.DataPath, "k8s", "apiserver.crt")
-}
-
 // Gets caBundle for k8s api server
 func (c *Clientset) GetCABundle() []byte {
 	if len(caBundle) > 0 {
 		return caBundle
 	}
-
-	//certPath := path.Join(c.grafanaCfg.DataPath, "k8s", "grafana_api.crt")
-	//keyPath := path.Join(c.grafanaCfg.DataPath, "k8s", "grafana_api.key")
-
-	//cert, err := tls.LoadX509KeyPair(certPath, keyPath)
-	//if err != nil {
-	//panic("potatoes")
-	//}
 
 	filename := path.Join(c.grafanaCfg.DataPath, "k8s", "apiserver.crt")
 	caBytes, err := os.ReadFile(filepath.Clean(filename))

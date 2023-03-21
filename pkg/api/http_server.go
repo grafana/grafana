@@ -453,50 +453,18 @@ func (hs *HTTPServer) start(ctx context.Context) error {
 
 func (hs *HTTPServer) k8sWebhookServer() error {
 	httpSrv := &http.Server{
-		Addr:        net.JoinHostPort("0.0.0.0", "2999"),
+		Addr:        net.JoinHostPort("127.0.0.1", "2999"),
 		Handler:     hs.web,
 		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
 
-	listener, err := net.Listen("tcp", "0.0.0.0:2999")
+	listener, err := net.Listen("tcp", "127.0.0.1:2999")
 	if err != nil {
-		return fmt.Errorf("failed to open listener on address 0.0.0.0:2999 - %w", err)
+		return fmt.Errorf("failed to open listener on address 127.0.0.1:2999 - %w", err)
 	}
 
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
 		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
-
-	//// generate new self signed cert for k8s webhooks
-	//cert, key, err := cert.GenerateSelfSignedCertKey(
-	//  listener.Addr().String(),
-	//  []net.IP{net.ParseIP("127.0.0.1")},
-	//  []string{},
-	//)
-	//if err != nil {
-	//  return fmt.Errorf("Error generating self signed cert")
-	//}
-
-	//// create x509 keypair from cert and key
-	//x509Key, err := tls.X509KeyPair(cert, key)
-	//if err != nil {
-	//  return fmt.Errorf("Error generating X509KeyPair: %s", err)
-	//}
-
-	//// write cert to datapath for k8s webhooks to read when registered at boot time
-	//err = os.WriteFile(path.Clean(path.Join(hs.Cfg.DataPath, "k8s", "grafana_api.crt")), cert, 0644)
-	//if err != nil {
-	//  return fmt.Errorf("Error writing cert to file: %s ", err)
-	//}
-
-	//err = os.WriteFile(path.Clean(path.Join(hs.Cfg.DataPath, "k8s", "grafana_api.key")), key, 0644)
-	//if err != nil {
-	//  return fmt.Errorf("Error writing key to file: %s ", err)
-	//}
-
-	//// set tls config on server from cert in memory
-	//tlsConfig := &tls.Config{Certificates: []tls.Certificate{x509Key}}
-	//httpSrv.TLSConfig = tlsConfig
-	//return httpSrv.ServeTLS(listener, "", "")
 
 	certpath := path.Join(hs.Cfg.DataPath, "k8s", "apiserver.crt")
 	keypath := path.Join(hs.Cfg.DataPath, "k8s", "apiserver.key")

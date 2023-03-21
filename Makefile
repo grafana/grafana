@@ -241,6 +241,7 @@ clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"
 	rm -rf node_modules
 	rm -rf public/build
+	rm -rf data/k8s
 
 gen-ts:
 	@echo "generating TypeScript definitions"
