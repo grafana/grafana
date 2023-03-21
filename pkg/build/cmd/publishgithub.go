@@ -19,6 +19,8 @@ type githubRepositoryService interface {
 	GetReleaseByTag(ctx context.Context, owner string, repo string, tag string) (*github.RepositoryRelease, *github.Response, error)
 	CreateRelease(ctx context.Context, owner string, repo string, release *github.RepositoryRelease) (*github.RepositoryRelease, *github.Response, error)
 	UploadReleaseAsset(ctx context.Context, owner string, repo string, id int64, opt *github.UploadOptions, file *os.File) (*github.ReleaseAsset, *github.Response, error)
+	DeleteReleaseAsset(ctx context.Context, owner string, repo string, id int64) (*github.Response, error)
+	ListReleaseAssets(ctx context.Context, owner string, repo string, id int64, opt *github.ListOptions) ([]*github.ReleaseAsset, *github.Response, error)
 }
 
 type githubRepo struct {
@@ -41,9 +43,10 @@ var (
 	errReleaseNotFound = errors.New(`release not found, use "--create" to create the release`)
 )
 
-func PublishGithub(ctx *cli.Context) error {
+func PublishGithub(cctx *cli.Context) error {
+	ctx := cctx.Context
 	token := os.Getenv("GH_TOKEN")
-	f, err := getPublishGithubFlags(ctx)
+	f, err := getPublishGithubFlags(cctx)
 	if err != nil {
 		return err
 	}
@@ -57,18 +60,18 @@ func PublishGithub(ctx *cli.Context) error {
 	}
 
 	if f.dryRun {
-		return runPublishGithubDryRun(f, token, ctx)
+		return runPublishGithubDryRun(f, token, cctx)
 	}
 
-	client := newGithubClient(ctx.Context, token)
-	release, res, err := client.GetReleaseByTag(ctx.Context, f.repo.owner, f.repo.name, f.tag)
+	client := newGithubClient(ctx, token)
+	release, res, err := client.GetReleaseByTag(ctx, f.repo.owner, f.repo.name, f.tag)
 	if err != nil && res.StatusCode != 404 {
 		return err
 	}
 
 	if release == nil {
 		if f.create {
-			release, _, err = client.CreateRelease(ctx.Context, f.repo.owner, f.repo.name, &github.RepositoryRelease{TagName: &f.tag})
+			release, _, err = client.CreateRelease(ctx, f.repo.owner, f.repo.name, &github.RepositoryRelease{TagName: &f.tag})
 			if err != nil {
 				return err
 			}
@@ -83,7 +86,32 @@ func PublishGithub(ctx *cli.Context) error {
 		return err
 	}
 
-	asset, _, err := client.UploadReleaseAsset(ctx.Context, f.repo.owner, f.repo.name, *release.ID, &github.UploadOptions{Name: artifactName}, file)
+	assetsPage := 1
+	foundAsset := false
+	for {
+		assets, resp, err := client.ListReleaseAssets(ctx, f.repo.owner, f.repo.name, *release.ID, &github.ListOptions{
+			Page: assetsPage,
+		})
+		if err != nil {
+			return err
+		}
+		for _, asset := range assets {
+			if asset.GetName() == artifactName {
+				fmt.Printf("Found existing artifact with the name '%s'. Deleting that now.\n", artifactName)
+				if _, err := client.DeleteReleaseAsset(ctx, f.repo.owner, f.repo.name, asset.GetID()); err != nil {
+					return fmt.Errorf("failed to delete already existing asset: %w", err)
+				}
+				foundAsset = true
+				break
+			}
+		}
+		if resp.NextPage <= assetsPage || foundAsset {
+			break
+		}
+		assetsPage = resp.NextPage
+	}
+
+	asset, _, err := client.UploadReleaseAsset(ctx, f.repo.owner, f.repo.name, *release.ID, &github.UploadOptions{Name: artifactName}, file)
 	if err != nil {
 		return err
 	}
