@@ -126,8 +126,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   getDefaultCacheHeaders() {
-    if (this.datasource.cacheLevel !== PrometheusCacheLevel.None) {
-      return buildCacheHeaders(this.datasource.getCacheDurationInMinutes() * 60);
+    if (config.featureToggles.prometheusResourceBrowserCache) {
+      if (this.datasource.cacheLevel !== PrometheusCacheLevel.None) {
+        return buildCacheHeaders(this.datasource.getCacheDurationInMinutes() * 60);
+      }
     }
     return;
   }
