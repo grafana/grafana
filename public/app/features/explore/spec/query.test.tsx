@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 
 import { serializeStateToUrlParam } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -70,8 +70,10 @@ describe('Explore: handle running/not running query', () => {
 
       jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse('different log'));
 
-      locationService.partial({
-        left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="different"}' }]),
+      act(() => {
+        locationService.partial({
+          left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="different"}' }]),
+        });
       });
 
       // Editor renders the new query
@@ -89,8 +91,10 @@ describe('Explore: handle running/not running query', () => {
 
       jest.mocked(datasources.elastic.query).mockReturnValueOnce(makeMetricsQueryResponse());
 
-      locationService.partial({
-        left: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'other query' }]),
+      act(() => {
+        locationService.partial({
+          left: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'other query' }]),
+        });
       });
 
       // Editor renders the new query

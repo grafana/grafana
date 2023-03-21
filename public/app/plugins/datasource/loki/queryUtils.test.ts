@@ -476,6 +476,75 @@ describe('combineResponses', () => {
     expect(combineResponses(null, responseB)).not.toBe(responseB);
   });
 
+  it('combine when first param has errors', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+    const errorA = {
+      message: 'errorA',
+    };
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+      error: errorA,
+      errors: [errorA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB],
+    };
+
+    const combined = combineResponses(responseA, responseB);
+    expect(combined.data[0].length).toBe(4);
+    expect(combined.error?.message).toBe('errorA');
+    expect(combined.errors).toHaveLength(1);
+    expect(combined.errors?.[0]?.message).toBe('errorA');
+  });
+
+  it('combine when second param has errors', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+    };
+    const errorB = {
+      message: 'errorB',
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB],
+      error: errorB,
+      errors: [errorB],
+    };
+
+    const combined = combineResponses(responseA, responseB);
+    expect(combined.data[0].length).toBe(4);
+    expect(combined.error?.message).toBe('errorB');
+    expect(combined.errors).toHaveLength(1);
+    expect(combined.errors?.[0]?.message).toBe('errorB');
+  });
+
+  it('combine when both params have errors', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+    const errorA = {
+      message: 'errorA',
+    };
+    const errorB = {
+      message: 'errorB',
+    };
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+      error: errorA,
+      errors: [errorA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB],
+      error: errorB,
+      errors: [errorB],
+    };
+
+    const combined = combineResponses(responseA, responseB);
+    expect(combined.data[0].length).toBe(4);
+    expect(combined.error?.message).toBe('errorA');
+    expect(combined.errors).toHaveLength(2);
+    expect(combined.errors?.[0]?.message).toBe('errorA');
+    expect(combined.errors?.[1]?.message).toBe('errorB');
+  });
+
   describe('combine stats', () => {
     const { metricFrameA } = getMockFrames();
     const makeResponse = (stats?: QueryResultMetaStat[]): DataQueryResponse => ({

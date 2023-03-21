@@ -195,11 +195,12 @@ TODO docs
 
 TODO docs
 
-| Property | Type   | Required | Description                                                                                                                                         |
-|----------|--------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| `color`  | string | **Yes**  | TODO docs                                                                                                                                           |
-| `state`  | string | No       | TODO docs<br/>TODO are the values here enumerable into a disjunction?<br/>Some seem to be listed in typescript comment                              |
-| `value`  | number | No       | TODO docs<br/>FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON |
+| Property | Type    | Required | Description                                                                                                                                         |
+|----------|---------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `color`  | string  | **Yes**  | TODO docs                                                                                                                                           |
+| `index`  | integer | No       | Threshold index, an old property that is not needed an should only appear in older dashboards                                                       |
+| `state`  | string  | No       | TODO docs<br/>TODO are the values here enumerable into a disjunction?<br/>Some seem to be listed in typescript comment                              |
+| `value`  | number  | No       | TODO docs<br/>FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON |
 
 ### ValueMapping
 

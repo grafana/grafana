@@ -2,6 +2,7 @@ package signature
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -76,7 +77,7 @@ func (m *PluginManifest) isV2() bool {
 	return strings.HasPrefix(m.ManifestVersion, "2.")
 }
 
-// readPluginManifest attempts to read and verify the plugin manifest
+// ReadPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
 func ReadPluginManifest(body []byte) (*PluginManifest, error) {
 	block, _ := clearsign.Decode(body)
@@ -98,11 +99,9 @@ func ReadPluginManifest(body []byte) (*PluginManifest, error) {
 	return &manifest, nil
 }
 
-func Calculate(mlog log.Logger, class plugins.Class, plugin plugins.FoundPlugin) (plugins.Signature, error) {
-	if class == plugins.Core {
-		return plugins.Signature{
-			Status: plugins.SignatureInternal,
-		}, nil
+func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, plugin plugins.FoundPlugin) (plugins.Signature, error) {
+	if defaultSignature, exists := src.DefaultSignature(ctx); exists {
+		return defaultSignature, nil
 	}
 
 	if len(plugin.FS.Files()) == 0 {

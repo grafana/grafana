@@ -35,6 +35,12 @@ export interface LokiQuery extends LokiQueryFromSchema {
   // the temporary fix (until this gets improved in the codegen), is to
   // override it here
   queryType?: LokiQueryType;
+
+  /**
+   * This is a property for the experimental query splitting feature.
+   * @experimental
+   */
+  chunkDuration?: string;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
