@@ -71,7 +71,13 @@ func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
 func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	streams := statesToStreams(rule, states, h.externalLabels, logger)
+
 	errCh := make(chan error, 1)
+	if len(streams) == 0 {
+		close(errCh)
+		return errCh
+	}
+
 	go func() {
 		defer close(errCh)
 
