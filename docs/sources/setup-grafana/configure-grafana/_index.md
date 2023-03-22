@@ -1358,6 +1358,10 @@ Sets a global limit on number of users that can be logged in at one time. Defaul
 
 Sets a global limit on number of alert rules that can be created. Default is -1 (unlimited).
 
+### global_correlations
+
+Sets a global limit on number of correlations that can be created. Default is -1 (unlimited).
+
 <hr>
 
 ## [unified_alerting]
