@@ -51,9 +51,9 @@ export const RootFolderView = ({
   const results = useAsync(async () => {
     const folders = await getChildren();
 
-    if (!hidePseudoFolders) {
-      folders.unshift({ title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID });
+    folders.unshift({ title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID });
 
+    if (!hidePseudoFolders) {
       const itemsUIDs = await impressionSrv.getDashboardOpened();
       if (itemsUIDs.length) {
         folders.unshift({ title: 'Recent', icon: 'clock-nine', kind: 'folder', uid: '__recent', itemsUIDs });
