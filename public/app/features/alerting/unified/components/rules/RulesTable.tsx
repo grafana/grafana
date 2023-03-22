@@ -1,4 +1,6 @@
 import { css, cx } from '@emotion/css';
+import { isBefore } from 'date-fns';
+import formatDuration from 'date-fns/formatDuration';
 import React, { useCallback, useMemo } from 'react';
 
 import {
@@ -17,7 +19,6 @@ import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { Annotation } from '../../utils/constants';
 import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
-import { isNullDate } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 import { ProvisioningBadge } from '../Provisioning';
@@ -116,21 +117,29 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
   const { hasRuler, rulerRulesLoaded } = useHasRuler();
 
   const calculateNextEvaluationDate = useCallback((rule: CombinedRule) => {
-    const isValidLastEvaluation =
-      rule.promRule?.lastEvaluation &&
-      !isNullDate(rule.promRule.lastEvaluation) &&
-      isValidDate(rule.promRule.lastEvaluation);
+    const isValidLastEvaluation = rule.promRule?.lastEvaluation && isValidDate(rule.promRule.lastEvaluation);
     const isValidIntervalDuration = rule.group.interval && isValidDuration(rule.group.interval);
 
-    if (!isValidLastEvaluation || !isValidIntervalDuration) {
+    if (!isValidLastEvaluation || !isValidIntervalDuration || isGrafanaRulerRulePaused(rule)) {
       return;
     }
 
-    const lastEvaluationDate = Date.parse(rule.promRule?.lastEvaluation || '');
     const intervalDuration = parseDuration(rule.group.interval!);
+    const lastEvaluationDate = Date.parse(rule.promRule?.lastEvaluation || '');
     const nextEvaluationDate = addDurationToDate(lastEvaluationDate, intervalDuration);
+
+    //when `nextEvaluationDate` is a past date it means the `lastEvaluationDate` was inaccurate.
+    //in this case we use the interval value to show a more generic estimate. See https://github.com/grafana/grafana/issues/65125
+    const isPastDate = isBefore(nextEvaluationDate, new Date());
+    if (isPastDate) {
+      return {
+        humanized: `within ${formatDuration(intervalDuration)}`,
+        fullDate: `within ${formatDuration(intervalDuration)}`,
+      };
+    }
+
     return {
-      humanized: dateTime(nextEvaluationDate).locale('en').fromNow(true),
+      humanized: `in ${dateTime(nextEvaluationDate).locale('en').fromNow(true)}`,
       fullDate: dateTimeFormat(nextEvaluationDate, { format: 'YYYY-MM-DD HH:mm:ss' }),
     };
   }, []);
@@ -211,9 +220,9 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
         renderCell: ({ data: rule }) => {
           const nextEvalInfo = calculateNextEvaluationDate(rule);
           return (
-            nextEvalInfo?.fullDate && (
+            nextEvalInfo && (
               <Tooltip placement="top" content={`${nextEvalInfo?.fullDate}`} theme="info">
-                <span>in {nextEvalInfo?.humanized}</span>
+                <span>{nextEvalInfo?.humanized}</span>
               </Tooltip>
             )
           );
