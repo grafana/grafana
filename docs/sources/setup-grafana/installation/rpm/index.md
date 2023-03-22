@@ -2,13 +2,13 @@
 aliases:
   - ../../installation/installation/rpm/
   - ../../installation/rpm/
-description: Grafana Installation guide for RPM-based Linux, such as Centos, Fedora,
-  OpenSuse, and Red Hat.
-title: Install on RPM-based Linux
+description: Install guide for Grafana on Red Hat, RHEL, or Fedora.
+title: Install Grafana on Red Hat, RHEL, or Fedora
+menuTitle: Redhat, RHEL, or Fedora
 weight: 400
 ---
 
-# Install on Redhat, RHEL, or Fedora
+# Install Grafana on Red Hat, RHEL, or Fedora
 
 This topic explains how to install Grafana dependencies, install Grafana on Redhat, RHEL, or Fedora, and start the Grafana server on your system.
 
