@@ -4,7 +4,6 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
@@ -20,7 +19,6 @@ func ProvideTestEnv(
 	pluginRegistry registry.Service,
 	httpClientProvider httpclient.Provider,
 	oAuthTokenService *oauthtokentest.Service,
-	roleRegistry accesscontrol.RoleRegistry,
 ) (*TestEnv, error) {
 	return &TestEnv{
 		server,
@@ -31,7 +29,6 @@ func ProvideTestEnv(
 		pluginRegistry,
 		httpClientProvider,
 		oAuthTokenService,
-		roleRegistry,
 	}, nil
 }
 
@@ -44,5 +41,4 @@ type TestEnv struct {
 	PluginRegistry      registry.Service
 	HTTPClientProvider  httpclient.Provider
 	OAuthTokenService   *oauthtokentest.Service
-	RoleRegistry        accesscontrol.RoleRegistry
 }

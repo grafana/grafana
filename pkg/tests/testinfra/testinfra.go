@@ -58,9 +58,6 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	require.NoError(t, err)
 	assert.Greater(t, dbSec.Key("query_retries").MustInt(), 0)
 
-	err = env.RoleRegistry.RegisterFixedRoles(ctx)
-	require.NoError(t, err)
-
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
 		if err := env.Server.Run(ctx); err != nil {

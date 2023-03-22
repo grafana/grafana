@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -72,8 +71,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get feature management service", err)
 	}
-	moduleManager := modules.ProvideService(cfg)
-	acService, err := acimpl.ProvideService(cfg, s, routing, nil, nil, featMgmt, moduleManager)
+	acService, err := acimpl.ProvideService(cfg, s, routing, nil, nil, featMgmt)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get access control", err)
 	}

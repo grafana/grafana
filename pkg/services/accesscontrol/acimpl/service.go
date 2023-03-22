@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -15,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
@@ -33,28 +31,30 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
-	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager, moduleManager modules.Manager) (*Service, error) {
-	return ProvideOSSService(cfg, database.ProvideService(store), cache, features, routeRegister, accessControl, moduleManager)
+	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {
+	service := ProvideOSSService(cfg, database.ProvideService(store), cache, features)
+
+	if !accesscontrol.IsDisabled(cfg) {
+		api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
+		if err := accesscontrol.DeclareFixedRoles(service); err != nil {
+			return nil, err
+		}
+	}
+
+	return service, nil
 }
 
-func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features *featuremgmt.FeatureManager,
-	routeRegister routing.RouteRegister, accessControl accesscontrol.AccessControl,
-	moduleManager modules.Manager) (*Service, error) {
+func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features *featuremgmt.FeatureManager) *Service {
 	s := &Service{
-		cfg:           cfg,
-		store:         store,
-		log:           log.New("accesscontrol.service"),
-		cache:         cache,
-		roles:         accesscontrol.BuildBasicRoleDefinitions(),
-		features:      features,
-		routeRegister: routeRegister,
-		accessControl: accessControl,
-		moduleManager: moduleManager,
+		cfg:      cfg,
+		store:    store,
+		log:      log.New("accesscontrol.service"),
+		cache:    cache,
+		roles:    accesscontrol.BuildBasicRoleDefinitions(),
+		features: features,
 	}
-	s.moduleManager.RegisterModule(modules.AccessControl, func() (services.Service, error) {
-		return services.NewBasicService(s.start, s.run, nil), nil
-	})
-	return s, nil
+
+	return s
 }
 
 type store interface {
@@ -73,29 +73,9 @@ type Service struct {
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
 	features      *featuremgmt.FeatureManager
-	moduleManager modules.Manager
 
 	routeRegister routing.RouteRegister
 	accessControl accesscontrol.AccessControl
-}
-
-func (s *Service) start(ctx context.Context) error {
-	if err := s.RegisterFixedRoles(ctx); err != nil {
-		return err
-	}
-
-	if !accesscontrol.IsDisabled(s.cfg) {
-		api.NewAccessControlAPI(s.routeRegister, s.accessControl, s, s.features).RegisterAPIEndpoints()
-		if err := accesscontrol.DeclareFixedRoles(s); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (s *Service) run(ctx context.Context) error {
-	<-ctx.Done()
-	return ctx.Err()
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {

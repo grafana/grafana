@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -30,8 +31,10 @@ type Options struct {
 
 // New returns a new instance of Server.
 func New(opts Options, cfg *setting.Cfg, moduleEngine modules.Engine, httpServer *api.HTTPServer,
-	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry) (*Server, error) {
-	s := newServer(opts, cfg, moduleEngine, backgroundServiceRegistry, httpServer)
+	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry,
+	roleRegistry accesscontrol.RoleRegistry,
+) (*Server, error) {
+	s := newServer(opts, cfg, moduleEngine, roleRegistry, backgroundServiceRegistry, httpServer)
 
 	if err := s.init(context.Background()); err != nil {
 		return nil, err
@@ -40,7 +43,7 @@ func New(opts Options, cfg *setting.Cfg, moduleEngine modules.Engine, httpServer
 	return s, nil
 }
 
-func newServer(opts Options, cfg *setting.Cfg, moduleEngine modules.Engine,
+func newServer(opts Options, cfg *setting.Cfg, moduleEngine modules.Engine, roleRegistry accesscontrol.RoleRegistry,
 	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry, httpServer *api.HTTPServer) *Server {
 	return &Server{
 		log:                       log.New("server"),
@@ -49,6 +52,7 @@ func newServer(opts Options, cfg *setting.Cfg, moduleEngine modules.Engine,
 		pidFile:                   opts.PidFile,
 		moduleEngine:              moduleEngine,
 		httpServer:                httpServer,
+		roleRegistry:              roleRegistry,
 		backgroundServiceRegistry: backgroundServiceRegistry,
 	}
 }
@@ -65,6 +69,7 @@ type Server struct {
 	shutdownFinished chan struct{}
 
 	httpServer                *api.HTTPServer
+	roleRegistry              accesscontrol.RoleRegistry
 	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry
 }
 
@@ -79,6 +84,10 @@ func (s *Server) init(ctx context.Context) error {
 	s.isInitialized = true
 
 	if err := s.writePIDFile(); err != nil {
+		return err
+	}
+
+	if err := s.roleRegistry.RegisterFixedRoles(ctx); err != nil {
 		return err
 	}
 

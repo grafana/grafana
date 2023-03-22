@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/fs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -474,6 +475,7 @@ func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern strin
 		hs := HTTPServer{
 			Cfg:         cfg,
 			pluginStore: pluginStore,
+			pluginFiles: fs.ProvideService(pluginStore),
 			log:         log.NewNopLogger(),
 			pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
 				PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
