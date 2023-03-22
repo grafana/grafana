@@ -175,7 +175,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         throw new Error('The Data source has not been defined.');
       }
 
-      const expression = updatedQueries[0].model?.expression || '';
+      const expression = updatedQueries[0].model?.expr || '';
 
       setValue('dataSourceName', dataSourceSettings.name);
       setValue('expression', expression);
