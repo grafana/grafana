@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
-import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor, Button } from '@grafana/ui';
+import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
 
 import { isValidQuery } from '../../queryUtils';
 
@@ -74,17 +74,11 @@ function ensureLogQL(monaco: Monaco) {
 }
 
 const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
-  const FORMAT_BUTTON_WIDTH = 88;
   return {
-    monacoWrapper: css`
-      width: 100%;
-      display: flex;
-      gap: ${theme.spacing(1)};
-    `,
     container: css`
       border-radius: ${theme.shape.borderRadius()};
       border: 1px solid ${theme.components.input.borderColor};
-      width: calc(100% - ${FORMAT_BUTTON_WIDTH}px);
+      width: 100%;
     `,
     placeholder: css`
       ::after {
@@ -116,8 +110,6 @@ const MonacoQueryField = ({
   const onBlurRef = useLatest(onBlur);
 
   const autocompleteCleanupCallback = useRef<(() => void) | null>(null);
-
-  const [logqlQuery, setLogqlQuery] = useState<string>(initialValue);
 
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
@@ -165,124 +157,114 @@ const MonacoQueryField = ({
     onQueryType(query);
   }, 1000);
 
-  const onFormatQuery = async () => {
-    setLogqlQuery(await datasource.formatQuery(logqlQuery));
-  };
-
   return (
-    <div className={styles.monacoWrapper}>
-      <div
-        aria-label={selectors.components.QueryField.container}
-        className={styles.container}
-        // NOTE: we will be setting inline-style-width/height on this element
-        ref={containerRef}
-      >
-        <ReactMonacoEditor
-          overrideServices={overrideServicesRef.current}
-          options={options}
-          language={LANG_ID}
-          value={logqlQuery}
-          beforeMount={(monaco) => {
-            ensureLogQL(monaco);
-          }}
-          onMount={(editor, monaco) => {
-            // Monaco has a bug where it runs actions on all instances (https://github.com/microsoft/monaco-editor/issues/2947), so we ensure actions are executed on instance-level with this ContextKey.
-            const isEditorFocused = editor.createContextKey<boolean>('isEditorFocused' + id, false);
-            // we setup on-blur
-            editor.onDidBlurEditorWidget(() => {
-              isEditorFocused.set(false);
-              onBlurRef.current(editor.getValue());
-            });
-            editor.onDidChangeModelContent((e) => {
-              const model = editor.getModel();
-              if (!model) {
-                return;
+    <div
+      aria-label={selectors.components.QueryField.container}
+      className={styles.container}
+      // NOTE: we will be setting inline-style-width/height on this element
+      ref={containerRef}
+    >
+      <ReactMonacoEditor
+        overrideServices={overrideServicesRef.current}
+        options={options}
+        language={LANG_ID}
+        value={initialValue}
+        beforeMount={(monaco) => {
+          ensureLogQL(monaco);
+        }}
+        onMount={(editor, monaco) => {
+          // Monaco has a bug where it runs actions on all instances (https://github.com/microsoft/monaco-editor/issues/2947), so we ensure actions are executed on instance-level with this ContextKey.
+          const isEditorFocused = editor.createContextKey<boolean>('isEditorFocused' + id, false);
+          // we setup on-blur
+          editor.onDidBlurEditorWidget(() => {
+            isEditorFocused.set(false);
+            onBlurRef.current(editor.getValue());
+          });
+          editor.onDidChangeModelContent((e) => {
+            const model = editor.getModel();
+            if (!model) {
+              return;
+            }
+            const query = model.getValue();
+            const errors =
+              validateQuery(
+                query,
+                datasource.interpolateString(query, placeHolderScopedVars),
+                model.getLinesContent()
+              ) || [];
+
+            const markers = errors.map(({ error, ...boundary }) => ({
+              message: `${
+                error ? `Error parsing "${error}"` : 'Parse error'
+              }. The query appears to be incorrect and could fail to be executed.`,
+              severity: monaco.MarkerSeverity.Error,
+              ...boundary,
+            }));
+            onTypeDebounced(query);
+            monaco.editor.setModelMarkers(model, 'owner', markers);
+          });
+          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef);
+          const completionProvider = getCompletionProvider(monaco, dataProvider);
+
+          // completion-providers in monaco are not registered directly to editor-instances,
+          // they are registered to languages. this makes it hard for us to have
+          // separate completion-providers for every query-field-instance
+          // (but we need that, because they might connect to different datasources).
+          // the trick we do is, we wrap the callback in a "proxy",
+          // and in the proxy, the first thing is, we check if we are called from
+          // "our editor instance", and if not, we just return nothing. if yes,
+          // we call the completion-provider.
+          const filteringCompletionProvider: monacoTypes.languages.CompletionItemProvider = {
+            ...completionProvider,
+            provideCompletionItems: (model, position, context, token) => {
+              // if the model-id does not match, then this call is from a different editor-instance,
+              // not "our instance", so return nothing
+              if (editor.getModel()?.id !== model.id) {
+                return { suggestions: [] };
               }
-              const query = model.getValue();
-              const errors =
-                validateQuery(
-                  query,
-                  datasource.interpolateString(query, placeHolderScopedVars),
-                  model.getLinesContent()
-                ) || [];
+              return completionProvider.provideCompletionItems(model, position, context, token);
+            },
+          };
 
-              const markers = errors.map(({ error, ...boundary }) => ({
-                message: `${
-                  error ? `Error parsing "${error}"` : 'Parse error'
-                }. The query appears to be incorrect and could fail to be executed.`,
-                severity: monaco.MarkerSeverity.Error,
-                ...boundary,
-              }));
-              setLogqlQuery(query);
-              onTypeDebounced(query);
-              monaco.editor.setModelMarkers(model, 'owner', markers);
-            });
-            const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef);
-            const completionProvider = getCompletionProvider(monaco, dataProvider);
+          const { dispose } = monaco.languages.registerCompletionItemProvider(LANG_ID, filteringCompletionProvider);
 
-            // completion-providers in monaco are not registered directly to editor-instances,
-            // they are registered to languages. this makes it hard for us to have
-            // separate completion-providers for every query-field-instance
-            // (but we need that, because they might connect to different datasources).
-            // the trick we do is, we wrap the callback in a "proxy",
-            // and in the proxy, the first thing is, we check if we are called from
-            // "our editor instance", and if not, we just return nothing. if yes,
-            // we call the completion-provider.
-            const filteringCompletionProvider: monacoTypes.languages.CompletionItemProvider = {
-              ...completionProvider,
-              provideCompletionItems: (model, position, context, token) => {
-                // if the model-id does not match, then this call is from a different editor-instance,
-                // not "our instance", so return nothing
-                if (editor.getModel()?.id !== model.id) {
-                  return { suggestions: [] };
-                }
-                return completionProvider.provideCompletionItems(model, position, context, token);
-              },
-            };
+          autocompleteCleanupCallback.current = dispose;
+          // this code makes the editor resize itself so that the content fits
+          // (it will grow taller when necessary)
+          // FIXME: maybe move this functionality into CodeEditor, like:
+          // <CodeEditor resizingMode="single-line"/>
+          const handleResize = () => {
+            const containerDiv = containerRef.current;
+            if (containerDiv !== null) {
+              const pixelHeight = editor.getContentHeight();
+              containerDiv.style.height = `${pixelHeight + EDITOR_HEIGHT_OFFSET}px`;
+              const pixelWidth = containerDiv.clientWidth;
+              editor.layout({ width: pixelWidth, height: pixelHeight });
+            }
+          };
 
-            const { dispose } = monaco.languages.registerCompletionItemProvider(LANG_ID, filteringCompletionProvider);
+          editor.onDidContentSizeChange(handleResize);
+          handleResize();
+          // handle: shift + enter
+          // FIXME: maybe move this functionality into CodeEditor?
+          editor.addCommand(
+            monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+            () => {
+              onRunQueryRef.current(editor.getValue());
+            },
+            'isEditorFocused' + id
+          );
 
-            autocompleteCleanupCallback.current = dispose;
-            // this code makes the editor resize itself so that the content fits
-            // (it will grow taller when necessary)
-            // FIXME: maybe move this functionality into CodeEditor, like:
-            // <CodeEditor resizingMode="single-line"/>
-            const handleResize = () => {
-              const containerDiv = containerRef.current;
-              if (containerDiv !== null) {
-                const pixelHeight = editor.getContentHeight();
-                containerDiv.style.height = `${pixelHeight + EDITOR_HEIGHT_OFFSET}px`;
-                const pixelWidth = containerDiv.clientWidth;
-                editor.layout({ width: pixelWidth, height: pixelHeight });
-              }
-            };
+          editor.onDidFocusEditorText(() => {
+            isEditorFocused.set(true);
+            if (editor.getValue().trim() === '') {
+              editor.trigger('', 'editor.action.triggerSuggest', {});
+            }
+          });
 
-            editor.onDidContentSizeChange(handleResize);
-            handleResize();
-            // handle: shift + enter
-            // FIXME: maybe move this functionality into CodeEditor?
-            editor.addCommand(
-              monaco.KeyMod.Shift | monaco.KeyCode.Enter,
-              () => {
-                onRunQueryRef.current(editor.getValue());
-              },
-              'isEditorFocused' + id
-            );
-
-            editor.onDidFocusEditorText(() => {
-              isEditorFocused.set(true);
-              if (editor.getValue().trim() === '') {
-                editor.trigger('', 'editor.action.triggerSuggest', {});
-              }
-            });
-
-            setPlaceholder(monaco, editor);
-          }}
-        />
-      </div>
-      <Button variant="secondary" onClick={onFormatQuery}>
-        Format
-      </Button>
+          setPlaceholder(monaco, editor);
+        }}
+      />
     </div>
   );
 };
