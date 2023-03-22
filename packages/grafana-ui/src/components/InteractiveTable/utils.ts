@@ -12,8 +12,6 @@ type InternalColumn<T extends object> = RTColumn<T> & {
 // Returns the columns in a "react-table" acceptable format
 export function getColumns<K extends object>(columns: Array<Column<K>>): Array<InternalColumn<K>> {
   return [
-    // TODO get someone who knows about our table implementation to look into this!
-    // @ts-expect-error
     {
       id: EXPANDER_CELL_ID,
       Cell: ExpanderCell,

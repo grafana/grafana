@@ -86,8 +86,6 @@ export function getColumns(
       // Make an expander cell
       Header: () => null, // No header
       id: 'expander', // It needs an ID
-      // TODO get someone who knows about our table implementation to look into this!
-      // @ts-expect-error
       Cell: RowExpander,
       width: EXPANDER_WIDTH,
       minWidth: EXPANDER_WIDTH,
@@ -127,8 +125,6 @@ export function getColumns(
 
     const Cell = getCellComponent(fieldTableOptions.cellOptions?.type, field);
     columns.push({
-      // TODO get someone who knows about our table implementation to look into this!
-      // @ts-expect-error
       Cell,
       id: fieldIndex.toString(),
       field: field,

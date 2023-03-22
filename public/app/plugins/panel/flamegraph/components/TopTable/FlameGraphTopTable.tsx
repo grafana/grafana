@@ -181,7 +181,7 @@ const FlameGraphTopTable = ({
 };
 
 const SymbolCell = ({ cell: { value } }: CellProps<TopTableValue, TopTableValue>) => {
-  return <div>{value.value}</div>;
+  return <div>{value}</div>;
 };
 
 const UnitCell = ({ cell: { value } }: CellProps<TopTableValue, TopTableValue>) => {
