@@ -177,9 +177,6 @@ compilation-stats.json
 # auto generated frontend docs
 /docs/sources/packages_api
 
-# wire generated files
-**/wire_gen.go
-
 # Auto-generated internationalization files
 public/locales/_build/
 public/locales/*/*.js
