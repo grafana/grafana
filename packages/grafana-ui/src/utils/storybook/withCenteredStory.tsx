@@ -1,13 +1,12 @@
+import { DecoratorFn } from '@storybook/react';
 import React from 'react';
-
-import { RenderFunction } from '../../types';
 
 interface CenteredStoryProps {
   children: React.ReactNode;
   horizontal?: boolean;
   vertical?: boolean;
 }
-const CenteredStory: React.FunctionComponent<CenteredStoryProps> = ({ horizontal, vertical, children }) => {
+const CenteredStory = ({ horizontal, vertical, children }: CenteredStoryProps) => {
   return (
     <div
       style={{
@@ -23,13 +22,13 @@ const CenteredStory: React.FunctionComponent<CenteredStoryProps> = ({ horizontal
   );
 };
 
-export const withNotCenteredStory = (story: RenderFunction) => <CenteredStory>{story()}</CenteredStory>;
-export const withCenteredStory = (story: RenderFunction) => (
+export const withNotCenteredStory: DecoratorFn = (story) => <CenteredStory>{story()}</CenteredStory>;
+export const withCenteredStory: DecoratorFn = (story) => (
   <CenteredStory horizontal vertical>
     {story()}
   </CenteredStory>
 );
-export const withHorizontallyCenteredStory = (story: RenderFunction) => (
+export const withHorizontallyCenteredStory: DecoratorFn = (story) => (
   <CenteredStory horizontal>{story()}</CenteredStory>
 );
-export const withVerticallyCenteredStory = (story: RenderFunction) => <CenteredStory vertical>{story()}</CenteredStory>;
+export const withVerticallyCenteredStory: DecoratorFn = (story) => <CenteredStory vertical>{story()}</CenteredStory>;

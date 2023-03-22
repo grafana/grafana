@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import { compact } from 'lodash';
-import React, { FC, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   DragDropContext,
   Draggable,
@@ -31,7 +31,7 @@ interface ModalProps {
 
 type CombinedRuleWithUID = { uid: string } & CombinedRule;
 
-export const ReorderCloudGroupModal: FC<ModalProps> = (props) => {
+export const ReorderCloudGroupModal = (props: ModalProps) => {
   const { group, namespace, onClose } = props;
   const [pending, setPending] = useState<boolean>(false);
   const [rulesList, setRulesList] = useState<CombinedRule[]>(group.rules);
@@ -145,7 +145,7 @@ interface ModalHeaderProps {
   group: CombinedRuleGroup;
 }
 
-const ModalHeader: FC<ModalHeaderProps> = ({ namespace, group }) => {
+const ModalHeader = ({ namespace, group }: ModalHeaderProps) => {
   const styles = useStyles2(getStyles);
 
   return (

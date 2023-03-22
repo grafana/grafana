@@ -33,6 +33,7 @@ export interface DataResponse {
   error?: string;
   refId?: string;
   frames?: DataFrameJSON[];
+  status?: number;
 
   // Legacy TSDB format...
   series?: TimeSeries[];
@@ -86,9 +87,15 @@ export function toDataQueryResponse(
           rsp.error = {
             refId: dr.refId,
             message: dr.error,
+            status: dr.status,
           };
-          rsp.state = LoadingState.Error;
         }
+        if (rsp.errors) {
+          rsp.errors.push({ refId: dr.refId, message: dr.error, status: dr.status });
+        } else {
+          rsp.errors = [{ refId: dr.refId, message: dr.error, status: dr.status }];
+        }
+        rsp.state = LoadingState.Error;
       }
 
       if (dr.frames?.length) {

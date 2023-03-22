@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ConfirmModal, useStyles2 } from '@grafana/ui';
@@ -14,7 +14,7 @@ interface Props {
   onDismiss: () => void;
 }
 
-export const ConfirmDeleteModal: FC<Props> = ({ results, onDeleteItems, isOpen, onDismiss }) => {
+export const ConfirmDeleteModal = ({ results, onDeleteItems, isOpen, onDismiss }: Props) => {
   const styles = useStyles2(getStyles);
 
   const dashboards = Array.from(results.get('dashboard') ?? []);

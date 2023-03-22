@@ -65,6 +65,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqCanAccessTeams := middleware.AdminOrEditorAndFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
+	ensureEditorOrViewerCanEdit := middleware.EnsureEditorOrViewerCanEdit(hs.Cfg)
 	authorize := ac.Middleware(hs.AccessControl)
 	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.accesscontrolService, hs.userService)
 	quota := middleware.Quota(hs.QuotaService)
@@ -101,7 +102,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/org/apikeys/", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAPIKeyRead)), hs.Index)
 	r.Get("/dashboard/import/", reqSignedIn, hs.Index)
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin", reqGrafanaAdmin, hs.Index)
+	r.Get("/admin", reqOrgAdmin, hs.Index)
 	r.Get("/admin/settings", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), hs.Index)
 	// Show the combined users page for org admins if topnav is enabled
 	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
@@ -156,10 +157,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
-	if hs.Features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
-		r.Get("/g/*", reqSignedIn, hs.Index)
-	}
-
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		// list public dashboards
 		r.Get("/public-dashboards/list", reqSignedIn, hs.Index)
@@ -177,7 +174,7 @@ func (hs *HTTPServer) registerRoutes() {
 		if f, ok := reqSignedIn.(func(c *contextmodel.ReqContext)); ok {
 			f(c)
 		}
-		middleware.EnsureEditorOrViewerCanEdit(c)
+		ensureEditorOrViewerCanEdit(c)
 	}, ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
 
 	r.Get("/playlists/", reqSignedIn, hs.Index)
@@ -218,10 +215,8 @@ func (hs *HTTPServer) registerRoutes() {
 	// expose plugin file system assets
 	r.Get("/public/plugins/:pluginId/*", hs.getPluginAssets)
 
-	if hs.Features.IsEnabled(featuremgmt.FlagSwaggerUi) {
-		r.Get("/swagger-ui", swaggerUI)
-		r.Get("/openapi3", openapi3)
-	}
+	r.Get("/swagger-ui", swaggerUI)
+	r.Get("/openapi3", openapi3)
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
@@ -308,10 +303,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		if hs.Features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {
 			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
-		}
-
-		if hs.QueryLibraryHTTPService != nil && !hs.QueryLibraryHTTPService.IsDisabled() {
-			apiRoute.Group("/query-library", hs.QueryLibraryHTTPService.RegisterHTTPRoutes)
 		}
 
 		// current org
@@ -619,11 +610,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// short urls
 		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
-
-		apiRoute.Group("/comments", func(commentRoute routing.RouteRegister) {
-			commentRoute.Post("/get", routing.Wrap(hs.commentsGet))
-			commentRoute.Post("/create", routing.Wrap(hs.commentsCreate))
-		})
 	}, reqSignedIn)
 
 	// admin api
@@ -631,13 +617,6 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/settings", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetSettings))
 		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(hs.AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(hs.PauseAllAlerts(setting.AlertingEnabled)))
-
-		if hs.Features.IsEnabled(featuremgmt.FlagExport) {
-			adminRoute.Get("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleGetStatus))
-			adminRoute.Post("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleRequestExport))
-			adminRoute.Post("/export/stop", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleRequestStop))
-			adminRoute.Get("/export/options", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleGetOptions))
-		}
 
 		adminRoute.Post("/encryption/rotate-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminRotateDataEncryptionKeys))
 		adminRoute.Post("/encryption/reencrypt-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminReEncryptEncryptionKeys))

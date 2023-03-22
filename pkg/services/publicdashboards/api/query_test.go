@@ -83,7 +83,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).
+			service.On("FindEnabledPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).
 				Return(&PublicDashboard{Uid: "pubdashuid"}, test.DashboardResult, test.Err).Maybe()
 
 			cfg := setting.NewCfg()

@@ -48,50 +48,48 @@ export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRul
     return getAllRulesSources();
   }, [rulesSourceName]);
 
-  return useMemo(
-    () =>
-      rulesSources
-        .map((rulesSource): CombinedRuleNamespace[] => {
-          const rulesSourceName = isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
-          const promRules = promRulesResponses[rulesSourceName]?.result;
-          const rulerRules = rulerRulesResponses[rulesSourceName]?.result;
+  return useMemo(() => {
+    return rulesSources
+      .map((rulesSource): CombinedRuleNamespace[] => {
+        const rulesSourceName = isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
+        const promRules = promRulesResponses[rulesSourceName]?.result;
+        const rulerRules = rulerRulesResponses[rulesSourceName]?.result;
 
-          const cached = cache.current[rulesSourceName];
-          if (cached && cached.promRules === promRules && cached.rulerRules === rulerRules) {
-            return cached.result;
-          }
-          const namespaces: Record<string, CombinedRuleNamespace> = {};
+        const cached = cache.current[rulesSourceName];
+        if (cached && cached.promRules === promRules && cached.rulerRules === rulerRules) {
+          return cached.result;
+        }
+        const namespaces: Record<string, CombinedRuleNamespace> = {};
 
-          // first get all the ruler rules in
-          Object.entries(rulerRules || {}).forEach(([namespaceName, groups]) => {
-            const namespace: CombinedRuleNamespace = {
-              rulesSource,
-              name: namespaceName,
-              groups: [],
-            };
-            namespaces[namespaceName] = namespace;
-            addRulerGroupsToCombinedNamespace(namespace, groups);
+        // first get all the ruler rules in
+        Object.entries(rulerRules || {}).forEach(([namespaceName, groups]) => {
+          const namespace: CombinedRuleNamespace = {
+            rulesSource,
+            name: namespaceName,
+            groups: [],
+          };
+          namespaces[namespaceName] = namespace;
+          addRulerGroupsToCombinedNamespace(namespace, groups);
+        });
+
+        // then correlate with prometheus rules
+        promRules?.forEach(({ name: namespaceName, groups }) => {
+          const ns = (namespaces[namespaceName] = namespaces[namespaceName] || {
+            rulesSource,
+            name: namespaceName,
+            groups: [],
           });
 
-          // then correlate with prometheus rules
-          promRules?.forEach(({ name: namespaceName, groups }) => {
-            const ns = (namespaces[namespaceName] = namespaces[namespaceName] || {
-              rulesSource,
-              name: namespaceName,
-              groups: [],
-            });
+          addPromGroupsToCombinedNamespace(ns, groups);
+        });
 
-            addPromGroupsToCombinedNamespace(ns, groups);
-          });
+        const result = Object.values(namespaces);
 
-          const result = Object.values(namespaces);
-
-          cache.current[rulesSourceName] = { promRules, rulerRules, result };
-          return result;
-        })
-        .flat(),
-    [promRulesResponses, rulerRulesResponses, rulesSources]
-  );
+        cache.current[rulesSourceName] = { promRules, rulerRules, result };
+        return result;
+      })
+      .flat();
+  }, [promRulesResponses, rulerRulesResponses, rulesSources]);
 }
 
 // merge all groups in case of grafana managed, essentially treating namespaces (folders) as groups

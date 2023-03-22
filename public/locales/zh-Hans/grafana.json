@@ -32,7 +32,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "操作",
       "data-tab": "数据",
       "error-tab": "错误",
       "json-tab": "JSON",
