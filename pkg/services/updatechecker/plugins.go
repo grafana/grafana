@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/hashicorp/go-version"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
@@ -22,11 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-// Create and register metrics into the default Prometheus registry
-
-var pluginsUpdateCheckerMetrics = httpclientprovider.NewPrometheusMetrics("grafana_plugins_update_checker").
-	WithMustRegister(prometheus.DefaultRegisterer)
 
 type PluginsService struct {
 	availableUpdates map[string]string
@@ -45,7 +39,6 @@ func ProvidePluginsService(cfg *setting.Cfg, pluginStore plugins.Store, tracer t
 	cl, err := httpclient.New(httpclient.Options{
 		Middlewares: []httpclient.Middleware{
 			httpclientprovider.TracingMiddleware(logger, tracer),
-			httpclientprovider.PrometheusMetricsMiddleware(pluginsUpdateCheckerMetrics),
 		},
 	})
 	if err != nil {

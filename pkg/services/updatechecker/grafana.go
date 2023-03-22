@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/hashicorp/go-version"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
@@ -22,11 +21,6 @@ import (
 )
 
 const grafanaLatestJSONURL = "https://raw.githubusercontent.com/grafana/grafana/main/latest.json"
-
-// Create and register metrics into the default Prometheus registry
-
-var grafanaUpdateCheckerMetrics = httpclientprovider.NewPrometheusMetrics("grafana_update_checker").
-	WithMustRegister(prometheus.DefaultRegisterer)
 
 type GrafanaService struct {
 	hasUpdate     bool
@@ -45,7 +39,6 @@ func ProvideGrafanaService(cfg *setting.Cfg, tracer tracing.Tracer) (*GrafanaSer
 	cl, err := httpclient.New(httpclient.Options{
 		Middlewares: []httpclient.Middleware{
 			httpclientprovider.TracingMiddleware(logger, tracer),
-			httpclientprovider.PrometheusMetricsMiddleware(grafanaUpdateCheckerMetrics),
 		},
 	})
 	if err != nil {

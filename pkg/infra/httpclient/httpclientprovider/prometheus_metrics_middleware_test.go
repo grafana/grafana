@@ -40,7 +40,7 @@ func TestPrometheusMetricsMiddleware(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			// Create metrics and make sure they are 0
-			metrics := NewPrometheusMetrics("test")
+			metrics := NewPrometheusMetricsMiddleware("test")
 			require.Equal(t, float64(0), testutil.ToFloat64(metrics.inFlightGauge))
 			require.Equal(t, float64(0), testutil.ToFloat64(metrics.requestsCounter))
 			require.Equal(t, float64(0), testutil.ToFloat64(metrics.failureCounter))
@@ -71,7 +71,7 @@ func TestPrometheusMetricsMiddleware(t *testing.T) {
 	}
 
 	t.Run("in flight", func(t *testing.T) {
-		metrics := NewPrometheusMetrics("test")
+		metrics := NewPrometheusMetricsMiddleware("test")
 		require.Equal(t, float64(0), testutil.ToFloat64(metrics.inFlightGauge))
 
 		srv := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {

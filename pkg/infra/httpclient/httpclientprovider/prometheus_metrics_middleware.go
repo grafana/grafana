@@ -16,8 +16,8 @@ type PrometheusMetrics struct {
 	inFlightGauge            prometheus.Gauge
 }
 
-// NewPrometheusMetrics returns a new *PrometheusMetrics with pre-filled metrics, with the specified prefix
-func NewPrometheusMetrics(prefix string) *PrometheusMetrics {
+// NewPrometheusMetricsMiddleware returns a new *PrometheusMetrics with pre-filled metrics, with the specified prefix
+func NewPrometheusMetricsMiddleware(prefix string) *PrometheusMetrics {
 	return &PrometheusMetrics{
 		requestsCounter: prometheus.NewCounter(prometheus.CounterOpts{
 			Name: prefix + "_request_total",
@@ -56,7 +56,7 @@ func (m *PrometheusMetrics) MustRegister(registry prometheus.Registerer) {
 // WithMustRegister calls MustRegister and returns itself. This is to allow to chain the method call
 // upon initialization, useful when declaring metrics in the global scope:
 //
-//	var svcMetrics = NewPrometheusMetrics("my_client").WithMustRegister(prometheus.DefaultRegisterer)
+//	var svcMetrics = NewPrometheusMetricsMiddleware("my_client").WithMustRegister(prometheus.DefaultRegisterer)
 func (m *PrometheusMetrics) WithMustRegister(registry prometheus.Registerer) *PrometheusMetrics {
 	m.MustRegister(registry)
 	return m
