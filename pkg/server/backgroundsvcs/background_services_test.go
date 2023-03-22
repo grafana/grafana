@@ -8,6 +8,6 @@ import (
 )
 
 func TestBackgroundServiceRegistry_GetServices(t *testing.T) {
-	s := newBackgroundServiceRegistry(newTestService("A", nil, false), newTestService("B", errors.New("boom"), false))
+	s := NewBackgroundServiceRegistry(newTestService("A", nil, false), newTestService("B", errors.New("boom"), false))
 	require.Len(t, s.GetServices(), 2)
 }

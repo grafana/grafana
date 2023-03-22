@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 )
 
-// BackgroundServiceRunner provides background services.
+// BackgroundServiceRunner provides a runner for background services.
 type BackgroundServiceRunner struct {
 	*services.BasicService
 	registry registry.BackgroundServiceRegistry

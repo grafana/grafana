@@ -11,7 +11,7 @@ import (
 
 func TestBackgroundServiceRunner_Run_Error(t *testing.T) {
 	testErr := errors.New("boom")
-	registry := newBackgroundServiceRegistry(newTestService("A", nil, false), newTestService("B", testErr, false))
+	registry := NewBackgroundServiceRegistry(newTestService("A", nil, false), newTestService("B", testErr, false))
 	r := ProvideBackgroundServiceRunner(registry)
 
 	err := r.run(context.Background())

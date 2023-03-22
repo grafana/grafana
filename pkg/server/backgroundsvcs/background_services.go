@@ -56,7 +56,7 @@ func ProvideBackgroundServiceRegistry(
 	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
 	_ *grpcserver.HealthService, _ entity.EntityStoreServer, _ *grpcserver.ReflectionService, _ *ldapapi.Service,
 ) *BackgroundServiceRegistry {
-	return newBackgroundServiceRegistry(
+	return NewBackgroundServiceRegistry(
 		httpServer,
 		ng,
 		cleanup,
@@ -94,7 +94,7 @@ type BackgroundServiceRegistry struct {
 	services []registry.BackgroundService
 }
 
-func newBackgroundServiceRegistry(s ...registry.BackgroundService) *BackgroundServiceRegistry {
+func NewBackgroundServiceRegistry(s ...registry.BackgroundService) *BackgroundServiceRegistry {
 	return &BackgroundServiceRegistry{services: s}
 }
 

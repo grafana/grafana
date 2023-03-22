@@ -12,26 +12,28 @@ type Registry interface{}
 
 type registry struct {
 	moduleManager modules.Manager
+	log           log.Logger
 }
 
 func ProvideRegistry(
 	moduleManager modules.Manager,
 	backgroundServiceRunner *backgroundsvcs.BackgroundServiceRunner,
 ) *registry {
-	return NewRegistry(
+	return newRegistry(
+		log.New("modules.registry"),
 		moduleManager,
 		backgroundServiceRunner,
 	)
 }
 
-func NewRegistry(moduleManager modules.Manager, allServices ...services.NamedService) *registry {
-	logger := log.New("modules.registry")
+func newRegistry(logger log.Logger, moduleManager modules.Manager, svcs ...services.NamedService) *registry {
 	r := &registry{
+		log:           logger,
 		moduleManager: moduleManager,
 	}
 
-	for _, service := range allServices {
-		s := service
+	for _, svc := range svcs {
+		s := svc
 		logger.Debug("Registering invisible module", "name", s.ServiceName())
 		r.moduleManager.RegisterInvisibleModule(s.ServiceName(), func() (services.Service, error) {
 			return s, nil

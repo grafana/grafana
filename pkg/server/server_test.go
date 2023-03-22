@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func testServer(t *testing.T, m *modules.MockModuleService) *Server {
+func testServer(t *testing.T, m *modules.MockModuleEngine) *Server {
 	t.Helper()
 	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, nil, m)
 	require.NoError(t, err)
@@ -28,7 +28,7 @@ func TestServer_Run_Error(t *testing.T) {
 
 	t.Run("Modules Run error bubbles up", func(t *testing.T) {
 		ctx := context.Background()
-		s := testServer(t, &modules.MockModuleService{
+		s := testServer(t, &modules.MockModuleEngine{
 			RunFunc: func(c context.Context) error {
 				require.Equal(t, ctx, c)
 				return testErr
@@ -44,7 +44,7 @@ func TestServer_Shutdown(t *testing.T) {
 	ctx := context.Background()
 
 	modulesShutdown := false
-	s := testServer(t, &modules.MockModuleService{
+	s := testServer(t, &modules.MockModuleEngine{
 		ShutdownFunc: func(_ context.Context) error {
 			modulesShutdown = true
 			return nil
@@ -69,7 +69,7 @@ func TestServer_Shutdown(t *testing.T) {
 	t.Run("Modules Shutdown error bubbles up", func(t *testing.T) {
 		testErr := errors.New("boom")
 
-		s = testServer(t, &modules.MockModuleService{
+		s = testServer(t, &modules.MockModuleEngine{
 			ShutdownFunc: func(_ context.Context) error {
 				return testErr
 			},
