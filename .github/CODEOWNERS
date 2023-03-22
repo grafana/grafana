@@ -37,16 +37,18 @@
 /docs/sources/                            @Eve832
 /docs/sources/administration/             @Eve832 @GrafanaWriter
 /docs/sources/alerting/                   @brendamuir
+/docs/sources/dashboards/                 @imatwawana
 /docs/sources/datasources/                @Eve832 @GrafanaWriter
 /docs/sources/explore/                    @Eve832 @GrafanaWriter
 /docs/sources/fundamentals                @chri2547
 /docs/sources/getting-started/            @chri2547
 /docs/sources/introduction/               @chri2547
 /docs/sources/old-alerting/               @brendamuir
+/docs/sources/panels-visualizations/      @imatwawana
 /docs/sources/release-notes/              @Eve832 @GrafanaWriter
 /docs/sources/setup-grafana/              @chri2547
-/docs/sources/upgrade-guide/              @chri2547
-/docs/sources/whatsnew/                   @chri2547
+/docs/sources/upgrade-guide/              @chri2547 @imatwawana
+/docs/sources/whatsnew/                   @chri2547 @imatwawana
 /docs/sources/developers/plugins/         @Eve832 @josmperez @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/backend/ @Eve832 @grafana/plugins-platform-backend
 

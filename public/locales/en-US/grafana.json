@@ -243,18 +243,6 @@
       "subtitle": "Reusable panels that can be added to multiple dashboards",
       "title": "Library panels"
     },
-    "live": {
-      "title": "Event streaming"
-    },
-    "live-cloud": {
-      "title": "Cloud"
-    },
-    "live-pipeline": {
-      "title": "Pipeline"
-    },
-    "live-status": {
-      "title": "Status"
-    },
     "manage-dashboards": {
       "title": "Browse"
     },
