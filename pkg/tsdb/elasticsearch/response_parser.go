@@ -1137,12 +1137,12 @@ func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
 
 func createFields(frames data.Frames, propKeys []string) []*data.Field {
 	var fields []*data.Field
-	// If we have no frames, we create fields from propKeys
+	// Otherwise use the fields from frames
 	if frames != nil {
 		for _, frame := range frames {
 			fields = append(fields, frame.Fields...)
 		}
-		// Otherwise use the fields from frames
+		// If we have no frames, we create fields from propKeys
 	} else {
 		for _, propKey := range propKeys {
 			fields = append(fields, data.NewField(propKey, nil, []*string{}))
