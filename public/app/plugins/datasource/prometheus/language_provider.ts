@@ -107,6 +107,7 @@ interface AutocompleteContext {
   history?: Array<HistoryItem<PromQuery>>;
 }
 
+const secondsInDay = 86400;
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics: string[];
   timeRange?: { start: number; end: number };
@@ -179,7 +180,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   async loadMetricsMetadata() {
     // @todo clean up prometheusResourceBrowserCache feature flag
     const headers = config.featureToggles.prometheusResourceBrowserCache
-      ? buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * 86400)
+      ? buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * secondsInDay)
       : {};
     this.metricsMetadata = fixSummariesMetadata(
       await this.request(
