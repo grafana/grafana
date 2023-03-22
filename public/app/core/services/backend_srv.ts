@@ -20,7 +20,6 @@ import { getConfig } from 'app/core/config';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
-import { getGrafanaStorage } from 'app/features/storage/storage';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
 
@@ -456,9 +455,6 @@ export class BackendSrv implements BackendService {
   }
 
   getDashboardByUid(uid: string): Promise<DashboardDTO> {
-    if (uid.indexOf('/') > 0 && config.featureToggles.dashboardsFromStorage) {
-      return getGrafanaStorage().getDashboard(uid);
-    }
     return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
 
