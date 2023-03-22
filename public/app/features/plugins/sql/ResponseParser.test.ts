@@ -1,5 +1,3 @@
-import { fill } from 'lodash';
-
 import { DataFrameDTO, FieldType, MutableDataFrame } from '@grafana/data';
 
 import { ResponseParser } from './ResponseParser';
@@ -7,13 +5,13 @@ import { ResponseParser } from './ResponseParser';
 describe('transformMetricFindResponse function', () => {
   it('should handle big arrays', () => {
     const responseParser = new ResponseParser();
-    const stringValues = new Array(150000);
-    const numberValues = new Array(150000);
+    const stringValues = new Array(150_000).fill('a');
+    const numberValues = new Array(150_000).fill(1);
 
     const frame: DataFrameDTO = {
       fields: [
-        { name: 'name', type: FieldType.string, values: fill(stringValues, 'a') },
-        { name: 'value', type: FieldType.number, values: fill(numberValues, 1) },
+        { name: 'name', type: FieldType.string, values: stringValues },
+        { name: 'value', type: FieldType.number, values: numberValues },
       ],
     };
 
