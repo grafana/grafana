@@ -71,7 +71,8 @@ export const Components = {
   Panels: {
     Panel: {
       title: (title: string) => `data-testid Panel header ${title}`,
-      headerItems: (item: string) => `data-testid Panel header item ${item}`,
+      headerItems: (item: string) => `Panel header item ${item}`,
+      menuItems: (item: string) => `data-testid Panel menu item ${item}`,
       containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
     },

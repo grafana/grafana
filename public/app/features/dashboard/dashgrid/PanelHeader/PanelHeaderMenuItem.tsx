@@ -23,7 +23,7 @@ export const PanelHeaderMenuItem = (props: Props & PanelMenuItem) => {
     <li
       className={isSubMenu ? `dropdown-submenu ${getDropdownLocationCssClass(ref)}` : undefined}
       ref={setRef}
-      data-testid={selectors.components.Panels.Panel.headerItems(props.text)}
+      data-testid={selectors.components.Panels.Panel.menuItems(props.text)}
     >
       <a onClick={props.onClick} href={props.href}>
         {icon && <Icon name={icon} className={styles.menuIconClassName} />}

@@ -64,7 +64,7 @@ export function PanelHeaderMenuNew({ items }: Props) {
           url={item.href}
           onClick={item.onClick}
           shortcut={item.shortcut}
-          testId={selectors.components.Panels.Panel.headerItems(item.text)}
+          testId={selectors.components.Panels.Panel.menuItems(item.text)}
         />
       )
     );
