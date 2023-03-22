@@ -147,7 +147,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
 
       const connectionCursorStyle = scene.isEditingEnabled ? 'grab' : '';
-      const selectedStyles = { stroke: strokeColor, strokeWidth: 3 };
+      const selectedStyles = { stroke: '#44aaff', strokeWidth: strokeWidth + 5 };
 
       return (
         <svg className={styles.connection} key={idx}>
@@ -171,6 +171,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
               stroke="transparent"
               pointerEvents="auto"
               strokeWidth={15}
+              style={isSelected ? selectedStyles : {}}
               x1={x1}
               y1={y1}
               x2={x2}
@@ -186,7 +187,6 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
               y1={y1}
               x2={x2}
               y2={y2}
-              style={isSelected ? selectedStyles : {}}
               cursor={connectionCursorStyle}
             />
           </g>
