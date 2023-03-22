@@ -150,13 +150,6 @@ export const PromSettings = (props: Props) => {
     options.jsonData.httpMethod = 'POST';
   }
 
-  const onDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // if(isValidDuration(e.target.value)){
-    //
-    // }
-    onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange);
-  };
-
   return (
     <>
       <div className="gf-form-group">
