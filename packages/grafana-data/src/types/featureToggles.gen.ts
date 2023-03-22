@@ -23,7 +23,6 @@ export interface FeatureToggles {
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
-  ['live-pipeline']?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
@@ -37,7 +36,6 @@ export interface FeatureToggles {
   storage?: boolean;
   k8s?: boolean;
   exploreMixedDatasource?: boolean;
-  tracing?: boolean;
   newTraceView?: boolean;
   correlations?: boolean;
   cloudWatchDynamicLabels?: boolean;
@@ -78,6 +76,7 @@ export interface FeatureToggles {
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
+  onlyExternalOrgRoleSync?: boolean;
   drawerDataSourcePicker?: boolean;
   traceqlSearch?: boolean;
   prometheusMetricEncyclopedia?: boolean;
