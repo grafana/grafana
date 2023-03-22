@@ -29,7 +29,9 @@ describe('Trace view', () => {
         e2e.pages.Explore.General.scrollView().children('.scrollbar-view').scrollTo('center');
 
         // After scrolling we should load more spans
-        e2e.components.TraceViewer.spanBar().its('length').should('be.gt', oldLength);
+        e2e.components.TraceViewer.spanBar().should(($span) => {
+          expect($span.length).to.be.gt(oldLength);
+        });
       });
   });
 });
