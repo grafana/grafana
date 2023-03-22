@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
@@ -73,7 +74,7 @@ func TestCallResource(t *testing.T) {
 		hs.PluginContextProvider = pcp
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = ps
-		hs.pluginClient = pluginClient.ProvideService(reg, pCfg, hs.tracer)
+		hs.pluginClient = pluginClient.ProvideService(reg, pCfg, tracing.InitializeTracerForTest())
 	})
 
 	t.Run("Test successful response is received for valid request", func(t *testing.T) {

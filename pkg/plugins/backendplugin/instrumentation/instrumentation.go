@@ -103,7 +103,7 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 	for key, value := range extraTraceAttributes {
 		span.SetAttributes(key, value, attribute.Key(key).String(value.(string)))
 	}
-	
+
 	return err
 }
 
@@ -126,7 +126,7 @@ func InstrumentCheckHealthRequest(ctx context.Context, req *backend.CheckHealthR
 func InstrumentCallResourceRequest(ctx context.Context, req *backend.CallResourceRequest, cfg Cfg, tracer tracing.Tracer, fn func() error) error {
 	return instrumentPluginRequest(ctx, cfg, &req.PluginContext, "callResource", tracer, fn, map[string]interface{}{
 		"dashboard_uid": req.GetHTTPHeader("X-Dashboard-Uid"),
-		"panel_id":     req.GetHTTPHeader("X-Panel-Id"),
+		"panel_id":      req.GetHTTPHeader("X-Panel-Id"),
 	})
 }
 
@@ -134,21 +134,21 @@ func InstrumentCallResourceRequest(ctx context.Context, req *backend.CallResourc
 func InstrumentQueryDataRequest(ctx context.Context, req *backend.QueryDataRequest, cfg Cfg, tracer tracing.Tracer, fn func() error) error {
 	return instrumentPluginRequest(ctx, cfg, &req.PluginContext, "queryData", tracer, fn, map[string]interface{}{
 		"dashboard_uid": req.GetHTTPHeader("X-Dashboard-Uid"),
-		"panel_id":     req.GetHTTPHeader("X-Panel-Id"),
+		"panel_id":      req.GetHTTPHeader("X-Panel-Id"),
 	})
 }
 
 func addToSpan(span tracing.Span, key string, value interface{}) {
-	switch value.(type) {
+	switch value := value.(type) {
 	case string:
-		span.SetAttributes(key, value.(string), attribute.Key(key).String(value.(string)))
+		span.SetAttributes(key, value, attribute.Key(key).String(value))
 	case int64:
-		span.SetAttributes(key, value.(int64), attribute.Key(key).Int64(value.(int64)))
+		span.SetAttributes(key, value, attribute.Key(key).Int64(value))
 	case int:
-		span.SetAttributes(key, value.(int), attribute.Key(key).Int(value.(int)))
+		span.SetAttributes(key, value, attribute.Key(key).Int(value))
 	case bool:
-		span.SetAttributes(key, value.(bool), attribute.Key(key).Bool(value.(bool)))
+		span.SetAttributes(key, value, attribute.Key(key).Bool(value))
 	case float64:
-		span.SetAttributes(key, value.(float64), attribute.Key(key).Float64(value.(float64)))
+		span.SetAttributes(key, value, attribute.Key(key).Float64(value))
 	}
 }

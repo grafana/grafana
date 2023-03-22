@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -261,7 +262,7 @@ func TestDataSourceQueryError(t *testing.T) {
 					nil,
 					&fakePluginRequestValidator{},
 					&fakeDatasources.FakeDataSourceService{},
-					pluginClient.ProvideService(r, &config.Cfg{}, hs.tracer),
+					pluginClient.ProvideService(r, &config.Cfg{}, tracing.InitializeTracerForTest()),
 				)
 				hs.QuotaService = quotatest.New(false, nil)
 			})
