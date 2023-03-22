@@ -88,8 +88,8 @@ export function TraceView(props: Props) {
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
-  const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans); // TODO JOEY: rename to searchMatches
-  const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState(''); // TODO JOEY: rename to focusedMatches
+  const { search, setSearch, searchMatches } = useSearch(traceProp?.spans);
+  const [focusedSearchMatch, setFocusedSearchMatch] = useState('');
 
   const styles = useStyles2(getStyles);
 
@@ -150,9 +150,9 @@ export function TraceView(props: Props) {
               timeZone={timeZone}
               search={search}
               setSearch={setSearch}
-              spanFindMatches={spanFindMatches}
-              focusedSpanIdForSearch={focusedSpanIdForSearch}
-              setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+              searchMatches={searchMatches}
+              focusedSearchMatch={focusedSearchMatch}
+              setFocusedSearchMatch={setFocusedSearchMatch}
             />
           ) : (
             <TracePageHeader
@@ -166,7 +166,7 @@ export function TraceView(props: Props) {
           <TraceTimelineViewer
             registerAccessors={noop}
             scrollToFirstVisibleSpan={noop}
-            findMatchesIDs={spanFindMatches}
+            findMatchesIDs={searchMatches}
             trace={traceProp}
             datasourceType={datasourceType}
             spanBarOptions={spanBarOptions?.spanBar}
@@ -199,7 +199,7 @@ export function TraceView(props: Props) {
             createSpanLink={createSpanLink}
             scrollElement={props.scrollElement}
             focusedSpanId={focusedSpanId}
-            focusedSpanIdForSearch={focusedSpanIdForSearch!}
+            focusedSearchMatch={focusedSearchMatch!}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
             topOfViewRefType={topOfViewRefType}

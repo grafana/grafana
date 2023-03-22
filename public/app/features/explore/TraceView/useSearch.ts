@@ -24,9 +24,9 @@ export function useSearch(spans?: TraceSpan[]) {
     fromOperator: '>',
     toOperator: '<',
   });
-  const spanFindMatches: Set<string> | undefined = useMemo(() => {
+  const searchMatches: Set<string> | undefined = useMemo(() => {
     return search && spans ? filterSpans(search, spans) : undefined;
   }, [search, spans]);
 
-  return { search, setSearch, spanFindMatches };
+  return { search, setSearch, searchMatches };
 }

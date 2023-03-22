@@ -109,7 +109,7 @@ export type TProps = TExtractUiFindFromStateReturn & {
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
   focusedSpanId?: string;
-  focusedSpanIdForSearch: string;
+  focusedSearchMatch: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
   topOfViewRefType?: TopOfViewRefType;
@@ -188,7 +188,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
       traceTimeline,
       theme,
       topOfViewRef,
-      focusedSpanIdForSearch,
+      focusedSearchMatch,
       ...rest
     } = this.props;
     const { trace } = rest;
@@ -219,7 +219,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
           setSpanNameColumnWidth={setSpanNameColumnWidth}
           currentViewRangeTime={viewRange.time.current}
           topOfViewRef={topOfViewRef}
-          focusedSpanIdForSearch={focusedSpanIdForSearch}
+          focusedSearchMatch={focusedSearchMatch}
           datasourceType={this.props.datasourceType}
         />
       </div>

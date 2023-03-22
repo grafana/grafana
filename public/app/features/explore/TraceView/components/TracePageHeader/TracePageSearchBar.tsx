@@ -25,18 +25,18 @@ import { ubJustifyEnd } from '../uberUtilityStyles';
 export type TracePageSearchBarProps = {
   // searchValue: string;
   // setSearch: (value: string) => void;
-  spanFindMatches: Set<string> | undefined;
-  focusedSpanIdForSearch: string;
-  setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
+  searchMatches: Set<string> | undefined;
+  focusedSearchMatch: string;
+  setFocusedSearchMatch: Dispatch<SetStateAction<string>>;
   datasourceType?: string;
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
   const {
     // searchValue,
-    spanFindMatches,
-    focusedSpanIdForSearch,
-    setFocusedSpanIdForSearch,
+    searchMatches,
+    focusedSearchMatch,
+    setFocusedSearchMatch,
     datasourceType,
   } = props;
   const styles = useStyles2(getStyles);
@@ -45,7 +45,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   const btnClass = cx(styles.TracePageSearchBarBtn);
 
   // const setTraceSearch = (value: string) => {
-  //   setFocusedSpanIdForSearch('');
+  //   setFocusedSearchMatch('');
   // };
 
   const nextResult = () => {
@@ -55,19 +55,17 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
       direction: 'next',
     });
 
-    const spanMatches = Array.from(spanFindMatches!);
-    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
-      ? spanMatches.indexOf(focusedSpanIdForSearch)
-      : 0;
+    const spanMatches = Array.from(searchMatches!);
+    const prevMatchedIndex = spanMatches.indexOf(focusedSearchMatch) ? spanMatches.indexOf(focusedSearchMatch) : 0;
 
     // new query || at end, go to start
     if (prevMatchedIndex === -1 || prevMatchedIndex === spanMatches.length - 1) {
-      setFocusedSpanIdForSearch(spanMatches[0]);
+      setFocusedSearchMatch(spanMatches[0]);
       return;
     }
 
     // get next
-    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex + 1]);
+    setFocusedSearchMatch(spanMatches[prevMatchedIndex + 1]);
   };
 
   const prevResult = () => {
@@ -77,19 +75,17 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
       direction: 'prev',
     });
 
-    const spanMatches = Array.from(spanFindMatches!);
-    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
-      ? spanMatches.indexOf(focusedSpanIdForSearch)
-      : 0;
+    const spanMatches = Array.from(searchMatches!);
+    const prevMatchedIndex = spanMatches.indexOf(focusedSearchMatch) ? spanMatches.indexOf(focusedSearchMatch) : 0;
 
     // new query || at start, go to end
     if (prevMatchedIndex === -1 || prevMatchedIndex === 0) {
-      setFocusedSpanIdForSearch(spanMatches[spanMatches.length - 1]);
+      setFocusedSearchMatch(spanMatches[spanMatches.length - 1]);
       return;
     }
 
     // get prev
-    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex - 1]);
+    setFocusedSearchMatch(spanMatches[prevMatchedIndex - 1]);
   };
 
   return (

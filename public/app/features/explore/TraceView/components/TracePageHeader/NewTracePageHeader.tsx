@@ -57,9 +57,9 @@ export type NewTracePageHeaderProps = {
   timeZone: TimeZone;
   search: SearchProps;
   setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
-  spanFindMatches: Set<string> | undefined;
-  focusedSpanIdForSearch: string;
-  setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>; // TODO JOEY: rename to setSearchMatches or just useSearch
+  searchMatches: Set<string> | undefined;
+  focusedSearchMatch: string;
+  setFocusedSearchMatch: React.Dispatch<React.SetStateAction<string>>; // TODO JOEY: rename to setSearchMatches or just useSearch
 };
 
 export function NewTracePageHeader(props: NewTracePageHeaderProps) {
@@ -71,9 +71,9 @@ export function NewTracePageHeader(props: NewTracePageHeaderProps) {
     timeZone,
     search,
     setSearch,
-    spanFindMatches,
-    focusedSpanIdForSearch,
-    setFocusedSpanIdForSearch,
+    searchMatches,
+    focusedSearchMatch,
+    setFocusedSearchMatch,
   } = props;
   const styles = { ...useStyles2(getStyles), ...useStyles2(getNewStyles) };
   const [tags, setTags] = useState('');
@@ -81,13 +81,13 @@ export function NewTracePageHeader(props: NewTracePageHeaderProps) {
 
   // const handleServiceNameChange = useCallback(
   //   (e) => {
-  //     setFocusedSpanIdForSearch('');
+  //     setFocusedSearchMatch('');
   //     setSearch({
   //       ...search,
   //       serviceName: e?.value || '',
   //     });
   //   },
-  //   [search, setFocusedSpanIdForSearch, setSearch]
+  //   [search, setFocusedSearchMatch, setSearch]
   // );
 
   const serviceNameOptions = (trace: Trace) => {
@@ -271,9 +271,9 @@ export function NewTracePageHeader(props: NewTracePageHeaderProps) {
         </InlineFieldRow>
         <TracePageSearchBar
           // searchValue={search}
-          spanFindMatches={spanFindMatches}
-          focusedSpanIdForSearch={focusedSpanIdForSearch}
-          setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+          searchMatches={searchMatches}
+          focusedSearchMatch={focusedSearchMatch}
+          setFocusedSearchMatch={setFocusedSearchMatch}
           // datasourceType={datasourceType}
         />
       </Collapse>
