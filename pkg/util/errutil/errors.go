@@ -42,6 +42,7 @@ func NewBase(reason StatusReason, msgID string, opts ...BaseOpt) Base {
 }
 
 func ErrorFrom(e error) (*Error, error) {
+	fmt.Printf("ErrorFrom: %e\n", e)
 	//nolint:errorlint
 	o, isGrafanaError := e.(Error)
 	if isGrafanaError {

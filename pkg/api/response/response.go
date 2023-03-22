@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/influxdata/influxdb-client-go/v2/internal/log"
 	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/yaml.v3"
 
@@ -256,9 +255,7 @@ func Error(status int, message string, err error) *NormalResponse {
 func Err(err error) *NormalResponse {
 	grafanaErr, err := errutil.ErrorFrom(err)
 	if err != nil {
-		return Error(http.StatusInternalServerError, "", fmt.Errorf("unexpected error type [%s]: %w", reflect.TypeOf(err), err))
-	}
-	if !errors.As(err, grafanaErr) {
+		fmt.Printf("unexpected error type [%s]: %v\n", reflect.TypeOf(err), err)
 		return Error(http.StatusInternalServerError, "", fmt.Errorf("unexpected error type [%s]: %w", reflect.TypeOf(err), err))
 	}
 
@@ -283,7 +280,6 @@ func ErrOrFallback(status int, message string, err error) *NormalResponse {
 	// }
 	grafanaErr, err := errutil.ErrorFrom(err)
 	if err != nil {
-		log.Warn("coulld not convert from error to Error for ErrOrFallback")
 		return Error(status, message, err)
 	}
 	return Err(grafanaErr)
