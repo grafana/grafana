@@ -81,6 +81,11 @@ type BeforeHandler func(rw http.ResponseWriter, req *http.Request) bool
 // macaronContextKey is used to store/fetch web.Context inside context.Context
 type macaronContextKey struct{}
 
+// WithContext takes a context and a macaron context and stores the latter into the context.
+func WithContext(ctx context.Context, webCtx *Context) context.Context {
+	return context.WithValue(ctx, macaronContextKey{}, webCtx)
+}
+
 // FromContext returns the macaron context stored in a context.Context, if any.
 func FromContext(c context.Context) *Context {
 	if mc, ok := c.Value(macaronContextKey{}).(*Context); ok {
@@ -154,7 +159,7 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		Resp: NewResponseWriter(req.Method, rw),
 	}
 
-	c.Req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))
+	c.Req = req.WithContext(WithContext(req.Context(), c))
 	return c
 }
 

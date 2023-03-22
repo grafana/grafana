@@ -3,12 +3,14 @@ package clientmiddleware
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
@@ -129,19 +131,19 @@ func TestTracingMiddleware(t *testing.T) {
 }
 
 func TestTracingMiddlewareAttributes(t *testing.T) {
-	defaultPluginContextRequestMut := func(req *backend.QueryDataRequest) {
+	defaultPluginContextRequestMut := func(ctx *context.Context, req *backend.QueryDataRequest) {
 		req.PluginContext.PluginID = "my_plugin_id"
 		req.PluginContext.OrgID = 1337
 	}
 
 	for _, tc := range []struct {
 		name       string
-		requestMut []func(req *backend.QueryDataRequest)
+		requestMut []func(ctx *context.Context, req *backend.QueryDataRequest)
 		assert     func(t *testing.T, span *tracing.FakeSpan)
 	}{
 		{
 			name: "default",
-			requestMut: []func(req *backend.QueryDataRequest){
+			requestMut: []func(ctx *context.Context, req *backend.QueryDataRequest){
 				defaultPluginContextRequestMut,
 			},
 			assert: func(t *testing.T, span *tracing.FakeSpan) {
@@ -154,9 +156,9 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 		},
 		{
 			name: "with user",
-			requestMut: []func(req *backend.QueryDataRequest){
+			requestMut: []func(ctx *context.Context, req *backend.QueryDataRequest){
 				defaultPluginContextRequestMut,
-				func(req *backend.QueryDataRequest) {
+				func(ctx *context.Context, req *backend.QueryDataRequest) {
 					req.PluginContext.User = &backend.User{Login: "admin"}
 				},
 			},
@@ -169,7 +171,7 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 		},
 		{
 			name:       "empty retains zero values",
-			requestMut: []func(req *backend.QueryDataRequest){},
+			requestMut: []func(ctx *context.Context, req *backend.QueryDataRequest){},
 			assert: func(t *testing.T, span *tracing.FakeSpan) {
 				assert.Len(t, span.Attributes, 2, "should have correct number of span attributes")
 				assert.Zero(t, span.Attributes["plugin_id"].AsString(), "should have correct plugin_id")
@@ -180,9 +182,9 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 		},
 		{
 			name: "no http headers",
-			requestMut: []func(req *backend.QueryDataRequest){
-				func(req *backend.QueryDataRequest) {
-					req.Headers = nil
+			requestMut: []func(ctx *context.Context, req *backend.QueryDataRequest){
+				func(ctx *context.Context, req *backend.QueryDataRequest) {
+					*ctx = web.WithContext(*ctx, &web.Context{Req: &http.Request{Header: nil}})
 				},
 			},
 			assert: func(t *testing.T, span *tracing.FakeSpan) {
@@ -192,8 +194,8 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 		},
 		{
 			name: "datasource settings",
-			requestMut: []func(req *backend.QueryDataRequest){
-				func(req *backend.QueryDataRequest) {
+			requestMut: []func(ctx *context.Context, req *backend.QueryDataRequest){
+				func(ctx *context.Context, req *backend.QueryDataRequest) {
 					req.PluginContext.DataSourceInstanceSettings = &backend.DataSourceInstanceSettings{
 						UID:  "uid",
 						Name: "name",
@@ -214,9 +216,13 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 		},
 		{
 			name: "http headers",
-			requestMut: []func(req *backend.QueryDataRequest){
-				func(req *backend.QueryDataRequest) {
-					req.Headers = map[string]string{"X-Panel-Id": "10", "X-Dashboard-Id": "20", "X-Other": "30"}
+			requestMut: []func(ctx *context.Context, req *backend.QueryDataRequest){
+				func(ctx *context.Context, req *backend.QueryDataRequest) {
+					*ctx = web.WithContext(*ctx, &web.Context{
+						Req: &http.Request{Header: map[string][]string{
+							"X-Panel-Id": {"10"}, "X-Dashboard-Uid": {"uid"}, "X-Other": {"30"},
+						}},
+					})
 				},
 			},
 			assert: func(t *testing.T, span *tracing.FakeSpan) {
@@ -226,16 +232,17 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 					assert.True(t, ok)
 				}
 				assert.Equal(t, int64(10), span.Attributes["panel_id"].AsInt64())
-				assert.Equal(t, int64(20), span.Attributes["dashboard_id"].AsInt64())
+				assert.Equal(t, "uid", span.Attributes["dashboard_uid"].AsString())
 			},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
 			req := &backend.QueryDataRequest{
 				PluginContext: backend.PluginContext{},
 			}
 			for _, mut := range tc.requestMut {
-				mut(req)
+				mut(&ctx, req)
 			}
 
 			tracer := tracing.NewFakeTracer()
@@ -245,7 +252,7 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 				clienttest.WithMiddlewares(NewTracingMiddleware(tracer)),
 			)
 
-			_, err := cdt.Decorator.QueryData(context.Background(), req)
+			_, err := cdt.Decorator.QueryData(ctx, req)
 			require.NoError(t, err)
 			require.Len(t, tracer.Spans, 1, "must have 1 span")
 			span := tracer.Spans[0]
