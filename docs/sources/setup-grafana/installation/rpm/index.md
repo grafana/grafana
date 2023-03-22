@@ -35,7 +35,7 @@ To install Grafana using a YUM repository, complete the following steps:
 
 1. Add a new file to your YUM repo using the method of your choice.
 
-   The following example uses `nano`.
+   The following example uses `nano` to add a file to the YUM repo.
 
    ```bash
    sudo nano /etc/yum.repos.d/grafana.repo
@@ -71,7 +71,7 @@ To install Grafana using a YUM repository, complete the following steps:
    sudo yum install grafana-enterprise
    ```
 
-### Install manually using YUM
+### Install Grafana manually using YUM
 
 If you install Grafana manually using YUM, then you must manually update Grafana for each new version. The following steps enable automatic updates for your Grafana installation.
 
@@ -85,9 +85,9 @@ If you install Grafana manually using YUM, then you must manually update Grafana
 1. Depending on which system you are running, click the **Linux** or **ARM** tab on the download page.
 1. Copy and paste the code from the installation page into your command line and run.
 
-### Install Grafana using RPM
+## Install Grafana using RPM
 
-If you install Grafana using RPM, then you must manually update Grafana for each new version. This method varies according to which Linux OS you are running. Read the instructions fully before you begin.
+If you install Grafana using RPM, then you must manually update Grafana for each new version. This method varies according to which Linux OS you are running.
 
 **Note:** The RPM files are signed. You can verify the signature with this [public GPG key](https://rpm.grafana.com/gpg.key).
 
@@ -106,9 +106,9 @@ If you install Grafana using RPM, then you must manually update Grafana for each
    sudo rpm -Uvh <local rpm package>
    ```
 
-### Install Grafana using the binary .tar.gz file
+## Install Grafana as a standalone binary
 
-Download the latest [`.tar.gz` file](https://grafana.com/grafana/download?platform=linux) and extract it. The files are extracted into a folder named after the Grafana version that you downloaded. This folder contains all files required to run Grafana. There are no init scripts or install scripts in this package.
+Complete the following steps to install Grafana using the standalone binaries:
 
 1. Navigate to the [Grafana download page](https://grafana.com/grafana/download).
 1. Select the Grafana version you want to install.
@@ -120,34 +120,35 @@ Download the latest [`.tar.gz` file](https://grafana.com/grafana/download?platfo
 1. Depending on which system you are running, click the **Linux** or **ARM** tab on the download page.
 1. Copy and paste the code from the installation page into your command line and run.
 
-```bash
-wget <tar.gz package url>
-sudo tar -zxvf <tar.gz package>
-```
-
 ## 2. Start the server
 
-This starts the `grafana-server` process as the `grafana` user, which was created during the package installation. The systemd commands work in most cases, but some older Linux systems might require init.d. The installer should prompt you with the correct commands.
+The following sections provide instructions for starting the `grafana-server` process as the `grafana` user created during the package installation.
 
-If you installed with an `.rpm` package, then you can start the server using `systemd` or `init.d`. If you installed a binary `.tar.gz` file, then you need to execute the binary.
+If you installed using the YUM repository or as an RPM package, then you can start the server using `systemd` or `init.d`. If you installed a binary `.tar.gz` file, then you need to execute the binary.
 
-### Start the server with systemd
+### Start the Grafana server with systemd
 
-To start the service and verify that the service has started:
+Complete the following steps to start the Grafana server with systemd and verify that it is running:
 
-```bash
-sudo systemctl daemon-reload
-sudo systemctl start grafana-server
-sudo systemctl status grafana-server
-```
+1. To start the service, run the following commands:
 
-Configure the Grafana server to start at boot:
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl start grafana-server
+   sudo systemctl status grafana-server
+   ```
 
-```bash
-sudo systemctl enable grafana-server
-```
+1. To verify that the service is running, run the following command:
 
-> **SUSE or OpenSUSE users:** You might need to start the server with the systemd method, then use the init.d method to configure Grafana to start at boot.
+   ```
+   sudo systemctl status grafana-server
+   ```
+
+1. To configure the Grafana server to start at boot, run the following command:
+
+   ```bash
+   sudo systemctl enable grafana-server.service
+   ```
 
 #### Serving Grafana on a port < 1024
 
@@ -159,27 +160,35 @@ When serving Grafana behind a proxy, you need to configure the `http_proxy` and 
 
 ### Start the server with init.d
 
-To start the service and verify that the service has started:
+Complete the following steps to start the Grafana service and verify that it is running:
+
+1. To start the Grafana server, run the following commands:
+
+   ```bash
+   sudo service grafana-server start
+   sudo service grafana-server status
+   ```
+
+1. To verify that the service is running, run the following command:
+
+   ```
+   sudo service grafana-server status
+   ```
+
+1. To configure the Grafana server to start at boot, run the following command:
+
+   ```bash
+   sudo update-rc.d grafana-server defaults
+   ```
+
+### Start the server using the binary
+
+The `grafana-server` binary .tar.gz needs the working directory to be the root install directory where the binary and the `public` folder are located.
+
+To start the Grafana server, run the following command:
 
 ```bash
-sudo service grafana-server start
-sudo service grafana-server status
-```
-
-Configure the Grafana server to start at boot:
-
-```bash
-sudo /sbin/chkconfig --add grafana-server
-```
-
-### Execute the binary
-
-The `grafana-server` binary needs the working directory to be the root install directory where the binary and the `public` folder are located.
-
-Start Grafana by running:
-
-```bash
-./bin/grafana-server web
+./bin/grafana-server
 ```
 
 ## Next steps
