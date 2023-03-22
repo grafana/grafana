@@ -395,14 +395,14 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 		err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &qAuth)
 		if err != nil {
 			if errors.Is(err, user.ErrUserNotFound) {
-				hs.log.Warn("Failed to get user auth info for basic auth user", cmd.UserID, nil)
+				hs.log.Debug("Failed to get user auth info for basic auth user", cmd.UserID, nil)
 			} else {
 				hs.log.Error("Failed to get user auth info for external sync check", cmd.UserID, err)
 				return response.Error(http.StatusInternalServerError, "Failed to get user auth info", nil)
 			}
 		}
 		if qAuth.Result != nil && qAuth.Result.AuthModule != "" && login.IsExternallySynced(hs.Cfg, qAuth.Result.AuthModule) {
-			return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf(""))
+			return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf("Cannot change role for externally synced user"))
 		}
 	}
 	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
