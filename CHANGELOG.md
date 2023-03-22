@@ -2380,6 +2380,8 @@ The dependency to [grafana/aws-sdk](https://github.com/grafana/grafana-aws-sdk-r
 
 <!-- 8.5.22 START -->
 
+# 8.5.22 (2023-03-22)
+
 <!-- 8.5.22 END -->
 
 <!-- 8.5.21 START -->
