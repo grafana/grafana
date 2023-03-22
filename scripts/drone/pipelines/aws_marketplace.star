@@ -5,7 +5,6 @@ This module contains steps and pipelines publishing to AWS Marketplace.
 load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
-    "fetch_images_step",
     "publish_image",
 )
 load("scripts/drone/vault.star", "from_secret")
