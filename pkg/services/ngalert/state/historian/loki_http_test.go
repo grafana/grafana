@@ -77,6 +77,18 @@ func TestLokiConfig(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("captures external labels", func(t *testing.T) {
+		set := setting.UnifiedAlertingStateHistorySettings{
+			LokiRemoteURL:  "http://url.com",
+			ExternalLabels: map[string]string{"a": "b"},
+		}
+
+		res, err := NewLokiConfig(set)
+
+		require.NoError(t, err)
+		require.Contains(t, res.ExternalLabels, "a")
+	})
 }
 
 func TestLokiHTTPClient(t *testing.T) {
