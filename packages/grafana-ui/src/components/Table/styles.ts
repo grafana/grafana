@@ -220,8 +220,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       font-size: ${theme.typography.bodySmall.fontSize};
       display: flex;
       justify-content: flex-end;
-      flex: 20%;
-      padding-right: ${theme.spacing(1)};
+      padding: ${theme.spacing(0, 1, 0, 2)};
     `,
 
     tableContentWrapper: (totalColumnsWidth: number) => {
