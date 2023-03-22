@@ -394,6 +394,12 @@ var (
 			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
+			Name:        "onlyExternalOrgRoleSync",
+			Description: "Prohibits a user from changing organization roles synced with external auth providers",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAuthnzSquad,
+		},
+		{
 			Name:         "drawerDataSourcePicker",
 			Description:  "Changes the user experience for data source selection to a drawer.",
 			State:        FeatureStateAlpha,
