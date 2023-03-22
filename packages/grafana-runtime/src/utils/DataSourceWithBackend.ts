@@ -44,8 +44,8 @@ export function isExpressionReference(ref?: DataSourceRef | string | null): bool
   if (!ref) {
     return false;
   }
-  const v = (ref as any).type ?? ref;
-  return v === ExpressionDatasourceRef.type || v === '-100'; // -100 was a legacy accident that should be removed
+  const v = typeof ref === 'string' ? ref : ref.type;
+  return v === ExpressionDatasourceRef.type || v === ExpressionDatasourceRef.name || v === '-100'; // -100 was a legacy accident that should be removed
 }
 
 export class HealthCheckError extends Error {
