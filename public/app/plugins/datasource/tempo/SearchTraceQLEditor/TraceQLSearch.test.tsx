@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { TempoQuery } from '../types';
 
@@ -101,7 +102,8 @@ describe('TraceQLSearch', () => {
       expect(nameFilter).not.toBeNull();
       expect(nameFilter?.operator).toBe('=');
       expect(nameFilter?.value).toStrictEqual(['customer']);
-      expect(nameFilter?.tag).toBe('.service.name');
+      expect(nameFilter?.tag).toBe('service.name');
+      expect(nameFilter?.scope).toBe(TraceqlSearchScope.Resource);
     }
   });
 

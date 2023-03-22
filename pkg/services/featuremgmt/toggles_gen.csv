@@ -31,7 +31,7 @@ canvasPanelNesting,alpha,@grafana/dataviz-squad,false,false,false,true
 scenes,alpha,@grafana/dashboards-squad,false,false,false,true
 disableSecretsCompatibility,alpha,@grafana/hosted-grafana-team,false,false,true,false
 logRequestsInstrumentedAsUnknown,alpha,@grafana/hosted-grafana-team,false,false,false,false
-dataConnectionsConsole,alpha,@grafana/plugins-platform-backend,false,false,false,false
+dataConnectionsConsole,stable,@grafana/plugins-platform-backend,false,false,false,false
 internationalization,stable,@grafana/user-essentials,false,false,false,false
 topnav,beta,@grafana/user-essentials,false,false,false,false
 grpcServer,alpha,@grafana/grafana-app-platform-squad,true,false,false,false

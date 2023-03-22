@@ -13,9 +13,10 @@ import {
 import { LoadingState } from '@grafana/schema';
 
 import { LokiDatasource } from './datasource';
-import { getRangeChunks as getLogsRangeChunks } from './logsTimeSplit';
-import { getRangeChunks as getMetricRangeChunks } from './metricTimeSplit';
-import { combineResponses, isLogsQuery } from './queryUtils';
+import { getRangeChunks as getLogsRangeChunks } from './logsTimeChunking';
+import { getRangeChunks as getMetricRangeChunks } from './metricTimeChunking';
+import { isLogsQuery } from './queryUtils';
+import { combineResponses } from './responseUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
 export function partitionTimeRange(
@@ -30,7 +31,6 @@ export function partitionTimeRange(
   // we need to replicate this algo:
   //
   // https://github.com/grafana/grafana/blob/main/pkg/tsdb/loki/step.go#L23
-
   const start = originalTimeRange.from.toDate().getTime();
   const end = originalTimeRange.to.toDate().getTime();
 
@@ -58,7 +58,6 @@ export function partitionTimeRange(
  * At the end, we will filter the targets that don't need to be executed in the next request batch,
  * becasue, for example, the `maxLines` have been reached.
  */
-
 function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQueryResponse | null): LokiQuery[] {
   if (!response) {
     return targets;
@@ -84,7 +83,7 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
 
 type LokiGroupedRequest = Array<{ request: DataQueryRequest<LokiQuery>; partition: TimeRange[] }>;
 
-export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest) {
+export function runGroupedQueriesInChunks(datasource: LokiDatasource, requests: LokiGroupedRequest) {
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
 
@@ -168,7 +167,7 @@ function getNextRequestPointers(requests: LokiGroupedRequest, requestGroup: numb
   };
 }
 
-export function runPartitionedQueries(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
+export function runQueryInChunks(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   const queries = request.targets.filter((query) => !query.hide);
   const [instantQueries, normalQueries] = partition(queries, (query) => query.queryType === LokiQueryType.Instant);
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
@@ -217,5 +216,5 @@ export function runPartitionedQueries(datasource: LokiDatasource, request: DataQ
     });
   }
 
-  return runGroupedQueries(datasource, requests);
+  return runGroupedQueriesInChunks(datasource, requests);
 }
