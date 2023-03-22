@@ -2,6 +2,7 @@ import React from 'react';
 
 import { PanelData, QueryResultMetaStat, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 
 import { InspectStatsTable } from './InspectStatsTable';
@@ -64,10 +65,11 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
 
   return (
     <div aria-label={selectors.components.PanelInspector.Stats.content}>
-      {(data.traceIds ?? []).join(' ')}
       <InspectStatsTable timeZone={timeZone} name={statsTableName} stats={stats} />
       <InspectStatsTable timeZone={timeZone} name={dataStatsTableName} stats={dataStats} />
-      <InspectStatsTraceIdsTable name={traceIdsStatsTableName} traceIds={data.traceIds ?? []} />
+      {config.featureToggles.showTraceId && (
+        <InspectStatsTraceIdsTable name={traceIdsStatsTableName} traceIds={data.traceIds ?? []} />
+      )}
     </div>
   );
 };

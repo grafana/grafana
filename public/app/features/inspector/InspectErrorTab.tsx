@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { DataQueryError } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Alert, JSONFormatter } from '@grafana/ui';
 
 interface InspectErrorTabProps {
@@ -36,7 +37,7 @@ function renderError(error: DataQueryError) {
         <>
           {error.status && <>Status: {error.status}. Message: </>}
           {msg}
-          {error.traceId != null && (
+          {config.featureToggles.showTraceId && error.traceId != null && (
             <>
               <br />
               (Trace ID: {error.traceId})
