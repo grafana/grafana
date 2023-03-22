@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { isBefore } from 'date-fns';
-import formatDuration from 'date-fns/formatDuration';
+import { isBefore, formatDuration } from 'date-fns';
 import React, { useCallback, useMemo } from 'react';
 
 import {
@@ -128,8 +127,9 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
     const lastEvaluationDate = Date.parse(rule.promRule?.lastEvaluation || '');
     const nextEvaluationDate = addDurationToDate(lastEvaluationDate, intervalDuration);
 
-    //when `nextEvaluationDate` is a past date it means the `lastEvaluationDate` was inaccurate.
-    //in this case we use the interval value to show a more generic estimate. See https://github.com/grafana/grafana/issues/65125
+    //when `nextEvaluationDate` is a past date it means lastEvaluation was more than one evaluation interval ago.
+    //in this case we use the interval value to show a more generic estimate.
+    //See https://github.com/grafana/grafana/issues/65125
     const isPastDate = isBefore(nextEvaluationDate, new Date());
     if (isPastDate) {
       return {
