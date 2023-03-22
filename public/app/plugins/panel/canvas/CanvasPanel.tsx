@@ -114,19 +114,22 @@ export class CanvasPanel extends Component<Props, State> {
       this.subs.add(
         this.scene.selection.subscribe({
           next: (v) => {
-            this.panelContext.onInstanceStateChange!({
-              scene: this.scene,
-              selected: v,
-              layer: this.scene.root,
-            });
-
-            activeCanvasPanel = this;
-            activePanelSubject.next({ panel: this });
+            if (v.length) {
+              activeCanvasPanel = this;
+              activePanelSubject.next({ panel: this });
+            }
 
             canvasInstances.forEach((canvasInstance) => {
               if (canvasInstance !== activeCanvasPanel) {
                 canvasInstance.scene.clearCurrentSelection(true);
+                canvasInstance.scene.connections.select(undefined);
               }
+            });
+
+            this.panelContext.onInstanceStateChange!({
+              scene: this.scene,
+              selected: v,
+              layer: this.scene.root,
             });
           },
         })
@@ -138,6 +141,7 @@ export class CanvasPanel extends Component<Props, State> {
             if (!this.context.instanceState) {
               return;
             }
+
             this.panelContext.onInstanceStateChange!({
               scene: this.scene,
               selected: this.context.instanceState.selected,
@@ -145,14 +149,20 @@ export class CanvasPanel extends Component<Props, State> {
               layer: this.scene.root,
             });
 
-            // @TODO !!
-            activeCanvasPanel = this;
-            activePanelSubject.next({ panel: this });
+            if (v) {
+              activeCanvasPanel = this;
+              activePanelSubject.next({ panel: this });
+            }
 
             canvasInstances.forEach((canvasInstance) => {
               if (canvasInstance !== activeCanvasPanel) {
                 canvasInstance.scene.clearCurrentSelection(true);
+                canvasInstance.scene.connections.select(undefined);
               }
+            });
+
+            setTimeout(() => {
+              this.forceUpdate();
             });
           },
         })

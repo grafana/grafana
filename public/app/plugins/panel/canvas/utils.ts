@@ -1,3 +1,5 @@
+import { isNumber, isString } from 'lodash';
+
 import { AppEvents, Field, LinkModel, PluginState, SelectableValue } from '@grafana/data';
 import { hasAlphaPanels } from 'app/core/config';
 
@@ -143,6 +145,15 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
   for (let v of sceneByName.values()) {
     if (v.options.connections) {
       v.options.connections.forEach((c, index) => {
+        // @TODO Remove after v10.x
+        if (isString(c.color)) {
+          c.color = { fixed: c.color };
+        }
+
+        if (isNumber(c.size)) {
+          c.size = { fixed: c.size, min: 1, max: 10 };
+        }
+
         const target = c.targetName ? sceneByName.get(c.targetName) : v.parent;
         if (target) {
           connections.push({

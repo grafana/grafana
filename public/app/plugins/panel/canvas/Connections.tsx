@@ -29,6 +29,9 @@ export class Connections {
   }
 
   select = (connection: ConnectionState | undefined) => {
+    if (connection === this.selection.value) {
+      return;
+    }
     this.selection.next(connection);
   };
 
