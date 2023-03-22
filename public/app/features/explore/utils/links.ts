@@ -126,7 +126,7 @@ export const getFieldLinksForExplore = (options: {
         const origOnClick = linkModel.onClick;
 
         linkModel.onClick = (...args) => {
-          reportInteraction('grafana_data_link_clicked', {
+          reportInteraction(DATA_LINK_USAGE_KEY, {
             origin: link.origin || DataLinkConfigOrigin.Datasource,
             app: CoreApp.Explore,
             internal: false,

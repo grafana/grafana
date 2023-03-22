@@ -1,5 +1,6 @@
 import {
   ArrayVector,
+  CoreApp,
   DataFrame,
   DataLink,
   DataLinkConfigOrigin,
@@ -35,7 +36,7 @@ describe('explore links utils', () => {
         ])
       );
 
-      window.open = jest.fn();
+      jest.spyOn(window, 'open').mockImplementation();
     });
 
     afterEach(() => {
@@ -63,9 +64,9 @@ describe('explore links utils', () => {
       }
 
       expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
-        app: 'explore',
+        app: CoreApp.Explore,
         internal: false,
-        origin: 'Datasource',
+        origin: DataLinkConfigOrigin.Datasource,
       });
     });
 
@@ -131,9 +132,9 @@ describe('explore links utils', () => {
       });
 
       expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
-        app: 'explore',
+        app: CoreApp.Explore,
         internal: true,
-        origin: 'Datasource',
+        origin: DataLinkConfigOrigin.Datasource,
       });
     });
 
@@ -317,9 +318,9 @@ describe('explore links utils', () => {
       }
 
       expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
-        app: 'explore',
+        app: CoreApp.Explore,
         internal: true,
-        origin: 'Correlations',
+        origin: DataLinkConfigOrigin.Correlations,
       });
 
       expect(links[1]).toHaveLength(1);
