@@ -381,6 +381,7 @@ describe('createPluginExtensionRegistry()', () => {
         type: PluginExtensionTypes.command,
         key: expect.any(Number),
         title: commandConfig1.title,
+        pluginName,
         description: commandConfig1.description,
         callHandlerWithContext: expect.any(Function),
       });
