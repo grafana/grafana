@@ -17,7 +17,7 @@ var (
 	ErrOrgUserNotFound                         = errors.New("cannot find the organization user")
 	ErrOrgUserAlreadyAdded                     = errors.New("user is already added to organization")
 	ErrOrgNotFound                             = errutil.NewBase(errutil.StatusNotFound, "org.notFound", errutil.WithPublicMessage("organization not found"))
-	ErrCannotChangeRoleForExternallySyncedUser = errutil.NewBase(errutil.StatusBadRequest, "org.externallySynced", errutil.WithPublicMessage("cannot change role for externally synced user"))
+	ErrCannotChangeRoleForExternallySyncedUser = errutil.NewBase(errutil.StatusForbidden, "org.externallySynced", errutil.WithPublicMessage("cannot change role for externally synced user"))
 )
 
 type Org struct {

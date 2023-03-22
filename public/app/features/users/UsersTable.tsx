@@ -50,7 +50,7 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
             <th>Seen</th>
             <th>Role</th>
             <th style={{ width: '34px' }} />
-            <th>Synced from</th>
+            <th>Origin</th>
             <th></th>
           </tr>
         </thead>

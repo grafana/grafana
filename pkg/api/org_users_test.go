@@ -796,8 +796,6 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 						AuthModule: "",
 					},
 				}
-				flags := hs.Features.GetFlags()
-				t.Logf("flags: %v", flags)
 				hs.accesscontrolService = &actest.FakeService{}
 				hs.userService = &usertest.FakeUserService{
 					ExpectedUser:         &user.User{},
