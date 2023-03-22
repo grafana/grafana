@@ -105,7 +105,7 @@ export const BarGaugeCell = (props: TableCellProps) => {
 
 /**
  * Getting gauge values to align is very tricky without looking at all values and passing them trough display processor. For very large tables that
- * could pretty expensive. So this is kind of a compromise. We look at the first 100 rows and cache the longest value.
+ * could pretty expensive. So this is kind of a compromise. We look at the first 1000 rows and cache the longest value.
  * If we have a cached value we just check if the current value is longer and update the alignmentFactor. This can obviously still lead to
  * unaligned gauges but it should a lot less common.
  **/
@@ -121,8 +121,9 @@ function getAlignmentFactor(field: Field, displayValue: DisplayValue, rowIndex: 
   } else {
     // look at the next 100 rows
     alignmentFactor = { ...displayValue };
+    const maxIndex = Math.min(field.values.length, rowIndex + 1000);
 
-    for (let i = rowIndex + 1; i < field.values.length; i++) {
+    for (let i = rowIndex + 1; i < maxIndex; i++) {
       const nextDisplayValue = field.display!(field.values.get(i));
       if (nextDisplayValue.text.length > alignmentFactor.text.length) {
         alignmentFactor.text = displayValue.text;
