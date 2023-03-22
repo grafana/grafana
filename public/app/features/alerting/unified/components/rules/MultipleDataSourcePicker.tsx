@@ -121,8 +121,8 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
       }));
 
     const groupedOptions = [
-      { label: 'Data sources that manage Alert rules', options: alertManagingDs, expanded: true },
-      { label: 'Other datasources', options: nonAlertManagingDs, expanded: true },
+      { label: 'Data sources with configured alert rules', options: alertManagingDs, expanded: true },
+      { label: 'Other data sources', options: nonAlertManagingDs, expanded: true },
     ];
 
     return groupedOptions;

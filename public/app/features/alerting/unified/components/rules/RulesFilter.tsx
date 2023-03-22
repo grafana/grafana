@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { logInfo } from '@grafana/runtime';
-import { Button, Field, Icon, Input, Label, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -130,7 +130,32 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     <div className={styles.container}>
       <Stack direction="column" gap={1}>
         <Stack direction="row" gap={1}>
-          <Field className={styles.dsPickerContainer} label="Search by data sources">
+          <Field
+            className={styles.dsPickerContainer}
+            label={
+              <Label htmlFor="data-source-picker">
+                <Stack gap={0.5}>
+                  <span>Search by data sources</span>
+                  <Tooltip
+                    content={
+                      <div>
+                        <p>
+                          Data sources containing configured alert rules are Mimir or Loki data sources where alert
+                          rules are stored and evaluated in the data source itself.
+                        </p>
+                        <p>
+                          In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
+                          alert rules in the Grafana UI as well as in the data source where they were configured.
+                        </p>
+                      </div>
+                    }
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
+          >
             <MultipleDataSourcePicker
               key={dataSourceKey}
               alerting
@@ -141,6 +166,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
               onClear={clearDataSource}
             />
           </Field>
+
           <div>
             <Label>State</Label>
             <RadioButtonGroup
