@@ -180,7 +180,7 @@ const FlameGraphTopTable = ({
   );
 };
 
-const SymbolCell = ({ cell: { value } }: CellProps<TopTableValue, TopTableValue>) => {
+const SymbolCell = ({ cell: { value } }: CellProps<TopTableValue, string>) => {
   return <div>{value}</div>;
 };
 
