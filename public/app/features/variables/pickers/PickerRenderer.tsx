@@ -4,6 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip } from '@grafana/ui';
 
 import { variableAdapters } from '../adapters';
+import { VARIABLE_PREFIX } from '../constants';
 import { VariableHide, VariableModel } from '../types';
 
 interface Props {
@@ -35,7 +36,7 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
     return null;
   }
 
-  const elementId = `var-${variable.id}`;
+  const elementId = VARIABLE_PREFIX + variable.id;
   if (variable.description) {
     return (
       <Tooltip content={variable.description} placement={'bottom'}>
