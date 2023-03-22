@@ -50,7 +50,7 @@ export const PageToolbar = React.memo(
     /**
      * .page-toolbar css class is used for some legacy css view modes (TV/Kiosk) and
      * media queries for mobile view when toolbar needs left padding to make room
-     * for mobile menu icon. This logic hopefylly can be changed when we move to a full react
+     * for mobile menu icon. This logic hopefully can be changed when we move to a full react
      * app and change how the app side menu & mobile menu is rendered.
      */
     const mainStyle = cx(
