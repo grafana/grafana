@@ -251,7 +251,13 @@ export interface LinkService {
 
 export class LinkSrv implements LinkService {
   getLinkUrl(link: any) {
-    let url = locationUtil.assureBaseUrl(getTemplateSrv().replace(link.url || ''));
+    let url = locationUtil.assureBaseUrl(
+      link.type === 'dashboards'
+        ? getTemplateSrv().replace(link.url || '')
+        : getTemplateSrv().replace(link.url || '', undefined, (value: string | boolean | number) => {
+            return encodeURIComponent(value);
+          })
+    );
     let params: { [key: string]: any } = {};
 
     if (link.keepTime) {
