@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
 
@@ -128,20 +129,20 @@ func TestTracingMiddleware(t *testing.T) {
 }
 
 func TestTracingMiddlewareAttributes(t *testing.T) {
-	defaultPluginContextMut := func(pluginContext *backend.PluginContext) {
-		pluginContext.PluginID = "my_plugin_id"
-		pluginContext.OrgID = 1337
+	defaultPluginContextRequestMut := func(req *backend.QueryDataRequest) {
+		req.PluginContext.PluginID = "my_plugin_id"
+		req.PluginContext.OrgID = 1337
 	}
 
 	for _, tc := range []struct {
-		name             string
-		pluginContextMut []func(pluginContext *backend.PluginContext)
-		assert           func(t *testing.T, span *tracing.FakeSpan)
+		name       string
+		requestMut []func(req *backend.QueryDataRequest)
+		assert     func(t *testing.T, span *tracing.FakeSpan)
 	}{
 		{
 			name: "default",
-			pluginContextMut: []func(pluginContext *backend.PluginContext){
-				defaultPluginContextMut,
+			requestMut: []func(req *backend.QueryDataRequest){
+				defaultPluginContextRequestMut,
 			},
 			assert: func(t *testing.T, span *tracing.FakeSpan) {
 				assert.Len(t, span.Attributes, 2, "should have correct number of span attributes")
@@ -153,10 +154,10 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 		},
 		{
 			name: "with user",
-			pluginContextMut: []func(pluginContext *backend.PluginContext){
-				defaultPluginContextMut,
-				func(pluginContext *backend.PluginContext) {
-					pluginContext.User = &backend.User{Login: "admin"}
+			requestMut: []func(req *backend.QueryDataRequest){
+				defaultPluginContextRequestMut,
+				func(req *backend.QueryDataRequest) {
+					req.PluginContext.User = &backend.User{Login: "admin"}
 				},
 			},
 			assert: func(t *testing.T, span *tracing.FakeSpan) {
@@ -167,8 +168,8 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 			},
 		},
 		{
-			name:             "empty retains zero values",
-			pluginContextMut: []func(pluginContext *backend.PluginContext){},
+			name:       "empty retains zero values",
+			requestMut: []func(req *backend.QueryDataRequest){},
 			assert: func(t *testing.T, span *tracing.FakeSpan) {
 				assert.Len(t, span.Attributes, 2, "should have correct number of span attributes")
 				assert.Zero(t, span.Attributes["plugin_id"].AsString(), "should have correct plugin_id")
@@ -177,13 +178,64 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 				assert.False(t, ok, "should not have user attribute")
 			},
 		},
+		{
+			name: "no http headers",
+			requestMut: []func(req *backend.QueryDataRequest){
+				func(req *backend.QueryDataRequest) {
+					req.Headers = nil
+				},
+			},
+			assert: func(t *testing.T, span *tracing.FakeSpan) {
+				assert.Empty(t, span.Attributes["panel_id"])
+				assert.Empty(t, span.Attributes["dashboard_id"])
+			},
+		},
+		{
+			name: "datasource settings",
+			requestMut: []func(req *backend.QueryDataRequest){
+				func(req *backend.QueryDataRequest) {
+					req.PluginContext.DataSourceInstanceSettings = &backend.DataSourceInstanceSettings{
+						UID:  "uid",
+						Name: "name",
+						Type: "type",
+					}
+				},
+			},
+			assert: func(t *testing.T, span *tracing.FakeSpan) {
+				require.Len(t, span.Attributes, 5)
+				for _, k := range []string{"plugin_id", "org_id"} {
+					_, ok := span.Attributes[attribute.Key(k)]
+					assert.True(t, ok)
+				}
+				assert.Equal(t, "uid", span.Attributes["datasource_uid"].AsString())
+				assert.Equal(t, "name", span.Attributes["datasource_name"].AsString())
+				assert.Equal(t, "type", span.Attributes["datasource_type"].AsString())
+			},
+		},
+		{
+			name: "http headers",
+			requestMut: []func(req *backend.QueryDataRequest){
+				func(req *backend.QueryDataRequest) {
+					req.Headers = map[string]string{"X-Panel-Id": "10", "X-Dashboard-Id": "20", "X-Other": "30"}
+				},
+			},
+			assert: func(t *testing.T, span *tracing.FakeSpan) {
+				require.Len(t, span.Attributes, 4)
+				for _, k := range []string{"plugin_id", "org_id"} {
+					_, ok := span.Attributes[attribute.Key(k)]
+					assert.True(t, ok)
+				}
+				assert.Equal(t, int64(10), span.Attributes["panel_id"].AsInt64())
+				assert.Equal(t, int64(20), span.Attributes["dashboard_id"].AsInt64())
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			pluginCtx := backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			req := &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{},
 			}
-			for _, mut := range tc.pluginContextMut {
-				mut(&pluginCtx)
+			for _, mut := range tc.requestMut {
+				mut(req)
 			}
 
 			tracer := tracing.NewFakeTracer()
@@ -193,9 +245,7 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 				clienttest.WithMiddlewares(NewTracingMiddleware(tracer)),
 			)
 
-			_, err := cdt.Decorator.QueryData(context.Background(), &backend.QueryDataRequest{
-				PluginContext: pluginCtx,
-			})
+			_, err := cdt.Decorator.QueryData(context.Background(), req)
 			require.NoError(t, err)
 			require.Len(t, tracer.Spans, 1, "must have 1 span")
 			span := tracer.Spans[0]
