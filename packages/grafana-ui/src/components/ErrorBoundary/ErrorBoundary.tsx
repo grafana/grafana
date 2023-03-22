@@ -39,7 +39,7 @@ export class ErrorBoundary extends PureComponent<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     captureException(error, { contexts: { react: { componentStack: errorInfo.componentStack } } });
-    faro.api.pushError(error);
+    faro?.api.pushError(error);
     this.setState({ error, errorInfo });
 
     if (this.props.onError) {
