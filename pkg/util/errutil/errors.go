@@ -41,6 +41,22 @@ func NewBase(reason StatusReason, msgID string, opts ...BaseOpt) Base {
 	return b
 }
 
+func ErrorFrom(e error) (*Error, error) {
+	//nolint:errorlint
+	o, isGrafanaError := e.(Error)
+	if isGrafanaError {
+		return &o, nil
+	}
+	//nolint:errorlint
+	base, isBase := e.(Base)
+	if isBase {
+		gerror := base.Errorf("")
+		gerror.LogMessage = base.publicMessage
+		return &gerror, nil
+	}
+	return nil, errors.New("could not covert error to Error")
+}
+
 type BaseOpt func(Base) Base
 
 // WithLogLevel sets a custom log level for all errors instantiated from

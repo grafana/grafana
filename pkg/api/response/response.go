@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/influxdata/influxdb-client-go/v2/internal/log"
 	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/yaml.v3"
 
@@ -253,7 +254,10 @@ func Error(status int, message string, err error) *NormalResponse {
 
 // Err creates an error response based on an errutil.Error error.
 func Err(err error) *NormalResponse {
-	grafanaErr := &errutil.Error{}
+	grafanaErr, err := errutil.ErrorFrom(err)
+	if err != nil {
+		return Error(http.StatusInternalServerError, "", fmt.Errorf("unexpected error type [%s]: %w", reflect.TypeOf(err), err))
+	}
 	if !errors.As(err, grafanaErr) {
 		return Error(http.StatusInternalServerError, "", fmt.Errorf("unexpected error type [%s]: %w", reflect.TypeOf(err), err))
 	}
@@ -273,12 +277,16 @@ func Err(err error) *NormalResponse {
 // rename this to Error when we're confident that that would be safe to
 // do.
 func ErrOrFallback(status int, message string, err error) *NormalResponse {
-	grafanaErr := &errutil.Error{}
-	if errors.As(err, grafanaErr) {
-		return Err(err)
+	// grafanaErr := &errutil.Error{}
+	// if errors.As(err, grafanaErr) {
+	// 	return Err(err)
+	// }
+	grafanaErr, err := errutil.ErrorFrom(err)
+	if err != nil {
+		log.Warn("coulld not convert from error to Error for ErrOrFallback")
+		return Error(status, message, err)
 	}
-
-	return Error(status, message, err)
+	return Err(grafanaErr)
 }
 
 // Empty creates an empty NormalResponse.
