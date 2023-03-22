@@ -29,7 +29,7 @@ describe('RowNumberToField Transformer', () => {
       expect(organized.fields).toEqual([
         {
           config: { min: 0, max: 3 },
-          name: 'row_number',
+          name: 'Row',
           type: FieldType.number,
           values: new IndexVector(4),
         },
@@ -48,7 +48,7 @@ describe('RowNumberToField Transformer', () => {
       name: 'A',
       fields: [
         {
-          name: 'row_number',
+          name: 'Row',
           type: FieldType.number,
           values: [0, 1, 2, 3],
         },
@@ -66,7 +66,7 @@ describe('RowNumberToField Transformer', () => {
       expect(organized.fields).toEqual([
         {
           config: { min: 0, max: 3 },
-          name: 'row_number',
+          name: 'Row',
           type: FieldType.number,
           values: new IndexVector(4),
         },
@@ -85,9 +85,9 @@ describe('RowNumberToField Transformer', () => {
       name: 'A',
       fields: [
         {
-          name: 'row_number',
+          name: 'Row',
           type: FieldType.number,
-          values: [0],
+          values: [0], // NOT the index field
         },
         {
           name: 'temperature',
@@ -103,9 +103,15 @@ describe('RowNumberToField Transformer', () => {
       expect(organized.fields).toEqual([
         {
           config: { min: 0, max: 3 },
-          name: 'row_number',
+          name: 'Row',
           type: FieldType.number,
           values: new IndexVector(4),
+        },
+        {
+          config: {},
+          name: 'Row',
+          type: FieldType.number,
+          values: new ArrayVector([0, undefined, undefined, undefined]),
         },
         {
           config: {},
