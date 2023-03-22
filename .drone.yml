@@ -3233,6 +3233,8 @@ steps:
   - publish-linux-packages-deb
   - publish-linux-packages-rpm
   environment:
+    GCP_KEY:
+      from_secret: gcp_key
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.1
@@ -3326,6 +3328,8 @@ steps:
   - publish-linux-packages-deb
   - publish-linux-packages-rpm
   environment:
+    GCP_KEY:
+      from_secret: gcp_key
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.1
@@ -4792,6 +4796,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: bf3d2885e476653b0f3bcecb4e0335b2d243285d90e3d74492bf794a90615e06
+hmac: 702107d1f512b722de5103aa8c80ff0f0048b3e42acbc3af17064301414def49
 
 ...
