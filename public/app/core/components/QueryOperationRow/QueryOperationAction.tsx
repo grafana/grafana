@@ -48,7 +48,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         left: -1px;
         right: 2px;
         height: 3px;
-        border-radius: 2px;
+        border-radius: ${theme.shape.radius.default};
         bottom: -8px;
         background-image: ${theme.colors.gradients.brandHorizontal} !important;
       }

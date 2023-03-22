@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/experimental';
@@ -15,7 +15,7 @@ export interface Props {
   query: TimeSeriesList;
 }
 
-export const Preprocessor: FunctionComponent<Props> = ({ query, metricDescriptor, onChange }) => {
+export const Preprocessor = ({ query, metricDescriptor, onChange }: Props) => {
   const options = useOptions(metricDescriptor);
 
   return (

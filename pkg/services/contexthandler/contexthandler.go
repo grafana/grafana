@@ -282,12 +282,13 @@ func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*apik
 
 	// fetch key
 	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgID: decoded.OrgId}
-	if err := h.apiKeyService.GetApiKeyByName(ctx, &keyQuery); err != nil {
+	key, err := h.apiKeyService.GetApiKeyByName(ctx, &keyQuery)
+	if err != nil {
 		return nil, err
 	}
 
 	// validate api key
-	isValid, err := apikeygen.IsValid(decoded, keyQuery.Result.Key)
+	isValid, err := apikeygen.IsValid(decoded, key.Key)
 	if err != nil {
 		return nil, err
 	}
@@ -295,7 +296,7 @@ func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*apik
 		return nil, apikeygen.ErrInvalidApiKey
 	}
 
-	return keyQuery.Result, nil
+	return key, nil
 }
 
 func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqContext) bool {

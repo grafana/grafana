@@ -169,7 +169,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       z-index: ${theme.zIndex.modal};
 
       ${theme.breakpoints.up('md')} {
-        border-radius: ${theme.shape.borderRadius(2)};
+        border-radius: ${theme.shape.radius.default};
         box-shadow: ${theme.shadows.z3};
         left: 0;
         margin: ${theme.spacing(0.5, 'auto', 0)};

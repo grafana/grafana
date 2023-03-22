@@ -122,25 +122,11 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
-			Name:            "dashboardsFromStorage",
-			Description:     "Load dashboards from the generic storage interface",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true, // Also a gate on automatic git storage (for now)
-			Owner:           grafanaAppPlatformSquad,
-		},
-		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaExploreSquad,
-		},
-		{
-			Name:         "tracing",
-			Description:  "Adds trace ID to error notifications",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        grafanaUserEssentialsSquad,
 		},
 		{
 			Name:         "newTraceView",
@@ -231,7 +217,8 @@ var (
 		{
 			Name:        "dataConnectionsConsole",
 			Description: "Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateStable,
+			Expression:  "true", // turned on by default
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
@@ -288,13 +275,6 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-		},
-		{
-			Name:            "queryLibrary",
-			Description:     "Reusable query library",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			Owner:           grafanaAppPlatformSquad,
 		},
 		{
 			Name:        "showDashboardValidationWarnings",
@@ -396,6 +376,13 @@ var (
 		{
 			Name:         "lokiQuerySplitting",
 			Description:  "Split large interval queries into subqueries with smaller time intervals",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "lokiQuerySplittingConfig",
+			Description:  "Give users the option to configure split durations for Loki queries",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
