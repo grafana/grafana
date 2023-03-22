@@ -122,6 +122,13 @@ type Correlation struct {
 	Config CorrelationConfig `json:"config" xorm:"jsonb config"`
 }
 
+type GetCorrelationsResponseBody struct {
+	Correlations []Correlation `json:"correlations"`
+	TotalCount   int64         `json:"totalCount"`
+	Page         int64         `json:"page"`
+	PerPage      int64         `json:"perpage"`
+}
+
 // CreateCorrelationResponse is the response struct for CreateCorrelationCommand
 // swagger:model
 type CreateCorrelationResponseBody struct {
