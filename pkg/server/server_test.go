@@ -9,15 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/modules"
-	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func testServer(t *testing.T, m *modules.MockModuleService) *Server {
 	t.Helper()
-	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, nil,
-		backgroundsvcs.NewBackgroundServiceRegistry(&modules.MockModuleEngine{}), m)
+	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, nil, m)
 	require.NoError(t, err)
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.
