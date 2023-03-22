@@ -15,13 +15,9 @@ export const AmRootRouteRead: FC<AmRootRouteReadProps> = ({ routes }) => {
 
   const receiver = routes.receiver || '-';
   const groupBy = routes.groupBy.join(', ') || '-';
-  const groupWait = routes.groupWaitValue ? `${routes.groupWaitValue}${routes.groupWaitValueType}` : '-';
-  const groupInterval = routes.groupIntervalValue
-    ? `${routes.groupIntervalValue}${routes.groupIntervalValueType}`
-    : '-';
-  const repeatInterval = routes.repeatIntervalValue
-    ? `${routes.repeatIntervalValue}${routes.repeatIntervalValueType}`
-    : '-';
+  const groupWait = routes.groupWaitValue || '-';
+  const groupInterval = routes.groupIntervalValue || '-';
+  const repeatInterval = routes.repeatIntervalValue || '-';
 
   return (
     <div className={styles.container}>
