@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -18,7 +19,7 @@ import (
 func TestQueryData(t *testing.T) {
 	t.Run("Empty registry should return not registered error", func(t *testing.T) {
 		registry := fakes.NewFakePluginRegistry()
-		client := ProvideService(registry, &config.Cfg{})
+		client := ProvideService(registry, &config.Cfg{}, tracing.InitializeTracerForTest())
 		_, err := client.QueryData(context.Background(), &backend.QueryDataRequest{})
 		require.Error(t, err)
 		require.ErrorIs(t, err, plugins.ErrPluginNotRegistered)
@@ -59,7 +60,7 @@ func TestQueryData(t *testing.T) {
 				err := registry.Add(context.Background(), p)
 				require.NoError(t, err)
 
-				client := ProvideService(registry, &config.Cfg{})
+				client := ProvideService(registry, &config.Cfg{}, tracing.InitializeTracerForTest())
 				_, err = client.QueryData(context.Background(), &backend.QueryDataRequest{
 					PluginContext: backend.PluginContext{
 						PluginID: "grafana",
@@ -123,7 +124,7 @@ func TestCallResource(t *testing.T) {
 		err := registry.Add(context.Background(), p)
 		require.NoError(t, err)
 
-		client := ProvideService(registry, &config.Cfg{})
+		client := ProvideService(registry, &config.Cfg{}, tracing.InitializeTracerForTest())
 
 		err = client.CallResource(context.Background(), req, sender)
 		require.NoError(t, err)
@@ -187,7 +188,7 @@ func TestCallResource(t *testing.T) {
 		err := registry.Add(context.Background(), p)
 		require.NoError(t, err)
 
-		client := ProvideService(registry, &config.Cfg{})
+		client := ProvideService(registry, &config.Cfg{}, tracing.InitializeTracerForTest())
 
 		err = client.CallResource(context.Background(), req, sender)
 		require.NoError(t, err)

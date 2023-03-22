@@ -261,7 +261,7 @@ func TestDataSourceQueryError(t *testing.T) {
 					nil,
 					&fakePluginRequestValidator{},
 					&fakeDatasources.FakeDataSourceService{},
-					pluginClient.ProvideService(r, &config.Cfg{}),
+					pluginClient.ProvideService(r, &config.Cfg{}, hs.tracer),
 				)
 				hs.QuotaService = quotatest.New(false, nil)
 			})

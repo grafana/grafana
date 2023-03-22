@@ -73,7 +73,7 @@ func TestCallResource(t *testing.T) {
 		hs.PluginContextProvider = pcp
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = ps
-		hs.pluginClient = pluginClient.ProvideService(reg, pCfg)
+		hs.pluginClient = pluginClient.ProvideService(reg, pCfg, hs.tracer)
 	})
 
 	t.Run("Test successful response is received for valid request", func(t *testing.T) {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
@@ -21,12 +22,14 @@ var _ plugins.Client = (*Service)(nil)
 type Service struct {
 	pluginRegistry registry.Service
 	cfg            *config.Cfg
+	tracer         tracing.Tracer
 }
 
-func ProvideService(pluginRegistry registry.Service, cfg *config.Cfg) *Service {
+func ProvideService(pluginRegistry registry.Service, cfg *config.Cfg, tracer tracing.Tracer) *Service {
 	return &Service{
 		pluginRegistry: pluginRegistry,
 		cfg:            cfg,
+		tracer:         tracer,
 	}
 }
 
@@ -44,7 +47,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	err := instrumentation.InstrumentQueryDataRequest(ctx, &req.PluginContext, instrumentation.Cfg{
 		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
 		Target:                p.Target(),
-	}, func() (innerErr error) {
+	}, s.tracer, func() (innerErr error) {
 		resp, innerErr = p.QueryData(ctx, req)
 		return
 	})
@@ -89,7 +92,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	err := instrumentation.InstrumentCallResourceRequest(ctx, &req.PluginContext, instrumentation.Cfg{
 		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
 		Target:                p.Target(),
-	}, func() error {
+	}, s.tracer, func() error {
 		removeConnectionHeaders(req.Headers)
 		removeHopByHopHeaders(req.Headers)
 
@@ -129,7 +132,7 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 	err := instrumentation.InstrumentCollectMetrics(ctx, &req.PluginContext, instrumentation.Cfg{
 		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
 		Target:                p.Target(),
-	}, func() (innerErr error) {
+	}, s.tracer, func() (innerErr error) {
 		resp, innerErr = p.CollectMetrics(ctx, req)
 		return
 	})
@@ -154,7 +157,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	err := instrumentation.InstrumentCheckHealthRequest(ctx, &req.PluginContext, instrumentation.Cfg{
 		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
 		Target:                p.Target(),
-	}, func() (innerErr error) {
+	}, s.tracer, func() (innerErr error) {
 		resp, innerErr = p.CheckHealth(ctx, req)
 		return
 	})

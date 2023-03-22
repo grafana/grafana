@@ -3,6 +3,7 @@ package pluginsintegration
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
@@ -74,14 +75,14 @@ var WireExtensionSet = wire.NewSet(
 
 func ProvideClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
 	pluginRegistry registry.Service,
-	oAuthTokenService oauthtoken.OAuthTokenService) (*client.Decorator, error) {
-	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService)
+	oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer) (*client.Decorator, error) {
+	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService, tracer)
 }
 
 func NewClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
 	pluginRegistry registry.Service,
-	oAuthTokenService oauthtoken.OAuthTokenService) (*client.Decorator, error) {
-	c := client.ProvideService(pluginRegistry, pCfg)
+	oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer) (*client.Decorator, error) {
+	c := client.ProvideService(pluginRegistry, pCfg, tracer)
 	middlewares := CreateMiddlewares(cfg, oAuthTokenService)
 
 	return client.NewDecorator(c, middlewares...)
