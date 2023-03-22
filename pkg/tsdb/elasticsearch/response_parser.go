@@ -665,7 +665,7 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 	queryResult *backend.DataResponse, props map[string]string) error {
 	propKeys := createPropKeys(props)
 	frames := data.Frames{}
-	fields := createFields(queryResult.Frames, propKeys, aggDef.Field)
+	fields := createFields(queryResult.Frames, propKeys)
 
 	for _, v := range esAgg.Get("buckets").MustArray() {
 		bucket := simplejson.NewFromAny(v)
@@ -1135,7 +1135,7 @@ func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
 	}
 }
 
-func createFields(frames data.Frames, propKeys []string, aggField string) []*data.Field {
+func createFields(frames data.Frames, propKeys []string) []*data.Field {
 	var fields []*data.Field
 	// If we have no frames, we create fields from propKeys
 	if frames != nil {
