@@ -10,7 +10,7 @@ export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
       return { text: '' };
     }
     const isNegative = value < 0;
-    if (neg) {
+    if (isNegative) {
       value = Math.abs(value);
     }
     const scaled = scaler(value, decimals, scaledDecimals);
@@ -19,7 +19,7 @@ export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
     } else {
       scaled.prefix = symbol;
     }
-    if (neg) {
+    if (isNegative) {
       scaled.prefix = `-${scaled.prefix?.length ? scaled.prefix : ''}`;
     }
     return scaled;
