@@ -301,7 +301,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         const text = this.getVariableText(variableName, value, scopedVars);
 
         if (value !== null && value !== undefined) {
-          if (scopedVars[variableName] && scopedVars[variableName].skipFormat) {
+          if (scopedVars[variableName].skipFormat) {
             fmt = undefined;
           }
 
