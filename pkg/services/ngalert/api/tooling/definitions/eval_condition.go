@@ -9,7 +9,7 @@ import (
 // EvalAlertConditionCommand is the command for evaluating a condition
 type EvalAlertConditionCommand struct {
 	Condition string       `json:"condition"`
-	Data      []AlertQuery `json:"data"` // TODO yuri. Create API model for AlertQuery
+	Data      []AlertQuery `json:"data"`
 	Now       time.Time    `json:"now"`
 }
 
