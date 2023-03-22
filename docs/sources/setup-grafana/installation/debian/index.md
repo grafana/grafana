@@ -23,7 +23,7 @@ While the process for upgrading Grafana is very similar to installing Grafana, t
 
 ## 1. Download and install
 
-You can install Grafana using our official APT repository, by downloading a `.deb` package, or by downloading a binary `.tar.gz` file.
+There are multiple ways to install Grafana: using our official APT repository, by downloading a `.deb` package, or by downloading a binary `.tar.gz` file.  Choose only one of the methods below that best suits your needs.
 
 ### Install from APT repository
 
@@ -89,7 +89,7 @@ wget <.deb package url>
 sudo dpkg -i grafana<edition>_<version>_amd64.deb
 ```
 
-## Install from binary .tar.gz file
+### Install from binary .tar.gz file
 
 Download the latest [`.tar.gz` file](https://grafana.com/grafana/download?platform=linux) and extract it. The files extract into a folder named after the Grafana version downloaded. This folder contains all files required to run Grafana. There are no init scripts or install scripts in this package.
 
@@ -103,6 +103,8 @@ sudo tar -zxvf <tar.gz package>
 This starts the `grafana-server` process as the `grafana` user, which was created during the package installation.
 
 If you installed with the APT repository or `.deb` package, then you can start the server using `systemd` or `init.d`. If you installed a binary `.tar.gz` file, then you need to execute the binary.
+
+> **Note:** The following subsections cover three different methods of starting the server: with systemd, initd, or by directly running the binary. You should follow only one of the three sets of instructions, depending on how your machine is configured.
 
 ### Start the server with systemd
 
