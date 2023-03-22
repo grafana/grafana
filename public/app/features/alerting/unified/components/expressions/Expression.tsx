@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { capitalize, uniqueId } from 'lodash';
 import React, { FC, useCallback, useState } from 'react';
 
-import { DataFrame, dateTimeFormat, GrafanaTheme2, LoadingState, PanelData, isTimeSeriesFrames } from '@grafana/data';
+import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { AutoSizeInput, clearButtonStyles, Icon, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
@@ -105,6 +105,7 @@ export const Expression: FC<ExpressionProps> = ({
         />
         <div className={styles.expression.body}>{renderExpressionType(query)}</div>
         {hasResults && <ExpressionResult series={series} isAlertCondition={isAlertCondition} />}
+
         <div className={styles.footer}>
           <Stack direction="row" alignItems="center">
             <AlertConditionIndicator
@@ -131,30 +132,33 @@ interface ExpressionResultProps {
   series: DataFrame[];
   isAlertCondition?: boolean;
 }
-
+export const PAGE_SIZE = 20;
 export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCondition }) => {
   const styles = useStyles2(getStyles);
 
   // sometimes we receive results where every value is just "null" when noData occurs
   const emptyResults = isEmptySeries(series);
   const isTimeSeriesResults = !emptyResults && isTimeSeriesFrames(series);
+  const slicedResults = series.slice(0, PAGE_SIZE);
+  const restResults = series.length - PAGE_SIZE;
 
   return (
     <div className={styles.expression.results}>
       {!emptyResults && isTimeSeriesResults && (
         <div>
-          {series.map((frame, index) => (
+          {slicedResults.map((frame, index) => (
             <TimeseriesRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
           ))}
         </div>
       )}
       {!emptyResults &&
         !isTimeSeriesResults &&
-        series.map((frame, index) => (
+        slicedResults.map((frame, index) => (
           // There's no way to uniquely identify a frame that doesn't cause render bugs :/ (Gilles)
           <FrameRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
         ))}
       {emptyResults && <div className={cx(styles.expression.noData, styles.mutedText)}>No data</div>}
+      {restResults > 0 && <div> {`There are ${restResults} more results`}</div>}
     </div>
   );
 };
