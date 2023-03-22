@@ -647,11 +647,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     vars[DataLinkBuiltInVars.keepTime] = {
       text: timeRangeUrl,
       value: timeRangeUrl,
+      skipFormat: true,
     };
 
     vars[DataLinkBuiltInVars.includeVars] = {
       text: variablesQuery,
       value: variablesQuery,
+      skipFormat: true,
     };
 
     return getTemplateSrv().replace(value, vars, format);
