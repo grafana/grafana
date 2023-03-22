@@ -1712,6 +1712,10 @@ func (c *fakeClient) GetConfiguredFields() es.ConfiguredFields {
 	return c.configuredFields
 }
 
+func (c *fakeClient) GetMinInterval(queryInterval string) (time.Duration, error) {
+	return 15 * time.Second, nil
+}
+
 func (c *fakeClient) ExecuteMultisearch(r *es.MultiSearchRequest) (*es.MultiSearchResponse, error) {
 	c.multisearchRequests = append(c.multisearchRequests, r)
 	return c.multiSearchResponse, c.multiSearchError

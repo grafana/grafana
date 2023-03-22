@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 type DatasourceInfo struct {
@@ -43,6 +44,7 @@ const loggerName = "tsdb.elasticsearch.client"
 // Client represents a client which can interact with elasticsearch api
 type Client interface {
 	GetConfiguredFields() ConfiguredFields
+	GetMinInterval(queryInterval string) (time.Duration, error)
 	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
 	MultiSearch() *MultiSearchRequestBuilder
 }
@@ -83,6 +85,11 @@ type baseClientImpl struct {
 
 func (c *baseClientImpl) GetConfiguredFields() ConfiguredFields {
 	return c.configuredFields
+}
+
+func (c *baseClientImpl) GetMinInterval(queryInterval string) (time.Duration, error) {
+	timeInterval := c.ds.TimeInterval
+	return intervalv2.GetIntervalFrom(queryInterval, timeInterval, 0, 5*time.Second)
 }
 
 type multiRequest struct {
