@@ -105,6 +105,13 @@ func getPanelIDFromRequest(r *http.Request) (int64, error) {
 	return 0, nil
 }
 
+func getInt64FromRequest(r *http.Request, k string) (int64, error) {
+	if s := strings.TrimSpace(r.URL.Query().Get(k)); s != "" {
+		return strconv.ParseInt(s, 10, 64)
+	}
+	return -1, nil
+}
+
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
 	dashboardUID := c.Query("dashboard_uid")
 	panelID, err := getPanelIDFromRequest(c.Req)
@@ -113,6 +120,19 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	}
 	if dashboardUID == "" && panelID != 0 {
 		return ErrResp(http.StatusBadRequest, errors.New("panel_id must be set with dashboard_uid"), "")
+	}
+
+	limitGroups, err := getInt64FromRequest(c.Req, "limit")
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "invalid limit")
+	}
+	limitRulesPerGroup, err := getInt64FromRequest(c.Req, "limit_rules")
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "invalid limit_rules")
+	}
+	limitAlertsPerRule, err := getInt64FromRequest(c.Req, "limit_alerts")
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "invalid limit_alerts")
 	}
 
 	ruleResponse := apimodels.RuleResponse{
@@ -161,15 +181,34 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqViewer, evaluator)
 	}
 
-	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
+	groupedRules := make(map[ngmodels.AlertRuleGroupKey]ngmodels.SortedAlertRules)
 	for _, rule := range ruleList {
 		key := rule.GetGroupKey()
 		rulesInGroup := groupedRules[key]
 		rulesInGroup = append(rulesInGroup, rule)
 		groupedRules[key] = rulesInGroup
 	}
+	// sort the rules once at the end instead of after each append
+	for _, groupRules := range groupedRules {
+		sort.Sort(groupRules)
+	}
 
-	for groupKey, rules := range groupedRules {
+	sortedGroups := make(ngmodels.SortedRuleGroupKeys, 0, len(groupedRules))
+	for groupKey, _ := range groupedRules {
+		sortedGroups = append(sortedGroups, groupKey)
+	}
+	sort.Sort(sortedGroups)
+
+	for i, groupKey := range sortedGroups {
+		if limitGroups > -1 && int64(i) >= limitGroups {
+			break
+		}
+
+		rules := groupedRules[groupKey]
+		if limitRulesPerGroup > -1 {
+			rules = rules[0:limitRulesPerGroup]
+		}
+
 		folder := namespaceMap[groupKey.NamespaceUID]
 		if folder == nil {
 			srv.log.Warn("query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", groupKey.NamespaceUID)
@@ -178,12 +217,13 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		if !authorizeAccessToRuleGroup(rules, hasAccess) {
 			continue
 		}
-		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, srv.toRuleGroup(groupKey.RuleGroup, folder, rules, labelOptions))
+		ruleGroup := srv.toRuleGroup(groupKey.RuleGroup, folder, rules, limitAlertsPerRule, labelOptions)
+		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, ruleGroup)
 	}
 	return response.JSON(http.StatusOK, ruleResponse)
 }
 
-func (srv PrometheusSrv) toRuleGroup(groupName string, folder *folder.Folder, rules []*ngmodels.AlertRule, labelOptions []ngmodels.LabelOption) *apimodels.RuleGroup {
+func (srv PrometheusSrv) toRuleGroup(groupName string, folder *folder.Folder, rules []*ngmodels.AlertRule, limitAlerts int64, labelOptions []ngmodels.LabelOption) *apimodels.RuleGroup {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupName,
 		File: folder.Title, // file is what Prometheus uses for provisioning, we replace it with namespace.
@@ -206,7 +246,11 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *folder.Folder, ru
 			LastEvaluation: time.Time{},
 		}
 
-		for _, alertState := range srv.manager.GetStatesForRuleUID(rule.OrgID, rule.UID) {
+		for i, alertState := range srv.manager.GetStatesForRuleUID(rule.OrgID, rule.UID) {
+			if limitAlerts > -1 && int64(i) >= limitAlerts {
+				break
+			}
+
 			activeAt := alertState.StartsAt
 			valString := ""
 			if alertState.State == eval.Alerting || alertState.State == eval.Pending {
