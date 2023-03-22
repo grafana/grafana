@@ -81,50 +81,65 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.wrapper}>
-      <div className={cx(styles.visualization, styles.containerBox)}>
-        <div className={styles.headerSection}>Start your new dashboard by adding a visualization</div>
-        <div className={styles.bodySection}>
-          Select a data source and then query and visualize your data with charts, stats and tables or create lists,
-          markdowns and other widgets
-        </div>
-        <div className={styles.centered}>
+    <div className={styles.centeredContent}>
+      <div className={cx(styles.centeredContent, styles.wrapper)}>
+        <div className={cx(styles.containerBox, styles.centeredContent, styles.visualizationContainer)}>
+          <div className={cx(styles.headerSection, styles.headerBig)}>
+            Start your new dashboard by adding a visualization
+          </div>
+          <div className={cx(styles.bodySection, styles.bodyBig)}>
+            Select a data source and then query and visualize your data with charts, stats and tables or create lists,
+            markdowns and other widgets.
+          </div>
           <Button
+            size="lg"
             icon="plus"
+            aria-label="Add new panel"
             onClick={() => {
               reportInteraction('Create new panel');
               onCreateNewPanel();
             }}
-          ></Button>
+            disabled={!canCreate}
+          >
+            Add visualization
+          </Button>
         </div>
-      </div>
-      <div className={styles.others}>
-        <div className={cx(styles.rowPanel, styles.containerBox)}>
-          <div className={styles.headerSection}>Add a row</div>
-          <div className={styles.bodySection}>Group your visualizations into expandable sections.</div>
-          <div className={styles.centered}>
+        <div className={cx(styles.centeredContent, styles.others)}>
+          <div className={cx(styles.containerBox, styles.centeredContent, styles.rowContainer)}>
+            <div className={cx(styles.headerSection, styles.headerSmall)}>Add a row</div>
+            <div className={cx(styles.bodySection, styles.bodySmall)}>
+              Group your visualizations into expandable sections.
+            </div>
             <Button
               icon="plus"
               fill="outline"
+              aria-label="Add new row"
               onClick={() => {
                 reportInteraction('Create new row');
                 onCreateNewRow();
               }}
-            ></Button>
+              disabled={!canCreate}
+            >
+              Add row
+            </Button>
           </div>
-        </div>
-        <div className={cx(styles.libPanel, styles.containerBox)}>
-          <div className={styles.headerSection}>Import panel</div>
-          <div className={styles.bodySection}>Import visualizations that are shared with other dashboards.</div>
-          <div className={styles.centered}>
+          <div className={cx(styles.containerBox, styles.centeredContent, styles.libraryContainer)}>
+            <div className={cx(styles.headerSection, styles.headerSmall)}>Import panel</div>
+            <div className={cx(styles.bodySection, styles.bodySmall)}>
+              Import visualizations that are shared with other dashboards.
+            </div>
             <Button
               icon="plus"
               fill="outline"
+              aria-label="Add new panel from panel library"
               onClick={() => {
                 reportInteraction('Add a panel from the panel library');
                 onAddLibraryPanel();
               }}
-            ></Button>
+              disabled={!canCreate}
+            >
+              Import library panel
+            </Button>
           </div>
         </div>
       </div>
@@ -135,37 +150,72 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
+      label: 'dashboard-empty-wrapper',
+      flexDirection: 'column',
+      maxWidth: '920px',
+      gap: theme.spacing.gridSize * 4,
+    }),
+    containerBox: css({
+      label: 'container-box',
+      flexDirection: 'column',
+      boxSizing: 'border-box',
+      border: '1px dashed rgba(110, 159, 255, 0.5)',
+    }),
+    centeredContent: css({
+      label: 'centered',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      flexDirection: 'column',
-      gap: theme.spacing.gridSize * 4,
     }),
-    visualization: css({}),
-    headerSection: css({}),
-    bodySection: css({}),
+    visualizationContainer: css({
+      label: 'visualization-container',
+      padding: theme.spacing.gridSize * 4,
+    }),
     others: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      label: 'others-wrapper',
+      alignItems: 'stretch',
       flexDirection: 'row',
       gap: theme.spacing.gridSize * 4,
     }),
-    rowPanel: css({}),
-    libPanel: css({}),
-    containerBox: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexDirection: 'column',
-      gap: theme.spacing.gridSize * 4,
-      border: '1px dashed rgba(110, 159, 255, 0.5)',
-      padding: theme.spacing.gridSize * 4,
+    rowContainer: css({
+      label: 'row-container',
+      padding: theme.spacing.gridSize * 3,
     }),
-    centered: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+    libraryContainer: css({
+      label: 'library-container',
+      padding: theme.spacing.gridSize * 3,
+    }),
+    visualizationContent: css({
+      gap: theme.spacing.gridSize * 2,
+    }),
+    headerSection: css({
+      label: 'header-section',
+      fontWeight: 600,
+    }),
+    headerBig: css({
+      fontSize: '32px',
+      lineHeight: '48px',
+      marginBottom: theme.spacing.gridSize * 2,
+    }),
+    headerSmall: css({
+      fontSize: '24px',
+      lineHeight: '32px',
+      marginBottom: theme.spacing.gridSize,
+    }),
+    bodySection: css({
+      label: 'body-section',
+      fontWeight: theme.typography.fontWeightRegular,
+      color: theme.colors.text.secondary,
+      textAlign: 'center',
+    }),
+    bodyBig: css({
+      fontSize: '20px',
+      maxWidth: '75%',
+      marginBottom: theme.spacing.gridSize * 4,
+    }),
+    bodySmall: css({
+      fontSize: '16px',
+      marginBottom: theme.spacing.gridSize * 3,
     }),
   };
 };

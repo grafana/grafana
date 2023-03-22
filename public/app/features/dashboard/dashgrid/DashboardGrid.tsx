@@ -260,7 +260,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
                 </ReactGridLayout>
               </div>
             ) : (
-              <div style={{ width: `${width}px`, height: '100%' }}>
+              <div style={{ width: `${width}px`, height: '100%', padding: `${draggable ? '120px 0' : '0'}` }}>
                 <DashboardEmpty dashboard={dashboard} canCreate={isEditable} />
               </div>
             );
