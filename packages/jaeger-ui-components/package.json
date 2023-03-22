@@ -1,6 +1,6 @@
 {
   "name": "@jaegertracing/jaeger-ui-components",
-  "version": "9.3.9",
+  "version": "9.3.12",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "license": "Apache-2.0",
@@ -31,10 +31,10 @@
   },
   "dependencies": {
     "@emotion/css": "11.10.5",
-    "@grafana/data": "9.3.9",
-    "@grafana/e2e-selectors": "9.3.9",
-    "@grafana/runtime": "9.3.9",
-    "@grafana/ui": "9.3.9",
+    "@grafana/data": "9.3.12",
+    "@grafana/e2e-selectors": "9.3.12",
+    "@grafana/runtime": "9.3.12",
+    "@grafana/ui": "9.3.12",
     "chance": "^1.0.10",
     "classnames": "^2.2.5",
     "combokeys": "^3.0.0",
