@@ -1484,7 +1484,7 @@ func TestResponseParser(t *testing.T) {
 		})
 	})
 
-	t.Run("With top_metrics", func(t *testing.T) {
+	t.Run("With top_metrics and date_histogram agg", func(t *testing.T) {
 		targets := map[string]string{
 			"A": `{
 				"metrics": [
