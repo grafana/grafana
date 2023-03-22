@@ -130,7 +130,7 @@ func unauthorized(c *contextmodel.ReqContext, err error) {
 
 func tokenRevoked(c *contextmodel.ReqContext, err *usertoken.TokenRevokedError) {
 	if c.IsApiRequest() {
-		c.JSON(401, map[string]interface{}{
+		c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"message": "Token revoked",
 			"error": map[string]interface{}{
 				"id":                    "ERR_TOKEN_REVOKED",
