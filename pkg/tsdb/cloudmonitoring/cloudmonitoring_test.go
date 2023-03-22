@@ -1150,7 +1150,7 @@ func TestCheckHealth(t *testing.T) {
 		})
 		service := &Service{
 			im: im,
-			gceDefaultProjectGetter: func(ctx context.Context) (string, error) {
+			gceDefaultProjectGetter: func(ctx context.Context, scope string) (string, error) {
 				return "", fmt.Errorf("not found!")
 			},
 		}

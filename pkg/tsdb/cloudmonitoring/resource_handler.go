@@ -34,7 +34,7 @@ func (s *Service) newResourceMux() *http.ServeMux {
 }
 
 func (s *Service) getGCEDefaultProject(rw http.ResponseWriter, req *http.Request) {
-	project, err := s.gceDefaultProjectGetter(req.Context())
+	project, err := s.gceDefaultProjectGetter(req.Context(), resourceManagerScope)
 	if err != nil {
 		writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
 		return
