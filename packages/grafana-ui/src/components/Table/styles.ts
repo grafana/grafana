@@ -207,14 +207,6 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         margin-bottom: 0;
       }
     `,
-    paginationItem: css`
-      flex: 20%;
-    `,
-    paginationCenterItem: css`
-      flex: 100%;
-      display: flex;
-      justify-content: center;
-    `,
     paginationSummary: css`
       color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
