@@ -11,7 +11,12 @@ import {
   DataSourceRef,
 } from '@grafana/data';
 
-import { DataSourceWithBackend, standardStreamOptionsProvider, toStreamingDataResponse } from './DataSourceWithBackend';
+import {
+  DataSourceWithBackend,
+  standardStreamOptionsProvider,
+  toStreamingDataResponse,
+  isExpressionReference,
+} from './DataSourceWithBackend';
 
 class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> {
   constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
