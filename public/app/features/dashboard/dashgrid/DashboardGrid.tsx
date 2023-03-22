@@ -14,6 +14,7 @@ import { DashboardRow } from '../components/DashboardRow';
 import { DashboardModel, PanelModel } from '../state';
 import { GridPos } from '../state/PanelModel';
 
+import { DashboardEmpty } from './DashboardEmpty';
 import { DashboardPanel } from './DashboardPanel';
 
 export interface Props {
@@ -208,7 +209,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isEditable } = this.props;
+    const { dashboard, isEditable } = this.props;
 
     /**
      * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
@@ -230,7 +231,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
             moving panels. https://github.com/grafana/grafana/issues/18497
             theme.breakpoints.md = 769
           */
-            return (
+            return dashboard.panels && dashboard.panels.length > 0 ? (
               /**
                * The children is using a width of 100% so we need to guarantee that it is wrapped
                * in an element that has the calculated size given by the AutoSizer. The AutoSizer
@@ -258,6 +259,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
                   {this.renderPanels(width)}
                 </ReactGridLayout>
               </div>
+            ) : (
+              <DashboardEmpty dashboard={dashboard} canCreate={isEditable} />
             );
           }}
         </AutoSizer>
