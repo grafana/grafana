@@ -5,15 +5,22 @@ import { scaledUnits, ValueFormatter } from './valueFormats';
 export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
   const units = ['', 'K', 'M', 'B', 'T'];
   const scaler = scaledUnits(1000, units);
-  return (size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
-    if (size === null) {
+  return (value: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
+    if (value == null) {
       return { text: '' };
     }
-    const scaled = scaler(size, decimals, scaledDecimals);
+    const neg = value < 0;
+    if (neg) {
+      value = Math.abs(value);
+    }
+    const scaled = scaler(value, decimals, scaledDecimals);
     if (asSuffix) {
       scaled.suffix = scaled.suffix !== undefined ? `${scaled.suffix}${symbol}` : undefined;
     } else {
       scaled.prefix = symbol;
+    }
+    if (neg) {
+      scaled.prefix = `-${scaled.prefix?.length ? scaled.prefix : ''}`;
     }
     return scaled;
   };
