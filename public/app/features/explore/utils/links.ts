@@ -12,8 +12,12 @@ import {
   SplitOpen,
   DataLink,
   DisplayValue,
+  DataLinkConfigOrigin,
+  CoreApp,
+  SplitOpenOptions,
 } from '@grafana/data';
-import { getTemplateSrv, VariableInterpolation } from '@grafana/runtime';
+import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTransformationVars } from 'app/features/correlations/transformations';
 
@@ -41,6 +45,8 @@ const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasRequiredPermissionsFilte
 export interface ExploreFieldLinkModel extends LinkModel<Field> {
   variables?: VariableInterpolation[];
 }
+
+const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
 
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
@@ -115,6 +121,29 @@ export const getFieldLinksForExplore = (options: {
         if (!linkModel.title) {
           linkModel.title = getTitleFromHref(linkModel.href);
         }
+
+        // take over the onClick to report the click, then either call the original onClick or navigate to the URL
+        const origOnClick = linkModel.onClick;
+
+        linkModel.onClick = (...args) => {
+          reportInteraction('grafana_data_link_clicked', {
+            origin: link.origin || DataLinkConfigOrigin.Datasource,
+            app: CoreApp.Explore,
+            internal: false,
+          });
+
+          if (origOnClick) {
+            origOnClick?.apply(...args);
+          } else {
+            // for external links without an onClick, we want to duplicate default href behavior since onClick stops it
+            if (linkModel.target === '_blank') {
+              window.open(linkModel.href);
+            } else {
+              window.location.href = linkModel.href;
+            }
+          }
+        };
+
         return linkModel;
       } else {
         let internalLinkSpecificVars: ScopedVars = {};
@@ -147,6 +176,16 @@ export const getFieldLinksForExplore = (options: {
           variables = variableData.variables;
         }
 
+        const splitFnWithTracking = (options?: SplitOpenOptions<DataQuery>) => {
+          reportInteraction(DATA_LINK_USAGE_KEY, {
+            origin: link.origin || DataLinkConfigOrigin.Datasource,
+            app: CoreApp.Explore,
+            internal: true,
+          });
+
+          splitOpenFn?.(options);
+        };
+
         if (variableData.allVariablesDefined) {
           const internalLink = mapInternalLinkToExplore({
             link,
@@ -154,7 +193,7 @@ export const getFieldLinksForExplore = (options: {
             scopedVars: allVars,
             range,
             field,
-            onClickFn: splitOpenFn,
+            onClickFn: (options) => splitFnWithTracking(options),
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
           return { ...internalLink, variables: variables };

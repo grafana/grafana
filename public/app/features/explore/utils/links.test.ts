@@ -2,6 +2,7 @@ import {
   ArrayVector,
   DataFrame,
   DataLink,
+  DataLinkConfigOrigin,
   dateTime,
   Field,
   FieldType,
@@ -10,13 +11,18 @@ import {
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { setTemplateSrv } from '@grafana/runtime';
+import { setTemplateSrv, reportInteraction } from '@grafana/runtime';
 
 import { initTemplateSrv } from '../../../../test/helpers/initTemplateSrv';
 import { ContextSrv, setContextSrv } from '../../../core/services/context_srv';
 import { setLinkSrv } from '../../panel/panellinks/link_srv';
 
 import { getFieldLinksForExplore, getVariableUsageInfo } from './links';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 describe('explore links utils', () => {
   describe('getFieldLinksForExplore', () => {
@@ -28,6 +34,12 @@ describe('explore links utils', () => {
           { type: 'custom', name: 'test', current: { value: 'foo' } },
         ])
       );
+
+      window.open = jest.fn();
+    });
+
+    afterEach(() => {
+      jest.resetAllMocks();
     });
 
     it('returns correct link model for external link', () => {
@@ -44,6 +56,17 @@ describe('explore links utils', () => {
 
       expect(links[0].href).toBe('http://regionalhost');
       expect(links[0].title).toBe('external');
+      expect(links[0].onClick).toBeDefined();
+
+      if (links[0].onClick) {
+        links[0].onClick({});
+      }
+
+      expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
+        app: 'explore',
+        internal: false,
+        origin: 'Datasource',
+      });
     });
 
     it('returns generates title for external link', () => {
@@ -105,6 +128,12 @@ describe('explore links utils', () => {
             spanId: 'abcdef',
           },
         },
+      });
+
+      expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
+        app: 'explore',
+        internal: true,
+        origin: 'Datasource',
       });
     });
 
@@ -251,6 +280,7 @@ describe('explore links utils', () => {
       const transformationLink: DataLink = {
         title: '',
         url: '',
+        origin: DataLinkConfigOrigin.Correlations,
         internal: {
           query: { query: 'http_requests{app=${application} env=${environment}}' },
           datasourceUid: 'uid_1',
@@ -281,6 +311,17 @@ describe('explore links utils', () => {
           '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=foo env=dev}"}]}'
         )}`
       );
+
+      if (links[0][0].onClick) {
+        links[0][0].onClick({});
+      }
+
+      expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
+        app: 'explore',
+        internal: true,
+        origin: 'Correlations',
+      });
+
       expect(links[1]).toHaveLength(1);
       expect(links[1][0].href).toBe(
         `/explore?left=${encodeURIComponent(
