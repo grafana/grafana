@@ -118,7 +118,7 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boole
         height: 100%;
         cursor: pointer;
         border: none;
-        border-radius: 50px;
+        border-radius: ${theme.shape.radius.pill};
         background: ${theme.components.input.background};
         border: 1px solid ${theme.components.input.borderColor};
         transition: all 0.3s ease;
@@ -133,7 +133,7 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boole
           content: '';
           width: 12px;
           height: 12px;
-          border-radius: 6px;
+          border-radius: ${theme.shape.radius.circle};
           background: ${theme.colors.text.secondary};
           box-shadow: ${theme.shadows.z1};
           top: 50%;

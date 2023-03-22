@@ -101,7 +101,24 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
   };
 
   return (
-    <Field label="Query" invalid={invalid} error={error}>
+    <Field
+      label="Query"
+      description={
+        <span>
+          Define the query that is run when the link is clicked. You can use{' '}
+          <a
+            href="https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            variables
+          </a>{' '}
+          to access specific field values.
+        </span>
+      }
+      invalid={invalid}
+      error={error}
+    >
       <Controller
         name={name}
         rules={{

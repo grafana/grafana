@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 var (
@@ -14,9 +16,27 @@ var (
 	ErrCorrelationNotFound                = errors.New("correlation not found")
 	ErrUpdateCorrelationEmptyParams       = errors.New("not enough parameters to edit correlation")
 	ErrInvalidConfigType                  = errors.New("invalid correlation config type")
+	ErrInvalidTransformationType          = errors.New("invalid transformation type")
+	ErrTransformationNotNested            = errors.New("transformations must be nested under config")
+	ErrTransformationRegexReqExp          = errors.New("regex transformations require expression")
+	ErrCorrelationsQuotaFailed            = errors.New("error getting correlations quota")
+	ErrCorrelationsQuotaReached           = errors.New("correlations quota reached")
+)
+
+const (
+	QuotaTargetSrv quota.TargetSrv = "correlations"
+	QuotaTarget    quota.Target    = "correlations"
 )
 
 type CorrelationConfigType string
+
+type Transformation struct {
+	//Enum: regex,logfmt
+	Type       string `json:"type"`
+	Expression string `json:"expression,omitempty"`
+	Field      string `json:"field,omitempty"`
+	MapValue   string `json:"mapValue,omitempty"`
+}
 
 const (
 	ConfigTypeQuery CorrelationConfigType = "query"
@@ -28,6 +48,19 @@ func (t CorrelationConfigType) Validate() error {
 	}
 	return nil
 }
+
+func (t Transformations) Validate() error {
+	for _, v := range t {
+		if v.Type != "regex" && v.Type != "logfmt" {
+			return fmt.Errorf("%s: \"%s\"", ErrInvalidTransformationType, t)
+		} else if v.Type == "regex" && len(v.Expression) == 0 {
+			return fmt.Errorf("%s: \"%s\"", ErrTransformationRegexReqExp, t)
+		}
+	}
+	return nil
+}
+
+type Transformations []Transformation
 
 // swagger:model
 type CorrelationConfig struct {
@@ -42,21 +75,28 @@ type CorrelationConfig struct {
 	// required:true
 	// example: { "expr": "job=app" }
 	Target map[string]interface{} `json:"target" binding:"Required"`
+	// Source data transformations
+	// required:false
+	// example: [{"type": "logfmt"}]
+	Transformations Transformations `json:"transformations,omitempty"`
 }
 
 func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 	target := c.Target
+	transformations := c.Transformations
 	if target == nil {
 		target = map[string]interface{}{}
 	}
 	return json.Marshal(struct {
-		Type   CorrelationConfigType  `json:"type"`
-		Field  string                 `json:"field"`
-		Target map[string]interface{} `json:"target"`
+		Type            CorrelationConfigType  `json:"type"`
+		Field           string                 `json:"field"`
+		Target          map[string]interface{} `json:"target"`
+		Transformations Transformations        `json:"transformations,omitempty"`
 	}{
-		Type:   ConfigTypeQuery,
-		Field:  c.Field,
-		Target: target,
+		Type:            ConfigTypeQuery,
+		Field:           c.Field,
+		Target:          target,
+		Transformations: transformations,
 	})
 }
 
@@ -117,6 +157,10 @@ func (c CreateCorrelationCommand) Validate() error {
 	if c.TargetUID == nil && c.Config.Type == ConfigTypeQuery {
 		return fmt.Errorf("correlations of type \"%s\" must have a targetUID", ConfigTypeQuery)
 	}
+
+	if err := c.Config.Transformations.Validate(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -151,6 +195,9 @@ type CorrelationConfigUpdateDTO struct {
 	// Target data query
 	// example: { "expr": "job=app" }
 	Target *map[string]interface{} `json:"target"`
+	// Source data transformations
+	// example: [{"type": "logfmt"},{"type":"regex","expression":"(Superman|Batman)", "variable":"name"}]
+	Transformations []Transformation `json:"transformations"`
 }
 
 func (c CorrelationConfigUpdateDTO) Validate() error {

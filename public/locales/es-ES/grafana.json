@@ -18,6 +18,7 @@
     "section": {
       "actions": "",
       "dashboard-search-results": "",
+      "folder-search-results": "",
       "pages": "",
       "preferences": "",
       "recent-dashboards": ""
@@ -31,7 +32,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "Acciones",
       "data-tab": "Datos",
       "error-tab": "Error",
       "json-tab": "JSON",
@@ -109,6 +109,13 @@
   },
   "folder-picker": {
     "loading": "Cargando carpetas..."
+  },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "",
+      "loading": "",
+      "no-options": ""
+    }
   },
   "library-panel": {
     "add-modal": {
@@ -236,20 +243,11 @@
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
       "title": "Paneles de la librería"
     },
-    "live": {
-      "title": "Transmisión de eventos"
-    },
-    "live-cloud": {
-      "title": "Nube"
-    },
-    "live-pipeline": {
-      "title": "Cartera"
-    },
-    "live-status": {
-      "title": "Estado"
-    },
     "manage-dashboards": {
       "title": "Navegar"
+    },
+    "manage-folder": {
+      "subtitle": ""
     },
     "monitoring": {
       "subtitle": "Aplicaciones de supervisión e infraestructura",
@@ -345,6 +343,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Pulse ESC para salir del modo de quiosco"
+    },
+    "toolbar": {
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
     }
   },
   "news": {
@@ -393,11 +396,37 @@
     }
   },
   "search": {
+    "actions": {
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "view-as-folders": "",
+      "view-as-grid": "",
+      "view-as-list": ""
+    },
     "dashboard-actions": {
       "import": "",
       "new": "",
       "new-dashboard": "",
       "new-folder": ""
+    },
+    "folder-view": {
+      "go-to-folder": "",
+      "select-folder": ""
+    },
+    "results-table": {
+      "datasource-header": "",
+      "location-header": "",
+      "name-header": "",
+      "tags-header": "",
+      "type-dashboard": "",
+      "type-folder": "",
+      "type-header": ""
+    },
+    "search-input": {
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
@@ -497,6 +526,11 @@
     },
     "title": "Preferencias"
   },
+  "tag-filter": {
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Intervalos absolutos utilizados recientemente",
@@ -572,12 +606,20 @@
     "loading": "Cargando sesiones..."
   },
   "variable": {
+    "adhoc": {
+      "placeholder": ""
+    },
+    "dropdown": {
+      "placeholder": ""
+    },
     "picker": {
-      "input": "Introducir el valor de la variable",
       "link-all": "Todo",
       "option-all": "Todo",
       "option-selected-values": "Seleccionados",
       "option-tooltip": "Eliminar selecciones"
+    },
+    "textbox": {
+      "placeholder": ""
     }
   }
 }

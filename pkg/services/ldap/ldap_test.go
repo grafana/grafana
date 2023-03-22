@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-ldap/ldap/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/ldap.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
@@ -68,7 +68,7 @@ func TestServer_Users(t *testing.T) {
 
 		// Set up attribute map without surname and email
 		cfg := setting.NewCfg()
-		cfg.LDAPEnabled = true
+		cfg.LDAPAuthEnabled = true
 
 		server := &Server{
 			cfg: cfg,
@@ -212,7 +212,7 @@ func TestServer_Users(t *testing.T) {
 		})
 
 		cfg := setting.NewCfg()
-		cfg.LDAPEnabled = true
+		cfg.LDAPAuthEnabled = true
 
 		server := &Server{
 			cfg: cfg,
@@ -289,7 +289,7 @@ func TestServer_Users(t *testing.T) {
 		})
 
 		cfg := setting.NewCfg()
-		cfg.LDAPEnabled = true
+		cfg.LDAPAuthEnabled = true
 
 		server := &Server{
 			cfg: cfg,

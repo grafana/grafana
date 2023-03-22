@@ -235,7 +235,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   top_metrics: {
     label: 'Top Metrics',
-    xpack: true,
     requiresField: false,
     isPipelineAgg: false,
     supportsMissing: false,
@@ -251,7 +250,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   rate: {
     label: 'Rate',
-    xpack: true,
     requiresField: true,
     isPipelineAgg: false,
     supportsMissing: false,

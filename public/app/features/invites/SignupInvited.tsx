@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { getBackendSrv } from '@grafana/runtime';
@@ -31,7 +31,7 @@ const navModel = {
 
 export interface Props extends GrafanaRouteComponentProps<{ code: string }> {}
 
-export const SignupInvitedPage: FC<Props> = ({ match }) => {
+export const SignupInvitedPage = ({ match }: Props) => {
   const code = match.params.code;
   const [initFormModel, setInitFormModel] = useState<FormModel>();
   const [greeting, setGreeting] = useState<string>();

@@ -109,14 +109,6 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.storage.title', 'Storage');
     case 'upgrading':
       return t('nav.upgrading.title', 'Stats and license');
-    case 'live':
-      return t('nav.live.title', 'Event streaming');
-    case 'live-status':
-      return t('nav.live-status.title', 'Status');
-    case 'live-pipeline':
-      return t('nav.live-pipeline.title', 'Pipeline');
-    case 'live-cloud':
-      return t('nav.live-cloud.title', 'Cloud');
     case 'monitoring':
       return t('nav.monitoring.title', 'Monitoring');
     case 'apps':
@@ -148,6 +140,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return config.featureToggles.topnav
         ? t('nav.dashboards.subtitle', 'Create and manage dashboards to visualize your data')
         : undefined;
+    case 'manage-folder':
+      return t('nav.manage-folder.subtitle', 'Manage folder dashboards and permissions');
     case 'dashboards/playlists':
       return t('nav.playlists.subtitle', 'Groups of dashboards that are displayed in a sequence');
     case 'dashboards/snapshots':

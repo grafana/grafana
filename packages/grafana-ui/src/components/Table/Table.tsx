@@ -13,8 +13,9 @@ import {
 import { VariableSizeList } from 'react-window';
 
 import { DataFrame, Field, ReducerID } from '@grafana/data';
+import { TableCellHeight } from '@grafana/schema';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../Pagination/Pagination';
 
@@ -23,7 +24,7 @@ import { HeaderRow } from './HeaderRow';
 import { TableCell } from './TableCell';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks';
 import { getInitialState, useTableStateReducer } from './reducer';
-import { getTableStyles } from './styles';
+import { useTableStyles } from './styles';
 import { FooterItem, GrafanaTableState, Props } from './types';
 import {
   getColumns,
@@ -56,13 +57,14 @@ export const Table = memo((props: Props) => {
     showTypeIcons,
     footerValues,
     enablePagination,
+    cellHeight = TableCellHeight.Sm,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
   const variableSizeListScrollbarRef = useRef<HTMLDivElement>(null);
-  const tableStyles = useStyles2(getTableStyles);
   const theme = useTheme2();
+  const tableStyles = useTableStyles(theme, cellHeight);
   const headerHeight = noHeader ? 0 : tableStyles.rowHeight;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
 
@@ -324,15 +326,12 @@ export const Table = memo((props: Props) => {
     }
     paginationEl = (
       <div className={tableStyles.paginationWrapper}>
-        {isSmall ? null : <div className={tableStyles.paginationItem} />}
-        <div className={tableStyles.paginationCenterItem}>
-          <Pagination
-            currentPage={state.pageIndex + 1}
-            numberOfPages={pageOptions.length}
-            showSmallVersion={isSmall}
-            onNavigate={onNavigate}
-          />
-        </div>
+        <Pagination
+          currentPage={state.pageIndex + 1}
+          numberOfPages={pageOptions.length}
+          showSmallVersion={isSmall}
+          onNavigate={onNavigate}
+        />
         {isSmall ? null : (
           <div className={tableStyles.paginationSummary}>
             {itemsRangeStart} - {itemsRangeEnd} of {data.length} rows
@@ -385,6 +384,8 @@ export const Table = memo((props: Props) => {
             <div ref={variableSizeListScrollbarRef}>
               <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true}>
                 <VariableSizeList
+                  // This component needs an unmount/remount when row height changes
+                  key={tableStyles.rowHeight}
                   height={listHeight}
                   itemCount={itemCount}
                   itemSize={getItemSize}

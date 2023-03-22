@@ -27,7 +27,6 @@ import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import { SavedQueryLink } from 'app/features/query-library/types';
 import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
@@ -131,7 +130,6 @@ const defaults: any = {
     overrides: [],
   },
   title: '',
-  savedQueryLink: null,
 };
 
 export class PanelModel implements DataConfigSource, IPanelModel {
@@ -156,8 +154,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   datasource: DataSourceRef | null = null;
   thresholds?: any;
   pluginVersion?: string;
-  savedQueryLink: SavedQueryLink | null = null; // Used by the experimental feature queryLibrary
-
   snapshotData?: DataFrameDTO[];
   timeFrom?: any;
   timeShift?: any;
@@ -524,17 +520,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       type: dataSource.type,
     };
 
-    if (options.savedQueryUid) {
-      this.savedQueryLink = {
-        ref: {
-          uid: options.savedQueryUid,
-        },
-        variables: [],
-      };
-    } else {
-      this.savedQueryLink = null;
-    }
-
     this.cacheTimeout = options.cacheTimeout;
     this.queryCachingTTL = options.queryCachingTTL;
     this.timeFrom = options.timeRange?.from;
@@ -662,11 +647,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     vars[DataLinkBuiltInVars.keepTime] = {
       text: timeRangeUrl,
       value: timeRangeUrl,
+      skipFormat: true,
     };
 
     vars[DataLinkBuiltInVars.includeVars] = {
       text: variablesQuery,
       value: variablesQuery,
+      skipFormat: true,
     };
 
     return getTemplateSrv().replace(value, vars, format);

@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "9.4.0-pre",
+  "version": "9.5.0-pre",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
@@ -37,16 +37,16 @@
     "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
-    "@grafana/data": "9.4.0-pre",
-    "@grafana/e2e-selectors": "9.4.0-pre",
-    "@grafana/faro-web-sdk": "1.0.0-beta2",
-    "@grafana/ui": "9.4.0-pre",
+    "@grafana/data": "9.5.0-pre",
+    "@grafana/e2e-selectors": "9.5.0-pre",
+    "@grafana/faro-web-sdk": "1.0.2",
+    "@grafana/ui": "9.5.0-pre",
     "@sentry/browser": "6.19.7",
     "history": "4.10.1",
     "lodash": "4.17.21",
-    "rxjs": "7.5.7",
+    "rxjs": "7.8.0",
     "systemjs": "0.20.19",
-    "tslib": "2.4.1"
+    "tslib": "2.5.0"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
@@ -59,7 +59,7 @@
     "@types/angular": "1.8.4",
     "@types/history": "4.7.11",
     "@types/jest": "29.2.3",
-    "@types/lodash": "4.14.187",
+    "@types/lodash": "4.14.191",
     "@types/react": "17.0.42",
     "@types/react-dom": "17.0.14",
     "@types/systemjs": "^0.20.6",
@@ -67,7 +67,7 @@
     "lodash": "4.17.21",
     "react": "17.0.2",
     "react-dom": "17.0.2",
-    "rimraf": "3.0.2",
+    "rimraf": "4.4.0",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
