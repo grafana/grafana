@@ -260,6 +260,16 @@ type GetCorrelationsBySourceUIDQuery struct {
 // GetCorrelationsQuery is the query to retrieve all correlations
 type GetCorrelationsQuery struct {
 	OrgId int64 `json:"-"`
+	// Limit the maximum number of correlations to return per page
+	// in:query
+	// required:false
+	// default:100
+	Limit int64 `json:"perpage"`
+	// Page index for starting fetching correlations
+	// in:query
+	// required:false
+	// default:1
+	Page int64 `json:"page"`
 }
 
 type DeleteCorrelationsBySourceUIDCommand struct {

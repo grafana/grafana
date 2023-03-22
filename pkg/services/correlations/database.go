@@ -229,7 +229,9 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 	correlations := make([]Correlation, 0)
 
 	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
-		return session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Find(&correlations)
+		offset := cmd.Limit * (cmd.Page - 1)
+
+		return session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Limit(int(cmd.Limit), int(offset)).Find(&correlations)
 	})
 	if err != nil {
 		return []Correlation{}, err
