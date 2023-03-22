@@ -70,6 +70,7 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator validations
 		RequestValidator:   requestValidator,
 		DataService:        dataService,
 		usageStatsService:  usageStatsService,
+		validator:          validator,
 		tracer:             tracer,
 		AlertStore:         store,
 		dashAlertExtractor: dashAlertExtractor,
