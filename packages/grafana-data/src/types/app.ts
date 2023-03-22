@@ -71,6 +71,7 @@ export type AppPluginExtensionCommand = Pick<PluginExtensionCommand, 'descriptio
 
 export type AppPluginExtensionLinkConfig<C extends object = object> = {
   title: string;
+  pluginName: string;
   description: string;
   placement: string;
   path: string;
@@ -79,6 +80,7 @@ export type AppPluginExtensionLinkConfig<C extends object = object> = {
 
 export type AppPluginExtensionCommandConfig<C extends object = object> = {
   title: string;
+  pluginName: string;
   description: string;
   placement: string;
   handler: (context?: C, helpers?: AppPluginExtensionCommandHelpers) => void;

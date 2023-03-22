@@ -7,12 +7,14 @@ describe('getPluginExtensions', () => {
   describe('when getting extensions for placement', () => {
     const placement = 'grafana/dashboard/panel/menu';
     const pluginId = 'grafana-basic-app';
+    const pluginName = 'Grafana Basic App';
 
     beforeAll(() => {
       setPluginsExtensionRegistry({
         [placement]: [
           createRegistryLinkItem({
             title: 'Declare incident',
+            pluginName,
             description: 'Declaring an incident in the app',
             path: `/a/${pluginId}/declare-incident`,
             key: 1,
@@ -21,6 +23,7 @@ describe('getPluginExtensions', () => {
         'plugins/myorg-basic-app/start': [
           createRegistryLinkItem({
             title: 'Declare incident',
+            pluginName,
             description: 'Declaring an incident in the app',
             path: `/a/${pluginId}/declare-incident`,
             key: 2,
