@@ -176,7 +176,7 @@ interface LogRowContextGroupProps extends LogRowContextGroupHeaderProps {
   error?: string;
 }
 
-const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeaderProps> = ({
+const LogRowContextGroupHeader = ({
   row,
   rows,
   onLoadMoreContext,
@@ -186,7 +186,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   getLogRowContextUi,
   runContextQuery,
   onHeightChange,
-}) => {
+}: LogRowContextGroupHeaderProps) => {
   const [height, setHeight] = useState(0);
   const datasourceUiRef = React.createRef<HTMLDivElement>();
   const theme = useTheme2();
@@ -259,7 +259,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   );
 };
 
-export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
+export const LogRowContextGroup = ({
   row,
   rows,
   error,
@@ -272,7 +272,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   getLogRowContextUi,
   runContextQuery,
   onHeightChange,
-}) => {
+}: LogRowContextGroupProps) => {
   const [height, setHeight] = useState(0);
   const theme = useTheme2();
   const { commonStyles, logs, bottomContext, afterContext } = getLogRowContextStyles(theme, undefined, height);
@@ -373,7 +373,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   );
 };
 
-export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
+export const LogRowContext = ({
   row,
   context,
   errors,
@@ -384,7 +384,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   wrapLogMessage,
   logsSortOrder,
   getLogRowContextUi,
-}) => {
+}: LogRowContextProps) => {
   useEffect(() => {
     const handleEscKeyDown = (e: KeyboardEvent): void => {
       if (e.key === 'Escape' || e.key === 'Esc') {

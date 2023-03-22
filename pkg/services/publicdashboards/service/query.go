@@ -260,18 +260,16 @@ func extractQueriesFromPanels(panels []interface{}, result map[int64][]*simplejs
 		for _, queryObj := range panel.Get("targets").MustArray() {
 			query := simplejson.NewFromAny(queryObj)
 
-			if hideAttr, exists := query.CheckGet("hide"); !exists || !hideAttr.MustBool() {
-				// We dont support exemplars for public dashboards currently
-				query.Del("exemplar")
+			// We dont support exemplars for public dashboards currently
+			query.Del("exemplar")
 
-				// if query target has no datasource, set it to have the datasource on the panel
-				if _, ok := query.CheckGet("datasource"); !ok {
-					uid := getDataSourceUidFromJson(panel)
-					datasource := map[string]interface{}{"type": "public-ds", "uid": uid}
-					query.Set("datasource", datasource)
-				}
-				panelQueries = append(panelQueries, query)
+			// if query target has no datasource, set it to have the datasource on the panel
+			if _, ok := query.CheckGet("datasource"); !ok {
+				uid := getDataSourceUidFromJson(panel)
+				datasource := map[string]interface{}{"type": "public-ds", "uid": uid}
+				query.Set("datasource", datasource)
 			}
+			panelQueries = append(panelQueries, query)
 		}
 
 		result[panel.Get("id").MustInt64()] = panelQueries
