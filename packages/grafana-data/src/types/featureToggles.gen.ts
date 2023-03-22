@@ -36,9 +36,7 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   storage?: boolean;
   k8s?: boolean;
-  dashboardsFromStorage?: boolean;
   exploreMixedDatasource?: boolean;
-  tracing?: boolean;
   newTraceView?: boolean;
   correlations?: boolean;
   cloudWatchDynamicLabels?: boolean;
@@ -61,7 +59,6 @@ export interface FeatureToggles {
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   newPanelChromeUI?: boolean;
-  queryLibrary?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
@@ -78,6 +75,7 @@ export interface FeatureToggles {
   logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
+  lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
   onlyExternalOrgRoleSync?: boolean;
   drawerDataSourcePicker?: boolean;

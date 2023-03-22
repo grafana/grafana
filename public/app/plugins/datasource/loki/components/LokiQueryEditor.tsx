@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
@@ -76,7 +77,9 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   }, [data]);
 
   const onChangeInternal = (query: LokiQuery) => {
-    setDataIsStale(true);
+    if (!isEqual(query, props.query)) {
+      setDataIsStale(true);
+    }
     onChange(query);
   };
 
