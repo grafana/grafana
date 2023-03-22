@@ -41,7 +41,7 @@ The rules within a group are run sequentially at a regular interval, the default
 1. In the left-side menu, click the **Alerts & incidents > Alerting > Alert rules** to open the page listing existing alerts.
 1. Find a Grafana Mimir or Loki managed rule with the group you want to edit.
 1. Click **Edit** (pen) icon.
-1. Modify the **Rule group** and **Rule group evaluation interval** information as necessary.
+1. Modify the **Evaluation group** and **Rule group evaluation interval** information as necessary.
 1. Click **Save changes**.
 
 When you rename the group, a new group with all the rules from the old group is created. The old group is deleted.

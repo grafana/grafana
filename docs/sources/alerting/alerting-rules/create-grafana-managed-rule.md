@@ -27,7 +27,7 @@ Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
 1. In Step 2, add queries and expressions to evaluate, and then select the alert condition.
    - For queries, select a data source from the dropdown.
    - Add one or more [queries]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data#add-a-query" >}}) or [expressions]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries" >}}).
-   - For each expression, select either **Classic condition** to create a single alert rule, or choose from **Math**, **Reduce**, **Resample** options to generate separate alert for each series. For details on these options, see [Single and multi dimensional rule](#single-and-multi-dimensional-rule).
+   - For each expression, select either **Classic condition** to create a single alert rule, or choose from **Math**, **Reduce**, and **Resample** options to generate separate alert for each series. For details on these options, see [Single and multi dimensional rule](#single-and-multi-dimensional-rule).
    - Click **Run queries** to verify that the query is successful.
    - Next, select the query or expression for your alert condition.
 1. In Step 3, specify the alert evaluation interval.

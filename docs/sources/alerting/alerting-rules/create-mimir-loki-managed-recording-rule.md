@@ -48,7 +48,7 @@ To create a Grafana Mimir or Loki managed recording rule
    - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
 1. Click **Save** to save the recording rule or **Save and exit** to save the recording rule and go back to the Alerting page.
 
-<!-- delete-->
+<!-- delete next steps? -->
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. Click **Create alert rule**.
