@@ -15,6 +15,11 @@ import (
 )
 
 var (
+	errUserSignupDisabled = errutil.NewBase(
+		errutil.StatusUnauthorized,
+		"user.sync.signup-disabled",
+		errutil.WithPublicMessage("Sign up is disabled"),
+	)
 	errSyncUserForbidden = errutil.NewBase(
 		errutil.StatusForbidden,
 		"user.sync.forbidden",
@@ -22,7 +27,7 @@ var (
 	)
 	errSyncUserInternal = errutil.NewBase(
 		errutil.StatusInternal,
-		"user.sync.forbidden",
+		"user.sync.internal",
 		errutil.WithPublicMessage("User sync failed"),
 	)
 	errUserProtection = errutil.NewBase(
@@ -73,7 +78,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	if errors.Is(errUserInDB, user.ErrUserNotFound) {
 		if !id.ClientParams.AllowSignUp {
 			s.log.FromContext(ctx).Warn("Failed to create user, signup is not allowed for module", "auth_module", id.AuthModule, "auth_id", id.AuthID)
-			return errSyncUserForbidden.Errorf("%w", login.ErrSignupNotAllowed)
+			return errUserSignupDisabled.Errorf("%w", login.ErrSignupNotAllowed)
 		}
 
 		// create user

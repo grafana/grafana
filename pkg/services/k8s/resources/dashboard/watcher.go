@@ -19,7 +19,6 @@ import (
 var _ Watcher = (*watcher)(nil)
 
 type watcher struct {
-	enabled        bool
 	log            log.Logger
 	dashboardStore database.DashboardSQLStore
 	folders        folder.FolderStore
@@ -33,7 +32,6 @@ func ProvideWatcher(
 	folders folder.FolderStore,
 ) (*watcher, error) {
 	c := watcher{
-		enabled:        features.IsEnabled(featuremgmt.FlagK8S),
 		log:            log.New("k8s.dashboards.controller"),
 		dashboardStore: dashboardStore,
 		folders:        folders,
@@ -151,9 +149,4 @@ func (c *watcher) Delete(ctx context.Context, dash *Dashboard) error {
 		ID:    existing.ID,
 		OrgID: existing.OrgID,
 	})
-}
-
-// only run service if feature toggle is enabled
-func (c *watcher) IsDisabled() bool {
-	return !c.enabled
 }

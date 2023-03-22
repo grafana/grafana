@@ -37,7 +37,6 @@ export interface FeatureToggles {
   storage?: boolean;
   k8s?: boolean;
   exploreMixedDatasource?: boolean;
-  tracing?: boolean;
   newTraceView?: boolean;
   correlations?: boolean;
   cloudWatchDynamicLabels?: boolean;

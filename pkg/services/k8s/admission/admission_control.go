@@ -63,6 +63,7 @@ type AdmissionError interface {
 type MutatingResponse struct {
 	// PatchOperations is the list of patch ops to perform on the request as part of the mutation
 	PatchOperations []PatchOperation
+	Raw             runtime.Object
 }
 
 // ValidatingAdmissionController is an interface that describes any object which should validate admission of
