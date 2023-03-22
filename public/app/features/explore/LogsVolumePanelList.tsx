@@ -67,8 +67,8 @@ export const LogsVolumePanelList = ({
   } else if (timeoutError) {
     return (
       <SupplementaryResultError
-        title="The logs volume query is taking too long"
-        suggestion="Continue executing"
+        title="The logs volume query is taking too long and has timed out"
+        suggestion="Retry"
         onSuggestion={retry}
         onRemove={onClose}
       />
