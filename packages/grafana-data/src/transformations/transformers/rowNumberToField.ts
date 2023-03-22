@@ -30,7 +30,7 @@ export const rowNumberToFieldTransformer: SynchronousDataTransformerInfo<RowNumb
 // This will make sure the first field contains the row value
 function getFrameWithRowIndex(frame: DataFrame): DataFrame {
   const first = frame.fields[0];
-  if (first.values instanceof IndexVector) {
+  if (first?.values instanceof IndexVector) {
     return frame;
   }
   return {
