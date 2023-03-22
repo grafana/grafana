@@ -70,7 +70,7 @@ func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) re
 //
 // # Rotate the auth token of the caller
 //
-// Rotate the token of caller, if successful send and new session cookie.
+// Rotate the token of caller, if successful send a new session cookie.
 //
 // Responses:
 // 200: okResponse
