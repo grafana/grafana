@@ -243,18 +243,6 @@
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
       "title": "Paneles de la librería"
     },
-    "live": {
-      "title": "Transmisión de eventos"
-    },
-    "live-cloud": {
-      "title": "Nube"
-    },
-    "live-pipeline": {
-      "title": "Cartera"
-    },
-    "live-status": {
-      "title": "Estado"
-    },
     "manage-dashboards": {
       "title": "Navegar"
     },
