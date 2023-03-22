@@ -1,4 +1,6 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
+import { FieldType, DataFrame } from '../../types';
+import { ArrayVector } from '../../vector';
 import { getFieldMatcher } from '../matchers';
 
 import { FieldMatcherID } from './ids';
@@ -384,6 +386,37 @@ describe('Field Regexp or Names Matcher', () => {
     for (const field of seriesWithNames.fields) {
       expect(matcher(field, seriesWithNames, [seriesWithNames])).toBe(true);
     }
+  });
+
+  it('Support fallback name matchers', () => {
+    const frame: DataFrame = {
+      fields: [
+        { name: 'time', type: FieldType.time, config: {}, values: new ArrayVector([1, 2]) },
+        {
+          name: 'UP',
+          type: FieldType.number,
+          config: {},
+          values: new ArrayVector([1, 2]),
+          labels: { __name__: 'UP' },
+        },
+      ],
+      name: 'X',
+      length: 2,
+    };
+
+    let matcher = getFieldMatcher({
+      id: FieldMatcherID.byName,
+      options: 'Value',
+    });
+    expect(matcher(frame.fields[0], frame, [])).toBeFalsy();
+    expect(matcher(frame.fields[1], frame, [])).toBeTruthy();
+
+    matcher = getFieldMatcher({
+      id: FieldMatcherID.byName,
+      options: 'Time',
+    });
+    expect(matcher(frame.fields[0], frame, [])).toBeTruthy();
+    expect(matcher(frame.fields[1], frame, [])).toBeFalsy();
   });
 });
 
