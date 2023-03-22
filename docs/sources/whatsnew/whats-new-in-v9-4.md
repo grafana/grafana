@@ -20,7 +20,7 @@ We've made the following changes to search and navigation.
 
 ### Command palette enhancements
 
-_Generally available on Grafana Cloud, and available to preview using the `topNavCommandPalette` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) in all editions of Grafana._
+_Generally available in all editions of Grafana._
 
 The command palette has been updated to provide a more efficient way to navigate Grafana. You can now search and access all pages and recent dashboards, making it easier to perform tasks without taking your hands off the keyboard.
 
@@ -39,6 +39,8 @@ The navigation in Grafana has been updated with a new design and an improved str
 The new navigation is gradually rolling out to all users on Grafana Cloud. If you’re using Grafana Open Source and Enterprise, you can enable this feature using the `topnav` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}).
 
 > **Note:** The Grafana documentation has not yet been updated to reflect changes to the navigation.
+
+> **Note:** Plugin developers should refer to [the migration guide]({{< relref "../developers/plugins/migration-guide.md#supporting-new-navigation-layout" >}}) to upgrade their plugins to work seamlessly with the new navigation layout.
 
 {{< figure src="/media/docs/grafana/navigation-9-4.png" max-width="750px" caption="Grafana new navigation" >}}
 
@@ -251,12 +253,6 @@ We've added Discord as a contact point receiver for Grafana Cloud alert rules.
 ### Alerting: administration
 
 We've made the following changes to alert administration.
-
-#### Better guidance to configure your Alertmanagers
-
-Get additional help while configuring your Alertmanager. If you enter an invalid Alertmanager configuration, an error message displays, and you can choose from a previous working configuration to restart it.
-
-{{< figure src="/media/docs/alerting/alertmanager-config.png" max-width="750px" caption="Better guidance to configure your Alertmanager" >}}
 
 #### Alerting landing page
 

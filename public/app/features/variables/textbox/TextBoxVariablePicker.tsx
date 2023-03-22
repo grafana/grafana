@@ -1,9 +1,11 @@
 import React, { ChangeEvent, FocusEvent, KeyboardEvent, ReactElement, useCallback, useEffect, useState } from 'react';
 
 import { Input } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 
 import { variableAdapters } from '../adapters';
+import { VARIABLE_PREFIX } from '../constants';
 import { VariablePickerProps } from '../pickers/types';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { changeVariableProp } from '../state/sharedReducer';
@@ -70,8 +72,8 @@ export function TextBoxVariablePicker({ variable, onVariableChange, readOnly }: 
       onBlur={onBlur}
       disabled={readOnly}
       onKeyDown={onKeyDown}
-      placeholder="Enter variable value"
-      id={`var-${variable.id}`}
+      placeholder={t('variable.textbox.placeholder', 'Enter variable value')}
+      id={VARIABLE_PREFIX + variable.id}
     />
   );
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestIntegrationStatsDataAccess(t *testing.T) {
@@ -84,7 +85,7 @@ func populateDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 			Login:   fmt.Sprintf("user_test_%v_login", i),
 			OrgName: fmt.Sprintf("Org #%v", i),
 		}
-		user, err := userSvc.CreateUserForTests(context.Background(), &cmd)
+		user, err := userSvc.Create(context.Background(), &cmd)
 		require.NoError(t, err)
 		users[i] = *user
 	}
@@ -122,7 +123,7 @@ func TestIntegration_GetAdminStats(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	db := sqlstore.InitTestDB(t)
-	statsService := ProvideService(db)
+	statsService := ProvideService(&setting.Cfg{}, db)
 
 	query := stats.GetAdminStatsQuery{}
 	err := statsService.GetAdminStats(context.Background(), &query)

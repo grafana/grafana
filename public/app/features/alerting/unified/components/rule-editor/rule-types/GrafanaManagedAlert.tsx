@@ -1,10 +1,10 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { RuleFormType } from '../../../types/rule-form';
 
 import { RuleType, SharedProps } from './RuleType';
 
-const GrafanaManagedRuleType: FC<SharedProps> = ({ selected = false, disabled, onClick }) => {
+const GrafanaManagedRuleType = ({ selected = false, disabled, onClick }: SharedProps) => {
   return (
     <RuleType
       name="Grafana managed alert"

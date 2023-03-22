@@ -701,6 +701,9 @@ type Threshold struct {
 	// TODO docs
 	Color string `json:"color"`
 
+	// Threshold index, an old property that is not needed an should only appear in older dashboards
+	Index *int32 `json:"index,omitempty"`
+
 	// TODO docs
 	// TODO are the values here enumerable into a disjunction?
 	// Some seem to be listed in typescript comment

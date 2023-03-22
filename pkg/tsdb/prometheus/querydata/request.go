@@ -158,6 +158,14 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 			Error: err,
 		}
 	}
+
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			s.log.Warn("failed to close query range response body", "error", err)
+		}
+	}()
+
 	return s.parseResponse(ctx, q, res)
 }
 
@@ -168,6 +176,14 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 			Error: err,
 		}
 	}
+
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			s.log.Warn("failed to close response body", "error", err)
+		}
+	}()
+
 	return s.parseResponse(ctx, q, res)
 }
 
@@ -178,6 +194,13 @@ func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *mode
 			Error: err,
 		}
 	}
+
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			s.log.Warn("failed to close response body", "error", err)
+		}
+	}()
 	return s.parseResponse(ctx, q, res)
 }
 

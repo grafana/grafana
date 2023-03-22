@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
@@ -22,7 +22,7 @@ export interface Props {
   preprocessor?: PreprocessorType;
 }
 
-export const Alignment: FC<Props> = ({
+export const Alignment = ({
   refId,
   templateVariableOptions,
   onChange,
@@ -31,7 +31,7 @@ export const Alignment: FC<Props> = ({
   datasource,
   metricDescriptor,
   preprocessor,
-}) => {
+}: Props) => {
   const alignmentLabel = useMemo(() => alignmentPeriodLabel(customMetaData, datasource), [customMetaData, datasource]);
   return (
     <EditorFieldGroup>

@@ -75,9 +75,9 @@ export const getStyles = () => {
 export type ScrubberProps = {
   isDragging: boolean;
   position: number;
-  onMouseDown: (evt: React.MouseEvent<any>) => void;
-  onMouseEnter: (evt: React.MouseEvent<any>) => void;
-  onMouseLeave: (evt: React.MouseEvent<any>) => void;
+  onMouseDown: (evt: React.MouseEvent<SVGGElement>) => void;
+  onMouseEnter: (evt: React.MouseEvent<SVGGElement>) => void;
+  onMouseLeave: (evt: React.MouseEvent<SVGGElement>) => void;
 };
 
 export default function Scrubber({ isDragging, onMouseDown, onMouseEnter, onMouseLeave, position }: ScrubberProps) {

@@ -33,8 +33,9 @@ This topic shows you how to create an API key using the Grafana UI. You can also
 
 **To create an API key:**
 
-1. Sign in to Grafana, hover your cursor over **Configuration** (the gear icon), and click **API Keys**.
-1. Click **New API key**.
+1. Sign in to Grafana.
+1. Click **Administration** in the left-side menu and select **API Keys**.
+1. Click **Add API key**.
 1. Enter a unique name for the key.
 1. In the **Role** field, select one of the following access levels you want to assign to the key.
    - **Admin**: Enables a user to use APIs at the broadest, most powerful administrative level.
@@ -58,25 +59,16 @@ You can choose to migrate a single API key or all API keys. Note that when you m
 
 **To migrate all API keys to service accounts:**
 
-1. Sign in to Grafana, hover your cursor over **Configuration** (the gear icon), and click **API Keys**.
-2. In the top of the page, find the section which says **Switch from API keys to service accounts**
-3. Click **Migrate to service accounts now**.
-4. A confirmation window will appear, asking to confirm the migration. Click **Yes, migrate now** if you are willing to continue.
-5. Once migration is successful, you can choose to forever hide the API keys page. Click **Hide API keys page forever** if you want to do that.
+1. Sign in to Grafana.
+1. Click **Administration** in the left-side menu and select **API Keys**.
+1. In the top of the page, find the section that says Switch from API keys to service accounts.
+1. Click **Migrate to service accounts now**.
+1. A confirmation window will appear, asking to confirm the migration. Click **Yes, migrate now** if you are willing to continue.
+1. Once migration is successful, you can choose to forever hide the API keys page. Click **Hide API keys page forever** if you want to do that.
 
 **To migrate single API key to a service account:**
 
-1. Sign in to Grafana, hover your cursor over **Configuration** (the gear icon), and click **API Keys**.
+1. Sign in to Grafana.
+1. Click **Administration** in the left-side menu and select **API Keys**.
 1. Find the API Key you want to migrate.
 1. Click **Migrate to service account**.
-
-### Revert service account token to API key
-
-**Note:** This is undesired operation and should be used only in emergency situations.
-
-It is possible to convert back service account token to API key. You can use the [Revert service account token to API key HTTP API]({{< relref "../../developers/http_api/create-api-tokens-for-org/#how-to-create-a-new-organization-and-an-api-token" >}}) for that.
-
-**The revert will perform the following actions:**
-
-1. Convert the given service account token back to API key
-1. Delete the service account associated with the given key. **Make sure there are no other tokens associated with the service account, otherwise they all will be deleted.**

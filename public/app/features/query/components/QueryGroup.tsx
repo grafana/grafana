@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
+import { DropEvent, FileRejection } from 'react-dropzone';
 import { Unsubscribable } from 'rxjs';
 
 import {
   CoreApp,
+  DataFrameJSON,
+  dataFrameToJSON,
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -18,19 +21,19 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery, queryIsEmpty } from 'app/core/utils/query';
+import * as DFImport from 'app/features/dataframe-import';
+import { DataSourcePickerWithHistory } from 'app/features/datasource-drawer/DataSourcePickerWithHistory';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
+import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 
-import { isQueryWithMixedDatasource } from '../../query-library/api/SavedQueriesApi';
-import { getSavedQuerySrv } from '../../query-library/api/SavedQueriesSrv';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
 
 import { GroupActionComponents } from './QueryActionComponent';
 import { QueryEditorRows } from './QueryEditorRows';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
-import { SavedQueryPicker } from './SavedQueryPicker';
 
 export interface Props {
   queryRunner: PanelQueryRunner;
@@ -158,69 +161,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     });
   };
 
-  onChangeSavedQuery = async (savedQueryUid: string | null) => {
-    if (!savedQueryUid?.length) {
-      // leave the queries, remove the link
-      this.onChange({
-        queries: this.state.queries,
-        savedQueryUid: null,
-        dataSource: {
-          name: this.state.dsSettings?.name,
-          uid: this.state.dsSettings?.uid,
-          type: this.state.dsSettings?.meta.id,
-          default: this.state.dsSettings?.isDefault,
-        },
-      });
-
-      this.setState({
-        queries: this.state.queries,
-        savedQueryUid: null,
-        dataSource: this.state.dataSource,
-        dsSettings: this.state.dsSettings,
-      });
-      return;
-    }
-
-    const { dsSettings } = this.state;
-    const currentDS = dsSettings ? await getDataSourceSrv().get(dsSettings.uid) : undefined;
-
-    const resp = await getSavedQuerySrv().getSavedQueries([{ uid: savedQueryUid }]);
-    if (!resp?.length) {
-      throw new Error('TODO error handling');
-    }
-    const savedQuery = resp[0];
-    const isMixedDatasource = isQueryWithMixedDatasource(savedQuery);
-
-    const nextDS = isMixedDatasource
-      ? await getDataSourceSrv().get('-- Mixed --')
-      : await getDataSourceSrv().get(savedQuery.queries[0].datasource?.uid);
-
-    // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
-    const queries = await updateQueries(nextDS, nextDS.uid, savedQuery.queries, currentDS);
-
-    const newDsSettings = await getDataSourceSrv().getInstanceSettings(nextDS.uid);
-    if (!newDsSettings) {
-      throw new Error('TODO error handling');
-    }
-    this.onChange({
-      queries,
-      savedQueryUid: savedQueryUid,
-      dataSource: {
-        name: newDsSettings.name,
-        uid: newDsSettings.uid,
-        type: newDsSettings.meta.id,
-        default: newDsSettings.isDefault,
-      },
-    });
-
-    this.setState({
-      queries,
-      savedQueryUid,
-      dataSource: nextDS,
-      dsSettings: newDsSettings,
-    });
-  };
-
   onAddQueryClick = () => {
     const { queries } = this.state;
     this.onQueriesChange(addQuery(queries, this.newQuery()));
@@ -274,14 +214,32 @@ export class QueryGroup extends PureComponent<Props, State> {
             Data source
           </InlineFormLabel>
           <div className={styles.dataSourceRowItem}>
-            <DataSourcePicker
-              onChange={this.onChangeDataSource}
-              current={options.dataSource}
-              metrics={true}
-              mixed={true}
-              dashboard={true}
-              variables={true}
-            />
+            {config.featureToggles.drawerDataSourcePicker ? (
+              <DataSourcePickerWithHistory
+                onChange={this.onChangeDataSource}
+                current={options.dataSource}
+                metrics={true}
+                mixed={true}
+                dashboard={true}
+                variables={true}
+                enableFileUpload={config.featureToggles.editPanelCSVDragAndDrop}
+                fileUploadOptions={{
+                  onDrop: this.onFileDrop,
+                  maxSize: DFImport.maxFileSize,
+                  multiple: false,
+                  accept: DFImport.acceptedFiles,
+                }}
+              ></DataSourcePickerWithHistory>
+            ) : (
+              <DataSourcePicker
+                onChange={this.onChangeDataSource}
+                current={options.dataSource}
+                metrics={true}
+                mixed={true}
+                dashboard={true}
+                variables={true}
+              ></DataSourcePicker>
+            )}
           </div>
           {dataSource && (
             <>
@@ -316,18 +274,6 @@ export class QueryGroup extends PureComponent<Props, State> {
             </>
           )}
         </div>
-        {config.featureToggles.queryLibrary && (
-          <>
-            <div className={styles.dataSourceRow}>
-              <InlineFormLabel htmlFor="saved-query-picker" width={'auto'}>
-                Saved query
-              </InlineFormLabel>
-              <div className={styles.dataSourceRowItem}>
-                <SavedQueryPicker current={this.state.savedQueryUid} onChange={this.onChangeSavedQuery} />
-              </div>
-            </div>
-          </>
-        )}
       </div>
     );
   }
@@ -369,7 +315,32 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.onScrollBottom();
   };
 
-  onQueriesChange = (queries: DataQuery[]) => {
+  onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
+    DFImport.filesToDataframes(acceptedFiles).subscribe(async (next) => {
+      const snapshot: DataFrameJSON[] = [];
+      next.dataFrames.forEach((df) => {
+        const dataframeJson = dataFrameToJSON(df);
+        snapshot.push(dataframeJson);
+      });
+      const ds = getDataSourceSrv().getInstanceSettings('-- Grafana --');
+      await this.onChangeDataSource(ds!);
+      this.onQueriesChange([
+        {
+          refId: 'A',
+          datasource: {
+            type: 'grafana',
+            uid: 'grafana',
+          },
+          queryType: GrafanaQueryType.Snapshot,
+          snapshot: snapshot,
+          file: next.file,
+        },
+      ]);
+      this.props.onRunQueries();
+    });
+  };
+
+  onQueriesChange = (queries: DataQuery[] | GrafanaQuery[]) => {
     this.onChange({ queries });
     this.setState({ queries });
   };

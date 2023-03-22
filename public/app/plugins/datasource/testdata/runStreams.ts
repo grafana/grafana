@@ -151,8 +151,8 @@ export function runLogsStream(
     let timeoutId: ReturnType<typeof setTimeout>;
 
     const pushNextEvent = () => {
-      data.fields[0].values.add(Date.now());
-      data.fields[1].values.add(getRandomLine());
+      data.fields[0].values.add(getRandomLine());
+      data.fields[1].values.add(Date.now());
 
       subscriber.next({
         data: [data],

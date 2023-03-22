@@ -21,8 +21,8 @@ import (
 	serviceaccount "github.com/grafana/grafana/pkg/kinds/serviceaccount/crd"
 	team "github.com/grafana/grafana/pkg/kinds/team/crd"
 	user "github.com/grafana/grafana/pkg/kinds/user/crd"
-	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/registry/corekind"
+	"github.com/grafana/kindsys/k8ssys"
 	"gopkg.in/yaml.v3"
 )
 
