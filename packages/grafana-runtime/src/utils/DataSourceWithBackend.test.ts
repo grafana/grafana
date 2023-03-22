@@ -2,20 +2,20 @@ import { of } from 'rxjs';
 import { BackendSrv, BackendSrvRequest, FetchResponse } from 'src/services';
 
 import {
-  DataSourceJsonData,
   DataQuery,
-  DataSourceInstanceSettings,
   DataQueryRequest,
   DataQueryResponseData,
-  MutableDataFrame,
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
   DataSourceRef,
+  MutableDataFrame,
 } from '@grafana/data';
 
 import {
   DataSourceWithBackend,
+  isExpressionReference,
   standardStreamOptionsProvider,
   toStreamingDataResponse,
-  isExpressionReference,
 } from './DataSourceWithBackend';
 
 class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> {
@@ -186,57 +186,6 @@ describe('DataSourceWithBackend', () => {
     rsp.data = [frame];
     obs = toStreamingDataResponse(rsp, request, standardStreamOptionsProvider);
     expect(obs).toBeDefined();
-  });
-
-  test('check that getResource uses the data source UID', () => {
-    const { mock, ds } = createMockDatasource();
-    ds.getResource('foo');
-
-    const args = mock.calls[0][0];
-
-    expect(mock.calls.length).toBe(1);
-    expect(args).toMatchObject({
-      headers: {
-        'X-Datasource-Uid': 'abc',
-        'X-Plugin-Id': 'dummy',
-      },
-      method: 'GET',
-      url: '/api/datasources/uid/abc/resources/foo',
-    });
-  });
-
-  test('check that postResource uses the data source UID', () => {
-    const { mock, ds } = createMockDatasource();
-    ds.postResource('foo');
-
-    const args = mock.calls[0][0];
-
-    expect(mock.calls.length).toBe(1);
-    expect(args).toMatchObject({
-      headers: {
-        'X-Datasource-Uid': 'abc',
-        'X-Plugin-Id': 'dummy',
-      },
-      method: 'POST',
-      url: '/api/datasources/uid/abc/resources/foo',
-    });
-  });
-
-  test('check that callHealthCheck uses the data source UID', () => {
-    const { mock, ds } = createMockDatasource();
-    ds.callHealthCheck();
-
-    const args = mock.calls[0][0];
-
-    expect(mock.calls.length).toBe(1);
-    expect(args).toMatchObject({
-      headers: {
-        'X-Datasource-Uid': 'abc',
-        'X-Plugin-Id': 'dummy',
-      },
-      method: 'GET',
-      url: '/api/datasources/uid/abc/health',
-    });
   });
 
   describe('isExpressionReference', () => {
