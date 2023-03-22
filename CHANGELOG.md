@@ -694,6 +694,8 @@ The following functions and classes related to logs are deprecated in the `grafa
 
 <!-- 9.2.15 START -->
 
+# 9.2.15 (2023-03-22)
+
 <!-- 9.2.15 END -->
 
 <!-- 9.2.13 START -->
