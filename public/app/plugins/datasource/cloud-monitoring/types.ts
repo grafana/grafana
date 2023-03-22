@@ -182,7 +182,7 @@ export interface CloudMonitoringQuery extends DataQuery {
 export interface CloudMonitoringOptions extends DataSourceJsonData {
   defaultProject?: string;
   gceDefaultProject?: string;
-  authenticationType: GoogleAuthType;
+  authenticationType: string;
   clientEmail?: string;
   tokenUri?: string;
 }
