@@ -3,7 +3,7 @@ import {
   DataSourceInstanceSettings,
   DataSourcePlugin,
   DataSourcePluginMeta,
-  ScopedVar,
+  ScopedVars,
 } from '@grafana/data';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
@@ -25,7 +25,7 @@ const templateSrv: any = {
       },
     },
   ],
-  replace: (v: string, scopedVars: ScopedVar) => {
+  replace: (v: string, scopedVars: ScopedVars) => {
     if (scopedVars && scopedVars.datasource) {
       return v.replace('${datasource}', scopedVars.datasource.value);
     }
