@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../installation/restart-grafana/
-  - ../setup/restart-grafana/
+  - ../setup-grafana/restart-grafana/
 description: How to start the Grafana server
 title: Start the Grafana server
 menuTitle: Start Grafana
