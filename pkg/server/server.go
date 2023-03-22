@@ -35,9 +35,9 @@ type Options struct {
 
 // New returns a new instance of Server.
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
-	provisioningService provisioning.ProvisioningService, moduleRegistry moduleRegistry.Registry,
+	provisioningService provisioning.ProvisioningService, moduleService modules.Engine,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
-	moduleService modules.Engine,
+	_ moduleRegistry.Registry, // imported to invoke initialization via Wire
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
 	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, moduleService)

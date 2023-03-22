@@ -32,6 +32,7 @@ func newRegistry(logger log.Logger, moduleManager modules.Manager, svcs ...servi
 		moduleManager: moduleManager,
 	}
 
+	// Register (invisible) modules which act solely as dependencies to module targets
 	for _, svc := range svcs {
 		s := svc
 		logger.Debug("Registering invisible module", "name", s.ServiceName())
@@ -40,6 +41,7 @@ func newRegistry(logger log.Logger, moduleManager modules.Manager, svcs ...servi
 		})
 	}
 
+	// Register module targets
 	logger.Debug("Registering module", "name", modules.All)
 	r.moduleManager.RegisterModule(modules.All, nil)
 
