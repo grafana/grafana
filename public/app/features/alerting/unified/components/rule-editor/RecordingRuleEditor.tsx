@@ -13,11 +13,12 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 import { TABLE, TIMESERIES } from '../../utils/constants';
 import { SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
 
+import { useQueryMappers } from './ExpressionEditor';
 import { VizWrapper } from './VizWrapper';
 
 export interface RecordingRuleEditorProps {
   queries: AlertQuery[];
-  onChangeQuery: (updatedQueries: AlertQuery[]) => void;
+  onChangeQuery: (updatedQueries: AlertQuery[], expression: string) => void;
   runQueries: (queries: AlertQuery[]) => void;
   panelData: Record<string, PanelData>;
   dataSourceName: string;
@@ -54,23 +55,25 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
     return getDataSourceSrv().get(dataSourceName);
   }, [dataSourceName]);
 
+  const { mapToValue } = useQueryMappers(dataSourceName);
+
   const handleChangedQuery = (changedQuery: DataQuery) => {
     const query = queries[0];
+
+    const expr = mapToValue(changedQuery);
 
     const merged = {
       ...query,
       refId: changedQuery.refId,
       queryType: query.model.queryType ?? '',
-      //@ts-ignore
-      expr: changedQuery?.expr,
+      expr,
       model: {
         refId: changedQuery.refId,
-        //@ts-ignore
-        expr: changedQuery?.expr,
+        expr,
         editorMode: 'code',
       },
     };
-    onChangeQuery([merged]);
+    onChangeQuery([merged], expr);
   };
 
   if (loading || dataSource?.name !== dataSourceName) {
