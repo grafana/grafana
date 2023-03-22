@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -40,14 +41,17 @@ const (
 var logger = plog.New("plugin.instrumentation")
 
 // instrumentPluginRequest instruments success rate and latency of `fn`
-func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.PluginContext, endpoint string, fn func() error) error {
+func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.PluginContext, endpoint string, tracer tracing.Tracer, fn func() error, extraTraceAttributes map[string]interface{}) error {
 	status := statusOK
 
 	start := time.Now()
 	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
+	traceCtx, span := tracer.Start(ctx, "plugin.request."+endpoint)
+	defer span.End()
 	err := fn()
 	if err != nil {
+		span.RecordError(err)
 		status = statusError
 		if errors.Is(err, context.Canceled) {
 			status = statusCancelled
@@ -58,37 +62,48 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 	pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, string(cfg.Target)).Observe(float64(elapsed / time.Millisecond))
 	pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status, string(cfg.Target)).Inc()
 
-	if cfg.LogDatasourceRequests {
-		logParams := []interface{}{
-			"status", status,
-			"duration", elapsed,
-			"pluginId", pluginCtx.PluginID,
-			"endpoint", endpoint,
-			"eventName", "grafana-data-egress",
-			"time_before_plugin_request", timeBeforePluginRequest,
-		}
-
-		if pluginCtx.User != nil {
-			logParams = append(logParams, "uname", pluginCtx.User.Login)
-		}
-
-		traceID := tracing.TraceIDFromContext(ctx, false)
-		if traceID != "" {
-			logParams = append(logParams, "traceID", traceID)
-		}
-
-		if pluginCtx.DataSourceInstanceSettings != nil {
-			logParams = append(logParams, "dsName", pluginCtx.DataSourceInstanceSettings.Name)
-			logParams = append(logParams, "dsUID", pluginCtx.DataSourceInstanceSettings.UID)
-		}
-
-		if status == statusError {
-			logParams = append(logParams, "error", err)
-		}
-
-		logger.Info("Plugin Request Completed", logParams...)
+	instrumentationParams := map[string]interface{}{
+		"status":                     status,
+		"duration":                   elapsed,
+		"pluginId":                   pluginCtx.PluginID,
+		"endpoint":                   endpoint,
+		"eventName":                  "grafana-data-egress",
+		"time_before_plugin_request": timeBeforePluginRequest,
 	}
 
+	if pluginCtx.User != nil {
+		instrumentationParams["uname"] = pluginCtx.User.Login
+	}
+
+	traceID := tracing.TraceIDFromContext(traceCtx, false)
+	if traceID != "" {
+		instrumentationParams["traceID"] = traceID
+	}
+
+	if pluginCtx.DataSourceInstanceSettings != nil {
+		instrumentationParams["dsName"] = pluginCtx.DataSourceInstanceSettings.Name
+		instrumentationParams["dsUID"] = pluginCtx.DataSourceInstanceSettings.UID
+	}
+
+	if status == statusError {
+		instrumentationParams["error"] = err
+	}
+
+	logParams := make([]interface{}, 0, len(instrumentationParams)/2)
+	for key, value := range instrumentationParams {
+		logParams = append(logParams, key, value)
+		if key != "TraceID" {
+			addToTrace(span, key, value)
+		}
+	}
+
+	if cfg.LogDatasourceRequests {
+		logger.Info("Plugin Request Completed", logParams...)
+	}
+	for key, value := range extraTraceAttributes {
+		span.SetAttributes(key, value, attribute.Key(key).String(value.(string)))
+	}
+	
 	return err
 }
 
@@ -98,21 +113,42 @@ type Cfg struct {
 }
 
 // InstrumentCollectMetrics instruments collectMetrics.
-func InstrumentCollectMetrics(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
-	return instrumentPluginRequest(ctx, cfg, req, "collectMetrics", fn)
+func InstrumentCollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest, cfg Cfg, tracer tracing.Tracer, fn func() error) error {
+	return instrumentPluginRequest(ctx, cfg, &req.PluginContext, "collectMetrics", tracer, fn, nil)
 }
 
 // InstrumentCheckHealthRequest instruments checkHealth.
-func InstrumentCheckHealthRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
-	return instrumentPluginRequest(ctx, cfg, req, "checkHealth", fn)
+func InstrumentCheckHealthRequest(ctx context.Context, req *backend.CheckHealthRequest, cfg Cfg, tracer tracing.Tracer, fn func() error) error {
+	return instrumentPluginRequest(ctx, cfg, &req.PluginContext, "checkHealth", tracer, fn, nil)
 }
 
 // InstrumentCallResourceRequest instruments callResource.
-func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
-	return instrumentPluginRequest(ctx, cfg, req, "callResource", fn)
+func InstrumentCallResourceRequest(ctx context.Context, req *backend.CallResourceRequest, cfg Cfg, tracer tracing.Tracer, fn func() error) error {
+	return instrumentPluginRequest(ctx, cfg, &req.PluginContext, "callResource", tracer, fn, map[string]interface{}{
+		"dashboard_uid": req.GetHTTPHeader("X-Dashboard-Uid"),
+		"panel_id":     req.GetHTTPHeader("X-Panel-Id"),
+	})
 }
 
 // InstrumentQueryDataRequest instruments success rate and latency of query data requests.
-func InstrumentQueryDataRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
-	return instrumentPluginRequest(ctx, cfg, req, "queryData", fn)
+func InstrumentQueryDataRequest(ctx context.Context, req *backend.QueryDataRequest, cfg Cfg, tracer tracing.Tracer, fn func() error) error {
+	return instrumentPluginRequest(ctx, cfg, &req.PluginContext, "queryData", tracer, fn, map[string]interface{}{
+		"dashboard_uid": req.GetHTTPHeader("X-Dashboard-Uid"),
+		"panel_id":     req.GetHTTPHeader("X-Panel-Id"),
+	})
+}
+
+func addToTrace(span tracing.Span, key string, value interface{}) {
+	switch value.(type) {
+	case string:
+		span.SetAttributes(key, value.(string), attribute.Key(key).String(value.(string)))
+	case int64:
+		span.SetAttributes(key, value.(int64), attribute.Key(key).Int64(value.(int64)))
+	case int:
+		span.SetAttributes(key, value.(int), attribute.Key(key).Int(value.(int)))
+	case bool:
+		span.SetAttributes(key, value.(bool), attribute.Key(key).Bool(value.(bool)))
+	case float64:
+		span.SetAttributes(key, value.(float64), attribute.Key(key).Float64(value.(float64)))
+	}
 }
