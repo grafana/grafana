@@ -11,6 +11,12 @@ import { Explore, Props } from './Explore';
 import { scanStopAction } from './state/query';
 import { createEmptyQueryResponse } from './state/utils';
 
+const resizeWindow = (x: number, y: number) => {
+  window.innerWidth = x;
+  window.innerHeight = y;
+  window.dispatchEvent(new Event('resize'));
+};
+
 const makeEmptyQueryResponse = (loadingState: LoadingState) => {
   const baseEmptyResponse = createEmptyQueryResponse();
 
@@ -142,5 +148,14 @@ describe('Explore', () => {
     await screen.findByText('Explore');
 
     expect(screen.getByTestId('explore-no-data')).toBeInTheDocument();
+  });
+
+  it('should render data source picker on small screens', async () => {
+    setup();
+    resizeWindow(500, 500);
+
+    const dataSourcePicker = await screen.findByLabelText('Data source picker select container');
+
+    expect(dataSourcePicker).toBeInTheDocument();
   });
 });
