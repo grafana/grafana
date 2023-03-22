@@ -10,8 +10,6 @@ weight: 400
 
 {{< docs/shared "influxdb/intro.md" >}}
 
-{{< docs/shared "getting-started/first-step.md" >}}
-
 #### Get InfluxDB
 
 You can [download InfluxDB](https://portal.influxdata.com/downloads/) and install it locally or you can sign up for [InfluxDB Cloud](https://www.influxdata.com/products/influxdb-cloud/). Windows installers are not available for some versions of InfluxDB.

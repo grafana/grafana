@@ -99,7 +99,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 		r := s.fetch(ctx, s.client, query, req.Headers)
 		if r == nil {
-			s.log.FromContext(ctx).Debug("Received nilresponse from runQuery", "query", query.Expr)
+			s.log.FromContext(ctx).Debug("Received nil response from runQuery", "query", query.Expr)
 			continue
 		}
 		result.Responses[q.RefID] = *r

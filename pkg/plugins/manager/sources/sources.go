@@ -26,9 +26,9 @@ func ProvideService(gCfg *setting.Cfg, cfg *config.Cfg) *Service {
 
 func (s *Service) List(_ context.Context) []plugins.PluginSource {
 	return []plugins.PluginSource{
-		{Class: plugins.Core, Paths: corePluginPaths(s.gCfg.StaticRootPath)},
-		{Class: plugins.Bundled, Paths: []string{s.gCfg.BundledPluginsPath}},
-		{Class: plugins.External, Paths: append([]string{s.cfg.PluginsPath}, pluginFSPaths(s.cfg.PluginSettings)...)},
+		NewLocalSource(plugins.Core, corePluginPaths(s.gCfg.StaticRootPath)),
+		NewLocalSource(plugins.Bundled, []string{s.gCfg.BundledPluginsPath}),
+		NewLocalSource(plugins.External, append([]string{s.cfg.PluginsPath}, pluginFSPaths(s.cfg.PluginSettings)...)),
 	}
 }
 

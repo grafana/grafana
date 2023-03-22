@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -32,7 +32,7 @@ interface Props {
   hideActions?: boolean;
 }
 
-export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTimingNames, hideActions }) => {
+export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hideActions }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const permissions = getNotificationsPermissions(alertManagerSourceName);

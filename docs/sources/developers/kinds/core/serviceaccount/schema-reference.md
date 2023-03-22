@@ -24,8 +24,8 @@ system account
 | `role`          | string             | **Yes**  |         | OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.<br/>Possible values are: `Admin`, `Editor`, `Viewer`.  |
 | `tokens`        | integer            | **Yes**  |         | Tokens is the number of active tokens for the service account.<br/>Tokens are used to authenticate the service account against Grafana. |
 | `accessControl` | map[string]boolean | No       |         | AccessControl metadata associated with a given resource.                                                                                |
-| `created`       | integer            | No       |         | Created indicates when the service account was created.                                                                                 |
+| `created`       | string             | No       |         | Created indicates when the service account was created.                                                                                 |
 | `teams`         | string[]           | No       |         | Teams is a list of teams the service account belongs to.                                                                                |
-| `updated`       | integer            | No       |         | Updated indicates when the service account was updated.                                                                                 |
+| `updated`       | string             | No       |         | Updated indicates when the service account was updated.                                                                                 |
 
 

@@ -692,6 +692,12 @@ The following functions and classes related to logs are deprecated in the `grafa
 - **Toolkit:** Deprecate `component:create` command. [#56086](https://github.com/grafana/grafana/pull/56086), [@academo](https://github.com/academo)
 - **Toolkit:** Remove changelog command. [#56073](https://github.com/grafana/grafana/pull/56073), [@gitstart](https://github.com/gitstart)
 
+<!-- 9.2.15 START -->
+
+# 9.2.15 (2023-03-22)
+
+<!-- 9.2.15 END -->
+
 <!-- 9.2.13 START -->
 
 <!-- 9.2.13 END -->
@@ -2377,6 +2383,12 @@ Make sure to handle possible errors on the callsite where using `backendSrv.fetc
 In the Loki data source, for consistency and performance reasons, we changed how we represent `NaN` (not a number) values received from Loki. In the past versions, we converted these to `null` in the frontend (for dashboard and explore), and kept as `NaN` in the alerting path. Starting with this version, we will always keep it as `NaN`. This change should be mostly invisible for the users. Issue [#45389](https://github.com/grafana/grafana/issues/45389)
 
 The dependency to [grafana/aws-sdk](https://github.com/grafana/grafana-aws-sdk-react) is moved from [grafana/ui](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/package.json) to the plugin. This means that any plugin that use SIGV4 auth need to pass a SIGV4 editor component as a prop to the `DataSourceHttpSettings` component. Issue [#43559](https://github.com/grafana/grafana/issues/43559)
+
+<!-- 8.5.22 START -->
+
+# 8.5.22 (2023-03-22)
+
+<!-- 8.5.22 END -->
 
 <!-- 8.5.21 START -->
 

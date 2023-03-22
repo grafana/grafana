@@ -67,14 +67,6 @@ const (
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
 
-	// FlagDashboardComments
-	// Enable dashboard-wide comments
-	FlagDashboardComments = "dashboardComments"
-
-	// FlagAnnotationComments
-	// Enable annotation comments
-	FlagAnnotationComments = "annotationComments"
-
 	// FlagMigrationLocking
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
@@ -83,21 +75,13 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagK8s
+	// FlagK8S
 	// Explore native k8s integrations
-	FlagK8s = "k8s"
-
-	// FlagDashboardsFromStorage
-	// Load dashboards from the generic storage interface
-	FlagDashboardsFromStorage = "dashboardsFromStorage"
+	FlagK8S = "k8s"
 
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
-
-	// FlagTracing
-	// Adds trace ID to error notifications
-	FlagTracing = "tracing"
 
 	// FlagNewTraceView
 	// Shows the new trace view design
@@ -187,10 +171,6 @@ const (
 	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
 	FlagNewPanelChromeUI = "newPanelChromeUI"
 
-	// FlagQueryLibrary
-	// Reusable query library
-	FlagQueryLibrary = "queryLibrary"
-
 	// FlagShowDashboardValidationWarnings
 	// Show warnings when dashboards do not validate against the schema
 	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
@@ -255,6 +235,10 @@ const (
 	// Split large interval queries into subqueries with smaller time intervals
 	FlagLokiQuerySplitting = "lokiQuerySplitting"
 
+	// FlagLokiQuerySplittingConfig
+	// Give users the option to configure split durations for Loki queries
+	FlagLokiQuerySplittingConfig = "lokiQuerySplittingConfig"
+
 	// FlagIndividualCookiePreferences
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
@@ -270,4 +254,12 @@ const (
 	// FlagPrometheusMetricEncyclopedia
 	// Replaces the Prometheus query builder metric select option with a paginated and filterable component
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
+
+	// FlagTimeSeriesTable
+	// Enable time series table transformer &amp; sparkline cell type
+	FlagTimeSeriesTable = "timeSeriesTable"
+
+	// FlagInfluxdbBackendMigration
+	// Query InfluxDB InfluxQL without the proxy
+	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 )
