@@ -140,7 +140,7 @@ var (
 	RudderstackConfigUrl                string
 
 	// LDAP
-	LDAPEnabled           bool
+	LDAPAuthEnabled       bool
 	LDAPSkipOrgRoleSync   bool
 	LDAPConfigFile        string
 	LDAPSyncCron          string
@@ -428,18 +428,28 @@ type Cfg struct {
 	// Frontend analytics
 	IntercomSecret string
 	// AzureAD
+	AzureADEnabled         bool
 	AzureADSkipOrgRoleSync bool
 
 	// Google
+	GoogleAuthEnabled     bool
 	GoogleSkipOrgRoleSync bool
 
 	// Gitlab
+	GitLabAuthEnabled     bool
 	GitLabSkipOrgRoleSync bool
 
+	// Generic OAuth
+	GenericOAuthAuthEnabled     bool
+	GenericOAuthSkipOrgRoleSync bool
+
 	// LDAP
-	LDAPEnabled         bool
-	LDAPSkipOrgRoleSync bool
-	LDAPAllowSignup     bool
+	LDAPAuthEnabled       bool
+	LDAPSkipOrgRoleSync   bool
+	LDAPConfigFilePath    string
+	LDAPAllowSignup       bool
+	LDAPActiveSyncEnabled bool
+	LDAPSyncCron          string
 
 	DefaultTheme    string
 	DefaultLanguage string
@@ -470,8 +480,9 @@ type Cfg struct {
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
 
-	// Github OAuth
-	GithubSkipOrgRoleSync bool
+	// GitHub OAuth
+	GitHubAuthEnabled     bool
+	GitHubSkipOrgRoleSync bool
 
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
@@ -479,6 +490,8 @@ type Cfg struct {
 	// in case API is not publicly accessible.
 	// Defaults to GrafanaComURL setting + "/api" if unset.
 	GrafanaComAPIURL string
+	// Grafana.com Auth enabled
+	GrafanaComAuthEnabled bool
 	// GrafanaComSkipOrgRoleSync can be set for
 	// letting users set org roles from within Grafana and
 	// skip the org roles coming from GrafanaCom
@@ -502,7 +515,12 @@ type Cfg struct {
 
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
+	// SAML Auth
+	SAMLAuthEnabled     bool
+	SAMLSkipOrgRoleSync bool
+
 	// Okta OAuth
+	OktaAuthEnabled     bool
 	OktaSkipOrgRoleSync bool
 
 	// Access Control
@@ -1094,6 +1112,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	cfg.readLDAPConfig()
+	cfg.readSAMLConfig()
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
 	cfg.readSessionConfig()
@@ -1192,17 +1211,26 @@ type RemoteCacheOptions struct {
 	Encryption bool
 }
 
+func (cfg *Cfg) readSAMLConfig() {
+	samlSec := cfg.Raw.Section("auth.saml")
+	cfg.SAMLAuthEnabled = samlSec.Key("enabled").MustBool(false)
+	cfg.SAMLSkipOrgRoleSync = samlSec.Key("skip_org_role_sync").MustBool(false)
+}
+
 func (cfg *Cfg) readLDAPConfig() {
 	ldapSec := cfg.Raw.Section("auth.ldap")
 	LDAPConfigFile = ldapSec.Key("config_file").String()
 	LDAPSyncCron = ldapSec.Key("sync_cron").String()
-	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
-	cfg.LDAPEnabled = LDAPEnabled
+	LDAPAuthEnabled = ldapSec.Key("enabled").MustBool(false)
+	cfg.LDAPConfigFilePath = ldapSec.Key("config_file").String()
+	cfg.LDAPSyncCron = ldapSec.Key("sync_cron").String()
+	cfg.LDAPAuthEnabled = ldapSec.Key("enabled").MustBool(false)
 	LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
-	cfg.LDAPSkipOrgRoleSync = LDAPSkipOrgRoleSync
+	cfg.LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
 	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
+	cfg.LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
 	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
-	cfg.LDAPAllowSignup = LDAPAllowSignup
+	cfg.LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 }
 
 func (cfg *Cfg) handleAWSConfig() {
@@ -1377,31 +1405,43 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 }
 func readAuthAzureADSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.azuread")
+	cfg.AzureADEnabled = sec.Key("enabled").MustBool(false)
 	cfg.AzureADSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
 func readAuthGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.grafana_com")
+	cfg.GrafanaComAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
 func readAuthGithubSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.github")
-	cfg.GithubSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+	cfg.GitHubAuthEnabled = sec.Key("enabled").MustBool(false)
+	cfg.GitHubSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
 func readAuthGoogleSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.google")
+	cfg.GoogleAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
 func readAuthGitlabSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.gitlab")
+	cfg.GitLabAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GitLabSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
+func readGenericOAuthSettings(iniFile *ini.File, cfg *Cfg) {
+	sec := iniFile.Section("auth.generic_oauth")
+	cfg.GenericOAuthAuthEnabled = sec.Key("enabled").MustBool(false)
+	cfg.GenericOAuthSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
 func readAuthOktaSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.okta")
+	cfg.OktaAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.OktaSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
@@ -1464,6 +1504,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// GitLab Auth
 	readAuthGitlabSettings(iniFile, cfg)
+	// genericOAuth
+	readGenericOAuthSettings(iniFile, cfg)
 
 	// Okta Auth
 	readAuthOktaSettings(iniFile, cfg)

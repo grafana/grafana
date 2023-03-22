@@ -424,6 +424,11 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:        "onlyExternalOrgRoleSync",
+			Description: "Prohibits a user from changing organization roles synced with external auth providers",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:         "prometheusMetricEncyclopedia",
 			Description:  "Replaces the Prometheus query builder metric select option with a paginated and filterable component",
 			State:        FeatureStateAlpha,

@@ -38,10 +38,10 @@ var getLDAPConfig = ldap.GetConfig
 // isLDAPEnabled checks if LDAP is enabled
 var isLDAPEnabled = func(cfg *setting.Cfg) bool {
 	if cfg != nil {
-		return cfg.LDAPEnabled
+		return cfg.LDAPAuthEnabled
 	}
 
-	return setting.LDAPEnabled
+	return setting.LDAPAuthEnabled
 }
 
 // newLDAP creates multiple LDAP instance
