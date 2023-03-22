@@ -2,6 +2,7 @@ import { Editor as SlateEditor } from 'slate';
 import Plain from 'slate-plain-serializer';
 
 import { AbstractLabelOperator, dateTime, HistoryItem, TimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SearchFunctionType } from '@grafana/ui';
 
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
@@ -97,7 +98,53 @@ describe('Language completion provider', () => {
     });
   });
 
+  // @todo clean up prometheusResourceBrowserCache feature flag
+  describe('getSeriesLabelsDeprecatedLRU', () => {
+    beforeEach(() => {
+      config.featureToggles.prometheusResourceBrowserCache = false;
+    });
+    it('should call labels endpoint', () => {
+      const languageProvider = new LanguageProvider({
+        ...defaultDatasource,
+        hasLabelsMatchAPISupport: () => true,
+      } as PrometheusDatasource);
+      const getSeriesLabels = languageProvider.getSeriesLabels;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+
+      const labelName = 'job';
+      const labelValue = 'grafana';
+      getSeriesLabels(`{${labelName}="${labelValue}"}`, [{ name: labelName, value: labelValue, op: '=' }] as Label[]);
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith(`/api/v1/labels`, [], {
+        end: toPrometheusTimeString,
+        'match[]': '{job="grafana"}',
+        start: fromPrometheusTimeString,
+      });
+    });
+
+    it('should call series endpoint', () => {
+      const languageProvider = new LanguageProvider({
+        ...defaultDatasource,
+        getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.None, getMockQuantizedTimeRangeParams()),
+      } as PrometheusDatasource);
+      const getSeriesLabels = languageProvider.getSeriesLabels;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+
+      const labelName = 'job';
+      const labelValue = 'grafana';
+      getSeriesLabels(`{${labelName}="${labelValue}"}`, [{ name: labelName, value: labelValue, op: '=' }] as Label[]);
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith('/api/v1/series', [], {
+        end: toPrometheusTimeString,
+        'match[]': '{job="grafana"}',
+        start: fromPrometheusTimeString,
+      });
+    });
+  });
   describe('getSeriesLabels', () => {
+    beforeEach(() => {
+      config.featureToggles.prometheusResourceBrowserCache = true;
+    });
     it('should call labels endpoint', () => {
       const languageProvider = new LanguageProvider({
         ...defaultDatasource,
@@ -812,6 +859,23 @@ describe('Language completion provider', () => {
       expect(mockedMetadataRequest.mock.calls.length).toBe(0);
       await instance.start();
       expect(mockedMetadataRequest.mock.calls.length).toBeGreaterThan(0);
+    });
+
+    it('doesnt blow up if metadata or fetchLabels rejects', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
+      const datasource: PrometheusDatasource = {
+        ...defaultDatasource,
+        metadataRequest: jest.fn(() => Promise.reject('rejected')),
+        lookupsDisabled: false,
+      } as unknown as PrometheusDatasource;
+      const mockedMetadataRequest = jest.mocked(datasource.metadataRequest);
+      const instance = new LanguageProvider(datasource);
+
+      expect(mockedMetadataRequest.mock.calls.length).toBe(0);
+      const result = await instance.start();
+      expect(result[0]).toBeUndefined();
+      expect(result[1]).toEqual([]);
+      expect(mockedMetadataRequest.mock.calls.length).toBe(3);
     });
   });
 
