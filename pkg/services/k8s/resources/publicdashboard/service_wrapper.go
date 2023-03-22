@@ -42,7 +42,7 @@ func ProvideService(
 	}, nil
 }
 
-// SaveDashboard saves the dashboard to kubernetes
+// Create saves the dashboard to kubernetes
 func (s *ServiceWrapper) Create(ctx context.Context, u *user.SignedInUser, dto *publicdashboardModels.SavePublicDashboardDTO) (*publicdashboardModels.PublicDashboard, error) {
 	// set params from DTO on model and use model from here down
 	pd := dto.PublicDashboard
@@ -85,4 +85,14 @@ func (s *ServiceWrapper) Create(ctx context.Context, u *user.SignedInUser, dto *
 	s.log.Debug("wait for revision", "revision", rv)
 
 	return pd, nil
+}
+
+// Delete removes the dashboard from kubernetes
+func (s *ServiceWrapper) Delete(ctx context.Context, uid string) error {
+	publicdashboardResource, err := s.clientset.GetClientset().GetResourceClient(CRD)
+	if err != nil {
+		return fmt.Errorf("provideServiceWrapper failed to get public dashboard resource client: %w", err)
+	}
+
+	return publicdashboardResource.Delete(ctx, uid, *metav1.NewDeleteOptions(0))
 }

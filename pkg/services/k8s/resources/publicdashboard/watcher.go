@@ -55,6 +55,16 @@ func (w *watcher) Update(ctx context.Context, oldObj, newObj *PublicDashboard) e
 }
 
 func (w *watcher) Delete(ctx context.Context, obj *PublicDashboard) error {
-	// TODO
-	return nil
+	existing, err := w.publicDashboardStore.Find(ctx, obj.Spec.Uid)
+	if err != nil {
+		return err
+	}
+
+	// no public dashboard
+	if existing == nil {
+		return nil
+	}
+
+	_, err = w.publicDashboardStore.Delete(ctx, existing.Uid)
+	return err
 }
