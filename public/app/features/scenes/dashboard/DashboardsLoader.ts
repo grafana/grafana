@@ -25,7 +25,7 @@ import {
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { isDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { DashboardQuery } from 'app/plugins/datasource/dashboard/types';
 import { graphToTimeseriesOptions } from 'app/plugins/panel/timeseries/migrations';
 import { DashboardDTO } from 'app/types';
@@ -97,8 +97,8 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
   const createVizPanel = (panel: PanelModel): VizPanel => {
     const viz = createVizPanelFromPanelModel(panel);
     panelsByID.set(panel.id, viz);
-    const firstQuery = panel.targets?.[0] as DashboardQuery;
-    if (firstQuery?.datasource?.uid === SHARED_DASHBOARD_QUERY && firstQuery.panelId) {
+    const firstQuery = panel.targets?.[0];
+    if (isDashboardQuery(firstQuery) && firstQuery.panelId) {
       sharedQueries.set(panel.id, firstQuery);
     }
     return viz;
