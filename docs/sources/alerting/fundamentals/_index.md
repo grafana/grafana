@@ -2,7 +2,7 @@
 aliases:
   - metrics/
   - unified-alerting/fundamentals/
-title: Explore Alerting
+title: Introduction to Alerting
 weight: 105
 ---
 

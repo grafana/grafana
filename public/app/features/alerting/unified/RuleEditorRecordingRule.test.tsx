@@ -13,22 +13,35 @@ import { searchFolders } from '../../manage-dashboards/state/actions';
 
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
-import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
+import { RecordingRuleEditorProps } from './components/rule-editor/RecordingRuleEditor';
 import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 
-jest.mock('./components/rule-editor/ExpressionEditor', () => ({
-  // eslint-disable-next-line react/display-name
-  ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
-    <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
-  ),
+jest.mock('./components/rule-editor/RecordingRuleEditor', () => ({
+  RecordingRuleEditor: ({ queries, onChangeQuery }: Pick<RecordingRuleEditorProps, 'queries' | 'onChangeQuery'>) => {
+    const onChange = (expr: string) => {
+      const query = queries[0];
+
+      const merged = {
+        ...query,
+        expr,
+        model: {
+          ...query.model,
+          expr,
+        },
+      };
+
+      onChangeQuery([merged]);
+    };
+
+    return <input data-testid="expr" onChange={(e) => onChange(e.target.value)} />;
+  },
 }));
 
 jest.mock('./api/buildInfo');
 jest.mock('./api/ruler');
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
-
 // there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
 // lets just skip it
 jest.mock('app/features/query/components/QueryEditorRow', () => ({
@@ -37,6 +50,25 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 }));
 
 jest.spyOn(config, 'getAllDataSources');
+
+const dataSources = {
+  default: mockDataSource(
+    {
+      type: 'prometheus',
+      name: 'Prom',
+      isDefault: true,
+    },
+    { alerting: true }
+  ),
+};
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(() => ({
+    getInstanceSettings: () => dataSources.default,
+    get: () => dataSources.default,
+  })),
+}));
 
 jest.setTimeout(60 * 1000);
 
@@ -64,17 +96,6 @@ describe('RuleEditor recording rules', () => {
 
   disableRBAC();
   it('can create a new cloud recording rule', async () => {
-    const dataSources = {
-      default: mockDataSource(
-        {
-          type: 'prometheus',
-          name: 'Prom',
-          isDefault: true,
-        },
-        { alerting: true }
-      ),
-    };
-
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
