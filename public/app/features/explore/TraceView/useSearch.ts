@@ -3,18 +3,27 @@ import { useMemo, useState } from 'react';
 import { filterSpans, TraceSpan } from './components';
 
 export interface SearchProps {
-  text?: string;
-  spanName?: string;
   serviceName?: string;
+  serviceNameOperator?: string;
+  spanName?: string;
+  spanNameOperator?: string;
+  from?: string;
+  fromOperator?: string;
+  to?: string;
+  toOperator?: string;
   tags?: string;
-  duration?: string;
 }
 /**
  * Controls the state of search input that highlights spans if they match the search string.
  * @param spans
  */
 export function useSearch(spans?: TraceSpan[]) {
-  const [search, setSearch] = useState({});
+  const [search, setSearch] = useState<SearchProps>({
+    spanNameOperator: '=',
+    serviceNameOperator: '=',
+    fromOperator: '>',
+    toOperator: '<',
+  });
   const spanFindMatches: Set<string> | undefined = useMemo(() => {
     return search && spans ? filterSpans(search, spans) : undefined;
   }, [search, spans]);

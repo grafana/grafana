@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { Dispatch, RefObject, SetStateAction, useMemo, useState } from 'react';
+import React, { RefObject, useMemo, useState } from 'react';
 
 import {
   DataFrame,
@@ -39,7 +39,7 @@ import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
-import { SearchProps } from './useSearch';
+import { useSearch } from './useSearch';
 import { useViewRange } from './useViewRange';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -63,11 +63,6 @@ type Props = {
   exploreId?: ExploreId;
   scrollElement?: Element;
   traceProp: Trace;
-  spanFindMatches?: Set<string>;
-  search: SearchProps;
-  setSearch: (value: SearchProps) => void;
-  focusedSpanIdForSearch: string;
-  setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
   queryResponse: PanelData;
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef: RefObject<HTMLDivElement>;
@@ -75,16 +70,7 @@ type Props = {
 };
 
 export function TraceView(props: Props) {
-  const {
-    spanFindMatches,
-    traceProp,
-    datasource,
-    topOfViewRef,
-    topOfViewRefType,
-    search,
-    setSearch,
-    setFocusedSpanIdForSearch,
-  } = props;
+  const { traceProp, datasource, topOfViewRef, topOfViewRefType } = props;
 
   const {
     detailStates,
@@ -102,6 +88,8 @@ export function TraceView(props: Props) {
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
+  const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans); // TODO JOEY: rename to searchMatches
+  const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState(''); // TODO JOEY: rename to focusedMatches
 
   const styles = useStyles2(getStyles);
 
@@ -162,6 +150,8 @@ export function TraceView(props: Props) {
               timeZone={timeZone}
               search={search}
               setSearch={setSearch}
+              spanFindMatches={spanFindMatches}
+              focusedSpanIdForSearch={focusedSpanIdForSearch}
               setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
             />
           ) : (
@@ -205,11 +195,11 @@ export function TraceView(props: Props) {
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
             linksGetter={() => []}
-            uiFind={props.search.text}
+            uiFind={search.tags} // TODO: JOEY: remove
             createSpanLink={createSpanLink}
             scrollElement={props.scrollElement}
             focusedSpanId={focusedSpanId}
-            focusedSpanIdForSearch={props.focusedSpanIdForSearch!}
+            focusedSpanIdForSearch={focusedSpanIdForSearch!}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
             topOfViewRefType={topOfViewRefType}

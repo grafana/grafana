@@ -22,7 +22,6 @@ export const TracesPanel = ({ data }: PanelProps) => {
   const traceProp = useMemo(() => transformDataFrames(data.series[0]), [data.series]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
-  const [searchBarSuffix, setSearchBarSuffix] = useState('');
   const dataSource = useAsync(async () => {
     return await getDataSourceSrv().get(data.request?.targets[0].datasource?.uid);
   });
@@ -45,8 +44,6 @@ export const TracesPanel = ({ data }: PanelProps) => {
           // searchValue={search}
           // setSearch={setSearch}
           spanFindMatches={spanFindMatches}
-          // searchBarSuffix={searchBarSuffix}
-          // setSearchBarSuffix={setSearchBarSuffix}
           focusedSpanIdForSearch={focusedSpanIdForSearch}
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
           datasourceType={datasourceType}

@@ -15,11 +15,23 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useToggle } from 'react-use';
 
 import { toOption, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { Badge, BadgeColor, Collapse, InlineField, InlineFieldRow, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Badge,
+  BadgeColor,
+  Collapse,
+  HorizontalGroup,
+  InlineField,
+  InlineFieldRow,
+  Input,
+  Select,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { TagsFilterField } from 'app/plugins/datasource/tempo/SpanFilters/TagsFilterField';
 
 import { SearchProps } from '../../useSearch';
@@ -35,54 +47,7 @@ import { formatDuration } from '../utils/date';
 import TracePageActions from './Actions/TracePageActions';
 import SpanGraph from './SpanGraph';
 import { timestamp, getStyles } from './TracePageHeader';
-
-const getNewStyles = (theme: GrafanaTheme2) => {
-  return {
-    titleRow: css`
-      label: TracePageHeaderTitleRow;
-      align-items: center;
-      display: flex;
-      padding: 0 0.5em 0 0.5em;
-    `,
-    title: css`
-      label: TracePageHeaderTitle;
-      color: inherit;
-      flex: 1;
-      font-size: 1.7em;
-      line-height: 1em;
-    `,
-    subtitle: css`
-      flex: 1;
-      line-height: 1em;
-      margin: -0.5em 0.5em 1.5em 0.5em;
-    `,
-    tag: css`
-      margin: 0 0.5em 0 0;
-    `,
-    url: css`
-      margin: -2.5px 0.3em;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      max-width: 30%;
-      display: inline-block;
-    `,
-    divider: css`
-      margin: 0 0.75em;
-    `,
-    header: css`
-      label: TracePageHeader;
-      background-color: ${theme.colors.background.primary};
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      padding: 0.5em 0.25em 0 0.25em;
-      & > :last-child {
-        border-bottom: 1px solid ${autoColor(theme, '#ccc')};
-      }
-    `,
-  };
-};
+import TracePageSearchBar from './TracePageSearchBar';
 
 export type NewTracePageHeaderProps = {
   trace: Trace | null;
@@ -91,9 +56,9 @@ export type NewTracePageHeaderProps = {
   viewRange: ViewRange;
   timeZone: TimeZone;
   search: SearchProps;
-  setSearch: (value: SearchProps) => void;
-  // spanFindMatches: Set<string> | undefined;
-  // focusedSpanIdForSearch: string;
+  setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
+  spanFindMatches: Set<string> | undefined;
+  focusedSpanIdForSearch: string;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>; // TODO JOEY: rename to setSearchMatches or just useSearch
 };
 
@@ -106,41 +71,56 @@ export function NewTracePageHeader(props: NewTracePageHeaderProps) {
     timeZone,
     search,
     setSearch,
+    spanFindMatches,
+    focusedSpanIdForSearch,
     setFocusedSpanIdForSearch,
   } = props;
   const styles = { ...useStyles2(getStyles), ...useStyles2(getNewStyles) };
   const [tags, setTags] = useState('');
+  const [showSpanFilters, setShowSpanFilters] = useToggle(true);
 
-  const handleSpanNameChange = useCallback(
-    (e) => {
-      setFocusedSpanIdForSearch('');
-      // setSearchBarSuffix('');
-      setSearch({
-        ...search,
-        spanName: e?.value || '',
-      });
-    },
-    [search, setFocusedSpanIdForSearch, setSearch]
-  );
+  // const handleServiceNameChange = useCallback(
+  //   (e) => {
+  //     setFocusedSpanIdForSearch('');
+  //     setSearch({
+  //       ...search,
+  //       serviceName: e?.value || '',
+  //     });
+  //   },
+  //   [search, setFocusedSpanIdForSearch, setSearch]
+  // );
 
-  const handleServiceNameChange = useCallback(
-    (e) => {
-      setFocusedSpanIdForSearch('');
-      // setSearchBarSuffix('');
-      setSearch({
-        ...search,
-        serviceName: e?.value || '',
-      });
-    },
-    [search, setFocusedSpanIdForSearch, setSearch]
-  );
+  const serviceNameOptions = (trace: Trace) => {
+    return [
+      ...new Set(
+        trace.spans.map((span) => {
+          return span.process.serviceName;
+        })
+      ),
+    ].map((name) => {
+      return toOption(name);
+    });
+  };
+
+  const spanNameOptions = (trace: Trace) => {
+    console.log('rendering');
+    return [
+      ...new Set(
+        trace.spans.map((span) => {
+          return span.operationName;
+        })
+      ),
+    ].map((name) => {
+      return toOption(name);
+    });
+  };
 
   useEffect(() => {
     if (tags !== search.tags) {
       setSearch({
         ...search,
         tags: tags,
-      })
+      });
     }
   }, [tags, search, setSearch]);
 
@@ -208,48 +188,94 @@ export function NewTracePageHeader(props: NewTracePageHeaderProps) {
         )}
       </div>
 
-      <Collapse label="Span Filters" isOpen={true} collapsible={true}>
+      <Collapse label="Span Filters" collapsible={true} isOpen={showSpanFilters} onToggle={setShowSpanFilters}>
         <InlineFieldRow>
-          <InlineField label="Service Name" labelWidth={14}>
-            <Select
-              placeholder="All services"
-              options={[...new Set(trace.spans.map((span) => {
-                return span.process.serviceName;
-              }))].map((name) => {
-                return toOption(name);
-              })}
-              onChange={handleServiceNameChange}
-              isClearable
-              aria-label={'select-service-name'}
-            />
+          <InlineField label="Service Name" labelWidth={16}>
+            <HorizontalGroup spacing={'none'}>
+              <Select
+                options={[toOption('='), toOption('!=')]}
+                value={search.serviceNameOperator}
+                onChange={(e) => setSearch({ ...search, serviceNameOperator: e?.value || '' })}
+              />
+              <Select
+                placeholder="All service names"
+                options={serviceNameOptions(trace)}
+                onChange={(e) => setSearch({ ...search, serviceName: e?.value || '' })}
+                isClearable
+                aria-label={'select-service-name'}
+              />
+            </HorizontalGroup>
           </InlineField>
-          <InlineField label="Span Name" labelWidth={14}>
-            <Select
-              placeholder="All spans"
-              options={[...new Set(trace.spans.map((span) => {
-                return span.operationName;
-              }))].map((name) => {
-                return toOption(name);
-              })}
-              onChange={handleSpanNameChange}
-              isClearable
-              aria-label={'select-span-name'}
-            />
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label="Span Name" labelWidth={16}>
+            <HorizontalGroup spacing={'none'}>
+              <Select
+                options={[toOption('='), toOption('!=')]}
+                value={search.spanNameOperator}
+                onChange={(e) => setSearch({ ...search, spanNameOperator: e?.value || '' })}
+              />
+              <Select
+                placeholder="All span names"
+                options={spanNameOptions(trace)}
+                onChange={(e) => setSearch({ ...search, spanName: e?.value || '' })}
+                isClearable
+                aria-label={'select-span-name'}
+              />
+            </HorizontalGroup>
           </InlineField>
-          <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in logfmt.">
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label="Duration" labelWidth={16}>
+            <HorizontalGroup spacing={'none'}>
+              <Select
+                options={[toOption('>'), toOption('>=')]}
+                value={search.fromOperator}
+                onChange={(e) => setSearch({ ...search, fromOperator: e?.value || '' })}
+              />
+              <Input
+                placeholder="e.g. 100ms, 1.2s"
+                value={search.from}
+                onChange={(v) => setSearch({ ...search, from: v.currentTarget.value || '' })}
+                // invalid={invalid}
+                width={18}
+              />
+              <Select
+                options={[toOption('<'), toOption('<=')]}
+                value={search.toOperator}
+                onChange={(e) => setSearch({ ...search, toOperator: e?.value || '' })}
+              />
+              <Input
+                placeholder="e.g. 100ms, 1.2s"
+                value={search.to}
+                onChange={(v) => setSearch({ ...search, to: v.currentTarget.value || '' })}
+                // invalid={invalid}
+                width={18}
+              />
+            </HorizontalGroup>
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label="Tags" labelWidth={16} tooltip="Values should be in logfmt.">
             <TagsFilterField
               placeholder="http.status_code=200 error=true"
               value={tags}
-              onChange={x => {
-                  setTags(x);
-                }
-              }
-              tags={trace.spans.map((span) => {
-                return span.tags;
-              }).flat()}
+              onChange={(x) => setTags(x)}
+              tags={trace.spans
+                .map((span) => {
+                  return span.tags;
+                })
+                .flat()}
             />
           </InlineField>
         </InlineFieldRow>
+        <TracePageSearchBar
+          // searchValue={search}
+          spanFindMatches={spanFindMatches}
+          focusedSpanIdForSearch={focusedSpanIdForSearch}
+          setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+          // datasourceType={datasourceType}
+        />
       </Collapse>
 
       <SpanGraph
@@ -261,3 +287,51 @@ export function NewTracePageHeader(props: NewTracePageHeaderProps) {
     </header>
   );
 }
+
+const getNewStyles = (theme: GrafanaTheme2) => {
+  return {
+    titleRow: css`
+      label: TracePageHeaderTitleRow;
+      align-items: center;
+      display: flex;
+      padding: 0 0.5em 0 0.5em;
+    `,
+    title: css`
+      label: TracePageHeaderTitle;
+      color: inherit;
+      flex: 1;
+      font-size: 1.7em;
+      line-height: 1em;
+    `,
+    subtitle: css`
+      flex: 1;
+      line-height: 1em;
+      margin: -0.5em 0.5em 1em 0.5em;
+    `,
+    tag: css`
+      margin: 0 0.5em 0 0;
+    `,
+    url: css`
+      margin: -2.5px 0.3em;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      max-width: 30%;
+      display: inline-block;
+    `,
+    divider: css`
+      margin: 0 0.75em;
+    `,
+    header: css`
+      label: TracePageHeader;
+      background-color: ${theme.colors.background.primary};
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 0.5em 0.25em 0 0.25em;
+      & > :last-child {
+        border-bottom: 1px solid ${autoColor(theme, '#ccc')};
+      }
+    `,
+  };
+};

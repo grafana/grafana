@@ -15,28 +15,16 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { createTheme } from '@grafana/data';
-
-import TracePageSearchBar, { getStyles, TracePageSearchBarProps } from './TracePageSearchBar';
+import TracePageSearchBar, { TracePageSearchBarProps } from './TracePageSearchBar';
 
 const defaultProps = {
   forwardedRef: React.createRef(),
   navigable: true,
-  searchBarSuffix: 'suffix',
   searchValue: 'value',
 };
 
 describe('<TracePageSearchBar>', () => {
   describe('truthy textFilter', () => {
-    it('renders UiFindInput with correct props', () => {
-      render(<TracePageSearchBar {...(defaultProps as unknown as TracePageSearchBarProps)} />);
-      expect((screen.getByPlaceholderText('Find...') as HTMLInputElement)['value']).toEqual('value');
-      const suffix = screen.getByLabelText('Search bar suffix');
-      const theme = createTheme();
-      expect(suffix['className']).toBe(getStyles(theme).TracePageSearchBarSuffix);
-      expect(suffix.textContent).toBe('suffix');
-    });
-
     it('renders buttons', () => {
       render(<TracePageSearchBar {...(defaultProps as unknown as TracePageSearchBarProps)} />);
       const nextResButton = screen.queryByRole('button', { name: 'Next results button' });
