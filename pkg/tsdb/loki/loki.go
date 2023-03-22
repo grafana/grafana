@@ -125,7 +125,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 		return err
 	}
 
-	contentType := encodedBytes.ContentType
+	contentType := rawLokiResponse.ContentType
 
 	if contentType == "" {
 		contentType = "application/json"
