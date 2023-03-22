@@ -9,6 +9,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
+// TODO: we likely want each org to map to a single namespace
+func GetOrgIDFromNamespace(namespace string) int64 {
+	// TODO... for now everyone is org 1
+	return 1
+}
+
 // This makes an consistent mapping between Grafana UIDs and k8s compatible names
 func GrafanaUIDToK8sName(uid string) string {
 	if allLowercaseAlphaNum(uid) && validation.IsQualifiedName(uid) == nil {

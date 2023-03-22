@@ -2,16 +2,15 @@ package dashboard
 
 import "strconv"
 
-type entityAnnotations struct {
-	OrgID   int64
-	Message string
+// Metadata annotations that can be used on any CRD object
+type CommonAnnotations struct {
+	Message string // commit message, version message  ¯\_(ツ)_/¯
 
 	// General
-	CreatedBy int64
+	CreatedBy int64 // internal ID, should be a string
 	CreatedAt int64
-	UpdatedBy int64
+	UpdatedBy int64 // internal ID, should be a string
 	UpdatedAt int64
-	FolderID  int64 // can we skip this and lookup?
 	FolderUID string
 
 	// Provisioning
@@ -22,21 +21,19 @@ type entityAnnotations struct {
 	OriginTime int64
 }
 
-const keyOrgID = "orgID"
 const keyCreatedBy = "createdBy"
 const keyCreatedAt = "createdAt"
 const keyUpdatedBy = "updatedBy"
 const keyUpdatedAt = "updatedAt"
 const keyMessage = "message"
 const keyPluginID = "plugin"
-const keyFolderID = "folderID"
 const keyFolderUID = "folderUID"
 const keyOriginName = "originName"
 const keyOriginPath = "originPath"
 const keyOriginKey = "originKey"
 const keyOriginTime = "originTime"
 
-func (a *entityAnnotations) Merge(anno map[string]string) {
+func (a *CommonAnnotations) Merge(anno map[string]string) {
 	tmp := make(map[string]string)
 	m := a.ToMap() // Only the ones we should keep
 	for k, v := range anno {
@@ -48,20 +45,13 @@ func (a *entityAnnotations) Merge(anno map[string]string) {
 	a.Read(tmp)
 }
 
-func (a *entityAnnotations) Read(anno map[string]string) {
+func (a *CommonAnnotations) Read(anno map[string]string) {
 	a.Message = anno[keyMessage]
 	a.PluginID = anno[keyPluginID]
 	a.FolderUID = anno[keyFolderUID]
 	a.OriginName = anno[keyOriginName]
 	a.OriginPath = anno[keyOriginPath]
 	a.OriginKey = anno[keyOriginKey]
-
-	if v, ok := anno[keyOrgID]; ok {
-		p, err := strconv.ParseInt(v, 10, 64)
-		if err == nil {
-			a.OrgID = p
-		}
-	}
 
 	if v, ok := anno[keyCreatedBy]; ok {
 		p, err := strconv.ParseInt(v, 10, 64)
@@ -91,13 +81,6 @@ func (a *entityAnnotations) Read(anno map[string]string) {
 		}
 	}
 
-	if v, ok := anno[keyFolderID]; ok {
-		p, err := strconv.ParseInt(v, 10, 64)
-		if err == nil {
-			a.FolderID = p
-		}
-	}
-
 	if v, ok := anno[keyOriginTime]; ok {
 		p, err := strconv.ParseInt(v, 10, 64)
 		if err == nil {
@@ -106,11 +89,8 @@ func (a *entityAnnotations) Read(anno map[string]string) {
 	}
 }
 
-func (a *entityAnnotations) ToMap() map[string]string {
+func (a *CommonAnnotations) ToMap() map[string]string {
 	anno := map[string]string{}
-	if a.OrgID > 0 {
-		anno[keyOrgID] = strconv.FormatInt(a.OrgID, 10)
-	}
 	if a.Message != "" {
 		anno[keyMessage] = a.Message
 	}
@@ -125,9 +105,6 @@ func (a *entityAnnotations) ToMap() map[string]string {
 	}
 	if a.UpdatedBy > 0 {
 		anno[keyUpdatedBy] = strconv.FormatInt(a.UpdatedBy, 10)
-	}
-	if a.FolderID > 0 {
-		anno[keyFolderID] = strconv.FormatInt(a.FolderID, 10)
 	}
 	if a.FolderUID != "" {
 		anno[keyFolderUID] = a.FolderUID

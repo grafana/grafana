@@ -83,7 +83,10 @@ func (s *service) start(ctx context.Context) error {
 
 	s.restConfig = server.GenericAPIServer.LoopbackClientConfig
 	s.restConfig.Host = DEFAULT_HOST
-	s.writeKubeConfiguration(s.restConfig)
+	err = s.writeKubeConfiguration(s.restConfig)
+	if err != nil {
+		return err
+	}
 
 	prepared, err := server.PrepareRun()
 	if err != nil {

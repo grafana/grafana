@@ -23,7 +23,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 )
@@ -103,7 +102,6 @@ const (
 func (ctx *Context) HTML(status int, name string, data interface{}) {
 	ctx.Resp.Header().Set(headerContentType, contentTypeHTML)
 	ctx.Resp.WriteHeader(status)
-	logger.New(false).Info("POTATO", "resp", ctx.Resp, "name", name, "data", data)
 	if err := ctx.template.ExecuteTemplate(ctx.Resp, name, data); err != nil {
 		panic("Context.HTML:" + err.Error())
 	}
