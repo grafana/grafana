@@ -334,7 +334,7 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiR
 func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *alertingNotify.Template) ([]*alertingNotify.Integration, error) {
 	integrations := make([]*alertingNotify.Integration, 0, len(receiver.GrafanaManagedReceivers))
 	for i, r := range receiver.GrafanaManagedReceivers {
-		n, err := am.buildReceiverIntegration(r, tmpl)
+		n, err := am.buildReceiverIntegration(PostableGrafanaReceiverToGrafanaReceiver(r), tmpl)
 		if err != nil {
 			return nil, err
 		}
@@ -343,7 +343,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 	return integrations, nil
 }
 
-func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.NotificationChannel, error) {
+func (am *Alertmanager) buildReceiverIntegration(r *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.NotificationChannel, error) {
 	// secure settings are already encrypted at this point
 	secureSettings := make(map[string][]byte, len(r.SecureSettings))
 
@@ -365,7 +365,7 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 			Name:                  r.Name,
 			Type:                  r.Type,
 			DisableResolveMessage: r.DisableResolveMessage,
-			Settings:              json.RawMessage(r.Settings),
+			Settings:              r.Settings,
 			SecureSettings:        secureSettings,
 		}
 	)
