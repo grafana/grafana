@@ -93,7 +93,7 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 	for key, value := range instrumentationParams {
 		logParams = append(logParams, key, value)
 		if key != "TraceID" {
-			addToTrace(span, key, value)
+			addToSpan(span, key, value)
 		}
 	}
 
@@ -138,7 +138,7 @@ func InstrumentQueryDataRequest(ctx context.Context, req *backend.QueryDataReque
 	})
 }
 
-func addToTrace(span tracing.Span, key string, value interface{}) {
+func addToSpan(span tracing.Span, key string, value interface{}) {
 	switch value.(type) {
 	case string:
 		span.SetAttributes(key, value.(string), attribute.Key(key).String(value.(string)))
