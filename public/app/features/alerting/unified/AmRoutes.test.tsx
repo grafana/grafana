@@ -1,4 +1,4 @@
-import { prettyDOM, prettyFormat, render, waitFor } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -297,7 +297,6 @@ describe('AmRoutes', () => {
     await clickSelectOption(receiverSelect, 'critical');
 
     const groupSelect = ui.groupSelect.get();
-    // console.log(prettyDOM(groupSelect))
     await userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
 
     // configure timing intervals
