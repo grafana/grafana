@@ -9,7 +9,7 @@ export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
     if (value == null) {
       return { text: '' };
     }
-    const neg = value < 0;
+    const isNegative = value < 0;
     if (neg) {
       value = Math.abs(value);
     }
