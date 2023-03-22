@@ -305,7 +305,6 @@ export const DashNav = React.memo<Props>((props) => {
     }
 
     if (canEdit && !isFullscreen) {
-      // todo will be a dropdown menu, no dashboard.addPanel immediately
       buttons.push(
         <ToolbarButton
           tooltip={t('dashboard.toolbar.add-panel', 'Add panel')}
