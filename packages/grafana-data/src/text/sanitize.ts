@@ -47,6 +47,10 @@ export function sanitize(unsanitizedString: string): string {
   }
 }
 
+export function sanitizeTT(unsanitizedString: string): TrustedHTML {
+  return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true });
+}
+
 /**
  * Returns string safe from XSS attacks to be used in the Text panel plugin.
  *
