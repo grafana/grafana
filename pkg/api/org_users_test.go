@@ -209,12 +209,13 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 		SkipOrgRoleSync bool
 		AuthEnabled     bool
 		AuthModule      string
-		Body            string `json:"body"`
-		userId          int
-		orgId           int
-		permissions     []accesscontrol.Permission
-		role            roletype.RoleType
 		expectedCode    int
+	}
+	permissions := []accesscontrol.Permission{
+		{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
+		{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:*"},
+		{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:*"},
+		{Action: accesscontrol.ActionOrgUsersRemove, Scope: "users:*"},
 	}
 	tests := []testCase{
 		{
@@ -222,54 +223,27 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 			SkipOrgRoleSync: true,
 			AuthEnabled:     true,
 			AuthModule:      login.LDAPAuthModule,
-			Body:            `{"userId": "1", "role": "Admin", "orgId": "1"}`,
-			userId:          2,
-			orgId:           1,
-			role:            roletype.RoleAdmin,
-			permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
-				{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:*"},
-				{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:*"},
-				{Action: accesscontrol.ActionOrgUsersRemove, Scope: "users:*"},
-			},
-			expectedCode: http.StatusOK,
+			expectedCode:    http.StatusOK,
 		},
 		{
 			desc:            "should not be able to change basicRole when skip_org_role_sync false",
 			SkipOrgRoleSync: false,
 			AuthEnabled:     true,
 			AuthModule:      login.LDAPAuthModule,
-			Body:            `{"userId": "1", "role": "Admin", "orgId": "1"}`,
-			userId:          2,
-			orgId:           1,
-			permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
-				{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:*"},
-				{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:*"},
-				{Action: accesscontrol.ActionOrgUsersRemove, Scope: "users:*"},
-			},
-			role:         roletype.RoleAdmin,
-			expectedCode: http.StatusForbidden,
+			expectedCode:    http.StatusForbidden,
 		},
 		{
 			desc:            "should not be able to change basicRole with a different provider",
 			SkipOrgRoleSync: false,
 			AuthEnabled:     true,
 			AuthModule:      login.GenericOAuthModule,
-			Body:            `{"userId": "1", "role": "Admin", "orgId": "1"}`,
-			userId:          2,
-			orgId:           1,
-			permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
-				{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:*"},
-				{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:*"},
-				{Action: accesscontrol.ActionOrgUsersRemove, Scope: "users:*"},
-			},
-			role:         roletype.RoleAdmin,
-			expectedCode: http.StatusForbidden,
+			expectedCode:    http.StatusForbidden,
 		},
 	}
 
+	userWithPermissions := userWithPermissions(1, permissions)
+	userRequesting := &user.User{ID: 2, OrgID: 1}
+	reqBody := `{"userId": "1", "role": "Admin", "orgId": "1"}`
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
@@ -277,28 +251,28 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 				hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
 				if tt.AuthModule == login.LDAPAuthModule {
 					hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
+					hs.Cfg.LDAPSkipOrgRoleSync = tt.SkipOrgRoleSync
 				} else if tt.AuthModule == login.GenericOAuthModule {
 					hs.Cfg.GenericOAuthAuthEnabled = tt.AuthEnabled
+					hs.Cfg.GenericOAuthSkipOrgRoleSync = tt.SkipOrgRoleSync
 				} else {
 					t.Errorf("invalid auth module for test: %s", tt.AuthModule)
 				}
-				hs.Cfg.LDAPSkipOrgRoleSync = tt.SkipOrgRoleSync
 
 				hs.authInfoService = &logintest.AuthInfoServiceFake{
 					ExpectedUserAuth: &login.UserAuth{AuthModule: tt.AuthModule},
 				}
 				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagOnlyExternalOrgRoleSync, true)
-				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions(1, tt.permissions)}
+				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions}
 				hs.orgService = &orgtest.FakeOrgService{}
 				hs.accesscontrolService = &actest.FakeService{
-					ExpectedPermissions: tt.permissions,
+					ExpectedPermissions: permissions,
 				}
 			})
-			req := server.NewRequest(http.MethodPatch, fmt.Sprintf("/api/orgs/%d/users/%d", tt.orgId, tt.userId), strings.NewReader(tt.Body))
+			req := server.NewRequest(http.MethodPatch, fmt.Sprintf("/api/orgs/%d/users/%d", userRequesting.OrgID, userRequesting.ID), strings.NewReader(reqBody))
 			req.Header.Set("Content-Type", "application/json")
-			u := userWithPermissions(1, tt.permissions)
-			u.OrgRole = tt.role
-			res, err := server.Send(webtest.RequestWithSignedInUser(req, u))
+			userWithPermissions.OrgRole = roletype.RoleAdmin
+			res, err := server.Send(webtest.RequestWithSignedInUser(req, userWithPermissions))
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
 			require.NoError(t, res.Body.Close())
