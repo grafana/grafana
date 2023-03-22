@@ -295,13 +295,17 @@ export class TemplateSrv implements BaseTemplateSrv {
     return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const variableName = var1 || var2 || var3;
       const variable = this.getVariableAtIndex(variableName);
-      const fmt = fmt2 || fmt3 || format;
+      let fmt = fmt2 || fmt3 || format;
 
       if (scopedVars) {
         const value = this.getVariableValue(variableName, fieldPath, scopedVars);
         const text = this.getVariableText(variableName, value, scopedVars);
 
         if (value !== null && value !== undefined) {
+          if (scopedVars[variableName].skipFormat) {
+            fmt = undefined;
+          }
+
           return this.formatValue(value, fmt, variable, text);
         }
       }
