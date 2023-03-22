@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/registry/corekind"
@@ -372,7 +373,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		return nil, err
 	}
 
-	hs.BasicService = services.NewBasicService(hs.start, hs.running, hs.stop)
+	hs.BasicService = services.NewBasicService(hs.start, hs.running, hs.stop).WithName(modules.HTTPServer)
 	return hs, nil
 }
 

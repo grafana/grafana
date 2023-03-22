@@ -55,6 +55,7 @@ func ProvideService(
 func (m *service) Init(_ context.Context) error {
 	var err error
 
+	m.log.Debug("Initializing module manager", "targets", m.targets)
 	for mod, targets := range DependencyMap {
 		if err := m.ModuleManager.AddDependency(mod, targets...); err != nil {
 			return err
@@ -94,6 +95,7 @@ func (m *service) Run(ctx context.Context) error {
 	listener := newServiceListener(m.log, m)
 	m.ServiceManager.AddListener(listener)
 
+	m.log.Debug("Starting module service manager")
 	// wait until a service fails or stop signal was received
 	err := m.ServiceManager.StartAsync(ctx)
 	if err != nil {

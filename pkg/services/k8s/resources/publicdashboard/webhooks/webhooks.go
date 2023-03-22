@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard"
 	k8sTypes "k8s.io/apimachinery/pkg/types"
 
@@ -71,7 +72,7 @@ func ProvideWebhooks(
 	// Register webhooks on grafana api server
 	webhooksAPI.RegisterAPIEndpoints()
 
-	webhooksAPI.BasicService = services.NewBasicService(webhooksAPI.start, webhooksAPI.running, nil)
+	webhooksAPI.BasicService = services.NewBasicService(webhooksAPI.start, webhooksAPI.running, nil).WithName(modules.PublicDashboardsWebhooks)
 
 	return webhooksAPI
 }

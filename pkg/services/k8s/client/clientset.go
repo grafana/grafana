@@ -108,6 +108,7 @@ func ProvideClientsetProvider(toggles featuremgmt.FeatureToggles, restConfigProv
 }
 
 func (s *service) GetClientset() *Clientset {
+	_ = s.AwaitRunning(context.Background())
 	return s.clientset
 }
 
