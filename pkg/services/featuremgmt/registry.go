@@ -169,8 +169,8 @@ var (
 			Owner:           grafanaAsCodeSquad,
 		},
 		{
-			Name:         "autoMigrateGraphPanels",
-			Description:  "Replace the angular graph panel with timeseries",
+			Name:         "autoMigrateOldPanels",
+			Description:  "Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
