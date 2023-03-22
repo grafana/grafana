@@ -243,6 +243,10 @@ const (
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
 
+	// FlagOnlyExternalOrgRoleSync
+	// Prohibits a user from changing organization roles synced with external auth providers
+	FlagOnlyExternalOrgRoleSync = "onlyExternalOrgRoleSync"
+
 	// FlagDrawerDataSourcePicker
 	// Changes the user experience for data source selection to a drawer.
 	FlagDrawerDataSourcePicker = "drawerDataSourcePicker"
