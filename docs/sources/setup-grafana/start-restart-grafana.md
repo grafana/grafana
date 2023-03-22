@@ -17,7 +17,7 @@ If you installed with the APT repository or `.deb` package, then you can start t
 
 ## Linux
 
-Starting and restarting the Grafana server depends on whether your Linux system uses `systemd` or `init.d`.
+The following subsections describe three methods of starting and restarting the Grafana server: with systemd, initd, or by directly running the binary. You should follow only one set of instructions, depending on how your machine is configured.
 
 ### Start the Grafana server with systemd
 

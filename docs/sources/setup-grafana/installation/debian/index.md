@@ -3,17 +3,18 @@ aliases:
   - ../../installation/debian/
   - ../../installation/installation/debian/
 description: Install guide for Grafana on Debian or Ubuntu
-title: Install on Debian or Ubuntu
+title: Install Grafana on Debian or Ubuntu
+menutitle: Debian or Ubuntu
 weight: 100
 ---
 
-# Install on Debian or Ubuntu
+# Install Grafana on Debian or Ubuntu
 
 This topic explains how to install Grafana dependencies, install Grafana on Linux Debian or Ubuntu, and start the Grafana server on your Debian or Ubuntu system.
 
-You can install Grafana using the Grafana Labs APT repository, by downloading a `.deb` package, or by downloading a binary `.tar.gz` file.
+There are multiple ways to install Grafana: using the Grafana Labs APT repository, by downloading a `.deb` package, or by downloading a binary `.tar.gz` file. Choose only one of the methods below that best suits your needs.
 
-If you install via the `.deb` package or `.tar.gz` file, then you must manually update Grafana for each new version.
+> **Note:** If you install via the `.deb` package or `.tar.gz` file, then you must manually update Grafana for each new version.
 
 ## Install from APT repository
 
@@ -27,8 +28,6 @@ If you install from the APT repository, Grafana automatically updates when you r
 | Grafana OSS (Beta)        | grafana            | `https://apt.grafana.com beta main`   |
 
 > **Note:** Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS edition. You can also upgrade to the [full Enterprise feature set](https://grafana.com/products/enterprise/?utm_source=grafana-install-page), which has support for [Enterprise plugins](https://grafana.com/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
-
-### Steps
 
 Complete the following steps to install Grafana from the APT repository:
 
@@ -69,8 +68,6 @@ Complete the following steps to install Grafana from the APT repository:
 
 If you choose not to install Grafana using APT, you can download and install Grafana using the deb package or as a standalone binary.
 
-### Steps
-
 Complete the following steps to install Grafana using DEB or the standalone binaries:
 
 1. Navigate to the [Grafana download page](https://grafana.com/grafana/download).
@@ -88,6 +85,8 @@ Complete the following steps to install Grafana using DEB or the standalone bina
 The following sections provide instructions for starting the `grafana-server` process as the `grafana` user, which was created during the package installation.
 
 If you installed with the APT repository or `.deb` package, then you can start the server using `systemd` or `init.d`. If you installed a binary `.tar.gz` file, then you need to execute the binary.
+
+> **Note:** The following subsections describe three methods of starting the Grafana server: with systemd, initd, or by directly running the binary. You should follow only one set of instructions, depending on how your machine is configured.
 
 ### Start the Grafana server with systemd
 
