@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fs"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -52,7 +53,7 @@ func NewCore(cfg *setting.Cfg, coreRegistry *coreplugin.Registry, reg *registry.
 	lic := plicensing.ProvideLicensing(cfg, &licensing.OSSLicensingService{Cfg: cfg})
 	l := loader.ProvideService(pCfg, lic, signature.NewUnsignedAuthorizer(pCfg),
 		reg, provider.ProvideService(coreRegistry), proc, fakes.NewFakeRoleRegistry(),
-		cdn, assetpath.ProvideService(cdn))
+		cdn, assetpath.ProvideService(cdn), finder.NewLocalFinder())
 	r := repo.ProvideService()
 	srcs := sources.ProvideService(cfg, pCfg)
 

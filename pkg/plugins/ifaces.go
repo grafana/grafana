@@ -25,6 +25,12 @@ type Installer interface {
 	Remove(ctx context.Context, pluginID string) error
 }
 
+type PluginSource interface {
+	PluginClass(ctx context.Context) Class
+	PluginURIs(ctx context.Context) []string
+	DefaultSignature(ctx context.Context) (Signature, bool)
+}
+
 type FileSystem interface {
 	// GetFile finds a plugin file.
 	GetFile(ctx context.Context, pluginID, filename string) (*File, error)
@@ -33,11 +39,6 @@ type FileSystem interface {
 type File struct {
 	Content []byte
 	ModTime time.Time
-}
-
-type PluginSource struct {
-	Class Class
-	Paths []string
 }
 
 type CompatOpts struct {

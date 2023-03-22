@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -62,7 +63,7 @@ func TestCallResource(t *testing.T) {
 	cdn := pluginscdn.ProvideService(pCfg)
 	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg), reg,
 		provider.ProvideService(coreRegistry), process.ProvideService(reg), fakes.NewFakeRoleRegistry(), cdn,
-		assetpath.ProvideService(cdn))
+		assetpath.ProvideService(cdn), finder.NewLocalFinder())
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps := store.ProvideService(reg, srcs, l)
 	err = ps.Run(context.Background())

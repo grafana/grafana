@@ -14,16 +14,16 @@ var _ plugins.Store = (*Service)(nil)
 
 type Service struct {
 	pluginRegistry registry.Service
-	pluginSources  sources.Resolver
+	pluginSources  sources.Registry
 	pluginLoader   loader.Service
 }
 
-func ProvideService(pluginRegistry registry.Service, pluginSources sources.Resolver,
+func ProvideService(pluginRegistry registry.Service, pluginSources sources.Registry,
 	pluginLoader loader.Service) *Service {
 	return New(pluginRegistry, pluginSources, pluginLoader)
 }
 
-func New(pluginRegistry registry.Service, pluginSources sources.Resolver,
+func New(pluginRegistry registry.Service, pluginSources sources.Registry,
 	pluginLoader loader.Service) *Service {
 	return &Service{
 		pluginRegistry: pluginRegistry,
@@ -34,7 +34,7 @@ func New(pluginRegistry registry.Service, pluginSources sources.Resolver,
 
 func (s *Service) Run(ctx context.Context) error {
 	for _, ps := range s.pluginSources.List(ctx) {
-		if _, err := s.pluginLoader.Load(ctx, ps.Class, ps.Paths); err != nil {
+		if _, err := s.pluginLoader.Load(ctx, ps); err != nil {
 			return err
 		}
 	}

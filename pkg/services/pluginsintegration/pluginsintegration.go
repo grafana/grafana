@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
@@ -29,7 +30,7 @@ var WireSet = wire.NewSet(
 	pluginscdn.ProvideService,
 	pluginSettings.ProvideService,
 	wire.Bind(new(pluginsettings.Service), new(*pluginSettings.Service)),
-	wire.Bind(new(sources.Resolver), new(*sources.Service)),
+	wire.Bind(new(sources.Registry), new(*sources.Service)),
 	sources.ProvideService,
 
 	//TODO remove (only here to support backendplugin_test.go)
@@ -57,6 +58,8 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
 	signature.ProvideOSSAuthorizer,
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
+	wire.Bind(new(finder.Finder), new(*finder.Local)),
+	finder.NewLocalFinder,
 )
 
 func ProvideClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,

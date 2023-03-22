@@ -148,7 +148,7 @@ describe('PromQueryField', () => {
     expect(labelBrowser.textContent).toContain('Metrics browser');
   });
 
-  it('should not run query onBlur in explore', async () => {
+  it('should not run query onBlur', async () => {
     const onRunQuery = jest.fn();
     const { container } = render(<PromQueryField {...defaultProps} app={CoreApp.Explore} onRunQuery={onRunQuery} />);
 
@@ -162,22 +162,6 @@ describe('PromQueryField', () => {
     // blur element
     await userEvent.click(document.body);
     expect(onRunQuery).not.toHaveBeenCalled();
-  });
-
-  it('should run query onBlur in dashboard', async () => {
-    const onRunQuery = jest.fn();
-    const { container } = render(<PromQueryField {...defaultProps} app={CoreApp.Dashboard} onRunQuery={onRunQuery} />);
-
-    // wait for component to rerender
-    await screen.findByRole('button');
-
-    const input = getByTestId(container, 'dummy-code-input');
-    expect(input).toBeInTheDocument();
-    await userEvent.type(input, 'metric');
-
-    // blur element
-    await userEvent.click(document.body);
-    expect(onRunQuery).toHaveBeenCalled();
   });
 });
 
