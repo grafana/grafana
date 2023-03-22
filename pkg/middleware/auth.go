@@ -45,7 +45,7 @@ func notAuthorized(c *contextmodel.ReqContext) {
 
 	writeRedirectCookie(c)
 
-	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedRotation) {
+	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
 		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
 		return
 	}

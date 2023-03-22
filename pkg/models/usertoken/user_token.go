@@ -39,7 +39,7 @@ type UserToken struct {
 
 const UrgentRotateTime = 1 * time.Minute
 
-func (t *UserToken) NeedRotation(rotationInterval time.Duration) bool {
+func (t *UserToken) NeedsRotation(rotationInterval time.Duration) bool {
 	rotatedAt := time.Unix(t.RotatedAt, 0)
 	if !t.AuthTokenSeen {
 		return rotatedAt.Before(time.Now().Add(-UrgentRotateTime))

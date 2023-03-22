@@ -494,8 +494,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContex
 	}
 
 	if h.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
-		if token.NeedRotation(time.Duration(h.Cfg.TokenRotationIntervalMinutes) * time.Minute) {
-			reqContext.LookupTokenErr = authn.ErrTokenNeedRotation.Errorf("token needs rotation")
+		if token.NeedsRotation(time.Duration(h.Cfg.TokenRotationIntervalMinutes) * time.Minute) {
+			reqContext.LookupTokenErr = authn.ErrTokenNeedsRotation.Errorf("token needs rotation")
 			return true
 		}
 	}

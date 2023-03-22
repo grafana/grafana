@@ -97,7 +97,10 @@ func (hs *HTTPServer) RotateUserAuthToken(c *contextmodel.ReqContext) response.R
 
 func (hs *HTTPServer) rotateToken(c *contextmodel.ReqContext) error {
 	token := c.GetCookie(hs.Cfg.LoginCookieName)
-	ip, _ := network.GetIPFromAddress(c.RemoteAddr())
+	ip, err := network.GetIPFromAddress(c.RemoteAddr())
+	if err != nil {
+		hs.log.Debug("Failed to get IP from client address", "addr", c.RemoteAddr())
+	}
 
 	res, err := hs.AuthTokenService.RotateToken(c.Req.Context(), auth.RotateCommand{
 		UnHashedToken: token,
