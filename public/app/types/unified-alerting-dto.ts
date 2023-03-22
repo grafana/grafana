@@ -182,7 +182,7 @@ export enum GrafanaAlertStateDecision {
 export interface AlertDataQuery extends DataQuery {
   maxDataPoints?: number;
   intervalMs?: number;
-  expr?: string;
+  expression?: string;
 }
 
 export interface AlertQuery {
