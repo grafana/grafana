@@ -52,7 +52,9 @@ describe('Connections', () => {
   test('shows a landing page for Your connections', async () => {
     renderPage(ROUTES.YourConnections);
 
-    expect(await screen.findByRole('link', { name: 'Datasources' })).toBeVisible();
+    // with the new nav enable by default, we wil have two links to the data sources page (from section and from the landing page)
+    const dsLinks = await screen.findAllByRole('link', { name: 'Datasources' });
+    expect(dsLinks[0]).toBeVisible();
     expect(await screen.findByText('Manage your existing datasource connections')).toBeVisible();
   });
 
