@@ -34,17 +34,21 @@ export function WizardContextProvider<T>(props: PropsWithChildren<WizardContextP
   const [currentPage, setCurrentPage] = useState(0);
   const { pages, onSubmit, children } = props;
 
-  const context: WizardContextProps<T> = {
-    currentPage,
-    CurrentPageComponent: pages[currentPage],
-    isLastPage: currentPage === pages.length - 1,
-    nextPage: () => setCurrentPage(currentPage + 1),
-    prevPage: () => setCurrentPage(currentPage - 1),
-    onSubmit,
-  };
-
-  // @ts-ignore
-  return <WizardContext.Provider value={context}>{children}</WizardContext.Provider>;
+  return (
+    <WizardContext.Provider
+      value={{
+        currentPage,
+        CurrentPageComponent: pages[currentPage],
+        isLastPage: currentPage === pages.length - 1,
+        nextPage: () => setCurrentPage(currentPage + 1),
+        prevPage: () => setCurrentPage(currentPage - 1),
+        // @ts-expect-error
+        onSubmit,
+      }}
+    >
+      {children}
+    </WizardContext.Provider>
+  );
 }
 
 export const useWizardContext = () => {
