@@ -21,6 +21,7 @@ import { ExplorePanelData, SupplementaryQueries } from 'app/types';
 
 export const supplementaryQueryTypes: SupplementaryQueryType[] = [
   SupplementaryQueryType.LogsVolume,
+  SupplementaryQueryType.LogsVolumeNoTimeout,
   SupplementaryQueryType.LogsSample,
 ];
 
@@ -34,6 +35,7 @@ export const loadSupplementaryQueries = (): SupplementaryQueries => {
   // We default to true for all supp queries
   let supplementaryQueries: SupplementaryQueries = {
     [SupplementaryQueryType.LogsVolume]: { enabled: true },
+    [SupplementaryQueryType.LogsVolumeNoTimeout]: { enabled: false },
     [SupplementaryQueryType.LogsSample]: { enabled: false },
   };
 
@@ -213,9 +215,8 @@ export const getSupplementaryQueryProvider = (
       ),
       distinct()
     );
-  } else {
-    // Create a fallback to results based logs volume
-    return getSupplementaryQueryFallback(type, explorePanelData, request.targets, datasourceInstance.name);
   }
-  return undefined;
+
+  // Create a fallback to results based logs volume
+  return getSupplementaryQueryFallback(type, explorePanelData, request.targets, datasourceInstance.name);
 };

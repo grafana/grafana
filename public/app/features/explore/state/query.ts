@@ -762,22 +762,31 @@ export function clearCache(exploreId: ExploreId): ThunkResult<void> {
 
 /**
  * Initializes loading logs volume data and stores emitted value.
+ * @param exploreId
+ * @param type Type of suplementary query to run
+ * @param displayAsType Optional. Overrde `type` to display the results as other query type
  */
-export function loadSupplementaryQueryData(exploreId: ExploreId, type: SupplementaryQueryType): ThunkResult<void> {
+export function loadSupplementaryQueryData(
+  exploreId: ExploreId,
+  type: SupplementaryQueryType,
+  displayAsType?: SupplementaryQueryType
+): ThunkResult<void> {
   return (dispatch, getState) => {
     const { supplementaryQueries } = getState().explore[exploreId]!;
     const dataProvider = supplementaryQueries[type].dataProvider;
 
+    const payloadType = displayAsType ? displayAsType : type;
+
     if (dataProvider) {
       const dataSubscription = dataProvider.subscribe({
         next: (supplementaryQueryData: DataQueryResponse) => {
-          dispatch(updateSupplementaryQueryDataAction({ exploreId, type, data: supplementaryQueryData }));
+          dispatch(updateSupplementaryQueryDataAction({ exploreId, type: payloadType, data: supplementaryQueryData }));
         },
       });
       dispatch(
         storeSupplementaryQueryDataSubscriptionAction({
           exploreId,
-          type,
+          type: payloadType,
           dataSubscription,
         })
       );

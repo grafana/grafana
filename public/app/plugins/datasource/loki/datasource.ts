@@ -164,7 +164,8 @@ export class LokiDatasource
     }
     switch (type) {
       case SupplementaryQueryType.LogsVolume:
-        return this.getLogsVolumeDataProvider(request);
+      case SupplementaryQueryType.LogsVolumeNoTimeout:
+        return this.getLogsVolumeDataProvider(request, type);
       case SupplementaryQueryType.LogsSample:
         return this.getLogsSampleDataProvider(request);
       default:
@@ -173,7 +174,11 @@ export class LokiDatasource
   }
 
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
-    return [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample];
+    return [
+      SupplementaryQueryType.LogsVolume,
+      SupplementaryQueryType.LogsVolumeNoTimeout,
+      SupplementaryQueryType.LogsSample,
+    ];
   }
 
   getSupplementaryQuery(type: SupplementaryQueryType, query: LokiQuery): LokiQuery | undefined {
@@ -187,6 +192,7 @@ export class LokiDatasource
 
     switch (type) {
       case SupplementaryQueryType.LogsVolume:
+      case SupplementaryQueryType.LogsVolumeNoTimeout:
         // it has to be a logs-producing range-query
         isQuerySuitable = !!(query.expr && isLogsQuery(query.expr) && query.queryType === LokiQueryType.Range);
         if (!isQuerySuitable) {
@@ -197,7 +203,7 @@ export class LokiDatasource
           ...normalizedQuery,
           refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
           instant: false,
-          supportingQueryType: SupportingQueryType.LogsVolume,
+          supportingQueryType: type === SupplementaryQueryType.LogsVolume ? SupportingQueryType.LogsVolume : undefined,
           expr: `sum by (level) (count_over_time(${expr}[$__interval]))`,
         };
 
@@ -219,10 +225,15 @@ export class LokiDatasource
     }
   }
 
-  getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+  getLogsVolumeDataProvider(
+    request: DataQueryRequest<LokiQuery>,
+    type:
+      | SupplementaryQueryType.LogsVolume
+      | SupplementaryQueryType.LogsVolumeNoTimeout = SupplementaryQueryType.LogsVolume
+  ): Observable<DataQueryResponse> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
-      .map((query) => this.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, query))
+      .map((query) => this.getSupplementaryQuery(type, query))
       .filter((query): query is LokiQuery => !!query);
 
     if (!targets.length) {

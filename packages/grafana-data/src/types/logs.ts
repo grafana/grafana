@@ -182,6 +182,7 @@ export const hasLogsContextSupport = (datasource: unknown): datasource is DataSo
  */
 export enum SupplementaryQueryType {
   LogsVolume = 'LogsVolume',
+  LogsVolumeNoTimeout = 'LogsVolumeNoTimeout',
   LogsSample = 'LogsSample',
 }
 

@@ -31,6 +31,7 @@ class MockDataSourceWithSupplementaryQuerySupport
 {
   private supplementaryQueriesResults: Record<SupplementaryQueryType, DataFrame[] | undefined> = {
     [SupplementaryQueryType.LogsVolume]: undefined,
+    [SupplementaryQueryType.LogsVolumeNoTimeout]: undefined,
     [SupplementaryQueryType.LogsSample]: undefined,
   };
 

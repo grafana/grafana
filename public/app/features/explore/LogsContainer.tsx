@@ -158,7 +158,9 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             splitOpen={splitOpenFn}
             loading={loading}
             loadingState={loadingState}
-            loadLogsVolumeData={() => loadSupplementaryQueryData(exploreId, SupplementaryQueryType.LogsVolume)}
+            loadLogsVolumeData={(type = SupplementaryQueryType.LogsVolume) =>
+              loadSupplementaryQueryData(exploreId, type, SupplementaryQueryType.LogsVolume)
+            }
             onChangeTime={this.onChangeTime}
             onClickFilterLabel={onClickFilterLabel}
             onClickFilterOutLabel={onClickFilterOutLabel}

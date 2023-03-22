@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { groupBy } from 'lodash';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import {
   AbsoluteTimeRange,
@@ -11,6 +11,7 @@ import {
   isLogsVolumeLimited,
   LoadingState,
   SplitOpen,
+  SupplementaryQueryType,
   TimeZone,
 } from '@grafana/data';
 import { Button, InlineField, useStyles2 } from '@grafana/ui';
@@ -25,7 +26,7 @@ type Props = {
   splitOpen: SplitOpen;
   width: number;
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
-  onLoadLogsVolume: () => void;
+  onLoadLogsVolume: (type?: SupplementaryQueryType) => void;
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
   onClose?(): void;
@@ -57,10 +58,11 @@ export const LogsVolumePanelList = ({
     return !isLogsVolumeLimited(data) && zoomRatio && zoomRatio < 1;
   });
 
-  const timeoutError = logsVolumeData?.error?.message?.includes('timeout');
-  const retry = () => {
-    onLoadLogsVolume();
-  };
+  const timeoutError =
+    logsVolumeData?.error?.message?.includes('timeout') || logsVolumeData?.error?.message?.includes('exceeded');
+  const retry = useCallback(() => {
+    onLoadLogsVolume(SupplementaryQueryType.LogsVolumeNoTimeout);
+  }, [onLoadLogsVolume]);
 
   if (logsVolumeData?.state === LoadingState.Loading) {
     return <span>Loading...</span>;
@@ -99,7 +101,7 @@ export const LogsVolumePanelList = ({
       {containsZoomed && (
         <div className={styles.extraInfoContainer}>
           <InlineField label="Reload log volume" transparent>
-            <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} id="reload-volume" />
+            <Button size="xs" icon="sync" variant="secondary" onClick={() => onLoadLogsVolume()} id="reload-volume" />
           </InlineField>
         </div>
       )}
