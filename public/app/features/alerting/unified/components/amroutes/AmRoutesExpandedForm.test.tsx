@@ -2,22 +2,24 @@ import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
 import React from 'react';
+import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
 
-import { Button } from '@grafana/ui';
+import { Route } from 'app/plugins/datasource/alertmanager/types';
+import { configureStore } from 'app/store/configureStore';
 
-import { TestProvider } from '../../../../../../test/helpers/TestProvider';
-import { RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';
 import * as grafanaApp from '../../components/receivers/grafanaAppReceivers/grafanaApp';
 import { FormAmRoute } from '../../types/amroutes';
+import { amRouteToFormAmRoute } from '../../utils/amroutes';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
-import { AmRoutesExpandedForm } from './EditNotificationPolicyForm';
+import { AmRoutesExpandedForm } from './AmRoutesExpandedForm';
 
 const ui = {
   error: byRole('alert'),
   overrideTimingsCheckbox: byRole('checkbox', { name: /Override general timings/ }),
-  submitBtn: byRole('button', { name: /Update default policy/ }),
+  submitBtn: byRole('button', { name: /Save policy/ }),
   groupWaitInput: byRole('textbox', { name: /Group wait/ }),
   groupIntervalInput: byRole('textbox', { name: /Group interval/ }),
   repeatIntervalInput: byRole('textbox', { name: /Repeat interval/ }),
@@ -27,11 +29,10 @@ const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafa
 useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
 
 // TODO Default and Notification policy form should be unified so we don't need to maintain two almost identical forms
-describe('EditNotificationPolicyForm', function () {
+describe('AmRoutesExpandedForm', function () {
   describe('Timing options', function () {
     it('should render prometheus duration strings in form inputs', async function () {
       renderRouteForm({
-        id: '1',
         group_wait: '1m30s',
         group_interval: '2d4h30m35s',
         repeat_interval: '1w2d6h',
@@ -49,7 +50,6 @@ describe('EditNotificationPolicyForm', function () {
       const onSubmit = jest.fn();
       renderRouteForm(
         {
-          id: '1',
           receiver: 'default',
         },
         [{ value: 'default', label: 'Default' }],
@@ -82,7 +82,6 @@ describe('EditNotificationPolicyForm', function () {
     const onSubmit = jest.fn();
     renderRouteForm(
       {
-        id: '0',
         receiver: 'default',
         group_wait: '1m30s',
         group_interval: '2d4h30m35s',
@@ -111,17 +110,18 @@ describe('EditNotificationPolicyForm', function () {
 });
 
 function renderRouteForm(
-  route: RouteWithID,
+  route: Route,
   receivers: AmRouteReceiver[] = [],
   onSubmit: (route: Partial<FormAmRoute>) => void = noop
 ) {
-  render(
-    <AmRoutesExpandedForm
-      actionButtons={<Button type="submit">Update default policy</Button>}
-      onSubmit={onSubmit}
-      receivers={receivers}
-      route={route}
-    />,
-    { wrapper: TestProvider }
+  const Wrapper = ({ children }: { children: React.ReactNode }) => (
+    <Provider store={configureStore()}>
+      <MemoryRouter>{children}</MemoryRouter>
+    </Provider>
   );
+  const [formAmRoute] = amRouteToFormAmRoute(route);
+
+  render(<AmRoutesExpandedForm receivers={receivers} routes={formAmRoute} onSave={onSubmit} onCancel={noop} />, {
+    wrapper: Wrapper,
+  });
 }

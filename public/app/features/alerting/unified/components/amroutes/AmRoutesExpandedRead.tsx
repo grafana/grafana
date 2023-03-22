@@ -33,13 +33,9 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
   const gridStyles = useStyles2(getGridStyles);
   const permissions = getNotificationsPermissions(alertManagerSourceName);
 
-  const groupWait = routes.groupWaitValue ? `${routes.groupWaitValue}${routes.groupWaitValueType}` : '-';
-  const groupInterval = routes.groupIntervalValue
-    ? `${routes.groupIntervalValue}${routes.groupIntervalValueType}`
-    : '-';
-  const repeatInterval = routes.repeatIntervalValue
-    ? `${routes.repeatIntervalValue}${routes.repeatIntervalValueType}`
-    : '-';
+  const groupWait = routes.groupWaitValue ?? '-';
+  const groupInterval = routes.groupIntervalValue ?? '-';
+  const repeatInterval = routes.repeatIntervalValue ?? '-';
 
   const [subroutes, setSubroutes] = useState(routes.routes);
   const [isAddMode, setIsAddMode] = useState(false);

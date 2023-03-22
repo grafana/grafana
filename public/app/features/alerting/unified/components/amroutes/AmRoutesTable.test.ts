@@ -14,11 +14,8 @@ const defaultAmRoute: FormAmRoute = {
   groupBy: [],
   overrideTimings: false,
   groupWaitValue: '',
-  groupWaitValueType: '',
   groupIntervalValue: '',
-  groupIntervalValueType: '',
   repeatIntervalValue: '',
-  repeatIntervalValueType: '',
   muteTimeIntervals: [],
   routes: [],
 };
