@@ -239,6 +239,20 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 			AuthModule:      login.GenericOAuthModule,
 			expectedCode:    http.StatusForbidden,
 		},
+		{
+			desc:            "should be able to change basicRole with a basic Auth",
+			SkipOrgRoleSync: false,
+			AuthEnabled:     false,
+			AuthModule:      "",
+			expectedCode:    http.StatusOK,
+		},
+		{
+			desc:            "should be able to change basicRole with a basic Auth",
+			SkipOrgRoleSync: true,
+			AuthEnabled:     true,
+			AuthModule:      "",
+			expectedCode:    http.StatusOK,
+		},
 	}
 
 	userWithPermissions := userWithPermissions(1, permissions)
@@ -255,6 +269,8 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 				} else if tt.AuthModule == login.GenericOAuthModule {
 					hs.Cfg.GenericOAuthAuthEnabled = tt.AuthEnabled
 					hs.Cfg.GenericOAuthSkipOrgRoleSync = tt.SkipOrgRoleSync
+				} else if tt.AuthModule == "" {
+					// authmodule empty means basic auth
 				} else {
 					t.Errorf("invalid auth module for test: %s", tt.AuthModule)
 				}

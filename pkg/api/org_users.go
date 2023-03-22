@@ -392,7 +392,6 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 	if hs.Features.IsEnabled(featuremgmt.FlagOnlyExternalOrgRoleSync) {
 		// we do not allow to change role for external synced users
 		qAuth := login.GetAuthInfoQuery{UserId: cmd.UserID}
-		fmt.Printf("qAuth: %+v\n", qAuth)
 		err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &qAuth)
 		if err != nil {
 			if errors.Is(err, user.ErrUserNotFound) {
@@ -403,7 +402,7 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 			}
 		}
 		if qAuth.Result != nil && qAuth.Result.AuthModule != "" && login.IsExternallySynced(hs.Cfg, qAuth.Result.AuthModule) {
-			return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser)
+			return response.ErrOrFallback(http.StatusForbidden, "Cannot change role for externally synced user", org.ErrCannotChangeRoleForExternallySyncedUser)
 		}
 	}
 	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
