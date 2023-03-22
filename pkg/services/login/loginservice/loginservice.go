@@ -80,7 +80,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *login.UpsertUserC
 			}
 		}
 
-		result, errCreateUser := ls.userService.Create(ctx, &user.CreateUserCommand{
+		createdUser, errCreateUser := ls.userService.Create(ctx, &user.CreateUserCommand{
 			Login:        extUser.Login,
 			Email:        extUser.Email,
 			Name:         extUser.Name,
@@ -91,25 +91,25 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *login.UpsertUserC
 		}
 
 		result = &user.User{
-			ID:               result.ID,
-			Version:          result.Version,
-			Email:            result.Email,
-			Name:             result.Name,
-			Login:            result.Login,
-			Password:         result.Password,
-			Salt:             result.Salt,
-			Rands:            result.Rands,
-			Company:          result.Company,
-			EmailVerified:    result.EmailVerified,
-			Theme:            result.Theme,
-			HelpFlags1:       result.HelpFlags1,
-			IsDisabled:       result.IsDisabled,
-			IsAdmin:          result.IsAdmin,
-			IsServiceAccount: result.IsServiceAccount,
-			OrgID:            result.OrgID,
-			Created:          result.Created,
-			Updated:          result.Updated,
-			LastSeenAt:       result.LastSeenAt,
+			ID:               createdUser.ID,
+			Version:          createdUser.Version,
+			Email:            createdUser.Email,
+			Name:             createdUser.Name,
+			Login:            createdUser.Login,
+			Password:         createdUser.Password,
+			Salt:             createdUser.Salt,
+			Rands:            createdUser.Rands,
+			Company:          createdUser.Company,
+			EmailVerified:    createdUser.EmailVerified,
+			Theme:            createdUser.Theme,
+			HelpFlags1:       createdUser.HelpFlags1,
+			IsDisabled:       createdUser.IsDisabled,
+			IsAdmin:          createdUser.IsAdmin,
+			IsServiceAccount: createdUser.IsServiceAccount,
+			OrgID:            createdUser.OrgID,
+			Created:          createdUser.Created,
+			Updated:          createdUser.Updated,
+			LastSeenAt:       createdUser.LastSeenAt,
 		}
 
 		if extUser.AuthModule != "" {
