@@ -847,11 +847,18 @@ func (d *dashboardStore) deleteAlertDefinition(dashboardId int64, sess *db.Sessi
 func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
 	var queryResult *dashboards.Dashboard
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		if query.ID == 0 && len(query.Slug) == 0 && len(query.UID) == 0 {
+		if query.ID == 0 && len(query.UID) == 0 && (query.Title == nil || query.FolderID == nil) {
 			return dashboards.ErrDashboardIdentifierNotSet
 		}
 
-		dashboard := dashboards.Dashboard{Slug: query.Slug, OrgID: query.OrgID, ID: query.ID, UID: query.UID}
+		dashboard := dashboards.Dashboard{OrgID: query.OrgID, ID: query.ID, UID: query.UID}
+		if query.Title != nil {
+			dashboard.Title = *query.Title
+		}
+		if query.FolderID != nil {
+			dashboard.FolderID = *query.FolderID
+		}
+
 		has, err := sess.Get(&dashboard)
 
 		if err != nil {

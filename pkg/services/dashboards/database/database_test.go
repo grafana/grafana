@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegrationDashboardDataAccess(t *testing.T) {
@@ -81,11 +82,12 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.False(t, queryResult.IsFolder)
 	})
 
-	t.Run("Should be able to get dashboard by slug", func(t *testing.T) {
+	t.Run("Should be able to get dashboard by title and folderID", func(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
-			Slug:  "test-dash-23",
-			OrgID: 1,
+			Title:    util.Pointer("test dash 23"),
+			FolderID: &savedFolder.ID,
+			OrgID:    1,
 		}
 
 		queryResult, err := dashboardStore.GetDashboard(context.Background(), &query)
