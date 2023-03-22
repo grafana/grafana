@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -82,7 +82,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.visualization}>
+      <div className={cx(styles.visualization, styles.containerBox)}>
         <div className={styles.headerSection}>Start your new dashboard by adding a visualization</div>
         <div className={styles.bodySection}>
           Select a data source and then query and visualize your data with charts, stats and tables or create lists,
@@ -99,7 +99,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
         </div>
       </div>
       <div className={styles.others}>
-        <div className={styles.row}>
+        <div className={cx(styles.rowPanel, styles.containerBox)}>
           <div className={styles.headerSection}>Add a row</div>
           <div className={styles.bodySection}>Group your visualizations into expandable sections.</div>
           <div className={styles.centered}>
@@ -113,7 +113,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             ></Button>
           </div>
         </div>
-        <div className={styles.libPanel}>
+        <div className={cx(styles.libPanel, styles.containerBox)}>
           <div className={styles.headerSection}>Import panel</div>
           <div className={styles.bodySection}>Import visualizations that are shared with other dashboards.</div>
           <div className={styles.centered}>
@@ -138,13 +138,30 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      flexDirection: 'column',
+      gap: theme.spacing.gridSize * 4,
     }),
     visualization: css({}),
     headerSection: css({}),
     bodySection: css({}),
-    others: css({}),
-    row: css({}),
+    others: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexDirection: 'row',
+      gap: theme.spacing.gridSize * 4,
+    }),
+    rowPanel: css({}),
     libPanel: css({}),
+    containerBox: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'column',
+      gap: theme.spacing.gridSize * 4,
+      border: '1px dashed rgba(110, 159, 255, 0.5)',
+      padding: theme.spacing.gridSize * 4,
+    }),
     centered: css({
       display: 'flex',
       alignItems: 'center',

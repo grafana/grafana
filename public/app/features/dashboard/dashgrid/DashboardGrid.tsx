@@ -260,7 +260,9 @@ export class DashboardGrid extends PureComponent<Props, State> {
                 </ReactGridLayout>
               </div>
             ) : (
-              <DashboardEmpty dashboard={dashboard} canCreate={isEditable} />
+              <div style={{ width: `${width}px`, height: '100%' }}>
+                <DashboardEmpty dashboard={dashboard} canCreate={isEditable} />
+              </div>
             );
           }}
         </AutoSizer>
