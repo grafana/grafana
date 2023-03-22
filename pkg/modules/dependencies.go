@@ -12,6 +12,8 @@ const (
 	KubernetesClientset string = "kubernetes-clientset"
 	Kubernetes          string = "kubernetes"
 
+	Provisioning string = "provisioning"
+
 	PublicDashboardsWebhooks string = "public-dashboards-webhooks"
 )
 
@@ -25,7 +27,9 @@ var DependencyMap = map[string][]string{
 	KubernetesInformers: {KubernetesCRDs},
 	Kubernetes:          {KubernetesInformers},
 
+	Provisioning: {KubernetesCRDs},
+
 	PublicDashboardsWebhooks: {KubernetesClientset},
 
-	All: {Kubernetes, HTTPServer, PublicDashboardsWebhooks},
+	All: {Kubernetes, HTTPServer, PublicDashboardsWebhooks, Provisioning},
 }
