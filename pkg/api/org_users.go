@@ -402,7 +402,7 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 			}
 		}
 		if qAuth.Result != nil && qAuth.Result.AuthModule != "" && login.IsExternallySynced(hs.Cfg, qAuth.Result.AuthModule) {
-			return response.ErrOrFallback(http.StatusForbidden, "Cannot change role for externally synced user", org.ErrCannotChangeRoleForExternallySyncedUser)
+			return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf(""))
 		}
 	}
 	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
