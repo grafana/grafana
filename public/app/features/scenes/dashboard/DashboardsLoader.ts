@@ -25,8 +25,7 @@ import {
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { isDashboardQuery } from 'app/plugins/datasource/dashboard';
-import { DashboardQuery } from 'app/plugins/datasource/dashboard/types';
+import { isDashboardQuery, DashboardQuery } from 'app/plugins/datasource/dashboard/types';
 import { graphToTimeseriesOptions } from 'app/plugins/panel/timeseries/migrations';
 import { DashboardDTO } from 'app/types';
 

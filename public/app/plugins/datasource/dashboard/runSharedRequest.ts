@@ -1,21 +1,23 @@
 import { Observable } from 'rxjs';
 
 import {
+  DataQuery,
   DataQueryRequest,
   DataSourceApi,
+  DataSourceRef,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
   DataTopic,
 } from '@grafana/data';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { QueryRunnerOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { DashboardQuery, SHARED_DASHBOARD_QUERY } from './types';
 
-export function isSharedDashboardQuery(datasource: string | DataSourceRef | DataSourceApi | null | undefined) {
+export function isSharedDashboardQuery(datasource: string | DataSourceRef | DataSourceApi | null) {
   if (!datasource) {
+    // default datasource
     return false;
   }
 
@@ -86,7 +88,7 @@ export function runSharedRequest(options: QueryRunnerOptions, query: DashboardQu
   });
 }
 
-export function getPanelIdFromQuery(queries: DataQuery[]): number | undefined {
+function getPanelIdFromQuery(queries: DataQuery[]): number | undefined {
   if (!queries || !queries.length) {
     return undefined;
   }
