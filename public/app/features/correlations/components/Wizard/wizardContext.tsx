@@ -10,14 +10,7 @@ export type WizardContextProps<T> = {
   CurrentPageComponent: React.ComponentType;
 };
 
-export const WizardContext = createContext<WizardContextProps<FieldValues>>({
-  currentPage: 0,
-  nextPage: () => {},
-  prevPage: () => {},
-  isLastPage: true,
-  onSubmit: () => {},
-  CurrentPageComponent: () => null,
-});
+export const WizardContext = createContext<WizardContextProps<FieldValues> | undefined>(undefined);
 
 /**
  * Dependencies provided to Wizard component required to build WizardContext
@@ -52,5 +45,10 @@ export function WizardContextProvider<T>(props: PropsWithChildren<WizardContextP
 }
 
 export const useWizardContext = () => {
-  return useContext(WizardContext);
+  const ctx = useContext(WizardContext);
+
+  if (!ctx) {
+    throw new Error('useWizardContext must be used within a WizardContextProvider');
+  }
+  return ctx;
 };
