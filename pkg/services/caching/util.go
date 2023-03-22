@@ -19,7 +19,7 @@ var statusToValue map[CacheStatus]string = map[CacheStatus]string{
 	StatusDisabled:   "DISABLED",
 }
 
-func MarkCacheStatus(isSkip bool, resp CachedDataResponse) {
+func MarkCacheStatus(isSkip bool, resp CachedQueryDataResponse) {
 	if isSkip {
 		populateCacheMeta(resp.Response, cacheSkipValue)
 	} else {

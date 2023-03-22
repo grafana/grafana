@@ -92,7 +92,7 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, sk
 	start := time.Now() // time how long this request takes
 
 	// First look in the query cache if enabled
-	var cr caching.CachedDataResponse
+	var cr caching.CachedQueryDataResponse
 	if !skipQueryCache {
 		if r := s.cachingService.HandleQueryRequest(ctx, reqDTO); r.Status == caching.StatusCacheHit {
 			caching.MarkCacheStatus(skipQueryCache, r)

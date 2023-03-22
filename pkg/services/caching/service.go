@@ -3,6 +3,7 @@ package caching
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -12,7 +13,8 @@ var (
 	ErrCachingNotAvailable = errors.New("query caching is not available in OSS Grafana")
 )
 
-type CacheResponseFn func(context.Context, *backend.QueryDataResponse)
+type CacheQueryResponseFn func(context.Context, *backend.QueryDataResponse)
+type CacheResourceResponseFn func(context.Context, *backend.CallResourceResponse)
 type CacheStatus int
 
 const (
@@ -23,11 +25,19 @@ const (
 	StatusUnimplemented                        // Caching is not implemented
 )
 
-type CachedDataResponse struct {
+type CachedQueryDataResponse struct {
 	// The cached data response associated with a query, or nil if no cached data is found
 	Response *backend.QueryDataResponse
 	// A function that should be used to cache a QueryDataResponse for a given query - can be set to nil by the method implementation
-	UpdateCacheFn CacheResponseFn
+	UpdateCacheFn CacheQueryResponseFn
+	Status        CacheStatus
+}
+
+type CachedResourceDataResponse struct {
+	// The cached resource response associated with a request, or nil if no cached data is found
+	Response *backend.CallResourceResponse
+	// A function that should be used to cache a CallResourceResponse for a given query - can be set to nil by the method implementation
+	UpdateCacheFn CacheResourceResponseFn
 	Status        CacheStatus
 }
 
@@ -36,22 +46,24 @@ func ProvideCachingService() *OSSCachingService {
 }
 
 type CachingService interface {
-	HandleQueryRequest(context.Context, dtos.MetricRequest) CachedDataResponse
-	HandleResourceRequest(context.Context) (*backend.QueryDataResponse, bool, CacheResponseFn, error)
+	HandleQueryRequest(context.Context, dtos.MetricRequest) CachedQueryDataResponse
+	HandleResourceRequest(context.Context, *http.Request) CachedResourceDataResponse
 }
 
 // Implementation of interface
 type OSSCachingService struct {
 }
 
-func (s *OSSCachingService) HandleQueryRequest(ctx context.Context, req dtos.MetricRequest) CachedDataResponse {
-	return CachedDataResponse{
+func (s *OSSCachingService) HandleQueryRequest(ctx context.Context, req dtos.MetricRequest) CachedQueryDataResponse {
+	return CachedQueryDataResponse{
 		Status: StatusUnimplemented,
 	}
 }
 
-func (s *OSSCachingService) HandleResourceRequest(ctx context.Context) (*backend.QueryDataResponse, bool, CacheResponseFn, error) {
-	return nil, false, nil, ErrCachingNotAvailable
+func (s *OSSCachingService) HandleResourceRequest(ctx context.Context, req *http.Request) CachedResourceDataResponse {
+	return CachedResourceDataResponse{
+		Status: StatusUnimplemented,
+	}
 }
 
 var _ CachingService = &OSSCachingService{}
