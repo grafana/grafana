@@ -50,6 +50,7 @@ describe('createPluginExtensionRegistry()', () => {
     // Sample link configurations that can be used in tests
     const linkConfig = {
       placement: placement1,
+      pluginName,
       title: 'Open incident',
       description: 'You can create an incident from this context',
       path: '/a/belugacdn-app/incidents/declare',
@@ -113,7 +114,7 @@ describe('createPluginExtensionRegistry()', () => {
         },
         {
           pluginId: 'grafana-monitoring-app',
-          pluginName: 'Grafana Monitoring Appƒ',
+          pluginName,
           linkExtensions: [
             { ...linkConfig, placement: placement1, path: '/a/grafana-monitoring-app/incidents/declare' },
           ],
@@ -192,6 +193,7 @@ describe('createPluginExtensionRegistry()', () => {
       expect(configured).toEqual({
         key: expect.any(Number),
         type: PluginExtensionTypes.link,
+        pluginName,
         title: linkConfig.title,
         description: linkConfig.description,
         path: linkConfig.path,
@@ -277,12 +279,14 @@ describe('createPluginExtensionRegistry()', () => {
     beforeEach(() => {
       commandConfig1 = {
         placement: 'grafana/dashboard/panel/menu',
+        pluginName,
         title: 'Open incident',
         description: 'You can create an incident from this context',
         handler: jest.fn(),
       };
       commandConfig2 = {
         placement: 'plugins/grafana-slo-app/slo-breached',
+        pluginName,
         title: 'Open incident',
         description: 'You can create an incident from this context',
         handler: jest.fn(),
@@ -340,7 +344,7 @@ describe('createPluginExtensionRegistry()', () => {
         },
         {
           pluginId: 'grafana-monitoring-app',
-          pluginName: 'Grafana Monitoring App',
+          pluginName,
           linkExtensions: [],
           commandExtensions: [commandConfig1],
         },
@@ -541,6 +545,7 @@ function shouldHaveExtensionsAtPlacement({
       if ('handler' in extension) {
         return {
           key: expect.any(Number),
+          pluginName: extension.pluginName,
           title: extension.title,
           description: extension.description,
           type: PluginExtensionTypes.command,
@@ -551,6 +556,7 @@ function shouldHaveExtensionsAtPlacement({
       // Link extension
       return {
         key: expect.any(Number),
+        pluginName: extension.pluginName,
         title: extension.title,
         description: extension.description,
         type: PluginExtensionTypes.link,
