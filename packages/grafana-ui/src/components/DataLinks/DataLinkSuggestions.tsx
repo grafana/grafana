@@ -53,7 +53,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ suggestions, ...otherProps }) => {
+export const DataLinkSuggestions = ({ suggestions, ...otherProps }: DataLinkSuggestionsProps) => {
   const ref = useRef(null);
 
   useClickAway(ref, () => {
@@ -104,8 +104,16 @@ interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
   activeRef?: React.RefObject<HTMLDivElement>;
 }
 
-const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.memo(
-  ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions, activeRef: selectedRef }) => {
+const DataLinkSuggestionsList = React.memo(
+  ({
+    activeIndex,
+    activeIndexOffset,
+    label,
+    onClose,
+    onSuggestionSelect,
+    suggestions,
+    activeRef: selectedRef,
+  }: DataLinkSuggestionsListProps) => {
     const styles = useStyles2(getStyles);
 
     return (

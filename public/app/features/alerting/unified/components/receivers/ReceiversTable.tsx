@@ -1,5 +1,5 @@
 import pluralize from 'pluralize';
-import React, { FC, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { dateTime, dateTimeFormat } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -238,7 +238,7 @@ interface Props {
   alertManagerName: string;
 }
 
-export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
+export const ReceiversTable = ({ config, alertManagerName }: Props) => {
   const dispatch = useDispatch();
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
   const permissions = getNotificationsPermissions(alertManagerName);

@@ -16,10 +16,11 @@ type Service struct {
 	pluginRegistry registry.Service
 }
 
-func ProvideService(pluginRegistry registry.Service, pluginSources sources.Resolver,
+func ProvideService(pluginRegistry registry.Service, pluginSources sources.Registry,
 	pluginLoader loader.Service) (*Service, error) {
-	for _, ps := range pluginSources.List(context.Background()) {
-		if _, err := pluginLoader.Load(context.Background(), ps.Class, ps.Paths); err != nil {
+	ctx := context.Background()
+	for _, ps := range pluginSources.List(ctx) {
+		if _, err := pluginLoader.Load(ctx, ps); err != nil {
 			return nil, err
 		}
 	}

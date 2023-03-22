@@ -18,7 +18,7 @@ const scalarOptions = [
   { label: 'Clamped', value: ScalarDimensionMode.Clamped, description: 'Use field values, clamped to max and min' },
 ];
 
-type Props = StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions, any>;
+type Props = StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions>;
 
 export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props) => {
   const { settings } = item;

@@ -68,8 +68,8 @@ import {
   findLastPosition,
   getLabelFilterPositions,
 } from './modifyQuery';
+import { runQueryInChunks } from './queryChunking';
 import { getQueryHints } from './queryHints';
-import { runPartitionedQueries } from './querySplitting';
 import {
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
@@ -77,7 +77,7 @@ import {
   getParserFromQuery,
   isLogsQuery,
   isValidQuery,
-  requestSupportsPartitioning,
+  requestSupporsChunking,
 } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
@@ -138,6 +138,7 @@ export class LokiDatasource
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
+  onContextClose: (() => void) | undefined;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -257,7 +258,7 @@ export class LokiDatasource
       .map(getNormalizedLokiQuery) // "fix" the `.queryType` prop
       .map((q) => ({ ...q, maxLines: q.maxLines ?? this.maxLines }));
 
-    const fixedRequest: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] } = {
+    const fixedRequest: DataQueryRequest<LokiQuery> = {
       ...request,
       targets: queries,
     };
@@ -285,8 +286,8 @@ export class LokiDatasource
       return this.runLiveQueryThroughBackend(fixedRequest);
     }
 
-    if (config.featureToggles.lokiQuerySplitting && requestSupportsPartitioning(fixedRequest.targets)) {
-      return runPartitionedQueries(this, fixedRequest);
+    if (config.featureToggles.lokiQuerySplitting && requestSupporsChunking(fixedRequest.targets)) {
+      return runQueryInChunks(this, fixedRequest);
     }
 
     return this.runQuery(fixedRequest);
@@ -424,9 +425,9 @@ export class LokiDatasource
     return res.data ?? (res || []);
   }
 
-  async getQueryStats(query: LokiQuery): Promise<QueryStats> {
+  async getQueryStats(query: string): Promise<QueryStats> {
     const { start, end } = this.getTimeRangeParams();
-    const labelMatchers = getStreamSelectorsFromQuery(query.expr);
+    const labelMatchers = getStreamSelectorsFromQuery(query);
 
     let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
 
@@ -806,53 +807,60 @@ export class LokiDatasource
   }
 
   getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
-    return LokiContextUi({
-      row,
-      languageProvider: this.languageProvider,
-      onClose: () => {
-        this.prepareContextExpr = this.prepareContextExprWithoutParsedLabels;
-      },
-      updateFilter: (contextFilters: ContextFilter[]) => {
-        this.prepareContextExpr = async (row: LogRowModel, origQuery?: DataQuery) => {
-          await this.languageProvider.start();
-          const labels = this.languageProvider.getLabelKeys();
+    const updateFilter = (contextFilters: ContextFilter[]) => {
+      this.prepareContextExpr = async (row: LogRowModel, origQuery?: DataQuery) => {
+        await this.languageProvider.start();
+        const labels = this.languageProvider.getLabelKeys();
 
-          let expr = contextFilters
-            .map((filter) => {
-              const label = filter.value;
-              if (filter && !filter.fromParser && filter.enabled && labels.includes(label)) {
-                // escape backslashes in label as users can't escape them by themselves
-                return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
-              }
-              return '';
-            })
-            // Filter empty strings
-            .filter((label) => !!label)
-            .join(',');
-
-          expr = `{${expr}}`;
-
-          const parserContextFilters = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
-          if (parserContextFilters.length) {
-            // we should also filter for labels from parsers, let's find the right parser
-            if (origQuery) {
-              const parser = getParserFromQuery((origQuery as LokiQuery).expr);
-              if (parser) {
-                expr = addParserToQuery(expr, parser);
-              }
+        let expr = contextFilters
+          .map((filter) => {
+            const label = filter.value;
+            if (filter && !filter.fromParser && filter.enabled && labels.includes(label)) {
+              // escape backslashes in label as users can't escape them by themselves
+              return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
             }
-            for (const filter of parserContextFilters) {
-              if (filter.enabled) {
-                expr = addLabelToQuery(expr, filter.label, '=', row.labels[filter.label]);
-              }
+            return '';
+          })
+          // Filter empty strings
+          .filter((label) => !!label)
+          .join(',');
+
+        expr = `{${expr}}`;
+
+        const parserContextFilters = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
+        if (parserContextFilters.length) {
+          // we should also filter for labels from parsers, let's find the right parser
+          if (origQuery) {
+            const parser = getParserFromQuery((origQuery as LokiQuery).expr);
+            if (parser) {
+              expr = addParserToQuery(expr, parser);
             }
           }
-          return expr;
-        };
-        if (runContextQuery) {
-          runContextQuery();
+          for (const filter of parserContextFilters) {
+            if (filter.enabled) {
+              expr = addLabelToQuery(expr, filter.label, '=', row.labels[filter.label]);
+            }
+          }
         }
-      },
+        return expr;
+      };
+      if (runContextQuery) {
+        runContextQuery();
+      }
+    };
+
+    // we need to cache this function so that it doesn't get recreated on every render
+    this.onContextClose =
+      this.onContextClose ??
+      (() => {
+        this.prepareContextExpr = this.prepareContextExprWithoutParsedLabels;
+      });
+
+    return LokiContextUi({
+      row,
+      updateFilter,
+      languageProvider: this.languageProvider,
+      onClose: this.onContextClose,
     });
   }
 

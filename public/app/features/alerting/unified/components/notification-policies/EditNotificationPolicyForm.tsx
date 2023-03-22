@@ -1,5 +1,5 @@
-import { css, cx } from '@emotion/css';
-import React, { FC, ReactNode, useState } from 'react';
+import { css } from '@emotion/css';
+import React, { ReactNode, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -27,15 +27,15 @@ import {
   emptyArrayFieldMatcher,
   mapMultiSelectValueToStrings,
   mapSelectValueToString,
-  optionalPositiveInteger,
   stringToSelectableValue,
   stringsToSelectableValues,
   commonGroupByOptions,
   amRouteToFormAmRoute,
+  promDurationValidator,
 } from '../../utils/amroutes';
-import { timeOptions } from '../../utils/time';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
+import { PromDurationInput } from './PromDurationInput';
 import { getFormStyles } from './formStyles';
 
 export interface AmRoutesExpandedFormProps {
@@ -43,21 +43,30 @@ export interface AmRoutesExpandedFormProps {
   route?: RouteWithID;
   onSubmit: (route: Partial<FormAmRoute>) => void;
   actionButtons: ReactNode;
+  defaults?: Partial<FormAmRoute>;
 }
 
-export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButtons, receivers, route, onSubmit }) => {
+export const AmRoutesExpandedForm = ({
+  actionButtons,
+  receivers,
+  route,
+  onSubmit,
+  defaults,
+}: AmRoutesExpandedFormProps) => {
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
   const muteTimingOptions = useMuteTimingOptions();
+  const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
 
   const receiversWithOnCallOnTop = receivers.sort(onCallFirst);
 
-  const formAmRoute = amRouteToFormAmRoute(route);
+  const formAmRoute = {
+    ...amRouteToFormAmRoute(route),
+    ...defaults,
+  };
 
-  const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
-
-  const defaultValues: FormAmRoute = {
+  const defaultValues: Omit<FormAmRoute, 'routes'> = {
     ...formAmRoute,
     // if we're adding a new route, show at least one empty matcher
     object_matchers: route ? formAmRoute.object_matchers : emptyMatcher,
@@ -67,7 +76,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
     <Form defaultValues={defaultValues} onSubmit={onSubmit} maxWidth="none">
       {({ control, register, errors, setValue, watch }) => (
         <>
-          {/* @ts-ignore-check: react-hook-form made me do this */}
           <input type="hidden" {...register('id')} />
           {/* @ts-ignore-check: react-hook-form made me do this */}
           <FieldArray name="object_matchers" control={control}>
@@ -86,7 +94,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                   {fields.length > 0 && (
                     <div className={styles.matchersContainer}>
                       {fields.map((field, index) => {
-                        const localPath = `object_matchers[${index}]`;
                         return (
                           <Stack direction="row" key={field.id} alignItems="center">
                             <Field
@@ -95,7 +102,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                               error={errors.object_matchers?.[index]?.name?.message}
                             >
                               <Input
-                                {...register(`${localPath}.name`, { required: 'Field is required' })}
+                                {...register(`object_matchers.${index}.name`, { required: 'Field is required' })}
                                 defaultValue={field.name}
                                 placeholder="label"
                                 autoFocus
@@ -114,7 +121,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                                 )}
                                 defaultValue={field.operator}
                                 control={control}
-                                name={`${localPath}.operator` as const}
+                                name={`object_matchers.${index}.operator`}
                                 rules={{ required: { value: true, message: 'Required.' } }}
                               />
                             </Field>
@@ -124,7 +131,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                               error={errors.object_matchers?.[index]?.value?.message}
                             >
                               <Input
-                                {...register(`${localPath}.value`, { required: 'Field is required' })}
+                                {...register(`object_matchers.${index}.value`, { required: 'Field is required' })}
                                 defaultValue={field.value}
                                 placeholder="value"
                               />
@@ -215,38 +222,11 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                 invalid={!!errors.groupWaitValue}
                 error={errors.groupWaitValue?.message}
               >
-                <>
-                  <div className={cx(formStyles.container, formStyles.timingContainer)}>
-                    <InputControl
-                      render={({ field, fieldState: { invalid } }) => (
-                        <Input
-                          {...field}
-                          className={formStyles.smallInput}
-                          invalid={invalid}
-                          aria-label="Group wait value"
-                        />
-                      )}
-                      control={control}
-                      name="groupWaitValue"
-                      rules={{
-                        validate: optionalPositiveInteger,
-                      }}
-                    />
-                    <InputControl
-                      render={({ field: { onChange, ref, ...field } }) => (
-                        <Select
-                          {...field}
-                          className={formStyles.input}
-                          onChange={(value) => onChange(mapSelectValueToString(value))}
-                          options={timeOptions}
-                          aria-label="Group wait type"
-                        />
-                      )}
-                      control={control}
-                      name="groupWaitValueType"
-                    />
-                  </div>
-                </>
+                <PromDurationInput
+                  {...register('groupWaitValue', { validate: promDurationValidator })}
+                  aria-label="Group wait value"
+                  className={formStyles.promDurationInput}
+                />
               </Field>
               <Field
                 label="Group interval"
@@ -254,38 +234,11 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                 invalid={!!errors.groupIntervalValue}
                 error={errors.groupIntervalValue?.message}
               >
-                <>
-                  <div className={cx(formStyles.container, formStyles.timingContainer)}>
-                    <InputControl
-                      render={({ field, fieldState: { invalid } }) => (
-                        <Input
-                          {...field}
-                          className={formStyles.smallInput}
-                          invalid={invalid}
-                          aria-label="Group interval value"
-                        />
-                      )}
-                      control={control}
-                      name="groupIntervalValue"
-                      rules={{
-                        validate: optionalPositiveInteger,
-                      }}
-                    />
-                    <InputControl
-                      render={({ field: { onChange, ref, ...field } }) => (
-                        <Select
-                          {...field}
-                          className={formStyles.input}
-                          onChange={(value) => onChange(mapSelectValueToString(value))}
-                          options={timeOptions}
-                          aria-label="Group interval type"
-                        />
-                      )}
-                      control={control}
-                      name="groupIntervalValueType"
-                    />
-                  </div>
-                </>
+                <PromDurationInput
+                  {...register('groupIntervalValue', { validate: promDurationValidator })}
+                  aria-label="Group interval value"
+                  className={formStyles.promDurationInput}
+                />
               </Field>
               <Field
                 label="Repeat interval"
@@ -293,39 +246,11 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                 invalid={!!errors.repeatIntervalValue}
                 error={errors.repeatIntervalValue?.message}
               >
-                <>
-                  <div className={cx(formStyles.container, formStyles.timingContainer)}>
-                    <InputControl
-                      render={({ field, fieldState: { invalid } }) => (
-                        <Input
-                          {...field}
-                          className={formStyles.smallInput}
-                          invalid={invalid}
-                          aria-label="Repeat interval value"
-                        />
-                      )}
-                      control={control}
-                      name="repeatIntervalValue"
-                      rules={{
-                        validate: optionalPositiveInteger,
-                      }}
-                    />
-                    <InputControl
-                      render={({ field: { onChange, ref, ...field } }) => (
-                        <Select
-                          {...field}
-                          className={formStyles.input}
-                          menuPlacement="top"
-                          onChange={(value) => onChange(mapSelectValueToString(value))}
-                          options={timeOptions}
-                          aria-label="Repeat interval type"
-                        />
-                      )}
-                      control={control}
-                      name="repeatIntervalValueType"
-                    />
-                  </div>
-                </>
+                <PromDurationInput
+                  {...register('repeatIntervalValue', { validate: promDurationValidator })}
+                  aria-label="Repeat interval value"
+                  className={formStyles.promDurationInput}
+                />
               </Field>
             </>
           )}

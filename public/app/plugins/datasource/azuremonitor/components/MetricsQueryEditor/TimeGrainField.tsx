@@ -14,12 +14,7 @@ interface TimeGrainFieldProps extends AzureQueryEditorFieldProps {
   timeGrainOptions: AzureMonitorOption[];
 }
 
-const TimeGrainField: React.FC<TimeGrainFieldProps> = ({
-  query,
-  timeGrainOptions,
-  variableOptionGroup,
-  onQueryChange,
-}) => {
+const TimeGrainField = ({ query, timeGrainOptions, variableOptionGroup, onQueryChange }: TimeGrainFieldProps) => {
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
       if (!change.value) {
