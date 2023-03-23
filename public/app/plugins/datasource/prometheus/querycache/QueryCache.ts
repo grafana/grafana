@@ -64,7 +64,7 @@ function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ
  */
 export class QueryCache {
   private overlapWindowMs;
-  private perfObeserver: PerformanceObserver;
+  private perfObeserver?: PerformanceObserver;
   private pendingRequestIds = new Set<string>();
 
   cache = new Map<TargetIdent, TargetCache>();
@@ -80,36 +80,38 @@ export class QueryCache {
       this.overlapWindowMs = durationToMilliseconds(duration);
     }
 
-    this.perfObeserver = new PerformanceObserver((list: PerformanceObserverEntryList) => {
-      list.getEntries().forEach((entry) => {
-        // https://github.com/microsoft/TypeScript/issues/33866 PerformanceResourceTiming types are not available from getEntries()?
-        const entryTypeCast: PerformanceResourceTiming = entry as PerformanceResourceTiming;
-        if (entryTypeCast?.initiatorType === 'fetch') {
-          let fetchUrl = entryTypeCast.name;
+    if (typeof PerformanceObserver === 'function') {
+      this.perfObeserver = new PerformanceObserver((list: PerformanceObserverEntryList) => {
+        list.getEntries().forEach((entry) => {
+          // https://github.com/microsoft/TypeScript/issues/33866 PerformanceResourceTiming types are not available from getEntries()?
+          const entryTypeCast: PerformanceResourceTiming = entry as PerformanceResourceTiming;
+          if (entryTypeCast?.initiatorType === 'fetch') {
+            let fetchUrl = entryTypeCast.name;
 
-          if (fetchUrl.includes('/api/ds/query')) {
-            let match = fetchUrl.match(/requestId=([a-z\d]+)/i);
+            if (fetchUrl.includes('/api/ds/query')) {
+              let match = fetchUrl.match(/requestId=([a-z\d]+)/i);
 
-            if (match) {
-              let requestId = match[1];
+              if (match) {
+                let requestId = match[1];
 
-              if (this.pendingRequestIds.has(requestId)) {
-                // TODO: store full initial request size by targSig so we can diff follow-up partial requests
-                // TODO: log savings between full initial request and incremental request to Faro
+                if (this.pendingRequestIds.has(requestId)) {
+                  // TODO: store full initial request size by targSig so we can diff follow-up partial requests
+                  // TODO: log savings between full initial request and incremental request to Faro
 
-                // Safari support for this is coming in 16.4:
-                // https://caniuse.com/mdn-api_performanceresourcetiming_transfersize
-                console.log('Transferred ' + Math.round(entryTypeCast.transferSize / 1024) + 'KB');
+                  // Safari support for this is coming in 16.4:
+                  // https://caniuse.com/mdn-api_performanceresourcetiming_transfersize
+                  console.log('Transferred ' + Math.round(entryTypeCast.transferSize / 1024) + 'KB');
 
-                this.pendingRequestIds.delete(requestId);
+                  this.pendingRequestIds.delete(requestId);
+                }
               }
             }
           }
-        }
+        });
       });
-    });
 
-    this.perfObeserver.observe({ type: 'resource', buffered: false });
+      this.perfObeserver.observe({ type: 'resource', buffered: false });
+    }
   }
 
   // can be used to change full range request to partial, split into multiple requests
