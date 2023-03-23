@@ -413,7 +413,7 @@ export const getLinksSupplier =
         }
       }
 
-      const variables = {
+      const variables: ScopedVars = {
         ...fieldScopedVars,
         __value: {
           text: 'Value',
@@ -423,10 +423,12 @@ export const getLinksSupplier =
         [DataLinkBuiltInVars.keepTime]: {
           text: timeRangeUrl,
           value: timeRangeUrl,
+          skipFormat: true,
         },
         [DataLinkBuiltInVars.includeVars]: {
           text: variablesQuery,
           value: variablesQuery,
+          skipFormat: true,
         },
       };
 
