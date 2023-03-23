@@ -198,6 +198,7 @@ datasources:
     access: proxy
     basicAuth: false
     jsonData:
+      # Note: tracesToLogs used before Grafana version 9.4
       tracesToLogsV2:
         # Field with an internal link pointing to a logs data source in Grafana.
         # datasourceUid value must match the uid value of the logs data source.
