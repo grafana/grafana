@@ -29,7 +29,7 @@
         "title": "Auto migrate (TRUE)",
         "tooltip": "",
         "type": "link",
-        "url": "/d/old-cdd412c4/?__feature.autoMigrateOldPanels=true"
+        "url": "/d/cdd412c4/?__feature.autoMigrateOldPanels=true"
       },
       {
         "asDropdown": false,
@@ -41,7 +41,7 @@
         "title": "Auto migrate (FALSE)",
         "tooltip": "",
         "type": "link",
-        "url": "/d/old-cdd412c4/?__feature.autoMigrateOldPanels=false"
+        "url": "/d/cdd412c4/?__feature.autoMigrateOldPanels=false"
       }
     ],
     "liveNow": false,
