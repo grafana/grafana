@@ -320,7 +320,7 @@ func TestDatasourceStats(t *testing.T) {
 
 		assert.EqualValues(t, 9, db["stats.ds."+datasources.DS_ES+".count"])
 		assert.EqualValues(t, 10, db["stats.ds."+datasources.DS_PROMETHEUS+".count"])
-		assert.EqualValues(t, 11+12, db["stats.ds.other.count"])
+		assert.EqualValues(t, 0, db["stats.ds.other.count"])
 	}
 
 	{
@@ -330,8 +330,8 @@ func TestDatasourceStats(t *testing.T) {
 		assert.EqualValues(t, 1, dba["stats.ds_access."+datasources.DS_ES+".direct.count"])
 		assert.EqualValues(t, 2, dba["stats.ds_access."+datasources.DS_ES+".proxy.count"])
 		assert.EqualValues(t, 3, dba["stats.ds_access."+datasources.DS_PROMETHEUS+".proxy.count"])
-		assert.EqualValues(t, 6+7, dba["stats.ds_access.other.direct.count"])
-		assert.EqualValues(t, 4+8, dba["stats.ds_access.other.proxy.count"])
+		assert.EqualValues(t, nil, dba["stats.ds_access.other.direct.count"])
+		assert.EqualValues(t, nil, dba["stats.ds_access.other.proxy.count"])
 	}
 }
 
