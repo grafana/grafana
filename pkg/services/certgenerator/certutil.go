@@ -43,6 +43,22 @@ func (cu *CertUtil) APIServerKeyFile() string {
 	return strings.Join([]string{cu.K8sDataPath, "apiserver.key"}, "/")
 }
 
+func (cu *CertUtil) K8sAuthnClientCertFile() string {
+	return strings.Join([]string{cu.K8sDataPath, "embedded-k8s-authn-plugin.crt"}, "/")
+}
+
+func (cu *CertUtil) K8sAuthnClientKeyFile() string {
+	return strings.Join([]string{cu.K8sDataPath, "embedded-k8s-authn-plugin.key"}, "/")
+}
+
+func (cu *CertUtil) K8sAuthzClientCertFile() string {
+	return strings.Join([]string{cu.K8sDataPath, "embedded-k8s-authz-plugin.crt"}, "/")
+}
+
+func (cu *CertUtil) K8sAuthzClientKeyFile() string {
+	return strings.Join([]string{cu.K8sDataPath, "embedded-k8s-authz-plugin.key"}, "/")
+}
+
 // Lifted from kube-apiserver package as it's a dependency of external cert generation
 // https://github.com/kubernetes/kubernetes/blob/master/cmd/kube-apiserver/app/server.go#L671
 func getServiceIPAndRanges(serviceClusterIPRanges string) (net.IP, net.IPNet, net.IPNet, error) {
@@ -191,7 +207,7 @@ func (cu *CertUtil) InitializeCACertPKI() error {
 	}
 }
 
-func verifyServerCertChain(cert *x509.Certificate, caCert *x509.Certificate) error {
+func verifyCertChain(cert *x509.Certificate, caCert *x509.Certificate) error {
 	roots := x509.NewCertPool()
 	roots.AddCert(caCert)
 
@@ -204,9 +220,9 @@ func verifyServerCertChain(cert *x509.Certificate, caCert *x509.Certificate) err
 	}
 
 	if err != nil {
-		return fmt.Errorf("error verifiing existing API server cert for a sanity check: %s "+
+		return fmt.Errorf("error verifiing existing cert (subject=%s) for a sanity check: %s "+
 			"Did you delete the original CA cert used for issuing it? "+
-			"Try reseting your PKI to resolve this problem", err.Error())
+			"If so, try reseting your PKI to resolve this problem", cert.Subject.CommonName, err.Error())
 	}
 
 	return nil
@@ -225,7 +241,7 @@ func (cu *CertUtil) EnsureApiServerPKI(advertiseAddress string, alternateIP net.
 		if err != nil {
 			return err
 		}
-		return verifyServerCertChain(cert, cu.caCert)
+		return verifyCertChain(cert, cu.caCert)
 	}
 
 	validFrom := time.Now().Add(-time.Hour) // valid an hour earlier to avoid flakes due to clock skew
@@ -271,4 +287,87 @@ func (cu *CertUtil) EnsureApiServerPKI(advertiseAddress string, alternateIP net.
 	}
 
 	return persistCertKeyPairToDisk(cert, cu.APIServerCertFile(), priv, cu.APIServerKeyFile(), cu.caCert)
+}
+
+func makeClientCert(clientName string, caCert *x509.Certificate, caKey *rsa.PrivateKey) (*x509.Certificate, *rsa.PrivateKey, error) {
+	validFrom := time.Now().Add(-time.Hour) // valid an hour earlier to avoid flakes due to clock skew
+	maxAge := time.Hour * 24 * 365          // one year self-signed certs
+
+	priv, err := rsa.GenerateKey(cryptorand.Reader, 2048)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	template := x509.Certificate{
+		SerialNumber: big.NewInt(2),
+		Subject: pkix.Name{
+			CommonName: fmt.Sprintf("%s@%d", clientName, time.Now().Unix()),
+		},
+		NotBefore: validFrom,
+		NotAfter:  validFrom.Add(maxAge),
+
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		BasicConstraintsValid: true,
+	}
+
+	certDerBytes, err := x509.CreateCertificate(cryptorand.Reader, &template, caCert, &priv.PublicKey, caKey)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cert, err := x509.ParseCertificate(certDerBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return cert, priv, nil
+}
+
+func (cu *CertUtil) EnsureAuthzClientPKI() error {
+	exists, err := certutil.CanReadCertAndKey(cu.K8sAuthzClientCertFile(), cu.K8sAuthzClientKeyFile())
+
+	if err != nil {
+		return fmt.Errorf("error reading existing authz client PKI: %s", err.Error())
+	}
+
+	if exists {
+		// Let's verify that the existing cert in fact verifies against existing CA chain
+		cert, _, err := loadExistingCertPKI(cu.K8sAuthzClientCertFile(), cu.K8sAuthzClientKeyFile())
+		if err != nil {
+			return err
+		}
+		return verifyCertChain(cert, cu.caCert)
+	}
+
+	cert, key, err := makeClientCert("grafana-embedded-k8s-authz-plugin", cu.caCert, cu.caKey)
+	if err != nil {
+		return fmt.Errorf("error provisioning k8s authz client PKI: %s", err.Error())
+	}
+
+	return persistCertKeyPairToDisk(cert, cu.K8sAuthzClientCertFile(), key, cu.K8sAuthzClientKeyFile())
+}
+
+func (cu *CertUtil) EnsureAuthnClientPKI() error {
+	exists, err := certutil.CanReadCertAndKey(cu.K8sAuthnClientCertFile(), cu.K8sAuthnClientKeyFile())
+
+	if err != nil {
+		return fmt.Errorf("error reading existing authn client PKI: %s", err.Error())
+	}
+
+	if exists {
+		// Let's verify that the existing cert in fact verifies against existing CA chain
+		cert, _, err := loadExistingCertPKI(cu.K8sAuthnClientCertFile(), cu.K8sAuthnClientKeyFile())
+		if err != nil {
+			return err
+		}
+		return verifyCertChain(cert, cu.caCert)
+	}
+
+	cert, key, err := makeClientCert("grafana-embedded-k8s-authn-plugin", cu.caCert, cu.caKey)
+	if err != nil {
+		return fmt.Errorf("error provisioning k8s authz client PKI: %s", err.Error())
+	}
+
+	return persistCertKeyPairToDisk(cert, cu.K8sAuthnClientCertFile(), key, cu.K8sAuthnClientKeyFile())
 }

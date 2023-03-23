@@ -59,7 +59,19 @@ func (s *service) up(ctx context.Context) error {
 
 	err = s.certUtil.EnsureApiServerPKI(DefaultAPIServerIp, apiServerServiceIP)
 	if err != nil {
-		s.Log.Error("error initializing API Server cert", "error", err)
+		s.Log.Error("error ensuring API Server PKI", "error", err)
+		return err
+	}
+
+	err = s.certUtil.EnsureAuthzClientPKI()
+	if err != nil {
+		s.Log.Error("error ensuring K8s Authz Client PKI", "error", err)
+		return err
+	}
+
+	err = s.certUtil.EnsureAuthnClientPKI()
+	if err != nil {
+		s.Log.Error("error ensuring K8s Authn Client PKI", "error", err)
 		return err
 	}
 
