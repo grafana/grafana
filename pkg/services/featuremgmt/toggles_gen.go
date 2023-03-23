@@ -27,10 +27,6 @@ const (
 	// Create and show thumbnails for dashboard search results
 	FlagDashboardPreviews = "dashboardPreviews"
 
-	// FlagLivePipeline
-	// Enable a generic live processing pipeline
-	FlagLivePipeline = "live-pipeline"
-
 	// FlagLiveServiceWebWorker
 	// This will use a webworker thread to processes events rather than the main thread
 	FlagLiveServiceWebWorker = "live-service-web-worker"
@@ -242,6 +238,10 @@ const (
 	// FlagIndividualCookiePreferences
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
+
+	// FlagOnlyExternalOrgRoleSync
+	// Prohibits a user from changing organization roles synced with external auth providers
+	FlagOnlyExternalOrgRoleSync = "onlyExternalOrgRoleSync"
 
 	// FlagDrawerDataSourcePicker
 	// Changes the user experience for data source selection to a drawer.

@@ -52,7 +52,7 @@ export const AlertType = ({ editingExistingRule }: Props) => {
       )}
 
       <div className={styles.flexRow}>
-        {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) && (
+        {(ruleFormType === RuleFormType.cloudAlerting || ruleFormType === RuleFormType.cloudRecording) && (
           <Field
             className={styles.formInput}
             label="Select data source"
