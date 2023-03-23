@@ -85,13 +85,9 @@ it('handles a default datasource in a template variable', async () => {
       ],
     },
   };
-  const dashboardModel = new DashboardModel(
-    dashboard,
-    {},
-    {
-      getVariablesFromState: () => dashboard.templating.list,
-    }
-  );
+  const dashboardModel = new DashboardModel(dashboard, undefined, {
+    getVariablesFromState: () => dashboard.templating.list,
+  });
   const exporter = new DashboardExporter();
   const exported: any = await exporter.makeExportable(dashboardModel);
   expect(exported.templating.list[0].datasource.uid).toBe('${DS_GFDB}');
@@ -111,13 +107,9 @@ it('If a panel queries has no datasource prop ignore it', async () => {
       },
     ],
   };
-  const dashboardModel = new DashboardModel(
-    dashboard,
-    {},
-    {
-      getVariablesFromState: () => dashboard.templating.list,
-    }
-  );
+  const dashboardModel = new DashboardModel(dashboard, undefined, {
+    getVariablesFromState: () => [],
+  });
   const exporter = new DashboardExporter();
   const exported: any = await exporter.makeExportable(dashboardModel);
   expect(exported.panels[0].datasource).toEqual({ uid: '${DS_OTHER}', type: 'other' });
