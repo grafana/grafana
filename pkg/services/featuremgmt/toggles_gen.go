@@ -112,7 +112,7 @@ const (
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
 
 	// FlagDisableAngular
-	// Dynamic flag to disable angular at runtime.  The prefered method is to set `angular_support_enabled` = false in the [security] settings, but this allows changing the state at runtime.
+	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
 	FlagDisableAngular = "disableAngular"
 
 	// FlagPrometheusWideSeries
