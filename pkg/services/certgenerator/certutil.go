@@ -21,6 +21,12 @@ import (
 	"strings"
 )
 
+const (
+	ApiServerCertSerial = iota + 1
+	AuthnClientCertSerial
+	AuthzClientCertSerial
+)
+
 type CertUtil struct {
 	K8sDataPath string
 	caKey       *rsa.PrivateKey
@@ -260,7 +266,7 @@ func (cu *CertUtil) EnsureApiServerPKI(advertiseAddress string, alternateIP net.
 	}
 
 	template := x509.Certificate{
-		SerialNumber: big.NewInt(2),
+		SerialNumber: new(big.Int).SetInt64(ApiServerCertSerial),
 		Subject: pkix.Name{
 			CommonName: fmt.Sprintf("%s@%d", advertiseAddress, time.Now().Unix()),
 		},
@@ -294,7 +300,7 @@ func (cu *CertUtil) EnsureApiServerPKI(advertiseAddress string, alternateIP net.
 	return persistCertKeyPairToDisk(cert, cu.APIServerCertFile(), priv, cu.APIServerKeyFile(), cu.caCert)
 }
 
-func makeClientCert(clientName string, caCert *x509.Certificate, caKey *rsa.PrivateKey) (*x509.Certificate, *rsa.PrivateKey, error) {
+func makeClientCert(clientName string, serialNumber *big.Int, caCert *x509.Certificate, caKey *rsa.PrivateKey) (*x509.Certificate, *rsa.PrivateKey, error) {
 	validFrom := time.Now().Add(-time.Hour) // valid an hour earlier to avoid flakes due to clock skew
 	maxAge := time.Hour * 24 * 365          // one year self-signed certs
 
@@ -304,7 +310,7 @@ func makeClientCert(clientName string, caCert *x509.Certificate, caKey *rsa.Priv
 	}
 
 	template := x509.Certificate{
-		SerialNumber: big.NewInt(2),
+		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			CommonName: fmt.Sprintf("%s@%d", clientName, time.Now().Unix()),
 		},
@@ -345,7 +351,7 @@ func (cu *CertUtil) EnsureAuthzClientPKI() error {
 		return verifyCertChain(cert, cu.caCert, x509.ExtKeyUsageClientAuth)
 	}
 
-	cert, key, err := makeClientCert("grafana-embedded-k8s-authz-plugin", cu.caCert, cu.caKey)
+	cert, key, err := makeClientCert("grafana-embedded-k8s-authz-plugin", new(big.Int).SetInt64(AuthzClientCertSerial), cu.caCert, cu.caKey)
 	if err != nil {
 		return fmt.Errorf("error provisioning k8s authz client PKI: %s", err.Error())
 	}
@@ -369,7 +375,7 @@ func (cu *CertUtil) EnsureAuthnClientPKI() error {
 		return verifyCertChain(cert, cu.caCert, x509.ExtKeyUsageClientAuth)
 	}
 
-	cert, key, err := makeClientCert("grafana-embedded-k8s-authn-plugin", cu.caCert, cu.caKey)
+	cert, key, err := makeClientCert("grafana-embedded-k8s-authn-plugin", new(big.Int).SetInt64(AuthnClientCertSerial), cu.caCert, cu.caKey)
 	if err != nil {
 		return fmt.Errorf("error provisioning k8s authz client PKI: %s", err.Error())
 	}
