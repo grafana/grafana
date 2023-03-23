@@ -2,6 +2,7 @@ package webhooks
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -11,15 +12,16 @@ import (
 	k8sAdmission "k8s.io/api/admission/v1"
 )
 
-func (api *WebhooksAPI) AdmissionCreate(c *contextmodel.ReqContext) response.Response {
+func (api *WebhooksAPI) Validate(c *contextmodel.ReqContext) response.Response {
+	fmt.Println("POTATO")
 	var resp *k8sAdmission.AdmissionReview
 
-	api.Log.Debug("admission controller create fired")
+	api.Log.Debug("admission controller validate fired")
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		api.Log.Error("error reading request body")
 	}
-	api.Log.Debug("create", "body", string(body))
+	api.Log.Debug("validate", "body", string(body))
 
 	var rev k8sAdmission.AdmissionReview
 	err = json.Unmarshal(body, &rev)
@@ -42,8 +44,6 @@ func (api *WebhooksAPI) AdmissionCreate(c *contextmodel.ReqContext) response.Res
 		return response.Error(500, "error unmarshalling request body", err)
 	}
 
-	// THIS IS BROKEN
-	// TODO: convert error to k8sAdmission.AdmissionResponse and then to response.Response
 	req := &admission.AdmissionRequest{
 		Action:  c.Req.Method,
 		Kind:    rev.Kind,
@@ -57,6 +57,7 @@ func (api *WebhooksAPI) AdmissionCreate(c *contextmodel.ReqContext) response.Res
 		Object:    obj,
 		OldObject: oldObj,
 	}
+	fmt.Println("POTATO")
 
 	err = api.ValidationController.Validate(c.Req.Context(), req)
 	if err != nil {
@@ -66,5 +67,6 @@ func (api *WebhooksAPI) AdmissionCreate(c *contextmodel.ReqContext) response.Res
 		resp = makeSuccessfulAdmissionReview(rev.Request.UID, rev.TypeMeta)
 	}
 
+	fmt.Println("POTATO")
 	return response.JSON(int(resp.Response.Result.Code), resp)
 }

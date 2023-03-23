@@ -2,6 +2,7 @@ package webhooks
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -14,11 +15,11 @@ import (
 	k8sTypes "k8s.io/apimachinery/pkg/types"
 )
 
-func (api *WebhooksAPI) MutationCreate(c *contextmodel.ReqContext) response.Response {
+func (api *WebhooksAPI) Mutate(c *contextmodel.ReqContext) response.Response {
 	var resp *k8sAdmission.AdmissionReview
 
 	// get body bytes
-	api.Log.Debug("mutation controller create fired")
+	api.Log.Debug("mutation controller fired")
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		api.Log.Error("error reading request body")
@@ -59,6 +60,7 @@ func (api *WebhooksAPI) MutationCreate(c *contextmodel.ReqContext) response.Resp
 		OldObject: nil,
 	}
 
+	fmt.Println("POTATO")
 	// do mutations
 	mutationResponse, err := api.MutationController.Mutate(c.Req.Context(), req)
 	if err != nil {
@@ -82,6 +84,7 @@ func (api *WebhooksAPI) MutationCreate(c *contextmodel.ReqContext) response.Resp
 		return response.JSON(int(resp.Response.Result.Code), resp)
 	}
 
+	fmt.Println("POTATO")
 	// add patch to response
 	marshalledOps, err := json.Marshal(ops)
 	if err != nil {

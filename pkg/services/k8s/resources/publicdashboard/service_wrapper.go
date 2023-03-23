@@ -11,7 +11,6 @@ import (
 	publicdashboardStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	publicdashboardService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -83,79 +82,23 @@ func (s *ServiceWrapper) Create(ctx context.Context, u *user.SignedInUser, dto *
 		return nil, publicdashboardModels.ErrBadRequest.Errorf("validation failed: %s", err)
 	}
 
+	// TODO wait for updated version
 	rv := uObj.GetResourceVersion()
 	s.log.Debug("wait for revision", "revision", rv)
 
 	return pd, nil
 }
 
-// TODO
-// * copy all api and service logic into here
-// * convert object into k8s object
-// * does patch happen here or in mutation?
-// * call k8s resource.delete
-// * handle the watcher insert
-// * handle validation hook
-// * handle mutation hook
-
+// Update mutates an existing public dashboard with updated fields
 func (s *ServiceWrapper) Update(ctx context.Context, u *user.SignedInUser, dto *publicdashboardModels.SavePublicDashboardDTO) (*publicdashboardModels.PublicDashboard, error) {
-	// SERVICE LOGIC
-	err := validation.ValidatePublicDashboard(dto)
-	if err != nil {
-		return nil, err
-	}
-
-	// validate if the dashboard exists
-	dashboard, err := s.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
-	if err != nil {
-		return nil, fmt.Errorf("Update: failed to find dashboard by orgId: %d and dashboardUid: %s: %w", u.OrgID, dto.DashboardUid, err)
-	}
-
-	if dashboard == nil {
-		return nil, fmt.Errorf("Update: dashboard not found by orgId: %d and dashboardUid: %s", u.OrgID, dto.DashboardUid)
-	}
-
-	// get existing public dashboard if exists
-	existingPubdash, err := s.store.Find(ctx, dto.PublicDashboard.Uid)
-	if err != nil {
-		return nil, fmt.Errorf("Update: failed to find public dashboard by uid: %s: %w", dto.PublicDashboard.Uid, err)
-	} else if existingPubdash == nil {
-		return nil, fmt.Errorf("Update: public dashboard not found by uid: %s", dto.PublicDashboard.Uid)
-	}
-
-	// set default value for time settings
-	if dto.PublicDashboard.TimeSettings == nil {
-		dto.PublicDashboard.TimeSettings = &publicdashboardModels.TimeSettings{}
-	}
-
-	if dto.PublicDashboard.Share == "" {
-		dto.PublicDashboard.Share = existingPubdash.Share
-	}
-
-	// set values to update
-	existingPubdash.IsEnabled = dto.PublicDashboard.IsEnabled
-	existingPubdash.AnnotationsEnabled = dto.PublicDashboard.AnnotationsEnabled
-	existingPubdash.TimeSelectionEnabled = dto.PublicDashboard.TimeSelectionEnabled
-	existingPubdash.TimeSettings = dto.PublicDashboard.TimeSettings
-	existingPubdash.Share = dto.PublicDashboard.Share
-	existingPubdash.UpdatedBy = dto.UserId
-	existingPubdash.UpdatedAt = time.Now()
-
-	// START K8s LOGIC
 	// get resource client
 	publicdashboardResource, err := s.clientset.GetClientset().GetResourceClient(CRD)
 	if err != nil {
 		return nil, fmt.Errorf("provideServiceWrapper failed to get public dashboard resource client: %w", err)
 	}
 
-	// convert from runtime object to core kind
-	k8sModel, err := modelToK8sObject(s.namespace, existingPubdash)
-	if err != nil {
-		return nil, err
-	}
-
 	// get original k8s object as unstructured
-	existingUnstructured, err := publicdashboardResource.Get(ctx, k8sModel.Name, metav1.GetOptions{})
+	existingUnstructured, err := publicdashboardResource.Get(ctx, dto.PublicDashboard.Uid, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -166,9 +109,30 @@ func (s *ServiceWrapper) Update(ctx context.Context, u *user.SignedInUser, dto *
 		return nil, err
 	}
 
+	pd, err := k8sObjectToModel(k8sPd)
+	if err != nil {
+		return nil, err
+	}
+
+	// set values to update
+	pd.IsEnabled = dto.PublicDashboard.IsEnabled
+	pd.AnnotationsEnabled = dto.PublicDashboard.AnnotationsEnabled
+	pd.TimeSelectionEnabled = dto.PublicDashboard.TimeSelectionEnabled
+	pd.TimeSettings = dto.PublicDashboard.TimeSettings
+	if dto.PublicDashboard.Share != "" {
+		pd.Share = dto.PublicDashboard.Share
+	}
+	pd.UpdatedBy = dto.UserId
+	pd.UpdatedAt = time.Now()
+
+	newK8s, err := modelToK8sObject(s.namespace, pd)
+	if err != nil {
+		return nil, err
+	}
+
 	// apply updates to original object
-	k8sPd.Spec = k8sModel.Spec
-	k8sPd.ObjectMeta.Annotations = k8sModel.ObjectMeta.Annotations
+	k8sPd.Spec = newK8s.Spec
+	k8sPd.ObjectMeta.Annotations = newK8s.ObjectMeta.Annotations
 
 	// convert from core kind to unstructured
 	uObj, err := k8sObjectToUnstructured(k8sPd)
@@ -176,16 +140,20 @@ func (s *ServiceWrapper) Update(ctx context.Context, u *user.SignedInUser, dto *
 		return nil, err
 	}
 
+	fmt.Println("POTATO")
 	// call k8s resource client
 	uObj, err = publicdashboardResource.Update(ctx, uObj, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, publicdashboardModels.ErrBadRequest.Errorf("validation failed: %s", err)
 	}
 
+	fmt.Println("POTATO")
+	// TODO wait for updated version
+
 	rv := uObj.GetResourceVersion()
 	s.log.Debug("wait for revision", "revision", rv)
 
-	return existingPubdash, nil
+	return pd, nil
 }
 
 // Delete removes the dashboard from kubernetes

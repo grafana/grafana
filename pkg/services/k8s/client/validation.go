@@ -50,9 +50,7 @@ func convertShortWebhookToValidationWebhook(caBundle []byte, swc ShortWebhookCon
 				},
 				Rules: []admissionregistrationV1.RuleWithOperations{
 					{
-						Operations: []admissionregistrationV1.OperationType{
-							admissionregistrationV1.Create,
-						},
+						Operations: swc.Operations,
 						Rule: admissionregistrationV1.Rule{
 							APIGroups:   []string{"*"},
 							APIVersions: []string{"*"},
