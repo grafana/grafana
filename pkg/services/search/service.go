@@ -96,11 +96,11 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 		dashboardQuery.Sort = sortOpt
 	}
 
-	if err := s.dashboardService.SearchDashboards(ctx, &dashboardQuery); err != nil {
+	hits, err := s.dashboardService.SearchDashboards(ctx, &dashboardQuery)
+	if err != nil {
 		return err
 	}
 
-	hits := dashboardQuery.Result
 	if query.Sort == "" {
 		hits = sortedHits(hits)
 	}

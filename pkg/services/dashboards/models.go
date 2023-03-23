@@ -416,6 +416,4 @@ type FindPersistedDashboardsQuery struct {
 	Sort          model.SortOption
 
 	Filters []interface{}
-
-	Result model.HitList
 }

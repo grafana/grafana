@@ -6,6 +6,7 @@ import (
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
 // DashboardService is a service for operating on dashboards.
@@ -25,7 +26,7 @@ type DashboardService interface {
 	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*Dashboard, error)
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*Dashboard, error)
-	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) error
+	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) (model.HitList, error)
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*DashboardACL) error
 	DeleteACLByUser(ctx context.Context, userID int64) error
 	CountDashboardsInFolder(ctx context.Context, query *CountDashboardsInFolderQuery) (int64, error)
