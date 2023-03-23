@@ -3,14 +3,14 @@ import React, { PropsWithChildren } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, useStyles2 } from '@grafana/ui';
 import { StoreState } from 'app/types';
 
 import { resetError } from './state/reducers';
 
 interface OwnProps {
   name: string;
-  showSave?: boolean;
+  showSavedBadge?: boolean;
   onSave?: () => void;
 }
 
@@ -31,8 +31,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 export const ConfigStepContainerUnconnected = ({
   name,
   error,
-  showSave,
-  onSave,
+  showSavedBadge,
   children,
   resetError,
 }: PropsWithChildren<Props>): JSX.Element => {
@@ -46,11 +45,7 @@ export const ConfigStepContainerUnconnected = ({
     <div>
       <div className={styles.header}>
         <h2>{name}</h2>
-        {showSave && onSave && (
-          <Button size="sm" fill="outline" onClick={() => onSave()}>
-            Save changes
-          </Button>
-        )}
+        <div>{showSavedBadge && <Badge text="Saved" color="green" icon="check" />}</div>
       </div>
       {error && (
         <Alert title={error.message} onRemove={onDismissError}>
