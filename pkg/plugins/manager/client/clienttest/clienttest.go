@@ -24,6 +24,7 @@ type TestClient struct {
 	CollectMetricsFunc  backend.CollectMetricsHandlerFunc
 	SubscribeStreamFunc func(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error)
 	PublishStreamFunc   func(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error)
+	RunStreamFunc       func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error
 }
 
 func (c *TestClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -72,6 +73,13 @@ func (c *TestClient) SubscribeStream(ctx context.Context, req *backend.Subscribe
 	}
 
 	return nil, nil
+}
+
+func (c *TestClient) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	if c.RunStreamFunc != nil {
+		return c.RunStreamFunc(ctx, req, sender)
+	}
+	return nil
 }
 
 type MiddlewareScenarioContext struct {
