@@ -59,7 +59,7 @@ export class TemplateSrvMock implements TemplateSrv {
     this.regex.lastIndex = 0;
     const match = this.regex.exec(expression);
     if (!match) {
-      return null;
+      return undefined;
     }
     return match.slice(1).find((match) => match !== undefined);
   }

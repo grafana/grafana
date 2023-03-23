@@ -194,7 +194,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     this.regex.lastIndex = 0;
     const match = this.regex.exec(expression);
     if (!match) {
-      return null;
+      return undefined;
     }
     const variableName = match.slice(1).find((match) => match !== undefined);
     return variableName;
