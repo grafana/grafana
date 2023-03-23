@@ -6,14 +6,14 @@ import { Alert, Button } from '@grafana/ui';
 type Props = {
   error?: DataQueryError;
   title: string;
-  suggestion?: string;
-  onSuggestion?(): void;
+  suggestedAction?: string;
+  onSuggestedAction?(): void;
   onRemove?(): void;
 };
 export function SupplementaryResultError(props: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const SHORT_ERROR_MESSAGE_LIMIT = 100;
-  const { error, title, suggestion, onSuggestion, onRemove } = props;
+  const { error, title, suggestedAction, onSuggestedAction, onRemove } = props;
   // generic get-error-message-logic, taken from
   // /public/app/features/explore/ErrorContainer.tsx
   const message = error?.message || error?.data?.message || '';
@@ -34,15 +34,15 @@ export function SupplementaryResultError(props: Props) {
       ) : (
         message
       )}
-      {suggestion && onSuggestion && (
+      {suggestedAction && onSuggestedAction && (
         <Button
           variant="primary"
           size="xs"
           onClick={() => {
-            onSuggestion();
+            onSuggestedAction();
           }}
         >
-          {suggestion}
+          {suggestedAction}
         </Button>
       )}
     </Alert>
