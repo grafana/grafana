@@ -9,6 +9,11 @@ export async function getStats(datasource: LokiDatasource, query: string): Promi
   }
 
   const response = await datasource.getQueryStats(query);
+
+  if (!response) {
+    return undefined;
+  }
+
   return Object.values(response).every((v) => v === 0) ? undefined : response;
 }
 
