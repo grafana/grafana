@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { capitalize, uniqueId } from 'lodash';
-import React, { FC, useCallback, useState } from 'react';
+import { capitalize, chunk, clamp, uniqueId } from 'lodash';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { AutoSizeInput, clearButtonStyles, Icon, IconButton, Select, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, Button, clearButtonStyles, Icon, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -134,31 +134,80 @@ interface ExpressionResultProps {
 }
 export const PAGE_SIZE = 20;
 export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCondition }) => {
+  const [pageIndex, setPageIndex] = useState(0);
   const styles = useStyles2(getStyles);
+
+  // reset the page index whenever the series changes
+  useEffect(() => {
+    setPageIndex(0);
+  }, [series, setPageIndex]);
 
   // sometimes we receive results where every value is just "null" when noData occurs
   const emptyResults = isEmptySeries(series);
   const isTimeSeriesResults = !emptyResults && isTimeSeriesFrames(series);
-  const slicedResults = series.slice(0, PAGE_SIZE);
-  const restResults = series.length - PAGE_SIZE;
+  const resultPages = chunk(series, PAGE_SIZE);
+
+  const previousPage = useCallback(() => {
+    setPageIndex((index) => clamp(index - 1, 0, resultPages.length - 1));
+  }, [setPageIndex, resultPages]);
+
+  const nextPage = useCallback(() => {
+    setPageIndex((index) => clamp(index + 1, 0, resultPages.length - 1));
+  }, [setPageIndex, resultPages]);
+
+  const shouldShowPagination = resultPages.length > 1;
+  const page = resultPages[pageIndex];
+  const pageStart = pageIndex * PAGE_SIZE + 1;
+  const pageEnd = clamp((pageIndex + 1) * PAGE_SIZE, series.length);
 
   return (
     <div className={styles.expression.results}>
       {!emptyResults && isTimeSeriesResults && (
         <div>
-          {slicedResults.map((frame, index) => (
-            <TimeseriesRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
+          {page.map((frame, index) => (
+            <TimeseriesRow
+              key={uniqueId()}
+              frame={frame}
+              index={pageStart + index}
+              isAlertCondition={isAlertCondition}
+            />
           ))}
         </div>
       )}
       {!emptyResults &&
         !isTimeSeriesResults &&
-        slicedResults.map((frame, index) => (
+        page.map((frame, index) => (
           // There's no way to uniquely identify a frame that doesn't cause render bugs :/ (Gilles)
-          <FrameRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
+          <FrameRow key={uniqueId()} frame={frame} index={pageStart + index} isAlertCondition={isAlertCondition} />
         ))}
       {emptyResults && <div className={cx(styles.expression.noData, styles.mutedText)}>No data</div>}
-      {restResults > 0 && <div> {`There are ${restResults} more results`}</div>}
+      {shouldShowPagination && (
+        <div className={styles.pagination.wrapper} data-testid="paginate-expression">
+          <Stack>
+            <Button
+              variant="secondary"
+              fill="outline"
+              onClick={previousPage}
+              icon="angle-left"
+              size="sm"
+              aria-label="previous-page"
+            />
+            <Spacer />
+            <span className={styles.mutedText}>
+              {pageStart} - {pageEnd} of {series.length}
+            </span>
+            <Spacer />
+            <Button
+              variant="secondary"
+              fill="outline"
+              onClick={nextPage}
+              icon="angle-right"
+              size="sm"
+              aria-label="next-page"
+            />
+          </Stack>
+        </div>
+      )}
     </div>
   );
 };
@@ -433,11 +482,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   timeseriesTableWrapper: css`
     max-height: 500px;
-    max-width: 300px;
 
     overflow-y: scroll;
-
-    padding: 0 !important; // not sure why but style override doesn't work otherwise :( (Gilles)
   `,
   timeseriesTable: css`
     table-layout: auto;
@@ -466,4 +512,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       }
     }
   `,
+  pagination: {
+    wrapper: css`
+      border-top: 1px solid ${theme.colors.border.medium};
+      padding: ${theme.spacing()};
+    `,
+  },
 });
