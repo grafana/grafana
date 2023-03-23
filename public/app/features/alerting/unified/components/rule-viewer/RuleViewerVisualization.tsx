@@ -14,7 +14,7 @@ import {
 import { config, getDataSourceSrv, PanelRenderer } from '@grafana/runtime';
 import { Alert, CodeEditor, DateTimePicker, LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { PanelOptions } from 'app/plugins/panel/table/panelcfg.gen';
+import { Options } from 'app/plugins/panel/table/panelcfg.gen';
 import { AccessControlAction } from 'app/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -45,7 +45,7 @@ export function RuleViewerVisualization({
   const defaultPanel = isExpressionQuery(model) ? TABLE : TIMESERIES;
   const [panel, setPanel] = useState<SupportedPanelPlugins>(defaultPanel);
   const dsSettings = getDataSourceSrv().getInstanceSettings(datasourceUid);
-  const [options, setOptions] = useState<PanelOptions>({
+  const [options, setOptions] = useState<Options>({
     frameIndex: 0,
     showHeader: true,
   });

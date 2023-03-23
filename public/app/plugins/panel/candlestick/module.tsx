@@ -2,7 +2,7 @@ import {
   Field,
   FieldType,
   getFieldDisplayName,
-  OptionsEditorBuilder,
+  PanelOptionsEditorBuilder,
   PanelPlugin,
   SelectableValue,
 } from '@grafana/data';
@@ -43,7 +43,7 @@ const colorStrategies = [
 const numericFieldFilter = (f: Field) => f.type === FieldType.number;
 
 function addFieldPicker(
-  builder: OptionsEditorBuilder<CandlestickOptions>,
+  builder: PanelOptionsEditorBuilder<CandlestickOptions>,
   info: FieldPickerInfo,
   data: CandlestickData | null
 ) {

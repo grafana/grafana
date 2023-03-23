@@ -4,14 +4,14 @@ import {
   escapeStringForRegex,
   FieldOverrideContext,
   getFieldDisplayName,
-  OptionsEditorBuilder,
+  PanelOptionsEditorBuilder,
   ReducerID,
   standardEditorsRegistry,
 } from '@grafana/data';
 import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
-  builder: OptionsEditorBuilder<T>,
+  builder: PanelOptionsEditorBuilder<T>,
   includeFieldMatcher = true
 ) {
   const valueOptionsCategory = ['Value options'];
@@ -89,7 +89,7 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
 }
 
 export function addOrientationOption<T extends SingleStatBaseOptions>(
-  builder: OptionsEditorBuilder<T>,
+  builder: PanelOptionsEditorBuilder<T>,
   category?: string[]
 ) {
   builder.addRadio({
