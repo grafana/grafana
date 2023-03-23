@@ -540,6 +540,7 @@ lerna.json @grafana/frontend-ops
 # Grafana Partnerships Team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-partnerships-team
+/pkg/services/caching/ @grafana/grafana-partnerships-team
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
