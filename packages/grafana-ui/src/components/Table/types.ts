@@ -72,6 +72,7 @@ export interface Props {
   width: number;
   height: number;
   maxHeight?: number;
+  hasTitle?: boolean;
   /** Minimal column width specified in pixels */
   columnMinWidth?: number;
   noHeader?: boolean;

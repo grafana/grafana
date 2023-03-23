@@ -224,7 +224,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       padding-right: ${theme.spacing(1)};
     `,
 
-    tableContentWrapper: (totalColumnsWidth: number) => {
+    tableContentWrapper: (totalColumnsWidth: number, margin: number) => {
       const width = totalColumnsWidth !== undefined ? `${totalColumnsWidth}px` : '100%';
 
       return css`
@@ -232,6 +232,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         width: ${width};
         display: flex;
         flex-direction: column;
+        margin-top: ${margin}px;
       `;
     },
     row: css`

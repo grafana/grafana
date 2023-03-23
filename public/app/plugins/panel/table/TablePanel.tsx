@@ -12,7 +12,7 @@ import { PanelOptions } from './panelcfg.gen';
 interface Props extends PanelProps<PanelOptions> {}
 
 export function TablePanel(props: Props) {
-  const { data, height, width, options, fieldConfig, id } = props;
+  const { data, height, width, options, fieldConfig, id, title } = props;
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
@@ -39,6 +39,10 @@ export function TablePanel(props: Props) {
     subData = subFrames.filter((f) => f.refId === main.refId);
   }
 
+  if (!title.length) {
+    tableHeight = tableHeight - 32;
+  }
+
   const tableElement = (
     <Table
       height={tableHeight}
@@ -49,6 +53,7 @@ export function TablePanel(props: Props) {
       showTypeIcons={options.showTypeIcons}
       resizable={true}
       showRowNums={options.showRowNums}
+      hasTitle={!!title.length}
       initialSortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}

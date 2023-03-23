@@ -38,6 +38,7 @@ import {
 
 const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
+const TITLE_HEIGHT = 32;
 
 export const Table = memo((props: Props) => {
   const {
@@ -45,6 +46,7 @@ export const Table = memo((props: Props) => {
     data,
     subData,
     height,
+    hasTitle = false,
     maxHeight,
     onCellFilterAdded,
     width,
@@ -379,7 +381,7 @@ export const Table = memo((props: Props) => {
   return (
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table" ref={tableDivRef}>
       <CustomScrollbar hideVerticalTrack={true}>
-        <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
+        <div className={tableStyles.tableContentWrapper(totalColumnsWidth, hasTitle ? 0 : TITLE_HEIGHT)}>
           {!noHeader && (
             <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
           )}
