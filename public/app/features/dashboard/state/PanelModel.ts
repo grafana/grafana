@@ -141,6 +141,10 @@ export const autoMigrateAngular: Record<string, string> = {
   'grafana-worldmap-panel': 'geomap',
 };
 
+const autoMigratePanelType: Record<string, string> = {
+  'heatmap-new': 'heatmap', // this was a temporary development panel that is now standard
+};
+
 export class PanelModel implements DataConfigSource, IPanelModel {
   /* persisted id, used in URL to identify a panel */
   id!: number;
@@ -244,23 +248,10 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       (this as any)[property] = model[property];
     }
 
-    switch (this.type) {
-      case 'graph':
-        if (config.featureToggles?.autoMigrateOldPanels || !config.angularSupportEnabled) {
-          this.autoMigrateFrom = this.type;
-          this.type = 'timeseries';
-        }
-        break;
-      case 'table-old':
-        if (config.featureToggles?.autoMigrateOldPanels || !config.angularSupportEnabled) {
-          this.autoMigrateFrom = this.type;
-          this.type = 'table';
-        }
-        break;
-      case 'heatmap-new':
-        this.autoMigrateFrom = this.type;
-        this.type = 'heatmap';
-        break;
+    const newType = autoMigratePanelType[this.type];
+    if (newType) {
+      this.autoMigrateFrom = this.type;
+      this.type = newType;
     }
 
     // defaults
