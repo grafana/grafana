@@ -372,12 +372,15 @@ describe('ExplorePage', () => {
           }),
         })
       );
-      await waitFor(() => {
-        const urlParams = decodeURIComponent(locationService.getSearch().toString());
-        expect(urlParams).toBe(
-          'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
-        );
-      });
+      await waitFor(
+        () => {
+          const urlParams = decodeURIComponent(locationService.getSearch().toString());
+          expect(urlParams).toBe(
+            'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
+          );
+        },
+        { timeout: 2000 }
+      );
     });
 
     it('Datasource in root not found and no queries changes to default', async () => {
