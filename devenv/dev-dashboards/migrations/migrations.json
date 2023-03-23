@@ -18,7 +18,6 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": 111,
     "links": [
       {
         "asDropdown": false,
@@ -341,7 +340,7 @@
     "timepicker": {},
     "timezone": "",
     "title": "Devenv - Panel migrations",
-    "uid": "cdd412c4-migrations",
+    "uid": "cdd412c4",
     "version": 9,
     "weekStart": ""
   }
