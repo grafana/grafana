@@ -1,12 +1,10 @@
 import { css, cx, keyframes } from '@emotion/css';
 import React from 'react';
-import { connect, MapDispatchToProps } from 'react-redux';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LibraryPanel } from '@grafana/schema';
 import { IconButton, useStyles2 } from '@grafana/ui';
-import { addPanel } from 'app/features/dashboard/state/reducers';
 
 import {
   LibraryPanelsSearch,
@@ -14,20 +12,12 @@ import {
 } from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 import { DashboardModel, PanelModel } from '../../state';
 
-export type PanelPluginInfo = { id: number; defaults: { gridPos: { w: number; h: number }; title: string } };
-
-export interface OwnProps {
+interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
 }
 
-export interface DispatchProps {
-  addPanel: typeof addPanel;
-}
-
-export type Props = OwnProps & DispatchProps;
-
-export const AddLibraryPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
+export const AddLibraryPanelWidget = ({ panel, dashboard }: Props) => {
   const onCancelAddPanel = (evt: React.MouseEvent<HTMLButtonElement>) => {
     evt.preventDefault();
     dashboard.removePanel(panel);
@@ -61,10 +51,6 @@ export const AddLibraryPanelWidgetUnconnected = ({ panel, dashboard }: Props) =>
     </div>
   );
 };
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { addPanel };
-
-export const AddLibraryPanelWidget = connect(undefined, mapDispatchToProps)(AddLibraryPanelWidgetUnconnected);
 
 const getStyles = (theme: GrafanaTheme2) => {
   const pulsate = keyframes({

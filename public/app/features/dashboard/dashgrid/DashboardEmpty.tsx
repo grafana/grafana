@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { calculateNewPanelGridPos } from 'app/features/dashboard/utils/panel';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -12,23 +13,11 @@ export interface Props {
 }
 
 export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
-  const calcNewPanelGridPos = () => {
-    // Move all panels down by the height of the "add panel" widget.
-    // This is to work around an issue with react-grid-layout that can mess up the layout
-    // in certain configurations. (See https://github.com/react-grid-layout/react-grid-layout/issues/1787)
-    const addPanelWidgetHeight = 8;
-    for (const panel of dashboard.panelIterator()) {
-      panel.gridPos.y += addPanelWidgetHeight;
-    }
-
-    return { x: 0, y: 0, w: 12, h: addPanelWidgetHeight };
-  };
-
   const onCreateNewPanel = () => {
     const newPanel: Partial<PanelModel> = {
       type: 'timeseries',
       title: 'Panel Title',
-      gridPos: calcNewPanelGridPos(),
+      gridPos: calculateNewPanelGridPos(dashboard),
     };
 
     dashboard.addPanel(newPanel);
@@ -48,35 +37,11 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const onAddLibraryPanel = () => {
     const newPanel = {
       type: 'add-library-panel',
-      gridPos: calcNewPanelGridPos(),
+      gridPos: calculateNewPanelGridPos(dashboard),
     };
 
     dashboard.addPanel(newPanel);
   };
-
-  // const onPasteCopiedPanel = (panelPluginInfo: PanelPluginInfo) => {
-  //   const gridPos = calcNewPanelGridPos();
-
-  //   const newPanel = {
-  //     type: panelPluginInfo.id,
-  //     title: 'Panel Title',
-  //     gridPos: {
-  //       x: gridPos.x,
-  //       y: gridPos.y,
-  //       w: panelPluginInfo.defaults.gridPos.w,
-  //       h: panelPluginInfo.defaults.gridPos.h,
-  //     },
-  //   };
-
-  //   // apply panel template / defaults
-  //   if (panelPluginInfo.defaults) {
-  //     defaults(newPanel, panelPluginInfo.defaults);
-  //     newPanel.title = panelPluginInfo.defaults.title;
-  //     store.delete(LS_PANEL_COPY_KEY);
-  //   }
-
-  //   dashboard.addPanel(newPanel);
-  // };
 
   const styles = useStyles2(getStyles);
 
@@ -84,13 +49,13 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     <div className={styles.centeredContent}>
       <div className={cx(styles.centeredContent, styles.wrapper)}>
         <div className={cx(styles.containerBox, styles.centeredContent, styles.visualizationContainer)}>
-          <div className={cx(styles.headerSection, styles.headerBig)}>
+          <h1 className={cx(styles.headerSection, styles.headerBig)}>
             Start your new dashboard by adding a visualization
-          </div>
-          <div className={cx(styles.bodySection, styles.bodyBig)}>
+          </h1>
+          <h4 className={cx(styles.bodySection, styles.bodyBig)}>
             Select a data source and then query and visualize your data with charts, stats and tables or create lists,
             markdowns and other widgets.
-          </div>
+          </h4>
           <Button
             size="lg"
             icon="plus"
@@ -106,10 +71,10 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
         </div>
         <div className={cx(styles.centeredContent, styles.others)}>
           <div className={cx(styles.containerBox, styles.centeredContent, styles.rowContainer)}>
-            <div className={cx(styles.headerSection, styles.headerSmall)}>Add a row</div>
-            <div className={cx(styles.bodySection, styles.bodySmall)}>
+            <h2 className={cx(styles.headerSection, styles.headerSmall)}>Add a row</h2>
+            <h5 className={cx(styles.bodySection, styles.bodySmall)}>
               Group your visualizations into expandable sections.
-            </div>
+            </h5>
             <Button
               icon="plus"
               fill="outline"
@@ -124,10 +89,10 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             </Button>
           </div>
           <div className={cx(styles.containerBox, styles.centeredContent, styles.libraryContainer)}>
-            <div className={cx(styles.headerSection, styles.headerSmall)}>Import panel</div>
-            <div className={cx(styles.bodySection, styles.bodySmall)}>
+            <h2 className={cx(styles.headerSection, styles.headerSmall)}>Import panel</h2>
+            <h5 className={cx(styles.bodySection, styles.bodySmall)}>
               Import visualizations that are shared with other dashboards.
-            </div>
+            </h5>
             <Button
               icon="plus"
               fill="outline"
@@ -152,7 +117,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     wrapper: css({
       label: 'dashboard-empty-wrapper',
       flexDirection: 'column',
-      maxWidth: '920px',
+      maxWidth: '890px',
       gap: theme.spacing.gridSize * 4,
     }),
     containerBox: css({
@@ -176,6 +141,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'stretch',
       flexDirection: 'row',
       gap: theme.spacing.gridSize * 4,
+
+      [theme.breakpoints.down('sm')]: {
+        flexDirection: 'column',
+      },
     }),
     rowContainer: css({
       label: 'row-container',
@@ -191,15 +160,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     headerSection: css({
       label: 'header-section',
       fontWeight: 600,
+      textAlign: 'center',
     }),
     headerBig: css({
-      fontSize: '32px',
-      lineHeight: '48px',
       marginBottom: theme.spacing.gridSize * 2,
     }),
     headerSmall: css({
-      fontSize: '24px',
-      lineHeight: '32px',
       marginBottom: theme.spacing.gridSize,
     }),
     bodySection: css({
@@ -209,12 +175,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       textAlign: 'center',
     }),
     bodyBig: css({
-      fontSize: '20px',
       maxWidth: '75%',
       marginBottom: theme.spacing.gridSize * 4,
     }),
     bodySmall: css({
-      fontSize: '16px',
       marginBottom: theme.spacing.gridSize * 3,
     }),
   };
