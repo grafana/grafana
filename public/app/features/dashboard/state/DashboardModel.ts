@@ -131,7 +131,10 @@ export class DashboardModel implements TimeModel {
     data: Dashboard,
     meta?: DashboardMeta,
     options?: {
+      // By default this uses variables from redux state
       getVariablesFromState?: GetVariables;
+
+      // Force the loader to migrate panels
       autoMigrateOldPanels?: boolean;
     }
   ) {
@@ -213,7 +216,7 @@ export class DashboardModel implements TimeModel {
     });
   }
 
-  private initMeta(meta?: DashboardMeta): DashboardMeta {
+  private initMeta(meta?: DashboardMeta) {
     meta = meta || {};
 
     meta.canShare = meta.canShare !== false;
@@ -232,7 +235,7 @@ export class DashboardModel implements TimeModel {
       meta.canSave = false;
     }
 
-    return meta;
+    this.meta = meta;
   }
 
   // cleans meta data and other non persistent state
