@@ -8,19 +8,19 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 )
 
-const XCacheHeader = "X-Cache"
+const (
+	XCacheHeader   = "X-Cache"
+	StatusHit      = "HIT"
+	StatusMiss     = "MISS"
+	StatusNone     = "NONE"
+	StatusBypass   = "BYPASS"
+	StatusError    = "ERROR"
+	StatusDisabled = "DISABLED"
+)
 
 type CacheQueryResponseFn func(context.Context, *backend.QueryDataResponse)
 type CacheResourceResponseFn func(context.Context, *backend.CallResourceResponse)
 type CacheStatus int
-
-const (
-	StatusNotFound      CacheStatus = iota + 1 // No cached data found for query
-	StatusCacheHit                             // Cached data found for query
-	StatusCacheError                           // Error occurred while processing query or checking cache
-	StatusDisabled                             // Caching is implemented but disabled via config or licensing
-	StatusUnimplemented                        // Caching is not implemented
-)
 
 type CachedQueryDataResponse struct {
 	// The cached data response associated with a query, or nil if no cached data is found
@@ -28,7 +28,6 @@ type CachedQueryDataResponse struct {
 	// A function that should be used to cache a QueryDataResponse for a given query - can be set to nil by the method implementation
 	UpdateCacheFn CacheQueryResponseFn
 	Headers       map[string][]string
-	Status        CacheStatus
 }
 
 type CachedResourceDataResponse struct {
@@ -36,7 +35,6 @@ type CachedResourceDataResponse struct {
 	Response *backend.CallResourceResponse
 	// A function that should be used to cache a CallResourceResponse for a given query - can be set to nil by the method implementation
 	UpdateCacheFn CacheResourceResponseFn
-	Status        CacheStatus
 }
 
 func ProvideCachingService() *OSSCachingService {
@@ -53,15 +51,11 @@ type OSSCachingService struct {
 }
 
 func (s *OSSCachingService) HandleQueryRequest(ctx context.Context, skipCache bool, req dtos.MetricRequest) CachedQueryDataResponse {
-	return CachedQueryDataResponse{
-		Status: StatusUnimplemented,
-	}
+	return CachedQueryDataResponse{}
 }
 
 func (s *OSSCachingService) HandleResourceRequest(ctx context.Context, req *http.Request) CachedResourceDataResponse {
-	return CachedResourceDataResponse{
-		Status: StatusUnimplemented,
-	}
+	return CachedResourceDataResponse{}
 }
 
 var _ CachingService = &OSSCachingService{}

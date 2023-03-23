@@ -94,7 +94,7 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, sk
 
 	// First look in the query cache if enabled
 	var cr caching.CachedQueryDataResponse
-	if r := s.cachingService.HandleQueryRequest(ctx, skipQueryCache, reqDTO); r.Status == caching.StatusCacheHit {
+	if r := s.cachingService.HandleQueryRequest(ctx, skipQueryCache, reqDTO); isCacheHit(r.Headers) {
 		return QueryResponseWithHeaders{
 			Response: r.Response,
 			Headers:  r.Headers,
@@ -108,7 +108,7 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, sk
 		cr.Headers = map[string][]string{}
 	}
 	if len(cr.Headers[caching.XCacheHeader]) == 0 {
-		cr.Headers[caching.XCacheHeader] = []string{"NONE"}
+		cr.Headers[caching.XCacheHeader] = []string{caching.StatusNone}
 	}
 
 	// do the actual queries
@@ -134,6 +134,17 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, sk
 		Response: resp,
 		Headers:  cr.Headers,
 	}, err
+}
+
+func isCacheHit(headers map[string][]string) bool {
+	if headers == nil {
+		return false
+	}
+
+	if v, ok := headers[caching.XCacheHeader]; ok {
+		return len(v) > 0 && v[0] == caching.StatusHit
+	}
+	return false
 }
 
 // queryData contains the logic for processing and executing queries
