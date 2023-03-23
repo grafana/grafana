@@ -309,6 +309,25 @@ describe('templateSrv', () => {
       const target = _templateSrv.replace('${test:queryparam}', {});
       expect(target).toBe('var-test=All');
     });
+
+    describe('percentencode option', () => {
+      beforeEach(() => {
+        _templateSrv = initTemplateSrv(key, [
+          {
+            type: 'query',
+            name: 'test',
+            current: { value: '$__all' },
+            allValue: '.+',
+            options: [{ value: 'value1' }, { value: 'value2' }],
+          },
+        ]);
+      });
+
+      it('should respect percentencode format', () => {
+        const target = _templateSrv.replace('this.${test:percentencode}', {}, 'regex');
+        expect(target).toBe('this.%2B');
+      });
+    });
   });
 
   describe('lucene format', () => {
