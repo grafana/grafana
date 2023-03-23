@@ -174,8 +174,8 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
             </defs>
             <defs>
               <linearGradient id="lineGradient">
-                <stop offset="99%" stopColor="#44aaff" stopOpacity="1" />
-                <stop offset="1%" stopColor="#44aaff" stopOpacity="0" />
+                <stop offset="0.5" stopColor="#44aaff" stopOpacity="0.6" />
+                <stop offset="1" stopColor="#44aaff" stopOpacity="0.2" />
               </linearGradient>
             </defs>
             <line
