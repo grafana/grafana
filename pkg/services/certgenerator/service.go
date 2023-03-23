@@ -57,7 +57,7 @@ func (s *service) up(ctx context.Context) error {
 		return nil
 	}
 
-	err = s.certUtil.UpsertApiServerPKI(DefaultAPIServerIp, apiServerServiceIP)
+	err = s.certUtil.EnsureApiServerPKI(DefaultAPIServerIp, apiServerServiceIP)
 	if err != nil {
 		s.Log.Error("error initializing API Server cert", "error", err)
 		return err

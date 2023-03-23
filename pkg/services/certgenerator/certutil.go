@@ -212,7 +212,7 @@ func verifyServerCertChain(cert *x509.Certificate, caCert *x509.Certificate) err
 	return nil
 }
 
-func (cu *CertUtil) UpsertApiServerPKI(advertiseAddress string, alternateIP net.IP) error {
+func (cu *CertUtil) EnsureApiServerPKI(advertiseAddress string, alternateIP net.IP) error {
 	exists, err := certutil.CanReadCertAndKey(cu.APIServerCertFile(), cu.APIServerCertFile())
 
 	if err != nil {
