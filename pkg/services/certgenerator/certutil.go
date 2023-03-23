@@ -1,0 +1,278 @@
+package certgenerator
+
+import (
+	"bytes"
+	cryptorand "crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"errors"
+	"fmt"
+	"math/big"
+	"os"
+	"time"
+
+	certutil "k8s.io/client-go/util/cert"
+	"k8s.io/client-go/util/keyutil"
+	"k8s.io/kubernetes/pkg/controlplane"
+	netutils "k8s.io/utils/net"
+	"net"
+	"strings"
+)
+
+type CertUtil struct {
+	K8sDataPath string
+	caKey       *rsa.PrivateKey
+	caCert      *x509.Certificate
+}
+
+func (cu *CertUtil) CACertFile() string {
+	return strings.Join([]string{cu.K8sDataPath, "ca.crt"}, "/")
+}
+
+func (cu *CertUtil) CAKeyFile() string {
+	return strings.Join([]string{cu.K8sDataPath, "ca.key"}, "/")
+}
+
+func (cu *CertUtil) APIServerCertFile() string {
+	return strings.Join([]string{cu.K8sDataPath, "apiserver.crt"}, "/")
+}
+
+func (cu *CertUtil) APIServerKeyFile() string {
+	return strings.Join([]string{cu.K8sDataPath, "apiserver.key"}, "/")
+}
+
+// Lifted from kube-apiserver package as it's a dependency of external cert generation
+// https://github.com/kubernetes/kubernetes/blob/master/cmd/kube-apiserver/app/server.go#L671
+func getServiceIPAndRanges(serviceClusterIPRanges string) (net.IP, net.IPNet, net.IPNet, error) {
+	serviceClusterIPRangeList := make([]string, 0)
+	if serviceClusterIPRanges != "" {
+		serviceClusterIPRangeList = strings.Split(serviceClusterIPRanges, ",")
+	}
+
+	var apiServerServiceIP net.IP
+	var primaryServiceIPRange net.IPNet
+	var secondaryServiceIPRange net.IPNet
+	var err error
+	// nothing provided by user, use default range (only applies to the Primary)
+	if len(serviceClusterIPRangeList) == 0 {
+		var primaryServiceClusterCIDR net.IPNet
+		primaryServiceIPRange, apiServerServiceIP, err = controlplane.ServiceIPRange(primaryServiceClusterCIDR)
+		if err != nil {
+			return net.IP{}, net.IPNet{}, net.IPNet{}, fmt.Errorf("error determining service IP ranges: %v", err)
+		}
+		return apiServerServiceIP, primaryServiceIPRange, net.IPNet{}, nil
+	}
+
+	_, primaryServiceClusterCIDR, err := netutils.ParseCIDRSloppy(serviceClusterIPRangeList[0])
+	if err != nil {
+		return net.IP{}, net.IPNet{}, net.IPNet{}, fmt.Errorf("service-cluster-ip-range[0] is not a valid cidr")
+	}
+
+	primaryServiceIPRange, apiServerServiceIP, err = controlplane.ServiceIPRange(*primaryServiceClusterCIDR)
+	if err != nil {
+		return net.IP{}, net.IPNet{}, net.IPNet{}, fmt.Errorf("error determining service IP ranges for primary service cidr: %v", err)
+	}
+
+	// user provided at least two entries
+	// note: validation asserts that the list is max of two dual stack entries
+	if len(serviceClusterIPRangeList) > 1 {
+		_, secondaryServiceClusterCIDR, err := netutils.ParseCIDRSloppy(serviceClusterIPRangeList[1])
+		if err != nil {
+			return net.IP{}, net.IPNet{}, net.IPNet{}, fmt.Errorf("service-cluster-ip-range[1] is not an ip net")
+		}
+		secondaryServiceIPRange = *secondaryServiceClusterCIDR
+	}
+	return apiServerServiceIP, primaryServiceIPRange, secondaryServiceIPRange, nil
+}
+
+func loadExistingCertPKI(certPath string, keyPath string) (*x509.Certificate, *rsa.PrivateKey, error) {
+	caCertPemBlocks, err := os.ReadFile(certPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error reading existing Cert: %s", err.Error())
+	}
+
+	caKeyPemBytes, err := os.ReadFile(keyPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error reading existing Key: %s", err.Error())
+	}
+
+	certBlock, _ := pem.Decode(caCertPemBlocks)
+
+	caCert, err := x509.ParseCertificate(certBlock.Bytes)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error parsing existing Cert: %s", err.Error())
+	}
+
+	keyBlock, _ := pem.Decode(caKeyPemBytes)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error parsing existing Key into pem: %s", err.Error())
+	}
+
+	caKey, err := x509.ParsePKCS1PrivateKey(keyBlock.Bytes)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error parsing existing Key from pem: %s", err.Error())
+	}
+
+	caKey.PublicKey = *(caCert.PublicKey.(*rsa.PublicKey))
+
+	return caCert, caKey, nil
+}
+
+func createNewCACertPKI() (*x509.Certificate, *rsa.PrivateKey, error) {
+	caKey, err := rsa.GenerateKey(cryptorand.Reader, 2048)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	caCert, err := certutil.NewSelfSignedCACert(certutil.Config{
+		CommonName:   "embedded-apiserver-ca",
+		Organization: []string{"Grafana Labs"},
+		AltNames: certutil.AltNames{
+			DNSNames: []string{"Grafana Embedded API Server CA"},
+		},
+	}, caKey)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return caCert, caKey, nil
+}
+
+func persistCertKeyPairToDisk(cert *x509.Certificate, certPath string, key *rsa.PrivateKey, keyPath string, caCerts ...*x509.Certificate) error {
+	keyBuffer := bytes.Buffer{}
+	if err := pem.Encode(&keyBuffer, &pem.Block{Type: keyutil.RSAPrivateKeyBlockType, Bytes: x509.MarshalPKCS1PrivateKey(key)}); err != nil {
+		return err
+	}
+
+	// Generate cert optionally followed by a CA cert
+	certBuffer := bytes.Buffer{}
+	if err := pem.Encode(&certBuffer, &pem.Block{Type: certutil.CertificateBlockType, Bytes: cert.Raw}); err != nil {
+		return err
+	}
+	for _, caCert := range caCerts {
+		if err := pem.Encode(&certBuffer, &pem.Block{Type: certutil.CertificateBlockType, Bytes: caCert.Raw}); err != nil {
+			return err
+		}
+	}
+
+	err := certutil.WriteCert(certPath, certBuffer.Bytes())
+	if err != nil {
+		return fmt.Errorf("error persisting CA Cert: %s", err.Error())
+	}
+	err = keyutil.WriteKey(keyPath, keyBuffer.Bytes())
+	if err != nil {
+		return fmt.Errorf("error persisting CA Key: %s", err.Error())
+	}
+
+	return nil
+}
+
+func (cu *CertUtil) InitializeCACertPKI() error {
+	exists, err := certutil.CanReadCertAndKey(cu.CACertFile(), cu.CAKeyFile())
+
+	if err != nil {
+		return fmt.Errorf("error reading existing CA PKI: %s", err.Error())
+	}
+
+	if exists {
+		cu.caCert, cu.caKey, err = loadExistingCertPKI(cu.CACertFile(), cu.CAKeyFile())
+	} else {
+		cu.caCert, cu.caKey, err = createNewCACertPKI()
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return persistCertKeyPairToDisk(cu.caCert, cu.CACertFile(), cu.caKey, cu.CAKeyFile())
+	}
+
+	return nil
+}
+
+func verifyServerCertChain(cert *x509.Certificate, caCert *x509.Certificate) error {
+	roots := x509.NewCertPool()
+	roots.AddCert(caCert)
+
+	chain, err := cert.Verify(x509.VerifyOptions{
+		Roots: roots,
+	})
+
+	if len(chain) == 0 {
+		err = errors.New("Could not determine the chain from CA certificate.")
+	}
+
+	if err != nil {
+		return fmt.Errorf("error verifiing existing API server cert for a sanity check: %s "+
+			"Did you delete the original CA cert used for issuing it? "+
+			"Try reseting your PKI to resolve this problem", err.Error())
+	}
+
+	return nil
+}
+
+func (cu *CertUtil) UpsertApiServerPKI(advertiseAddress string, alternateIP net.IP) error {
+	exists, err := certutil.CanReadCertAndKey(cu.APIServerCertFile(), cu.APIServerCertFile())
+
+	if err != nil {
+		return fmt.Errorf("error reading existing CA PKI: %s", err.Error())
+	}
+
+	if exists {
+		// Let's verify that the existing cert in fact verifies against existing CA chain
+		cert, _, err := loadExistingCertPKI(cu.APIServerCertFile(), cu.APIServerKeyFile())
+		if err != nil {
+			return err
+		}
+		return verifyServerCertChain(cert, cu.caCert)
+	}
+
+	validFrom := time.Now().Add(-time.Hour) // valid an hour earlier to avoid flakes due to clock skew
+	maxAge := time.Hour * 24 * 365          // one year self-signed certs
+	alternateIPs := []net.IP{alternateIP}
+	alternateDNS := []string{"kubernetes.default.svc", "kubernetes.default", "kubernetes"}
+
+	priv, err := rsa.GenerateKey(cryptorand.Reader, 2048)
+	if err != nil {
+		return err
+	}
+
+	template := x509.Certificate{
+		SerialNumber: big.NewInt(2),
+		Subject: pkix.Name{
+			CommonName: fmt.Sprintf("%s@%d", advertiseAddress, time.Now().Unix()),
+		},
+		NotBefore: validFrom,
+		NotAfter:  validFrom.Add(maxAge),
+
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+	}
+
+	if ip := netutils.ParseIPSloppy(advertiseAddress); ip != nil {
+		template.IPAddresses = append(template.IPAddresses, ip)
+	} else {
+		template.DNSNames = append(template.DNSNames, advertiseAddress)
+	}
+
+	template.IPAddresses = append(template.IPAddresses, alternateIPs...)
+	template.DNSNames = append(template.DNSNames, alternateDNS...)
+
+	certDerBytes, err := x509.CreateCertificate(cryptorand.Reader, &template, cu.caCert, &priv.PublicKey, cu.caKey)
+	if err != nil {
+		return err
+	}
+
+	cert, err := x509.ParseCertificate(certDerBytes)
+	if err != nil {
+		return err
+	}
+
+	return persistCertKeyPairToDisk(cert, cu.APIServerCertFile(), priv, cu.APIServerKeyFile(), cu.caCert)
+}

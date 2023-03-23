@@ -1,0 +1,67 @@
+package certgenerator
+
+import (
+	"context"
+	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/setting"
+	kubeoptions "k8s.io/kubernetes/pkg/kubeapiserver/options"
+	"strings"
+)
+
+const (
+	DefaultAPIServerIp = "127.0.0.1"
+)
+
+var (
+	_ Service = (*service)(nil)
+)
+
+type Service interface {
+	services.NamedService
+}
+
+type service struct {
+	*services.BasicService
+	cfg      *setting.Cfg
+	certUtil *CertUtil
+	Log      log.Logger
+}
+
+func ProvideService(cfg *setting.Cfg) (*service, error) {
+	certUtil := &CertUtil{
+		K8sDataPath: strings.Join([]string{cfg.DataPath, "k8s"}, "/"),
+	}
+
+	s := &service{
+		certUtil: certUtil,
+		cfg:      cfg,
+		Log:      log.New("certgenerator"),
+	}
+
+	s.BasicService = services.NewIdleService(s.up, nil).WithName(modules.CertGenerator)
+
+	return s, nil
+}
+func (s *service) up(ctx context.Context) error {
+	err := s.certUtil.InitializeCACertPKI()
+	if err != nil {
+		s.Log.Error("error initializing CA", "error", err.Error())
+		return err
+	}
+
+	apiServerServiceIP, _, _, err := getServiceIPAndRanges(kubeoptions.DefaultServiceIPCIDR.String())
+	if err != nil {
+		s.Log.Error("error getting service ip of apiserver for cert generation", "error", err)
+		return nil
+	}
+
+	err = s.certUtil.UpsertApiServerPKI(DefaultAPIServerIp, apiServerServiceIP)
+	if err != nil {
+		s.Log.Error("error initializing API Server cert", "error", err)
+		return err
+	}
+
+	return nil
+}
