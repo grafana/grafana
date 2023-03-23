@@ -43,7 +43,7 @@ export interface FeatureToggles {
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
   validateDashboardsOnSave?: boolean;
-  autoMigrateGraphPanels?: boolean;
+  autoMigrateOldPanels?: boolean;
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
   scenes?: boolean;
