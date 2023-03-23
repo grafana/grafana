@@ -260,9 +260,9 @@ export class BackendSrv implements BackendService {
                   return of({});
                 }
 
-                let authChecker = this.loginPing;
+                let authChecker = () => this.loginPing();
                 if (config.featureToggles.clientTokenRotation) {
-                  authChecker = this.rotateToken;
+                  authChecker = () => this.rotateToken();
                 }
 
                 return from(authChecker()).pipe(
