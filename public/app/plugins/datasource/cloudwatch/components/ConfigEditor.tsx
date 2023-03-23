@@ -8,8 +8,9 @@ import {
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { Input, InlineField, FieldProps } from '@grafana/ui';
+import { Input, InlineField, FieldProps, SecureSocksProxySettings } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
+import { config } from 'app/core/config';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { store } from 'app/store/store';
@@ -82,6 +83,9 @@ export const ConfigEditor = (props: Props) => {
             title={'The timeout must be a valid duration string, such as "15m" "30s" "2000ms" etc.'}
           />
         </InlineField>
+        {config.featureToggles.secureSocksDatasourceProxy && (
+          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+        )}
         <InlineField
           label="Default Log Groups"
           labelWidth={28}
@@ -124,7 +128,6 @@ export const ConfigEditor = (props: Props) => {
           />
         </InlineField>
       </div>
-
       <XrayLinkConfig
         onChange={(uid) => updateDatasourcePluginJsonDataOption(props, 'tracingDatasourceUid', uid)}
         datasourceUid={options.jsonData.tracingDatasourceUid}

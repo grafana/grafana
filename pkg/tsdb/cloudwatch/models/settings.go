@@ -10,7 +10,8 @@ import (
 
 type CloudWatchSettings struct {
 	awsds.AWSDatasourceSettings
-	Namespace string `json:"customMetricsNamespaces"`
+	Namespace               string `json:"customMetricsNamespaces"`
+	SecureSocksProxyEnabled bool   `json:"enableSecureSocksProxy"`
 }
 
 func LoadCloudWatchSettings(config backend.DataSourceInstanceSettings) (CloudWatchSettings, error) {
