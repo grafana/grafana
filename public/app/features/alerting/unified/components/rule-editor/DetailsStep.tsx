@@ -9,13 +9,36 @@ import { RuleEditorSection } from './RuleEditorSection';
 
 function getDescription(ruleType: RuleFormType | undefined) {
   if (ruleType === RuleFormType.cloudRecording) {
-    return 'Select the Namespace and Group for your recording rule';
+    return 'Select the Namespace and Group for your recording rule.';
   }
+  const docsLink =
+    'https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation/#the-values-variable';
+  const LinkToDocs = () => (
+    <span>
+      Click{' '}
+      <a href={docsLink} target="_blank" rel="noreferrer">
+        here{' '}
+      </a>
+      for documentation on how to template annotations and labels.
+    </span>
+  );
   if (ruleType === RuleFormType.grafana) {
-    return 'Write a summary to help you better manage your alerts';
+    return (
+      <span>
+        {' '}
+        Write a summary to help you better manage your alerts.
+        <LinkToDocs />
+      </span>
+    );
   }
   if (ruleType === RuleFormType.cloudAlerting) {
-    return 'Select the Namespace and evaluation group for your alert. Write a summary to help you better manage your alerts';
+    return (
+      <span>
+        {' '}
+        Select the Namespace and evaluation group for your alert. Write a summary to help you better manage your alerts.{' '}
+        <LinkToDocs />
+      </span>
+    );
   }
   return '';
 }
