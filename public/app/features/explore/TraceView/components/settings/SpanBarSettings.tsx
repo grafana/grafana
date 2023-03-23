@@ -52,7 +52,7 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
             placeholder="Duration"
             isClearable
             aria-label={'select-label-name'}
-            width={25}
+            width={40}
           />
         </InlineField>
       </InlineFieldRow>
@@ -73,7 +73,7 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
                 })
               }
               value={options.jsonData.spanBar?.tag || ''}
-              width={25}
+              width={40}
             />
           </InlineField>
         </InlineFieldRow>

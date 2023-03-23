@@ -24,8 +24,8 @@ To access Phlare settings, click the **Configuration** (gear) icon, then click *
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `Name`         | A name to specify the data source in panels, queries, and Explore.                                                                                                             |
 | `Default`      | The default data source will be pre-selected for new panels.                                                                                                                   |
-| `URL`          | The URL of the Tempo instance, e.g., `http://localhost:4100`                                                                                                                   |
-| `Basic Auth`   | Enable basic authentication to the Tempo data source.                                                                                                                          |
+| `URL`          | The URL of the Phlare instance, e.g., `http://localhost:4100`                                                                                                                  |
+| `Basic Auth`   | Enable basic authentication to the Phlare data source.                                                                                                                         |
 | `User`         | User name for basic authentication.                                                                                                                                            |
 | `Password`     | Password for basic authentication.                                                                                                                                             |
 | `Minimal step` | Similar to Prometheus, Phlare scrapes profiles at certain intervals. To prevent querying at smaller interval use Minimal step same or higher than your Phlare scrape interval. |

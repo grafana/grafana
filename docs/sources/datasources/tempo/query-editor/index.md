@@ -54,7 +54,7 @@ Tempo includes the ability to search the entire backend datastore.
 
 To configure your Tempo data source to use this feature, refer to the [Tempo documentation](/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-the-backend-datastore).
 
-## Query by trace ID
+## Query by TraceID
 
 To query a particular trace:
 
@@ -62,6 +62,10 @@ To query a particular trace:
 1. Enter the trace's ID into the **Trace ID** field.
 
 {{< figure src="/static/img/docs/tempo/query-editor-traceid.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo TraceID query type" >}}
+
+## Query by TraceQL
+
+To learn more about how to query by TraceQL, refer to the [TraceQL documentation](/docs/tempo/latest/traceql).
 
 ## Query Loki for traces
 
