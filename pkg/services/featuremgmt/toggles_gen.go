@@ -196,7 +196,7 @@ const (
 	FlagDatasourceOnboarding = "datasourceOnboarding"
 
 	// FlagEmptyDashboardPage
-	// Enable the redesigned UX of an empty (no panels) dashboard page
+	// Enable the redesigned user interface of a dashboard page that includes no panels
 	FlagEmptyDashboardPage = "emptyDashboardPage"
 
 	// FlagSecureSocksDatasourceProxy

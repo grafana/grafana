@@ -315,7 +315,7 @@ var (
 		},
 		{
 			Name:         "emptyDashboardPage",
-			Description:  "Enable the redesigned UX of an empty (no panels) dashboard page",
+			Description:  "Enable the redesigned user interface of a dashboard page that includes no panels",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
