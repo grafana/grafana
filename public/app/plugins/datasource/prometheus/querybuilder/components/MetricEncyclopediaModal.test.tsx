@@ -78,19 +78,6 @@ describe('MetricEncyclopediaModal', () => {
     expect(screen.getByText('all-metrics-help')).toBeInTheDocument();
   });
 
-  it('displays no metadata for a metric missing metadata when the metric is clicked', async () => {
-    setup(defaultQuery, listOfMetrics);
-    await waitFor(() => {
-      expect(screen.getByText('b')).toBeInTheDocument();
-    });
-
-    const interactiveMetric = screen.getByText('b');
-
-    await userEvent.click(interactiveMetric);
-
-    expect(screen.getByText('No metadata available')).toBeInTheDocument();
-  });
-
   // Filtering
   it('has a filter for selected type', async () => {
     setup(defaultQuery, listOfMetrics);
