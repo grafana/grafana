@@ -98,6 +98,11 @@ var wireExtsSet = wire.NewSet(
 	wireExtsBasicSet,
 )
 
+var wireExtsCLISet = wire.NewSet(
+	wireCLISet,
+	wireExtsBasicSet,
+)
+
 var wireExtsTestSet = wire.NewSet(
 	wireTestSet,
 	wireExtsBasicSet,

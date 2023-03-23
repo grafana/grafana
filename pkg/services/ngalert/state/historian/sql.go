@@ -21,12 +21,12 @@ func NewSqlBackend() *SqlBackend {
 	}
 }
 
-func (h *SqlBackend) RecordStatesAsync(ctx context.Context, _ history_model.RuleMeta, _ []state.StateTransition) <-chan error {
+func (h *SqlBackend) Record(ctx context.Context, _ history_model.RuleMeta, _ []state.StateTransition) <-chan error {
 	errCh := make(chan error)
 	close(errCh)
 	return errCh
 }
 
-func (h *SqlBackend) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
+func (h *SqlBackend) Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
 	return data.NewFrame("states"), nil
 }

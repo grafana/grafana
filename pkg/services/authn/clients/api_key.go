@@ -119,12 +119,13 @@ func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.
 
 	// fetch key
 	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgID: decoded.OrgId}
-	if err := s.apiKeyService.GetApiKeyByName(ctx, &keyQuery); err != nil {
+	key, err := s.apiKeyService.GetApiKeyByName(ctx, &keyQuery)
+	if err != nil {
 		return nil, err
 	}
 
 	// validate api key
-	isValid, err := apikeygen.IsValid(decoded, keyQuery.Result.Key)
+	isValid, err := apikeygen.IsValid(decoded, key.Key)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +133,7 @@ func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.
 		return nil, apikeygen.ErrInvalidApiKey
 	}
 
-	return keyQuery.Result, nil
+	return key, nil
 }
 
 func (s *APIKey) Test(ctx context.Context, r *authn.Request) bool {

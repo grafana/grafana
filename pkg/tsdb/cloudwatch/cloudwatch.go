@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -156,7 +155,7 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 		to the query, but rather an ID is first returned. Following this, a client is expected to send requests along
 		with the ID until the status of the query is complete, receiving (possibly partial) results each time. For
 		queries made via dashboards and Explore, the logic of making these repeated queries is handled on the
-		frontend, but because alerts and expressions are executed on the backend the logic needs to be reimplemented here.
+		frontend, but because alerts are executed on the backend the logic needs to be reimplemented here.
 	*/
 	q := req.Queries[0]
 	var model DataQueryJson
@@ -164,12 +163,11 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	if err != nil {
 		return nil, err
 	}
-
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	_, fromExpression := req.Headers[expr.FromExpressionHeaderName]
-	isSyncLogQuery := (fromAlert || fromExpression) && model.QueryMode == logsQueryMode
-	if isSyncLogQuery {
-		return executeSyncLogQuery(ctx, e, req)
+	isLogAlertQuery := fromAlert && model.QueryMode == logsQueryMode
+
+	if isLogAlertQuery {
+		return e.executeLogAlertQuery(ctx, req)
 	}
 
 	var result *backend.QueryDataResponse

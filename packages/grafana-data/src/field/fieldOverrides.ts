@@ -2,6 +2,8 @@ import { isNumber, set, unset, get, cloneDeep } from 'lodash';
 import { useMemo, useRef } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 
+import { VariableFormatID } from '@grafana/schema';
+
 import { compareArrayValues, compareDataFrameStructures, guessFieldTypeForField } from '../dataframe';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { PanelPlugin } from '../panel/PanelPlugin';
@@ -214,7 +216,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   });
 }
 
-// this is a significant optimization for streaming, where we currently re-process all values in the buffer on each update
+// this is a significant optimization for streaming, where we currently re-process all values in the buffer on ech update
 // via field.display(value). this can potentially be removed once we...
 // 1. process data packets incrementally and/if cache the results in the streaming datafame (maybe by buffer index)
 // 2. have the ability to selectively get display color or text (but not always both, which are each quite expensive)
@@ -411,7 +413,7 @@ export const getLinksSupplier =
         }
       }
 
-      const variables = {
+      const variables: ScopedVars = {
         ...fieldScopedVars,
         __value: {
           text: 'Value',
@@ -421,10 +423,12 @@ export const getLinksSupplier =
         [DataLinkBuiltInVars.keepTime]: {
           text: timeRangeUrl,
           value: timeRangeUrl,
+          skipFormat: true,
         },
         [DataLinkBuiltInVars.includeVars]: {
           text: variablesQuery,
           value: variablesQuery,
+          skipFormat: true,
         },
       };
 
@@ -455,7 +459,6 @@ export const getLinksSupplier =
           replaceVariables,
         });
       }
-
       let href = link.onBuildUrl
         ? link.onBuildUrl({
             origin: field,
@@ -464,8 +467,8 @@ export const getLinksSupplier =
         : link.url;
 
       if (href) {
-        locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-        href = replaceVariables(href, variables);
+        href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
+        href = replaceVariables(href, variables, VariableFormatID.PercentEncode);
         href = locationUtil.processUrl(href);
       }
 
