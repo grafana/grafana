@@ -198,7 +198,6 @@ datasources:
     access: proxy
     basicAuth: false
     jsonData:
-      # Note: tracesToLogs used before Grafana version 9.4
       tracesToLogsV2:
         # Field with an internal link pointing to a logs data source in Grafana.
         # datasourceUid value must match the uid value of the logs data source.
@@ -210,6 +209,16 @@ datasources:
         filterBySpanID: false
         customQuery: true
         query: 'method="${__span.tags.method}"'
+      # Note: tracesToLogs used before Grafana version 9.4
+      tracesToLogs:
+        datasourceUid: 'loki'
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
+        tags: ['job', 'instance', 'pod', 'namespace']
+        filterByTraceID: false
+        filterBySpanID: false
+        mapTagNamesEnabled: true
+        mappedTags: [{ key: 'service.name', value: 'service' }]
       tracesToMetrics:
         datasourceUid: 'prom'
         spanStartTimeShift: '1h'
