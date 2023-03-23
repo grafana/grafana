@@ -152,9 +152,9 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
 
       const connectionCursorStyle = scene.isEditingEnabled ? 'grab' : '';
-      const selectedStyles = { strokeWidth: strokeWidth + 5 };
+      const selectedStyles = { stroke: '#44aaff', strokeOpacity: 0.6, strokeWidth: strokeWidth + 5 };
 
-      const CONNECTION_HEAD_ID = `connectionHead-${idx + Date.now()}`;
+      const CONNECTION_HEAD_ID = `connectionHead-${headId}`;
 
       return (
         <svg className={styles.connection} key={idx}>
@@ -172,18 +172,12 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
                 <polygon points="0 0, 10 3.5, 0 7" fill={strokeColor} />
               </marker>
             </defs>
-            <defs>
-              <linearGradient id="lineGradient">
-                <stop offset="0.5" stopColor="#44aaff" stopOpacity="0.6" />
-                <stop offset="1" stopColor="#44aaff" stopOpacity="0.2" />
-              </linearGradient>
-            </defs>
             <line
               id={`${CONNECTION_LINE_ID}_transparent`}
               cursor={connectionCursorStyle}
               pointerEvents="auto"
+              stroke="transparent"
               strokeWidth={15}
-              stroke={isSelected ? 'url(#lineGradient)' : 'transparent'}
               style={isSelected ? selectedStyles : {}}
               x1={x1}
               y1={y1}
