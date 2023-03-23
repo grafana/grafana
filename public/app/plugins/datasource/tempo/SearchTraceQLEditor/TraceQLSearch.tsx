@@ -21,7 +21,7 @@ import DurationInput from './DurationInput';
 import InlineSearchField from './InlineSearchField';
 import SearchField from './SearchField';
 import TagsInput from './TagsInput';
-import { filterTitle, generateQueryFromFilters, replaceAt } from './utils';
+import { filterScopedTag, filterTitle, generateQueryFromFilters, replaceAt } from './utils';
 
 interface Props {
   datasource: TempoDatasource;
@@ -99,12 +99,21 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
       });
   }, [datasource.search?.filters, findFilter, updateFilter]);
 
+  // filter out tags that already exist in the static fields
+  const staticTags = datasource.search?.filters?.map((f) => f.tag) || [];
+  staticTags.push('duration');
+  const filteredTags = [...CompletionProvider.intrinsics, ...tags].filter((t) => !staticTags.includes(t));
+
   return (
     <>
       <div className={styles.container}>
         <div>
           {datasource.search?.filters?.map((f) => (
-            <InlineSearchField key={f.id} label={filterTitle(f)}>
+            <InlineSearchField
+              key={f.id}
+              label={filterTitle(f)}
+              tooltip={`Configured in datasource - ${filterScopedTag(f)}`}
+            >
               <SearchField
                 filter={findFilter(f.id) || f}
                 datasource={datasource}
@@ -153,7 +162,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
               setError={setError}
               updateFilter={updateFilter}
               deleteFilter={deleteFilter}
-              tags={[...CompletionProvider.intrinsics, ...tags]}
+              tags={filteredTags}
               isTagsLoading={isTagsLoading}
             />
           </InlineSearchField>
