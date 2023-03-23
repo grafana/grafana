@@ -10,18 +10,21 @@ import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { getPanelInspectorStyles2 } from './styles';
 
+export interface InspectGetDataOptions extends GetDataOptions {
+  downloadForExcel?: boolean;
+}
+
 interface Props {
-  options: GetDataOptions;
+  options: InspectGetDataOptions;
+  onOptionsChange?: (options: InspectGetDataOptions) => void;
+
   dataFrames: DataFrame[];
   transformId: DataTransformerID;
   transformationOptions: Array<SelectableValue<DataTransformerID>>;
   selectedDataFrame: number | DataTransformerID;
-  downloadForExcel: boolean;
   onDataFrameChange: (item: SelectableValue<DataTransformerID | number>) => void;
-  toggleDownloadForExcel: () => void;
   data?: DataFrame[];
   panel?: PanelModel;
-  onOptionsChange?: (options: GetDataOptions) => void;
 }
 
 export const InspectDataOptions = ({
@@ -34,8 +37,6 @@ export const InspectDataOptions = ({
   transformationOptions,
   selectedDataFrame,
   onDataFrameChange,
-  downloadForExcel,
-  toggleDownloadForExcel,
 }: Props) => {
   const styles = useStyles2(getPanelInspectorStyles2);
 
@@ -86,7 +87,7 @@ export const InspectDataOptions = ({
       }
     }
 
-    if (downloadForExcel) {
+    if (options.downloadForExcel) {
       parts.push(t('dashboard.inspect-data.excel-header', 'Excel header'));
     }
 
@@ -116,46 +117,54 @@ export const InspectDataOptions = ({
               </Field>
             )}
 
-            <HorizontalGroup>
-              {showPanelTransformationsOption && onOptionsChange && (
-                <Field
-                  label={t('dashboard.inspect-data.transformations-label', 'Apply panel transformations')}
-                  description={t(
-                    'dashboard.inspect-data.transformations-description',
-                    'Table data is displayed with transformations defined in the panel Transform tab.'
-                  )}
-                >
-                  <Switch
-                    value={!!options.withTransforms}
-                    onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
-                  />
-                </Field>
-              )}
-              {showFieldConfigsOption && onOptionsChange && (
-                <Field
-                  label={t('dashboard.inspect-data.formatted-data-label', 'Formatted data')}
-                  description={t(
-                    'dashboard.inspect-data.formatted-data-description',
-                    'Table data is formatted with options defined in the Field and Override tabs.'
-                  )}
-                >
-                  <Switch
-                    id="formatted-data-toggle"
-                    value={!!options.withFieldConfig}
-                    onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
-                  />
-                </Field>
-              )}
-              <Field
-                label={t('dashboard.inspect-data.download-excel-label', 'Download for Excel')}
-                description={t(
-                  'dashboard.inspect-data.download-excel-description',
-                  'Adds header to CSV for use with Excel'
+            {onOptionsChange && (
+              <HorizontalGroup>
+                {showPanelTransformationsOption && (
+                  <Field
+                    label={t('dashboard.inspect-data.transformations-label', 'Apply panel transformations')}
+                    description={t(
+                      'dashboard.inspect-data.transformations-description',
+                      'Table data is displayed with transformations defined in the panel Transform tab.'
+                    )}
+                  >
+                    <Switch
+                      value={!!options.withTransforms}
+                      onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
+                    />
+                  </Field>
                 )}
-              >
-                <Switch id="excel-toggle" value={downloadForExcel} onChange={toggleDownloadForExcel} />
-              </Field>
-            </HorizontalGroup>
+                {showFieldConfigsOption && (
+                  <Field
+                    label={t('dashboard.inspect-data.formatted-data-label', 'Formatted data')}
+                    description={t(
+                      'dashboard.inspect-data.formatted-data-description',
+                      'Table data is formatted with options defined in the Field and Override tabs.'
+                    )}
+                  >
+                    <Switch
+                      id="formatted-data-toggle"
+                      value={!!options.withFieldConfig}
+                      onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
+                    />
+                  </Field>
+                )}
+                <Field
+                  label={t('dashboard.inspect-data.download-excel-label', 'Download for Excel')}
+                  description={t(
+                    'dashboard.inspect-data.download-excel-description',
+                    'Adds header to CSV for use with Excel'
+                  )}
+                >
+                  <Switch
+                    id="excel-toggle"
+                    value={!!options.downloadForExcel}
+                    onChange={() =>
+                      onOptionsChange({ ...options, downloadForExcel: !Boolean(options.downloadForExcel) })
+                    }
+                  />
+                </Field>
+              </HorizontalGroup>
+            )}
           </VerticalGroup>
         </div>
       </QueryOperationRow>

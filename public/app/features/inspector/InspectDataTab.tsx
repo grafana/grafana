@@ -21,23 +21,22 @@ import { config } from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import { PanelModel } from 'app/features/dashboard/state';
-import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 import { transformToJaeger } from 'app/plugins/datasource/jaeger/responseTransform';
 import { transformToOTLP } from 'app/plugins/datasource/tempo/resultTransformer';
 import { transformToZipkin } from 'app/plugins/datasource/zipkin/utils/transforms';
 
-import { InspectDataOptions } from './InspectDataOptions';
+import { InspectDataOptions, InspectGetDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
 import { downloadAsJson, downloadDataFrameAsCsv, downloadLogsModelAsTxt } from './utils/download';
 
 interface Props {
   isLoading: boolean;
-  options: GetDataOptions;
+  options: InspectGetDataOptions;
   timeZone: TimeZone;
   app?: CoreApp;
   data?: DataFrame[];
   panel?: PanelModel;
-  onOptionsChange?: (options: GetDataOptions) => void;
+  onOptionsChange?: (options: InspectGetDataOptions) => void;
 }
 
 interface State {
@@ -209,7 +208,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
   render() {
     const { isLoading, options, data, panel, onOptionsChange, app } = this.props;
-    const { dataFrameIndex, transformId, transformationOptions, selectedDataFrame, downloadForExcel } = this.state;
+    const { dataFrameIndex, transformId, transformationOptions, selectedDataFrame } = this.state;
     const styles = getPanelInspectorStyles();
 
     if (isLoading) {
@@ -244,10 +243,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
             transformId={transformId}
             transformationOptions={transformationOptions}
             selectedDataFrame={selectedDataFrame}
-            downloadForExcel={downloadForExcel}
             onOptionsChange={onOptionsChange}
             onDataFrameChange={this.onDataFrameChange}
-            toggleDownloadForExcel={this.toggleDownloadForExcel}
           />
           <Button
             variant="primary"

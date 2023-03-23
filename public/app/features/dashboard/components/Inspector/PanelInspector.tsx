@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
@@ -9,12 +9,11 @@ import { InspectTab } from 'app/features/inspector/types';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { StoreState } from 'app/types';
 
-import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { HelpWizard } from '../HelpWizard/HelpWizard';
 import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
 
 import { InspectContent } from './InspectContent';
-import { useDatasourceMetadata, useInspectTabs } from './hooks';
+import { useDatasourceMetadata, useInspectDataOptions, useInspectTabs } from './hooks';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -28,10 +27,7 @@ export interface ConnectedProps {
 export type Props = OwnProps & ConnectedProps;
 
 const PanelInspectorUnconnected = ({ panel, dashboard, plugin }: Props) => {
-  const [dataOptions, setDataOptions] = useState<GetDataOptions>({
-    withTransforms: false,
-    withFieldConfig: true,
-  });
+  const { dataOptions, setDataOptions } = useInspectDataOptions();
 
   const location = useLocation();
   const { data, isLoading, error } = usePanelLatestData(panel, dataOptions, true);

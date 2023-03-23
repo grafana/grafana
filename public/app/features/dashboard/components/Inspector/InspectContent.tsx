@@ -4,6 +4,7 @@ import { CoreApp, DataSourceApi, formattedValueToString, getValueFormat, PanelDa
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+import { InspectGetDataOptions } from 'app/features/inspector/InspectDataOptions';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
 import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
 import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
@@ -12,7 +13,6 @@ import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectTab } from 'app/features/inspector/types';
 
-import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { DashboardModel, PanelModel } from '../../state';
 
 interface Props {
@@ -24,10 +24,10 @@ interface Props {
   // The last raw response
   data?: PanelData;
   isDataLoading: boolean;
-  dataOptions: GetDataOptions;
+  dataOptions: InspectGetDataOptions;
   // If the datasource supports custom metadata
   metadataDatasource?: DataSourceApi;
-  onDataOptionsChange: (options: GetDataOptions) => void;
+  onDataOptionsChange: (options: InspectGetDataOptions) => void;
   onClose: () => void;
 }
 

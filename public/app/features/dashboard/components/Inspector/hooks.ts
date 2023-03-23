@@ -1,10 +1,12 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useLocalStorage } from 'react-use';
 import useAsync from 'react-use/lib/useAsync';
 
 import { DataQueryError, DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { InspectGetDataOptions } from 'app/features/inspector/InspectDataOptions';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { supportsDataQuery } from '../PanelEditor/utils';
@@ -65,4 +67,29 @@ export const useInspectTabs = (
     }
     return tabs;
   }, [plugin, metaDs, dashboard, error]);
+};
+
+export const useInspectDataOptions = () => {
+  const [withTransforms, setWithTransforms] = useLocalStorage<boolean>('grafana.inspector.withTransforms', false);
+  const [withFieldConfig, setWithFieldConfig] = useLocalStorage<boolean>('grafana.inspector.withFieldConfig', true);
+  const [downloadForExcel, setDownloadForExcel] = useLocalStorage<boolean>('grafana.inspector.downloadForExcel', false);
+
+  const dataOptions = useMemo<InspectGetDataOptions>(() => {
+    return {
+      withTransforms: Boolean(withTransforms),
+      withFieldConfig: Boolean(withFieldConfig),
+      downloadForExcel: Boolean(downloadForExcel),
+    };
+  }, [withTransforms, withFieldConfig, downloadForExcel]);
+
+  const setDataOptions = useCallback(
+    (opts: InspectGetDataOptions) => {
+      setWithTransforms(opts.withTransforms);
+      setWithFieldConfig(opts.withFieldConfig);
+      setDownloadForExcel(opts.downloadForExcel);
+    },
+    [setWithTransforms, setWithFieldConfig, setDownloadForExcel]
+  );
+
+  return { dataOptions, setDataOptions };
 };
