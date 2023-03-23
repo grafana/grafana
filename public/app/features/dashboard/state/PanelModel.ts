@@ -132,7 +132,7 @@ const defaults: any = {
   title: '',
 };
 
-const autoMigrateAngular: Record<string, string> = {
+export const autoMigrateAngular: Record<string, string> = {
   graph: 'timeseries',
   'table-old': 'table',
   singlestat: 'stat', // also automigrated if dashboard schemaVerion < 27
@@ -261,14 +261,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
         this.autoMigrateFrom = this.type;
         this.type = 'heatmap';
         break;
-    }
-
-    // Auto-migrate old angular panels
-    if (!this.autoMigrateFrom && autoMigrateAngular[this.type]) {
-      if (!config.panels[this.type] || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels) {
-        this.autoMigrateFrom = this.type;
-        this.type = autoMigrateAngular[this.type];
-      }
     }
 
     // defaults
