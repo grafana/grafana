@@ -80,10 +80,12 @@ export class QueryCache {
       this.overlapWindowMs = durationToMilliseconds(duration);
     }
 
-    this.perfObeserver = new PerformanceObserver((list) => {
+    this.perfObeserver = new PerformanceObserver((list: PerformanceObserverEntryList) => {
       list.getEntries().forEach((entry) => {
-        if (entry.initiatorType === 'fetch') {
-          let fetchUrl = entry.name;
+        // https://github.com/microsoft/TypeScript/issues/33866 PerformanceResourceTiming types are not available from getEntries()?
+        const entryTypeCast: PerformanceResourceTiming = entry as PerformanceResourceTiming;
+        if (entryTypeCast?.initiatorType === 'fetch') {
+          let fetchUrl = entryTypeCast.name;
 
           if (fetchUrl.includes('/api/ds/query')) {
             let match = fetchUrl.match(/requestId=([a-z\d]+)/i);
@@ -97,7 +99,7 @@ export class QueryCache {
 
                 // Safari support for this is coming in 16.4:
                 // https://caniuse.com/mdn-api_performanceresourcetiming_transfersize
-                console.log('Transferred ' + (Math.round(entry.transferSize / 1024)) + 'KB');
+                console.log('Transferred ' + Math.round(entryTypeCast.transferSize / 1024) + 'KB');
 
                 this.pendingRequestIds.delete(requestId);
               }
@@ -107,7 +109,7 @@ export class QueryCache {
       });
     });
 
-    this.perfObeserver.observe({ type: "resource", buffered: false });
+    this.perfObeserver.observe({ type: 'resource', buffered: false });
   }
 
   // can be used to change full range request to partial, split into multiple requests

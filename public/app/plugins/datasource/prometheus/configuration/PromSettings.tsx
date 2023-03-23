@@ -358,7 +358,7 @@ export const PromSettings = (props: Props) => {
         <div className="gf-form-inline">
           {options.jsonData.incrementalQuerying && (
             <FormField
-              label="Query overlap window."
+              label="Query overlap window"
               labelWidth={14}
               tooltip="Set a duration like 10m or 120s or 0s. Default of 10 minutes. This duration will be added to the duration of each incremental request."
               inputEl={
