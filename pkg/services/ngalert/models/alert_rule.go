@@ -173,12 +173,12 @@ type AlertRuleWithOptionals struct {
 	HasPause bool
 }
 
-// SortedAlertRules sorts alert rules by AlertRuleGroupKey and then their index.
-type SortedAlertRules []*AlertRule
+// SortableAlertRules sorts alert rules by AlertRuleGroupKey and then their index.
+type SortableAlertRules []*AlertRule
 
-func (s SortedAlertRules) Len() int      { return len(s) }
-func (s SortedAlertRules) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-func (s SortedAlertRules) Less(i, j int) bool {
+func (s SortableAlertRules) Len() int      { return len(s) }
+func (s SortableAlertRules) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s SortableAlertRules) Less(i, j int) bool {
 	gk1, gk2 := s[i].GetGroupKey(), s[j].GetGroupKey()
 	if gk1 == gk2 {
 		return s[i].RuleGroupIndex < s[j].RuleGroupIndex
@@ -319,12 +319,12 @@ func (k AlertRuleKey) String() string {
 	return fmt.Sprintf("{orgID: %d, UID: %s}", k.OrgID, k.UID)
 }
 
-// SortedRuleGroupKeys sorts AlertRuleGroupKeys by Org ID, Namespace UID and RuleGroup.
-type SortedRuleGroupKeys []AlertRuleGroupKey
+// SortableRuleGroupKeys sorts AlertRuleGroupKeys by Org ID, Namespace UID and RuleGroup.
+type SortableRuleGroupKeys []AlertRuleGroupKey
 
-func (s SortedRuleGroupKeys) Len() int           { return len(s) }
-func (s SortedRuleGroupKeys) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s SortedRuleGroupKeys) Less(i, j int) bool { return s[i].Less(s[j]) }
+func (s SortableRuleGroupKeys) Len() int           { return len(s) }
+func (s SortableRuleGroupKeys) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s SortableRuleGroupKeys) Less(i, j int) bool { return s[i].Less(s[j]) }
 
 // GetKey returns the alert definitions identifier
 func (alertRule *AlertRule) GetKey() AlertRuleKey {
