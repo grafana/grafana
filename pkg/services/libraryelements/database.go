@@ -409,8 +409,19 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 
 		var libraryElements []model.LibraryElement
 		countBuilder := db.SQLBuilder{}
-		countBuilder.Write("SELECT * FROM library_element AS le")
-		countBuilder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id")
+		if folderFilter.includeGeneralFolder {
+			countBuilder.Write(selectLibraryElementDTOWithMeta)
+			countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
+			countBuilder.Write(` WHERE le.org_id=? AND le.folder_id=0`, signedInUser.OrgID)
+			writeKindSQL(query, &countBuilder)
+			writeSearchStringSQL(query, l.SQLStore, &countBuilder)
+			writeExcludeSQL(query, &countBuilder)
+			writeTypeFilterSQL(typeFilter, &countBuilder)
+			countBuilder.Write(" UNION ")
+		}
+		countBuilder.Write(selectLibraryElementDTOWithMeta)
+		countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
+		countBuilder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id and le.folder_id<>0")
 		countBuilder.Write(` WHERE le.org_id=?`, signedInUser.OrgID)
 		writeKindSQL(query, &countBuilder)
 		writeSearchStringSQL(query, l.SQLStore, &countBuilder)
