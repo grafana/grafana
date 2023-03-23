@@ -80,6 +80,7 @@ Alpha features might be changed or removed without prior notice.
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                      |
 | `elasticsearchBackendMigration`    | Use Elasticsearch as backend data source                                                                  |
 | `datasourceOnboarding`             | Enable data source onboarding page                                                                        |
+| `emptyDashboardPage`               | Enable the redesigned UX of an empty (no panels) dashboard page                                           |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                              |
 | `authnService`                     | Use new auth service to perform authentication                                                            |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                         |
