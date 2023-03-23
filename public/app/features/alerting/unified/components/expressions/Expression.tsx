@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { capitalize, chunk, clamp, uniqueId } from 'lodash';
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import { capitalize, uniqueId } from 'lodash';
+import React, { FC, useCallback, useState } from 'react';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -13,6 +13,7 @@ import { Threshold } from 'app/features/expressions/components/Threshold';
 import { ExpressionQuery, ExpressionQueryType, gelTypes } from 'app/features/expressions/types';
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { usePagination } from '../../hooks/usePagination';
 import { HoverCard } from '../HoverCard';
 import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
@@ -134,37 +135,28 @@ interface ExpressionResultProps {
 }
 export const PAGE_SIZE = 20;
 export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCondition }) => {
-  const [pageIndex, setPageIndex] = useState(0);
+  const { page, pageItems, onPageChange, numberOfPages, pageStart, pageEnd } = usePagination(series, 1, PAGE_SIZE);
   const styles = useStyles2(getStyles);
-
-  // reset the page index whenever the series changes
-  useEffect(() => {
-    setPageIndex(0);
-  }, [series, setPageIndex]);
 
   // sometimes we receive results where every value is just "null" when noData occurs
   const emptyResults = isEmptySeries(series);
   const isTimeSeriesResults = !emptyResults && isTimeSeriesFrames(series);
-  const resultPages = chunk(series, PAGE_SIZE);
 
   const previousPage = useCallback(() => {
-    setPageIndex((index) => clamp(index - 1, 0, resultPages.length - 1));
-  }, [setPageIndex, resultPages]);
+    onPageChange(page - 1);
+  }, [page, onPageChange]);
 
   const nextPage = useCallback(() => {
-    setPageIndex((index) => clamp(index + 1, 0, resultPages.length - 1));
-  }, [setPageIndex, resultPages]);
+    onPageChange(page + 1);
+  }, [page, onPageChange]);
 
-  const shouldShowPagination = resultPages.length > 1;
-  const page = resultPages[pageIndex];
-  const pageStart = pageIndex * PAGE_SIZE + 1;
-  const pageEnd = clamp((pageIndex + 1) * PAGE_SIZE, series.length);
+  const shouldShowPagination = numberOfPages > 1;
 
   return (
     <div className={styles.expression.results}>
       {!emptyResults && isTimeSeriesResults && (
         <div>
-          {page.map((frame, index) => (
+          {pageItems.map((frame, index) => (
             <TimeseriesRow
               key={uniqueId()}
               frame={frame}
@@ -176,7 +168,7 @@ export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCon
       )}
       {!emptyResults &&
         !isTimeSeriesResults &&
-        page.map((frame, index) => (
+        pageItems.map((frame, index) => (
           // There's no way to uniquely identify a frame that doesn't cause render bugs :/ (Gilles)
           <FrameRow key={uniqueId()} frame={frame} index={pageStart + index} isAlertCondition={isAlertCondition} />
         ))}
