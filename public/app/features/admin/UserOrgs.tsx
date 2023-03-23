@@ -426,6 +426,9 @@ const getChangeOrgButtonTheme = (theme: GrafanaTheme2) => ({
     margin-left: 1.8rem;
     margin-right: 0.6rem;
   `,
+  icon: css`
+    line-height: 2;
+  `,
 });
 
 export function ChangeOrgButton({
@@ -443,6 +446,7 @@ export function ChangeOrgButton({
           <span className={styles.lockMessageClass}>{lockMessage}</span>
           <Tooltip
             placement="right-end"
+            interactive={true}
             content={
               <div>
                 This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
@@ -459,7 +463,9 @@ export function ChangeOrgButton({
               </div>
             }
           >
-            <Icon name="question-circle" />
+            <div className={styles.icon}>
+              <Icon name="question-circle" />
+            </div>
           </Tooltip>
         </>
       ) : (

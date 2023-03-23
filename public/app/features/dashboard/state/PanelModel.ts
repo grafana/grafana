@@ -246,13 +246,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     switch (this.type) {
       case 'graph':
-        if (config.featureToggles?.autoMigrateGraphPanels || !config.angularSupportEnabled) {
+        if (config.featureToggles?.autoMigrateOldPanels || !config.angularSupportEnabled) {
           this.autoMigrateFrom = this.type;
           this.type = 'timeseries';
         }
         break;
       case 'table-old':
-        if (!config.angularSupportEnabled) {
+        if (config.featureToggles?.autoMigrateOldPanels || !config.angularSupportEnabled) {
           this.autoMigrateFrom = this.type;
           this.type = 'table';
         }
@@ -664,11 +664,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     vars[DataLinkBuiltInVars.keepTime] = {
       text: timeRangeUrl,
       value: timeRangeUrl,
+      skipFormat: true,
     };
 
     vars[DataLinkBuiltInVars.includeVars] = {
       text: variablesQuery,
       value: variablesQuery,
+      skipFormat: true,
     };
 
     return getTemplateSrv().replace(value, vars, format);
