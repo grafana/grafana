@@ -354,7 +354,6 @@ describe('ExplorePage', () => {
 
       const reducerMock = jest.spyOn(queryState, 'queryReducer');
       await waitForExplore(undefined, true);
-      const urlParams = decodeURIComponent(locationService.getSearch().toString());
       // because there are no import/export queries in our mock datasources, only the first one remains
       expect(reducerMock).toHaveBeenCalledWith(
         expect.anything(),
@@ -373,9 +372,12 @@ describe('ExplorePage', () => {
           }),
         })
       );
-      expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
-      );
+      await waitFor(() => {
+        const urlParams = decodeURIComponent(locationService.getSearch().toString());
+        expect(urlParams).toBe(
+          'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
+        );
+      });
     });
 
     it('Datasource in root not found and no queries changes to default', async () => {
