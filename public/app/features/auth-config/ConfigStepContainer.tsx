@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Badge, useStyles2 } from '@grafana/ui';
 import { StoreState } from 'app/types';
 
-import { resetError } from './state/reducers';
+import { resetError, resetWarning } from './state/reducers';
 
 interface OwnProps {
   name: string;
@@ -19,11 +19,13 @@ export type Props = OwnProps & ConnectedProps<typeof connector>;
 function mapStateToProps(state: StoreState) {
   return {
     error: state.authConfig.updateError,
+    warning: state.authConfig.warning,
   };
 }
 
 const mapDispatchToProps = {
   resetError,
+  resetWarning,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -31,14 +33,20 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 export const ConfigStepContainerUnconnected = ({
   name,
   error,
+  warning,
   showSavedBadge,
   children,
   resetError,
+  resetWarning,
 }: PropsWithChildren<Props>): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   const onDismissError = () => {
     resetError();
+  };
+
+  const onDismissWarning = () => {
+    resetWarning();
   };
 
   return (
@@ -50,6 +58,13 @@ export const ConfigStepContainerUnconnected = ({
       {error && (
         <Alert title={error.message} onRemove={onDismissError}>
           {error.errors?.map((e, i) => (
+            <div key={i}>{e}</div>
+          ))}
+        </Alert>
+      )}
+      {warning && (
+        <Alert title={warning.message} onRemove={onDismissWarning} severity="warning">
+          {warning.errors?.map((e, i) => (
             <div key={i}>{e}</div>
           ))}
         </Alert>

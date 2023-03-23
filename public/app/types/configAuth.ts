@@ -2,10 +2,11 @@ import { Settings } from 'app/types';
 
 export interface AuthConfigState {
   settings: Settings;
-  updateError?: SettingsUpdateError;
+  updateError?: SettingsError;
+  warning?: SettingsError;
 }
 
-export interface SettingsUpdateError {
+export interface SettingsError {
   message: string;
   errors: string[];
 }
