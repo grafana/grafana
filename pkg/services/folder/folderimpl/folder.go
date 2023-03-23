@@ -438,55 +438,51 @@ func prepareForUpdate(dashFolder *dashboards.Dashboard, orgId int64, userId int6
 	dashFolder.UpdateSlug()
 }
 
-func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) (err error) {
 	logger := s.log.FromContext(ctx)
 	if cmd.SignedInUser == nil {
 		return folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 	result := []string{cmd.UID}
-	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
-		if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-			subfolders, err := s.nestedFolderDelete(ctx, cmd)
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		subfolders, err := s.nestedFolderDelete(ctx, cmd)
 
-			if err != nil {
-				logger.Error("the delete folder on folder table failed with err: ", "error", err)
-				return err
-			}
-			result = append(result, subfolders...)
+		if err != nil {
+			logger.Error("the delete folder on folder table failed with err: ", "error", err)
+			return err
+		}
+		result = append(result, subfolders...)
+	}
+
+	for _, folder := range result {
+		dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, folder)
+		if err != nil {
+			return err
 		}
 
-		for _, folder := range result {
-			dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, folder)
-			if err != nil {
-				return err
-			}
-
-			guard, err := guardian.NewByUID(ctx, dashFolder.UID, cmd.OrgID, cmd.SignedInUser)
-			if err != nil {
-				return err
-			}
-
-			if canSave, err := guard.CanDelete(); err != nil || !canSave {
-				if err != nil {
-					return toFolderError(err)
-				}
-				return dashboards.ErrFolderAccessDenied
-			}
-
-			err = s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID)
-			if err != nil {
-				return err
-			}
-
-			err = s.legacyDelete(ctx, cmd, dashFolder)
-			if err != nil {
-				return err
-			}
+		guard, err := guardian.NewByUID(ctx, dashFolder.UID, cmd.OrgID, cmd.SignedInUser)
+		if err != nil {
+			return err
 		}
-		return nil
-	})
 
-	return err
+		if canSave, err := guard.CanDelete(); err != nil || !canSave {
+			if err != nil {
+				return toFolderError(err)
+			}
+			return dashboards.ErrFolderAccessDenied
+		}
+
+		err = s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID)
+		if err != nil {
+			return err
+		}
+
+		err = s.legacyDelete(ctx, cmd, dashFolder)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, UID string) error {

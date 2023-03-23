@@ -1047,7 +1047,7 @@ func (d *dashboardStore) CountDashboardsInFolder(
 
 func (d *dashboardStore) DeleteDashboardsInFolder(
 	ctx context.Context, req *dashboards.DeleteDashboardsInFolderRequest) error {
-	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	return d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		dashboard := dashboards.Dashboard{OrgID: req.OrgID}
 		has, err := sess.Where("uid = ? AND org_id = ?", req.FolderUID, req.OrgID).Get(&dashboard)
 		if err != nil {
