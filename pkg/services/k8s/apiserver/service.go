@@ -5,12 +5,14 @@ import (
 	"net"
 	"path"
 
+	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/services/k8s/kine"
 	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
 )
@@ -75,6 +77,10 @@ func (s *service) start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	logger := logr.New(newLogAdapter())
+	logger.V(1)
+	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
 
 	server, err := app.CreateServerChain(completedOptions)
 	if err != nil {
