@@ -1,4 +1,4 @@
-import { ScopedVars, TimeRange, TypedVariableModel, VariableMap } from '@grafana/data';
+import { AdHocVariableFilter, ScopedVars, TimeRange, TypedVariableModel, VariableMap } from '@grafana/data';
 
 /**
  * Via the TemplateSrv consumers get access to all the available template variables
@@ -32,6 +32,16 @@ export interface TemplateSrv {
    * Update the current time range to be used when interpolating __from / __to variables.
    */
   updateTimeRange(timeRange: TimeRange): void;
+
+  /**
+   * Lists ad-hoc filters for a specific datasource
+   */
+  getAdhocFilters(datasourceName: string): AdHocVariableFilter[];
+
+  /**
+   * Extracts variable name from an expression like '${example}'
+   */
+  getVariableName(expression: string): string | undefined;
 }
 
 let singletonInstance: TemplateSrv;
