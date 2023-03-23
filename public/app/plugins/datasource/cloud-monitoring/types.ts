@@ -1,10 +1,4 @@
 import { DataQuery, DataSourceJsonData, SelectableValue } from '@grafana/data';
-import { GoogleAuthType } from '@grafana/google-sdk';
-
-export const authTypes: Array<SelectableValue<string>> = [
-  { label: 'Google JWT File', value: GoogleAuthType.JWT },
-  { label: 'GCE Default Service Account', value: GoogleAuthType.GCE },
-];
 
 export enum MetricFindQueryTypes {
   Projects = 'projects',
