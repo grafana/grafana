@@ -66,6 +66,7 @@ type DiscoveryBase struct {
 type RuleDiscovery struct {
 	// required: true
 	RuleGroups []*RuleGroup `json:"groups"`
+	Total      int64        `json:"total"`
 }
 
 // AlertDiscovery has info for all active alerts.
@@ -73,6 +74,7 @@ type RuleDiscovery struct {
 type AlertDiscovery struct {
 	// required: true
 	Alerts []*Alert `json:"alerts"`
+	Total  int64    `json:"total"`
 }
 
 // swagger:model
@@ -86,6 +88,7 @@ type RuleGroup struct {
 	// same array.
 	// required: true
 	Rules []AlertingRule `json:"rules"`
+	Total int64          `json:"total"`
 	// required: true
 	Interval       float64   `json:"interval"`
 	LastEvaluation time.Time `json:"lastEvaluation"`
@@ -107,6 +110,7 @@ type AlertingRule struct {
 	Annotations overrideLabels `json:"annotations,omitempty"`
 	// required: true
 	Alerts []*Alert `json:"alerts,omitempty"`
+	Total  int64    `json:"total"`
 	Rule
 }
 
