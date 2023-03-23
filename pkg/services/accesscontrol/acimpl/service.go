@@ -73,9 +73,6 @@ type Service struct {
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
 	features      *featuremgmt.FeatureManager
-
-	routeRegister routing.RouteRegister
-	accessControl accesscontrol.AccessControl
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {

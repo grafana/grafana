@@ -361,12 +361,3 @@ func (s *Service) panelCount(ctx context.Context) int {
 func (s *Service) dataSourceCount(ctx context.Context) int {
 	return len(s.plugins.Plugins(ctx, plugins.DataSource))
 }
-
-func (s *Service) shouldReportDataSource(ctx context.Context, pluginID string) bool {
-	ds, exists := s.plugins.Plugin(ctx, pluginID)
-	if !exists {
-		return false
-	}
-
-	return ds.Signature.IsValid() || ds.Signature.IsInternal()
-}

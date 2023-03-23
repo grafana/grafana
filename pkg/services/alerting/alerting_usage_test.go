@@ -25,8 +25,8 @@ func TestAlertingUsageStats(t *testing.T) {
 			{ID: 4, Type: datasources.DS_PROMETHEUS},
 		},
 	}
-	s := &Stats{
-		alertStore:        store,
+	ae := &AlertEngine{
+		AlertStore:        store,
 		datasourceService: dsMock,
 	}
 
@@ -50,7 +50,7 @@ func TestAlertingUsageStats(t *testing.T) {
 		}, nil
 	}
 
-	result, err := s.QueryUsageStats(context.Background())
+	result, err := ae.QueryUsageStats(context.Background())
 	require.NoError(t, err, "getAlertingUsage should not return error")
 
 	expected := map[string]int{
@@ -97,7 +97,7 @@ func TestParsingAlertRuleSettings(t *testing.T) {
 		},
 	}
 
-	s := &Stats{}
+	ae := &AlertEngine{}
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
@@ -110,7 +110,7 @@ func TestParsingAlertRuleSettings(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			result, err := s.parseAlertRuleModel(settings)
+			result, err := ae.parseAlertRuleModel(settings)
 
 			tc.shouldErr(t, err)
 			diff := cmp.Diff(tc.expected, result)
