@@ -265,7 +265,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     // Auto-migrate old angular panels
     if (!this.autoMigrateFrom && autoMigrateAngular[this.type]) {
-      if (!config.panels[this.type] || !config.angularSupportEnabled) {
+      if (!config.panels[this.type] || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels) {
         this.autoMigrateFrom = this.type;
         this.type = autoMigrateAngular[this.type];
       }
