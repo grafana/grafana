@@ -105,13 +105,6 @@ func getPanelIDFromRequest(r *http.Request) (int64, error) {
 	return 0, nil
 }
 
-func getInt64FromRequest(r *http.Request, k string) (int64, error) {
-	if s := strings.TrimSpace(r.URL.Query().Get(k)); s != "" {
-		return strconv.ParseInt(s, 10, 64)
-	}
-	return -1, nil
-}
-
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
 	dashboardUID := c.Query("dashboard_uid")
 	panelID, err := getPanelIDFromRequest(c.Req)
@@ -122,18 +115,9 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		return ErrResp(http.StatusBadRequest, errors.New("panel_id must be set with dashboard_uid"), "")
 	}
 
-	limitGroups, err := getInt64FromRequest(c.Req, "limit")
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "invalid limit")
-	}
-	limitRulesPerGroup, err := getInt64FromRequest(c.Req, "limit_rules")
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "invalid limit_rules")
-	}
-	limitAlertsPerRule, err := getInt64FromRequest(c.Req, "limit_alerts")
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "invalid limit_alerts")
-	}
+	limitGroups := c.QueryInt64WithDefault("limit", -1)
+	limitRulesPerGroup := c.QueryInt64WithDefault("limit_rules", -1)
+	limitAlertsPerRule := c.QueryInt64WithDefault("limit_alerts", -1)
 
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
