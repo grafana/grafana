@@ -62,25 +62,59 @@ function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ
  * Ident: Identity: the string that is not expected to change
  * Sig: Signature: the string that is expected to change, upon which we wipe the cache fields
  */
-type Milliseconds = number;
 export class QueryCache {
-  private overlapWindow: Milliseconds;
-  constructor(overlapString?: string) {
-    const unverifiedOverlap = overlapString ?? defaultPrometheusQueryOverlapWindow;
-    if (isValidDuration(unverifiedOverlap)) {
-      const duration = parseDuration(unverifiedOverlap);
-      this.overlapWindow = durationToMilliseconds(duration);
-    } else {
-      const duration = parseDuration(defaultPrometheusQueryOverlapWindow);
-      this.overlapWindow = durationToMilliseconds(duration);
-    }
-  }
+  private overlapWindowMs;
+  private perfObeserver: PerformanceObserver;
+  private pendingRequestIds = new Set<string>();
 
   cache = new Map<TargetIdent, TargetCache>();
+
+  constructor(overlapString?: string) {
+    const unverifiedOverlap = overlapString ?? defaultPrometheusQueryOverlapWindow;
+
+    if (isValidDuration(unverifiedOverlap)) {
+      const duration = parseDuration(unverifiedOverlap);
+      this.overlapWindowMs = durationToMilliseconds(duration);
+    } else {
+      const duration = parseDuration(defaultPrometheusQueryOverlapWindow);
+      this.overlapWindowMs = durationToMilliseconds(duration);
+    }
+
+    this.perfObeserver = new PerformanceObserver((list) => {
+      list.getEntries().forEach((entry) => {
+        if (entry.initiatorType === 'fetch') {
+          let fetchUrl = entry.name;
+
+          if (fetchUrl.includes('/api/ds/query')) {
+            let match = fetchUrl.match(/requestId=([a-z\d]+)/i);
+
+            if (match) {
+              let requestId = match[1];
+
+              if (this.pendingRequestIds.has(requestId)) {
+                // TODO: store full initial request size by targSig so we can diff follow-up partial requests
+                // TODO: log savings between full initial request and incremental request to Faro
+
+                // Safari support for this is coming in 16.4:
+                // https://caniuse.com/mdn-api_performanceresourcetiming_transfersize
+                console.log('Transferred ' + (Math.round(entry.transferSize / 1024)) + 'KB');
+
+                this.pendingRequestIds.delete(requestId);
+              }
+            }
+          }
+        }
+      });
+    });
+
+    this.perfObeserver.observe({ type: "resource", buffered: false });
+  }
 
   // can be used to change full range request to partial, split into multiple requests
   requestInfo(request: DataQueryRequest<PromQuery>, interpolateString: StringInterpolator): CacheRequestInfo {
     // TODO: align from/to to interval to increase probability of hitting backend cache
+
+    this.pendingRequestIds.add(request.requestId);
 
     const newFrom = request.range.from.valueOf();
     const newTo = request.range.to.valueOf();
@@ -127,7 +161,7 @@ export class QueryCache {
       // 10m re-query overlap
 
       // clamp to make sure we don't re-query previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
-      let newFromPartial = Math.max(prevTo! - this.overlapWindow, newFrom);
+      let newFromPartial = Math.max(prevTo! - this.overlapWindowMs, newFrom);
 
       // modify to partial query
       request = {

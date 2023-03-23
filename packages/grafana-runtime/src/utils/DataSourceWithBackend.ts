@@ -121,7 +121,7 @@ class DataSourceWithBackend<
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, queryCachingTTL, range, requestId, hideFromInspector = false } = request;
+    const { intervalMs, maxDataPoints, queryCachingTTL, range, requestId, appendRequestId, hideFromInspector = false } = request;
     let targets = request.targets;
 
     if (this.filterQuery) {
@@ -197,9 +197,22 @@ class DataSourceWithBackend<
       });
     }
 
+    let queryStrObj: Record<string, string> = {};
+
     let url = '/api/ds/query';
+
     if (hasExpr) {
-      url += '?expression=true';
+      queryStrObj.expression = 'true';
+    }
+
+    if (appendRequestId) {
+      queryStrObj.requestId = requestId;
+    }
+
+    let queryStr = new URLSearchParams(queryStrObj).toString();
+
+    if (queryStr.length > 0) {
+      url += '?' + queryStr;
     }
 
     const headers: Record<string, string> = {};
