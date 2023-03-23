@@ -75,7 +75,14 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 	}
 
 	clusterLogger := l.New("component", "cluster")
-	moa.peer = NewRedisPeer("localhost:6379", clusterLogger)
+	// TODO: get addr from config
+	redisPeer := newRedisPeer(redisConfig{
+		addr: "localhost:6379",
+	}, clusterLogger, m.Registerer, cfg.UnifiedAlerting.HAPushPullInterval)
+	var ctx context.Context
+	ctx, moa.settleCancel = context.WithTimeout(context.Background(), 30*time.Second)
+	go redisPeer.Settle(ctx, cluster.DefaultGossipInterval*10)
+	moa.peer = redisPeer
 	// moa.peer = &NilPeer{}
 	// if len(cfg.UnifiedAlerting.HAPeers) > 0 {
 	// 	peer, err := cluster.Create(
