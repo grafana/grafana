@@ -17,6 +17,7 @@ import { Button, InlineField, useStyles2 } from '@grafana/ui';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
 import { SupplementaryResultError } from './SupplementaryResultError';
+import { isTimeoutErrorResponse } from './utils/logsVolumeResponse';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
@@ -57,10 +58,7 @@ export const LogsVolumePanelList = ({
     return !isLogsVolumeLimited(data) && zoomRatio && zoomRatio < 1;
   });
 
-  const timeoutError = logsVolumeData?.error?.message?.includes('timeout');
-  const retry = () => {
-    onLoadLogsVolume();
-  };
+  const timeoutError = isTimeoutErrorResponse(logsVolumeData);
 
   if (logsVolumeData?.state === LoadingState.Loading) {
     return <span>Loading...</span>;
@@ -68,8 +66,8 @@ export const LogsVolumePanelList = ({
     return (
       <SupplementaryResultError
         title="The logs volume query is taking too long and has timed out"
-        suggestion="Retry"
-        onSuggestion={retry}
+        suggestedAction="Retry"
+        onSuggestedAction={onLoadLogsVolume}
         onRemove={onClose}
       />
     );
