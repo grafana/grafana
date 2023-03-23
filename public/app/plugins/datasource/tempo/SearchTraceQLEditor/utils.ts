@@ -36,6 +36,10 @@ export const filterScopedTag = (f: TraceqlFilter) => {
 };
 
 export const filterTitle = (f: TraceqlFilter) => {
+  // Special case for the intrinsic "name" since a label called "Name" isn't explicit
+  if (f.tag === 'name') {
+    return 'Span Name';
+  }
   return startCase(filterScopedTag(f));
 };
 
