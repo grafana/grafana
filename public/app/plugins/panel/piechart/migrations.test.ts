@@ -60,7 +60,7 @@ describe('PieChart -> PieChartV2 migrations', () => {
     expect(options).toMatchObject({ displayLabels: [PieChartLabels.Name, PieChartLabels.Value] });
   });
 
-  it('hides the legend show i false', () => {
+  it('hides the legend when show is false', () => {
     const panel = { options: {} } as PanelModel;
 
     const oldPieChartOptions = {
