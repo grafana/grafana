@@ -10,7 +10,7 @@ import {
   VariableMap,
 } from '@grafana/data';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
-import { sceneGraph, FormatRegistryID, formatRegistry, CustomFormatterFn } from '@grafana/scenes';
+import { sceneGraph, FormatRegistryID, formatRegistry, VariableCustomFormatterFn } from '@grafana/scenes';
 
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
@@ -282,7 +282,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         scopedVars.__sceneObject.value,
         target,
         scopedVars,
-        format as string | CustomFormatterFn | undefined
+        format as string | VariableCustomFormatterFn | undefined
       );
     }
 

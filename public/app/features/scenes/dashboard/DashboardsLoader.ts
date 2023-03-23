@@ -265,7 +265,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
       text: variable.current.text,
       description: variable.description,
       regex: variable.regex,
-      query: variable.query,
+      pluginId: variable.query,
       allValue: variable.allValue || undefined,
       includeAll: variable.includeAll,
       defaultToAll: Boolean(variable.includeAll),

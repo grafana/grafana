@@ -43,7 +43,8 @@ export interface FeatureToggles {
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
   validateDashboardsOnSave?: boolean;
-  autoMigrateGraphPanels?: boolean;
+  autoMigrateOldPanels?: boolean;
+  disableAngular?: boolean;
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
   scenes?: boolean;
@@ -82,4 +83,5 @@ export interface FeatureToggles {
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
   influxdbBackendMigration?: boolean;
+  clientTokenRotation?: boolean;
 }
