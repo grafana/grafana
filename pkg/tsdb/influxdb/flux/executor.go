@@ -52,15 +52,16 @@ func executeQuery(ctx context.Context, logger log.Logger, query queryModel, runn
 		}
 	}
 
-	// Make sure there is at least one frame
-	if len(dr.Frames) == 0 {
-		dr.Frames = append(dr.Frames, data.NewFrame(""))
+	// add the metadata if there are frames
+	// otherwise it is a no data response and Frames are nil
+	if len(dr.Frames) != 0 {
+		firstFrame := dr.Frames[0]
+		if firstFrame.Meta == nil {
+			firstFrame.SetMeta(&data.FrameMeta{})
+		}
+		firstFrame.Meta.ExecutedQueryString = flux
 	}
-	firstFrame := dr.Frames[0]
-	if firstFrame.Meta == nil {
-		firstFrame.SetMeta(&data.FrameMeta{})
-	}
-	firstFrame.Meta.ExecutedQueryString = flux
+
 	return dr
 }
 

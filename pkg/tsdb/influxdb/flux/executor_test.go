@@ -305,3 +305,8 @@ func TestTimestampFirst(t *testing.T) {
 	require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
 	require.Equal(t, "Value", dr.Frames[0].Fields[1].Name)
 }
+
+func TestNoDataResponse(t *testing.T) {
+	dr := verifyGoldenResponse(t, "no_data")
+	require.Len(t, dr.Frames, 0)
+}
