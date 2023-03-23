@@ -11,8 +11,11 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -41,6 +44,8 @@ type AlertEngine struct {
 	ruleReader         ruleReader
 	log                log.Logger
 	resultHandler      resultHandler
+	usageStatsService  usagestats.Service
+	validator          validator.Service
 	tracer             tracing.Tracer
 	AlertStore         AlertStore
 	dashAlertExtractor DashAlertExtractor
@@ -56,14 +61,16 @@ func (e *AlertEngine) IsDisabled() bool {
 
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, requestValidator validations.PluginRequestValidator,
-	dataService legacydata.RequestHandler, encryptionService encryption.Internal,
+	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, validator validator.Service, encryptionService encryption.Internal,
 	notificationService *notifications.NotificationService, tracer tracing.Tracer, store AlertStore, cfg *setting.Cfg,
-	dashAlertExtractor DashAlertExtractor, dashboardService dashboards.DashboardService, dsService datasources.DataSourceService, annotationsRepo annotations.Repository) *AlertEngine {
+	dashAlertExtractor DashAlertExtractor, dashboardService dashboards.DashboardService, cacheService *localcache.CacheService, dsService datasources.DataSourceService, annotationsRepo annotations.Repository) *AlertEngine {
 	e := &AlertEngine{
 		Cfg:                cfg,
 		RenderService:      renderer,
 		RequestValidator:   requestValidator,
 		DataService:        dataService,
+		usageStatsService:  usageStatsService,
+		validator:          validator,
 		tracer:             tracer,
 		AlertStore:         store,
 		dashAlertExtractor: dashAlertExtractor,
@@ -77,6 +84,8 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator validations
 	e.ruleReader = newRuleReader(store)
 	e.log = log.New("alerting.engine")
 	e.resultHandler = newResultHandler(e.RenderService, store, notificationService, encryptionService.GetDecryptedValue)
+
+	e.registerUsageMetrics()
 
 	return e
 }
@@ -259,4 +268,28 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 		e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.ID, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
 		close(attemptChan)
 	}()
+}
+
+func (e *AlertEngine) registerUsageMetrics() {
+	e.usageStatsService.RegisterMetricsFunc(func(ctx context.Context) (map[string]interface{}, error) {
+		alertingUsageStats, err := e.QueryUsageStats(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		alertingOtherCount := 0
+		metrics := map[string]interface{}{}
+
+		for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
+			if e.validator.ShouldBeReported(ctx, dsType) {
+				metrics[fmt.Sprintf("stats.alerting.ds.%s.count", dsType)] = usageCount
+			} else {
+				alertingOtherCount += usageCount
+			}
+		}
+
+		metrics["stats.alerting.ds.other.count"] = alertingOtherCount
+
+		return metrics, nil
+	})
 }

@@ -13,9 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -27,11 +28,11 @@ type Service struct {
 	sqlstore           db.DB
 	plugins            plugins.Store
 	usageStats         usagestats.Service
+	validator          validator.Service
 	statsService       stats.Service
 	features           *featuremgmt.FeatureManager
 	datasources        datasources.DataSourceService
 	httpClientProvider httpclient.Provider
-	alertStats         *alerting.Stats
 
 	log log.Logger
 
@@ -43,10 +44,11 @@ type Service struct {
 
 func ProvideService(
 	us usagestats.Service,
+	validator validator.Service,
 	statsService stats.Service,
 	cfg *setting.Cfg,
 	store db.DB,
-	alertStats *alerting.Stats,
+	social social.Service,
 	plugins plugins.Store,
 	features *featuremgmt.FeatureManager,
 	datasourceService datasources.DataSourceService,
@@ -57,11 +59,11 @@ func ProvideService(
 		sqlstore:           store,
 		plugins:            plugins,
 		usageStats:         us,
+		validator:          validator,
 		statsService:       statsService,
 		features:           features,
 		datasources:        datasourceService,
 		httpClientProvider: httpClientProvider,
-		alertStats:         alertStats,
 
 		startTime: time.Now(),
 		log:       log.New("infra.usagestats.collector"),
@@ -73,7 +75,6 @@ func ProvideService(
 		s.collectDatasourceStats,
 		s.collectDatasourceAccess,
 		s.collectElasticStats,
-		s.collectAlertStats,
 		s.collectAlertNotifierStats,
 		s.collectPrometheusFlavors,
 		s.collectAdditionalMetrics,
@@ -215,27 +216,6 @@ func (s *Service) collectAlertNotifierStats(ctx context.Context) (map[string]int
 	return m, nil
 }
 
-func (s *Service) collectAlertStats(ctx context.Context) (map[string]interface{}, error) {
-	alertingUsageStats, err := s.alertStats.QueryUsageStats(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	alertingOtherCount := 0
-	m := map[string]interface{}{}
-	for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
-		if s.shouldReportDataSource(ctx, dsType) {
-			m[fmt.Sprintf("stats.alerting.ds.%s.count", dsType)] = usageCount
-		} else {
-			alertingOtherCount += usageCount
-		}
-	}
-
-	m["stats.alerting.ds.other.count"] = alertingOtherCount
-
-	return m, nil
-}
-
 func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 	dsStats := stats.GetDataSourceStatsQuery{}
@@ -249,7 +229,7 @@ func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interf
 	// as sending that name could be sensitive information
 	dsOtherCount := 0
 	for _, dsStat := range dsStats.Result {
-		if s.shouldReportDataSource(ctx, dsStat.Type) {
+		if s.validator.ShouldBeReported(ctx, dsStat.Type) {
 			m["stats.ds."+dsStat.Type+".count"] = dsStat.Count
 		} else {
 			dsOtherCount += dsStat.Count
@@ -303,7 +283,7 @@ func (s *Service) collectDatasourceAccess(ctx context.Context) (map[string]inter
 
 		access := strings.ToLower(dsAccessStat.Access)
 
-		if s.shouldReportDataSource(ctx, dsAccessStat.Type) {
+		if s.validator.ShouldBeReported(ctx, dsAccessStat.Type) {
 			m["stats.ds_access."+dsAccessStat.Type+"."+access+".count"] = dsAccessStat.Count
 		} else {
 			old := dsAccessOtherCount[access]

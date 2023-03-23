@@ -2,7 +2,6 @@ package statscollector
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -18,10 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -335,57 +334,6 @@ func TestDatasourceStats(t *testing.T) {
 		assert.EqualValues(t, 4+8, dba["stats.ds_access.other.proxy.count"])
 	}
 }
-func TestAlertStats(t *testing.T) {
-	t.Run("Should register alerting usage metrics", func(t *testing.T) {
-		dsService := &mockDatasourceService{
-			datasources: []*datasources.DataSource{{ID: 1, Type: datasources.DS_PROMETHEUS}},
-		}
-		pluginStore := &plugins.FakePluginStore{
-			PluginList: []plugins.PluginDTO{
-				{JSONData: plugins.JSONData{ID: datasources.DS_PROMETHEUS}, Signature: plugins.SignatureInternal},
-			},
-		}
-		alertStats := alerting.ProvideStats(&alertStoreMock{
-			getAllAlerts: func(ctx context.Context, q *models.GetAllAlertsQuery) (res []*models.Alert, err error) {
-				settings, err := simplejson.NewJson([]byte(`{"conditions": [{"query": { "datasourceId": 1}}]}`))
-				if err != nil {
-					return nil, err
-				}
-				return []*models.Alert{{Settings: settings}}, nil
-			},
-		}, dsService)
-
-		s := ProvideService(
-			&usagestats.UsageStatsMock{},
-			statstest.NewFakeService(),
-			setting.NewCfg(),
-			dbtest.NewFakeDB(),
-			alertStats,
-			pluginStore,
-			featuremgmt.WithFeatures(),
-			dsService,
-			httpclient.NewProvider(),
-		)
-
-		m, err := s.collectAlertStats(context.Background())
-		require.NoError(t, err)
-		require.Equal(t, 1, m["stats.alerting.ds.prometheus.count"])
-		require.Equal(t, 0, m["stats.alerting.ds.other.count"])
-	})
-}
-
-type alertStoreMock struct {
-	alerting.AlertStore
-
-	getAllAlerts func(ctx context.Context, q *models.GetAllAlertsQuery) (res []*models.Alert, err error)
-}
-
-func (a *alertStoreMock) GetAllAlertQueryHandler(ctx context.Context, q *models.GetAllAlertsQuery) (res []*models.Alert, err error) {
-	if a.getAllAlerts != nil {
-		return a.getAllAlerts(ctx, q)
-	}
-	return []*models.Alert{}, nil
-}
 
 func TestAlertNotifiersStats(t *testing.T) {
 	sqlStore := dbtest.NewFakeDB()
@@ -455,6 +403,16 @@ func mockSystemStats(statsService *statstest.FakeService) {
 	}
 }
 
+type mockSocial struct {
+	social.Service
+
+	OAuthProviders map[string]bool
+}
+
+func (m *mockSocial) GetOAuthProviders() map[string]bool {
+	return m.OAuthProviders
+}
+
 func setupSomeDataSourcePlugins(t *testing.T, s *Service) {
 	t.Helper()
 
@@ -479,10 +437,11 @@ func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService sta
 
 	return ProvideService(
 		&usagestats.UsageStatsMock{},
+		&validator.FakeUsageStatsValidator{},
 		statsService,
 		cfg,
 		store,
-		&alerting.Stats{},
+		&mockSocial{},
 		&plugins.FakePluginStore{},
 		featuremgmt.WithFeatures("feature1", "feature2"),
 		o.datasources,
@@ -504,14 +463,6 @@ type mockDatasourceService struct {
 	datasources.DataSourceService
 
 	datasources []*datasources.DataSource
-}
-
-func (s mockDatasourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
-	if len(s.datasources) > 0 {
-		return s.datasources[0], nil
-	}
-
-	return nil, errors.New("datasource mock not found")
 }
 
 func (s mockDatasourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {

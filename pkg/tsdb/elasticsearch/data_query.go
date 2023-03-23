@@ -178,7 +178,7 @@ func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFro
 
 func addHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder {
 	aggBuilder.Histogram(bucketAgg.ID, bucketAgg.Field, func(a *es.HistogramAgg, b es.AggBuilder) {
-		a.Interval = bucketAgg.Settings.Get("interval").MustInt(1000)
+		a.Interval = stringToIntWithDefaultValue(bucketAgg.Settings.Get("interval").MustString(), 1000)
 		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)
 
 		if missing, err := bucketAgg.Settings.Get("missing").Int(); err == nil {
@@ -196,7 +196,7 @@ func addTermsAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, metrics []*Metr
 		if size, err := bucketAgg.Settings.Get("size").Int(); err == nil {
 			a.Size = size
 		} else {
-			a.Size = getSizeFromString(bucketAgg.Settings.Get("size").MustString(), defaultSize)
+			a.Size = stringToIntWithDefaultValue(bucketAgg.Settings.Get("size").MustString(), defaultSize)
 		}
 
 		if minDocCount, err := bucketAgg.Settings.Get("min_doc_count").Int(); err == nil {
@@ -320,7 +320,7 @@ func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defa
 	b.SortDesc(defaultTimeField, "boolean")
 	b.SortDesc("_doc", "")
 	b.AddDocValueField(defaultTimeField)
-	b.Size(getSizeFromString(metric.Settings.Get("limit").MustString(), defaultSize))
+	b.Size(stringToIntWithDefaultValue(metric.Settings.Get("limit").MustString(), defaultSize))
 	b.AddHighlight()
 
 	// For log query, we add a date histogram aggregation
@@ -345,7 +345,7 @@ func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, 
 	b.SortDesc(defaultTimeField, "boolean")
 	b.SortDesc("_doc", "")
 	b.AddDocValueField(defaultTimeField)
-	b.Size(getSizeFromString(metric.Settings.Get("size").MustString(), defaultSize))
+	b.Size(stringToIntWithDefaultValue(metric.Settings.Get("size").MustString(), defaultSize))
 }
 
 func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) {
@@ -441,13 +441,14 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 	}
 }
 
-func getSizeFromString(sizeStr string, defaultSize int) int {
-	size, err := strconv.Atoi(sizeStr)
+func stringToIntWithDefaultValue(valueStr string, defaultValue int) int {
+	value, err := strconv.Atoi(valueStr)
 	if err != nil {
-		size = defaultSize
+		value = defaultValue
 	}
-	if size == 0 {
-		size = defaultSize
+	// In our case, 0 is not a valid value and in this case we default to defaultValue
+	if value == 0 {
+		value = defaultValue
 	}
-	return size
+	return value
 }
