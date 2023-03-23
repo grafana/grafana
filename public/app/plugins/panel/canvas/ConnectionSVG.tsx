@@ -154,7 +154,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const connectionCursorStyle = scene.isEditingEnabled ? 'grab' : '';
       const selectedStyles = { strokeWidth: strokeWidth + 5 };
 
-      const CONNECTION_HEAD_ID = `connectionHead-${idx}`;
+      const CONNECTION_HEAD_ID = `connectionHead-${idx + Date.now()}`;
 
       return (
         <svg className={styles.connection} key={idx}>
