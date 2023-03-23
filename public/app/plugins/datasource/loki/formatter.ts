@@ -107,24 +107,14 @@ export function revertTransformations(query: string, transformations: Transforma
   const tree = parser.parse(query);
   let recoveredQuery = query;
 
-  transformations.forEach((transformation) => {
-    tree.iterate({
-      enter: (nodeRef): false | void => {
-        // 7. We look for a node with the same id
-        if (nodeRef.type.id !== transformation?.nodeId) {
-          return;
-        }
-
-        // 8. We check if it contains the interpolated string
-        const nodeText = query.substring(nodeRef.node.from, nodeRef.node.to);
-        if (!nodeText.includes(transformation.replaced)) {
-          return;
-        }
-
-        // 8. Recover
-        recoveredQuery = recoveredQuery.replace(transformation.replaced, transformation.original);
-      },
-    });
+  tree.iterate({
+    enter: (node): false | void => {
+      if (transformations.some((transformation) => transformation.nodeId === node.type.id)) {
+        const foundIndex = transformations.findIndex((transformation) => transformation.nodeId === node.type.id);
+        const foundTransformation = transformations.splice(foundIndex, 1)[0];
+        recoveredQuery = recoveredQuery.replace(foundTransformation.replaced, foundTransformation.original);
+      }
+    },
   });
 
   return recoveredQuery;
