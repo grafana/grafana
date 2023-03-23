@@ -13,7 +13,7 @@ title: AzureMonitorDataQuery kind
 
 
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
 
 

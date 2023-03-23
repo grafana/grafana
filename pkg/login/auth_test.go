@@ -122,7 +122,7 @@ func TestAuthenticateUser(t *testing.T) {
 
 	authScenario(t, "When a non-existing grafana user authenticate and invalid ldap credentials", func(sc *authScenarioContext) {
 		cfg := setting.NewCfg()
-		cfg.LDAPEnabled = true
+		cfg.LDAPAuthEnabled = true
 		mockLoginUsingGrafanaDB(user.ErrUserNotFound, sc)
 		mockLoginUsingLDAP(true, ldap.ErrInvalidCredentials, sc)
 
@@ -140,7 +140,7 @@ func TestAuthenticateUser(t *testing.T) {
 
 	authScenario(t, "When a non-existing grafana user authenticate and valid ldap credentials", func(sc *authScenarioContext) {
 		cfg := setting.NewCfg()
-		cfg.LDAPEnabled = true
+		cfg.LDAPAuthEnabled = true
 		mockLoginUsingGrafanaDB(user.ErrUserNotFound, sc)
 		mockLoginUsingLDAP(true, nil, sc)
 
@@ -158,7 +158,7 @@ func TestAuthenticateUser(t *testing.T) {
 
 	authScenario(t, "When a non-existing grafana user authenticate and ldap returns unexpected error", func(sc *authScenarioContext) {
 		cfg := setting.NewCfg()
-		cfg.LDAPEnabled = true
+		cfg.LDAPAuthEnabled = true
 		customErr := errors.New("custom")
 		mockLoginUsingGrafanaDB(user.ErrUserNotFound, sc)
 		mockLoginUsingLDAP(true, customErr, sc)
@@ -177,7 +177,7 @@ func TestAuthenticateUser(t *testing.T) {
 
 	authScenario(t, "When grafana user authenticate with invalid credentials and invalid ldap credentials", func(sc *authScenarioContext) {
 		cfg := setting.NewCfg()
-		cfg.LDAPEnabled = true
+		cfg.LDAPAuthEnabled = true
 		mockLoginUsingGrafanaDB(ErrInvalidCredentials, sc)
 		mockLoginUsingLDAP(true, ldap.ErrInvalidCredentials, sc)
 

@@ -1089,8 +1089,30 @@ describe('LokiDatasource', () => {
   });
 
   describe('getDataSamples', () => {
-    it('hide request from inspector', () => {
-      const ds = createLokiDatasource(templateSrvStub);
+    let ds: LokiDatasource;
+    beforeEach(() => {
+      ds = createLokiDatasource(templateSrvStub);
+    });
+    it('ignores invalid queries', () => {
+      const spy = jest.spyOn(ds, 'query');
+      ds.getDataSamples({ expr: 'not a query', refId: 'A' });
+      expect(spy).not.toHaveBeenCalled();
+    });
+    it('ignores metric queries', () => {
+      const spy = jest.spyOn(ds, 'query');
+      ds.getDataSamples({ expr: 'count_over_time({a="b"}[1m])', refId: 'A' });
+      expect(spy).not.toHaveBeenCalled();
+    });
+    it('uses the current interval in the request', () => {
+      const spy = jest.spyOn(ds, 'query').mockImplementation(() => of({} as DataQueryResponse));
+      ds.getDataSamples({ expr: '{job="bar"}', refId: 'A' });
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          range: ds.getTimeRange(),
+        })
+      );
+    });
+    it('hides the request from the inspector', () => {
       const spy = jest.spyOn(ds, 'query').mockImplementation(() => of({} as DataQueryResponse));
       ds.getDataSamples({ expr: '{job="bar"}', refId: 'A' });
       expect(spy).toHaveBeenCalledWith(
