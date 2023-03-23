@@ -5,7 +5,9 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/web"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/query"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
@@ -26,6 +28,19 @@ func NewTracingMiddleware(tracer tracing.Tracer) plugins.ClientMiddleware {
 type TracingMiddleware struct {
 	tracer tracing.Tracer
 	next   plugins.Client
+}
+
+// setSpanAttributeFromHTTPHeader takes a ReqContext and a span, and adds the specified HTTP header as a span attribute
+// (string value), if the header is present.
+func setSpanAttributeFromHTTPHeader(reqCtx *contextmodel.ReqContext, span tracing.Span, attributeName, headerName string) {
+	// Do nothing if there's no request context
+	if reqCtx == nil || reqCtx.Req == nil {
+		return
+	}
+	// Set the attribute as string
+	if v := reqCtx.Req.Header.Get(headerName); v != "" {
+		span.SetAttributes(attributeName, v, attribute.Key(attributeName).String(v))
+	}
 }
 
 // traceWrap returns a new context.Context which wraps a newly created span. The span will also contain attributes for
@@ -50,13 +65,12 @@ func (m *TracingMiddleware) traceWrap(
 	}
 
 	// Additional attributes from http headers
-	if webCtx := web.FromContext(ctx); webCtx != nil && len(webCtx.Req.Header) > 0 {
-		if v, err := strconv.Atoi(webCtx.Req.Header.Get("X-Panel-Id")); err == nil {
+	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil && len(reqCtx.Req.Header) > 0 {
+		if v, err := strconv.Atoi(reqCtx.Req.Header.Get(query.HeaderPanelID)); err == nil {
 			span.SetAttributes("panel_id", v, attribute.Key("panel_id").Int(v))
 		}
-		if v := webCtx.Req.Header.Get("X-Dashboard-Uid"); v != "" {
-			span.SetAttributes("dashboard_uid", v, attribute.Key("dashboard_uid").String(v))
-		}
+		setSpanAttributeFromHTTPHeader(reqCtx, span, "query_group_id", query.HeaderQueryGroupID)
+		setSpanAttributeFromHTTPHeader(reqCtx, span, "dashboard_uid", query.HeaderDashboardUID)
 	}
 
 	// Return ctx with span + cleanup func

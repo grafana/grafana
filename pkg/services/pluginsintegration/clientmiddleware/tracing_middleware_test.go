@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -184,7 +186,7 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 			name: "no http headers",
 			requestMut: []func(ctx *context.Context, req *backend.QueryDataRequest){
 				func(ctx *context.Context, req *backend.QueryDataRequest) {
-					*ctx = web.WithContext(*ctx, &web.Context{Req: &http.Request{Header: nil}})
+					*ctx = ctxkey.Set(*ctx, &contextmodel.ReqContext{Context: &web.Context{Req: &http.Request{Header: nil}}})
 				},
 			},
 			assert: func(t *testing.T, span *tracing.FakeSpan) {
@@ -218,21 +220,45 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 			name: "http headers",
 			requestMut: []func(ctx *context.Context, req *backend.QueryDataRequest){
 				func(ctx *context.Context, req *backend.QueryDataRequest) {
-					*ctx = web.WithContext(*ctx, &web.Context{
-						Req: &http.Request{Header: map[string][]string{
-							"X-Panel-Id": {"10"}, "X-Dashboard-Uid": {"uid"}, "X-Other": {"30"},
-						}},
-					})
+					*ctx = ctxkey.Set(*ctx, newReqContextWithRequest(&http.Request{
+						Header: map[string][]string{
+							"X-Panel-Id":       {"10"},
+							"X-Dashboard-Uid":  {"dashboard uid"},
+							"X-Query-Group-Id": {"query group id"},
+							"X-Other":          {"30"},
+						},
+					}))
 				},
 			},
 			assert: func(t *testing.T, span *tracing.FakeSpan) {
-				require.Len(t, span.Attributes, 4)
+				require.Len(t, span.Attributes, 5)
 				for _, k := range []string{"plugin_id", "org_id"} {
 					_, ok := span.Attributes[attribute.Key(k)]
 					assert.True(t, ok)
 				}
 				assert.Equal(t, int64(10), span.Attributes["panel_id"].AsInt64())
-				assert.Equal(t, "uid", span.Attributes["dashboard_uid"].AsString())
+				assert.Equal(t, "dashboard uid", span.Attributes["dashboard_uid"].AsString())
+				assert.Equal(t, "query group id", span.Attributes["query_group_id"].AsString())
+			},
+		},
+		{
+			name: "single http headers are skipped if not present or empty",
+			requestMut: []func(ctx *context.Context, req *backend.QueryDataRequest){
+				func(ctx *context.Context, req *backend.QueryDataRequest) {
+					*ctx = ctxkey.Set(*ctx, newReqContextWithRequest(&http.Request{
+						Header: map[string][]string{
+							"X-Dashboard-Uid": {""},
+							"X-Other":         {"30"},
+						},
+					}))
+				},
+			},
+			assert: func(t *testing.T, span *tracing.FakeSpan) {
+				require.Len(t, span.Attributes, 2)
+				for _, k := range []string{"plugin_id", "org_id"} {
+					_, ok := span.Attributes[attribute.Key(k)]
+					assert.True(t, ok)
+				}
 			},
 		},
 	} {
@@ -264,6 +290,14 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 				tc.assert(t, span)
 			}
 		})
+	}
+}
+
+func newReqContextWithRequest(req *http.Request) *contextmodel.ReqContext {
+	return &contextmodel.ReqContext{
+		Context: &web.Context{
+			Req: req,
+		},
 	}
 }
 
