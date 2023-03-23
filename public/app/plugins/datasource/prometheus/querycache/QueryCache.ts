@@ -94,12 +94,14 @@ export class QueryCache {
               if (match) {
                 let requestId = match[1];
 
-                if (this.pendingRequestIds.has(requestId)) {
+                // Safari support for this is coming in 16.4:
+                // https://caniuse.com/mdn-api_performanceresourcetiming_transfersize
+                const isTransferSizeNumber = typeof entryTypeCast?.transferSize === 'number';
+
+                if (this.pendingRequestIds.has(requestId) && isTransferSizeNumber) {
                   // TODO: store full initial request size by targSig so we can diff follow-up partial requests
                   // TODO: log savings between full initial request and incremental request to Faro
 
-                  // Safari support for this is coming in 16.4:
-                  // https://caniuse.com/mdn-api_performanceresourcetiming_transfersize
                   console.log('Transferred ' + Math.round(entryTypeCast.transferSize / 1024) + 'KB');
 
                   this.pendingRequestIds.delete(requestId);
