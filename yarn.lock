@@ -5491,6 +5491,7 @@ __metadata:
     "@emotion/react": 11.10.6
     "@grafana/data": 9.5.0-pre
     "@grafana/e2e-selectors": 9.5.0-pre
+    "@grafana/faro-web-sdk": 1.0.2
     "@grafana/schema": 9.5.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@leeoniya/ufuzzy": 1.0.6
