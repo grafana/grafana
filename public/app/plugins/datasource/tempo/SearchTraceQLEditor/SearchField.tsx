@@ -14,7 +14,7 @@ import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { operators as allOperators, stringOperators, numberOperators } from '../traceql/traceql';
 
-import { operatorSelectableValue, scopeHelper } from './utils';
+import { filterScopedTag, operatorSelectableValue } from './utils';
 
 const getStyles = () => ({
   dropdown: css`
@@ -30,13 +30,25 @@ interface Props {
   setError: (error: FetchError) => void;
   isTagsLoading?: boolean;
   tags: string[];
+  hideScope?: boolean;
+  hideTag?: boolean;
 }
-const SearchField = ({ filter, datasource, updateFilter, deleteFilter, isTagsLoading, tags, setError }: Props) => {
+const SearchField = ({
+  filter,
+  datasource,
+  updateFilter,
+  deleteFilter,
+  isTagsLoading,
+  tags,
+  setError,
+  hideScope,
+  hideTag,
+}: Props) => {
   const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [isLoadingValues, setIsLoadingValues] = useState(false);
   const [options, setOptions] = useState<Array<SelectableValue<string>>>([]);
-  const [scopedTag, setScopedTag] = useState(scopeHelper(filter) + filter.tag);
+  const [scopedTag, setScopedTag] = useState(filterScopedTag(filter));
   // We automatically change the operator to the regex op when users select 2 or more values
   // However, they expect this to be automatically rolled back to the previous operator once
   // there's only one value selected, so we store the previous operator and value
@@ -58,7 +70,7 @@ const SearchField = ({ filter, datasource, updateFilter, deleteFilter, isTagsLoa
   }, [filter.value]);
 
   useEffect(() => {
-    const newScopedTag = scopeHelper(filter) + filter.tag;
+    const newScopedTag = filterScopedTag(filter);
     if (newScopedTag !== scopedTag) {
       setScopedTag(newScopedTag);
     }
@@ -101,7 +113,7 @@ const SearchField = ({ filter, datasource, updateFilter, deleteFilter, isTagsLoa
 
   return (
     <HorizontalGroup spacing={'none'} width={'auto'}>
-      {filter.type === 'dynamic' && (
+      {!hideScope && (
         <Select
           className={styles.dropdown}
           inputId={`${filter.id}-scope`}
@@ -114,12 +126,16 @@ const SearchField = ({ filter, datasource, updateFilter, deleteFilter, isTagsLoa
           aria-label={`select ${filter.id} scope`}
         />
       )}
-      {filter.type === 'dynamic' && (
+      {!hideTag && (
         <Select
           className={styles.dropdown}
           inputId={`${filter.id}-tag`}
           isLoading={isTagsLoading}
-          options={tags.map((t) => ({ label: t, value: t }))}
+          // Add the current tag to the list if it doesn't exist in the tags prop, otherwise the field will be empty even though the state has a value
+          options={(!filter.tag || tags.find((t) => t === filter.tag) ? tags : [filter.tag, ...tags]).map((t) => ({
+            label: t,
+            value: t,
+          }))}
           value={filter.tag}
           onChange={(v) => {
             updateFilter({ ...filter, tag: v?.value });

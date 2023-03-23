@@ -42,16 +42,14 @@ const TagsInput = ({ updateFilter, deleteFilter, filters, datasource, setError, 
   );
 
   useEffect(() => {
-    if (!filters?.find((f) => f.type === 'dynamic')) {
+    if (!filters?.length) {
       handleOnAdd();
     }
   }, [filters, handleOnAdd]);
 
-  const dynamicFilters = filters?.filter((f) => f.type === 'dynamic');
-
   return (
     <div className={styles.vertical}>
-      {dynamicFilters?.map((f, i) => (
+      {filters?.map((f, i) => (
         <div className={styles.horizontal} key={f.id}>
           <SearchField
             filter={f}
@@ -62,7 +60,7 @@ const TagsInput = ({ updateFilter, deleteFilter, filters, datasource, setError, 
             isTagsLoading={isTagsLoading}
             deleteFilter={deleteFilter}
           />
-          {i === dynamicFilters.length - 1 && (
+          {i === filters.length - 1 && (
             <AccessoryButton variant={'secondary'} icon={'plus'} onClick={handleOnAdd} title={'Add tag'} />
           )}
         </div>
