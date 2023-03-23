@@ -167,6 +167,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(annotations.Repository), new(*annotationsimpl.RepositoryImpl)),
 	alerting.ProvideAlertStore,
 	alerting.ProvideAlertEngine,
+	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
 	New,
 	api.ProvideHTTPServer,
 	query.ProvideService,
