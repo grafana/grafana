@@ -7,6 +7,19 @@ import AnnotationsField from './AnnotationsField';
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { RuleEditorSection } from './RuleEditorSection';
 
+function getDescription(ruleType: RuleFormType | undefined) {
+  if (ruleType === RuleFormType.cloudRecording) {
+    return 'Select the Namespace and Group for your recording rule';
+  }
+  if (ruleType === RuleFormType.grafana) {
+    return 'Write a summary to help you better manage your alerts';
+  }
+  if (ruleType === RuleFormType.cloudAlerting) {
+    return 'Select the Namespace and evaluation group for your alert. Write a summary to help you better manage your alerts';
+  }
+  return '';
+}
+
 export function DetailsStep() {
   const { watch } = useFormContext<RuleFormValues & { location?: string }>();
 
@@ -18,11 +31,7 @@ export function DetailsStep() {
     <RuleEditorSection
       stepNo={type === RuleFormType.cloudRecording ? 3 : 4}
       title={type === RuleFormType.cloudRecording ? 'Folder and group' : 'Add details for your alert rule'}
-      description={
-        type === RuleFormType.cloudRecording
-          ? 'Select the Namespace and Group for your recording rule'
-          : 'Select the folder and evaluation group for your alert. Write a summary to help you better manage your alerts'
-      }
+      description={getDescription(type)}
     >
       {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) &&
         dataSourceName && <GroupAndNamespaceFields rulesSourceName={dataSourceName} />}
