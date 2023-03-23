@@ -18,7 +18,7 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-describe('FolderView', () => {
+describe('RootFolderView', () => {
   let grafanaSearcherSpy: jest.SpyInstance;
   const mockOnTagSelected = jest.fn();
   const mockSelectionToggle = jest.fn();
