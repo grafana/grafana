@@ -340,6 +340,13 @@ var (
 			Owner:       grafanaDashboardsSquad,
 		},
 		{
+			Name:         "emptyDashboardPage",
+			Description:  "Enable the redesigned UX of an empty (no panels) dashboard page",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:        "secureSocksDatasourceProxy",
 			Description: "Enable secure socks tunneling for supported core datasources",
 			State:       FeatureStateAlpha,
