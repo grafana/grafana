@@ -1,3 +1,5 @@
+import { lastValueFrom } from 'rxjs';
+
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Settings, ThunkResult, SettingsUpdateError, UpdateSettingsQuery } from 'app/types';
@@ -18,7 +20,15 @@ export function saveSettings(data: UpdateSettingsQuery): ThunkResult<Promise<boo
   return async (dispatch) => {
     if (contextSrv.hasPermission(AccessControlAction.SettingsRead)) {
       try {
-        await getBackendSrv().put('/api/admin/settings', data);
+        await lastValueFrom(
+          getBackendSrv().fetch({
+            url: '/api/admin/settings',
+            method: 'PUT',
+            data,
+            showSuccessAlert: false,
+            showErrorAlert: false,
+          })
+        );
         dispatch(resetError());
         return true;
       } catch (error) {
