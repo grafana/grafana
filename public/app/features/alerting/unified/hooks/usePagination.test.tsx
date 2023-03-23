@@ -1,32 +1,6 @@
-// import { chunk, clamp } from 'lodash';
-// import { useCallback, useEffect, useState } from 'react';
-
 import { act, renderHook } from '@testing-library/react-hooks';
 
 import { usePagination } from './usePagination';
-
-// export function usePagination<T>(items: T[], initialPage: number = 1, itemsPerPage: number) {
-//   const [page, setPage] = useState(initialPage);
-
-//   const pages = chunk(items, itemsPerPage);
-//   const numberOfPages = pages.length;
-//   const pageItems = pages[page - 1] ?? [];
-
-//   const pageStart = ((page - 1) * itemsPerPage) + 1;
-//   const pageEnd = clamp(page * itemsPerPage, items.length);
-
-//   const onPageChange = useCallback((newPage: number) => {
-//     setPage(clamp(newPage, 1, pages.length));
-//   }, [setPage, pages]);
-
-//   const nextPage = useCallback(() => onPageChange(page + 1), [onPageChange]);
-//   const previousPage = useCallback(() => onPageChange(page - 1), [onPageChange]);
-
-//   // Reset the current page when number of pages has been changed
-//   useEffect(() => setPage(1), [numberOfPages]);
-
-//   return { page, onPageChange, numberOfPages, pageItems, pageStart, pageEnd, nextPage, previousPage };
-// }
 
 describe('usePagination()', () => {
   it('should work with no items', () => {
