@@ -54,12 +54,18 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 
 	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipCache, reqDTO)
 	if err != nil {
+		for _, res := range resp.Responses {
+			if res.Error != nil {
+				c.ErrorSource = "downstream"
+				break
+			}
+		}
 		return hs.handleQueryMetricsError(err)
 	}
-	return hs.toJsonStreamingResponse(resp)
+	return hs.toJsonStreamingResponse(c, resp)
 }
 
-func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {
+func (hs *HTTPServer) toJsonStreamingResponse(c *contextmodel.ReqContext, qdr *backend.QueryDataResponse) response.Response {
 	statusWhenError := http.StatusBadRequest
 	if hs.Features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
 		statusWhenError = http.StatusMultiStatus
@@ -69,6 +75,7 @@ func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) re
 	for _, res := range qdr.Responses {
 		if res.Error != nil {
 			statusCode = statusWhenError
+			c.ErrorSource = "downstream"
 		}
 	}
 

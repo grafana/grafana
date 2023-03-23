@@ -30,6 +30,7 @@ type ReqContext struct {
 	// RequestNonce is a cryptographic request identifier for use with Content Security Policy.
 	RequestNonce          string
 	IsPublicDashboardView bool
+	ErrorSource           string
 
 	PerfmonTimer   prometheus.Summary
 	LookupTokenErr error

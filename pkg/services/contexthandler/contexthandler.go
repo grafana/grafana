@@ -130,6 +130,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			AllowAnonymous: false,
 			SkipCache:      false,
 			Logger:         log.New("context"),
+			ErrorSource:    "grafana",
 		}
 
 		// Inject ReqContext into http.Request.Context

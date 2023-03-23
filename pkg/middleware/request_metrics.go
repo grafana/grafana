@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -40,7 +41,7 @@ func init() {
 			Help:      "Histogram of latencies for HTTP requests.",
 			Buckets:   defBuckets,
 		},
-		[]string{"handler", "status_code", "method"},
+		[]string{"handler", "status_code", "method", "errorSource"},
 	)
 
 	prometheus.MustRegister(httpRequestsInFlight, httpRequestDurationHistogram)
@@ -77,10 +78,16 @@ func RequestMetrics(features featuremgmt.FeatureToggles) web.Middleware {
 				}
 			}
 
+			errorSource := "grafana"
+			ctx := contexthandler.FromContext(r.Context())
+			if ctx != nil {
+				errorSource = ctx.ErrorSource
+			}
+
 			// avoiding the sanitize functions for in the new instrumentation
 			// since they dont make much sense. We should remove them later.
 			histogram := httpRequestDurationHistogram.
-				WithLabelValues(handler, code, r.Method)
+				WithLabelValues(handler, code, r.Method, errorSource)
 			if traceID := tracing.TraceIDFromContext(r.Context(), true); traceID != "" {
 				// Need to type-convert the Observer to an
 				// ExemplarObserver. This will always work for a
