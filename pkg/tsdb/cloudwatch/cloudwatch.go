@@ -20,11 +20,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
@@ -166,7 +166,7 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	}
 
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	_, fromExpression := req.Headers[expr.FromExpressionHeaderName]
+	fromExpression := req.GetHTTPHeader(query.HeaderFromExpression) != ""
 	isSyncLogQuery := (fromAlert || fromExpression) && model.QueryMode == logsQueryMode
 	if isSyncLogQuery {
 		return executeSyncLogQuery(ctx, e, req)

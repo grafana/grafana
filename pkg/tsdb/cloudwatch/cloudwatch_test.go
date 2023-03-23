@@ -17,10 +17,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
@@ -269,7 +269,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 			},
 			{
 				"expression header",
-				map[string]string{expr.FromExpressionHeaderName: "some value"},
+				map[string]string{fmt.Sprintf("http_%s", query.HeaderFromExpression): "some value"},
 				true,
 			},
 			{
