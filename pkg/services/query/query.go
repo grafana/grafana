@@ -93,14 +93,12 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, sk
 	start := time.Now() // time how long this request takes
 
 	// First look in the query cache if enabled
-	var cr caching.CachedQueryDataResponse
-	if r := s.cachingService.HandleQueryRequest(ctx, skipQueryCache, reqDTO); isCacheHit(r.Headers) {
+	cr := s.cachingService.HandleQueryRequest(ctx, skipQueryCache, reqDTO)
+	if isCacheHit(cr.Headers) {
 		return QueryResponseWithHeaders{
-			Response: r.Response,
-			Headers:  r.Headers,
+			Response: cr.Response,
+			Headers:  cr.Headers,
 		}, nil
-	} else {
-		cr = r
 	}
 
 	// Ensure there is an X-Cache header
