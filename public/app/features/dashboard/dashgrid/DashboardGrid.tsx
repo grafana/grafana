@@ -210,6 +210,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, isEditable } = this.props;
+    const hasPanels = dashboard.panels && dashboard.panels.length > 0;
 
     /**
      * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
@@ -231,7 +232,40 @@ export class DashboardGrid extends PureComponent<Props, State> {
             moving panels. https://github.com/grafana/grafana/issues/18497
             theme.breakpoints.md = 769
           */
-            return dashboard.panels && dashboard.panels.length > 0 ? (
+            return config.featureToggles.emptyDashboardPage ? (
+              hasPanels ? (
+                /**
+                 * The children is using a width of 100% so we need to guarantee that it is wrapped
+                 * in an element that has the calculated size given by the AutoSizer. The AutoSizer
+                 * has a width of 0 and will let its content overflow its div.
+                 */
+                <div style={{ width: `${width}px`, height: '100%' }}>
+                  <ReactGridLayout
+                    width={width}
+                    isDraggable={draggable}
+                    isResizable={isEditable}
+                    containerPadding={[0, 0]}
+                    useCSSTransforms={false}
+                    margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
+                    cols={GRID_COLUMN_COUNT}
+                    rowHeight={GRID_CELL_HEIGHT}
+                    draggableHandle=".grid-drag-handle"
+                    draggableCancel=".grid-drag-cancel"
+                    layout={this.buildLayout()}
+                    onDragStop={this.onDragStop}
+                    onResize={this.onResize}
+                    onResizeStop={this.onResizeStop}
+                    onLayoutChange={this.onLayoutChange}
+                  >
+                    {this.renderPanels(width)}
+                  </ReactGridLayout>
+                </div>
+              ) : (
+                <div style={{ width: `${width}px`, height: '100%', padding: `${draggable ? '100px 0' : '0'}` }}>
+                  <DashboardEmpty dashboard={dashboard} canCreate={isEditable} />
+                </div>
+              )
+            ) : (
               /**
                * The children is using a width of 100% so we need to guarantee that it is wrapped
                * in an element that has the calculated size given by the AutoSizer. The AutoSizer
@@ -257,10 +291,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
                 >
                   {this.renderPanels(width)}
                 </ReactGridLayout>
-              </div>
-            ) : (
-              <div style={{ width: `${width}px`, height: '100%', padding: `${draggable ? '100px 0' : '0'}` }}>
-                <DashboardEmpty dashboard={dashboard} canCreate={isEditable} />
               </div>
             );
           }}
