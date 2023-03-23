@@ -108,6 +108,7 @@ export class DashboardModel implements TimeModel {
   // repeat process cycles
   declare meta: DashboardMeta;
   events: EventBusExtended;
+  private getVariablesFromState: GetVariables;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
@@ -126,7 +127,15 @@ export class DashboardModel implements TimeModel {
     lastRefresh: true,
   };
 
-  constructor(data: Dashboard, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
+  constructor(
+    data: Dashboard,
+    meta?: DashboardMeta,
+    options?: {
+      getVariablesFromState?: GetVariables;
+      autoMigrateOldPanels?: boolean;
+    }
+  ) {
+    this.getVariablesFromState = options?.getVariablesFromState ?? getVariablesByKey;
     this.events = new EventBusSrv();
     this.id = data.id || null;
     // UID is not there for newly created dashboards
@@ -163,7 +172,7 @@ export class DashboardModel implements TimeModel {
     this.updateSchema(data);
 
     // Auto-migrate old angular panels
-    if (!config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels) {
+    if (options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels) {
       this.panels.forEach((p) => {
         const newType = autoMigrateAngular[p.type];
         if (!p.autoMigrateFrom && newType) {
@@ -204,7 +213,7 @@ export class DashboardModel implements TimeModel {
     });
   }
 
-  private initMeta(meta?: DashboardMeta) {
+  private initMeta(meta?: DashboardMeta): DashboardMeta {
     meta = meta || {};
 
     meta.canShare = meta.canShare !== false;
@@ -223,7 +232,7 @@ export class DashboardModel implements TimeModel {
       meta.canSave = false;
     }
 
-    this.meta = meta;
+    return meta;
   }
 
   // cleans meta data and other non persistent state
