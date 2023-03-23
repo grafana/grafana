@@ -16,6 +16,7 @@ weight: 300
 # Enable alerting high availability
 
 You can enable alerting high availability support by updating the Grafana configuration file. If you run Grafana in a Kubernetes cluster, additional steps are required. Both options are described below.
+Please note that the deduplication is done for the notification, but the alert will still be evaluated on every Grafana instance. This means that events in alerting state history will be duplicated by the number of Grafana instances running.
 
 ## Enable alerting high availability in Grafana
 
