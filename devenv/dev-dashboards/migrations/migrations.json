@@ -323,7 +323,7 @@
       }
     ],
     "refresh": "",
-    "schemaVersion": 38,
+    "schemaVersion": 35,
     "style": "dark",
     "tags": [
       "gdev",
