@@ -2,12 +2,14 @@ package publicdashboard
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	publicdashboardStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/user"
+	"gomodules.xyz/jsonpatch/v2"
 )
 
 var _ Watcher = (*watcher)(nil)
@@ -50,7 +52,54 @@ func (w *watcher) Add(ctx context.Context, obj *PublicDashboard) error {
 }
 
 func (w *watcher) Update(ctx context.Context, oldObj, newObj *PublicDashboard) error {
-	// TODO
+
+	//convert to publicdashboard model
+	newPd, err := k8sObjectToModel(newObj)
+	if err != nil {
+		return err
+	}
+	newBytes, err := json.Marshal(newPd)
+	if err != nil {
+		return err
+	}
+
+	// get existing object from db
+	existingPd, err := w.publicDashboardStore.Find(ctx, newPd.Uid)
+	if err != nil {
+		return err
+	}
+	existingBytes, err := json.Marshal(existingPd)
+	if err != nil {
+		return err
+	}
+
+	// create patch diff
+	ops, err := jsonpatch.CreatePatch(existingBytes, newBytes)
+	if err != nil {
+		return nil
+	}
+
+	// no ops, return
+	if len(ops) == 0 {
+		return nil
+	}
+
+	// convert to cmd
+	cmd := publicdashboardModels.SavePublicDashboardCommand{
+		PublicDashboard: *newPd,
+	}
+
+	// call service
+	_, err = w.publicDashboardStore.Update(ctx, cmd)
+	if err != nil {
+		return err
+	}
+
+	// log whether enabled has changed
+	if newPd.IsEnabled != existingPd.IsEnabled {
+		w.log.Info("Public dashboard changed", "publicDashboardUid", newPd.Uid, "dashboardUid", newPd.DashboardUid, "user", newPd.UpdatedBy, "enabled", newPd.IsEnabled)
+	}
+
 	return nil
 }
 
