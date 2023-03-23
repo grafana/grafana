@@ -325,7 +325,7 @@ describe('templateSrv', () => {
 
       it('should respect percentencode format', () => {
         const target = _templateSrv.replace('this.${test:percentencode}', {}, 'regex');
-        expect(target).toBe('this.%2B');
+        expect(target).toBe('this..%2B');
       });
     });
   });
