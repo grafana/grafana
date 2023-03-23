@@ -41,7 +41,7 @@ export interface TemplateSrv {
   /**
    * Extracts variable name from an expression like '${example}'
    */
-  getVariableName(expression: string): string | undefined;
+  getVariableName(expression: string): string | undefined | null;
 }
 
 let singletonInstance: TemplateSrv;

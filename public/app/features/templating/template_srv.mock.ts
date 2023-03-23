@@ -1,4 +1,4 @@
-import { ScopedVars, TimeRange, TypedVariableModel } from '@grafana/data';
+import { AdHocVariableFilter, ScopedVars, TimeRange, TypedVariableModel } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
 import { variableRegex } from '../variables/utils';
@@ -13,7 +13,7 @@ import { variableRegex } from '../variables/utils';
  */
 export class TemplateSrvMock implements TemplateSrv {
   private regex = variableRegex;
-  constructor(private variables: Record<string, string>) {}
+  constructor(private variables: Record<string, string>, private adHocFilters?: AdHocVariableFilter[]) {}
 
   getVariables(): TypedVariableModel[] {
     return Object.keys(this.variables).map((key) => {
@@ -75,4 +75,7 @@ export class TemplateSrvMock implements TemplateSrv {
   }
 
   updateTimeRange(timeRange: TimeRange) {}
+  getAdhocFilters(datasoureName: string) {
+    return this.adHocFilters ?? [];
+  }
 }

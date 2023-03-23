@@ -45,6 +45,12 @@ describe('DebugSection', () => {
         return false;
       },
       updateTimeRange(timeRange: TimeRange) {},
+      getVariableName(variable: string) {
+        return '';
+      },
+      getAdhocFilters(datasourceName: string) {
+        return [];
+      },
     });
   });
 

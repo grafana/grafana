@@ -23,6 +23,8 @@ describe('ZipkinDatasource', () => {
       containsTemplate: jest.fn(),
       getAllVariablesInTarget: jest.fn(),
       updateTimeRange: jest.fn(),
+      getAdhocFilters: jest.fn(),
+      getVariableName: jest.fn(),
     };
 
     it('runs query', async () => {
