@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -43,12 +44,12 @@ func apiErrorToNotice(err *AzureLogAnalyticsAPIError) data.Notice {
 }
 
 // ResponseTableToFrame converts an AzureResponseTable to a data.Frame.
-func ResponseTableToFrame(table *types.AzureResponseTable, refID string, executedQuery string) (*data.Frame, error) {
+func ResponseTableToFrame(table *types.AzureResponseTable, refID string, executedQuery string, queryType dataquery.AzureQueryType, resultFormat dataquery.ResultFormat) (*data.Frame, error) {
 	if len(table.Rows) == 0 {
 		return nil, nil
 	}
 
-	converterFrame, err := converterFrameForTable(table)
+	converterFrame, err := converterFrameForTable(table, queryType, resultFormat)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +65,7 @@ func ResponseTableToFrame(table *types.AzureResponseTable, refID string, execute
 	return converterFrame.Frame, nil
 }
 
-func converterFrameForTable(t *types.AzureResponseTable) (*data.FrameInputConverter, error) {
+func converterFrameForTable(t *types.AzureResponseTable, queryType dataquery.AzureQueryType, resultFormat dataquery.ResultFormat) (*data.FrameInputConverter, error) {
 	converters := []data.FieldConverter{}
 	colNames := make([]string, len(t.Columns))
 	colTypes := make([]string, len(t.Columns)) // for metadata
@@ -75,6 +76,9 @@ func converterFrameForTable(t *types.AzureResponseTable) (*data.FrameInputConver
 		converter, ok := converterMap[col.Type]
 		if !ok {
 			return nil, fmt.Errorf("unsupported analytics column type %v", col.Type)
+		}
+		if queryType == dataquery.AzureQueryTypeAzureTraces && resultFormat == dataquery.ResultFormatTrace && col.Name == "serviceTags" {
+			converter = serviceTagsConverter
 		}
 		converters = append(converters, converter)
 	}
@@ -110,6 +114,40 @@ var converterMap = map[string]data.FieldConverter{
 	"decimal":  decimalConverter,
 	"integer":  intConverter,
 	"number":   decimalConverter,
+}
+
+type KeyValue struct {
+	Value interface{} `json:"value"`
+	Key   string      `json:"key"`
+}
+
+var serviceTagsConverter = data.FieldConverter{
+	OutputFieldType: data.FieldTypeNullableJSON,
+	Converter: func(v interface{}) (interface{}, error) {
+		if v == nil {
+			return nil, nil
+		}
+
+		m := map[string]interface{}{}
+		err := json.Unmarshal([]byte(v.(string)), &m)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal trace serviceTags: %s", err)
+		}
+
+		parsedTags := make([]*KeyValue, 0, len(m)-1)
+		for k, v := range m {
+			parsedTags = append(parsedTags, &KeyValue{Key: k, Value: v})
+		}
+
+		marshalledTags, err := json.Marshal(parsedTags)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal parsed trace serviceTags: %s", err)
+		}
+
+		jsonTags := json.RawMessage(marshalledTags)
+
+		return &jsonTags, nil
+	},
 }
 
 var stringConverter = data.FieldConverter{
