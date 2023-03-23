@@ -34,18 +34,19 @@ Some stable features are enabled by default. You can disable a stable feature by
 
 ## Beta feature toggles
 
-| Feature toggle name               | Description                                                                        |
-| --------------------------------- | ---------------------------------------------------------------------------------- |
-| `trimDefaults`                    | Use cue schema to remove values that will be applied automatically                 |
-| `panelTitleSearch`                | Search for dashboards using panel title                                            |
-| `prometheusAzureOverrideAudience` | Experimental. Allow override default AAD audience for Azure Prometheus endpoint    |
-| `migrationLocking`                | Lock database during migrations                                                    |
-| `newDBLibrary`                    | Use jmoiron/sqlx rather than xorm for a few backend services                       |
-| `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                                |
-| `autoMigrateOldPanels`            | Migrate old angular panels to supported versions (graph, table-old, worldmap, etc) |
-| `topnav`                          | Displays new top nav and page layouts                                              |
-| `accessControlOnCall`             | Access control primitives for OnCall                                               |
-| `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                               |
+| Feature toggle name               | Description                                                                                                                                                                                  |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `trimDefaults`                    | Use cue schema to remove values that will be applied automatically                                                                                                                           |
+| `panelTitleSearch`                | Search for dashboards using panel title                                                                                                                                                      |
+| `prometheusAzureOverrideAudience` | Experimental. Allow override default AAD audience for Azure Prometheus endpoint                                                                                                              |
+| `migrationLocking`                | Lock database during migrations                                                                                                                                                              |
+| `newDBLibrary`                    | Use jmoiron/sqlx rather than xorm for a few backend services                                                                                                                                 |
+| `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                                                                                                                                          |
+| `autoMigrateOldPanels`            | Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)                                                                                                           |
+| `disableAngular`                  | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
+| `topnav`                          | Displays new top nav and page layouts                                                                                                                                                        |
+| `accessControlOnCall`             | Access control primitives for OnCall                                                                                                                                                         |
+| `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                                                                                                                                         |
 
 ## Alpha feature toggles
 
@@ -94,6 +95,7 @@ Alpha features might be changed or removed without prior notice.
 | `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component      |
 | `timeSeriesTable`                  | Enable time series table transformer & sparkline cell type                                                |
 | `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                 |
+| `clientTokenRotation`              | Replaces the current in-request token rotation so that the client initiates the rotation                  |
 
 ## Development feature toggles
 

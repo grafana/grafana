@@ -9,8 +9,7 @@
     "action": {
       "change-theme": "",
       "dark-theme": "",
-      "light-theme": "",
-      "search": ""
+      "light-theme": ""
     },
     "search-box": {
       "placeholder": ""
@@ -84,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "Panel hinzufügen",
-      "comments-show": "Dashboard-Kommentare anzeigen",
       "mark-favorite": "Als Favorit markieren",
       "open-original": "Original-Dashboard öffnen",
       "playlist-next": "Zum nächsten Dashboard",
@@ -292,7 +290,6 @@
       "title": "Szenen"
     },
     "search": {
-      "placeholder": "Grafana durchsuchen",
       "placeholderCommandPalette": ""
     },
     "search-dashboards": {
@@ -414,6 +411,11 @@
     "folder-view": {
       "go-to-folder": "",
       "select-folder": ""
+    },
+    "result-kind": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
     },
     "results-table": {
       "datasource-header": "",
