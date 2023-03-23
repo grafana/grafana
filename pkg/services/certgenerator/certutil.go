@@ -158,6 +158,8 @@ func createNewCACertPKI() (*x509.Certificate, *rsa.PrivateKey, error) {
 	return caCert, caKey, nil
 }
 
+// NOTE: the optional caCerts parameter is useful if you are preparing a server certificate and want to include CA cert in the cert bundle.
+// For client certificates, feel free to omit.
 func persistCertKeyPairToDisk(cert *x509.Certificate, certPath string, key *rsa.PrivateKey, keyPath string, caCerts ...*x509.Certificate) error {
 	keyBuffer := bytes.Buffer{}
 	if err := pem.Encode(&keyBuffer, &pem.Block{Type: keyutil.RSAPrivateKeyBlockType, Bytes: x509.MarshalPKCS1PrivateKey(key)}); err != nil {
@@ -207,12 +209,15 @@ func (cu *CertUtil) InitializeCACertPKI() error {
 	}
 }
 
-func verifyCertChain(cert *x509.Certificate, caCert *x509.Certificate) error {
+// NOTE: default KeyUsage to check against is x509.ExtKeyUsageServerAuth, for verifying client certificates, override
+// the keyUsages parameter appropriately
+func verifyCertChain(cert *x509.Certificate, caCert *x509.Certificate, keyUsages ...x509.ExtKeyUsage) error {
 	roots := x509.NewCertPool()
 	roots.AddCert(caCert)
 
 	chain, err := cert.Verify(x509.VerifyOptions{
-		Roots: roots,
+		Roots:     roots,
+		KeyUsages: keyUsages,
 	})
 
 	if len(chain) == 0 {
@@ -337,7 +342,7 @@ func (cu *CertUtil) EnsureAuthzClientPKI() error {
 		if err != nil {
 			return err
 		}
-		return verifyCertChain(cert, cu.caCert)
+		return verifyCertChain(cert, cu.caCert, x509.ExtKeyUsageClientAuth)
 	}
 
 	cert, key, err := makeClientCert("grafana-embedded-k8s-authz-plugin", cu.caCert, cu.caKey)
@@ -361,7 +366,7 @@ func (cu *CertUtil) EnsureAuthnClientPKI() error {
 		if err != nil {
 			return err
 		}
-		return verifyCertChain(cert, cu.caCert)
+		return verifyCertChain(cert, cu.caCert, x509.ExtKeyUsageClientAuth)
 	}
 
 	cert, key, err := makeClientCert("grafana-embedded-k8s-authn-plugin", cu.caCert, cu.caKey)
