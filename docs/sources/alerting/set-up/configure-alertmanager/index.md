@@ -26,10 +26,11 @@ External alertmanagers should now be configured as data sources using Grafana Co
 To add an external Alertmanager, complete the following steps.
 
 1. Click **Connections** in the left-side menu.
-1. Search for `Alertmanager`.
-1. Choose your implementation and install the plugin as directed and launch your Cloud instance again.
-1. In Grafana, go back to **Connections** and search for the plugin you've just installed; click it.
+1. On the Connections page, search for `Alertmanager`.
 1. Click the **Create a new data source** button.
+
+   If you don't see this button, you may need to install the plugin, relaunch your Cloud instance, and then repeat steps 1 and 2.
+
 1. Fill out the fields on the page, as required.
 
    If you are provisioning your data source, set the flag `handleGrafanaManagedAlerts` in the `jsonData` field to `true` to send Grafana-managed alerts to this Alertmanager.

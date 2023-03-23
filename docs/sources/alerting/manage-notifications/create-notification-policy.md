@@ -36,9 +36,9 @@ You can configure grouping to be `group_by: [alertname]` (take note that the `en
 
 > **Note:** Before Grafana v8.2, the configuration of the embedded Alertmanager was shared across organizations. Users of Grafana 8.0 and 8.1 are advised to use the new Grafana 8 Alerts only if they have one organization. Otherwise, silences for the Grafana managed alerts will be visible by all organizations.
 
-1. In the left-side menu, click **Alerts & incidents**, and then **Alerting**.
+1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
 1. Click **Notification policies**.
-1. From the **Choose Alertmanager** dropdown, select an external Alertmanager. By default, the Grafana Alertmanager is selected.
+1. From the **Choose Alertmanager** dropdown, select an external Alertmanager. By default, the **Grafana Alertmanager** is selected.
 1. In the Root policy section, click **Edit**.
 1. In **Default contact point**, update the contact point to whom notifications should be sent for rules when alert rules do not match any specific policy.
 1. In **Group by**, choose labels to group alerts by. If multiple alerts are matched for this policy, then they are grouped by these labels. A notification is sent per group. If the field is empty (default), then all notifications are sent in a single group. Use a special label `...` to group alerts by all labels (which effectively disables grouping).
@@ -50,9 +50,9 @@ You can configure grouping to be `group_by: [alertname]` (take note that the `en
 
 ## Add new nested policy
 
-1. In the left-side menu, click **Alerts & incidents**, and then **Alerting**.
+1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
 1. Click **Notification policies**.
-1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, the Grafana Alertmanager is selected.
+1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, the **Grafana Alertmanager** is selected.
 1. To add a top level specific policy, go to the Specific routing section and click **+ New specific policy**.
 1. In the Matching labels section, add one or more rules for matching alert labels.
 1. In the **Contact point** dropdown, select the contact point to send notification to if alert matches only this specific policy and not any of the nested policies.
@@ -63,7 +63,7 @@ You can configure grouping to be `group_by: [alertname]` (take note that the `en
 
 ## Add nested policy
 
-1. In the left-side menu, click **Alerts & incidents**, and then **Alerting**.
+1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
 1. Click **Notification policies**.
 1. Expand the specific policy you want to update.
 1. Click **+ Add nested policy**, then add the details using information in [Add new specific policy](#add-new-specific-policy).

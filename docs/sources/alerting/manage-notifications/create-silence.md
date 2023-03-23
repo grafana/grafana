@@ -26,7 +26,7 @@ Silences stop notifications from getting created and last for only a specified w
 To add a silence, complete the following steps.
 
 1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
-1. Click **Silences** to view the list of existing silences.
+1. Click **Silences**.
 1. From the **Alertmanager** dropdown, select an external Alertmanager to create and manage silences for the external data source. Otherwise, keep the default option of Grafana.
 1. Click **Create silence** to open the Create silence page.
 1. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.

@@ -25,9 +25,8 @@ You can view alert groups and also filter for alert rules that match specific cr
 
 To view alert groups, complete the following steps.
 
-In the left-side menu, click **Alerts & incidents**, and then **Alerting**.
-
-1. Click **Groups** to open the page listing existing groups.
+1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. Click **Groups** to view the list of existing groups.
 1. From the **Alertmanager** dropdown, select an external Alertmanager as your data source. By default, the `Grafana` Alertmanager is selected.
 1. From **Custom group by** dropdown, select a combination of labels to view a grouping other than the default. This is useful for debugging and verifying your grouping of notification policies.
 
