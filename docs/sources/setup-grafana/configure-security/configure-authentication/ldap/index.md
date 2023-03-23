@@ -190,12 +190,7 @@ group_search_filter_user_attribute = "uid"
 
 ### Group Mappings
 
-In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organization and role. These will be synced every time the user logs in, with LDAP being
-the authoritative source. So, if you change a user's role in the Grafana Org. Users page, this change will be reset the next time the user logs in. If you
-change the LDAP groups of a user, the change will take effect the next time the user logs in.
-
-> **Note:** As of Grafana 9.5, we have introduced a feature toggle `onlyExternalOrgRoleSync` disabling the ability for synced users to change their organizational roles during a login session.
-> See [change users organization]({{< relref "../../../../administration/user-management/manage-org-users/#change-a-users-organization-permissions" >}})
+In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organization and role. These will be synced every time the user logs in, with LDAP being the authoritative source.
 
 The first group mapping that an LDAP user is matched to will be used for the sync. If you have LDAP users that fit multiple mappings, the topmost mapping in the TOML configuration will be used.
 

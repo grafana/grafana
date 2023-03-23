@@ -38,8 +38,7 @@ You can see a list of users with accounts in your Grafana organization. If neces
 
 Update user permissions when you want to enhance or restrict a user's access to organization resources. For more information about organization permissions, refer to [Organization roles]({{< relref "../../roles-and-permissions/#organization-roles" >}}).
 
-> **Note:** As of Grafana 9.5, we have introduced a feature toggle `onlyExternalOrgRoleSync` disabling the ability for synced users to change their organizational roles during a login session.
-> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../../../setup-grafana/configure-grafana/feature-toggles/#configure-feature-toggles" >}}) for details.
+> **Note:** Users who logged in using an authentication provider have their organization roles synced from the provider. If you want to be able to change the organization role for users logged in from authentication providers refer to the `skip_org_role_sync` setting in your Grafana configuration. See configuration [skip org role sync]({{< relref "../../../setup-grafana/configure-grafana/#authgrafana_com-skip_org_role_sync" >}}) for details.
 
 ### Before you begin
 
