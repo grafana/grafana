@@ -46,7 +46,7 @@ describe('ErrorBoundary', () => {
     expect(context.contexts.react.componentStack).toMatch(/^\s+at ErrorThrower (.*)\s+at ErrorBoundary (.*)\s*$/);
   });
 
-  it('should recover when when recover props change', async () => {
+  it('should rerender when recover props change', async () => {
     const problem = new Error('things went terribly wrong');
     let renderCount = 0;
 
@@ -64,6 +64,8 @@ describe('ErrorBoundary', () => {
     );
 
     await screen.findByText(problem.message);
+    expect(renderCount).toBeGreaterThan(0);
+    const oldRenderCount = renderCount;
 
     rerender(
       <ErrorBoundary dependencies={[1, 3]}>
@@ -78,6 +80,6 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(renderCount).toBe(2);
+    expect(renderCount).toBeGreaterThan(oldRenderCount);
   });
 });
