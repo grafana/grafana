@@ -180,19 +180,15 @@ func (cu *CertUtil) InitializeCACertPKI() error {
 
 	if exists {
 		cu.caCert, cu.caKey, err = loadExistingCertPKI(cu.CACertFile(), cu.CAKeyFile())
+		return err
 	} else {
 		cu.caCert, cu.caKey, err = createNewCACertPKI()
-	}
+		if err != nil {
+			return err
+		}
 
-	if err != nil {
-		return err
-	}
-
-	if !exists {
 		return persistCertKeyPairToDisk(cu.caCert, cu.CACertFile(), cu.caKey, cu.CAKeyFile())
 	}
-
-	return nil
 }
 
 func verifyServerCertChain(cert *x509.Certificate, caCert *x509.Certificate) error {
