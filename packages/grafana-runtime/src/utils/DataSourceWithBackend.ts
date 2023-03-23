@@ -121,7 +121,15 @@ class DataSourceWithBackend<
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, queryCachingTTL, range, requestId, appendRequestId, hideFromInspector = false } = request;
+    const {
+      intervalMs,
+      maxDataPoints,
+      queryCachingTTL,
+      range,
+      requestId,
+      appendRequestId,
+      hideFromInspector = false,
+    } = request;
     let targets = request.targets;
 
     if (this.filterQuery) {
