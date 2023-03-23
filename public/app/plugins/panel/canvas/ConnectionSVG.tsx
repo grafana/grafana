@@ -15,6 +15,8 @@ type Props = {
 };
 
 let idCounter = 0;
+const htmlElementTypes = ['input', 'textarea'];
+
 export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -39,6 +41,11 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   }, [scene.panel.context.instanceState?.selectedConnection]);
 
   const onKeyUp = (e: KeyboardEvent) => {
+    const target = e.target as HTMLElement;
+    if (htmlElementTypes.indexOf(target.nodeName.toLowerCase()) > -1) {
+      return;
+    }
+
     // Backspace (8) or delete (46)
     if (e.keyCode === 8 || e.keyCode === 46) {
       if (selectedConnectionRef.current && selectedConnectionRef.current.source) {
