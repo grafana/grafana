@@ -91,7 +91,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
     setLabelBrowserVisible((visible) => !visible);
   };
 
-  const onPrettifyQuery = async () => {
+  const onClickFormatQueryButton = async () => {
     onChangeInternal({ ...query, expr: await datasource.formatQuery(query.expr) });
   };
 
@@ -161,7 +161,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           <Button variant="secondary" size="sm" onClick={onClickLabelBrowserButton} data-testid="label-browser-button">
             Label browser
           </Button>
-          <Button variant="secondary" size="sm" onClick={onPrettifyQuery}>
+          <Button variant="secondary" size="sm" onClick={onClickFormatQueryButton}>
             Prettify query
           </Button>
         </Stack>

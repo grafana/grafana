@@ -200,6 +200,7 @@ const MonacoQueryField = ({
               severity: monaco.MarkerSeverity.Error,
               ...boundary,
             }));
+
             onTypeDebounced(query);
             monaco.editor.setModelMarkers(model, 'owner', markers);
           });

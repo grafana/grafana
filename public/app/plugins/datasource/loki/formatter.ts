@@ -108,7 +108,7 @@ export function revertTransformations(query: string, transformations: Transforma
   let recoveredQuery = query;
 
   tree.iterate({
-    enter: (node): false | void => {
+    enter: (node): void => {
       if (transformations.some((transformation) => transformation.nodeId === node.type.id)) {
         const foundIndex = transformations.findIndex((transformation) => transformation.nodeId === node.type.id);
         const foundTransformation = transformations.splice(foundIndex, 1)[0];
