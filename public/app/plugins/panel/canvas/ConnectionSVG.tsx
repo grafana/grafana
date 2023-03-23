@@ -19,8 +19,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   const styles = useStyles2(getStyles);
 
   const headId = Date.now() + '_' + idCounter++;
-  const CONNECTION_LINE_ID = 'connectionLineId';
-  const CONNECTION_HEAD_ID = useMemo(() => `head-${headId}`, [headId]);
+  const CONNECTION_LINE_ID = useMemo(() => `connectionLineId-${headId}`, [headId]);
   const EDITOR_HEAD_ID = useMemo(() => `editorHead-${headId}`, [headId]);
   const defaultArrowColor = config.theme2.colors.text.primary;
   const defaultArrowSize = 2;
@@ -138,7 +137,6 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
         y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
       }
 
-      //  @TODO update selection style (arrow head included)
       const isSelected = selectedConnection === v && scene.panel.context.instanceState.selectedConnection;
 
       const strokeColor = info.color ? scene.context.getColor(info.color).value() : defaultArrowColor;
@@ -147,7 +145,9 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
 
       const connectionCursorStyle = scene.isEditingEnabled ? 'grab' : '';
-      const selectedStyles = { stroke: '#44aaff', strokeWidth: strokeWidth + 5 };
+      const selectedStyles = { strokeWidth: strokeWidth + 5 };
+
+      const CONNECTION_HEAD_ID = `connectionHead-${idx}`;
 
       return (
         <svg className={styles.connection} key={idx}>
@@ -160,17 +160,23 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
                 refX="10"
                 refY="3.5"
                 orient="auto"
-                stroke={defaultArrowColor}
+                stroke={strokeColor}
               >
-                <polygon points="0 0, 10 3.5, 0 7" fill={defaultArrowColor} />
+                <polygon points="0 0, 10 3.5, 0 7" fill={strokeColor} />
               </marker>
+            </defs>
+            <defs>
+              <linearGradient id="lineGradient">
+                <stop offset="99%" stopColor="#44aaff" stopOpacity="1" />
+                <stop offset="1%" stopColor="#44aaff" stopOpacity="0" />
+              </linearGradient>
             </defs>
             <line
               id={`${CONNECTION_LINE_ID}_transparent`}
               cursor={connectionCursorStyle}
-              stroke="transparent"
               pointerEvents="auto"
               strokeWidth={15}
+              stroke={isSelected ? 'url(#lineGradient)' : 'transparent'}
               style={isSelected ? selectedStyles : {}}
               x1={x1}
               y1={y1}
