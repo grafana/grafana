@@ -178,7 +178,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	}
 
 	sortedGroups := make(ngmodels.SortableRuleGroupKeys, 0, len(groupedRules))
-	for groupKey, _ := range groupedRules {
+	for groupKey := range groupedRules {
 		sortedGroups = append(sortedGroups, groupKey)
 	}
 	sort.Sort(sortedGroups)
