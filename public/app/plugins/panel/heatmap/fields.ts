@@ -20,7 +20,7 @@ import {
   rowsToCellsHeatmap,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { CellValues, PanelOptions } from './types';
+import { CellValues, Options } from './types';
 import { boundedMinMax } from './utils';
 
 export interface HeatmapData {
@@ -56,7 +56,7 @@ export interface HeatmapData {
 
 export function prepareHeatmapData(
   data: PanelData,
-  options: PanelOptions,
+  options: Options,
   theme: GrafanaTheme2,
   getFieldLinks?: (exemplars: DataFrame, field: Field) => (config: ValueLinkConfig) => Array<LinkModel<Field>>
 ): HeatmapData {
@@ -120,7 +120,7 @@ export function prepareHeatmapData(
 const getSparseHeatmapData = (
   frame: DataFrame,
   exemplars: DataFrame | undefined,
-  options: PanelOptions,
+  options: Options,
   theme: GrafanaTheme2
 ): HeatmapData => {
   if (frame.meta?.type !== DataFrameType.HeatmapCells || isHeatmapCellsDense(frame)) {
@@ -156,7 +156,7 @@ const getSparseHeatmapData = (
 const getDenseHeatmapData = (
   frame: DataFrame,
   exemplars: DataFrame | undefined,
-  options: PanelOptions,
+  options: Options,
   theme: GrafanaTheme2
 ): HeatmapData => {
   if (frame.meta?.type !== DataFrameType.HeatmapCells) {

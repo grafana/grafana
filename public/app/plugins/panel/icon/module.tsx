@@ -5,9 +5,9 @@ import { IconConfig, iconItem } from 'app/features/canvas/elements/icon';
 import { optionBuilder } from '../canvas/editor/options';
 
 import { IconPanel } from './IconPanel';
-import { defaultPanelOptions, PanelOptions } from './models.gen';
+import { defaultOptions, Options } from './models.gen';
 
-export const plugin = new PanelPlugin<PanelOptions>(IconPanel)
+export const plugin = new PanelPlugin<Options>(IconPanel)
   .setNoPadding() // extend to panel edges
   .useFieldConfig({
     standardOptions: {
@@ -31,6 +31,6 @@ export const plugin = new PanelPlugin<PanelOptions>(IconPanel)
         optionBuilder.addBorder(builder, ctx);
       },
 
-      defaultValue: defaultPanelOptions.root as any,
+      defaultValue: defaultOptions.root as any,
     });
   });

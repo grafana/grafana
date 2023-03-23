@@ -5,9 +5,9 @@ import { AutoEditor } from './AutoEditor';
 import { ManualEditor } from './ManualEditor';
 import { XYChartPanel2 } from './XYChartPanel2';
 import { getScatterFieldConfig } from './config';
-import { defaultScatterFieldConfig, PanelOptions, ScatterFieldConfig } from './types';
+import { defaultScatterFieldConfig, Options, ScatterFieldConfig } from './types';
 
-export const plugin = new PanelPlugin<PanelOptions, ScatterFieldConfig>(XYChartPanel2)
+export const plugin = new PanelPlugin<Options, ScatterFieldConfig>(XYChartPanel2)
   .useFieldConfig(getScatterFieldConfig(defaultScatterFieldConfig))
   .setPanelOptions((builder) => {
     builder

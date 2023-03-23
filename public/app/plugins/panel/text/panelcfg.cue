@@ -33,7 +33,7 @@ composableKinds: PanelCfg: {
 							showMiniMap:     bool | *false
 						} @cuetsy(kind="interface")
 
-						PanelOptions: {
+						Options: {
 							mode:    TextMode | *"markdown"
 							code?:   CodeOptions
 							content: string | *"""

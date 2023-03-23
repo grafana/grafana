@@ -5,7 +5,7 @@ import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { PanelOptions, MapViewConfig, GeomapInstanceState } from '../types';
+import { Options, MapViewConfig, GeomapInstanceState } from '../types';
 import { centerPointRegistry, MapCenterID } from '../view';
 
 import { CoordinatesMapViewEditor } from './CoordinatesMapViewEditor';
@@ -15,7 +15,7 @@ export const MapViewEditor = ({
   value,
   onChange,
   context,
-}: StandardEditorProps<MapViewConfig, unknown, PanelOptions, GeomapInstanceState>) => {
+}: StandardEditorProps<MapViewConfig, unknown, Options, GeomapInstanceState>) => {
   const labelWidth = 10;
 
   const views = useMemo(() => {

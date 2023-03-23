@@ -14,7 +14,7 @@ import { SearchCard } from 'app/features/search/components/SearchCard';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
 
-import { PanelLayout, PanelOptions } from './panelcfg.gen';
+import { PanelLayout, Options } from './panelcfg.gen';
 import { getStyles } from './styles';
 
 type Dashboard = DashboardSearchItem & { id?: number; isSearchResult?: boolean; isRecent?: boolean };
@@ -25,7 +25,7 @@ interface DashboardGroup {
   dashboards: Dashboard[];
 }
 
-async function fetchDashboards(options: PanelOptions, replaceVars: InterpolateFunction) {
+async function fetchDashboards(options: Options, replaceVars: InterpolateFunction) {
   let starredDashboards: Promise<DashboardSearchItem[]> = Promise.resolve([]);
   if (options.showStarred) {
     const params = { limit: options.maxItems, starred: 'true' };
@@ -89,7 +89,7 @@ async function fetchDashboards(options: PanelOptions, replaceVars: InterpolateFu
   return dashMap;
 }
 
-export function DashList(props: PanelProps<PanelOptions>) {
+export function DashList(props: PanelProps<Options>) {
   const [dashboards, setDashboards] = useState(new Map<string, Dashboard>());
   const dispatch = useDispatch();
   useEffect(() => {

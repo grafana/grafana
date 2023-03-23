@@ -32,7 +32,7 @@ import {
   defaultScatterFieldConfig,
   ScatterHoverCallback,
   ScatterSeries,
-  PanelOptions,
+  Options,
   ScatterShow,
 } from './types';
 
@@ -46,7 +46,7 @@ export interface ScatterPanelInfo {
  * This is called when options or structure rev changes
  */
 export function prepScatter(
-  options: PanelOptions,
+  options: Options,
   getData: () => DataFrame[],
   theme: GrafanaTheme2,
   ttip: ScatterHoverCallback,
@@ -202,7 +202,7 @@ function getScatterSeries(
   };
 }
 
-function prepSeries(options: PanelOptions, frames: DataFrame[]): ScatterSeries[] {
+function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
   let seriesIndex = 0;
   if (!frames.length) {
     throw 'Missing data';

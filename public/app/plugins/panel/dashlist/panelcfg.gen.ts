@@ -15,7 +15,7 @@ export enum PanelLayout {
   Previews = 'previews',
 }
 
-export interface PanelOptions {
+export interface Options {
   folderId?: number;
   layout?: PanelLayout;
   maxItems: number;
@@ -27,7 +27,7 @@ export interface PanelOptions {
   tags: Array<string>;
 }
 
-export const defaultPanelOptions: Partial<PanelOptions> = {
+export const defaultOptions: Partial<Options> = {
   layout: PanelLayout.List,
   maxItems: 10,
   query: '',

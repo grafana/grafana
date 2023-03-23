@@ -6,10 +6,10 @@ import { addOrientationOption, addStandardDataReduceOptions } from '../stat/comm
 
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 import { BarGaugePanel } from './BarGaugePanel';
-import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
+import { Options, defaultOptions } from './panelcfg.gen';
 import { BarGaugeSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<PanelOptions>(BarGaugePanel)
+export const plugin = new PanelPlugin<Options>(BarGaugePanel)
   .useFieldConfig()
   .setPanelOptions((builder) => {
     addStandardDataReduceOptions(builder);
@@ -27,7 +27,7 @@ export const plugin = new PanelPlugin<PanelOptions>(BarGaugePanel)
             { value: BarGaugeDisplayMode.Basic, label: 'Basic' },
           ],
         },
-        defaultValue: defaultPanelOptions.displayMode,
+        defaultValue: defaultOptions.displayMode,
       })
       .addRadio({
         path: 'valueMode',
@@ -39,27 +39,27 @@ export const plugin = new PanelPlugin<PanelOptions>(BarGaugePanel)
             { value: BarGaugeValueMode.Hidden, label: 'Hidden' },
           ],
         },
-        defaultValue: defaultPanelOptions.valueMode,
+        defaultValue: defaultOptions.valueMode,
       })
       .addBooleanSwitch({
         path: 'showUnfilled',
         name: 'Show unfilled area',
         description: 'When enabled renders the unfilled region as gray',
-        defaultValue: defaultPanelOptions.showUnfilled,
+        defaultValue: defaultOptions.showUnfilled,
         showIf: (options) => options.displayMode !== 'lcd',
       })
       .addNumberInput({
         path: 'minVizWidth',
         name: 'Min width',
         description: 'Minimum column width',
-        defaultValue: defaultPanelOptions.minVizWidth,
+        defaultValue: defaultOptions.minVizWidth,
         showIf: (options) => options.orientation === VizOrientation.Vertical,
       })
       .addNumberInput({
         path: 'minVizHeight',
         name: 'Min height',
         description: 'Minimum row height',
-        defaultValue: defaultPanelOptions.minVizHeight,
+        defaultValue: defaultOptions.minVizHeight,
         showIf: (options) => options.orientation === VizOrientation.Horizontal,
       });
   })

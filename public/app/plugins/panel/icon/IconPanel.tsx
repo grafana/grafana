@@ -18,9 +18,9 @@ import {
   TextDimensionConfig,
 } from 'app/features/dimensions';
 
-import { PanelOptions } from './models.gen';
+import { Options } from './models.gen';
 
-interface Props extends PanelProps<PanelOptions> {}
+interface Props extends PanelProps<Options> {}
 
 export class IconPanel extends Component<Props> {
   private element: ElementState;

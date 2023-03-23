@@ -10,7 +10,7 @@ import { ElementState } from 'app/features/canvas/runtime/element';
 
 import { AddLayerButton } from '../../../../core/components/Layers/AddLayerButton';
 import { getGlobalStyles } from '../globalStyles';
-import { PanelOptions } from '../models.gen';
+import { Options } from '../models.gen';
 import { getTreeData, onNodeDrop, TreeElement } from '../tree';
 import { DragNode, DropNode } from '../types';
 import { doSelect, getElementTypes, onAddItem } from '../utils';
@@ -20,7 +20,7 @@ import { TreeViewEditorProps } from './elementEditor';
 
 let allowSelection = true;
 
-export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeViewEditorProps, PanelOptions>) => {
+export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeViewEditorProps, Options>) => {
   const [treeData, setTreeData] = useState(getTreeData(item?.settings?.scene.root));
   const [autoExpandParent, setAutoExpandParent] = useState(true);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);

@@ -5,10 +5,10 @@ import { addOrientationOption, addStandardDataReduceOptions } from '../stat/comm
 
 import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMigrations';
 import { GaugePanel } from './GaugePanel';
-import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
+import { Options, defaultOptions } from './panelcfg.gen';
 import { GaugeSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<PanelOptions>(GaugePanel)
+export const plugin = new PanelPlugin<Options>(GaugePanel)
   .useFieldConfig({
     useCustomConfig: (builder) => {
       builder.addNumberInput({
@@ -30,13 +30,13 @@ export const plugin = new PanelPlugin<PanelOptions>(GaugePanel)
         path: 'showThresholdLabels',
         name: 'Show threshold labels',
         description: 'Render the threshold values around the gauge bar',
-        defaultValue: defaultPanelOptions.showThresholdLabels,
+        defaultValue: defaultOptions.showThresholdLabels,
       })
       .addBooleanSwitch({
         path: 'showThresholdMarkers',
         name: 'Show threshold markers',
         description: 'Renders the thresholds as an outer bar',
-        defaultValue: defaultPanelOptions.showThresholdMarkers,
+        defaultValue: defaultOptions.showThresholdMarkers,
       });
 
     commonOptionsBuilder.addTextSizeOptions(builder);

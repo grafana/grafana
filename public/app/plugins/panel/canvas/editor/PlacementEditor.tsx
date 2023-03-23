@@ -7,7 +7,7 @@ import { Field, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, Vert
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas';
 
-import { PanelOptions } from '../models.gen';
+import { Options } from '../models.gen';
 
 import { ConstraintSelectionBox } from './ConstraintSelectionBox';
 import { QuickPositioning } from './QuickPositioning';
@@ -31,7 +31,7 @@ const verticalOptions: Array<SelectableValue<VerticalConstraint>> = [
   { label: 'Scale', value: VerticalConstraint.Scale },
 ];
 
-type Props = StandardEditorProps<any, CanvasEditorOptions, PanelOptions>;
+type Props = StandardEditorProps<any, CanvasEditorOptions, Options>;
 
 export function PlacementEditor({ item }: Props) {
   const settings = item.settings;

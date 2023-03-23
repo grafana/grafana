@@ -33,7 +33,7 @@ import {
 } from '@grafana/schema';
 
 import { defaultGraphConfig } from './config';
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 /**
  * This is called when the panel changes from another panel
@@ -61,7 +61,7 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
   return {};
 };
 
-export function graphToTimeseriesOptions(angular: any): { fieldConfig: FieldConfigSource; options: PanelOptions } {
+export function graphToTimeseriesOptions(angular: any): { fieldConfig: FieldConfigSource; options: Options } {
   const overrides: ConfigOverrideRule[] = angular.fieldConfig?.overrides ?? [];
   const yaxes = angular.yaxes ?? [];
   let y1 = getFieldConfigFromOldAxis(yaxes[0]);
@@ -316,7 +316,7 @@ export function graphToTimeseriesOptions(angular: any): { fieldConfig: FieldConf
   y1.custom = omitBy(graph, isNil);
   y1.nullValueMode = angular.nullPointMode as NullValueMode;
 
-  const options: PanelOptions = {
+  const options: Options = {
     legend: {
       displayMode: LegendDisplayMode.List,
       showLegend: true,

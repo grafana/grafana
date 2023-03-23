@@ -19,7 +19,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { configureStore } from 'app/store/configureStore';
 
 import { AlertGroupsPanel } from './AlertGroupsPanel';
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 jest.mock('app/features/alerting/unified/api/alertmanager');
 
@@ -46,13 +46,13 @@ const dataSources = {
   }),
 };
 
-const defaultOptions: PanelOptions = {
+const defaultOptions: Options = {
   labels: '',
   alertmanager: 'Alertmanager',
   expandAll: false,
 };
 
-const defaultProps: PanelProps<PanelOptions> = {
+const defaultProps: PanelProps<Options> = {
   data: { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() },
   id: 1,
   timeRange: getDefaultTimeRange(),
@@ -79,7 +79,7 @@ const defaultProps: PanelProps<PanelOptions> = {
   width: 320,
 };
 
-const renderPanel = (options: PanelOptions = defaultOptions) => {
+const renderPanel = (options: Options = defaultOptions) => {
   const store = configureStore();
   const dash = new DashboardModel({ id: 1 } as Dashboard);
   dash.formatDate = (time: number) => new Date(time).toISOString();
