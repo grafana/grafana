@@ -48,8 +48,8 @@ In both cases, the assignment applies only to the user, team or service account 
 
    For more information about switching organizations, refer to [Switch organizations]({{< relref "../../../user-management/user-preferences/_index.md#switch-organizations" >}}).
 
-3. Hover your cursor over **Configuration** (the gear icon) in the left navigation menu, and click **Users** or **Teams** or **Service Accounts**.
-4. In the **Role** column, select the fixed role that you want to assign to the user, team or service account.
+3. In the left-side menu, click **Administration** and then **Users**, **Teams**, or **Service accounts**.
+4. In the **Role** column, select the fixed role that you want to assign to the user, team, or service account.
 5. Click **Update**.
 
 **To assign a fixed role as a server administrator:**

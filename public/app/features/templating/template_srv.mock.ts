@@ -40,6 +40,21 @@ export class TemplateSrvMock implements TemplateSrv {
     });
   }
 
+  getAllVariablesInTarget(target: string, scopedVars: ScopedVars): Record<string, string> {
+    const regexp = new RegExp(this.regex);
+    const values: Record<string, string> = {};
+
+    target.replace(regexp, (match, var1, var2, fmt2, var3, fieldPath) => {
+      const variableName = var1 || var2 || var3;
+      values[variableName] = this.variables[variableName];
+
+      // Don't care about the result anyway
+      return '';
+    });
+
+    return values;
+  }
+
   getVariableName(expression: string) {
     this.regex.lastIndex = 0;
     const match = this.regex.exec(expression);

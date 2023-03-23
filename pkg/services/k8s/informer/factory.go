@@ -92,7 +92,7 @@ func (f *factory) initializeInformers() {
 func (f *factory) initializeWatchers(ctx context.Context) {
 	for gvr, watchers := range f.watchers {
 		for _, watcher := range watchers {
-			f.informers[gvr].AddEventHandler(
+			_, err := f.informers[gvr].AddEventHandler(
 				cache.ResourceEventHandlerFuncs{
 					AddFunc: func(obj any) {
 						if err := watcher.Add(ctx, obj); err != nil {
@@ -111,6 +111,9 @@ func (f *factory) initializeWatchers(ctx context.Context) {
 					},
 				},
 			)
+			if err != nil {
+				f.log.Error("error registering event handler", "kind", gvr, "error", err)
+			}
 		}
 	}
 }

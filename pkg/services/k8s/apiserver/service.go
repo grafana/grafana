@@ -5,6 +5,7 @@ import (
 	"net"
 	"path"
 
+	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/k8s/kine"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
 )
@@ -77,6 +79,10 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	logger := logr.New(newLogAdapter())
+	logger.V(1)
+	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
+
 	server, err := app.CreateServerChain(completedOptions)
 	if err != nil {
 		return err
@@ -84,7 +90,10 @@ func (s *service) start(ctx context.Context) error {
 
 	s.restConfig = server.GenericAPIServer.LoopbackClientConfig
 	s.restConfig.Host = DEFAULT_HOST
-	s.writeKubeConfiguration(s.restConfig)
+	err = s.writeKubeConfiguration(s.restConfig)
+	if err != nil {
+		return err
+	}
 
 	prepared, err := server.PrepareRun()
 	if err != nil {

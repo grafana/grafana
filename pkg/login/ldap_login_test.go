@@ -20,7 +20,7 @@ var errTest = errors.New("test error")
 func TestLoginUsingLDAP(t *testing.T) {
 	LDAPLoginScenario(t, "When LDAP enabled and no server configured", func(sc *LDAPLoginScenarioContext) {
 		cfg := setting.NewCfg()
-		cfg.LDAPEnabled = true
+		cfg.LDAPAuthEnabled = true
 
 		sc.withLoginResult(false)
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
@@ -41,7 +41,7 @@ func TestLoginUsingLDAP(t *testing.T) {
 
 	LDAPLoginScenario(t, "When LDAP disabled", func(sc *LDAPLoginScenarioContext) {
 		cfg := setting.NewCfg()
-		cfg.LDAPEnabled = false
+		cfg.LDAPAuthEnabled = false
 
 		sc.withLoginResult(false)
 		loginService := &logintest.LoginServiceFake{}

@@ -2,14 +2,16 @@ package dashboard
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/k8s/client"
 	"github.com/grafana/grafana/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +25,7 @@ type StoreWrapper struct {
 	log       log.Logger
 	clientset client.ClientSetProvider
 	namespace string
+	folders   folder.FolderStore
 }
 
 var _ dashboards.Store = (*StoreWrapper)(nil)
@@ -31,6 +34,7 @@ func ProvideStoreWrapper(
 	features featuremgmt.FeatureToggles,
 	store database.DashboardSQLStore,
 	clientset client.ClientSetProvider,
+	folders folder.FolderStore,
 ) (dashboards.Store, error) {
 	// When feature is disabled, resolve the upstream SQL store
 	if !features.IsEnabled(featuremgmt.FlagK8S) {
@@ -41,6 +45,7 @@ func ProvideStoreWrapper(
 		log:               log.New("k8s.dashboards.service-wrapper"),
 		clientset:         clientset,
 		namespace:         "default",
+		folders:           folders,
 	}, nil
 }
 
@@ -60,7 +65,12 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		return s.DashboardSQLStore.SaveDashboard(ctx, cmd)
 	}
 
-	dashboardResource, err := s.clientset.GetClientset().GetResourceClient(CRD)
+	clientset := s.clientset.GetClientset()
+	if clientset == nil {
+		return nil, fmt.Errorf("not initialized yet")
+	}
+
+	dashboardResource, err := clientset.GetResourceClient(CRD)
 	if err != nil {
 		return nil, fmt.Errorf("ProvideServiceWrapper failed to get dashboard resource client: %w", err)
 	}
@@ -69,10 +79,17 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		return nil, fmt.Errorf("dashboard data is nil")
 	}
 
-	anno := entityAnnotations{
-		OrgID:     cmd.OrgID,
+	// Convert folder ID to UID
+	if cmd.FolderID > 0 && cmd.FolderUID == "" {
+		f, err := s.folders.GetFolderByID(ctx, cmd.OrgID, cmd.FolderID)
+		if err != nil {
+			return nil, err
+		}
+		cmd.FolderID = f.ID
+	}
+
+	anno := CommonAnnotations{
 		Message:   cmd.Message,
-		FolderID:  cmd.FolderID,
 		FolderUID: cmd.FolderUID,
 		PluginID:  cmd.PluginID,
 		UpdatedAt: cmd.UpdatedAt.UnixMilli(),
@@ -102,8 +119,7 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		meta.Name = GrafanaUIDToK8sName(uid)
 		r, err := dashboardResource.Get(ctx, meta.Name, metav1.GetOptions{})
 		if err != nil || r == nil {
-			//return nil, fmt.Errorf("unable to find k8s dashboard: " + uid)
-			fmt.Printf("UNABLE TO FIND: " + uid)
+			fmt.Printf("did not find: %s\n", uid)
 		} else {
 			if !cmd.Overwrite {
 				fmt.Printf("TODO... verify SQL version: %s\n", r.GetResourceVersion())
@@ -118,12 +134,17 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		}
 	}
 
-	// HACK, remove empty ID!!
-	// dto.Data.Del("id") <<<<< MUST KEEP UID since this is the real key
+	dto.Data.Del("id") // internal ID should not be saved in k8s
 	dto.Data.Set("uid", uid)
 	dto.UID = uid
+
 	// strip nulls...
 	stripNulls(dto.Data)
+
+	schemaVersion := dto.Data.Get("schemaVersion").MustInt()
+	if schemaVersion < dashboard.HandoffSchemaVersion {
+		return nil, fmt.Errorf("dashboard %s can not be parsed by thema (schemaVersion:%d)", uid, schemaVersion)
+	}
 
 	dashbytes, err := dto.Data.MarshalJSON()
 	if err != nil {
@@ -145,21 +166,22 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		d.Title = &dto.Title
 	}
 
-	if anno.CreatedAt < 100 {
+	if anno.CreatedAt < 1 {
 		anno.CreatedAt = time.Now().UnixMilli()
 	}
 	if anno.CreatedBy < 1 {
 		anno.CreatedBy = anno.UpdatedBy
 	}
+	anno.Message = fmt.Sprintf("%s (previous resourceVersion: %s)", cmd.Message, meta.ResourceVersion)
 	meta.Annotations = anno.ToMap()
 	uObj, err := toUnstructured(d, meta)
 	if err != nil {
 		return nil, err
 	}
 
-	js, _ := json.MarshalIndent(uObj, "", "  ")
-	fmt.Printf("-------- WRAPPER BEFORE SAVE ---------")
-	fmt.Printf("%s", string(js))
+	// js, _ := json.MarshalIndent(uObj, "", "  ")
+	// fmt.Printf("-------- WRAPPER BEFORE SAVE ---------")
+	// fmt.Printf("%s", string(js))
 
 	if meta.ResourceVersion == "" {
 		s.log.Debug("k8s action: create")
@@ -174,11 +196,12 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		return nil, err
 	}
 
-	js, _ = json.MarshalIndent(uObj, "", "  ")
-	fmt.Printf("-------- WRAPPER AFTER SAVE ---------")
-	fmt.Printf("%s", string(js))
+	return s.waitForRevision(ctx,
+		&dashboards.GetDashboardQuery{UID: uid, OrgID: dto.OrgID},
+		uObj.GetResourceVersion())
+}
 
-	rv := uObj.GetResourceVersion()
+func (s *StoreWrapper) waitForRevision(ctx context.Context, query *dashboards.GetDashboardQuery, rv string) (*dashboards.Dashboard, error) {
 	s.log.Debug("wait for revision", "revision", rv)
 
 	// TODO: rather than polling the dashboard service,
@@ -186,9 +209,11 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 	// however, this is likely better since it is checking the SQL instance that needs to be valid
 	for i := 0; i < 9; i++ {
 		time.Sleep(175 * time.Millisecond)
-		out, err := s.DashboardSQLStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: uid, OrgID: dto.OrgID})
+		out, err := s.DashboardSQLStore.GetDashboard(ctx, query)
 		if err != nil {
-			fmt.Printf("ERROR: %v", err)
+			if !errors.Is(err, dashboards.ErrDashboardNotFound) {
+				fmt.Printf("ERROR: %v", err)
+			}
 			continue
 		}
 		if out != nil && out.Data != nil {
@@ -202,5 +227,5 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 	}
 
 	// too many loops?
-	return nil, fmt.Errorf("controller never ran?")
+	return nil, fmt.Errorf("controller never ran? " + query.UID)
 }

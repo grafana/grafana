@@ -3,6 +3,7 @@ package kine
 import (
 	"context"
 	"fmt"
+	"os"
 	"path"
 
 	"github.com/grafana/dskit/services"
@@ -67,6 +68,10 @@ func (s *service) running(ctx context.Context) error {
 
 func buildConnectionString(dbconfig sqlstore.DatabaseConfig) (string, error) {
 	connectionString := ""
+
+	if err := os.MkdirAll(path.Join(path.Dir(dbconfig.Path), "k8s"), 0755); err != nil && !os.IsExist(err) {
+		return "", err
+	}
 
 	switch dbconfig.Type {
 	case "sqlite3", "sqlite":
