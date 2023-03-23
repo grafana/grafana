@@ -118,7 +118,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
     return runWithRetry(
       (targets: StartQueryRequest[]) => {
-        return this.makeLogActionRequest('StartQuery', targets);
+        return this.makeLogActionRequest('StartQuery', targets, options);
       },
       startQueryRequests,
       timeoutFunc
@@ -269,8 +269,12 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     }
   }
 
-  makeLogActionRequest(subtype: LogAction, queryParams: CloudWatchLogsRequest[]): Observable<DataFrame[]> {
-    const range = this.timeSrv.timeRange();
+  makeLogActionRequest(
+    subtype: LogAction,
+    queryParams: CloudWatchLogsRequest[],
+    options?: DataQueryRequest<CloudWatchQuery>
+  ): Observable<DataFrame[]> {
+    const range = options?.range || this.timeSrv.timeRange();
 
     const requestParams = {
       from: range.from.valueOf().toString(),
