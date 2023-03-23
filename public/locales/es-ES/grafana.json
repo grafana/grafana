@@ -9,8 +9,7 @@
     "action": {
       "change-theme": "",
       "dark-theme": "",
-      "light-theme": "",
-      "search": ""
+      "light-theme": ""
     },
     "search-box": {
       "placeholder": ""
@@ -84,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "Añadir panel",
-      "comments-show": "Mostrar comentarios del panel de control",
       "mark-favorite": "Marcar como favorito",
       "open-original": "Abrir el panel de control original",
       "playlist-next": "Ir al siguiente panel de control",
@@ -292,7 +290,6 @@
       "title": "Escenas"
     },
     "search": {
-      "placeholder": "Buscar Grafana",
       "placeholderCommandPalette": ""
     },
     "search-dashboards": {
@@ -414,6 +411,11 @@
     "folder-view": {
       "go-to-folder": "",
       "select-folder": ""
+    },
+    "result-kind": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
     },
     "results-table": {
       "datasource-header": "",

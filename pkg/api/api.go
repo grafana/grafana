@@ -218,6 +218,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/swagger-ui", swaggerUI)
 	r.Get("/openapi3", openapi3)
 
+	if hs.Features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+		r.Post("/api/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthToken))
+		r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
+	}
+
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
 		// user (signed in)
