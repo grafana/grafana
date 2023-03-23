@@ -72,3 +72,29 @@ func TestBase_Is(t *testing.T) {
 		})
 	}
 }
+
+func TestFrom(t *testing.T) {
+	tests := []struct {
+		Err                    error
+		ExpectedIsGrafanaError bool
+		ExpectedError          Error
+	}{
+		{
+			Err:                    NewBase(StatusNotFound, "test.notFound", WithPublicMessage("not found")),
+			ExpectedIsGrafanaError: true,
+			ExpectedError:          Error{LogMessage: "not found", Reason: StatusNotFound, MessageID: "test.notFound", PublicMessage: "not found", LogLevel: "debug"},
+		},
+		{
+			Err:                    NewBase(StatusBadRequest, "test.notFound", WithPublicMessage("not found")).Errorf(""),
+			ExpectedIsGrafanaError: true,
+			ExpectedError:          Error{LogMessage: "", Reason: StatusBadRequest, MessageID: "test.notFound", PublicMessage: "not found", LogLevel: "debug"},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("From(%s) = %s", tc.Err, tc.ExpectedError), func(t *testing.T) {
+			gError, isGError := From(tc.Err)
+			assert.Equal(t, tc.ExpectedIsGrafanaError, isGError)
+			assert.Equal(t, &tc.ExpectedError, gError)
+		})
+	}
+}

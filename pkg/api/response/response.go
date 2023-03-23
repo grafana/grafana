@@ -253,9 +253,8 @@ func Error(status int, message string, err error) *NormalResponse {
 
 // Err creates an error response based on an errutil.Error error.
 func Err(err error) *NormalResponse {
-	grafanaErr, err := errutil.ErrorFrom(err)
-	if err != nil {
-		fmt.Printf("unexpected error type [%s]: %v\n", reflect.TypeOf(err), err)
+	grafanaErr, isGrafanaError := errutil.From(err)
+	if !isGrafanaError {
 		return Error(http.StatusInternalServerError, "", fmt.Errorf("unexpected error type [%s]: %w", reflect.TypeOf(err), err))
 	}
 
@@ -274,15 +273,11 @@ func Err(err error) *NormalResponse {
 // rename this to Error when we're confident that that would be safe to
 // do.
 func ErrOrFallback(status int, message string, err error) *NormalResponse {
-	// grafanaErr := &errutil.Error{}
-	// if errors.As(err, grafanaErr) {
-	// 	return Err(err)
-	// }
-	grafanaErr, err := errutil.ErrorFrom(err)
-	if err != nil {
+	_, isGrafanaError := errutil.From(err)
+	if !isGrafanaError {
 		return Error(status, message, err)
 	}
-	return Err(grafanaErr)
+	return Err(err)
 }
 
 // Empty creates an empty NormalResponse.

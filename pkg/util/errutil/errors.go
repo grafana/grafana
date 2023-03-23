@@ -41,21 +41,18 @@ func NewBase(reason StatusReason, msgID string, opts ...BaseOpt) Base {
 	return b
 }
 
-func ErrorFrom(e error) (*Error, error) {
-	fmt.Printf("ErrorFrom: %e\n", e)
-	//nolint:errorlint
-	o, isGrafanaError := e.(Error)
-	if isGrafanaError {
-		return &o, nil
+func From(e error) (*Error, bool) {
+	grafanaErr := &Error{}
+	if errors.As(e, grafanaErr) {
+		return grafanaErr, true
 	}
-	//nolint:errorlint
-	base, isBase := e.(Base)
-	if isBase {
-		gerror := base.Errorf("")
-		gerror.LogMessage = base.publicMessage
-		return &gerror, nil
+	isBaseErr := &Base{}
+	if errors.As(e, isBaseErr) {
+		gerror := isBaseErr.Errorf("")
+		gerror.LogMessage = isBaseErr.publicMessage
+		return &gerror, true
 	}
-	return nil, errors.New("could not covert error to Error")
+	return nil, false
 }
 
 type BaseOpt func(Base) Base
