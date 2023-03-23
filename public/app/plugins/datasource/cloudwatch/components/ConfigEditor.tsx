@@ -67,6 +67,10 @@ export const ConfigEditor = (props: Props) => {
         </InlineField>
       </ConnectionConfig>
 
+      {config.featureToggles.secureSocksDatasourceProxy && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
+
       <h3 className="page-heading">CloudWatch Logs</h3>
       <div className="gf-form-group">
         <InlineField
@@ -83,9 +87,6 @@ export const ConfigEditor = (props: Props) => {
             title={'The timeout must be a valid duration string, such as "15m" "30s" "2000ms" etc.'}
           />
         </InlineField>
-        {config.featureToggles.secureSocksDatasourceProxy && (
-          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-        )}
         <InlineField
           label="Default Log Groups"
           labelWidth={28}
