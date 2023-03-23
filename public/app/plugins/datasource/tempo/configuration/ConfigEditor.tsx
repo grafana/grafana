@@ -12,6 +12,7 @@ import { LokiSearchSettings } from './LokiSearchSettings';
 import { QuerySettings } from './QuerySettings';
 import { SearchSettings } from './SearchSettings';
 import { ServiceGraphSettings } from './ServiceGraphSettings';
+import { TraceQLSearchSettings } from './TraceQLSearchSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 
@@ -48,7 +49,11 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
       </div>
 
       <div className="gf-form-group">
-        <SearchSettings options={options} onOptionsChange={onOptionsChange} />
+        {config.featureToggles.traceqlSearch ? (
+          <TraceQLSearchSettings options={options} onOptionsChange={onOptionsChange} />
+        ) : (
+          <SearchSettings options={options} onOptionsChange={onOptionsChange} />
+        )}
       </div>
 
       <div className="gf-form-group">
