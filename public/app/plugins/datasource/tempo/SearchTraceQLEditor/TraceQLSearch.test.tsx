@@ -40,6 +40,21 @@ jest.mock('../language_provider', () => {
 describe('TraceQLSearch', () => {
   let user: ReturnType<typeof userEvent.setup>;
 
+  const datasource: TempoDatasource = {
+    search: {
+      filters: [
+        {
+          id: 'service-name',
+          type: 'static',
+          tag: 'service.name',
+          operator: '=',
+          scope: TraceqlSearchScope.Resource,
+        },
+        { id: 'span-name', type: 'static', tag: 'name', operator: '=', scope: TraceqlSearchScope.Span },
+      ],
+    },
+  } as TempoDatasource;
+
   let query: TempoQuery = {
     refId: 'A',
     queryType: 'traceqlSearch',
@@ -63,9 +78,7 @@ describe('TraceQLSearch', () => {
   });
 
   it('should update operator when new value is selected in operator input', async () => {
-    const { container } = render(
-      <TraceQLSearch datasource={{} as TempoDatasource} query={query} onChange={onChange} />
-    );
+    const { container } = render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
 
     const minDurationOperator = container.querySelector(`input[aria-label="select min-duration operator"]`);
     expect(minDurationOperator).not.toBeNull();
@@ -84,9 +97,7 @@ describe('TraceQLSearch', () => {
   });
 
   it('should add new filter when new value is selected in the service name section', async () => {
-    const { container } = render(
-      <TraceQLSearch datasource={{} as TempoDatasource} query={query} onChange={onChange} />
-    );
+    const { container } = render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
     const serviceNameValue = container.querySelector(`input[aria-label="select service-name value"]`);
     expect(serviceNameValue).not.toBeNull();
     expect(serviceNameValue).toBeInTheDocument();
@@ -108,7 +119,7 @@ describe('TraceQLSearch', () => {
   });
 
   it('should add new filter when new filter button is clicked and remove filter when remove button is clicked', async () => {
-    render(<TraceQLSearch datasource={{} as TempoDatasource} query={query} onChange={onChange} />);
+    render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
 
     const dynamicFilters = query.filters.filter((f) => f.type === 'dynamic');
     expect(dynamicFilters.length).toBe(1);

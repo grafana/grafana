@@ -4,7 +4,7 @@ import React from 'react';
 
 import { FetchError } from '@grafana/runtime';
 
-import { TraceqlFilter } from '../dataquery.gen';
+import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 
 import SearchField from './SearchField';
@@ -48,12 +48,12 @@ describe('SearchField', () => {
     jest.useRealTimers();
   });
 
-  it('should not render tag if tag is present in field', () => {
+  it('should not render tag if hideTag is true', () => {
     const updateFilter = jest.fn((val) => {
       return val;
     });
     const filter: TraceqlFilter = { id: 'test1', type: 'static', valueType: 'string', tag: 'test-tag' };
-    const { container } = renderSearchField(updateFilter, filter);
+    const { container } = renderSearchField(updateFilter, filter, [], true);
 
     expect(container.querySelector(`input[aria-label="select test1 tag"]`)).not.toBeInTheDocument();
     expect(container.querySelector(`input[aria-label="select test1 operator"]`)).toBeInTheDocument();
@@ -155,16 +155,36 @@ describe('SearchField', () => {
   });
 });
 
-const renderSearchField = (updateFilter: (f: TraceqlFilter) => void, filter: TraceqlFilter, tags?: string[]) => {
+const renderSearchField = (
+  updateFilter: (f: TraceqlFilter) => void,
+  filter: TraceqlFilter,
+  tags?: string[],
+  hideTag?: boolean
+) => {
+  const datasource: TempoDatasource = {
+    search: {
+      filters: [
+        {
+          id: 'service-name',
+          type: 'static',
+          tag: 'service.name',
+          operator: '=',
+          scope: TraceqlSearchScope.Resource,
+        },
+        { id: 'span-name', type: 'static', tag: 'name', operator: '=', scope: TraceqlSearchScope.Span },
+      ],
+    },
+  } as TempoDatasource;
   return render(
     <SearchField
-      datasource={{} as TempoDatasource}
+      datasource={datasource}
       updateFilter={updateFilter}
       filter={filter}
       setError={function (error: FetchError): void {
         throw error;
       }}
       tags={tags || []}
+      hideTag={hideTag}
     />
   );
 };
