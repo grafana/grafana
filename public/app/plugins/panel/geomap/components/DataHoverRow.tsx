@@ -11,6 +11,7 @@ type Props = {
 
 export const DataHoverRow = ({ feature }: Props) => {
   let data: DataFrame;
+  //TODO this needs to be variable
   let rowIndex = 0;
   if (!feature) {
     return null;
