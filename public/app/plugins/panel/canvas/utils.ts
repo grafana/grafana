@@ -151,7 +151,7 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
         }
 
         if (isNumber(c.size)) {
-          c.size = { fixed: c.size, min: 1, max: 10 };
+          c.size = { fixed: 2, min: 1, max: 10 };
         }
 
         const target = c.targetName ? sceneByName.get(c.targetName) : v.parent;
