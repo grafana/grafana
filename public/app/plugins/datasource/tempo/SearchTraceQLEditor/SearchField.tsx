@@ -32,6 +32,7 @@ interface Props {
   tags: string[];
   hideScope?: boolean;
   hideTag?: boolean;
+  allowDelete?: boolean;
 }
 const SearchField = ({
   filter,
@@ -43,6 +44,7 @@ const SearchField = ({
   setError,
   hideScope,
   hideTag,
+  allowDelete,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
@@ -178,7 +180,7 @@ const SearchField = ({
         allowCustomValue={true}
         isMulti
       />
-      {filter.type === 'dynamic' && (
+      {allowDelete && (
         <AccessoryButton
           variant={'secondary'}
           icon={'times'}

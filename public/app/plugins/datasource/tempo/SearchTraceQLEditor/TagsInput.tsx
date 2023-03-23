@@ -59,6 +59,7 @@ const TagsInput = ({ updateFilter, deleteFilter, filters, datasource, setError, 
             tags={tags}
             isTagsLoading={isTagsLoading}
             deleteFilter={deleteFilter}
+            allowDelete={true}
           />
           {i === filters.length - 1 && (
             <AccessoryButton variant={'secondary'} icon={'plus'} onClick={handleOnAdd} title={'Add tag'} />
