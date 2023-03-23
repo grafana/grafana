@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginac"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,8 +27,8 @@ func TestAddAppLinks(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	permissions := []ac.Permission{
-		{Action: pluginac.ActionAppAccess, Scope: "*"},
-		{Action: pluginac.ActionInstall, Scope: "*"},
+		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+		{Action: pluginaccesscontrol.ActionInstall, Scope: "*"},
 		{Action: datasources.ActionCreate, Scope: "*"},
 		{Action: datasources.ActionRead, Scope: "*"},
 	}
@@ -460,7 +460,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	t.Run("Should add both includes when the user is an editor", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
 		user.Permissions = map[int64]map[string][]string{
-			1: {pluginac.ActionAppAccess: []string{"*"}},
+			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
 		}
 		user.OrgRole = roletype.RoleEditor
 
@@ -475,7 +475,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	t.Run("Should add one include when the user is a viewer", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
 		user.Permissions = map[int64]map[string][]string{
-			1: {pluginac.ActionAppAccess: []string{"*"}},
+			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
 		}
 		user.OrgRole = roletype.RoleViewer
 
@@ -489,7 +489,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	t.Run("Should add both includes when the user is a viewer with catalog read", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
 		user.Permissions = map[int64]map[string][]string{
-			1: {pluginac.ActionAppAccess: []string{"*"}, catalogReadAction: []string{}},
+			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}, catalogReadAction: []string{}},
 		}
 		user.OrgRole = roletype.RoleViewer
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
@@ -505,7 +505,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	t.Run("Should add one include when the user is an editor without catalog read", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
 		user.Permissions = map[int64]map[string][]string{
-			1: {pluginac.ActionAppAccess: []string{"*"}},
+			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
 		}
 		user.OrgRole = roletype.RoleEditor
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)

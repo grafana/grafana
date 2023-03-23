@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginac"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
@@ -59,7 +59,7 @@ func (s *ServiceImpl) getOrgAdminNode(c *contextmodel.ReqContext) (*navtree.NavL
 	}
 
 	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
-	if pluginac.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(pluginac.ReqCanAdminPlugins(s.cfg), pluginac.AdminAccessEvaluator) {
+	if pluginaccesscontrol.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(pluginaccesscontrol.ReqCanAdminPlugins(s.cfg), pluginaccesscontrol.AdminAccessEvaluator) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Plugins",
 			Id:       "plugins",

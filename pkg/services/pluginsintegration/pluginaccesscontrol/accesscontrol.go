@@ -1,4 +1,4 @@
-package pluginac
+package pluginaccesscontrol
 
 import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"

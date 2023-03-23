@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginac"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -93,7 +93,7 @@ func EnsureEditorOrViewerCanEdit(cfg *setting.Cfg) func(c *contextmodel.ReqConte
 
 func CanAdminPlugins(cfg *setting.Cfg) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
-		if !pluginac.ReqCanAdminPlugins(cfg)(c) {
+		if !pluginaccesscontrol.ReqCanAdminPlugins(cfg)(c) {
 			accessForbidden(c)
 			return
 		}
