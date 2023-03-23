@@ -130,11 +130,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	if err := s.roleRegistry.RegisterFixedRoles(s.context); err != nil {
-		return err
-	}
-
-	return s.provisioningService.RunInitProvisioners(s.context)
+	return s.roleRegistry.RegisterFixedRoles(s.context)
 }
 
 // Run initializes and starts services. This will block until all services have
