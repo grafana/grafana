@@ -19,6 +19,7 @@ concurrency:
   group: issue-add-to-parent-project-${{ github.event.number }}
 jobs:
   main:
+    if: contains(github.event.issue.labels.*.name, 'type/epic')
     runs-on: ubuntu-latest
     steps:
       - name: Check if issue is in child or parent projects
