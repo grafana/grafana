@@ -15,6 +15,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/k8s/client"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
@@ -60,7 +61,7 @@ func New(
 		serviceaccountWatcher,
 		teamWatcher,
 	)
-	r.BasicService = services.NewBasicService(r.start, r.run, nil)
+	r.BasicService = services.NewBasicService(r.start, r.run, nil).WithName(modules.KubernetesCRDs)
 	return r
 }
 

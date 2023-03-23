@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/k8s/kine"
 	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/client-go/rest"
@@ -28,7 +29,7 @@ var (
 )
 
 type Service interface {
-	services.Service
+	services.NamedService
 }
 
 type RestConfigProvider interface {
@@ -53,7 +54,7 @@ func ProvideService(etcdProvider kine.EtcdProvider, cfg *setting.Cfg) (*service,
 		stopCh:       make(chan struct{}),
 	}
 
-	s.BasicService = services.NewBasicService(s.start, s.running, nil)
+	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.KubernetesAPIServer)
 
 	return s, nil
 }
