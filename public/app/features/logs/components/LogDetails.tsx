@@ -8,7 +8,7 @@ import { calculateLogsLabelStats, calculateStats } from '../utils';
 
 import { LogDetailsRow } from './LogDetailsRow';
 import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
-import { getAllFields } from './logParser';
+import { getAllFields, createLogLineLinks } from './logParser';
 
 export interface Props extends Themeable2 {
   row: LogRowModel;
@@ -51,10 +51,17 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
     const fieldsAndLinks = getAllFields(row, getFieldLinks);
-    const links = fieldsAndLinks.filter((f) => f.links?.length).sort();
-    const fields = fieldsAndLinks.filter((f) => f.links?.length === 0).sort();
+    let fieldsWithLinks = fieldsAndLinks.filter((f) => f.links?.length);
+    const displayedFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex !== row.entryFieldIndex).sort();
+    const hiddenFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex === row.entryFieldIndex).sort();
+    const fieldsWithLinksFromVariableMap = createLogLineLinks(hiddenFieldsWithLinks);
+
+    // do not show the log message unless there is a link attached
+    const fields = fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
     const fieldsAvailable = fields && fields.length > 0;
-    const linksAvailable = links && links.length > 0;
+    const fieldsWithLinksAvailable =
+      (displayedFieldsWithLinks && displayedFieldsWithLinks.length > 0) ||
+      (fieldsWithLinksFromVariableMap && fieldsWithLinksFromVariableMap.length > 0);
 
     // If logs with error, we are not showing the level color
     const levelClassName = hasError
@@ -78,13 +85,13 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 )}
                 {Object.keys(labels)
                   .sort()
-                  .map((key) => {
+                  .map((key, i) => {
                     const value = labels[key];
                     return (
                       <LogDetailsRow
-                        key={`${key}=${value}`}
-                        parsedKey={key}
-                        parsedValue={value}
+                        key={`${key}=${value}-${i}`}
+                        parsedKeys={[key]}
+                        parsedValues={[value]}
                         isLabel={true}
                         getStats={() => calculateLogsLabelStats(getRows(), key)}
                         onClickFilterOutLabel={onClickFilterOutLabel}
@@ -95,16 +102,17 @@ class UnThemedLogDetails extends PureComponent<Props> {
                         app={app}
                         wrapLogMessage={wrapLogMessage}
                         displayedFields={displayedFields}
+                        disableActions={false}
                       />
                     );
                   })}
-                {fields.map((field) => {
-                  const { key, value, fieldIndex } = field;
+                {fields.map((field, i) => {
+                  const { keys, values, fieldIndex } = field;
                   return (
                     <LogDetailsRow
-                      key={`${key}=${value}`}
-                      parsedKey={key}
-                      parsedValue={value}
+                      key={`${keys[0]}=${values[0]}-${i}`}
+                      parsedKeys={keys}
+                      parsedValues={values}
                       onClickShowField={onClickShowField}
                       onClickHideField={onClickHideField}
                       onClickFilterOutLabel={onClickFilterOutLabel}
@@ -114,24 +122,25 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       wrapLogMessage={wrapLogMessage}
                       row={row}
                       app={app}
+                      disableActions={false}
                     />
                   );
                 })}
 
-                {linksAvailable && (
+                {fieldsWithLinksAvailable && (
                   <tr>
                     <td colSpan={100} className={styles.logDetailsHeading} aria-label="Data Links">
                       Links
                     </td>
                   </tr>
                 )}
-                {links.map((field) => {
-                  const { key, value, links, fieldIndex } = field;
+                {displayedFieldsWithLinks.map((field, i) => {
+                  const { keys, values, links, fieldIndex } = field;
                   return (
                     <LogDetailsRow
-                      key={`${key}=${value}`}
-                      parsedKey={key}
-                      parsedValue={value}
+                      key={`${keys[0]}=${values[0]}-${i}`}
+                      parsedKeys={keys}
+                      parsedValues={values}
                       links={links}
                       onClickShowField={onClickShowField}
                       onClickHideField={onClickHideField}
@@ -140,10 +149,31 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       wrapLogMessage={wrapLogMessage}
                       row={row}
                       app={app}
+                      disableActions={false}
                     />
                   );
                 })}
-                {!fieldsAvailable && !labelsAvailable && !linksAvailable && (
+                {fieldsWithLinksFromVariableMap?.map((field, i) => {
+                  const { keys, values, links, fieldIndex } = field;
+                  return (
+                    <LogDetailsRow
+                      key={`${keys[0]}=${values[0]}-${i}`}
+                      parsedKeys={keys}
+                      parsedValues={values}
+                      links={links}
+                      onClickShowField={onClickShowField}
+                      onClickHideField={onClickHideField}
+                      getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())}
+                      displayedFields={displayedFields}
+                      wrapLogMessage={wrapLogMessage}
+                      row={row}
+                      app={app}
+                      disableActions={true}
+                    />
+                  );
+                })}
+
+                {!fieldsAvailable && !labelsAvailable && !fieldsWithLinksAvailable && (
                   <tr>
                     <td colSpan={100} aria-label="No details">
                       No details available

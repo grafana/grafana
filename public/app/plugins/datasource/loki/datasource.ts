@@ -22,7 +22,6 @@ import {
   DateTime,
   FieldCache,
   FieldType,
-  getDefaultTimeRange,
   Labels,
   LoadingState,
   LogLevel,
@@ -548,11 +547,11 @@ export class LokiDatasource
       expr: query.expr,
       queryType: LokiQueryType.Range,
       refId: REF_ID_DATA_SAMPLES,
+      // For samples we limit the request to 10 lines, so queries are small and fast
       maxLines: 10,
     };
 
-    // For samples, we use defaultTimeRange (now-6h/now) and limit od 10 lines so queries are small and fast
-    const timeRange = getDefaultTimeRange();
+    const timeRange = this.getTimeRange();
     const request = makeRequest(lokiLogsQuery, timeRange, CoreApp.Unknown, REF_ID_DATA_SAMPLES, true);
     return await lastValueFrom(this.query(request).pipe(switchMap((res) => of(res.data))));
   }

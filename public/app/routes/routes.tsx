@@ -11,7 +11,6 @@ import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
-import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
@@ -503,7 +502,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getDynamicDashboardRoutes(),
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
-    ...getLiveRoutes(),
     ...getAlertingRoutes(),
     ...getProfileRoutes(),
     ...extraRoutes,
