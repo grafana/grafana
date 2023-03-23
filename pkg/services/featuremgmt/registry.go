@@ -176,6 +176,13 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
+			Name:         "disableAngular",
+			Description:  "Dynamic flag to disable angular at runtime.  The prefered method is to set `angular_support_enabled` = false in the [security] settings, but this allows changing the state at runtime.",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,

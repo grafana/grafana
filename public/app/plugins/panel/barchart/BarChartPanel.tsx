@@ -165,7 +165,7 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
     const tooltipMode =
       options.fullHighlight && options.stacking !== StackingMode.None ? TooltipDisplayMode.Multi : options.tooltip.mode;
 
-    const tooltipSort = options.tooltip.mode === TooltipDisplayMode.Multi ? options.tooltip.sort : SortOrder.None;
+    const tooltipSort = options.tooltip?.mode === TooltipDisplayMode.Multi ? options.tooltip.sort : SortOrder.None;
 
     return (
       <>

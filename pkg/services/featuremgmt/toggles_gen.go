@@ -111,6 +111,10 @@ const (
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
 
+	// FlagDisableAngular
+	// Dynamic flag to disable angular at runtime.  The prefered method is to set `angular_support_enabled` = false in the [security] settings, but this allows changing the state at runtime.
+	FlagDisableAngular = "disableAngular"
+
 	// FlagPrometheusWideSeries
 	// Enable wide series responses in the Prometheus datasource
 	FlagPrometheusWideSeries = "prometheusWideSeries"
