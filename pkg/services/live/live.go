@@ -619,7 +619,7 @@ func (g *GrafanaLive) handleOnRPC(client *centrifuge.Client, e centrifuge.RPCEve
 		}
 		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
 	}
-	data, err := jsonStd.Marshal(resp)
+	data, err := jsonStd.Marshal(resp.Response)
 	if err != nil {
 		logger.Error("Error marshaling query response", "user", client.UserID(), "client", client.ID(), "method", e.Method, "error", err)
 		return centrifuge.RPCReply{}, centrifuge.ErrorInternal

@@ -5,10 +5,7 @@ package query
 import (
 	context "context"
 
-	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	dtos "github.com/grafana/grafana/pkg/api/dtos"
-
 	mock "github.com/stretchr/testify/mock"
 
 	user "github.com/grafana/grafana/pkg/services/user"
@@ -20,16 +17,14 @@ type FakeQueryService struct {
 }
 
 // QueryData provides a mock function with given fields: ctx, _a1, skipDSCache, skipQueryCache, reqDTO
-func (_m *FakeQueryService) QueryData(ctx context.Context, _a1 *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+func (_m *FakeQueryService) QueryData(ctx context.Context, _a1 *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (QueryResponseWithHeaders, error) {
 	ret := _m.Called(ctx, _a1, skipDSCache, skipQueryCache, reqDTO)
 
-	var r0 *backend.QueryDataResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, bool, bool, dtos.MetricRequest) *backend.QueryDataResponse); ok {
+	var r0 QueryResponseWithHeaders
+	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, bool, bool, dtos.MetricRequest) QueryResponseWithHeaders); ok {
 		r0 = rf(ctx, _a1, skipDSCache, skipQueryCache, reqDTO)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*backend.QueryDataResponse)
-		}
+		r0 = ret.Get(0).(QueryResponseWithHeaders)
 	}
 
 	var r1 error

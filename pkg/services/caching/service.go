@@ -2,16 +2,13 @@ package caching
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 )
 
-var (
-	ErrCachingNotAvailable = errors.New("query caching is not available in OSS Grafana")
-)
+const XCacheHeader = "X-Cache"
 
 type CacheQueryResponseFn func(context.Context, *backend.QueryDataResponse)
 type CacheResourceResponseFn func(context.Context, *backend.CallResourceResponse)
@@ -30,6 +27,7 @@ type CachedQueryDataResponse struct {
 	Response *backend.QueryDataResponse
 	// A function that should be used to cache a QueryDataResponse for a given query - can be set to nil by the method implementation
 	UpdateCacheFn CacheQueryResponseFn
+	Headers       map[string][]string
 	Status        CacheStatus
 }
 
@@ -46,7 +44,7 @@ func ProvideCachingService() *OSSCachingService {
 }
 
 type CachingService interface {
-	HandleQueryRequest(context.Context, dtos.MetricRequest) CachedQueryDataResponse
+	HandleQueryRequest(context.Context, bool, dtos.MetricRequest) CachedQueryDataResponse
 	HandleResourceRequest(context.Context, *http.Request) CachedResourceDataResponse
 }
 
@@ -54,7 +52,7 @@ type CachingService interface {
 type OSSCachingService struct {
 }
 
-func (s *OSSCachingService) HandleQueryRequest(ctx context.Context, req dtos.MetricRequest) CachedQueryDataResponse {
+func (s *OSSCachingService) HandleQueryRequest(ctx context.Context, skipCache bool, req dtos.MetricRequest) CachedQueryDataResponse {
 	return CachedQueryDataResponse{
 		Status: StatusUnimplemented,
 	}

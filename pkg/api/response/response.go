@@ -150,8 +150,10 @@ func (r StreamingResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	}
 }
 
-func (r StreamingResponse) SetHeader(key, value string) StreamingResponse {
-	r.header.Set(key, value)
+func (r StreamingResponse) SetHeaders(key string, values []string) StreamingResponse {
+	for _, v := range values {
+		r.header.Add(key, v)
+	}
 	return r
 }
 

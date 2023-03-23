@@ -61,7 +61,7 @@ func ProvideService(
 //go:generate mockery --name Service --structname FakeQueryService --inpackage --filename query_service_mock.go
 type Service interface {
 	Run(ctx context.Context) error
-	QueryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
+	QueryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (QueryResponseWithHeaders, error)
 }
 
 // Gives us compile time error if the service does not adhere to the contract of the interface
@@ -88,18 +88,26 @@ func (s *ServiceImpl) Run(ctx context.Context) error {
 // By default, it will attempt to retrieve a cached response for the given query, unless `skipQueryCache` = true.
 // This is distinct from the `skipDSCache` argument, which only determines if the datasource metadata is cached.
 // Query caching is only implemented in Grafana Enterprise.
-func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (QueryResponseWithHeaders, error) {
 	start := time.Now() // time how long this request takes
 
 	// First look in the query cache if enabled
 	var cr caching.CachedQueryDataResponse
-	if !skipQueryCache {
-		if r := s.cachingService.HandleQueryRequest(ctx, reqDTO); r.Status == caching.StatusCacheHit {
-			caching.MarkCacheStatus(skipQueryCache, r)
-			return r.Response, nil
-		} else {
-			cr = r
-		}
+	if r := s.cachingService.HandleQueryRequest(ctx, skipQueryCache, reqDTO); r.Status == caching.StatusCacheHit {
+		return QueryResponseWithHeaders{
+			Response: r.Response,
+			Headers:  r.Headers,
+		}, nil
+	} else {
+		cr = r
+	}
+
+	// Ensure there is an X-Cache header
+	if cr.Headers == nil {
+		cr.Headers = map[string][]string{}
+	}
+	if len(cr.Headers[caching.XCacheHeader]) == 0 {
+		cr.Headers[caching.XCacheHeader] = []string{"NONE"}
 	}
 
 	// do the actual queries
@@ -110,8 +118,6 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, sk
 		if cr.UpdateCacheFn != nil {
 			cr.UpdateCacheFn(ctx, resp)
 		}
-		// Update cache response headers
-		caching.MarkCacheStatus(skipQueryCache, cr)
 	}
 
 	duration := time.Since(start)
@@ -119,11 +125,14 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, sk
 	// record request duration
 	QueryRequestHistogram.With(prometheus.Labels{
 		"datasource_type": getDatasourceType(reqDTO.GetUniqueDatasourceTypes()),
-		"cache":           caching.GetCacheHeaders(resp)["X-Cache"],
+		"cache":           cr.Headers[caching.XCacheHeader][0],
 		"query_type":      getQueryType(user),
 	}).Observe(duration.Seconds())
 
-	return resp, err
+	return QueryResponseWithHeaders{
+		Response: resp,
+		Headers:  cr.Headers,
+	}, err
 }
 
 // queryData contains the logic for processing and executing queries

@@ -11,6 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
+type QueryResponseWithHeaders struct {
+	Response *backend.QueryDataResponse
+	Headers  map[string][]string
+}
+
 type parsedQuery struct {
 	datasource *datasources.DataSource
 	query      backend.DataQuery

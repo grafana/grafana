@@ -75,7 +75,13 @@ func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Respon
 		return response.Err(err)
 	}
 
-	return toJsonStreamingResponse(api.Features, resp)
+	r := toJsonStreamingResponse(api.Features, resp.Response).(response.StreamingResponse)
+	if resp.Headers != nil {
+		for k, v := range resp.Headers {
+			r = r.SetHeaders(k, v)
+		}
+	}
+	return r
 }
 
 // GetAnnotations returns annotations for a public dashboard

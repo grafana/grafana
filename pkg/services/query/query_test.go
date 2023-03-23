@@ -397,9 +397,10 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		res, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, false, reqDTO)
 
 		require.NoError(t, err)
-		require.Error(t, res.Responses["B"].Error)
+		require.NotNil(t, res.Response)
+		require.Error(t, res.Response.Responses["B"].Error)
 		// Responses aren't mocked, so a "healthy" query will just return an empty response
-		require.NotContains(t, res.Responses, "A")
+		require.NotContains(t, res.Response.Responses, "A")
 	})
 
 	t.Run("ignores a deprecated datasourceID", func(t *testing.T) {

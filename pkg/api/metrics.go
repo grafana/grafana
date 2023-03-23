@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/services/caching"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -57,10 +56,14 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}
-	r := hs.toJsonStreamingResponse(resp).(response.StreamingResponse)
-	for k, v := range caching.GetCacheHeaders(resp) {
-		r = r.SetHeader(k, v)
+
+	r := hs.toJsonStreamingResponse(resp.Response).(response.StreamingResponse)
+	if resp.Headers != nil {
+		for k, v := range resp.Headers {
+			r = r.SetHeaders(k, v)
+		}
 	}
+
 	return r
 }
 

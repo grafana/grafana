@@ -1322,7 +1322,15 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 				},
 			},
 		}
-		sanitizeMetadataFromQueryData(fakeResponse)
+		headers := map[string][]string{
+			"X-Cache":          {"MISS"},
+			"header-to-delete": {"something sensitive"},
+		}
+		wrapper := query.QueryResponseWithHeaders{
+			Response: fakeResponse,
+			Headers:  headers,
+		}
+		sanitizeMetadataFromQueryData(&wrapper)
 		for k := range fakeResponse.Responses {
 			frames := fakeResponse.Responses[k].Frames
 			for i := range frames {
@@ -1330,6 +1338,9 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 				require.Empty(t, frames[i].Meta.Custom)
 			}
 		}
+		assert.Len(t, headers, 1)
+		assert.Contains(t, headers, "X-Cache")
+		assert.NotContains(t, headers, "header-to-delete")
 	})
 }
 
