@@ -15,7 +15,7 @@ on:
 
 jobs:
   workflow-call:
-    uses: grafana/code-coverage/.github/workflows/code-coverage.yml@v0.1.18
+    uses: grafana/code-coverage/.github/workflows/code-coverage.yml@v0.1.19
     with:
       frontend-path-regexp: public\/app\/features\/(explore|correlations)|public\/app\/plugins\/datasource\/(loki|elasticsearch)
       backend-path-regexp: pkg\/services\/(queryhistory)|pkg\/tsdb\/(loki|elasticsearch)
