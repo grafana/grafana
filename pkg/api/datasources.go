@@ -332,11 +332,14 @@ func validateURL(cmdType string, url string) response.Response {
 	return nil
 }
 
-func isCacheHit(headers map[string][]string) bool {
+func isCacheHit(r caching.CachedResourceDataResponse) bool {
+	if r.Response == nil {
+		return false
+	}
+	headers := r.Response.Headers
 	if headers == nil {
 		return false
 	}
-
 	if v, ok := headers[caching.XCacheHeader]; ok {
 		return len(v) > 0 && v[0] == caching.StatusHit
 	}
@@ -683,7 +686,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *contextmodel.ReqContext) {
 
 	// Check the cache first. If it's a hit, try to write it to the response
 	resp := hs.queryCachingService.HandleResourceRequest(c.Req.Context(), c.Req)
-	if isCacheHit(resp.Response.Headers) {
+	if isCacheHit(resp) {
 		if err := writeResourceResponse(c.Resp, resp); err != nil {
 			hs.log.Error("error trying to return cached resource response: %s", err.Error())
 		} else {
@@ -731,7 +734,7 @@ func (hs *HTTPServer) CallDatasourceResourceWithUID(c *contextmodel.ReqContext) 
 
 	// Check the cache first. If it's a hit, try to write it to the response
 	resp := hs.queryCachingService.HandleResourceRequest(c.Req.Context(), c.Req)
-	if isCacheHit(resp.Response.Headers) {
+	if isCacheHit(resp) {
 		if err := writeResourceResponse(c.Resp, resp); err != nil {
 			hs.log.Error("error trying to return cached resource response: %s", err.Error())
 		} else {

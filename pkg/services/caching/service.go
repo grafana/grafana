@@ -75,6 +75,9 @@ func (r CachedQueryDataResponse) WriteHeadersToResponse(resp *web.ResponseWriter
 }
 
 func (r CachedResourceDataResponse) WriteHeadersToResponse(resp *web.ResponseWriter) {
+	if r.Response == nil {
+		return
+	}
 	headers := r.Response.Headers
 	if headers == nil {
 		return
