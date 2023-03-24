@@ -122,7 +122,7 @@ export const InspectDataOptions = ({
             )}
 
             <HorizontalGroup>
-              {onOptionsChange && showPanelTransformationsOption && (
+              {showPanelTransformationsOption && onOptionsChange && (
                 <Field
                   label={t('dashboard.inspect-data.transformations-label', 'Apply panel transformations')}
                   description={t(
@@ -136,7 +136,7 @@ export const InspectDataOptions = ({
                   />
                 </Field>
               )}
-              {onOptionsChange && showFieldConfigsOption && (
+              {showFieldConfigsOption && onOptionsChange && (
                 <Field
                   label={t('dashboard.inspect-data.formatted-data-label', 'Formatted data')}
                   description={t(

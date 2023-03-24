@@ -185,6 +185,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const { options, onOptionsChange } = this.props;
     const downloadForExcel = !options.downloadForExcel;
     if (onOptionsChange) {
+      // keep in sync with the values managed in local storage
       onOptionsChange({ ...options, downloadForExcel });
     }
     this.setState({ downloadForExcel });
@@ -249,8 +250,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
             transformationOptions={transformationOptions}
             selectedDataFrame={selectedDataFrame}
             onOptionsChange={onOptionsChange}
-            toggleDownloadForExcel={this.toggleDownloadForExcel}
             onDataFrameChange={this.onDataFrameChange}
+            toggleDownloadForExcel={this.toggleDownloadForExcel}
           />
           <Button
             variant="primary"
