@@ -1,10 +1,10 @@
-import { useCallback, useMemo } from 'react';
-import { useLocalStorage } from 'react-use';
+import { useCallback, useMemo, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { DataQueryError, DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
+import store from 'app/core/store';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { InspectGetDataOptions } from 'app/features/inspector/InspectDataOptions';
 import { InspectTab } from 'app/features/inspector/types';
@@ -69,26 +69,30 @@ export const useInspectTabs = (
   }, [plugin, metaDs, dashboard, error]);
 };
 
+const inspectKey = 'grafana.inspect.dataOptions';
+const defaultOptions: InspectGetDataOptions = {
+  withTransforms: false,
+  withFieldConfig: true,
+  downloadForExcel: false,
+};
+
 export const useInspectDataOptions = () => {
-  const [withTransforms, setWithTransforms] = useLocalStorage<boolean>('grafana.inspector.withTransforms', false);
-  const [withFieldConfig, setWithFieldConfig] = useLocalStorage<boolean>('grafana.inspector.withFieldConfig', true);
-  const [downloadForExcel, setDownloadForExcel] = useLocalStorage<boolean>('grafana.inspector.downloadForExcel', false);
+  const [opts, setOpts] = useState(store.getObject<InspectGetDataOptions>(inspectKey, defaultOptions));
 
   const dataOptions = useMemo<InspectGetDataOptions>(() => {
     return {
-      withTransforms: Boolean(withTransforms),
-      withFieldConfig: Boolean(withFieldConfig),
-      downloadForExcel: Boolean(downloadForExcel),
+      ...defaultOptions,
+      ...opts,
     };
-  }, [withTransforms, withFieldConfig, downloadForExcel]);
+  }, [opts]);
 
   const setDataOptions = useCallback(
     (opts: InspectGetDataOptions) => {
-      setWithTransforms(opts.withTransforms);
-      setWithFieldConfig(opts.withFieldConfig);
-      setDownloadForExcel(opts.downloadForExcel);
+      const next = { ...defaultOptions, ...opts };
+      store.setObject(inspectKey, next);
+      setOpts(next);
     },
-    [setWithTransforms, setWithFieldConfig, setDownloadForExcel]
+    [setOpts]
   );
 
   return { dataOptions, setDataOptions };
