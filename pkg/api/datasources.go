@@ -690,6 +690,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *contextmodel.ReqContext) {
 			return
 		}
 	}
+	resp.WriteHeadersToResponse(&c.Resp)
 	// No cache hit, process resource request as usual
 	hs.callPluginResourceWithDataSource(c, plugin.ID, ds, resp.UpdateCacheFn)
 }
@@ -737,6 +738,7 @@ func (hs *HTTPServer) CallDatasourceResourceWithUID(c *contextmodel.ReqContext) 
 			return
 		}
 	}
+	resp.WriteHeadersToResponse(&c.Resp)
 	// No cache hit, process resource request as usual
 	hs.callPluginResourceWithDataSource(c, plugin.ID, ds, resp.UpdateCacheFn)
 }

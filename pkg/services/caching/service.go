@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -59,3 +60,28 @@ func (s *OSSCachingService) HandleResourceRequest(ctx context.Context, req *http
 }
 
 var _ CachingService = &OSSCachingService{}
+
+// Some helper funcs
+func (r CachedQueryDataResponse) WriteHeadersToResponse(resp *web.ResponseWriter) {
+	headers := r.Headers
+	if headers == nil {
+		return
+	}
+	for k, vs := range headers {
+		for _, v := range vs {
+			(*resp).Header().Add(k, v)
+		}
+	}
+}
+
+func (r CachedResourceDataResponse) WriteHeadersToResponse(resp *web.ResponseWriter) {
+	headers := r.Response.Headers
+	if headers == nil {
+		return
+	}
+	for k, vs := range headers {
+		for _, v := range vs {
+			(*resp).Header().Add(k, v)
+		}
+	}
+}
