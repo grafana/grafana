@@ -58,6 +58,7 @@ function getValueForValueMacro(scopedVars?: ScopedVars, fieldPath?: string) {
     case 'numeric':
       return result.numeric;
     case 'text':
+      return result.text;
     default:
       return formattedValueToString(result);
   }
