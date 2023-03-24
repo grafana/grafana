@@ -109,8 +109,8 @@ type AlertingRule struct {
 	// required: true
 	Annotations overrideLabels `json:"annotations,omitempty"`
 	// required: true
-	Alerts []*Alert `json:"alerts,omitempty"`
-	Total  int64    `json:"total"`
+	Alerts []*Alert       `json:"alerts,omitempty"`
+	Total  map[string]int `json:"total,omitempty"`
 	Rule
 }
 

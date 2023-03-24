@@ -234,17 +234,14 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *folder.Folder, ru
 		}
 
 		states := srv.manager.GetStatesForRuleUID(rule.OrgID, rule.UID)
-		for i, alertState := range states {
-			if limitAlerts > -1 && int64(i) >= limitAlerts {
-				break
-			}
-
+		totals := make(map[string]int)
+		for _, alertState := range states {
 			activeAt := alertState.StartsAt
 			valString := ""
 			if alertState.State == eval.Alerting || alertState.State == eval.Pending {
 				valString = formatValues(alertState)
 			}
-
+			totals[strings.ToLower(alertState.State.String())] += 1
 			alert := &apimodels.Alert{
 				Labels:      alertState.GetLabels(labelOptions...),
 				Annotations: alertState.Annotations,
@@ -284,8 +281,12 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *folder.Folder, ru
 			alertingRule.Alerts = append(alertingRule.Alerts, alert)
 		}
 
+		if limitAlerts > -1 {
+			alertingRule.Alerts = alertingRule.Alerts[0:limitAlerts]
+		}
+
 		alertingRule.Rule = newRule
-		alertingRule.Total = int64(len(states))
+		alertingRule.Total = totals
 		newGroup.Rules = append(newGroup.Rules, alertingRule)
 		newGroup.Interval = float64(rule.IntervalSeconds)
 		// TODO yuri. Change that when scheduler will process alerts in groups
