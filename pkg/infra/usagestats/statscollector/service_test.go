@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
@@ -148,10 +149,13 @@ func TestCollectingUsageStats(t *testing.T) {
 		BuildVersion:         "5.0.0",
 		AnonymousEnabled:     true,
 		BasicAuthEnabled:     true,
-		LDAPEnabled:          true,
+		LDAPAuthEnabled:      true,
 		AuthProxyEnabled:     true,
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",
+		RemoteCacheOptions: &setting.RemoteCacheOptions{
+			Name: "database",
+		},
 	}, sqlStore, statsService,
 		withDatasources(mockDatasourceService{datasources: expectedDataSources}))
 
@@ -210,7 +214,7 @@ func TestElasticStats(t *testing.T) {
 		BuildVersion:         "5.0.0",
 		AnonymousEnabled:     true,
 		BasicAuthEnabled:     true,
-		LDAPEnabled:          true,
+		LDAPAuthEnabled:      true,
 		AuthProxyEnabled:     true,
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",
@@ -433,6 +437,7 @@ func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService sta
 
 	return ProvideService(
 		&usagestats.UsageStatsMock{},
+		&validator.FakeUsageStatsValidator{},
 		statsService,
 		cfg,
 		store,

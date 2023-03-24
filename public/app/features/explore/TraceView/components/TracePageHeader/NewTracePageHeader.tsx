@@ -26,15 +26,29 @@ import { getTraceLinks } from '../model/link-patterns';
 import { getHeaderTags, getTraceName } from '../model/trace-viewer';
 import { formatDuration } from '../utils/date';
 
+import TracePageActions from './Actions/TracePageActions';
 import SpanGraph from './SpanGraph';
 import { TracePageHeaderEmbedProps, timestamp, getStyles } from './TracePageHeader';
 
 const getNewStyles = (theme: GrafanaTheme2) => {
   return {
+    titleRow: css`
+      label: TracePageHeaderTitleRow;
+      align-items: center;
+      display: flex;
+      padding: 0 0.5em 0 0.5em;
+    `,
+    title: css`
+      label: TracePageHeaderTitle;
+      color: inherit;
+      flex: 1;
+      font-size: 1.7em;
+      line-height: 1em;
+    `,
     subtitle: css`
       flex: 1;
       line-height: 1em;
-      margin: -0.5em 0 1.5em 0.5em;
+      margin: -0.5em 0.5em 1.5em 0.5em;
     `,
     tag: css`
       margin: 0 0.5em 0 0;
@@ -56,7 +70,7 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       position: sticky;
       top: 0;
       z-index: 5;
-      padding: 10px 5px 0 5px;
+      padding: 0.5em 0.25em 0 0.25em;
       & > :last-child {
         border-bottom: 1px solid ${autoColor(theme, '#ccc')};
       }
@@ -82,7 +96,7 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
   const { method, status, url } = getHeaderTags(trace.spans);
 
   const title = (
-    <h1 className={cx(styles.TracePageHeaderTitle)}>
+    <h1 className={cx(styles.title)}>
       <TraceName traceName={getTraceName(trace.spans)} />
       <small>
         <span className={styles.divider}>|</span>
@@ -92,7 +106,7 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
   );
 
   let statusColor: BadgeColor = 'green';
-  if (status && status.length > 0 && Number.isInteger(status[0].value)) {
+  if (status && status.length > 0) {
     if (status[0].value.toString().charAt(0) === '4') {
       statusColor = 'orange';
     } else if (status[0].value.toString().charAt(0) === '5') {
@@ -102,9 +116,10 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
 
   return (
     <header className={styles.header}>
-      <div className={styles.TracePageHeaderTitleRow}>
+      <div className={styles.titleRow}>
         {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
         {title}
+        <TracePageActions traceId={trace.traceID} />
       </div>
 
       <div className={styles.subtitle}>

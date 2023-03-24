@@ -11,6 +11,7 @@ import {
   TestVariable,
   NestedScene,
   SceneRefreshPicker,
+  TextBoxVariable,
 } from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
@@ -54,7 +55,11 @@ export function getVariablesDemo(): DashboardScene {
         }),
         new DataSourceVariable({
           name: 'ds',
-          query: 'testdata',
+          pluginId: 'testdata',
+        }),
+        new TextBoxVariable({
+          name: 'textbox',
+          value: 'default value',
         }),
       ],
     }),
@@ -72,6 +77,11 @@ export function getVariablesDemo(): DashboardScene {
                   $data: getQueryRunnerWithRandomWalkQuery({
                     alias: 'handler: $handler',
                   }),
+                }),
+                new SceneCanvasText({
+                  text: 'Text: ${textbox}',
+                  fontSize: 20,
+                  align: 'center',
                 }),
                 new SceneCanvasText({
                   placement: { width: '40%' },

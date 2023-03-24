@@ -8,7 +8,6 @@ import {
 } from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
-import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
@@ -54,7 +53,6 @@ export function getGridLayoutTest(): DashboardScene {
         }),
       ],
     }),
-    $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],

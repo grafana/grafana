@@ -2,6 +2,7 @@ package template
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"net/url"
 	"sort"
@@ -83,6 +84,17 @@ func NewData(labels map[string]string, res eval.Result) Data {
 	}
 }
 
+// ExpandError is an error containing the template and the error that occurred
+// while expanding it.
+type ExpandError struct {
+	Tmpl string
+	Err  error
+}
+
+func (e ExpandError) Error() string {
+	return fmt.Sprintf("failed to expand template '%s': %s", e.Tmpl, e.Err)
+}
+
 func Expand(ctx context.Context, name, tmpl string, data Data, externalURL *url.URL, evaluatedAt time.Time) (string, error) {
 	// add __alert_ to avoid possible conflicts with other templates
 	name = "__alert_" + name
@@ -101,7 +113,7 @@ func Expand(ctx context.Context, name, tmpl string, data Data, externalURL *url.
 
 	result, err := expander.Expand()
 	if err != nil {
-		return "", err
+		return "", ExpandError{Tmpl: tmpl, Err: err}
 	}
 
 	// We need to replace <no value> with [no value] as some integrations think <no value> is invalid HTML. For example,

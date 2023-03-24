@@ -22,13 +22,11 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		const (
 			pluginID, v1 = "test-panel", "1.0.0"
 			zipNameV1    = "test-panel-1.0.0.zip"
-			pluginDirV1  = "/data/plugin/test-panel-1.0.0"
 		)
 
 		// mock a plugin to be returned automatically by the plugin loader
 		pluginV1 := createPlugin(t, pluginID, plugins.External, true, true, func(plugin *plugins.Plugin) {
 			plugin.Info.Version = v1
-			plugin.PluginDir = pluginDirV1
 		})
 		mockZipV1 := &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
 			FileHeader: zip.FileHeader{Name: zipNameV1},
@@ -36,9 +34,9 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 
 		var loadedPaths []string
 		loader := &fakes.FakeLoader{
-			LoadFunc: func(_ context.Context, _ plugins.Class, paths []string) ([]*plugins.Plugin, error) {
-				loadedPaths = append(loadedPaths, paths...)
-				require.Equal(t, []string{zipNameV1}, paths)
+			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+				loadedPaths = append(loadedPaths, src.PluginURIs(ctx)...)
+				require.Equal(t, []string{zipNameV1}, src.PluginURIs(ctx))
 				return []*plugins.Plugin{pluginV1}, nil
 			},
 		}
@@ -63,7 +61,6 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 			RegisterFunc: func(_ context.Context, pluginID, pluginDir string) error {
 				require.Equal(t, pluginV1.ID, pluginID)
-				require.Equal(t, pluginV1.PluginDir, pluginDir)
 				return nil
 			},
 			Store: map[string]struct{}{},
@@ -88,22 +85,20 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 
 		t.Run("Update plugin to different version", func(t *testing.T) {
 			const (
-				v2          = "2.0.0"
-				zipNameV2   = "test-panel-2.0.0.zip"
-				pluginDirV2 = "/data/plugin/test-panel-2.0.0"
+				v2        = "2.0.0"
+				zipNameV2 = "test-panel-2.0.0.zip"
 			)
 			// mock a plugin to be returned automatically by the plugin loader
 			pluginV2 := createPlugin(t, pluginID, plugins.External, true, true, func(plugin *plugins.Plugin) {
 				plugin.Info.Version = v2
-				plugin.PluginDir = pluginDirV2
 			})
 
 			mockZipV2 := &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
 				FileHeader: zip.FileHeader{Name: zipNameV2},
 			}}}}
-			loader.LoadFunc = func(_ context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
-				require.Equal(t, plugins.External, class)
-				require.Equal(t, []string{zipNameV2}, paths)
+			loader.LoadFunc = func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+				require.Equal(t, plugins.External, src.PluginClass(ctx))
+				require.Equal(t, []string{zipNameV2}, src.PluginURIs(ctx))
 				return []*plugins.Plugin{pluginV2}, nil
 			}
 			pluginRepo.GetPluginDownloadOptionsFunc = func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
@@ -126,7 +121,6 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			}
 			fs.RegisterFunc = func(_ context.Context, pluginID, pluginDir string) error {
 				require.Equal(t, pluginV2.ID, pluginID)
-				require.Equal(t, pluginV2.PluginDir, pluginDir)
 				return nil
 			}
 

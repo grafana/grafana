@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, Fragment, useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, textUtil, urlUtil } from '@grafana/data';
@@ -34,7 +34,7 @@ interface Props {
   isViewMode: boolean;
 }
 
-export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewMode }) => {
+export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Props) => {
   const style = useStyles2(getStyles);
   const { namespace, group, rulerRule } = rule;
   const alertId = isGrafanaRulerRule(rule.rulerRule) ? rule.rulerRule.grafana_alert.id ?? '' : '';

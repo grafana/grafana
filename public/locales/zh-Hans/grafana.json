@@ -9,8 +9,7 @@
     "action": {
       "change-theme": "",
       "dark-theme": "",
-      "light-theme": "",
-      "search": ""
+      "light-theme": ""
     },
     "search-box": {
       "placeholder": ""
@@ -32,7 +31,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "操作",
       "data-tab": "数据",
       "error-tab": "错误",
       "json-tab": "JSON",
@@ -85,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "添加面板",
-      "comments-show": "显示仪表板备注",
       "mark-favorite": "标记为收藏",
       "open-original": "打开原始仪表板",
       "playlist-next": "前往下一个仪表板",
@@ -244,18 +241,6 @@
       "subtitle": "可重复使用的面板，可以添加到多个仪表板",
       "title": "库面板"
     },
-    "live": {
-      "title": "事件流"
-    },
-    "live-cloud": {
-      "title": "云"
-    },
-    "live-pipeline": {
-      "title": "管道"
-    },
-    "live-status": {
-      "title": "状态"
-    },
     "manage-dashboards": {
       "title": "浏览"
     },
@@ -305,7 +290,6 @@
       "title": "场景"
     },
     "search": {
-      "placeholder": "搜索 Grafana",
       "placeholderCommandPalette": ""
     },
     "search-dashboards": {
@@ -427,6 +411,11 @@
     "folder-view": {
       "go-to-folder": "",
       "select-folder": ""
+    },
+    "result-kind": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
     },
     "results-table": {
       "datasource-header": "",
