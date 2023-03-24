@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -67,6 +67,7 @@ function filterTags(parts: InfluxQueryTag[], allTagKeys: Set<string>): InfluxQue
 }
 
 export const Editor = (props: Props): JSX.Element => {
+  const [retentionPolicies, setRetentionPolicies] = useState<string[]>([]);
   const uniqueId = useUniqueId();
   const formatAsId = `influxdb-qe-format-as-${uniqueId}`;
   const orderByTimeId = `influxdb-qe-order-by${uniqueId}`;
@@ -75,6 +76,18 @@ export const Editor = (props: Props): JSX.Element => {
   const query = normalizeQuery(props.query);
   const { datasource } = props;
   const { measurement, policy } = query;
+
+  useEffect(() => {
+    let ignore = false;
+    getAllPolicies(datasource).then((result) => {
+      if (!ignore) {
+        setRetentionPolicies(result);
+      }
+    });
+    return () => {
+      ignore = true;
+    };
+  }, [datasource]);
 
   const allTagKeys = useMemo(async () => {
     const tagKeys = (await getTagKeysForMeasurementAndTags(measurement, policy, [], datasource)).map(
@@ -143,7 +156,7 @@ export const Editor = (props: Props): JSX.Element => {
     <div>
       <SegmentSection label="FROM" fill={true}>
         <FromSection
-          policy={policy}
+          policy={policy ?? retentionPolicies[0]}
           measurement={measurement}
           getPolicyOptions={() => getAllPolicies(datasource)}
           getMeasurementOptions={(filter) =>

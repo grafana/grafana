@@ -5008,8 +5008,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "18"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "19"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "20"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "19"]
     ],
     "public/app/plugins/datasource/influxdb/influx_series.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

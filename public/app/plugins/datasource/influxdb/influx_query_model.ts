@@ -20,9 +20,6 @@ export default class InfluxQueryModel {
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
 
-    // InfluxDB automatically generated an RP named autogen and set it as the DEFAULT RP for the database.
-    // https://docs.influxdata.com/influxdb/v1.8/concepts/glossary/#retention-policy-rp
-    target.policy = target.policy || 'autogen';
     target.resultFormat = target.resultFormat || 'time_series';
     target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
@@ -185,7 +182,7 @@ export default class InfluxQueryModel {
     return str + escapedKey + ' ' + operator + ' ' + value;
   }
 
-  getMeasurementAndPolicy(interpolate: any) {
+  getMeasurementAndPolicy(interpolate?: boolean) {
     let policy = this.target.policy;
     let measurement = this.target.measurement || 'measurement';
 
@@ -195,13 +192,7 @@ export default class InfluxQueryModel {
       measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
     }
 
-    if (policy !== 'default') {
-      policy = '"' + this.target.policy + '".';
-    } else {
-      policy = '';
-    }
-
-    return policy + measurement;
+    return `"${policy}".${measurement}`;
   }
 
   interpolateQueryStr(value: any[], variable: { multi: any; includeAll: any }, defaultFormatFn: any) {
