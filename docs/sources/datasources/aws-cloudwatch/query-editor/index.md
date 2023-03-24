@@ -3,7 +3,7 @@ aliases:
   - ../../data-sources/aws-cloudwatch/query-editor/
   - ../cloudwatch/
   - ./
-description: Guide for using the AWS CloudWatch data source's query editor
+description: Guide for using the Amazon CloudWatch data source's query editor
 keywords:
   - grafana
   - aws
@@ -11,11 +11,11 @@ keywords:
   - guide
   - queries
 menuTitle: Query editor
-title: AWS CloudWatch query editor
+title: Amazon CloudWatch query editor
 weight: 300
 ---
 
-# AWS CloudWatch query editor
+# Amazon CloudWatch query editor
 
 This topic explains querying specific to the CloudWatch data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
