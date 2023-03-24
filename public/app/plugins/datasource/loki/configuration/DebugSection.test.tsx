@@ -38,6 +38,9 @@ describe('DebugSection', () => {
       getVariables() {
         return [];
       },
+      getAllVariablesInTarget(target, scopedVars) {
+        return {};
+      },
       containsTemplate() {
         return false;
       },

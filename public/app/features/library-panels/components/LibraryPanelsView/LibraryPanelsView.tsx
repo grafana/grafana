@@ -23,7 +23,7 @@ interface LibraryPanelViewProps {
   perPage?: number;
 }
 
-export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
+export const LibraryPanelsView = ({
   className,
   onClickCard,
   searchString,
@@ -33,7 +33,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   showSecondaryActions,
   currentPanelId: currentPanel,
   perPage: propsPerPage = 40,
-}) => {
+}: LibraryPanelViewProps) => {
   const styles = useStyles2(getPanelViewStyles);
   const [{ libraryPanels, page, perPage, numberOfPages, loadingState, currentPanelId }, dispatch] = useReducer(
     libraryPanelsViewReducer,

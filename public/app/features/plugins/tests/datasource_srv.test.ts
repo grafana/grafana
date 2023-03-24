@@ -3,8 +3,9 @@ import {
   DataSourceInstanceSettings,
   DataSourcePlugin,
   DataSourcePluginMeta,
-  ScopedVar,
+  ScopedVars,
 } from '@grafana/data';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 // Datasource variable $datasource with current value 'BBB'
@@ -25,7 +26,7 @@ const templateSrv: any = {
       },
     },
   ],
-  replace: (v: string, scopedVars: ScopedVar) => {
+  replace: (v: string, scopedVars: ScopedVars) => {
     if (scopedVars && scopedVars.datasource) {
       return v.replace('${datasource}', scopedVars.datasource.value);
     }
@@ -198,6 +199,25 @@ describe('datasource_srv', () => {
             "uid": "uid-code-BBB",
           }
         `);
+      });
+
+      it('should return expression settings with either expression UIDs', () => {
+        const exprWithOldUID = dataSourceSrv.getInstanceSettings('-100');
+        expect(exprWithOldUID?.name).toBe('Expression');
+        expect(exprWithOldUID?.uid).toBe(ExpressionDatasourceRef.uid);
+        expect(exprWithOldUID?.type).toBe(ExpressionDatasourceRef.type);
+
+        const exprWithNewUID = dataSourceSrv.getInstanceSettings('__expr__');
+        expect(exprWithNewUID?.name).toBe('Expression');
+        expect(exprWithNewUID?.uid).toBe(ExpressionDatasourceRef.uid);
+        expect(exprWithNewUID?.type).toBe(ExpressionDatasourceRef.type);
+      });
+
+      it('should return expression settings with expression name', () => {
+        const exprWithName = dataSourceSrv.getInstanceSettings('Expression');
+        expect(exprWithName?.name).toBe(ExpressionDatasourceRef.name);
+        expect(exprWithName?.uid).toBe(ExpressionDatasourceRef.uid);
+        expect(exprWithName?.type).toBe(ExpressionDatasourceRef.type);
       });
     });
 

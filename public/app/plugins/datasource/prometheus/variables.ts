@@ -9,7 +9,7 @@ import { getTimeSrv, TimeSrv } from '../../../features/dashboard/services/TimeSr
 import { PromVariableQueryEditor } from './components/VariableQueryEditor';
 import { PrometheusDatasource } from './datasource';
 import PrometheusMetricFindQuery from './metric_find_query';
-import { PromQuery } from './types';
+import { PromVariableQuery } from './types';
 
 export class PrometheusVariableSupport extends CustomVariableSupport<PrometheusDatasource> {
   constructor(
@@ -23,8 +23,22 @@ export class PrometheusVariableSupport extends CustomVariableSupport<PrometheusD
 
   editor = PromVariableQueryEditor;
 
-  query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
-    const query = request.targets[0].query;
+  query(request: DataQueryRequest<PromVariableQuery>): Observable<DataQueryResponse> {
+    // Handling grafana as code from jsonnet variable queries which are strings and not objects
+    // Previously, when using StandardVariableSupport
+    // the variable query string was changed to be on the expr attribute
+    // Now, using CustomVariableSupport,
+    // the variable query is changed to the query attribute.
+    // So, without standard variable support changing the query string to the expr attribute,
+    // the variable query string is coming in as it is written in jsonnet,
+    // where it is just a string. Here is where we handle that.
+    let query: string | undefined;
+    if (typeof request.targets[0] === 'string') {
+      query = request.targets[0];
+    } else {
+      query = request.targets[0].query;
+    }
+
     if (!query) {
       return of({ data: [] });
     }

@@ -64,9 +64,10 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	// if the api key don't belong to a service account construct the identity and return it
 	if apiKey.ServiceAccountId == nil || *apiKey.ServiceAccountId < 1 {
 		return &authn.Identity{
-			ID:       authn.NamespacedID(authn.NamespaceAPIKey, apiKey.ID),
-			OrgID:    apiKey.OrgID,
-			OrgRoles: map[int64]org.RoleType{apiKey.OrgID: apiKey.Role},
+			ID:           authn.NamespacedID(authn.NamespaceAPIKey, apiKey.ID),
+			OrgID:        apiKey.OrgID,
+			OrgRoles:     map[int64]org.RoleType{apiKey.OrgID: apiKey.Role},
+			ClientParams: authn.ClientParams{SyncPermissions: true},
 		}, nil
 	}
 
@@ -79,7 +80,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		return nil, err
 	}
 
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceServiceAccount, usr.UserID), usr, authn.ClientParams{}), nil
+	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceServiceAccount, usr.UserID), usr, authn.ClientParams{SyncPermissions: true}), nil
 }
 
 func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, error) {
@@ -118,12 +119,13 @@ func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.
 
 	// fetch key
 	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgID: decoded.OrgId}
-	if err := s.apiKeyService.GetApiKeyByName(ctx, &keyQuery); err != nil {
+	key, err := s.apiKeyService.GetApiKeyByName(ctx, &keyQuery)
+	if err != nil {
 		return nil, err
 	}
 
 	// validate api key
-	isValid, err := apikeygen.IsValid(decoded, keyQuery.Result.Key)
+	isValid, err := apikeygen.IsValid(decoded, key.Key)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +133,7 @@ func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.
 		return nil, apikeygen.ErrInvalidApiKey
 	}
 
-	return keyQuery.Result, nil
+	return key, nil
 }
 
 func (s *APIKey) Test(ctx context.Context, r *authn.Request) bool {

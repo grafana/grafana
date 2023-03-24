@@ -484,6 +484,10 @@ Limits the amount of bytes that will be read/accepted from responses of outgoing
 
 Limits the number of rows that Grafana will process from SQL (relational) data sources. Default is `1000000`.
 
+### user_agent
+
+Sets a custom value for the `User-Agent` header for outgoing data proxy requests. If empty, the default value is `Grafana/<BuildVersion>` (for example `Grafana/9.0.0`).
+
 <hr />
 
 ## [analytics]
@@ -1353,6 +1357,10 @@ Sets a global limit on number of users that can be logged in at one time. Defaul
 ### global_alert_rule
 
 Sets a global limit on number of alert rules that can be created. Default is -1 (unlimited).
+
+### global_correlations
+
+Sets a global limit on number of correlations that can be created. Default is -1 (unlimited).
 
 <hr>
 

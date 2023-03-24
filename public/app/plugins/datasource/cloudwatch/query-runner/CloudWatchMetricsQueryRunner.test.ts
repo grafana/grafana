@@ -513,8 +513,8 @@ describe('CloudWatchMetricsQueryRunner', () => {
           runner.handleMetricQueries(queries, {
             ...request,
             scopedVars: {
-              var1: { selected: true, value: 'var1-foo', text: '' },
-              var2: { selected: true, value: 'var2-foo', text: '' },
+              var1: { value: 'var1-foo', text: '' },
+              var2: { value: 'var2-foo', text: '' },
             },
           })
         ).toEmitValuesWith(() => {
@@ -579,7 +579,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
           runner.handleMetricQueries(queries, {
             ...request,
             scopedVars: {
-              var1: { selected: true, value: 'var1-foo', text: '' },
+              var1: { value: 'var1-foo', text: '' },
             },
           })
         ).toEmitValuesWith(() => {
@@ -694,18 +694,20 @@ describe('CloudWatchMetricsQueryRunner', () => {
       );
     });
   });
-
   describe('interpolateMetricsQueryVariables', () => {
-    it('interpolates dimensions correctly', () => {
+    it('interpolates values correctly', () => {
       const testQuery = {
         id: 'a',
         refId: 'a',
         region: 'us-east-2',
         namespace: '',
+        expression: 'ABS($datasource)',
+        sqlExpression: 'select SUM(CPUUtilization) from $datasource',
         dimensions: { InstanceId: '$dimension' },
       };
       const { runner } = setupMockedMetricsQueryRunner({ variables: [dimensionVariable], mockGetVariableName: false });
       const result = runner.interpolateMetricsQueryVariables(testQuery, {
+        datasource: { text: 'foo', value: 'foo' },
         dimension: { text: 'foo', value: 'foo' },
       });
       expect(result).toStrictEqual({
@@ -713,7 +715,8 @@ describe('CloudWatchMetricsQueryRunner', () => {
         metricName: '',
         namespace: '',
         period: '',
-        sqlExpression: '',
+        sqlExpression: 'select SUM(CPUUtilization) from foo',
+        expression: 'ABS(foo)',
         dimensions: { InstanceId: ['foo'] },
       });
     });

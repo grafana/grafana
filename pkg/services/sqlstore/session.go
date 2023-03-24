@@ -95,7 +95,7 @@ func (ss *SQLStore) retryOnLocks(ctx context.Context, callback DBTransactionFunc
 			ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code", sqlError.Code)
 			// retryer immediately returns the error (if there is one) without checking the response
 			// therefore we only have to send it if we have reached the maximum retries
-			if retry == ss.dbCfg.QueryRetries {
+			if retry >= ss.dbCfg.QueryRetries {
 				return retryer.FuncError, ErrMaximumRetriesReached.Errorf("retry %d: %w", retry, err)
 			}
 			return retryer.FuncFailure, nil
@@ -126,21 +126,21 @@ func (ss *SQLStore) withDbSession(ctx context.Context, engine *xorm.Engine, call
 	return retryer.Retry(ss.retryOnLocks(ctx, callback, sess, retry), ss.dbCfg.QueryRetries, time.Millisecond*time.Duration(10), time.Second)
 }
 
-func (sess *DBSession) InsertId(bean interface{}, dialect migrator.Dialect) (int64, error) {
+func (sess *DBSession) InsertId(bean interface{}, dialect migrator.Dialect) error {
 	table := sess.DB().Mapper.Obj2Table(getTypeName(bean))
 
 	if err := dialect.PreInsertId(table, sess.Session); err != nil {
-		return 0, err
+		return err
 	}
-	id, err := sess.Session.InsertOne(bean)
+	_, err := sess.Session.InsertOne(bean)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	if err := dialect.PostInsertId(table, sess.Session); err != nil {
-		return 0, err
+		return err
 	}
 
-	return id, nil
+	return nil
 }
 
 func (sess *DBSession) WithReturningID(driverName string, query string, args []interface{}) (int64, error) {

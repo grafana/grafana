@@ -7,15 +7,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // Typed errors
 var (
-	ErrOrgNotFound         = errors.New("organization not found")
-	ErrOrgNameTaken        = errors.New("organization name is taken")
-	ErrLastOrgAdmin        = errors.New("cannot remove last organization admin")
-	ErrOrgUserNotFound     = errors.New("cannot find the organization user")
-	ErrOrgUserAlreadyAdded = errors.New("user is already added to organization")
+	ErrOrgNameTaken                            = errors.New("organization name is taken")
+	ErrLastOrgAdmin                            = errors.New("cannot remove last organization admin")
+	ErrOrgUserNotFound                         = errors.New("cannot find the organization user")
+	ErrOrgUserAlreadyAdded                     = errors.New("user is already added to organization")
+	ErrOrgNotFound                             = errutil.NewBase(errutil.StatusNotFound, "org.notFound", errutil.WithPublicMessage("organization not found"))
+	ErrCannotChangeRoleForExternallySyncedUser = errutil.NewBase(errutil.StatusForbidden, "org.externallySynced", errutil.WithPublicMessage("cannot change role for externally synced user"))
 )
 
 type Org struct {
@@ -138,20 +140,21 @@ type UpdateOrgUserCommand struct {
 }
 
 type OrgUserDTO struct {
-	OrgID         int64           `json:"orgId" xorm:"org_id"`
-	UserID        int64           `json:"userId" xorm:"user_id"`
-	Email         string          `json:"email"`
-	Name          string          `json:"name"`
-	AvatarURL     string          `json:"avatarUrl" xorm:"avatar_url"`
-	Login         string          `json:"login"`
-	Role          string          `json:"role"`
-	LastSeenAt    time.Time       `json:"lastSeenAt"`
-	Updated       time.Time       `json:"-"`
-	Created       time.Time       `json:"-"`
-	LastSeenAtAge string          `json:"lastSeenAtAge"`
-	AccessControl map[string]bool `json:"accessControl,omitempty"`
-	IsDisabled    bool            `json:"isDisabled"`
-	AuthLabels    []string        `json:"authLabels" xorm:"-"`
+	OrgID              int64           `json:"orgId" xorm:"org_id"`
+	UserID             int64           `json:"userId" xorm:"user_id"`
+	Email              string          `json:"email"`
+	Name               string          `json:"name"`
+	AvatarURL          string          `json:"avatarUrl" xorm:"avatar_url"`
+	Login              string          `json:"login"`
+	Role               string          `json:"role"`
+	LastSeenAt         time.Time       `json:"lastSeenAt"`
+	Updated            time.Time       `json:"-"`
+	Created            time.Time       `json:"-"`
+	LastSeenAtAge      string          `json:"lastSeenAtAge"`
+	AccessControl      map[string]bool `json:"accessControl,omitempty"`
+	IsDisabled         bool            `json:"isDisabled"`
+	AuthLabels         []string        `json:"authLabels" xorm:"-"`
+	IsExternallySynced bool            `json:"isExternallySynced"`
 }
 
 type RemoveOrgUserCommand struct {
