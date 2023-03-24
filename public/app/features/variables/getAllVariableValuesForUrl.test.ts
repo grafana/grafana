@@ -101,7 +101,9 @@ describe('getAllVariableValuesForUrl', () => {
   describe('fillVariableValuesForUrl with multi value, scopedVars and skip url sync', () => {
     beforeEach(() => {
       setTemplateSrv(
-        initTemplateSrv(key, [{ type: 'query', name: 'test', rootStateKey: key, current: { value: ['val1', 'val2'] } }])
+        initTemplateSrv(key, [
+          { type: 'query', name: 'test', rootStateKey: key, current: { value: ['val1', 'val2'] }, skipUrlSync: true },
+        ])
       );
     });
 
