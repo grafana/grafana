@@ -6,8 +6,9 @@
 # use the binary.
 
 GRAFANA_HOME="${GRAFANA_HOME:-/usr/share/grafana}"
+LIBEXEC_DIR=/usr/libexec/grafana
 
-EXECUTABLE="$GRAFANA_HOME/bin/grafana"
+EXECUTABLE="$LIBEXEC_DIR/grafana"
 
 if [ ! -x $EXECUTABLE ]; then
  echo "$EXECUTABLE not installed or not executable"
