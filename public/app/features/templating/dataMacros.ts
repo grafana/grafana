@@ -30,7 +30,7 @@ export function valueMacro(
     }
   }
 
-  if (!valueIndex) {
+  if (valueIndex === undefined) {
     return '';
   }
 
