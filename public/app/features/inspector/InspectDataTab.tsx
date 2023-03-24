@@ -46,6 +46,8 @@ interface State {
   dataFrameIndex: number;
   transformationOptions: Array<SelectableValue<DataTransformerID>>;
   transformedData: DataFrame[];
+
+  // This is kept in sync with options
   downloadForExcel: boolean;
 }
 
@@ -59,7 +61,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       transformId: DataTransformerID.noop,
       transformationOptions: buildTransformationOptions(),
       transformedData: props.data ?? [],
-      downloadForExcel: false,
+      downloadForExcel: Boolean(props.options.downloadForExcel),
     };
   }
 
@@ -180,9 +182,12 @@ export class InspectDataTab extends PureComponent<Props, State> {
   };
 
   toggleDownloadForExcel = () => {
-    this.setState((prevState) => ({
-      downloadForExcel: !prevState.downloadForExcel,
-    }));
+    const { options, onOptionsChange } = this.props;
+    const downloadForExcel = !options.downloadForExcel;
+    if (onOptionsChange) {
+      onOptionsChange({ ...options, downloadForExcel });
+    }
+    this.setState({ downloadForExcel });
   };
 
   getProcessedData(): DataFrame[] {
@@ -244,6 +249,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
             transformationOptions={transformationOptions}
             selectedDataFrame={selectedDataFrame}
             onOptionsChange={onOptionsChange}
+            toggleDownloadForExcel={this.toggleDownloadForExcel}
             onDataFrameChange={this.onDataFrameChange}
           />
           <Button
