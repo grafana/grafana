@@ -46,6 +46,8 @@ describe('templateSrv', () => {
       expect(_templateSrv.replace('${__value}', scopedVars)).toBe('10%');
       expect(_templateSrv.replace('${__value.text}', scopedVars)).toBe('10%');
       expect(_templateSrv.replace('${__value.time}', scopedVars)).toBe('10000');
+      // can apply format as well
+      expect(_templateSrv.replace('${__value.text:percentencode}', scopedVars)).toBe('10%25');
     });
 
     it('Should interpolate __value.* with calculatedValue', () => {

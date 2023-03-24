@@ -11,7 +11,7 @@ import {
   ScopedVar,
 } from '@grafana/data';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
-import { sceneGraph, FormatRegistryID, formatRegistry, VariableCustomFormatterFn } from '@grafana/scenes';
+import { sceneGraph, FormatRegistryID, VariableCustomFormatterFn } from '@grafana/scenes';
 
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
@@ -19,7 +19,7 @@ import { isAdHoc } from '../variables/guard';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { variableRegex } from '../variables/utils';
 
-import { getVariableWrapper } from './LegacyVariableWrapper';
+import { formatVariableValue } from './formatVariableValue';
 import { macroRegistry } from './macroRegistry';
 
 interface FieldAccessorCache {
@@ -126,51 +126,6 @@ export class TemplateSrv implements BaseTemplateSrv {
     }
 
     return filters;
-  }
-
-  formatValue(value: any, format?: any, variable?: any, text?: string): string {
-    // for some scopedVars there is no variable
-    variable = variable || {};
-
-    if (value === null || value === undefined) {
-      return '';
-    }
-
-    if (isAdHoc(variable) && format !== FormatRegistryID.queryParam) {
-      return '';
-    }
-
-    // if it's an object transform value to string
-    if (!Array.isArray(value) && typeof value === 'object') {
-      value = `${value}`;
-    }
-
-    if (typeof format === 'function') {
-      return format(value, variable, this.formatValue);
-    }
-
-    if (!format) {
-      format = FormatRegistryID.glob;
-    }
-
-    // some formats have arguments that come after ':' character
-    let args = format.split(':');
-    if (args.length > 1) {
-      format = args[0];
-      args = args.slice(1);
-    } else {
-      args = [];
-    }
-
-    let formatItem = formatRegistry.getIfExists(format);
-
-    if (!formatItem) {
-      console.error(`Variable format ${format} not found. Using glob format as fallback.`);
-      formatItem = formatRegistry.get(FormatRegistryID.glob);
-    }
-
-    const formatVariable = getVariableWrapper(variable, value, text ?? value);
-    return formatItem.formatter(value, args, formatVariable);
   }
 
   setGrafanaVariable(name: string, value: any) {
@@ -299,7 +254,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         const text = this.getVariableText(scopedVar, value);
 
         if (value !== null && value !== undefined) {
-          return this.formatValue(value, fmt, variable, text);
+          return formatVariableValue(value, fmt, variable, text);
         }
       }
 
@@ -311,12 +266,12 @@ export class TemplateSrv implements BaseTemplateSrv {
         const value = variableAdapters.get(variable.type).getValueForUrl(variable);
         const text = isAdHoc(variable) ? variable.id : variable.current.text;
 
-        return this.formatValue(value, fmt, variable, text);
+        return formatVariableValue(value, fmt, variable, text);
       }
 
       const systemValue = this.grafanaVariables.get(variable.current.value);
       if (systemValue) {
-        return this.formatValue(systemValue, fmt, variable);
+        return formatVariableValue(systemValue, fmt, variable);
       }
 
       let value = variable.current.value;
@@ -334,11 +289,11 @@ export class TemplateSrv implements BaseTemplateSrv {
       if (fieldPath) {
         const fieldValue = this.getVariableValue({ value, text }, fieldPath);
         if (fieldValue !== null && fieldValue !== undefined) {
-          return this.formatValue(fieldValue, fmt, variable, text);
+          return formatVariableValue(fieldValue, fmt, variable, text);
         }
       }
 
-      const res = this.formatValue(value, fmt, variable, text);
+      const res = formatVariableValue(value, fmt, variable, text);
       return res;
     });
   }
@@ -359,7 +314,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         const text = this.getVariableText(scopedVar, value);
 
         if (value !== null && value !== undefined) {
-          values[variableDisplayName] = this.formatValue(value, fmt, variable, text);
+          values[variableDisplayName] = formatVariableValue(value, fmt, variable, text);
         } else {
           values[variableDisplayName] = undefined;
         }
