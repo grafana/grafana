@@ -299,10 +299,6 @@ export class TemplateSrv implements BaseTemplateSrv {
         const text = this.getVariableText(scopedVar, value);
 
         if (value !== null && value !== undefined) {
-          if (scopedVar.skipFormat) {
-            fmt = undefined;
-          }
-
           return this.formatValue(value, fmt, variable, text);
         }
       }
@@ -367,6 +363,8 @@ export class TemplateSrv implements BaseTemplateSrv {
         } else {
           values[variableDisplayName] = undefined;
         }
+      } else {
+        values[variableDisplayName] = undefined;
       }
 
       // Don't care about the result anyway

@@ -12,16 +12,13 @@ export function getVariablesUrlParams(scopedVars?: ScopedVars): UrlQueryMap {
     const variable = variables[i];
     const scopedVar = scopedVars && scopedVars[variable.name];
 
+    if (variable.skipUrlSync) {
+      continue;
+    }
+
     if (scopedVar) {
-      if (scopedVar.skipUrlSync) {
-        continue;
-      }
       params[VARIABLE_PREFIX + variable.name] = scopedVar.value;
     } else {
-      // @ts-ignore
-      if (variable.skipUrlSync) {
-        continue;
-      }
       params[VARIABLE_PREFIX + variable.name] = variableAdapters.get(variable.type).getValueForUrl(variable as any);
     }
   }

@@ -107,7 +107,7 @@ describe('getAllVariableValuesForUrl', () => {
 
     it('should not set scoped value as url params', () => {
       const params = getVariablesUrlParams({
-        test: { value: 'val1', text: 'val1text', skipUrlSync: true },
+        test: { value: 'val1', text: 'val1text' },
       });
       expect(params['var-test']).toBe(undefined);
     });
