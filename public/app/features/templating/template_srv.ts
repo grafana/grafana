@@ -8,6 +8,7 @@ import {
   AdHocVariableModel,
   TypedVariableModel,
   VariableMap,
+  ScopedVar,
 } from '@grafana/data';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 import { sceneGraph, FormatRegistryID, formatRegistry, VariableCustomFormatterFn } from '@grafana/scenes';
@@ -19,6 +20,7 @@ import { getFilteredVariables, getVariables, getVariableWithName } from '../vari
 import { variableRegex } from '../variables/utils';
 
 import { getVariableWrapper } from './LegacyVariableWrapper';
+import { macroRegistry } from './macroRegistry';
 
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
@@ -249,12 +251,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return (this.fieldAccessorCache[fieldPath] = property(fieldPath));
   }
 
-  private getVariableValue(variableName: string, fieldPath: string | undefined, scopedVars: ScopedVars) {
-    const scopedVar = scopedVars[variableName];
-    if (!scopedVar) {
-      return null;
-    }
-
+  private getVariableValue(scopedVar: ScopedVar, fieldPath: string | undefined) {
     if (fieldPath) {
       return this.getFieldAccessor(fieldPath)(scopedVar.value);
     }
@@ -262,13 +259,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return scopedVar.value;
   }
 
-  private getVariableText(variableName: string, value: any, scopedVars: ScopedVars) {
-    const scopedVar = scopedVars[variableName];
-
-    if (!scopedVar) {
-      return null;
-    }
-
+  private getVariableText(scopedVar: ScopedVar, value: any) {
     if (scopedVar.value === value || typeof value !== 'string') {
       return scopedVar.text;
     }
@@ -293,16 +284,22 @@ export class TemplateSrv implements BaseTemplateSrv {
     this.regex.lastIndex = 0;
 
     return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
-      const variableName = var1 || var2 || var3;
+      const variableName: string = var1 || var2 || var3;
       const variable = this.getVariableAtIndex(variableName);
       let fmt = fmt2 || fmt3 || format;
 
-      if (scopedVars) {
-        const value = this.getVariableValue(variableName, fieldPath, scopedVars);
-        const text = this.getVariableText(variableName, value, scopedVars);
+      if (macroRegistry[variableName]) {
+        return macroRegistry[variableName](variableName, scopedVars, fieldPath, fmt);
+      }
+
+      const scopedVar = scopedVars && scopedVars[variableName];
+
+      if (scopedVar) {
+        const value = this.getVariableValue(scopedVar, fieldPath);
+        const text = this.getVariableText(scopedVar, value);
 
         if (value !== null && value !== undefined) {
-          if (scopedVars[variableName].skipFormat) {
+          if (scopedVar.skipFormat) {
             fmt = undefined;
           }
 
@@ -339,9 +336,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       }
 
       if (fieldPath) {
-        const fieldValue = this.getVariableValue(variableName, fieldPath, {
-          [variableName]: { value, text },
-        });
+        const fieldValue = this.getVariableValue({ value, text }, fieldPath);
         if (fieldValue !== null && fieldValue !== undefined) {
           return this.formatValue(fieldValue, fmt, variable, text);
         }
@@ -360,13 +355,18 @@ export class TemplateSrv implements BaseTemplateSrv {
       const variableDisplayName =
         var1 || var2 || (var3 !== undefined && fieldPath !== undefined) ? `${var3}.${fieldPath}` : var3;
       const fmt = fmt2 || fmt3 || format;
-      const value = this.getVariableValue(variableName, fieldPath, scopedVars);
-      if (value !== null && value !== undefined) {
-        const variable = this.getVariableAtIndex(variableName);
-        const text = this.getVariableText(variableName, value, scopedVars);
-        values[variableDisplayName] = this.formatValue(value, fmt, variable, text);
-      } else {
-        values[variableDisplayName] = undefined;
+      const scopedVar = scopedVars && scopedVars[variableName];
+      const variable = this.getVariableAtIndex(variableName);
+
+      if (scopedVar) {
+        const value = this.getVariableValue(scopedVar, fieldPath);
+        const text = this.getVariableText(scopedVar, value);
+
+        if (value !== null && value !== undefined) {
+          values[variableDisplayName] = this.formatValue(value, fmt, variable, text);
+        } else {
+          values[variableDisplayName] = undefined;
+        }
       }
 
       // Don't care about the result anyway

@@ -5,7 +5,6 @@ import {
   DataConfigSource,
   DataFrameDTO,
   DataLink,
-  DataLinkBuiltInVars,
   DataQuery,
   DataTransformerConfig,
   EventBusSrv,
@@ -13,7 +12,6 @@ import {
   PanelPlugin,
   PanelPluginDataSupport,
   ScopedVars,
-  urlUtil,
   PanelModel as IPanelModel,
   DataSourceRef,
   CoreApp,
@@ -36,8 +34,6 @@ import {
 } from 'app/types/events';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
-import { getTimeSrv } from '../services/TimeSrv';
 import { TimeOverrideResult } from '../utils/panel';
 
 export interface GridPos {
@@ -639,23 +635,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   replaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
     const lastRequest = this.getQueryRunner().getLastRequest();
     const vars: ScopedVars = Object.assign({}, this.scopedVars, lastRequest?.scopedVars, extraVars);
-
-    const allVariablesParams = getVariablesUrlParams(vars);
-    const variablesQuery = urlUtil.toUrlParams(allVariablesParams);
-    const timeRangeUrl = urlUtil.toUrlParams(getTimeSrv().timeRangeForUrl());
-
-    vars[DataLinkBuiltInVars.keepTime] = {
-      text: timeRangeUrl,
-      value: timeRangeUrl,
-      skipFormat: true,
-    };
-
-    vars[DataLinkBuiltInVars.includeVars] = {
-      text: variablesQuery,
-      value: variablesQuery,
-      skipFormat: true,
-    };
-
     return getTemplateSrv().replace(value, vars, format);
   }
 
