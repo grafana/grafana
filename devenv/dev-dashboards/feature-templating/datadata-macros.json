@@ -67,8 +67,8 @@
             "links": [
               {
                 "targetBlank": true,
-                "title": "value=${__value.raw}﻿﻿﻿﻿&time=﻿﻿﻿﻿${__value.time}﻿﻿﻿&__value:percentencode=${__value:percentencode}﻿﻿﻿&text=${__value.text}",
-                "url": "value=${__value.raw}﻿﻿﻿﻿&time=﻿﻿﻿﻿${__value.time}﻿﻿﻿justvalue=﻿﻿﻿${__value:percentencode}﻿﻿﻿&text=${__value.text}"
+                "title": "value=${__value.raw}&time=${__value.time}&__value:percentencode=${__value:percentencode}&text=${__value.text}",
+                "url": "value=${__value.raw}&time=${__value.time}justvalue=${__value:percentencode}&text=${__value.text}"
               }
             ],
             "mappings": [],
@@ -126,7 +126,7 @@
               {
                 "targetBlank": true,
                 "title": "Value link",
-                "url": "value=${__value.raw}﻿"
+                "url": "value=${__value.raw}"
               }
             ],
             "mappings": [],
@@ -272,7 +272,7 @@
               {
                 "targetBlank": true,
                 "title": "Value link",
-                "url": "value=${__calc}﻿"
+                "url": "value=${__calc}"
               }
             ],
             "mappings": [],
@@ -358,8 +358,8 @@
             },
             "links": [
               {
-                "title": "__data.refId=${__data.refId}﻿﻿﻿&__data.fields[0]=﻿${__data.fields[0]}&cluster=${__field.labels.cluster}",
-                "url": "refId=${__data.refId}﻿﻿﻿&__data.fields[0]=﻿${__data.fields[0]}&cluster=${__field.labels.cluster}"
+                "title": "__data.refId=${__data.refId}&__data.fields[0]=${__data.fields[0]}&cluster=${__field.labels.cluster}",
+                "url": "refId=${__data.refId}&__data.fields[0]=${__data.fields[0]}&cluster=${__field.labels.cluster}"
               }
             ],
             "mappings": [],
@@ -411,7 +411,7 @@
             "scenarioId": "random_walk"
           }
         ],
-        "title": "DataLink: refId=${__data.refId}﻿﻿﻿&__data.fields[0]=﻿${__data.fields[0]}&cluster=${__field.labels.cluster}",
+        "title": "DataLink: refId=${__data.refId}&__data.fields[0]=${__data.fields[0]}&cluster=${__field.labels.cluster}",
         "type": "table"
       },
       {
@@ -545,8 +545,8 @@
             },
             "links": [
               {
-                "title": "__field.name=${__field.name}﻿﻿﻿&__field.labels.cluster=﻿${__field.labels.cluster}",
-                "url": "__field.name=${__field.name}﻿﻿﻿&__field.labels.cluster=﻿${__field.labels.cluster}"
+                "title": "__field.name=${__field.name}&__field.labels.cluster=${__field.labels.cluster}",
+                "url": "__field.name=${__field.name}&__field.labels.cluster=${__field.labels.cluster}"
               }
             ],
             "mappings": [],
@@ -690,7 +690,7 @@
               {
                 "targetBlank": true,
                 "title": "Value link",
-                "url": "value=${__calc}﻿"
+                "url": "value=${__calc}"
               }
             ],
             "mappings": [],
