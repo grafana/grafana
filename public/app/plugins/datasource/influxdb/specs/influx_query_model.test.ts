@@ -11,6 +11,7 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
+          policy: 'autogen',
         },
         templateSrv,
         {}
@@ -48,6 +49,7 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
+          policy: 'autogen',
           select: [
             [
               { type: 'field', params: ['value'] },
@@ -74,6 +76,7 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
+          policy: 'autogen',
           groupBy: [{ type: 'time', params: ['auto'] }],
           tags: [{ key: 'hostname', value: 'server\\1' }],
         },
@@ -94,6 +97,7 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
+          policy: 'autogen',
           groupBy: [{ type: 'time', params: ['auto'] }],
           tags: [{ key: 'app', value: '/e.*/' }],
         },
@@ -114,6 +118,7 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
+          policy: 'autogen',
           groupBy: [{ type: 'time', params: ['auto'] }],
           tags: [
             { key: 'hostname', value: 'server1' },
@@ -138,6 +143,7 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
+          policy: 'autogen',
           groupBy: [{ type: 'time', params: ['auto'] }],
           tags: [
             { key: 'hostname', value: 'server1' },
@@ -162,6 +168,7 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
+          policy: 'autogen',
           groupBy: [{ type: 'time', params: ['auto'] }],
           tags: [
             { key: 'name', value: "Let's encrypt." },
@@ -186,6 +193,7 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
+          policy: 'autogen',
           groupBy: [],
           tags: [{ key: 'value', value: '5', operator: '>' }],
         },
@@ -204,6 +212,7 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
+          policy: 'autogen',
           tags: [],
           groupBy: [
             { type: 'time', interval: 'auto' },
@@ -227,6 +236,7 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
+          policy: 'autogen',
           select: [[{ type: 'field', params: ['value'] }]],
           groupBy: [],
         },
@@ -244,6 +254,7 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
+          policy: 'autogen',
           select: [[{ type: 'field', params: ['value'] }]],
           groupBy: [{ type: 'time' }, { type: 'fill', params: ['0'] }],
         },
@@ -263,6 +274,7 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
+          policy: 'autogen',
           groupBy: [{ type: 'time' }, { type: 'fill' }],
         },
         templateSrv,

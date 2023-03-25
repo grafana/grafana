@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import React from 'react';
 
 import InfluxDatasource from '../../datasource';
@@ -35,26 +35,29 @@ jest.mock('./Seg', () => {
   };
 });
 
-function assertEditor(query: InfluxQuery, textContent: string) {
+async function assertEditor(query: InfluxQuery, textContent: string) {
   const onChange = jest.fn();
   const onRunQuery = jest.fn();
   const datasource: InfluxDatasource = {
     metricFindQuery: () => Promise.resolve([]),
   } as unknown as InfluxDatasource;
-  const { container } = render(
-    <Editor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
-  );
-  expect(container.textContent).toBe(textContent);
+  await act(async () => {
+    const { container } = await render(
+      <Editor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
+    );
+    expect(container.textContent).toBe(textContent);
+  });
 }
 
 describe('InfluxDB InfluxQL Visual Editor', () => {
   it('should handle minimal query', () => {
     const query: InfluxQuery = {
       refId: 'A',
+      policy: 'default',
     };
     assertEditor(
       query,
-      'FROM[autogen][select measurement]WHERE[+]' +
+      'FROM[default][select measurement]WHERE[+]' +
         'SELECT[field]([value])[mean]()[+]' +
         'GROUP BY[time]([$__interval])[fill]([null])[+]' +
         'TIMEZONE[(optional)]ORDER BY TIME[ASC]' +
@@ -67,10 +70,11 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
       refId: 'A',
       alias: 'test-alias',
       resultFormat: 'table',
+      policy: 'default',
     };
     assertEditor(
       query,
-      'FROM[autogen][select measurement]WHERE[+]' +
+      'FROM[default][select measurement]WHERE[+]' +
         'SELECT[field]([value])[mean]()[+]' +
         'GROUP BY[time]([$__interval])[fill]([null])[+]' +
         'TIMEZONE[(optional)]ORDER BY TIME[ASC]' +

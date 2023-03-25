@@ -43,7 +43,7 @@ export const FromSection = ({
     <>
       <Seg
         allowCustomValue
-        value={policy ?? 'using default policy'}
+        value={policy ?? ''}
         loadOptions={handlePolicyLoadOptions}
         onChange={(v) => {
           onChange(v.value, measurement);
