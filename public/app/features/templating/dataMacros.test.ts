@@ -35,7 +35,7 @@ describe('templateSrv', () => {
         value: {
           frame: data,
           field: data.fields[0],
-          valueIndex: 1,
+          rowIndex: 1,
         },
       };
 

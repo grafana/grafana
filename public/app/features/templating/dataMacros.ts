@@ -21,7 +21,7 @@ function getValueForValueMacro(scopedVars?: ScopedVars, fieldPath?: string) {
     return '';
   }
 
-  const { frame, valueIndex, field, calculatedValue } = dataContext.value;
+  const { frame, rowIndex, field, calculatedValue } = dataContext.value;
 
   if (calculatedValue) {
     switch (fieldPath) {
@@ -37,16 +37,16 @@ function getValueForValueMacro(scopedVars?: ScopedVars, fieldPath?: string) {
     }
   }
 
-  if (valueIndex === undefined) {
+  if (rowIndex === undefined) {
     return '';
   }
 
   if (fieldPath === 'time') {
     const timeField = frame.fields.find((f) => f.type === FieldType.time);
-    return timeField ? timeField.values.get(valueIndex) : undefined;
+    return timeField ? timeField.values.get(rowIndex) : undefined;
   }
 
-  const value = field.values.get(valueIndex);
+  const value = field.values.get(rowIndex);
   if (fieldPath === 'raw') {
     return value;
   }

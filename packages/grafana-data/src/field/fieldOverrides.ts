@@ -376,7 +376,7 @@ export const getLinksSupplier =
 
       // We are not displaying reduction result
       if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
-        dataContext.value.valueIndex = config.valueRowIndex;
+        dataContext.value.rowIndex = config.valueRowIndex;
 
         const fieldsProxy = getFieldDisplayValuesProxy({
           frame,

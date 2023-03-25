@@ -18,7 +18,7 @@ export interface DataContextScopedVar {
   value: {
     frame: DataFrame;
     field: Field;
-    valueIndex?: number;
+    rowIndex?: number;
     calculatedValue?: DisplayValue;
   };
 }
