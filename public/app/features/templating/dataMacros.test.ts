@@ -70,4 +70,17 @@ describe('templateSrv', () => {
     expect(_templateSrv.replace('${__value.text}', scopedVars)).toBe('15%');
     expect(_templateSrv.replace('${__value.time}', scopedVars)).toBe('');
   });
+
+  it('Should return match when ${__value.*} is used and no dataContext or rowIndex is found', () => {
+    const dataContext: DataContextScopedVar = {
+      value: {
+        frame: data,
+        field: data.fields[0],
+      },
+    };
+
+    const scopedVars = { __dataContext: dataContext };
+
+    expect(_templateSrv.replace('${__value.raw}', scopedVars)).toBe('${__value.raw}');
+  });
 });

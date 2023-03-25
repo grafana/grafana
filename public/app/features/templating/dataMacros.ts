@@ -39,7 +39,7 @@ function getValueForValueMacro(match: string, fieldPath?: string, scopedVars?: S
   }
 
   if (rowIndex === undefined) {
-    return null;
+    return match;
   }
 
   if (fieldPath === 'time') {
