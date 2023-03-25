@@ -243,10 +243,6 @@ export class TemplateSrv implements BaseTemplateSrv {
       const variable = this.getVariableAtIndex(variableName);
       let fmt = fmt2 || fmt3 || format;
 
-      if (macroRegistry[variableName]) {
-        return macroRegistry[variableName](variableName, scopedVars, fieldPath, fmt);
-      }
-
       const scopedVar = scopedVars && scopedVars[variableName];
 
       if (scopedVar) {
@@ -259,6 +255,10 @@ export class TemplateSrv implements BaseTemplateSrv {
       }
 
       if (!variable) {
+        if (macroRegistry[variableName]) {
+          return macroRegistry[variableName](match, fieldPath, scopedVars, fmt);
+        }
+
         return match;
       }
 

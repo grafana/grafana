@@ -1,24 +1,25 @@
-import { FieldType, formattedValueToString, getDisplayProcessor, ScopedVars } from '@grafana/data';
+import { DisplayProcessor, FieldType, formattedValueToString, getDisplayProcessor, ScopedVars } from '@grafana/data';
 import { VariableCustomFormatterFn } from '@grafana/scenes';
 
 import { formatVariableValue } from './formatVariableValue';
 
-const fallbackDisplayProcessor = getDisplayProcessor();
-
+/**
+ * ${__value.raw/nummeric/text/time} macro
+ */
 export function valueMacro(
-  variableName: string,
-  scopedVars?: ScopedVars,
+  match: string,
   fieldPath?: string,
+  scopedVars?: ScopedVars,
   format?: string | VariableCustomFormatterFn
 ) {
-  const value = getValueForValueMacro(scopedVars, fieldPath);
+  const value = getValueForValueMacro(match, fieldPath, scopedVars);
   return formatVariableValue(value, format);
 }
 
-function getValueForValueMacro(scopedVars?: ScopedVars, fieldPath?: string) {
+function getValueForValueMacro(match: string, fieldPath?: string, scopedVars?: ScopedVars) {
   const dataContext = scopedVars?.__dataContext;
   if (!dataContext) {
-    return '';
+    return match;
   }
 
   const { frame, rowIndex, field, calculatedValue } = dataContext.value;
@@ -38,7 +39,7 @@ function getValueForValueMacro(scopedVars?: ScopedVars, fieldPath?: string) {
   }
 
   if (rowIndex === undefined) {
-    return '';
+    return null;
   }
 
   if (fieldPath === 'time') {
@@ -51,7 +52,7 @@ function getValueForValueMacro(scopedVars?: ScopedVars, fieldPath?: string) {
     return value;
   }
 
-  const displayProcessor = field.display ?? fallbackDisplayProcessor;
+  const displayProcessor = field.display ?? getFallbackDisplayProcessor();
   const result = displayProcessor(value);
 
   switch (fieldPath) {
@@ -62,4 +63,14 @@ function getValueForValueMacro(scopedVars?: ScopedVars, fieldPath?: string) {
     default:
       return formattedValueToString(result);
   }
+}
+
+let fallbackDisplayProcessor: DisplayProcessor | undefined;
+
+function getFallbackDisplayProcessor() {
+  if (!fallbackDisplayProcessor) {
+    fallbackDisplayProcessor = getDisplayProcessor();
+  }
+
+  return fallbackDisplayProcessor;
 }

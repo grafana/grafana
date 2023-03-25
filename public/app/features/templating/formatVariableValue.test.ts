@@ -1,8 +1,12 @@
+import { silenceConsoleOutput } from 'test/core/utils/silenceConsoleOutput';
+
 import { VariableFormatID } from '@grafana/schema';
 
 import { formatVariableValue } from './formatVariableValue';
 
 describe('format variable to string values', () => {
+  silenceConsoleOutput();
+
   it('single value should return value', () => {
     const result = formatVariableValue('test');
     expect(result).toBe('test');

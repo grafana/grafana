@@ -12,7 +12,7 @@ export const macroRegistry: Record<string, MacroHandler> = {
   [DataLinkBuiltInVars.keepTime]: urlTimeRangeMacro,
 };
 
-function includeVarsMacro(_variableName: string, scopedVars?: ScopedVars) {
+function includeVarsMacro(match: string, fieldPath?: string, scopedVars?: ScopedVars) {
   const allVariablesParams = getVariablesUrlParams(scopedVars);
   return urlUtil.toUrlParams(allVariablesParams);
 }
