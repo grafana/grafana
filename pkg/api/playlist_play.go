@@ -78,7 +78,7 @@ func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, s
 		return result, err
 	}
 
-	playlistItems := *dto.Items
+	playlistItems := dto.Items
 
 	dashboardByIDs := make([]int64, 0)
 	dashboardByTag := make([]string, 0)

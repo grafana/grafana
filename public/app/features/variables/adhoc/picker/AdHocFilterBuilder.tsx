@@ -1,6 +1,7 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { DataSourceRef, SelectableValue } from '@grafana/data';
+import { t } from 'app/core/internationalization';
 import { AdHocVariableFilter } from 'app/features/variables/types';
 
 import { AdHocFilterKey, REMOVE_FILTER_KEY } from './AdHocFilterKey';
@@ -13,7 +14,7 @@ interface Props {
   getTagKeysOptions?: any;
 }
 
-export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onCompleted, getTagKeysOptions }) => {
+export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, getTagKeysOptions }: Props) => {
   const [key, setKey] = useState<string | null>(null);
   const [operator, setOperator] = useState<string>('=');
 
@@ -64,7 +65,7 @@ export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onComp
       <AdHocFilterRenderer
         datasource={datasource}
         filter={{ key, value: '', operator, condition: '' }}
-        placeHolder="select value"
+        placeHolder={t('variable.adhoc.placeholder', 'Select value')}
         onKeyChange={onKeyChanged}
         onOperatorChange={onOperatorChanged}
         onValueChange={onValueChanged}

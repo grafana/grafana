@@ -44,7 +44,7 @@ func NewTestEnv(t *testing.T) TestContext {
 }
 
 type User struct {
-	username string
+	User     user.User
 	password string
 }
 
@@ -122,8 +122,8 @@ func (c TestContext) getURL(url string, user User) string {
 	c.t.Helper()
 
 	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
-	if user.username != "" && user.password != "" {
-		baseUrl = fmt.Sprintf("http://%s:%s@%s", user.username, user.password, c.env.Server.HTTPServer.Listener.Addr())
+	if user.User.Login != "" && user.password != "" {
+		baseUrl = fmt.Sprintf("http://%s:%s@%s", user.User.Login, user.password, c.env.Server.HTTPServer.Listener.Addr())
 	}
 
 	return fmt.Sprintf(
@@ -133,7 +133,7 @@ func (c TestContext) getURL(url string, user User) string {
 	)
 }
 
-func (c TestContext) createUser(cmd user.CreateUserCommand) {
+func (c TestContext) createUser(cmd user.CreateUserCommand) User {
 	c.t.Helper()
 	store := c.env.SQLStore
 	store.Cfg.AutoAssignOrg = true
@@ -145,8 +145,13 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) {
 	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(c.t, err)
 
-	_, err = usrSvc.CreateUserForTests(context.Background(), &cmd)
+	user, err := usrSvc.Create(context.Background(), &cmd)
 	require.NoError(c.t, err)
+
+	return User{
+		User:     *user,
+		password: cmd.Password,
+	}
 }
 
 func (c TestContext) createDs(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {

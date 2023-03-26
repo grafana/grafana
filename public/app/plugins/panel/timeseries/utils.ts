@@ -11,6 +11,7 @@ import {
   SortedVector,
   TimeRange,
 } from '@grafana/data';
+import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
@@ -25,6 +26,17 @@ export function prepareGraphableFields(
 ): DataFrame[] | null {
   if (!series?.length) {
     return null;
+  }
+
+  // some datasources simply tag the field as time, but don't convert to milli epochs
+  // so we're stuck with doing the parsing here to avoid Moment slowness everywhere later
+  // this mutates (once)
+  for (let frame of series) {
+    for (let field of frame.fields) {
+      if (field.type === FieldType.time && typeof field.values.get(0) !== 'number') {
+        field.values = convertFieldType(field, { destinationType: FieldType.time }).values;
+      }
+    }
   }
 
   let copy: Field;
@@ -122,11 +134,29 @@ export function prepareGraphableFields(
   }
 
   if (frames.length) {
+    setClassicPaletteIdxs(frames, theme);
     return frames;
   }
 
   return null;
 }
+
+const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2) => {
+  let seriesIndex = 0;
+
+  frames.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      // TODO: also add FieldType.enum type here after https://github.com/grafana/grafana/pull/60491
+      if (field.type === FieldType.number || field.type === FieldType.boolean) {
+        field.state = {
+          ...field.state,
+          seriesIndex: seriesIndex++, // TODO: skip this for fields with custom renderers (e.g. Candlestick)?
+        };
+        field.display = getDisplayProcessor({ field, theme });
+      }
+    });
+  });
+};
 
 export function getTimezones(timezones: string[] | undefined, defaultTimezone: string): string[] {
   if (!timezones || !timezones.length) {

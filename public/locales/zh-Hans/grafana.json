@@ -9,8 +9,7 @@
     "action": {
       "change-theme": "",
       "dark-theme": "",
-      "light-theme": "",
-      "search": ""
+      "light-theme": ""
     },
     "search-box": {
       "placeholder": ""
@@ -18,6 +17,7 @@
     "section": {
       "actions": "",
       "dashboard-search-results": "",
+      "folder-search-results": "",
       "pages": "",
       "preferences": "",
       "recent-dashboards": ""
@@ -31,7 +31,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "操作",
       "data-tab": "数据",
       "error-tab": "错误",
       "json-tab": "JSON",
@@ -84,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "添加面板",
-      "comments-show": "显示仪表板备注",
       "mark-favorite": "标记为收藏",
       "open-original": "打开原始仪表板",
       "playlist-next": "前往下一个仪表板",
@@ -109,6 +107,13 @@
   },
   "folder-picker": {
     "loading": "正在加载文件夹..."
+  },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "",
+      "loading": "",
+      "no-options": ""
+    }
   },
   "library-panel": {
     "add-modal": {
@@ -236,20 +241,11 @@
       "subtitle": "可重复使用的面板，可以添加到多个仪表板",
       "title": "库面板"
     },
-    "live": {
-      "title": "事件流"
-    },
-    "live-cloud": {
-      "title": "云"
-    },
-    "live-pipeline": {
-      "title": "管道"
-    },
-    "live-status": {
-      "title": "状态"
-    },
     "manage-dashboards": {
       "title": "浏览"
+    },
+    "manage-folder": {
+      "subtitle": ""
     },
     "monitoring": {
       "subtitle": "监控和基础设施应用",
@@ -294,7 +290,6 @@
       "title": "场景"
     },
     "search": {
-      "placeholder": "搜索 Grafana",
       "placeholderCommandPalette": ""
     },
     "search-dashboards": {
@@ -345,6 +340,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "按 ESC 退出 kiosk 模式"
+    },
+    "toolbar": {
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
     }
   },
   "news": {
@@ -393,11 +393,42 @@
     }
   },
   "search": {
+    "actions": {
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "view-as-folders": "",
+      "view-as-grid": "",
+      "view-as-list": ""
+    },
     "dashboard-actions": {
       "import": "",
       "new": "",
       "new-dashboard": "",
       "new-folder": ""
+    },
+    "folder-view": {
+      "go-to-folder": "",
+      "select-folder": ""
+    },
+    "result-kind": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
+    },
+    "results-table": {
+      "datasource-header": "",
+      "location-header": "",
+      "name-header": "",
+      "tags-header": "",
+      "type-dashboard": "",
+      "type-folder": "",
+      "type-header": ""
+    },
+    "search-input": {
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
@@ -497,6 +528,11 @@
     },
     "title": "首选项"
   },
+  "tag-filter": {
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "最近使用的绝对范围",
@@ -572,12 +608,20 @@
     "loading": "正在加载会话..."
   },
   "variable": {
+    "adhoc": {
+      "placeholder": ""
+    },
+    "dropdown": {
+      "placeholder": ""
+    },
     "picker": {
-      "input": "",
       "link-all": "",
       "option-all": "",
       "option-selected-values": "",
       "option-tooltip": ""
+    },
+    "textbox": {
+      "placeholder": ""
     }
   }
 }

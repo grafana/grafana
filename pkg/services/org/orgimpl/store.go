@@ -25,7 +25,9 @@ const MainOrgName = "Main Org."
 
 type store interface {
 	Get(context.Context, int64) (*org.Org, error)
+	// Insert adds a new organization. returns organization id
 	Insert(context.Context, *org.Org) (int64, error)
+	// InsertOrgUser adds a new membership record for a user in an organization. returns membership id
 	InsertOrgUser(context.Context, *org.OrgUser) (int64, error)
 	DeleteUserFromAll(context.Context, int64) error
 	Update(ctx context.Context, cmd *org.UpdateOrgCommand) error
@@ -62,7 +64,7 @@ func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
 			return err
 		}
 		if !has {
-			return org.ErrOrgNotFound
+			return org.ErrOrgNotFound.Errorf("failed to get organization with ID: %d", orgID)
 		}
 		return nil
 	})
@@ -76,9 +78,12 @@ func (ss *sqlStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
 	var orgID int64
 	var err error
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		if orgID, err = sess.InsertOne(org); err != nil {
+		if _, err = sess.Insert(org); err != nil {
 			return err
 		}
+
+		orgID = org.ID
+
 		if org.ID != 0 {
 			// it sets the setval in the sequence
 			if err := ss.dialect.PostInsertId("org", sess.Session); err != nil {
@@ -98,11 +103,11 @@ func (ss *sqlStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
 	return orgID, nil
 }
 
+// InsertOrgUser adds a new membership record for a user in an organization.
 func (ss *sqlStore) InsertOrgUser(ctx context.Context, cmd *org.OrgUser) (int64, error) {
-	var orgID int64
 	var err error
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		if orgID, err = sess.Insert(cmd); err != nil {
+		if _, err = sess.Insert(cmd); err != nil {
 			return err
 		}
 		return nil
@@ -110,7 +115,7 @@ func (ss *sqlStore) InsertOrgUser(ctx context.Context, cmd *org.OrgUser) (int64,
 	if err != nil {
 		return 0, err
 	}
-	return orgID, nil
+	return cmd.ID, nil
 }
 
 func (ss *sqlStore) DeleteUserFromAll(ctx context.Context, userID int64) error {
@@ -142,7 +147,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *org.UpdateOrgCommand) error
 		}
 
 		if affectedRows == 0 {
-			return org.ErrOrgNotFound
+			return org.ErrOrgNotFound.Errorf("failed to update organization with ID: %d", cmd.OrgId)
 		}
 
 		sess.PublishAfterCommit(&events.OrgUpdated{
@@ -205,7 +210,7 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.ID); err != nil {
 			return err
 		} else if len(res) != 1 {
-			return org.ErrOrgNotFound
+			return org.ErrOrgNotFound.Errorf("failed to delete organisation with ID: %d", cmd.ID)
 		}
 
 		deletes := []string{
@@ -362,7 +367,7 @@ func (ss *sqlStore) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) 
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.OrgID); err != nil {
 			return err
 		} else if len(res) != 1 {
-			return org.ErrOrgNotFound
+			return org.ErrOrgNotFound.Errorf("failed to add user to organization with ID: %d", cmd.OrgID)
 		}
 
 		entity := org.OrgUser{
@@ -519,7 +524,7 @@ func (ss *sqlStore) GetByID(ctx context.Context, query *org.GetOrgByIDQuery) (*o
 		}
 
 		if !exists {
-			return org.ErrOrgNotFound
+			return org.ErrOrgNotFound.Errorf("failed to get org by ID: %d", query.ID)
 		}
 		return nil
 	})
@@ -633,7 +638,7 @@ func (ss *sqlStore) GetByName(ctx context.Context, query *org.GetOrgByNameQuery)
 		}
 
 		if !exists {
-			return org.ErrOrgNotFound
+			return org.ErrOrgNotFound.Errorf("failed to get org by name: %s", query.Name)
 		}
 		return nil
 	})

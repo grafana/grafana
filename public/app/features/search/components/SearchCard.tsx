@@ -9,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Icon, Portal, TagList, useTheme2 } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { DashboardSectionItem, OnToggleChecked } from '../types';
+import { DashboardViewItem, OnToggleChecked } from '../types';
 
 import { SearchCardExpanded } from './SearchCardExpanded';
 import { SearchCheckbox } from './SearchCheckbox';
@@ -18,7 +18,8 @@ const DELAY_BEFORE_EXPANDING = 500;
 
 export interface Props {
   editable?: boolean;
-  item: DashboardSectionItem;
+  item: DashboardViewItem;
+  isSelected?: boolean;
   onTagSelected?: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
   onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
@@ -28,7 +29,7 @@ export function getThumbnailURL(uid: string, isLight?: boolean) {
   return `/api/dashboards/uid/${uid}/img/thumb/${isLight ? 'light' : 'dark'}`;
 }
 
-export function SearchCard({ editable, item, onTagSelected, onToggleChecked, onClick }: Props) {
+export function SearchCard({ editable, item, isSelected, onTagSelected, onToggleChecked, onClick }: Props) {
   const [hasImage, setHasImage] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [showExpandedView, setShowExpandedView] = useState(false);
@@ -130,7 +131,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked, onC
           className={styles.checkbox}
           aria-label={`Select dashboard ${item.title}`}
           editable={editable}
-          checked={item.checked}
+          checked={isSelected}
           onClick={onCheckboxClick}
         />
         {hasImage ? (
@@ -153,7 +154,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked, onC
       </div>
       <div className={styles.info}>
         <div className={styles.title}>{item.title}</div>
-        <TagList displayMax={1} tags={item.tags} onClick={onTagClick} />
+        <TagList displayMax={1} tags={item.tags ?? []} onClick={onTagClick} />
       </div>
       {showExpandedView && (
         <Portal className={styles.portal}>
@@ -180,7 +181,7 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => {
     card: css`
       background-color: ${theme.colors.background.secondary};
       border: 1px solid ${theme.colors.border.medium};
-      border-radius: 4px;
+      border-radius: ${theme.shape.radius.default};
       display: flex;
       flex-direction: column;
 
@@ -240,8 +241,8 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => {
     info: css`
       align-items: center;
       background-color: ${theme.colors.background.canvas};
-      border-bottom-left-radius: 4px;
-      border-bottom-right-radius: 4px;
+      border-bottom-left-radius: ${theme.shape.radius.default};
+      border-bottom-right-radius: ${theme.shape.radius.default};
       display: flex;
       height: ${theme.spacing(7)};
       gap: ${theme.spacing(1)};

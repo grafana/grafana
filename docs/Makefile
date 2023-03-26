@@ -10,19 +10,24 @@ pull:
 	$(PODMAN) pull $(IMAGE)
 
 docs: pull
-	$(PODMAN) run -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) /bin/bash -c "make server"
+	$(PODMAN) run --init -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) make server
 
 docs-preview: pull
-	$(PODMAN) run -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) /bin/bash -c "make server BUILD_DRAFTS=true"
+	$(PODMAN) run --init -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) make server BUILD_DRAFTS=true
 
 docs-no-pull:
-	$(PODMAN) run -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) /bin/bash -c "make server"
+	$(PODMAN) run --init -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) make server
 
 docs-test: pull
-	$(PODMAN) run -v $(shell pwd)/sources:$(CONTENT_PATH):Z --rm -it $(IMAGE) /bin/bash -c 'make prod'
+	$(PODMAN) run --init -v $(shell pwd)/sources:$(CONTENT_PATH):Z --rm -it $(IMAGE) make prod
 
 # expects that you have grafana/website checked out in same path as the grafana repo.
 docs-local-static: pull
 	if [ ! -d "$(LOCAL_STATIC_PATH)" ]; then echo "local path (website project) $(LOCAL_STATIC_PATH) not found"]; exit 1; fi
-	$(PODMAN) run -v $(shell pwd)/sources:$(CONTENT_PATH):Z \
+	$(PODMAN) run --init -v $(shell pwd)/sources:$(CONTENT_PATH):Z \
 		-v $(shell pwd)/$(LOCAL_STATIC_PATH):/hugo/static:Z -p $(PORT) --rm -it $(IMAGE)
+
+.PHONY: doc-validator/%
+doc-validator/%: ## Run doc-validator on a specific path. To lint the path /docs/sources/administration, run 'make doc-validator/administration'.
+doc-validator/%:
+	$(PODMAN) run --init -v "$(shell pwd)/sources:/sources" grafana/doc-validator:latest --skip-image-validation --include=$(subst doc-validator/,,$@) ./sources /docs/grafana/latest

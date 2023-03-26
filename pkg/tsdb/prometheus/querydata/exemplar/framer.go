@@ -55,22 +55,29 @@ func (f *Framer) Frames() (data.Frames, error) {
 	valueField := data.NewField(data.TimeSeriesValueFieldName, nil, make([]float64, 0, len(exemplars)))
 	exemplarFrame.Fields = append(exemplarFrame.Fields, timeField, valueField)
 	labelNames := f.labelTracker.GetNames()
+	exemplarLabels := make(map[string]string, len(labelNames))
 	for _, labelName := range labelNames {
 		exemplarFrame.Fields = append(exemplarFrame.Fields, data.NewField(labelName, nil, make([]string, 0, len(exemplars))))
 	}
 
 	// add the sampled exemplars to the new exemplar frame
 	for _, b := range exemplars {
+		// Fill labels map with default values
+		for _, n := range labelNames {
+			exemplarLabels[n] = b.SeriesLabels[n]
+		}
+		// Enter corresponding label values from exemplar fields
+		for _, bf := range b.Fields {
+			if _, exists := exemplarLabels[bf.Name]; exists {
+				exemplarLabels[bf.Name] = bf.CopyAt(b.RowIdx).(string)
+			}
+		}
+
 		timeField.Append(b.Timestamp)
 		valueField.Append(b.Value)
 		for i, labelName := range labelNames {
-			labelValue, ok := b.Labels[labelName]
-			if !ok {
-				// if the label is not present in the exemplar labels, then use the series label
-				labelValue = b.SeriesLabels[labelName]
-			}
 			colIdx := i + 2 // +2 to skip time and value fields
-			exemplarFrame.Fields[colIdx].Append(labelValue)
+			exemplarFrame.Fields[colIdx].Append(exemplarLabels[labelName])
 		}
 	}
 
