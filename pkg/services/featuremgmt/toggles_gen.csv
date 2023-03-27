@@ -33,7 +33,7 @@ disableSecretsCompatibility,alpha,@grafana/hosted-grafana-team,false,false,true,
 logRequestsInstrumentedAsUnknown,alpha,@grafana/hosted-grafana-team,false,false,false,false
 dataConnectionsConsole,stable,@grafana/plugins-platform-backend,false,false,false,false
 internationalization,stable,@grafana/user-essentials,false,false,false,false
-topnav,beta,@grafana/user-essentials,false,false,false,false
+topnav,stable,@grafana/user-essentials,false,false,false,false
 grpcServer,alpha,@grafana/grafana-app-platform-squad,true,false,false,false
 entityStore,alpha,@grafana/grafana-app-platform-squad,true,false,false,false
 cloudWatchCrossAccountQuerying,stable,@grafana/aws-plugins,false,false,false,false

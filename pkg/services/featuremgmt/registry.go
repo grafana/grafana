@@ -232,7 +232,8 @@ var (
 		{
 			Name:        "topnav",
 			Description: "Displays new top nav and page layouts",
-			State:       FeatureStateBeta,
+			State:       FeatureStateStable,
+			Expression:  "true", // enabled by default
 			Owner:       grafanaUserEssentialsSquad,
 		},
 		{
