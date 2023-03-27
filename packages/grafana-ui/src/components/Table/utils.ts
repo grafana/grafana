@@ -166,7 +166,7 @@ export function getColumns(
 }
 
 /*
-  Build `Field` data for row numbers and prepend to the field array; 
+  Build `Field` data for row numbers and prepend to the field array;
   this way, on other column's sort, the row numbers will persist in their proper place.
 */
 export function buildFieldsForOptionalRowNums(totalRows: number): Field {
@@ -339,12 +339,12 @@ export function getFooterItems(
   theme2: GrafanaTheme2
 ): FooterItem[] {
   /*
-    Here, `filterFields` is passed as the `headerGroups[0].headers` array 
-    that was destructured from the `useTable` hook. Unfortunately, since 
-    the `headerGroups` object is data based ONLY on the rendered "non-hidden" 
-    column headers, it will NOT include the Row Number column if it has been 
+    Here, `filterFields` is passed as the `headerGroups[0].headers` array
+    that was destructured from the `useTable` hook. Unfortunately, since
+    the `headerGroups` object is data based ONLY on the rendered "non-hidden"
+    column headers, it will NOT include the Row Number column if it has been
     toggled off. This will shift the rendering of the footer left 1 column,
-    creating an off-by-one issue. This is why we test for a `field.id` of "0". 
+    creating an off-by-one issue. This is why we test for a `field.id` of "0".
     If the condition is truthy, the togglable Row Number column is being rendered,
     and we can proceed normally. If not, we must add the field data in its place
     so that the footer data renders in the expected column.
@@ -356,26 +356,26 @@ export function getFooterItems(
     filterFields = [fieldToAdd, ...filterFields];
   }
 
-  /* 
-    The FooterItems[] are calculated using both the `headerGroups[0].headers` 
+  /*
+    The FooterItems[] are calculated using both the `headerGroups[0].headers`
     (filterFields) and `rows` (values) destructured from the useTable() hook.
-    This cacluation is based on the data from each index in `filterFields` 
-    array as well as the corresponding index in the `values` array. 
-    When the user hides a column through an override, the getColumns() 
-    hook is invoked, removes said hidden column, sends the updated column 
-    data to the useTable() hook, which then builds `headerGroups[0].headers` 
-    without the hidden column. However, it doesn't remove the hidden column 
-    from the `row` data, instead it substututes the hidden column row data 
-    with an `undefined` value. Therefore, the `row` array length never changes, 
-    despite the `headerGroups[0].headers` length changing at every column removal. 
-    This makes all footer reduce calculations AFTER the first hidden column 
-    in the `headerGroups[0].headers` break, since the indexing of both 
+    This cacluation is based on the data from each index in `filterFields`
+    array as well as the corresponding index in the `values` array.
+    When the user hides a column through an override, the getColumns()
+    hook is invoked, removes said hidden column, sends the updated column
+    data to the useTable() hook, which then builds `headerGroups[0].headers`
+    without the hidden column. However, it doesn't remove the hidden column
+    from the `row` data, instead it substututes the hidden column row data
+    with an `undefined` value. Therefore, the `row` array length never changes,
+    despite the `headerGroups[0].headers` length changing at every column removal.
+    This makes all footer reduce calculations AFTER the first hidden column
+    in the `headerGroups[0].headers` break, since the indexing of both
     arrays is no longer in parity.
 
-    So, here we simply recursively test for the "hidden" columns 
-    from `headerGroups[0].headers`. Each column has an ID property that corresponds 
-    to its own index, therefore if (`filterField.id` !== `String(index)`), 
-    we know there is one or more hidden columns; at which point we update 
+    So, here we simply recursively test for the "hidden" columns
+    from `headerGroups[0].headers`. Each column has an ID property that corresponds
+    to its own index, therefore if (`filterField.id` !== `String(index)`),
+    we know there is one or more hidden columns; at which point we update
     the index with an ersatz placeholder with just an `id` property.
   */
   addMissingColumnIndex(filterFields);
@@ -499,15 +499,15 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
   `values` property is omitted, as it will be added at a later time.
 */
 export const defaultRowNumberColumnFieldData: Omit<Field, 'values'> = {
-  /* 
+  /*
     Single whitespace as value for `name` property so as to render an empty/invisible column header;
     without the single whitespace, falsey headers (empty strings) are given a default name of "Value".
   */
   name: ' ',
-  display: function (value: string) {
+  display: function (value) {
     return {
       numeric: Number(value),
-      text: value,
+      text: value != null ? String(value) : '',
     };
   },
   type: FieldType.string,

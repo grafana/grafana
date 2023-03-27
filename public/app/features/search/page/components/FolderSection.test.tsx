@@ -15,7 +15,7 @@ describe('FolderSection', () => {
   const mockSelectionToggle = jest.fn();
   const mockSelection = jest.fn();
   const mockSection: DashboardViewItem = {
-    kind: 'folder' as const,
+    kind: 'folder',
     uid: 'my-folder',
     title: 'My folder',
   };

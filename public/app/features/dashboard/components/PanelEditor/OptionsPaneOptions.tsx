@@ -17,7 +17,7 @@ import { OptionSearchEngine } from './state/OptionSearchEngine';
 import { getRecentOptions } from './state/getRecentOptions';
 import { OptionPaneRenderProps } from './types';
 
-export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {
+export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   const { plugin, dashboard, panel } = props;
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState(OptionFilter.All);
