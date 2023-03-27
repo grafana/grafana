@@ -14,8 +14,8 @@ export function createLinkValidator(options: Options) {
   const { pluginId, title, logger } = options;
 
   return (configure: ConfigureFunc<AppPluginExtensionLink>): ConfigureFunc<AppPluginExtensionLink> => {
-    return function validateLink(link, context) {
-      const configured = configure(link, context);
+    return function validateLink(context) {
+      const configured = configure(context);
 
       if (!isString(configured?.path)) {
         return configured;

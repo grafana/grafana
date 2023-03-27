@@ -8,15 +8,15 @@ import { PluginExtensionRegistry } from '@grafana/runtime';
 
 import { createPluginExtensionRegistry } from './registryFactory';
 
-const validateLink = jest.fn((configure, extension, context) => configure?.(extension, context));
-const configureErrorHandler = jest.fn((configure, extension, context) => configure?.(extension, context));
+const validateLink = jest.fn((configure, context) => configure?.(context));
+const configureErrorHandler = jest.fn((configure, context) => configure?.(context));
 const commandErrorHandler = jest.fn((configure, context) => configure?.(context));
 
 jest.mock('./errorHandling', () => ({
   ...jest.requireActual('./errorHandling'),
   handleErrorsInConfigure: jest.fn(() => {
     return jest.fn((configure) => {
-      return jest.fn((extension, context) => configureErrorHandler(configure, extension, context));
+      return jest.fn((context) => configureErrorHandler(configure, context));
     });
   }),
   handleErrorsInHandler: jest.fn(() => {
@@ -30,7 +30,7 @@ jest.mock('./validateLink', () => ({
   ...jest.requireActual('./validateLink'),
   createLinkValidator: jest.fn(() => {
     return jest.fn((configure) => {
-      return jest.fn((extension, context) => validateLink(configure, extension, context));
+      return jest.fn((context) => validateLink(configure, context));
     });
   }),
 }));
@@ -205,15 +205,10 @@ describe('createPluginExtensionRegistry()', () => {
 
       const [configure] = registry[linkConfig.placement];
       const context = {};
-      const configurable = {
-        title: linkConfig.title,
-        description: linkConfig.description,
-        path: linkConfig.path,
-      };
 
       configure(context);
 
-      expect(validateLink).toBeCalledWith(expect.any(Function), configurable, context);
+      expect(validateLink).toBeCalledWith(expect.any(Function), context);
     });
 
     it('should wrap configure function with extension error handling', () => {
@@ -232,15 +227,10 @@ describe('createPluginExtensionRegistry()', () => {
 
       const [configure] = registry[linkConfig.placement];
       const context = {};
-      const configurable = {
-        title: linkConfig.title,
-        description: linkConfig.description,
-        path: linkConfig.path,
-      };
 
       configure(context);
 
-      expect(configureErrorHandler).toBeCalledWith(expect.any(Function), configurable, context);
+      expect(configureErrorHandler).toBeCalledWith(expect.any(Function), context);
     });
 
     it('should return undefined if returned by the provided extension config', () => {
@@ -394,15 +384,11 @@ describe('createPluginExtensionRegistry()', () => {
 
       const [configure] = registry[commandConfig1.placement];
       const context = {};
-      const configurable = {
-        title: commandConfig1.title,
-        description: commandConfig2.description,
-      };
 
       configure(context);
 
       // The error handler is wrapping (decorating) the configure function, so it can provide standard error messages
-      expect(configureErrorHandler).toBeCalledWith(expect.any(Function), configurable, context);
+      expect(configureErrorHandler).toBeCalledWith(expect.any(Function), context);
     });
 
     it('should return undefined if returned by the provided extension config', () => {

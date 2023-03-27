@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { usePrevious } from 'react-use';
+import React, { useState } from 'react';
 
-import { CoreApp, SelectableValue } from '@grafana/data';
+import { CoreApp, isValidDuration, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
-import { reportInteraction } from '@grafana/runtime';
-import { RadioButtonGroup, Select, AutoSizeInput } from '@grafana/ui';
+import { config, reportInteraction } from '@grafana/runtime';
+import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
@@ -19,12 +18,12 @@ export interface Props {
   maxLines: number;
   app?: CoreApp;
   datasource: LokiDatasource;
+  queryStats: QueryStats | undefined;
 }
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
-  ({ app, query, onChange, onRunQuery, maxLines, datasource }) => {
-    const [queryStats, setQueryStats] = useState<QueryStats>();
-    const prevQuery = usePrevious(query);
+  ({ app, query, onChange, onRunQuery, maxLines, datasource, queryStats }) => {
+    const [chunkRangeValid, setChunkRangeValid] = useState(true);
 
     const onQueryTypeChange = (value: LokiQueryType) => {
       onChange({ ...query, queryType: value });
@@ -40,6 +39,17 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       onRunQuery();
     };
 
+    const onChunkRangeChange = (evt: React.FormEvent<HTMLInputElement>) => {
+      const value = evt.currentTarget.value;
+      if (!isValidDuration(value)) {
+        setChunkRangeValid(false);
+        return;
+      }
+      setChunkRangeValid(true);
+      onChange({ ...query, chunkDuration: value });
+      onRunQuery();
+    };
+
     const onLegendFormatChanged = (evt: React.FormEvent<HTMLInputElement>) => {
       onChange({ ...query, legendFormat: evt.currentTarget.value });
       onRunQuery();
@@ -52,25 +62,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
         onRunQuery();
       }
     }
-
-    useEffect(() => {
-      if (query.expr === prevQuery?.expr) {
-        return;
-      }
-
-      if (!query.expr) {
-        setQueryStats(undefined);
-        return;
-      }
-
-      const makeAsyncRequest = async () => {
-        const res = await datasource.getQueryStats(query);
-
-        // this filters out the case where the user has not configured loki to use tsdb, in that case all keys in the query stats will be 0
-        Object.values(res).every((v) => v === 0) ? setQueryStats(undefined) : setQueryStats(res);
-      };
-      makeAsyncRequest();
-    }, [query, prevQuery, datasource]);
 
     let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
     let showMaxLines = isLogsQuery(query.expr);
@@ -119,6 +110,21 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               aria-label="Select resolution"
             />
           </EditorField>
+          {config.featureToggles.lokiQuerySplittingConfig && config.featureToggles.lokiQuerySplitting && (
+            <EditorField
+              label="Chunk Duration"
+              tooltip="Defines the duration of a single query chunk when query chunking is used."
+            >
+              <AutoSizeInput
+                minWidth={14}
+                type="string"
+                min={0}
+                defaultValue={query.chunkDuration ?? '1d'}
+                onCommitChange={onChunkRangeChange}
+                invalid={!chunkRangeValid}
+              />
+            </EditorField>
+          )}
         </QueryOptionGroup>
       </EditorRow>
     );

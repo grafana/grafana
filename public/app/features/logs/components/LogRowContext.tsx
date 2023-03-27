@@ -89,7 +89,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean, 
       background: ${theme.colors.background.primary};
       box-shadow: 0 0 ${theme.spacing(1.25)} ${theme.v1.palette.black};
       border: 1px solid ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       font-family: ${theme.typography.fontFamily};
     `,
     header: css`
@@ -107,7 +107,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean, 
       background: ${theme.colors.background.canvas};
     `,
     top: css`
-      border-radius: 0 0 ${theme.shape.borderRadius()} ${theme.shape.borderRadius()};
+      border-radius: 0 0 ${theme.shape.radius.default} ${theme.shape.radius.default};
       box-shadow: 0 0 ${theme.spacing(1.25)} ${theme.v1.palette.black};
       clip-path: inset(0px -${theme.spacing(1.25)} -${theme.spacing(1.25)} -${theme.spacing(1.25)});
     `,
@@ -119,7 +119,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean, 
       height: ${headerHeight}px;
       background: ${theme.colors.background.secondary};
       border: 1px solid ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.borderRadius()} ${theme.shape.borderRadius()} 0 0;
+      border-radius: ${theme.shape.radius.default} ${theme.shape.radius.default} 0 0;
       box-shadow: 0 0 ${theme.spacing(1.25)} ${theme.v1.palette.black};
       clip-path: inset(-${theme.spacing(1.25)} -${theme.spacing(1.25)} 0px -${theme.spacing(1.25)});
       font-family: ${theme.typography.fontFamily};
@@ -176,7 +176,7 @@ interface LogRowContextGroupProps extends LogRowContextGroupHeaderProps {
   error?: string;
 }
 
-const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeaderProps> = ({
+const LogRowContextGroupHeader = ({
   row,
   rows,
   onLoadMoreContext,
@@ -186,7 +186,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   getLogRowContextUi,
   runContextQuery,
   onHeightChange,
-}) => {
+}: LogRowContextGroupHeaderProps) => {
   const [height, setHeight] = useState(0);
   const datasourceUiRef = React.createRef<HTMLDivElement>();
   const theme = useTheme2();
@@ -259,7 +259,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   );
 };
 
-export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
+export const LogRowContextGroup = ({
   row,
   rows,
   error,
@@ -272,7 +272,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   getLogRowContextUi,
   runContextQuery,
   onHeightChange,
-}) => {
+}: LogRowContextGroupProps) => {
   const [height, setHeight] = useState(0);
   const theme = useTheme2();
   const { commonStyles, logs, bottomContext, afterContext } = getLogRowContextStyles(theme, undefined, height);
@@ -373,7 +373,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   );
 };
 
-export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
+export const LogRowContext = ({
   row,
   context,
   errors,
@@ -384,7 +384,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   wrapLogMessage,
   logsSortOrder,
   getLogRowContextUi,
-}) => {
+}: LogRowContextProps) => {
   useEffect(() => {
     const handleEscKeyDown = (e: KeyboardEvent): void => {
       if (e.key === 'Escape' || e.key === 'Esc') {

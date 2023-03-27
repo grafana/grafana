@@ -53,7 +53,6 @@ async function elasticSendLogItem(timestamp, item) {
   const url = new URL(ELASTIC_BASE_URL);
   url.pathname = `/logs-${timestampText}/_doc`;
   await jsonRequest(item, 'POST', url, 201);
-  console.log(`posted to ${url.toString()}`);
 }
 
 async function elasticSetupIndexTemplate() {
