@@ -230,7 +230,7 @@ describe('PublicDashboardPage', () => {
         expect(screen.queryByTestId(publicDashboardSelector.page)).not.toBeInTheDocument();
         expect(screen.queryByTestId(publicDashboardSelector.NotAvailable.pausedDescription)).not.toBeInTheDocument();
       });
-      expect(await screen.findByTestId(publicDashboardSelector.NotAvailable.title)).toBeInTheDocument();
+      expect(screen.getByTestId(publicDashboardSelector.NotAvailable.title)).toBeInTheDocument();
     });
   });
 });
