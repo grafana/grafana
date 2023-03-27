@@ -195,12 +195,16 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
         </div>
 
         <div className={styles.column}>
-          {!dashboardUid && !isDashboardFetching && <div>Select a dashboard to get a list of available panels</div>}
+          {!selectedDashboardUid && !isDashboardFetching && (
+            <div className={styles.selectDashboardPlaceholder}>
+              <div>Select a dashboard to get a list of available panels</div>
+            </div>
+          )}
           {isDashboardFetching && (
             <LoadingPlaceholder text="Loading dashboard..." className={styles.loadingPlaceholder} />
           )}
 
-          {!isDashboardFetching && (
+          {selectedDashboardUid && !isDashboardFetching && (
             <AutoSizer>
               {({ width, height }) => (
                 <FixedSizeList itemSize={32} height={height} width={width} itemCount={filteredPanels.length}>
@@ -281,6 +285,15 @@ const getPickerStyles = (theme: GrafanaTheme2) => {
       display: flex;
       justify-content: center;
       align-items: center;
+    `,
+    selectDashboardPlaceholder: css`
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+      font-weight: ${theme.typography.fontWeightBold};
     `,
     modal: css`
       height: 100%;
