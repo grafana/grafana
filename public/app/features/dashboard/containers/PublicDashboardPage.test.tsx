@@ -191,8 +191,8 @@ describe('PublicDashboardPage', () => {
         },
       });
       expect(await screen.findByTestId(selectors.TimePicker.openButton)).toBeInTheDocument();
-      expect(await screen.findByTestId(selectors.RefreshPicker.runButtonV2)).toBeInTheDocument();
-      expect(await screen.findByTestId(selectors.RefreshPicker.intervalButtonV2)).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.RefreshPicker.runButtonV2)).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.RefreshPicker.intervalButtonV2)).toBeInTheDocument();
     });
   });
 
