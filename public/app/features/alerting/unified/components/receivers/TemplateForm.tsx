@@ -1,17 +1,19 @@
 import { css } from '@emotion/css';
 import { Location } from 'history';
-import React from 'react';
-import { useForm, Validate } from 'react-hook-form';
+import React, { ReactElement, useState } from 'react';
+import { FormProvider, useForm, useFormContext, Validate } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
+import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Alert, Button, Field, FieldSet, Input, LinkButton, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, FieldSet, Icon, Input, LinkButton, TextArea, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
+import { usePreviewPayloadMutation } from '../../api/templateApi';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { makeAMLink } from '../../utils/misc';
@@ -19,11 +21,12 @@ import { initialAsyncRequestState } from '../../utils/redux';
 import { ensureDefine } from '../../utils/templates';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
+import { PayloadEditor } from './PayloadEditor';
 import { TemplateDataDocs } from './TemplateDataDocs';
 import { TemplateEditor } from './TemplateEditor';
 import { snippets } from './editor/templateDataSuggestions';
 
-interface Values {
+export interface Values {
   name: string;
   content: string;
 }
@@ -42,6 +45,8 @@ interface Props {
 export const isDuplicating = (location: Location) => location.pathname.endsWith('/duplicate');
 
 export const TemplateForm = ({ existing, alertManagerSourceName, config, provenance }: Props) => {
+  const NO_DEFAULT_TEMPLATE = 'No default template found';
+
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
@@ -51,6 +56,12 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
 
   const location = useLocation();
   const isduplicating = isDuplicating(location);
+
+  const [payload, setPayload] = useState(NO_DEFAULT_TEMPLATE);
+  const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
+
+  const [isPayloadEditorOpen, toggleIsPayloadEditorOpen] = useToggle(false);
+  const [isTemplateDataDocsOpen, toggleTemplateDataDocsOpen] = useToggle(false);
 
   const submit = (values: Values) => {
     // wrap content in "define" if it's not already wrapped, in case user did not do it/
@@ -92,86 +103,105 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     );
   };
 
+  const formApi = useForm<Values>({
+    mode: 'onSubmit',
+    defaultValues: existing ?? defaults,
+  });
   const {
     handleSubmit,
     register,
     formState: { errors },
     getValues,
     setValue,
-  } = useForm<Values>({
-    mode: 'onSubmit',
-    defaultValues: existing ?? defaults,
-  });
+  } = formApi;
 
   const validateNameIsUnique: Validate<string> = (name: string) => {
     return !config.template_files[name] || existing?.name === name
       ? true
       : 'Another template with this name already exists.';
   };
+
   return (
-    <form onSubmit={handleSubmit(submit)}>
-      <h4>{existing && !isduplicating ? 'Edit notification template' : 'Create notification template'}</h4>
-      {error && (
-        <Alert severity="error" title="Error saving template">
-          {error.message || (error as any)?.data?.message || String(error)}
-        </Alert>
-      )}
-      {provenance && <ProvisioningAlert resource={ProvisionedResource.Template} />}
-      <FieldSet disabled={Boolean(provenance)}>
-        <Field label="Template name" error={errors?.name?.message} invalid={!!errors.name?.message} required>
-          <Input
-            {...register('name', {
-              required: { value: true, message: 'Required.' },
-              validate: { nameIsUnique: validateNameIsUnique },
-            })}
-            placeholder="Give your template a name"
-            width={42}
-            autoFocus={true}
-          />
-        </Field>
-        <TemplatingGuideline />
-        <div className={styles.contentContainer}>
-          <div>
-            <Field label="Content" error={errors?.content?.message} invalid={!!errors.content?.message} required>
-              <div className={styles.editWrapper}>
-                <AutoSizer>
-                  {({ width, height }) => (
-                    <TemplateEditor
-                      value={getValues('content')}
-                      width={width}
-                      height={height}
-                      onBlur={(value) => setValue('content', value)}
-                    />
-                  )}
-                </AutoSizer>
+    <FormProvider {...formApi}>
+      <form onSubmit={handleSubmit(submit)}>
+        <h4>{existing && !isduplicating ? 'Edit notification template' : 'Create notification template'}</h4>
+        {error && (
+          <Alert severity="error" title="Error saving template">
+            {error.message || (error as any)?.data?.message || String(error)}
+          </Alert>
+        )}
+        {provenance && <ProvisioningAlert resource={ProvisionedResource.Template} />}
+        <FieldSet disabled={Boolean(provenance)}>
+          <Field label="Template name" error={errors?.name?.message} invalid={!!errors.name?.message} required>
+            <Input
+              {...register('name', {
+                required: { value: true, message: 'Required.' },
+                validate: { nameIsUnique: validateNameIsUnique },
+              })}
+              placeholder="Give your template a name"
+              width={42}
+              autoFocus={true}
+            />
+          </Field>
+          <TemplatingGuideline />
+          <div className={styles.contentContainer}>
+            <div>
+              <Field label="Content" error={errors?.content?.message} invalid={!!errors.content?.message} required>
+                <div className={styles.editWrapper}>
+                  <AutoSizer>
+                    {({ width, height }) => (
+                      <TemplateEditor
+                        value={getValues('content')}
+                        width={width}
+                        height={height}
+                        onBlur={(value) => setValue('content', value)}
+                      />
+                    )}
+                  </AutoSizer>
+                </div>
+              </Field>
+              <div className={styles.buttons}>
+                {loading && (
+                  <Button disabled={true} icon="fa fa-spinner" variant="primary">
+                    Saving...
+                  </Button>
+                )}
+                {!loading && (
+                  <Button type="submit" variant="primary">
+                    Save template
+                  </Button>
+                )}
+                <LinkButton
+                  disabled={loading}
+                  href={makeAMLink('alerting/notifications', alertManagerSourceName)}
+                  variant="secondary"
+                  type="button"
+                  fill="outline"
+                >
+                  Cancel
+                </LinkButton>
               </div>
-            </Field>
-            <div className={styles.buttons}>
-              {loading && (
-                <Button disabled={true} icon="fa fa-spinner" variant="primary">
-                  Saving...
-                </Button>
-              )}
-              {!loading && (
-                <Button type="submit" variant="primary">
-                  Save template
-                </Button>
-              )}
-              <LinkButton
-                disabled={loading}
-                href={makeAMLink('alerting/notifications', alertManagerSourceName)}
-                variant="secondary"
-                type="button"
-                fill="outline"
-              >
-                Cancel
-              </LinkButton>
             </div>
+            <TemplatePreview
+              payload={payload}
+              payloadFormatError={payloadFormatError}
+              setPayloadFormatError={setPayloadFormatError}
+            />
           </div>
+        </FieldSet>
+
+        <ExpandableSection
+          title="Data Cheat sheet"
+          isOpen={isTemplateDataDocsOpen}
+          toggleOpen={toggleTemplateDataDocsOpen}
+        >
           <TemplateDataDocs />
-        </div>
-      </FieldSet>
-    </form>
+        </ExpandableSection>
+        <ExpandableSection title="Edit Payload" isOpen={isPayloadEditorOpen} toggleOpen={toggleIsPayloadEditorOpen}>
+          <PayloadEditor payload={payload} setPayload={setPayload} />
+        </ExpandableSection>
+      </form>
+    </FormProvider>
   );
 };
 
@@ -209,6 +239,84 @@ function TemplatingGuideline() {
   );
 }
 
+interface ExpandableSectionProps {
+  title: string;
+  isOpen: boolean;
+  toggleOpen: React.MouseEventHandler<HTMLDivElement> | undefined;
+  children: ReactElement;
+}
+
+function ExpandableSection({ isOpen, toggleOpen, children, title }: ExpandableSectionProps) {
+  const styles = useStyles2(getStyles);
+  return (
+    <Stack gap={2} direction="column">
+      <div className={styles.previewHeader} onClick={toggleOpen}>
+        <div className={styles.toggle}>
+          <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
+        </div>
+        <div className={styles.previewHeaderTitle}>{title}</div>
+      </div>
+      {isOpen && <>{children}</>}
+    </Stack>
+  );
+}
+export const PREVIEW_NOT_AVAILABLE = 'Preview is not available';
+export function TemplatePreview({
+  payload,
+  setPayloadFormatError,
+  payloadFormatError,
+}: {
+  payload: string;
+  payloadFormatError: string | null;
+  setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
+}) {
+  const styles = useStyles2(getStyles);
+
+  const { watch } = useFormContext<Values>();
+
+  const templateContent = watch('content');
+  const [trigger, { data }] = usePreviewPayloadMutation();
+  const previewResults = data?.results;
+  const previewError = data?.error;
+
+  const errorToRender: boolean = Boolean(previewError) || Boolean(payloadFormatError);
+  const errorString = payloadFormatError || previewError;
+  const previewString = !errorToRender && previewResults ? previewResults?.toString() : '';
+  //TODO: render previewResults array ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  const previewToRender = errorToRender ? errorString : previewString ?? PREVIEW_NOT_AVAILABLE;
+
+  const onPreview = () => {
+    try {
+      JSON.parse(payload);
+      trigger({ template: templateContent, payload: payload });
+      setPayloadFormatError(null);
+    } catch (e) {
+      setPayloadFormatError(e instanceof Error ? e.message : 'Invalid JSON.');
+    }
+  };
+
+  return (
+    <Stack direction="row" alignItems="center" gap={2}>
+      <Button onClick={onPreview} icon="arrow-right">
+        Preview
+      </Button>
+
+      <Stack direction="column">
+        <div className={styles.preview.title}> Preview</div>
+        <TextArea
+          required={true}
+          value={previewToRender}
+          disabled={true}
+          className={styles.preview.textArea}
+          rows={10}
+          cols={50}
+        />
+      </Stack>
+    </Stack>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   contentContainer: css`
     display: flex;
@@ -242,4 +350,33 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 640px;
     height: 320px;
   `,
+  toggle: css({
+    color: theme.colors.text.secondary,
+    marginRight: `${theme.spacing(1)}`,
+  }),
+  previewHeader: css({
+    display: 'flex',
+    cursor: 'pointer',
+    alignItems: 'baseline',
+    color: theme.colors.text.primary,
+    '&:hover': {
+      background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
+    },
+  }),
+  previewHeaderTitle: css({
+    flexGrow: 1,
+    overflow: 'hidden',
+    fontSize: theme.typography.h4.fontSize,
+    fontWeight: theme.typography.fontWeightMedium,
+    margin: 0,
+  }),
+  preview: {
+    title: css`
+    fontSize: ${theme.typography.bodySmall.fontSize};,
+    `,
+    textArea: css`
+      width: 605px;
+      height: 291px;
+    `,
+  },
 });
