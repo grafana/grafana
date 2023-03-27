@@ -379,7 +379,7 @@ export const Table = memo((props: Props) => {
 
   /*
     Currently, in the `TablePanel` component, if no table title is given,
-    the table shifts upwards to take up the space the rendered title used to comprise.
+    the table shifts upwards to take up the space the rendered title used to fill.
     This causes the `PanelHeader` component to then overlay on top of the table headers,
     making sorting and filtering impossible.
   */
