@@ -29,6 +29,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `internationalization`              | Enables internationalization                                                                                                                                                 | Yes                |
 | `cloudWatchCrossAccountQuerying`    | Enables cross-account querying in CloudWatch datasources                                                                                                                     | Yes                |
 | `accessTokenExpirationCheck`        | Enable OAuth access_token expiration check and token refresh using the refresh_token                                                                                         |                    |
+| `emptyDashboardPage`                | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                             | Yes                |
 | `disablePrometheusExemplarSampling` | Disable Prometheus examplar sampling                                                                                                                                         |                    |
 | `logsSampleInExplore`               | Enables access to the logs sample feature in Explore                                                                                                                         | Yes                |
 
@@ -81,7 +82,6 @@ Alpha features might be changed or removed without prior notice.
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                      |
 | `elasticsearchBackendMigration`    | Use Elasticsearch as backend data source                                                                  |
 | `datasourceOnboarding`             | Enable data source onboarding page                                                                        |
-| `emptyDashboardPage`               | Enable the redesigned user interface of a dashboard page that includes no panels                          |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                              |
 | `authnService`                     | Use new auth service to perform authentication                                                            |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                         |
