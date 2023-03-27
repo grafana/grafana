@@ -191,7 +191,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 
 		rules := groupedRules[groupKey]
 		numRulesWithoutLimit := len(rules)
-		if limitRulesPerGroup > -1 {
+		if limitRulesPerGroup > -1 && int64(len(rules)) > limitRulesPerGroup {
 			rules = rules[0:limitRulesPerGroup]
 		}
 
@@ -281,7 +281,7 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *folder.Folder, ru
 			alertingRule.Alerts = append(alertingRule.Alerts, alert)
 		}
 
-		if limitAlerts > -1 {
+		if limitAlerts > -1 && int64(len(alertingRule.Alerts)) > limitAlerts {
 			alertingRule.Alerts = alertingRule.Alerts[0:limitAlerts]
 		}
 
