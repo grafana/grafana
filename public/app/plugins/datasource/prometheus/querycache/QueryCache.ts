@@ -8,6 +8,8 @@ import {
   isValidDuration,
   parseDuration,
 } from '@grafana/data/src';
+import { faro } from '@grafana/faro-web-sdk';
+import { config } from '@grafana/runtime/src';
 import { amendTable, Table, trimTable } from 'app/features/live/data/amendTimeSeries';
 
 import { PromQuery } from '../types';
@@ -101,8 +103,21 @@ export class QueryCache {
                 if (this.pendingRequestIds.has(requestId) && isTransferSizeNumber) {
                   // TODO: store full initial request size by targSig so we can diff follow-up partial requests
                   // TODO: log savings between full initial request and incremental request to Faro
+                  const requestTransferSizeString = Math.round(entryTypeCast.transferSize / 1024).toString(10);
 
-                  console.log('Transferred ' + Math.round(entryTypeCast.transferSize / 1024) + 'KB');
+                  console.log('Transferred ' + requestTransferSizeString + 'KB');
+                  if (config.grafanaJavascriptAgent.enabled) {
+                    faro.api.pushEvent(
+                      'prometheus incremental query response size',
+                      {
+                        size: requestTransferSizeString,
+                      },
+                      'no-interaction',
+                      {
+                        skipDedupe: true,
+                      }
+                    );
+                  }
 
                   this.pendingRequestIds.delete(requestId);
                 }
