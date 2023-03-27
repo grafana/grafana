@@ -191,8 +191,8 @@ describe('PublicDashboardPage', () => {
         },
       });
       expect(await screen.findByTestId(selectors.TimePicker.openButton)).toBeInTheDocument();
-      expect(await screen.findByTestId(selectors.RefreshPicker.runButtonV2)).toBeInTheDocument();
-      expect(await screen.findByTestId(selectors.RefreshPicker.intervalButtonV2)).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.RefreshPicker.runButtonV2)).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.RefreshPicker.intervalButtonV2)).toBeInTheDocument();
     });
   });
 
@@ -210,8 +210,8 @@ describe('PublicDashboardPage', () => {
       await waitFor(() => {
         expect(screen.queryByTestId(publicDashboardSelector.page)).not.toBeInTheDocument();
       });
-      expect(await screen.findByTestId(publicDashboardSelector.NotAvailable.title)).toBeInTheDocument();
-      expect(await screen.findByTestId(publicDashboardSelector.NotAvailable.pausedDescription)).toBeInTheDocument();
+      expect(screen.getByTestId(publicDashboardSelector.NotAvailable.title)).toBeInTheDocument();
+      expect(screen.getByTestId(publicDashboardSelector.NotAvailable.pausedDescription)).toBeInTheDocument();
     });
   });
 
@@ -230,7 +230,7 @@ describe('PublicDashboardPage', () => {
         expect(screen.queryByTestId(publicDashboardSelector.page)).not.toBeInTheDocument();
         expect(screen.queryByTestId(publicDashboardSelector.NotAvailable.pausedDescription)).not.toBeInTheDocument();
       });
-      expect(await screen.findByTestId(publicDashboardSelector.NotAvailable.title)).toBeInTheDocument();
+      expect(screen.getByTestId(publicDashboardSelector.NotAvailable.title)).toBeInTheDocument();
     });
   });
 });
