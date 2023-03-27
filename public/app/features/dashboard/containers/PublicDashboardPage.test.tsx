@@ -210,8 +210,8 @@ describe('PublicDashboardPage', () => {
       await waitFor(() => {
         expect(screen.queryByTestId(publicDashboardSelector.page)).not.toBeInTheDocument();
       });
-      expect(await screen.findByTestId(publicDashboardSelector.NotAvailable.title)).toBeInTheDocument();
-      expect(await screen.findByTestId(publicDashboardSelector.NotAvailable.pausedDescription)).toBeInTheDocument();
+      expect(screen.getByTestId(publicDashboardSelector.NotAvailable.title)).toBeInTheDocument();
+      expect(screen.getByTestId(publicDashboardSelector.NotAvailable.pausedDescription)).toBeInTheDocument();
     });
   });
 
