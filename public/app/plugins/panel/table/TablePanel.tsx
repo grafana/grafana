@@ -39,7 +39,7 @@ export function TablePanel(props: Props) {
     subData = subFrames.filter((f) => f.refId === main.refId);
   }
 
-  // If the title is removed from the panel, this will adjust the table height accordingly.
+  // If there is an empty title for the panel, this will adjust the table height accordingly.
   if (!title.length) {
     tableHeight = tableHeight - TITLE_HEIGHT;
   }
