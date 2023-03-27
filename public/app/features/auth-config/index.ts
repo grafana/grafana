@@ -1,6 +1,6 @@
-import { Settings, SettingsSection } from 'app/types';
+import { AuthProviderStatus, Settings, SettingsSection } from 'app/types';
 
-import { AuthProviderInfo } from './types';
+import { AuthProviderInfo, GetStatusHook } from './types';
 
 export * from './types';
 
@@ -15,9 +15,14 @@ const registeredAuthProviders: AuthProviderInfo[] = [
   // { id: 'okta', displayName: 'Okta OAuht2' },
 ];
 
-export function registerAuthProvider(provider: AuthProviderInfo) {
+const authProvidersConfigHooks: { [k: string]: GetStatusHook } = {};
+
+export function registerAuthProvider(provider: AuthProviderInfo, getConfigHook?: GetStatusHook) {
   if (!registeredAuthProviders.find((p) => p.id === provider.id)) {
     registeredAuthProviders.push(provider);
+    if (getConfigHook) {
+      authProvidersConfigHooks[provider.id] = getConfigHook;
+    }
   }
 }
 
@@ -46,4 +51,12 @@ export function getAuthProviders(cfg: Settings): SettingsSection[] {
     }
   }
   return providers;
+}
+
+export async function getAuthProviderStatus(providerId: string): Promise<AuthProviderStatus> {
+  if (authProvidersConfigHooks[providerId]) {
+    const getStatusHook = authProvidersConfigHooks[providerId];
+    return getStatusHook();
+  }
+  return { configured: false, enabled: false };
 }

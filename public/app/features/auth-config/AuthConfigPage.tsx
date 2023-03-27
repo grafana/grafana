@@ -8,9 +8,9 @@ import { Page } from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 
 import { ProviderCard } from './components/ProviderCard';
-import { loadSettings } from './state/actions';
+import { loadSettings, loadProviderStatuses } from './state/actions';
 
-import { getAuthProviders } from '.';
+import { getRegisteredAuthProviders } from '.';
 
 interface OwnProps {}
 
@@ -19,26 +19,33 @@ export type Props = OwnProps & ConnectedProps<typeof connector>;
 function mapStateToProps(state: StoreState) {
   return {
     settings: state.authConfig.settings,
+    providerStatuses: state.authConfig.providerStatuses,
   };
 }
 
 const mapDispatchToProps = {
   loadSettings,
+  loadProviderStatuses,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export const AuthConfigPageUnconnected = ({ settings, loadSettings }: Props): JSX.Element => {
+export const AuthConfigPageUnconnected = ({
+  settings,
+  providerStatuses,
+  loadSettings,
+  loadProviderStatuses,
+}: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
     loadSettings();
-  }, [loadSettings]);
+    loadProviderStatuses();
+  }, [loadSettings, loadProviderStatuses]);
 
-  const authProviders = getAuthProviders(settings);
-  const enabledProviders = authProviders.filter((p) => p.enabled === 'true');
-  const availableProviders = authProviders.filter((p) => p.enabled !== 'true');
-  console.log(authProviders);
+  const authProviders = getRegisteredAuthProviders();
+  const enabledProviders = authProviders.filter((p) => providerStatuses[p.id]?.enabled);
+  const availableProviders = authProviders.filter((p) => !providerStatuses[p.id]?.enabled);
 
   return (
     <Page navId="authentication">
@@ -47,20 +54,22 @@ export const AuthConfigPageUnconnected = ({ settings, loadSettings }: Props): JS
         <div className={styles.cardsContainer}>
           {enabledProviders.map((provider) => (
             <ProviderCard
-              key={provider.providerId}
-              providerId={provider.providerId}
-              displayName={provider.name || provider.displayName}
-              enabled={provider.enabled === 'true'}
+              key={provider.id}
+              providerId={provider.id}
+              displayName={provider.displayName}
+              authType={provider.type}
+              enabled={providerStatuses[provider.id]?.enabled}
             />
           ))}
         </div>
         <div className={styles.cardsContainer}>
           {availableProviders.map((provider) => (
             <ProviderCard
-              key={provider.providerId}
-              providerId={provider.providerId}
-              displayName={provider.name || provider.displayName}
-              enabled={provider.enabled === 'true'}
+              key={provider.id}
+              providerId={provider.id}
+              displayName={provider.displayName}
+              authType={provider.type}
+              enabled={providerStatuses[provider.id]?.enabled}
             />
           ))}
         </div>

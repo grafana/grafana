@@ -1,9 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { AuthConfigState, Settings, SettingsError } from 'app/types';
+import { AuthConfigState, AuthProviderStatus, Settings, SettingsError } from 'app/types';
 
 export const initialState: AuthConfigState = {
   settings: {},
+  providerStatuses: {},
 };
 
 const authConfigSlice = createSlice({
@@ -12,6 +13,9 @@ const authConfigSlice = createSlice({
   reducers: {
     settingsUpdated: (state, action: PayloadAction<Settings>): AuthConfigState => {
       return { ...state, settings: action.payload };
+    },
+    providerStatusesLoaded: (state, action: PayloadAction<{ [key: string]: AuthProviderStatus }>): AuthConfigState => {
+      return { ...state, providerStatuses: action.payload };
     },
     setError: (state, action: PayloadAction<SettingsError>): AuthConfigState => {
       return { ...state, updateError: action.payload };
@@ -28,7 +32,8 @@ const authConfigSlice = createSlice({
   },
 });
 
-export const { settingsUpdated, setError, resetError, setWarning, resetWarning } = authConfigSlice.actions;
+export const { settingsUpdated, providerStatusesLoaded, setError, resetError, setWarning, resetWarning } =
+  authConfigSlice.actions;
 
 export const authConfigReducer = authConfigSlice.reducer;
 
