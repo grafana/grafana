@@ -12,9 +12,8 @@ import {
   SplitOpen,
   DataLink,
   DisplayValue,
-  VariableMap,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, InterpolationsMap } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTransformationVars } from 'app/features/correlations/transformations';
 
@@ -40,7 +39,7 @@ const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasRequiredPermissionsFilte
  * for internal links and undefined for non-internal links
  */
 export interface ExploreFieldLinkModel extends LinkModel<Field> {
-  variables?: VariableMap;
+  variables?: InterpolationsMap;
 }
 
 /**
@@ -134,12 +133,11 @@ export const getFieldLinksForExplore = (options: {
         }
 
         const allVars = { ...scopedVars, ...internalLinkSpecificVars };
-        const varMapFn = getTemplateSrv().getAllVariablesInTarget.bind(getTemplateSrv());
-        const variableData = getVariableUsageInfo(link, allVars, varMapFn);
-        let variables: VariableMap = {};
-        if (Object.keys(variableData.variables).length === 0) {
+        const variableData = getVariableUsageInfo(link, allVars);
+        let variables: InterpolationsMap = new Map();
+        if (Array.from(variableData.variables.keys()).length === 0) {
           const fieldName = field.name.toString();
-          variables[fieldName] = '';
+          variables.set(fieldName, '');
         } else {
           variables = variableData.variables;
         }
@@ -212,18 +210,21 @@ export function useLinks(range: TimeRange, splitOpenFn?: SplitOpen) {
  * Use variable map from templateSrv to determine if all variables have values
  * @param query
  * @param scopedVars
- * @param getVarMap
  */
 export function getVariableUsageInfo<T extends DataLink>(
   query: T,
-  scopedVars: ScopedVars,
-  getVarMap: Function
-): { variables: VariableMap; allVariablesDefined: boolean } {
-  const vars = getVarMap(getStringsFromObject(query), scopedVars);
+  scopedVars: ScopedVars
+): { variables: InterpolationsMap; allVariablesDefined: boolean } {
+  const variables: InterpolationsMap = new Map();
+  const replaceFn = getTemplateSrv().replace.bind(getTemplateSrv());
+  replaceFn(getStringsFromObject(query), scopedVars, undefined, variables);
   // the string processor will convert null to '' but is not ran in all scenarios
   return {
-    variables: vars,
-    allVariablesDefined: Object.values(vars).every((val) => val !== undefined && val !== null && val !== ''),
+    variables: variables,
+    allVariablesDefined: Array.from(variables.keys()).every((key) => {
+      const val = variables.get(key);
+      return val !== undefined && val !== null && val !== '';
+    }),
   };
 }
 

@@ -528,8 +528,7 @@ describe('explore links utils', () => {
       const scopedVars = {
         testVal: { text: '', value: 'val1' },
       };
-      const varMapMock = jest.fn().mockReturnValue({ testVal: scopedVars.testVal.value });
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars, varMapMock).allVariablesDefined;
+      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
 
       expect(dataLinkRtnVal).toBe(true);
     });
@@ -547,8 +546,7 @@ describe('explore links utils', () => {
       const scopedVars = {
         testVal: { text: '', value: 'val1' },
       };
-      const varMapMock = jest.fn().mockReturnValue({ diffVar: null });
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars, varMapMock).allVariablesDefined;
+      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
 
       expect(dataLinkRtnVal).toBe(false);
     });
@@ -566,8 +564,7 @@ describe('explore links utils', () => {
       const scopedVars = {
         testVal: { text: '', value: 'val1' },
       };
-      const varMapMock = jest.fn().mockReturnValue({ testVal: 'val1', diffVar: null });
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars, varMapMock).allVariablesDefined;
+      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
       expect(dataLinkRtnVal).toBe(false);
     });
 
@@ -584,8 +581,7 @@ describe('explore links utils', () => {
       const scopedVars = {
         testVal: { text: '', value: 'val1' },
       };
-      const varMapMock = jest.fn().mockReturnValue({});
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars, varMapMock).allVariablesDefined;
+      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
       expect(dataLinkRtnVal).toBe(true);
     });
   });

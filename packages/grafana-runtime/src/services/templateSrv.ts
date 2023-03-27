@@ -1,4 +1,9 @@
-import { ScopedVars, TimeRange, TypedVariableModel, VariableMap } from '@grafana/data';
+import { ScopedVars, TimeRange, TypedVariableModel } from '@grafana/data';
+
+/**
+ * Represents interpolated expressions
+ */
+export type InterpolationsMap = Map<string, string | null>;
 
 /**
  * Via the TemplateSrv consumers get access to all the available template variables
@@ -16,12 +21,12 @@ export interface TemplateSrv {
   /**
    * Replace the values within the target string.  See also {@link InterpolateFunction}
    */
-  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string;
-
-  /**
-   * Return the variables and values only
-   */
-  getAllVariablesInTarget(target: string, scopedVars: ScopedVars, format?: string | Function): VariableMap;
+  replace(
+    target?: string,
+    scopedVars?: ScopedVars,
+    format?: string | Function,
+    interpolations?: InterpolationsMap
+  ): string;
 
   /**
    * Checks if a target contains template variables.

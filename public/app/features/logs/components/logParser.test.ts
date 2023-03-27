@@ -133,7 +133,10 @@ describe('logParser', () => {
         },
         title: 'test',
         target: '_self',
-        variables: { path: 'test', msg: 'test msg' },
+        variables: new Map([
+          ['path', 'test'],
+          ['msg', 'test msg'],
+        ]),
       };
 
       const fieldWithVarLink: FieldDef = {
@@ -164,9 +167,12 @@ describe('logParser', () => {
         },
         title: 'test',
         target: '_self',
-        variables: { path: undefined, message: false },
+        variables: new Map([
+          ['path', null],
+          ['message', 'false'],
+        ]),
       };
-
+      // TODO FIX TEST
       const fieldWithVarLink: FieldDef = {
         fieldIndex: 2,
         keys: ['Line'],
