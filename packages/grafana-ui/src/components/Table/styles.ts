@@ -90,6 +90,8 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     `;
   };
 
+  console.log(theme.spacing(2), 'spacing');
+
   return {
     theme,
     cellHeight,
@@ -232,7 +234,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         width: ${width};
         display: flex;
         flex-direction: column;
-        margin-top: ${margin}px;
+        margin-top: ${theme.spacing(margin)};
       `;
     },
     row: css`

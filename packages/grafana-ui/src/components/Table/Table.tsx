@@ -46,7 +46,7 @@ export const Table = memo((props: Props) => {
     data,
     subData,
     height,
-    title,
+    parentData,
     maxHeight,
     onCellFilterAdded,
     width,
@@ -279,7 +279,6 @@ export const Table = memo((props: Props) => {
       }
 
       prepareRow(row);
-
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
           {/*add the subtable to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
@@ -379,11 +378,24 @@ export const Table = memo((props: Props) => {
     }
   };
 
+  /*
+    Currently, in the `TablePanel` component, if no table title is givin,
+    the table shifts upwards to take up the space the rendered title used to comprise.
+    This causes the `PanelHeader` component to then overlay on top of the table headers,
+    making sorting and filtering impossible.
+  */
+  const adjustTitleMargin = () => {
+    if (parentData?.titleSource === 'tablePanel') {
+      // If there is no title, add a margin-top of the title height.
+      return !parentData?.title?.length ? TITLE_HEIGHT / 8 : 0;
+    }
+    return 0;
+  };
+
   return (
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table" ref={tableDivRef}>
       <CustomScrollbar hideVerticalTrack={true}>
-        {/* Adjust table's margin-top if nullish title value exists, so as to prevent `PanelHeader` overlap */}
-        <div className={tableStyles.tableContentWrapper(totalColumnsWidth, !!title?.length ? TITLE_HEIGHT : 0)}>
+        <div className={tableStyles.tableContentWrapper(totalColumnsWidth, adjustTitleMargin())}>
           {!noHeader && (
             <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
           )}
