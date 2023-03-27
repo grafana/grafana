@@ -5110,8 +5110,8 @@ __metadata:
     uplot: 1.6.24
     xss: ^1.0.14
   peerDependencies:
-    react: ^16.8.0 || ^17.0.0
-    react-dom: ^16.8.0 || ^17.0.0
+    react: ^17.0.0 || ^18.0.0
+    react-dom: ^17.0.0 || ^18.0.0
   languageName: unknown
   linkType: soft
 
@@ -5342,8 +5342,8 @@ __metadata:
     tslib: 2.5.0
     typescript: 4.8.4
   peerDependencies:
-    react: 17.0.2
-    react-dom: 17.0.2
+    react: ^17.0.0 || ^18.0.0
+    react-dom: ^17.0.0 || ^18.0.0
   languageName: unknown
   linkType: soft
 
@@ -5623,8 +5623,8 @@ __metadata:
     uuid: 9.0.0
     webpack: 5.76.0
   peerDependencies:
-    react: ^16.8.0 || ^17.0.0
-    react-dom: ^16.8.0 || ^17.0.0
+    react: ^17.0.0 || ^18.0.0
+    react-dom: ^17.0.0 || ^18.0.0
   languageName: unknown
   linkType: soft
 
