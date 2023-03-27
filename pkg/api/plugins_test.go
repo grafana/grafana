@@ -22,6 +22,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -135,6 +139,7 @@ func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled}
 			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 			hs.pluginInstaller = NewFakePluginInstaller()
+			hs.pluginFileStore = &fakes.FakePluginFileStore{}
 		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
@@ -167,10 +172,10 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 		nonCdnPlugin := &plugins.Plugin{
 			JSONData: plugins.JSONData{ID: nonCDNPluginID, Info: plugins.Info{Version: "2.0.0"}},
 		}
-		service := &plugins.FakePluginStore{
-			PluginList: []plugins.PluginDTO{
-				cdnPlugin.ToDTO(),
-				nonCdnPlugin.ToDTO(),
+		registry := &fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				cdnPluginID:    cdnPlugin,
+				nonCDNPluginID: nonCdnPlugin,
 			},
 		}
 		cfg := setting.NewCfg()
@@ -195,7 +200,7 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 				"When calling GET for a CDN plugin on",
 				fmt.Sprintf("/public/plugins/%s/%s", cdnPluginID, cas.assetURL),
 				"/public/plugins/:pluginId/*",
-				cfg, service, func(sc *scenarioContext) {
+				cfg, registry, func(sc *scenarioContext) {
 					// Get the prometheus metric (to test that the handler is instrumented correctly)
 					counter := pluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
 						"plugin_id":      cdnPluginID,
@@ -225,7 +230,7 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 			"When calling GET for a non-CDN plugin on",
 			fmt.Sprintf("/public/plugins/%s/%s", nonCDNPluginID, "module.js"),
 			"/public/plugins/:pluginId/*",
-			cfg, service, func(sc *scenarioContext) {
+			cfg, registry, func(sc *scenarioContext) {
 				// Here the metric should not increment
 				var m dto.Metric
 				counter := pluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
@@ -270,14 +275,16 @@ func Test_GetPluginAssets(t *testing.T) {
 	requestedFile := filepath.Clean(tmpFile.Name())
 
 	t.Run("Given a request for an existing plugin file", func(t *testing.T) {
-		p := createPluginDTO(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewLocalFS(map[string]struct{}{requestedFile: {}}, filepath.Dir(requestedFile)))
-		service := &plugins.FakePluginStore{
-			PluginList: []plugins.PluginDTO{p},
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewLocalFS(map[string]struct{}{requestedFile: {}}, filepath.Dir(requestedFile)))
+		pluginRegistry := &fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p.ID: p,
+			},
 		}
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
 		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
-			setting.NewCfg(), service, func(sc *scenarioContext) {
+			setting.NewCfg(), pluginRegistry, func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				require.Equal(t, 200, sc.resp.Code)
@@ -286,14 +293,16 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a relative path", func(t *testing.T) {
-		p := createPluginDTO(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewLocalFS(map[string]struct{}{}, ""))
-		service := &plugins.FakePluginStore{
-			PluginList: []plugins.PluginDTO{p},
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewLocalFS(map[string]struct{}{}, ""))
+		pluginRegistry := &fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p.ID: p,
+			},
 		}
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, tmpFileInParentDir.Name())
 		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
-			setting.NewCfg(), service, func(sc *scenarioContext) {
+			setting.NewCfg(), pluginRegistry, func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				require.Equal(t, 404, sc.resp.Code)
@@ -301,16 +310,18 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an existing plugin file that is not listed as a signature covered file", func(t *testing.T) {
-		p := createPluginDTO(plugins.JSONData{ID: pluginID}, plugins.Core, plugins.NewLocalFS(map[string]struct{}{
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.Core, plugins.NewLocalFS(map[string]struct{}{
 			requestedFile: {},
 		}, ""))
-		service := &plugins.FakePluginStore{
-			PluginList: []plugins.PluginDTO{p},
+		pluginRegistry := &fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p.ID: p,
+			},
 		}
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
 		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
-			setting.NewCfg(), service, func(sc *scenarioContext) {
+			setting.NewCfg(), pluginRegistry, func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				require.Equal(t, 200, sc.resp.Code)
@@ -319,9 +330,11 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin file", func(t *testing.T) {
-		p := createPluginDTO(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewLocalFS(map[string]struct{}{}, ""))
-		service := &plugins.FakePluginStore{
-			PluginList: []plugins.PluginDTO{p},
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewLocalFS(map[string]struct{}{}, ""))
+		service := &fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p.ID: p,
+			},
 		}
 
 		requestedFile := "nonExistent"
@@ -339,14 +352,11 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin", func(t *testing.T) {
-		service := &plugins.FakePluginStore{
-			PluginList: []plugins.PluginDTO{},
-		}
-
+		pluginRegistry := fakes.NewFakePluginRegistry()
 		requestedFile := "nonExistent"
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
 		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
-			setting.NewCfg(), service, func(sc *scenarioContext) {
+			setting.NewCfg(), pluginRegistry, func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				var respJson map[string]interface{}
@@ -469,13 +479,14 @@ func callGetPluginAsset(sc *scenarioContext) {
 }
 
 func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string,
-	cfg *setting.Cfg, pluginStore plugins.Store, fn scenarioFunc) {
+	cfg *setting.Cfg, pluginRegistry registry.Service, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg.IsFeatureToggleEnabled = func(_ string) bool { return false }
 		hs := HTTPServer{
-			Cfg:         cfg,
-			pluginStore: pluginStore,
-			log:         log.NewNopLogger(),
+			Cfg:             cfg,
+			pluginStore:     store.New(pluginRegistry),
+			pluginFileStore: filestore.ProvideService(pluginRegistry),
+			log:             log.NewNopLogger(),
 			pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
 				PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
 				PluginSettings:        cfg.PluginSettings,
@@ -535,19 +546,24 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 }
 
 func Test_PluginsList_AccessControl(t *testing.T) {
-	p1 := createPluginDTO(plugins.JSONData{
+	p1 := createPlugin(plugins.JSONData{
 		ID: "test-app", Type: "app", Name: "test-app",
 		Info: plugins.Info{
 			Version: "1.0.0",
 		}}, plugins.External, plugins.NewLocalFS(map[string]struct{}{}, ""))
-	p2 := createPluginDTO(
+	p2 := createPlugin(
 		plugins.JSONData{ID: "mysql", Type: "datasource", Name: "MySQL",
 			Info: plugins.Info{
 				Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
 				Description: "Data source for MySQL databases",
 			}}, plugins.Core, plugins.NewLocalFS(map[string]struct{}{}, ""))
 
-	pluginStore := plugins.FakePluginStore{PluginList: []plugins.PluginDTO{p1, p2}}
+	pluginRegistry := &fakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			p1.ID: p1,
+			p2.ID: p2,
+		},
+	}
 
 	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
 		"test-app": {ID: 0, OrgID: 1, PluginID: "test-app", PluginVersion: "1.0.0", Enabled: true},
@@ -580,8 +596,9 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.PluginSettings = &pluginSettings
-				hs.pluginStore = pluginStore
-				hs.pluginsUpdateChecker = updatechecker.ProvidePluginsService(hs.Cfg, pluginStore)
+				hs.pluginStore = store.New(pluginRegistry)
+				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
+				hs.pluginsUpdateChecker = updatechecker.ProvidePluginsService(hs.Cfg, nil)
 			})
 
 			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/plugins"), userWithPermissions(1, tc.permissions)))
@@ -598,12 +615,10 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 	}
 }
 
-func createPluginDTO(jd plugins.JSONData, class plugins.Class, files plugins.FS) plugins.PluginDTO {
-	p := &plugins.Plugin{
+func createPlugin(jd plugins.JSONData, class plugins.Class, files plugins.FS) *plugins.Plugin {
+	return &plugins.Plugin{
 		JSONData: jd,
 		Class:    class,
 		FS:       files,
 	}
-
-	return p.ToDTO()
 }
