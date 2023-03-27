@@ -75,7 +75,8 @@ type DashboardVersionDTO struct {
 	RestoredFrom  int              `json:"restoredFrom"`
 	Version       int              `json:"version"`
 	Created       time.Time        `json:"created"`
-	CreatedBy     int64            `json:"createdBy"`
+	CreatedBy     int64            `json:"-"`
+	CreatedByStr  string           `json:"createdBy"`
 	Message       string           `json:"message"`
 	Data          *simplejson.Json `json:"data" db:"data"`
 }

@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -665,6 +666,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 		return response.Error(404, fmt.Sprintf("No versions found for dashboardId %d", dash.ID), err)
 	}
 
+	const cacheKey = "userLogin-"
 	for _, version := range res {
 		if version.RestoredFrom == version.Version {
 			version.Message = "Initial save (created by migration)"
@@ -678,6 +680,24 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 
 		if version.ParentVersion == 0 {
 			version.Message = "Initial save"
+		}
+
+		if version.CreatedBy == 0 {
+			continue
+		}
+
+		key := fmt.Sprintf("%s%d", cacheKey, version.CreatedBy)
+		if cached, found := hs.CacheService.Get(key); found {
+			version.CreatedByStr = cached.(string)
+		} else {
+			u, err := hs.userService.GetByID(c.Req.Context(), &user.GetUserByIDQuery{
+				ID: version.CreatedBy,
+			})
+			if err != nil {
+				hs.log.Debug("failed to get user that has created the dashboard", "err", err, "createdBy", version.CreatedBy, "dashboardUID", version.DashboardUID)
+			}
+			hs.CacheService.Set(key, u.Login, time.Second*5)
+			version.CreatedByStr = u.Login
 		}
 	}
 
