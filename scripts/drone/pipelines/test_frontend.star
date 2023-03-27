@@ -81,6 +81,7 @@ def test_frontend_enterprise(trigger, ver_mode, source, edition = "enterprise"):
             clone_enterprise_step(source),
             init_enterprise_step(ver_mode),
             identify_runner_step(),
+            download_grabpl_step(),
         ] +
         with_deps([yarn_install_step()], ["init-enterprise"]) +
         [
