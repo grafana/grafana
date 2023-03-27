@@ -44,6 +44,7 @@ import {
 
 export const EXPANDER_WIDTH = 50;
 export const OPTIONAL_ROW_NUMBER_COLUMN_WIDTH = 50;
+export const TITLE_HEIGHT = 32;
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {

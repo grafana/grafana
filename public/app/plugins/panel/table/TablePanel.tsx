@@ -5,7 +5,7 @@ import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableV
 import { PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
-import { OPTIONAL_ROW_NUMBER_COLUMN_WIDTH } from '@grafana/ui/src/components/Table/utils';
+import { OPTIONAL_ROW_NUMBER_COLUMN_WIDTH, TITLE_HEIGHT } from '@grafana/ui/src/components/Table/utils';
 
 import { PanelOptions } from './panelcfg.gen';
 
@@ -39,8 +39,9 @@ export function TablePanel(props: Props) {
     subData = subFrames.filter((f) => f.refId === main.refId);
   }
 
+  // If the title is removed from the panel, this will adjust the table height accordingly.
   if (!title.length) {
-    tableHeight = tableHeight - 32;
+    tableHeight = tableHeight - TITLE_HEIGHT;
   }
 
   const tableElement = (

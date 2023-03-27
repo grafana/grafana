@@ -34,11 +34,11 @@ import {
   createFooterCalculationValues,
   EXPANDER_WIDTH,
   buildFieldsForOptionalRowNums,
+  TITLE_HEIGHT,
 } from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
-const TITLE_HEIGHT = 32;
 
 export const Table = memo((props: Props) => {
   const {
@@ -61,7 +61,6 @@ export const Table = memo((props: Props) => {
     enablePagination,
     cellHeight = TableCellHeight.Sm,
   } = props;
-  console.log('🚀 ~ file: Table.tsx:64 ~ Table ~ props:', props);
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
