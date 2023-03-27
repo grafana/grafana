@@ -46,7 +46,7 @@ export const Table = memo((props: Props) => {
     data,
     subData,
     height,
-    hasTitle = false,
+    title,
     maxHeight,
     onCellFilterAdded,
     width,
@@ -61,6 +61,7 @@ export const Table = memo((props: Props) => {
     enablePagination,
     cellHeight = TableCellHeight.Sm,
   } = props;
+  console.log('🚀 ~ file: Table.tsx:64 ~ Table ~ props:', props);
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
@@ -381,7 +382,8 @@ export const Table = memo((props: Props) => {
   return (
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table" ref={tableDivRef}>
       <CustomScrollbar hideVerticalTrack={true}>
-        <div className={tableStyles.tableContentWrapper(totalColumnsWidth, hasTitle ? 0 : TITLE_HEIGHT)}>
+        {/* Adjust table's margin-top if nullish title value exists, so as to prevent `PanelHeader` overlap */}
+        <div className={tableStyles.tableContentWrapper(totalColumnsWidth, !!title?.length ? TITLE_HEIGHT : 0)}>
           {!noHeader && (
             <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
           )}
