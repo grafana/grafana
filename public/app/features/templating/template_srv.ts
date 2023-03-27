@@ -332,8 +332,8 @@ export class TemplateSrv implements BaseTemplateSrv {
       if (this.isAllValue(value)) {
         value = this.getAllValue(variable);
         text = ALL_VARIABLE_TEXT;
-        // skip formatting of custom all values
-        if (variable.allValue && fmt !== FormatRegistryID.text) {
+        // skip formatting of custom all values unless format set to text or percentencode
+        if (variable.allValue && fmt !== FormatRegistryID.text && fmt !== FormatRegistryID.percentEncode) {
           return this.replace(value);
         }
       }
