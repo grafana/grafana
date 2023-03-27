@@ -184,29 +184,35 @@ export function runQueryInChunks(datasource: LokiDatasource, request: DataQueryR
 
   const requests: LokiGroupedRequest = [];
   for (const [chunkRangeMs, queries] of Object.entries(rangePartitionedLogQueries)) {
-    requests.push({
-      request: { ...request, targets: queries },
-      partition: partitionTimeRange(
-        true,
-        request.range,
-        request.intervalMs,
-        queries[0].resolution ?? 1,
-        Number(chunkRangeMs)
-      ),
-    });
+    const resolutionPartition = groupBy(queries, (query) => query.resolution || 1);
+    for (const resolution in resolutionPartition) {
+      requests.push({
+        request: { ...request, targets: resolutionPartition[resolution] },
+        partition: partitionTimeRange(
+          true,
+          request.range,
+          request.intervalMs,
+          Number(resolution),
+          Number(chunkRangeMs)
+        ),
+      });
+    }
   }
 
   for (const [chunkRangeMs, queries] of Object.entries(rangePartitionedMetricQueries)) {
-    requests.push({
-      request: { ...request, targets: queries },
-      partition: partitionTimeRange(
-        false,
-        request.range,
-        request.intervalMs,
-        queries[0].resolution ?? 1,
-        Number(chunkRangeMs)
-      ),
-    });
+    const resolutionPartition = groupBy(queries, (query) => query.resolution || 1);
+    for (const resolution in resolutionPartition) {
+      requests.push({
+        request: { ...request, targets: resolutionPartition[resolution] },
+        partition: partitionTimeRange(
+          false,
+          request.range,
+          request.intervalMs,
+          Number(resolution),
+          Number(chunkRangeMs)
+        ),
+      });
+    }
   }
 
   if (instantQueries.length) {
