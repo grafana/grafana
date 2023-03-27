@@ -77,8 +77,8 @@ func converterFrameForTable(t *types.AzureResponseTable, queryType dataquery.Azu
 		if !ok {
 			return nil, fmt.Errorf("unsupported analytics column type %v", col.Type)
 		}
-		if queryType == dataquery.AzureQueryTypeAzureTraces && resultFormat == dataquery.ResultFormatTrace && col.Name == "serviceTags" {
-			converter = serviceTagsConverter
+		if queryType == dataquery.AzureQueryTypeAzureTraces && resultFormat == dataquery.ResultFormatTrace && (col.Name == "serviceTags" || col.Name == "tags") {
+			converter = tagsConverter
 		}
 		converters = append(converters, converter)
 	}
@@ -121,7 +121,7 @@ type KeyValue struct {
 	Key   string      `json:"key"`
 }
 
-var serviceTagsConverter = data.FieldConverter{
+var tagsConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableJSON,
 	Converter: func(v interface{}) (interface{}, error) {
 		if v == nil {
@@ -131,17 +131,32 @@ var serviceTagsConverter = data.FieldConverter{
 		m := map[string]interface{}{}
 		err := json.Unmarshal([]byte(v.(string)), &m)
 		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal trace serviceTags: %s", err)
+			return nil, fmt.Errorf("failed to unmarshal trace tags: %s", err)
 		}
 
 		parsedTags := make([]*KeyValue, 0, len(m)-1)
 		for k, v := range m {
+			if v == nil {
+				continue
+			}
+
+			switch v.(type) {
+			case float64:
+				if v == 0 {
+					continue
+				}
+			case string:
+				if v == "" {
+					continue
+				}
+			}
+
 			parsedTags = append(parsedTags, &KeyValue{Key: k, Value: v})
 		}
 
 		marshalledTags, err := json.Marshal(parsedTags)
 		if err != nil {
-			return nil, fmt.Errorf("failed to marshal parsed trace serviceTags: %s", err)
+			return nil, fmt.Errorf("failed to marshal parsed trace tags: %s", err)
 		}
 
 		jsonTags := json.RawMessage(marshalledTags)

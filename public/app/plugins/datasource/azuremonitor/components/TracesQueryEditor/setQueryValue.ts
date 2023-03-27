@@ -1,16 +1,22 @@
 import { AzureMonitorQuery } from '../../types';
 
-const buildTracesQuery = (operationId: string): string =>
-  `set truncationmaxrecords=10000;
+import { tableTags } from './consts';
+
+const buildTracesQuery = (operationId: string): string => {
+  const tables = Object.keys(tableTags).join(',');
+  const tags = Object.values(tableTags).join(',');
+  return `set truncationmaxrecords=10000;
     set truncationmaxsize=67108864;
-    union isfuzzy=true traces, customEvents, pageViews, requests, dependencies, exceptions, availabilityResults
+    union isfuzzy=true ${tables}
     | where $__timeFilter()
     | where (operation_Id != '' and operation_Id == '${operationId}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${operationId}')
     | extend duration = iff(isnull(duration), toreal(0), duration)
     | extend spanID = iff(itemType == "pageView" or isempty(id), tostring(new_guid()), id)
     | extend serviceName = iff(isempty(name), column_ifexists("problemId", ""), name)
-    | project operation_Id, operation_ParentId, itemType, spanID, duration, timestamp, serviceName, customDimensions
-    | project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions`;
+    | extend tags = bag_pack_columns(${tags})
+    | project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name
+    | project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags`;
+};
 
 export function setKustoQuery(query: AzureMonitorQuery, operationId?: string): AzureMonitorQuery {
   let kustoQuery;
