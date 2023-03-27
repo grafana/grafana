@@ -105,9 +105,6 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, sk
 	if cr.Headers == nil {
 		cr.Headers = map[string][]string{}
 	}
-	if len(cr.Headers[caching.XCacheHeader]) == 0 {
-		cr.Headers[caching.XCacheHeader] = []string{caching.StatusNone}
-	}
 
 	// do the actual queries
 	resp, err := s.queryData(ctx, user, skipDSCache, reqDTO)
@@ -119,14 +116,14 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, sk
 		}
 	}
 
-	duration := time.Since(start)
-
-	// record request duration
-	QueryRequestHistogram.With(prometheus.Labels{
-		"datasource_type": getDatasourceType(reqDTO.GetUniqueDatasourceTypes()),
-		"cache":           cr.Headers[caching.XCacheHeader][0],
-		"query_type":      getQueryType(user),
-	}).Observe(duration.Seconds())
+	// record request duration if caching was used
+	if h, ok := cr.Headers[caching.XCacheHeader]; ok && len(h) > 0 {
+		QueryRequestHistogram.With(prometheus.Labels{
+			"datasource_type": getDatasourceType(reqDTO.GetUniqueDatasourceTypes()),
+			"cache":           cr.Headers[caching.XCacheHeader][0],
+			"query_type":      getQueryType(user),
+		}).Observe(time.Since(start).Seconds())
+	}
 
 	return QueryResponseWithHeaders{
 		Response: resp,

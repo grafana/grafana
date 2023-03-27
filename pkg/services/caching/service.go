@@ -13,7 +13,6 @@ const (
 	XCacheHeader   = "X-Cache"
 	StatusHit      = "HIT"
 	StatusMiss     = "MISS"
-	StatusNone     = "NONE"
 	StatusBypass   = "BYPASS"
 	StatusError    = "ERROR"
 	StatusDisabled = "DISABLED"
