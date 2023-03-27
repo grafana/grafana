@@ -12,35 +12,26 @@ weight: 900
 
 # Set up Grafana HTTPS for Secure Web Traffic
 
-The Grafana UI is accessed through the web. Setting up HTTPS ensures that
-communication going back and forth between Grafana and the end user is encrypted, to include
-login information and metric data.
+When accessing the Grafana UI through the web, it is important to set up HTTPS to ensure the communication between Grafana and the end user is encrypted, including login credentials and retrieved metric data.
 
-In order to accomplish this, Grafana needs a key to use for encrypting the traffic, and a
-[Secure Socket Layer (SSL) certificate](https://www.kaspersky.com/resource-center/definitions/what-is-a-ssl-certificate) that helps establish the identity of the site. With these two things, 
-users can see the proper browser "lock icon" indicating their connection is secure.
+In order to ensure secure traffic over the internet, Grafana must have a key for encryption as well as a [Secure Socket Layer (SSL) Certificate](https://www.kaspersky.com/resource-center/definitions/what-is-a-ssl-certificate) to verify the identity of the site. This will display a browser "lock icon" which confirms the connection is safe.
 
 ![secure HTTPS connection](/media/docs/grafana/https-config/screenshot-secure-https.png)
 
-This page will outline how to:
+This topic shows you how to:
 
 1. Obtain a certificate and key
 2. Configure Grafana HTTPS
 3. Restart the Grafana server
 
-## Obtain a Certificate and Key
+## Obtain a certificate and key
 
-There are two different methods of accomplishing this, depending on your needs. The
-_self-signed_ method is faster and easier, but results in browser warnings the end user
-will see. The Certificate Authority (CA) signed
-approach requires extra steps, but enables full browser trust.  If you would like to
-read a full treatment of the difference between these approaches,
-[it can be found here](https://www.baeldung.com/cs/self-signed-ca-vs-certificate). You
-should choose only one of the next two sections to follow.
+There are two methods you can use to obtain a certificate and a key. The faster and easier _self-signed_ option might show browser warnings to the user that they will have to accept each time they visit the site. Alternatively, the Certificate Authority (CA) signed option requires more steps to complete, but it enables full trust with the browser. To learn more about the difference between these options, refer to [Difference between self-signed CA and self-signed certificate](https://www.baeldung.com/cs/self-signed-ca-vs-certificate). Choose only one of the two sections to follow.
 
-### Generating a Self-Signed Certificate
 
-In this section we will use `openssl` tooling to generate all necessary files from 
+### Generate a self-signed certificate
+
+This section shows you how to use `openssl` tooling to generate all necessary files from 
 the command line.  
 
 ```bash
