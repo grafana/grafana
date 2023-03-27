@@ -43,6 +43,8 @@ var pluginsCDNFallbackRedirectRequests = promauto.NewCounterVec(prometheus.Count
 	Help:      "Number of requests to the plugins CDN backend redirect fallback handler.",
 }, []string{"plugin_id", "plugin_version"})
 
+var ErrUnexpectedFileExtension = errors.New("unexpected file extension")
+
 func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
@@ -539,12 +541,17 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name string) ([]byte, error) {
 	plugin, exists := hs.pluginStore.Plugin(ctx, pluginId)
 	if !exists {
-		return nil, plugins.NotFoundError{PluginID: pluginId}
+		return make([]byte, 0), plugins.NotFoundError{PluginID: pluginId}
 	}
 
-	md, err := plugin.File(mdFilepath(strings.ToUpper(name)))
+	file, err := mdFilepath(strings.ToUpper(name))
 	if err != nil {
-		md, err = plugin.File(mdFilepath(strings.ToUpper(name)))
+		return make([]byte, 0), err
+	}
+
+	md, err := plugin.File(file)
+	if err != nil {
+		md, err = plugin.File(strings.ToLower(file))
 		if err != nil {
 			return make([]byte, 0), nil
 		}
@@ -554,7 +561,6 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 			hs.log.Error("Failed to close plugin markdown file", "err", err)
 		}
 	}()
-
 	d, err := io.ReadAll(md)
 	if err != nil {
 		return make([]byte, 0), nil
@@ -562,6 +568,14 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 	return d, nil
 }
 
-func mdFilepath(mdFilename string) string {
-	return filepath.Clean(filepath.Join("/", fmt.Sprintf("%s.md", mdFilename)))
+func mdFilepath(mdFilename string) (string, error) {
+	fileExt := filepath.Ext(mdFilename)
+	switch fileExt {
+	case "md":
+		return util.CleanRelativePath(mdFilename)
+	case "":
+		return util.CleanRelativePath(fmt.Sprintf("%s.md", mdFilename))
+	default:
+		return "", ErrUnexpectedFileExtension
+	}
 }
