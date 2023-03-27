@@ -91,10 +91,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
     setLabelBrowserVisible((visible) => !visible);
   };
 
-  const onClickFormatQueryButton = async () => {
-    onChangeInternal({ ...query, expr: await datasource.formatQuery(query.expr) });
-  };
-
   useEffect(() => {
     const update = shouldUpdateStats(query.expr, previousQuery, timerange, previousTimerange);
     if (update) {
@@ -160,9 +156,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           </Button>
           <Button variant="secondary" size="sm" onClick={onClickLabelBrowserButton} data-testid="label-browser-button">
             Label browser
-          </Button>
-          <Button variant="secondary" size="sm" onClick={onClickFormatQueryButton}>
-            Prettify query
           </Button>
         </Stack>
         <QueryHeaderSwitch label="Explain query" value={explain} onChange={onExplainChange} />
