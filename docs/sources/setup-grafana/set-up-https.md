@@ -43,8 +43,7 @@ $ sudo openssl genrsa -out /etc/grafana/grafana.key 2048
 $ sudo openssl req -new -key /etc/grafana/grafana.key -out /etc/grafana/grafana.csr
 ```
 
-Answer the questions when prompted, which will include your fully-qualified domain name, 
-email address, country code, and others, which will look like this:
+When prompted, answer the questions, which might include your fully-qualified domain name, email address, country code, and others. The following example is similar to the prompts you will see.
 
 ```
 You are about to be asked to enter information that will be incorporated
@@ -72,7 +71,7 @@ An optional company name []:
 sudo openssl x509 -req -days 365 -in grafana.csr -signkey /etc/grafana/grafana.key -out /etc/grafana/grafana.crt
 ```
 
-Set appropriate permissions for files
+1. Run the following command to set the appropriate permissions for the files:
 
 ```bash
 sudo chown grafana:grafana /etc/grafana/grafana.crt
@@ -80,29 +79,22 @@ sudo chown grafana:grafana /etc/grafana/grafana.key
 sudo chmod 400 grafana.key /etc/grafana/grafana.crt
 ```
 
-> **Note**: proceeding with these files, browsers
-will provide warnings for the resulting website because the certificate is not trusted
-by a third-party source. Browsers will display trust warnings similar to the following; 
-but the connection will still be encrypted.
+**Note**: When using these files, browsers might provide warnings for the resulting website because a third-party source does not trust the certificate. Browsers will show trust warnings; however, the connection will remain encrypted.
 
-![insecure HTTPS connection](/media/docs/grafana/https-config/screenshot-insecure-https.png)
+![Unsecure HTTPS connection](/media/docs/grafana/https-config/screenshot-insecure-https.png)
 
 
-### Getting a Signed Certificate from LetsEncrypt
+### Obtain a signed certificate from LetsEncrypt
 
-[LetsEncrypt](https://letsencrypt.org/) is a nonprofit certificate authority that provides certificates
-without charge. There are many companies and certificate authorities (CAs) who can provide signed
-certificates. While there are many differences between how to generate those depending on the provider,
-the principles are similar.  We use LetsEncrypt as an example in this section, because it is a free
-option everyone can use.
+[LetsEncrypt](https://letsencrypt.org/) is a nonprofit certificate authority that provides certificates without any charge. For signed certificates, there are multiple companies and certificate authorities (CAs) available. The principles for generating the certificates might vary slightly in accordance with the provider but will generally remain the same. 
 
-> **Note**: the instructions in this section assume a Debian-based linux; support for other
-distributions and OSs can be found in the [certbot instructions](https://certbot.eff.org/instructions).  Further, these instructions require you have a domain name you control. Dynamic domain
-names such as those provided by Amazon EC2 or DynDNS providers will not work.
+The examples in this section use LetsEncrypt because it is free for everyone.
+
+> **Note**: The instructions provided in this section are for a Debian-based Linux system. For other distributions and operating systems, please refer to the [certbot instructions](https://certbot.eff.org/instructions). Also, these instructions require you to have a domain name that you are in control of. Dynamic domain names like those from Amazon EC2 or DynDNS providers will not function.
 
 #### Install snapd and certbot
 
-The `certbot` program is an OSS tool for automatically using LetsEncrypt certificates, and `snapd` is a tool that installs and runs `certbot` for us.
+`certbot` is an open-source program used to manage LetsEncrypt certificates, and `snapd` is a tool that assists in running `certbot` and installing the certificates.
 
 ```bash
 sudo apt-get install snapd
@@ -118,7 +110,7 @@ sudo snap install --classic certbot
 sudo ln -s /snap/bin/certbot /usr/bin/certbot
 ```
 
-#### Generate Certificates with Certbot
+#### Generate certificates with certbot
 
 We run the command `sudo certbot certonly --standalone`, which will prompt for the answer
 to a few questions before generating the certificate.  This process will temporarily open a
