@@ -2,12 +2,13 @@ package certgenerator
 
 import (
 	"context"
+	"path/filepath"
+
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/setting"
 	kubeoptions "k8s.io/kubernetes/pkg/kubeapiserver/options"
-	"path/filepath"
 )
 
 const (

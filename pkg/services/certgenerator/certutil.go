@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,7 +20,6 @@ import (
 	"k8s.io/client-go/util/keyutil"
 	"k8s.io/kubernetes/pkg/controlplane"
 	netutils "k8s.io/utils/net"
-	"net"
 )
 
 const (
@@ -117,12 +117,12 @@ func getServiceIPAndRanges(serviceClusterIPRanges string) (net.IP, net.IPNet, ne
 }
 
 func loadExistingCertPKI(certPath string, keyPath string) (*x509.Certificate, *rsa.PrivateKey, error) {
-	caCertPemBlocks, err := os.ReadFile(certPath)
+	caCertPemBlocks, err := os.ReadFile(filepath.Clean(certPath))
 	if err != nil {
 		return nil, nil, fmt.Errorf("error reading existing Cert: %s", err.Error())
 	}
 
-	caKeyPemBytes, err := os.ReadFile(keyPath)
+	caKeyPemBytes, err := os.ReadFile(filepath.Clean(keyPath))
 	if err != nil {
 		return nil, nil, fmt.Errorf("error reading existing Key: %s", err.Error())
 	}
@@ -235,7 +235,7 @@ func verifyCertChain(cert *x509.Certificate, caCert *x509.Certificate, keyUsages
 	})
 
 	if len(chain) == 0 {
-		err = errors.New("Could not determine the chain from CA certificate.")
+		err = errors.New("could not determine the chain from CA certificate")
 	}
 
 	if err != nil {
