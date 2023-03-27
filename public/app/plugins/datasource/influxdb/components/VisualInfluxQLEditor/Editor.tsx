@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -77,16 +78,9 @@ export const Editor = (props: Props): JSX.Element => {
   const { datasource } = props;
   const { measurement, policy } = query;
 
-  useEffect(() => {
-    let ignore = false;
-    getAllPolicies(datasource).then((result) => {
-      if (!ignore) {
-        setRetentionPolicies(result);
-      }
-    });
-    return () => {
-      ignore = true;
-    };
+  useAsync(async () => {
+    const response = await getAllPolicies(datasource);
+    await setRetentionPolicies(response);
   }, [datasource]);
 
   const allTagKeys = useMemo(async () => {
