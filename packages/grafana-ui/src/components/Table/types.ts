@@ -67,8 +67,7 @@ export interface GrafanaTableState extends TableState {
 export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> {}
 
 type TableParentMetaData = {
-  title: string;
-  titleSource: string;
+  [key: string]: string;
 };
 
 export interface Props {
