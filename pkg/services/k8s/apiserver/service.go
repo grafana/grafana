@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/certgenerator"
+	"github.com/grafana/grafana/pkg/services/k8s/authn"
 	"github.com/grafana/grafana/pkg/services/k8s/kine"
 	"github.com/grafana/grafana/pkg/setting"
 	serveroptions "k8s.io/apiserver/pkg/server/options"
@@ -40,6 +41,7 @@ type service struct {
 	*services.BasicService
 
 	etcdProvider kine.EtcdProvider
+	k8sAuthnAPI  authn.K8sAuthnAPI
 	restConfig   *rest.Config
 
 	dataPath  string
@@ -47,10 +49,11 @@ type service struct {
 	stoppedCh chan error
 }
 
-func ProvideService(etcdProvider kine.EtcdProvider, cfg *setting.Cfg) (*service, error) {
+func ProvideService(etcdProvider kine.EtcdProvider, k8sAuthnAPI authn.K8sAuthnAPI, cfg *setting.Cfg) (*service, error) {
 	s := &service{
 		dataPath:     path.Join(cfg.DataPath, "k8s"),
 		etcdProvider: etcdProvider,
+		k8sAuthnAPI:  k8sAuthnAPI,
 		stopCh:       make(chan struct{}),
 	}
 
@@ -78,6 +81,9 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{DefaultAPIServerHost}
+	serverRunOptions.Authentication.WebHook.ConfigFile = "conf/k8s-authn-webhook-config"
+	serverRunOptions.Authentication.WebHook.Version = "v1"
+
 	etcdConfig := s.etcdProvider.GetConfig()
 	serverRunOptions.Etcd.StorageConfig.Transport.ServerList = etcdConfig.Endpoints
 	serverRunOptions.Etcd.StorageConfig.Transport.CertFile = etcdConfig.TLSConfig.CertFile
