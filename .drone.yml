@@ -20,12 +20,6 @@ steps:
   image: alpine:3.17.1
   name: identify-runner
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
@@ -75,12 +69,6 @@ steps:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.17.1
   name: identify-runner
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
@@ -948,12 +936,6 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.17.1
   name: identify-runner
@@ -1064,12 +1046,6 @@ platform:
   os: linux
 services: []
 steps:
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.17.1
@@ -6658,6 +6634,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 5ec68c71f8a873111cad27fd98e77aa5e2c53ac3716a2212f8010b8352e2fd0a
+hmac: e4c52ad4cc14e3508033bcd338487e334304565a072967171bde149ba6c9d8a7
 
 ...
