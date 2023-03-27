@@ -22,6 +22,7 @@ import (
 )
 
 const (
+	// The CA gets made using a helper in cert package provided in client-go. As such, it picks 0 for the CA serial - hence starting at 1 here.
 	ApiServerCertSerial = iota + 1
 	AuthnClientCertSerial
 	AuthzClientCertSerial
