@@ -14,13 +14,13 @@ This topic explains how to install Grafana dependencies, install Grafana on Redh
 
 You can install Grafana using a YUM repository, using RPM, or by downloading a binary `.tar.gz` file.
 
-If you install via the `.tar.gz` file, then you must manually update Grafana for each new version.
+If you install via RPM or the `.tar.gz` file, then you must manually update Grafana for each new version.
 
 ## Install Grafana using YUM
 
 You can install Grafana from a YUM repository or manually using YUM.
 
-### Install from YUM repository
+### Install Grafana from the YUM repository
 
 If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo yum update`.
 
@@ -33,7 +33,7 @@ If you install from the YUM repository, then Grafana is automatically updated ev
 
 To install Grafana using a YUM repository, complete the following steps:
 
-1. Add a new file to your YUM repo using the method of your choice.
+1. Add a file to your YUM repository using the method of your choice.
 
    The following example uses `nano` to add a file to the YUM repo.
 
@@ -73,7 +73,7 @@ To install Grafana using a YUM repository, complete the following steps:
 
 ### Install Grafana manually using YUM
 
-If you install Grafana manually using YUM, then you must manually update Grafana for each new version. The following steps enable automatic updates for your Grafana installation.
+If you install Grafana manually using YUM, you must manually update Grafana for each new version. The following steps enable automatic updates for your Grafana installation.
 
 1. Navigate to the [Grafana download page](https://grafana.com/grafana/download).
 1. Select the Grafana version you want to install.
