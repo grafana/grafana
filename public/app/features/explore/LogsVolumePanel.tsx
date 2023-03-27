@@ -25,12 +25,13 @@ type Props = {
   width: number;
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
   onLoadLogsVolume: () => void;
+  hideTitle: boolean;
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
 };
 
 export function LogsVolumePanel(props: Props) {
-  const { width, timeZone, splitOpen, onUpdateTimeRange, onHiddenSeriesChanged } = props;
+  const { width, timeZone, splitOpen, onUpdateTimeRange, onHiddenSeriesChanged, hideTitle } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -82,7 +83,7 @@ export function LogsVolumePanel(props: Props) {
     }
   }
 
-  let extraInfoComponent = <span>{extraInfo}</span>;
+  let extraInfoComponent = hideTitle ? null : <span>{extraInfo}</span>;
 
   if (logsVolumeData.state === LoadingState.Streaming) {
     extraInfoComponent = (
