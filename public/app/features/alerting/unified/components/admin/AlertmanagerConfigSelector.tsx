@@ -49,9 +49,7 @@ export default function AlertmanagerConfigSelector({
     }
 
     const configs: ValidAmConfigOption[] = validAmConfigs.map((config) => ({
-      label: config.successfully_applied_at
-        ? `Config from ${new Date(config.successfully_applied_at).toLocaleString()}`
-        : 'Previous config',
+      label: config.last_applied ? `Config from ${new Date(config.last_applied).toLocaleString()}` : 'Previous config',
       value: config,
     }));
     onChange(configs[0]);

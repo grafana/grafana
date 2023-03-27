@@ -162,7 +162,7 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
                 alertmanager_config: status.config,
                 template_files: {},
                 template_file_provenances: result.template_file_provenances,
-                successfully_applied_at: result.successfully_applied_at,
+                last_applied: result.last_applied,
               }));
             }
             return result;
