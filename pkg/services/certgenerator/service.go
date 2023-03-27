@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/setting"
 	kubeoptions "k8s.io/kubernetes/pkg/kubeapiserver/options"
-	"strings"
+	"path/filepath"
 )
 
 const (

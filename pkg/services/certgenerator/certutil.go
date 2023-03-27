@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	certutil "k8s.io/client-go/util/cert"
@@ -18,7 +20,6 @@ import (
 	"k8s.io/kubernetes/pkg/controlplane"
 	netutils "k8s.io/utils/net"
 	"net"
-	"strings"
 )
 
 const (
@@ -39,31 +40,31 @@ func (cu *CertUtil) CACertFile() string {
 }
 
 func (cu *CertUtil) CAKeyFile() string {
-	return strings.Join([]string{cu.K8sDataPath, "ca.key"}, "/")
+	return filepath.Join(cu.K8sDataPath, "ca.key")
 }
 
 func (cu *CertUtil) APIServerCertFile() string {
-	return strings.Join([]string{cu.K8sDataPath, "apiserver.crt"}, "/")
+	return filepath.Join(cu.K8sDataPath, "apiserver.crt")
 }
 
 func (cu *CertUtil) APIServerKeyFile() string {
-	return strings.Join([]string{cu.K8sDataPath, "apiserver.key"}, "/")
+	return filepath.Join(cu.K8sDataPath, "apiserver.key")
 }
 
 func (cu *CertUtil) K8sAuthnClientCertFile() string {
-	return strings.Join([]string{cu.K8sDataPath, "embedded-k8s-authn-plugin.crt"}, "/")
+	return filepath.Join(cu.K8sDataPath, "embedded-k8s-authn-plugin.crt")
 }
 
 func (cu *CertUtil) K8sAuthnClientKeyFile() string {
-	return strings.Join([]string{cu.K8sDataPath, "embedded-k8s-authn-plugin.key"}, "/")
+	return filepath.Join(cu.K8sDataPath, "embedded-k8s-authn-plugin.key")
 }
 
 func (cu *CertUtil) K8sAuthzClientCertFile() string {
-	return strings.Join([]string{cu.K8sDataPath, "embedded-k8s-authz-plugin.crt"}, "/")
+	return filepath.Join(cu.K8sDataPath, "embedded-k8s-authz-plugin.crt")
 }
 
 func (cu *CertUtil) K8sAuthzClientKeyFile() string {
-	return strings.Join([]string{cu.K8sDataPath, "embedded-k8s-authz-plugin.key"}, "/")
+	return filepath.Join(cu.K8sDataPath, "embedded-k8s-authz-plugin.key")
 }
 
 // Lifted from kube-apiserver package as it's a dependency of external cert generation
