@@ -267,10 +267,6 @@ const (
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 
-	// FlagPrometheusResourceBrowserCache
-	// Displays browser caching options in Prometheus data source configuration
-	FlagPrometheusResourceBrowserCache = "prometheusResourceBrowserCache"
-
 	// FlagClientTokenRotation
 	// Replaces the current in-request token rotation so that the client initiates the rotation
 	FlagClientTokenRotation = "clientTokenRotation"
@@ -278,4 +274,8 @@ const (
 	// FlagDisableElasticsearchBackendExploreQuery
 	// Disable executing of Elasticsearch Explore queries trough backend
 	FlagDisableElasticsearchBackendExploreQuery = "disableElasticsearchBackendExploreQuery"
+
+	// FlagPrometheusResourceBrowserCache
+	// Displays browser caching options in Prometheus data source configuration
+	FlagPrometheusResourceBrowserCache = "prometheusResourceBrowserCache"
 )
