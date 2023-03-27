@@ -284,21 +284,21 @@ describe('mergeLogsVolumeDataFrames', () => {
   it('merges log volumes', () => {
     // timestamps: 1 2 3 4 5 6
 
-    // info:       1   1
-    // info:       2 3
-    // expected:   3 3 1
+    // info 1:     1 - 1 - - -
+    // info 2:     2 3 - - - -
+    // total:      3 3 1 - - -
     const infoVolume1 = mockLogVolume('info', [1, 3], [1, 1]);
     const infoVolume2 = mockLogVolume('info', [1, 2], [2, 3]);
 
-    // debug:        2 3
-    // debug       1
-    // expected    1 2 3
+    // debug 1:    - 2 3 - - -
+    // debug 2:    1 - - - 0 -
+    // total:      1 2 3 - 0 -
     const debugVolume1 = mockLogVolume('debug', [2, 3], [2, 3]);
-    const debugVolume2 = mockLogVolume('debug', [1], [1]);
+    const debugVolume2 = mockLogVolume('debug', [1, 5], [1, 0]);
 
-    // error:                1
-    // error:      1         1
-    // expected:   1         2
+    // error 1:    - - - - - 1
+    // error 2:    1 - - - - 1
+    // total:      1 - - - - 2
     const errorVolume1 = mockLogVolume('error', [1, 6], [1, 1]);
     const errorVolume2 = mockLogVolume('error', [1], [1]);
 
@@ -322,6 +322,9 @@ describe('mergeLogsVolumeDataFrames', () => {
           {
             name: 'value',
             values: new ArrayVector([3, 3, 1]),
+            config: {
+              displayNameFromDS: 'info',
+            },
           },
         ],
       },
@@ -330,11 +333,14 @@ describe('mergeLogsVolumeDataFrames', () => {
           {
             name: 'time',
             type: 'time',
-            values: new ArrayVector([1, 2, 3]),
+            values: new ArrayVector([1, 2, 3, 5]),
           },
           {
             name: 'value',
-            values: new ArrayVector([1, 2, 3]),
+            values: new ArrayVector([1, 2, 3, 0]),
+            config: {
+              displayNameFromDS: 'debug',
+            },
           },
         ],
       },
@@ -347,6 +353,9 @@ describe('mergeLogsVolumeDataFrames', () => {
           {
             name: 'value',
             values: new ArrayVector([2, 1]),
+            config: {
+              displayNameFromDS: 'error',
+            },
           },
         ],
       },

@@ -3,6 +3,7 @@ import { distinct, from, mergeMap, Observable, of } from 'rxjs';
 import { scan } from 'rxjs/operators';
 
 import {
+  DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
@@ -84,9 +85,11 @@ const createFallbackLogVolumeProvider = (
         const bucketSize = exploreData.logsResult.bucketSize;
         const targetRefIds = queryTargets.map((query) => query.refId);
         const rowsByRefId = groupBy(exploreData.logsResult.rows, 'dataFrame.refId');
+        let allSeries: DataFrame[] = [];
         targetRefIds.forEach((refId) => {
           if (rowsByRefId[refId]?.length) {
             const series = makeDataFramesForLogs(rowsByRefId[refId], bucketSize);
+            allSeries = [...allSeries, ...series];
             const logVolumeCustomMetaData: LogsVolumeCustomMetaData = {
               logsVolumeType: LogsVolumeType.Limited,
               absoluteRange: exploreData.logsResult?.visibleRange!,
@@ -95,7 +98,7 @@ const createFallbackLogVolumeProvider = (
             };
 
             observer.next({
-              data: series.map((d) => {
+              data: allSeries.map((d) => {
                 const custom = d.meta?.custom || {};
                 return {
                   ...d,

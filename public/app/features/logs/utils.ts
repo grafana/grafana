@@ -11,7 +11,7 @@ import {
   FieldCache,
   FieldType,
   MutableDataFrame,
-  getLogsVolumeDataSourceInfo,
+  QueryResultMeta,
 } from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
@@ -169,10 +169,13 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] 
   }
 
   const aggregated: Record<string, Record<number, number>> = {};
-  const configs: Record<string, FieldConfig> = {};
+  const configs: Record<
+    string,
+    { name?: string; meta: QueryResultMeta; valueFieldConfig: FieldConfig; timeFieldConfig: FieldConfig }
+  > = {};
   let results: DataFrame[] = [];
-  const info = getLogsVolumeDataSourceInfo(dataFrames);
 
+  // collect and aggregate into aggregated object
   dataFrames.forEach((dataFrame) => {
     const fieldCache = new FieldCache(dataFrame);
     const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
@@ -185,9 +188,14 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] 
       throw new Error('Missing value field');
     }
 
-    const level = valueField.config.displayNameFromDS || 'logs';
+    const level = valueField.config.displayNameFromDS || dataFrame.name || 'logs';
     const length = valueField.values.length;
-    configs[level] = { ...valueField.config };
+    configs[level] = {
+      name: dataFrame.name,
+      meta: { ...(dataFrame.meta || {}) },
+      valueFieldConfig: { ...valueField.config },
+      timeFieldConfig: { ...timeField.config },
+    };
 
     for (let pointIndex = 0; pointIndex < length; pointIndex++) {
       const time: number = timeField.values.get(pointIndex);
@@ -198,21 +206,20 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] 
     }
   });
 
+  // convert aggregated into data frames
   Object.keys(aggregated).forEach((level) => {
     const levelDataFrame = new MutableDataFrame();
-    levelDataFrame.meta = {
-      custom: {
-        datasourceName: info?.name,
-      },
-    };
-    levelDataFrame.addField({ name: 'time', type: FieldType.time });
-    levelDataFrame.addField({ name: 'value', type: FieldType.number, config: configs[level] });
+    const { name, meta, timeFieldConfig, valueFieldConfig } = configs[level];
+    levelDataFrame.name = name;
+    levelDataFrame.meta = meta;
+    levelDataFrame.addField({ name: 'Time', type: FieldType.time, config: timeFieldConfig });
+    levelDataFrame.addField({ name: 'Value', type: FieldType.number, config: valueFieldConfig });
 
     for (const time in aggregated[level]) {
       const value = aggregated[level][time];
       levelDataFrame.add({
-        time: Number(time),
-        value,
+        Time: Number(time),
+        Value: value,
       });
     }
 
