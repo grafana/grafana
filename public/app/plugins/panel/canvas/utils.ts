@@ -163,8 +163,8 @@ export function getConnectionsByTarget(element: ElementState, scene: Scene) {
 }
 
 export function updateConnectionsForSource(element: ElementState, scene: Scene) {
-  const connections = getConnectionsByTarget(element, scene);
-  connections.forEach((connection) => {
+  const targetConnections = getConnectionsByTarget(element, scene);
+  targetConnections.forEach((connection) => {
     const sourceConnections = connection.source.options.connections?.splice(0) ?? [];
     const connections = sourceConnections.filter((con) => con.targetName !== element.getName());
     connection.source.onChange({ ...connection.source.options, connections });
