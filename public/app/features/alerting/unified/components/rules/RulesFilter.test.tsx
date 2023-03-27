@@ -19,6 +19,14 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
+jest.mock('./MultipleDataSourcePicker', () => {
+  const original = jest.requireActual('./MultipleDataSourcePicker');
+  return {
+    ...original,
+    MultipleDataSourcePicker: () => <></>,
+  };
+});
+
 setDataSourceSrv(new MockDataSourceSrv({}));
 
 const ui = {

@@ -9,8 +9,7 @@
     "action": {
       "change-theme": "Cĥäŉģę ŧĥęmę...",
       "dark-theme": "Đäřĸ",
-      "light-theme": "Ŀįģĥŧ",
-      "search": "Ŝęäřčĥ"
+      "light-theme": "Ŀįģĥŧ"
     },
     "search-box": {
       "placeholder": "Ŝęäřčĥ őř ĵūmp ŧő..."
@@ -84,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "Åđđ päŉęľ",
-      "comments-show": "Ŝĥőŵ đäşĥþőäřđ čőmmęŉŧş",
       "mark-favorite": "Mäřĸ äş ƒävőřįŧę",
       "open-original": "Øpęŉ őřįģįŉäľ đäşĥþőäřđ",
       "playlist-next": "Ğő ŧő ŉęχŧ đäşĥþőäřđ",
@@ -243,18 +241,6 @@
       "subtitle": "Ŗęūşäþľę päŉęľş ŧĥäŧ čäŉ þę äđđęđ ŧő mūľŧįpľę đäşĥþőäřđş",
       "title": "Ŀįþřäřy päŉęľş"
     },
-    "live": {
-      "title": "Ēvęŉŧ şŧřęämįŉģ"
-    },
-    "live-cloud": {
-      "title": "Cľőūđ"
-    },
-    "live-pipeline": {
-      "title": "Pįpęľįŉę"
-    },
-    "live-status": {
-      "title": "Ŝŧäŧūş"
-    },
     "manage-dashboards": {
       "title": "ßřőŵşę"
     },
@@ -304,7 +290,6 @@
       "title": "Ŝčęŉęş"
     },
     "search": {
-      "placeholder": "Ŝęäřčĥ Ğřäƒäŉä",
       "placeholderCommandPalette": "Ŝęäřčĥ őř ĵūmp ŧő..."
     },
     "search-dashboards": {
@@ -426,6 +411,11 @@
     "folder-view": {
       "go-to-folder": "Ğő ŧő ƒőľđęř",
       "select-folder": "Ŝęľęčŧ ƒőľđęř"
+    },
+    "result-kind": {
+      "dashboard": "Đäşĥþőäřđ",
+      "folder": "Főľđęř",
+      "panel": "Päŉęľ"
     },
     "results-table": {
       "datasource-header": "Đäŧä şőūřčę",

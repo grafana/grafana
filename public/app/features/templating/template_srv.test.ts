@@ -309,6 +309,25 @@ describe('templateSrv', () => {
       const target = _templateSrv.replace('${test:queryparam}', {});
       expect(target).toBe('var-test=All');
     });
+
+    describe('percentencode option', () => {
+      beforeEach(() => {
+        _templateSrv = initTemplateSrv(key, [
+          {
+            type: 'query',
+            name: 'test',
+            current: { value: '$__all' },
+            allValue: '.+',
+            options: [{ value: 'value1' }, { value: 'value2' }],
+          },
+        ]);
+      });
+
+      it('should respect percentencode format', () => {
+        const target = _templateSrv.replace('this.${test:percentencode}', {}, 'regex');
+        expect(target).toBe('this..%2B');
+      });
+    });
   });
 
   describe('lucene format', () => {
@@ -820,6 +839,15 @@ describe('templateSrv', () => {
     it('query variable with adhoc value and queryparam format should return correct queryparam', () => {
       const target = _templateSrv.replace('${adhoc}', { adhoc: { value: 'value2', text: 'value2' } }, 'queryparam');
       expect(target).toBe('var-adhoc=value2');
+    });
+
+    it('Variable named ${__all_variables} is already formatted so skip any formatting', () => {
+      const target = _templateSrv.replace(
+        '${__all_variables}',
+        { __all_variables: { value: 'var-server=server+name+with+plus%2B', skipFormat: true } },
+        'percentencode'
+      );
+      expect(target).toBe('var-server=server+name+with+plus%2B');
     });
   });
 
