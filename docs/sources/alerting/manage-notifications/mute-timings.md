@@ -33,19 +33,21 @@ The following table highlights the key differences between mute timings and sile
 
 ## Create a mute timing
 
-1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
+1. In the left-side menu, click **Alerts & incidents**, and then **Alerting**.
 1. Click **Notification policies**.
-1. From the **Alertmanager** dropdown, select an external Alertmanager. By default, the Grafana Alertmanager is selected.
-1. Click the **Mute Timings** tab.
-1. Click **Add mute timing**.
-1. You will be redirected to a form to create a [time interval](#time-intervals) to match against for your mute timing.
+1. From the **Alertmanager** dropdown, select an external Alertmanager. By default, the **Grafana Alertmanager** is selected.
+1. Scroll down to the Mute timings section.
+1. Click **+ Add mute timing**.
+1. Fill out the form to create a [time interval](#time-intervals) to match against for your mute timing.
 1. Click **Submit** to create the mute timing.
 
 ## Add mute timing to a notification policy
 
+1. In the left-side menu, click **Alerts & incidents**, and then **Alerting**.
+1. Click **Notification policies**.
 1. Identify the notification policy you would like to add the mute timing to and click the **Edit** button for that policy.
-1. From the Mute Timings dropdown select the mute timings you would like to add to the route.
-1. Click the **Save policy** button to save.
+1. In the Specific routing section, from the **Mute timings** dropdown, select the mute timings you would like to add to the route.
+1. Click **Save policy**.
 
 ## Time intervals
 

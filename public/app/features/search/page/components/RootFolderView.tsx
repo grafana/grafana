@@ -6,23 +6,39 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getBackendSrv } from '@grafana/runtime';
 import { Alert, Spinner, useStyles2 } from '@grafana/ui';
+import config from 'app/core/config';
 
 import { contextSrv } from '../../../../core/services/context_srv';
 import impressionSrv from '../../../../core/services/impression_srv';
 import { GENERAL_FOLDER_UID } from '../../constants';
 import { getGrafanaSearcher } from '../../service';
+import { getFolderChildren } from '../../service/folders';
 import { queryResultToViewItem } from '../../service/utils';
-import { DashboardViewItem } from '../../types';
-import { SearchResultsProps } from '../components/SearchResultsTable';
 
 import { FolderSection } from './FolderSection';
+import { SearchResultsProps } from './SearchResultsTable';
+
+async function getChildren() {
+  if (config.featureToggles.nestedFolders) {
+    return getFolderChildren();
+  }
+
+  const searcher = getGrafanaSearcher();
+  const results = await searcher.search({
+    query: '*',
+    kind: ['folder'],
+    sort: searcher.getFolderViewSort(),
+    limit: 1000,
+  });
+
+  return results.view.map((v) => queryResultToViewItem(v, results.view));
+}
 
 type Props = Pick<SearchResultsProps, 'selection' | 'selectionToggle' | 'onTagSelected' | 'onClickItem'> & {
   tags?: string[];
   hidePseudoFolders?: boolean;
 };
-
-export const FolderView = ({
+export const RootFolderView = ({
   selection,
   selectionToggle,
   onTagSelected,
@@ -33,33 +49,22 @@ export const FolderView = ({
   const styles = useStyles2(getStyles);
 
   const results = useAsync(async () => {
-    const folders: DashboardViewItem[] = [];
+    const folders = await getChildren();
+
+    folders.unshift({ title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID });
 
     if (!hidePseudoFolders) {
+      const itemsUIDs = await impressionSrv.getDashboardOpened();
+      if (itemsUIDs.length) {
+        folders.unshift({ title: 'Recent', icon: 'clock-nine', kind: 'folder', uid: '__recent', itemsUIDs });
+      }
+
       if (contextSrv.isSignedIn) {
         const stars = await getBackendSrv().get('api/user/stars');
         if (stars.length > 0) {
-          folders.push({ title: 'Starred', icon: 'star', kind: 'folder', uid: '__starred', itemsUIDs: stars });
+          folders.unshift({ title: 'Starred', icon: 'star', kind: 'folder', uid: '__starred', itemsUIDs: stars });
         }
       }
-
-      const itemsUIDs = await impressionSrv.getDashboardOpened();
-      if (itemsUIDs.length) {
-        folders.push({ title: 'Recent', icon: 'clock-nine', kind: 'folder', uid: '__recent', itemsUIDs });
-      }
-    }
-
-    folders.push({ title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID });
-
-    const searcher = getGrafanaSearcher();
-    const results = await searcher.search({
-      query: '*',
-      kind: ['folder'],
-      sort: searcher.getFolderViewSort(),
-      limit: 1000,
-    });
-    for (const row of results.view) {
-      folders.push(queryResultToViewItem(row, results.view));
     }
 
     return folders;
