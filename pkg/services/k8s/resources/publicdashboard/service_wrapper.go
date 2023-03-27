@@ -140,14 +140,12 @@ func (s *ServiceWrapper) Update(ctx context.Context, u *user.SignedInUser, dto *
 		return nil, err
 	}
 
-	fmt.Println("POTATO")
 	// call k8s resource client
 	uObj, err = publicdashboardResource.Update(ctx, uObj, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, publicdashboardModels.ErrBadRequest.Errorf("validation failed: %s", err)
 	}
 
-	fmt.Println("POTATO")
 	// TODO wait for updated version
 
 	rv := uObj.GetResourceVersion()

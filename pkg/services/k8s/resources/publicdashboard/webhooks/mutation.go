@@ -2,7 +2,6 @@ package webhooks
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -60,7 +59,6 @@ func (api *WebhooksAPI) Mutate(c *contextmodel.ReqContext) response.Response {
 		OldObject: nil,
 	}
 
-	fmt.Println("POTATO")
 	// do mutations
 	mutationResponse, err := api.MutationController.Mutate(c.Req.Context(), req)
 	if err != nil {
@@ -84,7 +82,6 @@ func (api *WebhooksAPI) Mutate(c *contextmodel.ReqContext) response.Response {
 		return response.JSON(int(resp.Response.Result.Code), resp)
 	}
 
-	fmt.Println("POTATO")
 	// add patch to response
 	marshalledOps, err := json.Marshal(ops)
 	if err != nil {

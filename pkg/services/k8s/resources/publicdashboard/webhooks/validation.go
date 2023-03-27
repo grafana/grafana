@@ -2,7 +2,6 @@ package webhooks
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -13,7 +12,6 @@ import (
 )
 
 func (api *WebhooksAPI) Validate(c *contextmodel.ReqContext) response.Response {
-	fmt.Println("POTATO")
 	var resp *k8sAdmission.AdmissionReview
 
 	api.Log.Debug("admission controller validate fired")
@@ -57,7 +55,6 @@ func (api *WebhooksAPI) Validate(c *contextmodel.ReqContext) response.Response {
 		Object:    obj,
 		OldObject: oldObj,
 	}
-	fmt.Println("POTATO")
 
 	err = api.ValidationController.Validate(c.Req.Context(), req)
 	if err != nil {
@@ -67,6 +64,5 @@ func (api *WebhooksAPI) Validate(c *contextmodel.ReqContext) response.Response {
 		resp = makeSuccessfulAdmissionReview(rev.Request.UID, rev.TypeMeta)
 	}
 
-	fmt.Println("POTATO")
 	return response.JSON(int(resp.Response.Result.Code), resp)
 }

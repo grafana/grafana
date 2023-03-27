@@ -61,13 +61,19 @@ func (m *pdMutation) Mutate(ctx context.Context, request *admission.AdmissionReq
 		return nil, err
 	}
 
-	// convert to runtime object
-	uObj, err := modelToK8sObject(k8sPd.Namespace, pd)
+	// convert model into k8s object
+	newk8s, err := modelToK8sObject(k8sPd.Namespace, pd)
 	if err != nil {
 		return nil, err
 	}
 
-	resp.Raw = uObj
+	// apply object fields to existing k8s object so we keep the rest of the
+	// metadata
+	k8sPd.Spec = newk8s.Spec
+	k8sPd.ObjectMeta.Annotations = newk8s.ObjectMeta.Annotations
+
+	// add to response
+	resp.Raw = k8sPd
 
 	return resp, nil
 }
@@ -106,5 +112,6 @@ func (m *pdMutation) update(ctx context.Context, request *admission.AdmissionReq
 	if pd.Share == "" {
 		pd.Share = oldPd.Share
 	}
+
 	return nil
 }
