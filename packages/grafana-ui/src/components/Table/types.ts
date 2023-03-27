@@ -66,16 +66,18 @@ export interface GrafanaTableState extends TableState {
 
 export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> {}
 
+type TableParentMetaData = {
+  title: string;
+  titleSource: string;
+};
+
 export interface Props {
   ariaLabel?: string;
   data: DataFrame;
   width: number;
   height: number;
   maxHeight?: number;
-  parentMetaData?: {
-    title: string;
-    titleSource: string;
-  };
+  parentMetaData?: TableParentMetaData;
   /** Minimal column width specified in pixels */
   columnMinWidth?: number;
   noHeader?: boolean;
