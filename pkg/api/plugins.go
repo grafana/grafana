@@ -521,7 +521,7 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name 
 			return nil, plugins.NotFoundError{PluginID: pluginID}
 		}
 
-		md, err = hs.pluginFileStore.File(ctx, pluginID, mdFilepath(strings.ToUpper(name)))
+		md, err = hs.pluginFileStore.File(ctx, pluginID, mdFilepath(strings.ToLower(name)))
 		if err != nil {
 			return make([]byte, 0), nil
 		}
