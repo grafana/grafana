@@ -1,3 +1,8 @@
+---
+title: Extend the Grafana UI with links and commands
+description: Learn how to add links and commands to the Grafana user interface from an App plugin
+---
+
 # Extend the Grafana UI with links and commands
 
 Use the Plugin extensions API with your Grafana App plugins to add links to the Grafana UI. Doing so allows you to direct users to your plugins pages from various "placements" within the Grafana application.

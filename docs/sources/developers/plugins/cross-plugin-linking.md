@@ -1,6 +1,11 @@
+---
+title: Cross plugin links and commands
+description: Learn how to add plugin links and commands to a grafana app plugin
+---
+
 # Cross plugin links and commands
 
-Using the Plugin extensions API App, plugins can register placements of their own to display other plugins links. This cross-plugin linking creates a more immersive user experience for installed plugins.
+Using the Plugin extensions API, App plugins can register placements of their own to display other plugins links. This cross-plugin linking creates a more immersive user experience for installed plugins.
 
 ## Available placements within plugins
 
