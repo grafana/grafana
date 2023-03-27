@@ -9,13 +9,13 @@ export async function fetchFeedText(url: string) {
 
 export function isAtomFeed(txt: string) {
   const domParser = new DOMParser();
-
   //@ts-ignore
   if (trustedTypes.createPolicy) {
     //@ts-ignore
-    const escapeHTMLPolicy = trustedTypes.createPolicy('atom', { createHTML: (s: string) => s });
+    const escapeHTMLPolicy = trustedTypes.createPolicy('atom', { createHTML: () => txt });
     const escaped = escapeHTMLPolicy.createHTML(txt);
     const doc = domParser.parseFromString(escaped, 'text/xml'); // Feed parseFromString with TrustedHTML
+    console.log(escaped);
     return doc.querySelector('feed') !== null;
   } else {
     const doc = domParser.parseFromString(txt, 'text/xml');

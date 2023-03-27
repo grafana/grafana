@@ -348,13 +348,7 @@
     </script>
             [[if .TrustedTypes]]
             <script nonce="[[.Nonce]]">
-              if (window.trustedTypes && trustedTypes.createPolicy) { // check if browser supports Trusted Types
-                trustedTypes.createPolicy('default', { 
-                  createHTML: string => sanitizett(string),
-                  createScript: string => string, 
-                  createScriptURL: string => {if (string.protocol === 'data:') {return '';}return string;},
-                });
-              }
+
             </script>
             [[end]]
   </body>
