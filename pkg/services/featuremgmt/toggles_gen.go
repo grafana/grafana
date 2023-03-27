@@ -27,10 +27,6 @@ const (
 	// Create and show thumbnails for dashboard search results
 	FlagDashboardPreviews = "dashboardPreviews"
 
-	// FlagLivePipeline
-	// Enable a generic live processing pipeline
-	FlagLivePipeline = "live-pipeline"
-
 	// FlagLiveServiceWebWorker
 	// This will use a webworker thread to processes events rather than the main thread
 	FlagLiveServiceWebWorker = "live-service-web-worker"
@@ -111,9 +107,13 @@ const (
 	// Validate dashboard JSON POSTed to api/dashboards/db
 	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
 
-	// FlagAutoMigrateGraphPanels
-	// Replace the angular graph panel with timeseries
-	FlagAutoMigrateGraphPanels = "autoMigrateGraphPanels"
+	// FlagAutoMigrateOldPanels
+	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
+	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
+
+	// FlagDisableAngular
+	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
+	FlagDisableAngular = "disableAngular"
 
 	// FlagPrometheusWideSeries
 	// Enable wide series responses in the Prometheus datasource
@@ -243,6 +243,10 @@ const (
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
 
+	// FlagOnlyExternalOrgRoleSync
+	// Prohibits a user from changing organization roles synced with external auth providers
+	FlagOnlyExternalOrgRoleSync = "onlyExternalOrgRoleSync"
+
 	// FlagDrawerDataSourcePicker
 	// Changes the user experience for data source selection to a drawer.
 	FlagDrawerDataSourcePicker = "drawerDataSourcePicker"
@@ -262,4 +266,8 @@ const (
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
+
+	// FlagClientTokenRotation
+	// Replaces the current in-request token rotation so that the client initiates the rotation
+	FlagClientTokenRotation = "clientTokenRotation"
 )

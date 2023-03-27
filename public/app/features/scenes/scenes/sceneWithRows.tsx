@@ -1,7 +1,6 @@
 import { VizPanel, NestedScene, SceneTimePicker, SceneFlexLayout, SceneTimeRange } from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
-import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
@@ -49,7 +48,6 @@ export function getSceneWithRows(): DashboardScene {
         }),
       ],
     }),
-    $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],

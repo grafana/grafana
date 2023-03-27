@@ -1,6 +1,9 @@
 package kind
 
-import "strings"
+import (
+	"strings"
+	t "time"
+)
 
 name:        "Dashboard"
 maturity:    "experimental"
@@ -322,7 +325,7 @@ lineage: seqs: [
 				// TODO docs
 				#Snapshot: {
 					// TODO docs
-					created: string @grafanamaturity(NeedsExpertReview)
+					created: string & t.Time
 					// TODO docs
 					expires: string @grafanamaturity(NeedsExpertReview)
 					// TODO docs
@@ -338,7 +341,7 @@ lineage: seqs: [
 					// TODO docs
 					orgId: uint32 @grafanamaturity(NeedsExpertReview)
 					// TODO docs
-					updated: string @grafanamaturity(NeedsExpertReview)
+					updated: string & t.Time
 					// TODO docs
 					url?: string @grafanamaturity(NeedsExpertReview)
 					// TODO docs
