@@ -9,7 +9,7 @@ Using the Plugin extensions API, App plugins can register placements of their ow
 
 ## Available placements within plugins
 
-A placement is a location in another plugins UI where your plugin can insert links or commands. All placements within plugins must start with `plugins/<plugin-id>`.
+A placement is a location in another plugins UI where your plugin can insert links or commands. All placement names within plugins must start with `plugins/<plugin-id>`.
 
 ## How to create a placement within a plugin
 
