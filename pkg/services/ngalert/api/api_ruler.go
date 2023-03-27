@@ -448,7 +448,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64, provena
 			OrgID:           r.OrgID,
 			Title:           r.Title,
 			Condition:       r.Condition,
-			Data:            r.Data,
+			Data:            ApiAlertQueriesFromAlertQueries(r.Data),
 			Updated:         r.Updated,
 			IntervalSeconds: r.IntervalSeconds,
 			Version:         r.Version,
