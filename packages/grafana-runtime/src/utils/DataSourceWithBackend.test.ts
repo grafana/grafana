@@ -103,6 +103,61 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
+  test('correctly creates expression queries', () => {
+    const { mock, ds } = createMockDatasource();
+    ds.query({
+      maxDataPoints: 10,
+      intervalMs: 5000,
+      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: '__expr__' } }],
+      dashboardUID: 'dashA',
+      panelId: 123,
+      queryGroupId: 'abc',
+    } as DataQueryRequest);
+
+    const args = mock.calls[0][0];
+
+    expect(mock.calls.length).toBe(1);
+    expect(args).toMatchInlineSnapshot(`
+      {
+        "data": {
+          "queries": [
+            {
+              "datasource": {
+                "type": "dummy",
+                "uid": "abc",
+              },
+              "datasourceId": 1234,
+              "intervalMs": 5000,
+              "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
+              "refId": "A",
+            },
+            {
+              "datasource": {
+                "name": "Expression",
+                "type": "__expr__",
+                "uid": "__expr__",
+              },
+              "refId": "B",
+            },
+          ],
+        },
+        "headers": {
+          "X-Dashboard-Uid": "dashA",
+          "X-Datasource-Uid": "abc",
+          "X-Grafana-From-Expr": "true",
+          "X-Panel-Id": "123",
+          "X-Plugin-Id": "dummy",
+          "X-Query-Group-Id": "abc",
+        },
+        "hideFromInspector": false,
+        "method": "POST",
+        "requestId": undefined,
+        "url": "/api/ds/query?expression=true",
+      }
+    `);
+  });
+
   test('should apply template variables only for the current data source', () => {
     const { mock, ds } = createMockDatasource();
     ds.applyTemplateVariables = jest.fn();
