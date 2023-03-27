@@ -35,7 +35,7 @@ type K8sAuthnAPIImpl struct {
 	// *services.BasicService
 	RouteRegister routing.RouteRegister
 	Features      *featuremgmt.FeatureManager
-	ApiKey        clients.APIKey
+	ApiKey        *clients.APIKey
 	Log           log.Logger
 }
 
@@ -48,7 +48,7 @@ func ProvideService(
 ) *K8sAuthnAPIImpl {
 	k8sAuthnAPI := &K8sAuthnAPIImpl{
 		RouteRegister: rr,
-		ApiKey:        *clients.ProvideAPIKey(apikeyService, userService),
+		ApiKey:        clients.ProvideAPIKey(apikeyService, userService),
 		Log:           log.New("k8s.webhooks.authn"),
 	}
 

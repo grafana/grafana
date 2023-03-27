@@ -37,3 +37,17 @@ Run a `make clean-k8s-certs` as mentioned above.
 `cert-generator` and `kine`. Once existent, it ends up holding all the
 temporary k8s things such as certificates as well as the SQLite database
 powering Kine.
+   1. `grafana.kubeconfig`: The `kubectl` configuration provided here
+   is apiserver loopback config. While this is mostly an internal detail of
+   how apiserver manages itself, its currently exposed to support development.
+   `./bin/grafana kubectl` command utilizes this kubeconfig. If not present,
+   this config file is created when apiserver boots.
+
+## Configuration
+
+1. **Authentication Webhook**: the config for K8s webhook authentication
+is located in [k8s-authn-webhook-config](../../..//conf/k8s-authn-webhook-config).
+   1. This currently supports using a glsa token from a Grafana service account
+   having `Admin` role. The kubeconfig can be constructed from 
+   `../../../data/k8s/grafana.kubeconfig` with the token swapped with a
+   glsa token.
