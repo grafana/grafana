@@ -316,6 +316,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         const expr = `${variableName}${fieldPath ? `.${fieldPath}` : ''}`;
         const result = this.evaluateVariableExpression(match, variableName, fieldPath, fmt, scopedVars);
         interpolations.set(expr, result === match ? null : result);
+        return result;
       });
     }
 
