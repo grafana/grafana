@@ -27,6 +27,8 @@ This means that you should be able to configure LDAP integration using any compl
 In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "../../../configure-grafana/" >}}) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
+After enabling LDAP, the default behavior is for Grafana users to be created automatically upon successful LDAP authentication. If you prefer for only existing Grafana users to be able to sign in, you can change `allow_sign_up` to `false` in the `[auth.ldap]` section.
+
 ```ini
 [auth.ldap]
 # Set to `true` to enable LDAP integration (default: `false`)
@@ -188,9 +190,7 @@ group_search_filter_user_attribute = "uid"
 
 ### Group Mappings
 
-In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organization and role. These will be synced every time the user logs in, with LDAP being
-the authoritative source. So, if you change a user's role in the Grafana Org. Users page, this change will be reset the next time the user logs in. If you
-change the LDAP groups of a user, the change will take effect the next time the user logs in.
+In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organization and role. These will be synced every time the user logs in, with LDAP being the authoritative source.
 
 The first group mapping that an LDAP user is matched to will be used for the sync. If you have LDAP users that fit multiple mappings, the topmost mapping in the TOML configuration will be used.
 

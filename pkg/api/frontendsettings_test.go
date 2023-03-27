@@ -16,19 +16,19 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager, pstore plugins.Store, psettings pluginSettings.Service) (*web.Mux, *HTTPServer) {
+func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager, pstore plugins.Store, psettings pluginsettings.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	db.InitTestDB(t)
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
@@ -51,7 +51,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 
 	var pluginsSettings = psettings
 	if pluginsSettings == nil {
-		pluginsSettings = &pluginSettings.FakePluginSettings{}
+		pluginsSettings = &pluginsettings.FakePluginSettings{}
 	}
 
 	hs := &HTTPServer{
@@ -72,7 +72,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 			PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
 			PluginSettings:        cfg.PluginSettings,
 		}),
-		SocialService: social.ProvideService(cfg, features, &usagestats.UsageStatsMock{}),
+		SocialService: social.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService()),
 	}
 
 	m := web.New()
@@ -211,51 +211,29 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 	tests := []struct {
 		desc           string
 		pluginStore    func() plugins.Store
-		pluginSettings func() pluginSettings.Service
+		pluginSettings func() pluginsettings.Service
 		expected       settings
 	}{
 		{
-			desc: "app without extensions",
+			desc: "disabled app with preload",
 			pluginStore: func() plugins.Store {
 				return &plugins.FakePluginStore{
-					PluginList: newPlugins("test-app", nil),
-				}
-			},
-			pluginSettings: func() pluginSettings.Service {
-				return &pluginSettings.FakePluginSettings{
-					Plugins: newAppSettings("test-app", true),
-				}
-			},
-			expected: settings{
-				Apps: map[string]*plugins.AppDTO{
-					"test-app": {
-						ID:         "test-app",
-						Preload:    false,
-						Path:       "/test-app/module.js",
-						Version:    "0.5.0",
-						Extensions: nil,
-					},
-				},
-			},
-		},
-		{
-			desc: "enabled app with link extensions",
-			pluginStore: func() plugins.Store {
-				return &plugins.FakePluginStore{
-					PluginList: newPlugins("test-app", []*plugindef.ExtensionsLink{
+					PluginList: []plugins.PluginDTO{
 						{
-							Placement:   "core/home/menu",
-							Type:        plugindef.ExtensionsLinkTypeLink,
-							Title:       "Title",
-							Description: "Home route of app",
-							Path:        "/home",
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:      "test-app",
+								Info:    plugins.Info{Version: "0.5.0"},
+								Type:    plugins.App,
+								Preload: true,
+							},
 						},
-					}),
+					},
 				}
 			},
-			pluginSettings: func() pluginSettings.Service {
-				return &pluginSettings.FakePluginSettings{
-					Plugins: newAppSettings("test-app", true),
+			pluginSettings: func() pluginsettings.Service {
+				return &pluginsettings.FakePluginSettings{
+					Plugins: newAppSettings("test-app", false),
 				}
 			},
 			expected: settings{
@@ -265,82 +243,6 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						Preload: false,
 						Path:    "/test-app/module.js",
 						Version: "0.5.0",
-						Extensions: []*plugindef.ExtensionsLink{
-							{
-								Placement:   "core/home/menu",
-								Type:        plugindef.ExtensionsLinkTypeLink,
-								Title:       "Title",
-								Description: "Home route of app",
-								Path:        "/home",
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc: "disabled app with link extensions",
-			pluginStore: func() plugins.Store {
-				return &plugins.FakePluginStore{
-					PluginList: newPlugins("test-app", []*plugindef.ExtensionsLink{
-						{
-							Placement:   "core/home/menu",
-							Type:        plugindef.ExtensionsLinkTypeLink,
-							Title:       "Title",
-							Description: "Home route of app",
-							Path:        "/home",
-						},
-					}),
-				}
-			},
-			pluginSettings: func() pluginSettings.Service {
-				return &pluginSettings.FakePluginSettings{
-					Plugins: newAppSettings("test-app", false),
-				}
-			},
-			expected: settings{
-				Apps: map[string]*plugins.AppDTO{
-					"test-app": {
-						ID:         "test-app",
-						Preload:    false,
-						Path:       "/test-app/module.js",
-						Version:    "0.5.0",
-						Extensions: nil,
-					},
-				},
-			},
-		},
-		{
-			desc: "disabled app with preload",
-			pluginStore: func() plugins.Store {
-				return &plugins.FakePluginStore{
-					PluginList: []plugins.PluginDTO{
-						{
-							Module: fmt.Sprintf("/%s/module.js", "test-app"),
-							JSONData: plugins.JSONData{
-								ID:         "test-app",
-								Info:       plugins.Info{Version: "0.5.0"},
-								Type:       plugins.App,
-								Extensions: []*plugindef.ExtensionsLink{},
-								Preload:    true,
-							},
-						},
-					},
-				}
-			},
-			pluginSettings: func() pluginSettings.Service {
-				return &pluginSettings.FakePluginSettings{
-					Plugins: newAppSettings("test-app", false),
-				}
-			},
-			expected: settings{
-				Apps: map[string]*plugins.AppDTO{
-					"test-app": {
-						ID:         "test-app",
-						Preload:    false,
-						Path:       "/test-app/module.js",
-						Version:    "0.5.0",
-						Extensions: nil,
 					},
 				},
 			},
@@ -353,29 +255,27 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
 							JSONData: plugins.JSONData{
-								ID:         "test-app",
-								Info:       plugins.Info{Version: "0.5.0"},
-								Type:       plugins.App,
-								Extensions: []*plugindef.ExtensionsLink{},
-								Preload:    true,
+								ID:      "test-app",
+								Info:    plugins.Info{Version: "0.5.0"},
+								Type:    plugins.App,
+								Preload: true,
 							},
 						},
 					},
 				}
 			},
-			pluginSettings: func() pluginSettings.Service {
-				return &pluginSettings.FakePluginSettings{
+			pluginSettings: func() pluginsettings.Service {
+				return &pluginsettings.FakePluginSettings{
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
-						ID:         "test-app",
-						Preload:    true,
-						Path:       "/test-app/module.js",
-						Version:    "0.5.0",
-						Extensions: nil,
+						ID:      "test-app",
+						Preload: true,
+						Path:    "/test-app/module.js",
+						Version: "0.5.0",
 					},
 				},
 			},
@@ -399,27 +299,13 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 	}
 }
 
-func newAppSettings(id string, enabled bool) map[string]*pluginSettings.DTO {
-	return map[string]*pluginSettings.DTO{
+func newAppSettings(id string, enabled bool) map[string]*pluginsettings.DTO {
+	return map[string]*pluginsettings.DTO{
 		id: {
 			ID:       0,
 			OrgID:    1,
 			PluginID: id,
 			Enabled:  enabled,
-		},
-	}
-}
-
-func newPlugins(id string, extensions []*plugindef.ExtensionsLink) []plugins.PluginDTO {
-	return []plugins.PluginDTO{
-		{
-			Module: fmt.Sprintf("/%s/module.js", id),
-			JSONData: plugins.JSONData{
-				ID:         id,
-				Info:       plugins.Info{Version: "0.5.0"},
-				Type:       plugins.App,
-				Extensions: extensions,
-			},
 		},
 	}
 }

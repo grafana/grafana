@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
@@ -9,7 +9,7 @@ import { ChangePassword } from './ChangePassword';
 
 export interface Props extends GrafanaRouteComponentProps<{}, { code: string }> {}
 
-export const ChangePasswordPage: FC<Props> = (props) => {
+export const ChangePasswordPage = (props: Props) => {
   return (
     <LoginLayout>
       <InnerBox>

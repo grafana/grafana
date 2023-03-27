@@ -13,6 +13,7 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { SortOrder } from '@grafana/schema';
 import {
   GraphGradientMode,
   GraphNG,
@@ -67,15 +68,7 @@ const propsToDiff: Array<string | PropDiffFn> = [
 
 interface Props extends PanelProps<PanelOptions> {}
 
-export const BarChartPanel: React.FunctionComponent<Props> = ({
-  data,
-  options,
-  fieldConfig,
-  width,
-  height,
-  timeZone,
-  id,
-}) => {
+export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZone, id }: Props) => {
   const theme = useTheme2();
   const { eventBus } = usePanelContext();
 
@@ -172,6 +165,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     const tooltipMode =
       options.fullHighlight && options.stacking !== StackingMode.None ? TooltipDisplayMode.Multi : options.tooltip.mode;
 
+    const tooltipSort = options.tooltip.mode === TooltipDisplayMode.Multi ? options.tooltip.sort : SortOrder.None;
+
     return (
       <>
         {shouldDisplayCloseButton && (
@@ -197,7 +192,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
           data={info.aligned}
           rowIndex={datapointIdx}
           columnIndex={seriesIdx}
-          sortOrder={options.tooltip.sort}
+          sortOrder={tooltipSort}
           mode={tooltipMode}
         />
       </>

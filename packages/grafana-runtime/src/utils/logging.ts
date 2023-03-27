@@ -76,10 +76,7 @@ export function logDebug(message: string, contexts?: Contexts) {
  */
 export function logError(err: Error, contexts?: Contexts) {
   if (config.grafanaJavascriptAgent.enabled) {
-    faro.api.pushLog([err.message], {
-      level: GrafanaLogLevel.ERROR,
-      context: contexts,
-    });
+    faro.api.pushError(err);
   }
   if (config.sentry.enabled) {
     captureException(err, { contexts });
