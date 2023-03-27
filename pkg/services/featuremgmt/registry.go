@@ -334,7 +334,7 @@ var (
 		},
 		{
 			Name:        "disablePrometheusExemplarSampling",
-			Description: "Disable Prometheus examplar sampling",
+			Description: "Disable Prometheus exemplar sampling",
 			State:       FeatureStateStable,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
@@ -440,6 +440,12 @@ var (
 			Description: "Replaces the current in-request token rotation so that the client initiates the rotation",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAuthnzSquad,
+		},
+		{
+			Name:        "disableElasticsearchBackendExploreQuery",
+			Description: "Disable executing of Elasticsearch Explore queries trough backend",
+			State:       FeatureStateBeta,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 	}
 )
