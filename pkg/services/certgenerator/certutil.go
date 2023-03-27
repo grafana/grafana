@@ -29,6 +29,11 @@ const (
 	AuthzClientCertSerial
 )
 
+const (
+	CannotVerifyErrorMessageFragment = "This is usually caused by only half of the keypair left behind on disk." +
+		"Try clearing the certs and retry"
+)
+
 type CertUtil struct {
 	K8sDataPath string
 	caKey       *rsa.PrivateKey
@@ -201,7 +206,8 @@ func (cu *CertUtil) InitializeCACertPKI() error {
 	exists, err := certutil.CanReadCertAndKey(cu.CACertFile(), cu.CAKeyFile())
 
 	if err != nil {
-		return fmt.Errorf("error reading existing CA PKI: %s", err.Error())
+		return fmt.Errorf("error reading existing CA PKI: %s"+
+			CannotVerifyErrorMessageFragment, err.Error())
 	}
 
 	if exists {
@@ -245,7 +251,8 @@ func (cu *CertUtil) EnsureApiServerPKI(advertiseAddress string, alternateIP net.
 	exists, err := certutil.CanReadCertAndKey(cu.APIServerCertFile(), cu.APIServerCertFile())
 
 	if err != nil {
-		return fmt.Errorf("error reading existing CA PKI: %s", err.Error())
+		return fmt.Errorf("error reading existing CA PKI: %s"+
+			CannotVerifyErrorMessageFragment, err.Error())
 	}
 
 	if exists {
@@ -341,7 +348,8 @@ func (cu *CertUtil) EnsureAuthzClientPKI() error {
 	exists, err := certutil.CanReadCertAndKey(cu.K8sAuthzClientCertFile(), cu.K8sAuthzClientKeyFile())
 
 	if err != nil {
-		return fmt.Errorf("error reading existing authz client PKI: %s", err.Error())
+		return fmt.Errorf("error reading existing authz client PKI: %s"+
+			CannotVerifyErrorMessageFragment, err.Error())
 	}
 
 	if exists {
@@ -365,7 +373,8 @@ func (cu *CertUtil) EnsureAuthnClientPKI() error {
 	exists, err := certutil.CanReadCertAndKey(cu.K8sAuthnClientCertFile(), cu.K8sAuthnClientKeyFile())
 
 	if err != nil {
-		return fmt.Errorf("error reading existing authn client PKI: %s", err.Error())
+		return fmt.Errorf("error reading existing authn client PKI. %s"+
+			CannotVerifyErrorMessageFragment, err.Error())
 	}
 
 	if exists {
