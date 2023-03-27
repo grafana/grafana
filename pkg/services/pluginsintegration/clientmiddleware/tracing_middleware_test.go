@@ -161,7 +161,7 @@ func TestTracingMiddleware(t *testing.T) {
 					_ = tc.run(pluginCtx, cdt)
 				}()
 
-				assert.True(t, didPanic, "should have panicked")
+				require.True(t, didPanic, "should have panicked")
 				require.Len(t, tracer.Spans, 1, "must have 1 span")
 				span := tracer.Spans[0]
 				assert.True(t, span.IsEnded(), "span should be ended")
