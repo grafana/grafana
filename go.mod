@@ -83,7 +83,7 @@ require (
 	github.com/m3db/prometheus_remote_client_golang v0.4.4
 	github.com/magefile/mage v1.14.0
 	github.com/mattn/go-isatty v0.0.16
-	github.com/mattn/go-sqlite3 v1.14.6
+	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/matttproud/golang_protobuf_extensions v1.0.4
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 	github.com/opentracing/opentracing-go v1.2.0
@@ -128,7 +128,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
-	xorm.io/builder v0.3.6
+	xorm.io/builder v0.3.6 // indirect
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
