@@ -14,7 +14,7 @@ import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
 
 type Props = LokiQueryEditorProps & {
   showExplain: boolean;
-  setQueryStats: React.Dispatch<React.SetStateAction<QueryStats | undefined>>;
+  setQueryStats: React.Dispatch<React.SetStateAction<QueryStats | null>>;
 };
 
 export function LokiQueryCodeEditor({
