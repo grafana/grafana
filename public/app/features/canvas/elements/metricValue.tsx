@@ -30,12 +30,21 @@ const MetricValueDisplay = (props: CanvasElementProps<TextConfig, TextData>) => 
 
   const isEditMode = useObservable<boolean>(scene?.editModeEnabled ?? of(false));
 
+  const getDisplayValue = () => {
+    if (!data || !data.text) {
+      return 'NA';
+    }
+
+    return data.text ?? 'Double click to set field';
+  };
+
   if (isEditMode && isSelected) {
     return <MetricValueEdit {...props} />;
   }
+
   return (
     <div className={styles.container}>
-      <span className={styles.span}>{data?.text ? data.text : 'Double click to set field'}</span>
+      <span className={styles.span}>{getDisplayValue()}</span>
     </div>
   );
 };
