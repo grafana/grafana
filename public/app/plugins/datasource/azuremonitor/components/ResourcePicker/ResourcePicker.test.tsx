@@ -89,8 +89,8 @@ describe('AzureMonitor ResourcePicker', () => {
 
   it('should show a subscription as selected if there is one saved', async () => {
     render(<ResourcePicker {...defaultProps} resources={[singleSubscriptionSelectionURI]} />);
-    await waitFor(async () => {
-      expect((await screen.findAllByLabelText('Dev Subscription')).length).toBe(2);
+    await waitFor(() => {
+      expect(screen.getAllByLabelText('Dev Subscription')).toHaveLength(2);
     });
     const subscriptionCheckboxes = await screen.findAllByLabelText('Dev Subscription');
     expect(subscriptionCheckboxes[0]).toBeChecked();
@@ -112,7 +112,7 @@ describe('AzureMonitor ResourcePicker', () => {
     await waitFor(() => {
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
     });
-    await waitFor(async () => {
+    await waitFor(() => {
       expect(screen.getAllByLabelText('db-server')).toHaveLength(2);
     });
     const resourceCheckboxes = await screen.findAllByLabelText('db-server');
