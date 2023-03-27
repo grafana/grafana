@@ -90,8 +90,6 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     `;
   };
 
-  console.log(theme.spacing(2), 'spacing');
-
   return {
     theme,
     cellHeight,
