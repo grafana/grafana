@@ -424,8 +424,8 @@ type = grpc
 url = localhost:9095
 # Defaults to true. If true, it establishes a secure connection to Loki
 tls = true
-# Set the tenant id for Loki communications. Disabled by default.
-# Mandatory to interact with Loki running in multi-tenant mode.
+# Set the tenant ID for Loki communication, which is disabled by default.
+# The tenant ID is required to interact with Loki running in multi-tenant mode.
 tenant_id =
 ```
 
