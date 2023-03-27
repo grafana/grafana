@@ -277,10 +277,6 @@ function incrementName(name: string, nameIncremenet: string, params: string[], i
   return nameIncremenet;
 }
 
-// function addUnique(s: Set<string>, value: string | number) {
-//   s.add(value.toString());
-// }
-
 function rawQuerySelectedFieldsInDataframe(query: string | undefined, dfs: DataFrame[]) {
   const names: Array<string | undefined> = dfs.map((df: DataFrame) => df.name);
 
