@@ -316,11 +316,13 @@ describe('mergeLogsVolumeDataFrames', () => {
       {
         fields: [
           {
-            name: 'time',
+            name: 'Time',
+            type: FieldType.time,
             values: new ArrayVector([1, 2, 3]),
           },
           {
-            name: 'value',
+            name: 'Value',
+            type: FieldType.number,
             values: new ArrayVector([3, 3, 1]),
             config: {
               displayNameFromDS: 'info',
@@ -331,12 +333,13 @@ describe('mergeLogsVolumeDataFrames', () => {
       {
         fields: [
           {
-            name: 'time',
-            type: 'time',
+            name: 'Time',
+            type: FieldType.time,
             values: new ArrayVector([1, 2, 3, 5]),
           },
           {
-            name: 'value',
+            name: 'Value',
+            type: FieldType.number,
             values: new ArrayVector([1, 2, 3, 0]),
             config: {
               displayNameFromDS: 'debug',
@@ -347,11 +350,13 @@ describe('mergeLogsVolumeDataFrames', () => {
       {
         fields: [
           {
-            name: 'time',
+            name: 'Time',
+            type: FieldType.time,
             values: new ArrayVector([1, 6]),
           },
           {
-            name: 'value',
+            name: 'Value',
+            type: FieldType.number,
             values: new ArrayVector([2, 1]),
             config: {
               displayNameFromDS: 'error',
