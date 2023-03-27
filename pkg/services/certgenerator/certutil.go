@@ -34,7 +34,7 @@ type CertUtil struct {
 }
 
 func (cu *CertUtil) CACertFile() string {
-	return strings.Join([]string{cu.K8sDataPath, "ca.crt"}, "/")
+	return filepath.Join(cu.K8sDataPath, "ca.crt")
 }
 
 func (cu *CertUtil) CAKeyFile() string {
