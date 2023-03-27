@@ -27,6 +27,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -59,7 +60,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	canListNonCorePlugins := reqOrgAdmin(c) || hasAccess(reqOrgAdmin, ac.EvalAny(
 		ac.EvalPermission(datasources.ActionCreate),
-		ac.EvalPermission(plugins.ActionInstall),
+		ac.EvalPermission(pluginaccesscontrol.ActionInstall),
 	))
 
 	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgID)
@@ -89,7 +90,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 		// Should be able to list this installed plugin:
 		//  * anyone that can edit its settings
 		if !pluginDef.IsCorePlugin() && !canListNonCorePlugins && !hasAccess(reqOrgAdmin,
-			ac.EvalPermission(plugins.ActionWrite, plugins.ScopeProvider.GetResourceScope(pluginDef.ID))) {
+			ac.EvalPermission(pluginaccesscontrol.ActionWrite, pluginaccesscontrol.ScopeProvider.GetResourceScope(pluginDef.ID))) {
 			continue
 		}
 
@@ -120,7 +121,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 
 	// Compute metadata
 	pluginsMetadata := hs.getMultiAccessControlMetadata(c, c.OrgID,
-		plugins.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
+		pluginaccesscontrol.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
 
 	// Prepare DTO
 	result := make(dtos.PluginList, 0)
@@ -175,7 +176,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 	if plugin.IsApp() {
 		hasAccess := ac.HasAccess(hs.AccessControl, c)
 		if !hasAccess(ac.ReqSignedIn,
-			ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
+			ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID))) {
 			return response.Error(http.StatusForbidden, "Access Denied", nil)
 		}
 	}

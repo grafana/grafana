@@ -28,6 +28,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -105,7 +106,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 }
 
 func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
-	canInstall := []ac.Permission{{Action: plugins.ActionInstall}}
+	canInstall := []ac.Permission{{Action: pluginaccesscontrol.ActionInstall}}
 	cannotInstall := []ac.Permission{{Action: "plugins:cannotinstall"}}
 
 	type testCase struct {
@@ -570,7 +571,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 		},
 		{
 			desc:            "should be able to list core plugins and plugins user has permission to",
-			permissions:     []ac.Permission{{Action: plugins.ActionWrite, Scope: "plugins:id:test-app"}},
+			permissions:     []ac.Permission{{Action: pluginaccesscontrol.ActionWrite, Scope: "plugins:id:test-app"}},
 			expectedCode:    http.StatusOK,
 			expectedPlugins: []string{"mysql", "test-app"},
 		},
