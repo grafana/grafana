@@ -76,8 +76,8 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 	if i.cfg.Opentelemetry.IsEnabled() && pluginTracingEnabled {
 		hostEnv = append(
 			hostEnv,
-			fmt.Sprintf("GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS=%s", i.cfg.Opentelemetry.Address),
-			fmt.Sprintf("GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION=%s", i.cfg.Opentelemetry.Propagation),
+			fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", i.cfg.Opentelemetry.Address),
+			fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", i.cfg.Opentelemetry.Propagation),
 		)
 	}
 
