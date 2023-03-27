@@ -551,10 +551,6 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 
 	md, err := plugin.File(file)
 	if err != nil {
-		if errors.Is(err, plugins.ErrPluginNotInstalled) {
-			return make([]byte, 0), plugins.NotFoundError{PluginID: pluginId}
-		}
-
 		md, err = plugin.File(strings.ToLower(file))
 		if err != nil {
 			return make([]byte, 0), nil
