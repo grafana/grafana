@@ -208,7 +208,7 @@ const (
 	FlagAuthnService = "authnService"
 
 	// FlagDisablePrometheusExemplarSampling
-	// Disable Prometheus examplar sampling
+	// Disable Prometheus exemplar sampling
 	FlagDisablePrometheusExemplarSampling = "disablePrometheusExemplarSampling"
 
 	// FlagAlertingBacktesting
@@ -270,4 +270,8 @@ const (
 	// FlagClientTokenRotation
 	// Replaces the current in-request token rotation so that the client initiates the rotation
 	FlagClientTokenRotation = "clientTokenRotation"
+
+	// FlagDisableElasticsearchBackendExploreQuery
+	// Disable executing of Elasticsearch Explore queries trough backend
+	FlagDisableElasticsearchBackendExploreQuery = "disableElasticsearchBackendExploreQuery"
 )
