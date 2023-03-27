@@ -279,6 +279,7 @@ describe('runQueryInChunks()', () => {
         range: range1d,
       });
       await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+        // A, B
         expect(datasource.runQuery).toHaveBeenCalledTimes(2);
       });
     });
@@ -291,6 +292,7 @@ describe('runQueryInChunks()', () => {
         range: range1d,
       });
       await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+        // A, B
         expect(datasource.runQuery).toHaveBeenCalledTimes(2);
       });
     });
@@ -301,12 +303,29 @@ describe('runQueryInChunks()', () => {
           { expr: '{a="b"}', refId: 'B', resolution: 5 },
           { expr: 'count_over_time({a="b"}[1m])', refId: 'C', resolution: 3 },
           { expr: 'count_over_time{a="b"}[1m])', refId: 'D', resolution: 5 },
-          { expr: '{a="b"}', refId: 'B', resolution: 5, queryType: LokiQueryType.Instant },
+          { expr: '{a="b"}', refId: 'E', resolution: 5, queryType: LokiQueryType.Instant },
         ],
         range: range1d,
       });
       await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+        // A, B, C, D, E
         expect(datasource.runQuery).toHaveBeenCalledTimes(5);
+      });
+    });
+    test('Chunked groups mixed queries by resolution', async () => {
+      const request = getQueryOptions<LokiQuery>({
+        targets: [
+          { expr: '{a="b"}', refId: 'A', resolution: 3 },
+          { expr: '{a="b"}', refId: 'B', resolution: 5 },
+          { expr: 'count_over_time({a="b"}[1m])', refId: 'C', resolution: 3 },
+          { expr: 'count_over_time{a="b"}[1m])', refId: 'D', resolution: 5 },
+          { expr: '{a="b"}', refId: 'E', resolution: 5, queryType: LokiQueryType.Instant },
+        ],
+        range, // 3 days
+      });
+      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+        // 3 * A, 3 * B, 3 * C, 3 * D, 1 * E
+        expect(datasource.runQuery).toHaveBeenCalledTimes(13);
       });
     });
   });
