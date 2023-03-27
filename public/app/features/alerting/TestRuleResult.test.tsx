@@ -28,10 +28,8 @@ const props: React.ComponentProps<typeof TestRuleResult> = {
 
 describe('TestRuleResult', () => {
   it('should render without error', async () => {
-    expect(async () => {
-      render(<TestRuleResult {...props} />);
-      await screen.findByRole('button', { name: 'Copy to Clipboard' });
-    }).not.toThrow();
+    render(<TestRuleResult {...props} />);
+    await screen.findByRole('button', { name: 'Copy to Clipboard' });
   });
 
   it('should call testRule when mounting', async () => {

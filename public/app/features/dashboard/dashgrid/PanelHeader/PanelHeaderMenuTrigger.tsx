@@ -23,15 +23,12 @@ export function PanelHeaderMenuTrigger({ children, ...divProps }: Props) {
 
       setPanelMenuOpen(!panelMenuOpen);
     },
-    [clickCoordinates, panelMenuOpen, setPanelMenuOpen]
+    [panelMenuOpen, setPanelMenuOpen]
   );
 
-  const onMouseDown = useCallback(
-    (event: MouseEvent<HTMLDivElement>) => {
-      clickCoordinates.current = eventToClickCoordinates(event);
-    },
-    [clickCoordinates]
-  );
+  const onMouseDown = useCallback((event: MouseEvent<HTMLDivElement>) => {
+    clickCoordinates.current = eventToClickCoordinates(event);
+  }, []);
 
   return (
     <header {...divProps} className="panel-title-container" onClick={onMenuToggle} onMouseDown={onMouseDown}>
