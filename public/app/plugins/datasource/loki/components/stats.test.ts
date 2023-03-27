@@ -59,6 +59,11 @@ describe('makeStatsRequest', () => {
     expect(getStats(datasource, query)).resolves.toBe(null);
   });
 
+  it('should return null if the query is invalid', () => {
+    const query = '{job="grafana",';
+    expect(getStats(datasource, query)).resolves.toBe(null);
+  });
+
   it('should return null if the response has no data', () => {
     const query = '{job="grafana"}';
     datasource.getQueryStats = jest.fn().mockResolvedValue({ streams: 0, chunks: 0, bytes: 0, entries: 0 });
