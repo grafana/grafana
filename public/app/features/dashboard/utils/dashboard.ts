@@ -82,7 +82,6 @@ export const getCopiedPanelPlugin = (): (PanelPluginMeta & PanelPluginInfo) | un
       const pluginCopy: PanelPluginMeta = cloneDeep(pluginInfo);
       pluginCopy.name = copiedPanel.title;
       pluginCopy.sort = -1;
-      // const defaultsPanel = copiedPanel;
 
       return { ...pluginCopy, defaults: { ...copiedPanel } };
     }
