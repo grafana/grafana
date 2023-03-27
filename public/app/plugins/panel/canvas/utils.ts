@@ -173,3 +173,12 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
 export function getConnectionsByTarget(element: ElementState, scene: Scene) {
   return scene.connections.state.filter((connection) => connection.target === element);
 }
+
+export function updateConnectionsForSource(element: ElementState, scene: Scene) {
+  const targetConnections = getConnectionsByTarget(element, scene);
+  targetConnections.forEach((connection) => {
+    const sourceConnections = connection.source.options.connections?.splice(0) ?? [];
+    const connections = sourceConnections.filter((con) => con.targetName !== element.getName());
+    connection.source.onChange({ ...connection.source.options, connections });
+  });
+}
