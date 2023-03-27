@@ -130,6 +130,38 @@ func TestRemoteLokiBackend(t *testing.T) {
 			require.NotContains(t, res[0].Stream, "__private__")
 		})
 
+		t.Run("includes instance labels in log line", func(t *testing.T) {
+			rule := createTestRule()
+			l := log.NewNopLogger()
+			states := singleFromNormal(&state.State{
+				State:  eval.Alerting,
+				Labels: data.Labels{"statelabel": "labelvalue"},
+			})
+
+			res := statesToStreams(rule, states, nil, l)
+
+			entry := requireSingleEntry(t, res)
+			require.Contains(t, entry.InstanceLabels, "statelabel")
+		})
+
+		t.Run("does not include labels other than instance labels in log line", func(t *testing.T) {
+			rule := createTestRule()
+			l := log.NewNopLogger()
+			states := singleFromNormal(&state.State{
+				State: eval.Alerting,
+				Labels: data.Labels{
+					"statelabel": "labelvalue",
+					"labeltwo":   "labelvalue",
+					"labelthree": "labelvalue",
+				},
+			})
+
+			res := statesToStreams(rule, states, nil, l)
+
+			entry := requireSingleEntry(t, res)
+			require.Len(t, entry.InstanceLabels, 3)
+		})
+
 		t.Run("serializes values when regular", func(t *testing.T) {
 			rule := createTestRule()
 			l := log.NewNopLogger()

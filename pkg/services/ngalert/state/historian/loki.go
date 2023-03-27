@@ -262,12 +262,13 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 		repr := string(lblJsn)
 
 		entry := lokiEntry{
-			SchemaVersion: 1,
-			Previous:      state.PreviousFormatted(),
-			Current:       state.Formatted(),
-			Values:        valuesAsDataBlob(state.State),
-			DashboardUID:  rule.DashboardUID,
-			PanelID:       rule.PanelID,
+			SchemaVersion:  1,
+			Previous:       state.PreviousFormatted(),
+			Current:        state.Formatted(),
+			Values:         valuesAsDataBlob(state.State),
+			DashboardUID:   rule.DashboardUID,
+			PanelID:        rule.PanelID,
+			InstanceLabels: state.Labels,
 		}
 		if state.State.State == eval.Error {
 			entry.Error = state.Error.Error()
@@ -319,6 +320,9 @@ type lokiEntry struct {
 	Values        *simplejson.Json `json:"values"`
 	DashboardUID  string           `json:"dashboardUID"`
 	PanelID       int64            `json:"panelID"`
+	// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.
+	// These should not be conflated with labels associated with log streams.
+	InstanceLabels map[string]string `json:"labels"`
 }
 
 func valuesAsDataBlob(state *state.State) *simplejson.Json {
