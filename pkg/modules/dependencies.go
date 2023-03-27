@@ -3,6 +3,8 @@ package modules
 const (
 	All string = "all"
 
+	CertGenerator string = "cert-generator"
+
 	HTTPServer string = "http-server"
 
 	Kine                string = "kine"
@@ -18,10 +20,12 @@ const (
 )
 
 var DependencyMap = map[string][]string{
-	HTTPServer: {KubernetesAPIServer},
+	CertGenerator: {},
+
+	HTTPServer: {CertGenerator},
 
 	Kine:                {},
-	KubernetesAPIServer: {Kine},
+	KubernetesAPIServer: {CertGenerator, Kine},
 	KubernetesClientset: {KubernetesAPIServer},
 	KubernetesCRDs:      {KubernetesClientset},
 	KubernetesInformers: {KubernetesCRDs},

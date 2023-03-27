@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry/corecrd"
+	"github.com/grafana/grafana/pkg/services/certgenerator"
 	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
 	"github.com/grafana/grafana/pkg/services/k8s/client"
 	"github.com/grafana/grafana/pkg/services/k8s/informer"
@@ -23,6 +24,7 @@ type registry struct {
 func ProvideRegistry(
 	moduleManager modules.Manager,
 	apiServer apiserver.Service,
+	certGenerator certgenerator.Service,
 	crdRegistry *corecrd.Registry,
 	kineService kine.Service,
 	informerService informer.Service,
@@ -34,6 +36,7 @@ func ProvideRegistry(
 	return NewRegistry(
 		moduleManager,
 		apiServer,
+		certGenerator,
 		crdRegistry,
 		kineService,
 		informerService,
