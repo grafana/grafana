@@ -83,10 +83,10 @@ grafana_alerting_state_history_transitions_failed_total{org="1"} 1
 grafana_alerting_state_history_transitions_total{org="1"} 2
 # HELP grafana_alerting_state_history_writes_failed_total The total number of failed writes of state history batches.
 # TYPE grafana_alerting_state_history_writes_failed_total counter
-grafana_alerting_state_history_writes_failed_total{org="1"} 1
+grafana_alerting_state_history_writes_failed_total{backend="annotations",org="1"} 1
 # HELP grafana_alerting_state_history_writes_total The total number of state history batches that were attempted to be written.
 # TYPE grafana_alerting_state_history_writes_total counter
-grafana_alerting_state_history_writes_total{org="1"} 2
+grafana_alerting_state_history_writes_total{backend="annotations",org="1"} 2
 `)
 		err := testutil.GatherAndCompare(reg, exp,
 			"grafana_alerting_state_history_transitions_total",
