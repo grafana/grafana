@@ -14,10 +14,14 @@ seqs: [
 		schemas: [
 			{
 				// Unique name of the plugin. If the plugin is published on
-				// grafana.com, then the plugin id has to follow the naming
+				// grafana.com, then the plugin `id` has to follow the naming
 				// conventions.
 				id: string & strings.MinRunes(1)
 				id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([ for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|gauge|geomap|gettingstarted|graph|heatmap|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin|phlare|parca)$"
+
+				// Human-readable name of the plugin that is shown to the user in
+				// the UI.
+				name: string
 
 				// The set of all plugin types. This hidden field exists solely
 				// so that the set can be string-interpolated into other fields.
@@ -31,42 +35,144 @@ seqs: [
 				// a superset of plugin types.
 				#IncludeType: type | "dashboard" | "page"
 
-				// Human-readable name of the plugin that is shown to the user in
-				// the UI.
-				name: string
+				// Metadata about the plugin
+				info: #Info
 
-				// FIXME there appears to be a bug in thema that prevents this from working. Maybe it'd
-				// help to refer to it with an alias, but thema can't support using current list syntax.
-				// syntax (fixed by grafana/thema#82). Either way, for now, pascalName gets populated in Go.
-				let sani = (strings.ToTitle(regexp.ReplaceAllLiteral("[^a-zA-Z]+", name, "")))
+				// Metadata about a Grafana plugin. Some fields are used on the plugins
+				// page in Grafana and others on grafana.com, if the plugin is published.
+				#Info: {
+					// Information about the plugin author
+					author?: {
+						// Author's name
+						name?: string
 
-				// The PascalCase name for the plugin. Used for creating machine-friendly
-				// identifiers, typically in code generation.
-				//
-				// If not provided, defaults to name, but title-cased and sanitized (only
-				// alphabetical characters allowed).
-				pascalName: string & =~"^([A-Z][a-zA-Z]{1,62})$" | *sani
+						// Author's name
+						email?: string
 
-				// Plugin category used on the Add data source page.
-				category?: "tsdb" | "logging" | "cloud" | "tracing" | "sql" | "enterprise" | "profiling" | "other"
+						// Link to author's website
+						url?: string
+					}
+
+					// Build information
+					build?: #BuildInfo
+
+					// Description of plugin. Used on the plugins page in Grafana and
+					// for search on grafana.com.
+					description?: string
+
+					// Array of plugin keywords. Used for search on grafana.com.
+					keywords: [...string]
+					// should be this, but CUE to openapi converter screws this up
+					// by inserting a non-concrete default.
+					// keywords: [string, ...string]
+
+					// An array of link objects to be displayed on this plugin's
+					// project page in the form `{name: 'foo', url:
+					// 'http://example.com'}`
+					links?: [...{
+						name?: string
+						url?:  string
+					}]
+
+					// SVG images that are used as plugin icons
+					logos?: {
+						// Link to the "small" version of the plugin logo, which must be
+						// an SVG image. "Large" and "small" logos can be the same image.
+						small: string
+
+						// Link to the "large" version of the plugin logo, which must be
+						// an SVG image. "Large" and "small" logos can be the same image.
+						large: string
+					}
+
+					// An array of screenshot objects in the form `{name: 'bar', path:
+					// 'img/screenshot.png'}`
+					screenshots?: [...{
+						name?: string
+						path?: string
+					}]
+
+					// Date when this plugin was built
+					updated?: =~"^(\\d{4}-\\d{2}-\\d{2}|\\%TODAY\\%)$"
+
+					// Project version of this commit, e.g. `6.7.x`
+					version?: =~"^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)|(\\%VERSION\\%)$"
+				}
+
+				#BuildInfo: {
+					// Time when the plugin was built, as a Unix timestamp
+					time?: int64
+					repo?: string
+
+					// Git branch the plugin was built from
+					branch?: string
+
+					// Git hash of the commit the plugin was built from
+					hash?:     string
+					"number"?: int64
+
+					// GitHub pull request the plugin was built from
+					pr?: int32
+				}
+
+				// Dependency information related to Grafana and other plugins
+				dependencies: #Dependencies
+
+				#Dependencies: {
+					// (Deprecated) Required Grafana version for this plugin, e.g.
+					// `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or
+					// v7.x.x.
+					grafanaVersion?: =~"^([0-9]+)(\\.[0-9x]+)?(\\.[0-9x])?$"
+
+					// Required Grafana version for this plugin. Validated using
+					// https://github.com/npm/node-semver.
+					grafanaDependency: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
+
+					// An array of required plugins on which this plugin depends
+					plugins?: [...#Dependency]
+				}
+
+				// Dependency describes another plugin on which a plugin depends.
+				// The id refers to the plugin package identifier, as given on
+				// the grafana.com plugin marketplace.
+				#Dependency: {
+					id:      =~"^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
+					type:    "app" | "datasource" | "panel"
+					name:    string
+					version: string
+					...
+				}
+
+				// Schema definition for the plugin.json file. Used primarily for schema validation.
+				$schema?: string 
+
+				// For data source plugins, if the plugin supports alerting. Requires `backend` to be set to `true`.
+				alerting?: bool
 
 				// For data source plugins, if the plugin supports annotation
 				// queries.
 				annotations?: bool
 
-				// For data source plugins, if the plugin supports alerting.
-				alerting?: bool
+				// Set to true for app plugins that should be enabled and pinned to the navigation bar in all orgs.
+				autoEnabled?: bool
 
 				// If the plugin has a backend component.
 				backend?: bool
 
-				// builtin indicates whether the plugin is developed and shipped as part
-				// of Grafana. Also known as a "core plugin."
+				// [internal only] Indicates whether the plugin is developed and shipped as part
+				// of Grafana. Also known as a 'core plugin'.
 				builtIn: bool | *false
 
-				// hideFromList excludes the plugin from listings in Grafana's UI. Only
-				// allowed for builtin plugins.
-				hideFromList: bool | *false
+				// Plugin category used on the Add data source page.
+				category?: "tsdb" | "logging" | "cloud" | "tracing" | "profiling" | "sql" | "enterprise" | "iot" | "other"
+
+				// Grafana Enterprise specific features.
+				enterpriseFeatures?: {
+					// Enable/Disable health diagnostics errors. Requires Grafana
+					// >=7.5.5.
+					healthDiagnosticsErrors?: bool | *false
+					...
+				}
 
 				// The first part of the file name of the backend component
 				// executable. There can be multiple executables built for
@@ -77,15 +183,9 @@ seqs: [
 				// https://golang.org/doc/install/source#environment.
 				executable?: string
 
-				// Initialize plugin on startup. By default, the plugin
-				// initializes on first use.
-				preload?: bool
-
-				// Marks a plugin as a pre-release.
-				state?: #ReleaseState
-
-				// ReleaseState indicates release maturity state of a plugin.
-				#ReleaseState: "alpha" | "beta" | "deprecated" | *"stable"
+				// [internal only] Excludes the plugin from listings in Grafana's UI. Only
+				// allowed for `builtIn` plugins.
+				hideFromList: bool | *false
 
 				// Resources to include in plugin.
 				includes?: [...#Include]
@@ -122,32 +222,63 @@ seqs: [
 					...
 				}
 
-				// For data source plugins, if the plugin supports logs.
+				// For data source plugins, if the plugin supports logs. It may be used to filter logs only features.
 				logs?: bool
+
+				// For data source plugins, if the plugin supports metric queries.
+				// Used to enable the plugin in the panel editor.
+				metrics?: bool
+
+				// FIXME there appears to be a bug in thema that prevents this from working. Maybe it'd
+				// help to refer to it with an alias, but thema can't support using current list syntax.
+				// syntax (fixed by grafana/thema#82). Either way, for now, pascalName gets populated in Go.
+				let sani = (strings.ToTitle(regexp.ReplaceAllLiteral("[^a-zA-Z]+", name, "")))
+
+				// [internal only] The PascalCase name for the plugin. Used for creating machine-friendly
+				// identifiers, typically in code generation.
+				//
+				// If not provided, defaults to name, but title-cased and sanitized (only
+				// alphabetical characters allowed).
+				pascalName: string & =~"^([A-Z][a-zA-Z]{1,62})$" | *sani
+
+				// Initialize plugin on startup. By default, the plugin
+				// initializes on first use.
+				preload?: bool
+
+				// For data source plugins. There is a query options section in
+				// the plugin's query editor and these options can be turned on
+				// if needed.
+				queryOptions?: {
+					// For data source plugins. If the `max data points` option should
+					// be shown in the query options section in the query editor.
+					maxDataPoints?: bool
+
+					// For data source plugins. If the `min interval` option should be
+					// shown in the query options section in the query editor.
+					minInterval?: bool
+
+					// For data source plugins. If the `cache timeout` option should
+					// be shown in the query options section in the query editor.
+					cacheTimeout?: bool
+				}
+
+				// Routes is a list of proxy routes, if any. For datasource plugins only.
+				routes?: [...#Route]
 
 				// For panel plugins. Hides the query editor.
 				skipDataQuery?: bool
 
-				// For data source plugins, if the plugin supports metric queries.
-				// Used in Explore.
-				metrics?: bool
+				// Marks a plugin as a pre-release.
+				state?: #ReleaseState
 
-				// For data source plugins, if the plugin supports streaming.
+				// ReleaseState indicates release maturity state of a plugin.
+				#ReleaseState: "alpha" | "beta" | "deprecated" | *"stable"
+
+				// For data source plugins, if the plugin supports streaming. Used in Explore to start live streaming.
 				streaming?: bool
 
-				// This is an undocumented feature.
-				tables?: bool
-
-				// For data source plugins, if the plugin supports tracing.
+				// For data source plugins, if the plugin supports tracing. Used for example to link logs (e.g. Loki logs) with tracing plugins.
 				tracing?: bool
-
-				// For data source plugins, include hidden queries in the data
-				// request.
-				hiddenQueries?: bool
-
-				// Set to true for app plugins that should be enabled by default
-				// in all orgs
-				autoEnabled?: bool
 
 				// Optional list of RBAC RoleRegistrations.
 				// Describes and organizes the default permissions associated with any of the Grafana basic roles,
@@ -193,134 +324,6 @@ seqs: [
 				// With RBAC, the Admin basic role inherits its default permissions from the Editor basic role which
 				// in turn inherits them from the Viewer basic role.
 				#BasicRole: "Grafana Admin" | "Admin" | "Editor" | "Viewer"
-
-				// Dependencies needed by the plugin.
-				dependencies: #Dependencies
-
-				#Dependencies: {
-					// (Deprecated) Required Grafana version for this plugin, e.g.
-					// `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or
-					// v7.x.x.
-					grafanaVersion?: =~"^([0-9]+)(\\.[0-9x]+)?(\\.[0-9x])?$"
-
-					// Required Grafana version for this plugin. Validated using
-					// https://github.com/npm/node-semver.
-					grafanaDependency: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
-
-					// An array of required plugins on which this plugin depends.
-					plugins?: [...#Dependency]
-				}
-
-				// Dependency describes another plugin on which a plugin depends.
-				// The id refers to the plugin package identifier, as given on
-				// the grafana.com plugin marketplace.
-				#Dependency: {
-					id:      =~"^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
-					type:    "app" | "datasource" | "panel"
-					name:    string
-					version: string
-					...
-				}
-
-				// Metadata about the plugin.
-				info: #Info
-
-				// Metadata about a Grafana plugin. Some fields are used on the plugins
-				// page in Grafana and others on grafana.com, if the plugin is published.
-				#Info: {
-					// Information about the plugin author.
-					author?: {
-						// Author's name.
-						name?: string
-
-						// Author's name.
-						email?: string
-
-						// Link to author's website.
-						url?: string
-					}
-
-					// Build information
-					build?: #BuildInfo
-
-					// Description of plugin. Used on the plugins page in Grafana and
-					// for search on grafana.com.
-					description?: string
-
-					// Array of plugin keywords. Used for search on grafana.com.
-					keywords: [...string]
-					// should be this, but CUE to openapi converter screws this up
-					// by inserting a non-concrete default.
-					// keywords: [string, ...string]
-
-					// An array of link objects to be displayed on this plugin's
-					// project page in the form `{name: 'foo', url:
-					// 'http://example.com'}`
-					links?: [...{
-						name?: string
-						url?:  string
-					}]
-
-					// SVG images that are used as plugin icons.
-					logos?: {
-						// Link to the "small" version of the plugin logo, which must be
-						// an SVG image. "Large" and "small" logos can be the same image.
-						small: string
-
-						// Link to the "large" version of the plugin logo, which must be
-						// an SVG image. "Large" and "small" logos can be the same image.
-						large: string
-					}
-
-					// An array of screenshot objects in the form `{name: 'bar', path:
-					// 'img/screenshot.png'}`
-					screenshots?: [...{
-						name?: string
-						path?: string
-					}]
-
-					// Date when this plugin was built.
-					updated?: =~"^(\\d{4}-\\d{2}-\\d{2}|\\%TODAY\\%)$"
-
-					// Project version of this commit, e.g. `6.7.x`.
-					version?: =~"^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)|(\\%VERSION\\%)$"
-				}
-
-				#BuildInfo: {
-					// Time when the plugin was built, as a Unix timestamp.
-					time?: int64
-					repo?: string
-
-					// Git branch the plugin was built from.
-					branch?: string
-
-					// Git hash of the commit the plugin was built from
-					hash?:     string
-					"number"?: int64
-
-					// GitHub pull request the plugin was built from
-					pr?: int32
-				}
-
-				// For data source plugins. There is a query options section in
-				// the plugin's query editor and these options can be turned on
-				// if needed.
-				queryOptions?: {
-					// For data source plugins. If the `max data points` option should
-					// be shown in the query options section in the query editor.
-					maxDataPoints?: bool
-
-					// For data source plugins. If the `min interval` option should be
-					// shown in the query options section in the query editor.
-					minInterval?: bool
-
-					// For data source plugins. If the `cache timeout` option should
-					// be shown in the query options section in the query editor.
-					cacheTimeout?: bool
-				}
-
-				// Routes is a list of proxy routes, if any. For datasource plugins only.
-				routes?: [...#Route]
 
 				// Header describes an HTTP header that is forwarded with a proxied request for
 				// a plugin route.
@@ -402,14 +405,6 @@ seqs: [
 
 					// Parameters for the JWT token authentication request.
 					params: [string]: string
-				}
-
-				// Grafana Enerprise specific features.
-				enterpriseFeatures?: {
-					// Enable/Disable health diagnostics errors. Requires Grafana
-					// >=7.5.5.
-					healthDiagnosticsErrors?: bool | *false
-					...
 				}
 			},
 		]

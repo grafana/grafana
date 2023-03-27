@@ -28,7 +28,8 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -60,7 +61,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	canListNonCorePlugins := reqOrgAdmin(c) || hasAccess(reqOrgAdmin, ac.EvalAny(
 		ac.EvalPermission(datasources.ActionCreate),
-		ac.EvalPermission(plugins.ActionInstall),
+		ac.EvalPermission(pluginaccesscontrol.ActionInstall),
 	))
 
 	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgID)
@@ -90,7 +91,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 		// Should be able to list this installed plugin:
 		//  * anyone that can edit its settings
 		if !pluginDef.IsCorePlugin() && !canListNonCorePlugins && !hasAccess(reqOrgAdmin,
-			ac.EvalPermission(plugins.ActionWrite, plugins.ScopeProvider.GetResourceScope(pluginDef.ID))) {
+			ac.EvalPermission(pluginaccesscontrol.ActionWrite, pluginaccesscontrol.ScopeProvider.GetResourceScope(pluginDef.ID))) {
 			continue
 		}
 
@@ -121,7 +122,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 
 	// Compute metadata
 	pluginsMetadata := hs.getMultiAccessControlMetadata(c, c.OrgID,
-		plugins.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
+		pluginaccesscontrol.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
 
 	// Prepare DTO
 	result := make(dtos.PluginList, 0)
@@ -176,7 +177,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 	if plugin.IsApp() {
 		hasAccess := ac.HasAccess(hs.AccessControl, c)
 		if !hasAccess(ac.ReqSignedIn,
-			ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
+			ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID))) {
 			return response.Error(http.StatusForbidden, "Access Denied", nil)
 		}
 	}
@@ -271,17 +272,20 @@ func (hs *HTTPServer) GetPluginMarkdown(c *contextmodel.ReqContext) response.Res
 	if err != nil {
 		var notFound plugins.NotFoundError
 		if errors.As(err, &notFound) {
-			return response.Error(404, notFound.Error(), nil)
+			return response.Error(http.StatusNotFound, notFound.Error(), nil)
 		}
 
-		return response.Error(500, "Could not get markdown file", err)
+		return response.Error(http.StatusInternalServerError, "Could not get markdown file", err)
 	}
 
 	// fallback try readme
 	if len(content) == 0 {
 		content, err = hs.pluginMarkdown(c.Req.Context(), pluginID, "readme")
 		if err != nil {
-			return response.Error(501, "Could not get markdown file", err)
+			if errors.Is(err, plugins.ErrFileNotExist) {
+				return response.Error(http.StatusNotFound, plugins.ErrFileNotExist.Error(), nil)
+			}
+			return response.Error(http.StatusNotImplemented, "Could not get markdown file", err)
 		}
 	}
 

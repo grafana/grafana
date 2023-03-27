@@ -24,11 +24,17 @@ const (
 )
 
 var (
-	ErrServiceAccountAlreadyExists    = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrAlreadyExists", errutil.WithPublicMessage("service account already exists"))
-	ErrServiceAccountTokenNotFound    = errutil.NewBase(errutil.StatusNotFound, "serviceaccounts.ErrTokenNotFound", errutil.WithPublicMessage("service account token not found"))
-	ErrInvalidTokenExpiration         = errutil.NewBase(errutil.StatusValidationFailed, "serviceaccounts.ErrInvalidInput", errutil.WithPublicMessage("invalid SecondsToLive value"))
-	ErrDuplicateToken                 = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrTokenAlreadyExists", errutil.WithPublicMessage("service account token with given name already exists in the organization"))
-	ErrServiceAccountAndTokenMismatch = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrToeknMismatch", errutil.WithPublicMessage("API token does not belong to the given service account"))
+	ErrServiceAccountNotFound            = errutil.NewBase(errutil.StatusNotFound, "serviceaccounts.ErrNotFound", errutil.WithPublicMessage("service account not found"))
+	ErrServiceAccountInvalidRole         = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrInvalidRoleSpecified", errutil.WithPublicMessage("invalid role specified"))
+	ErrServiceAccountRolePrivilegeDenied = errutil.NewBase(errutil.StatusForbidden, "serviceaccounts.ErrRoleForbidden", errutil.WithPublicMessage("can not assign a role higher than user's role"))
+	ErrServiceAccountInvalidOrgID        = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrInvalidOrgId", errutil.WithPublicMessage("invalid org id specified"))
+	ErrServiceAccountInvalidID           = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrInvalidId", errutil.WithPublicMessage("invalid service account id specified"))
+	ErrServiceAccountInvalidAPIKeyID     = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrInvalidAPIKeyId", errutil.WithPublicMessage("invalid api key id specified"))
+	ErrServiceAccountInvalidTokenID      = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrInvalidTokenId", errutil.WithPublicMessage("invalid service account token id specified"))
+	ErrServiceAccountAlreadyExists       = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrAlreadyExists", errutil.WithPublicMessage("service account already exists"))
+	ErrServiceAccountTokenNotFound       = errutil.NewBase(errutil.StatusNotFound, "serviceaccounts.ErrTokenNotFound", errutil.WithPublicMessage("service account token not found"))
+	ErrInvalidTokenExpiration            = errutil.NewBase(errutil.StatusValidationFailed, "serviceaccounts.ErrInvalidInput", errutil.WithPublicMessage("invalid SecondsToLive value"))
+	ErrDuplicateToken                    = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrTokenAlreadyExists", errutil.WithPublicMessage("service account token with given name already exists in the organization"))
 )
 
 type ServiceAccount struct {
@@ -146,8 +152,9 @@ const (
 )
 
 type Stats struct {
-	ServiceAccounts int64 `xorm:"serviceaccounts"`
-	Tokens          int64 `xorm:"serviceaccount_tokens"`
+	ServiceAccounts     int64 `xorm:"serviceaccounts"`
+	Tokens              int64 `xorm:"serviceaccount_tokens"`
+	ForcedExpiryEnabled bool  `xorm:"-"`
 }
 
 // AccessEvaluator is used to protect the "Configuration > Service accounts" page access

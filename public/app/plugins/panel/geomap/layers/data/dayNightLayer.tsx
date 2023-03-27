@@ -11,7 +11,7 @@ import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { Fill, Stroke, Style, Circle } from 'ol/style';
-import {Group as LayerGroup} from 'ol/layer';
+import { Group as LayerGroup } from 'ol/layer';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 
@@ -36,7 +36,7 @@ export interface DayNightConfig {
 const defaultConfig: DayNightConfig = {
   show: ShowTime.To,
   sun: false,
-  nightColor: '#a7a6ba4D'
+  nightColor: '#a7a6ba4D',
 };
 
 export const DAY_NIGHT_LAYER_ID = 'dayNight';
@@ -72,9 +72,9 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
     };
 
     // DayNight source
-    const source = new DayNight({ });
+    const source = new DayNight({});
     const sourceMethods = Object.getPrototypeOf(source);
-    const sourceLine = new DayNight({ });
+    const sourceLine = new DayNight({});
     const sourceLineMethods = Object.getPrototypeOf(sourceLine);
 
     // Night polygon
@@ -82,9 +82,9 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
       source,
       style: new Style({
         fill: new Fill({
-          color: theme.visualization.getColorByName(config.nightColor)
-        })
-      })
+          color: theme.visualization.getColorByName(config.nightColor),
+        }),
+      }),
     });
 
     // Night line (for crosshair sharing)
@@ -92,12 +92,12 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
       source: new VectorSource({
         features: [],
       }),
-      style: new Style ({
+      style: new Style({
         stroke: new Stroke({
           color: '#607D8B',
           width: 1.5,
           lineDash: [2, 3],
-        })
+        }),
       }),
     });
 
@@ -113,8 +113,8 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
       style: new Style({
         image: new Circle({
           radius: 13,
-          fill: new Fill({color: 'rgb(253,184,19)'}),
-        })
+          fill: new Fill({ color: 'rgb(253,184,19)' }),
+        }),
       }),
     });
 
@@ -128,9 +128,9 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
         radius: 13,
         stroke: new Stroke({
           color: 'rgb(253,184,19)',
-          width: 1.5
-        })
-      })
+          width: 1.5,
+        }),
+      }),
     });
 
     const sunLineStyleDash = new Style({
@@ -139,9 +139,9 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
         stroke: new Stroke({
           color: '#607D8B',
           width: 1.5,
-          lineDash: [2,3]
-        })
-      })
+          lineDash: [2, 3],
+        }),
+      }),
     });
 
     const sunLineLayer = new VectorLayer({
@@ -154,7 +154,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
     // Build group of layers
     // TODO: add blended night region to "connect" current night region to lines
     const layer = new LayerGroup({
-      layers: config.sun? [vectorLayer, sunLayer, sunLineLayer, nightLineLayer] : [vectorLayer, nightLineLayer]
+      layers: config.sun ? [vectorLayer, sunLayer, sunLineLayer, nightLineLayer] : [vectorLayer, nightLineLayer],
     });
 
     // Crosshair sharing subscriptions
@@ -168,18 +168,20 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
             const lineTime = new Date(time);
             const nightLinePoints = sourceLine.getCoordinates(lineTime.toString(), 'line');
             nightLineLayer.getSource()?.clear();
-            const lineStringArray:Coordinate[][] = [];
-            for (let l = 0; l < nightLinePoints.length - 1; l++){
-              const x1:number = Object.values(nightLinePoints[l])[0];
-              const y1:number = Object.values(nightLinePoints[l])[1];
-              const x2:number = Object.values(nightLinePoints[l+1])[0];
-              const y2:number = Object.values(nightLinePoints[l+1])[1];
-              const lineString = [fromLonLat([x1, y1]),fromLonLat([x2, y2])];
+            const lineStringArray: Coordinate[][] = [];
+            for (let l = 0; l < nightLinePoints.length - 1; l++) {
+              const x1: number = Object.values(nightLinePoints[l])[0];
+              const y1: number = Object.values(nightLinePoints[l])[1];
+              const x2: number = Object.values(nightLinePoints[l + 1])[0];
+              const y2: number = Object.values(nightLinePoints[l + 1])[1];
+              const lineString = [fromLonLat([x1, y1]), fromLonLat([x2, y2])];
               lineStringArray.push(lineString);
             }
-            nightLineLayer.getSource()?.addFeature(new Feature({
+            nightLineLayer.getSource()?.addFeature(
+              new Feature({
                 geometry: new MultiLineString(lineStringArray),
-              }))
+              })
+            );
 
             let sunLinePos: number[] = [];
             sunLinePos = sourceLineMethods.getSunPosition(lineTime);
@@ -206,14 +208,14 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
         let selectedTime: Date = new Date();
         let sunPos: number[] = [];
         // TODO: add option for "Both"
-        if (config.show === ShowTime.From){
+        if (config.show === ShowTime.From) {
           selectedTime = from;
         } else {
           selectedTime = to;
         }
 
         source.setTime(selectedTime);
-        if (config.sun){
+        if (config.sun) {
           sunPos = sourceMethods.getSunPosition(selectedTime);
           sunFeature.getGeometry()?.setCoordinates(fromLonLat(sunPos));
         }
@@ -221,28 +223,27 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
 
       // Marker overlay options
       registerOptionsUI: (builder) => {
-        if(!options.config?.nightColor) {
-          options.config = { ...defaultConfig, ...options.config}
+        if (!options.config?.nightColor) {
+          options.config = { ...defaultConfig, ...options.config };
         }
 
-        builder
-          .addRadio({
-            path: 'config.show',
-            name: 'Show',
-            settings: {
-              options: [
-                { label: 'From', value: ShowTime.From },
-                { label: 'To', value: ShowTime.To },
-              ],
-            },
-            defaultValue: defaultConfig.show,
-          });
+        builder.addRadio({
+          path: 'config.show',
+          name: 'Show',
+          settings: {
+            options: [
+              { label: 'From', value: ShowTime.From },
+              { label: 'To', value: ShowTime.To },
+            ],
+          },
+          defaultValue: defaultConfig.show,
+        });
         builder.addColorPicker({
           path: 'config.nightColor',
           name: 'Night region color',
           description: 'Pick color of night region',
           defaultValue: defaultConfig.nightColor,
-          settings: [{enableNamedColors: false}],
+          settings: [{ enableNamedColors: false }],
         });
         builder.addBooleanSwitch({
           path: 'config.sun',

@@ -57,7 +57,7 @@ export function createViewedBoundsFunc(viewRange: { min: number; max: number; vi
  *                        items.
  * @returns {boolean}      True if a match was found.
  */
-export function spanHasTag(key: string, value: any, span: TraceSpan) {
+export function spanHasTag(key: string, value: unknown, span: TraceSpan) {
   if (!Array.isArray(span.tags) || !span.tags.length) {
     return false;
   }

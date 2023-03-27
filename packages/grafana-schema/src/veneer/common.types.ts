@@ -9,6 +9,11 @@ export interface MapLayerOptions<TConfig = any> extends raw.MapLayerOptions {
 }
 
 export interface DataQuery extends raw.DataQuery {
+  /**
+   * Unique, guid like, string (used only in explore mode)
+   */
+  key?: string;
+
   // TODO remove explicit nulls
   datasource?: raw.DataSourceRef | null;
 }

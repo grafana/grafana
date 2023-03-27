@@ -139,7 +139,7 @@ export function TraceView(props: Props) {
 
   return (
     <>
-      {props.dataFrames?.length && props.dataFrames[0]?.meta?.preferredVisualisationType === 'trace' && traceProp ? (
+      {props.dataFrames?.length && traceProp ? (
         <>
           {config.featureToggles.newTraceView ? (
             <NewTracePageHeader

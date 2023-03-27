@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce, pick } from 'lodash';
-import React, { FC, useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -16,11 +16,11 @@ interface NotificationPoliciesFilterProps {
   onChangeReceiver: (receiver: string | undefined) => void;
 }
 
-const NotificationPoliciesFilter: FC<NotificationPoliciesFilterProps> = ({
+const NotificationPoliciesFilter = ({
   receivers,
   onChangeReceiver,
   onChangeMatchers,
-}) => {
+}: NotificationPoliciesFilterProps) => {
   const [searchParams, setSearchParams] = useURLSearchParams();
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
@@ -89,6 +89,7 @@ const NotificationPoliciesFilter: FC<NotificationPoliciesFilterProps> = ({
       <Field label="Search by contact point" style={{ marginBottom: 0 }}>
         <Select
           id="receiver"
+          aria-label="Search by contact point"
           value={selectedContactPoint}
           options={receiverOptions}
           onChange={(option) => {

@@ -8,6 +8,10 @@ aliases:
   - ../enterprise/license/license-expiration/
   - ../enterprise/license/license-restrictions/
   - license-restrictions/
+cascade:
+  labels:
+    products:
+      - enterprise
 description: Activate and manage a Grafana Enterprise license
 keywords:
   - grafana
@@ -99,7 +103,7 @@ GF_SERVER_ROOT_URL=https://grafana.example.com/
 
 ### Step 4. Restart Grafana
 
-To finalize the installation of Grafana Enterprise, restart Grafana to enable all Grafana Enterprise features. Refer to [restart Grafana]({{< relref "../../setup-grafana/restart-grafana/" >}}) for more information.
+To finalize the installation of Grafana Enterprise, restart Grafana to enable all Grafana Enterprise features. Refer to [restart Grafana]({{< relref "../../setup-grafana/start-restart-grafana/" >}}) for more information.
 
 ## License expiration
 
@@ -121,7 +125,7 @@ If your license has expired, most of Grafana keeps working as normal. Some enter
 2. Log in to your [Grafana Cloud Account](/login) and make sure you're in the correct organization in the dropdown at the top of the page.
 3. Under the **Grafana Enterprise** section in the menu bar to the left, choose licenses and download the currently valid license with which you want to run Grafana. If you cannot see a valid license on Grafana.com, please contact your account manager at Grafana Labs to renew your subscription.
 4. Replace the current `license.jwt`-file with the one you've just downloaded.
-5. [Restart Grafana]({{< relref "../../setup-grafana/restart-grafana/" >}}).
+5. [Restart Grafana]({{< relref "../../setup-grafana/start-restart-grafana/" >}}).
 
 ### If your license expires
 

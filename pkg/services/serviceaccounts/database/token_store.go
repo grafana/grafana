@@ -58,18 +58,19 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 			ServiceAccountID: &serviceAccountId,
 		}
 
-		if err := s.apiKeyService.AddAPIKey(ctx, addKeyCmd); err != nil {
+		key, err := s.apiKeyService.AddAPIKey(ctx, addKeyCmd)
+		if err != nil {
 			switch {
 			case errors.Is(err, apikey.ErrDuplicate):
-				return serviceaccounts.ErrDuplicateToken
+				return serviceaccounts.ErrDuplicateToken.Errorf("service account token with name %s already exists in the organization", cmd.Name)
 			case errors.Is(err, apikey.ErrInvalidExpiration):
-				return serviceaccounts.ErrInvalidTokenExpiration
+				return serviceaccounts.ErrInvalidTokenExpiration.Errorf("invalid service account token expiration value %d", cmd.SecondsToLive)
 			}
 
 			return err
 		}
 
-		apiKey = addKeyCmd.Result
+		apiKey = key
 		return nil
 	})
 }
@@ -84,7 +85,7 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context
 		}
 		affected, err := result.RowsAffected()
 		if affected == 0 {
-			return serviceaccounts.ErrServiceAccountTokenNotFound
+			return serviceaccounts.ErrServiceAccountTokenNotFound.Errorf("service account token with id %d not found", tokenId)
 		}
 
 		return err
@@ -101,7 +102,7 @@ func (s *ServiceAccountsStoreImpl) RevokeServiceAccountToken(ctx context.Context
 		}
 		affected, err := result.RowsAffected()
 		if affected == 0 {
-			return serviceaccounts.ErrServiceAccountTokenNotFound
+			return serviceaccounts.ErrServiceAccountTokenNotFound.Errorf("service account token with id %d not found for service account with id %d", tokenId, serviceAccountId)
 		}
 
 		return err
@@ -124,28 +125,6 @@ func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *db.Session
 
 	if _, err := sess.ID(key.ID).Update(&key); err != nil {
 		s.log.Warn("Could not update api key", "err", err)
-		return err
-	}
-
-	return nil
-}
-
-// detachApiKeyFromServiceAccount converts service account token to old API key
-func (s *ServiceAccountsStoreImpl) detachApiKeyFromServiceAccount(sess *db.Session, apiKeyId int64) error {
-	key := apikey.APIKey{ID: apiKeyId}
-	exists, err := sess.Get(&key)
-	if err != nil {
-		s.log.Warn("Cannot get API key", "err", err)
-		return err
-	}
-	if !exists {
-		s.log.Warn("API key not found", "err", err)
-		return apikey.ErrNotFound
-	}
-	key.ServiceAccountId = nil
-
-	if _, err := sess.ID(key.ID).AllCols().Update(&key); err != nil {
-		s.log.Error("Could not update api key", "err", err)
 		return err
 	}
 

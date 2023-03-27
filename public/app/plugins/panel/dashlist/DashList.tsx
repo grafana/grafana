@@ -170,7 +170,7 @@ export function DashList(props: PanelProps<PanelOptions>) {
     <ul className={css.gridContainer}>
       {dashboards.map((dash) => (
         <li key={dash.uid}>
-          <SearchCard item={{ ...dash, kind: 'folder' }} />
+          <SearchCard item={{ ...dash, kind: 'dashboard' }} />
         </li>
       ))}
     </ul>

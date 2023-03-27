@@ -2,10 +2,12 @@ package authnimpl
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -62,14 +64,15 @@ func ProvideService(
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 	oauthService oauthserver.OAuth2Service,
 	socialService social.Service, cache *remotecache.RemoteCache,
-	ldapService service.LDAP,
-) *Service {
+	ldapService service.LDAP, registerer prometheus.Registerer,
+) authn.Service {
 	s := &Service{
 		log:            log.New("authn.service"),
 		cfg:            cfg,
 		clients:        make(map[string]authn.Client),
 		clientQueue:    newQueue[authn.ContextAwareClient](),
 		tracer:         tracer,
+		metrics:        newMetrics(registerer),
 		sessionService: sessionService,
 		postAuthHooks:  newQueue[authn.PostAuthHookFn](),
 		postLoginHooks: newQueue[authn.PostLoginHookFn](),
@@ -81,7 +84,7 @@ func ProvideService(
 	s.RegisterClient(clients.ProvideAPIKey(apikeyService, userService))
 
 	if cfg.LoginCookieName != "" {
-		s.RegisterClient(clients.ProvideSession(sessionService, userService, cfg.LoginCookieName, cfg.LoginMaxLifetime))
+		s.RegisterClient(clients.ProvideSession(cfg, sessionService, features))
 	}
 
 	if s.cfg.AnonymousEnabled {
@@ -90,7 +93,7 @@ func ProvideService(
 
 	var proxyClients []authn.ProxyClient
 	var passwordClients []authn.PasswordClient
-	if s.cfg.LDAPEnabled {
+	if s.cfg.LDAPAuthEnabled {
 		ldap := clients.ProvideLDAP(cfg, ldapService)
 		proxyClients = append(proxyClients, ldap)
 		passwordClients = append(passwordClients, ldap)
@@ -158,6 +161,7 @@ func ProvideService(
 	}
 
 	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
+	s.RegisterPostAuthHook(sync.ProvidePermissionsSync(accessControlService).SyncPermissionsHook, 110)
 
 	return s
 }
@@ -169,7 +173,9 @@ type Service struct {
 	clients     map[string]authn.Client
 	clientQueue *queue[authn.ContextAwareClient]
 
-	tracer         tracing.Tracer
+	tracer  tracing.Tracer
+	metrics *metrics
+
 	sessionService auth.UserTokenService
 
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
@@ -187,18 +193,26 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		if item.v.Test(ctx, r) {
 			identity, err := s.authenticate(ctx, item.v, r)
 			if err != nil {
+				// Note: special case for token rotation
+				// We don't want to fallthrough in this case
+				if errors.Is(err, authn.ErrTokenNeedsRotation) {
+					return nil, err
+				}
+
 				authErr = multierror.Append(authErr, err)
 				// try next
 				continue
 			}
 
 			if identity != nil {
+				s.metrics.successfulAuth.WithLabelValues(item.v.Name()).Inc()
 				return identity, nil
 			}
 		}
 	}
 
 	if authErr != nil {
+		s.metrics.failedAuth.Inc()
 		return nil, authErr
 	}
 
@@ -239,6 +253,10 @@ func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint)
 }
 
 func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (identity *authn.Identity, err error) {
+	ctx, span := s.tracer.Start(ctx, "authn.Login")
+	defer span.End()
+	span.SetAttributes(attributeKeyClient, client, attribute.Key(attributeKeyClient).String(client))
+
 	defer func() {
 		for _, hook := range s.postLoginHooks.items {
 			hook.v(ctx, identity, r, err)
@@ -247,11 +265,13 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 
 	c, ok := s.clients[client]
 	if !ok {
+		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
 	}
 
 	identity, err = s.authenticate(ctx, c, r)
 	if err != nil {
+		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		return nil, err
 	}
 
@@ -259,6 +279,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 
 	// Login is only supported for users
 	if namespace != authn.NamespaceUser || id <= 0 {
+		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", namespace)
 	}
 
@@ -270,10 +291,12 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 
 	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: id}, ip, r.HTTPRequest.UserAgent())
 	if err != nil {
+		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		s.log.FromContext(ctx).Error("Failed to create session", "client", client, "id", identity.ID, "err", err)
 		return nil, err
 	}
 
+	s.metrics.successfulLogin.WithLabelValues(client).Inc()
 	identity.SessionToken = sessionToken
 	return identity, nil
 }
