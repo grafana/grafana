@@ -7,8 +7,6 @@ import {
   AdHocVariableFilter,
   AdHocVariableModel,
   TypedVariableModel,
-  VariableMap,
-  ScopedVar,
 } from '@grafana/data';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 import { sceneGraph, FormatRegistryID, VariableCustomFormatterFn } from '@grafana/scenes';
@@ -48,6 +46,9 @@ export class TemplateSrv implements BaseTemplateSrv {
 
   constructor(private dependencies: TemplateSrvDependencies = runtimeDependencies) {
     this._variables = [];
+  }
+  getAllVariablesInTarget(target: string, scopedVars: ScopedVars, format?: string | Function | undefined): VariableMap {
+    throw new Error('Method not implemented.');
   }
 
   init(variables: any, timeRange?: TimeRange) {
@@ -280,8 +281,8 @@ export class TemplateSrv implements BaseTemplateSrv {
       if (this.isAllValue(value)) {
         value = this.getAllValue(variable);
         text = ALL_VARIABLE_TEXT;
-        // skip formatting of custom all values
-        if (variable.allValue && fmt !== FormatRegistryID.text) {
+        // skip formatting of custom all values unless format set to text or percentencode
+        if (variable.allValue && fmt !== FormatRegistryID.text && fmt !== FormatRegistryID.percentEncode) {
           return this.replace(value);
         }
       }
@@ -296,58 +297,6 @@ export class TemplateSrv implements BaseTemplateSrv {
       const res = formatVariableValue(value, fmt, variable, text);
       return res;
     });
-  }
-
-  getAllVariablesInTarget(target: string, scopedVars: ScopedVars, format?: string | Function): VariableMap {
-    const values: VariableMap = {};
-
-    this.replaceInVariableRegex(target, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
-      const variableName = var1 || var2 || var3;
-      const variableDisplayName =
-        var1 || var2 || (var3 !== undefined && fieldPath !== undefined) ? `${var3}.${fieldPath}` : var3;
-      const fmt = fmt2 || fmt3 || format;
-      const scopedVar = scopedVars && scopedVars[variableName];
-      const variable = this.getVariableAtIndex(variableName);
-
-      if (scopedVar) {
-        const value = this.getVariableValue(scopedVar, fieldPath);
-        const text = this.getVariableText(scopedVar, value);
-
-        if (value !== null && value !== undefined) {
-          values[variableDisplayName] = formatVariableValue(value, fmt, variable, text);
-        } else {
-          values[variableDisplayName] = undefined;
-        }
-      } else {
-        values[variableDisplayName] = undefined;
-      }
-
-      // Don't care about the result anyway
-      return '';
-    });
-
-    return values;
-  }
-
-  /**
-   * The replace function, for every match, will return a function that has the full match as a param
-   * followed by one param per capture group of the variable regex.
-   *
-   * See the definition of this.regex for further comments on the variable definitions.
-   */
-  private replaceInVariableRegex(
-    text: string,
-    replace: (
-      fullMatch: string, //     $simpleVarName   [[squareVarName:squareFormat]]   ${curlyVarName.curlyPath:curlyFormat}
-      simpleVarName: string, // simpleVarName                  -                                     -
-      squareVarName: string, //        -                squareVarName                                -
-      squareFormat: string, //         -                squareFormat                                 -
-      curlyVarName: string, //         -                      -                                curlyVarName
-      curlyPath: string, //            -                      -                                  curlyPath
-      curlyFormat: string //           -                      -                                 curlyFormat
-    ) => string
-  ) {
-    return text.replace(this.regex, replace);
   }
 
   isAllValue(value: any) {

@@ -27,7 +27,7 @@ export function createDashboardModelFixture(
     ...dashboardInput,
   };
 
-  return new DashboardModel(dashboardJson, meta, getVariablesFromState);
+  return new DashboardModel(dashboardJson, meta, { getVariablesFromState });
 }
 
 export function createPanelJSONFixture(panelInput: Partial<Panel | GraphPanel | RowPanel> = {}): Panel {

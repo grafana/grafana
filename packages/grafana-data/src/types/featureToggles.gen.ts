@@ -84,4 +84,5 @@ export interface FeatureToggles {
   timeSeriesTable?: boolean;
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
+  disableElasticsearchBackendExploreQuery?: boolean;
 }
