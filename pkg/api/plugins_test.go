@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -472,6 +473,85 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 	}
 
 	require.Zero(t, resp.Header().Get("Content-Type"))
+}
+
+func TestPluginMarkdown(t *testing.T) {
+	t.Run("Plugin not installed returns error", func(t *testing.T) {
+		pluginFileStore := &fakes.FakePluginFileStore{
+			FileFunc: func(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+				return nil, plugins.ErrPluginNotInstalled
+			},
+		}
+		hs := HTTPServer{
+			Cfg:             setting.NewCfg(),
+			log:             log.New(),
+			pluginFileStore: pluginFileStore,
+		}
+
+		pluginID := "test-datasource"
+		filename := "test"
+
+		md, err := hs.pluginMarkdown(context.Background(), pluginID, filename)
+		require.ErrorAs(t, err, &plugins.NotFoundError{PluginID: pluginID})
+		require.Equal(t, []byte{}, md)
+	})
+
+	t.Run("File fetch will be retried using different casing if error occurs", func(t *testing.T) {
+		var requestedFiles []string
+		pluginFileStore := &fakes.FakePluginFileStore{
+			FileFunc: func(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+				requestedFiles = append(requestedFiles, filename)
+				return nil, errors.New("some error")
+			},
+		}
+
+		hs := HTTPServer{
+			Cfg:             setting.NewCfg(),
+			log:             log.New(),
+			pluginFileStore: pluginFileStore,
+		}
+
+		filename := "reAdMe"
+
+		md, err := hs.pluginMarkdown(context.Background(), "test-datasource", filename)
+		require.NoError(t, err)
+		require.Equal(t, []byte{}, md)
+		require.Equal(t, []string{"/README.md", "/readme.md"}, requestedFiles)
+	})
+
+	t.Run("Non markdown file request returns an error", func(t *testing.T) {
+		hs := HTTPServer{
+			Cfg:             setting.NewCfg(),
+			log:             log.New(),
+			pluginFileStore: &fakes.FakePluginFileStore{},
+		}
+
+		filename := "test.json"
+
+		md, err := hs.pluginMarkdown(context.Background(), "test-datasource", filename)
+		require.ErrorIs(t, err, ErrUnexpectedFileExtension)
+		require.Equal(t, []byte{}, md)
+	})
+
+	t.Run("Happy path", func(t *testing.T) {
+		data := []byte{1, 2, 3}
+
+		pluginFileStore := &fakes.FakePluginFileStore{
+			FileFunc: func(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+				return &plugins.File{Content: data}, nil
+			},
+		}
+
+		hs := HTTPServer{
+			Cfg:             setting.NewCfg(),
+			log:             log.New(),
+			pluginFileStore: pluginFileStore,
+		}
+
+		md, err := hs.pluginMarkdown(context.Background(), "test-datasource", "someFile")
+		require.NoError(t, err)
+		require.Equal(t, data, md)
+	})
 }
 
 func callGetPluginAsset(sc *scenarioContext) {
