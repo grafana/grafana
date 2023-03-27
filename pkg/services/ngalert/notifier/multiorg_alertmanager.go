@@ -77,7 +77,8 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 	clusterLogger := l.New("component", "cluster")
 	// TODO: get addr from config
 	redisPeer := newRedisPeer(redisConfig{
-		addr: "localhost:6379",
+		addr: cfg.UnifiedAlerting.HARedisAddr,
+		name: cfg.UnifiedAlerting.HARedisPeerName,
 	}, clusterLogger, m.Registerer, cfg.UnifiedAlerting.HAPushPullInterval)
 	var ctx context.Context
 	ctx, moa.settleCancel = context.WithTimeout(context.Background(), 30*time.Second)

@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 
@@ -23,18 +24,20 @@ type redisConfig struct {
 	addr     string
 	password string
 	db       int
+	name     string
 }
 
 const (
-	peerPattern      = "peer-*"
-	fullState        = "full_state"
-	fullStateChannel = fullState
-	update           = "update"
-	redisServerLabel = "redis-server"
+	peerPattern         = "*"
+	fullState           = "full_state"
+	fullStateChannel    = fullState
+	fullStateChannelReq = fullStateChannel + ":request"
+	update              = "update"
+	redisServerLabel    = "redis-server"
 )
 
 type redisPeer struct {
-	Name       string
+	name       string
 	redis      *redis.Client
 	logger     log.Logger
 	quorum     int
@@ -67,13 +70,14 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		logger.Error("failed to ping redis", "err", cmd.Err(), "addr", cfg.addr, "db", cfg.db)
 	}
 	p := &redisPeer{
-		Name:             name,
+		name:             name,
 		redis:            rdb,
 		logger:           logger,
 		quorum:           3,
 		states:           map[string]cluster.State{},
 		subs:             map[string]*redis.PubSub{},
 		pushPullInterval: pushPullInterval,
+		readyc:           make(chan struct{}),
 	}
 
 	messagesReceived := prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -152,10 +156,12 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 	p.nodePingDuration = nodePingDuration
 
 	p.subs[fullStateChannel] = p.redis.Subscribe(context.Background(), fullStateChannel)
+	p.subs[fullStateChannelReq] = p.redis.Subscribe(context.Background(), fullStateChannelReq)
 
 	go p.heartbeatLoop()
 	go p.fullStateSyncPublish()
 	go p.fullStateSyncReceive()
+	go p.fullStateReqReceive()
 
 	return p
 }
@@ -163,7 +169,7 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 func (p *redisPeer) heartbeatLoop() {
 	for {
 		startTime := time.Now()
-		cmd := p.redis.Set(context.Background(), p.Name, time.Now().Unix(), time.Minute*30)
+		cmd := p.redis.Set(context.Background(), p.name, time.Now().Unix(), time.Minute*30)
 		reqDur := time.Since(startTime)
 		p.nodePingDuration.WithLabelValues(redisServerLabel).Observe(reqDur.Seconds())
 		if cmd.Err() != nil {
@@ -175,8 +181,8 @@ func (p *redisPeer) heartbeatLoop() {
 
 func (p *redisPeer) Position() int {
 	for i, peer := range p.Members() {
-		if peer == p.Name {
-			p.logger.Info("cluster position found", "name", p.Name, "position", i)
+		if peer == p.name {
+			p.logger.Info("cluster position found", "name", p.name, "position", i)
 			return i
 		}
 	}
@@ -207,12 +213,32 @@ func (p *redisPeer) GetHealthScore() int {
 
 // Members returns a list of active cluster Members.
 func (p *redisPeer) Members() []string {
+	// TODO use scan
 	cmd := p.redis.Keys(context.Background(), peerPattern)
 	if cmd.Err() != nil {
 		p.logger.Error("error getting keys from redis")
 	}
-	// TODO: filter active
-	peers := cmd.Val()
+	values := p.redis.MGet(context.Background(), cmd.Val()...)
+	if cmd.Err() != nil {
+		p.logger.Error("error getting values from redis")
+	}
+	peers := []string{}
+	// TODO: cleanup
+	for i, peer := range cmd.Val() {
+		val := values.Val()[i]
+		if val == nil {
+			continue
+		}
+		ts, err := strconv.ParseInt(val.(string), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		tm := time.Unix(ts, 0)
+		if tm.Before(time.Now().Add(-time.Minute)) {
+			continue
+		}
+		peers = append(peers, peer)
+	}
 	sort.Strings(peers)
 	return peers
 }
@@ -313,6 +339,23 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 	}
 }
 
+func (p *redisPeer) fullStateReqReceive() {
+	for !p.isShutdown {
+		data, err := p.subs[fullStateChannelReq].ReceiveMessage(context.Background())
+		if err != nil {
+			p.logger.Error("error receiving message from redis", "err", err, "channel", data.Channel)
+			continue
+		}
+		if data.Payload == p.name {
+			continue
+		}
+		cmd := p.redis.Publish(context.Background(), fullStateChannel, p.LocalState())
+		if cmd.Err() != nil {
+			p.logger.Error("error publishing message to redis", "err", cmd.Err(), "channel", data.Channel)
+		}
+	}
+}
+
 func (p *redisPeer) fullStateSyncReceive() {
 	for !p.isShutdown {
 		p.messagesReceived.WithLabelValues(fullState).Inc()
@@ -349,6 +392,10 @@ func (p *redisPeer) fullStateSyncPublish() {
 		_ = p.redis.Publish(context.Background(), fullStateChannel, p.LocalState())
 		time.Sleep(p.pushPullInterval)
 	}
+}
+
+func (p *redisPeer) requestFullState() {
+	_ = p.redis.Publish(context.Background(), fullStateChannelReq, p.name)
 }
 
 func (p *redisPeer) LocalState() []byte {
