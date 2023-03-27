@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
@@ -94,7 +95,7 @@ func (config *ReceiverV1) mapToModel(name string) (definitions.EmbeddedContactPo
 	}
 	// As the values are not encrypted when coming from disk files,
 	// we can simply return the fallback for validation.
-	err := cp.Valid(func(_ context.Context, _ map[string][]byte, _, fallback string) string {
+	err := provisioning.ValidateContactPoint(cp, func(_ context.Context, _ map[string][]byte, _, fallback string) string {
 		return fallback
 	})
 	if err != nil {
