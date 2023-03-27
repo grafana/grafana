@@ -7,29 +7,8 @@ import (
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
 
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/corecrd"
-	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
-	"github.com/grafana/grafana/pkg/services/k8s/client"
-	"github.com/grafana/grafana/pkg/services/k8s/informer"
-	"github.com/grafana/grafana/pkg/services/k8s/kine"
-	publicDashboardWebhooks "github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard/webhooks"
 	"github.com/grafana/grafana/pkg/setting"
-)
-
-// List of available targets.
-const (
-	All                 string = "all"
-	HTTPServer          string = "http-server"
-	Kine                string = "kine"
-	KubernetesCRDs      string = "kubernetes-crds"
-	KubernetesAPIServer string = "kubernetes-apiserver"
-	KubernetesInformers string = "kubernetes-informers"
-	KubernetesClientset string = "kubernetes-clientset"
-	Kubernetes          string = "kubernetes"
-
-	PublicDashboardWebhooks string = "public-dashboard-webhooks"
 )
 
 type Engine interface {
@@ -39,8 +18,8 @@ type Engine interface {
 }
 
 type Manager interface {
-	RegisterModule(name string, initFn func() (services.Service, error), deps ...string)
-	RegisterInvisibleModule(name string, initFn func() (services.Service, error), deps ...string)
+	RegisterModule(name string, initFn func() (services.Service, error))
+	RegisterInvisibleModule(name string, initFn func() (services.Service, error))
 }
 
 var _ Engine = (*service)(nil)
@@ -48,64 +27,27 @@ var _ Manager = (*service)(nil)
 
 // service manages the registration and lifecycle of modules.
 type service struct {
-	cfg           *setting.Cfg
-	log           log.Logger
-	targets       []string
-	dependencyMap map[string][]string
+	cfg     *setting.Cfg
+	log     log.Logger
+	targets []string
 
 	ModuleManager  *modules.Manager
 	ServiceManager *services.Manager
 	ServiceMap     map[string]services.Service
-
-	publicDashboardWebhooks *publicDashboardWebhooks.WebhooksAPI
-	apiServer               apiserver.Service
-	crdRegistry             *corecrd.Registry
-	kineService             kine.Service
-	intormerService         informer.Service
-	clientsetService        client.Service
-	httpServer              *api.HTTPServer
 }
 
 func ProvideService(
 	cfg *setting.Cfg,
-	apiServer apiserver.Service,
-	crdRegistry *corecrd.Registry,
-	kineService kine.Service,
-	informerService informer.Service,
-	clientsetService client.Service,
-	publicDashboardWebhooks *publicDashboardWebhooks.WebhooksAPI,
-	httpServer *api.HTTPServer,
 ) *service {
 	logger := log.New("modules")
 
-	dependencyMap := map[string][]string{
-		HTTPServer:              {KubernetesAPIServer},
-		Kine:                    {},
-		KubernetesAPIServer:     {Kine},
-		KubernetesClientset:     {KubernetesAPIServer},
-		KubernetesCRDs:          {KubernetesClientset},
-		KubernetesInformers:     {KubernetesCRDs},
-		Kubernetes:              {KubernetesInformers},
-		PublicDashboardWebhooks: {KubernetesClientset},
-		All:                     {HTTPServer, Kubernetes, PublicDashboardWebhooks},
-	}
-
 	return &service{
-		cfg:           cfg,
-		log:           logger,
-		targets:       cfg.Target,
-		dependencyMap: dependencyMap,
+		cfg:     cfg,
+		log:     logger,
+		targets: cfg.Target,
 
 		ModuleManager: modules.NewManager(logger),
 		ServiceMap:    map[string]services.Service{},
-
-		publicDashboardWebhooks: publicDashboardWebhooks,
-		apiServer:               apiServer,
-		crdRegistry:             crdRegistry,
-		kineService:             kineService,
-		intormerService:         informerService,
-		clientsetService:        clientsetService,
-		httpServer:              httpServer,
 	}
 }
 
@@ -113,18 +55,8 @@ func ProvideService(
 func (m *service) Init(_ context.Context) error {
 	var err error
 
-	// module registration
-	m.RegisterInvisibleModule(HTTPServer, m.httpServerInit)
-	m.RegisterModule(Kine, m.kineInit)
-	m.RegisterModule(KubernetesAPIServer, m.k8sApiServerInit)
-	m.RegisterModule(KubernetesClientset, m.k8sClientsetInit)
-	m.RegisterModule(KubernetesCRDs, m.k8sCRDsInit)
-	m.RegisterModule(KubernetesInformers, m.k8sInformersInit)
-	m.RegisterModule(PublicDashboardWebhooks, m.publicDashboardWebhooksInit)
-	m.RegisterModule(Kubernetes, nil)
-	m.RegisterModule(All, nil)
-
-	for mod, targets := range m.dependencyMap {
+	m.log.Debug("Initializing module manager", "targets", m.targets)
+	for mod, targets := range DependencyMap {
 		if err := m.ModuleManager.AddDependency(mod, targets...); err != nil {
 			return err
 		}
@@ -163,6 +95,7 @@ func (m *service) Run(ctx context.Context) error {
 	listener := newServiceListener(m.log, m)
 	m.ServiceManager.AddListener(listener)
 
+	m.log.Debug("Starting module service manager")
 	// wait until a service fails or stop signal was received
 	err := m.ServiceManager.StartAsync(ctx)
 	if err != nil {
@@ -198,53 +131,16 @@ func (m *service) Shutdown(ctx context.Context) error {
 }
 
 // RegisterModule registers a module with the dskit module manager.
-func (m *service) RegisterModule(name string, initFn func() (services.Service, error), deps ...string) {
+func (m *service) RegisterModule(name string, initFn func() (services.Service, error)) {
 	m.ModuleManager.RegisterModule(name, initFn)
-	if len(deps) == 0 {
-		return
-	}
-	m.dependencyMap[name] = deps
 }
 
 // RegisterInvisibleModule registers an invisible module with the dskit module manager.
-// Invisible modules are not visible to the user, and are intendent to be used as dependencies.
-func (m *service) RegisterInvisibleModule(name string, initFn func() (services.Service, error), deps ...string) {
+func (m *service) RegisterInvisibleModule(name string, initFn func() (services.Service, error)) {
 	m.ModuleManager.RegisterModule(name, initFn, modules.UserInvisibleModule)
-	if len(deps) == 0 {
-		return
-	}
-	m.dependencyMap[name] = deps
 }
 
 // IsModuleEnabled returns true if the module is enabled.
 func (m *service) IsModuleEnabled(name string) bool {
 	return stringsContain(m.targets, name)
-}
-
-func (m *service) k8sApiServerInit() (services.Service, error) {
-	return m.apiServer, nil
-}
-
-func (m *service) k8sCRDsInit() (services.Service, error) {
-	return m.crdRegistry, nil
-}
-
-func (m *service) k8sInformersInit() (services.Service, error) {
-	return m.intormerService, nil
-}
-
-func (m *service) k8sClientsetInit() (services.Service, error) {
-	return m.clientsetService, nil
-}
-
-func (m *service) kineInit() (services.Service, error) {
-	return m.kineService, nil
-}
-
-func (m *service) publicDashboardWebhooksInit() (services.Service, error) {
-	return m.publicDashboardWebhooks, nil
-}
-
-func (m *service) httpServerInit() (services.Service, error) {
-	return m.httpServer, nil
 }

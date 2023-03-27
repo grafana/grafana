@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
@@ -44,7 +45,7 @@ type Resource interface {
 }
 
 type Service interface {
-	services.Service
+	services.NamedService
 }
 
 type ClientSetProvider interface {
@@ -102,12 +103,12 @@ type ShortWebhookConfig struct {
 // ProvideClientset returns a new Clientset configured with cfg.
 func ProvideClientsetProvider(toggles featuremgmt.FeatureToggles, restConfigProvider apiserver.RestConfigProvider, cfg *setting.Cfg) (*service, error) {
 	s := &service{restConfigProvider: restConfigProvider, grafanaCfg: cfg}
-	s.BasicService = services.NewBasicService(s.start, s.running, nil)
-
+	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.KubernetesClientset)
 	return s, nil
 }
 
 func (s *service) GetClientset() *Clientset {
+	_ = s.AwaitRunning(context.Background())
 	return s.clientset
 }
 

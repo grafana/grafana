@@ -7,6 +7,8 @@ import (
 	"path"
 
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/k3s-io/kine/pkg/endpoint"
 )
@@ -15,7 +17,7 @@ const DEFAULT_HOST = "tcp://127.0.0.1:2379"
 
 // Service is the interface for the kine service.
 type Service interface {
-	services.Service
+	services.NamedService
 }
 
 type EtcdProvider interface {
@@ -24,6 +26,8 @@ type EtcdProvider interface {
 
 type service struct {
 	*services.BasicService
+
+	log              log.Logger
 	etcdConfig       *endpoint.ETCDConfig
 	connectionString string
 }
@@ -34,8 +38,8 @@ func ProvideService(sqlStoreService *sqlstore.SQLStore) (*service, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &service{connectionString: connectionString}
-	s.BasicService = services.NewBasicService(s.start, s.running, nil)
+	s := &service{connectionString: connectionString, log: log.New("kine")}
+	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.Kine)
 	return s, nil
 }
 
@@ -48,6 +52,7 @@ func (s *service) start(ctx context.Context) error {
 		Endpoint: s.connectionString,
 		Listener: DEFAULT_HOST,
 	}
+	s.log.Debug("Starting kine", "connectionString", s.connectionString, "listener", DEFAULT_HOST)
 	etcdConfig, err := endpoint.Listen(ctx, config)
 	if err != nil {
 		return err

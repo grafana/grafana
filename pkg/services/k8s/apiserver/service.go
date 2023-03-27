@@ -2,22 +2,25 @@ package apiserver
 
 import (
 	"context"
-	"net"
-	"path"
-
+	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/certgenerator"
 	"github.com/grafana/grafana/pkg/services/k8s/kine"
 	"github.com/grafana/grafana/pkg/setting"
+	serveroptions "k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
+	"net"
+	"path"
 )
 
 const (
-	DEFAULT_IP   = "127.0.0.1"
-	DEFAULT_HOST = "https://" + DEFAULT_IP + ":6443"
+	DefaultAPIServerHost = "https://" + certgenerator.DefaultAPIServerIp + ":6443"
 )
 
 var (
@@ -26,7 +29,7 @@ var (
 )
 
 type Service interface {
-	services.Service
+	services.NamedService
 }
 
 type RestConfigProvider interface {
@@ -51,7 +54,7 @@ func ProvideService(etcdProvider kine.EtcdProvider, cfg *setting.Cfg) (*service,
 		stopCh:       make(chan struct{}),
 	}
 
-	s.BasicService = services.NewBasicService(s.start, s.running, nil)
+	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.KubernetesAPIServer)
 
 	return s, nil
 }
@@ -61,10 +64,20 @@ func (s *service) GetRestConfig() *rest.Config {
 }
 
 func (s *service) start(ctx context.Context) error {
+	// Get the util to get the paths to pre-generated certs
+	certUtil := certgenerator.CertUtil{
+		K8sDataPath: s.dataPath,
+	}
+
 	serverRunOptions := options.NewServerRunOptions()
-	serverRunOptions.SecureServing.BindAddress = net.ParseIP(DEFAULT_IP)
-	serverRunOptions.SecureServing.ServerCert.CertDirectory = s.dataPath
-	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{DEFAULT_HOST}
+	serverRunOptions.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
+
+	serverRunOptions.SecureServing.ServerCert.CertKey = serveroptions.CertKey{
+		CertFile: certUtil.APIServerCertFile(),
+		KeyFile:  certUtil.APIServerKeyFile(),
+	}
+
+	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{DefaultAPIServerHost}
 	etcdConfig := s.etcdProvider.GetConfig()
 	serverRunOptions.Etcd.StorageConfig.Transport.ServerList = etcdConfig.Endpoints
 	serverRunOptions.Etcd.StorageConfig.Transport.CertFile = etcdConfig.TLSConfig.CertFile
@@ -76,13 +89,17 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	logger := logr.New(newLogAdapter())
+	logger.V(1)
+	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
+
 	server, err := app.CreateServerChain(completedOptions)
 	if err != nil {
 		return err
 	}
 
 	s.restConfig = server.GenericAPIServer.LoopbackClientConfig
-	s.restConfig.Host = DEFAULT_HOST
+	s.restConfig.Host = DefaultAPIServerHost
 	err = s.writeKubeConfiguration(s.restConfig)
 	if err != nil {
 		return err
