@@ -37,9 +37,13 @@ export const onAddLibraryPanel = (dashboard: DashboardModel) => {
   dashboard.addPanel(newPanel);
 };
 
-type PanelPluginInfo = { id: number; defaults: { gridPos: { w: number; h: number }; title: string } };
+type PanelPluginInfo = { defaults: { gridPos: { w: number; h: number }; title: string } };
 
-export const onPasteCopiedPanel = (dashboard: DashboardModel, panelPluginInfo: PanelPluginInfo) => {
+export const onPasteCopiedPanel = (dashboard: DashboardModel, panelPluginInfo?: PanelPluginMeta & PanelPluginInfo) => {
+  if (!panelPluginInfo) {
+    return;
+  }
+
   const gridPos = calculateNewPanelGridPos(dashboard);
 
   const newPanel = {
@@ -63,7 +67,7 @@ export const onPasteCopiedPanel = (dashboard: DashboardModel, panelPluginInfo: P
   dashboard.addPanel(newPanel);
 };
 
-export const getCopiedPanelPlugins = (): PanelPluginMeta | PanelPluginInfo | undefined => {
+export const getCopiedPanelPlugin = (): (PanelPluginMeta & PanelPluginInfo) | undefined => {
   const panels = chain(config.panels)
     .filter({ hideFromList: false })
     .map((item) => item)
@@ -78,9 +82,9 @@ export const getCopiedPanelPlugins = (): PanelPluginMeta | PanelPluginInfo | und
       const pluginCopy: PanelPluginMeta = cloneDeep(pluginInfo);
       pluginCopy.name = copiedPanel.title;
       pluginCopy.sort = -1;
-      const defaultsPanel = copiedPanel;
+      // const defaultsPanel = copiedPanel;
 
-      return { ...pluginCopy, defaults: { ...defaultsPanel } };
+      return { ...pluginCopy, defaults: { ...copiedPanel } };
     }
   }
 
