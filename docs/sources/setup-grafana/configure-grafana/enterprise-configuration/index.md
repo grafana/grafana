@@ -104,7 +104,7 @@ Decide whether or not to enable the TLS (Transport Layer Security) protocol when
 
 ### tenant_id
 
-Set the tenant id for Loki communications. Disabled by default. Mandatory to interact with Loki running in multi-tenant mode.
+Set the tenant ID for Loki communication, which is disabled by default. The tenant ID is required to interact with Loki running in [multi-tenant mode](/docs/loki/latest/operations/multi-tenancy/).
 
 ## [analytics.summaries]
 
@@ -218,7 +218,7 @@ If true, it establishes a secure connection to Loki. Defaults to true.
 
 ### tenant_id
 
-Set the tenant id for Loki communications. Disabled by default. Mandatory to interact with Loki running in multi-tenant mode.
+Set the tenant ID for Loki communication, which is disabled by default. The tenant ID is required to interact with Loki running in [multi-tenant mode](/docs/loki/latest/operations/multi-tenancy/).
 
 ## [auth.saml]
 
