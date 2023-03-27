@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 type UnknownReceiverError struct {
@@ -103,7 +104,9 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 		return err
 	}
 
-	if err := config.ProcessConfig(moa.Crypto.Encrypt); err != nil {
+	if err := config.ProcessConfig(func(ctx context.Context, payload []byte) ([]byte, error) {
+		return moa.Crypto.Encrypt(ctx, payload, secrets.WithoutScope())
+	}); err != nil {
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
 	}
 

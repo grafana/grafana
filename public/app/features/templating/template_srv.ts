@@ -7,7 +7,6 @@ import {
   AdHocVariableFilter,
   AdHocVariableModel,
   TypedVariableModel,
-  VariableMap,
 } from '@grafana/data';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 import { sceneGraph, FormatRegistryID, formatRegistry, VariableCustomFormatterFn } from '@grafana/scenes';
