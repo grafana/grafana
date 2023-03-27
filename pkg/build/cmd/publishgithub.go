@@ -43,10 +43,10 @@ var (
 	errReleaseNotFound = errors.New(`release not found, use "--create" to create the release`)
 )
 
-func PublishGithub(cctx *cli.Context) error {
-	ctx := cctx.Context
+func PublishGithub(c *cli.Context) error {
+	ctx := c.Context
 	token := os.Getenv("GH_TOKEN")
-	f, err := getPublishGithubFlags(cctx)
+	f, err := getPublishGithubFlags(c)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func PublishGithub(cctx *cli.Context) error {
 	}
 
 	if f.dryRun {
-		return runPublishGithubDryRun(f, token, cctx)
+		return runPublishGithubDryRun(f, token, c)
 	}
 
 	client := newGithubClient(ctx, token)
@@ -129,21 +129,21 @@ func githubRepositoryClient(ctx context.Context, token string) githubRepositoryS
 	return client.Repositories
 }
 
-func getPublishGithubFlags(ctx *cli.Context) (*publishGithubFlags, error) {
-	metadata, err := config.GenerateMetadata(ctx)
+func getPublishGithubFlags(c *cli.Context) (*publishGithubFlags, error) {
+	metadata, err := config.GenerateMetadata(c)
 	if err != nil {
 		return nil, err
 	}
-	tag := ctx.Value("tag").(string)
+	tag := c.Value("tag").(string)
 	if tag == "" && metadata.GrafanaVersion != "" {
 		tag = fmt.Sprintf("v%s", metadata.GrafanaVersion)
 	}
-	fullRepo := ctx.Value("repo").(string)
-	dryRun := ctx.Value("dry-run").(bool)
+	fullRepo := c.Value("repo").(string)
+	dryRun := c.Value("dry-run").(bool)
 	owner := strings.Split(fullRepo, "/")[0]
 	name := strings.Split(fullRepo, "/")[1]
-	create := ctx.Value("create").(bool)
-	artifactPath := ctx.Value("path").(string)
+	create := c.Value("create").(bool)
+	artifactPath := c.Value("path").(string)
 	if artifactPath == "" {
 		artifactPath = fmt.Sprintf("grafana-enterprise2-%s-amd64.img", metadata.GrafanaVersion)
 		fmt.Printf("path argument is not provided, resolving to default %s...\n", artifactPath)
@@ -160,10 +160,10 @@ func getPublishGithubFlags(ctx *cli.Context) (*publishGithubFlags, error) {
 	}, nil
 }
 
-func runPublishGithubDryRun(f *publishGithubFlags, token string, ctx *cli.Context) error {
-	client := newGithubClient(ctx.Context, token)
+func runPublishGithubDryRun(f *publishGithubFlags, token string, c *cli.Context) error {
+	client := newGithubClient(c.Context, token)
 	fmt.Println("Dry-Run: Retrieving release on repository by tag")
-	release, res, err := client.GetReleaseByTag(ctx.Context, f.repo.owner, f.repo.name, f.tag)
+	release, res, err := client.GetReleaseByTag(c.Context, f.repo.owner, f.repo.name, f.tag)
 	if err != nil && res.StatusCode != 404 {
 		fmt.Println("Dry-Run: Github communication error:\n", err)
 		return nil
