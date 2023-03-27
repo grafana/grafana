@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -299,16 +300,15 @@ type AlertRuleGroupKey struct {
 	OrgID        int64
 	NamespaceUID string
 	RuleGroup    string
+	Folder       string
 }
 
 func (k AlertRuleGroupKey) Less(v AlertRuleGroupKey) bool {
-	if k.OrgID == v.OrgID {
-		if k.NamespaceUID == v.NamespaceUID {
-			return k.RuleGroup < v.RuleGroup
-		}
-		return k.NamespaceUID < v.NamespaceUID
+	if strings.ToLower(k.Folder) == strings.ToLower(v.Folder) {
+		return strings.ToLower(k.RuleGroup) < strings.ToLower(v.RuleGroup)
 	}
-	return k.OrgID < v.OrgID
+
+	return strings.ToLower(k.Folder) < strings.ToLower(v.Folder)
 }
 
 func (k AlertRuleGroupKey) String() string {

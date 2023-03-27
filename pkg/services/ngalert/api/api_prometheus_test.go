@@ -504,6 +504,10 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			assert.Emptyf(t, rules, "not all expected rules were returned")
 		})
 	})
+
+	t.Run("test with pagination", func(t *testing.T) {
+
+	})
 }
 
 func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, *acmock.Mock, PrometheusSrv) {

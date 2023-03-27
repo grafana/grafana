@@ -65,8 +65,8 @@ type DiscoveryBase struct {
 // swagger:model
 type RuleDiscovery struct {
 	// required: true
-	RuleGroups []*RuleGroup `json:"groups"`
-	Total      int64        `json:"total"`
+	RuleGroups  []*RuleGroup     `json:"groups"`
+	RulesTotals map[string]int64 `json:"rules_totals"`
 }
 
 // AlertDiscovery has info for all active alerts.
