@@ -2,6 +2,7 @@ import {
   CustomVariable,
   DataSourceVariable,
   QueryVariable,
+  SceneDataTransformer,
   SceneGridLayout,
   SceneGridRow,
   SceneQueryRunner,
@@ -301,11 +302,29 @@ describe('DashboardLoader', () => {
       expect(vizPanelSceneObject.state.options).toEqual(panel.options);
       expect(vizPanelSceneObject.state.fieldConfig).toEqual(panel.fieldConfig);
       expect(vizPanelSceneObject.state.pluginVersion).toBe('1.0.0');
-      expect((vizPanelSceneObject.state.$data as SceneQueryRunner)?.state.queries).toEqual(panel.targets);
-      expect((vizPanelSceneObject.state.$data as SceneQueryRunner)?.state.maxDataPoints).toEqual(100);
-      expect((vizPanelSceneObject.state.$data as SceneQueryRunner)?.state.transformations).toEqual(
+      expect(
+        ((vizPanelSceneObject.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.queries
+      ).toEqual(panel.targets);
+      expect(
+        ((vizPanelSceneObject.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.maxDataPoints
+      ).toEqual(100);
+      expect((vizPanelSceneObject.state.$data as SceneDataTransformer)?.state.transformations).toEqual(
         panel.transformations
       );
+    });
+
+    it('should initalize the VizPanel without title and transparent true', () => {
+      const panel = {
+        title: '',
+        type: 'test-plugin',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        transparent: true,
+      };
+
+      const vizPanelSceneObject = createVizPanelFromPanelModel(new PanelModel(panel));
+
+      expect(vizPanelSceneObject.state.displayMode).toEqual('transparent');
+      expect(vizPanelSceneObject.state.hoverHeader).toEqual(true);
     });
   });
 
@@ -518,7 +537,7 @@ describe('DashboardLoader', () => {
         label: undefined,
         name: 'query1',
         options: [],
-        query: 'prometheus',
+        pluginId: 'prometheus',
         regex: '/^gdev/',
         skipUrlSync: false,
         text: ['gdev-prometheus', 'gdev-slow-prometheus'],

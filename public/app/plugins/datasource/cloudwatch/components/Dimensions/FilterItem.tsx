@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FunctionComponent, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
@@ -32,7 +32,7 @@ const excludeCurrentKey = (dimensions: Dimensions, currentKey: string | undefine
     return acc;
   }, {});
 
-export const FilterItem: FunctionComponent<Props> = ({
+export const FilterItem = ({
   filter,
   metricStat: { region, namespace, metricName, dimensions, accountId },
   datasource,
@@ -40,7 +40,7 @@ export const FilterItem: FunctionComponent<Props> = ({
   disableExpressions,
   onChange,
   onDelete,
-}) => {
+}: Props) => {
   const dimensionsExcludingCurrentKey = useMemo(
     () => excludeCurrentKey(dimensions ?? {}, filter.key),
     [dimensions, filter]

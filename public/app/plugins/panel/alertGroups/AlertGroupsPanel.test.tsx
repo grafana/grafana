@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { byTestId } from 'testing-library-selector';
@@ -116,10 +116,9 @@ describe('AlertGroupsPanel', () => {
   });
 
   it('renders the panel with the groups', async () => {
-    await renderPanel();
+    renderPanel();
 
-    await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
-    const groups = ui.group.getAll();
+    const groups = await ui.group.findAll();
 
     expect(groups).toHaveLength(2);
 
@@ -131,19 +130,16 @@ describe('AlertGroupsPanel', () => {
   });
 
   it('renders panel with groups expanded', async () => {
-    await renderPanel({ labels: '', alertmanager: 'Alertmanager', expandAll: true });
+    renderPanel({ labels: '', alertmanager: 'Alertmanager', expandAll: true });
 
-    await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
-    const alerts = ui.alert.queryAll();
+    const alerts = await ui.alert.findAll();
     expect(alerts).toHaveLength(3);
   });
 
   it('filters alerts by label filter', async () => {
-    await renderPanel({ labels: 'region=US-Central', alertmanager: 'Alertmanager', expandAll: true });
+    renderPanel({ labels: 'region=US-Central', alertmanager: 'Alertmanager', expandAll: true });
 
-    await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
-    const alerts = ui.alert.queryAll();
-
+    const alerts = await ui.alert.findAll();
     expect(alerts).toHaveLength(2);
   });
 });

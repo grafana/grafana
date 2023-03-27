@@ -315,7 +315,7 @@ The `toUpper` function returns all text in uppercase.
 #### Example
 
 ```
-{{ toLower "Hello, world!" }}
+{{ toUpper "Hello, world!" }}
 ```
 
 ```

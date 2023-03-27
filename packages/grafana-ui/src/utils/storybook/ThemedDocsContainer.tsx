@@ -8,9 +8,10 @@ import { GrafanaLight, GrafanaDark } from '../../../.storybook/storybookTheme';
 
 type Props = {
   context: DocsContextProps;
+  children?: React.ReactNode;
 };
 
-export const ThemedDocsContainer: React.FC<Props> = ({ children, context }) => {
+export const ThemedDocsContainer = ({ children, context }: Props) => {
   const dark = useDarkMode();
 
   return (

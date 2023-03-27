@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
@@ -17,7 +17,7 @@ interface Props {
   field?: Field;
 }
 
-export const FilterPopup: FC<Props> = ({ column: { preFilteredRows, filterValue, setFilter }, onClose, field }) => {
+export const FilterPopup = ({ column: { preFilteredRows, filterValue, setFilter }, onClose, field }: Props) => {
   const theme = useTheme2();
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
@@ -104,7 +104,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(2)};
     margin: ${theme.spacing(1)} 0;
     box-shadow: 0px 0px 20px ${theme.v1.palette.black};
-    border-radius: ${theme.spacing(0.5)};
+    border-radius: ${theme.shape.radius.default};
   `,
   listDivider: css`
     label: listDivider;

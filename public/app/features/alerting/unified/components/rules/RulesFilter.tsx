@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { DataSourcePicker, logInfo } from '@grafana/runtime';
-import { Button, Field, Icon, Input, Label, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { logInfo } from '@grafana/runtime';
+import { Button, Field, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -14,6 +14,8 @@ import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth } from '../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../utils/rules';
 import { HoverCard } from '../HoverCard';
+
+import { MultipleDataSourcePicker } from './MultipleDataSourcePicker';
 
 const ViewOptions: SelectableValue[] = [
   {
@@ -69,13 +71,30 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
   const dataSourceKey = `dataSource-${filterKey}`;
   const queryStringKey = `queryString-${filterKey}`;
 
-  const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings) => {
-    updateFilters({ ...filterState, dataSourceName: dataSourceValue.name });
+  const searchQueryRef = useRef<HTMLInputElement | null>(null);
+  const { handleSubmit, register, setValue } = useForm<{ searchQuery: string }>({ defaultValues: { searchQuery } });
+  const { ref, ...rest } = register('searchQuery');
+
+  useEffect(() => {
+    setValue('searchQuery', searchQuery);
+  }, [searchQuery, setValue]);
+
+  const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings, action: 'add' | 'remove') => {
+    const dataSourceNames =
+      action === 'add'
+        ? [...filterState.dataSourceNames].concat([dataSourceValue.name])
+        : filterState.dataSourceNames.filter((name) => name !== dataSourceValue.name);
+
+    updateFilters({
+      ...filterState,
+      dataSourceNames,
+    });
+
     setFilterKey((key) => key + 1);
   };
 
   const clearDataSource = () => {
-    updateFilters({ ...filterState, dataSourceName: undefined });
+    updateFilters({ ...filterState, dataSourceNames: [] });
     setFilterKey((key) => key + 1);
   };
 
@@ -106,26 +125,48 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     setTimeout(() => setFilterKey(filterKey + 1), 100);
   };
 
-  const searchQueryRef = useRef<HTMLInputElement | null>(null);
-  const { handleSubmit, register } = useForm<{ searchQuery: string }>({ defaultValues: { searchQuery } });
-  const { ref, ...rest } = register('searchQuery');
-
   const searchIcon = <Icon name={'search'} />;
   return (
     <div className={styles.container}>
       <Stack direction="column" gap={1}>
         <Stack direction="row" gap={1}>
-          <Field className={styles.dsPickerContainer} label="Search by data source">
-            <DataSourcePicker
+          <Field
+            className={styles.dsPickerContainer}
+            label={
+              <Label htmlFor="data-source-picker">
+                <Stack gap={0.5}>
+                  <span>Search by data sources</span>
+                  <Tooltip
+                    content={
+                      <div>
+                        <p>
+                          Data sources containing configured alert rules are Mimir or Loki data sources where alert
+                          rules are stored and evaluated in the data source itself.
+                        </p>
+                        <p>
+                          In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
+                          alert rules in the Grafana UI as well as in the data source where they were configured.
+                        </p>
+                      </div>
+                    }
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
+          >
+            <MultipleDataSourcePicker
               key={dataSourceKey}
               alerting
               noDefault
               placeholder="All data sources"
-              current={filterState.dataSourceName}
+              current={filterState.dataSourceNames}
               onChange={handleDataSourceChange}
               onClear={clearDataSource}
             />
           </Field>
+
           <div>
             <Label>State</Label>
             <RadioButtonGroup
@@ -158,7 +199,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
             >
               <Field
                 label={
-                  <Label>
+                  <Label htmlFor="rulesSearchInput">
                     <Stack gap={0.5}>
                       <span>Search</span>
                       <HoverCard content={<SearchQueryHelp />}>
@@ -169,6 +210,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
                 }
               >
                 <Input
+                  id="rulesSearchInput"
                   key={queryStringKey}
                   prefix={searchIcon}
                   ref={(e) => {
@@ -210,7 +252,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-bottom: ${theme.spacing(1)};
     `,
     dsPickerContainer: css`
-      width: 250px;
+      width: 550px;
       flex-grow: 0;
       margin: 0;
     `,
@@ -231,7 +273,7 @@ function SearchQueryHelp() {
       <div className={styles.grid}>
         <div>Filter type</div>
         <div>Expression</div>
-        <HelpRow title="Datasource" expr="datasource:mimir" />
+        <HelpRow title="Datasources" expr="datasource:mimir datasource:prometheus" />
         <HelpRow title="Folder/Namespace" expr="namespace:global" />
         <HelpRow title="Group" expr="group:cpu-usage" />
         <HelpRow title="Rule" expr='rule:"cpu 80%"' />

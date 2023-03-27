@@ -122,15 +122,15 @@ describe('getFieldLinksSupplier', () => {
     expect(links).toMatchInlineSnapshot(`
       [
         {
-          "href": "http://go/100.200 kW",
+          "href": "http://go/100.200%20kW",
           "title": "By Name",
         },
         {
-          "href": "http://go/100.200 kW",
+          "href": "http://go/100.200%20kW",
           "title": "By Index",
         },
         {
-          "href": "http://go/100.200 kW",
+          "href": "http://go/100.200%20kW",
           "title": "By Title",
         },
         {
@@ -146,7 +146,7 @@ describe('getFieldLinksSupplier', () => {
           "title": "Unknown Field",
         },
         {
-          "href": "http://go/Hello Templates",
+          "href": "http://go/Hello%20Templates",
           "title": "Data Frame name",
         },
         {
