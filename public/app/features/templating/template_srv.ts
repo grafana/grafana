@@ -276,23 +276,31 @@ export class TemplateSrv implements BaseTemplateSrv {
     return value;
   }
 
-  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
+  replaceExt(
+    target?: string,
+    scopedVars?: ScopedVars,
+    format?: string | Function
+  ): { replacedString: string; variables?: VariableMap } {
     if (scopedVars && scopedVars.__sceneObject) {
-      return sceneGraph.interpolate(
-        scopedVars.__sceneObject.value,
-        target,
-        scopedVars,
-        format as string | VariableCustomFormatterFn | undefined
-      );
+      return {
+        replacedString: sceneGraph.interpolate(
+          scopedVars.__sceneObject.value,
+          target,
+          scopedVars,
+          format as string | VariableCustomFormatterFn | undefined
+        ),
+      };
     }
 
     if (!target) {
-      return target ?? '';
+      return { replacedString: target ?? '' };
     }
 
     this.regex.lastIndex = 0;
 
-    return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
+    let values: VariableMap = {};
+
+    const replaceString = target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const variableName = var1 || var2 || var3;
       const variable = this.getVariableAtIndex(variableName);
       let fmt = fmt2 || fmt3 || format;
@@ -305,25 +313,30 @@ export class TemplateSrv implements BaseTemplateSrv {
           if (scopedVars[variableName].skipFormat) {
             fmt = undefined;
           }
-
-          return this.formatValue(value, fmt, variable, text);
+          const formattedVarValue = this.formatValue(value, fmt, variable, text);
+          values[variableName] = formattedVarValue;
+          return formattedVarValue;
         }
       }
 
       if (!variable) {
+        values[variableName] = match; // when does a variable be undefined here?
         return match;
       }
 
       if (fmt === FormatRegistryID.queryParam || isAdHoc(variable)) {
         const value = variableAdapters.get(variable.type).getValueForUrl(variable);
         const text = isAdHoc(variable) ? variable.id : variable.current.text;
-
-        return this.formatValue(value, fmt, variable, text);
+        const formattedVarValue = this.formatValue(value, fmt, variable, text);
+        values[variableName] = formattedVarValue;
+        return formattedVarValue;
       }
 
       const systemValue = this.grafanaVariables.get(variable.current.value);
       if (systemValue) {
-        return this.formatValue(systemValue, fmt, variable);
+        const formattedVarValue = this.formatValue(systemValue, fmt, variable);
+        values[variableName] = formattedVarValue;
+        return formattedVarValue;
       }
 
       let value = variable.current.value;
@@ -334,7 +347,9 @@ export class TemplateSrv implements BaseTemplateSrv {
         text = ALL_VARIABLE_TEXT;
         // skip formatting of custom all values unless format set to text or percentencode
         if (variable.allValue && fmt !== FormatRegistryID.text && fmt !== FormatRegistryID.percentEncode) {
-          return this.replace(value);
+          const nestedReplace = this.replaceExt(value);
+          values = { ...values, ...nestedReplace.variables };
+          return nestedReplace.replacedString;
         }
       }
 
@@ -343,13 +358,22 @@ export class TemplateSrv implements BaseTemplateSrv {
           [variableName]: { value, text },
         });
         if (fieldValue !== null && fieldValue !== undefined) {
-          return this.formatValue(fieldValue, fmt, variable, text);
+          const formattedVarValue = this.formatValue(fieldValue, fmt, variable, text);
+          values[variableName] = formattedVarValue;
+          return formattedVarValue;
         }
       }
 
-      const res = this.formatValue(value, fmt, variable, text);
-      return res;
+      const formattedVarValue = this.formatValue(value, fmt, variable, text);
+      values[variableName] = formattedVarValue;
+      return formattedVarValue;
     });
+
+    return { replacedString: replaceString, variables: values };
+  }
+
+  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
+    return this.replaceExt(target, scopedVars, format).replacedString;
   }
 
   getAllVariablesInTarget(target: string, scopedVars: ScopedVars, format?: string | Function): VariableMap {
