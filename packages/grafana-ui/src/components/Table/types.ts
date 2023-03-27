@@ -72,7 +72,7 @@ export interface Props {
   width: number;
   height: number;
   maxHeight?: number;
-  parentData?: {
+  parentMetaData?: {
     title: string;
     titleSource: string;
   };

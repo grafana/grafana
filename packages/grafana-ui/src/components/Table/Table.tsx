@@ -46,7 +46,7 @@ export const Table = memo((props: Props) => {
     data,
     subData,
     height,
-    parentData,
+    parentMetaData,
     maxHeight,
     onCellFilterAdded,
     width,
@@ -385,9 +385,9 @@ export const Table = memo((props: Props) => {
   */
   const adjustTitleMargin = () => {
     // This only currently applies to table being used in the TablePanel.
-    if (parentData?.titleSource === 'tablePanel') {
+    if (parentMetaData?.titleSource === 'tablePanel') {
       // If there is no title, add a margin-top of the title height.
-      return !parentData?.title?.length ? TITLE_HEIGHT / 8 : 0;
+      return !parentMetaData?.title?.length ? TITLE_HEIGHT / 8 : 0;
     }
     return 0;
   };

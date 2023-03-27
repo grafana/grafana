@@ -54,7 +54,7 @@ export function TablePanel(props: Props) {
       showTypeIcons={options.showTypeIcons}
       resizable={true}
       showRowNums={options.showRowNums}
-      parentData={{ title, titleSource: 'tablePanel' }}
+      parentMetaData={{ title, titleSource: 'tablePanel' }}
       initialSortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
