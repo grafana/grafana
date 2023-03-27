@@ -54,14 +54,19 @@ func NewAnnotationBackend(annotations AnnotationStore, dashboards dashboards.Das
 	}
 }
 
-// RecordStates writes a number of state transitions for a given rule to state history.
-func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
+// Record writes a number of state transitions for a given rule to state history.
+func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
 	annotations := buildAnnotations(rule, states, logger)
 	panel := parsePanelKey(rule, logger)
 
 	errCh := make(chan error, 1)
+	if len(annotations) == 0 {
+		close(errCh)
+		return errCh
+	}
+
 	go func() {
 		defer close(errCh)
 		errCh <- h.recordAnnotations(ctx, panel, annotations, rule.OrgID, logger)
@@ -69,7 +74,8 @@ func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule history_
 	return errCh
 }
 
-func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.HistoryQuery) (*data.Frame, error) {
+// Query filters state history annotations and formats them into a dataframe.
+func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQuery) (*data.Frame, error) {
 	logger := h.log.FromContext(ctx)
 	if query.RuleUID == "" {
 		return nil, fmt.Errorf("ruleUID is required to query annotations")
@@ -179,10 +185,6 @@ func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransitio
 }
 
 func (h *AnnotationBackend) recordAnnotations(ctx context.Context, panel *panelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error {
-	if len(annotations) == 0 {
-		return nil
-	}
-
 	if panel != nil {
 		dashID, err := h.dashboards.getID(ctx, panel.orgID, panel.dashUID)
 		if err != nil {

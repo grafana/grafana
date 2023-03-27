@@ -45,6 +45,8 @@ composableKinds: PanelCfg: {
 								// Represents the selected calculations
 								reducer: []
 							}
+							// Controls the height of the rows
+							cellHeight?: ui.TableCellHeight | *"sm"
 						} @cuetsy(kind="interface")
 					},
 				]

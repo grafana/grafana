@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -43,6 +44,12 @@ func notAuthorized(c *contextmodel.ReqContext) {
 	}
 
 	writeRedirectCookie(c)
+
+	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
+		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
+		return
+	}
+
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
@@ -83,9 +90,11 @@ func removeForceLoginParams(str string) string {
 	return forceLoginParamsRegexp.ReplaceAllString(str, "")
 }
 
-func EnsureEditorOrViewerCanEdit(c *contextmodel.ReqContext) {
-	if !c.SignedInUser.HasRole(org.RoleEditor) && !setting.ViewersCanEdit {
-		accessForbidden(c)
+func EnsureEditorOrViewerCanEdit(cfg *setting.Cfg) func(c *contextmodel.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
+		if !c.SignedInUser.HasRole(org.RoleEditor) && !cfg.ViewersCanEdit {
+			accessForbidden(c)
+		}
 	}
 }
 

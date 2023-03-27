@@ -1,6 +1,6 @@
 import { isFunction, isObject } from 'lodash';
 
-import type { AppConfigureExtension } from '@grafana/data';
+import type { CommandHandlerFunc, ConfigureFunc } from './types';
 
 type Options = {
   pluginId: string;
@@ -8,18 +8,18 @@ type Options = {
   logger: (msg: string, error?: unknown) => void;
 };
 
-export function createErrorHandling<T>(options: Options) {
+export function handleErrorsInConfigure<T>(options: Options) {
   const { pluginId, title, logger } = options;
 
-  return (configure: AppConfigureExtension<T>): AppConfigureExtension<T> => {
-    return function handleErrors(extension, context) {
+  return (configure: ConfigureFunc<T>): ConfigureFunc<T> => {
+    return function handleErrors(context) {
       try {
         if (!isFunction(configure)) {
           logger(`[Plugins] ${pluginId} provided invalid configuration function for extension '${title}'.`);
           return;
         }
 
-        const result = configure(extension, context);
+        const result = configure(context);
         if (result instanceof Promise) {
           logger(
             `[Plugins] ${pluginId} provided an unsupported async/promise-based configureation function for extension '${title}'.`
@@ -36,6 +36,35 @@ export function createErrorHandling<T>(options: Options) {
         return result;
       } catch (error) {
         logger(`[Plugins] ${pluginId} thow an error while configure extension '${title}'`, error);
+        return;
+      }
+    };
+  };
+}
+
+export function handleErrorsInHandler(options: Options) {
+  const { pluginId, title, logger } = options;
+
+  return (handler: CommandHandlerFunc): CommandHandlerFunc => {
+    return function handleErrors(context) {
+      try {
+        if (!isFunction(handler)) {
+          logger(`[Plugins] ${pluginId} provided invalid handler function for command extension '${title}'.`);
+          return;
+        }
+
+        const result = handler(context);
+        if (result instanceof Promise) {
+          logger(
+            `[Plugins] ${pluginId} provided an unsupported async/promise-based handler function for command extension '${title}'.`
+          );
+          result.catch(() => {});
+          return;
+        }
+
+        return result;
+      } catch (error) {
+        logger(`[Plugins] ${pluginId} thow an error while handling command extension '${title}'`, error);
         return;
       }
     };

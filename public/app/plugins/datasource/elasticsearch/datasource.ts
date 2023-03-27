@@ -391,40 +391,8 @@ export class ElasticDatasource
     return this.templateSrv.replace(queryString, scopedVars, 'lucene');
   }
 
-  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
-    // We need a separate interpolation format for lucene queries, therefore we first interpolate any
-    // lucene query string and then everything else
-    const interpolateBucketAgg = (bucketAgg: BucketAggregation): BucketAggregation => {
-      if (bucketAgg.type === 'filters') {
-        return {
-          ...bucketAgg,
-          settings: {
-            ...bucketAgg.settings,
-            filters: bucketAgg.settings?.filters?.map((filter) => ({
-              ...filter,
-              query: this.interpolateLuceneQuery(filter.query, scopedVars) || '*',
-            })),
-          },
-        };
-      }
-
-      return bucketAgg;
-    };
-
-    const expandedQueries = queries.map(
-      (query): ElasticsearchQuery => ({
-        ...query,
-        datasource: this.getRef(),
-        query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars)),
-        bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
-      })
-    );
-
-    const finalQueries: ElasticsearchQuery[] = JSON.parse(
-      this.templateSrv.replace(JSON.stringify(expandedQueries), scopedVars)
-    );
-
-    return finalQueries;
+  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars | {}): ElasticsearchQuery[] {
+    return queries.map((q) => this.applyTemplateVariables(q, scopedVars));
   }
 
   testDatasource() {
@@ -684,9 +652,6 @@ export class ElasticDatasource
     const sentTargets: ElasticsearchQuery[] = [];
     let targetsContainsLogsQuery = targets.some((target) => hasMetricOfType(target, 'logs'));
 
-    // add global adhoc filters to timeFilter
-    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-
     const logLimits: Array<number | undefined> = [];
 
     for (const target of targets) {
@@ -709,14 +674,14 @@ export class ElasticDatasource
 
         target.metrics = [];
         // Setting this for metrics queries that are typed as logs
-        queryObj = this.queryBuilder.getLogsQuery(target, limit, adhocFilters);
+        queryObj = this.queryBuilder.getLogsQuery(target, limit);
       } else {
         logLimits.push();
         if (target.alias) {
           target.alias = this.interpolateLuceneQuery(target.alias, request.scopedVars);
         }
 
-        queryObj = this.queryBuilder.build(target, adhocFilters);
+        queryObj = this.queryBuilder.build(target);
       }
 
       const esQuery = JSON.stringify(queryObj);
@@ -1037,6 +1002,38 @@ export class ElasticDatasource
     });
 
     const finalQuery = [query, ...esFilters].filter((f) => f).join(' AND ');
+    return finalQuery;
+  }
+
+  // Used when running queries through backend
+  applyTemplateVariables(query: ElasticsearchQuery, scopedVars: ScopedVars): ElasticsearchQuery {
+    // We need a separate interpolation format for lucene queries, therefore we first interpolate any
+    // lucene query string and then everything else
+    const interpolateBucketAgg = (bucketAgg: BucketAggregation): BucketAggregation => {
+      if (bucketAgg.type === 'filters') {
+        return {
+          ...bucketAgg,
+          settings: {
+            ...bucketAgg.settings,
+            filters: bucketAgg.settings?.filters?.map((filter) => ({
+              ...filter,
+              query: this.interpolateLuceneQuery(filter.query, scopedVars) || '*',
+            })),
+          },
+        };
+      }
+
+      return bucketAgg;
+    };
+
+    const expandedQuery = {
+      ...query,
+      datasource: this.getRef(),
+      query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars)),
+      bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
+    };
+
+    const finalQuery = JSON.parse(this.templateSrv.replace(JSON.stringify(expandedQuery), scopedVars));
     return finalQuery;
   }
 }

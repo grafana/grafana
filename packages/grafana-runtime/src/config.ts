@@ -85,6 +85,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   featureToggles: FeatureToggles = {};
+  anonymousEnabled = false;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   dashboardPreviews: {
@@ -187,6 +188,10 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
     overrideFeatureTogglesFromUrl(this);
 
+    if (this.featureToggles.disableAngular) {
+      this.angularSupportEnabled = false;
+    }
+
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
     this.theme2 = createTheme(getThemeCustomizations(this));
 
@@ -229,10 +234,11 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
     if (key.startsWith('__feature.')) {
+      const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
       const toggleState = value === 'true';
-      if (toggleState !== config.featureToggles[key]) {
-        config.featureToggles[featureName] = toggleState;
+      if (toggleState !== featureToggles[key]) {
+        featureToggles[featureName] = toggleState;
         console.log(`Setting feature toggle ${featureName} = ${toggleState}`);
       }
     }

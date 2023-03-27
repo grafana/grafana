@@ -43,3 +43,12 @@ func (pd *PublicDashboardServiceWrapperImpl) FindByDashboardUid(ctx context.Cont
 
 	return pubdash, nil
 }
+
+func (pd *PublicDashboardServiceWrapperImpl) Delete(ctx context.Context, uid string) error {
+	_, err := pd.store.Delete(ctx, uid)
+	if err != nil {
+		return ErrInternalServerError.Errorf("Delete: failed to delete a public dashboard by Uid: %s %w", uid, err)
+	}
+
+	return nil
+}

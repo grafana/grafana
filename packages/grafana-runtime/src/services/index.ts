@@ -11,7 +11,6 @@ export * from './appEvents';
 export {
   type PluginExtensionRegistry,
   type PluginExtensionRegistryItem,
-  type RegistryConfigureExtension,
   setPluginsExtensionRegistry,
 } from './pluginExtensions/registry';
 export {

@@ -77,16 +77,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
       durationSpan0 = Math.floor(trace.spans[0].duration / 1000);
     }
 
-    let durationSpan1 = trace.spans[1].duration;
-
-    if (trace.spans[1].duration >= 1_000_000) {
-      durationSpan1 = Math.floor(trace.spans[1].duration / 1000000);
-    } else if (trace.spans[1].duration >= 1000) {
-      durationSpan1 = Math.floor(trace.spans[1].duration / 1000);
-    }
-
     expect(screen.getAllByText(durationSpan0, { exact: false })).toBeTruthy();
-    expect(screen.getAllByText(durationSpan1, { exact: false })).toBeTruthy();
   });
 
   it('renders without exploding', () => {

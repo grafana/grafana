@@ -9,8 +9,7 @@
     "action": {
       "change-theme": "",
       "dark-theme": "",
-      "light-theme": "",
-      "search": ""
+      "light-theme": ""
     },
     "search-box": {
       "placeholder": ""
@@ -32,7 +31,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "Actions",
       "data-tab": "Données",
       "error-tab": "Erreur",
       "json-tab": "JSON",
@@ -85,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "Ajouter un panneau",
-      "comments-show": "Afficher les commentaires du tableau de bord",
       "mark-favorite": "Marquer comme favori",
       "open-original": "Ouvrir le tableau de bord d'origine",
       "playlist-next": "Accéder au tableau de bord suivant",
@@ -244,18 +241,6 @@
       "subtitle": "Panneaux réutilisables pouvant être ajoutés à plusieurs tableaux de bord",
       "title": "Panneaux de bibliothèque"
     },
-    "live": {
-      "title": "Diffusion d'événements"
-    },
-    "live-cloud": {
-      "title": "Cloud"
-    },
-    "live-pipeline": {
-      "title": "Pipeline"
-    },
-    "live-status": {
-      "title": "Statut"
-    },
     "manage-dashboards": {
       "title": "Parcourir"
     },
@@ -305,7 +290,6 @@
       "title": "Scènes"
     },
     "search": {
-      "placeholder": "Rechercher dans Grafana",
       "placeholderCommandPalette": ""
     },
     "search-dashboards": {
@@ -427,6 +411,11 @@
     "folder-view": {
       "go-to-folder": "",
       "select-folder": ""
+    },
+    "result-kind": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
     },
     "results-table": {
       "datasource-header": "",

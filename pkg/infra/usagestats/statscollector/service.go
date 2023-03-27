@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
@@ -27,6 +28,7 @@ type Service struct {
 	sqlstore           db.DB
 	plugins            plugins.Store
 	usageStats         usagestats.Service
+	validator          validator.Service
 	statsService       stats.Service
 	features           *featuremgmt.FeatureManager
 	datasources        datasources.DataSourceService
@@ -42,6 +44,7 @@ type Service struct {
 
 func ProvideService(
 	us usagestats.Service,
+	validator validator.Service,
 	statsService stats.Service,
 	cfg *setting.Cfg,
 	store db.DB,
@@ -56,6 +59,7 @@ func ProvideService(
 		sqlstore:           store,
 		plugins:            plugins,
 		usageStats:         us,
+		validator:          validator,
 		statsService:       statsService,
 		features:           features,
 		datasources:        datasourceService,
@@ -173,9 +177,6 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	}
 
 	m["stats.avg_auth_token_per_user.count"] = avgAuthTokensPerUser
-	if s.cfg.RemoteCacheOptions != nil && s.cfg.RemoteCacheOptions.Name != "" {
-		m["stats.remote_cache."+s.cfg.RemoteCacheOptions.Name+".count"] = 1
-	}
 	m["stats.packaging."+s.cfg.Packaging+".count"] = 1
 	m["stats.distributor."+s.cfg.ReportingDistributor+".count"] = 1
 
@@ -228,7 +229,7 @@ func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interf
 	// as sending that name could be sensitive information
 	dsOtherCount := 0
 	for _, dsStat := range dsStats.Result {
-		if s.usageStats.ShouldBeReported(ctx, dsStat.Type) {
+		if s.validator.ShouldBeReported(ctx, dsStat.Type) {
 			m["stats.ds."+dsStat.Type+".count"] = dsStat.Count
 		} else {
 			dsOtherCount += dsStat.Count
@@ -282,7 +283,7 @@ func (s *Service) collectDatasourceAccess(ctx context.Context) (map[string]inter
 
 		access := strings.ToLower(dsAccessStat.Access)
 
-		if s.usageStats.ShouldBeReported(ctx, dsAccessStat.Type) {
+		if s.validator.ShouldBeReported(ctx, dsAccessStat.Type) {
 			m["stats.ds_access."+dsAccessStat.Type+"."+access+".count"] = dsAccessStat.Count
 		} else {
 			old := dsAccessOtherCount[access]
@@ -315,6 +316,7 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.MStatTotalDashboards.Set(float64(statsQuery.Result.Dashboards))
 	metrics.MStatTotalFolders.Set(float64(statsQuery.Result.Folders))
 	metrics.MStatTotalUsers.Set(float64(statsQuery.Result.Users))
+	metrics.MStatTotalTeams.Set(float64(statsQuery.Result.Teams))
 	metrics.MStatActiveUsers.Set(float64(statsQuery.Result.ActiveUsers))
 	metrics.MStatTotalPlaylists.Set(float64(statsQuery.Result.Playlists))
 	metrics.MStatTotalOrgs.Set(float64(statsQuery.Result.Orgs))
