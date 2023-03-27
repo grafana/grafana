@@ -4486,12 +4486,6 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
@@ -4499,7 +4493,7 @@ steps:
   image: golang:1.19.4
   name: compile-build-cmd
 - depends_on:
-  - grabpl
+  - compile-build-cmd
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-deb
   privileged: true
@@ -4520,7 +4514,7 @@ steps:
       from_secret: packages_service_account
     target_bucket: grafana-packages
 - depends_on:
-  - grabpl
+  - compile-build-cmd
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-rpm
   privileged: true
@@ -4583,12 +4577,6 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
@@ -4596,7 +4584,7 @@ steps:
   image: golang:1.19.4
   name: compile-build-cmd
 - depends_on:
-  - grabpl
+  - compile-build-cmd
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-deb
   privileged: true
@@ -4617,7 +4605,7 @@ steps:
       from_secret: packages_service_account
     target_bucket: grafana-packages
 - depends_on:
-  - grabpl
+  - compile-build-cmd
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-rpm
   privileged: true
@@ -6534,6 +6522,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: ddbb4b9b753132c24db6de4d57ccd2f5a05ceebe9eaf32a12f34c86372cf37ef
+hmac: 3f77e38d0e3fd91f9a878e40fae2ba397747af28aaf5db7b91625b57fdd75398
 
 ...
