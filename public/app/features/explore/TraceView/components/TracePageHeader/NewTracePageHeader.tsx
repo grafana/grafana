@@ -15,24 +15,10 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
-import { useEffect, useState } from 'react';
-import { useToggle } from 'react-use';
 
-import { toOption, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import {
-  Badge,
-  BadgeColor,
-  Collapse,
-  HorizontalGroup,
-  InlineField,
-  InlineFieldRow,
-  Input,
-  Select,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
-import { TagsFilterField } from 'app/plugins/datasource/tempo/SpanFilters/TagsFilterField';
+import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { SearchProps } from '../../useSearch';
 import { autoColor } from '../Theme';
@@ -45,9 +31,9 @@ import { Trace } from '../types';
 import { formatDuration } from '../utils/date';
 
 import TracePageActions from './Actions/TracePageActions';
+import { SpanFilters } from './SpanFilters/SpanFilters';
 import SpanGraph from './SpanGraph';
 import { timestamp, getStyles } from './TracePageHeader';
-import TracePageSearchBar from './TracePageSearchBar';
 
 export type NewTracePageHeaderProps = {
   trace: Trace | null;
@@ -59,7 +45,7 @@ export type NewTracePageHeaderProps = {
   setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
   searchMatches: Set<string> | undefined;
   focusedSearchMatch: string;
-  setFocusedSearchMatch: React.Dispatch<React.SetStateAction<string>>; // TODO JOEY: rename to setSearchMatches or just useSearch
+  setFocusedSearchMatch: React.Dispatch<React.SetStateAction<string>>;
 };
 
 export function NewTracePageHeader(props: NewTracePageHeaderProps) {
@@ -76,53 +62,6 @@ export function NewTracePageHeader(props: NewTracePageHeaderProps) {
     setFocusedSearchMatch,
   } = props;
   const styles = { ...useStyles2(getStyles), ...useStyles2(getNewStyles) };
-  const [tags, setTags] = useState('');
-  const [showSpanFilters, setShowSpanFilters] = useToggle(true);
-
-  // const handleServiceNameChange = useCallback(
-  //   (e) => {
-  //     setFocusedSearchMatch('');
-  //     setSearch({
-  //       ...search,
-  //       serviceName: e?.value || '',
-  //     });
-  //   },
-  //   [search, setFocusedSearchMatch, setSearch]
-  // );
-
-  const serviceNameOptions = (trace: Trace) => {
-    return [
-      ...new Set(
-        trace.spans.map((span) => {
-          return span.process.serviceName;
-        })
-      ),
-    ].map((name) => {
-      return toOption(name);
-    });
-  };
-
-  const spanNameOptions = (trace: Trace) => {
-    console.log('rendering');
-    return [
-      ...new Set(
-        trace.spans.map((span) => {
-          return span.operationName;
-        })
-      ),
-    ].map((name) => {
-      return toOption(name);
-    });
-  };
-
-  useEffect(() => {
-    if (tags !== search.tags) {
-      setSearch({
-        ...search,
-        tags: tags,
-      });
-    }
-  }, [tags, search, setSearch]);
 
   const links = React.useMemo(() => {
     if (!trace) {
@@ -188,95 +127,14 @@ export function NewTracePageHeader(props: NewTracePageHeaderProps) {
         )}
       </div>
 
-      <Collapse label="Span Filters" collapsible={true} isOpen={showSpanFilters} onToggle={setShowSpanFilters}>
-        <InlineFieldRow>
-          <InlineField label="Service Name" labelWidth={16}>
-            <HorizontalGroup spacing={'none'}>
-              <Select
-                options={[toOption('='), toOption('!=')]}
-                value={search.serviceNameOperator}
-                onChange={(e) => setSearch({ ...search, serviceNameOperator: e?.value || '' })}
-              />
-              <Select
-                placeholder="All service names"
-                options={serviceNameOptions(trace)}
-                onChange={(e) => setSearch({ ...search, serviceName: e?.value || '' })}
-                isClearable
-                aria-label={'select-service-name'}
-              />
-            </HorizontalGroup>
-          </InlineField>
-        </InlineFieldRow>
-        <InlineFieldRow>
-          <InlineField label="Span Name" labelWidth={16}>
-            <HorizontalGroup spacing={'none'}>
-              <Select
-                options={[toOption('='), toOption('!=')]}
-                value={search.spanNameOperator}
-                onChange={(e) => setSearch({ ...search, spanNameOperator: e?.value || '' })}
-              />
-              <Select
-                placeholder="All span names"
-                options={spanNameOptions(trace)}
-                onChange={(e) => setSearch({ ...search, spanName: e?.value || '' })}
-                isClearable
-                aria-label={'select-span-name'}
-              />
-            </HorizontalGroup>
-          </InlineField>
-        </InlineFieldRow>
-        <InlineFieldRow>
-          <InlineField label="Duration" labelWidth={16}>
-            <HorizontalGroup spacing={'none'}>
-              <Select
-                options={[toOption('>'), toOption('>=')]}
-                value={search.fromOperator}
-                onChange={(e) => setSearch({ ...search, fromOperator: e?.value || '' })}
-              />
-              <Input
-                placeholder="e.g. 100ms, 1.2s"
-                value={search.from}
-                onChange={(v) => setSearch({ ...search, from: v.currentTarget.value || '' })}
-                // invalid={invalid}
-                width={18}
-              />
-              <Select
-                options={[toOption('<'), toOption('<=')]}
-                value={search.toOperator}
-                onChange={(e) => setSearch({ ...search, toOperator: e?.value || '' })}
-              />
-              <Input
-                placeholder="e.g. 100ms, 1.2s"
-                value={search.to}
-                onChange={(v) => setSearch({ ...search, to: v.currentTarget.value || '' })}
-                // invalid={invalid}
-                width={18}
-              />
-            </HorizontalGroup>
-          </InlineField>
-        </InlineFieldRow>
-        <InlineFieldRow>
-          <InlineField label="Tags" labelWidth={16} tooltip="Values should be in logfmt.">
-            <TagsFilterField
-              placeholder="http.status_code=200 error=true"
-              value={tags}
-              onChange={(x) => setTags(x)}
-              tags={trace.spans
-                .map((span) => {
-                  return span.tags;
-                })
-                .flat()}
-            />
-          </InlineField>
-        </InlineFieldRow>
-        <TracePageSearchBar
-          // searchValue={search}
-          searchMatches={searchMatches}
-          focusedSearchMatch={focusedSearchMatch}
-          setFocusedSearchMatch={setFocusedSearchMatch}
-          // datasourceType={datasourceType}
-        />
-      </Collapse>
+      <SpanFilters
+        trace={trace}
+        search={search}
+        setSearch={setSearch}
+        searchMatches={searchMatches}
+        focusedSearchMatch={focusedSearchMatch}
+        setFocusedSearchMatch={setFocusedSearchMatch}
+      />
 
       <SpanGraph
         trace={trace}

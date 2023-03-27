@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SearchProps } from '../../useSearch';
-import { TNil, TraceKeyValuePair, TraceSpan } from '../types';
+import { v4 as uuidv4 } from 'uuid';
+
+import { SearchProps, Tag } from '../../useSearch';
+import { TNil, TraceSpan } from '../types';
 
 export default function filterSpans(searchProps: SearchProps, spans: TraceSpan[] | TNil) {
   if (!spans) {
@@ -40,63 +42,97 @@ export default function filterSpans(searchProps: SearchProps, spans: TraceSpan[]
   return new Set(arraysToMatchAcross);
 }
 
-const getTagMatches = (spans: TraceSpan[], tags: string) => {
-  // if a span field includes at least one filter in includeFilters, the span is a match
-  const includeFilters: string[] = [];
+const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
+  return spans
+    .filter((span: TraceSpan) => {
+      const spanTagKeys = getTagsFromSpan(span, 'keys');
+      const spanTagValues = getTagsFromSpan(span, 'values');
 
-  // values with keys that include text in any one of the excludeKeys will be ignored
-  const excludeKeys: string[] = [];
-
-  // split textFilter by whitespace, remove empty strings, and extract includeFilters and excludeKeys
-  tags
-    .split(/\s+/)
-    .filter(Boolean)
-    .forEach((w) => {
-      if (w[0] === '-') {
-        excludeKeys.push(w.slice(1).toLowerCase());
-      } else {
-        includeFilters.push(w.toLowerCase());
-      }
-    });
-
-  const isTextInFilters = (filters: string[], text: string) =>
-    filters.some((filter) => text.toLowerCase().includes(filter));
-  const isTextInKeyValues = (kvs: TraceKeyValuePair[]) => {
-    return kvs.some((kv) => {
-      // ignore checking key and value for a match if key is in excludeKeys
-      if (isTextInFilters(excludeKeys, kv.key)) {
-        return false;
-      }
-
-      const match = includeFilters.some((filter) => {
-        if (filter.includes('=')) {
-          // match if key and value matches an item in includeFilters
-          const a = `${kv.key}=${kv.value}`.toLowerCase().includes(filter);
-          if (a) {
-            // console.log('f=', filter, kv);
-          }
-          return a;
-        } else {
-          // match if key or value matches an item in includeFilters
-          const b = kv.key.toLowerCase().includes(filter) || kv.value.toString().toLowerCase().includes(filter);
-          if (b) {
-            // console.log('f', filter, kv);
-          }
-          return b;
+      return tags.some((tag: Tag) => {
+        if (tag.key && tag.value) {
+          const keyMatch = checkForMatch(tag.key, spanTagKeys, tag.operator);
+          const valueMatch = checkForMatch(tag.value, spanTagValues, tag.operator);
+          return keyMatch && valueMatch;
+        } else if (tag.key) {
+          const match = checkForMatch(tag.key, spanTagKeys, tag.operator);
+          return match;
+        } else if (tag.value) {
+          const match = checkForMatch(tag.value, spanTagValues, tag.operator);
+          return match;
         }
+        return false;
       });
+    })
+    .map((span: TraceSpan) => span.spanID);
 
-      return match;
-    });
-  };
+  // // if a span field includes at least one filter in includeFilters, the span is a match
+  // const includeFilters: string[] = [];
 
-  const areTagsAMatch = (span: TraceSpan) =>
-    isTextInKeyValues(span.tags) ||
-    (span.logs !== null && span.logs.some((log) => isTextInKeyValues(log.fields))) ||
-    isTextInKeyValues(span.process.tags) ||
-    includeFilters.some((filter) => filter === span.spanID);
+  // // values with keys that include text in any one of the excludeKeys will be ignored
+  // const excludeKeys: string[] = [];
 
-  return spans.filter(areTagsAMatch).map((span: TraceSpan) => span.spanID);
+  // // split textFilter by whitespace, remove empty strings, and extract includeFilters and excludeKeys
+  // tags
+  //   .split(/\s+/)
+  //   .filter(Boolean)
+  //   .forEach((w) => {
+  //     if (w[0] === '-') {
+  //       excludeKeys.push(w.slice(1).toLowerCase());
+  //     } else {
+  //       includeFilters.push(w.toLowerCase());
+  //     }
+  //   });
+
+  // const isTextInFilters = (filters: string[], text: string) =>
+  //   filters.some((filter) => text.toLowerCase().includes(filter));
+  // const isTextInKeyValues = (kvs: TraceKeyValuePair[]) => {
+  //   return kvs.some((kv) => {
+  //     // ignore checking key and value for a match if key is in excludeKeys
+  //     if (isTextInFilters(excludeKeys, kv.key)) {
+  //       return false;
+  //     }
+
+  //     const match = includeFilters.some((filter) => {
+  //       if (filter.includes('=')) {
+  //         // match if key and value matches an item in includeFilters
+  //         const a = `${kv.key}=${kv.value}`.toLowerCase().includes(filter);
+  //         if (a) {
+  //           // console.log('f=', filter, kv);
+  //         }
+  //         return a;
+  //       } else {
+  //         // match if key or value matches an item in includeFilters
+  //         const b = kv.key.toLowerCase().includes(filter) || kv.value.toString().toLowerCase().includes(filter);
+  //         if (b) {
+  //           // console.log('f', filter, kv);
+  //         }
+  //         return b;
+  //       }
+  //     });
+
+  //     return match;
+  //   });
+  // };
+
+  // const areTagsAMatch = (span: TraceSpan) =>
+  //   isTextInKeyValues(span.tags) ||
+  //   (span.logs !== null && span.logs.some((log) => isTextInKeyValues(log.fields))) ||
+  //   isTextInKeyValues(span.process.tags) ||
+  //   includeFilters.some((filter) => filter === span.spanID);
+
+  // return spans.filter(areTagsAMatch).map((span: TraceSpan) => span.spanID);
+};
+
+export const getTagsFromSpan = (span: TraceSpan, type: 'keys' | 'values') => {
+  const tags = type === 'keys' ? span.tags.map((x) => x.key.toString()) : span.tags.map((x) => x.value.toString());
+  const processTags =
+    type === 'keys' ? span.process.tags.map((x) => x.key.toString()) : span.process.tags.map((x) => x.value.toString());
+  // TODO: JOEY: logs tags
+  return [...tags, ...processTags];
+};
+
+const checkForMatch = (needle: string, haystack: string[], operator: string) => {
+  return operator === '=' ? haystack.includes(needle) : !haystack.includes(needle);
 };
 
 const getServiceNameMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
@@ -152,3 +188,5 @@ const convertTimeFilter = (time: string) => {
   }
   return undefined;
 };
+
+export const randomId = () => uuidv4().slice(0, 12);
