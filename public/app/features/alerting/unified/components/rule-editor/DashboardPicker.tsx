@@ -14,6 +14,7 @@ import {
   Button,
   Alert,
   clearButtonStyles,
+  Tooltip,
 } from '@grafana/ui';
 
 import { dashboardApi } from '../../api/dashboardApi';
@@ -21,6 +22,7 @@ import { dashboardApi } from '../../api/dashboardApi';
 export interface PanelDTO {
   id: number;
   title?: string;
+  type: string;
 }
 
 function panelSort(a: PanelDTO, b: PanelDTO) {
@@ -71,7 +73,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
 
   const filteredPanels =
     dashboardResult?.dashboard?.panels
-      ?.filter((panel): panel is PanelDTO => typeof panel.id === 'number')
+      ?.filter((panel): panel is PanelDTO => typeof panel.id === 'number' && typeof panel.type === 'string')
       ?.filter((panel) => panel.title?.toLowerCase().includes(panelFilter.toLowerCase()))
       .sort(panelSort) ?? [];
 
@@ -115,7 +117,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
         className={cx(styles.rowButton, { [styles.rowOdd]: index % 2 === 1, [styles.rowSelected]: isSelected })}
         onClick={() => handleDashboardChange(dashboard.uid)}
       >
-        <div className={styles.dashboardTitle}>{dashboard.title}</div>
+        <div className={cx(styles.dashboardTitle, styles.rowButtonTitle)}>{dashboard.title}</div>
         <div className={styles.dashboardFolder}>
           <Icon name="folder" /> {dashboard.folderTitle ?? 'General'}
         </div>
@@ -125,16 +127,29 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
 
   const PanelRow = ({ index, style }: { index: number; style: CSSProperties }) => {
     const panel = filteredPanels[index];
+    const panelTitle = panel.title || '<No title>';
     const isSelected = selectedPanelId === panel.id.toString();
+    const isAlertingCompatible = panel.type === 'graph' || panel.type === 'timeseries';
 
     return (
       <button
         type="button"
         style={style}
-        className={cx(styles.rowButton, { [styles.rowOdd]: index % 2 === 1, [styles.rowSelected]: isSelected })}
+        className={cx(styles.rowButton, styles.panelButton, {
+          [styles.rowOdd]: index % 2 === 1,
+          [styles.rowSelected]: isSelected,
+        })}
         onClick={() => setSelectedPanelId(panel.id.toString())}
+        disabled={!isAlertingCompatible}
       >
-        {panel.title || '<No title>'}
+        <div className={styles.rowButtonTitle} title={panelTitle}>
+          {panelTitle}
+        </div>
+        {!isAlertingCompatible && (
+          <Tooltip content="Alerting is only supported on graph and timeseries panels">
+            <Icon name="bell-slash" />
+          </Tooltip>
+        )}
       </button>
     );
   };
@@ -273,12 +288,27 @@ const getPickerStyles = (theme: GrafanaTheme2) => {
       white-space: nowrap;
       cursor: pointer;
       border: 2px solid transparent;
+
+      &:disabled {
+        cursor: not-allowed;
+        color: ${theme.colors.text.disabled};
+      }
+    `,
+    rowButtonTitle: css`
+      text-overflow: ellipsis;
+      overflow: hidden;
     `,
     rowSelected: css`
       border-color: ${theme.colors.primary.border};
     `,
     rowOdd: css`
       background-color: ${theme.colors.background.secondary};
+    `,
+    panelButton: css`
+      display: flex;
+      gap: ${theme.spacing(1)};
+      justify-content: space-between;
+      align-items: center;
     `,
     loadingPlaceholder: css`
       height: 100%;
