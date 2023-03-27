@@ -13,7 +13,7 @@ A placement is a location in another plugins UI where your plugin can insert lin
 
 ## How to create a placement within a plugin
 
-The `getPluginExtensions` method in `@grafana/runtime` creates a placement within your plugin. A placement is a way of specifying where in the plugin UI other plugins links or commands are rendered. `getPluginExtensions` takes an object consisting of the `placement` name, which must begin `plugin/<pluginId>`, and include any contextual information you would like to provide for the use of other plugins. It returns a list of `extensionLinks` and `extensionCommands` that your program can loop over.
+The `getPluginExtensions` method in `@grafana/runtime` can be used to create a placement within your plugin. A placement is a way of specifying where in the plugin UI other plugins links or commands are rendered. `getPluginExtensions` takes an object consisting of the `placement` name, which must begin `plugin/<pluginId>`, and include any contextual information you would like to provide for the use of other plugins. It returns a list of `extensionLinks` and `extensionCommands` that your program can loop over.
 
 _Note: Creating a placement in a plugin creates a public interface for other plugins to interact with. Changes to the placement or the context it passes could break any plugin that attempts to register a link inside your plugin._
 

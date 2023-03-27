@@ -48,7 +48,7 @@ new AppPlugin().configureExtensionLink({
   description: 'Will send the user to the basic app',
   placement: 'grafana/dashboard/panel/menu',
   path: '/a/myorg-basic-app/one',
-  configure: (link: AppPluginLinkExtension, context: PanelContext) => {
+  configure: (context: PanelContext) => {
     switch (context?.pluginId) {
       case 'timeseries':
         return {
