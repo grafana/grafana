@@ -243,6 +243,13 @@ clean: ## Clean up intermediate build artifacts.
 	rm -rf public/build
 	rm -rf data/k8s
 
+clean-k8s:
+	rm -rf data/k8s
+
+clean-k8s-certs:
+	rm -rf data/k8s/*.crt
+	rm -rf data/k8s/*.key
+
 gen-ts:
 	@echo "generating TypeScript definitions"
 	go get github.com/tkrajina/typescriptify-golang-structs/typescriptify@v0.1.7

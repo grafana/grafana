@@ -9,6 +9,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io/fs"
 	"math/big"
 	"net"
 	"os"
@@ -203,6 +204,9 @@ func persistCertKeyPairToDisk(cert *x509.Certificate, certPath string, key *rsa.
 }
 
 func (cu *CertUtil) InitializeCACertPKI() error {
+	if err := os.MkdirAll(cu.K8sDataPath, 0755); err != nil && !errors.Is(err, fs.ErrExist) {
+		return err
+	}
 	exists, err := certutil.CanReadCertAndKey(cu.CACertFile(), cu.CAKeyFile())
 
 	if err != nil {
