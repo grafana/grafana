@@ -97,7 +97,6 @@ func TestTracingMiddleware(t *testing.T) {
 			},
 			expSpanName: "PluginClient.runStream",
 		},
-		// TODO: RunStream?
 	} {
 		t.Run("Creates spans on "+tc.name, func(t *testing.T) {
 			t.Run("successful", func(t *testing.T) {
@@ -136,6 +135,36 @@ func TestTracingMiddleware(t *testing.T) {
 				assert.True(t, span.IsEnded(), "span should be ended")
 				assert.Error(t, span.Err, "span should contain an error")
 				assert.Equal(t, codes.Error, span.StatusCode, "span code should be error")
+			})
+
+			t.Run("panic", func(t *testing.T) {
+				var didPanic bool
+
+				tracer := tracing.NewFakeTracer()
+
+				cdt := clienttest.NewClientDecoratorTest(
+					t,
+					clienttest.WithMiddlewares(
+						NewTracingMiddleware(tracer),
+						newAlwaysPanicMiddleware("panic!"),
+					),
+				)
+
+				func() {
+					defer func() {
+						// Swallow panic so the test can keep running,
+						// and we can assert that the client panicked
+						if r := recover(); r != nil {
+							didPanic = true
+						}
+					}()
+					_ = tc.run(pluginCtx, cdt)
+				}()
+
+				assert.True(t, didPanic, "should have panicked")
+				require.Len(t, tracer.Spans, 1, "must have 1 span")
+				span := tracer.Spans[0]
+				assert.True(t, span.IsEnded(), "span should be ended")
 			})
 		})
 	}
@@ -215,14 +244,13 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 				},
 			},
 			assert: func(t *testing.T, span *tracing.FakeSpan) {
-				require.Len(t, span.Attributes, 5)
+				require.Len(t, span.Attributes, 4)
 				for _, k := range []string{"plugin_id", "org_id"} {
 					_, ok := span.Attributes[attribute.Key(k)]
 					assert.True(t, ok)
 				}
 				assert.Equal(t, "uid", span.Attributes["datasource_uid"].AsString())
 				assert.Equal(t, "name", span.Attributes["datasource_name"].AsString())
-				assert.Equal(t, "type", span.Attributes["datasource_type"].AsString())
 			},
 		},
 		{
@@ -310,44 +338,56 @@ func newReqContextWithRequest(req *http.Request) *contextmodel.ReqContext {
 	}
 }
 
-// alwaysErrorMiddleware is a middleware that always returns the specified error
-type alwaysErrorMiddleware struct {
-	err error
+// alwaysErrorFuncMiddleware is a middleware that runs the specified f function for each method, and returns the error
+// returned by f. Any other return values are set to their zero-value.
+// If recovererFunc is specified, it is run in case of panic in the middleware (f).
+type alwaysErrorFuncMiddleware struct {
+	f func() error
 }
 
-func (m *alwaysErrorMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return nil, m.err
+func (m *alwaysErrorFuncMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return nil, m.f()
 }
 
-func (m *alwaysErrorMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	return m.err
+func (m *alwaysErrorFuncMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return m.f()
 }
 
-func (m *alwaysErrorMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	return nil, m.err
+func (m *alwaysErrorFuncMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	return nil, m.f()
 }
 
-func (m *alwaysErrorMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return nil, m.err
+func (m *alwaysErrorFuncMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+	return nil, m.f()
 }
 
-func (m *alwaysErrorMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return nil, m.err
+func (m *alwaysErrorFuncMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	return nil, m.f()
 }
 
-func (m *alwaysErrorMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return nil, m.err
+func (m *alwaysErrorFuncMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	return nil, m.f()
 }
 
-func (m *alwaysErrorMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.err
+func (m *alwaysErrorFuncMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	return m.f()
 }
 
-// newAlwaysErrorMiddleware returns a new *alwaysErrorMiddleware configured with the provided error
+// newAlwaysErrorMiddleware returns a new middleware that always returns the specified error.
 func newAlwaysErrorMiddleware(err error) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
-		return &alwaysErrorMiddleware{
-			err: err,
-		}
+		return &alwaysErrorFuncMiddleware{func() error {
+			return err
+		}}
+	})
+}
+
+// newAlwaysPanicMiddleware returns a new middleware that always panics with the specified message,
+func newAlwaysPanicMiddleware(message string) plugins.ClientMiddleware {
+	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
+		return &alwaysErrorFuncMiddleware{func() error {
+			panic(message)
+			return nil
+		}}
 	})
 }

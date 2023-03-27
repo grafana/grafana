@@ -2,11 +2,11 @@ package clientmiddleware
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/query"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -32,13 +32,9 @@ type TracingMiddleware struct {
 
 // setSpanAttributeFromHTTPHeader takes a ReqContext and a span, and adds the specified HTTP header as a span attribute
 // (string value), if the header is present.
-func setSpanAttributeFromHTTPHeader(reqCtx *contextmodel.ReqContext, span tracing.Span, attributeName, headerName string) {
-	// Do nothing if there's no request context
-	if reqCtx == nil || reqCtx.Req == nil {
-		return
-	}
+func setSpanAttributeFromHTTPHeader(headers http.Header, span tracing.Span, attributeName, headerName string) {
 	// Set the attribute as string
-	if v := reqCtx.Req.Header.Get(headerName); v != "" {
+	if v := headers.Get(headerName); v != "" {
 		span.SetAttributes(attributeName, v, attribute.Key(attributeName).String(v))
 	}
 }
@@ -57,7 +53,6 @@ func (m *TracingMiddleware) traceWrap(
 	span.SetAttributes("org_id", pluginContext.OrgID, attribute.Int64("org_id", pluginContext.OrgID))
 	if settings := pluginContext.DataSourceInstanceSettings; settings != nil {
 		span.SetAttributes("datasource_name", settings.Name, attribute.Key("datasource_name").String(settings.Name))
-		span.SetAttributes("datasource_type", settings.Type, attribute.Key("datasource_type").String(settings.Type))
 		span.SetAttributes("datasource_uid", settings.UID, attribute.Key("datasource_uid").String(settings.UID))
 	}
 	if u := pluginContext.User; u != nil {
@@ -65,12 +60,12 @@ func (m *TracingMiddleware) traceWrap(
 	}
 
 	// Additional attributes from http headers
-	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil && len(reqCtx.Req.Header) > 0 {
+	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil && reqCtx.Req != nil && len(reqCtx.Req.Header) > 0 {
 		if v, err := strconv.Atoi(reqCtx.Req.Header.Get(query.HeaderPanelID)); err == nil {
 			span.SetAttributes("panel_id", v, attribute.Key("panel_id").Int(v))
 		}
-		setSpanAttributeFromHTTPHeader(reqCtx, span, "query_group_id", query.HeaderQueryGroupID)
-		setSpanAttributeFromHTTPHeader(reqCtx, span, "dashboard_uid", query.HeaderDashboardUID)
+		setSpanAttributeFromHTTPHeader(reqCtx.Req.Header, span, "query_group_id", query.HeaderQueryGroupID)
+		setSpanAttributeFromHTTPHeader(reqCtx.Req.Header, span, "dashboard_uid", query.HeaderDashboardUID)
 	}
 
 	// Return ctx with span + cleanup func
@@ -84,50 +79,57 @@ func (m *TracingMiddleware) traceWrap(
 }
 
 func (m *TracingMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "queryData")
+	defer func() { end(err) }()
 	resp, err := m.next.QueryData(ctx, req)
-	end(err)
 	return resp, err
 }
 
 func (m *TracingMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "callResource")
-	err := m.next.CallResource(ctx, req, sender)
-	end(err)
+	defer func() { end(err) }()
+	err = m.next.CallResource(ctx, req, sender)
 	return err
 }
 
 func (m *TracingMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "checkHealth")
+	defer func() { end(err) }()
 	resp, err := m.next.CheckHealth(ctx, req)
-	end(err)
 	return resp, err
 }
 
 func (m *TracingMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "collectMetrics")
+	defer func() { end(err) }()
 	resp, err := m.next.CollectMetrics(ctx, req)
-	end(err)
 	return resp, err
 }
 
 func (m *TracingMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "subscribeStream")
+	defer func() { end(err) }()
 	resp, err := m.next.SubscribeStream(ctx, req)
-	end(err)
 	return resp, err
 }
 
 func (m *TracingMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "publishStream")
+	defer func() { end(err) }()
 	resp, err := m.next.PublishStream(ctx, req)
-	end(err)
 	return resp, err
 }
 
 func (m *TracingMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "runStream")
-	err := m.next.RunStream(ctx, req, sender)
-	end(err)
+	defer func() { end(err) }()
+	err = m.next.RunStream(ctx, req, sender)
 	return err
 }
