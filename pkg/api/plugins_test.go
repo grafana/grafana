@@ -570,7 +570,7 @@ func TestPluginMarkdown(t *testing.T) {
 			pluginStore: &plugins.FakePluginStore{PluginList: []plugins.PluginDTO{p}},
 		}
 
-		md, err := hs.pluginMarkdown(context.Background(), "test-datasource", "someFile")
+		md, err := hs.pluginMarkdown(context.Background(), p.ID, "someFile")
 		require.NoError(t, err)
 		require.Equal(t, data, md)
 	})
