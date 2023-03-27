@@ -34,6 +34,15 @@ func (v *pdValidation) Validate(ctx context.Context, request *admission.Admissio
 		return err
 	}
 
+	// TODO should we ask k8s if the underlying dashboard exists?
+	//dashboard, err := s.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
+	//if err != nil {
+	//return nil, fmt.Errorf("Update: failed to find dashboard by orgId: %d and dashboardUid: %s: %w", u.OrgID, dto.DashboardUid, err)
+	//}
+	//if dashboard == nil {
+	//return nil, fmt.Errorf("Update: dashboard not found by orgId: %d and dashboardUid: %s", u.OrgID, dto.DashboardUid)
+	//}
+
 	// API VALIDATIONS
 	if !validation.IsValidShortUID(pdModel.DashboardUid) {
 		return fmt.Errorf("invalid dashboard ID: %v", pdModel.DashboardUid)
@@ -49,13 +58,5 @@ func (v *pdValidation) Validate(ctx context.Context, request *admission.Admissio
 		return err
 	}
 
-	// verify public dashboard does not exist and that we didn't get one from the
-	// request
-	existingPubdash, err := v.publicdashboardsStore.Find(ctx, pdModel.Uid)
-	if err != nil {
-		return fmt.Errorf("Create: failed to find the public dashboard: %w", err)
-	} else if existingPubdash != nil {
-		return fmt.Errorf("Create: public dashboard already exists: %s", dto.PublicDashboard.Uid)
-	}
 	return nil
 }

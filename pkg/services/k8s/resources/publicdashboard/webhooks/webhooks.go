@@ -32,19 +32,25 @@ type WebhooksAPI struct {
 
 var ValidationWebhookConfigs = []client.ShortWebhookConfig{
 	{
-		Kind:       publicdashboard.Kind,
-		Operations: []admissionregistrationV1.OperationType{admissionregistrationV1.Create},
-		Url:        "https://127.0.0.1:2999/k8s/publicdashboards/admission/create",
-		Timeout:    int32(5),
+		Kind: publicdashboard.Kind,
+		Operations: []admissionregistrationV1.OperationType{
+			admissionregistrationV1.Create,
+			admissionregistrationV1.Update,
+		},
+		Url:     "https://127.0.0.1:2999/k8s/publicdashboards/validate",
+		Timeout: int32(5),
 	},
 }
 
 var MutationWebhookConfigs = []client.ShortWebhookConfig{
 	{
-		Kind:       publicdashboard.Kind,
-		Operations: []admissionregistrationV1.OperationType{admissionregistrationV1.Create},
-		Url:        "https://127.0.0.1:2999/k8s/publicdashboards/mutation/create",
-		Timeout:    int32(5),
+		Kind: publicdashboard.Kind,
+		Operations: []admissionregistrationV1.OperationType{
+			admissionregistrationV1.Create,
+			admissionregistrationV1.Update,
+		},
+		Url:     "https://127.0.0.1:2999/k8s/publicdashboards/mutate",
+		Timeout: int32(5),
 	},
 }
 
@@ -78,8 +84,8 @@ func ProvideWebhooks(
 }
 
 func (api *WebhooksAPI) RegisterAPIEndpoints() {
-	api.RouteRegister.Post("/k8s/publicdashboards/admission/create", api.AdmissionCreate)
-	api.RouteRegister.Post("/k8s/publicdashboards/mutation/create", api.MutationCreate)
+	api.RouteRegister.Post("/k8s/publicdashboards/validate", api.Validate)
+	api.RouteRegister.Post("/k8s/publicdashboards/mutate", api.Mutate)
 }
 
 func (api *WebhooksAPI) start(ctx context.Context) error {

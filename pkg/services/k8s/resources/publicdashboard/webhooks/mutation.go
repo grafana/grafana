@@ -14,11 +14,11 @@ import (
 	k8sTypes "k8s.io/apimachinery/pkg/types"
 )
 
-func (api *WebhooksAPI) MutationCreate(c *contextmodel.ReqContext) response.Response {
+func (api *WebhooksAPI) Mutate(c *contextmodel.ReqContext) response.Response {
 	var resp *k8sAdmission.AdmissionReview
 
 	// get body bytes
-	api.Log.Debug("mutation controller create fired")
+	api.Log.Debug("mutation controller fired")
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		api.Log.Error("error reading request body")
