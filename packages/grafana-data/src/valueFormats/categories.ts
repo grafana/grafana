@@ -383,6 +383,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'I/O ops/sec (iops)', id: 'iops', fn: simpleCountUnit('io/s') },
       { name: 'counts/min (cpm)', id: 'cpm', fn: simpleCountUnit('c/m') },
       { name: 'ops/min (opm)', id: 'opm', fn: simpleCountUnit('ops/m') },
+      { name: 'requests/min (rpm)', id: 'reqpm', fn: simpleCountUnit('req/m') },
       { name: 'reads/min (rpm)', id: 'rpm', fn: simpleCountUnit('rd/m') },
       { name: 'writes/min (wpm)', id: 'wpm', fn: simpleCountUnit('wr/m') },
     ],
