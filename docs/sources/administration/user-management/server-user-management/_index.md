@@ -130,7 +130,7 @@ The force logout action can apply to one device that is logged in to Grafana, or
 1. Sign in to Grafana as a server administrator.
 1. Click **Administration** in the left-side menu, and then **Users**.
 1. Click a user.
-1. Scroll down to the **Sessions** section.
+1. Scroll down to the Sessions section.
 1. Perform one of the following actions:
    - Click **Force logout** next to the session entry that you want logged out of Grafana.
    - Click **Force logout from all devices**.
