@@ -385,6 +385,7 @@ export const Table = memo((props: Props) => {
     making sorting and filtering impossible.
   */
   const adjustTitleMargin = () => {
+    // This only currently applies to table being used in the TablePanel.
     if (parentData?.titleSource === 'tablePanel') {
       // If there is no title, add a margin-top of the title height.
       return !parentData?.title?.length ? TITLE_HEIGHT / 8 : 0;
