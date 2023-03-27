@@ -110,7 +110,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.11.2
 	golang.org/x/crypto v0.4.0
 	golang.org/x/exp v0.0.0-20221211140036-ad323defaf05
-	golang.org/x/net v0.4.0
+	golang.org/x/net v0.7.0
 	golang.org/x/oauth2 v0.3.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/time v0.2.0
@@ -232,8 +232,8 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.10.0
 	go.uber.org/goleak v1.2.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
-	golang.org/x/text v0.5.0
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.7.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20221227171554-f9683d7f8bef
@@ -340,7 +340,7 @@ require (
 	github.com/unknwon/log v0.0.0-20150304194804-e617c87089d3 // indirect
 	go.opentelemetry.io/otel/metric v0.34.0 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
-	golang.org/x/term v0.3.0 // indirect
+	golang.org/x/term v0.5.0 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/api v0.25.3 // indirect
