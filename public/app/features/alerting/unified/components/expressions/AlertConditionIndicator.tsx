@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, useStyles2 } from '@grafana/ui';
+import { Badge, clearButtonStyles, useStyles2 } from '@grafana/ui';
 
 interface AlertConditionProps {
   enabled?: boolean;
@@ -11,12 +11,7 @@ interface AlertConditionProps {
   onSetCondition?: () => void;
 }
 
-export const AlertConditionIndicator: FC<AlertConditionProps> = ({
-  enabled = false,
-  error,
-  warning,
-  onSetCondition,
-}) => {
+export const AlertConditionIndicator = ({ enabled = false, error, warning, onSetCondition }: AlertConditionProps) => {
   const styles = useStyles2(getStyles);
 
   if (enabled && error) {
@@ -33,22 +28,27 @@ export const AlertConditionIndicator: FC<AlertConditionProps> = ({
 
   if (!enabled) {
     return (
-      <div className={styles.actionLink} onClick={() => onSetCondition && onSetCondition()}>
+      <button type="button" className={styles.actionLink} onClick={() => onSetCondition && onSetCondition()}>
         Make this the alert condition
-      </div>
+      </button>
     );
   }
 
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  actionLink: css`
-    color: ${theme.colors.text.link};
-    cursor: pointer;
+const getStyles = (theme: GrafanaTheme2) => {
+  const clearButton = clearButtonStyles(theme);
 
-    &:hover {
-      text-decoration: underline;
-    }
-  `,
-});
+  return {
+    actionLink: css`
+      ${clearButton};
+      color: ${theme.colors.text.link};
+      cursor: pointer;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    `,
+  };
+};

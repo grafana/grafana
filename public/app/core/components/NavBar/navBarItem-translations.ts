@@ -1,10 +1,11 @@
+import { config } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
+
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
 // Because the navigation content is dynamic (defined in the backend), we can not use
 // the normal inline message definition method.
 
-import { config } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
-
+// see pkg/api/index.go
 export function getNavTitle(navId: string | undefined) {
   // the switch cases must match the ID of the navigation item, as defined in the backend nav model
   switch (navId) {
@@ -38,6 +39,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.snapshots.title', 'Snapshots');
     case 'dashboards/library-panels':
       return t('nav.library-panels.title', 'Library panels');
+    case 'dashboards/public':
+      return t('nav.public.title', 'Public dashboards');
     case 'dashboards/new':
       return t('nav.new-dashboard.title', 'New dashboard');
     case 'dashboards/folder/new':
@@ -106,14 +109,6 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.storage.title', 'Storage');
     case 'upgrading':
       return t('nav.upgrading.title', 'Stats and license');
-    case 'live':
-      return t('nav.live.title', 'Event streaming');
-    case 'live-status':
-      return t('nav.live-status.title', 'Status');
-    case 'live-pipeline':
-      return t('nav.live-pipeline.title', 'Pipeline');
-    case 'live-cloud':
-      return t('nav.live-cloud.title', 'Cloud');
     case 'monitoring':
       return t('nav.monitoring.title', 'Monitoring');
     case 'apps':
@@ -145,6 +140,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return config.featureToggles.topnav
         ? t('nav.dashboards.subtitle', 'Create and manage dashboards to visualize your data')
         : undefined;
+    case 'manage-folder':
+      return t('nav.manage-folder.subtitle', 'Manage folder dashboards and permissions');
     case 'dashboards/playlists':
       return t('nav.playlists.subtitle', 'Groups of dashboards that are displayed in a sequence');
     case 'dashboards/snapshots':

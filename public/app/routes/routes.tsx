@@ -11,11 +11,9 @@ import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
-import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { getRoutes as getQueryLibraryRoutes } from 'app/features/query-library/routes';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
@@ -185,15 +183,14 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/f/:uid/:slug/permissions',
-      component:
-        config.rbacEnabled && contextSrv.hasPermission(AccessControlAction.FoldersPermissionsRead)
-          ? SafeDynamicImport(
-              () =>
-                import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/AccessControlFolderPermissions')
-            )
-          : SafeDynamicImport(
-              () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')
-            ),
+      component: config.rbacEnabled
+        ? SafeDynamicImport(
+            () =>
+              import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/AccessControlFolderPermissions')
+          )
+        : SafeDynamicImport(
+            () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')
+          ),
     },
     {
       path: '/dashboards/f/:uid/:slug/settings',
@@ -367,20 +364,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/admin/storage/k8s',
-      roles: () => ['Admin'],
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "K8SStoragePage" */ 'app/features/storage/k8s/K8SPage')
-      ),
-    },
-    {
-      path: '/admin/storage/export',
-      roles: () => ['Admin'],
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "ExportPage" */ 'app/features/storage/ExportPage')
-      ),
-    },
-    {
       path: '/admin/storage/:path*',
       roles: () => ['Admin'],
       component: SafeDynamicImport(
@@ -516,14 +499,11 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
       ),
     },
-    ...getBrowseStorageRoutes(),
     ...getDynamicDashboardRoutes(),
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
-    ...getLiveRoutes(),
     ...getAlertingRoutes(),
     ...getProfileRoutes(),
-    ...getQueryLibraryRoutes(),
     ...extraRoutes,
     ...getPublicDashboardRoutes(),
     ...getDataConnectionsRoutes(),
@@ -536,30 +516,8 @@ export function getAppRoutes(): RouteDescriptor[] {
   ];
 }
 
-export function getBrowseStorageRoutes(cfg = config): RouteDescriptor[] {
-  if (!cfg.featureToggles.dashboardsFromStorage) {
-    return [];
-  }
-  return [
-    {
-      path: '/g/:slug*.json', // suffix will eventually include dashboard
-      pageClass: 'page-dashboard',
-      routeName: DashboardRoutes.Path,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
-      ),
-    },
-    {
-      path: '/g/:slug*',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "StorageFolderPage" */ '../features/storage/StorageFolderPage')
-      ),
-    },
-  ];
-}
-
 export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
-  if (!cfg.featureToggles.supportBundles) {
+  if (!cfg.supportBundlesEnabled) {
     return [];
   }
 
@@ -595,9 +553,10 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/scenes/embedded/:name',
+      path: '/scenes/grafana-monitoring',
+      exact: false,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/SceneEmbeddedPage')
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/apps/GrafanaMonitoringApp')
       ),
     },
     {

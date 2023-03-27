@@ -30,7 +30,7 @@ export function getLogLevel(line: string): LogLevel {
 
     if (result) {
       if (currentIndex === undefined || result.index < currentIndex) {
-        level = (LogLevel as any)[key];
+        level = LogLevel[key as keyof typeof LogLevel];
         currentIndex = result.index;
       }
     }
@@ -40,7 +40,7 @@ export function getLogLevel(line: string): LogLevel {
 
 /** @deprecated will be removed in the next major version */
 export function getLogLevelFromKey(key: string | number): LogLevel {
-  const level = (LogLevel as any)[key.toString().toLowerCase()];
+  const level = LogLevel[key.toString().toLowerCase() as keyof typeof LogLevel];
   if (level) {
     return level;
   }
@@ -136,7 +136,7 @@ export function calculateLogsLabelStats(rows: LogRowModel[], label: string): Log
   const rowCount = rowsWithLabel.length;
 
   // Get label value counts for eligible rows
-  const countsByValue = countBy(rowsWithLabel, (row) => (row as LogRowModel).labels[label]);
+  const countsByValue = countBy(rowsWithLabel, (row) => row.labels[label]);
   return getSortedCounts(countsByValue, rowCount);
 }
 

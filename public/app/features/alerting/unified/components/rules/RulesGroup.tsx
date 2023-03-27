@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -14,8 +14,8 @@ import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
 import { useRulesAccess } from '../../utils/accessControlHooks';
-import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
-import { makeFolderLink } from '../../utils/misc';
+import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
+import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
@@ -35,7 +35,7 @@ interface Props {
   viewMode: ViewMode;
 }
 
-export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, viewMode }) => {
+export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }: Props) => {
   const { rulesSource } = namespace;
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
@@ -234,14 +234,20 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
         )}
       </div>
       {!isCollapsed && (
-        <RulesTable showSummaryColumn={true} className={styles.rulesTable} showGuidelines={true} rules={group.rules} />
+        <RulesTable
+          showSummaryColumn={true}
+          className={styles.rulesTable}
+          showGuidelines={true}
+          showNextEvaluationColumn={Boolean(group.interval)}
+          rules={group.rules}
+        />
       )}
       {isEditingGroup && (
         <EditCloudGroupModal
-          groupInterval={group.interval ?? ''}
-          nameSpaceAndGroup={{ group: group, namespace: namespace }}
-          sourceName={getRulesSourceName(namespace.rulesSource)}
+          namespace={namespace}
+          group={group}
           onClose={() => closeEditModal()}
+          folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder) : undefined}
         />
       )}
       {isReorderingGroup && (

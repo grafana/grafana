@@ -58,6 +58,8 @@ func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *l
 	return nil
 }
 
+// GetAuthInfo returns the auth info for a user
+// It will return the latest auth info for a user
 func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) error {
 	if query.UserId == 0 && query.AuthId == "" {
 		return user.ErrUserNotFound

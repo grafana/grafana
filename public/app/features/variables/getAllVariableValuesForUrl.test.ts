@@ -31,7 +31,7 @@ describe('getAllVariableValuesForUrl', () => {
     });
 
     it('should set multiple url params', () => {
-      let params: any = getVariablesUrlParams();
+      const params = getVariablesUrlParams();
       expect(params['var-test']).toMatchObject(['val1', 'val2']);
     });
   });
@@ -107,7 +107,7 @@ describe('getAllVariableValuesForUrl', () => {
 
     it('should not set scoped value as url params', () => {
       const params = getVariablesUrlParams({
-        test: { name: 'test', value: 'val1', text: 'val1text', skipUrlSync: true },
+        test: { value: 'val1', text: 'val1text', skipUrlSync: true },
       });
       expect(params['var-test']).toBe(undefined);
     });

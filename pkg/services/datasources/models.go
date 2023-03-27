@@ -105,8 +105,6 @@ type AddDataSourceCommand struct {
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
-
-	Result *DataSource `json:"-"`
 }
 
 // Also acts as api DTO
@@ -131,8 +129,6 @@ type UpdateDataSourceCommand struct {
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
-
-	Result *DataSource `json:"-"`
 }
 
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
@@ -159,23 +155,18 @@ type GetDataSourcesQuery struct {
 	OrgID           int64
 	DataSourceLimit int
 	User            *user.SignedInUser
-	Result          []*DataSource
 }
 
-type GetAllDataSourcesQuery struct {
-	Result []*DataSource
-}
+type GetAllDataSourcesQuery struct{}
 
 type GetDataSourcesByTypeQuery struct {
-	OrgID  int64 // optional: filter by org_id
-	Type   string
-	Result []*DataSource
+	OrgID int64 // optional: filter by org_id
+	Type  string
 }
 
 type GetDefaultDataSourceQuery struct {
-	OrgID  int64
-	User   *user.SignedInUser
-	Result *DataSource
+	OrgID int64
+	User  *user.SignedInUser
 }
 
 // GetDataSourceQuery will get a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
@@ -186,14 +177,11 @@ type GetDataSourceQuery struct {
 	Name string
 
 	OrgID int64
-
-	Result *DataSource
 }
 
 type DatasourcesPermissionFilterQuery struct {
 	User        *user.SignedInUser
 	Datasources []*DataSource
-	Result      []*DataSource
 }
 
 const (

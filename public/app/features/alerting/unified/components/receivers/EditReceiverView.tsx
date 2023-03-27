@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -14,7 +14,7 @@ interface Props {
   alertManagerSourceName: string;
 }
 
-export const EditReceiverView: FC<Props> = ({ config, receiverName, alertManagerSourceName }) => {
+export const EditReceiverView = ({ config, receiverName, alertManagerSourceName }: Props) => {
   const receiver = config.alertmanager_config.receivers?.find(({ name }) => name === receiverName);
   if (!receiver) {
     return (

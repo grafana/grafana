@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -26,16 +27,17 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 			OrgID: cmd.OrgId,
 			UID:   cmd.SourceUID,
 		}
-		if err = s.DataSourceService.GetDataSource(ctx, query); err != nil {
+		dataSource, err := s.DataSourceService.GetDataSource(ctx, query)
+		if err != nil {
 			return ErrSourceDataSourceDoesNotExists
 		}
 
-		if !cmd.SkipReadOnlyCheck && query.Result.ReadOnly {
+		if !cmd.SkipReadOnlyCheck && dataSource.ReadOnly {
 			return ErrSourceDataSourceReadOnly
 		}
 
 		if cmd.TargetUID != nil {
-			if err = s.DataSourceService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+			if _, err = s.DataSourceService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
 				OrgID: cmd.OrgId,
 				UID:   *cmd.TargetUID,
 			}); err != nil {
@@ -64,11 +66,12 @@ func (s CorrelationsService) deleteCorrelation(ctx context.Context, cmd DeleteCo
 			OrgID: cmd.OrgId,
 			UID:   cmd.SourceUID,
 		}
-		if err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
+		dataSource, err := s.DataSourceService.GetDataSource(ctx, query)
+		if err != nil {
 			return ErrSourceDataSourceDoesNotExists
 		}
 
-		if query.Result.ReadOnly {
+		if dataSource.ReadOnly {
 			return ErrSourceDataSourceReadOnly
 		}
 
@@ -91,11 +94,12 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			OrgID: cmd.OrgId,
 			UID:   cmd.SourceUID,
 		}
-		if err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
+		dataSource, err := s.DataSourceService.GetDataSource(ctx, query)
+		if err != nil {
 			return ErrSourceDataSourceDoesNotExists
 		}
 
-		if query.Result.ReadOnly {
+		if dataSource.ReadOnly {
 			return ErrSourceDataSourceReadOnly
 		}
 
@@ -126,6 +130,9 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			if cmd.Config.Target != nil {
 				correlation.Config.Target = *cmd.Config.Target
 			}
+			if cmd.Config.Transformations != nil {
+				correlation.Config.Transformations = cmd.Config.Transformations
+			}
 		}
 
 		updateCount, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(correlation)
@@ -153,7 +160,7 @@ func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelat
 			OrgID: cmd.OrgId,
 			UID:   cmd.SourceUID,
 		}
-		if err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
+		if _, err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
 			return ErrSourceDataSourceDoesNotExists
 		}
 
@@ -171,6 +178,31 @@ func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelat
 	return correlation, nil
 }
 
+func (s CorrelationsService) CountCorrelations(ctx context.Context) (*quota.Map, error) {
+	u := &quota.Map{}
+	var err error
+	count := int64(0)
+	err = s.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		q := sess.Table("correlation")
+		count, err = q.Count()
+
+		if err != nil {
+			return err
+		}
+
+		tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+		if err != nil {
+			return err
+		}
+		u.Set(tag, count)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return u, err
+}
+
 func (s CorrelationsService) getCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
 	correlations := make([]Correlation, 0)
 
@@ -179,7 +211,7 @@ func (s CorrelationsService) getCorrelationsBySourceUID(ctx context.Context, cmd
 			OrgID: cmd.OrgId,
 			UID:   cmd.SourceUID,
 		}
-		if err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
+		if _, err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
 			return ErrSourceDataSourceDoesNotExists
 		}
 

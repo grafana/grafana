@@ -235,6 +235,25 @@ func TestParseMetricRequest(t *testing.T) {
 		_, err = tc.queryService.parseMetricRequest(httpreq.Context(), tc.signedInUser, true, mr)
 		require.NoError(t, err)
 	})
+
+	t.Run("Test a duplicated refId", func(t *testing.T) {
+		tc := setup(t)
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`)
+		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.Error(t, err)
+	})
 }
 
 func TestQueryDataMultipleSources(t *testing.T) {
@@ -444,7 +463,7 @@ type testContext struct {
 	secretStore            secretskvs.SecretsKVStore
 	dataSourceCache        *fakeDataSourceCache
 	pluginRequestValidator *fakePluginRequestValidator
-	queryService           *Service // implementation belonging to this package
+	queryService           *ServiceImpl // implementation belonging to this package
 	signedInUser           *user.SignedInUser
 }
 

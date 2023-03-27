@@ -20,6 +20,7 @@ import {
 import {
   BackendSrv,
   BackendSrvRequest,
+  config,
   FetchResponse,
   getBackendSrv,
   reportInteraction,
@@ -32,6 +33,7 @@ import { CustomVariableModel } from '../../../features/variables/types';
 
 import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
+import { runQueryInChunks } from './queryChunking';
 import { parseToNodeNamesArray } from './queryUtils';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
 import { LokiVariableSupport } from './variables';
@@ -42,6 +44,8 @@ jest.mock('@grafana/runtime', () => {
     reportInteraction: jest.fn(),
   };
 });
+
+jest.mock('./queryChunking');
 
 const templateSrvStub = {
   getAdhocFilters: jest.fn(() => [] as unknown[]),
@@ -1085,8 +1089,30 @@ describe('LokiDatasource', () => {
   });
 
   describe('getDataSamples', () => {
-    it('hide request from inspector', () => {
-      const ds = createLokiDatasource(templateSrvStub);
+    let ds: LokiDatasource;
+    beforeEach(() => {
+      ds = createLokiDatasource(templateSrvStub);
+    });
+    it('ignores invalid queries', () => {
+      const spy = jest.spyOn(ds, 'query');
+      ds.getDataSamples({ expr: 'not a query', refId: 'A' });
+      expect(spy).not.toHaveBeenCalled();
+    });
+    it('ignores metric queries', () => {
+      const spy = jest.spyOn(ds, 'query');
+      ds.getDataSamples({ expr: 'count_over_time({a="b"}[1m])', refId: 'A' });
+      expect(spy).not.toHaveBeenCalled();
+    });
+    it('uses the current interval in the request', () => {
+      const spy = jest.spyOn(ds, 'query').mockImplementation(() => of({} as DataQueryResponse));
+      ds.getDataSamples({ expr: '{job="bar"}', refId: 'A' });
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          range: ds.getTimeRange(),
+        })
+      );
+    });
+    it('hides the request from the inspector', () => {
       const spy = jest.spyOn(ds, 'query').mockImplementation(() => of({} as DataQueryResponse));
       ds.getDataSamples({ expr: '{job="bar"}', refId: 'A' });
       expect(spy).toHaveBeenCalledWith(
@@ -1095,6 +1121,40 @@ describe('LokiDatasource', () => {
           requestId: REF_ID_DATA_SAMPLES,
         })
       );
+    });
+  });
+
+  describe('Query splitting', () => {
+    beforeAll(() => {
+      config.featureToggles.lokiQuerySplitting = true;
+      jest.mocked(runQueryInChunks).mockReturnValue(
+        of({
+          data: [],
+        })
+      );
+    });
+    afterAll(() => {
+      config.featureToggles.lokiQuerySplitting = false;
+    });
+    it.each([
+      [[{ expr: 'count_over_time({a="b"}[1m])', refId: 'A' }]],
+      [[{ expr: '{a="b"}', refId: 'A' }]],
+      [
+        [
+          { expr: 'count_over_time({a="b"}[1m])', refId: 'A', hide: true },
+          { expr: '{a="b"}', refId: 'B' },
+        ],
+      ],
+    ])('supports query splitting when the requirements are met', async (targets: LokiQuery[]) => {
+      const ds = createLokiDatasource(templateSrvStub);
+      const query = getQueryOptions<LokiQuery>({
+        targets,
+        app: CoreApp.Dashboard,
+      });
+
+      await expect(ds.query(query)).toEmitValuesWith(() => {
+        expect(runQueryInChunks).toHaveBeenCalled();
+      });
     });
   });
 });

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-ldap/ldap/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/ldap.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
@@ -18,7 +18,7 @@ func TestNew(t *testing.T) {
 	result := New(&ServerConfig{
 		Attr:          AttributeMap{},
 		SearchBaseDNs: []string{"BaseDNHere"},
-	})
+	}, &setting.Cfg{})
 
 	assert.Implements(t, (*IServer)(nil), result)
 }
@@ -67,7 +67,11 @@ func TestServer_Users(t *testing.T) {
 		conn.setSearchResult(&result)
 
 		// Set up attribute map without surname and email
+		cfg := setting.NewCfg()
+		cfg.LDAPAuthEnabled = true
+
 		server := &Server{
+			cfg: cfg,
 			Config: &ServerConfig{
 				Attr: AttributeMap{
 					Username: "username",
@@ -160,6 +164,7 @@ func TestServer_Users(t *testing.T) {
 		})
 
 		server := &Server{
+			cfg: setting.NewCfg(),
 			Config: &ServerConfig{
 				Attr: AttributeMap{
 					Username: "username",
@@ -206,7 +211,11 @@ func TestServer_Users(t *testing.T) {
 			}
 		})
 
+		cfg := setting.NewCfg()
+		cfg.LDAPAuthEnabled = true
+
 		server := &Server{
+			cfg: cfg,
 			Config: &ServerConfig{
 				Attr: AttributeMap{
 					Username: "username",
@@ -279,7 +288,11 @@ func TestServer_Users(t *testing.T) {
 			}
 		})
 
+		cfg := setting.NewCfg()
+		cfg.LDAPAuthEnabled = true
+
 		server := &Server{
+			cfg: cfg,
 			Config: &ServerConfig{
 				Attr: AttributeMap{
 					Username: "username",
@@ -312,11 +325,7 @@ func TestServer_Users(t *testing.T) {
 			require.True(t, res[0].IsDisabled)
 		})
 		t.Run("skip org role sync", func(t *testing.T) {
-			backup := setting.LDAPSkipOrgRoleSync
-			defer func() {
-				setting.LDAPSkipOrgRoleSync = backup
-			}()
-			setting.LDAPSkipOrgRoleSync = true
+			server.cfg.LDAPSkipOrgRoleSync = true
 
 			res, err := server.Users([]string{"groot"})
 			require.NoError(t, err)
@@ -327,6 +336,7 @@ func TestServer_Users(t *testing.T) {
 			require.False(t, res[0].IsDisabled)
 		})
 		t.Run("sync org role", func(t *testing.T) {
+			server.cfg.LDAPSkipOrgRoleSync = false
 			res, err := server.Users([]string{"groot"})
 			require.NoError(t, err)
 			require.Len(t, res, 1)

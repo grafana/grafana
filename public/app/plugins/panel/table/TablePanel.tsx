@@ -7,7 +7,7 @@ import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 import { OPTIONAL_ROW_NUMBER_COLUMN_WIDTH } from '@grafana/ui/src/components/Table/utils';
 
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -56,6 +56,7 @@ export function TablePanel(props: Props) {
       footerOptions={options.footer}
       enablePagination={options.footer?.enablePagination}
       subData={subData}
+      cellHeight={options.cellHeight}
     />
   );
 

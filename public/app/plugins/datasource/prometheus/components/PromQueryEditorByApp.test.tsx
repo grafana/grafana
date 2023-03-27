@@ -1,4 +1,4 @@
-import { render, RenderResult } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { noop } from 'lodash';
 import React from 'react';
 
@@ -8,20 +8,21 @@ import { PrometheusDatasource } from '../datasource';
 
 import { PromQueryEditorByApp } from './PromQueryEditorByApp';
 import { testIds as alertingTestIds } from './PromQueryEditorForAlerting';
+import { Props } from './monaco-query-field/MonacoQueryFieldProps';
 
 // the monaco-based editor uses lazy-loading and that does not work
 // well with this test, and we do not need the monaco-related
 // functionality in this test anyway, so we mock it out.
 jest.mock('./monaco-query-field/MonacoQueryFieldLazy', () => {
-  const fakeQueryField = (props: any) => {
-    return <input onBlur={props.onBlur} data-testid={'dummy-code-input'} type={'text'} />;
+  const fakeQueryField = (props: Props) => {
+    return <input onBlur={(e) => props.onBlur(e.currentTarget.value)} data-testid={'dummy-code-input'} type={'text'} />;
   };
   return {
     MonacoQueryFieldLazy: fakeQueryField,
   };
 });
 
-function setup(app: CoreApp): RenderResult & { onRunQuery: jest.Mock } {
+function setup(app: CoreApp): { onRunQuery: jest.Mock } {
   const dataSource = {
     createQuery: jest.fn((q) => q),
     getInitHints: () => [],
@@ -36,7 +37,7 @@ function setup(app: CoreApp): RenderResult & { onRunQuery: jest.Mock } {
   } as unknown as PrometheusDatasource;
   const onRunQuery = jest.fn();
 
-  const renderOutput = render(
+  render(
     <PromQueryEditorByApp
       app={app}
       onChange={noop}
@@ -47,36 +48,35 @@ function setup(app: CoreApp): RenderResult & { onRunQuery: jest.Mock } {
   );
 
   return {
-    ...renderOutput,
     onRunQuery,
   };
 }
 
 describe('PromQueryEditorByApp', () => {
-  it('should render simplified query editor for cloud alerting', () => {
-    const { getByTestId } = setup(CoreApp.CloudAlerting);
+  it('should render simplified query editor for cloud alerting', async () => {
+    setup(CoreApp.CloudAlerting);
 
-    expect(getByTestId(alertingTestIds.editor)).toBeInTheDocument();
+    expect(await screen.findByTestId(alertingTestIds.editor)).toBeInTheDocument();
   });
 
   it('should render editor selector for unkown apps', () => {
-    const { getByTestId, queryByTestId } = setup(CoreApp.Unknown);
+    setup(CoreApp.Unknown);
 
-    expect(getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
-    expect(queryByTestId(alertingTestIds.editor)).toBeNull();
+    expect(screen.getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
+    expect(screen.queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 
   it('should render editor selector for explore', () => {
-    const { getByTestId, queryByTestId } = setup(CoreApp.Explore);
+    setup(CoreApp.Explore);
 
-    expect(getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
-    expect(queryByTestId(alertingTestIds.editor)).toBeNull();
+    expect(screen.getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
+    expect(screen.queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 
   it('should render editor selector for dashboard', () => {
-    const { getByTestId, queryByTestId } = setup(CoreApp.Dashboard);
+    setup(CoreApp.Dashboard);
 
-    expect(getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
-    expect(queryByTestId(alertingTestIds.editor)).toBeNull();
+    expect(screen.getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
+    expect(screen.queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 });

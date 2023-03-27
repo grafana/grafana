@@ -13,28 +13,28 @@ import (
 // DataSourceService interface for interacting with datasources.
 type DataSourceService interface {
 	// GetDataSource gets a datasource.
-	GetDataSource(ctx context.Context, query *GetDataSourceQuery) error
+	GetDataSource(ctx context.Context, query *GetDataSourceQuery) (*DataSource, error)
 
 	// GetDataSources gets datasources.
-	GetDataSources(ctx context.Context, query *GetDataSourcesQuery) error
+	GetDataSources(ctx context.Context, query *GetDataSourcesQuery) ([]*DataSource, error)
 
 	// GetAllDataSources gets all datasources.
-	GetAllDataSources(ctx context.Context, query *GetAllDataSourcesQuery) error
+	GetAllDataSources(ctx context.Context, query *GetAllDataSourcesQuery) (res []*DataSource, err error)
 
 	// GetDataSourcesByType gets datasources by type.
-	GetDataSourcesByType(ctx context.Context, query *GetDataSourcesByTypeQuery) error
+	GetDataSourcesByType(ctx context.Context, query *GetDataSourcesByTypeQuery) ([]*DataSource, error)
 
 	// AddDataSource adds a new datasource.
-	AddDataSource(ctx context.Context, cmd *AddDataSourceCommand) error
+	AddDataSource(ctx context.Context, cmd *AddDataSourceCommand) (*DataSource, error)
 
 	// DeleteDataSource deletes an existing datasource.
 	DeleteDataSource(ctx context.Context, cmd *DeleteDataSourceCommand) error
 
 	// UpdateDataSource updates an existing datasource.
-	UpdateDataSource(ctx context.Context, cmd *UpdateDataSourceCommand) error
+	UpdateDataSource(ctx context.Context, cmd *UpdateDataSourceCommand) (*DataSource, error)
 
 	// GetDefaultDataSource gets the default datasource.
-	GetDefaultDataSource(ctx context.Context, query *GetDefaultDataSourceQuery) error
+	GetDefaultDataSource(ctx context.Context, query *GetDefaultDataSourceQuery) (*DataSource, error)
 
 	// GetHTTPTransport gets a datasource specific HTTP transport.
 	GetHTTPTransport(ctx context.Context, ds *DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error)

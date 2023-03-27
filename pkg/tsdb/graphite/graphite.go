@@ -161,6 +161,13 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &result, err
 	}
 
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			logger.Warn("failed to close response body", "error", err)
+		}
+	}()
+
 	frames, err := s.toDataFrames(logger, res, origRefIds)
 	if err != nil {
 		span.RecordError(err)

@@ -1,25 +1,36 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
+import { useLocation } from 'react-use';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { Icon, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
-import { alertStateToReadable, alertStateToState, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
-import { PromRuleWithLocation } from 'app/types/unified-alerting';
+import { Spacer } from 'app/features/alerting/unified/components/Spacer';
+import { fromCombinedRule, stringifyIdentifier } from 'app/features/alerting/unified/utils/rule-id';
+import {
+  alertStateToReadable,
+  alertStateToState,
+  getFirstActiveAt,
+  isAlertingRule,
+} from 'app/features/alerting/unified/utils/rules';
+import { createUrl } from 'app/features/alerting/unified/utils/url';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { AlertingRule, CombinedRuleWithLocation } from '../../../../types/unified-alerting';
 import { AlertInstances } from '../AlertInstances';
 import { getStyles } from '../UnifiedAlertList';
 import { UnifiedAlertListOptions } from '../types';
 
-type UngroupedModeProps = {
-  rules: PromRuleWithLocation[];
+type Props = {
+  rules: CombinedRuleWithLocation[];
   options: UnifiedAlertListOptions;
 };
 
-const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
+const UngroupedModeView = ({ rules, options }: Props) => {
   const styles = useStyles2(getStyles);
   const stateStyle = useStyles2(getStateTagStyles);
+  const { href: returnTo } = useLocation();
 
   const rulesToDisplay = rules.length <= options.maxItems ? rules : rules.slice(0, options.maxItems);
 
@@ -27,43 +38,71 @@ const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
     <>
       <ol className={styles.alertRuleList}>
         {rulesToDisplay.map((ruleWithLocation, index) => {
-          const { rule, namespaceName, groupName } = ruleWithLocation;
-          const firstActiveAt = getFirstActiveAt(rule);
-          return (
-            <li className={styles.alertRuleItem} key={`alert-${namespaceName}-${groupName}-${rule.name}-${index}`}>
-              <div className={stateStyle.icon}>
-                <Icon
-                  name={alertDef.getStateDisplayModel(rule.state).iconClass}
-                  className={stateStyle[alertStateToState(rule.state)]}
-                  size={'lg'}
-                />
-              </div>
-              <div>
-                <div className={styles.instanceDetails}>
-                  <div className={styles.alertName} title={rule.name}>
-                    {rule.name}
-                  </div>
-                  <div className={styles.alertDuration}>
-                    <span className={stateStyle[alertStateToState(rule.state)]}>
-                      {alertStateToReadable(rule.state)}
-                    </span>{' '}
-                    {firstActiveAt && rule.state !== PromAlertingRuleState.Inactive && (
-                      <>
-                        for{' '}
-                        <span>
-                          {intervalToAbbreviatedDurationString({
-                            start: firstActiveAt,
-                            end: Date.now(),
-                          })}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <AlertInstances alerts={ruleWithLocation.rule.alerts ?? []} options={options} />
-              </div>
-            </li>
+          const { namespaceName, groupName, dataSourceName } = ruleWithLocation;
+          const alertingRule: AlertingRule | undefined = isAlertingRule(ruleWithLocation.promRule)
+            ? ruleWithLocation.promRule
+            : undefined;
+          const firstActiveAt = getFirstActiveAt(alertingRule);
+          const indentifier = fromCombinedRule(ruleWithLocation.dataSourceName, ruleWithLocation);
+          const strIndentifier = stringifyIdentifier(indentifier);
+
+          const href = createUrl(
+            `/alerting/${encodeURIComponent(dataSourceName)}/${encodeURIComponent(strIndentifier)}/view`,
+            { returnTo: returnTo ?? '' }
           );
+          if (alertingRule) {
+            return (
+              <li
+                className={styles.alertRuleItem}
+                key={`alert-${namespaceName}-${groupName}-${ruleWithLocation.name}-${index}`}
+              >
+                <div className={stateStyle.icon}>
+                  <Icon
+                    name={alertDef.getStateDisplayModel(alertingRule.state).iconClass}
+                    className={stateStyle[alertStateToState(alertingRule.state)]}
+                    size={'lg'}
+                  />
+                </div>
+                <div className={styles.alertNameWrapper}>
+                  <div className={styles.instanceDetails}>
+                    <Stack direction="row" gap={1} wrap={false}>
+                      <div className={styles.alertName} title={ruleWithLocation.name}>
+                        {ruleWithLocation.name}
+                      </div>
+                      <Spacer />
+                      {href && (
+                        <a href={href} target="__blank" className={styles.link} rel="noopener">
+                          <Stack alignItems="center" gap={1}>
+                            View alert rule
+                            <Icon name={'external-link-alt'} size="sm" />
+                          </Stack>
+                        </a>
+                      )}
+                    </Stack>
+                    <div className={styles.alertDuration}>
+                      <span className={stateStyle[alertStateToState(alertingRule.state)]}>
+                        {alertStateToReadable(alertingRule.state)}
+                      </span>{' '}
+                      {firstActiveAt && alertingRule.state !== PromAlertingRuleState.Inactive && (
+                        <>
+                          for{' '}
+                          <span>
+                            {intervalToAbbreviatedDurationString({
+                              start: firstActiveAt,
+                              end: Date.now(),
+                            })}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <AlertInstances alerts={alertingRule.alerts ?? []} options={options} />
+                </div>
+              </li>
+            );
+          } else {
+            return null;
+          }
         })}
       </ol>
     </>
