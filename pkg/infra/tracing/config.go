@@ -9,9 +9,8 @@ import (
 // OpentelemetryCfg contains the Opentelemetry address and propagation config values.
 // This is used to export the Opentelemetry (OTLP) config without exposing the whole *setting.Cfg.
 type OpentelemetryCfg struct {
-	Address         string
-	Propagation     string
-	DisabledPlugins *DisabledPlugins
+	Address     string
+	Propagation string
 }
 
 // IsEnabled returns true if OTLP tracing is enabled (address set)
@@ -30,8 +29,7 @@ func NewOpentelemetryCfg(grafanaCfg *setting.Cfg) (OpentelemetryCfg, error) {
 		return OpentelemetryCfg{}, nil
 	}
 	return OpentelemetryCfg{
-		Address:         ots.address,
-		Propagation:     ots.propagation,
-		DisabledPlugins: ots.disabledPlugins,
+		Address:     ots.address,
+		Propagation: ots.propagation,
 	}, nil
 }

@@ -69,7 +69,11 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(i.cfg.Azure)...)
 
 	// Tracing
-	if i.cfg.Opentelemetry.IsEnabled() && !i.cfg.Opentelemetry.DisabledPlugins.IsDisabled(plugin.ID) {
+	pluginTracingEnabled := true
+	if v, exists := i.cfg.PluginSettings[plugin.ID]["tracing"]; exists {
+		pluginTracingEnabled = v != "false"
+	}
+	if i.cfg.Opentelemetry.IsEnabled() && pluginTracingEnabled {
 		hostEnv = append(
 			hostEnv,
 			fmt.Sprintf("GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS=%s", i.cfg.Opentelemetry.Address),

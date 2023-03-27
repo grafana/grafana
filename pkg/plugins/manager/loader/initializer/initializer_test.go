@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -227,18 +228,8 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 	}
 
 	defaultOtelCfg := tracing.OpentelemetryCfg{
-		Address:         "127.0.0.1:4317",
-		Propagation:     "",
-		DisabledPlugins: &tracing.DisabledPlugins{},
-	}
-	newDisabledPluginOtelCfg := func(ids ...string) tracing.OpentelemetryCfg {
-		var d tracing.DisabledPlugins
-		d.Add(ids...)
-		return tracing.OpentelemetryCfg{
-			Address:         "127.0.0.1:4317",
-			Propagation:     "",
-			DisabledPlugins: &d,
-		}
+		Address:     "127.0.0.1:4317",
+		Propagation: "",
 	}
 
 	expDefaultOtlp := func(t *testing.T, envVars []string) {
@@ -294,9 +285,8 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			name: "otlp propagation",
 			cfg: &config.Cfg{
 				Opentelemetry: tracing.OpentelemetryCfg{
-					Address:         "127.0.0.1:4317",
-					Propagation:     "w3c",
-					DisabledPlugins: &tracing.DisabledPlugins{},
+					Address:     "127.0.0.1:4317",
+					Propagation: "w3c",
 				},
 			},
 			exp: func(t *testing.T, envVars []string) {
@@ -309,7 +299,10 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "disabled on plugin",
 			cfg: &config.Cfg{
-				Opentelemetry: newDisabledPluginOtelCfg(pluginID),
+				Opentelemetry: defaultOtelCfg,
+				PluginSettings: setting.PluginSettings{
+					pluginID: map[string]string{"tracing": "false"},
+				},
 			},
 			exp: expNoTracing,
 		},
