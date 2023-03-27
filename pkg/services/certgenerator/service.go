@@ -31,7 +31,7 @@ type service struct {
 
 func ProvideService(cfg *setting.Cfg) (*service, error) {
 	certUtil := &CertUtil{
-		K8sDataPath: strings.Join([]string{cfg.DataPath, "k8s"}, "/"),
+		K8sDataPath: filepath.Join(cfg.DataPath, "k8s"),
 	}
 
 	s := &service{
