@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { groupBy } from 'lodash';
+import { groupBy, mapValues } from 'lodash';
 import React, { useMemo } from 'react';
 
 import {
@@ -14,6 +14,8 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { Button, InlineField, useStyles2 } from '@grafana/ui';
+
+import { mergeLogsVolumeDataFrames } from '../logs/utils';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
 import { SupplementaryResultError } from './SupplementaryResultError';
@@ -41,10 +43,12 @@ export const LogsVolumePanelList = ({
   splitOpen,
   timeZone,
 }: Props) => {
-  const logVolumes = useMemo(
-    () => groupBy(logsVolumeData?.data || [], 'meta.custom.sourceQuery.refId'),
-    [logsVolumeData]
-  );
+  const logVolumes: Record<string, DataFrame[]> = useMemo(() => {
+    const grouped = groupBy(logsVolumeData?.data || [], 'meta.custom.datasourceName');
+    return mapValues(grouped, (value) => {
+      return mergeLogsVolumeDataFrames(value);
+    });
+  }, [logsVolumeData]);
 
   const styles = useStyles2(getStyles);
 
