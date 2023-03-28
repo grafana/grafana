@@ -170,7 +170,7 @@ export const Table = memo((props: Props) => {
     }
 
     const footerItems = getFooterItems(
-      headerGroups[0].headers as unknown as Array<{ field: Field; id: string }>,
+      headerGroups[0].headers as unknown as Array<{ id: string; field: Field }>,
       createFooterCalculationValues(rows),
       footerOptions,
       theme
