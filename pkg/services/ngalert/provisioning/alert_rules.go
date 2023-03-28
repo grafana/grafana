@@ -51,12 +51,12 @@ func (service *AlertRuleService) GetAlertRules(ctx context.Context, orgID int64)
 	q := models.ListAlertRulesQuery{
 		OrgID: orgID,
 	}
-	err := service.ruleStore.ListAlertRules(ctx, &q)
+	rules, err := service.ruleStore.ListAlertRules(ctx, &q)
 	if err != nil {
 		return nil, err
 	}
 	// TODO: GET provenance
-	return q.Result, nil
+	return rules, nil
 }
 
 func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (models.AlertRule, models.Provenance, error) {
@@ -64,15 +64,15 @@ func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, 
 		OrgID: orgID,
 		UID:   ruleUID,
 	}
-	err := service.ruleStore.GetAlertRuleByUID(ctx, query)
+	rules, err := service.ruleStore.GetAlertRuleByUID(ctx, query)
 	if err != nil {
 		return models.AlertRule{}, models.ProvenanceNone, err
 	}
-	provenance, err := service.provenanceStore.GetProvenance(ctx, query.Result, orgID)
+	provenance, err := service.provenanceStore.GetProvenance(ctx, rules, orgID)
 	if err != nil {
 		return models.AlertRule{}, models.ProvenanceNone, err
 	}
-	return *query.Result, provenance, nil
+	return *rules, provenance, nil
 }
 
 type AlertRuleWithFolderTitle struct {
@@ -86,14 +86,14 @@ func (service *AlertRuleService) GetAlertRuleWithFolderTitle(ctx context.Context
 		OrgID: orgID,
 		UID:   ruleUID,
 	}
-	err := service.ruleStore.GetAlertRuleByUID(ctx, query)
+	rule, err := service.ruleStore.GetAlertRuleByUID(ctx, query)
 	if err != nil {
 		return AlertRuleWithFolderTitle{}, err
 	}
 
 	dq := dashboards.GetDashboardQuery{
 		OrgID: orgID,
-		UID:   query.Result.NamespaceUID,
+		UID:   rule.NamespaceUID,
 	}
 
 	dash, err := service.dashboardService.GetDashboard(ctx, &dq)
@@ -102,7 +102,7 @@ func (service *AlertRuleService) GetAlertRuleWithFolderTitle(ctx context.Context
 	}
 
 	return AlertRuleWithFolderTitle{
-		AlertRule:   *query.Result,
+		AlertRule:   *rule,
 		FolderTitle: dash.Title,
 	}, nil
 }
@@ -158,19 +158,20 @@ func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, 
 		NamespaceUIDs: []string{namespaceUID},
 		RuleGroup:     group,
 	}
-	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
+	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
+	if err != nil {
 		return models.AlertRuleGroup{}, err
 	}
-	if len(q.Result) == 0 {
+	if len(ruleList) == 0 {
 		return models.AlertRuleGroup{}, store.ErrAlertRuleGroupNotFound
 	}
 	res := models.AlertRuleGroup{
-		Title:     q.Result[0].RuleGroup,
-		FolderUID: q.Result[0].NamespaceUID,
-		Interval:  q.Result[0].IntervalSeconds,
+		Title:     ruleList[0].RuleGroup,
+		FolderUID: ruleList[0].NamespaceUID,
+		Interval:  ruleList[0].IntervalSeconds,
 		Rules:     []models.AlertRule{},
 	}
-	for _, r := range q.Result {
+	for _, r := range ruleList {
 		if r != nil {
 			res.Rules = append(res.Rules, *r)
 		}
@@ -189,12 +190,12 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 			NamespaceUIDs: []string{namespaceUID},
 			RuleGroup:     ruleGroup,
 		}
-		err := service.ruleStore.ListAlertRules(ctx, query)
+		ruleList, err := service.ruleStore.ListAlertRules(ctx, query)
 		if err != nil {
 			return fmt.Errorf("failed to list alert rules: %w", err)
 		}
-		updateRules := make([]models.UpdateRule, 0, len(query.Result))
-		for _, rule := range query.Result {
+		updateRules := make([]models.UpdateRule, 0, len(ruleList))
+		for _, rule := range ruleList {
 			if rule.IntervalSeconds == intervalSeconds {
 				continue
 			}
@@ -222,11 +223,12 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 			NamespaceUIDs: []string{group.FolderUID},
 			RuleGroup:     group.Title,
 		}
-		if err := service.ruleStore.ListAlertRules(ctx, &listRulesQuery); err != nil {
+		ruleList, err := service.ruleStore.ListAlertRules(ctx, &listRulesQuery)
+		if err != nil {
 			return fmt.Errorf("failed to list alert rules: %w", err)
 		}
-		group.Rules = make([]models.AlertRule, 0, len(listRulesQuery.Result))
-		for _, r := range listRulesQuery.Result {
+		group.Rules = make([]models.AlertRule, 0, len(ruleList))
+		for _, r := range ruleList {
 			if r != nil {
 				group.Rules = append(group.Rules, *r)
 			}
@@ -411,10 +413,11 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Co
 		NamespaceUIDs: []string{namespaceUID},
 		RuleGroup:     group,
 	}
-	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
+	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
+	if err != nil {
 		return file.AlertRuleGroupWithFolderTitle{}, err
 	}
-	if len(q.Result) == 0 {
+	if len(ruleList) == 0 {
 		return file.AlertRuleGroupWithFolderTitle{}, store.ErrAlertRuleGroupNotFound
 	}
 
@@ -429,15 +432,15 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Co
 
 	res := file.AlertRuleGroupWithFolderTitle{
 		AlertRuleGroup: &models.AlertRuleGroup{
-			Title:     q.Result[0].RuleGroup,
-			FolderUID: q.Result[0].NamespaceUID,
-			Interval:  q.Result[0].IntervalSeconds,
+			Title:     ruleList[0].RuleGroup,
+			FolderUID: ruleList[0].NamespaceUID,
+			Interval:  ruleList[0].IntervalSeconds,
 			Rules:     []models.AlertRule{},
 		},
 		OrgID:       orgID,
 		FolderTitle: dash.Title,
 	}
-	for _, r := range q.Result {
+	for _, r := range ruleList {
 		if r != nil {
 			res.AlertRuleGroup.Rules = append(res.AlertRuleGroup.Rules, *r)
 		}
@@ -451,13 +454,14 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 		OrgID: orgID,
 	}
 
-	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
+	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
+	if err != nil {
 		return nil, err
 	}
 
 	groups := make(map[models.AlertRuleGroupKey][]models.AlertRule)
 	namespaces := make(map[string][]*models.AlertRuleGroupKey)
-	for _, r := range q.Result {
+	for _, r := range ruleList {
 		groupKey := r.GetGroupKey()
 		group := groups[groupKey]
 		group = append(group, *r)

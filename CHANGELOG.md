@@ -1,3 +1,22 @@
+<!-- 9.4.7 START -->
+
+# 9.4.7 (2023-03-16)
+
+### Bug fixes
+
+- **Alerting:** Update scheduler to receive rule updates only from database. [#64780](https://github.com/grafana/grafana/pull/64780), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Influxdb:** Re-introduce backend migration feature toggle. [#64842](https://github.com/grafana/grafana/pull/64842), [@itsmylife](https://github.com/itsmylife)
+- **Security:** Fixes for CVE-2023-1410. [#65278](https://github.com/grafana/grafana/pull/65278), [@itsmylife](https://github.com/itsmylife)
+
+### Breaking changes
+
+The InfluxDB backend migration feature toggle (influxdbBackendMigration) has been reintroduced in this version as issues were discovered with backend processing of InfluxDB data. Unless this feature toggle is enabled, all InfluxDB data will be parsed in the frontend. This frontend processing is the default behavior.
+In Grafana 9.4.4, InfluxDB data parsing started to be handled in the backend. If you have upgraded to 9.4.4 and then added new transformations on InfluxDB data, those panels will fail to render. To resolve this either:
+
+- Remove the affected panel and re-create it
+- Edit the `time` field as `Time` in `panel.json` or `dashboard.json` Issue [#64842](https://github.com/grafana/grafana/issues/64842)
+
+<!-- 9.4.7 END -->
 <!-- 9.4.3 START -->
 
 # 9.4.3 (2023-03-02)
@@ -346,6 +365,17 @@ Sentry frontend logging provider will be removed with next major version. Issue 
 - **Toolkit:** Deprecate all plugin related commands. [#60290](https://github.com/grafana/grafana/pull/60290), [@academo](https://github.com/academo)
 - **Grafana UI:** Add experimental InteractiveTable component. [#58223](https://github.com/grafana/grafana/pull/58223), [@Elfo404](https://github.com/Elfo404)
 
+<!-- 9.3.11 START -->
+
+# 9.3.11 (2023-03-22)
+
+### Bug fixes
+
+- **Alerting:** Update scheduler to receive rule updates only from database. [#64662](https://github.com/grafana/grafana/pull/64662), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Chore:** Update Grafana to use Alertmanager v0.25.1-0.20230308154952-78fedf89728b. [#64784](https://github.com/grafana/grafana/pull/64784), [@yuri-tceretian](https://github.com/yuri-tceretian)
+
+<!-- 9.3.11 END -->
+
 <!-- 9.3.8 START -->
 
 # 9.3.8 (2023-02-28)
@@ -691,6 +721,12 @@ The following functions and classes related to logs are deprecated in the `grafa
 - **Grafana UI:** Clean up bundle. [#56100](https://github.com/grafana/grafana/pull/56100), [@jackw](https://github.com/jackw)
 - **Toolkit:** Deprecate `component:create` command. [#56086](https://github.com/grafana/grafana/pull/56086), [@academo](https://github.com/academo)
 - **Toolkit:** Remove changelog command. [#56073](https://github.com/grafana/grafana/pull/56073), [@gitstart](https://github.com/gitstart)
+
+<!-- 9.2.15 START -->
+
+# 9.2.15 (2023-03-22)
+
+<!-- 9.2.15 END -->
 
 <!-- 9.2.13 START -->
 
@@ -2377,6 +2413,12 @@ Make sure to handle possible errors on the callsite where using `backendSrv.fetc
 In the Loki data source, for consistency and performance reasons, we changed how we represent `NaN` (not a number) values received from Loki. In the past versions, we converted these to `null` in the frontend (for dashboard and explore), and kept as `NaN` in the alerting path. Starting with this version, we will always keep it as `NaN`. This change should be mostly invisible for the users. Issue [#45389](https://github.com/grafana/grafana/issues/45389)
 
 The dependency to [grafana/aws-sdk](https://github.com/grafana/grafana-aws-sdk-react) is moved from [grafana/ui](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/package.json) to the plugin. This means that any plugin that use SIGV4 auth need to pass a SIGV4 editor component as a prop to the `DataSourceHttpSettings` component. Issue [#43559](https://github.com/grafana/grafana/issues/43559)
+
+<!-- 8.5.22 START -->
+
+# 8.5.22 (2023-03-22)
+
+<!-- 8.5.22 END -->
 
 <!-- 8.5.21 START -->
 

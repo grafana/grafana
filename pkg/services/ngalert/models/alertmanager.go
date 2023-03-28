@@ -25,8 +25,7 @@ type HistoricAlertConfiguration struct {
 
 // GetLatestAlertmanagerConfigurationQuery is the query to get the latest alertmanager configuration.
 type GetLatestAlertmanagerConfigurationQuery struct {
-	OrgID  int64
-	Result *AlertConfiguration
+	OrgID int64
 }
 
 // SaveAlertmanagerConfigurationCmd is the command to save an alertmanager configuration.
@@ -47,8 +46,7 @@ type MarkConfigurationAsAppliedCmd struct {
 
 // GetAppliedConfigurationsQuery is the query for getting configurations that have been previously applied with no errors.
 type GetAppliedConfigurationsQuery struct {
-	OrgID  int64
-	Result []*HistoricAlertConfiguration
+	OrgID int64
 }
 
 func HistoricConfigFromAlertConfig(config AlertConfiguration) HistoricAlertConfiguration {

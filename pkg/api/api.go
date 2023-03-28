@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -43,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -140,9 +140,9 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/connections/datasources/:id/page/:page", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
 
 	// App Root Page
-	appPluginIDScope := plugins.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
-	r.Get("/a/:id/*", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, appPluginIDScope)), hs.Index)
-	r.Get("/a/:id", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, appPluginIDScope)), hs.Index)
+	appPluginIDScope := pluginaccesscontrol.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
+	r.Get("/a/:id/*", authorize(reqSignedIn, ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, appPluginIDScope)), hs.Index)
+	r.Get("/a/:id", authorize(reqSignedIn, ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, appPluginIDScope)), hs.Index)
 
 	r.Get("/d/:uid/:slug", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
@@ -217,6 +217,11 @@ func (hs *HTTPServer) registerRoutes() {
 
 	r.Get("/swagger-ui", swaggerUI)
 	r.Get("/openapi3", openapi3)
+
+	if hs.Features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+		r.Post("/api/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthToken))
+		r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
+	}
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
@@ -400,27 +405,27 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Get("/id/:name", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionIDRead, nameScope)), routing.Wrap(hs.GetDataSourceIdByName))
 		})
 
-		pluginIDScope := plugins.ScopeProvider.GetResourceScope(ac.Parameter(":pluginId"))
+		pluginIDScope := pluginaccesscontrol.ScopeProvider.GetResourceScope(ac.Parameter(":pluginId"))
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(hs.GetPluginSettingByID)) // RBAC check performed in handler for App Plugins
 		apiRoute.Get("/plugins/:pluginId/markdown/:name", routing.Wrap(hs.GetPluginMarkdown))
 		apiRoute.Get("/plugins/:pluginId/health", routing.Wrap(hs.CheckHealth))
-		apiRoute.Any("/plugins/:pluginId/resources", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, pluginIDScope)), hs.CallResource)
-		apiRoute.Any("/plugins/:pluginId/resources/*", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, pluginIDScope)), hs.CallResource)
+		apiRoute.Any("/plugins/:pluginId/resources", authorize(reqSignedIn, ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), hs.CallResource)
+		apiRoute.Any("/plugins/:pluginId/resources/*", authorize(reqSignedIn, ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), hs.CallResource)
 		apiRoute.Get("/plugins/errors", routing.Wrap(hs.GetPluginErrorsList))
-		apiRoute.Any("/plugin-proxy/:pluginId/*", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, pluginIDScope)), hs.ProxyPluginRequest)
-		apiRoute.Any("/plugin-proxy/:pluginId", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, pluginIDScope)), hs.ProxyPluginRequest)
+		apiRoute.Any("/plugin-proxy/:pluginId/*", authorize(reqSignedIn, ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), hs.ProxyPluginRequest)
+		apiRoute.Any("/plugin-proxy/:pluginId", authorize(reqSignedIn, ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), hs.ProxyPluginRequest)
 
 		if hs.Cfg.PluginAdminEnabled && !hs.Cfg.PluginAdminExternalManageEnabled {
 			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
-				pluginRoute.Post("/:pluginId/install", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.InstallPlugin))
-				pluginRoute.Post("/:pluginId/uninstall", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.UninstallPlugin))
+				pluginRoute.Post("/:pluginId/install", authorize(reqGrafanaAdmin, ac.EvalPermission(pluginaccesscontrol.ActionInstall)), routing.Wrap(hs.InstallPlugin))
+				pluginRoute.Post("/:pluginId/uninstall", authorize(reqGrafanaAdmin, ac.EvalPermission(pluginaccesscontrol.ActionInstall)), routing.Wrap(hs.UninstallPlugin))
 			})
 		}
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", reqOrgAdmin, routing.Wrap(hs.GetPluginDashboards))
-			pluginRoute.Post("/:pluginId/settings", authorize(reqOrgAdmin, ac.EvalPermission(plugins.ActionWrite, pluginIDScope)), routing.Wrap(hs.UpdatePluginSetting))
+			pluginRoute.Post("/:pluginId/settings", authorize(reqOrgAdmin, ac.EvalPermission(pluginaccesscontrol.ActionWrite, pluginIDScope)), routing.Wrap(hs.UpdatePluginSetting))
 			pluginRoute.Get("/:pluginId/metrics", reqOrgAdmin, routing.Wrap(hs.CollectPluginMetrics))
 		})
 
@@ -591,21 +596,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 			// Some channels may have info
 			liveRoute.Get("/info/*", routing.Wrap(hs.Live.HandleInfoHTTP))
-
-			if hs.Features.IsEnabled(featuremgmt.FlagLivePipeline) {
-				// POST Live data to be processed according to channel rules.
-				liveRoute.Post("/pipeline/push/*", hs.LivePushGateway.HandlePipelinePush)
-				liveRoute.Post("/pipeline-convert-test", routing.Wrap(hs.Live.HandlePipelineConvertTestHTTP), reqOrgAdmin)
-				liveRoute.Get("/pipeline-entities", routing.Wrap(hs.Live.HandlePipelineEntitiesListHTTP), reqOrgAdmin)
-				liveRoute.Get("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesListHTTP), reqOrgAdmin)
-				liveRoute.Post("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesPostHTTP), reqOrgAdmin)
-				liveRoute.Put("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesPutHTTP), reqOrgAdmin)
-				liveRoute.Delete("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesDeleteHTTP), reqOrgAdmin)
-				liveRoute.Get("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsListHTTP), reqOrgAdmin)
-				liveRoute.Post("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsPostHTTP), reqOrgAdmin)
-				liveRoute.Put("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsPutHTTP), reqOrgAdmin)
-				liveRoute.Delete("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsDeleteHTTP), reqOrgAdmin)
-			}
 		})
 
 		// short urls
