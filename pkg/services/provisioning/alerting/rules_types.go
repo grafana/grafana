@@ -79,7 +79,7 @@ type AlertRuleV1 struct {
 	Record               *RecordV1               `json:"record" yaml:"record"`
 }
 
-// UnmarshalJSON supports the grandfathered typo dashboardUid. This should be removed in V2.
+// UnmarshalJSON supports the grandfathered typo dasboardUid. TODO: This should be removed in V2.
 func (rule *AlertRuleV1) UnmarshalJSON(b []byte) error {
 	var t struct {
 		AlertRuleV1 `json:",inline" yaml:",inline"`
@@ -97,8 +97,8 @@ func (rule *AlertRuleV1) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// UnmarshalYAML supports the grandfathered typo dashboardUid. Even though the typo only existed in the json tag, we need
-// support in YAML as well since we use yaml.UnmarshalYAML when parsing. This should be removed in V2.
+// UnmarshalYAML supports the grandfathered typo dasboardUid. Even though the typo only existed in the json tag, we need
+// support in YAML as well since we use yaml.UnmarshalYAML when parsing. TODO: This should be removed in V2.
 func (rule *AlertRuleV1) UnmarshalYAML(value *yaml.Node) error {
 	type plain AlertRuleV1
 	var t struct {

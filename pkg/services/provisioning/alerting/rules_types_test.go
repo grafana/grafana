@@ -295,7 +295,7 @@ func TestNotificationsSettingsV1MapToModel(t *testing.T) {
 	}
 }
 
-// This can be removed when the dasboardUid typo support is removed.
+// This can be removed when the dasboardUid typo support is removed. TODO: This should be removed in V2.
 func TestRulesDasboardUidTypo(t *testing.T) {
 	t.Run("a rule with dasboardUid json should json unmarshal correctly", func(t *testing.T) {
 		ruleJson := `{"dasboardUid":"test"}`
