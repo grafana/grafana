@@ -242,19 +242,20 @@ func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 }
 
 func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) []stream {
+	labels := mergeLabels(make(map[string]string), externalLabels)
+	// System-defined labels take precedence over user-defined external labels.
+	labels[StateHistoryLabelKey] = StateHistoryLabelValue
+	labels[OrgIDLabel] = fmt.Sprint(rule.OrgID)
+	labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
+	labels[GroupLabel] = fmt.Sprint(rule.Group)
+	labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
+
 	buckets := make(map[string][]sample) // label repr (JSON) -> entries
 	for _, state := range states {
 		if !shouldRecord(state) {
 			continue
 		}
 
-		labels := mergeLabels(make(map[string]string), externalLabels)
-		// System-defined labels take precedence over user-defined external labels.
-		labels[StateHistoryLabelKey] = StateHistoryLabelValue
-		labels[OrgIDLabel] = fmt.Sprint(rule.OrgID)
-		labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
-		labels[GroupLabel] = fmt.Sprint(rule.Group)
-		labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
 		lblJsn, err := json.Marshal(labels)
 		if err != nil {
 			logger.Error("Failed to marshal labels to JSON", "error", err)
