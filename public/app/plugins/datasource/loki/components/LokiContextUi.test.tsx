@@ -112,17 +112,15 @@ describe('LokiContextUi', () => {
     await selectOptionInTest(select[1], 'label3');
   });
 
-  // TODO can't seem to get fake timers to work in this text
-  // investigate a better way to test this behaviour
-  it.skip('calls updateFilter when selecting a label', async () => {
+  it('calls updateFilter when selecting a label', async () => {
     jest.useFakeTimers();
     const props = setupProps();
     render(<LokiContextUi {...props} />);
     await waitFor(() => {
       expect(props.languageProvider.start).toHaveBeenCalled();
+      expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
-    const select = await screen.findAllByRole('combobox');
-    await selectOptionInTest(select[1], 'label3');
+    await selectOptionInTest(screen.getAllByRole('combobox')[1], 'label3');
     act(() => {
       jest.runAllTimers();
     });
