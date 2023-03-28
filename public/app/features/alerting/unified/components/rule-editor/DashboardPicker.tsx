@@ -140,14 +140,13 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
           [styles.rowSelected]: isSelected,
         })}
         onClick={() => setSelectedPanelId(panel.id.toString())}
-        disabled={!isAlertingCompatible}
       >
         <div className={styles.rowButtonTitle} title={panelTitle}>
           {panelTitle}
         </div>
         {!isAlertingCompatible && (
-          <Tooltip content="Alerting is only supported on graph and timeseries panels">
-            <Icon name="bell-slash" />
+          <Tooltip content="Alert tab will be disabled for this panel. It is only supported on graph and timeseries panels">
+            <Icon name="exclamation-triangle" className={styles.warnIcon} />
           </Tooltip>
         )}
       </button>
@@ -335,6 +334,9 @@ const getPickerStyles = (theme: GrafanaTheme2) => {
     `,
     modalAlert: css`
       flex-grow: 0;
+    `,
+    warnIcon: css`
+      fill: ${theme.colors.warning.main};
     `,
   };
 };
