@@ -7,9 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/authn/clients"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
 	v1 "k8s.io/api/authorization/v1"
 )
@@ -22,17 +20,16 @@ type K8sAuthzAPIImpl struct {
 	// *services.BasicService
 	RouteRegister routing.RouteRegister
 	AccessControl accesscontrol.AccessControl
-	Features      *featuremgmt.FeatureManager
-	ApiKey        clients.APIKey
 	Log           log.Logger
 }
 
 func ProvideAuthz(
 	rr routing.RouteRegister,
-	_ accesscontrol.AccessControl,
+	ac accesscontrol.AccessControl,
 ) *K8sAuthzAPIImpl {
 	k8sAuthzAPI := &K8sAuthzAPIImpl{
 		RouteRegister: rr,
+		AccessControl: ac,
 		Log:           log.New("k8s.webhooks.authn"),
 	}
 

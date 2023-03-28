@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	v1 "k8s.io/api/authentication/v1"
 )
 
@@ -29,7 +28,6 @@ type K8sAuthnAPI interface {
 
 type K8sAuthnAPIImpl struct {
 	RouteRegister routing.RouteRegister
-	Features      *featuremgmt.FeatureManager
 	ApiKey        *clients.APIKey
 	Log           log.Logger
 }
