@@ -250,18 +250,11 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 	labels[GroupLabel] = fmt.Sprint(rule.Group)
 	labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
 
-	buckets := make(map[string][]sample) // label repr (JSON) -> entries
+	samples := make([]sample, 0, len(states))
 	for _, state := range states {
 		if !shouldRecord(state) {
 			continue
 		}
-
-		lblJsn, err := json.Marshal(labels)
-		if err != nil {
-			logger.Error("Failed to marshal labels to JSON", "error", err)
-			continue
-		}
-		repr := string(lblJsn)
 
 		entry := lokiEntry{
 			SchemaVersion:  1,
@@ -283,26 +276,18 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 		}
 		line := string(jsn)
 
-		buckets[repr] = append(buckets[repr], sample{
+		samples = append(samples, sample{
 			T: state.State.LastEvaluationTime,
 			V: line,
 		})
 	}
 
-	result := make([]stream, 0, len(buckets))
-	for repr, rows := range buckets {
-		labels, err := data.LabelsFromString(repr)
-		if err != nil {
-			logger.Error("Failed to parse frame labels, skipping state history batch: %w", err)
-			continue
-		}
-		result = append(result, stream{
+	return []stream{
+		{
 			Stream: labels,
-			Values: rows,
-		})
+			Values: samples,
+		},
 	}
-
-	return result
 }
 
 func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream, logger log.Logger) error {
