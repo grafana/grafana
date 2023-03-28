@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"sort"
 	"testing"
 	"time"
 
@@ -74,46 +73,8 @@ func TestRemoteLokiBackend(t *testing.T) {
 				"group":              rule.Group,
 				"orgID":              fmt.Sprint(rule.OrgID),
 				"ruleUID":            rule.UID,
-				"a":                  "b",
 			}
 			require.Equal(t, exp, res[0].Stream)
-		})
-
-		t.Run("groups streams based on combined labels", func(t *testing.T) {
-			rule := createTestRule()
-			l := log.NewNopLogger()
-			states := []state.StateTransition{
-				{
-					PreviousState: eval.Normal,
-					State: &state.State{
-						State:  eval.Alerting,
-						Labels: data.Labels{"a": "b"},
-					},
-				},
-				{
-					PreviousState: eval.Normal,
-					State: &state.State{
-						State:  eval.Alerting,
-						Labels: data.Labels{"a": "b"},
-					},
-				},
-				{
-					PreviousState: eval.Normal,
-					State: &state.State{
-						State:  eval.Alerting,
-						Labels: data.Labels{"c": "d"},
-					},
-				},
-			}
-
-			res := statesToStreams(rule, states, nil, l)
-
-			require.Len(t, res, 2)
-			sort.Slice(res, func(i, j int) bool { return len(res[i].Values) > len(res[j].Values) })
-			require.Contains(t, res[0].Stream, "a")
-			require.Len(t, res[0].Values, 2)
-			require.Contains(t, res[1].Stream, "c")
-			require.Len(t, res[1].Values, 1)
 		})
 
 		t.Run("excludes private labels", func(t *testing.T) {

@@ -248,7 +248,8 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 			continue
 		}
 
-		labels := mergeLabels(removePrivateLabels(state.State.Labels), externalLabels)
+		labels := mergeLabels(make(map[string]string), externalLabels)
+		// System-defined labels take precedence over user-defined external labels.
 		labels[StateHistoryLabelKey] = StateHistoryLabelValue
 		labels[OrgIDLabel] = fmt.Sprint(rule.OrgID)
 		labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
