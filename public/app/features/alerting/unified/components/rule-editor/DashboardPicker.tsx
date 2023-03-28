@@ -146,7 +146,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
         </div>
         {!isAlertingCompatible && (
           <Tooltip content="Alert tab will be disabled for this panel. It is only supported on graph and timeseries panels">
-            <Icon name="exclamation-triangle" className={styles.warnIcon} />
+            <Icon name="exclamation-triangle" className={styles.warnIcon} data-testid="warning-icon" />
           </Tooltip>
         )}
       </button>

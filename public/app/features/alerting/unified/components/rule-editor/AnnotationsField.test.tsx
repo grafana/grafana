@@ -1,4 +1,4 @@
-import { findByRole, findByText, findByTitle, render } from '@testing-library/react';
+import { findByRole, findByText, findByTitle, getByTestId, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
@@ -238,7 +238,7 @@ describe('AnnotationsField', function () {
       expect(annotationValueElements[1]).toHaveTextContent('3');
     });
 
-    it('should render disabled panels when of type other than graph and timeseries', async function () {
+    it('should render warning icon for panels of type other than graph and timeseries', async function () {
       mockSearchApiResponse(server, [
         mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
       ]);
@@ -263,9 +263,9 @@ describe('AnnotationsField', function () {
       await user.click(ui.setDashboardButton.get());
       await user.click(await findByTitle(dialog.get(), 'My dashboard'));
 
-      const disabledPanel = await findByRole(dialog.get(), 'button', { name: /First panel/ });
+      const warnedPanel = await findByRole(dialog.get(), 'button', { name: /First panel/ });
 
-      expect(disabledPanel).toHaveAttribute('disabled');
+      expect(getByTestId(warnedPanel, 'warning-icon')).toBeInTheDocument();
     });
   });
 });
