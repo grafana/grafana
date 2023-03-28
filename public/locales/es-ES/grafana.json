@@ -9,8 +9,7 @@
     "action": {
       "change-theme": "Cambiar tema...",
       "dark-theme": "Oscuro",
-      "light-theme": "Claro",
-      "search": "Buscar"
+      "light-theme": "Claro"
     },
     "search-box": {
       "placeholder": ""
@@ -18,6 +17,7 @@
     "section": {
       "actions": "Acciones",
       "dashboard-search-results": "Paneles de control",
+      "folder-search-results": "",
       "pages": "Páginas",
       "preferences": "Preferencias",
       "recent-dashboards": ""
@@ -31,7 +31,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "Acciones",
       "data-tab": "Datos",
       "error-tab": "Error",
       "json-tab": "JSON",
@@ -84,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "Añadir panel",
-      "comments-show": "Mostrar comentarios del panel de control",
       "mark-favorite": "Marcar como favorito",
       "open-original": "Abrir el panel de control original",
       "playlist-next": "Ir al siguiente panel de control",
@@ -110,20 +108,27 @@
   "folder-picker": {
     "loading": "Cargando carpetas..."
   },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "",
+      "loading": "",
+      "no-options": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Cancelar",
       "create": "Crear panel de librería",
       "error": "Ya existe un panel de librería con este nombre",
       "folder": "Guardar en carpeta",
-      "folder-description": "Los permisos del panel de biblioteca se derivan de los permisos de la carpeta",
-      "name": "Nombre del panel de biblioteca"
+      "folder-description": "Los permisos del panel de librería se derivan de los permisos de la carpeta",
+      "name": "Nombre del panel de librería"
     }
   },
   "library-panels": {
     "save": {
-      "error": "Error al guardar el panel de la biblioteca: «{{errorMsg}}»",
-      "success": "Panel de biblioteca guardado"
+      "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
+      "success": "Panel de librería guardado"
     }
   },
   "nav": {
@@ -234,22 +239,13 @@
     },
     "library-panels": {
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
-      "title": "Paneles de la librería"
-    },
-    "live": {
-      "title": "Transmisión de eventos"
-    },
-    "live-cloud": {
-      "title": "Nube"
-    },
-    "live-pipeline": {
-      "title": "Cartera"
-    },
-    "live-status": {
-      "title": "Estado"
+      "title": "Paneles de librería"
     },
     "manage-dashboards": {
       "title": "Navegar"
+    },
+    "manage-folder": {
+      "subtitle": ""
     },
     "monitoring": {
       "subtitle": "Aplicaciones de supervisión e infraestructura",
@@ -294,7 +290,6 @@
       "title": "Escenas"
     },
     "search": {
-      "placeholder": "Buscar Grafana",
       "placeholderCommandPalette": ""
     },
     "search-dashboards": {
@@ -345,6 +340,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Pulse ESC para salir del modo de quiosco"
+    },
+    "toolbar": {
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
     }
   },
   "news": {
@@ -393,11 +393,42 @@
     }
   },
   "search": {
+    "actions": {
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
+      "starred": "Destacado",
+      "view-as-folders": "",
+      "view-as-grid": "",
+      "view-as-list": ""
+    },
     "dashboard-actions": {
       "import": "Importar",
       "new": "Nuevo",
       "new-dashboard": "Nuevo panel de control",
       "new-folder": "Nueva carpeta"
+    },
+    "folder-view": {
+      "go-to-folder": "",
+      "select-folder": ""
+    },
+    "result-kind": {
+      "dashboard": "Panel de control",
+      "folder": "Carpeta",
+      "panel": ""
+    },
+    "results-table": {
+      "datasource-header": "",
+      "location-header": "",
+      "name-header": "",
+      "tags-header": "",
+      "type-dashboard": "",
+      "type-folder": "",
+      "type-header": ""
+    },
+    "search-input": {
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
@@ -461,7 +492,7 @@
     "tab-title": {
       "embed": "Incrustar",
       "export": "Exportar",
-      "library-panel": "Panel de biblioteca",
+      "library-panel": "Panel de librería",
       "link": "Enlace",
       "snapshot": "Instantánea"
     },
@@ -496,6 +527,11 @@
       "system-label": ""
     },
     "title": "Preferencias"
+  },
+  "tag-filter": {
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
   },
   "time-picker": {
     "absolute": {
@@ -572,12 +608,20 @@
     "loading": "Cargando sesiones..."
   },
   "variable": {
+    "adhoc": {
+      "placeholder": ""
+    },
+    "dropdown": {
+      "placeholder": ""
+    },
     "picker": {
-      "input": "Introducir el valor de la variable",
       "link-all": "Todo",
       "option-all": "Todo",
       "option-selected-values": "Seleccionados",
       "option-tooltip": "Eliminar selecciones"
+    },
+    "textbox": {
+      "placeholder": ""
     }
   }
 }
