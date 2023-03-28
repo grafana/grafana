@@ -46,7 +46,7 @@ powering Kine.
 ## Configuration
 
 1. **Authentication Webhook**: the config for K8s webhook authentication
-is located in [k8s-authn-webhook-config](../../..//conf/k8s-authn-webhook-config).
+is located in [k8s-authn-webhook-config](../../../conf/k8s-authn-webhook-config).
    1. This currently supports using a glsa token from a Grafana service account
    having `Admin` role. The kubeconfig can be constructed from 
    `../../../data/k8s/grafana.kubeconfig` with the token swapped with a
