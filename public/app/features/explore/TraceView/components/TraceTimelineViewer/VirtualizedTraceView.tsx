@@ -42,10 +42,6 @@ import {
   ViewedBoundsFunctionType,
 } from './utils';
 
-type TExtractUiFindFromStateReturn = {
-  uiFind: string | undefined;
-};
-
 const getStyles = stylesFactory((props: TVirtualizedTraceViewOwnProps) => {
   const { topOfViewRefType } = props;
   const position = topOfViewRefType === TopOfViewRefType.Explore ? 'fixed' : 'absolute';
@@ -104,7 +100,6 @@ type TVirtualizedTraceViewOwnProps = {
   detailTagsToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
   setSpanNameColumnWidth: (width: number) => void;
-  setTrace: (trace: Trace | TNil, uiFind: string | TNil) => void;
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
@@ -119,7 +114,7 @@ type TVirtualizedTraceViewOwnProps = {
   datasourceType: string;
 };
 
-export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
+export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;
 
 // export for tests
 export const DEFAULT_HEIGHTS = {
@@ -199,8 +194,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   constructor(props: VirtualizedTraceViewProps) {
     super(props);
-    const { setTrace, trace, uiFind } = props;
-    setTrace(trace, uiFind);
   }
 
   componentDidMount() {
@@ -226,22 +219,15 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   }
 
   componentDidUpdate(prevProps: Readonly<VirtualizedTraceViewProps>) {
-    const { registerAccessors, trace } = prevProps;
+    const { registerAccessors } = prevProps;
     const {
       shouldScrollToFirstUiFindMatch,
       clearShouldScrollToFirstUiFindMatch,
       scrollToFirstVisibleSpan,
       registerAccessors: nextRegisterAccessors,
-      setTrace,
-      trace: nextTrace,
-      uiFind,
       focusedSpanId,
       focusedSearchMatch,
     } = this.props;
-
-    if (trace !== nextTrace) {
-      setTrace(nextTrace, uiFind);
-    }
 
     if (this.listView && registerAccessors !== nextRegisterAccessors) {
       nextRegisterAccessors(this.getAccessors());

@@ -191,11 +191,9 @@ export function TraceView(props: Props) {
             detailProcessToggle={detailProcessToggle}
             detailTagsToggle={detailTagsToggle}
             detailToggle={toggleDetail}
-            setTrace={noop}
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
             linksGetter={() => []}
-            uiFind={search.tags} // TODO: JOEY: remove
             createSpanLink={createSpanLink}
             scrollElement={props.scrollElement}
             focusedSpanId={focusedSpanId}
