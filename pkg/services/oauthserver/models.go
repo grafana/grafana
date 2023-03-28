@@ -8,8 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-// TmpOrgID is the orgID we use while global service accounts are not supported.
-const TmpOrgID int64 = 1
+const (
+	// TmpOrgID is the orgID we use while global service accounts are not supported.
+	TmpOrgID int64 = 1
+	// NoServiceAccountID is the ID we use for client that have no service account associated.
+	NoServiceAccountID int64 = 0
+)
 
 var (
 	allOrgsOAuthScope = "org.*"
@@ -17,6 +21,7 @@ var (
 
 type OAuth2Service interface {
 	RegisterExternalService(ctx context.Context, app *ExternalServiceRegistration) (*ClientDTO, error)
+	UpdateExternalService(ctx context.Context, cmd *UpdateClientCommand) (*ClientDTO, error)
 	GetExternalService(ctx context.Context, id string) (*Client, error)
 	HandleTokenRequest(rw http.ResponseWriter, req *http.Request)
 	HandleIntrospectionRequest(rw http.ResponseWriter, req *http.Request)

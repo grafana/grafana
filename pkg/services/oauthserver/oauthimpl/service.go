@@ -164,6 +164,11 @@ func (s *OAuth2ServiceImpl) RandString(n int) (string, error) {
 // TODO it would be great to create the service account in the same DB session as the client
 func (s *OAuth2ServiceImpl) RegisterExternalService(ctx context.Context,
 	registration *oauthserver.ExternalServiceRegistration) (*oauthserver.ClientDTO, error) {
+	if registration == nil {
+		s.logger.Warn("RegisterExternalService called without registration")
+		return nil, nil
+	}
+
 	client := oauthserver.Client{
 		ExternalServiceName:    registration.ExternalServiceName,
 		ImpersonatePermissions: registration.ImpersonatePermissions,
@@ -172,41 +177,32 @@ func (s *OAuth2ServiceImpl) RegisterExternalService(ctx context.Context,
 		client.RedirectURI = *registration.RedirectURI
 	}
 
-	// res.Domain = "http://localhost" // TODO: Make this configurable
-
-	id, err := s.RandString(20)
-	if err != nil {
-		s.logger.Error("Error gen id", "client", client, "error", err)
-		return nil, err
+	var errGenCred error
+	client.ClientID, client.Secret, errGenCred = s.genCredentials()
+	if errGenCred != nil {
+		s.logger.Error("Error generating credentials", "client", client, "error", errGenCred)
+		return nil, errGenCred
 	}
-	client.ClientID = id
-	secret, err := s.RandString(40)
-	if err != nil {
-		s.logger.Error("Error gen secret", "client", client, "error", err)
-		return nil, err
-	}
-	client.Secret = secret
 
 	// Assign permissions to a service account that will be associated to the App
-	if len(registration.Permissions) > 0 {
-		s.logger.Debug("Generate service account")
-		id, err := s.createServiceAccount(ctx, registration)
-		if err != nil {
-			return nil, err
-		}
-		client.ServiceAccountID = id
+	id, err := s.createServiceAccount(ctx, registration.ExternalServiceName, registration.Permissions)
+	if err != nil {
+		return nil, err
 	}
+	client.ServiceAccountID = id
 
-	client.GrantTypes = strings.Join(s.computeGrantTypes(registration), ",")
+	client.GrantTypes = strings.Join(s.computeGrantTypes(registration.Permissions, registration.ImpersonatePermissions), ",")
 
 	// Handle RSA key options
 	s.logger.Debug("Handle key options")
-	keys, err := s.handleKeyOptions(ctx, registration)
+	keys, err := s.handleKeyOptions(ctx, registration.Key)
 	if err != nil {
 		s.logger.Error("Error handling key options", "client", client, "error", err)
 		return nil, err
 	}
-	client.PublicPem = []byte(keys.PublicPem)
+	if keys != nil {
+		client.PublicPem = []byte(keys.PublicPem)
+	}
 
 	s.logger.Info("Registering app", "client", client)
 	err = s.sqlstore.RegisterExternalService(ctx, &client)
@@ -218,23 +214,46 @@ func (s *OAuth2ServiceImpl) RegisterExternalService(ctx context.Context,
 	return dto, nil
 }
 
-func (s *OAuth2ServiceImpl) computeGrantTypes(registration *oauthserver.ExternalServiceRegistration) []string {
+func (s *OAuth2ServiceImpl) genCredentials() (string, string, error) {
+	// TODO make the length configurable
+	id, err := s.RandString(20)
+	if err != nil {
+		return "", "", err
+	}
+	// TODO make the length configurable
+	secret, err := s.RandString(40)
+	if err != nil {
+		return "", "", err
+	}
+	return id, secret, err
+}
+
+func (s *OAuth2ServiceImpl) computeGrantTypes(selfPermissions []ac.Permission, impersonatePermissions []ac.Permission) []string {
 	grantTypes := []string{}
 
 	// If the app has permissions, it can use the client credentials grant type
-	if len(registration.Permissions) > 0 {
+	if len(selfPermissions) > 0 {
 		grantTypes = append(grantTypes, string(fosite.GrantTypeClientCredentials))
 	}
 
 	// If the app has impersonate permissions, it can use the JWT bearer grant type
-	if len(registration.ImpersonatePermissions) > 0 {
+	// TODO should we also check if the app has users:impersonate permissions?
+	if len(impersonatePermissions) > 0 {
 		grantTypes = append(grantTypes, string(fosite.GrantTypeJWTBearer))
 	}
 
 	return grantTypes
 }
 
-func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (int64, error) {
+// createServiceAccount creates a service account with the given permissions
+// and returns the ID of the service account
+// When no permission is given, the account isn't created and -1 is returned
+// TODO we should use a single transaction for the whole service account creation process
+func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName string, permissions []ac.Permission) (int64, error) {
+	if len(permissions) == 0 {
+		return oauthserver.NoServiceAccountID, nil
+	}
+
 	newRole := func(r roletype.RoleType) *roletype.RoleType {
 		return &r
 	}
@@ -242,38 +261,40 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, registrati
 		return &b
 	}
 
-	slug := slugify.Slugify(registration.ExternalServiceName)
+	slug := slugify.Slugify(extSvcName)
 
 	// TODO: Can we use ServiceAccounts in global orgs in the future? As apps are available accross all orgs.
 	// FIXME currently using orgID 1
+	s.logger.Debug("Generate service account", "orgID", oauthserver.TmpOrgID, "name", slug)
 	sa, err := s.saService.CreateServiceAccount(ctx, oauthserver.TmpOrgID, &serviceaccounts.CreateServiceAccountForm{
 		Name:       slug,
 		Role:       newRole(roletype.RoleViewer), // TODO: Use empty role
 		IsDisabled: newBool(false),
 	})
 	if err != nil {
-		return -1, err
+		return oauthserver.NoServiceAccountID, err
 	}
 
+	s.logger.Debug("Create tailored role for service account", "name", slug, "saID", sa.Id, "permissions", permissions)
 	if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
 		OrgID:             ac.GlobalOrgID,
 		Global:            true,
 		ExternalServiceID: slug,
 		ServiceAccountID:  sa.Id,
-		Permissions:       registration.Permissions,
+		Permissions:       permissions,
 	}); err != nil {
-		return -1, err
+		return oauthserver.NoServiceAccountID, err
 	}
 
 	return sa.Id, nil
 }
 
-func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (*oauthserver.KeyResult, error) {
-	if registration.Key == nil {
+func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oauthserver.KeyOption) (*oauthserver.KeyResult, error) {
+	if keyOption == nil {
 		return nil, nil
 	}
 
-	if registration.Key.Generate {
+	if keyOption.Generate {
 		RSAKey, err := rsa.GenerateKey(rand.Reader, 2048)
 		if err != nil {
 			return nil, err
@@ -298,9 +319,9 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, registration *
 	// 	}, nil
 	// }
 
-	if registration.Key.PublicPEM != "" {
+	if keyOption.PublicPEM != "" {
 		return &oauthserver.KeyResult{
-			PublicPem: registration.Key.PublicPEM,
+			PublicPem: keyOption.PublicPEM,
 		}, nil
 	}
 
@@ -321,6 +342,7 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 		return nil, err
 	}
 
+	// TODO Handle case where the external service does not have a service account
 	// Retrieve self permissions and generate a signed in user
 	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, app.ServiceAccountID)
 	if err != nil {
@@ -347,6 +369,95 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 	s.cache.Set(id, *app, cacheExpirationTime)
 
 	return app, nil
+}
+
+func (s *OAuth2ServiceImpl) UpdateExternalService(ctx context.Context, cmd *oauthserver.UpdateClientCommand) (*oauthserver.ClientDTO, error) {
+	if cmd == nil {
+		s.logger.Warn("Update External Service called without a command")
+		return nil, nil
+	}
+
+	previous, errFetchExtSvc := s.sqlstore.GetExternalServiceByName(ctx, cmd.ExternalServiceName)
+	if errFetchExtSvc != nil {
+		s.logger.Error("Error fetching service", "externale service", cmd.ExternalServiceName, "error", errFetchExtSvc)
+		return nil, errFetchExtSvc
+	}
+
+	// TODO if we re-generate the clientID and clientSecret, we should invalidate all the tokens tied to it
+	// TODO invalidate the client cache entry for the previous client ID
+	if cmd.GenCredentials {
+		id, secret, errGenCred := s.genCredentials()
+		if errGenCred != nil {
+			s.logger.Error("Error generating credentials", "externale service", cmd.ExternalServiceName, "error", errGenCred)
+			return nil, errGenCred
+		}
+		cmd.ClientID, cmd.Secret = &id, &secret
+	}
+	if cmd.Permissions != nil {
+		if previous.ServiceAccountID <= 0 {
+			saID, errCreateSvcAcc := s.createServiceAccount(ctx, cmd.ExternalServiceName, cmd.Permissions)
+			if errCreateSvcAcc != nil {
+				s.logger.Error("Error creating service account", "externale service", cmd.ExternalServiceName, "error", errCreateSvcAcc)
+				return nil, errCreateSvcAcc
+			}
+			cmd.ServiceAccountID = &saID
+		} else {
+			// check if the service account exists
+			sa, errFetchSvcAcc := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, previous.ServiceAccountID)
+			if errFetchSvcAcc != nil {
+				s.logger.Error("Error retrieving service account", "externale service", cmd.ExternalServiceName, "error", errFetchSvcAcc)
+				return nil, errFetchSvcAcc
+			}
+			if len(cmd.Permissions) > 0 {
+				// update the service account's permissions
+				if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
+					OrgID:             ac.GlobalOrgID,
+					Global:            true,
+					ExternalServiceID: cmd.ExternalServiceName,
+					ServiceAccountID:  sa.Id,
+					Permissions:       cmd.Permissions,
+				}); err != nil {
+					return nil, err
+				}
+			} else {
+				// remove the service account
+				if err := s.saService.DeleteServiceAccount(ctx, oauthserver.TmpOrgID, sa.Id); err != nil {
+					return nil, err
+				}
+				cmd.ServiceAccountID = func() *int64 { var i int64 = oauthserver.NoServiceAccountID; return &i }()
+			}
+		}
+	}
+	if cmd.Key != nil {
+		keyResult, errKeyHandling := s.handleKeyOptions(ctx, cmd.Key)
+		if errKeyHandling != nil {
+			s.logger.Error("Error handling key options", "externale service", cmd.ExternalServiceName, "error", errKeyHandling)
+			return nil, errKeyHandling
+		}
+		if keyResult != nil {
+			cmd.PublicPem = []byte(keyResult.PublicPem)
+		}
+	}
+	// If we have an update in permissions => recompute grant types
+	if cmd.Permissions != nil || cmd.ImpersonatePermissions != nil {
+		permissions := cmd.Permissions
+		if permissions == nil {
+			permissions = previous.SelfPermissions
+		}
+		impersonatePermissions := cmd.ImpersonatePermissions
+		if impersonatePermissions == nil {
+			impersonatePermissions = previous.ImpersonatePermissions
+		}
+		grantTypes := strings.Join(s.computeGrantTypes(permissions, impersonatePermissions), ",")
+		cmd.GrantTypes = &grantTypes
+	}
+
+	client, errUpdate := s.sqlstore.UpdateExternalService(ctx, cmd)
+	if errUpdate != nil {
+		s.logger.Error("Error updating service", "externale service", cmd.ExternalServiceName, "error", errUpdate)
+		return nil, errUpdate
+	}
+	return client.ToDTO(), nil
 }
 
 // TODO cache scopes

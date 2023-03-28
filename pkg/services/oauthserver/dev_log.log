@@ -1,5 +1,0 @@
-Issue:
-    Service accounts need an OrgID but Apps are global.
-    Clients not stored in the DB.
-    Clients scopes and permissions should be tied together.
-    Impersonation scopes are not supported.
