@@ -7,6 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 
+import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings, loadProviderStatuses } from './state/actions';
 import { filterAuthSettings } from './utils';
@@ -46,8 +47,14 @@ export const AuthConfigPageUnconnected = ({
 
   const authProviders = getRegisteredAuthProviders();
   const enabledProviders = authProviders.filter((p) => providerStatuses[p.id]?.enabled);
-  const availableProviders = authProviders.filter((p) => !providerStatuses[p.id]?.enabled);
+  const configuresProviders = authProviders.filter(
+    (p) => providerStatuses[p.id]?.configured && !providerStatuses[p.id]?.enabled
+  );
+  const availableProviders = authProviders.filter(
+    (p) => !providerStatuses[p.id]?.enabled && !providerStatuses[p.id]?.configured
+  );
   const authSettings = filterAuthSettings(settings);
+  const firstAvailableProvider = availableProviders?.length ? availableProviders[0] : null;
 
   return (
     <Page navId="authentication">
@@ -66,14 +73,25 @@ export const AuthConfigPageUnconnected = ({
             ))}
           </div>
         )}
-        {!!availableProviders?.length && (
+        {!enabledProviders?.length && firstAvailableProvider && (
+          <ConfigureAuthCTA
+            title={`You have no ${firstAvailableProvider.type} configuration created at the moment`}
+            buttonIcon="plus-circle"
+            buttonLink={firstAvailableProvider.configPath}
+            buttonTitle={`Configure ${firstAvailableProvider.type}`}
+            description={`Important: if you have ${firstAvailableProvider.type} configuration enabled via the .ini file Grafana is using it.
+              Configuring ${firstAvailableProvider.type} via UI will take precedence over any configuration in the .ini file.
+              No changes will be written into .ini file.`}
+          />
+        )}
+        {!!configuresProviders?.length && (
           <div className={styles.cardsContainer}>
-            {availableProviders.map((provider) => (
+            {configuresProviders.map((provider) => (
               <ProviderCard
                 key={provider.id}
                 providerId={provider.id}
                 displayName={provider.displayName}
-                authType={provider.type}
+                authType={provider.protocol}
                 enabled={providerStatuses[provider.id]?.enabled}
               />
             ))}
@@ -114,6 +132,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
       gap: ${theme.spacing(3)};
       margin-bottom: ${theme.spacing(3)};
+      margin-top: ${theme.spacing(2)};
     `,
     sectionHeader: css`
       margin-bottom: ${theme.spacing(3)};
