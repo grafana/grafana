@@ -175,7 +175,7 @@ In the above example, we have a lucene query that filters documents based on the
 a variable in the _Terms_ group by field input box. This allows you to use a variable to quickly change how the data is grouped.
 
 Example dashboard:
-[Elasticsearch Templated Dashboard](https://play.grafana.org/d/CknOEXDMk/elasticsearch-templated?orgId=1d)
+[Elasticsearch Templated Dashboard](https://play.grafana.org/d/z8OZC66nk/elasticsearch-8-2-0-sample-flight-data?orgId=1)
 
 ## Annotations
 
