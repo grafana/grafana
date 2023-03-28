@@ -86,7 +86,7 @@ export enum TopOfViewRefType {
 type TVirtualizedTraceViewOwnProps = {
   currentViewRangeTime: [number, number];
   timeZone: TimeZone;
-  findMatchesIDs: Set<string> | TNil;
+  searchMatches: Set<string> | TNil;
   scrollToFirstVisibleSpan: () => void;
   registerAccessors: (accesors: Accessors) => void;
   trace: Trace;
@@ -290,7 +290,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     }
     return {
       getViewRange: this.getViewRange,
-      getSearchedSpanIDs: this.getSearchedSpanIDs,
+      getSearchMatches: this.getSearchMatches,
       getCollapsedChildren: this.getCollapsedChildren,
       getViewHeight: lv.getViewHeight,
       getBottomRowIndexVisible: lv.getBottomVisibleIndex,
@@ -303,7 +303,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   getViewRange = () => this.props.currentViewRangeTime;
 
-  getSearchedSpanIDs = () => this.props.findMatchesIDs;
+  getSearchMatches = () => this.props.searchMatches;
 
   getCollapsedChildren = () => this.props.childrenHiddenIDs;
 
@@ -386,7 +386,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       childrenToggle,
       detailStates,
       detailToggle,
-      findMatchesIDs,
+      searchMatches,
       spanNameColumnWidth,
       trace,
       spanBarOptions,
@@ -406,7 +406,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     const color = getColorByKey(serviceName, theme);
     const isCollapsed = childrenHiddenIDs.has(spanID);
     const isDetailExpanded = detailStates.has(spanID);
-    const isMatchingFilter = findMatchesIDs ? findMatchesIDs.has(spanID) : false;
+    const isMatchingFilter = searchMatches ? searchMatches.has(spanID) : false;
     const isFocused = spanID === focusedSpanId || spanID === focusedSearchMatch;
     const showErrorIcon = isErrorSpan(span) || (isCollapsed && spanContainsErredSpan(trace.spans, spanIndex));
 

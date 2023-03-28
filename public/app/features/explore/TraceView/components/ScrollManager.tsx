@@ -27,7 +27,7 @@ import { TraceSpan, TraceSpanReference, Trace } from './types/trace';
  */
 export type Accessors = {
   getViewRange: () => [number, number];
-  getSearchedSpanIDs: () => Set<string> | TNil;
+  getSearchMatches: () => Set<string> | TNil;
   getCollapsedChildren: () => Set<string> | TNil;
   getViewHeight: () => number;
   getBottomRowIndexVisible: () => number;
@@ -153,7 +153,7 @@ export default class ScrollManager {
     // use NaN as fallback to make flow happy
     const startTime = checkVisibility ? traceStartTime + duration * viewStart : NaN;
     const endTime = checkVisibility ? traceStartTime + duration * viewEnd : NaN;
-    const findMatches = xrs.getSearchedSpanIDs();
+    const findMatches = xrs.getSearchMatches();
     const _collapsed = xrs.getCollapsedChildren();
     const childrenAreHidden = _collapsed ? new Set(_collapsed) : null;
     // use empty Map as fallback to make flow happy

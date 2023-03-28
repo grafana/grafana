@@ -36,7 +36,7 @@ let props = {
   detailStates: new Map(),
   detailTagsToggle: jest.fn(),
   detailToggle: jest.fn(),
-  findMatchesIDs: null,
+  searchMatches: null,
   registerAccessors: jest.fn(),
   scrollToFirstVisibleSpan: jest.fn(),
   setSpanNameColumnWidth: jest.fn(),

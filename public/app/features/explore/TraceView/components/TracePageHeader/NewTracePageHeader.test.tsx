@@ -18,10 +18,10 @@ import React from 'react';
 import config from 'app/core/config';
 
 import { NewTracePageHeader } from './NewTracePageHeader';
-import { TracePageHeaderEmbedProps } from './TracePageHeader';
+import { TracePageHeaderProps } from './TracePageHeader';
 import { trace } from './TracePageHeader.test';
 
-const setup = (propOverrides?: TracePageHeaderEmbedProps) => {
+const setup = (propOverrides?: TracePageHeaderProps) => {
   const defaultProps = {
     trace,
     timeZone: '',

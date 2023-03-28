@@ -20,7 +20,7 @@ import { toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 import { Collapse, HorizontalGroup, InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
 
-import { SearchProps } from '../../../useSearch';
+import { SearchProps, TagType } from '../../../useSearch';
 import { Trace } from '../../types';
 import { getTagsFromSpan, randomId } from '../../utils/filter-spans';
 import TracePageSearchBar from '../TracePageSearchBar';
@@ -80,13 +80,15 @@ export function SpanFilters(props: SpanFilterProps) {
     });
   };
 
-  const tagOptions = (trace: Trace, type: 'keys' | 'values') => {
+  const tagOptions = (trace: Trace, type: TagType) => {
     // console.log('rendering');
     return [
       ...new Set(
         trace.spans
           .map((span) => {
-            return type === 'keys' ? Object.keys(getTagsFromSpan(span)) : Object.values(getTagsFromSpan(span)).flat();
+            return type === TagType.Keys
+              ? Object.keys(getTagsFromSpan(span))
+              : Object.values(getTagsFromSpan(span)).flat();
           })
           .flat()
           .sort()
@@ -212,7 +214,7 @@ export function SpanFilters(props: SpanFilterProps) {
                         }),
                       });
                     }}
-                    options={tagOptions(trace, 'keys')}
+                    options={tagOptions(trace, TagType.Keys)}
                     placeholder="Select tag"
                     value={tag.key}
                   />
@@ -230,7 +232,7 @@ export function SpanFilters(props: SpanFilterProps) {
                   />
                   <Select
                     isClearable
-                    options={tagOptions(trace, 'values')}
+                    options={tagOptions(trace, TagType.Values)}
                     onChange={(v) => {
                       setSearch({
                         ...search,

@@ -17,7 +17,7 @@ import React from 'react';
 
 import { getTraceName } from '../model/trace-viewer';
 
-import TracePageHeader, { TracePageHeaderEmbedProps } from './TracePageHeader';
+import TracePageHeader, { TracePageHeaderProps } from './TracePageHeader';
 
 export const trace = {
   services: [{ name: 'serviceA', numberOfSpans: 1 }],
@@ -93,7 +93,7 @@ export const trace = {
   endTime: 1675605058644515,
 };
 
-const setup = (propOverrides?: TracePageHeaderEmbedProps) => {
+const setup = (propOverrides?: TracePageHeaderProps) => {
   const defaultProps = {
     trace,
     timeZone: '',
@@ -113,7 +113,7 @@ describe('TracePageHeader test', () => {
   });
 
   it('should render nothing if a trace is not present', () => {
-    setup({ trace: null } as TracePageHeaderEmbedProps);
+    setup({ trace: null } as TracePageHeaderProps);
     expect(screen.queryByRole('banner')).not.toBeInTheDocument();
     expect(screen.queryAllByRole('listitem')).toHaveLength(0);
     expect(screen.queryByText(/Reset Selection/)).not.toBeInTheDocument();
@@ -155,7 +155,7 @@ describe('TracePageHeader test', () => {
         {...({
           trace: trace,
           viewRange: { time: { current: [10, 20] } },
-        } as unknown as TracePageHeaderEmbedProps)}
+        } as unknown as TracePageHeaderProps)}
       />
     );
     expect(screen.queryAllByRole('listitem')).toHaveLength(5);

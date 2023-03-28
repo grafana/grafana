@@ -20,8 +20,6 @@ const styles = {
 export const TracesPanel = ({ data }: PanelProps) => {
   const topOfViewRef = createRef<HTMLDivElement>();
   const traceProp = useMemo(() => transformDataFrames(data.series[0]), [data.series]);
-  const { search, setSearch, searchMatches } = useSearch(traceProp?.spans);
-  const [focusedSearchMatch, setFocusedSearchMatch] = useState('');
   const dataSource = useAsync(async () => {
     return await getDataSourceSrv().get(data.request?.targets[0].datasource?.uid);
   });
@@ -54,11 +52,6 @@ export const TracesPanel = ({ data }: PanelProps) => {
         dataFrames={data.series}
         scrollElement={scrollElement}
         traceProp={traceProp}
-        searchMatches={searchMatches}
-        search={search}
-        setSearch={setSearch}
-        focusedSearchMatch={focusedSearchMatch}
-        setFocusedSearchMatch={setFocusedSearchMatch}
         queryResponse={data}
         datasource={dataSource.value}
         topOfViewRef={topOfViewRef}

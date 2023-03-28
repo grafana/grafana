@@ -39,7 +39,7 @@ export default function filterSpans(searchProps: SearchProps, spans: TraceSpan[]
   if (arraysToMatchAcross.length > 0) {
     return new Set([...arraysToMatchAcross].reduce((a, b) => a.filter((c) => b.includes(c))));
   }
-  return new Set(arraysToMatchAcross);
+  return new Set([]);
 }
 
 const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {

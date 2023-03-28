@@ -166,7 +166,7 @@ export function TraceView(props: Props) {
           <TraceTimelineViewer
             registerAccessors={noop}
             scrollToFirstVisibleSpan={noop}
-            findMatchesIDs={searchMatches}
+            searchMatches={searchMatches}
             trace={traceProp}
             datasourceType={datasourceType}
             spanBarOptions={spanBarOptions?.spanBar}
