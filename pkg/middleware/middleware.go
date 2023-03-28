@@ -39,7 +39,7 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 
 			traceId := tracing.TraceIDFromContext(c.Req.Context(), false)
 			if traceId != "" {
-				w.Header().Set("traceparent", traceId)
+				w.Header().Set("grafana-trace-id", traceId)
 			}
 
 			_, _, resourceURLMatch := t.Match(c.Req.URL.Path)

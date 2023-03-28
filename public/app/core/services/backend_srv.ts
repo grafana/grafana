@@ -50,7 +50,7 @@ export interface FolderRequestOptions {
   withAccessControl?: boolean;
 }
 
-const GRAFANA_TRACEID_HEADER = 'traceparent';
+const GRAFANA_TRACEID_HEADER = 'grafana-trace-id';
 
 export class BackendSrv implements BackendService {
   private inFlightRequests: Subject<string> = new Subject<string>();
