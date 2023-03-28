@@ -129,7 +129,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 
 	var flushStreamErr error
 	go func() {
-		flushStreamErr = hs.flushStream(stream, w)
+		flushStreamErr = hs.flushStream(crReq, stream, w)
 		wg.Done()
 	}()
 
@@ -140,7 +140,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 	return flushStreamErr
 }
 
-func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w http.ResponseWriter) error {
+func (hs *HTTPServer) flushStream(req *backend.CallResourceRequest, stream callResourceClientResponseStream, w http.ResponseWriter) error {
 	processedStreams := 0
 
 	for {
@@ -198,6 +198,8 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 
 		if _, err := w.Write(resp.Body); err != nil {
 			hs.log.Error("Failed to write resource response", "err", err)
+		} else {
+			hs.cachingService.CacheResourceResponse(context.Background(), req, resp)
 		}
 
 		if flusher, ok := w.(http.Flusher); ok {
@@ -273,4 +275,8 @@ func (s *callResourceResponseStream) Close() error {
 	close(s.stream)
 	s.closed = true
 	return nil
+}
+
+func (s *callResourceResponseStream) Clone() (*callResourceResponseStream, error) {
+	return nil, nil
 }

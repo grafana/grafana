@@ -50,8 +50,17 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 
 	// First look in the query cache if enabled
 	cr := m.caching.HandleQueryRequest(ctx, req)
-	// Immediately write any headers to the response
-	cr.WriteHeadersToResponse(&reqCtx.Resp)
+
+	defer func() {
+		// record request duration if caching was used
+		if h, ok := cr.Headers[caching.XCacheHeader]; ok && len(h) > 0 {
+			QueryRequestHistogram.With(prometheus.Labels{
+				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
+				"cache":           cr.Headers[caching.XCacheHeader][0],
+				"query_type":      getQueryType(reqCtx),
+			}).Observe(time.Since(start).Seconds())
+		}
+	}()
 
 	if isCacheHit(cr.Headers) {
 		return cr.Response, nil
@@ -65,15 +74,6 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 		cr.UpdateCacheFn(ctx, resp)
 	}
 
-	// record request duration if caching was used
-	if h, ok := cr.Headers[caching.XCacheHeader]; ok && len(h) > 0 {
-		QueryRequestHistogram.With(prometheus.Labels{
-			"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
-			"cache":           cr.Headers[caching.XCacheHeader][0],
-			"query_type":      getQueryType(reqCtx),
-		}).Observe(time.Since(start).Seconds())
-	}
-
 	return resp, err
 }
 
@@ -83,35 +83,26 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	}
 
 	start := time.Now() // time how long this request takes
-	reqCtx := contexthandler.FromContext(ctx)
 
 	// First look in the resource cache if enabled
-	cr := m.caching.HandleResourceRequest(ctx, req)
-	// Immediately write any headers to the response
-	cr.WriteHeadersToResponse(&reqCtx.Resp)
+	resp := m.caching.HandleResourceRequest(ctx, req)
 
-	if isCacheHit(cr.Headers) {
-		return sender.Send(cr.Response)
+	defer func() {
+		// record request duration if caching was used
+		if h, ok := resp.Headers[caching.XCacheHeader]; ok && len(h) > 0 {
+			ResourceRequestHistogram.With(prometheus.Labels{
+				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
+				"cache":           resp.Headers[caching.XCacheHeader][0],
+			}).Observe(time.Since(start).Seconds())
+		}
+	}()
+
+	if isCacheHit(resp.Headers) {
+		return sender.Send(resp)
 	}
 
 	// do the actual request
-	err := m.next.CallResource(ctx, req, sender)
-
-	// Update the resource cache with the result for this metrics request
-	if err == nil && cr.UpdateCacheFn != nil {
-		// todo read and update response
-		// cr.UpdateCacheFn(ctx, resp)
-	}
-
-	// record request duration if caching was used
-	if h, ok := cr.Headers[caching.XCacheHeader]; ok && len(h) > 0 {
-		ResourceRequestHistogram.With(prometheus.Labels{
-			"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
-			"cache":           cr.Headers[caching.XCacheHeader][0],
-		}).Observe(time.Since(start).Seconds())
-	}
-
-	return err
+	return m.next.CallResource(ctx, req, sender)
 }
 
 func isCacheHit(headers map[string][]string) bool {
