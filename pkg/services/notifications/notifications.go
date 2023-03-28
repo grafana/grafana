@@ -235,27 +235,26 @@ func (ns *NotificationService) SendResetPasswordEmail(ctx context.Context, cmd *
 
 type GetUserByLoginFunc = func(c context.Context, login string) (*user.User, error)
 
-func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, query *ValidateResetPasswordCodeQuery, userByLogin GetUserByLoginFunc) error {
+func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, query *ValidateResetPasswordCodeQuery, userByLogin GetUserByLoginFunc) (*user.User, error) {
 	login := getLoginForEmailCode(query.Code)
 	if login == "" {
-		return ErrInvalidEmailCode
+		return nil, ErrInvalidEmailCode
 	}
 
 	user, err := userByLogin(ctx, login)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	validEmailCode, err := validateUserEmailCode(ns.Cfg, user, query.Code)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !validEmailCode {
-		return ErrInvalidEmailCode
+		return nil, ErrInvalidEmailCode
 	}
 
-	query.Result = user
-	return nil
+	return user, nil
 }
 
 func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *events.SignUpStarted) error {
