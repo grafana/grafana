@@ -30,8 +30,6 @@ composableKinds: PanelCfg: {
 							frameIndex: number | *0
 							// Controls whether the panel should show the header
 							showHeader: bool | *true
-							// Controls whether the columns should be numbered
-							showRowNums?: bool | *false
 							// Controls whether the header should show icons for the column types
 							showTypeIcons?: bool | *false
 							// Used to control row sorting

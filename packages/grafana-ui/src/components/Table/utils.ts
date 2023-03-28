@@ -43,7 +43,6 @@ import {
 } from './types';
 
 export const EXPANDER_WIDTH = 50;
-export const OPTIONAL_ROW_NUMBER_COLUMN_WIDTH = 50;
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
@@ -163,25 +162,6 @@ export function getColumns(
   }
 
   return columns;
-}
-
-/*
-  Build `Field` data for row numbers and prepend to the field array;
-  this way, on other column's sort, the row numbers will persist in their proper place.
-*/
-export function buildFieldsForOptionalRowNums(totalRows: number): Field {
-  return {
-    ...defaultRowNumberColumnFieldData,
-    values: buildBufferedEmptyValues(totalRows),
-  };
-}
-
-/*
-  This gives us an empty buffered ArrayVector of the desired length to match the table data.
-  It is simply a data placeholder for the Row Number column data.
-*/
-export function buildBufferedEmptyValues(totalRows: number): ArrayVector<string> {
-  return new ArrayVector(new Array(totalRows));
 }
 
 export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
@@ -339,24 +319,6 @@ export function getFooterItems(
   theme2: GrafanaTheme2
 ): FooterItem[] {
   /*
-    Here, `filterFields` is passed as the `headerGroups[0].headers` array
-    that was destructured from the `useTable` hook. Unfortunately, since
-    the `headerGroups` object is data based ONLY on the rendered "non-hidden"
-    column headers, it will NOT include the Row Number column if it has been
-    toggled off. This will shift the rendering of the footer left 1 column,
-    creating an off-by-one issue. This is why we test for a `field.id` of "0".
-    If the condition is truthy, the togglable Row Number column is being rendered,
-    and we can proceed normally. If not, we must add the field data in its place
-    so that the footer data renders in the expected column.
-  */
-  if (!filterFields.some((field) => field?.id === '0')) {
-    const length = values.length;
-    // Build the additional field that will correct the off-by-one footer issue.
-    const fieldToAdd = { id: '0', field: buildFieldsForOptionalRowNums(length) };
-    filterFields = [fieldToAdd, ...filterFields];
-  }
-
-  /*
     The FooterItems[] are calculated using both the `headerGroups[0].headers`
     (filterFields) and `rows` (values) destructured from the useTable() hook.
     This cacluation is based on the data from each index in `filterFields`
@@ -383,8 +345,8 @@ export function getFooterItems(
   return filterFields.map((data, i) => {
     // Then test for numerical data - this will filter out placeholder `filterFields` as well.
     if (data?.field?.type !== FieldType.number) {
-      // Show the reducer type ("Total", "Range", "Count", "Delta", etc) in the first non "Row Number" column, only if it cannot be numerically reduced.
-      if (i === 1 && options.reducer && options.reducer.length > 0) {
+      // Show the reducer in the first column
+      if (i === 0 && options.reducer && options.reducer.length > 0) {
         const reducer = fieldReducers.get(options.reducer[0]);
         return reducer.name;
       }
@@ -493,34 +455,6 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
       };
   }
 }
-
-/*
-  For building the column data for the togglable Row Number field.
-  `values` property is omitted, as it will be added at a later time.
-*/
-export const defaultRowNumberColumnFieldData: Omit<Field, 'values'> = {
-  /*
-    Single whitespace as value for `name` property so as to render an empty/invisible column header;
-    without the single whitespace, falsey headers (empty strings) are given a default name of "Value".
-  */
-  name: ' ',
-  display: function (value) {
-    return {
-      numeric: Number(value),
-      text: value != null ? String(value) : '',
-    };
-  },
-  type: FieldType.string,
-  config: {
-    color: { mode: 'thresholds' },
-    custom: {
-      align: 'auto',
-      cellOptions: { type: 'auto' },
-      inspect: false,
-      width: OPTIONAL_ROW_NUMBER_COLUMN_WIDTH,
-    },
-  },
-};
 
 /**
  * This recurses through an array of `filterFields` (Array<{ id: string; field?: Field } | undefined>)
