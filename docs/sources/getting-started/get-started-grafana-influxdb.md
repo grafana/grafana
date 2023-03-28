@@ -99,7 +99,8 @@ You can also create Flux queries in the InfluxDB Explore view.
 
 In your Grafana instance, go to the [Explore]({{< relref "../explore/" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics.
 
-#### Start building dashboards
+#### Start building dashboards or import from a curated list of existing InfluxDB dashboards.
+
 
 There you go! Use Explore and Data Explorer to experiment with your data, and add the queries that you like to your dashboard as panels. Have fun!
 
