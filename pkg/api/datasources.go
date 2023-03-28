@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/caching"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
@@ -330,20 +329,6 @@ func validateURL(cmdType string, url string) response.Response {
 	}
 
 	return nil
-}
-
-func isCacheHit(r caching.CachedResourceDataResponse) bool {
-	if r.Response == nil {
-		return false
-	}
-	headers := r.Response.Headers
-	if headers == nil {
-		return false
-	}
-	if v, ok := headers[caching.XCacheHeader]; ok {
-		return len(v) > 0 && v[0] == caching.StatusHit
-	}
-	return false
 }
 
 // validateJSONData prevents the user from adding a custom header with name that matches the auth proxy header name.
@@ -722,35 +707,6 @@ func (hs *HTTPServer) CallDatasourceResourceWithUID(c *contextmodel.ReqContext) 
 	}
 
 	hs.callPluginResourceWithDataSource(c, plugin.ID, ds)
-}
-
-func writeResourceResponse(w http.ResponseWriter, response caching.CachedResourceDataResponse) error {
-	r := response.Response
-	if r == nil {
-		return fmt.Errorf("error writing empty response")
-	}
-	if r.Headers != nil {
-		for name, values := range r.Headers {
-			if w.Header().Get(name) != "" {
-				continue // don't overwrite existing headers
-			}
-
-			for _, value := range values {
-				w.Header().Set(name, value)
-			}
-		}
-	}
-
-	// don't write status unless it has been set
-	if r.Status > 0 {
-		w.WriteHeader(r.Status)
-	}
-
-	if _, err := w.Write(r.Body); err != nil {
-		return fmt.Errorf("error writing response: %s", err.Error())
-	}
-
-	return nil
 }
 
 func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *datasources.DataSource) dtos.DataSource {

@@ -223,7 +223,7 @@ func handleCallResourceError(err error, reqCtx *contextmodel.ReqContext) {
 
 // callResourceClientResponseStream is used for receiving resource call responses.
 type callResourceClientResponseStream interface {
-	Rexcv() (*backend.CallResourceResponse, error)
+	Recv() (*backend.CallResourceResponse, error)
 	Close() error
 }
 
