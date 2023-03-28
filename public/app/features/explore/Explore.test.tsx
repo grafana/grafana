@@ -12,9 +12,9 @@ import { scanStopAction } from './state/query';
 import { createEmptyQueryResponse } from './state/utils';
 
 const resizeWindow = (x: number, y: number) => {
-  window.innerWidth = x;
-  window.innerHeight = y;
-  window.dispatchEvent(new Event('resize'));
+  global.innerWidth = x;
+  global.innerHeight = y;
+  global.dispatchEvent(new Event('resize'));
 };
 
 const makeEmptyQueryResponse = (loadingState: LoadingState) => {
@@ -150,12 +150,24 @@ describe('Explore', () => {
     expect(screen.getByTestId('explore-no-data')).toBeInTheDocument();
   });
 
-  it('should render data source picker on small screens', async () => {
-    setup();
-    resizeWindow(500, 500);
+  describe('On small screens', () => {
+    const windowWidth = global.innerWidth,
+      windowHeight = global.innerHeight;
 
-    const dataSourcePicker = await screen.findByLabelText('Data source picker select container');
+    beforeAll(() => {
+      resizeWindow(500, 500);
+    });
 
-    expect(dataSourcePicker).toBeInTheDocument();
+    afterAll(() => {
+      resizeWindow(windowWidth, windowHeight);
+    });
+
+    it('should render data source picker', async () => {
+      setup();
+
+      const dataSourcePicker = await screen.findByLabelText('Data source picker select container');
+
+      expect(dataSourcePicker).toBeInTheDocument();
+    });
   });
 });
