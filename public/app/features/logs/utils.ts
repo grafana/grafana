@@ -207,6 +207,8 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] 
   Object.keys(aggregated).forEach((level) => {
     const levelDataFrame = new MutableDataFrame();
     const { meta, timeFieldConfig, valueFieldConfig } = configs[level];
+    // Log Volume visualization uses the name when toggling the legend
+    levelDataFrame.name = level;
     levelDataFrame.meta = meta;
     levelDataFrame.addField({ name: 'Time', type: FieldType.time, config: timeFieldConfig });
     levelDataFrame.addField({ name: 'Value', type: FieldType.number, config: valueFieldConfig });
