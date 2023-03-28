@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -25,6 +25,7 @@ export interface Props {
   isFullscreen?: boolean;
   'aria-label'?: string;
   buttonOverflowAlignment?: 'left' | 'right';
+  showLeftItemsOnSmallScreen?: boolean;
 }
 
 /** @alpha */
@@ -44,8 +45,11 @@ export const PageToolbar = React.memo(
     /** main nav-container aria-label **/
     'aria-label': ariaLabel,
     buttonOverflowAlignment = 'right',
+    showLeftItemsOnSmallScreen = false,
   }: Props) => {
-    const styles = useStyles2(getStyles);
+    const styles = useStyles2(
+      useCallback((theme) => getStyles(theme, showLeftItemsOnSmallScreen), [showLeftItemsOnSmallScreen])
+    );
 
     /**
      * .page-toolbar css class is used for some legacy css view modes (TV/Kiosk) and
@@ -145,10 +149,16 @@ export const PageToolbar = React.memo(
 
 PageToolbar.displayName = 'PageToolbar';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, showLeftItemsOnSmallScreen: boolean) => {
   const { spacing, typography } = theme;
 
   const focusStyle = getFocusStyles(theme);
+
+  const showLeftItemsStyles = css`
+    align-items: center;
+    display: flex;
+    padding-right: ${spacing(0.5)};
+  `;
 
   return {
     pre: css`
@@ -234,13 +244,13 @@ const getStyles = (theme: GrafanaTheme2) => {
         flex: 1;
       }
     `,
-    leftActionItem: css`
-      display: none;
-      ${theme.breakpoints.up('md')} {
-        align-items: center;
-        display: flex;
-        padding-right: ${spacing(0.5)};
-      }
-    `,
+    leftActionItem: showLeftItemsOnSmallScreen
+      ? showLeftItemsStyles
+      : css`
+          display: 'none';
+          ${theme.breakpoints.up('md')} {
+            ${showLeftItemsStyles}
+          }
+        `,
   };
 };

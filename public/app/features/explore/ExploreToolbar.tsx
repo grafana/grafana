@@ -40,15 +40,6 @@ const getStyles = (exploreId: ExploreId, isLargerExploreId: boolean) => {
             : 'none',
       },
     }),
-    /*
-    this selects the `DataSourcePicker`, passed on the `leftItems` prop to `PageToolbar`,
-    it add flex display to override the `leftActionItem` default style
-    */
-    toolbar: css({
-      '> div > nav > div > div:last-child': {
-        display: 'flex',
-      },
-    }),
   };
 };
 
@@ -248,18 +239,8 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
   };
 
   render() {
-    const {
-      datasourceMissing,
-      exploreId,
-      splitted,
-      containerWidth,
-      topOfViewRef,
-      refreshInterval,
-      loading,
-      largerExploreId,
-    } = this.props;
-    const isLargerExploreId = largerExploreId === exploreId;
-    const styles = getStyles(exploreId, isLargerExploreId);
+    const { datasourceMissing, exploreId, splitted, containerWidth, topOfViewRef, refreshInterval, loading } =
+      this.props;
 
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const isTopnav = config.featureToggles.topnav;
@@ -304,8 +285,8 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
           aria-label="Explore toolbar"
           title={exploreId === ExploreId.left && !isTopnav ? 'Explore' : undefined}
           pageIcon={exploreId === ExploreId.left && !isTopnav ? 'compass' : undefined}
-          className={styles.toolbar}
           leftItems={toolbarLeftItems}
+          showLeftItemsOnSmallScreen={true}
         >
           {this.renderActions()}
         </PageToolbar>
