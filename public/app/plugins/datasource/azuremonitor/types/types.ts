@@ -3,12 +3,13 @@ import {
   DataSourceJsonData,
   DataSourceSettings,
   PanelData,
+  SelectableValue,
   TableData,
 } from '@grafana/data';
 
 import Datasource from '../datasource';
 
-import { AzureMonitorQuery } from './query';
+import { AzureMonitorQuery, ResultFormat } from './query';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 export type AzureDataSourceInstanceSettings = DataSourceInstanceSettings<AzureDataSourceJsonData>;
@@ -168,6 +169,11 @@ export interface AzureQueryEditorFieldProps {
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
+}
+
+export interface FormatAsFieldProps extends AzureQueryEditorFieldProps {
+  inputId: string;
+  options: Array<SelectableValue<ResultFormat>>;
 }
 
 export interface AzureResourceSummaryItem {

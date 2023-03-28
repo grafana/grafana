@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
@@ -38,6 +39,7 @@ type AzureLogAnalyticsQuery struct {
 	TimeRange    backend.TimeRange
 	Query        string
 	Resources    []string
+	QueryType    string
 }
 
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
@@ -127,6 +129,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(logger log.Logger, queries []
 			TimeRange:    query.TimeRange,
 			Query:        rawQuery,
 			Resources:    resources,
+			QueryType:    query.QueryType,
 		})
 	}
 
@@ -195,7 +198,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		return dataResponseErrorWithExecuted(err)
 	}
 
-	frame, err := ResponseTableToFrame(t, query.RefID, query.Query)
+	frame, err := ResponseTableToFrame(t, query.RefID, query.Query, dataquery.AzureQueryType(query.QueryType), dataquery.ResultFormat(query.ResultFormat))
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -207,6 +210,16 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
+	}
+
+	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) && query.ResultFormat == string(dataquery.ResultFormatTrace) {
+		if frame.Meta == nil {
+			frame.Meta = &data.FrameMeta{
+				PreferredVisualization: "trace",
+			}
+		} else {
+			frame.Meta.PreferredVisualization = "trace"
+		}
 	}
 
 	err = setAdditionalFrameMeta(frame,

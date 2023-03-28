@@ -192,6 +192,7 @@ export const defaultAzureLogsQuery: Partial<AzureLogsQuery> = {
 export enum ResultFormat {
   Table = 'table',
   TimeSeries = 'time_series',
+  Trace = 'trace',
 }
 
 export interface AzureResourceGraphQuery {

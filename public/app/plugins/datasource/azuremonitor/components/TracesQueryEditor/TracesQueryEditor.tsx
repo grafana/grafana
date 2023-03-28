@@ -1,14 +1,16 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
+import { createFilter } from 'react-select';
 import { lastValueFrom } from 'rxjs';
 
-import { CoreApp, DataFrame, DataQueryRequest, SelectableValue, TimeRange } from '@grafana/data';
+import { CoreApp, DataFrame, SelectableValue, TimeRange } from '@grafana/data';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
-import { Select } from '@grafana/ui';
+import { VirtualizedSelect } from '@grafana/ui';
 
 import Datasource from '../../datasource';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, AzureQueryType, ResultFormat } from '../../types';
 import { useAsyncState } from '../../utils/useAsyncState';
 import { Field } from '../Field';
+import FormatAsField from '../FormatAsField';
 import AdvancedResourcePicker from '../LogsQueryEditor/AdvancedResourcePicker';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
@@ -120,23 +122,24 @@ const TracesQueryEditor = ({
 
   const operationIds = useOperationIds(query, datasource, setError, timeRange);
 
-  const onOperationIdChange = useCallback(
-    ({ value }: SelectableValue<string>) => {
-      if (value) {
-        const newQuery = setKustoQuery(query, value);
-        onChange(newQuery);
-      } else {
-        onChange({
-          ...query,
-          azureLogAnalytics: {
-            ...query.azureLogAnalytics,
-            query: '',
-          },
-        });
-      }
-    },
-    [onChange, query]
-  );
+  const onOperationIdChange = ({ value }: SelectableValue<string>) => {
+    if (value) {
+      const newQuery = setKustoQuery(query, value);
+      onChange(newQuery);
+    } else {
+      onChange({
+        ...query,
+        azureLogAnalytics: {
+          ...query.azureLogAnalytics,
+          query: '',
+        },
+      });
+    }
+  };
+
+  const _customFilter = createFilter({ ignoreAccents: false });
+  const customFilter = (option: SelectableValue, searchQuery: string) =>
+    _customFilter({ label: option.label ?? '', value: option.value ?? '', data: {} }, searchQuery);
 
   return (
     <span data-testid="azure-monitor-logs-query-editor-with-experimental-ui">
@@ -174,15 +177,27 @@ const TracesQueryEditor = ({
         <EditorRow>
           <EditorFieldGroup>
             <Field label="Operation ID">
-              <Select
+              <VirtualizedSelect
+                filterOption={customFilter}
                 inputId="azure-monitor-traces-operation-id-field"
                 value={query.azureLogAnalytics?.operationId || null}
                 onChange={onOperationIdChange}
                 options={operationIds}
                 allowCustomValue
-                virtualized
               />
             </Field>
+            <FormatAsField
+              datasource={datasource}
+              setError={setError}
+              query={query}
+              variableOptionGroup={variableOptionGroup}
+              onQueryChange={onChange}
+              inputId="azure-monitor-traces"
+              options={[
+                { label: 'Table', value: ResultFormat.Table },
+                { label: 'Trace', value: ResultFormat.Trace },
+              ]}
+            />
           </EditorFieldGroup>
         </EditorRow>
       </EditorRows>

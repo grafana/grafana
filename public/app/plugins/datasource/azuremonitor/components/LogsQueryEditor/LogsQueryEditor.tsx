@@ -4,13 +4,13 @@ import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { Alert } from '@grafana/ui';
 
 import Datasource from '../../datasource';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat } from '../../types';
+import FormatAsField from '../FormatAsField';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 
 import AdvancedResourcePicker from './AdvancedResourcePicker';
-import FormatAsField from './FormatAsField';
 import QueryField from './QueryField';
 import useMigrations from './useMigrations';
 
@@ -99,6 +99,11 @@ const LogsQueryEditor = ({
                 variableOptionGroup={variableOptionGroup}
                 onQueryChange={onChange}
                 setError={setError}
+                inputId={'azure-monitor-logs'}
+                options={[
+                  { label: 'Time series', value: ResultFormat.TimeSeries },
+                  { label: 'Table', value: ResultFormat.Table },
+                ]}
               />
             )}
 
