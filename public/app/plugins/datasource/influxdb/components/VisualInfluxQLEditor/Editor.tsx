@@ -78,7 +78,7 @@ export const Editor = (props: Props): JSX.Element => {
   const { measurement, policy } = query;
 
   const policyData = useAsync(() => getAllPolicies(datasource), [datasource]);
-  const retentionPolicies = policyData.error != null ? [] : policyData.value ?? [];
+  const retentionPolicies = !!policyData.error ? [] : policyData.value ?? [];
 
   const allTagKeys = useMemo(async () => {
     const tagKeys = (await getTagKeysForMeasurementAndTags(measurement, policy, [], datasource)).map(
