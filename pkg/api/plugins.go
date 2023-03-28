@@ -540,9 +540,9 @@ func mdFilepath(mdFilename string) (string, error) {
 	fileExt := filepath.Ext(mdFilename)
 	switch fileExt {
 	case "md":
-		return filepath.Clean(filepath.Join("/", mdFilename)), nil
+		return util.CleanRelativePath(mdFilename)
 	case "":
-		return filepath.Clean(filepath.Join("/", fmt.Sprintf("%s.md", mdFilename))), nil
+		return util.CleanRelativePath(fmt.Sprintf("%s.md", mdFilename))
 	default:
 		return "", ErrUnexpectedFileExtension
 	}
