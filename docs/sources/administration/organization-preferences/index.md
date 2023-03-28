@@ -39,8 +39,8 @@ Grafana server administrators and organization administrators can change organiz
 
 Follow these instructions if you are a Grafana Server Admin.
 
-1. Hover your cursor over the **Server Admin** (shield) icon until a menu appears.
-1. Click **Orgs**.
+1. Click **Administration** in the left-side menu.
+1. Click **Organizations**.
 1. In the organization list, click the name of the organization that you want to change.
 1. In **Name**, enter the new organization name.
 1. Click **Update**.

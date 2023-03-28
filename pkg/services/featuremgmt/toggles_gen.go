@@ -199,6 +199,10 @@ const (
 	// Enable data source onboarding page
 	FlagDatasourceOnboarding = "datasourceOnboarding"
 
+	// FlagEmptyDashboardPage
+	// Enable the redesigned user interface of a dashboard page that includes no panels
+	FlagEmptyDashboardPage = "emptyDashboardPage"
+
 	// FlagSecureSocksDatasourceProxy
 	// Enable secure socks tunneling for supported core datasources
 	FlagSecureSocksDatasourceProxy = "secureSocksDatasourceProxy"

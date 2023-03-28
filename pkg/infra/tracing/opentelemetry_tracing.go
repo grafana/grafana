@@ -166,13 +166,17 @@ func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, er
 		return nil, err
 	}
 
+	return initTracerProvider(exp, ots.customAttribs...)
+}
+
+func initTracerProvider(exp tracesdk.SpanExporter, customAttribs ...attribute.KeyValue) (*tracesdk.TracerProvider, error) {
 	res, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
 			semconv.ServiceNameKey.String("grafana"),
 			semconv.ServiceVersionKey.String(version.Version),
 		),
-		resource.WithAttributes(ots.customAttribs...),
+		resource.WithAttributes(customAttribs...),
 		resource.WithProcessRuntimeDescription(),
 		resource.WithTelemetrySDK(),
 	)
@@ -222,15 +226,34 @@ func (ots *Opentelemetry) initOpentelemetryTracer() error {
 		otel.SetTracerProvider(tp)
 	}
 
-	switch ots.propagation {
-	case w3cPropagator:
-		otel.SetTextMapPropagator(propagation.TraceContext{})
-	case jaegerPropagator:
-		otel.SetTextMapPropagator(jaegerpropagator.Jaeger{})
-	default:
-		otel.SetTextMapPropagator(propagation.TraceContext{})
+	propagators := []propagation.TextMapPropagator{}
+	for _, p := range strings.Split(ots.propagation, ",") {
+		switch p {
+		case w3cPropagator:
+			propagators = append(propagators, propagation.TraceContext{}, propagation.Baggage{})
+		case jaegerPropagator:
+			propagators = append(propagators, jaegerpropagator.Jaeger{})
+		case "":
+		default:
+			return fmt.Errorf("unsupported OpenTelemetry propagator: %q", p)
+		}
 	}
-	ots.tracerProvider = tp
+
+	switch len(propagators) {
+	case 0:
+		otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+			propagation.TraceContext{}, propagation.Baggage{},
+		))
+	case 1:
+		otel.SetTextMapPropagator(propagators[0])
+	default:
+		otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagators...))
+	}
+
+	if ots.tracerProvider == nil {
+		ots.tracerProvider = tp
+	}
+
 	ots.tracer = otel.GetTracerProvider().Tracer("component-main")
 
 	return nil
