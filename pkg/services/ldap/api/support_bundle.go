@@ -72,7 +72,7 @@ func (s *Service) supportBundleCollector(context.Context) (*supportbundles.Suppo
 
 	bWriter.WriteString("```ini\n")
 
-	bWriter.WriteString(fmt.Sprintf("enabled = %v\n", s.cfg.LDAPEnabled))
+	bWriter.WriteString(fmt.Sprintf("enabled = %v\n", s.cfg.LDAPAuthEnabled))
 	bWriter.WriteString(fmt.Sprintf("config_file = %s\n", s.cfg.LDAPConfigFilePath))
 	bWriter.WriteString(fmt.Sprintf("allow_sign_up = %v\n", s.cfg.LDAPAllowSignup))
 	bWriter.WriteString(fmt.Sprintf("sync_cron = %s\n", s.cfg.LDAPSyncCron))

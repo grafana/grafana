@@ -1,7 +1,6 @@
 import { ComponentClass } from 'react';
 
 import {
-  DataLinkBuiltInVars,
   FieldConfigProperty,
   PanelData,
   PanelProps,
@@ -19,20 +18,12 @@ import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../../variables/adapters';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
-import { setTimeSrv } from '../services/TimeSrv';
 import { TimeOverrideResult } from '../utils/panel';
 
 import { PanelModel } from './PanelModel';
 
 standardFieldConfigEditorRegistry.setInit(() => mockStandardFieldConfigOptions());
 standardEditorsRegistry.setInit(() => mockStandardFieldConfigOptions());
-
-setTimeSrv({
-  timeRangeForUrl: () => ({
-    from: 1607687293000,
-    to: 1607687293100,
-  }),
-} as any);
 
 const getVariables = () => variablesMock;
 const getVariableWithName = (name: string) => variablesMock.filter((v) => v.name === name)[0];
@@ -211,19 +202,10 @@ describe('PanelModel', () => {
           bbb: { value: 'BBB', text: 'upperB' },
         };
       });
+
       it('should interpolate variables', () => {
         const out = model.replaceVariables('hello $aaa');
         expect(out).toBe('hello AAA');
-      });
-
-      it('should interpolate $__url_time_range variable', () => {
-        const out = model.replaceVariables(`/d/1?$${DataLinkBuiltInVars.keepTime}`);
-        expect(out).toBe('/d/1?from=1607687293000&to=1607687293100');
-      });
-
-      it('should interpolate $__all_variables variable', () => {
-        const out = model.replaceVariables(`/d/1?$${DataLinkBuiltInVars.includeVars}`);
-        expect(out).toBe('/d/1?var-test1=val1&var-test2=val2&var-test3=Value%203&var-test4=A&var-test4=B');
       });
 
       it('should prefer the local variable value', () => {
