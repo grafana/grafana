@@ -3,8 +3,13 @@ package elasticsearch
 import (
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
+// To avoid compiler optimizations eliminating the function under test
+// we are storing the result to a package level variable
+var Request *backend.QueryDataResponse
 
 func BenchmarkSimpleMetricRequest(b *testing.B) {
 	queriesBytes := getQueriesBytesFromTestsDataFile("metric_simple")
@@ -14,7 +19,7 @@ func BenchmarkSimpleMetricRequest(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		executeElasticsearchDataQuery(c, string(queriesBytes), from, to)
+		Request, _ = executeElasticsearchDataQuery(c, string(queriesBytes), from, to)
 	}
 }
 
@@ -23,10 +28,9 @@ func BenchmarkComplexMetricRequest(b *testing.B) {
 	c := newFakeClient()
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		executeElasticsearchDataQuery(c, string(queriesBytes), from, to)
+		Request, _ = executeElasticsearchDataQuery(c, string(queriesBytes), from, to)
 	}
 }
 
@@ -35,10 +39,9 @@ func BenchmarkMultiMetricRequest(b *testing.B) {
 	c := newFakeClient()
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		executeElasticsearchDataQuery(c, string(queriesBytes), from, to)
+		Request, _ = executeElasticsearchDataQuery(c, string(queriesBytes), from, to)
 	}
 }
 
@@ -47,7 +50,6 @@ func BenchmarkRawDataRequest(b *testing.B) {
 	c := newFakeClient()
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		executeElasticsearchDataQuery(c, string(queriesBytes), from, to)
@@ -59,7 +61,6 @@ func BenchmarkRawDocumentRequest(b *testing.B) {
 	c := newFakeClient()
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		executeElasticsearchDataQuery(c, string(queriesBytes), from, to)
@@ -71,7 +72,6 @@ func BenchmarkLogsRequest(b *testing.B) {
 	c := newFakeClient()
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		executeElasticsearchDataQuery(c, string(queriesBytes), from, to)
