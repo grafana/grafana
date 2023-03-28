@@ -55,7 +55,7 @@ export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JS
  * @param targ
  */
 function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ: PromQuery) {
-  return `${targExpr}|${request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.exemplar}`;
+  return `${targExpr}|${targ.interval ?? request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.exemplar}`;
 }
 
 /**
@@ -67,7 +67,6 @@ function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ
 export class QueryCache {
   private overlapWindowMs;
   private perfObeserver?: PerformanceObserver;
-  private pendingRequestIds = new Set<string>();
   private pendingRequestIdsToTargSig: Record<string, Record<string, number | null>> = {};
 
   cache = new Map<TargetIdent, TargetCache>();
@@ -99,35 +98,52 @@ export class QueryCache {
 
                 // Safari support for this is coming in 16.4:
                 // https://caniuse.com/mdn-api_performanceresourcetiming_transfersize
-                const isTransferSizeNumber = typeof entryTypeCast?.transferSize === 'number';
-
-                if (this.pendingRequestIds.has(requestId) && isTransferSizeNumber) {
+                // Gating that this exists to prevent runtime errors
+                if (typeof entryTypeCast?.transferSize === 'number') {
                   // TODO: store full initial request size by targSig so we can diff follow-up partial requests
                   // TODO: log savings between full initial request and incremental request to Faro
-                  const requestTransferSize = Math.round(entryTypeCast.transferSize / 1024);
-                  const ident = this.pendingRequestIdsToTargSig[requestId];
-                  Object.keys(ident).forEach((key) => {
-                    if (ident[key] === null) {
-                      ident[key] = requestTransferSize;
-                    }
-                  });
+                  const requestTransferSize = Math.round(entryTypeCast.transferSize);
+                  const idToBytes = this.pendingRequestIdsToTargSig[requestId];
 
-                  console.log('Transferred ' + requestTransferSize + 'KB');
-                  if (config.grafanaJavascriptAgent.enabled) {
-                    faro.api.pushEvent(
-                      'prometheus incremental query response size',
-                      {
-                        size: requestTransferSize.toString(10),
-                      },
-                      'no-interaction',
-                      {
-                        skipDedupe: true,
+                  if (idToBytes) {
+                    // Set the transfer size for this current request
+                    Object.keys(idToBytes).forEach((key) => {
+                      for (let otherRequestIds in this.pendingRequestIdsToTargSig) {
+                        const firstKey = Object.keys(this.pendingRequestIdsToTargSig[otherRequestIds])[0];
+                        const firstValue = Object.values(this.pendingRequestIdsToTargSig[otherRequestIds])[0];
+                        if (firstKey === key && firstValue !== null) {
+                          console.log('SENDING EVENT', {
+                            id: firstKey,
+                            initialRequestBytes: firstValue.toString(),
+                            subsequentRequestBytes: requestTransferSize.toString(10),
+                          });
+
+                          if (config.grafanaJavascriptAgent.enabled) {
+                            faro.api.pushEvent(
+                              'prometheus incremental query response size',
+                              {
+                                id: firstKey,
+                                initialRequestBytes: firstValue.toString(),
+                                subsequentRequestBytes: requestTransferSize.toString(10),
+                              },
+                              'no-interaction',
+                              {
+                                skipDedupe: true,
+                              }
+                            );
+                          }
+                          // Send event with requestTransferSize, and otherValue
+
+                          // We've already saved the initial request, lets just send an event with the delta
+                          delete this.pendingRequestIdsToTargSig[requestId];
+                          break;
+                        }
                       }
-                    );
-                  }
 
-                  this.pendingRequestIds.delete(requestId);
-                  // delete this.pendingRequestIdsToTargSig[requestId];
+                      // Set the transfer size
+                      idToBytes[key] = requestTransferSize;
+                    });
+                  }
                 }
               }
             }
@@ -142,18 +158,6 @@ export class QueryCache {
   // can be used to change full range request to partial, split into multiple requests
   requestInfo(request: DataQueryRequest<PromQuery>, interpolateString: StringInterpolator): CacheRequestInfo {
     // TODO: align from/to to interval to increase probability of hitting backend cache
-
-    request.targets.forEach((target) => {
-      const targSig = `${request.dashboardUID}|${request.panelId}|${target.refId}`;
-      if (!this.pendingRequestIdsToTargSig[request.requestId]) {
-        this.pendingRequestIdsToTargSig[request.requestId] = {};
-      }
-      this.pendingRequestIdsToTargSig[request.requestId][targSig] = null;
-    });
-    this.pendingRequestIds.add(request.requestId);
-
-    console.log('pending requests', this.pendingRequestIdsToTargSig);
-
     const newFrom = request.range.from.valueOf();
     const newTo = request.range.to.valueOf();
 
@@ -170,6 +174,11 @@ export class QueryCache {
       let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
       let targExpr = interpolateString(targ.expr);
       let targSig = getTargSig(targExpr, request, targ); // ${request.maxDataPoints} ?
+
+      if (!this.pendingRequestIdsToTargSig[request.requestId]) {
+        this.pendingRequestIdsToTargSig[request.requestId] = {};
+      }
+      this.pendingRequestIdsToTargSig[request.requestId][targIdent + '|' + targSig] = null;
 
       reqTargSigs.set(targIdent, targSig);
     });
