@@ -44,12 +44,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 // separate function to allow testing the whole transformation and query flow
 func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo) (*backend.QueryDataResponse, error) {
-	// Support for version after their end-of-life (currently <7.10.0) was removed
-	lastSupportedVersion, _ := semver.NewVersion("7.10.0")
-	if dsInfo.ESVersion.LessThan(lastSupportedVersion) {
-		return &backend.QueryDataResponse{}, fmt.Errorf("support for elasticsearch versions after their end-of-life (currently versions < 7.10) was removed")
-	}
-
 	if len(queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
@@ -84,10 +78,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		version, err := coerceVersion(jsonData["esVersion"])
-		if err != nil {
-			return nil, fmt.Errorf("elasticsearch version is required, err=%v", err)
-		}
+		// we used to have a field named `esVersion`, please do not use this name in the future.
 
 		timeField, ok := jsonData["timeField"].(string)
 		if !ok {
@@ -154,7 +145,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			HTTPClient:                 httpCli,
 			Database:                   settings.Database,
 			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
-			ESVersion:                  version,
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
 			TimeInterval:               timeInterval,

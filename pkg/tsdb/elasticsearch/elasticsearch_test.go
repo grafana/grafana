@@ -11,7 +11,6 @@ import (
 )
 
 type datasourceInfo struct {
-	ESVersion                  interface{} `json:"esVersion"`
 	TimeField                  interface{} `json:"timeField"`
 	MaxConcurrentShardRequests int64       `json:"maxConcurrentShardRequests"`
 	Interval                   string      `json:"interval"`
@@ -54,7 +53,6 @@ func TestCoerceVersion(t *testing.T) {
 func TestNewInstanceSettings(t *testing.T) {
 	t.Run("fields exist", func(t *testing.T) {
 		dsInfo := datasourceInfo{
-			ESVersion:                  "7.0.0",
 			TimeField:                  "@timestamp",
 			MaxConcurrentShardRequests: 5,
 		}
@@ -69,91 +67,9 @@ func TestNewInstanceSettings(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("esVersion", func(t *testing.T) {
-		t.Run("correct version", func(t *testing.T) {
-			dsInfo := datasourceInfo{
-				ESVersion:                  5,
-				TimeField:                  "@timestamp",
-				MaxConcurrentShardRequests: 5,
-				Interval:                   "Daily",
-				TimeInterval:               "TimeInterval",
-			}
-
-			settingsJSON, err := json.Marshal(dsInfo)
-			require.NoError(t, err)
-
-			dsSettings := backend.DataSourceInstanceSettings{
-				JSONData: json.RawMessage(settingsJSON),
-			}
-
-			_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
-			require.NoError(t, err)
-		})
-
-		t.Run("faulty version int", func(t *testing.T) {
-			dsInfo := datasourceInfo{
-				ESVersion:                  1234,
-				TimeField:                  "@timestamp",
-				MaxConcurrentShardRequests: 5,
-				Interval:                   "Daily",
-				TimeInterval:               "TimeInterval",
-			}
-
-			settingsJSON, err := json.Marshal(dsInfo)
-			require.NoError(t, err)
-
-			dsSettings := backend.DataSourceInstanceSettings{
-				JSONData: json.RawMessage(settingsJSON),
-			}
-
-			_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
-			require.EqualError(t, err, "elasticsearch version is required, err=elasticsearch version=1234 is not supported")
-		})
-
-		t.Run("faulty version string", func(t *testing.T) {
-			dsInfo := datasourceInfo{
-				ESVersion:                  "NOT_VALID",
-				TimeField:                  "@timestamp",
-				MaxConcurrentShardRequests: 5,
-				Interval:                   "Daily",
-				TimeInterval:               "TimeInterval",
-			}
-
-			settingsJSON, err := json.Marshal(dsInfo)
-			require.NoError(t, err)
-
-			dsSettings := backend.DataSourceInstanceSettings{
-				JSONData: json.RawMessage(settingsJSON),
-			}
-
-			_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
-			require.EqualError(t, err, "elasticsearch version is required, err=Invalid Semantic Version")
-		})
-
-		t.Run("no version", func(t *testing.T) {
-			dsInfo := datasourceInfo{
-				TimeField:                  "@timestamp",
-				MaxConcurrentShardRequests: 5,
-				Interval:                   "Daily",
-				TimeInterval:               "TimeInterval",
-			}
-
-			settingsJSON, err := json.Marshal(dsInfo)
-			require.NoError(t, err)
-
-			dsSettings := backend.DataSourceInstanceSettings{
-				JSONData: json.RawMessage(settingsJSON),
-			}
-
-			_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
-			require.EqualError(t, err, "elasticsearch version is required, err=elasticsearch version <nil>, cannot be cast to int")
-		})
-	})
-
 	t.Run("timeField", func(t *testing.T) {
 		t.Run("is nil", func(t *testing.T) {
 			dsInfo := datasourceInfo{
-				ESVersion:                  2,
 				MaxConcurrentShardRequests: 5,
 				Interval:                   "Daily",
 				TimeInterval:               "TimeInterval",
@@ -172,7 +88,6 @@ func TestNewInstanceSettings(t *testing.T) {
 
 		t.Run("is empty", func(t *testing.T) {
 			dsInfo := datasourceInfo{
-				ESVersion:                  2,
 				MaxConcurrentShardRequests: 5,
 				Interval:                   "Daily",
 				TimeField:                  "",
