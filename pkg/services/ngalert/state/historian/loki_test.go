@@ -356,6 +356,29 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 	})
 }
 
+func TestSelectorString(t *testing.T) {
+	selectors := []Selector{{"name", "=", "Bob"}, {"age", "=~", "30"}}
+	expected := "{name=\"Bob\",age=~\"30\"}"
+	result := selectorString(selectors)
+	require.Equal(t, expected, result)
+
+	selectors = []Selector{}
+	expected = "{}"
+	result = selectorString(selectors)
+	require.Equal(t, expected, result)
+}
+
+func TestNewSelector(t *testing.T) {
+	selector, err := NewSelector("label", "=", "value")
+	require.NoError(t, err)
+	require.Equal(t, "label", selector.Label)
+	require.Equal(t, Eq, selector.Op)
+	require.Equal(t, "value", selector.Value)
+
+	selector, err = NewSelector("label", "invalid", "value")
+	require.Error(t, err)
+}
+
 func createTestLokiBackend(req client.Requester, met *metrics.Historian) *RemoteLokiBackend {
 	url, _ := url.Parse("http://some.url")
 	cfg := LokiConfig{

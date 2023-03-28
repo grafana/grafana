@@ -41,7 +41,7 @@ const defaultQueryRange = 6 * time.Hour
 type remoteLokiClient interface {
 	ping(context.Context) error
 	push(context.Context, []stream) error
-	rangeQuery(ctx context.Context, selectors []Selector, start, end int64) (queryRes, error)
+	rangeQuery(ctx context.Context, logQL string, start, end int64) (queryRes, error)
 }
 
 // RemoteLokibackend is a state.Historian that records state history to an external Loki instance.
@@ -103,6 +103,8 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 		return nil, fmt.Errorf("failed to build the provided selectors: %w", err)
 	}
 
+	logQL := selectorString(selectors)
+
 	now := time.Now().UTC()
 	if query.To.IsZero() {
 		query.To = now
@@ -112,7 +114,7 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 	}
 
 	// Timestamps are expected in RFC3339Nano.
-	res, err := h.client.rangeQuery(ctx, selectors, query.From.UnixNano(), query.To.UnixNano())
+	res, err := h.client.rangeQuery(ctx, logQL, query.From.UnixNano(), query.To.UnixNano())
 	if err != nil {
 		return nil, err
 	}
@@ -312,4 +314,41 @@ func jsonifyRow(line string) (json.RawMessage, error) {
 		return nil, err
 	}
 	return json.Marshal(entry)
+}
+
+type Selector struct {
+	// Label to Select
+	Label string
+	Op    Operator
+	// Value that is expected
+	Value string
+}
+
+func NewSelector(label, op, value string) (Selector, error) {
+	if !isValidOperator(op) {
+		return Selector{}, fmt.Errorf("'%s' is not a valid query operator", op)
+	}
+	return Selector{Label: label, Op: Operator(op), Value: value}, nil
+}
+
+func selectorString(selectors []Selector) string {
+	if len(selectors) == 0 {
+		return "{}"
+	}
+	// Build the query selector.
+	query := ""
+	for _, s := range selectors {
+		query += fmt.Sprintf("%s%s%q,", s.Label, s.Op, s.Value)
+	}
+	// Remove the last comma, as we append one to every selector.
+	query = query[:len(query)-1]
+	return "{" + query + "}"
+}
+
+func isValidOperator(op string) bool {
+	switch op {
+	case "=", "!=", "=~", "!~":
+		return true
+	}
+	return false
 }
