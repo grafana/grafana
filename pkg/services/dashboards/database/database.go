@@ -852,14 +852,17 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 		}
 
 		dashboard := dashboards.Dashboard{OrgID: query.OrgID, ID: query.ID, UID: query.UID}
+		mustCols := []string{}
 		if query.Title != nil {
 			dashboard.Title = *query.Title
+			mustCols = append(mustCols, "title")
 		}
 		if query.FolderID != nil {
 			dashboard.FolderID = *query.FolderID
+			mustCols = append(mustCols, "folder_id")
 		}
 
-		has, err := sess.Get(&dashboard)
+		has, err := sess.MustCols(mustCols...).Get(&dashboard)
 
 		if err != nil {
 			return err
