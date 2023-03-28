@@ -5,7 +5,6 @@ import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableV
 import { PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
-import { OPTIONAL_ROW_NUMBER_COLUMN_WIDTH } from '@grafana/ui/src/components/Table/utils';
 
 import { PanelOptions } from './panelcfg.gen';
 
@@ -43,7 +42,7 @@ export function TablePanel(props: Props) {
     <Table
       height={tableHeight}
       // This calculation is to accommodate the optionally rendered Row Numbers Column
-      width={options.showRowNums ? width : width + OPTIONAL_ROW_NUMBER_COLUMN_WIDTH}
+      width={width}
       data={main}
       noHeader={!options.showHeader}
       showTypeIcons={options.showTypeIcons}

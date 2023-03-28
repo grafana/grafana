@@ -17,7 +17,12 @@ export function useTableStateReducer({ onColumnResize, onSortByChange, data }: P
           if (onColumnResize) {
             const info = (newState.columnResizing.headerIdWidths as any)[0];
             const columnIdString = info[0];
-            const fieldIndex = parseInt(columnIdString, 10);
+            const fieldIndex = getSourceDataFieldIndex(columnIdString, newState);
+            // Can't resize row number column
+            if (fieldIndex < 0) {
+              return newState;
+            }
+
             const width = Math.round(newState.columnResizing.columnWidths[columnIdString] as number);
 
             const field = data.fields[fieldIndex];
@@ -33,7 +38,13 @@ export function useTableStateReducer({ onColumnResize, onSortByChange, data }: P
             const sortByFields: TableSortByFieldState[] = [];
 
             for (const sortItem of newState.sortBy) {
-              const field = data.fields[parseInt(sortItem.id, 10)];
+              const fieldIndex = getSourceDataFieldIndex(sortItem.id, newState);
+              // Can't resize row number column
+              if (fieldIndex < 0) {
+                return newState;
+              }
+
+              const field = data.fields[fieldIndex];
               if (!field) {
                 continue;
               }
@@ -63,14 +74,19 @@ export function useTableStateReducer({ onColumnResize, onSortByChange, data }: P
   );
 }
 
+function getSourceDataFieldIndex(columnId: string, state: GrafanaTableState) {
+  const fieldIndex = parseInt(columnId, 10);
+  return state.showRowNums ? fieldIndex - 1 : fieldIndex;
+}
+
 export function getInitialState(
   initialSortBy: Props['initialSortBy'],
-  initialShowRowNumbers: Props['showRowNums'],
+  showRowNums: boolean | undefined,
   columns: GrafanaTableColumn[]
 ): Partial<GrafanaTableState> {
   const state: Partial<GrafanaTableState> = {
     toggleRowExpandedCounter: 0,
-    hiddenColumns: initialShowRowNumbers ? [] : ['0'],
+    showRowNums,
   };
 
   if (initialSortBy) {

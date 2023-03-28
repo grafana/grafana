@@ -110,11 +110,13 @@ export const Table = memo((props: Props) => {
   );
 
   // React-table column definitions
-  const memoizedColumns = useMemo(
-    () =>
-      getColumns(addRowNumbersFieldToData(data), width, columnMinWidth, !!subData?.length, footerItems, isCountRowsSet),
-    [data, width, columnMinWidth, footerItems, subData, isCountRowsSet]
-  );
+  const memoizedColumns = useMemo(() => {
+    let dataWithMaybeRows = data;
+    if (showRowNums) {
+      dataWithMaybeRows = addRowNumbersFieldToData(data);
+    }
+    return getColumns(dataWithMaybeRows, width, columnMinWidth, !!subData?.length, footerItems, isCountRowsSet);
+  }, [data, width, columnMinWidth, footerItems, subData, isCountRowsSet, showRowNums]);
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer(props);
@@ -146,15 +148,9 @@ export const Table = memo((props: Props) => {
     gotoPage,
     setPageSize,
     pageOptions,
-    setHiddenColumns,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
 
   const extendedState = state as GrafanaTableState;
-
-  // Hide Row Number column on toggle
-  useEffect(() => {
-    !!showRowNums ? setHiddenColumns([]) : setHiddenColumns(['0']);
-  }, [showRowNums, setHiddenColumns]);
 
   /*
     Footer value calculation is being moved in the Table component and the footerValues prop will be deprecated.
