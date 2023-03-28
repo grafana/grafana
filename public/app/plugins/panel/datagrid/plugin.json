@@ -1,0 +1,16 @@
+{
+  "type": "panel",
+  "name": "Datagrid",
+  "id": "datagrid",
+
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-xychart.svg",
+      "large": "img/icn-xychart.svg"
+    }
+  }
+}
