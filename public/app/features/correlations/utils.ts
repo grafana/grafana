@@ -31,11 +31,10 @@ export const attachCorrelationsToDataFrames = (
 
 const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlations: CorrelationData[]) => {
   dataFrame.fields.forEach((field) => {
+    field.config.links = field.config.links?.filter((link) => link.origin !== DataLinkConfigOrigin.Correlations) || [];
     correlations.map((correlation) => {
       if (correlation.config?.field === field.name) {
-        field.config.links =
-          field.config.links?.filter((link) => link.origin !== DataLinkConfigOrigin.Correlations) || [];
-        field.config.links.push({
+        field.config.links!.push({
           internal: {
             query: correlation.config?.target,
             datasourceUid: correlation.target.uid,
