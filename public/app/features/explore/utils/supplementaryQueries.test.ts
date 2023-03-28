@@ -197,6 +197,10 @@ describe('SupplementaryQueries utils', function () {
         ]);
       });
     });
+    it('Returns undefined for logs sample', async () => {
+      const testProvider = await setup('no-data-providers', SupplementaryQueryType.LogsSample);
+      await expect(testProvider).toBe(undefined);
+    });
     it('Creates single fallback result', async () => {
       const testProvider = await setup('no-data-providers', SupplementaryQueryType.LogsVolume, [
         'no-data-providers',
@@ -212,17 +216,6 @@ describe('SupplementaryQueries utils', function () {
           {
             data: [...assertDataFromLogsResults(), ...assertDataFromLogsResults()],
             state: LoadingState.Done,
-          },
-        ]);
-      });
-    });
-
-    it('Does not use a fallback for logs sample', async () => {
-      const testProvider = await setup('no-data-providers', SupplementaryQueryType.LogsSample);
-      await expect(testProvider).toEmitValuesWith((received) => {
-        expect(received).toMatchObject([
-          {
-            state: LoadingState.NotStarted,
           },
         ]);
       });
