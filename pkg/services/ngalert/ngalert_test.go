@@ -192,7 +192,7 @@ grafana_alerting_state_history_info{backend="noop"} 0
 }
 
 func ashTogglesOn() featuremgmt.FeatureToggles {
-	return toggles("alertStateHistoryDualWrites", "alertStateHistoryLokiPrimary", "alertStateHistoryDisableAnnotations")
+	return toggles("alertStateHistoryLokiSecondary", "alertStateHistoryLokiPrimary", "alertStateHistoryLokiOnly")
 }
 
 func toggles(ns ...string) featuremgmt.FeatureToggles {
