@@ -17,7 +17,7 @@ func GetOrgIDFromNamespace(namespace string) int64 {
 
 // This makes an consistent mapping between Grafana UIDs and k8s compatible names
 func GrafanaUIDToK8sName(uid string) string {
-	if allLowercaseAlphaNum(uid) && validation.IsQualifiedName(uid) == nil {
+	if hasNoUppercase(uid) && validation.IsQualifiedName(uid) == nil {
 		return uid // OK, so just use it directly
 	}
 
@@ -28,9 +28,9 @@ func GrafanaUIDToK8sName(uid string) string {
 	return fmt.Sprintf("g%x", bs[:12])
 }
 
-func allLowercaseAlphaNum(s string) bool {
+func hasNoUppercase(s string) bool {
 	for _, r := range s {
-		if !(unicode.IsLower(r) || unicode.IsDigit(r)) {
+		if unicode.IsUpper(r) {
 			return false
 		}
 	}
