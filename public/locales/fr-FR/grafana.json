@@ -7,21 +7,20 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "",
-      "dark-theme": "",
-      "light-theme": "",
-      "search": ""
+      "change-theme": "Modifier le thème...",
+      "dark-theme": "Sombre",
+      "light-theme": "Clair"
     },
     "search-box": {
       "placeholder": ""
     },
     "section": {
-      "actions": "",
-      "dashboard-search-results": "",
+      "actions": "Actions",
+      "dashboard-search-results": "Tableaux de bord",
       "folder-search-results": "",
-      "pages": "",
-      "preferences": "",
-      "recent-dashboards": ""
+      "pages": "Pages",
+      "preferences": "Préférences",
+      "recent-dashboards": "Tableaux de bord récents"
     }
   },
   "common": {
@@ -32,7 +31,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "Actions",
       "data-tab": "Données",
       "error-tab": "Erreur",
       "json-tab": "JSON",
@@ -40,7 +38,7 @@
       "query-tab": "Requête",
       "stats-tab": "Statistiques",
       "subtitle": "{{queryCount}} requêtes avec un délai total de requête de {{formatted}}",
-      "title": "Inspecter\u00a0: {{panelTitle}}"
+      "title": "Inspecter : {{panelTitle}}"
     },
     "inspect-data": {
       "data-options": "Options de données",
@@ -70,7 +68,7 @@
       "panel-json-description": "Le modèle enregistré dans le tableau de bord JSON qui configure comment tout fonctionne.",
       "panel-json-label": "Panneau JSON",
       "select-source": "Sélectionner la source",
-      "unknown": "Objet inconnu\u00a0: {{show}}"
+      "unknown": "Objet inconnu : {{show}}"
     },
     "inspect-meta": {
       "no-inspector": "Pas d'inspecteur de métadonnées"
@@ -85,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "Ajouter un panneau",
-      "comments-show": "Afficher les commentaires du tableau de bord",
       "mark-favorite": "Marquer comme favori",
       "open-original": "Ouvrir le tableau de bord d'origine",
       "playlist-next": "Accéder au tableau de bord suivant",
@@ -103,7 +100,7 @@
     "contact-admin": "Veuillez contacter votre administrateur pour configurer les sources de données.",
     "explanation": "Pour visualiser vos données, vous devrez d’abord les connecter.",
     "new-dashboard": "Nouveau tableau de bord",
-    "preferred": "Connectez votre source de données préférée\u00a0:",
+    "preferred": "Connectez votre source de données préférée :",
     "sampleData": "Ou établissez un nouveau tableau de bord avec des exemples de données",
     "viewAll": "Afficher tout",
     "welcome": "Bienvenue aux tableaux de bord Grafana !"
@@ -130,7 +127,7 @@
   },
   "library-panels": {
     "save": {
-      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque\u00a0: \"{{errorMsg}}\"",
+      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque : \"{{errorMsg}}\"",
       "success": "Panneau de bibliothèque enregistré"
     }
   },
@@ -168,7 +165,7 @@
       "title": "Règles d'alerte"
     },
     "alerting-receivers": {
-      "subtitle": "Décider la manière dont vos contacts sont informés lorsqu'une alerte se déclenche",
+      "subtitle": "",
       "title": "Points de contact"
     },
     "alerting-silences": {
@@ -199,7 +196,7 @@
       "title": "Créer"
     },
     "create-alert": {
-      "title": "Nouvelle règle d'alerte"
+      "title": ""
     },
     "create-dashboard": {
       "title": "Tableau de bord"
@@ -244,18 +241,6 @@
       "subtitle": "Panneaux réutilisables pouvant être ajoutés à plusieurs tableaux de bord",
       "title": "Panneaux de bibliothèque"
     },
-    "live": {
-      "title": "Diffusion d'événements"
-    },
-    "live-cloud": {
-      "title": "Cloud"
-    },
-    "live-pipeline": {
-      "title": "Pipeline"
-    },
-    "live-status": {
-      "title": "Statut"
-    },
     "manage-dashboards": {
       "title": "Parcourir"
     },
@@ -267,7 +252,7 @@
       "title": "Suivi"
     },
     "new": {
-      "title": ""
+      "title": "Nouveau"
     },
     "new-dashboard": {
       "title": "Nouveau tableau de bord"
@@ -295,7 +280,7 @@
       "title": "Modifier le mot de passe"
     },
     "profile/settings": {
-      "title": "Préférences"
+      "title": "Profil"
     },
     "profile/switch-org": "Passer à une autre organisation",
     "public": {
@@ -305,7 +290,6 @@
       "title": "Scènes"
     },
     "search": {
-      "placeholder": "Rechercher dans Grafana",
       "placeholderCommandPalette": ""
     },
     "search-dashboards": {
@@ -372,22 +356,22 @@
   },
   "panel": {
     "header-menu": {
-      "copy": "",
-      "create-library-panel": "",
-      "duplicate": "",
-      "edit": "",
-      "explore": "",
-      "get-help": "",
+      "copy": "Copier",
+      "create-library-panel": "Créer un panneau Bibliothèque",
+      "duplicate": "Dupliquer",
+      "edit": "Modifier",
+      "explore": "Explorer",
+      "get-help": "Obtenir de l’aide",
       "hide-legend": "Masquer la légende",
       "inspect": "Inspecter",
       "inspect-data": "Données",
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
-      "query": "",
-      "remove": "",
+      "query": "Requête",
+      "remove": "Supprimer",
       "share": "Partager",
       "show-legend": "Afficher la légende",
-      "unlink-library-panel": "",
+      "unlink-library-panel": "Dissocier le panneau Bibliothèque",
       "view": "Afficher"
     }
   },
@@ -413,28 +397,33 @@
       "include-panels": "",
       "remove-datasource-filter": "",
       "sort-placeholder": "",
-      "starred": "",
+      "starred": "Favoris",
       "view-as-folders": "",
       "view-as-grid": "",
       "view-as-list": ""
     },
     "dashboard-actions": {
-      "import": "",
-      "new": "",
-      "new-dashboard": "",
-      "new-folder": ""
+      "import": "Importer",
+      "new": "Nouveau",
+      "new-dashboard": "Nouveau tableau de bord",
+      "new-folder": "Nouveau dossier"
     },
     "folder-view": {
       "go-to-folder": "",
       "select-folder": ""
     },
+    "result-kind": {
+      "dashboard": "Tableau de bord",
+      "folder": "Dossier",
+      "panel": ""
+    },
     "results-table": {
       "datasource-header": "",
       "location-header": "",
-      "name-header": "",
+      "name-header": "Nom",
       "tags-header": "",
-      "type-dashboard": "",
-      "type-folder": "",
+      "type-dashboard": "Tableau de bord",
+      "type-folder": "Dossier",
       "type-header": ""
     },
     "search-input": {
@@ -494,7 +483,7 @@
       "info-text-1": "Un instantané est un moyen instantané de partager publiquement un tableau de bord interactif. Lors de la création, nous supprimons les données sensibles telles que les requêtes (métrique, modèle et annotation) et les liens du panneau, pour ne laisser que les métriques visibles et les noms de séries intégrés dans votre tableau de bord.",
       "info-text-2": "N'oubliez pas que votre instantané <1>peut être consulté par une personne</1> qui dispose du lien et qui peut accéder à l'URL. Partagez judicieusement.",
       "local-button": "Instantané local",
-      "mistake-message": "Avez-vous commis une erreur\u00a0? ",
+      "mistake-message": "Avez-vous commis une erreur ? ",
       "name": "Nom de l'instantané",
       "timeout": "Délai d’expiration (secondes)",
       "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps.",
@@ -623,7 +612,7 @@
       "placeholder": ""
     },
     "dropdown": {
-      "placeholder": ""
+      "placeholder": "Entrer la valeur de la variable"
     },
     "picker": {
       "link-all": "Tout",
@@ -632,7 +621,7 @@
       "option-tooltip": "Effacer les sélections"
     },
     "textbox": {
-      "placeholder": ""
+      "placeholder": "Entrer la valeur de la variable"
     }
   }
 }

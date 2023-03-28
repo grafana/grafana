@@ -68,16 +68,6 @@ func (f OrgFilter) Where() (string, []interface{}) {
 	return "dashboard.org_id=?", []interface{}{f.OrgId}
 }
 
-type StarredFilter struct {
-	UserId int64
-}
-
-func (f StarredFilter) Where() (string, []interface{}) {
-	return `(SELECT count(*)
-			 FROM star
-			 WHERE star.dashboard_id = dashboard.id AND star.user_id = ?) > 0`, []interface{}{f.UserId}
-}
-
 type TitleFilter struct {
 	Dialect migrator.Dialect
 	Title   string

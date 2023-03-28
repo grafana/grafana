@@ -1,4 +1,5 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import config from 'app/core/config';
@@ -37,10 +38,13 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
 });
 
 describe('QueryGroup', () => {
+  // QueryGroup relies on this being present
+  Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: jest.fn() });
+
   beforeEach(() => {
-    jest.useFakeTimers();
     config.expressionsEnabled = true;
   });
+
   it('Should add expression on click', async () => {
     renderScenario({});
 
@@ -48,8 +52,10 @@ describe('QueryGroup', () => {
     const queryRowsContainer = await screen.findByTestId('query-editor-rows');
     expect(queryRowsContainer.children.length).toBe(2);
 
-    await addExpressionButton.click();
-    expect(queryRowsContainer.children.length).toBe(3);
+    await userEvent.click(addExpressionButton);
+    await waitFor(() => {
+      expect(queryRowsContainer.children.length).toBe(3);
+    });
   });
 
   it('Should add query on click', async () => {
@@ -59,9 +65,11 @@ describe('QueryGroup', () => {
     const queryRowsContainer = await screen.findByTestId('query-editor-rows');
     expect(queryRowsContainer.children.length).toBe(2);
 
-    await addQueryButton.click();
+    await userEvent.click(addQueryButton);
 
-    expect(queryRowsContainer.children.length).toBe(3);
+    await waitFor(() => {
+      expect(queryRowsContainer.children.length).toBe(3);
+    });
   });
 
   it('New expression should be expanded', async () => {
@@ -69,14 +77,16 @@ describe('QueryGroup', () => {
 
     const addExpressionButton = await screen.findByTestId('query-tab-add-expression');
     const queryRowsContainer = await screen.findByTestId('query-editor-rows');
-    await addExpressionButton.click();
+    await userEvent.click(addExpressionButton);
 
     const lastQueryEditorRow = (await screen.findAllByTestId('query-editor-row')).at(-1);
     const lastEditorToggleRow = (await screen.findAllByLabelText('toggle collapse and expand query row')).at(-1);
 
     expect(lastEditorToggleRow?.getAttribute('aria-expanded')).toBe('true');
     expect(lastQueryEditorRow?.firstElementChild?.children.length).toBe(2);
-    expect(queryRowsContainer.children.length).toBe(3);
+    await waitFor(() => {
+      expect(queryRowsContainer.children.length).toBe(3);
+    });
   });
 
   it('New query should be expanded', async () => {
@@ -84,23 +94,23 @@ describe('QueryGroup', () => {
 
     const addQueryButton = await screen.findByTestId('query-tab-add-query');
     const queryRowsContainer = await screen.findByTestId('query-editor-rows');
-    await addQueryButton.click();
+    await userEvent.click(addQueryButton);
 
     const lastQueryEditorRow = (await screen.findAllByTestId('query-editor-row')).at(-1);
     const lastEditorToggleRow = (await screen.findAllByLabelText('toggle collapse and expand query row')).at(-1);
 
     expect(lastEditorToggleRow?.getAttribute('aria-expanded')).toBe('true');
     expect(lastQueryEditorRow?.firstElementChild?.children.length).toBe(2);
-    expect(queryRowsContainer.children.length).toBe(3);
+    await waitFor(() => {
+      expect(queryRowsContainer.children.length).toBe(3);
+    });
   });
 
   it('Should open data source help modal', async () => {
     renderScenario({});
 
     const openHelpButton = await screen.findByTestId('query-tab-help-button');
-    await act(async () => {
-      await openHelpButton.click();
-    });
+    await userEvent.click(openHelpButton);
 
     const helpModal = await screen.findByRole('dialog');
     expect(helpModal).toBeInTheDocument();
@@ -109,6 +119,7 @@ describe('QueryGroup', () => {
   it('Should not show add expression button when expressions are disabled', async () => {
     config.expressionsEnabled = false;
     renderScenario({});
+    await screen.findByTestId('query-tab-add-query');
     const addExpressionButton = screen.queryByTestId('query-tab-add-expression');
     expect(addExpressionButton).not.toBeInTheDocument();
   });

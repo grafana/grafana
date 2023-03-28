@@ -40,12 +40,6 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:        "live-pipeline",
-			Description: "Enable a generic live processing pipeline",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
 			Name:         "live-service-web-worker",
 			Description:  "This will use a webworker thread to processes events rather than the main thread",
 			State:        FeatureStateAlpha,
@@ -69,6 +63,7 @@ var (
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "publicDashboards",
@@ -102,18 +97,6 @@ var (
 			Owner:       grafanaAsCodeSquad,
 		},
 		{
-			Name:        "dashboardComments",
-			Description: "Enable dashboard-wide comments",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
-			Name:        "annotationComments",
-			Description: "Enable annotation comments",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
 			Name:        "migrationLocking",
 			Description: "Lock database during migrations",
 			State:       FeatureStateBeta,
@@ -133,24 +116,11 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
-			Name:            "dashboardsFromStorage",
-			Description:     "Load dashboards from the generic storage interface",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true, // Also a gate on automatic git storage (for now)
-			Owner:           grafanaAppPlatformSquad,
-		},
-		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaExploreSquad,
-		},
-		{
-			Name:         "tracing",
-			Description:  "Adds trace ID to error notifications",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
 		},
 		{
 			Name:         "newTraceView",
@@ -199,8 +169,15 @@ var (
 			Owner:           grafanaAsCodeSquad,
 		},
 		{
-			Name:         "autoMigrateGraphPanels",
-			Description:  "Replace the angular graph panel with timeseries",
+			Name:         "autoMigrateOldPanels",
+			Description:  "Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:         "disableAngular",
+			Description:  "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
@@ -241,7 +218,8 @@ var (
 		{
 			Name:        "dataConnectionsConsole",
 			Description: "Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateStable,
+			Expression:  "true", // turned on by default
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
@@ -275,7 +253,7 @@ var (
 			Name:        "cloudWatchCrossAccountQuerying",
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			State:       FeatureStateStable,
-			Expression:  "true", //enabled by default
+			Expression:  "true", // enabled by default
 			Owner:       awsPluginsSquad,
 		},
 		{
@@ -298,13 +276,6 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-		},
-		{
-			Name:            "queryLibrary",
-			Description:     "Reusable query library",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			Owner:           grafanaAppPlatformSquad,
 		},
 		{
 			Name:        "showDashboardValidationWarnings",
@@ -350,6 +321,13 @@ var (
 			Owner:       grafanaDashboardsSquad,
 		},
 		{
+			Name:         "emptyDashboardPage",
+			Description:  "Enable the redesigned user interface of a dashboard page that includes no panels",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:        "secureSocksDatasourceProxy",
 			Description: "Enable secure socks tunneling for supported core datasources",
 			State:       FeatureStateAlpha,
@@ -363,7 +341,7 @@ var (
 		},
 		{
 			Name:        "disablePrometheusExemplarSampling",
-			Description: "Disable Prometheus examplar sampling",
+			Description: "Disable Prometheus exemplar sampling",
 			State:       FeatureStateStable,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
@@ -392,7 +370,7 @@ var (
 			Name:         "logsSampleInExplore",
 			Description:  "Enables access to the logs sample feature in Explore",
 			State:        FeatureStateStable,
-			Expression:   "true", //turned on by default
+			Expression:   "true", // turned on by default
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
@@ -411,10 +389,23 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:         "lokiQuerySplittingConfig",
+			Description:  "Give users the option to configure split durations for Loki queries",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:        "individualCookiePreferences",
 			Description: "Support overriding cookie preferences per user",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaBackendPlatformSquad,
+		},
+		{
+			Name:        "onlyExternalOrgRoleSync",
+			Description: "Prohibits a user from changing organization roles synced with external auth providers",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAuthnzSquad,
 		},
 		{
 			Name:         "drawerDataSourcePicker",
@@ -436,6 +427,32 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "timeSeriesTable",
+			Description:  "Enable time series table transformer & sparkline cell type",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        appO11ySquad,
+		},
+		{
+			Name:         "influxdbBackendMigration",
+			Description:  "Query InfluxDB InfluxQL without the proxy",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "clientTokenRotation",
+			Description: "Replaces the current in-request token rotation so that the client initiates the rotation",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAuthnzSquad,
+		},
+		{
+			Name:        "disableElasticsearchBackendExploreQuery",
+			Description: "Disable executing of Elasticsearch Explore queries trough backend",
+			State:       FeatureStateBeta,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "disableAuthenticationConfigUI",

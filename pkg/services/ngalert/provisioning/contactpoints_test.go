@@ -224,9 +224,9 @@ func TestContactPointService(t *testing.T) {
 		q := models.GetLatestAlertmanagerConfigurationQuery{
 			OrgID: 1,
 		}
-		err := sut.amStore.GetLatestAlertmanagerConfiguration(context.Background(), &q)
+		config, err := sut.amStore.GetLatestAlertmanagerConfiguration(context.Background(), &q)
 		require.NoError(t, err)
-		expectedConcurrencyToken := q.Result.ConfigurationHash
+		expectedConcurrencyToken := config.ConfigurationHash
 
 		_, err = sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)

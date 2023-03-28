@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -20,11 +20,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/grafana/grafana/pkg/services/star"
-	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegrationDashboardDataAccess(t *testing.T) {
@@ -35,11 +34,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	var cfg *setting.Cfg
 	var savedFolder, savedDash, savedDash2 *dashboards.Dashboard
 	var dashboardStore dashboards.Store
-	var starService star.Service
 
 	setup := func() {
 		sqlStore, cfg = db.InitTestDBwithCfg(t)
-		starService = starimpl.ProvideService(sqlStore, cfg)
 		quotaService := quotatest.New(false, nil)
 		var err error
 		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
@@ -85,11 +82,12 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.False(t, queryResult.IsFolder)
 	})
 
-	t.Run("Should be able to get dashboard by slug", func(t *testing.T) {
+	t.Run("Should be able to get dashboard by title and folderID", func(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
-			Slug:  "test-dash-23",
-			OrgID: 1,
+			Title:    util.Pointer("test dash 23"),
+			FolderID: &savedFolder.ID,
+			OrgID:    1,
 		}
 
 		queryResult, err := dashboardStore.GetDashboard(context.Background(), &query)
@@ -100,6 +98,29 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, queryResult.ID, savedDash.ID)
 		require.Equal(t, queryResult.UID, savedDash.UID)
 		require.False(t, queryResult.IsFolder)
+	})
+
+	t.Run("Should not be able to get dashboard by title alone", func(t *testing.T) {
+		setup()
+		query := dashboards.GetDashboardQuery{
+			Title: util.Pointer("test dash 23"),
+			OrgID: 1,
+		}
+
+		_, err := dashboardStore.GetDashboard(context.Background(), &query)
+		require.ErrorIs(t, err, dashboards.ErrDashboardIdentifierNotSet)
+	})
+
+	t.Run("Folder=0 should not be able to get a dashboard in a folder", func(t *testing.T) {
+		setup()
+		query := dashboards.GetDashboardQuery{
+			Title:    util.Pointer("test dash 23"),
+			FolderID: util.Pointer(int64(0)),
+			OrgID:    1,
+		}
+
+		_, err := dashboardStore.GetDashboard(context.Background(), &query)
+		require.ErrorIs(t, err, dashboards.ErrDashboardNotFound)
 	})
 
 	t.Run("Should be able to get dashboard by uid", func(t *testing.T) {
@@ -453,39 +474,6 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 		hit2 := query.Result[1]
 		require.Equal(t, len(hit2.Tags), 1)
-	})
-
-	t.Run("Should be able to find starred dashboards", func(t *testing.T) {
-		setup()
-		starredDash := insertTestDashboard(t, dashboardStore, "starred dash", 1, 0, false)
-		err := starService.Add(context.Background(), &star.StarDashboardCommand{
-			DashboardID: starredDash.ID,
-			UserID:      10,
-		})
-		require.NoError(t, err)
-
-		err = starService.Add(context.Background(), &star.StarDashboardCommand{
-			DashboardID: savedDash.ID,
-			UserID:      1,
-		})
-		require.NoError(t, err)
-
-		query := dashboards.FindPersistedDashboardsQuery{
-			SignedInUser: &user.SignedInUser{
-				UserID:  10,
-				OrgID:   1,
-				OrgRole: org.RoleEditor,
-				Permissions: map[int64]map[string][]string{
-					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
-				},
-			},
-			IsStarred: true,
-		}
-		res, err := dashboardStore.FindDashboards(context.Background(), &query)
-
-		require.NoError(t, err)
-		require.Equal(t, len(res), 1)
-		require.Equal(t, res[0].Title, "starred dash")
 	})
 
 	t.Run("Can count dashboards by parent folder", func(t *testing.T) {

@@ -52,7 +52,7 @@ export function useRulesFilter() {
       // Existing query filters takes precedence over legacy ones
       updateFilters(
         produce(filterState, (draft) => {
-          draft.dataSourceName ??= legacyFilters.dataSource;
+          draft.dataSourceNames ??= legacyFilters.dataSource ? [legacyFilters.dataSource] : [];
           if (legacyFilters.alertState && isPromAlertingRuleState(legacyFilters.alertState)) {
             draft.ruleState ??= legacyFilters.alertState;
           }
@@ -90,14 +90,14 @@ const ufuzzy = new uFuzzy({
 
 export const filterRules = (
   namespaces: CombinedRuleNamespace[],
-  filterState: RulesFilter = { labels: [], freeFormWords: [] }
+  filterState: RulesFilter = { dataSourceNames: [], labels: [], freeFormWords: [] }
 ): CombinedRuleNamespace[] => {
   let filteredNamespaces = namespaces;
 
-  const dataSourceFilter = filterState.dataSourceName;
-  if (dataSourceFilter) {
+  const dataSourceFilter = filterState.dataSourceNames;
+  if (dataSourceFilter.length) {
     filteredNamespaces = filteredNamespaces.filter(({ rulesSource }) =>
-      isCloudRulesSource(rulesSource) ? rulesSource.name === dataSourceFilter : true
+      isCloudRulesSource(rulesSource) ? dataSourceFilter.includes(rulesSource.name) : true
     );
   }
 
@@ -108,7 +108,7 @@ export const filterRules = (
     const [idxs, info, order] = ufuzzy.search(namespaceHaystack, namespaceFilter);
     if (info && order) {
       filteredNamespaces = order.map((idx) => filteredNamespaces[info.idx[idx]]);
-    } else {
+    } else if (idxs) {
       filteredNamespaces = idxs.map((idx) => filteredNamespaces[idx]);
     }
   }
@@ -127,7 +127,7 @@ const reduceNamespaces = (filterState: RulesFilter) => {
       const [idxs, info, order] = ufuzzy.search(groupsHaystack, groupNameFilter);
       if (info && order) {
         filteredGroups = order.map((idx) => filteredGroups[info.idx[idx]]);
-      } else {
+      } else if (idxs) {
         filteredGroups = idxs.map((idx) => filteredGroups[idx]);
       }
     }
@@ -157,7 +157,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       const [idxs, info, order] = ufuzzy.search(rulesHaystack, ruleNameQuery);
       if (info && order) {
         filteredRules = order.map((idx) => filteredRules[info.idx[idx]]);
-      } else {
+      } else if (idxs) {
         filteredRules = idxs.map((idx) => filteredRules[idx]);
       }
     }
@@ -168,7 +168,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       }
 
       const doesNotQueryDs = isGrafanaRulerRule(rule.rulerRule) && !isQueryingDataSource(rule.rulerRule, filterState);
-      if (filterState.dataSourceName && doesNotQueryDs) {
+      if (filterState.dataSourceNames?.length && doesNotQueryDs) {
         return false;
       }
 
@@ -223,7 +223,7 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
 }
 
 const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: RulesFilter): boolean => {
-  if (!filterState.dataSourceName) {
+  if (!filterState.dataSourceNames?.length) {
     return true;
   }
 
@@ -232,6 +232,6 @@ const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: Rules
       return false;
     }
     const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-    return ds?.name === filterState.dataSourceName;
+    return ds?.name && filterState?.dataSourceNames?.includes(ds.name);
   });
 };
