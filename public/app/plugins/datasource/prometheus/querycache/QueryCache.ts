@@ -55,7 +55,7 @@ export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JS
  * @param targ
  */
 function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ: PromQuery) {
-  return `${targExpr}|${request.intervalMs}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.exemplar}`;
+  return `${targExpr}|${request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.exemplar}`;
 }
 
 /**
@@ -68,6 +68,7 @@ export class QueryCache {
   private overlapWindowMs;
   private perfObeserver?: PerformanceObserver;
   private pendingRequestIds = new Set<string>();
+  private pendingRequestIdsToTargSig: Record<string, Record<string, number | null>> = {};
 
   cache = new Map<TargetIdent, TargetCache>();
 
@@ -103,14 +104,20 @@ export class QueryCache {
                 if (this.pendingRequestIds.has(requestId) && isTransferSizeNumber) {
                   // TODO: store full initial request size by targSig so we can diff follow-up partial requests
                   // TODO: log savings between full initial request and incremental request to Faro
-                  const requestTransferSizeString = Math.round(entryTypeCast.transferSize / 1024).toString(10);
+                  const requestTransferSize = Math.round(entryTypeCast.transferSize / 1024);
+                  const ident = this.pendingRequestIdsToTargSig[requestId];
+                  Object.keys(ident).forEach((key) => {
+                    if (ident[key] === null) {
+                      ident[key] = requestTransferSize;
+                    }
+                  });
 
-                  console.log('Transferred ' + requestTransferSizeString + 'KB');
+                  console.log('Transferred ' + requestTransferSize + 'KB');
                   if (config.grafanaJavascriptAgent.enabled) {
                     faro.api.pushEvent(
                       'prometheus incremental query response size',
                       {
-                        size: requestTransferSizeString,
+                        size: requestTransferSize.toString(10),
                       },
                       'no-interaction',
                       {
@@ -120,6 +127,7 @@ export class QueryCache {
                   }
 
                   this.pendingRequestIds.delete(requestId);
+                  // delete this.pendingRequestIdsToTargSig[requestId];
                 }
               }
             }
@@ -135,7 +143,16 @@ export class QueryCache {
   requestInfo(request: DataQueryRequest<PromQuery>, interpolateString: StringInterpolator): CacheRequestInfo {
     // TODO: align from/to to interval to increase probability of hitting backend cache
 
+    request.targets.forEach((target) => {
+      const targSig = `${request.dashboardUID}|${request.panelId}|${target.refId}`;
+      if (!this.pendingRequestIdsToTargSig[request.requestId]) {
+        this.pendingRequestIdsToTargSig[request.requestId] = {};
+      }
+      this.pendingRequestIdsToTargSig[request.requestId][targSig] = null;
+    });
     this.pendingRequestIds.add(request.requestId);
+
+    console.log('pending requests', this.pendingRequestIdsToTargSig);
 
     const newFrom = request.range.from.valueOf();
     const newTo = request.range.to.valueOf();
@@ -175,8 +192,6 @@ export class QueryCache {
         break;
       }
     }
-
-    // console.log(`${doPartialQuery ? 'partial' : 'full'} query`);
 
     if (doPartialQuery) {
       // 10m re-query overlap
@@ -262,12 +277,15 @@ export class QueryCache {
             let nextTable: Table = respFrame.fields.map((field) => field.values.toArray()) as Table;
 
             let amendedTable = amendTable(prevTable, nextTable);
+            if (amendedTable) {
+              for (let i = 0; i < amendedTable.length; i++) {
+                cachedFrame.fields[i].values = new ArrayVector(amendedTable[i]);
+              }
 
-            for (let i = 0; i < amendedTable.length; i++) {
-              cachedFrame.fields[i].values = new ArrayVector(amendedTable[i]);
+              cachedFrame.length = cachedFrame.fields[0].values.length;
+            } else {
+              console.warn('No table, invalid merge!');
             }
-
-            cachedFrame.length = cachedFrame.fields[0].values.length;
           }
         });
 
