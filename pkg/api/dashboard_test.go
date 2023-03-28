@@ -145,16 +145,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		fakeDash.HasACL = false
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
 		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersionDTO{}
-		fakeDashboardVersionService.ExpectedListDashboarVersions = []*dashver.DashboardVersionDTO{
-			{
-				Version:   1,
-				CreatedBy: 1,
-			},
-			{
-				Version:   2,
-				CreatedBy: 1,
-			},
-		}
 		teamService := &teamtest.FakeService{}
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(fakeDash, nil)
