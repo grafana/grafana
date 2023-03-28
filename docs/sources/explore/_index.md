@@ -15,13 +15,20 @@ title: Explore
 weight: 90
 ---
 
-# Explore
+# Explore Split and Correlate
 
-Grafana's dashboard UI is all about building dashboards for visualization. Explore strips away the dashboard and panel options so that you can focus on the query. It helps you iterate until you have a working query and then think about building a dashboard.
+Grafana's dashboard UI is all about building dashboards for visualization. Explore strips away the dashboard and panel options so that you can focus on the query. It helps you iterate until you have a working query and then think about building a dashboard. 
 
-> Refer to [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) in Grafana Enterprise to understand how you can control access with role-based permissions.
 
-If you just want to explore your data and do not want to create a dashboard, then Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time. See also:
+
+Explore is a handy feature when you just want to understand your data. Grafana leverages the native API of the data source for querying.
+If you find a query worth keeping in a dashboard, you can add it by selecting "Add to Dashboard".  (screenshot) If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time. Split the Explore view in two views and display results from different data sources.
+Each query will:
+- Leverage the native API of the source
+- Consider the same time range in both cases if the sync views button is clicked
+- Useful to correlate results from different systems side to side (ex. Metrics, Logs & Traces)
+
+See also:
 
 - [Query management in Explore]({{< relref "query-management/" >}})
 - [Logs integration in Explore]({{< relref "logs-integration/" >}})
@@ -30,7 +37,7 @@ If you just want to explore your data and do not want to create a dashboard, the
 
 ## Start exploring
 
-> Refer to [Role-based access Control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) in Grafana Enterprise to understand how you can manage Explore with role-based permissions.
+
 
 In order to access Explore, you must have an editor or an administrator role, unless the [viewers_can_edit option]({{< relref "../setup-grafana/configure-grafana/#viewers_can_edit" >}}) is enabled. Refer to [About users and permissions]({{< relref "../administration/roles-and-permissions/" >}}) for more information on what each role has access to.
 
