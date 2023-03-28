@@ -194,18 +194,19 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	rulesTotals := make(map[string]int64, len(groupedRules))
 	for _, groupKey := range sortedGroups {
 		rules := groupedRules[groupKey]
-		if limitRulesPerGroup > -1 && int64(len(rules)) > limitRulesPerGroup {
-			rules = rules[0:limitRulesPerGroup]
-		}
 
 		if !authorizeAccessToRuleGroup(rules, hasAccess) {
 			continue
 		}
-		// TODO(grobinson): These totals are incorrect as calculated after limit
+		
 		ruleGroup, totals := srv.toRuleGroup(groupKey, rules, limitAlertsPerRule, labelOptions)
 
 		for k, v := range totals {
 			rulesTotals[k] += v
+		}
+
+		if limitRulesPerGroup > -1 && int64(len(rules)) > limitRulesPerGroup {
+			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
 		}
 
 		ruleGroup.Totals = totals
