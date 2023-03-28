@@ -85,7 +85,7 @@ func Test_teamSync(t *testing.T) {
 	var actualExternalUser *login.ExternalUserInfo
 
 	t.Run("login.TeamSync should not be called when nil", func(t *testing.T) {
-		err := loginsvc.UpsertUser(context.Background(), upsertCmd)
+		_, err := loginsvc.UpsertUser(context.Background(), upsertCmd)
 		require.Nil(t, err)
 		assert.Nil(t, actualUser)
 		assert.Nil(t, actualExternalUser)
@@ -97,7 +97,7 @@ func Test_teamSync(t *testing.T) {
 				return nil
 			}
 			loginsvc.TeamSync = teamSyncFunc
-			err := loginsvc.UpsertUser(context.Background(), upsertCmd)
+			_, err := loginsvc.UpsertUser(context.Background(), upsertCmd)
 			require.Nil(t, err)
 			assert.Equal(t, actualUser, expectedUser)
 			assert.Equal(t, actualExternalUser, upsertCmd.ExternalUser)
@@ -120,7 +120,7 @@ func Test_teamSync(t *testing.T) {
 				return nil
 			}
 			loginsvc.TeamSync = teamSyncFunc
-			err := loginsvc.UpsertUser(context.Background(), upsertCmdSkipTeamSync)
+			_, err := loginsvc.UpsertUser(context.Background(), upsertCmdSkipTeamSync)
 			require.Nil(t, err)
 			assert.Nil(t, actualUser)
 			assert.Nil(t, actualExternalUser)
@@ -131,7 +131,7 @@ func Test_teamSync(t *testing.T) {
 				return errors.New("teamsync test error")
 			}
 			loginsvc.TeamSync = teamSyncFunc
-			err := loginsvc.UpsertUser(context.Background(), upsertCmd)
+			_, err := loginsvc.UpsertUser(context.Background(), upsertCmd)
 			require.Error(t, err)
 		})
 	})
@@ -154,7 +154,7 @@ func TestUpsertUser_crashOnLog_issue62538(t *testing.T) {
 
 	var err error
 	require.NotPanics(t, func() {
-		err = loginsvc.UpsertUser(context.Background(), upsertCmd)
+		_, err = loginsvc.UpsertUser(context.Background(), upsertCmd)
 	})
 	require.ErrorIs(t, err, login.ErrSignupNotAllowed)
 }
