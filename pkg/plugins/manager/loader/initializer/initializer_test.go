@@ -246,9 +246,9 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			switch v {
 			case "GF_VERSION=":
 				setFound("version")
-			case "GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS=127.0.0.1:4317":
+			case "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317":
 				setFound("address")
-			case "GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION=":
+			case "GF_INSTANCE_OTLP_PROPAGATION=":
 				setFound("propagation")
 			}
 		}
@@ -292,8 +292,8 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			exp: func(t *testing.T, envVars []string) {
 				assert.Len(t, envVars, 3)
 				assert.Equal(t, "GF_VERSION=", envVars[0])
-				assert.Equal(t, "GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS=127.0.0.1:4317", envVars[1])
-				assert.Equal(t, "GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION=w3c", envVars[2])
+				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[1])
+				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c", envVars[2])
 			},
 		},
 		{
