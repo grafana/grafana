@@ -196,6 +196,7 @@ var (
 	// StatsTotalDataKeys is a metric of total number of data keys stored in Grafana.
 	StatsTotalDataKeys *prometheus.GaugeVec
 
+	// TODO: delete this metric
 	// MStatTotalPublicDashboards is a metric total amount of public dashboards
 	MStatTotalPublicDashboards prometheus.Gauge
 )
