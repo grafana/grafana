@@ -137,14 +137,16 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 	}
 
 	// TODO: create permission for authentication page
-	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)) {
-		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
-			Text:     "Authentication",
-			Id:       "authentication",
-			SubTitle: "Manage your auth settings and configure single sign-on",
-			Icon:     "signin",
-			Url:      s.cfg.AppSubURL + "/admin/authentication",
-		})
+	if s.license.FeatureEnabled("saml") {
+		if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)) {
+			adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+				Text:     "Authentication",
+				Id:       "authentication",
+				SubTitle: "Manage your auth settings and configure single sign-on",
+				Icon:     "signin",
+				Url:      s.cfg.AppSubURL + "/admin/authentication",
+			})
+		}
 	}
 
 	if hasGlobalAccess(ac.ReqGrafanaAdmin, orgsAccessEvaluator) {
