@@ -303,7 +303,7 @@ func getQueryUrl(query string, resources []string, azurePortalUrl string) (strin
 		return "", fmt.Errorf("failed to marshal log analytics resources: %s", err)
 	}
 	portalUrl += url.QueryEscape(string(resourcesMarshalled))
-	portalUrl += "/query/" + url.PathEscape(string(encodedQuery)) + "/isQueryBase64Compressed/true/timespanInIsoFormat/P1D"
+	portalUrl += "/query/" + url.PathEscape(encodedQuery) + "/isQueryBase64Compressed/true/timespanInIsoFormat/P1D"
 	return portalUrl, nil
 }
 
