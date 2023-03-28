@@ -16,9 +16,11 @@ export interface ScopedVars {
  */
 export interface DataContextScopedVar {
   value: {
+    data: DataFrame[];
     frame: DataFrame;
     field: Field;
     rowIndex?: number;
+    frameIndex?: number;
     calculatedValue?: DisplayValue;
   };
 }

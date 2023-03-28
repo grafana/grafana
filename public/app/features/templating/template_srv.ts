@@ -284,7 +284,10 @@ export class TemplateSrv implements BaseTemplateSrv {
 
     if (!variable) {
       if (macroRegistry[variableName]) {
-        return macroRegistry[variableName](match, fieldPath, scopedVars, format);
+        const macro = macroRegistry[variableName];
+        if (macro) {
+          return macro(match, fieldPath, scopedVars, format);
+        }
       }
 
       return match;

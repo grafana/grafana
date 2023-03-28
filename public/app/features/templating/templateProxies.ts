@@ -1,7 +1,4 @@
-import { DataFrame, Field } from '../types';
-import { formatLabels } from '../utils/labels';
-
-import { getFieldDisplayName } from './fieldState';
+import { Field, DataFrame, getFieldDisplayName, formatLabels } from '@grafana/data';
 
 /**
  * This object is created often, and only used when tmplates exist.  Using a proxy lets us delay
