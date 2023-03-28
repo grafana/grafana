@@ -98,12 +98,10 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 
 // Query retrieves state history entries from an external Loki instance and formats the results into a dataframe.
 func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
-	selectors, err := buildSelectors(query)
+	logQL, err := buildLogQuery(query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build the provided selectors: %w", err)
+		return nil, err
 	}
-
-	logQL := selectorString(selectors)
 
 	now := time.Now().UTC()
 	if query.To.IsZero() {
@@ -351,4 +349,24 @@ func isValidOperator(op string) bool {
 		return true
 	}
 	return false
+}
+
+func buildLogQuery(query models.HistoryQuery) (string, error) {
+	selectors, err := buildSelectors(query)
+	if err != nil {
+		return "", fmt.Errorf("failed to build the provided selectors: %w", err)
+	}
+
+	logQL := selectorString(selectors)
+
+	labelFilters := ""
+	for k, v := range query.Labels {
+		labelFilters += fmt.Sprintf(" | labels.%s=%q", k, v)
+	}
+
+	if labelFilters != "" {
+		logQL = fmt.Sprintf("%s | json%s", logQL, labelFilters)
+	}
+
+	return logQL, nil
 }
