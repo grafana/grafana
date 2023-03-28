@@ -13,6 +13,8 @@ export enum DataFrameType {
 
   TimeSeriesMulti = 'timeseries-multi',
 
+  TimeRanges = 'timeranges',
+
   /** Directory listing */
   DirectoryListing = 'directory-listing',
 
