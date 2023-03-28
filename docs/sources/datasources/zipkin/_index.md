@@ -177,16 +177,6 @@ datasources:
         filterBySpanID: false
         customQuery: true
         query: 'method="${__span.tags.method}"'
-      # Note: tracesToLogs used before Grafana version 9.4
-      tracesToLogs:
-        datasourceUid: 'loki'
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
-        tags: ['job', 'instance', 'pod', 'namespace']
-        filterByTraceID: false
-        filterBySpanID: false
-        mapTagNamesEnabled: true
-        mappedTags: [{ key: 'service.name', value: 'service' }]
       tracesToMetrics:
         datasourceUid: 'prom'
         spanStartTimeShift: '1h'
