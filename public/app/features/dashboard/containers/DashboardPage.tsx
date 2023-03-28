@@ -48,6 +48,7 @@ import { liveTimer } from '../dashgrid/liveTimer';
 import { getTimeSrv } from '../services/TimeSrv';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
+import { calculateNewPanelGridPos } from '../utils/panel';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -361,17 +362,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       return;
     }
 
-    // Move all panels down by the height of the "add panel" widget.
-    // This is to work around an issue with react-grid-layout that can mess up the layout
-    // in certain configurations. (See https://github.com/react-grid-layout/react-grid-layout/issues/1787)
-    const addPanelWidgetHeight = 8;
-    for (const panel of dashboard.panelIterator()) {
-      panel.gridPos.y += addPanelWidgetHeight;
-    }
-
     dashboard.addPanel({
       type: 'add-panel',
-      gridPos: { x: 0, y: 0, w: 12, h: addPanelWidgetHeight },
+      gridPos: calculateNewPanelGridPos(dashboard),
       title: 'Panel Title',
     });
 

@@ -107,9 +107,13 @@ const (
 	// Validate dashboard JSON POSTed to api/dashboards/db
 	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
 
-	// FlagAutoMigrateGraphPanels
-	// Replace the angular graph panel with timeseries
-	FlagAutoMigrateGraphPanels = "autoMigrateGraphPanels"
+	// FlagAutoMigrateOldPanels
+	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
+	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
+
+	// FlagDisableAngular
+	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
+	FlagDisableAngular = "disableAngular"
 
 	// FlagPrometheusWideSeries
 	// Enable wide series responses in the Prometheus datasource
@@ -195,6 +199,10 @@ const (
 	// Enable data source onboarding page
 	FlagDatasourceOnboarding = "datasourceOnboarding"
 
+	// FlagEmptyDashboardPage
+	// Enable the redesigned user interface of a dashboard page that includes no panels
+	FlagEmptyDashboardPage = "emptyDashboardPage"
+
 	// FlagSecureSocksDatasourceProxy
 	// Enable secure socks tunneling for supported core datasources
 	FlagSecureSocksDatasourceProxy = "secureSocksDatasourceProxy"
@@ -204,7 +212,7 @@ const (
 	FlagAuthnService = "authnService"
 
 	// FlagDisablePrometheusExemplarSampling
-	// Disable Prometheus examplar sampling
+	// Disable Prometheus exemplar sampling
 	FlagDisablePrometheusExemplarSampling = "disablePrometheusExemplarSampling"
 
 	// FlagAlertingBacktesting
@@ -262,4 +270,12 @@ const (
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
+
+	// FlagClientTokenRotation
+	// Replaces the current in-request token rotation so that the client initiates the rotation
+	FlagClientTokenRotation = "clientTokenRotation"
+
+	// FlagDisableElasticsearchBackendExploreQuery
+	// Disable executing of Elasticsearch Explore queries trough backend
+	FlagDisableElasticsearchBackendExploreQuery = "disableElasticsearchBackendExploreQuery"
 )
