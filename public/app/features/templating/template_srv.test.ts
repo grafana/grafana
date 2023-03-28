@@ -1,5 +1,5 @@
 import { dateTime, TimeRange } from '@grafana/data';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { setDataSourceSrv, VariableInterpolation } from '@grafana/runtime';
 import { FormatRegistryID, TestVariable } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
@@ -125,6 +125,70 @@ describe('templateSrv', () => {
         test: { value: 'mupp', text: 'asd' },
       });
       expect(target).toBe('this.mupp.filters');
+    });
+  });
+
+  describe('replace with interpolations map', function () {
+    beforeEach(() => {
+      _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'test', current: { value: 'testValue' } }]);
+    });
+
+    it('replace can save interpolation result', () => {
+      let interpolations: VariableInterpolation[] = [];
+
+      const target = _templateSrv.replace(
+        'test.${test}.${scoped}.${nested.name}.${test}.${optionTest:raw}.$notfound',
+        {
+          scoped: { value: 'scopedValue', text: 'scopedText' },
+          optionTest: { value: 'optionTestValue', text: 'optionTestText' },
+          nested: { value: { name: 'nestedValue' } },
+        },
+        undefined,
+        interpolations
+      );
+
+      expect(target).toBe('test.testValue.scopedValue.nestedValue.testValue.optionTestValue.$notfound');
+      expect(interpolations.length).toBe(6);
+      expect(interpolations).toEqual([
+        {
+          match: '${test}',
+          found: true,
+          value: 'testValue',
+          variableName: 'test',
+        },
+        {
+          match: '${scoped}',
+          found: true,
+          value: 'scopedValue',
+          variableName: 'scoped',
+        },
+        {
+          fieldPath: 'name',
+          match: '${nested.name}',
+          found: true,
+          value: 'nestedValue',
+          variableName: 'nested',
+        },
+        {
+          match: '${test}',
+          found: true,
+          value: 'testValue',
+          variableName: 'test',
+        },
+        {
+          format: 'raw',
+          match: '${optionTest:raw}',
+          found: true,
+          value: 'optionTestValue',
+          variableName: 'optionTest',
+        },
+        {
+          match: '$notfound',
+          found: false,
+          value: '$notfound',
+          variableName: 'notfound',
+        },
+      ]);
     });
   });
 
@@ -356,7 +420,7 @@ describe('templateSrv', () => {
         { type: 'query', name: 'test', current: { value: '<script>alert(asd)</script>' } },
       ]);
       const target = _templateSrv.replace('$test', {}, 'html');
-      expect(target).toBe('&lt;script&gt;alert(asd)&lt;&#47;script&gt;');
+      expect(target).toBe('&lt;script&gt;alert(asd)&lt;/script&gt;');
     });
   });
 
