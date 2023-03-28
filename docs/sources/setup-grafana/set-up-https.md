@@ -190,7 +190,7 @@ $ sudo ln -s /etc/letsencrypt/live/subdomain.mysite.com/privkey.pem /etc/grafana
 $ sudo ln -s /etc/letsencrypt/live/subdomain.mysite.com/fullchain.pem /etc/grafana/grafana.crt
 ```
 
-#### Adjust Permissions
+#### Adjust permissions
 
 [Need intro here to explain what this is]
 
