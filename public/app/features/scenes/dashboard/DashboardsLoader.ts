@@ -21,6 +21,7 @@ import {
   QueryVariable,
   ConstantVariable,
   SceneDataTransformer,
+  SharedDataListener,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -171,15 +172,17 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
     const a = panelsByID.get(panelId);
     const b = panelsByID.get(query.panelId!);
     if (a && b) {
-      let data = b.state.$data;
+      let provider = b.state.$data;
       // Remove the transformation wrapper
-      if (query.withTransforms === false && data instanceof SceneDataTransformer) {
-        data = data.state.$data;
+      if (query.withTransforms === false && provider instanceof SceneDataTransformer) {
+        provider = provider.state.$data;
       }
       if (query.topic) {
         // TODO? filter based on topic?
       }
-      a.setState({ $data: data });
+      if (provider) {
+        a.setState({ $data: new SharedDataListener({ provider }) });
+      }
     }
   }
   return panels;

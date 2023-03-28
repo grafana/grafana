@@ -37,14 +37,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.urlSyncManager = new UrlSyncManager(this);
     this.urlSyncManager.initSync();
   }
-
-  public deactivate() {
-    super.deactivate();
-
-    if (this.urlSyncManager) {
-      this.urlSyncManager!.cleanUp();
-    }
-  }
 }
 
 function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
