@@ -273,7 +273,7 @@ describe('calculateField transformer w/ timeseries', () => {
         };
         for (const key of Object.keys(variables)) {
           if (target === `$${key}`) {
-            return variables[key].value + '';
+            return variables[key]!.value + '';
           }
         }
         return target;

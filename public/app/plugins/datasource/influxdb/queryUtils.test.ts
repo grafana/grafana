@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { buildRawQuery, normalizeQuery, changeSelectPart, changeGroupByPart } from './queryUtils';
+import { buildRawQuery, changeGroupByPart, changeSelectPart, normalizeQuery } from './queryUtils';
 import { InfluxQuery } from './types';
 
 describe('InfluxDB query utils', () => {
@@ -37,12 +37,15 @@ describe('InfluxDB query utils', () => {
             ],
           ],
         })
-      ).toBe('SELECT mean("value") FROM "measurement" WHERE $timeFilter GROUP BY time($__interval) fill(null)');
+      ).toBe(
+        'SELECT mean("value") FROM "default"."measurement" WHERE $timeFilter GROUP BY time($__interval)' + ' fill(null)'
+      );
     });
     it('should handle small query', () => {
       expect(
         buildRawQuery({
           refId: 'A',
+          policy: 'autogen',
           select: [
             [
               {
@@ -53,12 +56,13 @@ describe('InfluxDB query utils', () => {
           ],
           groupBy: [],
         })
-      ).toBe('SELECT "value" FROM "measurement" WHERE $timeFilter');
+      ).toBe('SELECT "value" FROM "autogen"."measurement" WHERE $timeFilter');
     });
     it('should handle string limit/slimit', () => {
       expect(
         buildRawQuery({
           refId: 'A',
+          policy: 'autogen',
           select: [
             [
               {
@@ -71,12 +75,13 @@ describe('InfluxDB query utils', () => {
           limit: '12',
           slimit: '23',
         })
-      ).toBe('SELECT "value" FROM "measurement" WHERE $timeFilter LIMIT 12 SLIMIT 23');
+      ).toBe('SELECT "value" FROM "autogen"."measurement" WHERE $timeFilter LIMIT 12 SLIMIT 23');
     });
     it('should handle number limit/slimit', () => {
       expect(
         buildRawQuery({
           refId: 'A',
+          policy: 'autogen',
           select: [
             [
               {
@@ -89,12 +94,13 @@ describe('InfluxDB query utils', () => {
           limit: 12,
           slimit: 23,
         })
-      ).toBe('SELECT "value" FROM "measurement" WHERE $timeFilter LIMIT 12 SLIMIT 23');
+      ).toBe('SELECT "value" FROM "autogen"."measurement" WHERE $timeFilter LIMIT 12 SLIMIT 23');
     });
     it('should handle all the tag-operators', () => {
       expect(
         buildRawQuery({
           refId: 'A',
+          policy: 'autogen',
           select: [
             [
               {
@@ -147,7 +153,10 @@ describe('InfluxDB query utils', () => {
           groupBy: [],
         })
       ).toBe(
-        `SELECT "value" FROM "measurement" WHERE ("cpu" = 'cpu0' AND "cpu" != 'cpu0' AND "cpu" <> 'cpu0' AND "cpu" < cpu0 AND "cpu" > cpu0 AND "cpu" =~ /cpu0/ AND "cpu" !~ /cpu0/) AND $timeFilter`
+        `SELECT "value" ` +
+          `FROM "autogen"."measurement" ` +
+          `WHERE ("cpu" = 'cpu0' AND "cpu" != 'cpu0' AND "cpu" <> 'cpu0' AND "cpu" < cpu0 AND ` +
+          `"cpu" > cpu0 AND "cpu" =~ /cpu0/ AND "cpu" !~ /cpu0/) AND $timeFilter`
       );
     });
     it('should handle a complex query', () => {
@@ -229,7 +238,12 @@ describe('InfluxDB query utils', () => {
           tz: 'UTC',
         })
       ).toBe(
-        `SELECT holt_winters_with_fit(mean("usage_idle"), 30, 5), median("usage_guest") FROM "cpu" WHERE ("cpu" = 'cpu2' OR "cpu" = 'cpu3' AND "cpu" = 'cpu1') AND $timeFilter GROUP BY time($__interval), "cpu", "host" fill(none) ORDER BY time DESC LIMIT 12 SLIMIT 23 tz('UTC')`
+        `SELECT holt_winters_with_fit(mean("usage_idle"), 30, 5), median("usage_guest") ` +
+          `FROM "default"."cpu" ` +
+          `WHERE ("cpu" = 'cpu2' OR "cpu" = 'cpu3' AND "cpu" = 'cpu1') ` +
+          `AND $timeFilter ` +
+          `GROUP BY time($__interval), "cpu", "host" fill(none) ` +
+          `ORDER BY time DESC LIMIT 12 SLIMIT 23 tz('UTC')`
       );
     });
   });
@@ -238,13 +252,14 @@ describe('InfluxDB query utils', () => {
     it('should handle minimal query', () => {
       const query: InfluxQuery = {
         refId: 'A',
+        policy: 'autogen',
       };
 
       const queryClone = cloneDeep(query);
 
       expect(normalizeQuery(query)).toStrictEqual({
         refId: 'A',
-        policy: 'default',
+        policy: 'autogen',
         resultFormat: 'time_series',
         orderByTime: 'ASC',
         tags: [],

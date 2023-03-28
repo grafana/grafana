@@ -45,7 +45,7 @@ describe('SearchResultsTable', () => {
         overrides: [],
       },
       replaceVariables: (value, vars, format) => {
-        return vars && value === '${__value.text}' ? vars['__value'].value.text : value;
+        return vars && value === '${__value.text}' ? vars['__value']!.value.text : value;
       },
       theme: createTheme(),
     });
