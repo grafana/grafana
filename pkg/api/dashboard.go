@@ -695,6 +695,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 			})
 			if err != nil {
 				hs.log.Debug("failed to get user that has created the dashboard", "err", err, "createdBy", version.CreatedBy, "dashboardUID", version.DashboardUID)
+				continue
 			}
 			hs.CacheService.Set(key, u.Login, time.Second*5)
 			version.CreatedByStr = u.Login
