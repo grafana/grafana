@@ -448,9 +448,13 @@ export class DashboardModel implements TimeModel {
   }
 
   private ensurePanelsHaveIds() {
+    const ids = new Set<number>();
     let nextPanelId = this.getNextPanelId();
     for (const panel of this.panelIterator()) {
-      panel.id ??= nextPanelId++;
+      if (!panel.id || ids.has(panel.id)) {
+        panel.id = nextPanelId++;
+      }
+      ids.add(panel.id);
     }
   }
 
