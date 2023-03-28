@@ -3,10 +3,10 @@ package publicdashboards
 import (
 	"context"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -29,7 +29,7 @@ type Service interface {
 	DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error
 
 	GetMetricRequest(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error)
-	GetQueryDataResponse(ctx context.Context, skipDSCache bool, skipQueryCache bool, reqDTO PublicDashboardQueryDTO, panelId int64, accessToken string) (query.QueryResponseWithHeaders, error)
+	GetQueryDataResponse(ctx context.Context, skipDSCache bool, reqDTO PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error)
 	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)
 	NewPublicDashboardAccessToken(ctx context.Context) (string, error)
 	NewPublicDashboardUid(ctx context.Context) (string, error)

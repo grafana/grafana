@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
-	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
@@ -119,35 +118,34 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 }
 
 // GetQueryDataResponse returns a query data response for the given panel and query
-func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipDSCache bool, skipQueryCache bool, queryDto models.PublicDashboardQueryDTO, panelId int64, accessToken string) (query.QueryResponseWithHeaders, error) {
-	resp := query.QueryResponseWithHeaders{}
+func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipDSCache bool, queryDto models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
 	publicDashboard, dashboard, err := pd.FindEnabledPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 
 	metricReq, err := pd.GetMetricRequest(ctx, dashboard, publicDashboard, panelId, queryDto)
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 
 	if len(metricReq.Queries) == 0 {
-		return resp, models.ErrPanelQueriesNotFound.Errorf("GetQueryDataResponse: failed to extract queries from panel")
+		return nil, models.ErrPanelQueriesNotFound.Errorf("GetQueryDataResponse: failed to extract queries from panel")
 	}
 
 	anonymousUser := buildAnonymousUser(ctx, dashboard)
-	resp, err = pd.QueryDataService.QueryData(ctx, anonymousUser, skipDSCache, skipQueryCache, metricReq)
+	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipDSCache, metricReq)
 
 	reqDatasources := metricReq.GetUniqueDatasourceTypes()
 	if err != nil {
 		LogQueryFailure(reqDatasources, pd.log, err)
-		return resp, err
+		return nil, err
 	}
 	LogQuerySuccess(reqDatasources, pd.log)
 
-	sanitizeMetadataFromQueryData(&resp)
+	sanitizeMetadataFromQueryData(res)
 
-	return resp, nil
+	return res, nil
 }
 
 // buildMetricRequest merges public dashboard parameters with dashboard and returns a metrics request to be sent to query backend
@@ -180,7 +178,7 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 func buildAnonymousUser(ctx context.Context, dashboard *dashboards.Dashboard) *user.SignedInUser {
 	datasourceUids := getUniqueDashboardDatasourceUids(dashboard.Data)
 
-	// Create a user with blank permissions - query metrics uses the lack of login or userID as an indication that this is a pubdash user
+	// Create a user with blank permissions
 	anonymousUser := &user.SignedInUser{OrgID: dashboard.OrgID, Permissions: make(map[int64]map[string][]string)}
 
 	// Scopes needed for Annotation queries
@@ -289,22 +287,13 @@ func getDataSourceUidFromJson(query *simplejson.Json) string {
 	return uid
 }
 
-func sanitizeMetadataFromQueryData(res *query.QueryResponseWithHeaders) {
-	if res.Response != nil {
-		for k := range res.Response.Responses {
-			frames := res.Response.Responses[k].Frames
-			for i := range frames {
-				if frames[i].Meta != nil {
-					frames[i].Meta.ExecutedQueryString = ""
-					frames[i].Meta.Custom = nil
-				}
-			}
-		}
-	}
-	if res.Headers != nil {
-		for k := range res.Headers {
-			if strings.ToLower(k) != "x-cache" {
-				delete(res.Headers, k)
+func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
+	for k := range res.Responses {
+		frames := res.Responses[k].Frames
+		for i := range frames {
+			if frames[i].Meta != nil {
+				frames[i].Meta.ExecutedQueryString = ""
+				frames[i].Meta.Custom = nil
 			}
 		}
 	}

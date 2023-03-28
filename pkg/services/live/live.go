@@ -559,7 +559,7 @@ func (g *GrafanaLive) handleOnRPC(client *centrifuge.Client, e centrifuge.RPCEve
 	if err != nil {
 		return centrifuge.RPCReply{}, centrifuge.ErrorBadRequest
 	}
-	resp, err := g.queryDataService.QueryData(client.Context(), user, false, false, req)
+	resp, err := g.queryDataService.QueryData(client.Context(), user, false, req)
 	if err != nil {
 		logger.Error("Error query data", "user", client.UserID(), "client", client.ID(), "method", e.Method, "error", err)
 		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
@@ -571,7 +571,7 @@ func (g *GrafanaLive) handleOnRPC(client *centrifuge.Client, e centrifuge.RPCEve
 		}
 		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
 	}
-	data, err := jsonStd.Marshal(resp.Response)
+	data, err := jsonStd.Marshal(resp)
 	if err != nil {
 		logger.Error("Error marshaling query response", "user", client.UserID(), "client", client.ID(), "method", e.Method, "error", err)
 		return centrifuge.RPCReply{}, centrifuge.ErrorInternal

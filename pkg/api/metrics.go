@@ -52,19 +52,12 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipDSCache, c.SkipQueryCache, reqDTO)
+	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}
 
-	r := hs.toJsonStreamingResponse(resp.Response).(response.StreamingResponse)
-	if resp.Headers != nil {
-		for k, v := range resp.Headers {
-			r = r.SetHeaders(k, v)
-		}
-	}
-
-	return r
+	return hs.toJsonStreamingResponse(resp)
 }
 
 func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {

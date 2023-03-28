@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -14,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -40,7 +38,6 @@ func ProvideService(
 	pluginRequestValidator validations.PluginRequestValidator,
 	dataSourceService datasources.DataSourceService,
 	pluginClient plugins.Client,
-	cachingService caching.CachingService,
 ) *ServiceImpl {
 	g := &ServiceImpl{
 		cfg:                    cfg,
@@ -49,11 +46,7 @@ func ProvideService(
 		pluginRequestValidator: pluginRequestValidator,
 		dataSourceService:      dataSourceService,
 		pluginClient:           pluginClient,
-		cachingService:         cachingService,
 		log:                    log.New("query_data"),
-	}
-	if err := prometheus.Register(QueryRequestHistogram); err != nil {
-		g.log.Error("error registering prometheus collector", "error", err)
 	}
 	g.log.Info("Query Service initialization")
 	return g
@@ -62,7 +55,7 @@ func ProvideService(
 //go:generate mockery --name Service --structname FakeQueryService --inpackage --filename query_service_mock.go
 type Service interface {
 	Run(ctx context.Context) error
-	QueryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (QueryResponseWithHeaders, error)
+	QueryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
 }
 
 // Gives us compile time error if the service does not adhere to the contract of the interface
@@ -75,7 +68,6 @@ type ServiceImpl struct {
 	pluginRequestValidator validations.PluginRequestValidator
 	dataSourceService      datasources.DataSourceService
 	pluginClient           plugins.Client
-	cachingService         caching.CachingService
 	log                    log.Logger
 }
 
@@ -86,82 +78,23 @@ func (s *ServiceImpl) Run(ctx context.Context) error {
 }
 
 // QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
-// By default, it will attempt to retrieve a cached response for the given query, unless `skipQueryCache` = true.
-// This is distinct from the `skipDSCache` argument, which only determines if the datasource metadata is cached.
-// Query caching is only implemented in Grafana Enterprise.
-func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (QueryResponseWithHeaders, error) {
-	start := time.Now() // time how long this request takes
-
-	// First look in the query cache if enabled
-	cr := s.cachingService.HandleQueryRequest(ctx, skipQueryCache, reqDTO)
-	if isCacheHit(cr.Headers) {
-		return QueryResponseWithHeaders{
-			Response: cr.Response,
-			Headers:  cr.Headers,
-		}, nil
-	}
-
-	// Ensure there is an X-Cache header
-	if cr.Headers == nil {
-		cr.Headers = map[string][]string{}
-	}
-
-	// do the actual queries
-	resp, err := s.queryData(ctx, user, skipDSCache, reqDTO)
-
-	// Update the query cache with the result for this metrics request
-	if err == nil {
-		if cr.UpdateCacheFn != nil {
-			cr.UpdateCacheFn(ctx, resp)
-		}
-	}
-
-	// record request duration if caching was used
-	if h, ok := cr.Headers[caching.XCacheHeader]; ok && len(h) > 0 {
-		QueryRequestHistogram.With(prometheus.Labels{
-			"datasource_type": getDatasourceType(reqDTO.GetUniqueDatasourceTypes()),
-			"cache":           cr.Headers[caching.XCacheHeader][0],
-			"query_type":      getQueryType(user),
-		}).Observe(time.Since(start).Seconds())
-	}
-
-	return QueryResponseWithHeaders{
-		Response: resp,
-		Headers:  cr.Headers,
-	}, err
-}
-
-func isCacheHit(headers map[string][]string) bool {
-	if headers == nil {
-		return false
-	}
-
-	if v, ok := headers[caching.XCacheHeader]; ok {
-		return len(v) > 0 && v[0] == caching.StatusHit
-	}
-	return false
-}
-
-// queryData contains the logic for processing and executing queries
-func (s *ServiceImpl) queryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 	// Parse the request into parsed queries grouped by datasource uid
 	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO)
 	if err != nil {
 		return nil, err
 	}
 
-	var resp *backend.QueryDataResponse
+	// If there are expressions, handle them and return
 	if parsedReq.hasExpression {
-		// If there are expressions, handle them and return
-		resp, err = s.handleExpressions(ctx, user, parsedReq)
-	} else if len(parsedReq.parsedQueries) == 1 {
-		// If there is only one datasource, query it and return
-		resp, err = s.handleQuerySingleDatasource(ctx, user, parsedReq)
-	} else {
-		// If there are multiple datasources, handle their queries concurrently and return the aggregate result
-		resp, err = s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
+		return s.handleExpressions(ctx, user, parsedReq)
 	}
-	return resp, err
+	// If there is only one datasource, query it and return
+	if len(parsedReq.parsedQueries) == 1 {
+		return s.handleQuerySingleDatasource(ctx, user, parsedReq)
+	}
+	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
+	return s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
 }
 
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
@@ -198,7 +131,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user *user.S
 			// Handle panics in the datasource qery
 			defer recoveryFn(subDTO.Queries)
 
-			subResp, err := s.queryData(ctx, user, skipDSCache, subDTO)
+			subResp, err := s.QueryData(ctx, user, skipDSCache, subDTO)
 			if err == nil {
 				rchan <- subResp.Responses
 			} else {
@@ -314,7 +247,7 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user *use
 }
 
 // parseRequest parses a request into parsed queries grouped by datasource uid
-func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
+func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipDSCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
 		return nil, ErrNoQueriesFound
 	}
@@ -329,7 +262,7 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user *user.SignedI
 	// Parse the queries and store them by datasource
 	datasourcesByUid := map[string]*datasources.DataSource{}
 	for _, query := range reqDTO.Queries {
-		ds, err := s.getDataSourceFromQuery(ctx, user, skipCache, query, datasourcesByUid)
+		ds, err := s.getDataSourceFromQuery(ctx, user, skipDSCache, query, datasourcesByUid)
 		if err != nil {
 			return nil, err
 		}
@@ -375,7 +308,7 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user *user.SignedI
 	return req, req.validateRequest(ctx)
 }
 
-func (s *ServiceImpl) getDataSourceFromQuery(ctx context.Context, user *user.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {
+func (s *ServiceImpl) getDataSourceFromQuery(ctx context.Context, user *user.SignedInUser, skipDSCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {
 	var err error
 	uid := query.Get("datasource").Get("uid").MustString()
 
@@ -399,7 +332,7 @@ func (s *ServiceImpl) getDataSourceFromQuery(ctx context.Context, user *user.Sig
 	}
 
 	if uid != "" {
-		ds, err = s.dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipCache)
+		ds, err = s.dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipDSCache)
 		if err != nil {
 			return nil, err
 		}
@@ -409,7 +342,7 @@ func (s *ServiceImpl) getDataSourceFromQuery(ctx context.Context, user *user.Sig
 	// use datasourceId if it exists
 	id := query.Get("datasourceId").MustInt64(0)
 	if id > 0 {
-		ds, err = s.dataSourceCache.GetDatasource(ctx, id, user, skipCache)
+		ds, err = s.dataSourceCache.GetDatasource(ctx, id, user, skipDSCache)
 		if err != nil {
 			return nil, err
 		}

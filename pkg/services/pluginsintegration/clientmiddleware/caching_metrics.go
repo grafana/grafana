@@ -1,8 +1,8 @@
-package query
+package clientmiddleware
 
 import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/user"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -21,21 +21,8 @@ var QueryRequestHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 	Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 }, []string{"datasource_type", "cache", "query_type"})
 
-func getDatasourceType(datasources []string) string {
-	if len(datasources) <= 0 {
-		return None
-	}
-
-	// since we cache the entire result for mixed datasource queries, we have no choice but to label it as mixed
-	if len(datasources) > 1 {
-		return Mixed
-	}
-
-	return datasources[0]
-}
-
-func getQueryType(user *user.SignedInUser) string {
-	if user.Login == "" && user.UserID == 0 {
+func getQueryType(req *contextmodel.ReqContext) string {
+	if req.IsPublicDashboardView {
 		return QueryPubdash
 	}
 	return QueryDashboard

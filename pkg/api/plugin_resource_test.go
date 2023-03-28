@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/caching"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
@@ -103,7 +104,7 @@ func TestCallResource(t *testing.T) {
 			req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 			return errors.New("something went wrong")
 		}),
-	}, pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{})...)
+	}, pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{}, &caching.OSSCachingService{})...)
 	require.NoError(t, err)
 
 	srv = SetupAPITestServer(t, func(hs *HTTPServer) {

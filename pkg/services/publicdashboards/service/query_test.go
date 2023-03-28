@@ -488,7 +488,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 		pubdashDto, err := service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		resp, _ := service.GetQueryDataResponse(context.Background(), true, false, publicDashboardQueryDTO, 1, pubdashDto.AccessToken)
+		resp, _ := service.GetQueryDataResponse(context.Background(), true, publicDashboardQueryDTO, 1, pubdashDto.AccessToken)
 		require.NotNil(t, resp)
 	})
 }
@@ -1322,15 +1322,7 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 				},
 			},
 		}
-		headers := map[string][]string{
-			"X-Cache":          {"MISS"},
-			"header-to-delete": {"something sensitive"},
-		}
-		wrapper := query.QueryResponseWithHeaders{
-			Response: fakeResponse,
-			Headers:  headers,
-		}
-		sanitizeMetadataFromQueryData(&wrapper)
+		sanitizeMetadataFromQueryData(fakeResponse)
 		for k := range fakeResponse.Responses {
 			frames := fakeResponse.Responses[k].Frames
 			for i := range frames {
@@ -1338,9 +1330,6 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 				require.Empty(t, frames[i].Meta.Custom)
 			}
 		}
-		assert.Len(t, headers, 1)
-		assert.Contains(t, headers, "X-Cache")
-		assert.NotContains(t, headers, "header-to-delete")
 	})
 }
 

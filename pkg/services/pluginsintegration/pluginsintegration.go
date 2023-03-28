@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
@@ -74,26 +75,29 @@ var WireExtensionSet = wire.NewSet(
 
 func ProvideClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
 	pluginRegistry registry.Service,
-	oAuthTokenService oauthtoken.OAuthTokenService) (*client.Decorator, error) {
-	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService)
+	oAuthTokenService oauthtoken.OAuthTokenService,
+	cachingService caching.CachingService) (*client.Decorator, error) {
+	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService, cachingService)
 }
 
 func NewClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
 	pluginRegistry registry.Service,
-	oAuthTokenService oauthtoken.OAuthTokenService) (*client.Decorator, error) {
+	oAuthTokenService oauthtoken.OAuthTokenService,
+	cachingService caching.CachingService) (*client.Decorator, error) {
 	c := client.ProvideService(pluginRegistry, pCfg)
-	middlewares := CreateMiddlewares(cfg, oAuthTokenService)
+	middlewares := CreateMiddlewares(cfg, oAuthTokenService, cachingService)
 
 	return client.NewDecorator(c, middlewares...)
 }
 
-func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService) []plugins.ClientMiddleware {
+func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, cachingService caching.CachingService) []plugins.ClientMiddleware {
 	skipCookiesNames := []string{cfg.LoginCookieName}
 	middlewares := []plugins.ClientMiddleware{
 		clientmiddleware.NewTracingHeaderMiddleware(),
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
+		clientmiddleware.NewCachingMiddleware(cachingService),
 	}
 
 	if cfg.SendUserHeader {

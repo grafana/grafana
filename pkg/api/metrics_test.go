@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/services/caching"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -62,7 +61,6 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 				return &backend.QueryDataResponse{Responses: resp}, nil
 			},
 		},
-		&caching.OSSCachingService{},
 	)
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
@@ -111,7 +109,6 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 				return &backend.QueryDataResponse{Responses: resp}, nil
 			},
 		},
-		&caching.OSSCachingService{},
 	)
 	httpServer := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
@@ -265,7 +262,6 @@ func TestDataSourceQueryError(t *testing.T) {
 					&fakePluginRequestValidator{},
 					&fakeDatasources.FakeDataSourceService{},
 					pluginClient.ProvideService(r, &config.Cfg{}),
-					&caching.OSSCachingService{},
 				)
 				hs.QuotaService = quotatest.New(false, nil)
 			})

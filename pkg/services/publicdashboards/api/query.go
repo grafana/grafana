@@ -70,18 +70,12 @@ func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Respon
 		return response.Err(ErrBadRequest.Errorf("QueryPublicDashboard: error parsing request: %v", err))
 	}
 
-	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipDSCache, c.SkipQueryCache, reqDTO, panelId, accessToken)
+	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipDSCache, reqDTO, panelId, accessToken)
 	if err != nil {
 		return response.Err(err)
 	}
 
-	r := toJsonStreamingResponse(api.Features, resp.Response).(response.StreamingResponse)
-	if resp.Headers != nil {
-		for k, v := range resp.Headers {
-			r = r.SetHeaders(k, v)
-		}
-	}
-	return r
+	return toJsonStreamingResponse(api.Features, resp)
 }
 
 // GetAnnotations returns annotations for a public dashboard

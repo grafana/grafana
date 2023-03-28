@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -42,7 +41,7 @@ func ProvideCachingService() *OSSCachingService {
 }
 
 type CachingService interface {
-	HandleQueryRequest(context.Context, bool, dtos.MetricRequest) CachedQueryDataResponse
+	HandleQueryRequest(context.Context, *backend.QueryDataRequest) CachedQueryDataResponse
 	HandleResourceRequest(context.Context, *http.Request) CachedResourceDataResponse
 }
 
@@ -50,7 +49,7 @@ type CachingService interface {
 type OSSCachingService struct {
 }
 
-func (s *OSSCachingService) HandleQueryRequest(ctx context.Context, skipCache bool, req dtos.MetricRequest) CachedQueryDataResponse {
+func (s *OSSCachingService) HandleQueryRequest(ctx context.Context, req *backend.QueryDataRequest) CachedQueryDataResponse {
 	return CachedQueryDataResponse{}
 }
 

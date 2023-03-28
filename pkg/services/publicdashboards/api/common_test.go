@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -137,7 +136,6 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 		&fakePluginRequestValidator{},
 		&fakeDatasources.FakeDataSourceService{},
 		fpc,
-		&caching.OSSCachingService{},
 	)
 }
 

@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -289,7 +288,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			PublicDashboardAccessToken: "abc123",
 		}
 
-		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, false, reqDTO)
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 
 		require.NoError(t, err)
 	})
@@ -340,7 +339,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		}
 
 		// without query parameter
-		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, false, reqDTO)
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 		require.NoError(t, err)
 
 		httpreq, err := http.NewRequest(http.MethodPost, "http://localhost/ds/query?expression=true", bytes.NewReader([]byte{}))
@@ -357,7 +356,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		httpreq.Header.Add("X-Datasource-Uid", "gIEkMvIVz")
 
 		// with query parameter
-		_, err = tc.queryService.QueryData(httpreq.Context(), tc.signedInUser, true, false, reqDTO)
+		_, err = tc.queryService.QueryData(httpreq.Context(), tc.signedInUser, true, reqDTO)
 		require.NoError(t, err)
 	})
 
@@ -394,13 +393,12 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			PublicDashboardAccessToken: "abc123",
 		}
 
-		res, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, false, reqDTO)
+		res, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 
 		require.NoError(t, err)
-		require.NotNil(t, res.Response)
-		require.Error(t, res.Response.Responses["B"].Error)
+		require.Error(t, res.Responses["B"].Error)
 		// Responses aren't mocked, so a "healthy" query will just return an empty response
-		require.NotContains(t, res.Response.Responses, "A")
+		require.NotContains(t, res.Responses, "A")
 	})
 
 	t.Run("ignores a deprecated datasourceID", func(t *testing.T) {
@@ -425,7 +423,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			PublicDashboardAccessToken: "abc123",
 		}
 
-		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, false, reqDTO)
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 
 		require.NoError(t, err)
 	})
@@ -449,7 +447,7 @@ func setup(t *testing.T) *testContext {
 		SimulatePluginFailure: false,
 	}
 	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, fakeDatasourceService)
-	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, ds, pc, &caching.OSSCachingService{}) // provider belonging to this package
+	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, ds, pc) // provider belonging to this package
 	return &testContext{
 		pluginContext:          pc,
 		secretStore:            ss,
