@@ -46,25 +46,24 @@ func (api *K8sAuthzAPIImpl) RegisterAPIEndpoints() {
 }
 
 func (api *K8sAuthzAPIImpl) Authorize(c *contextmodel.ReqContext) response.Response {
-	subjectAccessReview := v1.SubjectAccessReview{}
-	web.Bind(c.Req, &subjectAccessReview)
+	inputSAR := v1.SubjectAccessReview{}
+	web.Bind(c.Req, &inputSAR)
 
 	// TODO: expand this logic so it isn't just limited to letting Admin through
-	if subjectAccessReview.Spec.User == GrafanaAdminK8sUser {
+	if inputSAR.Spec.User == GrafanaAdminK8sUser {
 		return response.JSON(http.StatusOK, v1.SubjectAccessReview{
 			Status: v1.SubjectAccessReviewStatus{
 				Allowed: true,
 			},
 		})
 
-	} else {
-		return response.JSON(http.StatusOK, v1.SubjectAccessReview{
-			Status: v1.SubjectAccessReviewStatus{
-				Allowed: false,
-				Denied:  true,
-				Reason:  "specified user doesn't have Admin role",
-			},
-		})
 	}
-	return response.JSON(http.StatusOK, subjectAccessReview)
+
+	return response.JSON(http.StatusOK, v1.SubjectAccessReview{
+		Status: v1.SubjectAccessReviewStatus{
+			Allowed: false,
+			Denied:  true,
+			Reason:  "specified user doesn't have Admin role",
+		},
+	})
 }
