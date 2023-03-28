@@ -118,7 +118,7 @@ export function addTeamGroup(groupId: string): ThunkResult<void> {
 export function removeTeamGroup(groupId: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
-    // need to use query parameter due to escaped characters in the request, see issue: https://github.com/grafana/grafana-enterprise/issues/4840
+    // need to use query parameter due to escaped characters in the request
     await getBackendSrv().delete(`/api/teams/${team.id}/groups?groupId=${encodeURIComponent(groupId)}`);
     dispatch(loadTeamGroups());
   };
