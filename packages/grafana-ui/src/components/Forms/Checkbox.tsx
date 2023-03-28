@@ -14,10 +14,11 @@ export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'
   value?: boolean;
   // htmlValue allows to specify the input "value" attribute
   htmlValue?: string | number;
+  indeterminate?: boolean;
 }
 
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ label, description, value, htmlValue, onChange, disabled, className, ...inputProps }, ref) => {
+  ({ label, description, value, htmlValue, onChange, disabled, className, indeterminate, ...inputProps }, ref) => {
     const handleOnChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         if (onChange) {
@@ -28,16 +29,19 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
     );
     const styles = useStyles2(getCheckboxStyles);
 
+    const ariaChecked = indeterminate ? 'mixed' : undefined;
+
     return (
       <label className={cx(styles.wrapper, className)}>
         <div className={styles.checkboxWrapper}>
           <input
             type="checkbox"
-            className={styles.input}
+            className={cx(styles.input, indeterminate && styles.inputIndeterminate)}
             checked={value}
             disabled={disabled}
             onChange={handleOnChange}
             value={htmlValue}
+            aria-checked={ariaChecked}
             {...inputProps}
             ref={ref}
           />
@@ -88,9 +92,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
        * for angular components styling
        * */
       &:checked + span {
-        background: blue;
         background: ${theme.colors.primary.main};
-        border: none;
 
         &:hover {
           background: ${theme.colors.primary.shade};
@@ -123,6 +125,28 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
         }
       }
     `,
+
+    inputIndeterminate: css`
+      & + span {
+        background: ${theme.colors.primary.main};
+
+        &:hover {
+          background: ${theme.colors.primary.shade};
+        }
+
+        &:after {
+          content: '';
+          position: absolute;
+          z-index: 2;
+          left: 2px;
+          right: 2px;
+          top: calc(50% - 1.5px);
+          height: 3px;
+          background-color: ${theme.colors.primary.contrastText};
+        }
+      }
+    `,
+
     checkboxWrapper: css`
       display: flex;
       align-items: center;

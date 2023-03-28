@@ -80,4 +80,29 @@ InAField.args = {
   disabled: false,
 };
 
+export const AllStates: ComponentStory<typeof Checkbox> = (args) => {
+  const [checked, setChecked] = useState(false);
+  const onChange = useCallback(
+    (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
+    [setChecked]
+  );
+
+  return (
+    <div>
+      <VerticalGroup>
+        <Checkbox value={checked} onChange={onChange} {...args} />
+        <Checkbox value={true} label="Checked" />
+        <Checkbox value={false} label="Unchecked" />
+        <Checkbox value={false} indeterminate={true} label="Interdeterminate" />
+      </VerticalGroup>
+    </div>
+  );
+};
+
+AllStates.args = {
+  label: 'Props set from controls',
+  description: 'Set to true if you want to skip TLS cert validation',
+  disabled: false,
+};
+
 export default meta;
