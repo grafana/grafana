@@ -93,7 +93,11 @@ When creating or updating a data link, press Cmd+Space or Ctrl+Space on your key
 
 ### Add a data link
 
-1. Hover over any part of the panel you want to which you want to add the data link to display the actions menu on the top right corner. Click the menu and select **Edit**. To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
+1. Hover over any part of the panel you want to which you want to add the data link to display the actions menu on the top right corner.
+1. Click the menu and select **Edit**.
+
+   To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
+
 1. Scroll down to the Data links section and expand it.
 1. Click **Add link**.
 1. Enter a **Title**. **Title** is a human-readable label for the link that will be displayed in the UI.

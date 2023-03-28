@@ -118,7 +118,11 @@ Click the icon next to the panel title to see available panel links.
 
 ### Add a panel link
 
-1. Hover over any part of the panel to which you want to add the link to display the actions menu on the top right corner. Click the menu and select **Edit**. To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
+1. Hover over any part of the panel to which you want to add the link to display the actions menu on the top right corner.
+1. Click the menu and select **Edit**.
+
+   To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
+
 1. Expand the **Panel options** section, scroll down to Panel links.
 1. Click **Add link**.
 1. Enter a **Title**. **Title** is a human-readable label for the link that will be displayed in the UI.
@@ -133,7 +137,11 @@ Click the icon next to the panel title to see available panel links.
 
 ### Update a panel link
 
-1. Hover over any part of the panel to display the actions menu on the top right corner. Click the menu and select **Edit**. To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
+1. Hover over any part of the panel to display the actions menu on the top right corner.
+1. Click the menu and select **Edit**.
+
+   To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
+
 1. Expand the **Panel options** section, scroll down to Panel links.
 1. Find the link that you want to make changes to.
 1. Click the Edit (pencil) icon to open the Edit link window.
@@ -143,7 +151,11 @@ Click the icon next to the panel title to see available panel links.
 
 ### Delete a panel link
 
-1. Hover over any part of the panel to display the actions menu on the top right corner. Click the menu and select **Edit**. To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
+1. Hover over any part of the panel to display the actions menu on the top right corner.
+1. Click the menu and select **Edit**.
+
+   To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
+
 1. Expand the **Panel options** section, scroll down to Panel links.
 1. Find the link that you want to delete.
 1. Click the **X** icon next to the link you want to delete.
