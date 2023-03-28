@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { dateTime } from '@grafana/data';
@@ -37,5 +38,30 @@ describe('Date time picker', () => {
     fireEvent.blur(dateTimeInput);
 
     expect(dateTimeInput).toHaveDisplayValue('2021-07-31 12:30:30');
+  });
+
+  it('should be able to select values in TimeOfDayPicker without blurring the element', async () => {
+    renderDatetimePicker();
+    await userEvent.click(screen.getByLabelText('Time picker'));
+
+    await userEvent.click(screen.getAllByRole('textbox')[1]);
+
+    const hourElement = screen.getAllByRole('button', {
+      name: '00',
+    })[0];
+
+    expect(hourElement).toBeVisible();
+
+    await userEvent.click(hourElement);
+
+    expect(hourElement).toBeVisible();
+
+    await userEvent.click(document.body);
+
+    expect(
+      screen.queryByRole('button', {
+        name: '00',
+      })
+    ).not.toBeInTheDocument();
   });
 });
