@@ -2,7 +2,6 @@ package caching
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/web"
@@ -34,6 +33,7 @@ type CachedResourceDataResponse struct {
 	Response *backend.CallResourceResponse
 	// A function that should be used to cache a CallResourceResponse for a given query - can be set to nil by the method implementation
 	UpdateCacheFn CacheResourceResponseFn
+	Headers       map[string][]string
 }
 
 func ProvideCachingService() *OSSCachingService {
@@ -42,7 +42,7 @@ func ProvideCachingService() *OSSCachingService {
 
 type CachingService interface {
 	HandleQueryRequest(context.Context, *backend.QueryDataRequest) CachedQueryDataResponse
-	HandleResourceRequest(context.Context, *http.Request) CachedResourceDataResponse
+	HandleResourceRequest(context.Context, *backend.CallResourceRequest) CachedResourceDataResponse
 }
 
 // Implementation of interface
@@ -53,7 +53,7 @@ func (s *OSSCachingService) HandleQueryRequest(ctx context.Context, req *backend
 	return CachedQueryDataResponse{}
 }
 
-func (s *OSSCachingService) HandleResourceRequest(ctx context.Context, req *http.Request) CachedResourceDataResponse {
+func (s *OSSCachingService) HandleResourceRequest(ctx context.Context, req *backend.CallResourceRequest) CachedResourceDataResponse {
 	return CachedResourceDataResponse{}
 }
 

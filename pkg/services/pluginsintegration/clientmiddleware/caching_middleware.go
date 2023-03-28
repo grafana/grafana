@@ -12,12 +12,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// NewUserHeaderMiddleware creates a new plugins.ClientMiddleware that will
-// populate the X-Grafana-User header on outgoing plugins.Client requests.
+// NewCachingMiddleware creates a new plugins.ClientMiddleware that will
+// attempt to read and write query results to the cache
 func NewCachingMiddleware(cachingService caching.CachingService) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		log := log.New("caching_middleware")
 		if err := prometheus.Register(QueryRequestHistogram); err != nil {
+			log.Error("error registering prometheus collector", "error", err)
+		}
+		if err := prometheus.Register(ResourceRequestHistogram); err != nil {
 			log.Error("error registering prometheus collector", "error", err)
 		}
 		return &CachingMiddleware{
@@ -34,6 +37,9 @@ type CachingMiddleware struct {
 	log     log.Logger
 }
 
+// QueryData receives a data request and attempts to access results already stored in the cache for that request.
+// If data is found, it will return it immediately. Otherwise, it will perform the queries as usual, then write the response to the cache.
+// If the cache service is implemented, we write any provided headers to the response and capture the request duration as a metric.
 func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if req == nil {
 		return m.next.QueryData(ctx, req)
@@ -58,6 +64,7 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	if err == nil && cr.UpdateCacheFn != nil {
 		cr.UpdateCacheFn(ctx, resp)
 	}
+
 	// record request duration if caching was used
 	if h, ok := cr.Headers[caching.XCacheHeader]; ok && len(h) > 0 {
 		QueryRequestHistogram.With(prometheus.Labels{
@@ -75,7 +82,36 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 		return m.next.CallResource(ctx, req, sender)
 	}
 
-	return m.next.CallResource(ctx, req, sender)
+	start := time.Now() // time how long this request takes
+	reqCtx := contexthandler.FromContext(ctx)
+
+	// First look in the resource cache if enabled
+	cr := m.caching.HandleResourceRequest(ctx, req)
+	// Immediately write any headers to the response
+	cr.WriteHeadersToResponse(&reqCtx.Resp)
+
+	if isCacheHit(cr.Headers) {
+		return sender.Send(cr.Response)
+	}
+
+	// do the actual request
+	err := m.next.CallResource(ctx, req, sender)
+
+	// Update the resource cache with the result for this metrics request
+	if err == nil && cr.UpdateCacheFn != nil {
+		// todo read and update response
+		// cr.UpdateCacheFn(ctx, resp)
+	}
+
+	// record request duration if caching was used
+	if h, ok := cr.Headers[caching.XCacheHeader]; ok && len(h) > 0 {
+		ResourceRequestHistogram.With(prometheus.Labels{
+			"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
+			"cache":           cr.Headers[caching.XCacheHeader][0],
+		}).Observe(time.Since(start).Seconds())
+	}
+
+	return err
 }
 
 func isCacheHit(headers map[string][]string) bool {

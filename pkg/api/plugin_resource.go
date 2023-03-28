@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/services/caching"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -44,12 +43,12 @@ func (hs *HTTPServer) callPluginResource(c *contextmodel.ReqContext, pluginID st
 		return
 	}
 
-	if err = hs.makePluginResourceRequest(c.Resp, req, pCtx, nil); err != nil {
+	if err = hs.makePluginResourceRequest(c.Resp, req, pCtx); err != nil {
 		handleCallResourceError(err, c)
 	}
 }
 
-func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContext, pluginID string, ds *datasources.DataSource, ufn caching.CacheResourceResponseFn) {
+func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContext, pluginID string, ds *datasources.DataSource) {
 	pCtx, found, err := hs.PluginContextProvider.GetWithDataSource(c.Req.Context(), pluginID, c.SignedInUser, ds)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
@@ -77,7 +76,7 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContex
 		return
 	}
 
-	if err = hs.makePluginResourceRequest(c.Resp, req, pCtx, ufn); err != nil {
+	if err = hs.makePluginResourceRequest(c.Resp, req, pCtx); err != nil {
 		handleCallResourceError(err, c)
 	}
 }
@@ -97,7 +96,7 @@ func (hs *HTTPServer) pluginResourceRequest(c *contextmodel.ReqContext) (*http.R
 	return clonedReq, nil
 }
 
-func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext, ufn caching.CacheResourceResponseFn) error {
+func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
 	proxyutil.PrepareProxyRequest(req)
 
 	body, err := io.ReadAll(req.Body)
@@ -130,7 +129,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 
 	var flushStreamErr error
 	go func() {
-		flushStreamErr = hs.flushStream(stream, w, ufn)
+		flushStreamErr = hs.flushStream(stream, w)
 		wg.Done()
 	}()
 
@@ -141,7 +140,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 	return flushStreamErr
 }
 
-func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w http.ResponseWriter, ufn caching.CacheResourceResponseFn) error {
+func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w http.ResponseWriter) error {
 	processedStreams := 0
 
 	for {
@@ -199,9 +198,6 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 
 		if _, err := w.Write(resp.Body); err != nil {
 			hs.log.Error("Failed to write resource response", "err", err)
-		} else if ufn != nil {
-			// If a cache response function was passed in, call it with this data
-			ufn(context.Background(), resp)
 		}
 
 		if flusher, ok := w.(http.Flusher); ok {
@@ -227,7 +223,7 @@ func handleCallResourceError(err error, reqCtx *contextmodel.ReqContext) {
 
 // callResourceClientResponseStream is used for receiving resource call responses.
 type callResourceClientResponseStream interface {
-	Recv() (*backend.CallResourceResponse, error)
+	Rexcv() (*backend.CallResourceResponse, error)
 	Close() error
 }
 

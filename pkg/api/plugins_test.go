@@ -368,7 +368,7 @@ func TestMakePluginResourceRequest(t *testing.T) {
 
 	resp := httptest.NewRecorder()
 	pCtx := backend.PluginContext{}
-	err := hs.makePluginResourceRequest(resp, req, pCtx, nil)
+	err := hs.makePluginResourceRequest(resp, req, pCtx)
 	require.NoError(t, err)
 
 	for {
@@ -392,7 +392,7 @@ func TestMakePluginResourceRequestSetCookieNotPresent(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	resp := httptest.NewRecorder()
 	pCtx := backend.PluginContext{}
-	err := hs.makePluginResourceRequest(resp, req, pCtx, nil)
+	err := hs.makePluginResourceRequest(resp, req, pCtx)
 	require.NoError(t, err)
 
 	for {
@@ -426,7 +426,7 @@ func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			resp := httptest.NewRecorder()
 			pCtx := backend.PluginContext{}
-			err := hs.makePluginResourceRequest(resp, req, pCtx, nil)
+			err := hs.makePluginResourceRequest(resp, req, pCtx)
 			require.NoError(t, err)
 
 			for {
@@ -452,7 +452,7 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	resp := httptest.NewRecorder()
 	pCtx := backend.PluginContext{}
-	err := hs.makePluginResourceRequest(resp, req, pCtx, nil)
+	err := hs.makePluginResourceRequest(resp, req, pCtx)
 	require.NoError(t, err)
 
 	for {

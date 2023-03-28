@@ -684,18 +684,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *contextmodel.ReqContext) {
 		return
 	}
 
-	// Check the cache first. If it's a hit, try to write it to the response
-	resp := hs.queryCachingService.HandleResourceRequest(c.Req.Context(), c.Req)
-	if isCacheHit(resp) {
-		if err := writeResourceResponse(c.Resp, resp); err != nil {
-			hs.log.Error("error trying to return cached resource response: %s", err.Error())
-		} else {
-			return
-		}
-	}
-	resp.WriteHeadersToResponse(&c.Resp)
-	// No cache hit, process resource request as usual
-	hs.callPluginResourceWithDataSource(c, plugin.ID, ds, resp.UpdateCacheFn)
+	hs.callPluginResourceWithDataSource(c, plugin.ID, ds)
 }
 
 // swagger:route GET /datasources/uid/{uid}/resources/{datasource_proxy_route} datasources callDatasourceResourceWithUID
@@ -732,18 +721,7 @@ func (hs *HTTPServer) CallDatasourceResourceWithUID(c *contextmodel.ReqContext) 
 		return
 	}
 
-	// Check the cache first. If it's a hit, try to write it to the response
-	resp := hs.queryCachingService.HandleResourceRequest(c.Req.Context(), c.Req)
-	if isCacheHit(resp) {
-		if err := writeResourceResponse(c.Resp, resp); err != nil {
-			hs.log.Error("error trying to return cached resource response: %s", err.Error())
-		} else {
-			return
-		}
-	}
-	resp.WriteHeadersToResponse(&c.Resp)
-	// No cache hit, process resource request as usual
-	hs.callPluginResourceWithDataSource(c, plugin.ID, ds, resp.UpdateCacheFn)
+	hs.callPluginResourceWithDataSource(c, plugin.ID, ds)
 }
 
 func writeResourceResponse(w http.ResponseWriter, response caching.CachedResourceDataResponse) error {
