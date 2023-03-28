@@ -28,16 +28,16 @@ func (e AlertmanagerConfigRejectedError) Error() string {
 }
 
 type configurationStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
+	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
 }
 
 func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64) (definitions.GettableUserConfig, error) {
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
-	err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query)
+	amConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query)
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to get latest configuration: %w", err)
 	}
-	cfg, err := Load([]byte(query.Result.AlertmanagerConfiguration))
+	cfg, err := Load([]byte(amConfig.AlertmanagerConfiguration))
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to unmarshal alertmanager configuration: %w", err)
 	}
@@ -93,7 +93,8 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
 	// Get the last known working configuration
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
-	if err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query); err != nil {
+	_, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query)
+	if err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return fmt.Errorf("failed to get latest configuration %w", err)
