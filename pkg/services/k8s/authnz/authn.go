@@ -74,24 +74,24 @@ func (api *K8sAuthnAPIImpl) Validate(c *contextmodel.ReqContext) response.Respon
 		api.Log.Error("K8s authn webhook failed to authenticate a request", "error", err)
 
 		return api.sendDeniedV1Response("authorization token is invalid")
-	} else {
-		user := identity.SignedInUser()
-		// We currently only allow glsa-prefixed serviceaccount tokens direct access to kube-apiserver
-		if user.HasRole(roletype.RoleAdmin) && user.IsServiceAccount {
-			// Extra fields are set up here as placeholders. It is just to demonstrate that
-			// the authorization flow will have Username, Groups and additionally any other Extra fields as necessary
-			extra := make(map[string]v1.ExtraValue)
-			extra["token-name"] = []string{c.SignedInUser.Name}
-			extra["org-role"] = []string{string(c.SignedInUser.OrgRole)}
-			return api.sendV1Response(v1.UserInfo{
-				// SignedInUser.Name could be anything, since it's just the token name
-				// as entered by the user. We normalize it for subsequent use in the authorization flow.
-				Username: GrafanaAdminK8sUser,
-				Groups:   []string{"server-admins"},
-				UID:      strconv.FormatInt(c.SignedInUser.UserID, 10),
-				Extra:    extra,
-			})
-		}
+	}
+
+	user := identity.SignedInUser()
+	// We currently only allow glsa-prefixed serviceaccount tokens direct access to kube-apiserver
+	if user.HasRole(roletype.RoleAdmin) && user.IsServiceAccount {
+		// Extra fields are set up here as placeholders. It is just to demonstrate that
+		// the authorization flow will have Username, Groups and additionally any other Extra fields as necessary
+		extra := make(map[string]v1.ExtraValue)
+		extra["token-name"] = []string{c.SignedInUser.Name}
+		extra["org-role"] = []string{string(c.SignedInUser.OrgRole)}
+		return api.sendV1Response(v1.UserInfo{
+			// SignedInUser.Name could be anything, since it's just the token name
+			// as entered by the user. We normalize it for subsequent use in the authorization flow.
+			Username: GrafanaAdminK8sUser,
+			Groups:   []string{"server-admins"},
+			UID:      strconv.FormatInt(c.SignedInUser.UserID, 10),
+			Extra:    extra,
+		})
 	}
 
 	return api.sendDeniedV1Response("authorization token does not have sufficient privileges")
