@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2, locationUtil } from '@grafana/data';
+import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
@@ -29,7 +29,7 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
 
   let homeUrl = config.appSubUrl || '/';
   if (!config.bootData.user.isSignedIn && !config.anonymousEnabled) {
-    homeUrl = locationUtil.getUrlForPartial(location, { forceLogin: 'true' });
+    homeUrl = textUtil.sanitizeUrl(locationUtil.getUrlForPartial(location, { forceLogin: 'true' }));
   }
 
   return (
