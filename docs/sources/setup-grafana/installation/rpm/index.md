@@ -16,11 +16,7 @@ You can install Grafana using a YUM repository, using RPM, or by downloading a b
 
 If you install via RPM or the `.tar.gz` file, then you must manually update Grafana for each new version.
 
-## Install Grafana using YUM
-
-You can install Grafana from a YUM repository or manually using YUM.
-
-### Install Grafana from the YUM repository
+## Install Grafana from the YUM respository
 
 If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo yum update`.
 
@@ -71,23 +67,9 @@ To install Grafana using a YUM repository, complete the following steps:
    sudo yum install grafana-enterprise
    ```
 
-### Install Grafana manually using YUM
+## Install the Grafana RPM package manually
 
-If you install Grafana manually using YUM, you must manually update Grafana for each new version. The following steps enable automatic updates for your Grafana installation.
-
-1. Navigate to the [Grafana download page](https://grafana.com/grafana/download).
-1. Select the Grafana version you want to install.
-   - The most recent Grafana version is selected by default.
-   - The **Version** field displays only tagged releases. If you want to install a nightly build, click **Nightly Builds** and then select a version.
-1. Select an **Edition**.
-   - **Enterprise:** This is the recommended version. It is functionally identical to the open source version, but includes features you can unlock with a license, if you so choose.
-   - **Open Source:** This version is functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
-1. Depending on which system you are running, click the **Linux** or **ARM** tab on the download page.
-1. Copy and paste the code from the installation page into your command line and run.
-
-## Install Grafana using RPM
-
-If you install Grafana using RPM, then you must manually update Grafana for each new version. This method varies according to which Linux OS you are running.
+If you install Grafana manually using YUM or RPM, then you must manually update Grafana for each new version. This method varies according to which Linux OS you are running.
 
 **Note:** The RPM files are signed. You can verify the signature with this [public GPG key](https://rpm.grafana.com/gpg.key).
 
