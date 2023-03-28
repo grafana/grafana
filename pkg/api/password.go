@@ -38,8 +38,8 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *contextmodel.ReqContext) respons
 	}
 
 	getAuthQuery := login.GetAuthInfoQuery{UserId: usr.ID}
-	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-		authModule := getAuthQuery.Result.AuthModule
+	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
+		authModule := authInfo.AuthModule
 		if authModule == login.LDAPAuthModule || authModule == login.AuthProxyAuthModule {
 			return response.Error(401, "Not allowed to reset password for LDAP or Auth Proxy user", nil)
 		}
@@ -70,7 +70,8 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 		return usr, err
 	}
 
-	if err := hs.NotificationService.ValidateResetPasswordCode(c.Req.Context(), &query, getUserByLogin); err != nil {
+	userResult, err := hs.NotificationService.ValidateResetPasswordCode(c.Req.Context(), &query, getUserByLogin)
+	if err != nil {
 		if errors.Is(err, notifications.ErrInvalidEmailCode) {
 			return response.Error(400, "Invalid or expired reset password code", nil)
 		}
@@ -87,9 +88,8 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 	}
 
 	cmd := user.ChangeUserPasswordCommand{}
-	cmd.UserID = query.Result.ID
-	var err error
-	cmd.NewPassword, err = util.EncodePassword(form.NewPassword, query.Result.Salt)
+	cmd.UserID = userResult.ID
+	cmd.NewPassword, err = util.EncodePassword(form.NewPassword, userResult.Salt)
 	if err != nil {
 		return response.Error(500, "Failed to encode password", err)
 	}

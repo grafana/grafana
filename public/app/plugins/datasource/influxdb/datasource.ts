@@ -123,7 +123,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   withCredentials: any;
   access: 'direct' | 'proxy';
   interval: any;
-  responseParser: any;
+  responseParser: ResponseParser;
   httpMode: string;
   isFlux: boolean;
   isProxyAccess: boolean;
@@ -604,6 +604,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       params.db = options.database;
     } else if (this.database) {
       params.db = this.database;
+    }
+
+    if (options?.policy) {
+      params.rp = options.policy;
     }
 
     const { q } = data;
