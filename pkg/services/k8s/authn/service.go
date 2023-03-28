@@ -32,7 +32,6 @@ type K8sAuthnAPI interface {
 }
 
 type K8sAuthnAPIImpl struct {
-	// *services.BasicService
 	RouteRegister routing.RouteRegister
 	Features      *featuremgmt.FeatureManager
 	ApiKey        *clients.APIKey
