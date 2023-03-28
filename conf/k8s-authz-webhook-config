@@ -1,5 +1,3 @@
-# NOTE: In this directory primarily because the certs are here and can be mounted in the kind
-# container all at once
 clusters:
 - name: authz-webhook
   cluster:
