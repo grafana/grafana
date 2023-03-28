@@ -1,5 +1,4 @@
 ---
-aliases:
 description: Install guide for Grafana on SUSE or OpenSUSE.
 title: Install Grafana on SUSE or OpenSUSE
 menuTitle: Redhat, RHEL, or Fedora

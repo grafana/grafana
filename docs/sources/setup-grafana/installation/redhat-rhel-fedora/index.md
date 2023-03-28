@@ -1,7 +1,4 @@
 ---
-aliases:
-  - ../../installation/installation/rpm/
-  - ../../installation/rpm/
 description: Install guide for Grafana on Red Hat, RHEL, and Fedora.
 title: Install Grafana on Red Hat, RHEL, or Fedora
 menuTitle: Redhat, RHEL, or Fedora
