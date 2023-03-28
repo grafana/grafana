@@ -141,7 +141,7 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
 			Text:     "Authentication",
 			Id:       "authentication",
-			SubTitle: "Configure authentication",
+			SubTitle: "Manage your auth settings and configure single sign-on",
 			Icon:     "signin",
 			Url:      s.cfg.AppSubURL + "/admin/authentication",
 		})

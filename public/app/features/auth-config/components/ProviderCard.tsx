@@ -33,7 +33,7 @@ export function ProviderCard({ providerId, displayName, enabled, configPath, aut
             className={styles.actionButton}
           />
         </div> */}
-        <h2 className={cx(styles.name, { [styles.disabled]: !enabled })}>{displayName}</h2>
+        <h2 className={styles.name}>{displayName}</h2>
         <div className={styles.content}></div>
         <div className={styles.footer}>
           {authType && <Badge text={authType} color="blue" icon="info-circle" />}
