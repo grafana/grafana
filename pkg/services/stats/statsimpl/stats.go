@@ -2,7 +2,6 @@ package statsimpl
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -12,20 +11,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/stats"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
 
-func ProvideService(cfg *setting.Cfg, db db.DB) stats.Service {
-	return &sqlStatsService{cfg: cfg, db: db}
+func ProvideService(db db.DB) stats.Service {
+	return &sqlStatsService{db: db}
 }
 
-type sqlStatsService struct {
-	db  db.DB
-	cfg *setting.Cfg
-}
+type sqlStatsService struct{ db db.DB }
 
 func (ss *sqlStatsService) GetAlertNotifiersUsageStats(ctx context.Context, query *stats.GetAlertNotifierUsageStatsQuery) error {
 	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
@@ -178,11 +173,6 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 		dailyActiveEndDate := now.Add(-dailyActiveUserTimeLimit)
 		monthlyActiveEndDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 
-		alertsQuery := fmt.Sprintf("SELECT COUNT(*) FROM %s", dialect.Quote("alert"))
-		if ss.IsUnifiedAlertingEnabled() {
-			alertsQuery = fmt.Sprintf("SELECT COUNT(*) FROM %s", dialect.Quote("alert_rule"))
-		}
-
 		var rawSQL = `SELECT
 		(
 			SELECT COUNT(*)
@@ -212,7 +202,10 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("star") + `
 		) AS stars,
-		(` + alertsQuery + ` ) AS alerts,
+		(
+			SELECT COUNT(*)
+			FROM ` + dialect.Quote("alert") + `
+		) AS alerts,
 		(
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `
@@ -263,10 +256,6 @@ func (ss *sqlStatsService) GetSystemUserCountStats(ctx context.Context, query *s
 
 		return nil
 	})
-}
-
-func (ss *sqlStatsService) IsUnifiedAlertingEnabled() bool {
-	return ss.cfg != nil && ss.cfg.UnifiedAlerting.IsEnabled()
 }
 
 func (ss *sqlStatsService) updateUserRoleCountsIfNecessary(ctx context.Context, forced bool) error {

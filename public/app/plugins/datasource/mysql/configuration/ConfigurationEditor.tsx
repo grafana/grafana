@@ -7,18 +7,7 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import {
-  Alert,
-  FieldSet,
-  InlineField,
-  InlineFieldRow,
-  InlineSwitch,
-  Input,
-  Link,
-  SecretInput,
-  SecureSocksProxySettings,
-} from '@grafana/ui';
-import { config } from 'app/core/config';
+import { Alert, FieldSet, InlineField, InlineFieldRow, InlineSwitch, Input, Link, SecretInput } from '@grafana/ui';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
 import { useMigrateDatabaseField } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseField';
@@ -47,16 +36,16 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
     };
   };
 
-  const WIDTH_SHORT = 15;
-  const WIDTH_MEDIUM = 22;
-  const WIDTH_LONG = 40;
+  const mediumWidth = 20;
+  const shortWidth = 15;
+  const longWidth = 40;
 
   return (
     <>
       <FieldSet label="MySQL Connection" width={400}>
-        <InlineField labelWidth={WIDTH_SHORT} label="Host">
+        <InlineField labelWidth={shortWidth} label="Host">
           <Input
-            width={WIDTH_LONG}
+            width={longWidth}
             name="host"
             type="text"
             value={options.url || ''}
@@ -64,9 +53,9 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
             onChange={onDSOptionChanged('url')}
           ></Input>
         </InlineField>
-        <InlineField labelWidth={WIDTH_SHORT} label="Database">
+        <InlineField labelWidth={shortWidth} label="Database">
           <Input
-            width={WIDTH_LONG}
+            width={longWidth}
             name="database"
             value={jsonData.database || ''}
             placeholder="database name"
@@ -74,17 +63,17 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
           ></Input>
         </InlineField>
         <InlineFieldRow>
-          <InlineField labelWidth={WIDTH_SHORT} label="User">
+          <InlineField labelWidth={shortWidth} label="User">
             <Input
-              width={WIDTH_SHORT}
+              width={shortWidth}
               value={options.user || ''}
               placeholder="user"
               onChange={onDSOptionChanged('user')}
             ></Input>
           </InlineField>
-          <InlineField labelWidth={WIDTH_SHORT - 5} label="Password">
+          <InlineField labelWidth={shortWidth - 5} label="Password">
             <SecretInput
-              width={WIDTH_SHORT}
+              width={shortWidth}
               placeholder="Password"
               isConfigured={options.secureJsonFields && options.secureJsonFields.password}
               onReset={onResetPassword}
@@ -103,22 +92,17 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
             </span>
           }
           label="Session timezone"
-          labelWidth={WIDTH_MEDIUM}
+          labelWidth={mediumWidth}
         >
           <Input
-            width={WIDTH_LONG - 5}
+            width={longWidth - 5}
             value={jsonData.timezone || ''}
             onChange={onUpdateDatasourceJsonDataOption(props, 'timezone')}
             placeholder="(default)"
           ></Input>
         </InlineField>
         <InlineFieldRow>
-          <InlineField
-            labelWidth={WIDTH_MEDIUM}
-            tooltip="Enables TLS authentication using client cert configured in secure json data."
-            htmlFor="tlsAuth"
-            label="Use TLS Client Auth"
-          >
+          <InlineField labelWidth={mediumWidth} htmlFor="tlsAuth" label="TLS Client Auth">
             <InlineSwitch
               id="tlsAuth"
               onChange={onSwitchChanged('tlsAuth')}
@@ -126,8 +110,8 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
             ></InlineSwitch>
           </InlineField>
           <InlineField
-            labelWidth={WIDTH_MEDIUM}
-            tooltip="Needed for verifing self-signed TLS Certs."
+            labelWidth={mediumWidth}
+            tooltip="Needed for verifing self-signed TLS Certs"
             htmlFor="tlsCaCert"
             label="With CA Cert"
           >
@@ -138,12 +122,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
             ></InlineSwitch>
           </InlineField>
         </InlineFieldRow>
-        <InlineField
-          labelWidth={WIDTH_MEDIUM}
-          tooltip="When enabled, skips verification of the MySql server's TLS certificate chain and host name."
-          htmlFor="skipTLSVerify"
-          label="Skip TLS Verification"
-        >
+        <InlineField labelWidth={mediumWidth} htmlFor="skipTLSVerify" label="Skip TLS Verify">
           <InlineSwitch
             id="skipTLSVerify"
             onChange={onSwitchChanged('tlsSkipVerify')}
@@ -152,9 +131,6 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         </InlineField>
       </FieldSet>
 
-      {config.featureToggles.secureSocksDatasourceProxy && (
-        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-      )}
       {jsonData.tlsAuth || jsonData.tlsAuthWithCACert ? (
         <FieldSet label="TLS/SSL Auth Details">
           <TLSSecretsConfig
@@ -167,7 +143,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
       ) : null}
 
       <ConnectionLimits
-        labelWidth={WIDTH_SHORT}
+        labelWidth={shortWidth}
         jsonData={jsonData}
         onPropertyChanged={(property, value) => {
           updateDatasourcePluginJsonDataOption(props, property, value);
@@ -182,7 +158,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
               <code>1m</code> if your data is written every minute.
             </span>
           }
-          labelWidth={WIDTH_MEDIUM}
+          labelWidth={mediumWidth}
           label="Min time interval"
         >
           <Input

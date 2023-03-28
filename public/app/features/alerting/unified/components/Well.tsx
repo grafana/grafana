@@ -1,12 +1,12 @@
 import { cx, css } from '@emotion/css';
-import React from 'react';
+import React, { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 type Props = React.HTMLAttributes<HTMLDivElement>;
 
-export const Well = ({ children, className }: Props) => {
+export const Well: FC<Props> = ({ children, className }) => {
   const styles = useStyles2(getStyles);
   return <div className={cx(styles.wrapper, className)}>{children}</div>;
 };

@@ -140,7 +140,7 @@ function WelcomeHeader({ className }: { className?: string }) {
     <ContentBox className={cx(styles.ctaContainer, className)}>
       <WelcomeCTABox
         title="Alert rules"
-        description="Define the condition that must be met before an alert rule fires"
+        description="Define the condition that must be me before an alert rule fires"
         href="/alerting/list"
         hrefText="Manage alert rules"
       />
@@ -250,7 +250,8 @@ const getContentBoxStyles = (theme: GrafanaTheme2) => ({
   box: css`
     padding: ${theme.spacing(2)};
     background-color: ${theme.colors.background.secondary};
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: 3px;
+    outline: 1px solid ${theme.colors.border.strong};
   `,
 });
 

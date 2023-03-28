@@ -72,7 +72,6 @@ export const Components = {
     Panel: {
       title: (title: string) => `data-testid Panel header ${title}`,
       headerItems: (item: string) => `Panel header item ${item}`,
-      menuItems: (item: string) => `data-testid Panel menu item ${item}`,
       containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
     },
@@ -403,8 +402,5 @@ export const Components = {
   },
   AnalyticsToolbarButton: {
     button: 'Dashboard insights',
-  },
-  Variables: {
-    variableOption: 'data-testid variable-option',
   },
 };

@@ -47,7 +47,7 @@ const shouldHideLegendItem = (data: GraphSeriesValue[][], hideEmpty = false, hid
   return (hideEmpty && isNullOnlySeries) || (hideZero && isZeroOnlySeries);
 };
 
-export const GraphWithLegend = (props: GraphWithLegendProps) => {
+export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (props: GraphWithLegendProps) => {
   const {
     series,
     timeRange,

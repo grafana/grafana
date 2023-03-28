@@ -68,5 +68,6 @@ func (uat *userAuthToken) toUserToken(ut *auth.UserToken) error {
 	ut.UpdatedAt = uat.UpdatedAt
 	ut.RevokedAt = uat.RevokedAt
 	ut.UnhashedToken = uat.UnhashedToken
+
 	return nil
 }

@@ -29,14 +29,13 @@ import (
 func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 	query := apikey.GetApiKeysQuery{OrgID: c.OrgID, User: c.SignedInUser, IncludeExpired: c.QueryBool("includeExpired")}
 
-	keys, err := hs.apiKeyService.GetAPIKeys(c.Req.Context(), &query)
-	if err != nil {
+	if err := hs.apiKeyService.GetAPIKeys(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to list api keys", err)
 	}
 
 	ids := map[string]bool{}
-	result := make([]*dtos.ApiKeyDTO, len(keys))
-	for i, t := range keys {
+	result := make([]*dtos.ApiKeyDTO, len(query.Result))
+	for i, t := range query.Result {
 		ids[strconv.FormatInt(t.ID, 10)] = true
 		var expiration *time.Time = nil
 		if t.Expires != nil {
@@ -48,7 +47,6 @@ func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 			Name:       t.Name,
 			Role:       t.Role,
 			Expiration: expiration,
-			LastUsedAt: t.LastUsedAt,
 		}
 	}
 
@@ -135,8 +133,7 @@ func (hs *HTTPServer) AddAPIKey(c *contextmodel.ReqContext) response.Response {
 	}
 
 	cmd.Key = newKeyInfo.HashedKey
-	key, err := hs.apiKeyService.AddAPIKey(c.Req.Context(), &cmd)
-	if err != nil {
+	if err := hs.apiKeyService.AddAPIKey(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, apikey.ErrInvalidExpiration) {
 			return response.Error(400, err.Error(), nil)
 		}
@@ -147,8 +144,8 @@ func (hs *HTTPServer) AddAPIKey(c *contextmodel.ReqContext) response.Response {
 	}
 
 	result := &dtos.NewApiKeyResult{
-		ID:   key.ID,
-		Name: key.Name,
+		ID:   cmd.Result.ID,
+		Name: cmd.Result.Name,
 		Key:  newKeyInfo.ClientSecret,
 	}
 

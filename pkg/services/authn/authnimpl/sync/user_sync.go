@@ -15,11 +15,6 @@ import (
 )
 
 var (
-	errUserSignupDisabled = errutil.NewBase(
-		errutil.StatusUnauthorized,
-		"user.sync.signup-disabled",
-		errutil.WithPublicMessage("Sign up is disabled"),
-	)
 	errSyncUserForbidden = errutil.NewBase(
 		errutil.StatusForbidden,
 		"user.sync.forbidden",
@@ -27,7 +22,7 @@ var (
 	)
 	errSyncUserInternal = errutil.NewBase(
 		errutil.StatusInternal,
-		"user.sync.internal",
+		"user.sync.forbidden",
 		errutil.WithPublicMessage("User sync failed"),
 	)
 	errUserProtection = errutil.NewBase(
@@ -78,7 +73,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	if errors.Is(errUserInDB, user.ErrUserNotFound) {
 		if !id.ClientParams.AllowSignUp {
 			s.log.FromContext(ctx).Warn("Failed to create user, signup is not allowed for module", "auth_module", id.AuthModule, "auth_id", id.AuthID)
-			return errUserSignupDisabled.Errorf("%w", login.ErrSignupNotAllowed)
+			return errSyncUserForbidden.Errorf("%w", login.ErrSignupNotAllowed)
 		}
 
 		// create user
@@ -281,12 +276,7 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	if identity.AuthID != "" && identity.AuthModule != "" {
 		query := &login.GetAuthInfoQuery{AuthId: identity.AuthID, AuthModule: identity.AuthModule}
 		errGetAuthInfo := s.authInfoService.GetAuthInfo(ctx, query)
-
-		if errGetAuthInfo != nil && !errors.Is(errGetAuthInfo, user.ErrUserNotFound) {
-			return nil, nil, errGetAuthInfo
-		}
-
-		if !errors.Is(errGetAuthInfo, user.ErrUserNotFound) {
+		if errGetAuthInfo == nil {
 			usr, errGetByID := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: query.Result.UserId})
 			if errGetByID == nil {
 				return usr, query.Result, nil
@@ -295,13 +285,10 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 			if !errors.Is(errGetByID, user.ErrUserNotFound) {
 				return nil, nil, errGetByID
 			}
+		}
 
-			// if the user connected to user auth does not exist try to clean it up
-			if errors.Is(errGetByID, user.ErrUserNotFound) {
-				if err := s.authInfoService.DeleteUserAuthInfo(ctx, query.Result.UserId); err != nil {
-					s.log.FromContext(ctx).Error("Failed to clean up user auth", "error", err, "auth_module", identity.AuthModule, "auth_id", identity.AuthID)
-				}
-			}
+		if !errors.Is(errGetAuthInfo, user.ErrUserNotFound) {
+			return nil, nil, errGetAuthInfo
 		}
 	}
 

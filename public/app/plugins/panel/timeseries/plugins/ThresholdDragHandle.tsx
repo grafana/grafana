@@ -17,14 +17,14 @@ interface ThresholdDragHandleProps {
   formatValue: (value: number) => string;
 }
 
-export const ThresholdDragHandle = ({
+export const ThresholdDragHandle: React.FC<ThresholdDragHandleProps> = ({
   step,
   y,
   dragBounds,
   mapPositionToValue,
   formatValue,
   onChange,
-}: ThresholdDragHandleProps) => {
+}) => {
   const theme = useTheme2();
   let yPos = y;
   let outOfBounds: OutOfBounds = 'none';

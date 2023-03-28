@@ -178,13 +178,13 @@ var _ proxyCache = new(fakeCache)
 
 type fakeCache struct {
 	expectedErr  error
-	expectedItem []byte
+	expectedItem interface{}
 }
 
-func (f fakeCache) Get(ctx context.Context, key string) ([]byte, error) {
+func (f fakeCache) Get(ctx context.Context, key string) (interface{}, error) {
 	return f.expectedItem, f.expectedErr
 }
 
-func (f fakeCache) Set(ctx context.Context, key string, value []byte, expire time.Duration) error {
+func (f fakeCache) Set(ctx context.Context, key string, value interface{}, expire time.Duration) error {
 	return f.expectedErr
 }

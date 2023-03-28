@@ -76,11 +76,10 @@ func validateRuleNode(
 		}
 	}
 
-	queries := AlertQueriesFromApiAlertQueries(ruleNode.GrafanaManagedAlert.Data)
-	if len(queries) != 0 {
+	if len(ruleNode.GrafanaManagedAlert.Data) != 0 {
 		cond := ngmodels.Condition{
 			Condition: ruleNode.GrafanaManagedAlert.Condition,
-			Data:      queries,
+			Data:      ruleNode.GrafanaManagedAlert.Data,
 		}
 		if err = conditionValidator(cond); err != nil {
 			return nil, fmt.Errorf("failed to validate condition of alert rule %s: %w", ruleNode.GrafanaManagedAlert.Title, err)
@@ -91,7 +90,7 @@ func validateRuleNode(
 		OrgID:           orgId,
 		Title:           ruleNode.GrafanaManagedAlert.Title,
 		Condition:       ruleNode.GrafanaManagedAlert.Condition,
-		Data:            queries,
+		Data:            ruleNode.GrafanaManagedAlert.Data,
 		UID:             ruleNode.GrafanaManagedAlert.UID,
 		IntervalSeconds: intervalSeconds,
 		NamespaceUID:    namespace.UID,

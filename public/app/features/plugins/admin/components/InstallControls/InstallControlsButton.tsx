@@ -6,8 +6,6 @@ import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
-import { useDispatch } from 'app/types';
 
 import { useInstallStatus, useUninstallStatus, useInstall, useUninstall } from '../../state/hooks';
 import { trackPluginInstalled, trackPluginUninstalled } from '../../tracking';
@@ -17,16 +15,9 @@ type InstallControlsButtonProps = {
   plugin: CatalogPlugin;
   pluginStatus: PluginStatus;
   latestCompatibleVersion?: Version;
-  setNeedReload: (needReload: boolean) => void;
 };
 
-export function InstallControlsButton({
-  plugin,
-  pluginStatus,
-  latestCompatibleVersion,
-  setNeedReload,
-}: InstallControlsButtonProps) {
-  const dispatch = useDispatch();
+export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVersion }: InstallControlsButtonProps) {
   const [queryParams] = useQueryParams();
   const location = useLocation();
   const { isInstalling, error: errorInstalling } = useInstallStatus();
@@ -48,9 +39,6 @@ export function InstallControlsButton({
     await install(plugin.id, latestCompatibleVersion?.version);
     if (!errorInstalling) {
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
-      if (plugin.type === 'app') {
-        setNeedReload(true);
-      }
     }
   };
 
@@ -66,10 +54,6 @@ export function InstallControlsButton({
         locationService.replace(`${location.pathname}?page=${PluginTabIds.OVERVIEW}`);
       }
       appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${plugin.name}`]);
-      if (plugin.type === 'app') {
-        dispatch(removePluginFromNavTree({ pluginID: plugin.id }));
-        setNeedReload(false);
-      }
     }
   };
 

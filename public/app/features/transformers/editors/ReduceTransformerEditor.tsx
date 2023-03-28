@@ -13,7 +13,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { LegacyForms, Select, StatsPicker } from '@grafana/ui';
 
 // TODO:  Minimal implementation, needs some <3
-export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProps<ReduceTransformerOptions>) => {
+export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransformerOptions>> = ({
+  options,
+  onChange,
+}) => {
   const modes: Array<SelectableValue<ReduceTransformerMode>> = [
     {
       label: 'Series to rows',

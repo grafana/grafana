@@ -85,15 +85,13 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => {
       const interpolatedLogGroupArns = interpolateStringArrayUsingSingleOrMultiValuedVariable(
         this.templateSrv,
-        (target.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.arn),
-        options.scopedVars
+        (target.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.arn)
       );
 
       // need to support legacy format variables too
       const interpolatedLogGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
         this.templateSrv,
         target.logGroupNames || this.instanceSettings.jsonData.defaultLogGroups || [],
-        options.scopedVars,
         'text'
       );
 
@@ -105,7 +103,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       return {
         refId: target.refId,
         region: this.templateSrv.replace(this.getActualRegion(target.region)),
-        queryString: this.templateSrv.replace(target.expression || '', options.scopedVars),
+        queryString: this.templateSrv.replace(target.expression || ''),
         logGroups,
         logGroupNames,
       };
@@ -118,7 +116,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
     return runWithRetry(
       (targets: StartQueryRequest[]) => {
-        return this.makeLogActionRequest('StartQuery', targets, options);
+        return this.makeLogActionRequest('StartQuery', targets);
       },
       startQueryRequests,
       timeoutFunc
@@ -269,12 +267,8 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     }
   }
 
-  makeLogActionRequest(
-    subtype: LogAction,
-    queryParams: CloudWatchLogsRequest[],
-    options?: DataQueryRequest<CloudWatchQuery>
-  ): Observable<DataFrame[]> {
-    const range = options?.range || this.timeSrv.timeRange();
+  makeLogActionRequest(subtype: LogAction, queryParams: CloudWatchLogsRequest[]): Observable<DataFrame[]> {
+    const range = this.timeSrv.timeRange();
 
     const requestParams = {
       from: range.from.valueOf().toString(),

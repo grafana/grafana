@@ -22,7 +22,7 @@ const variableOptionGroup = {
   options: [],
 };
 
-describe('LogsQueryEditor', () => {
+describe('LogsQueryEdiutor', () => {
   const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
 
   beforeEach(() => {
@@ -50,13 +50,13 @@ describe('LogsQueryEditor', () => {
     );
 
     const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
-    await userEvent.click(resourcePickerButton);
+    resourcePickerButton.click();
 
     const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
-    await userEvent.click(subscriptionButton);
+    subscriptionButton.click();
 
     const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
-    await userEvent.click(resourceGroupButton);
+    resourceGroupButton.click();
 
     const checkbox = await screen.findByLabelText('web-server');
     await userEvent.click(checkbox);
@@ -98,13 +98,13 @@ describe('LogsQueryEditor', () => {
     );
 
     const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
-    await userEvent.click(resourcePickerButton);
+    resourcePickerButton.click();
 
     const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
-    await userEvent.click(subscriptionButton);
+    subscriptionButton.click();
 
     const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
-    await userEvent.click(resourceGroupButton);
+    resourceGroupButton.click();
 
     const checkbox = await screen.findByLabelText('web-server');
     await userEvent.click(checkbox);
@@ -131,13 +131,13 @@ describe('LogsQueryEditor', () => {
     );
 
     const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
-    await userEvent.click(resourcePickerButton);
+    resourcePickerButton.click();
 
     const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
-    await userEvent.click(subscriptionButton);
+    subscriptionButton.click();
 
     const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
-    await userEvent.click(resourceGroupButton);
+    resourceGroupButton.click();
 
     const checkbox = await screen.findByLabelText('web-server');
     await userEvent.click(checkbox);
@@ -164,17 +164,17 @@ describe('LogsQueryEditor', () => {
     );
 
     const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
-    await userEvent.click(resourcePickerButton);
+    resourcePickerButton.click();
 
     const advancedSection = screen.getByText('Advanced');
-    await userEvent.click(advancedSection);
+    advancedSection.click();
 
     const advancedInput = await screen.findByTestId('input-advanced-resource-picker-1');
     // const advancedInput = await screen.findByLabelText('Resource URI(s)');
     await userEvent.type(advancedInput, '/subscriptions/def-123');
 
     const applyButton = screen.getByRole('button', { name: 'Apply' });
-    await userEvent.click(applyButton);
+    applyButton.click();
 
     expect(onChange).toBeCalledWith(
       expect.objectContaining({

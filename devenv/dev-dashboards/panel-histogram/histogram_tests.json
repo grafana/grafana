@@ -748,6 +748,7 @@
       "type": "histogram"
     }
   ],
+  "revision": 1,
   "schemaVersion": 37,
   "style": "dark",
   "tags": [

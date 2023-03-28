@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestRulePayloadMarshaling(t *testing.T) {
@@ -22,7 +24,7 @@ func TestRulePayloadMarshaling(t *testing.T) {
 		{
 			desc: "success grafana",
 			input: func() TestRulePayload {
-				data := AlertQuery{}
+				data := models.AlertQuery{}
 
 				// hack around that the struct embeds the json message inside of it as well
 				raw, _ := json.Marshal(data)
@@ -31,7 +33,7 @@ func TestRulePayloadMarshaling(t *testing.T) {
 				return TestRulePayload{
 					GrafanaManagedCondition: &EvalAlertConditionCommand{
 						Condition: "placeholder",
-						Data:      []AlertQuery{data},
+						Data:      []models.AlertQuery{data},
 					},
 				}
 			}(),

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, RenderResult } from '@testing-library/react';
 import { noop } from 'lodash';
 import React from 'react';
 
@@ -22,7 +22,7 @@ jest.mock('./monaco-query-field/MonacoQueryFieldLazy', () => {
   };
 });
 
-function setup(app: CoreApp): { onRunQuery: jest.Mock } {
+function setup(app: CoreApp): RenderResult & { onRunQuery: jest.Mock } {
   const dataSource = {
     createQuery: jest.fn((q) => q),
     getInitHints: () => [],
@@ -37,7 +37,7 @@ function setup(app: CoreApp): { onRunQuery: jest.Mock } {
   } as unknown as PrometheusDatasource;
   const onRunQuery = jest.fn();
 
-  render(
+  const renderOutput = render(
     <PromQueryEditorByApp
       app={app}
       onChange={noop}
@@ -48,35 +48,36 @@ function setup(app: CoreApp): { onRunQuery: jest.Mock } {
   );
 
   return {
+    ...renderOutput,
     onRunQuery,
   };
 }
 
 describe('PromQueryEditorByApp', () => {
-  it('should render simplified query editor for cloud alerting', async () => {
-    setup(CoreApp.CloudAlerting);
+  it('should render simplified query editor for cloud alerting', () => {
+    const { getByTestId } = setup(CoreApp.CloudAlerting);
 
-    expect(await screen.findByTestId(alertingTestIds.editor)).toBeInTheDocument();
+    expect(getByTestId(alertingTestIds.editor)).toBeInTheDocument();
   });
 
   it('should render editor selector for unkown apps', () => {
-    setup(CoreApp.Unknown);
+    const { getByTestId, queryByTestId } = setup(CoreApp.Unknown);
 
-    expect(screen.getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
-    expect(screen.queryByTestId(alertingTestIds.editor)).toBeNull();
+    expect(getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
+    expect(queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 
   it('should render editor selector for explore', () => {
-    setup(CoreApp.Explore);
+    const { getByTestId, queryByTestId } = setup(CoreApp.Explore);
 
-    expect(screen.getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
-    expect(screen.queryByTestId(alertingTestIds.editor)).toBeNull();
+    expect(getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
+    expect(queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 
   it('should render editor selector for dashboard', () => {
-    setup(CoreApp.Dashboard);
+    const { getByTestId, queryByTestId } = setup(CoreApp.Dashboard);
 
-    expect(screen.getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
-    expect(screen.queryByTestId(alertingTestIds.editor)).toBeNull();
+    expect(getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
+    expect(queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 });

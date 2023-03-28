@@ -4,9 +4,11 @@ import { FieldConfigEditorProps, NumberFieldConfigSettings } from '@grafana/data
 
 import { NumberInput } from './NumberInput';
 
-type Props = FieldConfigEditorProps<number, NumberFieldConfigSettings>;
-
-export const NumberValueEditor = ({ value, onChange, item }: Props) => {
+export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFieldConfigSettings>> = ({
+  value,
+  onChange,
+  item,
+}) => {
   const { settings } = item;
 
   const onValueChange = useCallback(

@@ -33,7 +33,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
 
-  getValueColor = (frameIdx: number, fieldIdx: number, value: unknown) => {
+  getValueColor = (frameIdx: number, fieldIdx: number, value: any) => {
     const field = this.props.frames[frameIdx].fields[fieldIdx];
 
     if (field.display) {

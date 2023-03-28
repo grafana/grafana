@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
@@ -179,7 +180,7 @@ func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 	result := make([]alertQuery, 0, len(data))
 	for _, d := range data {
 		// queries that are expression are not relevant, skip them.
-		if d.DatasourceUID == expressionDatasourceUID {
+		if d.DatasourceUID == expr.DatasourceType {
 			result = append(result, d)
 			continue
 		}

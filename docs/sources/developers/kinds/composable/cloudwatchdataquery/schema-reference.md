@@ -13,7 +13,7 @@ title: CloudWatchDataQuery kind
 
 
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
 
 

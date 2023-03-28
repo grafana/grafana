@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { FunctionComponent, useMemo } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorField, EditorList, EditorRow } from '@grafana/experimental';
@@ -32,7 +32,12 @@ const operators = ['=', '!=', '=~', '!=~'].map(toOption);
 // For example the 'metric.type' is set with the metric name selector.
 const protectedFilterKeys = ['metric.type'];
 
-export const LabelFilter = ({ labels = {}, filters: filterArray, onChange: _onChange, variableOptionGroup }: Props) => {
+export const LabelFilter: FunctionComponent<Props> = ({
+  labels = {},
+  filters: filterArray,
+  onChange: _onChange,
+  variableOptionGroup,
+}) => {
   const rawFilters: Filter[] = stringArrayToFilters(filterArray);
   const filters = rawFilters.filter(({ key }) => !protectedFilterKeys.includes(key));
   const protectedFilters = rawFilters.filter(({ key }) => protectedFilterKeys.includes(key));

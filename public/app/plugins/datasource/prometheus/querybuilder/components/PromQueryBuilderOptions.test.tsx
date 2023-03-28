@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
@@ -14,10 +13,10 @@ describe('PromQueryBuilderOptions', () => {
   it('Can change query type', async () => {
     const { props } = setup();
 
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    screen.getByTitle('Click to edit options').click();
     expect(screen.getByLabelText('Range')).toBeChecked();
 
-    await userEvent.click(screen.getByLabelText('Instant'));
+    screen.getByLabelText('Instant').click();
 
     expect(props.onChange).toHaveBeenCalledWith({
       ...props.query,
@@ -30,7 +29,7 @@ describe('PromQueryBuilderOptions', () => {
   it('Can set query type to "Both" on render for PanelEditor', async () => {
     setup({ instant: true, range: true });
 
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    screen.getByTitle('Click to edit options').click();
 
     expect(screen.getByLabelText('Both')).toBeChecked();
   });
@@ -38,12 +37,12 @@ describe('PromQueryBuilderOptions', () => {
   it('Can set query type to "Both" on render for Explorer', async () => {
     setup({ instant: true, range: true }, CoreApp.Explore);
 
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    screen.getByTitle('Click to edit options').click();
 
     expect(screen.getByLabelText('Both')).toBeChecked();
   });
 
-  it('Legend format default to Auto', () => {
+  it('Legend format default to Auto', async () => {
     setup();
     expect(screen.getByText('Legend: Auto')).toBeInTheDocument();
   });
@@ -51,12 +50,12 @@ describe('PromQueryBuilderOptions', () => {
   it('Can change legend format to verbose', async () => {
     const { props } = setup();
 
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    screen.getByTitle('Click to edit options').click();
 
     let legendModeSelect = screen.getByText('Auto').parentElement!;
-    await userEvent.click(legendModeSelect);
+    legendModeSelect.click();
 
-    await selectOptionInTest(legendModeSelect, 'Verbose');
+    await selectOptionInTest(legendModeSelect as HTMLElement, 'Verbose');
 
     expect(props.onChange).toHaveBeenCalledWith({
       ...props.query,
@@ -67,12 +66,12 @@ describe('PromQueryBuilderOptions', () => {
   it('Can change legend format to custom', async () => {
     const { props } = setup();
 
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    screen.getByTitle('Click to edit options').click();
 
     let legendModeSelect = screen.getByText('Auto').parentElement!;
-    await userEvent.click(legendModeSelect);
+    legendModeSelect.click();
 
-    await selectOptionInTest(legendModeSelect, 'Custom');
+    await selectOptionInTest(legendModeSelect as HTMLElement, 'Custom');
 
     expect(props.onChange).toHaveBeenCalledWith({
       ...props.query,
@@ -80,23 +79,23 @@ describe('PromQueryBuilderOptions', () => {
     });
   });
 
-  it('Handle defaults with undefined range', () => {
+  it('Handle defaults with undefined range', async () => {
     setup(getQueryWithDefaults({ refId: 'A', expr: '', range: undefined, instant: true }, CoreApp.Dashboard));
 
     expect(screen.getByText('Type: Instant')).toBeInTheDocument();
   });
 
-  it('Should show "Exemplars: false" by default', () => {
+  it('Should show "Exemplars: false" by default', async () => {
     setup();
     expect(screen.getByText('Exemplars: false')).toBeInTheDocument();
   });
 
-  it('Should show "Exemplars: false" when query has "Exemplars: false"', () => {
+  it('Should show "Exemplars: false" when query has "Exemplars: false"', async () => {
     setup({ exemplar: false });
     expect(screen.getByText('Exemplars: false')).toBeInTheDocument();
   });
 
-  it('Should show "Exemplars: true" when query has "Exemplars: true"', () => {
+  it('Should show "Exemplars: true" when query has "Exemplars: true"', async () => {
     setup({ exemplar: true });
     expect(screen.getByText('Exemplars: true')).toBeInTheDocument();
   });

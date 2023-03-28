@@ -10,7 +10,7 @@ type WithGrafanaRuntime<T> = T & {
 };
 
 const hasGrafanaRuntime = <T>(obj: T): obj is WithGrafanaRuntime<T> => {
-  return 'grafanaRuntime' in obj;
+  return typeof (obj as any)?.grafanaRuntime === 'object';
 };
 
 e2e.benchmark({

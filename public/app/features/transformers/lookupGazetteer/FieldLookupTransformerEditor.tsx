@@ -31,7 +31,11 @@ const fieldLookupSettings: StandardEditorsRegistryItem<string, GazetteerPathEdit
   settings: {},
 } as any;
 
-export const FieldLookupTransformerEditor = ({ input, options, onChange }: TransformerUIProps<FieldLookupOptions>) => {
+export const FieldLookupTransformerEditor: React.FC<TransformerUIProps<FieldLookupOptions>> = ({
+  input,
+  options,
+  onChange,
+}) => {
   const onPickLookupField = useCallback(
     (value: string | undefined) => {
       onChange({

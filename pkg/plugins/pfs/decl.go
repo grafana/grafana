@@ -2,10 +2,9 @@ package pfs
 
 import (
 	"cuelang.org/go/cue/ast"
-	"github.com/grafana/kindsys"
-	"github.com/grafana/thema"
-
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/thema"
 )
 
 type PluginDecl struct {

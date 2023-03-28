@@ -60,7 +60,7 @@ const useDimensionLabels = (data: PanelData | undefined, query: AzureMonitorQuer
   return dimensionLabels;
 };
 
-const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: DimensionFieldsProps) => {
+const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensionOptions, onQueryChange }) => {
   const dimensionFilters = useMemo(
     () => query.azureMonitor?.dimensionFilters ?? [],
     [query.azureMonitor?.dimensionFilters]

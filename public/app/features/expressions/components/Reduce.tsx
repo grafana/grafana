@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
@@ -12,7 +12,7 @@ interface Props {
   onChange: (query: ExpressionQuery) => void;
 }
 
-export const Reduce = ({ labelWidth = 'auto', onChange, refIds, query }: Props) => {
+export const Reduce: FC<Props> = ({ labelWidth = 'auto', onChange, refIds, query }) => {
   const reducer = reducerTypes.find((o) => o.value === query.reducer);
 
   const onRefIdChange = (value: SelectableValue<string>) => {

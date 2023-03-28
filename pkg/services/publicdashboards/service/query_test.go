@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -353,85 +352,6 @@ const (
   ],
   "schemaVersion": 35
 }`
-
-	dashboardWithRows = `
-{
-  "panels": [
-    {
-      "id": 2,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "_yxMP8Ynk"
-          },
-          "exemplar": true,
-          "expr": "go_goroutines{job=\"$job\"}",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "promds2"
-          },
-          "exemplar": true,
-          "expr": "query2",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "B"
-        }
-      ],
-      "title": "Panel Title",
-      "type": "timeseries"
-    },
-    {
-      "id": 3,
-      "collapsed": true,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 9
-      },
-      "title": "This panel is a Row",
-      "type": "row",
-"panels": [
-    {
-      "id": 4,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "_yxMP8Ynk"
-          },
-          "exemplar": true,
-          "expr": "go_goroutines{job=\"$job\"}",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "promds2"
-          },
-          "exemplar": true,
-          "expr": "query2",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "B"
-        }
-      ],
-      "title": "Panel inside a row",
-      "type": "timeseries"
-    }
-  ]
-    }
-  ],
-  "schemaVersion": 35
-}`
 )
 
 func TestGetQueryDataResponse(t *testing.T) {
@@ -440,14 +360,10 @@ func TestGetQueryDataResponse(t *testing.T) {
 	require.NoError(t, err)
 	publicdashboardStore := database.ProvideStore(sqlStore)
 
-	fakeQueryService := &query.FakeQueryService{}
-	fakeQueryService.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&backend.QueryDataResponse{}, nil)
-
 	service := &PublicDashboardServiceImpl{
 		log:                log.New("test.logger"),
 		store:              publicdashboardStore,
 		intervalCalculator: intervalv2.NewCalculator(),
-		QueryDataService:   fakeQueryService,
 	}
 
 	publicDashboardQueryDTO := PublicDashboardQueryDTO{
@@ -455,7 +371,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 		MaxDataPoints: int64(1),
 	}
 
-	t.Run("Returns query data even when the query is hidden", func(t *testing.T) {
+	t.Run("Returns nil when query is hidden", func(t *testing.T) {
 		hiddenQuery := map[string]interface{}{
 			"datasource": map[string]interface{}{
 				"type": "mysql",
@@ -489,7 +405,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 		require.NoError(t, err)
 
 		resp, _ := service.GetQueryDataResponse(context.Background(), true, publicDashboardQueryDTO, 1, pubdashDto.AccessToken)
-		require.NotNil(t, resp)
+		require.Nil(t, resp)
 	})
 }
 
@@ -1008,7 +924,7 @@ func TestBuildMetricRequest(t *testing.T) {
 		require.ErrorContains(t, err, ErrPanelNotFound.Error())
 	})
 
-	t.Run("metric request built with hidden query", func(t *testing.T) {
+	t.Run("metric request built without hidden query", func(t *testing.T) {
 		hiddenQuery := map[string]interface{}{
 			"datasource": map[string]interface{}{
 				"type": "mysql",
@@ -1053,9 +969,9 @@ func TestBuildMetricRequest(t *testing.T) {
 			require.Equal(t, publicDashboardQueryDTO.MaxDataPoints, reqDTO.Queries[i].Get("maxDataPoints").MustInt64())
 		}
 
-		require.Len(t, reqDTO.Queries, 2)
+		require.Len(t, reqDTO.Queries, 1)
 
-		require.Equal(
+		require.NotEqual(
 			t,
 			simplejson.NewFromAny(hiddenQuery),
 			reqDTO.Queries[0],
@@ -1064,8 +980,49 @@ func TestBuildMetricRequest(t *testing.T) {
 		require.Equal(
 			t,
 			simplejson.NewFromAny(nonHiddenQuery),
-			reqDTO.Queries[1],
+			reqDTO.Queries[0],
 		)
+	})
+
+	t.Run("metric request built with 0 queries len when all queries are hidden", func(t *testing.T) {
+		customPanels := []interface{}{
+			map[string]interface{}{
+				"id": 1,
+				"datasource": map[string]interface{}{
+					"uid": "ds1",
+				},
+				"targets": []interface{}{map[string]interface{}{
+					"datasource": map[string]interface{}{
+						"type": "mysql",
+						"uid":  "ds1",
+					},
+					"hide":  true,
+					"refId": "A",
+				}, map[string]interface{}{
+					"datasource": map[string]interface{}{
+						"type": "prometheus",
+						"uid":  "ds2",
+					},
+					"hide":  true,
+					"refId": "B",
+				}},
+			}}
+
+		publicDashboard := insertTestDashboard(t, dashboardStore, "testDashWithAllQueriesHidden", 1, 0, true, []map[string]interface{}{}, customPanels)
+
+		reqDTO, err := service.buildMetricRequest(
+			context.Background(),
+			publicDashboard,
+			publicDashboardPD,
+			1,
+			publicDashboardQueryDTO,
+		)
+		require.NoError(t, err)
+
+		require.Equal(t, from, reqDTO.From)
+		require.Equal(t, to, reqDTO.To)
+
+		require.Len(t, reqDTO.Queries, 0)
 	})
 }
 
@@ -1074,6 +1031,11 @@ func TestBuildAnonymousUser(t *testing.T) {
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
 	require.NoError(t, err)
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
+	// publicdashboardStore := database.ProvideStore(sqlStore)
+	// service := &PublicDashboardServiceImpl{
+	//	log:   log.New("test.logger"),
+	//	store: publicdashboardStore,
+	// }
 
 	t.Run("will add datasource read and query permissions to user for each datasource in dashboard", func(t *testing.T) {
 		user := buildAnonymousUser(context.Background(), dashboard)
@@ -1198,32 +1160,25 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		}`, string(query))
 	})
 
-	t.Run("hidden query not filtered", func(t *testing.T) {
+	t.Run("hidden query filtered", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithOneHiddenQuery))
 		require.NoError(t, err)
 		queries := groupQueriesByPanelId(json)[2]
 
-		require.Len(t, queries, 2)
+		require.Len(t, queries, 1)
+		for _, query := range queries {
+			if hideAttr, exists := query.CheckGet("hide"); exists && hideAttr.MustBool() {
+				require.Fail(t, "hidden queries should have been filtered")
+			}
+		}
 	})
 
-	t.Run("hidden queries not filtered, so queries returned", func(t *testing.T) {
+	t.Run("hidden query filtered, so empty queries returned", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithAllHiddenQueries))
 		require.NoError(t, err)
 		queries := groupQueriesByPanelId(json)[2]
 
-		require.Len(t, queries, 2)
-	})
-
-	t.Run("queries inside panels inside rows are returned", func(t *testing.T) {
-		json, err := simplejson.NewJson([]byte(dashboardWithRows))
-		require.NoError(t, err)
-
-		queries := groupQueriesByPanelId(json)
-		for idx := range queries {
-			assert.NotNil(t, queries[idx])
-		}
-
-		assert.Len(t, queries, 2)
+		require.Len(t, queries, 0)
 	})
 }
 

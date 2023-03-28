@@ -89,18 +89,7 @@ export const getLocaleData = (): DateTimeLocale => {
   return moment.localeData();
 };
 
-export const isDateTimeInput = (value: unknown): value is DateTimeInput => {
-  return (
-    value === null ||
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    value instanceof Date ||
-    (Array.isArray(value) && value.every((v) => typeof v === 'string' || typeof v === 'number')) ||
-    isDateTime(value)
-  );
-};
-
-export const isDateTime = (value: unknown): value is DateTime => {
+export const isDateTime = (value: any): value is DateTime => {
   return moment.isMoment(value);
 };
 

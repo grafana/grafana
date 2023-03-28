@@ -24,8 +24,7 @@ describe('ColorPickerInput', () => {
     const mockOnChange = jest.fn();
     render(<ColorPickerInput onChange={mockOnChange} />);
     await userEvent.type(screen.getByRole('textbox'), 'some text');
-    // blur the input
-    await userEvent.click(document.body);
+    screen.getByRole('textbox').blur();
     await waitFor(() => expect(mockOnChange).not.toHaveBeenCalled());
     expect(screen.getByRole('textbox')).toHaveValue('');
   });

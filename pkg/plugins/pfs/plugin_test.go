@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/kindsys"
+	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 // This is a brick-dumb test that just ensures known schema interfaces are being

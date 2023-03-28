@@ -21,7 +21,7 @@ interface KBarResultsProps {
   maxHeight?: number;
 }
 
-export const KBarResults = (props: KBarResultsProps) => {
+export const KBarResults: React.FC<KBarResultsProps> = (props) => {
   const activeRef = React.useRef<HTMLElement>(null);
   const parentRef = React.useRef(null);
 
@@ -155,16 +155,13 @@ export const KBarResults = (props: KBarResultsProps) => {
         }}
       >
         {rowVirtualizer.virtualItems.map((virtualRow) => {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const item = itemsRef.current[virtualRow.index] as ActionImpl & {
-            url?: string;
-            target?: React.HTMLAttributeAnchorTarget;
-          };
+          const item = itemsRef.current[virtualRow.index];
 
           // ActionImpl constructor copies all properties from action onto ActionImpl
           // so our url property is secretly there, but completely untyped
           // Preferably this change is upstreamed and ActionImpl has this
-          const { target, url } = item;
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const url = (item as ActionImpl & { url?: string }).url;
 
           const handlers = typeof item !== 'string' && {
             onPointerMove: () =>
@@ -203,7 +200,6 @@ export const KBarResults = (props: KBarResultsProps) => {
               <a
                 key={virtualRow.index}
                 href={url}
-                target={target}
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 ref={active ? (activeRef as React.RefObject<HTMLAnchorElement>) : null}
                 {...childProps}

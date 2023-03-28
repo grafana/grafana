@@ -15,17 +15,17 @@ type xormStore struct {
 	db db.DB
 }
 
-func (ss *xormStore) Get(ctx context.Context, query *thumbs.GetDashboardThumbnailCommand) (result *thumbs.DashboardThumbnail, err error) {
-	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		thumb, err := findThumbnailByMeta(sess, query.DashboardThumbnailMeta)
+func (ss *xormStore) Get(ctx context.Context, query *thumbs.GetDashboardThumbnailCommand) (*thumbs.DashboardThumbnail, error) {
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		result, err := findThumbnailByMeta(sess, query.DashboardThumbnailMeta)
 		if err != nil {
 			return err
 		}
-		result = thumb
+		query.Result = result
 		return nil
 	})
 
-	return result, err
+	return query.Result, err
 }
 
 func marshalDatasourceUids(dsUids []string) (string, error) {
@@ -40,8 +40,8 @@ func marshalDatasourceUids(dsUids []string) (string, error) {
 	return string(b), nil
 }
 
-func (ss *xormStore) Save(ctx context.Context, cmd *thumbs.SaveDashboardThumbnailCommand) (result *thumbs.DashboardThumbnail, err error) {
-	err = ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+func (ss *xormStore) Save(ctx context.Context, cmd *thumbs.SaveDashboardThumbnailCommand) (*thumbs.DashboardThumbnail, error) {
+	err := ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		existing, err := findThumbnailByMeta(sess, cmd.DashboardThumbnailMeta)
 
 		if err != nil && !errors.Is(err, dashboards.ErrDashboardThumbnailNotFound) {
@@ -61,7 +61,7 @@ func (ss *xormStore) Save(ctx context.Context, cmd *thumbs.SaveDashboardThumbnai
 			existing.DsUIDs = dsUids
 			existing.State = thumbs.ThumbnailStateDefault
 			_, err = sess.ID(existing.Id).Update(existing)
-			result = existing
+			cmd.Result = existing
 			return err
 		}
 
@@ -84,11 +84,11 @@ func (ss *xormStore) Save(ctx context.Context, cmd *thumbs.SaveDashboardThumbnai
 		thumb.State = thumbs.ThumbnailStateDefault
 		thumb.PanelId = cmd.PanelID
 		_, err = sess.Insert(thumb)
-		result = thumb
+		cmd.Result = thumb
 		return err
 	})
 
-	return result, err
+	return cmd.Result, err
 }
 
 func (ss *xormStore) UpdateState(ctx context.Context, cmd *thumbs.UpdateThumbnailStateCommand) error {
@@ -107,22 +107,22 @@ func (ss *xormStore) UpdateState(ctx context.Context, cmd *thumbs.UpdateThumbnai
 	return err
 }
 
-func (ss *xormStore) Count(ctx context.Context, cmd *thumbs.FindDashboardThumbnailCountCommand) (n int64, err error) {
-	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+func (ss *xormStore) Count(ctx context.Context, cmd *thumbs.FindDashboardThumbnailCountCommand) (int64, error) {
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		count, err := sess.Count(&thumbs.DashboardThumbnail{})
 		if err != nil {
 			return err
 		}
 
-		n = count
+		cmd.Result = count
 		return nil
 	})
 
-	return n, err
+	return cmd.Result, err
 }
 
-func (ss *xormStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *thumbs.FindDashboardsWithStaleThumbnailsCommand) (result []*thumbs.DashboardWithStaleThumbnail, err error) {
-	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+func (ss *xormStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *thumbs.FindDashboardsWithStaleThumbnailsCommand) ([]*thumbs.DashboardWithStaleThumbnail, error) {
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.Table("dashboard")
 		sess.Join("LEFT", "dashboard_thumbnail", "dashboard.id = dashboard_thumbnail.dashboard_id AND dashboard_thumbnail.theme = ? AND dashboard_thumbnail.kind = ?", cmd.Theme, cmd.Kind)
 		sess.Where("dashboard.is_folder = ?", ss.db.GetDialect().BooleanStr(false))
@@ -152,17 +152,17 @@ func (ss *xormStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd 
 			"dashboard.version",
 			"dashboard.slug")
 
-		var list = make([]*thumbs.DashboardWithStaleThumbnail, 0)
-		err := sess.Find(&list)
+		var result = make([]*thumbs.DashboardWithStaleThumbnail, 0)
+		err := sess.Find(&result)
 
 		if err != nil {
 			return err
 		}
-		result = list
+		cmd.Result = result
 		return err
 	})
 
-	return result, err
+	return cmd.Result, err
 }
 
 func findThumbnailByMeta(sess *db.Session, meta thumbs.DashboardThumbnailMeta) (*thumbs.DashboardThumbnail, error) {

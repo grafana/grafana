@@ -25,17 +25,7 @@ function renderTagCondition(tag: { operator: any; value: string; condition: any;
     value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
   }
 
-  let escapedKey = `"${tag.key}"`;
-
-  if (tag.key.endsWith('::tag')) {
-    escapedKey = `"${tag.key.slice(0, -5)}"::tag`;
-  }
-
-  if (tag.key.endsWith('::field')) {
-    escapedKey = `"${tag.key.slice(0, -7)}"::field`;
-  }
-
-  return str + escapedKey + ' ' + operator + ' ' + value;
+  return str + '"' + tag.key + '" ' + operator + ' ' + value;
 }
 
 export class InfluxQueryBuilder {
@@ -93,13 +83,7 @@ export class InfluxQueryBuilder {
     }
 
     if (withKey) {
-      let keyIdentifier = withKey;
-
-      if (keyIdentifier.endsWith('::tag')) {
-        keyIdentifier = keyIdentifier.slice(0, -5);
-      }
-
-      query += ' WITH KEY = "' + keyIdentifier + '"';
+      query += ' WITH KEY = "' + withKey + '"';
     }
 
     if (this.target.tags && this.target.tags.length > 0) {

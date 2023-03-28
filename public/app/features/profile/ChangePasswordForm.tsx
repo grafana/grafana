@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { FC } from 'react';
 
 import { Button, Field, Form, HorizontalGroup, LinkButton } from '@grafana/ui';
 import config from 'app/core/config';
@@ -15,7 +15,7 @@ export interface Props {
   onChangePassword: (payload: ChangePasswordFields) => void;
 }
 
-export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) => {
+export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving }) => {
   const { disableLoginForm } = config;
   const authSource = user.authLabels?.length && user.authLabels[0];
 

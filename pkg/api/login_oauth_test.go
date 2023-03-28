@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -34,7 +33,7 @@ func setupSocialHTTPServerWithConfig(t *testing.T, cfg *setting.Cfg) *HTTPServer
 		Cfg:            cfg,
 		License:        &licensing.OSSLicensingService{Cfg: cfg},
 		SQLStore:       sqlStore,
-		SocialService:  social.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService()),
+		SocialService:  social.ProvideService(cfg, features, &usagestats.UsageStatsMock{}),
 		HooksService:   hooks.ProvideService(),
 		SecretsService: fakes.NewFakeSecretsService(),
 		Features:       features,

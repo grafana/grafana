@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -14,7 +14,7 @@ interface Props {
   alertManagerSourceName: string;
 }
 
-export const DuplicateTemplateView = ({ config, templateName, alertManagerSourceName }: Props) => {
+export const DuplicateTemplateView: FC<Props> = ({ config, templateName, alertManagerSourceName }) => {
   const template = config.template_files?.[templateName];
 
   if (!template) {

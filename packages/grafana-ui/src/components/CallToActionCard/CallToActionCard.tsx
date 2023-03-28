@@ -12,7 +12,12 @@ export interface CallToActionCardProps {
   className?: string;
 }
 
-export const CallToActionCard = ({ message, callToActionElement, footer, className }: CallToActionCardProps) => {
+export const CallToActionCard: React.FunctionComponent<CallToActionCardProps> = ({
+  message,
+  callToActionElement,
+  footer,
+  className,
+}) => {
   const css = useStyles2(getStyles);
 
   return (
@@ -29,7 +34,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: call-to-action-card;
     padding: ${theme.spacing(3)};
     background: ${theme.colors.background.secondary};
-    border-radius: ${theme.shape.radius.default};
+    border-radius: ${theme.shape.borderRadius(2)};
     display: flex;
     flex-direction: column;
     align-items: center;

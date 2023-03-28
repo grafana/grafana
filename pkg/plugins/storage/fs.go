@@ -14,7 +14,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/logger"
 )
 
 var _ Manager = (*FS)(nil)
@@ -30,10 +30,10 @@ type FS struct {
 	store      map[string]string
 	mu         sync.RWMutex
 	pluginsDir string
-	log        log.PrettyLogger
+	log        logger.Logger
 }
 
-func FileSystem(logger log.PrettyLogger, pluginsDir string) *FS {
+func FileSystem(logger logger.Logger, pluginsDir string) *FS {
 	return &FS{
 		store:      make(map[string]string),
 		pluginsDir: pluginsDir,

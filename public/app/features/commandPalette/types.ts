@@ -9,13 +9,11 @@ export type CommandPaletteAction = RootCommandPaletteAction | ChildCommandPalett
 type RootCommandPaletteAction = Omit<Action, 'parent'> & {
   section: NotNullable<Action['section']>;
   priority: NotNullable<Action['priority']>;
-  target?: React.HTMLAttributeAnchorTarget;
   url?: string;
 };
 
 type ChildCommandPaletteAction = Action & {
   parent: NotNullable<Action['parent']>;
   priority: NotNullable<Action['priority']>;
-  target?: React.HTMLAttributeAnchorTarget;
   url?: string;
 };

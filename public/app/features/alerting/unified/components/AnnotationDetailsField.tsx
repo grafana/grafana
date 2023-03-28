@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { FC } from 'react';
 
 import { GrafanaTheme2, textUtil } from '@grafana/data';
 import { Tooltip, useStyles2 } from '@grafana/ui';
@@ -18,7 +18,7 @@ interface Props {
   valueLink?: string;
 }
 
-export const AnnotationDetailsField = ({ annotationKey, value, valueLink }: Props) => {
+export const AnnotationDetailsField: FC<Props> = ({ annotationKey, value, valueLink }) => {
   const label = annotationLabels[annotationKey as Annotation] ? (
     <Tooltip content={annotationKey} placement="top" theme="info">
       <span>{annotationLabels[annotationKey as Annotation]}</span>
@@ -34,7 +34,7 @@ export const AnnotationDetailsField = ({ annotationKey, value, valueLink }: Prop
   );
 };
 
-const AnnotationValue = ({ annotationKey, value, valueLink }: Props) => {
+const AnnotationValue: FC<Props> = ({ annotationKey, value, valueLink }) => {
   const styles = useStyles2(getStyles);
 
   const needsWell = wellableAnnotationKeys.includes(annotationKey);

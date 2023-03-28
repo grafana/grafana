@@ -21,7 +21,7 @@ import {
 import { LibraryElementDTO } from '../../../library-panels/types';
 import { DashboardModel, PanelModel } from '../../state';
 
-export type PanelPluginInfo = { id: number; defaults: { gridPos: { w: number; h: number }; title: string } };
+export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
 export interface OwnProps {
   panel: PanelModel;
@@ -88,7 +88,7 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
   const onPasteCopiedPanel = (panelPluginInfo: PanelPluginInfo) => {
     const { gridPos } = panel;
 
-    const newPanel = {
+    const newPanel: any = {
       type: panelPluginInfo.id,
       title: 'Panel Title',
       gridPos: {
@@ -124,7 +124,7 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
   };
 
   const onCreateNewRow = () => {
-    const newRow = {
+    const newRow: any = {
       type: 'row',
       title: 'Row title',
       gridPos: { x: 0, y: 0 },
@@ -207,7 +207,7 @@ interface AddPanelWidgetHandleProps {
   styles: AddPanelStyles;
 }
 
-const AddPanelWidgetHandle = ({ children, onBack, onCancel, styles }: AddPanelWidgetHandleProps) => {
+const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ children, onBack, onCancel, styles }) => {
   return (
     <div className={cx(styles.headerRow, 'grid-drag-handle')}>
       {onBack && (

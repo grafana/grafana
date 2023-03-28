@@ -23,7 +23,7 @@ interface SQLGroupByProps {
   onQueryChange: (query: CloudWatchMetricsQuery) => void;
 }
 
-const SQLGroupBy = ({ query, datasource, onQueryChange }: SQLGroupByProps) => {
+const SQLGroupBy: React.FC<SQLGroupByProps> = ({ query, datasource, onQueryChange }) => {
   const sql = query.sql ?? {};
   const groupBysFromQuery = useMemo(() => getFlattenedGroupBys(query.sql ?? {}), [query.sql]);
   const [items, setItems] = useState<QueryEditorGroupByExpression[]>(groupBysFromQuery);
@@ -87,7 +87,7 @@ interface GroupByItemProps {
   onDelete: () => void;
 }
 
-const GroupByItem = (props: GroupByItemProps) => {
+const GroupByItem: React.FC<GroupByItemProps> = (props) => {
   const { options, item, onChange, onDelete } = props;
   const fieldName = item.property?.name;
 

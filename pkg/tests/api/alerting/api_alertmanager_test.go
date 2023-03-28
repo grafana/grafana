@@ -12,10 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/expr"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -503,12 +504,12 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiring",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -644,12 +645,12 @@ func TestIntegrationRulerAccess(t *testing.T) {
 						GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 							Title:     fmt.Sprintf("AlwaysFiring %d", i),
 							Condition: "A",
-							Data: []apimodels.AlertQuery{
+							Data: []ngmodels.AlertQuery{
 								{
 									RefID: "A",
-									RelativeTimeRange: apimodels.RelativeTimeRange{
-										From: apimodels.Duration(time.Duration(5) * time.Hour),
-										To:   apimodels.Duration(time.Duration(3) * time.Hour),
+									RelativeTimeRange: ngmodels.RelativeTimeRange{
+										From: ngmodels.Duration(time.Duration(5) * time.Hour),
+										To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 									},
 									DatasourceUID: expr.DatasourceUID,
 									Model: json.RawMessage(`{
@@ -886,7 +887,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title: "AlwaysFiring",
-						Data:  []apimodels.AlertQuery{},
+						Data:  []ngmodels.AlertQuery{},
 					},
 				},
 				expectedMessage: "invalid rule specification at index [0]: invalid alert rule: no queries or expressions are found",
@@ -903,12 +904,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -933,12 +934,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     getLongString(t, ngstore.AlertRuleMaxTitleLength+1),
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -963,12 +964,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiring",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -994,12 +995,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiring",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -1024,12 +1025,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiring",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: "unknown",
 								Model: json.RawMessage(`{
@@ -1054,12 +1055,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiring",
 						Condition: "B",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -1113,12 +1114,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiring",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -1133,12 +1134,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiringButSilenced",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -1300,12 +1301,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						UID:       "unknown",
 						Title:     "AlwaysNormal",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -1373,12 +1374,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						UID:       ruleUID,
 						Title:     "AlwaysNormal",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -1407,12 +1408,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						UID:       ruleUID,
 						Title:     "AlwaysAlerting",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -1481,12 +1482,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						UID:       ruleUID, // Including the UID in the payload makes the endpoint update the existing rule.
 						Title:     "AlwaysNormal",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -1599,12 +1600,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						UID:       ruleUID, // Including the UID in the payload makes the endpoint update the existing rule.
 						Title:     "AlwaysNormal",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -1958,12 +1959,12 @@ func TestIntegrationQuota(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "One more alert rule",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -1993,12 +1994,12 @@ func TestIntegrationQuota(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "Updated alert rule",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -2568,7 +2569,7 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
-	u, err := usrSvc.Create(context.Background(), &cmd)
+	u, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 	require.NoError(t, err)
 	return u.ID
 }

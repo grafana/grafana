@@ -150,8 +150,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
 	}
-	ruleList, err := srv.store.ListAlertRules(c.Req.Context(), &alertRuleQuery)
-	if err != nil {
+	if err := srv.store.ListAlertRules(c.Req.Context(), &alertRuleQuery); err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"
 		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
 		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
@@ -162,7 +161,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	}
 
 	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
-	for _, rule := range ruleList {
+	for _, rule := range alertRuleQuery.Result {
 		key := rule.GetGroupKey()
 		rulesInGroup := groupedRules[key]
 		rulesInGroup = append(rulesInGroup, rule)

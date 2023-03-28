@@ -3,7 +3,6 @@ package generate_datasources
 import (
 	"net/http"
 	"net/http/httptest"
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -32,14 +31,6 @@ func TestCanGetCompatibleDatasources(t *testing.T) {
 	datasources, err := GetCompatibleDatasources(server.URL)
 
 	require.NoError(t, err)
-
-	expectedDatasources := []string{"postgres"}
-	expectedDatasources = append(expectedDatasources, grafanaDatasources...)
-	sort.Strings(expectedDatasources)
-
-	assert.Len(t, datasources, len(expectedDatasources))
-
-	for i := range expectedDatasources {
-		assert.Equal(t, expectedDatasources[i], datasources[i])
-	}
+	assert.Len(t, datasources, 1)
+	assert.Equal(t, "postgres", datasources[0])
 }

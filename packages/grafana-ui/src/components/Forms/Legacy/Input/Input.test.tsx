@@ -29,8 +29,7 @@ describe('Input', () => {
     render(<Input validationEvents={testBlurValidation} placeholder={PLACEHOLDER_TEXT} />);
     const inputEl = screen.getByPlaceholderText(PLACEHOLDER_TEXT);
     await userEvent.type(inputEl, 'abcde');
-    // blur the field
-    await userEvent.click(document.body);
+    inputEl.blur();
     await screen.findByText(TEST_ERROR_MESSAGE);
   });
 
@@ -38,8 +37,7 @@ describe('Input', () => {
     render(<Input validationEvents={testBlurValidation} placeholder={PLACEHOLDER_TEXT} />);
     const inputEl = screen.getByPlaceholderText(PLACEHOLDER_TEXT);
     await userEvent.type(inputEl, 'Hi');
-    // blur the field
-    await userEvent.click(document.body);
+    inputEl.blur();
     const errorMessage = screen.queryByText(TEST_ERROR_MESSAGE);
     expect(errorMessage).not.toBeInTheDocument();
   });

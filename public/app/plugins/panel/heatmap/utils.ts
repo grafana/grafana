@@ -16,14 +16,15 @@ import {
   TimeRange,
   FieldType,
 } from '@grafana/data';
-import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, HeatmapCellLayout } from '@grafana/schema';
+import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { HeatmapData } from './fields';
-import { PanelFieldConfig, YAxisConfig } from './types';
+import { PanelFieldConfig, YAxisConfig } from './models.gen';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;

@@ -8,14 +8,14 @@ export class PreferencesService {
   /**
    * Overrides all preferences
    */
-  update(preferences: UserPreferencesDTO) {
+  update(preferences: UserPreferencesDTO): Promise<any> {
     return backendSrv.put(`/api/${this.resourceUri}/preferences`, preferences);
   }
 
   /**
    * Updates only provided preferences
    */
-  patch(preferences: Partial<UserPreferencesDTO>) {
+  patch(preferences: Partial<UserPreferencesDTO>): Promise<any> {
     return backendSrv.patch(`/api/${this.resourceUri}/preferences`, preferences);
   }
 

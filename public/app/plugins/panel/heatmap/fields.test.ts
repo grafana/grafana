@@ -1,6 +1,6 @@
 import { createTheme } from '@grafana/data';
 
-import { PanelOptions } from './types';
+import { PanelOptions } from './models.gen';
 
 const theme = createTheme();
 

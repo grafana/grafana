@@ -3,7 +3,6 @@ package usertoken
 import (
 	"errors"
 	"fmt"
-	"time"
 )
 
 var ErrInvalidSessionToken = errors.New("invalid session token")
@@ -35,22 +34,4 @@ type UserToken struct {
 	UpdatedAt     int64
 	RevokedAt     int64
 	UnhashedToken string
-}
-
-const UrgentRotateTime = 1 * time.Minute
-
-func (t *UserToken) NeedsRotation(rotationInterval time.Duration) bool {
-	rotatedAt := time.Unix(t.RotatedAt, 0)
-	if !t.AuthTokenSeen {
-		return rotatedAt.Before(time.Now().Add(-UrgentRotateTime))
-	}
-
-	return rotatedAt.Before(time.Now().Add(-rotationInterval))
-}
-
-const rotationLeeway = 5 * time.Second
-
-func (t *UserToken) NextRotation(rotationInterval time.Duration) time.Time {
-	rotatedAt := time.Unix(t.RotatedAt, 0)
-	return rotatedAt.Add(rotationInterval - rotationLeeway)
 }

@@ -90,7 +90,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
   toggleActiveDatasourceOnly = () =>
     this.updateSettings({ activeDatasourceOnly: !this.props.richHistorySettings.activeDatasourceOnly });
 
-  componentDidUpdate(prevProps: Readonly<RichHistoryProps>) {
+  componentDidUpdate(prevProps: Readonly<RichHistoryProps>, prevState: Readonly<{}>, snapshot?: any) {
     if (prevProps.richHistory !== this.props.richHistory) {
       this.setState({
         loading: false,

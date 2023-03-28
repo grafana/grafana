@@ -58,7 +58,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: absolute;
       top: 0px;
       justify-content: center;
-      border-radius: ${theme.shape.radius.circle};
+      border-radius: 20px;
       width: 26px;
       height: 26px;
     `,

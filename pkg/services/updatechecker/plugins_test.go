@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -136,7 +135,6 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 							Info: plugins.Info{Version: "0.9.0"},
 							Type: plugins.DataSource,
 						},
-						Class: plugins.External,
 					},
 					{
 						JSONData: plugins.JSONData{
@@ -144,7 +142,6 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 							Info: plugins.Info{Version: "0.5.0"},
 							Type: plugins.App,
 						},
-						Class: plugins.External,
 					},
 					{
 						JSONData: plugins.JSONData{
@@ -152,26 +149,24 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 							Info: plugins.Info{Version: "2.5.7"},
 							Type: plugins.Panel,
 						},
-						Class: plugins.Bundled,
 					},
 					{
+						Class: plugins.Core,
 						JSONData: plugins.JSONData{
 							ID:   "test-core-panel",
 							Info: plugins.Info{Version: "0.0.1"},
 							Type: plugins.Panel,
 						},
-						Class: plugins.Core,
 					},
 				},
 			},
 			httpClient: &fakeHTTPClient{
 				fakeResp: jsonResp,
 			},
-			log:    log.NewNopLogger(),
-			tracer: tracing.InitializeTracerForTest(),
+			log: log.NewNopLogger(),
 		}
 
-		svc.instrumentedCheckForUpdates(context.Background())
+		svc.checkForUpdates(context.Background())
 
 		require.Equal(t, 1, len(svc.availableUpdates))
 
@@ -200,8 +195,8 @@ type fakeHTTPClient struct {
 	requestURL string
 }
 
-func (c *fakeHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	c.requestURL = req.URL.String()
+func (c *fakeHTTPClient) Get(url string) (*http.Response, error) {
+	c.requestURL = url
 
 	resp := &http.Response{
 		Body: io.NopCloser(strings.NewReader(c.fakeResp)),

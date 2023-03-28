@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 import { PluginState } from '@grafana/data';
 import { Badge, BadgeProps } from '@grafana/ui';
@@ -7,7 +7,7 @@ interface Props {
   state?: PluginState;
 }
 
-export const PluginStateInfo = (props: Props) => {
+export const PluginStateInfo: FC<Props> = (props) => {
   const display = getFeatureStateInfo(props.state);
 
   if (!display) {

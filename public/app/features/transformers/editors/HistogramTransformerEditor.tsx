@@ -8,11 +8,11 @@ import {
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-export const HistogramTransformerEditor = ({
+export const HistogramTransformerEditor: React.FC<TransformerUIProps<HistogramTransformerOptions>> = ({
   input,
   options,
   onChange,
-}: TransformerUIProps<HistogramTransformerOptions>) => {
+}) => {
   const labelWidth = 18;
 
   const onBucketSizeChanged = useCallback(

@@ -5,11 +5,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-func ProvideDashboardService(
+func ProvideSimpleDashboardService(
 	features featuremgmt.FeatureToggles,
-	orig *DashboardServiceImpl,
+	svc *DashboardServiceImpl,
 ) dashboards.DashboardService {
-	return orig
+	return svc
 }
 
 func ProvideDashboardProvisioningService(

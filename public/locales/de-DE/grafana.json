@@ -7,20 +7,21 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Thema ändern...",
-      "dark-theme": "Dunkel",
-      "light-theme": "Hell"
+      "change-theme": "",
+      "dark-theme": "",
+      "light-theme": "",
+      "search": ""
     },
     "search-box": {
       "placeholder": ""
     },
     "section": {
-      "actions": "Aktionen",
-      "dashboard-search-results": "Dashboards",
+      "actions": "",
+      "dashboard-search-results": "",
       "folder-search-results": "",
-      "pages": "Seiten",
-      "preferences": "Einstellungen",
-      "recent-dashboards": "Kürzliche Dashboards"
+      "pages": "",
+      "preferences": "",
+      "recent-dashboards": ""
     }
   },
   "common": {
@@ -31,6 +32,7 @@
   },
   "dashboard": {
     "inspect": {
+      "actions-tab": "Aktionen",
       "data-tab": "Daten",
       "error-tab": "Fehler",
       "json-tab": "JSON",
@@ -83,6 +85,7 @@
     },
     "toolbar": {
       "add-panel": "Panel hinzufügen",
+      "comments-show": "Dashboard-Kommentare anzeigen",
       "mark-favorite": "Als Favorit markieren",
       "open-original": "Original-Dashboard öffnen",
       "playlist-next": "Zum nächsten Dashboard",
@@ -165,7 +168,7 @@
       "title": "Warnregeln"
     },
     "alerting-receivers": {
-      "subtitle": "",
+      "subtitle": "Entscheide, wie deine Kontakte benachrichtigt werden, wenn eine Warnung ausgelöst wird",
       "title": "Kontaktpunkte"
     },
     "alerting-silences": {
@@ -196,7 +199,7 @@
       "title": "Erstellen"
     },
     "create-alert": {
-      "title": ""
+      "title": "Neue Warnregel"
     },
     "create-dashboard": {
       "title": "Dashboard"
@@ -241,6 +244,18 @@
       "subtitle": "Wiederverwendbare Panels, die zu mehreren Dashboards hinzugefügt werden können",
       "title": "Bibliotheks-Panels"
     },
+    "live": {
+      "title": "Event-Streaming"
+    },
+    "live-cloud": {
+      "title": "Cloud"
+    },
+    "live-pipeline": {
+      "title": "In Vorbereitung"
+    },
+    "live-status": {
+      "title": "Status"
+    },
     "manage-dashboards": {
       "title": "Durchsuchen"
     },
@@ -252,7 +267,7 @@
       "title": "Überwachung"
     },
     "new": {
-      "title": "Neu"
+      "title": ""
     },
     "new-dashboard": {
       "title": "Neues Dashboard"
@@ -280,7 +295,7 @@
       "title": "Passwort ändern"
     },
     "profile/settings": {
-      "title": "Profil"
+      "title": "Einstellungen"
     },
     "profile/switch-org": "Organisation wechseln",
     "public": {
@@ -290,6 +305,7 @@
       "title": "Szenen"
     },
     "search": {
+      "placeholder": "Grafana durchsuchen",
       "placeholderCommandPalette": ""
     },
     "search-dashboards": {
@@ -322,8 +338,8 @@
       "title": "Speicher"
     },
     "support-bundles": {
-      "subtitle": "Support-Bundles herunterladen",
-      "title": "Support-Bundles"
+      "subtitle": "Support Bundles herunterladen",
+      "title": "Support Bundles"
     },
     "teams": {
       "subtitle": "Gruppen von Benutzern mit gemeinsamen Dashboards und Benachrichtigungen",
@@ -356,22 +372,22 @@
   },
   "panel": {
     "header-menu": {
-      "copy": "Kopieren",
-      "create-library-panel": "Bibliotheksleiste erstellen",
-      "duplicate": "Duplikat",
-      "edit": "Bearbeiten",
-      "explore": "Entdecken",
-      "get-help": "Hilfe",
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
       "hide-legend": "Legende ausblenden",
       "inspect": "Überprüfen",
       "inspect-data": "Daten",
       "inspect-json": "Panel-JSON",
       "more": "Mehr …",
-      "query": "Abfrage",
-      "remove": "Entfernen",
+      "query": "",
+      "remove": "",
       "share": "Teilen",
       "show-legend": "Legende anzeigen",
-      "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben",
+      "unlink-library-panel": "",
       "view": "Anzeigen"
     }
   },
@@ -397,33 +413,28 @@
       "include-panels": "",
       "remove-datasource-filter": "",
       "sort-placeholder": "",
-      "starred": "Hervorgehoben",
+      "starred": "",
       "view-as-folders": "",
       "view-as-grid": "",
       "view-as-list": ""
     },
     "dashboard-actions": {
-      "import": "Importieren",
-      "new": "Neu",
-      "new-dashboard": "Neues Dashboard",
-      "new-folder": "Neuer Ordner"
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
     },
     "folder-view": {
       "go-to-folder": "",
       "select-folder": ""
     },
-    "result-kind": {
-      "dashboard": "Dashboard",
-      "folder": "Ordner",
-      "panel": ""
-    },
     "results-table": {
       "datasource-header": "",
       "location-header": "",
-      "name-header": "Name",
+      "name-header": "",
       "tags-header": "",
-      "type-dashboard": "Dashboard",
-      "type-folder": "Ordner",
+      "type-dashboard": "",
+      "type-folder": "",
       "type-header": ""
     },
     "search-input": {
@@ -612,7 +623,7 @@
       "placeholder": ""
     },
     "dropdown": {
-      "placeholder": "Variablenwert eingeben"
+      "placeholder": ""
     },
     "picker": {
       "link-all": "Alle",
@@ -621,7 +632,7 @@
       "option-tooltip": "Auswahl löschen"
     },
     "textbox": {
-      "placeholder": "Variablenwert eingeben"
+      "placeholder": ""
     }
   }
 }

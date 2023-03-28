@@ -3,7 +3,6 @@ import { FC } from 'react';
 import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-table';
 
 import { DataFrame, Field, KeyValue, SelectableValue } from '@grafana/data';
-import { TableCellHeight } from '@grafana/schema';
 
 import { TableStyles } from './styles';
 
@@ -85,7 +84,6 @@ export interface Props {
   footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
   enablePagination?: boolean;
-  cellHeight?: TableCellHeight;
   /** @alpha */
   subData?: DataFrame[];
 }

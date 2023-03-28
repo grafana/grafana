@@ -32,6 +32,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -980,12 +981,12 @@ func getRulesConfig(t *testing.T) string {
 			GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 				Title:     alertName,
 				Condition: "A",
-				Data: []apimodels.AlertQuery{
+				Data: []ngmodels.AlertQuery{
 					{
 						RefID: "A",
-						RelativeTimeRange: apimodels.RelativeTimeRange{
-							From: apimodels.Duration(time.Duration(5) * time.Hour),
-							To:   apimodels.Duration(time.Duration(3) * time.Hour),
+						RelativeTimeRange: ngmodels.RelativeTimeRange{
+							From: ngmodels.Duration(time.Duration(5) * time.Hour),
+							To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 						},
 						DatasourceUID: expr.DatasourceUID,
 						Model: json.RawMessage(`{

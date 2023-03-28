@@ -311,7 +311,6 @@ function makeNodeDatum(options: Partial<NodeDatum> = {}) {
     },
     subTitle: 'service',
     title: 'service:0',
-    icon: 'database',
     ...options,
   };
 }

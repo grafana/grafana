@@ -1,5 +1,5 @@
 import { PanelPlugin, VizOrientation } from '@grafana/data';
-import { BarGaugeDisplayMode, BarGaugeValueMode } from '@grafana/schema';
+import { BarGaugeDisplayMode } from '@grafana/schema';
 import { commonOptionsBuilder, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
@@ -28,18 +28,6 @@ export const plugin = new PanelPlugin<PanelOptions>(BarGaugePanel)
           ],
         },
         defaultValue: defaultPanelOptions.displayMode,
-      })
-      .addRadio({
-        path: 'valueMode',
-        name: 'Value display',
-        settings: {
-          options: [
-            { value: BarGaugeValueMode.Color, label: 'Value color' },
-            { value: BarGaugeValueMode.Text, label: 'Text color' },
-            { value: BarGaugeValueMode.Hidden, label: 'Hidden' },
-          ],
-        },
-        defaultValue: defaultPanelOptions.valueMode,
       })
       .addBooleanSwitch({
         path: 'showUnfilled',

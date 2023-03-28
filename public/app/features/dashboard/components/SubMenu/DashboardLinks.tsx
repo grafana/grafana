@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
@@ -18,7 +18,7 @@ export interface Props {
   links: DashboardLink[];
 }
 
-export const DashboardLinks = ({ dashboard, links }: Props) => {
+export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
   const forceUpdate = useForceUpdate();
 
   useEffectOnce(() => {

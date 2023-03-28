@@ -19,7 +19,6 @@ import {
   SecretInput,
   Link,
 } from '@grafana/ui';
-import { config } from 'app/core/config';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
 import { useMigrateDatabaseField } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseField';
@@ -167,21 +166,6 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
         ) : null}
       </FieldSet>
 
-      {config.featureToggles.secureSocksDatasourceProxy && (
-        <FieldSet label="Secure Socks Proxy">
-          <InlineField labelWidth={26} label="Enabled" tooltip="Connect to this datasource via the secure socks proxy.">
-            <InlineSwitch
-              value={options.jsonData.enableSecureSocksProxy ?? false}
-              onChange={(event) =>
-                onOptionsChange({
-                  ...options,
-                  jsonData: { ...options.jsonData, enableSecureSocksProxy: event!.currentTarget.checked },
-                })
-              }
-            />
-          </InlineField>
-        </FieldSet>
-      )}
       {jsonData.sslmode !== PostgresTLSModes.disable ? (
         <FieldSet label="TLS/SSL Auth Details">
           {jsonData.tlsConfigurationMethod === PostgresTLSMethods.fileContent ? (

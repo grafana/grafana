@@ -1,5 +1,13 @@
-import { render, waitFor, screen, fireEvent, within, Matcher, getByRole } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import {
+  render,
+  waitFor,
+  screen,
+  fireEvent,
+  waitForElementToBeRemoved,
+  within,
+  Matcher,
+  getByRole,
+} from '@testing-library/react';
 import { merge, uniqueId } from 'lodash';
 import React from 'react';
 import { DeepPartial } from 'react-hook-form';
@@ -271,12 +279,9 @@ describe('CorrelationsPage', () => {
       mocks.reportInteraction.mockClear();
     });
 
-    it('shows the first page of the wizard', async () => {
-      const CTAButton = await screen.findByRole('button', { name: /add correlation/i });
-      expect(CTAButton).toBeInTheDocument();
-
+    it('shows CTA', async () => {
       // insert form should not be present
-      expect(screen.queryByRole('button', { name: /next$/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
 
       // "add new" button is the button on the top of the page, not visible when the CTA is rendered
       expect(screen.queryByRole('button', { name: /add new$/i })).not.toBeInTheDocument();
@@ -284,48 +289,51 @@ describe('CorrelationsPage', () => {
       // there's no table in the page
       expect(screen.queryByRole('table')).not.toBeInTheDocument();
 
-      await userEvent.click(CTAButton);
+      const CTAButton = screen.getByRole('button', { name: /add correlation/i });
+      expect(CTAButton).toBeInTheDocument();
 
-      // form's next button
-      expect(await screen.findByRole('button', { name: /next$/i })).toBeInTheDocument();
+      fireEvent.click(CTAButton);
+
+      // wait for the form to be rendered and query editor to be mounted
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
+
+      // form's submit button
+      expect(screen.getByRole('button', { name: /add$/i })).toBeInTheDocument();
     });
 
     it('correctly adds first correlation', async () => {
-      const CTAButton = await screen.findByRole('button', { name: /add correlation/i });
+      const CTAButton = screen.getByRole('button', { name: /add correlation/i });
       expect(CTAButton).toBeInTheDocument();
 
       // there's no table in the page, as we are adding the first correlation
       expect(screen.queryByRole('table')).not.toBeInTheDocument();
 
-      await userEvent.click(CTAButton);
+      fireEvent.click(CTAButton);
 
-      // step 1: label and description
-      await userEvent.clear(screen.getByRole('textbox', { name: /label/i }));
-      await userEvent.type(screen.getByRole('textbox', { name: /label/i }), 'A Label');
-      await userEvent.clear(screen.getByRole('textbox', { name: /description/i }));
-      await userEvent.type(screen.getByRole('textbox', { name: /description/i }), 'A Description');
-      await userEvent.click(await screen.findByRole('button', { name: /next$/i }));
+      fireEvent.change(screen.getByRole('textbox', { name: /label/i }), { target: { value: 'A Label' } });
+      fireEvent.change(screen.getByRole('textbox', { name: /description/i }), { target: { value: 'A Description' } });
 
-      // step 2:
-      // set target datasource picker value
-      fireEvent.keyDown(screen.getByLabelText(/^target/i), { keyCode: 40 });
-      await userEvent.click(screen.getByText('prometheus'));
-      await userEvent.click(await screen.findByRole('button', { name: /next$/i }));
-
-      // step 3:
       // set source datasource picker value
-      fireEvent.keyDown(screen.getByLabelText(/^source/i), { keyCode: 40 });
-      await userEvent.click(screen.getByText('loki'));
-      await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
+      fireEvent.keyDown(screen.getByLabelText(/^source$/i), { keyCode: 40 });
+      fireEvent.click(screen.getByText('loki'));
 
-      await userEvent.clear(screen.getByRole('textbox', { name: /results field/i }));
-      await userEvent.type(screen.getByRole('textbox', { name: /results field/i }), 'Line');
-      await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
+      // set target datasource picker value
+      fireEvent.keyDown(screen.getByLabelText(/^target$/i), { keyCode: 40 });
+      fireEvent.click(screen.getByText('prometheus'));
+
+      fireEvent.change(screen.getByRole('textbox', { name: /target field/i }), { target: { value: 'Line' } });
+
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
+
+      fireEvent.click(screen.getByRole('button', { name: /add$/i }));
+
+      // Waits for the form to be removed, meaning the correlation got successfully saved
+      await waitForElementToBeRemoved(() => screen.queryByRole('button', { name: /add$/i }));
 
       expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_added');
 
       // the table showing correlations should have appeared
-      expect(await screen.findByRole('table')).toBeInTheDocument();
+      expect(screen.getByRole('table')).toBeInTheDocument();
     });
   });
 
@@ -405,15 +413,12 @@ describe('CorrelationsPage', () => {
     });
 
     it('shows a table with correlations', async () => {
-      expect(await screen.findByRole('table')).toBeInTheDocument();
+      expect(screen.getByRole('table')).toBeInTheDocument();
     });
 
     it('correctly sorts by source', async () => {
-      // wait for table to appear
-      await screen.findByRole('table');
-
       const sourceHeader = getByRole(getHeaderByName('Source'), 'button');
-      await userEvent.click(sourceHeader);
+      fireEvent.click(sourceHeader);
       let cells = queryCellsByColumnName('Source');
       cells.forEach((cell, i, allCells) => {
         const prevCell = allCells[i - 1];
@@ -422,7 +427,7 @@ describe('CorrelationsPage', () => {
         }
       });
 
-      await userEvent.click(sourceHeader);
+      fireEvent.click(sourceHeader);
       cells = queryCellsByColumnName('Source');
       cells.forEach((cell, i, allCells) => {
         const prevCell = allCells[i - 1];
@@ -433,52 +438,46 @@ describe('CorrelationsPage', () => {
     });
 
     it('correctly adds new correlation', async () => {
-      const addNewButton = await screen.findByRole('button', { name: /add new/i });
+      const addNewButton = screen.getByRole('button', { name: /add new/i });
       expect(addNewButton).toBeInTheDocument();
-      await userEvent.click(addNewButton);
+      fireEvent.click(addNewButton);
 
-      // step 1:
-      await userEvent.clear(screen.getByRole('textbox', { name: /label/i }));
-      await userEvent.type(screen.getByRole('textbox', { name: /label/i }), 'A Label');
-      await userEvent.clear(screen.getByRole('textbox', { name: /description/i }));
-      await userEvent.type(screen.getByRole('textbox', { name: /description/i }), 'A Description');
-      await userEvent.click(await screen.findByRole('button', { name: /next$/i }));
+      fireEvent.change(screen.getByRole('textbox', { name: /label/i }), { target: { value: 'A Label' } });
+      fireEvent.change(screen.getByRole('textbox', { name: /description/i }), { target: { value: 'A Description' } });
 
-      // step 2:
-      // set target datasource picker value
-      fireEvent.keyDown(screen.getByLabelText(/^target/i), { keyCode: 40 });
-      await userEvent.click(screen.getByText('elastic'));
-      await userEvent.click(await screen.findByRole('button', { name: /next$/i }));
-
-      // step 3:
       // set source datasource picker value
-      fireEvent.keyDown(screen.getByLabelText(/^source/i), { keyCode: 40 });
-      await userEvent.click(within(screen.getByLabelText('Select options menu')).getByText('prometheus'));
+      fireEvent.keyDown(screen.getByLabelText(/^source$/i), { keyCode: 40 });
+      fireEvent.click(within(screen.getByLabelText('Select options menu')).getByText('prometheus'));
 
-      await userEvent.clear(screen.getByRole('textbox', { name: /results field/i }));
-      await userEvent.type(screen.getByRole('textbox', { name: /results field/i }), 'Line');
+      // set target datasource picker value
+      fireEvent.keyDown(screen.getByLabelText(/^target$/i), { keyCode: 40 });
+      fireEvent.click(screen.getByText('elastic'));
 
-      await userEvent.click(screen.getByRole('button', { name: /add$/i }));
+      fireEvent.change(screen.getByRole('textbox', { name: /target field/i }), { target: { value: 'Line' } });
+
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
+
+      fireEvent.click(screen.getByRole('button', { name: /add$/i }));
+
+      // the form should get removed after successful submissions
+      await waitForElementToBeRemoved(() => screen.queryByRole('button', { name: /add$/i }));
 
       expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_added');
-
-      // the table showing correlations should have appeared
-      expect(await screen.findByRole('table')).toBeInTheDocument();
     });
 
     it('correctly closes the form when clicking on the close icon', async () => {
-      const addNewButton = await screen.findByRole('button', { name: /add new/i });
+      const addNewButton = screen.getByRole('button', { name: /add new/i });
       expect(addNewButton).toBeInTheDocument();
-      await userEvent.click(addNewButton);
+      fireEvent.click(addNewButton);
 
-      await userEvent.click(screen.getByRole('button', { name: /close$/i }));
+      fireEvent.click(screen.getByRole('button', { name: /close$/i }));
 
       expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
     });
 
     it('correctly deletes correlations', async () => {
       // A row with the correlation should exist
-      expect(await screen.findByRole('cell', { name: /some label/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /some label/i })).toBeInTheDocument();
 
       const tableRows = queryRowsByCellValue('Source', 'loki');
 
@@ -486,41 +485,40 @@ describe('CorrelationsPage', () => {
 
       expect(deleteButton).toBeInTheDocument();
 
-      await userEvent.click(deleteButton);
+      fireEvent.click(deleteButton);
 
       const confirmButton = within(tableRows[0]).getByRole('button', { name: /delete$/i });
       expect(confirmButton).toBeInTheDocument();
 
-      await userEvent.click(confirmButton);
+      fireEvent.click(confirmButton);
 
-      expect(screen.queryByRole('cell', { name: /some label$/i })).not.toBeInTheDocument();
+      await waitForElementToBeRemoved(() => screen.queryByRole('cell', { name: /some label$/i }));
 
       expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_deleted');
     });
 
     it('correctly edits correlations', async () => {
-      // wait for table to appear
-      await screen.findByRole('table');
-
       const tableRows = queryRowsByCellValue('Source', 'loki');
 
       const rowExpanderButton = within(tableRows[0]).getByRole('button', { name: /toggle row expanded/i });
-      await userEvent.click(rowExpanderButton);
+      fireEvent.click(rowExpanderButton);
 
       expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_details_expanded');
 
-      await userEvent.clear(screen.getByRole('textbox', { name: /label/i }));
-      await userEvent.type(screen.getByRole('textbox', { name: /label/i }), 'edited label');
-      await userEvent.clear(screen.getByRole('textbox', { name: /description/i }));
-      await userEvent.type(screen.getByRole('textbox', { name: /description/i }), 'edited description');
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
+
+      fireEvent.change(screen.getByRole('textbox', { name: /label/i }), { target: { value: 'edited label' } });
+      fireEvent.change(screen.getByRole('textbox', { name: /description/i }), {
+        target: { value: 'edited description' },
+      });
 
       expect(screen.queryByRole('cell', { name: /edited label$/i })).not.toBeInTheDocument();
 
-      await userEvent.click(screen.getByRole('button', { name: /next$/i }));
-      await userEvent.click(screen.getByRole('button', { name: /next$/i }));
-      await userEvent.click(screen.getByRole('button', { name: /save$/i }));
+      fireEvent.click(screen.getByRole('button', { name: /save$/i }));
 
-      expect(await screen.findByRole('cell', { name: /edited label$/i })).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByRole('cell', { name: /edited label$/i })).toBeInTheDocument();
+      });
 
       expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_edited');
     });
@@ -556,21 +554,24 @@ describe('CorrelationsPage', () => {
 
     it("doesn't render delete button", async () => {
       // A row with the correlation should exist
-      expect(await screen.findByRole('cell', { name: /some label/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /some label/i })).toBeInTheDocument();
 
       expect(screen.queryByRole('button', { name: /delete correlation/i })).not.toBeInTheDocument();
     });
 
     it('edit form is read only', async () => {
       // A row with the correlation should exist
-      const rowExpanderButton = await screen.findByRole('button', { name: /toggle row expanded/i });
+      const rowExpanderButton = screen.getByRole('button', { name: /toggle row expanded/i });
 
-      await userEvent.click(rowExpanderButton);
+      fireEvent.click(rowExpanderButton);
 
       expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_details_expanded');
 
+      // wait for the form to be rendered and query editor to be mounted
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
+
       // form elements should be readonly
-      const labelInput = await screen.findByRole('textbox', { name: /label/i });
+      const labelInput = screen.getByRole('textbox', { name: /label/i });
       expect(labelInput).toBeInTheDocument();
       expect(labelInput).toHaveAttribute('readonly');
 

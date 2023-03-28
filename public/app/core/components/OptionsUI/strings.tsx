@@ -22,19 +22,20 @@ export class StringArrayEditor extends React.PureComponent<Props, State> {
     onChange(copy);
   };
 
-  onValueChange = (e: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>, idx: number) => {
-    if ('key' in e) {
-      if (e.key !== 'Enter') {
+  onValueChange = (e: React.SyntheticEvent, idx: number) => {
+    const evt = e as React.KeyboardEvent<HTMLInputElement>;
+    if (e.hasOwnProperty('key')) {
+      if (evt.key !== 'Enter') {
         return;
       }
     }
     const { value, onChange } = this.props;
 
     // Form event, or Enter
-    const v = e.currentTarget.value.trim();
+    const v = evt.currentTarget.value.trim();
     if (idx < 0) {
       if (v) {
-        e.currentTarget.value = ''; // reset last value
+        evt.currentTarget.value = ''; // reset last value
         onChange([...value, v]);
       }
       this.setState({ showAdd: false });

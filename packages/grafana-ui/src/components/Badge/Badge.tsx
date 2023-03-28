@@ -62,7 +62,7 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
       font-size: ${theme.typography.size.sm};
       display: inline-flex;
       padding: 1px 4px;
-      border-radius: ${theme.shape.radius.default};
+      border-radius: 3px;
       background: ${bgColor};
       border: 1px solid ${borderColor};
       color: ${textColor};

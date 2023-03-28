@@ -13,7 +13,7 @@ interface SaveDashboardButtonProps {
   size?: ComponentSize;
 }
 
-export const SaveDashboardButton = ({ dashboard, onSaveSuccess, size }: SaveDashboardButtonProps) => {
+export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashboard, onSaveSuccess, size }) => {
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
@@ -37,9 +37,12 @@ export const SaveDashboardButton = ({ dashboard, onSaveSuccess, size }: SaveDash
   );
 };
 
-type Props = SaveDashboardButtonProps & { variant?: ButtonVariant };
-
-export const SaveDashboardAsButton = ({ dashboard, onSaveSuccess, variant, size }: Props) => {
+export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps & { variant?: ButtonVariant }> = ({
+  dashboard,
+  onSaveSuccess,
+  variant,
+  size,
+}) => {
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {

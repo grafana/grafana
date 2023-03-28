@@ -14,7 +14,11 @@ interface ThresholdControlsPluginProps {
   onThresholdsChange?: (thresholds: ThresholdsConfig) => void;
 }
 
-export const ThresholdControlsPlugin = ({ config, fieldConfig, onThresholdsChange }: ThresholdControlsPluginProps) => {
+export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = ({
+  config,
+  fieldConfig,
+  onThresholdsChange,
+}) => {
   const plotInstance = useRef<uPlot>();
   const [renderToken, setRenderToken] = useState(0);
 

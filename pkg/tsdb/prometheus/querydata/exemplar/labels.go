@@ -1,16 +1,11 @@
 package exemplar
 
-import (
-	"sort"
-
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-)
+import "sort"
 
 var _ LabelTracker = (*labelTracker)(nil)
 
 type LabelTracker interface {
 	Add(labels map[string]string)
-	AddFields(fields []*data.Field)
 	GetNames() []string
 }
 
@@ -28,14 +23,9 @@ func NewLabelTracker() LabelTracker {
 // so that they can be used to build the label fields in the exemplar frame
 func (l *labelTracker) Add(labels map[string]string) {
 	for k := range labels {
-		l.labelSet[k] = struct{}{}
-	}
-}
-
-// AddFields saves field names so that they can be used to build the label fields in the exemplar frame.
-func (l *labelTracker) AddFields(fields []*data.Field) {
-	for _, f := range fields {
-		l.labelSet[f.Name] = struct{}{}
+		if _, ok := l.labelSet[k]; !ok {
+			l.labelSet[k] = struct{}{}
+		}
 	}
 }
 

@@ -13,7 +13,7 @@ type LinkSettingsListProps = {
   onEdit: (idx: number) => void;
 };
 
-export const LinkSettingsList = ({ dashboard, onNew, onEdit }: LinkSettingsListProps) => {
+export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, onNew, onEdit }) => {
   const [links, setLinks] = useState(dashboard.links);
 
   const moveLink = (idx: number, direction: number) => {

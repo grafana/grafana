@@ -255,7 +255,6 @@ function mockDashboardSearchItem(searchItem: Partial<DashboardSearchItem>) {
     uri: '',
     items: [],
     tags: [],
-    slug: '',
     isStarred: false,
     ...searchItem,
   };

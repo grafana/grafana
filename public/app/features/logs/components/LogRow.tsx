@@ -117,21 +117,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   renderTimeStamp(epochMs: number) {
     return dateTimeFormat(epochMs, {
       timeZone: this.props.timeZone,
-      defaultWithMS: true,
     });
   }
-
-  onMouseEnter = () => {
-    if (this.props.onLogRowHover) {
-      this.props.onLogRowHover(this.props.row);
-    }
-  };
-
-  onMouseLeave = () => {
-    if (this.props.onLogRowHover) {
-      this.props.onLogRowHover(undefined);
-    }
-  };
 
   renderLogRow(
     context?: LogRowContextRows,
@@ -161,6 +148,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       theme,
       getFieldLinks,
       forceEscape,
+      onLogRowHover,
       app,
       scrollElement,
       styles,
@@ -183,8 +171,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         <tr
           className={logRowBackground}
           onClick={this.toggleDetails}
-          onMouseEnter={this.onMouseEnter}
-          onMouseLeave={this.onMouseLeave}
+          onMouseEnter={() => {
+            onLogRowHover && onLogRowHover(row);
+          }}
+          onMouseLeave={() => {
+            onLogRowHover && onLogRowHover(undefined);
+          }}
         >
           {showDuplicates && (
             <td className={styles.logsRowDuplicates}>
@@ -254,7 +246,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             hasError={hasError}
             displayedFields={displayedFields}
             app={app}
-            styles={styles}
           />
         )}
       </>

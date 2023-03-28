@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 interface Props {
   label: string;
 }
 
-export const ConditionSegment = ({ label }: Props) => {
+export const ConditionSegment: FC<Props> = ({ label }) => {
   return (
     <div className="gf-form">
       <span className="gf-form-label query-keyword">{label}</span>

@@ -53,11 +53,10 @@ func (s *Service) Add(ctx context.Context, username, IPAddress string) error {
 		return nil
 	}
 
-	_, err := s.store.CreateLoginAttempt(ctx, CreateLoginAttemptCommand{
+	return s.store.CreateLoginAttempt(ctx, CreateLoginAttemptCommand{
 		Username:  username,
 		IpAddress: IPAddress,
 	})
-	return err
 }
 
 func (s *Service) Reset(ctx context.Context, username string) error {

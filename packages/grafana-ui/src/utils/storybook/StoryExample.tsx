@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { FC } from 'react';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
@@ -8,7 +8,7 @@ export interface Props {
   children?: React.ReactNode;
 }
 
-export const StoryExample = ({ name, children }: Props) => {
+export const StoryExample: FC<Props> = ({ name, children }) => {
   const theme = useTheme2();
   const style = css`
     width: 100%;

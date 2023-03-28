@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import { FieldError, DeepMap, useFormContext } from 'react-hook-form';
 
 import { Button, useStyles2 } from '@grafana/ui';
@@ -19,7 +19,7 @@ interface Props {
   readOnly?: boolean;
 }
 
-export const SubformArrayField = ({ option, pathPrefix, errors, defaultValues, readOnly = false }: Props) => {
+export const SubformArrayField: FC<Props> = ({ option, pathPrefix, errors, defaultValues, readOnly = false }) => {
   const styles = useStyles2(getReceiverFormFieldStyles);
   const path = `${pathPrefix}${option.propertyName}`;
   const formAPI = useFormContext();

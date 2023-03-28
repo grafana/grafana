@@ -11,7 +11,9 @@ export interface VariableValuesPreviewProps {
   variable: VariableWithOptions;
 }
 
-export const VariableValuesPreview = ({ variable: { options } }: VariableValuesPreviewProps) => {
+export const VariableValuesPreview: React.FunctionComponent<VariableValuesPreviewProps> = ({
+  variable: { options },
+}) => {
   const [previewLimit, setPreviewLimit] = useState(20);
   const [previewOptions, setPreviewOptions] = useState<VariableOption[]>([]);
   const showMoreOptions = useCallback(

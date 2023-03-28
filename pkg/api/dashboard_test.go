@@ -13,9 +13,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/api"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -166,7 +163,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				{Role: &editorRole, Permission: dashboards.PERMISSION_EDIT},
 			}
 			dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
-			guardian.InitLegacyGuardian(hs.Cfg, mockSQLStore, dashboardService, teamService)
+			guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 		}
 
 		// This tests two scenarios:
@@ -275,8 +272,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		}
 
 		setUp := func() {
-			cfg.ViewersCanEdit = false
-			guardian.InitLegacyGuardian(cfg, mockSQLStore, dashboardService, teamService)
+			origCanEdit := setting.ViewersCanEdit
+			t.Cleanup(func() {
+				setting.ViewersCanEdit = origCanEdit
+			})
+			setting.ViewersCanEdit = false
+			guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 		}
 
 		// This tests six scenarios:
@@ -303,7 +304,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					setUp()
 					sc.sqlStore = mockSQLStore
-					hs.callDeleteDashboardByUID(t, sc, dashboardService, nil)
+					hs.callDeleteDashboardByUID(t, sc, dashboardService)
 
 					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
@@ -341,7 +342,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					setUp()
-					hs.callDeleteDashboardByUID(t, sc, dashboardService, nil)
+					hs.callDeleteDashboardByUID(t, sc, dashboardService)
 
 					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
@@ -367,14 +368,18 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			role := org.RoleViewer
 
 			setUpInner := func() {
-				cfg.ViewersCanEdit = false
+				origCanEdit := setting.ViewersCanEdit
+				t.Cleanup(func() {
+					setting.ViewersCanEdit = origCanEdit
+				})
+				setting.ViewersCanEdit = false
 
 				dashboardService := dashboards.NewFakeDashboardService(t)
 				qResult := []*dashboards.DashboardACLInfoDTO{
 					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: dashboards.PERMISSION_EDIT},
 				}
 				dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
-				guardian.InitLegacyGuardian(cfg, mockSQLStore, dashboardService, teamService)
+				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
@@ -395,9 +400,23 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 				dashboardService.On("DeleteDashboard", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(nil)
 
-				pubdashService := publicdashboards.NewFakePublicDashboardService(t)
-				pubdashService.On("DeleteByDashboard", mock.Anything, mock.Anything).Return(nil)
-				hs.callDeleteDashboardByUID(t, sc, dashboardService, pubdashService)
+				hs.callDeleteDashboardByUID(t, sc, dashboardService)
+
+				assert.Equal(t, 200, sc.resp.Code)
+			}, mockSQLStore)
+
+			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+				setUpInner()
+				sc.sqlStore = mockSQLStore
+				sc.dashboardVersionService = fakeDashboardVersionService
+				hs.callGetDashboardVersion(sc)
+
+				assert.Equal(t, 200, sc.resp.Code)
+			}, mockSQLStore)
+
+			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+				setUpInner()
+				hs.callGetDashboardVersions(sc)
 
 				assert.Equal(t, 200, sc.resp.Code)
 			}, mockSQLStore)
@@ -407,20 +426,24 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			role := org.RoleViewer
 
 			setUpInner := func() {
-				cfg.ViewersCanEdit = true
+				origCanEdit := setting.ViewersCanEdit
+				t.Cleanup(func() {
+					setting.ViewersCanEdit = origCanEdit
+				})
+				setting.ViewersCanEdit = true
 
 				dashboardService := dashboards.NewFakeDashboardService(t)
 				qResult := []*dashboards.DashboardACLInfoDTO{
 					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: dashboards.PERMISSION_VIEW},
 				}
 				dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
-				guardian.InitLegacyGuardian(cfg, mockSQLStore, dashboardService, teamService)
+				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				setUpInner()
 
-				require.True(t, cfg.ViewersCanEdit)
+				require.True(t, setting.ViewersCanEdit)
 				sc.sqlStore = mockSQLStore
 				dash := getDashboardShouldReturn200WithConfig(t, sc, nil, nil, dashboardService, nil)
 
@@ -432,7 +455,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				setUpInner()
 
-				hs.callDeleteDashboardByUID(t, sc, dashboardService, nil)
+				hs.callDeleteDashboardByUID(t, sc, dashboardService)
 				assert.Equal(t, 403, sc.resp.Code)
 			}, mockSQLStore)
 		})
@@ -441,14 +464,18 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			role := org.RoleViewer
 
 			setUpInner := func() {
-				cfg.ViewersCanEdit = true
+				origCanEdit := setting.ViewersCanEdit
+				t.Cleanup(func() {
+					setting.ViewersCanEdit = origCanEdit
+				})
+				setting.ViewersCanEdit = true
 
 				dashboardService := dashboards.NewFakeDashboardService(t)
 				qResult := []*dashboards.DashboardACLInfoDTO{
 					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: dashboards.PERMISSION_ADMIN},
 				}
 				dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
-				guardian.InitLegacyGuardian(cfg, mockSQLStore, dashboardService, teamService)
+				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -468,9 +495,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				qResult := dashboards.NewDashboard("test")
 				dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 				dashboardService.On("DeleteDashboard", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(nil)
-				pubdashService := publicdashboards.NewFakePublicDashboardService(t)
-				pubdashService.On("DeleteByDashboard", mock.Anything, mock.Anything).Return(nil)
-				hs.callDeleteDashboardByUID(t, sc, dashboardService, pubdashService)
+				hs.callDeleteDashboardByUID(t, sc, dashboardService)
 
 				assert.Equal(t, 200, sc.resp.Code)
 			}, mockSQLStore)
@@ -494,13 +519,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			role := org.RoleEditor
 
 			setUpInner := func() {
-				cfg := setting.NewCfg()
 				dashboardService := dashboards.NewFakeDashboardService(t)
 				qResult := []*dashboards.DashboardACLInfoDTO{
 					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: dashboards.PERMISSION_VIEW},
 				}
 				dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
-				guardian.InitLegacyGuardian(cfg, mockSQLStore, dashboardService, teamService)
+				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -514,7 +538,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				setUpInner()
-				hs.callDeleteDashboardByUID(t, sc, dashboardService, nil)
+				hs.callDeleteDashboardByUID(t, sc, dashboardService)
 
 				assert.Equal(t, 403, sc.resp.Code)
 			}, mockSQLStore)
@@ -768,7 +792,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil, nil)
 			qResult := &dashboards.Dashboard{}
 			dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
-			guardian.InitLegacyGuardian(setting.NewCfg(), sqlmock, dashSvc, teamSvc)
+			guardian.InitLegacyGuardian(sqlmock, dashSvc, teamSvc)
 		}
 
 		cmd := dtos.CalculateDiffOptions{
@@ -887,7 +911,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 		qResult2 := []*dashboards.DashboardACLInfoDTO{{OrgID: testOrgID, DashboardID: 1, UserID: testUserID, Permission: dashboards.PERMISSION_EDIT}}
 		dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult2, nil)
-		guardian.InitLegacyGuardian(setting.NewCfg(), mockSQLStore, dashboardService, teamService)
+		guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
 			fakeProvisioningService := provisioning.NewProvisioningServiceMock(context.Background())
@@ -958,13 +982,13 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 	features := featuremgmt.WithFeatures()
 
-	folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		cfg, dashboardStore, folderStore, db.InitTestDB(t), featuremgmt.WithFeatures())
+	folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, db.InitTestDB(t), featuremgmt.WithFeatures())
 
 	if dashboardService == nil {
-		dashboardService = service.ProvideDashboardServiceImpl(
-			cfg, dashboardStore, folderStore, nil, features, folderPermissions, dashboardPermissions,
-			ac, folderSvc,
+		dashboardService = service.ProvideDashboardService(
+			cfg, dashboardStore, folderStore, nil, features,
+			folderPermissions, dashboardPermissions, ac,
+			folderSvc,
 		)
 	}
 
@@ -975,9 +999,10 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		SQLStore:              sc.sqlStore,
 		ProvisioningService:   provisioningService,
 		AccessControl:         accesscontrolmock.New(),
-		dashboardProvisioningService: service.ProvideDashboardServiceImpl(
-			cfg, dashboardStore, folderStore, nil, features, folderPermissions, dashboardPermissions,
-			ac, folderSvc,
+		dashboardProvisioningService: service.ProvideDashboardService(
+			cfg, dashboardStore, folderStore, nil, features,
+			folderPermissions, dashboardPermissions, ac,
+			folderSvc,
 		),
 		DashboardService: dashboardService,
 		Features:         featuremgmt.WithFeatures(),
@@ -1011,10 +1036,8 @@ func (hs *HTTPServer) callGetDashboardVersions(sc *scenarioContext) {
 }
 
 func (hs *HTTPServer) callDeleteDashboardByUID(t *testing.T,
-	sc *scenarioContext, mockDashboard *dashboards.FakeDashboardService, mockPubdashService *publicdashboards.FakePublicDashboardService) {
+	sc *scenarioContext, mockDashboard *dashboards.FakeDashboardService) {
 	hs.DashboardService = mockDashboard
-	pubdashApi := api.ProvideApi(mockPubdashService, nil, nil, featuremgmt.WithFeatures())
-	hs.PublicDashboardsApi = pubdashApi
 	sc.handlerFunc = hs.DeleteDashboardByUID
 	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 }

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import React, { FC, ReactElement } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Form, Input, Field } from '@grafana/ui';
@@ -26,7 +26,7 @@ export const submitButton = css`
   width: 100%;
 `;
 
-export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, loginHint }: Props) => {
+export const LoginForm: FC<Props> = ({ children, onSubmit, isLoggingIn, passwordHint, loginHint }) => {
   return (
     <div className={wrapperStyles}>
       <Form onSubmit={onSubmit} validateOn="onChange">

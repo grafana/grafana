@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { Form, Field, Input, Button, HorizontalGroup, LinkButton, FormAPI } from '@grafana/ui';
@@ -27,7 +27,7 @@ interface QueryParams {
 
 interface Props extends GrafanaRouteComponentProps<{}, QueryParams> {}
 
-export const SignupPage = (props: Props) => {
+export const SignupPage: FC<Props> = (props) => {
   const notifyApp = useAppNotification();
   const onSubmit = async (formData: SignupDTO) => {
     if (formData.name === '') {

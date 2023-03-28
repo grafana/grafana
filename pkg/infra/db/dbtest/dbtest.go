@@ -51,10 +51,6 @@ func (f *FakeDB) Quote(value string) string {
 	return ""
 }
 
-func (f *FakeDB) RecursiveQueriesAreSupported() (bool, error) {
-	return false, nil
-}
-
 // TODO: service-specific methods not yet split out ; to be removed
 func (f *FakeDB) UpdateTempUserWithEmailSent(ctx context.Context, cmd *tempuser.UpdateTempUserWithEmailSentCommand) error {
 	return f.ExpectedError

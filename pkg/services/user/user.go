@@ -24,4 +24,7 @@ type Service interface {
 	UpdatePermissions(context.Context, int64, bool) error
 	SetUserHelpFlag(context.Context, *SetUserHelpFlagCommand) error
 	GetProfile(context.Context, *GetUserProfileQuery) (*UserProfileDTO, error)
+
+	// TEST ONLY METHOD
+	CreateUserForTests(context.Context, *CreateUserCommand) (*User, error)
 }

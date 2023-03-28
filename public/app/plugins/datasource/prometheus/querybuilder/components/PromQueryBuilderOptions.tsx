@@ -5,7 +5,6 @@ import { EditorField, EditorRow, EditorSwitch } from '@grafana/experimental';
 import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
-import { PromQueryFormat } from '../../dataquery.gen';
 import { PromQuery } from '../../types';
 import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 
@@ -29,7 +28,7 @@ export interface Props {
 }
 
 export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange, onRunQuery }) => {
-  const onChangeFormat = (value: SelectableValue<PromQueryFormat>) => {
+  const onChangeFormat = (value: SelectableValue<string>) => {
     onChange({ ...query, format: value.value });
     onRunQuery();
   };

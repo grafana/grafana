@@ -1,5 +1,5 @@
 import { clamp } from 'lodash';
-import { useLayoutEffect } from 'react';
+import React, { useLayoutEffect } from 'react';
 import uPlot from 'uplot';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
@@ -170,7 +170,7 @@ const initHook = (u: uPlot) => {
 /**
  * @alpha
  */
-export const KeyboardPlugin = ({ config }: KeyboardPluginProps) => {
+export const KeyboardPlugin: React.FC<KeyboardPluginProps> = ({ config }) => {
   useLayoutEffect(() => config.addHook('init', initHook), [config]);
 
   return null;

@@ -1,7 +1,7 @@
 import { standardTransformersRegistry } from '../../transformations';
 import { DataTransformerInfo } from '../../types';
 
-export const mockTransformationsRegistry = (transformers: DataTransformerInfo[]) => {
+export const mockTransformationsRegistry = (transformers: Array<DataTransformerInfo<any>>) => {
   standardTransformersRegistry.setInit(() => {
     return transformers.map((t) => {
       return {

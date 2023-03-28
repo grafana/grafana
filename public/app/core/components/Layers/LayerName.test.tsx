@@ -1,19 +1,16 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { LayerNameProps, LayerName } from './LayerName';
 
 describe('LayerName', () => {
-  it('Can edit title', async () => {
+  it('Can edit title', () => {
     const scenario = renderScenario({});
-    await userEvent.click(screen.getByTestId('layer-name-div'));
+    screen.getByTestId('layer-name-div').click();
 
     const input = screen.getByTestId('layer-name-input');
-    await userEvent.clear(input);
-    await userEvent.type(input, 'new name');
-    // blur the element
-    await userEvent.click(document.body);
+    fireEvent.change(input, { target: { value: 'new name' } });
+    fireEvent.blur(input);
 
     expect(jest.mocked(scenario.props.onChange).mock.calls[0][0]).toBe('new name');
   });
@@ -21,9 +18,9 @@ describe('LayerName', () => {
   it('Show error when empty name is specified', async () => {
     renderScenario({});
 
-    await userEvent.click(screen.getByTestId('layer-name-div'));
+    screen.getByTestId('layer-name-div').click();
     const input = screen.getByTestId('layer-name-input');
-    await userEvent.clear(input);
+    fireEvent.change(input, { target: { value: '' } });
     const alert = await screen.findByRole('alert');
 
     expect(alert.textContent).toBe('An empty layer name is not allowed');
@@ -32,10 +29,9 @@ describe('LayerName', () => {
   it('Show error when other layer with same name exists', async () => {
     renderScenario({});
 
-    await userEvent.click(screen.getByTestId('layer-name-div'));
+    screen.getByTestId('layer-name-div').click();
     const input = screen.getByTestId('layer-name-input');
-    await userEvent.clear(input);
-    await userEvent.type(input, 'Layer 2');
+    fireEvent.change(input, { target: { value: 'Layer 2' } });
     const alert = await screen.findByRole('alert');
 
     expect(alert.textContent).toBe('Layer name already exists');

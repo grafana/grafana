@@ -1,4 +1,4 @@
-import React, { ChangeEvent, MouseEvent } from 'react';
+import React, { ChangeEvent, MouseEvent, FC } from 'react';
 
 import { Button } from '../Button';
 import { InlineField } from '../Forms/InlineField';
@@ -15,7 +15,7 @@ interface Props {
   onClick: (event: MouseEvent<HTMLButtonElement>) => void;
 }
 
-export const CertificationKey = ({ hasCert, label, onChange, onClick, placeholder }: Props) => {
+export const CertificationKey: FC<Props> = ({ hasCert, label, onChange, onClick, placeholder }) => {
   return (
     <InlineFieldRow>
       <InlineField label={label} labelWidth={14} disabled={hasCert}>

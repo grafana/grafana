@@ -16,7 +16,7 @@ export interface FooterRowProps {
   tableStyles: TableStyles;
 }
 
-export function FooterRow(props: FooterRowProps) {
+export const FooterRow = (props: FooterRowProps) => {
   const { totalColumnsWidth, footerGroups, isPaginationVisible, tableStyles } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
 
@@ -38,7 +38,7 @@ export function FooterRow(props: FooterRowProps) {
       })}
     </div>
   );
-}
+};
 
 function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
   const footerProps = column.getHeaderProps();

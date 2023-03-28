@@ -13,12 +13,12 @@ interface MetricNamespaceFieldProps extends AzureQueryEditorFieldProps {
   metricNamespaces: AzureMonitorOption[];
 }
 
-const MetricNamespaceField = ({
+const MetricNamespaceField: React.FC<MetricNamespaceFieldProps> = ({
   metricNamespaces,
   query,
   variableOptionGroup,
   onQueryChange,
-}: MetricNamespaceFieldProps) => {
+}) => {
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
       if (!change.value) {

@@ -49,9 +49,9 @@ composableKinds: DataQuery: {
 						#BucketAggregationType: "terms" | "filters" | "geohash_grid" | "date_histogram" | "histogram" | "nested" @cuetsy(kind="type")
 
 						#BaseBucketAggregation: {
-							id:        string
-							type:      #BucketAggregationType
-							settings?: _
+							id:   string
+							type: #BucketAggregationType
+							settings?: {...}
 						} @cuetsy(kind="interface")
 
 						#BucketAggregationWithField: {
@@ -287,7 +287,6 @@ composableKinds: DataQuery: {
 						#BasePipelineMetricAggregation: {
 							#MetricAggregationWithField
 							pipelineAgg?: string
-							type:         #PipelineMetricAggregationType
 						} @cuetsy(kind="interface")
 
 						#PipelineMetricAggregationWithMultipleBucketPaths: {
@@ -365,7 +364,7 @@ composableKinds: DataQuery: {
 						// #MovingAverage's settings are overridden in types.ts
 						#MovingAverage: {
 							#BasePipelineMetricAggregation
-							type: #PipelineMetricAggregationType & "moving_avg"
+							type: "moving_avg"
 							settings?: {...}
 						} @cuetsy(kind="interface")
 

@@ -5,7 +5,6 @@ import { Button, ConfirmModal } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
 
@@ -50,17 +49,12 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
             <th>Seen</th>
             <th>Role</th>
             <th style={{ width: '34px' }} />
-            <th>Origin</th>
+            <th></th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           {users.map((user, index) => {
-            let basicRoleDisabled = !contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user);
-            if (config.featureToggles.onlyExternalOrgRoleSync) {
-              const isUserSynced = user?.isExternallySynced;
-              basicRoleDisabled = isUserSynced || basicRoleDisabled;
-            }
             return (
               <tr key={`${user.userId}-${index}`}>
                 <td className="width-2 text-center">
@@ -92,13 +86,13 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
                       roleOptions={roleOptions}
                       basicRole={user.role}
                       onBasicRoleChange={(newRole) => onRoleChange(newRole, user)}
-                      basicRoleDisabled={basicRoleDisabled}
+                      basicRoleDisabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user)}
                     />
                   ) : (
                     <OrgRolePicker
                       aria-label="Role"
                       value={user.role}
-                      disabled={basicRoleDisabled}
+                      disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user)}
                       onChange={(newRole) => onRoleChange(newRole, user)}
                     />
                   )}

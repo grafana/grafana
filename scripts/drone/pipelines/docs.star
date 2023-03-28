@@ -7,6 +7,7 @@ load(
     "build_docs_website_step",
     "build_image",
     "codespell_step",
+    "download_grabpl_step",
     "identify_runner_step",
     "yarn_install_step",
 )
@@ -27,6 +28,7 @@ docs_paths = {
 def docs_pipelines(ver_mode, trigger):
     environment = {"EDITION": "oss"}
     steps = [
+        download_grabpl_step(),
         identify_runner_step(),
         yarn_install_step(),
         codespell_step(),

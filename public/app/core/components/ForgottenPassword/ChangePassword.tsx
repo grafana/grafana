@@ -1,4 +1,4 @@
-import React, { SyntheticEvent } from 'react';
+import React, { FC, SyntheticEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip, Form, Field, VerticalGroup, Button } from '@grafana/ui';
@@ -15,7 +15,7 @@ interface PasswordDTO {
   confirmNew: string;
 }
 
-export const ChangePassword = ({ onSubmit, onSkip }: Props) => {
+export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
   const submit = (passwords: PasswordDTO) => {
     onSubmit(passwords.newPassword);
   };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useEffectOnce } from 'react-use';
 
@@ -35,7 +35,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = ConnectedProps<typeof connector>;
 
-export const SelectOrgPage = ({ setUserOrganization, getUserOrganizations, userOrgs }: Props) => {
+export const SelectOrgPage: FC<Props> = ({ setUserOrganization, getUserOrganizations, userOrgs }) => {
   const setUserOrg = async (org: UserOrg) => {
     await setUserOrganization(org.orgId);
     window.location.href = config.appSubUrl + '/';

@@ -40,9 +40,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.GrafanaBackend, body.Type().String()))
 	}
 
-	queries := AlertQueriesFromApiAlertQueries(body.GrafanaManagedCondition.Data)
-
-	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
+	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: body.GrafanaManagedCondition.Data}, func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
 	}) {
 		return errorToResponse(fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization))
@@ -50,7 +48,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 
 	evalCond := ngmodels.Condition{
 		Condition: body.GrafanaManagedCondition.Condition,
-		Data:      queries,
+		Data:      body.GrafanaManagedCondition.Data,
 	}
 	ctx := eval.Context(c.Req.Context(), c.SignedInUser)
 
@@ -114,8 +112,7 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *contextmodel.ReqContext, body ap
 }
 
 func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimodels.EvalQueriesPayload) response.Response {
-	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
-	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
+	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: cmd.Data}, func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
 	}) {
 		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
@@ -123,7 +120,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimod
 
 	cond := ngmodels.Condition{
 		Condition: "",
-		Data:      queries,
+		Data:      cmd.Data,
 	}
 	if len(cmd.Data) > 0 {
 		cond.Condition = cmd.Data[0].RefID
@@ -172,8 +169,7 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 		return ErrResp(400, err, "")
 	}
 
-	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
-	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
+	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: cmd.Data}, func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
 	}) {
 		return errorToResponse(fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization))
@@ -194,7 +190,7 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 		UID:             "backtesting-" + util.GenerateShortUID(),
 		OrgID:           c.OrgID,
 		Condition:       cmd.Condition,
-		Data:            queries,
+		Data:            cmd.Data,
 		IntervalSeconds: intervalSeconds,
 		NoDataState:     noDataState,
 		For:             forInterval,

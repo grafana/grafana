@@ -23,13 +23,13 @@ interface ExemplarsPluginProps {
   visibleSeries?: VisibleExemplarLabels;
 }
 
-export const ExemplarsPlugin = ({
+export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
   exemplars,
   timeZone,
   getFieldLinks,
   config,
   visibleSeries,
-}: ExemplarsPluginProps) => {
+}) => {
   const plotInstance = useRef<uPlot>();
 
   useLayoutEffect(() => {

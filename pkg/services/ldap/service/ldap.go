@@ -47,7 +47,7 @@ func ProvideService(cfg *setting.Cfg) *LDAPImpl {
 		loadingMutex: &sync.Mutex{},
 	}
 
-	if !cfg.LDAPAuthEnabled {
+	if !cfg.LDAPEnabled {
 		return s
 	}
 
@@ -63,7 +63,7 @@ func ProvideService(cfg *setting.Cfg) *LDAPImpl {
 }
 
 func (s *LDAPImpl) ReloadConfig() error {
-	if !s.cfg.LDAPAuthEnabled {
+	if !s.cfg.LDAPEnabled {
 		return nil
 	}
 
@@ -95,7 +95,7 @@ func (s *LDAPImpl) Config() *ldap.Config {
 }
 
 func (s *LDAPImpl) Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, error) {
-	if !s.cfg.LDAPAuthEnabled {
+	if !s.cfg.LDAPEnabled {
 		return nil, ErrLDAPNotEnabled
 	}
 
@@ -108,7 +108,7 @@ func (s *LDAPImpl) Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, 
 }
 
 func (s *LDAPImpl) User(username string) (*login.ExternalUserInfo, error) {
-	if !s.cfg.LDAPAuthEnabled {
+	if !s.cfg.LDAPEnabled {
 		return nil, ErrLDAPNotEnabled
 	}
 

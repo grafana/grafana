@@ -1,7 +1,7 @@
 package pfs
 
 import (
-	"github.com/grafana/kindsys"
+	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 // GrafanaPlugin specifies what plugins may declare in .cue files in a

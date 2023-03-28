@@ -1,14 +1,8 @@
 import Prism, { Grammar } from 'prismjs';
 import { Observable, of } from 'rxjs';
 
-import {
-  AbstractQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  ScopedVars,
-} from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { AbstractQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceWithBackend } from '@grafana/runtime';
 
 import { extractLabelMatchers, toPromLikeExpr } from '../prometheus/language_utils';
 
@@ -16,10 +10,7 @@ import { normalizeQuery } from './QueryEditor/QueryEditor';
 import { PhlareDataSourceOptions, Query, ProfileTypeMessage, SeriesMessage } from './types';
 
 export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSourceOptions> {
-  constructor(
-    instanceSettings: DataSourceInstanceSettings<PhlareDataSourceOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv()
-  ) {
+  constructor(instanceSettings: DataSourceInstanceSettings<PhlareDataSourceOptions>) {
     super(instanceSettings);
   }
 
@@ -56,13 +47,6 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
 
   async getLabelNames(): Promise<string[]> {
     return await super.getResource('labelNames');
-  }
-
-  applyTemplateVariables(query: Query, scopedVars: ScopedVars): Query {
-    return {
-      ...query,
-      labelSelector: this.templateSrv.replace(query.labelSelector ?? '', scopedVars),
-    };
   }
 
   async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<Query[]> {

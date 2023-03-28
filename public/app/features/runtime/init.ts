@@ -1,18 +1,6 @@
-import { PanelData, RawTimeRange } from '@grafana/data';
+import { PanelData } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-
-import { DashboardModel } from '../dashboard/state';
-
-declare global {
-  interface Window {
-    grafanaRuntime?: {
-      getDashboardSaveModel: () => DashboardModel | undefined;
-      getDashboardTimeRange: () => { from: number; to: number; raw: RawTimeRange };
-      getPanelData: () => Record<number, PanelData | undefined> | undefined;
-    };
-  }
-}
 
 /**
  * This will setup features that are accessible through the root window location
@@ -22,7 +10,7 @@ declare global {
  * @internal and subject to change
  */
 export function initWindowRuntime() {
-  window.grafanaRuntime = {
+  (window as any).grafanaRuntime = {
     /** Get info for the current dashboard.  This will include the migrated dashboard JSON */
     getDashboardSaveModel: () => {
       const d = getDashboardSrv().getCurrent();
@@ -48,10 +36,10 @@ export function initWindowRuntime() {
       if (!d) {
         return undefined;
       }
-      return d.panels.reduce<Record<number, PanelData | undefined>>((acc, panel) => {
+      return d.panels.reduce((acc, panel) => {
         acc[panel.id] = panel.getQueryRunner().getLastResult();
         return acc;
-      }, {});
+      }, {} as Record<number, PanelData | undefined>);
     },
   };
 }

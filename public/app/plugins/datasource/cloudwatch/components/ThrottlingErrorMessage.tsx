@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { FunctionComponent } from 'react';
 
 export interface Props {
   region: string;
 }
 
-export const ThrottlingErrorMessage = ({ region }: Props) => (
+export const ThrottlingErrorMessage: FunctionComponent<Props> = ({ region }) => (
   <p>
     Please visit the&nbsp;
     <a

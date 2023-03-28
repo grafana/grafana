@@ -53,21 +53,21 @@ func TestIntegrationLoginAttemptsQuery(t *testing.T) {
 			now: func() time.Time { return mockTime },
 		}
 
-		_, err := s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
+		err := s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 
 		mockTime = timePlusOneMinute
-		_, err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
+		err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 
 		mockTime = timePlusTwoMinutes
-		_, err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
+		err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
@@ -118,21 +118,21 @@ func TestIntegrationLoginAttemptsDelete(t *testing.T) {
 			now: func() time.Time { return mockTime },
 		}
 
-		_, err := s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
+		err := s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 
 		mockTime = timePlusOneMinute
-		_, err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
+		err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 
 		mockTime = timePlusTwoMinutes
-		_, err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
+		err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})

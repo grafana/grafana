@@ -61,7 +61,7 @@ const HttpAccessHelp = () => (
 
 const LABEL_WIDTH = 26;
 
-export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
+export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
   const {
     defaultUrl,
     dataSourceConfig,

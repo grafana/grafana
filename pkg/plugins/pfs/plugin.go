@@ -2,8 +2,7 @@ package pfs
 
 import (
 	"cuelang.org/go/cue/ast"
-	"github.com/grafana/kindsys"
-
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 )
 

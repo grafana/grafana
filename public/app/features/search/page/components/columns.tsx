@@ -170,10 +170,7 @@ export const generateColumns = (
         return (
           <div {...p.cellProps} className={cx(styles.locationCellStyle)}>
             {parts.map((p) => {
-              let info = meta.locationInfo[p];
-              if (!info && p === 'general') {
-                info = { kind: 'folder', url: '/dashboards', name: 'General' };
-              }
+              const info = meta.locationInfo[p];
               return info ? (
                 <a key={p} href={info.url} className={styles.locationItem}>
                   <Icon name={getIconForKind(info.kind)} /> {info.name}

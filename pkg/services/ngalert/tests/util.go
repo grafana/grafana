@@ -81,7 +81,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 
-	dashboardService := dashboardservice.ProvideDashboardServiceImpl(
+	dashboardService := dashboardservice.ProvideDashboardService(
 		cfg, dashboardStore, folderStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
@@ -168,11 +168,11 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 		NamespaceUIDs: []string{folderUID},
 		RuleGroup:     ruleGroup,
 	}
-	ruleList, err := dbstore.ListAlertRules(ctx, &q)
+	err = dbstore.ListAlertRules(ctx, &q)
 	require.NoError(t, err)
-	require.NotEmpty(t, ruleList)
+	require.NotEmpty(t, q.Result)
 
-	rule := ruleList[0]
+	rule := q.Result[0]
 	t.Logf("alert definition: %v with title: %q interval: %d folder: %s created", rule.GetKey(), rule.Title, rule.IntervalSeconds, folderUID)
 	return rule
 }

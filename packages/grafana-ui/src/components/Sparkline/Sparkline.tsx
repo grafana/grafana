@@ -44,7 +44,6 @@ const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Hidden,
-  pointSize: 2,
 };
 
 /** @internal */
@@ -182,8 +181,6 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         pxAlign: false,
         scaleKey,
         theme,
-        colorMode,
-        thresholds: config.thresholds,
         drawStyle: customConfig.drawStyle!,
         lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,
@@ -191,9 +188,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         showPoints: pointsMode,
         pointSize: customConfig.pointSize,
         fillOpacity: customConfig.fillOpacity,
-        fillColor: customConfig.fillColor,
-        lineStyle: customConfig.lineStyle,
-        gradientMode: customConfig.gradientMode,
+        fillColor: customConfig.fillColor ?? seriesColor,
       });
     }
 

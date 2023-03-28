@@ -2,7 +2,6 @@ import { ScopedVars, UrlQueryMap } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { variableAdapters } from './adapters';
-import { VARIABLE_PREFIX } from './constants';
 
 export function getVariablesUrlParams(scopedVars?: ScopedVars): UrlQueryMap {
   const params: UrlQueryMap = {};
@@ -14,13 +13,13 @@ export function getVariablesUrlParams(scopedVars?: ScopedVars): UrlQueryMap {
       if (scopedVars[variable.name].skipUrlSync) {
         continue;
       }
-      params[VARIABLE_PREFIX + variable.name] = scopedVars[variable.name].value;
+      params['var-' + variable.name] = scopedVars[variable.name].value;
     } else {
       // @ts-ignore
       if (variable.skipUrlSync) {
         continue;
       }
-      params[VARIABLE_PREFIX + variable.name] = variableAdapters.get(variable.type).getValueForUrl(variable as any);
+      params['var-' + variable.name] = variableAdapters.get(variable.type).getValueForUrl(variable as any);
     }
   }
 

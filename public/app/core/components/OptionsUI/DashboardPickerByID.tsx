@@ -1,5 +1,5 @@
 import debounce from 'debounce-promise';
-import React from 'react';
+import React, { FC } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelect } from '@grafana/ui';
@@ -31,7 +31,7 @@ interface Props {
 /**
  * @deprecated prefer using dashboard uid rather than id
  */
-export const DashboardPickerByID = ({
+export const DashboardPickerByID: FC<Props> = ({
   onChange: propsOnChange,
   value,
   width,
@@ -41,7 +41,7 @@ export const DashboardPickerByID = ({
   id,
   optionLabel = 'label',
   excludedDashboards,
-}: Props) => {
+}) => {
   const debouncedSearch = debounce((query: string) => getDashboards(query || '', optionLabel, excludedDashboards), 300);
   const option = value ? { value, [optionLabel]: value[optionLabel] } : undefined;
   const onChange = (item: SelectableValue<DashboardPickerItem>) => {

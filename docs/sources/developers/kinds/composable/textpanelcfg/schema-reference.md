@@ -13,29 +13,27 @@ title: TextPanelCfg kind
 
 
 
-| Property       | Type                    | Required | Default     | Description                                                                                             |
-|----------------|-------------------------|----------|-------------|---------------------------------------------------------------------------------------------------------|
-| `CodeLanguage` | string                  | **Yes**  | `plaintext` | Possible values are: `plaintext`, `yaml`, `xml`, `typescript`, `sql`, `go`, `markdown`, `html`, `json`. |
-| `CodeOptions`  | [object](#codeoptions)  | **Yes**  |             |                                                                                                         |
-| `PanelOptions` | [object](#paneloptions) | **Yes**  |             |                                                                                                         |
-| `TextMode`     | string                  | **Yes**  |             | Possible values are: `html`, `markdown`, `code`.                                                        |
+| Property       | Type                    | Required | Description                                                                                                                   |
+|----------------|-------------------------|----------|-------------------------------------------------------------------------------------------------------------------------------|
+| `CodeLanguage` | string                  | **Yes**  | Possible values are: `plaintext`, `yaml`, `xml`, `typescript`, `sql`, `go`, `markdown`, `html`, `json`. Default: `plaintext`. |
+| `CodeOptions`  | [object](#codeoptions)  | **Yes**  |                                                                                                                               |
+| `PanelOptions` | [object](#paneloptions) | **Yes**  |                                                                                                                               |
+| `TextMode`     | string                  | **Yes**  | Possible values are: `html`, `markdown`, `code`.                                                                              |
 
 ### CodeOptions
 
-| Property          | Type    | Required | Default     | Description                                                                                             |
-|-------------------|---------|----------|-------------|---------------------------------------------------------------------------------------------------------|
-| `language`        | string  | **Yes**  | `plaintext` | Possible values are: `plaintext`, `yaml`, `xml`, `typescript`, `sql`, `go`, `markdown`, `html`, `json`. |
-| `showLineNumbers` | boolean | **Yes**  | `false`     |                                                                                                         |
-| `showMiniMap`     | boolean | **Yes**  | `false`     |                                                                                                         |
+| Property          | Type    | Required | Description                                                                                                                   |
+|-------------------|---------|----------|-------------------------------------------------------------------------------------------------------------------------------|
+| `language`        | string  | **Yes**  | Possible values are: `plaintext`, `yaml`, `xml`, `typescript`, `sql`, `go`, `markdown`, `html`, `json`. Default: `plaintext`. |
+| `showLineNumbers` | boolean | **Yes**  | Default: `false`.                                                                                                             |
+| `showMiniMap`     | boolean | **Yes**  | Default: `false`.                                                                                                             |
 
 ### PanelOptions
 
-| Property  | Type                        | Required | Default                                                                        | Description                                      |
-|-----------|-----------------------------|----------|--------------------------------------------------------------------------------|--------------------------------------------------|
-| `content` | string                      | **Yes**  | `# Title                                                                       |                                                  |
-|           |                             |          |                                                                                |                                                  |
-|           |                             |          | For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)` |                                                  |
-| `mode`    | string                      | **Yes**  |                                                                                | Possible values are: `html`, `markdown`, `code`. |
-| `code`    | [CodeOptions](#codeoptions) | No       |                                                                                |                                                  |
+| Property  | Type                        | Required | Description                                                                                                |
+|-----------|-----------------------------|----------|------------------------------------------------------------------------------------------------------------|
+| `content` | string                      | **Yes**  | Default: `# Title<br/><br/>For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)`. |
+| `mode`    | string                      | **Yes**  | Possible values are: `html`, `markdown`, `code`.                                                           |
+| `code`    | [CodeOptions](#codeoptions) | No       |                                                                                                            |
 
 

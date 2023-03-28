@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models/usertoken"
-	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -40,18 +39,12 @@ func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
 
 				if !c.IsSignedIn && forceLogin {
 					unauthorized(c, nil)
-					return
 				}
 			}
 
-			if c.LookupTokenErr != nil {
-				var revokedErr *usertoken.TokenRevokedError
-				if errors.As(c.LookupTokenErr, &revokedErr) {
-					tokenRevoked(c, revokedErr)
-					return
-				}
-
-				unauthorized(c, c.LookupTokenErr)
+			var revokedErr *usertoken.TokenRevokedError
+			if errors.As(c.LookupTokenErr, &revokedErr) {
+				unauthorized(c, revokedErr)
 				return
 			}
 
@@ -115,28 +108,20 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 
 func unauthorized(c *contextmodel.ReqContext, err error) {
 	if c.IsApiRequest() {
-		c.WriteErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), c.LookupTokenErr)
-		return
-	}
+		response := map[string]interface{}{
+			"message": "Unauthorized",
+		}
 
-	writeRedirectCookie(c)
-	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
-		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
-		return
-	}
-
-	c.Redirect(setting.AppSubUrl + "/login")
-}
-
-func tokenRevoked(c *contextmodel.ReqContext, err *usertoken.TokenRevokedError) {
-	if c.IsApiRequest() {
-		c.JSON(http.StatusUnauthorized, map[string]interface{}{
-			"message": "Token revoked",
-			"error": map[string]interface{}{
+		var revokedErr *usertoken.TokenRevokedError
+		if errors.As(err, &revokedErr) {
+			response["message"] = "Token revoked"
+			response["error"] = map[string]interface{}{
 				"id":                    "ERR_TOKEN_REVOKED",
-				"maxConcurrentSessions": err.MaxConcurrentSessions,
-			},
-		})
+				"maxConcurrentSessions": revokedErr.MaxConcurrentSessions,
+			}
+		}
+
+		c.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
@@ -230,12 +215,8 @@ func UseOrgFromContextParams(c *contextmodel.ReqContext) (int64, error) {
 	orgID, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 
 	// Special case of macaron handling invalid params
-	if err != nil {
-		return 0, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
-	}
-
-	if orgID == 0 {
-		return 0, org.ErrOrgNotFound.Errorf("empty org ID")
+	if orgID == 0 || err != nil {
+		return 0, org.ErrOrgNotFound
 	}
 
 	return orgID, nil

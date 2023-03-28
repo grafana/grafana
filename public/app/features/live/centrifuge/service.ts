@@ -29,6 +29,7 @@ export type CentrifugeSrvDeps = {
   appUrl: string;
   orgId: number;
   orgRole: string;
+  sessionId: string;
   liveEnabled: boolean;
   dataStreamSubscriberReadiness: Observable<boolean>;
 };

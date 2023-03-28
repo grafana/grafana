@@ -47,8 +47,7 @@ func (r ResultType) String() string {
 
 type Exemplar struct {
 	SeriesLabels map[string]string
-	Fields       []*data.Field
-	RowIdx       int
+	Labels       map[string]string
 	Value        float64
 	Timestamp    time.Time
 }

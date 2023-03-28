@@ -13,7 +13,13 @@ export interface QueryOperationActionProps {
   active?: boolean;
 }
 
-export const QueryOperationAction = ({ icon, active, disabled, title, onClick }: QueryOperationActionProps) => {
+export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({
+  icon,
+  active,
+  disabled,
+  title,
+  onClick,
+}) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -48,7 +54,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         left: -1px;
         right: 2px;
         height: 3px;
-        border-radius: ${theme.shape.radius.default};
+        border-radius: 2px;
         bottom: -8px;
         background-image: ${theme.colors.gradients.brandHorizontal} !important;
       }

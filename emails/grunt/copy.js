@@ -7,11 +7,5 @@ module.exports = function () {
       src: ['**.txt'],
       dest: '../public/emails/',
     },
-    html: {
-      expand: true,
-      cwd: 'dist',
-      src: ['**.html'],
-      dest: '../public/emails/',
-    },
   };
 };

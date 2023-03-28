@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { useEffect, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -35,7 +35,7 @@ interface Props {
   viewMode: ViewMode;
 }
 
-export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }: Props) => {
+export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, viewMode }) => {
   const { rulesSource } = namespace;
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
@@ -234,13 +234,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         )}
       </div>
       {!isCollapsed && (
-        <RulesTable
-          showSummaryColumn={true}
-          className={styles.rulesTable}
-          showGuidelines={true}
-          showNextEvaluationColumn={Boolean(group.interval)}
-          rules={group.rules}
-        />
+        <RulesTable showSummaryColumn={true} className={styles.rulesTable} showGuidelines={true} rules={group.rules} />
       )}
       {isEditingGroup && (
         <EditCloudGroupModal

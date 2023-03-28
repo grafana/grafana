@@ -26,10 +26,7 @@ type Props = DispatchProps & ConnectedProps<typeof connector>;
 export function ExploreQueryInspector(props: Props) {
   const { loading, width, onClose, queryResponse, timeZone } = props;
   const dataFrames = queryResponse?.series || [];
-  let errors = queryResponse?.errors;
-  if (!errors?.length && queryResponse?.error) {
-    errors = [queryResponse.error];
-  }
+  const error = queryResponse?.error;
 
   useEffect(() => {
     reportInteraction('grafana_explore_query_inspector_opened');
@@ -72,12 +69,12 @@ export function ExploreQueryInspector(props: Props) {
   };
 
   const tabs = [statsTab, queryTab, jsonTab, dataTab];
-  if (errors?.length) {
+  if (error) {
     const errorTab: TabConfig = {
       label: 'Error',
       value: 'error',
       icon: 'exclamation-triangle',
-      content: <InspectErrorTab errors={errors} />,
+      content: <InspectErrorTab error={error} />,
     };
     tabs.push(errorTab);
   }

@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 
-import { QueryEditorProps } from '@grafana/data';
+import { CoreApp, QueryEditorProps } from '@grafana/data';
 
 import { LokiDatasource } from '../datasource';
 import { shouldRefreshLabels } from '../languageUtils';
@@ -12,7 +12,6 @@ export interface LokiQueryFieldProps extends QueryEditorProps<LokiDatasource, Lo
   ExtraFieldElement?: ReactNode;
   placeholder?: string;
   'data-testid'?: string;
-  onQueryType?: (query: string) => void;
 }
 
 interface LokiQueryFieldState {
@@ -66,7 +65,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   };
 
   render() {
-    const { ExtraFieldElement, query, datasource, history, onRunQuery, onQueryType } = this.props;
+    const { ExtraFieldElement, query, app, datasource, history, onRunQuery } = this.props;
     const placeholder = this.props.placeholder ?? 'Enter a Loki query (run with Shift+Enter)';
 
     return (
@@ -77,13 +76,13 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
         >
           <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
             <MonacoQueryFieldWrapper
+              runQueryOnBlur={app !== CoreApp.Explore}
               datasource={datasource}
               history={history ?? []}
               onChange={this.onChangeQuery}
               onRunQuery={onRunQuery}
               initialValue={query.expr ?? ''}
               placeholder={placeholder}
-              onQueryType={onQueryType}
             />
           </div>
         </div>

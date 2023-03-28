@@ -94,7 +94,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 export type Props = {
   color: string;
-  onClick?: (evt: React.MouseEvent<HTMLDivElement>) => void;
+  onClick?: (evt: React.MouseEvent<any>) => void;
   viewEnd: number;
   viewStart: number;
   getViewedBounds: ViewedBoundsFunctionType;

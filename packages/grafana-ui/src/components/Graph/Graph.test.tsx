@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import $ from 'jquery';
 import React from 'react';
 
@@ -9,7 +9,7 @@ import { VizTooltip } from '../VizTooltip';
 
 import Graph from './Graph';
 
-const display: DisplayProcessor = (v) => ({ numeric: Number(v), text: String(v), color: 'red' });
+const display: DisplayProcessor = (v) => ({ numeric: v, text: String(v), color: 'red' });
 
 const series: GraphSeriesXY[] = [
   {
@@ -136,9 +136,7 @@ describe('Graph', () => {
             series: { seriesIndex: 0 },
           },
         };
-        act(() => {
-          $('div.graph-panel__chart').trigger('plothover', [eventArgs.pos, eventArgs.activeItem]);
-        });
+        $('div.graph-panel__chart').trigger('plothover', [eventArgs.pos, eventArgs.activeItem]);
         const timestamp = screen.getByLabelText('Timestamp');
         const tooltip = screen.getByTestId('SeriesTableRow').parentElement;
 
@@ -167,9 +165,7 @@ describe('Graph', () => {
           activeItem: null,
         };
         // Then
-        act(() => {
-          $('div.graph-panel__chart').trigger('plothover', [eventArgs.pos, eventArgs.activeItem]);
-        });
+        $('div.graph-panel__chart').trigger('plothover', [eventArgs.pos, eventArgs.activeItem]);
         const timestamp = screen.getByLabelText('Timestamp');
 
         const tableRows = screen.getAllByTestId('SeriesTableRow');

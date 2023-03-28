@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { FunctionComponent } from 'react';
 
 import { withTheme2, useStyles2 } from '../../themes';
 import { Switch } from '../Forms/Legacy/Switch/Switch';
@@ -12,7 +12,7 @@ export interface SeriesColorPickerPopoverProps extends ColorPickerProps, Popover
   onToggleAxis?: () => void;
 }
 
-export const SeriesColorPickerPopover = (props: SeriesColorPickerPopoverProps) => {
+export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopoverProps> = (props) => {
   const styles = useStyles2(getStyles);
   const { yaxis, onToggleAxis, color, ...colorPickerProps } = props;
 

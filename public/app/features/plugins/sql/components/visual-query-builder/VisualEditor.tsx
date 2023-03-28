@@ -18,7 +18,14 @@ interface VisualEditorProps extends QueryEditorProps {
   onValidate: (isValid: boolean) => void;
 }
 
-export const VisualEditor = ({ query, db, queryRowFilter, onChange, onValidate, range }: VisualEditorProps) => {
+export const VisualEditor: React.FC<VisualEditorProps> = ({
+  query,
+  db,
+  queryRowFilter,
+  onChange,
+  onValidate,
+  range,
+}) => {
   const state = useAsync(async () => {
     const fields = await db.fields(query);
     return fields;

@@ -7,4 +7,4 @@ export * from './dimensions';
 export * from './ArrayDataFrame';
 export * from './DataFrameJSON';
 export * from './frameComparisons';
-export { anySeriesWithTimeField, isTimeSeriesFrame, isTimeSeriesFrames } from './utils';
+export { anySeriesWithTimeField } from './utils';

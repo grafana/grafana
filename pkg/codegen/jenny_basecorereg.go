@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/kindsys"
+	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 // BaseCoreRegistryJenny generates a static registry for core kinds that

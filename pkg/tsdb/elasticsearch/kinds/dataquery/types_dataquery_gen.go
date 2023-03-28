@@ -62,12 +62,25 @@ const (
 
 // Defines values for BasePipelineMetricAggregationType.
 const (
+	BasePipelineMetricAggregationTypeAvg           BasePipelineMetricAggregationType = "avg"
 	BasePipelineMetricAggregationTypeBucketScript  BasePipelineMetricAggregationType = "bucket_script"
+	BasePipelineMetricAggregationTypeCardinality   BasePipelineMetricAggregationType = "cardinality"
+	BasePipelineMetricAggregationTypeCount         BasePipelineMetricAggregationType = "count"
 	BasePipelineMetricAggregationTypeCumulativeSum BasePipelineMetricAggregationType = "cumulative_sum"
 	BasePipelineMetricAggregationTypeDerivative    BasePipelineMetricAggregationType = "derivative"
+	BasePipelineMetricAggregationTypeExtendedStats BasePipelineMetricAggregationType = "extended_stats"
+	BasePipelineMetricAggregationTypeLogs          BasePipelineMetricAggregationType = "logs"
+	BasePipelineMetricAggregationTypeMax           BasePipelineMetricAggregationType = "max"
+	BasePipelineMetricAggregationTypeMin           BasePipelineMetricAggregationType = "min"
 	BasePipelineMetricAggregationTypeMovingAvg     BasePipelineMetricAggregationType = "moving_avg"
 	BasePipelineMetricAggregationTypeMovingFn      BasePipelineMetricAggregationType = "moving_fn"
+	BasePipelineMetricAggregationTypePercentiles   BasePipelineMetricAggregationType = "percentiles"
+	BasePipelineMetricAggregationTypeRate          BasePipelineMetricAggregationType = "rate"
+	BasePipelineMetricAggregationTypeRawData       BasePipelineMetricAggregationType = "raw_data"
+	BasePipelineMetricAggregationTypeRawDocument   BasePipelineMetricAggregationType = "raw_document"
 	BasePipelineMetricAggregationTypeSerialDiff    BasePipelineMetricAggregationType = "serial_diff"
+	BasePipelineMetricAggregationTypeSum           BasePipelineMetricAggregationType = "sum"
+	BasePipelineMetricAggregationTypeTopMetrics    BasePipelineMetricAggregationType = "top_metrics"
 )
 
 // Defines values for BucketAggregationSettingsOrder.
@@ -444,7 +457,7 @@ type AverageType string
 // BaseBucketAggregation defines model for BaseBucketAggregation.
 type BaseBucketAggregation struct {
 	Id       string                    `json:"id"`
-	Settings *interface{}              `json:"settings,omitempty"`
+	Settings map[string]interface{}    `json:"settings,omitempty"`
 	Type     BaseBucketAggregationType `json:"type"`
 }
 
@@ -485,30 +498,34 @@ type BasePipelineMetricAggregationType string
 
 // BucketAggregation defines model for BucketAggregation.
 type BucketAggregation struct {
-	Field    *string `json:"field,omitempty"`
-	Id       *string `json:"id,omitempty"`
-	Settings *struct {
-		Filters []struct {
-			Label string `json:"label"`
-			Query string `json:"query"`
-		} `json:"filters,omitempty"`
-		Interval    *string                         `json:"interval,omitempty"`
-		MinDocCount *string                         `json:"min_doc_count,omitempty"`
-		Missing     *string                         `json:"missing,omitempty"`
-		Offset      *string                         `json:"offset,omitempty"`
-		Order       *BucketAggregationSettingsOrder `json:"order,omitempty"`
-		OrderBy     *string                         `json:"orderBy,omitempty"`
-		Precision   *string                         `json:"precision,omitempty"`
-		Size        *string                         `json:"size,omitempty"`
-		TimeZone    *string                         `json:"timeZone,omitempty"`
-		TrimEdges   *string                         `json:"trimEdges,omitempty"`
-	} `json:"settings,omitempty"`
-	Type  *interface{} `json:"type,omitempty"`
-	union json.RawMessage
+	Field    *string                     `json:"field,omitempty"`
+	Id       *string                     `json:"id,omitempty"`
+	Settings *BucketAggregation_Settings `json:"settings,omitempty"`
+	Type     *interface{}                `json:"type,omitempty"`
+	union    json.RawMessage
 }
 
 // BucketAggregationSettingsOrder defines model for BucketAggregation.Settings.Order.
 type BucketAggregationSettingsOrder string
+
+// BucketAggregation_Settings defines model for BucketAggregation.Settings.
+type BucketAggregation_Settings struct {
+	Filters []struct {
+		Label string `json:"label"`
+		Query string `json:"query"`
+	} `json:"filters,omitempty"`
+	Interval             *string                         `json:"interval,omitempty"`
+	MinDocCount          *string                         `json:"min_doc_count,omitempty"`
+	Missing              *string                         `json:"missing,omitempty"`
+	Offset               *string                         `json:"offset,omitempty"`
+	Order                *BucketAggregationSettingsOrder `json:"order,omitempty"`
+	OrderBy              *string                         `json:"orderBy,omitempty"`
+	Precision            *string                         `json:"precision,omitempty"`
+	Size                 *string                         `json:"size,omitempty"`
+	TimeZone             *string                         `json:"timeZone,omitempty"`
+	TrimEdges            *string                         `json:"trimEdges,omitempty"`
+	AdditionalProperties map[string]interface{}          `json:"-"`
+}
 
 // BucketAggregationType defines model for BucketAggregationType.
 type BucketAggregationType string
@@ -517,7 +534,7 @@ type BucketAggregationType string
 type BucketAggregationWithField struct {
 	Field    *string                        `json:"field,omitempty"`
 	Id       string                         `json:"id"`
-	Settings *interface{}                   `json:"settings,omitempty"`
+	Settings map[string]interface{}         `json:"settings,omitempty"`
 	Type     BucketAggregationWithFieldType `json:"type"`
 }
 
@@ -613,7 +630,7 @@ type ElasticsearchDataQuery struct {
 	Alias *string `json:"alias,omitempty"`
 
 	// List of bucket aggregations
-	BucketAggs []BucketAggsItem `json:"bucketAggs,omitempty"`
+	BucketAggs []_BucketAggs_Item `json:"bucketAggs,omitempty"`
 
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
@@ -622,12 +639,13 @@ type ElasticsearchDataQuery struct {
 	Datasource *interface{} `json:"datasource,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	// Note this does not always imply that the query should not be executed since
-	// the results from a hidden query may be used as the input to other queries (SSE etc)
 	Hide *bool `json:"hide,omitempty"`
 
+	// Unique, guid like, string used in explore mode
+	Key *string `json:"key,omitempty"`
+
 	// List of metric aggregations
-	Metrics []MetricsItem `json:"metrics,omitempty"`
+	Metrics []_Metrics_Item `json:"metrics,omitempty"`
 
 	// Lucene query
 	Query *string `json:"query,omitempty"`
@@ -636,9 +654,7 @@ type ElasticsearchDataQuery struct {
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
 
-	// A unique identifier for the query within the list of targets.
-	// In server side expressions, the refId is used as a variable name to identify results.
-	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
+	// A - Z
 	RefId string `json:"refId"`
 
 	// Name of time field
@@ -648,32 +664,36 @@ type ElasticsearchDataQuery struct {
 // BucketAggsSettingsOrder defines model for ElasticsearchDataQuery.BucketAggs.Settings.Order.
 type BucketAggsSettingsOrder string
 
-// BucketAggsItem defines model for ElasticsearchDataQuery.bucketAggs.Item.
-type BucketAggsItem struct {
-	Field    *string `json:"field,omitempty"`
-	Id       *string `json:"id,omitempty"`
-	Settings *struct {
-		Filters []struct {
-			Label string `json:"label"`
-			Query string `json:"query"`
-		} `json:"filters,omitempty"`
-		Interval    *string                  `json:"interval,omitempty"`
-		MinDocCount *string                  `json:"min_doc_count,omitempty"`
-		Missing     *string                  `json:"missing,omitempty"`
-		Offset      *string                  `json:"offset,omitempty"`
-		Order       *BucketAggsSettingsOrder `json:"order,omitempty"`
-		OrderBy     *string                  `json:"orderBy,omitempty"`
-		Precision   *string                  `json:"precision,omitempty"`
-		Size        *string                  `json:"size,omitempty"`
-		TimeZone    *string                  `json:"timeZone,omitempty"`
-		TrimEdges   *string                  `json:"trimEdges,omitempty"`
-	} `json:"settings,omitempty"`
-	Type  *interface{} `json:"type,omitempty"`
-	union json.RawMessage
+// _BucketAggs_Settings defines model for ElasticsearchDataQuery.BucketAggs.Settings.
+type _BucketAggs_Settings struct {
+	Filters []struct {
+		Label string `json:"label"`
+		Query string `json:"query"`
+	} `json:"filters,omitempty"`
+	Interval             *string                  `json:"interval,omitempty"`
+	MinDocCount          *string                  `json:"min_doc_count,omitempty"`
+	Missing              *string                  `json:"missing,omitempty"`
+	Offset               *string                  `json:"offset,omitempty"`
+	Order                *BucketAggsSettingsOrder `json:"order,omitempty"`
+	OrderBy              *string                  `json:"orderBy,omitempty"`
+	Precision            *string                  `json:"precision,omitempty"`
+	Size                 *string                  `json:"size,omitempty"`
+	TimeZone             *string                  `json:"timeZone,omitempty"`
+	TrimEdges            *string                  `json:"trimEdges,omitempty"`
+	AdditionalProperties map[string]interface{}   `json:"-"`
 }
 
-// MetricsSettings defines model for ElasticsearchDataQuery.Metrics.Settings.
-type MetricsSettings struct {
+// _BucketAggs_Item defines model for ElasticsearchDataQuery.bucketAggs.Item.
+type _BucketAggs_Item struct {
+	Field    *string               `json:"field,omitempty"`
+	Id       *string               `json:"id,omitempty"`
+	Settings *_BucketAggs_Settings `json:"settings,omitempty"`
+	Type     *interface{}          `json:"type,omitempty"`
+	union    json.RawMessage
+}
+
+// _Metrics_Settings defines model for ElasticsearchDataQuery.Metrics.Settings.
+type _Metrics_Settings struct {
 	Format               *string                `json:"format,omitempty"`
 	Lag                  *string                `json:"lag,omitempty"`
 	Limit                *string                `json:"limit,omitempty"`
@@ -693,8 +713,8 @@ type MetricsSettings struct {
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
-// MetricsItem defines model for ElasticsearchDataQuery.metrics.Item.
-type MetricsItem struct {
+// _Metrics_Item defines model for ElasticsearchDataQuery.metrics.Item.
+type _Metrics_Item struct {
 	Field             *string                `json:"field,omitempty"`
 	Hide              *bool                  `json:"hide,omitempty"`
 	Id                *string                `json:"id,omitempty"`
@@ -704,8 +724,8 @@ type MetricsItem struct {
 		Name        string `json:"name"`
 		PipelineAgg string `json:"pipelineAgg"`
 	} `json:"pipelineVariables,omitempty"`
-	Settings *MetricsSettings `json:"settings,omitempty"`
-	Type     *interface{}     `json:"type,omitempty"`
+	Settings *_Metrics_Settings `json:"settings,omitempty"`
+	Type     *interface{}       `json:"type,omitempty"`
 	union    json.RawMessage
 }
 
@@ -844,13 +864,13 @@ type MetricAggregation struct {
 		Name        string `json:"name"`
 		PipelineAgg string `json:"pipelineAgg"`
 	} `json:"pipelineVariables,omitempty"`
-	Settings *MetricAggregationSettings `json:"settings,omitempty"`
-	Type     *interface{}               `json:"type,omitempty"`
+	Settings *MetricAggregation_Settings `json:"settings,omitempty"`
+	Type     *interface{}                `json:"type,omitempty"`
 	union    json.RawMessage
 }
 
-// MetricAggregationSettings defines model for MetricAggregation.Settings.
-type MetricAggregationSettings struct {
+// MetricAggregation_Settings defines model for MetricAggregation.Settings.
+type MetricAggregation_Settings struct {
 	Format               *string                `json:"format,omitempty"`
 	Lag                  *string                `json:"lag,omitempty"`
 	Limit                *string                `json:"limit,omitempty"`
@@ -921,13 +941,13 @@ type MetricAggregationWithSettings struct {
 		Name        string `json:"name"`
 		PipelineAgg string `json:"pipelineAgg"`
 	} `json:"pipelineVariables,omitempty"`
-	Settings *MetricAggregationWithSettingsSettings `json:"settings,omitempty"`
-	Type     *interface{}                           `json:"type,omitempty"`
+	Settings *MetricAggregationWithSettings_Settings `json:"settings,omitempty"`
+	Type     *interface{}                            `json:"type,omitempty"`
 	union    json.RawMessage
 }
 
-// MetricAggregationWithSettingsSettings defines model for MetricAggregationWithSettings.Settings.
-type MetricAggregationWithSettingsSettings struct {
+// MetricAggregationWithSettings_Settings defines model for MetricAggregationWithSettings.Settings.
+type MetricAggregationWithSettings_Settings struct {
 	Format               *string                `json:"format,omitempty"`
 	Lag                  *string                `json:"lag,omitempty"`
 	Limit                *string                `json:"limit,omitempty"`
@@ -1108,13 +1128,13 @@ type PipelineMetricAggregation struct {
 		Name        string `json:"name"`
 		PipelineAgg string `json:"pipelineAgg"`
 	} `json:"pipelineVariables,omitempty"`
-	Settings *PipelineMetricAggregationSettings `json:"settings,omitempty"`
-	Type     *interface{}                       `json:"type,omitempty"`
+	Settings *PipelineMetricAggregation_Settings `json:"settings,omitempty"`
+	Type     *interface{}                        `json:"type,omitempty"`
 	union    json.RawMessage
 }
 
-// PipelineMetricAggregationSettings defines model for PipelineMetricAggregation.Settings.
-type PipelineMetricAggregationSettings struct {
+// PipelineMetricAggregation_Settings defines model for PipelineMetricAggregation.Settings.
+type PipelineMetricAggregation_Settings struct {
 	Format               *string                `json:"format,omitempty"`
 	Script               *interface{}           `json:"script,omitempty"`
 	Unit                 *string                `json:"unit,omitempty"`

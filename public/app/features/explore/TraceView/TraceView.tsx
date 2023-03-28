@@ -13,7 +13,7 @@ import {
   PanelData,
   SplitOpen,
 } from '@grafana/data';
-import { config, getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getTraceToLogsOptions, TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
@@ -26,14 +26,7 @@ import { ExploreId } from 'app/types/explore';
 
 import { changePanelState } from '../state/explorePane';
 
-import {
-  SpanBarOptionsData,
-  Trace,
-  TracePageHeader,
-  NewTracePageHeader,
-  TraceTimelineViewer,
-  TTraceTimeline,
-} from './components';
+import { SpanBarOptionsData, Trace, TracePageHeader, TraceTimelineViewer, TTraceTimeline } from './components';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
@@ -139,25 +132,15 @@ export function TraceView(props: Props) {
 
   return (
     <>
-      {props.dataFrames?.length && traceProp ? (
+      {props.dataFrames?.length && props.dataFrames[0]?.meta?.preferredVisualisationType === 'trace' && traceProp ? (
         <>
-          {config.featureToggles.newTraceView ? (
-            <NewTracePageHeader
-              trace={traceProp}
-              updateNextViewRangeTime={updateNextViewRangeTime}
-              updateViewRangeTime={updateViewRangeTime}
-              viewRange={viewRange}
-              timeZone={timeZone}
-            />
-          ) : (
-            <TracePageHeader
-              trace={traceProp}
-              updateNextViewRangeTime={updateNextViewRangeTime}
-              updateViewRangeTime={updateViewRangeTime}
-              viewRange={viewRange}
-              timeZone={timeZone}
-            />
-          )}
+          <TracePageHeader
+            trace={traceProp}
+            updateNextViewRangeTime={updateNextViewRangeTime}
+            updateViewRangeTime={updateViewRangeTime}
+            viewRange={viewRange}
+            timeZone={timeZone}
+          />
           <TraceTimelineViewer
             registerAccessors={noop}
             scrollToFirstVisibleSpan={noop}

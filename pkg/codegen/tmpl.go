@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/kindsys"
+	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 // All the parsed templates in the tmpl subdirectory

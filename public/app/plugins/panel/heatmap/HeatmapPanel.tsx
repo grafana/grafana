@@ -20,13 +20,13 @@ import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/tra
 
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
+import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
-import { PanelOptions } from './types';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
-export const HeatmapPanel = ({
+export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   data,
   id,
   timeRange,
@@ -38,7 +38,7 @@ export const HeatmapPanel = ({
   eventBus,
   onChangeTimeRange,
   replaceVariables,
-}: HeatmapPanelProps) => {
+}) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { sync } = usePanelContext();

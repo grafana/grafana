@@ -105,6 +105,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     return builder; // empty frame with no options
   }
 
+  let seriesIndex = 0;
+
   const xScaleKey = 'x';
   let xScaleUnit = '_x';
   let yScaleKey = '';
@@ -214,6 +216,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     if (field === xField || field.type !== FieldType.number) {
       continue;
     }
+
+    // TODO: skip this for fields with custom renderers?
+    field.state!.seriesIndex = seriesIndex++;
 
     let fmt = field.display ?? defaultFormatter;
     if (field.config.custom?.stacking?.mode === StackingMode.Percent) {

@@ -31,7 +31,6 @@ export const FileUpload = ({
   children = 'Upload file',
   accept = '*',
   size = 'md',
-  showFileName,
 }: React.PropsWithChildren<Props>) => {
   const style = useStyles2(getStyles(size));
   const [fileName, setFileName] = useState('');
@@ -64,7 +63,7 @@ export const FileUpload = ({
         {children}
       </label>
 
-      {showFileName && fileName && (
+      {fileName && (
         <span
           aria-label="File name"
           className={style.fileName}

@@ -6,9 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/kindsys"
-
-	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 // CRDKindRegistryJenny generates a static registry of the CRD representations
@@ -45,7 +43,7 @@ func (j *crdregjenny) Generate(kinds ...kindsys.Kind) (*codejen.File, error) {
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup("core_crd_registry.tmpl").Execute(buf, tvars_kind_registry{
 		PackageName:       "corecrd",
-		KindPackagePrefix: filepath.ToSlash(filepath.Join("github.com/grafana/grafana", cuectx.GoCoreKindParentPath)),
+		KindPackagePrefix: filepath.ToSlash(filepath.Join("github.com/grafana/grafana", kindsys.GoCoreKindParentPath)),
 		Kinds:             cores,
 	}); err != nil {
 		return nil, fmt.Errorf("failed executing core crd registry template: %w", err)

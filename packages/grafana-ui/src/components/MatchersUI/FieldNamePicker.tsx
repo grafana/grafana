@@ -6,10 +6,13 @@ import { Select } from '../Select/Select';
 
 import { useFieldDisplayNames, useSelectOptions, frameHasName } from './utils';
 
-type Props = StandardEditorProps<string, FieldNamePickerConfigSettings>;
-
 // Pick a field name out of the fields
-export const FieldNamePicker = ({ value, onChange, context, item }: Props) => {
+export const FieldNamePicker: React.FC<StandardEditorProps<string, FieldNamePickerConfigSettings>> = ({
+  value,
+  onChange,
+  context,
+  item,
+}) => {
   const settings: FieldNamePickerConfigSettings = item.settings ?? {};
   const names = useFieldDisplayNames(context.data, settings?.filter);
   const selectOptions = useSelectOptions(names, value);
@@ -34,7 +37,7 @@ export const FieldNamePicker = ({ value, onChange, context, item }: Props) => {
         onChange={onSelectChange}
         noOptionsMessage={settings.noFieldsMessage}
         width={settings.width}
-        isClearable={settings.isClearable !== false}
+        isClearable={true}
       />
     </>
   );

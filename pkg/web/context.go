@@ -16,7 +16,6 @@ package web
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"net"
 	"net/http"
@@ -104,7 +103,7 @@ func (ctx *Context) HTML(status int, name string, data interface{}) {
 	ctx.Resp.Header().Set(headerContentType, contentTypeHTML)
 	ctx.Resp.WriteHeader(status)
 	if err := ctx.template.ExecuteTemplate(ctx.Resp, name, data); err != nil {
-		panic(fmt.Sprintf("Context.HTML - Error rendering template: %s. You may need to build frontend assets \n %s", name, err.Error()))
+		panic("Context.HTML:" + err.Error())
 	}
 }
 

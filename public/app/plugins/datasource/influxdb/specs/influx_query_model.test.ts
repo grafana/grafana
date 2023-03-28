@@ -11,16 +11,13 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
-          policy: 'autogen',
         },
         templateSrv,
         {}
       );
 
       const queryText = query.render();
-      expect(queryText).toBe(
-        'SELECT mean("value") FROM "autogen"."cpu" WHERE $timeFilter GROUP BY time($__interval)' + ' fill(null)'
-      );
+      expect(queryText).toBe('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(null)');
     });
   });
 
@@ -49,7 +46,6 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
-          policy: 'autogen',
           select: [
             [
               { type: 'field', params: ['value'] },
@@ -65,7 +61,7 @@ describe('InfluxQuery', () => {
 
       const queryText = query.render();
       expect(queryText).toBe(
-        'SELECT mean("value") /100 AS "text" FROM "autogen"."cpu" WHERE $timeFilter GROUP BY time($__interval) fill(null)'
+        'SELECT mean("value") /100 AS "text" FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(null)'
       );
     });
   });
@@ -76,7 +72,6 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
-          policy: 'autogen',
           groupBy: [{ type: 'time', params: ['auto'] }],
           tags: [{ key: 'hostname', value: 'server\\1' }],
         },
@@ -87,7 +82,7 @@ describe('InfluxQuery', () => {
       const queryText = query.render();
 
       expect(queryText).toBe(
-        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("hostname" = \'server\\\\1\') AND $timeFilter' +
+        'SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server\\\\1\') AND $timeFilter' +
           ' GROUP BY time($__interval)'
       );
     });
@@ -97,7 +92,6 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
-          policy: 'autogen',
           groupBy: [{ type: 'time', params: ['auto'] }],
           tags: [{ key: 'app', value: '/e.*/' }],
         },
@@ -107,7 +101,7 @@ describe('InfluxQuery', () => {
 
       const queryText = query.render();
       expect(queryText).toBe(
-        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("app" =~ /e.*/) AND $timeFilter GROUP BY time($__interval)'
+        'SELECT mean("value") FROM "cpu" WHERE ("app" =~ /e.*/) AND $timeFilter GROUP BY time($__interval)'
       );
     });
   });
@@ -118,7 +112,6 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
-          policy: 'autogen',
           groupBy: [{ type: 'time', params: ['auto'] }],
           tags: [
             { key: 'hostname', value: 'server1' },
@@ -131,7 +124,7 @@ describe('InfluxQuery', () => {
 
       const queryText = query.render();
       expect(queryText).toBe(
-        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("hostname" = \'server1\' AND "app" = \'email\') AND ' +
+        'SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server1\' AND "app" = \'email\') AND ' +
           '$timeFilter GROUP BY time($__interval)'
       );
     });
@@ -143,7 +136,6 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
-          policy: 'autogen',
           groupBy: [{ type: 'time', params: ['auto'] }],
           tags: [
             { key: 'hostname', value: 'server1' },
@@ -156,7 +148,7 @@ describe('InfluxQuery', () => {
 
       const queryText = query.render();
       expect(queryText).toBe(
-        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("hostname" = \'server1\' OR "hostname" = \'server2\') AND ' +
+        'SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server1\' OR "hostname" = \'server2\') AND ' +
           '$timeFilter GROUP BY time($__interval)'
       );
     });
@@ -168,7 +160,6 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
-          policy: 'autogen',
           groupBy: [{ type: 'time', params: ['auto'] }],
           tags: [
             { key: 'name', value: "Let's encrypt." },
@@ -181,7 +172,7 @@ describe('InfluxQuery', () => {
 
       const queryText = query.render();
       expect(queryText).toBe(
-        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("name" = \'Let\\\'s encrypt.\' OR "hostname" = \'server2\') AND ' +
+        'SELECT mean("value") FROM "cpu" WHERE ("name" = \'Let\\\'s encrypt.\' OR "hostname" = \'server2\') AND ' +
           '$timeFilter GROUP BY time($__interval)'
       );
     });
@@ -193,7 +184,6 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
-          policy: 'autogen',
           groupBy: [],
           tags: [{ key: 'value', value: '5', operator: '>' }],
         },
@@ -202,7 +192,7 @@ describe('InfluxQuery', () => {
       );
 
       const queryText = query.render();
-      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" > 5) AND $timeFilter');
+      expect(queryText).toBe('SELECT mean("value") FROM "cpu" WHERE ("value" > 5) AND $timeFilter');
     });
   });
 
@@ -212,7 +202,6 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
-          policy: 'autogen',
           tags: [],
           groupBy: [
             { type: 'time', interval: 'auto' },
@@ -224,9 +213,7 @@ describe('InfluxQuery', () => {
       );
 
       const queryText = query.render();
-      expect(queryText).toBe(
-        'SELECT mean("value") FROM "autogen"."cpu" WHERE $timeFilter GROUP BY time($__interval), "host"'
-      );
+      expect(queryText).toBe('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($__interval), "host"');
     });
   });
 
@@ -236,7 +223,6 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
-          policy: 'autogen',
           select: [[{ type: 'field', params: ['value'] }]],
           groupBy: [],
         },
@@ -244,7 +230,7 @@ describe('InfluxQuery', () => {
         {}
       );
       const queryText = query.render();
-      expect(queryText).toBe('SELECT "value" FROM "autogen"."cpu" WHERE $timeFilter');
+      expect(queryText).toBe('SELECT "value" FROM "cpu" WHERE $timeFilter');
     });
   });
 
@@ -254,7 +240,6 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
-          policy: 'autogen',
           select: [[{ type: 'field', params: ['value'] }]],
           groupBy: [{ type: 'time' }, { type: 'fill', params: ['0'] }],
         },
@@ -262,9 +247,7 @@ describe('InfluxQuery', () => {
         {}
       );
       const queryText = query.render();
-      expect(queryText).toBe(
-        'SELECT "value" FROM "autogen"."cpu" WHERE $timeFilter GROUP BY time($__interval) fill(0)'
-      );
+      expect(queryText).toBe('SELECT "value" FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(0)');
     });
   });
 
@@ -274,7 +257,6 @@ describe('InfluxQuery', () => {
         {
           refId: 'A',
           measurement: 'cpu',
-          policy: 'autogen',
           groupBy: [{ type: 'time' }, { type: 'fill' }],
         },
         templateSrv,

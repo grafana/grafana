@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import React, { MouseEvent, useCallback, useState } from 'react';
 
-import { DataFrame, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
-import { ContextMenu, MenuGroup, MenuItem, useStyles2 } from '@grafana/ui';
+import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { ContextMenu, MenuGroup, MenuItem, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { Config } from './layout';
 import { EdgeDatum, NodeDatum } from './types';
-import { getEdgeFields, getNodeFields, statToString } from './utils';
+import { getEdgeFields, getNodeFields } from './utils';
 
 /**
  * Hook that contains state of the context menu, both for edges and nodes and provides appropriate component when
@@ -47,7 +47,10 @@ export function useContextMenu(
 
       const links = nodes ? getLinks(nodes, node.dataFrameRowIndex) : [];
       const renderer = getItemsRenderer(links, node, extraNodeItem);
-      setMenu(makeContextMenu(<NodeHeader node={node} nodes={nodes} />, event, setMenu, renderer));
+
+      if (renderer) {
+        setMenu(makeContextMenu(<NodeHeader node={node} nodes={nodes} />, renderer, event, setMenu));
+      }
     },
     [config, nodes, getLinks, setMenu, setConfig, setFocusedNodeId]
   );
@@ -61,7 +64,10 @@ export function useContextMenu(
       }
       const links = getLinks(edges, edge.dataFrameRowIndex);
       const renderer = getItemsRenderer(links, edge);
-      setMenu(makeContextMenu(<EdgeHeader edge={edge} edges={edges} />, event, setMenu, renderer));
+
+      if (renderer) {
+        setMenu(makeContextMenu(<EdgeHeader edge={edge} edges={edges} />, renderer, event, setMenu));
+      }
     },
     [edges, getLinks, setMenu]
   );
@@ -71,9 +77,9 @@ export function useContextMenu(
 
 function makeContextMenu(
   header: JSX.Element,
+  renderer: () => React.ReactNode,
   event: MouseEvent<SVGElement>,
-  setMenu: (el: JSX.Element | undefined) => void,
-  renderer?: () => React.ReactNode
+  setMenu: (el: JSX.Element | undefined) => void
 ) {
   return (
     <ContextMenu
@@ -173,78 +179,73 @@ function getItems(links: LinkModel[]) {
   });
 }
 
-function FieldRow({ field, index }: { field: Field; index: number }) {
-  return (
-    <HeaderRow
-      label={field.config?.displayName || field.name}
-      value={statToString(field.config, field.values.get(index) || '')}
-    />
-  );
-}
-
-function HeaderRow({ label, value }: { label: string; value: string }) {
-  const styles = useStyles2(getLabelStyles);
-  return (
-    <tr>
-      <td className={styles.label}>{label}: </td>
-      <td className={styles.value}>{value}</td>
-    </tr>
-  );
-}
-
-/**
- * Shows some field values in a table on top of the context menu.
- */
 function NodeHeader({ node, nodes }: { node: NodeDatum; nodes?: DataFrame }) {
-  const rows = [];
+  const index = node.dataFrameRowIndex;
   if (nodes) {
     const fields = getNodeFields(nodes);
-    for (const f of [fields.title, fields.subTitle, fields.mainStat, fields.secondaryStat, ...fields.details]) {
-      if (f && f.values.get(node.dataFrameRowIndex)) {
-        rows.push(<FieldRow field={f} index={node.dataFrameRowIndex} />);
-      }
-    }
+
+    return (
+      <div>
+        {fields.title && (
+          <Label
+            label={fields.title.config.displayName || fields.title.name}
+            value={fields.title.values.get(index) || ''}
+          />
+        )}
+        {fields.subTitle && (
+          <Label
+            label={fields.subTitle.config.displayName || fields.subTitle.name}
+            value={fields.subTitle.values.get(index) || ''}
+          />
+        )}
+        {fields.details.map((f) => (
+          <Label key={f.name} label={f.config.displayName || f.name} value={f.values.get(index) || ''} />
+        ))}
+      </div>
+    );
   } else {
     // Fallback if we don't have nodes dataFrame. Can happen if we use just the edges frame to construct this.
-    if (node.title) {
-      rows.push(<HeaderRow label={'Title'} value={node.title} />);
-    }
-    if (node.subTitle) {
-      rows.push(<HeaderRow label={'Subtitle'} value={node.subTitle} />);
-    }
+    return (
+      <div>
+        {node.title && <Label label={'Title'} value={node.title} />}
+        {node.subTitle && <Label label={'Subtitle'} value={node.subTitle} />}
+      </div>
+    );
   }
-
-  return (
-    <table style={{ width: '100%' }}>
-      <tbody>{rows}</tbody>
-    </table>
-  );
 }
 
-/**
- * Shows some of the field values in a table on top of the context menu.
- */
 function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
   const index = props.edge.dataFrameRowIndex;
+  const styles = getLabelStyles(useTheme2());
   const fields = getEdgeFields(props.edges);
   const valueSource = fields.source?.values.get(index) || '';
   const valueTarget = fields.target?.values.get(index) || '';
 
-  const rows = [];
-  if (valueSource && valueTarget) {
-    rows.push(<HeaderRow label={'Source → Target'} value={`${valueSource} → ${valueTarget}`} />);
-  }
+  return (
+    <div>
+      {fields.source && fields.target && (
+        <div className={styles.label}>
+          <div>Source → Target</div>
+          <span className={styles.value}>
+            {valueSource} → {valueTarget}
+          </span>
+        </div>
+      )}
+      {fields.details.map((f) => (
+        <Label key={f.name} label={f.config.displayName || f.name} value={f.values.get(index) || ''} />
+      ))}
+    </div>
+  );
+}
 
-  for (const f of [fields.mainStat, fields.secondaryStat, ...fields.details]) {
-    if (f && f.values.get(index)) {
-      rows.push(<FieldRow field={f} index={index} />);
-    }
-  }
+function Label({ label, value }: { label: string; value: string | number }) {
+  const styles = useStyles2(getLabelStyles);
 
   return (
-    <table style={{ width: '100%' }}>
-      <tbody>{rows}</tbody>
-    </table>
+    <div className={styles.label}>
+      <div>{label}</div>
+      <span className={styles.value}>{value}</span>
+    </div>
   );
 }
 
@@ -253,16 +254,19 @@ export const getLabelStyles = (theme: GrafanaTheme2) => {
     label: css`
       label: Label;
       line-height: 1.25;
+      margin-bottom: ${theme.spacing(0.5)};
+      padding-left: ${theme.spacing(0.25)};
       color: ${theme.colors.text.disabled};
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.fontWeightMedium};
-      padding-right: ${theme.spacing(1)};
     `,
     value: css`
       label: Value;
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.fontWeightMedium};
       color: ${theme.colors.text.primary};
+      margin-top: ${theme.spacing(0.25)};
+      display: block;
     `,
   };
 };

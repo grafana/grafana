@@ -19,7 +19,6 @@ export interface PostgresOptions extends SQLOptions {
   sslKeyFile?: string;
   postgresVersion?: number;
   timescaledb?: boolean;
-  enableSecureSocksProxy?: boolean;
 }
 
 export interface SecureJsonData {

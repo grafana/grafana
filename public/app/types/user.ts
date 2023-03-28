@@ -13,7 +13,6 @@ export interface OrgUser extends WithAccessControlMetadata {
   userId: number;
   isDisabled: boolean;
   authLabels?: string[];
-  isExternallySynced?: boolean;
 }
 
 export interface User {

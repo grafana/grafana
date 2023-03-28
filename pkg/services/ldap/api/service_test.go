@@ -60,7 +60,7 @@ func setupAPITest(t *testing.T, opts ...func(a *Service)) (*Service, *webtest.Se
 	t.Helper()
 	router := routing.NewRouteRegister()
 	cfg := setting.NewCfg()
-	cfg.LDAPAuthEnabled = true
+	cfg.LDAPEnabled = true
 
 	a := ProvideService(cfg,
 		router,

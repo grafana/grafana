@@ -11,9 +11,11 @@ export interface FunctionEditorControlsProps {
 }
 
 const FunctionDescription = React.lazy(async () => {
+  // @ts-ignore
+  const { default: rst2html } = await import(/* webpackChunkName: "rst2html" */ 'rst2html');
   return {
     default(props: { description?: string }) {
-      return <div>{props.description}</div>;
+      return <div dangerouslySetInnerHTML={{ __html: rst2html(props.description ?? '') }} />;
     },
   };
 });

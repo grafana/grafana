@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -206,15 +206,13 @@ func messageExtractor(resp *response.NormalResponse) (interface{}, error) {
 // ErrorResp creates a response with a visible error
 func ErrResp(status int, err error, msg string, args ...interface{}) *response.NormalResponse {
 	if msg != "" {
-		formattedMsg := fmt.Sprintf(msg, args...)
-		err = fmt.Errorf("%s: %w", formattedMsg, err)
+		err = errors.WithMessagef(err, msg, args...)
 	}
 	return response.Error(status, err.Error(), err)
 }
 
 // accessForbiddenResp creates a response of forbidden access.
 func accessForbiddenResp() response.Response {
-	//nolint:stylecheck // Grandfathered capitalization of error.
 	return ErrResp(http.StatusForbidden, errors.New("Permission denied"), "")
 }
 

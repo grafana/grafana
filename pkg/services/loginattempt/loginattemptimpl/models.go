@@ -2,11 +2,15 @@ package loginattemptimpl
 
 import (
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 )
 
 type CreateLoginAttemptCommand struct {
 	Username  string
 	IpAddress string
+
+	Result loginattempt.LoginAttempt
 }
 
 type GetUserLoginAttemptCountQuery struct {

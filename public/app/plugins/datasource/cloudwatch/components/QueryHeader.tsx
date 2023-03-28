@@ -22,7 +22,7 @@ const apiModes: Array<SelectableValue<CloudWatchQueryMode>> = [
   { label: 'CloudWatch Logs', value: 'Logs' },
 ];
 
-const QueryHeader = ({
+const QueryHeader: React.FC<Props> = ({
   query,
   onChange,
   datasource,
@@ -31,7 +31,7 @@ const QueryHeader = ({
   dataIsStale,
   data,
   onRunQuery,
-}: Props) => {
+}) => {
   const { queryMode, region } = query;
   const isMonitoringAccount = useIsMonitoringAccount(datasource.resources, query.region);
   const [regions, regionIsLoading] = useRegions(datasource);

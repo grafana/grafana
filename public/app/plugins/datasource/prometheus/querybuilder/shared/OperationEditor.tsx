@@ -4,7 +4,7 @@ import { Draggable } from 'react-beautiful-dnd';
 
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Icon, InlineField, Tooltip, useTheme2 } from '@grafana/ui';
+import { Button, Icon, InlineField, Tooltip, useStyles2 } from '@grafana/ui';
 import { isConflictingFilter } from 'app/plugins/datasource/loki/querybuilder/operationUtils';
 import { LokiOperationId } from 'app/plugins/datasource/loki/querybuilder/types';
 
@@ -44,14 +44,9 @@ export function OperationEditor({
   flash,
   highlight,
 }: Props) {
+  const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
   const shouldFlash = useFlash(flash);
-
-  const isConflicting =
-    operation.id === LokiOperationId.LabelFilter && isConflictingFilter(operation, query.operations);
-
-  const theme = useTheme2();
-  const styles = getStyles(theme, isConflicting);
 
   if (!def) {
     return <span>Operation {operation.id} not found</span>;
@@ -133,6 +128,11 @@ export function OperationEditor({
     }
   }
 
+  let isConflicting = false;
+  if (operation.id === LokiOperationId.LabelFilter) {
+    isConflicting = isConflictingFilter(operation, query.operations);
+  }
+
   const isInvalid = (isDragging: boolean) => {
     if (isDragging) {
       return undefined;
@@ -147,7 +147,7 @@ export function OperationEditor({
         <InlineField
           error={'You have conflicting label filters'}
           invalid={isInvalid(snapshot.isDragging)}
-          className={cx(styles.error, styles.cardWrapper)}
+          className={styles.error}
         >
           <div
             className={cx(
@@ -243,11 +243,8 @@ function callParamChangedThenOnChange(
   }
 }
 
-const getStyles = (theme: GrafanaTheme2, isConflicting: boolean) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
-    cardWrapper: css({
-      alignItems: 'stretch',
-    }),
     error: css({
       marginBottom: theme.spacing(1),
     }),
@@ -258,9 +255,9 @@ const getStyles = (theme: GrafanaTheme2, isConflicting: boolean) => {
       flexDirection: 'column',
       cursor: 'grab',
       borderRadius: theme.shape.borderRadius(1),
+      marginBottom: theme.spacing(1),
       position: 'relative',
       transition: 'all 0.5s ease-in 0s',
-      height: isConflicting ? 'auto' : '100%',
     }),
     cardError: css({
       boxShadow: `0px 0px 4px 0px ${theme.colors.warning.main}`,

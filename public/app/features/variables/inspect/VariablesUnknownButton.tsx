@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { FC, useMemo } from 'react';
 
 import { IconButton } from '@grafana/ui';
 
@@ -10,7 +10,7 @@ interface Props {
   usages: UsagesToNetwork[];
 }
 
-export const VariablesUnknownButton = ({ id, usages }: Props) => {
+export const VariablesUnknownButton: FC<Props> = ({ id, usages }) => {
   const network = useMemo(() => usages.find((n) => n.variable.id === id), [id, usages]);
 
   if (!network) {

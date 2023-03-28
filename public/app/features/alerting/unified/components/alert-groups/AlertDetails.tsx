@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
@@ -18,7 +18,7 @@ interface AmNotificationsAlertDetailsProps {
   alert: AlertmanagerAlert;
 }
 
-export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsAlertDetailsProps) => {
+export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, alertManagerSourceName }) => {
   const styles = useStyles2(getStyles);
   const instancePermissions = getInstancesPermissions(alertManagerSourceName);
 

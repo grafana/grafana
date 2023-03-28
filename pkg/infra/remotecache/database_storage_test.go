@@ -17,10 +17,11 @@ func TestDatabaseStorageGarbageCollection(t *testing.T) {
 
 	db := &databaseCache{
 		SQLStore: sqlstore,
+		codec:    &gobCodec{},
 		log:      log.New("remotecache.database"),
 	}
 
-	obj := []byte("foolbar")
+	obj := &CacheableStruct{String: "foolbar"}
 
 	// set time.now to 2 weeks ago
 	var err error
@@ -65,10 +66,11 @@ func TestSecondSet(t *testing.T) {
 
 	db := &databaseCache{
 		SQLStore: sqlstore,
+		codec:    &gobCodec{},
 		log:      log.New("remotecache.database"),
 	}
 
-	obj := []byte("hey!")
+	obj := &CacheableStruct{String: "hey!"}
 
 	err = db.Set(context.Background(), "killa-gorilla", obj, 0)
 	assert.Equal(t, err, nil)
@@ -82,10 +84,11 @@ func TestDatabaseStorageCount(t *testing.T) {
 
 	db := &databaseCache{
 		SQLStore: sqlstore,
+		codec:    &gobCodec{},
 		log:      log.New("remotecache.database"),
 	}
 
-	obj := []byte("foolbar")
+	obj := &CacheableStruct{String: "foolbar"}
 
 	// set time.now to 2 weeks ago
 	var err error

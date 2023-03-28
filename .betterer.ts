@@ -22,12 +22,23 @@ function countUndocumentedStories() {
   });
 }
 
+async function findEslintConfigFiles(): Promise<string[]> {
+  return new Promise((resolve, reject) => {
+    glob('**/.eslintrc', (err, files) => {
+      if (err) {
+        reject(err);
+      }
+      resolve(files);
+    });
+  });
+}
+
 function countEslintErrors() {
   return new BettererFileTest(async (filePaths, fileTestResult, resolver) => {
     const { baseDirectory } = resolver;
     const cli = new ESLint({ cwd: baseDirectory });
 
-    const eslintConfigFiles = await glob('**/.eslintrc');
+    const eslintConfigFiles = await findEslintConfigFiles();
     const eslintConfigMainPaths = eslintConfigFiles.map((file) => path.resolve(path.dirname(file)));
 
     const baseRules: Partial<Linter.RulesRecord> = {

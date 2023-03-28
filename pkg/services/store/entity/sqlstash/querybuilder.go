@@ -5,7 +5,7 @@ import "strings"
 type selectQuery struct {
 	fields   []string // SELECT xyz
 	from     string   // FROM object
-	limit    int64
+	limit    int
 	oneExtra bool
 
 	where []string

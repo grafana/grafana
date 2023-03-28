@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import React from 'react';
+import React, { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -29,7 +29,7 @@ export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'descript
   interactive?: boolean;
 }
 
-export const InlineField = ({
+export const InlineField: FC<Props> = ({
   children,
   label,
   tooltip,
@@ -46,7 +46,7 @@ export const InlineField = ({
   transparent,
   interactive,
   ...htmlProps
-}: Props) => {
+}) => {
   const theme = useTheme2();
   const styles = getStyles(theme, grow, shrink);
   const inputId = htmlFor ?? getChildId(children);

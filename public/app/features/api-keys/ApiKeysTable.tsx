@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { FC } from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { Button, DeleteButton, HorizontalGroup, Icon, Tooltip, useTheme2 } from '@grafana/ui';
@@ -15,7 +15,7 @@ interface Props {
   onMigrate: (apiKey: ApiKey) => void;
 }
 
-export const ApiKeysTable = ({ apiKeys, timeZone, onDelete, onMigrate }: Props) => {
+export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete, onMigrate }) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
@@ -26,7 +26,6 @@ export const ApiKeysTable = ({ apiKeys, timeZone, onDelete, onMigrate }: Props) 
           <th>Name</th>
           <th>Role</th>
           <th>Expires</th>
-          <th>Last used at</th>
           <th style={{ width: '34px' }} />
         </tr>
       </thead>
@@ -48,7 +47,6 @@ export const ApiKeysTable = ({ apiKeys, timeZone, onDelete, onMigrate }: Props) 
                     </span>
                   )}
                 </td>
-                <td>{formatLastUsedAtDate(timeZone, key.lastUsedAt)}</td>
                 <td>
                   <HorizontalGroup justify="flex-end">
                     <Button size="sm" onClick={() => onMigrate(key)}>
@@ -70,13 +68,6 @@ export const ApiKeysTable = ({ apiKeys, timeZone, onDelete, onMigrate }: Props) 
     </table>
   );
 };
-
-function formatLastUsedAtDate(timeZone: TimeZone, lastUsedAt?: string): string {
-  if (!lastUsedAt) {
-    return 'Never';
-  }
-  return dateTimeFormat(lastUsedAt, { timeZone });
-}
 
 function formatDate(expiration: string | undefined, timeZone: TimeZone): string {
   if (!expiration) {

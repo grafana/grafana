@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import React, { FC, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, useStyles2 } from '@grafana/ui';
@@ -20,7 +20,7 @@ export interface SharedProps {
   onClick: (value: RuleFormType) => void;
 }
 
-const RuleType = (props: Props) => {
+const RuleType: FC<Props> = (props) => {
   const { name, description, image, selected = false, value, onClick, disabled = false } = props;
   const styles = useStyles2(getStyles);
 

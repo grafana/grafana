@@ -99,43 +99,41 @@ describe('PromQueryEditorSelector', () => {
   it('shows code editor if expr and nothing else', async () => {
     // We opt for showing code editor for queries created before this feature was added
     render(<PromQueryEditorSelector {...defaultProps} />);
-    await expectCodeEditor();
+    expectCodeEditor();
   });
 
   it('shows code editor if no expr and nothing else since defaultEditor is code', async () => {
     renderWithDatasourceDefaultEditorMode(QueryEditorMode.Code);
-    await expectCodeEditor();
+    expectCodeEditor();
   });
 
   it('shows builder if no expr and nothing else since defaultEditor is builder', async () => {
     renderWithDatasourceDefaultEditorMode(QueryEditorMode.Builder);
-    await expectBuilder();
+    expectBuilder();
   });
 
   it('shows code editor when code mode is set', async () => {
     renderWithMode(QueryEditorMode.Code);
-    await expectCodeEditor();
+    expectCodeEditor();
   });
 
-  it('shows builder when builder mode is set', async () => {
+  it('shows builder when builder mode is set', () => {
     renderWithMode(QueryEditorMode.Builder);
-    await expectBuilder();
+    expectBuilder();
   });
 
-  it('shows Run Queries button in Dashboards', async () => {
+  it('shows Run Queries button in Dashboards', () => {
     renderWithProps({}, { app: CoreApp.Dashboard });
-    await expectRunQueriesButton();
+    expectRunQueriesButton();
   });
 
-  it('hides Run Queries button in Explore', async () => {
+  it('hides Run Queries button in Explore', () => {
     renderWithProps({}, { app: CoreApp.Explore });
-    await expectCodeEditor();
     expectNoRunQueriesButton();
   });
 
-  it('hides Run Queries button in Correlations Page', async () => {
+  it('hides Run Queries button in Correlations Page', () => {
     renderWithProps({}, { app: CoreApp.Correlations });
-    await expectCodeEditor();
     expectNoRunQueriesButton();
   });
 
@@ -161,7 +159,7 @@ describe('PromQueryEditorSelector', () => {
   it('Can enable explain', async () => {
     renderWithMode(QueryEditorMode.Builder);
     expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
-    await userEvent.click(screen.getByLabelText('Explain'));
+    screen.getByLabelText('Explain').click();
     expect(await screen.findByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
   });
 
@@ -230,16 +228,16 @@ function renderWithProps(overrides?: Partial<PromQuery>, componentProps: Partial
   return { onChange, ...stuff };
 }
 
-async function expectCodeEditor() {
-  expect(await screen.findByText('MonacoQueryFieldWrapper')).toBeInTheDocument();
+function expectCodeEditor() {
+  expect(screen.getByText('MonacoQueryFieldWrapper')).toBeInTheDocument();
 }
 
-async function expectBuilder() {
-  expect(await screen.findByText('Metric')).toBeInTheDocument();
+function expectBuilder() {
+  expect(screen.getByText('Metric')).toBeInTheDocument();
 }
 
-async function expectRunQueriesButton() {
-  expect(await screen.findByRole('button', { name: /run queries/i })).toBeInTheDocument();
+function expectRunQueriesButton() {
+  expect(screen.getByRole('button', { name: /run queries/i })).toBeInTheDocument();
 }
 
 function expectNoRunQueriesButton() {

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { FC, useMemo } from 'react';
 
 import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
@@ -32,7 +32,7 @@ const defaultChannelValues: CloudChannelValues = Object.freeze({
   type: 'email',
 });
 
-export const CloudReceiverForm = ({ existing, alertManagerSourceName, config }: Props) => {
+export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName, config }) => {
   const dispatch = useDispatch();
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 import { Alert, Icon } from '@grafana/ui';
 import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
@@ -7,7 +7,7 @@ interface Props {
   ldapConnectionInfo: LdapConnectionInfo;
 }
 
-export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
+export const LdapConnectionStatus: FC<Props> = ({ ldapConnectionInfo }) => {
   return (
     <>
       <h3 className="page-heading">LDAP Connection</h3>
@@ -50,7 +50,7 @@ interface LdapConnectionErrorProps {
   ldapConnectionInfo: LdapConnectionInfo;
 }
 
-export const LdapErrorBox = ({ ldapConnectionInfo }: LdapConnectionErrorProps) => {
+export const LdapErrorBox: FC<LdapConnectionErrorProps> = ({ ldapConnectionInfo }) => {
   const hasError = ldapConnectionInfo.some((info) => info.error);
   if (!hasError) {
     return null;

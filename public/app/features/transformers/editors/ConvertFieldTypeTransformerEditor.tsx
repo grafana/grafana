@@ -16,12 +16,9 @@ import {
 } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
-import { allFieldTypeIconOptions } from '@grafana/ui/src/components/MatchersUI/FieldTypeMatcherEditor';
-import { hasAlphaPanels } from 'app/core/config';
-import { findField } from 'app/features/dimensions';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
-  settings: { width: 24, isClearable: false },
+  settings: { width: 24 },
 } as any;
 
 export const ConvertFieldTypeTransformerEditor = ({
@@ -29,12 +26,18 @@ export const ConvertFieldTypeTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<ConvertFieldTypeTransformerOptions>) => {
-  const allTypes = allFieldTypeIconOptions.filter((v) => v.value !== FieldType.trace);
+  const allTypes: Array<SelectableValue<FieldType>> = [
+    { value: FieldType.number, label: 'Numeric' },
+    { value: FieldType.string, label: 'String' },
+    { value: FieldType.time, label: 'Time' },
+    { value: FieldType.boolean, label: 'Boolean' },
+    { value: FieldType.other, label: 'JSON' },
+  ];
 
   const onSelectField = useCallback(
     (idx: number) => (value: string | undefined) => {
       const conversions = options.conversions;
-      conversions[idx] = { ...conversions[idx], targetField: value ?? '', dateFormat: undefined };
+      conversions[idx] = { ...conversions[idx], targetField: value ?? '' };
       onChange({
         ...options,
         conversions: conversions,
@@ -93,65 +96,40 @@ export const ConvertFieldTypeTransformerEditor = ({
     <>
       {options.conversions.map((c: ConvertFieldTypeOptions, idx: number) => {
         return (
-          <div key={`${c.targetField}-${idx}`}>
-            <InlineFieldRow>
-              <InlineField label={'Field'}>
-                <FieldNamePicker
-                  context={{ data: input }}
-                  value={c.targetField ?? ''}
-                  onChange={onSelectField(idx)}
-                  item={fieldNamePickerSettings}
-                />
-              </InlineField>
-              <InlineField label={'as'}>
-                <Select
-                  options={allTypes}
-                  value={c.destinationType}
-                  placeholder={'Type'}
-                  onChange={onSelectDestinationType(idx)}
-                  width={18}
-                />
-              </InlineField>
-              {c.destinationType === FieldType.time && (
-                <InlineField
-                  label="Input format"
-                  tooltip="Specify the format of the input field so Grafana can parse the date string correctly."
-                >
-                  <Input
-                    value={c.dateFormat}
-                    placeholder={'e.g. YYYY-MM-DD'}
-                    onChange={onInputFormat(idx)}
-                    width={24}
-                  />
-                </InlineField>
-              )}
-              {c.destinationType === FieldType.string &&
-                (c.dateFormat || findField(input?.[0], c.targetField)?.type === FieldType.time) && (
-                  <InlineField label="Date format" tooltip="Specify the output format.">
-                    <Input
-                      value={c.dateFormat}
-                      placeholder={'e.g. YYYY-MM-DD'}
-                      onChange={onInputFormat(idx)}
-                      width={24}
-                    />
-                  </InlineField>
-                )}
-              <Button
-                size="md"
-                icon="trash-alt"
-                variant="secondary"
-                onClick={() => onRemoveConvertFieldType(idx)}
-                aria-label={'Remove convert field type transformer'}
+          <InlineFieldRow key={`${c.targetField}-${idx}`}>
+            <InlineField label={'Field'}>
+              <FieldNamePicker
+                context={{ data: input }}
+                value={c.targetField ?? ''}
+                onChange={onSelectField(idx)}
+                item={fieldNamePickerSettings}
               />
-            </InlineFieldRow>
-            {c.destinationType === FieldType.enum && hasAlphaPanels && (
-              <InlineFieldRow>
-                <InlineField label={''} labelWidth={6}>
-                  <div>TODO... show options here (alpha panels enabled)</div>
-                </InlineField>
-              </InlineFieldRow>
+            </InlineField>
+            <InlineField label={'as'}>
+              <Select
+                options={allTypes}
+                value={c.destinationType}
+                placeholder={'Type'}
+                onChange={onSelectDestinationType(idx)}
+                width={18}
+              />
+            </InlineField>
+            {c.destinationType === FieldType.time && (
+              <InlineField
+                label="Input format"
+                tooltip="Specify the format of the input field so Grafana can parse the date string correctly."
+              >
+                <Input value={c.dateFormat} placeholder={'e.g. YYYY-MM-DD'} onChange={onInputFormat(idx)} width={24} />
+              </InlineField>
             )}
-          </div>
+            <Button
+              size="md"
+              icon="trash-alt"
+              variant="secondary"
+              onClick={() => onRemoveConvertFieldType(idx)}
+              aria-label={'Remove convert field type transformer'}
+            />
+          </InlineFieldRow>
         );
       })}
       <Button

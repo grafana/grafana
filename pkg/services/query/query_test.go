@@ -463,7 +463,7 @@ type testContext struct {
 	secretStore            secretskvs.SecretsKVStore
 	dataSourceCache        *fakeDataSourceCache
 	pluginRequestValidator *fakePluginRequestValidator
-	queryService           *ServiceImpl // implementation belonging to this package
+	queryService           *Service // implementation belonging to this package
 	signedInUser           *user.SignedInUser
 }
 

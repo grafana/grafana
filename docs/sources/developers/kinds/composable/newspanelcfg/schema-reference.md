@@ -13,15 +13,15 @@ title: NewsPanelCfg kind
 
 
 
-| Property       | Type                    | Required | Default | Description |
-|----------------|-------------------------|----------|---------|-------------|
-| `PanelOptions` | [object](#paneloptions) | **Yes**  |         |             |
+| Property       | Type                    | Required | Description |
+|----------------|-------------------------|----------|-------------|
+| `PanelOptions` | [object](#paneloptions) | **Yes**  |             |
 
 ### PanelOptions
 
-| Property    | Type    | Required | Default | Description                                |
-|-------------|---------|----------|---------|--------------------------------------------|
-| `feedUrl`   | string  | No       |         | empty/missing will default to grafana blog |
-| `showImage` | boolean | No       | `true`  |                                            |
+| Property    | Type    | Required | Description                                |
+|-------------|---------|----------|--------------------------------------------|
+| `feedUrl`   | string  | No       | empty/missing will default to grafana blog |
+| `showImage` | boolean | No       | Default: `true`.                           |
 
 

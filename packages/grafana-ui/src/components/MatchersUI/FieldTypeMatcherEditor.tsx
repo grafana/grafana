@@ -2,7 +2,6 @@ import React, { memo, useMemo, useCallback } from 'react';
 
 import { FieldMatcherID, fieldMatchers, SelectableValue, FieldType, DataFrame } from '@grafana/data';
 
-import { getFieldTypeIconName } from '../../types/icon';
 import { Select } from '../Select/Select';
 
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
@@ -24,22 +23,19 @@ export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
 });
 FieldTypeMatcherEditor.displayName = 'FieldTypeMatcherEditor';
 
-// Select options for all field types.
-// This is not eported to the published package, but used internally
-export const allFieldTypeIconOptions: Array<SelectableValue<FieldType>> = [
-  { value: FieldType.number, label: 'Number', icon: getFieldTypeIconName(FieldType.number) },
-  { value: FieldType.string, label: 'String', icon: getFieldTypeIconName(FieldType.string) },
-  { value: FieldType.time, label: 'Time', icon: getFieldTypeIconName(FieldType.time) },
-  { value: FieldType.boolean, label: 'Boolean', icon: getFieldTypeIconName(FieldType.boolean) },
-  { value: FieldType.trace, label: 'Traces', icon: getFieldTypeIconName(FieldType.trace) },
-  { value: FieldType.enum, label: 'Enum', icon: getFieldTypeIconName(FieldType.enum) },
-  { value: FieldType.other, label: 'Other', icon: getFieldTypeIconName(FieldType.other) },
+const allTypes: Array<SelectableValue<FieldType>> = [
+  { value: FieldType.number, label: 'Numeric' },
+  { value: FieldType.string, label: 'String' },
+  { value: FieldType.time, label: 'Time' },
+  { value: FieldType.boolean, label: 'Boolean' },
+  { value: FieldType.trace, label: 'Traces' },
+  { value: FieldType.other, label: 'Other' },
 ];
 
 const useFieldCounts = (data: DataFrame[]): Map<FieldType, number> => {
   return useMemo(() => {
     const counts: Map<FieldType, number> = new Map();
-    for (const t of allFieldTypeIconOptions) {
+    for (const t of allTypes) {
       counts.set(t.value!, 0);
     }
     for (const frame of data) {
@@ -60,7 +56,7 @@ const useSelectOptions = (counts: Map<string, number>, opt?: string): Array<Sele
   return useMemo(() => {
     let found = false;
     const options: Array<SelectableValue<string>> = [];
-    for (const t of allFieldTypeIconOptions) {
+    for (const t of allTypes) {
       const count = counts.get(t.value!);
       const match = opt === t.value;
       if (count || match) {

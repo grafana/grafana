@@ -10,25 +10,33 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsmigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func runRunnerCommand(command func(commandLine utils.CommandLine, runner server.Runner) error) func(context *cli.Context) error {
+func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.Runner) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		runner, err := initializeRunner(cmd)
+
+		cfg, err := initCfg(cmd)
+		if err != nil {
+			return fmt.Errorf("%v: %w", "failed to load configuration", err)
+		}
+
+		r, err := runner.Initialize(cfg)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to initialize runner", err)
 		}
-		if err := command(cmd, runner); err != nil {
+
+		if err := command(cmd, r); err != nil {
 			return err
 		}
+
 		logger.Info("\n\n")
 		return nil
 	}
@@ -37,19 +45,20 @@ func runRunnerCommand(command func(commandLine utils.CommandLine, runner server.
 func runDbCommand(command func(commandLine utils.CommandLine, sqlStore db.DB) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		runner, err := initializeRunner(cmd)
+
+		cfg, err := initCfg(cmd)
 		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to initialize runner", err)
+			return fmt.Errorf("%v: %w", "failed to load configuration", err)
 		}
 
-		tracer, err := tracing.ProvideService(runner.Cfg)
+		tracer, err := tracing.ProvideService(cfg)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
 		}
 
 		bus := bus.ProvideBus(tracer)
 
-		sqlStore, err := db.ProvideService(runner.Cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
+		sqlStore, err := db.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to initialize SQL store", err)
 		}
@@ -63,22 +72,24 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore db.DB) er
 	}
 }
 
-func initializeRunner(cmd *utils.ContextCommandLine) (server.Runner, error) {
+func initCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
 	configOptions := strings.Split(cmd.String("configOverrides"), " ")
-	runner, err := server.InitializeForCLI(setting.CommandLineArgs{
+	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 		Config:   cmd.ConfigFile(),
 		HomePath: cmd.HomePath(),
 		// tailing arguments have precedence over the options string
 		Args: append(configOptions, cmd.Args().Slice()...),
 	})
+
 	if err != nil {
-		return server.Runner{}, fmt.Errorf("%v: %w", "failed to initialize runner", err)
+		return nil, err
 	}
 
 	if cmd.Bool("debug") {
-		runner.Cfg.LogConfigSources()
+		cfg.LogConfigSources()
 	}
-	return runner, nil
+
+	return cfg, nil
 }
 
 func runPluginCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) error {

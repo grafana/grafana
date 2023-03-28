@@ -65,9 +65,9 @@ Let's add a tab for managing server instances.
 
    ```ts
    import { AppRootProps } from '@grafana/data';
-   import React from 'react';
+   import React, { FC } from 'react';
 
-   export const Instances = ({ query, path, meta }: AppRootProps) => {
+   export const Instances: FC<AppRootProps> = ({ query, path, meta }) => {
      return <p>Hello</p>;
    };
    ```
@@ -162,7 +162,7 @@ In this step, you'll add a data source to your app plugin. You can add panel plu
    ```bash
    mkdir tmp
    cd tmp
-   npx @grafana/create-plugin@latest
+   npx @grafana/create-plugin
    ```
 
 1. Move the `src` directory in the data source plugin to `src/datasources`, and rename it to `my-datasource`.

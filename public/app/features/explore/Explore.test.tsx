@@ -125,22 +125,14 @@ const setup = (overrideProps?: Partial<Props>) => {
 };
 
 describe('Explore', () => {
-  it('should not render no data with not started loading state', async () => {
+  it('should not render no data with not started loading state', () => {
     setup();
-
-    // Wait for the Explore component to render
-    await screen.findByText('Explore');
-
     expect(screen.queryByTestId('explore-no-data')).not.toBeInTheDocument();
   });
 
   it('should render no data with done loading state', async () => {
     const queryResp = makeEmptyQueryResponse(LoadingState.Done);
     setup({ queryResponse: queryResp });
-
-    // Wait for the Explore component to render
-    await screen.findByText('Explore');
-
     expect(screen.getByTestId('explore-no-data')).toBeInTheDocument();
   });
 });

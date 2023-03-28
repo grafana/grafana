@@ -294,12 +294,12 @@ func createRule(t *testing.T, client apiClient, folder string) {
 				GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 					Title:     fmt.Sprintf("rule under folder %s", folder),
 					Condition: "A",
-					Data: []apimodels.AlertQuery{
+					Data: []ngmodels.AlertQuery{
 						{
 							RefID: "A",
-							RelativeTimeRange: apimodels.RelativeTimeRange{
-								From: apimodels.Duration(time.Duration(5) * time.Hour),
-								To:   apimodels.Duration(time.Duration(3) * time.Hour),
+							RelativeTimeRange: ngmodels.RelativeTimeRange{
+								From: ngmodels.Duration(time.Duration(5) * time.Hour),
+								To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 							},
 							DatasourceUID: expr.DatasourceUID,
 							Model: json.RawMessage(`{
@@ -434,12 +434,12 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiring",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -454,12 +454,12 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiringButSilenced",
 						Condition: "A",
-						Data: []apimodels.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -889,12 +889,12 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 			Title:     "AlwaysFiring",
 			Condition: "A",
-			Data: []apimodels.AlertQuery{
+			Data: []ngmodels.AlertQuery{
 				{
 					RefID: "A",
-					RelativeTimeRange: apimodels.RelativeTimeRange{
-						From: apimodels.Duration(time.Duration(5) * time.Hour),
-						To:   apimodels.Duration(time.Duration(3) * time.Hour),
+					RelativeTimeRange: ngmodels.RelativeTimeRange{
+						From: ngmodels.Duration(time.Duration(5) * time.Hour),
+						To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 					},
 					DatasourceUID: expr.DatasourceUID,
 					Model: json.RawMessage(`{
@@ -916,12 +916,12 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 			Title:     "AlwaysFiring2",
 			Condition: "A",
-			Data: []apimodels.AlertQuery{
+			Data: []ngmodels.AlertQuery{
 				{
 					RefID: "A",
-					RelativeTimeRange: apimodels.RelativeTimeRange{
-						From: apimodels.Duration(time.Duration(5) * time.Hour),
-						To:   apimodels.Duration(time.Duration(3) * time.Hour),
+					RelativeTimeRange: ngmodels.RelativeTimeRange{
+						From: ngmodels.Duration(time.Duration(5) * time.Hour),
+						To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 					},
 					DatasourceUID: expr.DatasourceUID,
 					Model: json.RawMessage(`{

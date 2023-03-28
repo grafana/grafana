@@ -1,4 +1,5 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
+import classnames from 'classnames';
 import React, { ReactElement, useCallback, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -37,19 +38,18 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
 
   return (
     <div
-      className={cx(styles.container, { 'show-on-hover': !menuOpen })}
+      className={classnames(styles.container, { 'show-on-hover': !menuOpen })}
       style={{ top: `${offset}px` }}
       data-testid="hover-header-container"
     >
       <div
-        className={cx(styles.square, styles.draggable, dragClass)}
+        className={classnames(styles.square, styles.draggable, dragClass)}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         ref={draggableRef}
       >
-        <Icon name="expand-arrows" className={styles.draggableIcon} />
+        <Icon name="draggabledots" />
       </div>
-      {!title && <h6 className={cx(styles.untitled, styles.draggable, dragClass)}>Untitled</h6>}
       {children}
       <div className={styles.square}>
         <PanelMenu
@@ -76,13 +76,12 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       position: 'absolute',
       zIndex: 1,
-      right: 0,
-      boxSizing: 'content-box',
+      boxSizing: 'border-box',
       alignItems: 'center',
       background: theme.colors.background.secondary,
       color: theme.colors.text.primary,
       border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: '1px',
       height: theme.spacing(4),
       boxShadow: theme.shadows.z1,
     }),
@@ -92,37 +91,18 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       width: theme.spacing(4),
       height: '100%',
-      paddingRight: theme.spacing(0.5),
     }),
     draggable: css({
       cursor: 'move',
-      // mobile do not support draggable panels
-      [theme.breakpoints.down('md')]: {
-        display: 'none',
-      },
     }),
     menuButton: css({
-      // Background and border are overriden when topnav toggle is disabled
-      background: 'inherit',
-      border: 'none',
+      color: theme.colors.text.primary,
       '&:hover': {
-        background: theme.colors.secondary.main,
+        background: 'inherit',
       },
     }),
     title: css({
       padding: theme.spacing(0.75),
-    }),
-    untitled: css({
-      color: theme.colors.text.disabled,
-      fontStyle: 'italic',
-      marginBottom: 0,
-    }),
-    draggableIcon: css({
-      transform: 'rotate(45deg)',
-      color: theme.colors.text.secondary,
-      '&:hover': {
-        color: theme.colors.text.primary,
-      },
     }),
   };
 }

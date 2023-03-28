@@ -62,12 +62,10 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       return [];
     }
   }
-
-  async handleLogGroupsQuery({ region, logGroupPrefix, accountId }: VariableQuery) {
+  async handleLogGroupsQuery({ region, logGroupPrefix }: VariableQuery) {
     const interpolatedPrefix = this.resources.templateSrv.replace(logGroupPrefix);
     return this.resources
       .getLogGroups({
-        accountId,
         region,
         logGroupNamePrefix: interpolatedPrefix,
         listAllLogGroups: true,
@@ -91,33 +89,25 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     return this.resources.getNamespaces().then((namespaces) => namespaces.map(selectableValueToMetricFindOption));
   }
 
-  async handleMetricsQuery({ namespace, region, accountId }: VariableQuery) {
+  async handleMetricsQuery({ namespace, region }: VariableQuery) {
     return this.resources
-      .getMetrics({ namespace, region, accountId })
+      .getMetrics({ namespace, region })
       .then((metrics) => metrics.map(selectableValueToMetricFindOption));
   }
 
-  async handleDimensionKeysQuery({ namespace, region, accountId }: VariableQuery) {
+  async handleDimensionKeysQuery({ namespace, region }: VariableQuery) {
     return this.resources
-      .getDimensionKeys({ namespace, region, accountId })
+      .getDimensionKeys({ namespace, region })
       .then((keys) => keys.map(selectableValueToMetricFindOption));
   }
 
-  async handleDimensionValuesQuery({
-    namespace,
-    accountId,
-    region,
-    dimensionKey,
-    metricName,
-    dimensionFilters,
-  }: VariableQuery) {
+  async handleDimensionValuesQuery({ namespace, region, dimensionKey, metricName, dimensionFilters }: VariableQuery) {
     if (!dimensionKey || !metricName) {
       return [];
     }
     return this.resources
       .getDimensionValues({
         region,
-        accountId,
         namespace,
         metricName,
         dimensionKey,

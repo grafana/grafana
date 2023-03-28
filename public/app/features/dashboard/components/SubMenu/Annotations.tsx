@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 
 import { AnnotationQuery, DataQuery, EventBus } from '@grafana/data';
 
@@ -10,7 +10,7 @@ interface Props {
   onAnnotationChanged: (annotation: AnnotationQuery<DataQuery>) => void;
 }
 
-export const Annotations = ({ annotations, onAnnotationChanged, events }: Props) => {
+export const Annotations: FunctionComponent<Props> = ({ annotations, onAnnotationChanged, events }) => {
   const [visibleAnnotations, setVisibleAnnotations] = useState<AnnotationQuery[]>([]);
   useEffect(() => {
     setVisibleAnnotations(annotations.filter((annotation) => annotation.hide !== true));

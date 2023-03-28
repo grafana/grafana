@@ -1,15 +1,15 @@
 import { css, CSSObject } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { TableCellHeight } from '@grafana/schema';
 
-export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCellHeight) {
+export const getTableStyles = (theme: GrafanaTheme2) => {
   const borderColor = theme.colors.border.weak;
   const resizerColor = theme.colors.primary.border;
   const cellPadding = 6;
-  const cellHeight = getCellHeight(theme, cellHeightOption, cellPadding);
+  const lineHeight = theme.typography.body.lineHeight;
+  const bodyFontSize = 14;
+  const cellHeight = cellPadding * 2 + bodyFontSize * lineHeight;
   const rowHeight = cellHeight + 2;
-  const headerHeight = 28;
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
 
   const buildCellContainerStyle = (color?: string, background?: string, overflowOnHover?: boolean) => {
@@ -95,7 +95,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     cellHeight,
     buildCellContainerStyle,
     cellPadding,
-    cellHeightInner: cellHeight - cellPadding * 2,
+    cellHeightInner: bodyFontSize * lineHeight,
     rowHeight,
     table: css`
       height: 100%;
@@ -106,14 +106,14 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     `,
     thead: css`
       label: thead;
-      height: ${headerHeight}px;
+      height: ${rowHeight}px;
       overflow-y: auto;
       overflow-x: hidden;
       position: relative;
     `,
     tfoot: css`
       label: tfoot;
-      height: ${headerHeight}px;
+      height: ${rowHeight}px;
       border-top: 1px solid ${borderColor};
       overflow-y: auto;
       overflow-x: hidden;
@@ -124,12 +124,10 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       border-bottom: 1px solid ${borderColor};
     `,
     headerCell: css`
-      height: 100%;
-      padding: 0 ${cellPadding}px;
+      padding: ${cellPadding}px;
       overflow: hidden;
       white-space: nowrap;
       display: flex;
-      align-items: center;
       font-weight: ${theme.typography.fontWeightMedium};
 
       &:last-child {
@@ -207,12 +205,21 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         margin-bottom: 0;
       }
     `,
+    paginationItem: css`
+      flex: 20%;
+    `,
+    paginationCenterItem: css`
+      flex: 100%;
+      display: flex;
+      justify-content: center;
+    `,
     paginationSummary: css`
       color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
       display: flex;
       justify-content: flex-end;
-      padding: ${theme.spacing(0, 1, 0, 2)};
+      flex: 20%;
+      padding-right: ${theme.spacing(1)};
     `,
 
     tableContentWrapper: (totalColumnsWidth: number) => {
@@ -251,7 +258,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       height: 100%;
       position: absolute;
       right: -4px;
-      border-radius: ${theme.shape.radius.default};
+      border-radius: 3px;
       top: 0;
       touch-action: none;
 
@@ -278,21 +285,6 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       cursor: pointer;
     `,
   };
-}
+};
 
-export type TableStyles = ReturnType<typeof useTableStyles>;
-
-function getCellHeight(theme: GrafanaTheme2, cellHeightOption: TableCellHeight, cellPadding: number) {
-  const bodyFontSize = theme.typography.fontSize;
-  const lineHeight = theme.typography.body.lineHeight;
-
-  switch (cellHeightOption) {
-    case 'md':
-      return 42;
-    case 'lg':
-      return 48;
-    case 'sm':
-    default:
-      return cellPadding * 2 + bodyFontSize * lineHeight;
-  }
-}
+export type TableStyles = ReturnType<typeof getTableStyles>;

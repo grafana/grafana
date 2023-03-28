@@ -5,11 +5,8 @@ import { Field, LogLevel, LogRowModel, MutableDataFrame, createTheme } from '@gr
 
 import { LogDetails, Props } from './LogDetails';
 import { createLogRow } from './__mocks__/logRow';
-import { getLogRowStyles } from './getLogRowStyles';
 
 const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
-  const theme = createTheme();
-  const styles = getLogRowStyles(theme);
   const props: Props = {
     displayedFields: [],
     showDuplicates: false,
@@ -20,8 +17,7 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
     onClickFilterOutLabel: () => {},
     onClickShowField: () => {},
     onClickHideField: () => {},
-    theme,
-    styles,
+    theme: createTheme(),
     ...(propOverrides || {}),
   };
 

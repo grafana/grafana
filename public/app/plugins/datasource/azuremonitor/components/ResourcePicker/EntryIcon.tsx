@@ -9,7 +9,7 @@ interface EntryIconProps {
   isOpen: boolean;
 }
 
-export const EntryIcon = ({ isOpen, entry: { type } }: EntryIconProps) => {
+export const EntryIcon: React.FC<EntryIconProps> = ({ isOpen, entry: { type } }) => {
   switch (type) {
     case ResourceRowType.Subscription:
       return <Icon name="layer-group" />;

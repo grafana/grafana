@@ -11,7 +11,7 @@ interface EditorRowProps {
   stackProps?: Partial<React.ComponentProps<typeof Stack>>;
 }
 
-export const EditorRow = ({ children, stackProps }: EditorRowProps) => {
+export const EditorRow: React.FC<EditorRowProps> = ({ children, stackProps }) => {
   const styles = useStyles2(getStyles);
 
   return (

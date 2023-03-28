@@ -14,199 +14,182 @@ func TestIsExternallySynced(t *testing.T) {
 		provider string
 		expected bool
 	}{
-		// azure
 		{
 			name:     "AzureAD synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{AzureADEnabled: true, AzureADSkipOrgRoleSync: false},
-			provider: AzureADAuthModule,
+			cfg:      &setting.Cfg{AzureADSkipOrgRoleSync: false},
+			provider: AzureADLabel,
 			expected: true,
 		},
 		{
 			name:     "AzureAD synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{AzureADEnabled: true, AzureADSkipOrgRoleSync: true},
-			provider: AzureADAuthModule,
+			cfg:      &setting.Cfg{AzureADSkipOrgRoleSync: true},
+			provider: AzureADLabel,
 			expected: false,
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
 			name:     "azuread external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{AzureADEnabled: true, AzureADSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
-			provider: AzureADAuthModule,
+			cfg:      &setting.Cfg{AzureADSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
+			provider: AzureADLabel,
 			expected: false,
 		},
-		// google
 		{
 			name:     "Google synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{GoogleAuthEnabled: true, GoogleSkipOrgRoleSync: false},
-			provider: GoogleAuthModule,
+			cfg:      &setting.Cfg{GoogleSkipOrgRoleSync: false},
+			provider: GoogleLabel,
 			expected: true,
 		},
 		{
 			name:     "Google synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{GoogleAuthEnabled: true, GoogleSkipOrgRoleSync: true},
-			provider: GoogleAuthModule,
+			cfg:      &setting.Cfg{GoogleSkipOrgRoleSync: true},
+			provider: GoogleLabel,
 			expected: false,
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
 			name:     "google external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{GoogleAuthEnabled: true, GoogleSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
-			provider: GoogleAuthModule,
+			cfg:      &setting.Cfg{GoogleSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
+			provider: GoogleLabel,
 			expected: false,
 		},
 		{
 			name:     "external user should return that it is not externally synced when oauth org role sync is set and google skip org role sync set",
-			cfg:      &setting.Cfg{GoogleAuthEnabled: true, GoogleSkipOrgRoleSync: true, OAuthSkipOrgRoleUpdateSync: true},
-			provider: GoogleAuthModule,
+			cfg:      &setting.Cfg{GoogleSkipOrgRoleSync: true, OAuthSkipOrgRoleUpdateSync: true},
+			provider: GoogleLabel,
 			expected: false,
 		},
-		// okta
 		{
 			name:     "Okta synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{OktaAuthEnabled: true, OktaSkipOrgRoleSync: false},
-			provider: OktaAuthModule,
+			cfg:      &setting.Cfg{OktaSkipOrgRoleSync: false},
+			provider: OktaLabel,
 			expected: true,
 		},
 		{
 			name: "Okta synced user should return that it is not externally synced when org role sync is set",
-			cfg:  &setting.Cfg{OktaAuthEnabled: true, OktaSkipOrgRoleSync: true},
+			cfg:  &setting.Cfg{OktaSkipOrgRoleSync: true},
 
-			provider: OktaAuthModule,
+			provider: OktaLabel,
 			expected: false,
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
 			name:     "okta external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{OktaAuthEnabled: true, OktaSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
-			provider: OktaAuthModule,
+			cfg:      &setting.Cfg{OktaSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
+			provider: OktaLabel,
 			expected: false,
 		},
-		// github
 		{
 			name:     "Github synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{GitHubAuthEnabled: true, GitHubSkipOrgRoleSync: false},
-			provider: GithubAuthModule,
+			cfg:      &setting.Cfg{GithubSkipOrgRoleSync: false},
+			provider: GithubLabel,
 			expected: true,
 		},
 		{
 			name:     "Github synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{GitHubAuthEnabled: true, GitHubSkipOrgRoleSync: true},
-			provider: GithubAuthModule,
+			cfg:      &setting.Cfg{GithubSkipOrgRoleSync: true},
+			provider: GithubLabel,
 			expected: false,
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
 			name:     "github external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{GitHubAuthEnabled: true, GitHubSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
-			provider: GithubAuthModule,
+			cfg:      &setting.Cfg{GithubSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
+			provider: GithubLabel,
 			expected: false,
 		},
 		// gitlab
 		{
 			name:     "Gitlab synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{GitLabAuthEnabled: true, GitLabSkipOrgRoleSync: false},
-			provider: GitLabAuthModule,
+			cfg:      &setting.Cfg{GitLabSkipOrgRoleSync: false},
+			provider: GitLabLabel,
 			expected: true,
 		},
 		{
 			name:     "Gitlab synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{GitLabAuthEnabled: true, GitLabSkipOrgRoleSync: true},
-			provider: GitLabAuthModule,
+			cfg:      &setting.Cfg{GitLabSkipOrgRoleSync: true},
+			provider: GitLabLabel,
 			expected: false,
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
 			name:     "gitlab external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{GitLabAuthEnabled: true, GitLabSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
-			provider: GitLabAuthModule,
+			cfg:      &setting.Cfg{GitLabSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
+			provider: GitLabLabel,
 			expected: false,
 		},
 		// grafana.com
 		{
 			name:     "Grafana.com synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{GrafanaComAuthEnabled: true, GrafanaComSkipOrgRoleSync: false},
-			provider: GrafanaComAuthModule,
+			cfg:      &setting.Cfg{GrafanaComSkipOrgRoleSync: false},
+			provider: GrafanaComLabel,
 			expected: true,
 		},
 		{
 			name:     "Grafana.com synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{GrafanaComAuthEnabled: true, GrafanaComSkipOrgRoleSync: true},
-			provider: GrafanaComAuthModule,
+			cfg:      &setting.Cfg{GrafanaComSkipOrgRoleSync: true},
+			provider: GrafanaComLabel,
 			expected: false,
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
 			name:     "grafanacom external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{GrafanaComAuthEnabled: true, GrafanaComSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
-			provider: GrafanaComAuthModule,
+			cfg:      &setting.Cfg{GrafanaComSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
+			provider: GrafanaComLabel,
 			expected: false,
 		},
-		// generic oauth
 		{
-			name: "OAuth synced user should return that it is externally synced",
-			cfg:  &setting.Cfg{GenericOAuthAuthEnabled: true, OAuthSkipOrgRoleUpdateSync: false},
-			// this could be any of the external oauth providers
-			provider: GenericOAuthModule,
+			name:     "Generic OAuth synced user should return that it is externally synced",
+			cfg:      &setting.Cfg{OAuthSkipOrgRoleUpdateSync: false},
+			provider: GenericOAuthLabel,
 			expected: true,
 		},
 		{
-			name: "OAuth synced user should return that it is not externally synced when org role sync is set",
-			cfg:  &setting.Cfg{GenericOAuthAuthEnabled: true, OAuthSkipOrgRoleUpdateSync: true},
-			// this could be any of the external oauth providers
-			provider: GenericOAuthModule,
+			name:     "Generic OAuth synced user should return that it is not externally synced when org role sync is set",
+			cfg:      &setting.Cfg{OAuthSkipOrgRoleUpdateSync: true},
+			provider: GenericOAuthLabel,
 			expected: false,
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
 			name:     "generic oauth external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{GenericOAuthAuthEnabled: true, GenericOAuthSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
-			provider: GenericOAuthModule,
+			cfg:      &setting.Cfg{GenericOAuthSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
+			provider: GenericOAuthLabel,
 			expected: false,
 		},
-		// saml
 		{
 			name:     "SAML synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{SAMLAuthEnabled: true, SAMLSkipOrgRoleSync: false},
-			provider: SAMLAuthModule,
+			cfg:      &setting.Cfg{SAMLSkipOrgRoleSync: false},
+			provider: SAMLLabel,
 			expected: true,
 		},
 		{
 			name:     "SAML synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{SAMLAuthEnabled: true, SAMLSkipOrgRoleSync: true},
-			provider: SAMLAuthModule,
+			cfg:      &setting.Cfg{SAMLSkipOrgRoleSync: true},
+			provider: SAMLLabel,
 			expected: false,
 		},
-		// ldap
 		{
 			name:     "LDAP synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{LDAPAuthEnabled: true, LDAPSkipOrgRoleSync: false},
-			provider: LDAPAuthModule,
+			cfg:      &setting.Cfg{LDAPSkipOrgRoleSync: false},
+			provider: LDAPLabel,
 			expected: true,
 		},
 		{
 			name:     "LDAP synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{LDAPAuthEnabled: true, LDAPSkipOrgRoleSync: true},
-			provider: LDAPAuthModule,
+			cfg:      &setting.Cfg{LDAPSkipOrgRoleSync: true},
+			provider: LDAPLabel,
 			expected: false,
 		},
-		// jwt
 		{
 			name:     "JWT synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{JWTAuthEnabled: true, JWTAuthSkipOrgRoleSync: false},
-			provider: JWTModule,
+			cfg:      &setting.Cfg{JWTAuthSkipOrgRoleSync: false},
+			provider: JWTLabel,
 			expected: true,
 		},
 		{
 			name:     "JWT synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{JWTAuthEnabled: true, JWTAuthSkipOrgRoleSync: true},
-			provider: JWTModule,
-			expected: false,
-		},
-		// IsProvider test
-		{
-			name:     "If no provider enabled should return false",
 			cfg:      &setting.Cfg{JWTAuthSkipOrgRoleSync: true},
-			provider: JWTModule,
+			provider: JWTLabel,
 			expected: false,
 		},
 	}
@@ -214,35 +197,6 @@ func TestIsExternallySynced(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expected, IsExternallySynced(tc.cfg, tc.provider))
-		})
-	}
-}
-
-func TestIsProviderEnabled(t *testing.T) {
-	testcases := []struct {
-		name     string
-		cfg      *setting.Cfg
-		provider string
-		expected bool
-	}{
-		// github
-		{
-			name:     "Github should return true if enabled",
-			cfg:      &setting.Cfg{GitHubAuthEnabled: true},
-			provider: GithubAuthModule,
-			expected: true,
-		},
-		{
-			name:     "Github should return false if not enabled",
-			cfg:      &setting.Cfg{},
-			provider: GithubAuthModule,
-			expected: false,
-		},
-	}
-
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, IsProviderEnabled(tc.cfg, tc.provider))
 		})
 	}
 }

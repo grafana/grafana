@@ -4,8 +4,6 @@ import { AppEvents } from '@grafana/data';
 import { FetchError, isFetchError } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 
-import { logInfo, LogMessages } from '../Analytics';
-
 export interface AsyncRequestState<T> {
   result?: T;
   loading: boolean;
@@ -139,7 +137,6 @@ export function withAppEvents<T>(
     });
 }
 
-export const UNKNOW_ERROR = 'Unknown Error';
 export function messageFromError(e: Error | FetchError | SerializedError): string {
   if (isFetchError(e)) {
     if (e.data?.message) {
@@ -157,15 +154,7 @@ export function messageFromError(e: Error | FetchError | SerializedError): strin
       return e.statusText;
     }
   }
-  // message in e object, return message
-  const errorMessage = (e as Error)?.message;
-  if (errorMessage) {
-    return errorMessage;
-  }
-  // for some reason (upstream this code), sometimes we get an object without the message field neither in the e.data and nor in e.message
-  // in this case we want to avoid String(e) printing [object][object]
-  logInfo(LogMessages.unknownMessageFromError, { error: JSON.stringify(e) });
-  return UNKNOW_ERROR;
+  return (e as Error)?.message || String(e);
 }
 
 export function isAsyncRequestMapSliceSettled<T>(slice: AsyncRequestMapSlice<T>): boolean {

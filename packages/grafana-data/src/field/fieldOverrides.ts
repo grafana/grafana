@@ -2,8 +2,6 @@ import { isNumber, set, unset, get, cloneDeep } from 'lodash';
 import { useMemo, useRef } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 
-import { VariableFormatID } from '@grafana/schema';
-
 import { compareArrayValues, compareDataFrameStructures, guessFieldTypeForField } from '../dataframe';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { PanelPlugin } from '../panel/PanelPlugin';
@@ -413,7 +411,7 @@ export const getLinksSupplier =
         }
       }
 
-      const variables: ScopedVars = {
+      const variables = {
         ...fieldScopedVars,
         __value: {
           text: 'Value',
@@ -423,12 +421,10 @@ export const getLinksSupplier =
         [DataLinkBuiltInVars.keepTime]: {
           text: timeRangeUrl,
           value: timeRangeUrl,
-          skipFormat: true,
         },
         [DataLinkBuiltInVars.includeVars]: {
           text: variablesQuery,
           value: variablesQuery,
-          skipFormat: true,
         },
       };
 
@@ -455,10 +451,11 @@ export const getLinksSupplier =
           internalLink: link.internal,
           scopedVars: variables,
           field,
-          range: link.internal.range ?? ({} as any),
+          range: {} as any,
           replaceVariables,
         });
       }
+
       let href = link.onBuildUrl
         ? link.onBuildUrl({
             origin: field,
@@ -467,8 +464,8 @@ export const getLinksSupplier =
         : link.url;
 
       if (href) {
-        href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-        href = replaceVariables(href, variables, VariableFormatID.PercentEncode);
+        locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
+        href = replaceVariables(href, variables);
         href = locationUtil.processUrl(href);
       }
 

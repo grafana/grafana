@@ -337,7 +337,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *contextmodel.ReqContext, f
 		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, ApiAlertRuleGroupFromAlertRuleGroup(g))
+	return response.JSON(http.StatusOK, AlertRuleGroupToApi(g))
 }
 
 // RouteGetAlertRulesExport retrieves all alert rules in a format compatible with file provisioning.
@@ -403,7 +403,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, 
 func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, ag definitions.AlertRuleGroup, folderUID string, group string) response.Response {
 	ag.FolderUID = folderUID
 	ag.Title = group
-	groupModel, err := AlertRuleGroupFromApiAlertRuleGroup(ag)
+	groupModel, err := AlertRuleGroupFromApi(ag)
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}

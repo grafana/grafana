@@ -14,7 +14,9 @@ func TestMaxRetries(t *testing.T) {
 		retryVal++
 		return FuncFailure, nil
 	}, 8, 100*time.Millisecond, 100*time.Millisecond)
-	assert.Error(t, err) // Exceeding max-retries is an error.
+	if err != nil {
+		assert.FailNow(t, "Error while retrying function")
+	}
 
 	assert.Equal(t, 8, retryVal)
 }

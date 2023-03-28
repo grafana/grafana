@@ -5,7 +5,7 @@ import { getTimeField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field';
 import { DataFrame, DataTransformerInfo, Field, FieldType, NullValueMode, Vector } from '../../types';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
-import { ArrayVector, BinaryOperationVector, ConstantVector, IndexVector } from '../../vector';
+import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
 import { AsNumberVector } from '../../vector/AsNumberVector';
 import { RowVector } from '../../vector/RowVector';
 import { doStandardCalcs, fieldReducers, ReducerID } from '../fieldReducer';
@@ -19,7 +19,6 @@ import { noopTransformer } from './noop';
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
   BinaryOperation = 'binary',
-  Index = 'index',
 }
 
 export interface ReduceOptions {
@@ -99,22 +98,6 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
           };
 
           creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data);
-        } else if (mode === CalculateFieldMode.Index) {
-          return data.map((frame) => {
-            const f = {
-              name: options.alias ?? 'Row',
-              type: FieldType.number,
-              values: new IndexVector(frame.length),
-              config: {
-                min: 0,
-                max: frame.length - 1,
-              },
-            };
-            return {
-              ...frame,
-              fields: options.replaceFields ? [f] : [...frame.fields, f],
-            };
-          });
         }
 
         // Nothing configured
@@ -252,21 +235,16 @@ export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
     return options.alias;
   }
 
-  switch (options.mode) {
-    case CalculateFieldMode.BinaryOperation: {
-      const { binary } = options;
-      return `${binary?.left ?? ''} ${binary?.operator ?? ''} ${binary?.right ?? ''}`;
+  if (options.mode === CalculateFieldMode.BinaryOperation) {
+    const { binary } = options;
+    return `${binary?.left ?? ''} ${binary?.operator ?? ''} ${binary?.right ?? ''}`;
+  }
+
+  if (options.mode === CalculateFieldMode.ReduceRow) {
+    const r = fieldReducers.getIfExists(options.reduce?.reducer);
+    if (r) {
+      return r.name;
     }
-    case CalculateFieldMode.ReduceRow:
-      {
-        const r = fieldReducers.getIfExists(options.reduce?.reducer);
-        if (r) {
-          return r.name;
-        }
-      }
-      break;
-    case CalculateFieldMode.Index:
-      return 'Row';
   }
 
   return 'math';

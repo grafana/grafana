@@ -191,9 +191,10 @@ type TestDataDataQuery struct {
 	ErrorType  *ErrorType   `json:"errorType,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	// Note this does not always imply that the query should not be executed since
-	// the results from a hidden query may be used as the input to other queries (SSE etc)
-	Hide        *bool   `json:"hide,omitempty"`
+	Hide *bool `json:"hide,omitempty"`
+
+	// Unique, guid like, string used in explore mode
+	Key         *string `json:"key,omitempty"`
 	Labels      *string `json:"labels,omitempty"`
 	LevelColumn *bool   `json:"levelColumn,omitempty"`
 	Lines       *int64  `json:"lines,omitempty"`
@@ -215,9 +216,7 @@ type TestDataDataQuery struct {
 	QueryType       *string `json:"queryType,omitempty"`
 	RawFrameContent *string `json:"rawFrameContent,omitempty"`
 
-	// A unique identifier for the query within the list of targets.
-	// In server side expressions, the refId is used as a variable name to identify results.
-	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
+	// A - Z
 	RefId       string      `json:"refId"`
 	ScenarioId  *ScenarioId `json:"scenarioId,omitempty"`
 	SeriesCount *int32      `json:"seriesCount,omitempty"`

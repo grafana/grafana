@@ -6,8 +6,8 @@ import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { GraphiteDatasource } from '../datasource';
-import { getRollupNotice, getRuntimeConsolidationNotice, parseSchemaRetentions } from '../meta';
-import { GraphiteOptions, GraphiteQuery, MetricTankSeriesMeta } from '../types';
+import { parseSchemaRetentions, getRollupNotice, getRuntimeConsolidationNotice } from '../meta';
+import { GraphiteQuery, GraphiteOptions, MetricTankSeriesMeta } from '../types';
 
 export type Props = MetadataInspectorProps<GraphiteDatasource, GraphiteQuery, GraphiteOptions>;
 
@@ -163,7 +163,7 @@ const getStyles = stylesFactory(() => {
     bucket: css`
       display: flex;
       margin-bottom: ${theme.spacing.sm};
-      border-radius: ${theme.border.radius.sm};
+      border-radius: ${theme.border.radius.md};
     `,
     bucketInterval: css`
       flex-grow: 0;
@@ -174,7 +174,7 @@ const getStyles = stylesFactory(() => {
       text-align: center;
       color: ${theme.palette.white};
       margin-right: ${theme.spacing.md};
-      border-radius: ${theme.border.radius.sm};
+      border-radius: ${theme.border.radius.md};
     `,
     bucketRetentionActive: css`
       background: linear-gradient(0deg, ${theme.palette.greenBase}, ${theme.palette.greenShade});

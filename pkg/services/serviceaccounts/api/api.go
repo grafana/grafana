@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -15,6 +16,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -39,8 +41,11 @@ type service interface {
 	SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error)
 	ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
+	GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (*serviceaccounts.APIKeysMigrationStatus, error)
+	HideApiKeysTab(ctx context.Context, orgID int64) error
 	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error
 	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
+	RevertApiKey(ctx context.Context, saId int64, keyId int64) error
 	// Service account tokens
 	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error)
 	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
@@ -84,10 +89,16 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.CreateToken))
 		serviceAccountsRoute.Delete("/:serviceAccountId/tokens/:tokenId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteToken))
+		serviceAccountsRoute.Get("/migrationstatus", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.GetAPIKeysMigrationStatus))
+		serviceAccountsRoute.Post("/hideApiKeys", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.HideApiKeysTab))
 		serviceAccountsRoute.Post("/migrate", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.MigrateApiKeysToServiceAccounts))
 		serviceAccountsRoute.Post("/migrate/:keyId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ConvertToServiceAccount))
+		serviceAccountsRoute.Post("/:serviceAccountId/revert/:keyId", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.RevertApiKey))
 	})
 }
 
@@ -113,12 +124,22 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 	}
 
 	if err := api.validateRole(cmd.Role, &c.OrgRole); err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create service account", err)
+		switch {
+		case errors.Is(err, serviceaccounts.ErrServiceAccountInvalidRole):
+			return response.Error(http.StatusBadRequest, err.Error(), err)
+		case errors.Is(err, serviceaccounts.ErrServiceAccountRolePrivilegeDenied):
+			return response.Error(http.StatusForbidden, err.Error(), err)
+		default:
+			return response.Error(http.StatusInternalServerError, "failed to create service account", err)
+		}
 	}
 
 	serviceAccount, err := api.service.CreateServiceAccount(c.Req.Context(), c.OrgID, &cmd)
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to create service account", err)
+	switch {
+	case errors.Is(err, database.ErrServiceAccountAlreadyExists):
+		return response.Error(http.StatusBadRequest, "Failed to create service account", err)
+	case err != nil:
+		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
 	}
 
 	if !api.accesscontrol.IsDisabled() {
@@ -158,7 +179,12 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *contextmodel.ReqConte
 
 	serviceAccount, err := api.service.RetrieveServiceAccount(ctx.Req.Context(), ctx.OrgID, scopeID)
 	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to retrieve service account", err)
+		switch {
+		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
+			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
+		default:
+			return response.Error(http.StatusInternalServerError, "Failed to retrieve service account", err)
+		}
 	}
 
 	saIDString := strconv.FormatInt(serviceAccount.Id, 10)
@@ -204,12 +230,24 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) 
 	}
 
 	if err := api.validateRole(cmd.Role, &c.OrgRole); err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update service account", err)
+		switch {
+		case errors.Is(err, serviceaccounts.ErrServiceAccountInvalidRole):
+			return response.Error(http.StatusBadRequest, err.Error(), err)
+		case errors.Is(err, serviceaccounts.ErrServiceAccountRolePrivilegeDenied):
+			return response.Error(http.StatusForbidden, err.Error(), err)
+		default:
+			return response.Error(http.StatusInternalServerError, "failed to update service account", err)
+		}
 	}
 
 	resp, err := api.service.UpdateServiceAccount(c.Req.Context(), c.OrgID, scopeID, &cmd)
 	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed update service account", err)
+		switch {
+		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
+			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
+		default:
+			return response.Error(http.StatusInternalServerError, "Failed update service account", err)
+		}
 	}
 
 	saIDString := strconv.FormatInt(resp.Id, 10)
@@ -227,10 +265,10 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) 
 
 func (api *ServiceAccountsAPI) validateRole(r *org.RoleType, orgRole *org.RoleType) error {
 	if r != nil && !r.IsValid() {
-		return serviceaccounts.ErrServiceAccountInvalidRole.Errorf("invalid role specified")
+		return serviceaccounts.ErrServiceAccountInvalidRole
 	}
 	if r != nil && !orgRole.Includes(*r) {
-		return serviceaccounts.ErrServiceAccountRolePrivilegeDenied.Errorf("can not assign a role higher than user's role")
+		return serviceaccounts.ErrServiceAccountRolePrivilegeDenied
 	}
 	return nil
 }
@@ -326,6 +364,23 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 	return response.JSON(http.StatusOK, serviceAccountSearch)
 }
 
+// GET /api/serviceaccounts/migrationstatus
+func (api *ServiceAccountsAPI) GetAPIKeysMigrationStatus(ctx *contextmodel.ReqContext) response.Response {
+	upgradeStatus, err := api.service.GetAPIKeysMigrationStatus(ctx.Req.Context(), ctx.OrgID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Internal server error", err)
+	}
+	return response.JSON(http.StatusOK, upgradeStatus)
+}
+
+// POST /api/serviceaccounts/hideapikeys
+func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *contextmodel.ReqContext) response.Response {
+	if err := api.service.HideApiKeysTab(ctx.Req.Context(), ctx.OrgID); err != nil {
+		return response.Error(http.StatusInternalServerError, "Internal server error", err)
+	}
+	return response.Success("API keys hidden")
+}
+
 // POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *contextmodel.ReqContext) response.Response {
 	if err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID); err != nil {
@@ -347,6 +402,23 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *contextmodel.ReqCont
 	}
 
 	return response.Success("Service accounts migrated")
+}
+
+// POST /api/serviceaccounts/revert/:keyId
+func (api *ServiceAccountsAPI) RevertApiKey(ctx *contextmodel.ReqContext) response.Response {
+	keyId, err := strconv.ParseInt(web.Params(ctx.Req)[":keyId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "key ID is invalid", err)
+	}
+	serviceAccountId, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "service account ID is invalid", err)
+	}
+
+	if err := api.service.RevertApiKey(ctx.Req.Context(), serviceAccountId, keyId); err != nil {
+		return response.Error(http.StatusInternalServerError, "error reverting to API key", err)
+	}
+	return response.Success("reverted service account to API key")
 }
 
 func (api *ServiceAccountsAPI) getAccessControlMetadata(c *contextmodel.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {

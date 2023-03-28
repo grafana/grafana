@@ -1,4 +1,4 @@
-export const mockSearch = jest.fn(() => {
+export const mockSearch = jest.fn<any, any>(() => {
   return Promise.resolve([]);
 });
 

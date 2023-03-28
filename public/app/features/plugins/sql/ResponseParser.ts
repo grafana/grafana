@@ -14,11 +14,13 @@ export class ResponseParser implements ResponseParserType {
         values.push({ text: '' + textField.values.get(i), value: '' + valueField.values.get(i) });
       }
     } else {
-      for (const field of frame.fields) {
-        for (const value of field.values.toArray()) {
-          values.push({ text: value });
-        }
-      }
+      values.push(
+        ...frame.fields
+          .flatMap((f) => f.values.toArray())
+          .map((v) => ({
+            text: v,
+          }))
+      );
     }
 
     return uniqBy(values, 'text');

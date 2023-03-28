@@ -1,15 +1,12 @@
-import { css } from '@emotion/css';
 import { merge } from 'lodash';
 import React, { useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { SelectableValue } from '@grafana/data';
 import { TableCellOptions } from '@grafana/schema';
-import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
+import { Field, Select, TableCellDisplayMode } from '@grafana/ui';
 
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
-import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
 
 // The props that any cell type editor are expected
 // to handle. In this case the generic type should
@@ -26,8 +23,8 @@ interface Props {
 
 export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   const cellType = value.type;
-  const styles = useStyles2(getStyles);
   const currentMode = cellDisplayModeOptions.find((o) => o.value!.type === cellType)!;
+
   let [settingCache, setSettingCache] = useState<Record<string, TableCellOptions>>({});
 
   // Update display mode on change
@@ -57,7 +54,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
 
   // Setup and inject editor
   return (
-    <div className={styles.fixBottomMargin}>
+    <>
       <Field>
         <Select options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
@@ -67,30 +64,15 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       {cellType === TableCellDisplayMode.ColorBackground && (
         <ColorBackgroundCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
-      {cellType === TableCellDisplayMode.Sparkline && (
-        <SparklineCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
-      )}
-    </div>
+    </>
   );
-};
-
-const SparklineDisplayModeOption: SelectableValue<TableCellOptions> = {
-  value: { type: TableCellDisplayMode.Sparkline },
-  label: 'Sparkline',
 };
 
 const cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.Auto }, label: 'Auto' },
-  ...(config.featureToggles.timeSeriesTable ? [SparklineDisplayModeOption] : []),
   { value: { type: TableCellDisplayMode.ColorText }, label: 'Colored text' },
   { value: { type: TableCellDisplayMode.ColorBackground }, label: 'Colored background' },
   { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },
   { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
   { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
 ];
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  fixBottomMargin: css({
-    marginBottom: theme.spacing(-2),
-  }),
-});

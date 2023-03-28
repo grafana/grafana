@@ -9,11 +9,6 @@ export interface MapLayerOptions<TConfig = any> extends raw.MapLayerOptions {
 }
 
 export interface DataQuery extends raw.DataQuery {
-  /**
-   * Unique, guid like, string (used only in explore mode)
-   */
-  key?: string;
-
   // TODO remove explicit nulls
   datasource?: raw.DataSourceRef | null;
 }
@@ -28,12 +23,3 @@ export interface TextDimensionConfig extends BaseDimensionConfig<string>, Omit<r
 export interface ColorDimensionConfig extends BaseDimensionConfig<string>, Omit<raw.ColorDimensionConfig, 'fixed'> {}
 
 export * from '../common/common.gen';
-
-// TODO remove when https://github.com/grafana/cuetsy/issues/74 is fixed
-export const defaultTableFieldOptions: raw.TableFieldOptions = {
-  align: 'auto',
-  inspect: false,
-  cellOptions: {
-    type: raw.TableCellDisplayMode.Auto,
-  },
-};

@@ -113,9 +113,7 @@ const supplier = (
   }
 };
 
-type Props = TransformerUIProps<SpatialTransformOptions>;
-
-export const SetGeometryTransformerEditor = (props: Props) => {
+export const SetGeometryTransformerEditor: React.FC<TransformerUIProps<SpatialTransformOptions>> = (props) => {
   // a new component is created with every change :(
   useEffect(() => {
     if (!props.options.source?.mode) {

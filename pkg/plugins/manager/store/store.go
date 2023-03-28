@@ -2,12 +2,14 @@ package store
 
 import (
 	"context"
+	"path/filepath"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ plugins.Store = (*Service)(nil)
@@ -16,11 +18,10 @@ type Service struct {
 	pluginRegistry registry.Service
 }
 
-func ProvideService(pluginRegistry registry.Service, pluginSources sources.Registry,
+func ProvideService(gCfg *setting.Cfg, cfg *config.Cfg, pluginRegistry registry.Service,
 	pluginLoader loader.Service) (*Service, error) {
-	ctx := context.Background()
-	for _, ps := range pluginSources.List(ctx) {
-		if _, err := pluginLoader.Load(ctx, ps); err != nil {
+	for _, ps := range pluginSources(gCfg, cfg) {
+		if _, err := pluginLoader.Load(context.Background(), ps.Class, ps.Paths); err != nil {
 			return nil, err
 		}
 	}
@@ -117,4 +118,32 @@ func (s *Service) Routes() []*plugins.StaticRoute {
 		}
 	}
 	return staticRoutes
+}
+
+func pluginSources(gCfg *setting.Cfg, cfg *config.Cfg) []plugins.PluginSource {
+	return []plugins.PluginSource{
+		{Class: plugins.Core, Paths: corePluginPaths(gCfg.StaticRootPath)},
+		{Class: plugins.Bundled, Paths: []string{gCfg.BundledPluginsPath}},
+		{Class: plugins.External, Paths: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg.PluginSettings)...)},
+	}
+}
+
+// corePluginPaths provides a list of the Core plugin paths which need to be scanned on init()
+func corePluginPaths(staticRootPath string) []string {
+	datasourcePaths := filepath.Join(staticRootPath, "app/plugins/datasource")
+	panelsPath := filepath.Join(staticRootPath, "app/plugins/panel")
+	return []string{datasourcePaths, panelsPath}
+}
+
+// pluginSettingPaths provides a plugin paths defined in cfg.PluginSettings which need to be scanned on init()
+func pluginSettingPaths(ps map[string]map[string]string) []string {
+	var pluginSettingDirs []string
+	for _, s := range ps {
+		path, exists := s["path"]
+		if !exists || path == "" {
+			continue
+		}
+		pluginSettingDirs = append(pluginSettingDirs, path)
+	}
+	return pluginSettingDirs
 }

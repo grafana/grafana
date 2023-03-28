@@ -4,10 +4,9 @@ import (
 	"sync"
 
 	"github.com/google/wire"
-	"github.com/grafana/kindsys"
-	"github.com/grafana/thema"
-
 	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/thema"
 )
 
 // KindSet contains all of the wire-style providers related to kinds.

@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 )
 
 var errWebHookURL = errors.New("webhook url must be https")
@@ -76,7 +76,7 @@ func (wClient *webHookClient) Notify(ctx context.Context,
 
 	jsonValue, err := json.Marshal(values)
 	if err != nil {
-		return fmt.Errorf("%s: %w", "failed to marshal webhook request", err)
+		return errors.Wrap(err, "failed to marshal webhook request")
 	}
 
 	// Build URL
@@ -84,7 +84,7 @@ func (wClient *webHookClient) Notify(ctx context.Context,
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		wClient.url, bytes.NewReader(jsonValue))
 	if err != nil {
-		return fmt.Errorf("%s: %w", "failed to make http request", err)
+		return errors.Wrap(err, "failed to make http request")
 	}
 
 	// Set headers
@@ -95,7 +95,7 @@ func (wClient *webHookClient) Notify(ctx context.Context,
 	// make http POST request to check for leaked tokens.
 	resp, err := wClient.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("%s: %w", "failed to webhook request", err)
+		return errors.Wrap(err, "failed to webhook request")
 	}
 
 	defer func() { _ = resp.Body.Close() }()

@@ -3,7 +3,6 @@ package instrumentation
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -13,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	plog "github.com/grafana/grafana/pkg/plugins/log"
 )
 
 var (
@@ -31,27 +29,19 @@ var (
 	}, []string{"plugin_id", "endpoint", "target"})
 )
 
-const (
-	statusOK        = "ok"
-	statusError     = "error"
-	statusCancelled = "cancelled"
-)
-
-var logger = plog.New("plugin.instrumentation")
+var logger log.Logger = log.New("plugin.instrumentation")
 
 // instrumentPluginRequest instruments success rate and latency of `fn`
 func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.PluginContext, endpoint string, fn func() error) error {
-	status := statusOK
+	status := "ok"
 
 	start := time.Now()
+
 	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
 	err := fn()
 	if err != nil {
-		status = statusError
-		if errors.Is(err, context.Canceled) {
-			status = statusCancelled
-		}
+		status = "error"
 	}
 
 	elapsed := time.Since(start)
@@ -80,10 +70,6 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 		if pluginCtx.DataSourceInstanceSettings != nil {
 			logParams = append(logParams, "dsName", pluginCtx.DataSourceInstanceSettings.Name)
 			logParams = append(logParams, "dsUID", pluginCtx.DataSourceInstanceSettings.UID)
-		}
-
-		if status == statusError {
-			logParams = append(logParams, "error", err)
 		}
 
 		logger.Info("Plugin Request Completed", logParams...)

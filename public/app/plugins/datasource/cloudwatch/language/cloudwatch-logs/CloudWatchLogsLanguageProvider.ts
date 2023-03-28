@@ -133,7 +133,6 @@ export class CloudWatchLogsLanguageProvider extends LanguageProvider {
     const interpolatedLogGroups = interpolateStringArrayUsingSingleOrMultiValuedVariable(
       getTemplateSrv(),
       logGroups.map((lg) => lg.name),
-      {},
       'text'
     );
     const results = await Promise.all(

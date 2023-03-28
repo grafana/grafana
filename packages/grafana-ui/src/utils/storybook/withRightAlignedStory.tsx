@@ -1,7 +1,8 @@
-import { DecoratorFn } from '@storybook/react';
 import React from 'react';
 
-const RightAlignedStory = ({ children }: React.PropsWithChildren<{}>) => {
+import { RenderFunction } from '../../types';
+
+const RightAlignedStory: React.FunctionComponent<{}> = ({ children }) => {
   return (
     <div
       style={{
@@ -17,4 +18,4 @@ const RightAlignedStory = ({ children }: React.PropsWithChildren<{}>) => {
   );
 };
 
-export const withRightAlignedStory: DecoratorFn = (story) => <RightAlignedStory>{story()}</RightAlignedStory>;
+export const withRightAlignedStory = (story: RenderFunction) => <RightAlignedStory>{story()}</RightAlignedStory>;

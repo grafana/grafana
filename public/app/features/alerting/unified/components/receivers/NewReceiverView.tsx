@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
@@ -12,7 +12,7 @@ interface Props {
   alertManagerSourceName: string;
 }
 
-export const NewReceiverView = ({ alertManagerSourceName, config }: Props) => {
+export const NewReceiverView: FC<Props> = ({ alertManagerSourceName, config }) => {
   if (alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME) {
     return <GrafanaReceiverForm alertManagerSourceName={alertManagerSourceName} config={config} />;
   } else {

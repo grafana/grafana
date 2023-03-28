@@ -1,6 +1,6 @@
 import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
 
-import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
+import { sortDataFrameByTime } from './sortDataFrame';
 
 const inputFrame: DataFrame = {
   refId: 'A',
@@ -29,7 +29,7 @@ const inputFrame: DataFrame = {
 
 describe('loki sortDataFrame', () => {
   it('sorts a dataframe ascending', () => {
-    const sortedFrame = sortDataFrameByTime(inputFrame, SortDirection.Ascending);
+    const sortedFrame = sortDataFrameByTime(inputFrame, 'ASCENDING');
     expect(sortedFrame.length).toBe(5);
     const timeValues = sortedFrame.fields[0].values.toArray();
     const lineValues = sortedFrame.fields[1].values.toArray();
@@ -40,7 +40,7 @@ describe('loki sortDataFrame', () => {
     expect(tsNsValues).toStrictEqual([`1001000000`, `1002000000`, `1003000000`, `1004000000`, `1005000000`]);
   });
   it('sorts a dataframe descending', () => {
-    const sortedFrame = sortDataFrameByTime(inputFrame, SortDirection.Descending);
+    const sortedFrame = sortDataFrameByTime(inputFrame, 'DESCENDING');
     expect(sortedFrame.length).toBe(5);
     const timeValues = sortedFrame.fields[0].values.toArray();
     const lineValues = sortedFrame.fields[1].values.toArray();

@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
@@ -61,7 +60,6 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 			ConnMaxLifetime:     14400,
 			Timescaledb:         false,
 			ConfigurationMethod: "file-path",
-			SecureDSProxy:       false,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -94,17 +92,8 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 			logger.Debug("GetEngine", "connection", cnnstr)
 		}
 
-		driverName := "postgres"
-		// register a proxy driver if the secure socks proxy is enabled
-		if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
-			driverName, err = createPostgresProxyDriver(&cfg.SecureSocksDSProxy, cnnstr)
-			if err != nil {
-				return "", nil
-			}
-		}
-
 		config := sqleng.DataPluginConfiguration{
-			DriverName:        driverName,
+			DriverName:        "postgres",
 			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},

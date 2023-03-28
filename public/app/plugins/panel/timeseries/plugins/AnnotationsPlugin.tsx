@@ -13,7 +13,7 @@ interface AnnotationsPluginProps {
   timeZone: TimeZone;
 }
 
-export const AnnotationsPlugin = ({ annotations, timeZone, config }: AnnotationsPluginProps) => {
+export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotations, timeZone, config }) => {
   const theme = useTheme2();
   const plotInstance = useRef<uPlot>();
 

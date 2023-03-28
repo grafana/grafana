@@ -19,7 +19,7 @@ interface NestedRowProps {
   scrollIntoView?: boolean;
 }
 
-const NestedRow = ({
+const NestedRow: React.FC<NestedRowProps> = ({
   row,
   selectedRows,
   level,
@@ -28,7 +28,7 @@ const NestedRow = ({
   selectableEntryTypes,
   scrollIntoView,
   disableRow,
-}: NestedRowProps) => {
+}) => {
   const styles = useStyles2(getStyles);
   const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>('closed');
 

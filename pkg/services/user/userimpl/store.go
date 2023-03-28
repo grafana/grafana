@@ -432,8 +432,6 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 		if signedInUser.ExternalAuthModule != "oauth_grafana_com" {
 			signedInUser.ExternalAuthID = ""
 		}
-
-		signedInUser.Analytics = buildUserAnalyticsSettings(signedInUser, ss.cfg.IntercomSecret)
 		return nil
 	})
 	return &signedInUser, err

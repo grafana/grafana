@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
@@ -19,6 +20,7 @@ type UsageStats struct {
 	Cfg           *setting.Cfg
 	kvStore       *kvstore.NamespacedKVStore
 	RouteRegister routing.RouteRegister
+	pluginStore   plugins.Store
 	accesscontrol ac.AccessControl
 
 	log    log.Logger
@@ -29,6 +31,7 @@ type UsageStats struct {
 }
 
 func ProvideService(cfg *setting.Cfg,
+	pluginStore plugins.Store,
 	kvStore kvstore.KVStore,
 	routeRegister routing.RouteRegister,
 	tracer tracing.Tracer,
@@ -39,6 +42,7 @@ func ProvideService(cfg *setting.Cfg,
 	s := &UsageStats{
 		Cfg:           cfg,
 		RouteRegister: routeRegister,
+		pluginStore:   pluginStore,
 		kvStore:       kvstore.WithNamespace(kvStore, 0, "infra.usagestats"),
 		log:           log.New("infra.usagestats"),
 		tracer:        tracer,
@@ -111,6 +115,15 @@ func (uss *UsageStats) RegisterSendReportCallback(c usagestats.SendReportCallbac
 	uss.sendReportCallbacks = append(uss.sendReportCallbacks, c)
 }
 
+func (uss *UsageStats) ShouldBeReported(ctx context.Context, dsType string) bool {
+	ds, exists := uss.pluginStore.Plugin(ctx, dsType)
+	if !exists {
+		return false
+	}
+
+	return ds.Signature.IsValid() || ds.Signature.IsInternal()
+}
+
 func (uss *UsageStats) supportBundleCollector() supportbundles.Collector {
 	return supportbundles.Collector{
 		UID:               "usage-stats",
@@ -124,7 +137,7 @@ func (uss *UsageStats) supportBundleCollector() supportbundles.Collector {
 				return nil, err
 			}
 
-			data, err := json.MarshalIndent(report, "", " ")
+			data, err := json.Marshal(report)
 			if err != nil {
 				return nil, err
 			}

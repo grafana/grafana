@@ -3,10 +3,7 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": {
-          "type": "datasource",
-          "uid": "grafana"
-        },
+        "datasource": "-- Grafana --",
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -16,16 +13,12 @@
     ]
   },
   "editable": true,
-  "fiscalYearStartMonth": 0,
+  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
-  "liveNow": false,
   "panels": [
     {
-      "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
-      },
+      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -33,23 +26,11 @@
         "y": 0
       },
       "id": 7,
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
-          },
-          "refId": "A"
-        }
-      ],
       "title": "Cell styles",
       "type": "row"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "gdev-testdata"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -57,19 +38,16 @@
           },
           "custom": {
             "align": "center",
-            "cellOptions": {
-              "mode": "gradient",
-              "type": "color-background"
-            },
-            "filterable": false,
-            "inspect": false
+            "displayMode": "color-background",
+            "filterable": false
           },
           "mappings": [],
           "thresholds": {
             "mode": "percentage",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "blue",
@@ -146,17 +124,7 @@
       },
       "id": 4,
       "options": {
-        "cellHeight": "md",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
         "showHeader": true,
-        "showRowNums": false,
         "sortBy": [
           {
             "desc": true,
@@ -164,19 +132,17 @@
           }
         ]
       },
-      "pluginVersion": "9.5.0-pre",
+      "pluginVersion": "",
       "targets": [
         {
-          "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
-          },
           "refId": "A",
           "scenarioId": "random_walk",
           "seriesCount": 15,
           "stringInput": ""
         }
       ],
+      "timeFrom": null,
+      "timeShift": null,
       "title": "Colored background",
       "transformations": [
         {
@@ -193,29 +159,23 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": "center",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "filterable": false,
-            "inspect": false
+            "align": null,
+            "filterable": false
           },
           "mappings": [],
           "thresholds": {
             "mode": "percentage",
             "steps": [
               {
-                "color": "orange"
+                "color": "orange",
+                "value": null
               },
               {
                 "color": "red",
@@ -228,51 +188,60 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Basic "
+              "options": "A"
             },
             "properties": [
               {
-                "id": "custom.cellOptions",
-                "value": {
-                  "mode": "basic",
-                  "type": "gauge"
-                }
-              },
-              {
-                "id": "custom.inspect",
-                "value": false
+                "id": "custom.displayMode",
+                "value": "gradient-gauge"
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "Gradient text color value"
+              "options": "Info"
             },
             "properties": [
               {
-                "id": "custom.cellOptions",
-                "value": {
-                  "mode": "gradient",
-                  "type": "gauge",
-                  "valueMode": "text"
-                }
+                "id": "custom.width",
+                "value": 92
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "LCD hidden value"
+              "options": "Min"
             },
             "properties": [
               {
-                "id": "custom.cellOptions",
-                "value": {
-                  "mode": "lcd",
-                  "type": "gauge",
-                  "valueMode": "hidden"
-                }
+                "id": "custom.width",
+                "value": 76
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 89
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 165
               }
             ]
           }
@@ -280,22 +249,13 @@
       },
       "gridPos": {
         "h": 16,
-        "w": 17,
+        "w": 8,
         "x": 7,
         "y": 1
       },
       "id": 2,
       "options": {
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
         "showHeader": true,
-        "showRowNums": false,
         "sortBy": [
           {
             "desc": false,
@@ -303,25 +263,22 @@
           }
         ]
       },
-      "pluginVersion": "9.5.0-pre",
+      "pluginVersion": "",
       "targets": [
         {
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
-          },
           "refId": "A",
           "scenarioId": "random_walk_table",
           "stringInput": ""
         }
       ],
+      "timeFrom": null,
+      "timeShift": null,
       "title": "Bar gauge cells",
       "transformations": [
         {
           "id": "organize",
           "options": {
             "excludeByName": {
-              "Info": true,
               "Time": true
             },
             "indexByName": {
@@ -331,43 +288,35 @@
               "Time": 0,
               "Value": 4
             },
-            "renameByName": {
-              "A": "LCD hidden value",
-              "Max": "Gradient text color value",
-              "Min": "Basic "
-            }
+            "renameByName": {}
           }
         }
       ],
       "type": "table"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": "gdev-testdata",
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
+            "align": null,
+            "filterable": false
           },
           "mappings": [],
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
-                "color": "green"
+                "color": "blue",
+                "value": null
               },
               {
-                "color": "red",
-                "value": 80
+                "color": "green",
+                "value": 50
               }
             ]
           }
@@ -376,329 +325,82 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "rate"
+              "options": "A"
             },
             "properties": [
               {
-                "id": "custom.cellOptions",
-                "value": {
-                  "fillOpacity": 29,
-                  "gradientMode": "opacity",
-                  "lineWidth": 1,
-                  "type": "sparkline"
-                }
+                "id": "custom.displayMode",
+                "value": "lcd-gauge"
               },
               {
-                "id": "color",
-                "value": {
-                  "mode": "continuous-GrYlRd"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "cluster"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 120
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "service"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 120
+                "id": "custom.align",
+                "value": "center"
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 7,
+        "h": 16,
         "w": 9,
-        "x": 0,
-        "y": 17
+        "x": 15,
+        "y": 1
       },
-      "id": 14,
-      "maxDataPoints": 50,
+      "id": 5,
       "options": {
-        "cellHeight": "md",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
         "showHeader": true,
-        "showRowNums": false,
         "sortBy": []
       },
-      "pluginVersion": "9.5.0-pre",
+      "pluginVersion": "",
       "targets": [
         {
-          "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
-          },
-          "labels": "cluster=eu,service=checkout",
-          "min": 0.1,
           "refId": "A",
-          "scenarioId": "random_walk",
-          "seriesCount": 3
+          "scenarioId": "random_walk_table",
+          "stringInput": ""
         }
       ],
-      "title": "Sparkline cell",
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Retro LCD cell",
       "transformations": [
-        {
-          "id": "timeSeriesTable",
-          "options": {}
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {},
-            "indexByName": {},
-            "renameByName": {
-              "Trend": "rate"
-            }
-          }
-        }
-      ],
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "rate"
-            },
-            "properties": [
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "drawStyle": "bars",
-                  "fillOpacity": 100,
-                  "gradientMode": "hue",
-                  "lineWidth": 0,
-                  "showPoints": "auto",
-                  "type": "sparkline"
-                }
-              },
-              {
-                "id": "color",
-                "value": {
-                  "mode": "continuous-GrYlRd"
-                }
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "latency"
-            },
-            "properties": [
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "fillOpacity": 40,
-                  "gradientMode": "opacity",
-                  "lineInterpolation": "stepBefore",
-                  "lineWidth": 1,
-                  "type": "sparkline"
-                }
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "purple",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "service"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 120
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "cluster"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 120
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 15,
-        "x": 9,
-        "y": 17
-      },
-      "id": 15,
-      "maxDataPoints": 30,
-      "options": {
-        "cellHeight": "md",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true,
-        "showRowNums": false
-      },
-      "pluginVersion": "9.5.0-pre",
-      "targets": [
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
-          },
-          "labels": "cluster=eu,service=checkout",
-          "min": 0.1,
-          "refId": "A",
-          "scenarioId": "random_walk",
-          "seriesCount": 3
-        },
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
-          },
-          "hide": false,
-          "labels": "cluster=eu,service=checkout",
-          "min": 0.1,
-          "refId": "B",
-          "scenarioId": "random_walk",
-          "seriesCount": 3
-        }
-      ],
-      "title": "Multiple sparkline cells per row",
-      "transformations": [
-        {
-          "id": "timeSeriesTable",
-          "options": {}
-        },
-        {
-          "id": "joinByField",
-          "options": {
-            "byField": "service",
-            "mode": "outer"
-          }
-        },
         {
           "id": "organize",
           "options": {
             "excludeByName": {
-              "cluster 2": true
+              "Info": false,
+              "Max": true,
+              "Min": true,
+              "Time": false
             },
-            "indexByName": {},
-            "renameByName": {
-              "Trend": "rate",
-              "Trend #A": "rate",
-              "Trend #B": "latency",
-              "cluster 1": "cluster"
-            }
+            "indexByName": {
+              "Info": 1,
+              "Max": 3,
+              "Min": 2,
+              "Time": 0,
+              "Value": 4
+            },
+            "renameByName": {}
           }
         }
       ],
       "type": "table"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "gdev-testdata"
-      },
+      "collapsed": false,
+      "datasource": "gdev-testdata",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 17
       },
       "id": 9,
-      "targets": [
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
-          },
-          "refId": "A"
-        }
-      ],
+      "panels": [],
       "title": "Data links",
       "type": "row"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "gdev-testdata"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -706,11 +408,8 @@
           },
           "custom": {
             "align": "center",
-            "cellOptions": {
-              "type": "color-text"
-            },
-            "filterable": false,
-            "inspect": false
+            "displayMode": "color-text",
+            "filterable": false
           },
           "decimals": 2,
           "mappings": [],
@@ -718,7 +417,8 @@
             "mode": "percentage",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "blue",
@@ -744,7 +444,8 @@
             },
             "properties": [
               {
-                "id": "custom.align"
+                "id": "custom.align",
+                "value": null
               }
             ]
           },
@@ -771,30 +472,17 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 25
+        "y": 18
       },
       "id": 3,
+      "maxDataPoints": "10",
       "options": {
-        "cellHeight": "md",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true,
-        "showRowNums": false
+        "showHeader": true
       },
-      "pluginVersion": "9.5.0-pre",
+      "pluginVersion": "",
       "targets": [
         {
           "alias": "S1",
-          "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
-          },
           "labels": "server=A",
           "refId": "A",
           "scenarioId": "random_walk",
@@ -803,10 +491,6 @@
         },
         {
           "alias": "S2",
-          "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
-          },
           "labels": "server=B",
           "refId": "B",
           "scenarioId": "random_walk",
@@ -815,10 +499,6 @@
         },
         {
           "alias": "S3",
-          "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
-          },
           "labels": "server=C",
           "refId": "C",
           "scenarioId": "random_walk",
@@ -826,6 +506,8 @@
           "stringInput": ""
         }
       ],
+      "timeFrom": null,
+      "timeShift": null,
       "title": "Data link with labels and numeric value",
       "transformations": [
         {
@@ -836,10 +518,7 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "gdev-testdata"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -847,18 +526,16 @@
           },
           "custom": {
             "align": "center",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "filterable": false,
-            "inspect": false
+            "displayMode": "auto",
+            "filterable": false
           },
           "mappings": [],
           "thresholds": {
             "mode": "percentage",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "blue",
@@ -882,21 +559,11 @@
         "h": 8,
         "w": 5,
         "x": 12,
-        "y": 25
+        "y": 18
       },
       "id": 10,
       "options": {
-        "cellHeight": "md",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
         "showHeader": false,
-        "showRowNums": false,
         "sortBy": [
           {
             "desc": true,
@@ -904,19 +571,17 @@
           }
         ]
       },
-      "pluginVersion": "9.5.0-pre",
+      "pluginVersion": "",
       "targets": [
         {
-          "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
-          },
           "refId": "A",
           "scenarioId": "random_walk_table",
           "seriesCount": 5,
           "stringInput": ""
         }
       ],
+      "timeFrom": null,
+      "timeShift": null,
       "title": "No header",
       "transformations": [
         {
@@ -941,10 +606,7 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "gdev-testdata"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -952,17 +614,15 @@
           },
           "custom": {
             "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
+            "displayMode": "auto"
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -977,39 +637,25 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 33
+        "y": 26
       },
       "id": 12,
       "options": {
-        "cellHeight": "md",
         "footer": {
-          "countRows": false,
+          "show": true,
           "fields": "",
           "reducer": [
             "sum"
-          ],
-          "show": true
+          ]
         },
-        "showHeader": true,
-        "showRowNums": false
+        "showHeader": true
       },
-      "pluginVersion": "9.5.0-pre",
-      "targets": [
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
-          },
-          "refId": "A"
-        }
-      ],
+      "pluginVersion": "",
       "title": "Footer",
       "type": "table"
     }
   ],
-  "refresh": "",
-  "revision": 1,
-  "schemaVersion": 38,
+  "schemaVersion": 27,
   "style": "dark",
   "tags": [
     "gdev",
@@ -1038,6 +684,5 @@
   "timezone": "",
   "title": "Panel Tests - React Table",
   "uid": "U_bZIMRMk",
-  "version": 7,
-  "weekStart": ""
+  "version": 6
 }

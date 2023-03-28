@@ -1,9 +1,6 @@
 import { DataFrame, Field, SortedVector } from '@grafana/data';
 
-export enum SortDirection {
-  Ascending,
-  Descending,
-}
+type SortDirection = 'ASCENDING' | 'DESCENDING';
 
 // creates the `index` for the sorting.
 // this is needed by the `SortedVector`.
@@ -24,7 +21,7 @@ function makeIndex(field: Field<string>, dir: SortDirection): number[] {
     index[i] = i;
   }
 
-  const isAsc = dir === SortDirection.Ascending;
+  const isAsc = dir === 'ASCENDING';
 
   index.sort((a: number, b: number): number => {
     // we need to answer this question:

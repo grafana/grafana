@@ -6,7 +6,6 @@ import (
 	"os"
 	"sort"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
@@ -108,20 +107,17 @@ func TestBuildConflictBlock(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
+			usrSvc := setupTestUserService(t, sqlStore)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
-				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
 				for _, u := range tc.users {
-					u := user.User{
-						Email:   u.Email,
-						Name:    u.Name,
-						Login:   u.Login,
-						OrgID:   int64(testOrgID),
-						Created: time.Now(),
-						Updated: time.Now(),
+					cmd := user.CreateUserCommand{
+						Email: u.Email,
+						Name:  u.Name,
+						Login: u.Login,
+						OrgID: int64(testOrgID),
 					}
-					// call user store instead of user service so as not to prevent conflicting users
-					_, err := userStore.Insert(context.Background(), &u)
-					require.NoError(t, err, u)
+					_, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
+					require.NoError(t, err)
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 				require.NoError(t, err)
@@ -216,19 +212,16 @@ conflict: test2
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
+			usrSvc := setupTestUserService(t, sqlStore)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
-				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
 				for _, u := range tc.users {
-					u := user.User{
-						Email:   u.Email,
-						Name:    u.Name,
-						Login:   u.Login,
-						OrgID:   int64(testOrgID),
-						Created: time.Now(),
-						Updated: time.Now(),
+					cmd := user.CreateUserCommand{
+						Email: u.Email,
+						Name:  u.Name,
+						Login: u.Login,
+						OrgID: int64(testOrgID),
 					}
-					// call user store instead of user service so as not to prevent conflicting users
-					_, err := userStore.Insert(context.Background(), &u)
+					_, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 
@@ -397,20 +390,17 @@ func TestGetConflictingUsers(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
+			usrSvc := setupTestUserService(t, sqlStore)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
-				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
 				for _, u := range tc.users {
-					u := user.User{
+					cmd := user.CreateUserCommand{
 						Email:            u.Email,
 						Name:             u.Name,
 						Login:            u.Login,
 						OrgID:            int64(testOrgID),
 						IsServiceAccount: u.IsServiceAccount,
-						Created:          time.Now(),
-						Updated:          time.Now(),
 					}
-					// call user store instead of user service so as not to prevent conflicting users
-					_, err := userStore.Insert(context.Background(), &u)
+					_, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
@@ -509,19 +499,16 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
+			usrSvc := setupTestUserService(t, sqlStore)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
-				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
 				for _, u := range tc.users {
-					cmd := user.User{
-						Email:   u.Email,
-						Name:    u.Name,
-						Login:   u.Login,
-						OrgID:   int64(testOrgID),
-						Created: time.Now(),
-						Updated: time.Now(),
+					cmd := user.CreateUserCommand{
+						Email: u.Email,
+						Name:  u.Name,
+						Login: u.Login,
+						OrgID: int64(testOrgID),
 					}
-					// call user store instead of user service so as not to prevent conflicting users
-					_, err := userStore.Insert(context.Background(), &cmd)
+					_, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
@@ -769,19 +756,16 @@ conflict: test2
 		for _, tc := range testCases {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
+			usrSvc := setupTestUserService(t, sqlStore)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
-				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
 				for _, u := range tc.users {
-					cmd := user.User{
-						Email:   u.Email,
-						Name:    u.Name,
-						Login:   u.Login,
-						OrgID:   int64(testOrgID),
-						Created: time.Now(),
-						Updated: time.Now(),
+					cmd := user.CreateUserCommand{
+						Email: u.Email,
+						Name:  u.Name,
+						Login: u.Login,
+						OrgID: int64(testOrgID),
 					}
-					// call user store instead of user service so as not to prevent conflicting users
-					_, err := userStore.Insert(context.Background(), &cmd)
+					_, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 				// add additional user with conflicting login where DOMAIN is upper case

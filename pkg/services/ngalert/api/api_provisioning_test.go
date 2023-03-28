@@ -1021,21 +1021,21 @@ func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlert
 		OrgID:     orgID,
 		Title:     title,
 		Condition: "A",
-		Data: []definitions.AlertQuery{
+		Data: []models.AlertQuery{
 			{
 				RefID: "A",
 				Model: json.RawMessage(testModel),
-				RelativeTimeRange: definitions.RelativeTimeRange{
-					From: definitions.Duration(60),
-					To:   definitions.Duration(0),
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(60),
+					To:   models.Duration(0),
 				},
 			},
 		},
 		RuleGroup:    "my-cool-group",
 		FolderUID:    "folder-uid",
 		For:          model.Duration(60),
-		NoDataState:  definitions.OK,
-		ExecErrState: definitions.OkErrState,
+		NoDataState:  models.OK,
+		ExecErrState: models.OkErrState,
 	}
 }
 

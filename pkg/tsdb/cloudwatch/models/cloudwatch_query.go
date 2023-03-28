@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -42,12 +41,7 @@ const (
 	GMDApiModeSQLExpression
 )
 
-const (
-	defaultRegion     = "default"
-	defaultConsoleURL = "console.aws.amazon.com"
-	usGovConsoleURL   = "console.amazonaws-us-gov.com"
-	chinaConsoleURL   = "console.amazonaws.cn"
-)
+const defaultRegion = "default"
 
 type CloudWatchQuery struct {
 	logger            log.Logger
@@ -193,7 +187,7 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time, 
 		return "", fmt.Errorf("could not marshal link: %w", err)
 	}
 
-	url, err := url.Parse(fmt.Sprintf(`https://%s/cloudwatch/deeplink.js`, getEndpoint(q.Region)))
+	url, err := url.Parse(fmt.Sprintf(`https://%s.console.aws.amazon.com/cloudwatch/deeplink.js`, q.Region))
 	if err != nil {
 		return "", fmt.Errorf("unable to parse CloudWatch console deep link")
 	}
@@ -490,16 +484,4 @@ func sortDimensions(dimensions map[string][]string) map[string][]string {
 		sortedDimensions[k] = dimensions[k]
 	}
 	return sortedDimensions
-}
-
-func getEndpoint(region string) string {
-	partition, _ := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region)
-	url := defaultConsoleURL
-	if partition.ID() == endpoints.AwsUsGovPartitionID {
-		url = usGovConsoleURL
-	}
-	if partition.ID() == endpoints.AwsCnPartitionID {
-		url = chinaConsoleURL
-	}
-	return fmt.Sprintf("%s.%s", region, url)
 }

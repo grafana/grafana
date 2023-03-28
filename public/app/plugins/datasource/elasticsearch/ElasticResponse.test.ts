@@ -1301,7 +1301,6 @@ describe('ElasticResponse', () => {
           refId: 'A',
           metrics: [{ type: 'raw_data', id: '1' }],
           bucketAggs: [],
-          timeField: '@timestamp',
         },
       ];
 
@@ -1318,7 +1317,7 @@ describe('ElasticResponse', () => {
                   _id: '1',
                   _type: '_doc',
                   _index: 'index',
-                  _source: { sourceProp: 'asd', '@timestamp': '2019-01-01T00:00:00Z' },
+                  _source: { sourceProp: 'asd' },
                 },
               ],
             },
@@ -1333,12 +1332,6 @@ describe('ElasticResponse', () => {
       for (const field of result.data[0].fields) {
         expect(field.config.filterable).toBe(true);
       }
-    });
-
-    it('should have time field values in DateTime format', () => {
-      const timeField = result.data[0].fields.find((field) => field.name === '@timestamp');
-      expect(timeField).toBeDefined();
-      expect(timeField?.values.get(0)).toBe(1546300800000);
     });
   });
 

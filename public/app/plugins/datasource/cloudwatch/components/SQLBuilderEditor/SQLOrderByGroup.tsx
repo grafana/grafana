@@ -22,7 +22,7 @@ const orderByDirections: Array<SelectableValue<string>> = [
   { label: DESC, value: DESC },
 ];
 
-const SQLOrderByGroup = ({ query, onQueryChange, datasource }: SQLBuilderSelectRowProps) => {
+const SQLOrderByGroup: React.FC<SQLBuilderSelectRowProps> = ({ query, onQueryChange, datasource }) => {
   const sql = query.sql ?? {};
   const orderBy = sql.orderBy?.name;
   const orderByDirection = sql.orderByDirection;

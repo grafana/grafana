@@ -315,32 +315,36 @@ export function hasLinks(field: Field): boolean {
 }
 
 export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): DisplayValueAlignmentFactors {
-  let maxTitle = '';
-  let maxText = '';
-  let maxPrefix = '';
-  let maxSuffix = '';
+  const info: DisplayValueAlignmentFactors = {
+    title: '',
+    text: '',
+  };
+
+  let prefixLength = 0;
+  let suffixLength = 0;
 
   for (let i = 0; i < values.length; i++) {
     const v = values[i].display;
 
-    if (v.text && v.text.length > maxText.length) {
-      maxText = v.text;
+    if (v.text && v.text.length > info.text.length) {
+      info.text = v.text;
     }
 
-    if (v.title && v.title.length > maxTitle.length) {
-      maxTitle = v.title;
+    if (v.title && v.title.length > info.title.length) {
+      info.title = v.title;
     }
 
-    if (v.prefix && v.prefix.length > maxPrefix.length) {
-      maxPrefix = v.prefix;
+    if (v.prefix && v.prefix.length > prefixLength) {
+      info.prefix = v.prefix;
+      prefixLength = v.prefix.length;
     }
 
-    if (v.suffix && v.suffix.length > maxSuffix.length) {
-      maxSuffix = v.suffix;
+    if (v.suffix && v.suffix.length > suffixLength) {
+      info.suffix = v.suffix;
+      suffixLength = v.suffix.length;
     }
   }
-
-  return { text: maxText, title: maxTitle, suffix: maxSuffix, prefix: maxPrefix };
+  return info;
 }
 
 function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): FieldDisplay {

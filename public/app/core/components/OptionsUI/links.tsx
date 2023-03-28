@@ -8,9 +8,11 @@ import {
 } from '@grafana/data';
 import { DataLinksInlineEditor } from '@grafana/ui';
 
-type Props = FieldConfigEditorProps<DataLink[], DataLinksFieldConfigSettings>;
-
-export const DataLinksValueEditor = ({ value, onChange, context }: Props) => {
+export const DataLinksValueEditor: React.FC<FieldConfigEditorProps<DataLink[], DataLinksFieldConfigSettings>> = ({
+  value,
+  onChange,
+  context,
+}) => {
   return (
     <DataLinksInlineEditor
       links={value}

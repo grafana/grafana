@@ -41,7 +41,7 @@ type LinkSettingsEditProps = {
   onGoBack: () => void;
 };
 
-export const LinkSettingsEdit = ({ editLinkIdx, dashboard, onGoBack }: LinkSettingsEditProps) => {
+export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx, dashboard, onGoBack }) => {
   const [linkSettings, setLinkSettings] = useState(editLinkIdx !== null ? dashboard.links[editLinkIdx] : newLink);
 
   const onUpdate = (link: DashboardLink) => {

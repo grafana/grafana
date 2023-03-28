@@ -49,7 +49,8 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
 
     if (labelsToConsider.length === 0) {
-      return await datasource.languageProvider.fetchLabels();
+      await datasource.languageProvider.refreshLogLabels();
+      return datasource.languageProvider.getLabelKeys();
     }
 
     const expr = lokiQueryModeller.renderLabels(labelsToConsider);

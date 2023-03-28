@@ -78,17 +78,7 @@ func (query *Query) renderTags() []string {
 			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
 		}
 
-		escapedKey := fmt.Sprintf(`"%s"`, tag.Key)
-
-		if strings.HasSuffix(tag.Key, "::tag") {
-			escapedKey = fmt.Sprintf(`"%s"::tag`, strings.TrimSuffix(tag.Key, "::tag"))
-		}
-
-		if strings.HasSuffix(tag.Key, "::field") {
-			escapedKey = fmt.Sprintf(`"%s"::field`, strings.TrimSuffix(tag.Key, "::field"))
-		}
-
-		res = append(res, fmt.Sprintf(`%s%s %s %s`, str, escapedKey, tag.Operator, textValue))
+		res = append(res, fmt.Sprintf(`%s"%s" %s %s`, str, tag.Key, tag.Operator, textValue))
 	}
 
 	return res

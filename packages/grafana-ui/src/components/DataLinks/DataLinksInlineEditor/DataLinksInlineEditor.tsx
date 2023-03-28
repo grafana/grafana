@@ -18,7 +18,12 @@ interface DataLinksInlineEditorProps {
   data: DataFrame[];
 }
 
-export const DataLinksInlineEditor = ({ links, onChange, getSuggestions, data }: DataLinksInlineEditorProps) => {
+export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({
+  links,
+  onChange,
+  getSuggestions,
+  data,
+}) => {
   const theme = useTheme2();
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);

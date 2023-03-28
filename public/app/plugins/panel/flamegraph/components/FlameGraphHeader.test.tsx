@@ -33,7 +33,7 @@ describe('FlameGraphHeader', () => {
     render(<FlameGraphHeaderWithProps />);
     await userEvent.type(screen.getByPlaceholderText('Search..'), 'abc');
     expect(screen.getByDisplayValue('abc')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /Reset/i }));
+    screen.getByRole('button', { name: /Reset/i }).click();
     expect(screen.queryByDisplayValue('abc')).not.toBeInTheDocument();
   });
 });

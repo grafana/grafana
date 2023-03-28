@@ -18,7 +18,7 @@ export type LoadingIndicatorProps = {
 /**
  * @internal
  */
-export const LoadingIndicator = ({ onCancel, loading }: LoadingIndicatorProps) => {
+export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ onCancel, loading }) => {
   const styles = useStyles2(getStyles);
 
   if (!loading) {

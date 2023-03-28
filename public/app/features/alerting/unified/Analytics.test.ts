@@ -18,10 +18,10 @@ describe('isNewUser', function () {
 
     getBackendSrv().get = jest.fn().mockResolvedValue(newUser);
 
-    const isNew = await isNewUser();
+    const isNew = await isNewUser(1);
     expect(isNew).toBe(true);
     expect(getBackendSrv().get).toHaveBeenCalledTimes(1);
-    expect(getBackendSrv().get).toHaveBeenCalledWith('/api/user');
+    expect(getBackendSrv().get).toHaveBeenCalledWith('/api/users/1');
   });
 
   it('should return false if the user has been created prior to the last two weeks', async () => {
@@ -32,9 +32,9 @@ describe('isNewUser', function () {
 
     getBackendSrv().get = jest.fn().mockResolvedValue(oldUser);
 
-    const isNew = await isNewUser();
+    const isNew = await isNewUser(2);
     expect(isNew).toBe(false);
     expect(getBackendSrv().get).toHaveBeenCalledTimes(1);
-    expect(getBackendSrv().get).toHaveBeenCalledWith('/api/user');
+    expect(getBackendSrv().get).toHaveBeenCalledWith('/api/users/2');
   });
 });

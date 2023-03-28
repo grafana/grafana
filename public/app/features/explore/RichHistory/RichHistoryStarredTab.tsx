@@ -15,7 +15,7 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
 
-export interface RichHistoryStarredTabProps {
+export interface Props {
   queries: RichHistoryQuery[];
   totalQueries: number;
   loading: boolean;
@@ -72,7 +72,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
+export function RichHistoryStarredTab(props: Props) {
   const {
     updateFilters,
     clearRichHistoryResults,
@@ -136,7 +136,6 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
           )}
           <div className={styles.filterInput}>
             <FilterInput
-              escapeRegex={false}
               placeholder="Search queries"
               value={richHistorySearchFilters.search}
               onChange={(search: string) => updateFilters({ search })}

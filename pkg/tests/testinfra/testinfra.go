@@ -53,11 +53,6 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	require.NoError(t, err)
 	require.NoError(t, env.SQLStore.Sync())
 
-	require.NotNil(t, env.SQLStore.Cfg)
-	dbSec, err := env.SQLStore.Cfg.Raw.GetSection("database")
-	require.NoError(t, err)
-	assert.Greater(t, dbSec.Key("query_retries").MustInt(), 0)
-
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
 		if err := env.Server.Run(); err != nil {
@@ -381,7 +376,7 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 }
 
-func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) *user.User {
+func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) int64 {
 	t.Helper()
 
 	store.Cfg.AutoAssignOrg = true
@@ -394,12 +389,7 @@ func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
-	o, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: fmt.Sprintf("test org %d", time.Now().UnixNano())})
+	u, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 	require.NoError(t, err)
-
-	cmd.OrgID = o.ID
-
-	u, err := usrSvc.Create(context.Background(), &cmd)
-	require.NoError(t, err)
-	return u
+	return u.ID
 }

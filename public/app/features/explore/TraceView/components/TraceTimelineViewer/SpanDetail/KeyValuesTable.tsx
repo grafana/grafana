@@ -14,6 +14,7 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import jsonMarkup from 'json-markup';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -23,8 +24,6 @@ import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
 import { TraceKeyValuePair, TraceLink, TNil } from '../../types';
 import { ubInlineBlock, uWidth100 } from '../../uberUtilityStyles';
-
-import jsonMarkup from './jsonMarkup';
 
 const copyIconClassName = 'copyIcon';
 

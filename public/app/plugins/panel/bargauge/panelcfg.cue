@@ -29,7 +29,6 @@ composableKinds: PanelCfg: {
 						PanelOptions: {
 							common.SingleStatBaseOptions
 							displayMode:  common.BarGaugeDisplayMode | *"gradient"
-							valueMode:    common.BarGaugeValueMode | *"color"
 							showUnfilled: bool | *true
 							minVizWidth:  uint32 | *0
 							minVizHeight: uint32 | *10

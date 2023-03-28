@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Flame Graph",
   "id": "flamegraph",
+  "state": "beta",
 
   "info": {
     "author": {

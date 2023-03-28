@@ -26,11 +26,11 @@ const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePick
   editor: () => null,
 };
 
-export const extractFieldsTransformerEditor = ({
+export const extractFieldsTransformerEditor: React.FC<TransformerUIProps<ExtractFieldsOptions>> = ({
   input,
   options,
   onChange,
-}: TransformerUIProps<ExtractFieldsOptions>) => {
+}) => {
   const onPickSourceField = (source?: string) => {
     onChange({
       ...options,

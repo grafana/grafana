@@ -24,7 +24,6 @@ import {
   TemplateSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
-import { BarGaugeDisplayMode, TableCellDisplayMode } from '@grafana/schema';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { serializeParams } from 'app/core/utils/fetch';
@@ -35,7 +34,6 @@ import { LokiOptions } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
-import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import {
   failedMetric,
   histogramMetric,
@@ -206,7 +204,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           subQueries.push(
             this._request('/api/search', {
               q: queryValue,
-              limit: options.targets[0].limit ?? DEFAULT_LIMIT,
+              limit: options.targets[0].limit,
               start: options.range.from.unix(),
               end: options.range.to.unix(),
             }).pipe(
@@ -221,36 +219,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             )
           );
         }
-      } catch (error) {
-        return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
-      }
-    }
-    if (targets.traceqlSearch?.length) {
-      try {
-        const queryValue = generateQueryFromFilters(targets.traceqlSearch[0].filters);
-        reportInteraction('grafana_traces_traceql_search_queried', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-          grafana_version: config.buildInfo.version,
-          query: queryValue ?? '',
-        });
-        subQueries.push(
-          this._request('/api/search', {
-            q: queryValue,
-            limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-            start: options.range.from.unix(),
-            end: options.range.to.unix(),
-          }).pipe(
-            map((response) => {
-              return {
-                data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
-              };
-            }),
-            catchError((error) => {
-              return of({ error: { message: error.data.message }, data: [] });
-            })
-          )
-        );
       } catch (error) {
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
@@ -553,7 +521,7 @@ function rateQuery(
   datasourceUid: string
 ) {
   const serviceMapRequest = makePromServiceMapRequest(request);
-  serviceMapRequest.targets = makeServiceGraphViewRequest([buildExpr(rateMetric, defaultTableFilter, request)]);
+  serviceMapRequest.targets = makeApmRequest([buildExpr(rateMetric, defaultTableFilter, request)]);
 
   return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
     toArray(),
@@ -578,23 +546,23 @@ function errorAndDurationQuery(
   datasourceUid: string,
   tempoDatasourceUid: string
 ) {
-  let serviceGraphViewMetrics = [];
+  let apmMetrics = [];
   let errorRateBySpanName = '';
   let durationsBySpanName: string[] = [];
   const spanNames = rateResponse.data[0][0]?.fields[1]?.values.toArray() ?? [];
 
   if (spanNames.length > 0) {
     errorRateBySpanName = buildExpr(errorRateMetric, 'span_name=~"' + spanNames.join('|') + '"', request);
-    serviceGraphViewMetrics.push(errorRateBySpanName);
+    apmMetrics.push(errorRateBySpanName);
     spanNames.map((name: string) => {
       const metric = buildExpr(durationMetric, 'span_name=~"' + name + '"', request);
       durationsBySpanName.push(metric);
-      serviceGraphViewMetrics.push(metric);
+      apmMetrics.push(metric);
     });
   }
 
   const serviceMapRequest = makePromServiceMapRequest(request);
-  serviceMapRequest.targets = makeServiceGraphViewRequest(serviceGraphViewMetrics);
+  serviceMapRequest.targets = makeApmRequest(apmMetrics);
 
   return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
     // Just collect all the responses first before processing into node graph data
@@ -605,7 +573,7 @@ function errorAndDurationQuery(
         throw new Error(errorRes.error!.message);
       }
 
-      const serviceGraphView = getServiceGraphView(
+      const apmTable = getApmTable(
         request,
         rateResponse,
         errorAndDurationResponse[0],
@@ -615,7 +583,7 @@ function errorAndDurationQuery(
         tempoDatasourceUid
       );
 
-      if (serviceGraphView.fields.length === 0) {
+      if (apmTable.fields.length === 0) {
         return {
           data: [rateResponse.data[1], rateResponse.data[2]],
           state: LoadingState.Done,
@@ -623,7 +591,7 @@ function errorAndDurationQuery(
       }
 
       return {
-        data: [serviceGraphView, rateResponse.data[1], rateResponse.data[2]],
+        data: [apmTable, rateResponse.data[1], rateResponse.data[2]],
         state: LoadingState.Done,
       };
     })
@@ -716,7 +684,7 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
   };
 }
 
-function getServiceGraphView(
+function getApmTable(
   request: DataQueryRequest<TempoQuery>,
   rateResponse: DataQueryResponse,
   secondResponse: DataQueryResponse,
@@ -763,17 +731,14 @@ function getServiceGraphView(
 
     df.fields.push({
       ...rate[0].fields[2],
-      name: '  ',
+      name: ' ',
       labels: null,
       config: {
         color: {
           mode: 'continuous-BlPu',
         },
         custom: {
-          cellOptions: {
-            mode: BarGaugeDisplayMode.Lcd,
-            type: TableCellDisplayMode.Gauge,
-          },
+          displayMode: 'lcd-gauge',
         },
         decimals: 3,
       },
@@ -809,7 +774,7 @@ function getServiceGraphView(
 
     df.fields.push({
       ...errorRate[0].fields[2],
-      name: '   ',
+      name: '  ',
       values: values,
       labels: null,
       config: {
@@ -817,10 +782,7 @@ function getServiceGraphView(
           mode: 'continuous-RdYlGr',
         },
         custom: {
-          cellOptions: {
-            mode: BarGaugeDisplayMode.Lcd,
-            type: TableCellDisplayMode.Gauge,
-          },
+          displayMode: 'lcd-gauge',
         },
         decimals: 3,
       },
@@ -879,7 +841,7 @@ export function buildExpr(
   if (serviceMapQueryMatch?.length) {
     serviceMapQuery = serviceMapQueryMatch[1];
   }
-  // map serviceGraph metric tags to serviceGraphView metric tags
+  // map serviceGraph metric tags to APM metric tags
   serviceMapQuery = serviceMapQuery.replace('client', 'service').replace('server', 'service');
   const metricParams = serviceMapQuery.includes('span_name')
     ? metric.params.concat(serviceMapQuery)
@@ -916,7 +878,7 @@ export function getRateAlignedValues(
   return values;
 }
 
-export function makeServiceGraphViewRequest(metrics: any[]) {
+export function makeApmRequest(metrics: any[]) {
   return metrics.map((metric) => {
     return {
       refId: metric,

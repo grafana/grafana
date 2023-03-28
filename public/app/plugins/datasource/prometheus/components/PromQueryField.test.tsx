@@ -48,40 +48,31 @@ describe('PromQueryField', () => {
     window.getSelection = () => {};
   });
 
-  it('renders metrics chooser regularly if lookups are not disabled in the datasource settings', async () => {
+  it('renders metrics chooser regularly if lookups are not disabled in the datasource settings', () => {
     const queryField = render(<PromQueryField {...defaultProps} />);
-
-    // wait for component to render
-    await screen.findByRole('button');
 
     expect(queryField.getAllByRole('button')).toHaveLength(1);
   });
 
-  it('renders a disabled metrics chooser if lookups are disabled in datasource settings', async () => {
+  it('renders a disabled metrics chooser if lookups are disabled in datasource settings', () => {
     const props = defaultProps;
     props.datasource.lookupsDisabled = true;
     const queryField = render(<PromQueryField {...props} />);
-
-    // wait for component to render
-    await screen.findByRole('button');
 
     const bcButton = queryField.getByRole('button');
     expect(bcButton).toBeDisabled();
   });
 
-  it('renders an initial hint if no data and initial hint provided', async () => {
+  it('renders an initial hint if no data and initial hint provided', () => {
     const props = defaultProps;
     props.datasource.lookupsDisabled = true;
     props.datasource.getInitHints = () => [{ label: 'Initial hint', type: 'INFO' }];
     render(<PromQueryField {...props} />);
 
-    // wait for component to render
-    await screen.findByRole('button');
-
     expect(screen.getByText('Initial hint')).toBeInTheDocument();
   });
 
-  it('renders query hint if data, query hint and initial hint provided', async () => {
+  it('renders query hint if data, query hint and initial hint provided', () => {
     const props = defaultProps;
     props.datasource.lookupsDisabled = true;
     props.datasource.getInitHints = () => [{ label: 'Initial hint', type: 'INFO' }];
@@ -97,9 +88,6 @@ describe('PromQueryField', () => {
         }
       />
     );
-
-    // wait for component to render
-    await screen.findByRole('button');
 
     expect(screen.getByText('Query hint')).toBeInTheDocument();
     expect(screen.queryByText('Initial hint')).not.toBeInTheDocument();
@@ -125,9 +113,6 @@ describe('PromQueryField', () => {
       />
     );
 
-    // wait for component to render
-    await screen.findByRole('button');
-
     const changedMetrics = ['baz', 'moo'];
     queryField.rerender(
       <PromQueryField
@@ -142,26 +127,28 @@ describe('PromQueryField', () => {
     // If we check the label browser right away it should be in loading state
     let labelBrowser = screen.getByRole('button');
     expect(labelBrowser.textContent).toContain('Loading');
-
-    // wait for component to rerender
-    labelBrowser = await screen.findByRole('button');
-    expect(labelBrowser.textContent).toContain('Metrics browser');
   });
 
-  it('should not run query onBlur', async () => {
+  it('should not run query onBlur in explore', async () => {
     const onRunQuery = jest.fn();
     const { container } = render(<PromQueryField {...defaultProps} app={CoreApp.Explore} onRunQuery={onRunQuery} />);
-
-    // wait for component to rerender
-    await screen.findByRole('button');
 
     const input = getByTestId(container, 'dummy-code-input');
     expect(input).toBeInTheDocument();
     await userEvent.type(input, 'metric');
-
-    // blur element
-    await userEvent.click(document.body);
+    input.blur();
     expect(onRunQuery).not.toHaveBeenCalled();
+  });
+
+  it('should run query onBlur in dashboard', async () => {
+    const onRunQuery = jest.fn();
+    const { container } = render(<PromQueryField {...defaultProps} app={CoreApp.Dashboard} onRunQuery={onRunQuery} />);
+
+    const input = getByTestId(container, 'dummy-code-input');
+    expect(input).toBeInTheDocument();
+    await userEvent.type(input, 'metric');
+    input.blur();
+    expect(onRunQuery).toHaveBeenCalled();
   });
 });
 

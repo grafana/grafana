@@ -19,8 +19,6 @@ export interface Props {
   disabled?: boolean;
 }
 
-export const POPUP_CLASS_NAME = 'time-of-day-picker-panel';
-
 export const TimeOfDayPicker = ({
   minuteStep = 1,
   showHour = true,
@@ -35,7 +33,7 @@ export const TimeOfDayPicker = ({
   return (
     <RcTimePicker
       className={cx(inputSizes()[size], styles.input)}
-      popupClassName={cx(styles.picker, POPUP_CLASS_NAME)}
+      popupClassName={styles.picker}
       defaultValue={dateTimeAsMoment()}
       onChange={(value: any) => onChange(dateTime(value))}
       allowEmpty={false}

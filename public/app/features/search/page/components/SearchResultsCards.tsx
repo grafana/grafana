@@ -48,7 +48,6 @@ export const SearchResultsCards = React.memo(
 
         const item = response.view.get(rowIndex);
         const searchItem = queryResultToViewItem(item, response.view);
-        const isSelected = selectionToggle && selection?.(searchItem.kind, searchItem.uid);
 
         return (
           <div style={style} key={item.uid} className={className} role="row">
@@ -62,7 +61,7 @@ export const SearchResultsCards = React.memo(
               }}
               editable={Boolean(selection != null)}
               onClickItem={onClickItem}
-              isSelected={isSelected}
+              isSelected={selectionToggle && selection?.(searchItem.kind, searchItem.uid)}
             />
           </div>
         );

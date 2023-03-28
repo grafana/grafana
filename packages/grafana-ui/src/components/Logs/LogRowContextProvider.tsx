@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import {
@@ -137,7 +137,12 @@ export const getRowContexts = async (
 };
 
 /** @deprecated will be removed in the next major version */
-export const LogRowContextProvider = ({ getRowContext, row, children, logsSortOrder }: LogRowContextProviderProps) => {
+export const LogRowContextProvider: React.FunctionComponent<LogRowContextProviderProps> = ({
+  getRowContext,
+  row,
+  children,
+  logsSortOrder,
+}) => {
   // React Hook that creates a number state value called limit to component state and a setter function called setLimit
   // The initial value for limit is 10
   // Used for the number of rows to retrieve from backend from a specific point in time

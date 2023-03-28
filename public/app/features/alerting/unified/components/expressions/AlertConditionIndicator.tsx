@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, clearButtonStyles, useStyles2 } from '@grafana/ui';
@@ -11,7 +11,12 @@ interface AlertConditionProps {
   onSetCondition?: () => void;
 }
 
-export const AlertConditionIndicator = ({ enabled = false, error, warning, onSetCondition }: AlertConditionProps) => {
+export const AlertConditionIndicator: FC<AlertConditionProps> = ({
+  enabled = false,
+  error,
+  warning,
+  onSetCondition,
+}) => {
   const styles = useStyles2(getStyles);
 
   if (enabled && error) {

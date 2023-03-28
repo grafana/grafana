@@ -13,13 +13,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestConcurrentUsersMetrics(t *testing.T) {
 	sqlStore, cfg := db.InitTestDBwithCfg(t)
-	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore)
+	statsService := statsimpl.ProvideService(sqlStore)
 	s := createService(t, cfg, sqlStore, statsService)
 
 	createConcurrentTokens(t, sqlStore)
@@ -37,7 +36,7 @@ func TestConcurrentUsersMetrics(t *testing.T) {
 
 func TestConcurrentUsersStats(t *testing.T) {
 	sqlStore, cfg := db.InitTestDBwithCfg(t)
-	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore)
+	statsService := statsimpl.ProvideService(sqlStore)
 	s := createService(t, cfg, sqlStore, statsService)
 
 	createConcurrentTokens(t, sqlStore)

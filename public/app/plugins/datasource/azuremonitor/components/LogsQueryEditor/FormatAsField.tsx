@@ -14,7 +14,7 @@ const FORMAT_OPTIONS: Array<SelectableValue<ResultFormat>> = [
   { label: 'Table', value: ResultFormat.Table },
 ];
 
-const FormatAsField = ({ query, variableOptionGroup, onQueryChange }: AzureQueryEditorFieldProps) => {
+const FormatAsField: React.FC<AzureQueryEditorFieldProps> = ({ query, variableOptionGroup, onQueryChange }) => {
   const options = useMemo(() => [...FORMAT_OPTIONS, variableOptionGroup], [variableOptionGroup]);
 
   const handleChange = useCallback(

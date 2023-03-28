@@ -4,7 +4,6 @@ export function getFilter(filter: Partial<RulesFilter>): RulesFilter {
   return {
     freeFormWords: [],
     labels: [],
-    dataSourceNames: [],
     ...filter,
   };
 }

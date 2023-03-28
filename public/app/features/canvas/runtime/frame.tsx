@@ -6,7 +6,6 @@ import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
-import { updateConnectionsForSource } from '../../../plugins/panel/canvas/utils';
 import { CanvasElementItem } from '../element';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
@@ -115,7 +114,6 @@ export class FrameState extends ElementState {
     switch (action) {
       case LayerActionID.Delete:
         this.elements = this.elements.filter((e) => e !== element);
-        updateConnectionsForSource(element, this.scene);
         this.scene.byName.delete(element.options.name);
         this.scene.save();
         this.reinitializeMoveable();

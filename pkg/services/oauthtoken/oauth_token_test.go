@@ -1,7 +1,6 @@
 package oauthtoken
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"net/http"
@@ -302,10 +301,6 @@ func (m *MockSocialConnector) Client(ctx context.Context, t *oauth2.Token) *http
 func (m *MockSocialConnector) TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource {
 	args := m.Called(ctx, t)
 	return args.Get(0).(oauth2.TokenSource)
-}
-
-func (m *MockSocialConnector) SupportBundleContent(bf *bytes.Buffer) error {
-	return nil
 }
 
 type FakeAuthInfoStore struct {

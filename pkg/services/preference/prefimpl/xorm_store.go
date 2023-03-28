@@ -73,8 +73,7 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *pref.Preference) (int64, err
 	var ID int64
 	var err error
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err = sess.Insert(cmd)
-		ID = cmd.ID
+		ID, err = sess.Insert(cmd)
 		return err
 	})
 	return ID, err

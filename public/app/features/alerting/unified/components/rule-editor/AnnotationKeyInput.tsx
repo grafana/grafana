@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { FC, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
@@ -16,7 +16,7 @@ interface Props {
   'aria-label'?: string;
 }
 
-export const AnnotationKeyInput = ({ value, existingKeys, 'aria-label': ariaLabel, ...rest }: Props) => {
+export const AnnotationKeyInput: FC<Props> = ({ value, existingKeys, 'aria-label': ariaLabel, ...rest }) => {
   const annotationOptions = useMemo(
     (): SelectableValue[] =>
       Object.values(Annotation)

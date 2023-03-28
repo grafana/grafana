@@ -6,7 +6,6 @@ import { LoadingState } from '@grafana/data';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { StoreState, ThunkDispatch } from 'app/types';
 
-import { VARIABLE_PREFIX } from '../../constants';
 import { isMulti } from '../../guard';
 import { getVariableQueryRunner } from '../../query/VariableQueryRunner';
 import { formatVariableLabel } from '../../shared/formatVariable';
@@ -126,7 +125,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
 
       return (
         <VariableLink
-          id={VARIABLE_PREFIX + variable.id}
+          id={`var-${variable.id}`}
           text={linkText}
           onClick={this.onShowOptions}
           loading={loading}
@@ -145,12 +144,13 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
       return (
         <ClickOutsideWrapper onClick={this.onHideOptions}>
           <VariableInput
-            id={VARIABLE_PREFIX + id}
+            id={`var-${id}`}
             value={picker.queryValue}
             onChange={this.onFilterOrSearchOptions}
             onNavigate={this.onNavigate}
             aria-expanded={true}
             aria-controls={`options-${id}`}
+            currenthighlightindex={picker.highlightIndex}
           />
           <VariableOptions
             values={picker.options}

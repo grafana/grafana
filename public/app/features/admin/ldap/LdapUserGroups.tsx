@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 import { Tooltip, Icon } from '@grafana/ui';
 import { LdapRole } from 'app/types';
@@ -8,7 +8,7 @@ interface Props {
   showAttributeMapping?: boolean;
 }
 
-export const LdapUserGroups = ({ groups, showAttributeMapping }: Props) => {
+export const LdapUserGroups: FC<Props> = ({ groups, showAttributeMapping }) => {
   const items = showAttributeMapping ? groups : groups.filter((item) => item.orgRole);
 
   return (

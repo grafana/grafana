@@ -44,7 +44,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-export const ButtonCascader = (props: ButtonCascaderProps) => {
+export const ButtonCascader: React.FC<ButtonCascaderProps> = (props) => {
   const { onChange, className, loadData, icon, buttonProps, hideDownIcon, variant, disabled, ...rest } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);

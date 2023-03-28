@@ -10,11 +10,9 @@
 package librarypanel
 
 import (
-	"github.com/grafana/kindsys"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/vmux"
-
-	"github.com/grafana/grafana/pkg/cuectx"
 )
 
 // rootrel is the relative path from the grafana repository root to the
@@ -36,7 +34,7 @@ var _ kindsys.Core = &Kind{}
 
 // TODO standard generated docs
 func NewKind(rt *thema.Runtime, opts ...thema.BindOption) (*Kind, error) {
-	def, err := cuectx.LoadCoreKindDef(rootrel, rt.Context(), nil)
+	def, err := kindsys.LoadCoreKindDef(rootrel, rt.Context(), nil)
 	if err != nil {
 		return nil, err
 	}

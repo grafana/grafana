@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { dump, load } from 'js-yaml';
-import React, { useState } from 'react';
+import React, { FC, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -22,7 +22,7 @@ interface Props {
 
 const tabs = [{ label: 'Yaml', value: 'yaml' }];
 
-export const RuleInspector = ({ onClose }: Props) => {
+export const RuleInspector: FC<Props> = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState('yaml');
   const { setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(drawerStyles);
@@ -57,7 +57,7 @@ interface SubtitleProps {
   setActiveTab: (tab: string) => void;
 }
 
-const RuleInspectorSubtitle = ({ activeTab, setActiveTab }: SubtitleProps) => {
+const RuleInspectorSubtitle: FC<SubtitleProps> = ({ activeTab, setActiveTab }) => {
   return (
     <TabsBar>
       {tabs.map((tab, index) => {
@@ -79,7 +79,7 @@ interface YamlTabProps {
   onSubmit: (newModel: RuleFormValues) => void;
 }
 
-const InspectorYamlTab = ({ onSubmit }: YamlTabProps) => {
+const InspectorYamlTab: FC<YamlTabProps> = ({ onSubmit }) => {
   const styles = useStyles2(yamlTabStyle);
   const { getValues } = useFormContext<RuleFormValues>();
 

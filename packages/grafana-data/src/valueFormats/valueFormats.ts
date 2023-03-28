@@ -127,7 +127,7 @@ export function isBooleanUnit(unit?: string) {
 }
 
 export function booleanValueFormatter(t: string, f: string): ValueFormatter {
-  return (value) => {
+  return (value: any) => {
     return { text: value ? t : f };
   };
 }
@@ -159,7 +159,7 @@ export function locale(value: number, decimals: DecimalCount): FormattedValue {
     return { text: '' };
   }
   return {
-    text: value.toLocaleString(undefined, { maximumFractionDigits: decimals ?? undefined }),
+    text: value.toLocaleString(undefined, { maximumFractionDigits: decimals as number }),
   };
 }
 

@@ -6,10 +6,8 @@ import (
 	"net/url"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/hashicorp/go-multierror"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -51,30 +49,23 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 }
 
 func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
-	// Merge both the extra labels and the labels from the evaluation into a common set
-	// of labels that can be expanded in custom labels and annotations.
-	templateData := template.NewData(mergeLabels(extraLabels, result.Instance), result)
-
-	// For now, do nothing with these errors as they are already logged in expand.
-	// In the future, we want to show these errors to the user somehow.
-	labels, _ := expand(ctx, log, alertRule.Title, alertRule.Labels, templateData, externalURL, result.EvaluatedAt)
-	annotations, _ := expand(ctx, log, alertRule.Title, alertRule.Annotations, templateData, externalURL, result.EvaluatedAt)
+	ruleLabels, annotations := rs.expandRuleLabelsAndAnnotations(ctx, log, alertRule, result, extraLabels, externalURL)
 
 	values := make(map[string]float64)
-	for refID, v := range result.Values {
+	for _, v := range result.Values {
 		if v.Value != nil {
-			values[refID] = *v.Value
+			values[v.Var] = *v.Value
 		} else {
-			values[refID] = math.NaN()
+			values[v.Var] = math.NaN()
 		}
 	}
 
-	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(result.Instance))
+	lbs := make(data.Labels, len(extraLabels)+len(ruleLabels)+len(result.Instance))
 	dupes := make(data.Labels)
 	for key, val := range extraLabels {
 		lbs[key] = val
 	}
-	for key, val := range labels {
+	for key, val := range ruleLabels {
 		ruleVal, ok := lbs[key]
 		// if duplicate labels exist, reserved label will take precedence
 		if ok {
@@ -144,27 +135,25 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 	return newState
 }
 
-// expand returns the expanded templates of all annotations or labels for the template data.
-// If a template cannot be expanded due to an error in the template the original template is
-// maintained and an error is added to the multierror. All errors in the multierror are
-// template.ExpandError errors.
-func expand(ctx context.Context, log log.Logger, name string, original map[string]string, data template.Data, externalURL *url.URL, evaluatedAt time.Time) (map[string]string, error) {
-	var (
-		errs     *multierror.Error
-		expanded = make(map[string]string, len(original))
-	)
-	for k, v := range original {
-		result, err := template.Expand(ctx, name, v, data, externalURL, evaluatedAt)
-		if err != nil {
-			log.Error("Error in expanding template", "error", err)
-			errs = multierror.Append(errs, err)
-			// keep the original template on error
-			expanded[k] = v
-		} else {
-			expanded[k] = result
+func (rs *ruleStates) expandRuleLabelsAndAnnotations(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, alertInstance eval.Result, extraLabels data.Labels, externalURL *url.URL) (data.Labels, data.Labels) {
+	// use labels from the result and extra labels to expand the labels and annotations declared by the rule
+	templateLabels := mergeLabels(extraLabels, alertInstance.Instance)
+
+	expand := func(original map[string]string) map[string]string {
+		expanded := make(map[string]string, len(original))
+		for k, v := range original {
+			ev, err := template.Expand(ctx, alertRule.Title, v, template.NewData(templateLabels, alertInstance), externalURL, alertInstance.EvaluatedAt)
+			expanded[k] = ev
+			if err != nil {
+				log.Error("Error in expanding template", "name", k, "value", v, "error", err)
+				// Store the original template on error.
+				expanded[k] = v
+			}
 		}
+
+		return expanded
 	}
-	return expanded, errs.ErrorOrNil()
+	return expand(alertRule.Labels), expand(alertRule.Annotations)
 }
 
 func (rs *ruleStates) deleteStates(predicate func(s *State) bool) []*State {

@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { SupplementaryResultError } from './SupplementaryResultError';
@@ -14,7 +13,7 @@ describe('SupplementaryResultError', () => {
     expect(screen.getByText(error.data.message)).toBeInTheDocument();
   });
 
-  it('shows long warning message', async () => {
+  it('shows long warning message', () => {
     // we make a long message
     const messagePart = 'One two three four five six seven eight nine ten.';
     const message = messagePart.repeat(3);
@@ -25,7 +24,7 @@ describe('SupplementaryResultError', () => {
     expect(screen.getByText(title)).toBeInTheDocument();
     expect(screen.queryByText(message)).not.toBeInTheDocument();
     const button = screen.getByText('Show details');
-    await userEvent.click(button);
+    button.click();
     expect(screen.getByText(message)).toBeInTheDocument();
   });
 });

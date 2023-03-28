@@ -42,17 +42,11 @@ func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*Fe
 	for key, val := range flags {
 		flag, ok := mgmt.flags[key]
 		if !ok {
-			switch key {
-			// renamed the flag so it supports more panels
-			case "autoMigrateGraphPanels":
-				flag = mgmt.flags[FlagAutoMigrateOldPanels]
-			default:
-				flag = &FeatureFlag{
-					Name:  key,
-					State: FeatureStateUnknown,
-				}
-				mgmt.flags[key] = flag
+			flag = &FeatureFlag{
+				Name:  key,
+				State: FeatureStateUnknown,
 			}
+			mgmt.flags[key] = flag
 		}
 		flag.Expression = fmt.Sprintf("%t", val) // true | false
 	}

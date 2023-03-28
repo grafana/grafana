@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -55,7 +56,7 @@ type Alertmanager interface {
 }
 
 type AlertingStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
+	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
 }
 
 // API handlers.
@@ -65,6 +66,7 @@ type API struct {
 	DatasourceService    datasources.DataSourceService
 	RouteRegister        routing.RouteRegister
 	QuotaService         quota.Service
+	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            RuleStore
@@ -114,6 +116,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		&RulerSrv{
 			conditionValidator: api.EvaluatorFactory,
 			QuotaService:       api.QuotaService,
+			scheduleService:    api.Schedule,
 			store:              api.RuleStore,
 			provenanceStore:    api.ProvenanceStore,
 			xactManager:        api.TransactionManager,

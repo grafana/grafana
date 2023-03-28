@@ -24,8 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -84,13 +82,6 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
-	if hs.Features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
-		if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
-			c.Redirect(hs.Cfg.AppSubURL + "/")
-			return
-		}
-	}
-
 	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
 		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
@@ -130,7 +121,19 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 			}
 		}
 
-		c.Redirect(hs.GetRedirectURL(c))
+		if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
+			if err := hs.ValidateRedirectTo(redirectTo); err != nil {
+				// the user is already logged so instead of rendering the login page with error
+				// it should be redirected to the home page.
+				c.Logger.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
+				redirectTo = hs.Cfg.AppSubURL + "/"
+			}
+			cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
+			c.Redirect(redirectTo)
+			return
+		}
+
+		c.Redirect(hs.Cfg.AppSubURL + "/")
 		return
 	}
 
@@ -187,7 +190,7 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 
 func (hs *HTTPServer) LoginAPIPing(c *contextmodel.ReqContext) response.Response {
 	if c.IsSignedIn || c.IsAnonymous {
-		return response.JSON(http.StatusOK, util.DynMap{"message": "Logged in"})
+		return response.JSON(http.StatusOK, "Logged in")
 	}
 
 	return response.Error(401, "Unauthorized", nil)
@@ -204,8 +207,22 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 			return response.Err(err)
 		}
 
+		cookies.WriteSessionCookie(c, hs.Cfg, identity.SessionToken.UnhashedToken, hs.Cfg.LoginMaxLifetime)
+		result := map[string]interface{}{
+			"message": "Logged in",
+		}
+
+		if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
+			if err := hs.ValidateRedirectTo(redirectTo); err == nil {
+				result["redirectUrl"] = redirectTo
+			} else {
+				c.Logger.Info("Ignored invalid redirect_to cookie value.", "url", redirectTo)
+			}
+			cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
+		}
+
 		metrics.MApiLoginPost.Inc()
-		return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo)
+		return response.JSON(http.StatusOK, result)
 	}
 
 	cmd := dtos.LoginCommand{}
@@ -281,11 +298,21 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 		return resp
 	}
 
+	result := map[string]interface{}{
+		"message": "Logged in",
+	}
+
+	if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
+		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
+			result["redirectUrl"] = redirectTo
+		} else {
+			c.Logger.Info("Ignored invalid redirect_to cookie value.", "url", redirectTo)
+		}
+		cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
+	}
+
 	metrics.MApiLoginPost.Inc()
-	resp = response.JSON(http.StatusOK, map[string]any{
-		"message":     "Logged in",
-		"redirectUrl": hs.GetRedirectURL(c),
-	})
+	resp = response.JSON(http.StatusOK, result)
 	return resp
 }
 
@@ -310,7 +337,7 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqCont
 	c.UserToken = userToken
 
 	hs.log.Info("Successful Login", "User", user.Email)
-	authn.WriteSessionCookie(c.Resp, hs.Cfg, userToken)
+	cookies.WriteSessionCookie(c, hs.Cfg, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetime)
 	return nil
 }
 
@@ -338,7 +365,7 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		hs.log.Error("failed to revoke auth token", "error", err)
 	}
 
-	authn.DeleteSessionCookie(c.Resp, hs.Cfg)
+	cookies.WriteSessionCookie(c, hs.Cfg, "", -1)
 
 	if setting.SignoutRedirectUrl != "" {
 		c.Redirect(setting.SignoutRedirectUrl)
@@ -425,11 +452,6 @@ func getLoginExternalError(err error) string {
 	var createTokenErr *auth.CreateTokenErr
 	if errors.As(err, &createTokenErr) {
 		return createTokenErr.ExternalErr
-	}
-
-	gfErr := &errutil.Error{}
-	if errors.As(err, gfErr) {
-		return gfErr.Public().Message
 	}
 
 	return err.Error()

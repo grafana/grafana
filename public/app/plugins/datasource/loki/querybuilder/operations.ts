@@ -15,7 +15,7 @@ import {
   labelFilterRenderer,
   pipelineRenderer,
 } from './operationUtils';
-import { LokiOperationId, LokiOperationOrder, lokiOperators, LokiVisualQueryOperationCategory } from './types';
+import { LokiOperationId, LokiOperationOrder, LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   const aggregations = [
@@ -352,12 +352,7 @@ Example: \`\`error_level=\`level\` \`\`
       id: LokiOperationId.LineFilterIpMatches,
       name: 'IP line filter expression',
       params: [
-        {
-          name: 'Operator',
-          type: 'string',
-          minWidth: 16,
-          options: [lokiOperators.contains, lokiOperators.doesNotContain],
-        },
+        { name: 'Operator', type: 'string', options: ['|=', '!='] },
         {
           name: 'Pattern',
           type: 'string',
@@ -378,23 +373,9 @@ Example: \`\`error_level=\`level\` \`\`
       id: LokiOperationId.LabelFilter,
       name: 'Label filter expression',
       params: [
-        { name: 'Label', type: 'string', minWidth: 14 },
-        {
-          name: 'Operator',
-          type: 'string',
-          minWidth: 14,
-          options: [
-            lokiOperators.equals,
-            lokiOperators.doesNotEqual,
-            lokiOperators.matchesRegex,
-            lokiOperators.doesNotMatchRegex,
-            lokiOperators.greaterThan,
-            lokiOperators.lessThan,
-            lokiOperators.greaterThanOrEqual,
-            lokiOperators.lessThanOrEqual,
-          ],
-        },
-        { name: 'Value', type: 'string', minWidth: 14 },
+        { name: 'Label', type: 'string' },
+        { name: 'Operator', type: 'string', options: ['=', '!=', ' =~', '!~', '>', '<', '>=', '<='] },
+        { name: 'Value', type: 'string' },
       ],
       defaultParams: ['', '=', ''],
       alternativesKey: 'label filter',
@@ -408,14 +389,9 @@ Example: \`\`error_level=\`level\` \`\`
       id: LokiOperationId.LabelFilterIpMatches,
       name: 'IP label filter expression',
       params: [
-        { name: 'Label', type: 'string', minWidth: 14 },
-        {
-          name: 'Operator',
-          type: 'string',
-          minWidth: 14,
-          options: [lokiOperators.equals, lokiOperators.doesNotEqual],
-        },
-        { name: 'Value', type: 'string', minWidth: 14 },
+        { name: 'Label', type: 'string' },
+        { name: 'Operator', type: 'string', options: ['=', '!='] },
+        { name: 'Value', type: 'string' },
       ],
       defaultParams: ['', '=', ''],
       alternativesKey: 'label filter',

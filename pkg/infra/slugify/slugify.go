@@ -36,7 +36,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid"
 )
 
 var (
@@ -53,7 +53,7 @@ func Slugify(value string) string {
 	if s == "" {
 		s = base64.RawURLEncoding.EncodeToString([]byte(value))
 		if len(s) > 50 || s == "" {
-			s = uuid.NewSHA1(uuid.NameSpaceOID, []byte(value)).String()
+			s = uuid.NewV5(uuid.NamespaceOID, value).String()
 		}
 	}
 	return s

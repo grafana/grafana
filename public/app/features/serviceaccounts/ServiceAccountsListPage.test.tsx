@@ -23,6 +23,9 @@ const setup = (propOverrides: Partial<Props>) => {
   const updateServiceAccountMock = jest.fn();
   const changeStateFilterMock = jest.fn();
   const createServiceAccountTokenMock = jest.fn();
+  const getApiKeysMigrationStatusMock = jest.fn();
+  const getApiKeysMigrationInfoMock = jest.fn();
+  const closeApiKeysMigrationInfoMock = jest.fn();
   const props: Props = {
     isLoading: false,
     page: 0,
@@ -33,6 +36,8 @@ const setup = (propOverrides: Partial<Props>) => {
     showPaging: false,
     totalPages: 1,
     serviceAccounts: [],
+    apiKeysMigrated: false,
+    showApiKeysMigrationInfo: false,
     changeQuery: changeQueryMock,
     fetchACOptions: fetchACOptionsMock,
     fetchServiceAccounts: fetchServiceAccountsMock,
@@ -40,6 +45,9 @@ const setup = (propOverrides: Partial<Props>) => {
     updateServiceAccount: updateServiceAccountMock,
     changeStateFilter: changeStateFilterMock,
     createServiceAccountToken: createServiceAccountTokenMock,
+    getApiKeysMigrationStatus: getApiKeysMigrationStatusMock,
+    getApiKeysMigrationInfo: getApiKeysMigrationInfoMock,
+    closeApiKeysMigrationInfo: closeApiKeysMigrationInfoMock,
   };
 
   Object.assign(props, propOverrides);

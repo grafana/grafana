@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { groupBy } from 'lodash';
-import React, { FormEvent, useCallback, useState } from 'react';
+import React, { FC, FormEvent, useCallback, useState } from 'react';
 
 import { AlertState, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -27,11 +27,11 @@ type StateHistoryMap = Record<string, StateHistoryRowItem[]>;
 
 type StateHistoryRow = DynamicTableItemProps<StateHistoryRowItem>;
 
-interface Props {
+interface RuleStateHistoryProps {
   alertId: string;
 }
 
-const StateHistory = ({ alertId }: Props) => {
+const StateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
   const [textFilter, setTextFilter] = useState<string>('');
   const handleTextFilter = useCallback((event: FormEvent<HTMLInputElement>) => {
     setTextFilter(event.currentTarget.value);

@@ -50,10 +50,7 @@ export const InspectContent = ({
     return null;
   }
 
-  let errors = data?.errors;
-  if (!errors?.length && data?.error) {
-    errors = [data.error];
-  }
+  const error = data?.error;
 
   // Validate that the active tab is actually valid and allowed
   let activeTab = currentTab;
@@ -105,7 +102,7 @@ export const InspectContent = ({
       {activeTab === InspectTab.JSON && (
         <InspectJSONTab panel={panel} dashboard={dashboard} data={data} onClose={onClose} />
       )}
-      {activeTab === InspectTab.Error && <InspectErrorTab errors={errors} />}
+      {activeTab === InspectTab.Error && <InspectErrorTab error={error} />}
       {data && activeTab === InspectTab.Stats && <InspectStatsTab data={data} timeZone={dashboard.getTimezone()} />}
       {data && activeTab === InspectTab.Query && (
         <QueryInspector panel={panel} data={data.series} onRefreshQuery={() => panel.refresh()} />

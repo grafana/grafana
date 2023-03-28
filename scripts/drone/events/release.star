@@ -576,6 +576,7 @@ def publish_packages_pipeline():
         "target": ["public"],
     }
     oss_steps = [
+        download_grabpl_step(),
         compile_build_cmd(),
         publish_linux_packages_step(edition = "oss", package_manager = "deb"),
         publish_linux_packages_step(edition = "oss", package_manager = "rpm"),
@@ -583,6 +584,7 @@ def publish_packages_pipeline():
     ]
 
     enterprise_steps = [
+        download_grabpl_step(),
         compile_build_cmd(),
         publish_linux_packages_step(edition = "enterprise", package_manager = "deb"),
         publish_linux_packages_step(edition = "enterprise", package_manager = "rpm"),

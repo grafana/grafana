@@ -9,9 +9,11 @@ import { getStyles } from '@grafana/ui/src/components/Slider/styles';
 
 import { NumberInput } from './NumberInput';
 
-type Props = FieldConfigEditorProps<number, SliderFieldConfigSettings>;
-
-export const SliderValueEditor = ({ value, onChange, item }: Props) => {
+export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFieldConfigSettings>> = ({
+  value,
+  onChange,
+  item,
+}) => {
   // Input reference
   const inputRef = useRef<HTMLSpanElement>(null);
 

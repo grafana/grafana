@@ -9,7 +9,7 @@ keywords:
   - exemplars
   - prometheus
 title: Exemplars
-weight: 750
+weight: 400
 ---
 
 # Introduction to exemplars

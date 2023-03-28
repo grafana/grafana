@@ -1,79 +1,51 @@
-import { assertPluginExtensionLink, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
-
-import { getPluginExtensions } from './extensions';
-import { PluginExtensionRegistryItem, setPluginsExtensionRegistry } from './registry';
+import { getPluginExtensions, PluginExtensionsMissingError } from './extensions';
+import { setPluginsExtensionRegistry } from './registry';
 
 describe('getPluginExtensions', () => {
-  describe('when getting extensions for placement', () => {
-    const placement = 'grafana/dashboard/panel/menu';
+  describe('when getting a registered extension link', () => {
     const pluginId = 'grafana-basic-app';
+    const linkId = 'declare-incident';
 
     beforeAll(() => {
       setPluginsExtensionRegistry({
-        [placement]: [
-          createRegistryLinkItem({
+        [`plugins/${pluginId}/${linkId}`]: [
+          {
+            type: 'link',
             title: 'Declare incident',
             description: 'Declaring an incident in the app',
             path: `/a/${pluginId}/declare-incident`,
             key: 1,
-          }),
-        ],
-        'plugins/myorg-basic-app/start': [
-          createRegistryLinkItem({
-            title: 'Declare incident',
-            description: 'Declaring an incident in the app',
-            path: `/a/${pluginId}/declare-incident`,
-            key: 2,
-          }),
+          },
         ],
       });
     });
 
-    it('should return extensions with correct path', () => {
-      const { extensions } = getPluginExtensions({ placement });
-      const [extension] = extensions;
+    it('should return a collection of extensions to the plugin', () => {
+      const { extensions, error } = getPluginExtensions({
+        placement: `plugins/${pluginId}/${linkId}`,
+      });
 
-      assertPluginExtensionLink(extension);
-
-      expect(extension.path).toBe(`/a/${pluginId}/declare-incident`);
-      expect(extensions.length).toBe(1);
+      expect(extensions[0].path).toBe(`/a/${pluginId}/declare-incident`);
+      expect(error).toBeUndefined();
     });
 
-    it('should return extensions with correct description', () => {
-      const { extensions } = getPluginExtensions({ placement });
-      const [extension] = extensions;
+    it('should return a description for the requested link', () => {
+      const { extensions, error } = getPluginExtensions({
+        placement: `plugins/${pluginId}/${linkId}`,
+      });
 
-      assertPluginExtensionLink(extension);
-
-      expect(extension.description).toBe('Declaring an incident in the app');
-      expect(extensions.length).toBe(1);
+      expect(extensions[0].path).toBe(`/a/${pluginId}/declare-incident`);
+      expect(extensions[0].description).toBe('Declaring an incident in the app');
+      expect(error).toBeUndefined();
     });
 
-    it('should return extensions with correct title', () => {
-      const { extensions } = getPluginExtensions({ placement });
-      const [extension] = extensions;
-
-      assertPluginExtensionLink(extension);
-
-      expect(extension.title).toBe('Declare incident');
-      expect(extensions.length).toBe(1);
-    });
-
-    it('should return an empty array when extensions can be found', () => {
-      const { extensions } = getPluginExtensions({
-        placement: 'plugins/not-installed-app/news',
+    it('should return an empty array when no links can be found', () => {
+      const { extensions, error } = getPluginExtensions({
+        placement: `an-unknown-app/${linkId}`,
       });
 
       expect(extensions.length).toBe(0);
+      expect(error).toBeInstanceOf(PluginExtensionsMissingError);
     });
   });
 });
-
-function createRegistryLinkItem(
-  link: Omit<PluginExtensionLink, 'type'>
-): PluginExtensionRegistryItem<PluginExtensionLink> {
-  return (context?: object) => ({
-    ...link,
-    type: PluginExtensionTypes.link,
-  });
-}

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
@@ -36,21 +37,15 @@ func (rt *queryDataTestRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 }
 
 // we setup a fake datasource-info
-func newFlowTestDsInfo(body []byte, statusCode int, requestCallback func(req *http.Request) error) *es.DatasourceInfo {
+func newFlowTestDsInfo(body []byte, statusCode int, reuestCallback func(req *http.Request) error) *es.DatasourceInfo {
 	client := http.Client{
-		Transport: &queryDataTestRoundTripper{body: body, statusCode: statusCode, requestCallback: requestCallback},
+		Transport: &queryDataTestRoundTripper{body: body, statusCode: statusCode, requestCallback: reuestCallback},
 	}
-
-	configuredFields := es.ConfiguredFields{
-		TimeField:       "testtime",
-		LogMessageField: "line",
-		LogLevelField:   "lvl",
-	}
-
 	return &es.DatasourceInfo{
+		ESVersion:                  semver.MustParse("8.5.0"),
 		Interval:                   "Daily",
 		Database:                   "[testdb-]YYYY.MM.DD",
-		ConfiguredFields:           configuredFields,
+		TimeField:                  "testtime",
 		TimeInterval:               "1s",
 		URL:                        "http://localhost:9200",
 		HTTPClient:                 &client,

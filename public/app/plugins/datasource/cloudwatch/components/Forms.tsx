@@ -1,4 +1,4 @@
-import React, { InputHTMLAttributes } from 'react';
+import React, { InputHTMLAttributes, FunctionComponent } from 'react';
 
 import { InlineFormLabel } from '@grafana/ui';
 
@@ -8,7 +8,7 @@ export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   children?: React.ReactNode;
 }
 
-export const QueryField = ({ label, tooltip, children }: Partial<Props>) => (
+export const QueryField: FunctionComponent<Partial<Props>> = ({ label, tooltip, children }) => (
   <>
     <InlineFormLabel width={8} className="query-keyword" tooltip={tooltip}>
       {label}
@@ -17,7 +17,7 @@ export const QueryField = ({ label, tooltip, children }: Partial<Props>) => (
   </>
 );
 
-export const QueryInlineField = ({ ...props }: Props) => {
+export const QueryInlineField: FunctionComponent<Props> = ({ ...props }) => {
   return (
     <div className={'gf-form-inline'}>
       <QueryField {...props} />

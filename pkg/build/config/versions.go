@@ -120,7 +120,6 @@ var Versions = VersionMap{
 				Alpine,
 				Ubuntu,
 			},
-			PrereleaseBucket: "grafana-prerelease/artifacts/docker",
 		},
 		Buckets: Buckets{
 			Artifacts:            "grafana-downloads",

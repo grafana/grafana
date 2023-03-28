@@ -79,14 +79,16 @@ You can navigate from a span in a trace view directly to logs relevant for that 
 
 Click the document icon to open a split view in Explore with the configured data source and query relevant logs for the span.
 
-## Service Graph view
+## APM dashboard
 
-The Service Graph view visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
-Once the requirements are set up, this pre-configured view is immediately available.
+Application performance management (APM) uses data gathered from services, agents, systems, and microservices to visualize and identify areas of concern.
 
-For more information, refer to the [Service Graph view table section](https://grafana.com/docs/grafana/latest/datasources/tempo/#service-graph-view-table) of the Tempo data source page and the [service graph view page](https://grafana.com/docs/tempo/latest/metrics-generator/service-graph-view/) in the Tempo documentation.
+The Grafana APM dashboard visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
+Once the requirements are set up, this pre-configured dashboard is immediately available.
 
-{{< figure src="/static/img/docs/grafana-cloud/apm-overview.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the Service Graph view" >}}
+For more information, refer to the [APM table section](https://grafana.com/docs/grafana/latest/datasources/tempo/#apm-table) of the Tempo data source page and the [APM dashboard page](https://grafana.com/docs/tempo/latest/metrics-generator/app-performance-mgmt/) in the Tempo documentation.
+
+{{< figure src="/static/img/docs/grafana-cloud/apm-overview.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the APM dashboard" >}}
 
 ## Data API
 

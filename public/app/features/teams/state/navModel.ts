@@ -14,9 +14,9 @@ const loadingTeam = {
   memberCount: 0,
   permission: TeamPermissionLevel.Member,
   accessControl: { isEditor: false },
-  created: '',
+  created: 0,
   orgId: 0,
-  updated: '',
+  updated: 0,
 };
 
 export function buildNavModel(team: Team): NavModelItem {

@@ -7,6 +7,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourcePluginMeta } from '@grafana/data';
 import * as runtime from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import 'whatwg-fetch';
 
@@ -26,6 +27,8 @@ afterEach(() => {
 });
 
 beforeAll(() => {
+  runtime.setBackendSrv(backendSrv);
+
   server.listen({ onUnhandledRequest: 'bypass' });
 });
 

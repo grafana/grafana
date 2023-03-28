@@ -1,12 +1,6 @@
 ---
 aliases:
   - ./
-cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
 description: Learn how to search for Grafana dashboards
 keywords:
   - search
@@ -67,7 +61,7 @@ Complete the following steps to enable the `panelTitleSearch` feature toggle.
    ```
    [feature_toggles]
    # enable features, separated by spaces
-   enable = panelTitleSearch
+   enable = dashboardPreviews
    ```
 
 1. Save your changes and restart the Grafana server.

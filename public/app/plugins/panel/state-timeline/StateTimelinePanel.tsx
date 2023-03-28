@@ -35,7 +35,7 @@ interface TimelinePanelProps extends PanelProps<PanelOptions> {}
 /**
  * @alpha
  */
-export const StateTimelinePanel = ({
+export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   data,
   timeRange,
   timeZone,
@@ -44,7 +44,7 @@ export const StateTimelinePanel = ({
   height,
   replaceVariables,
   onChangeTimeRange,
-}: TimelinePanelProps) => {
+}) => {
   const theme = useTheme2();
 
   const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);

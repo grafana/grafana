@@ -60,13 +60,13 @@ describe('PieChart -> PieChartV2 migrations', () => {
     expect(options).toMatchObject({ displayLabels: [PieChartLabels.Name, PieChartLabels.Value] });
   });
 
-  it('hides the legend when show is false', () => {
+  it('hides the legend when no legend values are selected', () => {
     const panel = { options: {} } as PanelModel;
 
     const oldPieChartOptions = {
       angular: {
         legendType: 'On graph',
-        legend: { show: false },
+        legend: {},
       },
     };
     const options = PieChartPanelChangedHandler(panel, 'grafana-piechart-panel', oldPieChartOptions);

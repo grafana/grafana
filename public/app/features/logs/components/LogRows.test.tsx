@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { range } from 'lodash';
 import React from 'react';
 
@@ -55,9 +55,7 @@ describe('LogRows', () => {
     expect(screen.queryAllByRole('row')).toHaveLength(2);
     expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 1');
 
-    act(() => {
-      jest.runAllTimers();
-    });
+    jest.runAllTimers();
     rerender(
       <LogRows
         logRows={rows}

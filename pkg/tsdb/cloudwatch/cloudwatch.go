@@ -99,12 +99,7 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		opts, err := settings.HTTPClientOptions()
-		if err != nil {
-			return nil, err
-		}
-
-		httpClient, err := httpClientProvider.New(opts)
+		httpClient, err := httpClientProvider.New()
 		if err != nil {
 			return nil, fmt.Errorf("error creating http client: %w", err)
 		}
@@ -250,9 +245,9 @@ func (e *cloudWatchExecutor) newSession(pluginCtx backend.PluginContext, region 
 		region = instance.Settings.Region
 	}
 
-	sess, err := e.sessions.GetSession(awsds.SessionConfig{
+	return e.sessions.GetSession(awsds.SessionConfig{
 		// https://github.com/grafana/grafana/issues/46365
-		// HTTPClient: instance.HTTPClient,
+		// HTTPClient: dsInfo.HTTPClient,
 		Settings: awsds.AWSDatasourceSettings{
 			Profile:       instance.Settings.Profile,
 			Region:        region,
@@ -266,17 +261,6 @@ func (e *cloudWatchExecutor) newSession(pluginCtx backend.PluginContext, region 
 		},
 		UserAgentName: aws.String("Cloudwatch"),
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	// work around until https://github.com/grafana/grafana/issues/39089 is implemented
-	if e.cfg.SecureSocksDSProxy.Enabled && e.features.IsEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && instance.Settings.SecureSocksProxyEnabled {
-		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
-		sess.Config.HTTPClient.Transport = instance.HTTPClient.Transport
-	}
-
-	return sess, nil
 }
 
 func (e *cloudWatchExecutor) getInstance(pluginCtx backend.PluginContext) (*DataSource, error) {

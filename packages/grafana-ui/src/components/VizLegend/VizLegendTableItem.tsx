@@ -28,14 +28,14 @@ export interface Props {
 /**
  * @internal
  */
-export const LegendTableItem = ({
+export const LegendTableItem: React.FunctionComponent<Props> = ({
   item,
   onLabelClick,
   onLabelMouseOver,
   onLabelMouseOut,
   className,
   readonly,
-}: Props) => {
+}) => {
   const styles = useStyles2(getStyles);
 
   const onMouseOver = useCallback(

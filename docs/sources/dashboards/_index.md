@@ -1,12 +1,6 @@
 ---
 aliases:
   - features/dashboard/dashboards/
-cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
 title: Dashboards
 weight: 70
 ---

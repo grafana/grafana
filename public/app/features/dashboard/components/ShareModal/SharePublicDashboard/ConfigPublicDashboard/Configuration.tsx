@@ -11,7 +11,7 @@ import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import { useSelector } from '../../../../../../types';
 
-import { ConfigPublicDashboardForm } from './ConfigPublicDashboard';
+import { ConfigPublicDashoardForm } from './ConfigPublicDashboard';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
@@ -21,8 +21,8 @@ export const Configuration = ({
   register,
 }: {
   disabled: boolean;
-  onChange: (name: keyof ConfigPublicDashboardForm, value: boolean) => void;
-  register: UseFormRegister<ConfigPublicDashboardForm>;
+  onChange: (name: keyof ConfigPublicDashoardForm, value: boolean) => void;
+  register: UseFormRegister<ConfigPublicDashoardForm>;
 }) => {
   const styles = useStyles2(getStyles);
 
@@ -45,12 +45,7 @@ export const Configuration = ({
             <Switch
               {...register('isTimeSelectionEnabled')}
               data-testid={selectors.EnableTimeRangeSwitch}
-              onChange={(e) => {
-                reportInteraction('grafana_dashboards_public_time_selection_clicked', {
-                  action: e.currentTarget.checked ? 'enable' : 'disable',
-                });
-                onChange('isTimeSelectionEnabled', e.currentTarget.checked);
-              }}
+              onChange={(e) => onChange('isTimeSelectionEnabled', e.currentTarget.checked)}
             />
             <Label description="Allow viewers to change time range">Time range picker enabled</Label>
           </Layout>
@@ -58,7 +53,7 @@ export const Configuration = ({
             <Switch
               {...register('isAnnotationsEnabled')}
               onChange={(e) => {
-                reportInteraction('grafana_dashboards_public_annotations_clicked', {
+                reportInteraction('grafana_dashboards_annotations_clicked', {
                   action: e.currentTarget.checked ? 'enable' : 'disable',
                 });
                 onChange('isAnnotationsEnabled', e.currentTarget.checked);

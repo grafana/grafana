@@ -2,18 +2,22 @@ package initializer
 
 import (
 	"context"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 )
 
 func TestInitializer_Initialize(t *testing.T) {
+	absCurPath, err := filepath.Abs(".")
+	assert.NoError(t, err)
+
 	t.Run("core backend datasource", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
@@ -27,12 +31,13 @@ func TestInitializer_Initialize(t *testing.T) {
 				},
 				Backend: true,
 			},
-			Class: plugins.Core,
+			PluginDir: absCurPath,
+			Class:     plugins.Core,
 		}
 
 		i := &Initializer{
 			cfg: &config.Cfg{},
-			log: log.NewTestLogger(),
+			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -56,12 +61,13 @@ func TestInitializer_Initialize(t *testing.T) {
 				},
 				Backend: true,
 			},
-			Class: plugins.External,
+			PluginDir: absCurPath,
+			Class:     plugins.External,
 		}
 
 		i := &Initializer{
 			cfg: &config.Cfg{},
-			log: log.NewTestLogger(),
+			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -85,12 +91,13 @@ func TestInitializer_Initialize(t *testing.T) {
 				},
 				Backend: true,
 			},
-			Class: plugins.External,
+			PluginDir: absCurPath,
+			Class:     plugins.External,
 		}
 
 		i := &Initializer{
 			cfg: &config.Cfg{},
-			log: log.NewTestLogger(),
+			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -113,7 +120,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: &config.Cfg{},
-			log: log.NewTestLogger(),
+			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -140,7 +147,6 @@ func TestInitializer_envVars(t *testing.T) {
 			LicenseEdition: "test",
 			TokenRaw:       "token",
 			LicensePath:    "/path/to/ent/license",
-			LicenseAppURL:  "https://myorg.com/",
 		}
 
 		i := &Initializer{
@@ -152,20 +158,19 @@ func TestInitializer_envVars(t *testing.T) {
 				},
 			},
 			license: licensing,
-			log:     log.NewTestLogger(),
+			log:     log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
 		}
 
 		envVars := i.envVars(p)
-		assert.Len(t, envVars, 6)
+		assert.Len(t, envVars, 5)
 		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[0])
 		assert.Equal(t, "GF_VERSION=", envVars[1])
 		assert.Equal(t, "GF_EDITION=test", envVars[2])
 		assert.Equal(t, "GF_ENTERPRISE_LICENSE_PATH=/path/to/ent/license", envVars[3])
-		assert.Equal(t, "GF_ENTERPRISE_APP_URL=https://myorg.com/", envVars[4])
-		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[5])
+		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[4])
 	})
 }
 

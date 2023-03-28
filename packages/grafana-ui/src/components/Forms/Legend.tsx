@@ -20,7 +20,7 @@ export const getLegendStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const Legend = ({ children, className, ...legendProps }: LabelProps) => {
+export const Legend: React.FC<LabelProps> = ({ children, className, ...legendProps }) => {
   const styles = useStyles2(getLegendStyles);
 
   return (

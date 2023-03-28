@@ -55,7 +55,7 @@ export function getVersionLinks(): FooterLink[] {
 
   links.push({
     target: '_blank',
-    id: 'license',
+    id: 'version',
     text: `${buildInfo.edition}${stateInfo}`,
     url: licenseInfo.licenseUrl,
   });

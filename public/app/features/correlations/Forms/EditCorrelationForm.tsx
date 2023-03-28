@@ -1,14 +1,12 @@
 import React, { useEffect } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 
-import { Wizard } from '../components/Wizard';
+import { Button, HorizontalGroup } from '@grafana/ui';
+
 import { Correlation } from '../types';
 import { useCorrelations } from '../useCorrelations';
 
-import { ConfigureCorrelationBasicInfoForm } from './ConfigureCorrelationBasicInfoForm';
-import { ConfigureCorrelationSourceForm } from './ConfigureCorrelationSourceForm';
-import { ConfigureCorrelationTargetForm } from './ConfigureCorrelationTargetForm';
-import { CorrelationFormNavigation } from './CorrelationFormNavigation';
-import { CorrelationsFormContextProvider } from './correlationsFormContext';
+import { CorrelationDetailsFormPart } from './CorrelationDetailsFormPart';
 import { EditFormDTO } from './types';
 
 interface Props {
@@ -32,14 +30,23 @@ export const EditCorrelationForm = ({ onUpdated, correlation, readOnly = false }
     }
   }, [error, loading, value, onUpdated]);
 
+  const { uid, sourceUID, targetUID, ...otherCorrelation } = correlation;
+
+  const methods = useForm<EditFormDTO>({ defaultValues: otherCorrelation });
+
   return (
-    <CorrelationsFormContextProvider data={{ loading, readOnly, correlation }}>
-      <Wizard<EditFormDTO>
-        defaultValues={correlation}
-        pages={[ConfigureCorrelationBasicInfoForm, ConfigureCorrelationTargetForm, ConfigureCorrelationSourceForm]}
-        onSubmit={readOnly ? (e) => () => {} : onSubmit}
-        navigation={CorrelationFormNavigation}
-      />
-    </CorrelationsFormContextProvider>
+    <FormProvider {...methods}>
+      <form onSubmit={readOnly ? (e) => e.preventDefault() : methods.handleSubmit(onSubmit)}>
+        <CorrelationDetailsFormPart readOnly={readOnly} correlation={correlation} />
+
+        {!readOnly && (
+          <HorizontalGroup justify="flex-end">
+            <Button variant="primary" icon={loading ? 'fa fa-spinner' : 'save'} type="submit" disabled={loading}>
+              Save
+            </Button>
+          </HorizontalGroup>
+        )}
+      </form>
+    </FormProvider>
   );
 };

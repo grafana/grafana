@@ -23,7 +23,7 @@ interface DynamicConfigValueEditorProps {
   searchQuery: string;
 }
 
-export const DynamicConfigValueEditor = ({
+export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> = ({
   property,
   context,
   registry,
@@ -31,7 +31,7 @@ export const DynamicConfigValueEditor = ({
   onRemove,
   isSystemOverride,
   searchQuery,
-}: DynamicConfigValueEditorProps) => {
+}) => {
   const styles = useStyles2(getStyles);
   const item = registry?.getIfExists(property.id);
 

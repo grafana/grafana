@@ -13,7 +13,6 @@ import {
   SplitOpen,
   DataFrame,
   SupplementaryQueryType,
-  DataQueryResponse,
 } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
@@ -50,7 +49,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
-  getLogRowContext = async (row: LogRowModel, options?: any): Promise<DataQueryResponse | []> => {
+  getLogRowContext = async (row: LogRowModel, options?: any): Promise<any> => {
     const { datasourceInstance, logsQueries } = this.props;
 
     if (hasLogsContextSupport(datasourceInstance)) {

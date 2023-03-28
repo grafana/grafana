@@ -32,14 +32,14 @@ interface ContextMenuPluginProps {
   replaceVariables?: InterpolateFunction;
 }
 
-export const ContextMenuPlugin = ({
+export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
   data,
   config,
   onClose,
   timeZone,
   replaceVariables,
   ...otherProps
-}: ContextMenuPluginProps) => {
+}) => {
   const plotCanvas = useRef<HTMLDivElement>();
   const [coords, setCoords] = useState<ContextMenuSelectionCoords | null>(null);
   const [point, setPoint] = useState<ContextMenuSelectionPoint | null>(null);
@@ -208,14 +208,14 @@ interface ContextMenuViewProps {
   replaceVariables?: InterpolateFunction;
 }
 
-export const ContextMenuView = ({
+export const ContextMenuView: React.FC<ContextMenuViewProps> = ({
   selection,
   timeZone,
   defaultItems,
   replaceVariables,
   data,
   ...otherProps
-}: ContextMenuViewProps) => {
+}) => {
   const ref = useRef(null);
 
   const onClose = () => {

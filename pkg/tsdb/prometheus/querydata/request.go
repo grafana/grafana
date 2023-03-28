@@ -99,7 +99,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 		r := s.fetch(ctx, s.client, query, req.Headers)
 		if r == nil {
-			s.log.FromContext(ctx).Debug("Received nil response from runQuery", "query", query.Expr)
+			s.log.FromContext(ctx).Debug("Received nilresponse from runQuery", "query", query.Expr)
 			continue
 		}
 		result.Responses[q.RefID] = *r
@@ -153,12 +153,6 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 
 func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
 	res, err := c.QueryRange(ctx, q)
-	if err != nil {
-		return backend.DataResponse{
-			Error: err,
-		}
-	}
-
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
@@ -166,17 +160,16 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 		}
 	}()
 
+	if err != nil {
+		return backend.DataResponse{
+			Error: err,
+		}
+	}
 	return s.parseResponse(ctx, q, res)
 }
 
 func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
 	res, err := c.QueryInstant(ctx, q)
-	if err != nil {
-		return backend.DataResponse{
-			Error: err,
-		}
-	}
-
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
@@ -184,23 +177,28 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 		}
 	}()
 
+	if err != nil {
+		return backend.DataResponse{
+			Error: err,
+		}
+	}
 	return s.parseResponse(ctx, q, res)
 }
 
 func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
 	res, err := c.QueryExemplars(ctx, q)
-	if err != nil {
-		return backend.DataResponse{
-			Error: err,
-		}
-	}
-
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
 			s.log.Warn("failed to close response body", "error", err)
 		}
 	}()
+
+	if err != nil {
+		return backend.DataResponse{
+			Error: err,
+		}
+	}
 	return s.parseResponse(ctx, q, res)
 }
 

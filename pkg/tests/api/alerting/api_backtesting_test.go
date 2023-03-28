@@ -53,7 +53,8 @@ func TestBacktesting(t *testing.T) {
 	require.Truef(t, ok, "The data file does not contain a field `query`")
 
 	for _, query := range queryRequest.Data {
-		if query.DatasourceUID == "__expr__" {
+		isExpr, _ := query.IsExpression()
+		if isExpr {
 			continue
 		}
 		t.Logf("Creating a new test data source with UID %s", query.DatasourceUID)

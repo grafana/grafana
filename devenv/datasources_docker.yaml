@@ -76,6 +76,7 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
+      esVersion: 8.1.4
 
   - name: gdev-elasticsearch-filebeat
     type: elasticsearch
@@ -85,6 +86,7 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
+      esVersion: 8.1.4
       timeInterval: "10s"
       logMessageField: message
       logLevelField: fields.level
@@ -97,6 +99,7 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
+      esVersion: 8.1.4
       timeInterval: "10s"
 
   - name: gdev-mysql

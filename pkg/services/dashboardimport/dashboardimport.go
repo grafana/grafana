@@ -40,8 +40,8 @@ type ImportDashboardResponse struct {
 	DashboardId      int64  `json:"dashboardId"`
 	FolderId         int64  `json:"folderId"`
 	FolderUID        string `json:"folderUid"`
-	ImportedRevision int64  `json:"importedRevision,omitempty"` // Only used for plugin imports
-	Revision         int64  `json:"revision,omitempty"`         // Only used for plugin imports
+	ImportedRevision int64  `json:"importedRevision"`
+	Revision         int64  `json:"revision"`
 	Description      string `json:"description"`
 	Path             string `json:"path"`
 	Removed          bool   `json:"removed"`

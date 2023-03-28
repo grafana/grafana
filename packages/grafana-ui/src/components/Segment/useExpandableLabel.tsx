@@ -25,7 +25,7 @@ export const useExpandableLabel = (
     }
   };
 
-  const Label = ({ Component, onClick, disabled }: LabelProps) => (
+  const Label: React.FC<LabelProps> = ({ Component, onClick, disabled }) => (
     <button
       type="button"
       className={buttonStyles}

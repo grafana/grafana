@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 import { SilenceState } from 'app/plugins/datasource/alertmanager/types';
 
@@ -14,4 +14,6 @@ interface Props {
   state: SilenceState;
 }
 
-export const SilenceStateTag = ({ state }: Props) => <StateTag state={silenceStateToState[state]}>{state}</StateTag>;
+export const SilenceStateTag: FC<Props> = ({ state }) => (
+  <StateTag state={silenceStateToState[state]}>{state}</StateTag>
+);

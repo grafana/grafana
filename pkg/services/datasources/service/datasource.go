@@ -161,7 +161,7 @@ func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetData
 	return s.SQLStore.GetDataSources(ctx, query)
 }
 
-func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
+func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error {
 	return s.SQLStore.GetAllDataSources(ctx, query)
 }
 
@@ -424,11 +424,10 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 	if ds.JsonData != nil {
 		opts.CustomOptions = ds.JsonData.MustMap()
 		// allow the plugin sdk to get the json data in JSONDataFromHTTPClientOptions
-		deepJsonDataCopy := make(map[string]interface{}, len(opts.CustomOptions))
+		opts.CustomOptions["grafanaData"] = make(map[string]interface{})
 		for k, v := range opts.CustomOptions {
-			deepJsonDataCopy[k] = v
+			opts.CustomOptions[k] = v
 		}
-		opts.CustomOptions["grafanaData"] = deepJsonDataCopy
 	}
 	if ds.BasicAuth {
 		password, err := s.DecryptedBasicAuthPassword(ctx, ds)

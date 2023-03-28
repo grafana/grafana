@@ -38,8 +38,7 @@ export function getTransformationsDemo(): DashboardScene {
             }),
 
             new VizPanel({
-              $data: new SceneDataTransformer({
-                $data: getQueryRunnerWithRandomWalkQuery(),
+              $data: getQueryRunnerWithRandomWalkQuery(undefined, {
                 transformations: [
                   {
                     id: 'reduce',
@@ -49,7 +48,6 @@ export function getTransformationsDemo(): DashboardScene {
                   },
                 ],
               }),
-
               pluginId: 'stat',
               title: 'Query with predefined transformations',
             }),

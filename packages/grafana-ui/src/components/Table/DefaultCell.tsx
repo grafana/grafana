@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import React, { FC, ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
@@ -15,7 +15,7 @@ import { TableStyles } from './styles';
 import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
 import { getCellOptions } from './utils';
 
-export const DefaultCell = (props: TableCellProps) => {
+export const DefaultCell: FC<TableCellProps> = (props) => {
   const { field, cell, tableStyles, row, cellProps } = props;
 
   const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
@@ -28,7 +28,7 @@ export const DefaultCell = (props: TableCellProps) => {
     value = formattedValueToString(displayValue);
   }
 
-  const showFilters = props.onCellFilterAdded && field.config.filterable;
+  const showFilters = field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellOptions = getCellOptions(field);
   const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled);
@@ -56,7 +56,7 @@ export const DefaultCell = (props: TableCellProps) => {
         </DataLinksContextMenu>
       )}
 
-      {showActions && <CellActions {...props} previewMode="text" showFilters={showFilters} />}
+      {showActions && <CellActions {...props} previewMode="text" />}
     </div>
   );
 };
@@ -77,12 +77,10 @@ function getCellStyle(
   if (cellOptions.type === TableCellDisplayMode.ColorText) {
     textColor = displayValue.color;
   } else if (cellOptions.type === TableCellDisplayMode.ColorBackground) {
-    const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
-
-    if (mode === TableCellBackgroundDisplayMode.Basic) {
+    if (cellOptions.mode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
-    } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
+    } else if (cellOptions.mode === TableCellBackgroundDisplayMode.Gradient) {
       const bgColor2 = tinycolor(displayValue.color)
         .darken(10 * darkeningFactor)
         .spin(5);

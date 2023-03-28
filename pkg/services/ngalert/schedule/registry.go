@@ -3,6 +3,7 @@ package schedule
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -29,6 +30,19 @@ func (r *alertRuleInfoRegistry) getOrCreateInfo(context context.Context, key mod
 		r.alertRuleInfo[key] = info
 	}
 	return info, !ok
+}
+
+// get returns the channel for the specific alert rule
+// if the key does not exist returns an error
+func (r *alertRuleInfoRegistry) get(key models.AlertRuleKey) (*alertRuleInfo, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	info, ok := r.alertRuleInfo[key]
+	if !ok {
+		return nil, fmt.Errorf("%v key not found", key)
+	}
+	return info, nil
 }
 
 func (r *alertRuleInfoRegistry) exists(key models.AlertRuleKey) bool {
@@ -155,19 +169,16 @@ func (r *alertRulesRegistry) get(k models.AlertRuleKey) *models.AlertRule {
 	return r.rules[k]
 }
 
-// set replaces all rules in the registry. Returns difference between previous and the new current version of the registry
-func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[string]string) diff {
+// set replaces all rules in the registry.
+func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[string]string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	rulesMap := make(map[models.AlertRuleKey]*models.AlertRule)
+	r.rules = make(map[models.AlertRuleKey]*models.AlertRule)
 	for _, rule := range rules {
-		rulesMap[rule.GetKey()] = rule
+		r.rules[rule.GetKey()] = rule
 	}
-	d := r.getDiff(rulesMap)
-	r.rules = rulesMap
 	// return the map as is without copying because it is not mutated
 	r.folderTitles = folders
-	return d
 }
 
 // update inserts or replaces a rule in the registry.
@@ -207,29 +218,4 @@ func (r *alertRulesRegistry) needsUpdate(keys []models.AlertRuleKeyWithVersion) 
 		}
 	}
 	return false
-}
-
-type diff struct {
-	updated map[models.AlertRuleKey]struct{}
-}
-
-func (d diff) IsEmpty() bool {
-	return len(d.updated) == 0
-}
-
-// getDiff calculates difference between the list of rules fetched previously and provided keys. Returns diff where
-// updated - a list of keys that exist in the registry but with different version,
-func (r *alertRulesRegistry) getDiff(rules map[models.AlertRuleKey]*models.AlertRule) diff {
-	result := diff{
-		updated: map[models.AlertRuleKey]struct{}{},
-	}
-	for key, newRule := range rules {
-		oldRule, ok := r.rules[key]
-		if !ok || newRule.Version == oldRule.Version {
-			// a new rule or not updated
-			continue
-		}
-		result.updated[key] = struct{}{}
-	}
-	return result
 }

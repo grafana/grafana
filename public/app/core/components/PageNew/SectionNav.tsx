@@ -68,7 +68,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     navContainer: css({
       display: 'flex',
       flexDirection: 'column',
-      position: 'relative',
 
       [theme.breakpoints.up('md')]: {
         flexDirection: 'row',

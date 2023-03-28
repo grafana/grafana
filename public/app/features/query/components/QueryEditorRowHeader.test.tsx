@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { openMenu } from 'react-select-event';
 
@@ -31,16 +30,13 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
 });
 
 describe('QueryEditorRowHeader', () => {
-  it('Can edit title', async () => {
+  it('Can edit title', () => {
     const scenario = renderScenario({});
-    await userEvent.click(screen.getByTestId('query-name-div'));
+    screen.getByTestId('query-name-div').click();
 
     const input = screen.getByTestId('query-name-input');
-    await userEvent.clear(input);
-    await userEvent.type(input, 'new name');
-
-    // blur the field
-    await userEvent.click(document.body);
+    fireEvent.change(input, { target: { value: 'new name' } });
+    fireEvent.blur(input);
 
     expect(jest.mocked(scenario.props.onChange).mock.calls[0][0].refId).toBe('new name');
   });
@@ -48,10 +44,9 @@ describe('QueryEditorRowHeader', () => {
   it('Show error when other query with same name exists', async () => {
     renderScenario({});
 
-    await userEvent.click(screen.getByTestId('query-name-div'));
+    screen.getByTestId('query-name-div').click();
     const input = screen.getByTestId('query-name-input');
-    await userEvent.clear(input);
-    await userEvent.type(input, 'B');
+    fireEvent.change(input, { target: { value: 'B' } });
     const alert = await screen.findByRole('alert');
 
     expect(alert.textContent).toBe('Query name already exists');
@@ -60,9 +55,9 @@ describe('QueryEditorRowHeader', () => {
   it('Show error when empty name is specified', async () => {
     renderScenario({});
 
-    await userEvent.click(screen.getByTestId('query-name-div'));
+    screen.getByTestId('query-name-div').click();
     const input = screen.getByTestId('query-name-input');
-    await userEvent.clear(input);
+    fireEvent.change(input, { target: { value: '' } });
     const alert = await screen.findByRole('alert');
 
     expect(alert.textContent).toBe('An empty query name is not allowed');

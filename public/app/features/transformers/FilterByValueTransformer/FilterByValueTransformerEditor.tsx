@@ -34,7 +34,9 @@ const filterMatch: Array<SelectableValue<FilterByValueMatch>> = [
   { label: 'Match any', value: FilterByValueMatch.any },
 ];
 
-export const FilterByValueTransformerEditor = (props: TransformerUIProps<FilterByValueTransformerOptions>) => {
+export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterByValueTransformerOptions>> = (
+  props
+) => {
   const { input, options, onChange } = props;
   const styles = getEditorStyles();
   const fieldsInfo = useFieldsInfo(input);

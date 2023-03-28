@@ -46,7 +46,7 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-export const Label = ({ children, description, className, category, ...labelProps }: LabelProps) => {
+export const Label: React.FC<LabelProps> = ({ children, description, className, category, ...labelProps }) => {
   const theme = useTheme2();
   const styles = getLabelStyles(theme);
   const categories = category?.map((c, i) => {

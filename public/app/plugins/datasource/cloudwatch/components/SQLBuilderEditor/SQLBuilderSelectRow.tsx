@@ -32,7 +32,7 @@ interface SQLBuilderSelectRowProps {
 
 const AGGREGATIONS = STATISTICS.map(toOption);
 
-const SQLBuilderSelectRow = ({ datasource, query, onQueryChange }: SQLBuilderSelectRowProps) => {
+const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, query, onQueryChange }) => {
   const sql = query.sql ?? {};
 
   const aggregation = sql.select?.name;

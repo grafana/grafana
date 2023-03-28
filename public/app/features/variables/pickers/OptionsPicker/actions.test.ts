@@ -212,14 +212,21 @@ describe('options picker actions', () => {
       .whenActionIsDispatched(navigateOptions('key', NavigationKey.moveDown, clearOthers))
       .whenAsyncActionIsDispatched(navigateOptions('key', key, clearOthers), true);
 
+    const option = createOption(['sameLabel'], ['B'], true);
+
     // Check selecting the second option triggers variables to update
     tester.thenDispatchedActionsShouldEqual(
-      toKeyedAction('key', toggleOption({ option: options[1], forceSelect: false, clearOthers }))
+      toKeyedAction('key', toggleOption({ option: options[1], forceSelect: true, clearOthers })),
+      toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option }))),
+      toKeyedAction('key', changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))),
+      toKeyedAction('key', hideOptions()),
+      toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option })))
     );
+    expect(locationService.partial).toHaveBeenLastCalledWith({ 'var-Constant': ['B'] });
   });
 
   describe('when navigateOptions is dispatched with navigation key selectAndClose after highlighting the second option', () => {
-    it('then correct actions are dispatched for multi-value variable', async () => {
+    it('then correct actions are dispatched', async () => {
       const options = [createOption('A'), createOption('B'), createOption('C')];
       const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
 
@@ -238,34 +245,10 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(navigateOptions('key', NavigationKey.moveUp, clearOthers))
         .whenAsyncActionIsDispatched(navigateOptions('key', key, clearOthers), true);
 
-      tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('key', toggleOption({ option: options[1], forceSelect: false, clearOthers }))
-      );
-    });
-
-    it('then correct actions are dispatched for single-value variable', async () => {
-      const options = [createOption('A'), createOption('B'), createOption('C')];
-      const variable = createVariable({ options, current: createOption('A', 'A', true), includeAll: false });
-
-      const clearOthers = false;
-      const key = NavigationKey.selectAndClose;
-
-      const tester = await reduxTester<RootReducerType>()
-        .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(
-          toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        )
-        .whenActionIsDispatched(toKeyedAction('key', showOptions(variable)))
-        .whenActionIsDispatched(navigateOptions('key', NavigationKey.moveDown, clearOthers))
-        .whenActionIsDispatched(navigateOptions('key', NavigationKey.moveDown, clearOthers))
-        .whenActionIsDispatched(navigateOptions('key', NavigationKey.moveDown, clearOthers))
-        .whenActionIsDispatched(navigateOptions('key', NavigationKey.moveUp, clearOthers))
-        .whenAsyncActionIsDispatched(navigateOptions('key', key, clearOthers), true);
-
       const option = {
-        ...createOption('B'),
+        ...createOption(['B']),
         selected: true,
-        value: 'B',
+        value: ['B'],
       };
 
       tester.thenDispatchedActionsShouldEqual(
@@ -278,7 +261,7 @@ describe('options picker actions', () => {
         toKeyedAction('key', hideOptions()),
         toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option })))
       );
-      expect(locationService.partial).toHaveBeenLastCalledWith({ 'var-Constant': 'B' });
+      expect(locationService.partial).toHaveBeenLastCalledWith({ 'var-Constant': ['B'] });
     });
   });
 
@@ -543,7 +526,7 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(toggleOptionByHighlight('key', clearOthers));
 
       const optionA = createOption('A');
-      const optionBD = createOption('BD');
+      const optionBC = createOption('BC');
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction('key', toggleOption({ option: optionA, forceSelect: false, clearOthers })),
@@ -551,21 +534,13 @@ describe('options picker actions', () => {
         toKeyedAction('key', updateOptionsAndFilter(variable.options)),
         toKeyedAction('key', moveOptionsHighlight(1)),
         toKeyedAction('key', moveOptionsHighlight(1)),
-        toKeyedAction('key', toggleOption({ option: optionBD, forceSelect: false, clearOthers }))
+        toKeyedAction('key', toggleOption({ option: optionBC, forceSelect: false, clearOthers }))
       );
     });
   });
 });
 
 function createMultiVariable(extend?: Partial<QueryVariableModel>): QueryVariableModel {
-  return createVariable({
-    multi: true,
-    includeAll: true,
-    ...(extend ?? {}),
-  });
-}
-
-function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableModel {
   return {
     ...initialVariableModelState,
     type: 'query',
@@ -581,8 +556,8 @@ function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableMode
     sort: VariableSort.alphabeticalAsc,
     refresh: VariableRefresh.never,
     regex: '',
-    multi: false,
-    includeAll: false,
+    multi: true,
+    includeAll: true,
     ...(extend ?? {}),
   };
 }

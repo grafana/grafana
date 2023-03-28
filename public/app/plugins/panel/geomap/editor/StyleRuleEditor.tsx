@@ -5,14 +5,12 @@ import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
 import { GrafanaTheme2, SelectableValue, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
-import { ComparisonOperation } from '@grafana/schema';
 import { Button, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
-import { comparisonOperationOptions } from '@grafana/ui/src/components/MatchersUI/FieldValueMatcher';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';
 import { defaultStyleConfig, StyleConfig } from '../style/types';
-import { FeatureStyleConfig } from '../types';
+import { ComparisonOperation, FeatureStyleConfig } from '../types';
 import { getUniqueFeatureValues, LayerContentInfo } from '../utils/getFeatures';
 import { getSelectionInfo } from '../utils/selection';
 
@@ -22,6 +20,15 @@ export interface StyleRuleEditorSettings {
   features: Observable<FeatureLike[]>;
   layerInfo: Observable<LayerContentInfo>;
 }
+
+const comparators = [
+  { label: '==', value: ComparisonOperation.EQ },
+  { label: '!=', value: ComparisonOperation.NEQ },
+  { label: '>', value: ComparisonOperation.GT },
+  { label: '>=', value: ComparisonOperation.GTE },
+  { label: '<', value: ComparisonOperation.LT },
+  { label: '<=', value: ComparisonOperation.LTE },
+];
 
 type Props = StandardEditorProps<FeatureStyleConfig, any, unknown, StyleRuleEditorSettings>;
 
@@ -141,8 +148,8 @@ export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
         </InlineField>
         <InlineField className={styles.inline}>
           <Select
-            value={comparisonOperationOptions.find((v) => v.value === check.operation)}
-            options={comparisonOperationOptions}
+            value={comparators.find((v) => v.value === check.operation)}
+            options={comparators}
             onChange={onChangeComparison}
             aria-label={'Comparison operator'}
             width={8}

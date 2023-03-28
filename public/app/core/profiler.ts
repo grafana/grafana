@@ -1,9 +1,3 @@
-declare global {
-  interface Window {
-    panelsRendered?: number;
-  }
-}
-
 export class Profiler {
   panelsRendered = 0;
   enabled?: boolean = undefined;
@@ -15,7 +9,7 @@ export class Profiler {
 
     // this window variable is used by backend rendering tools to know
     // all panels have completed rendering
-    window.panelsRendered = this.panelsRendered;
+    (window as any).panelsRendered = this.panelsRendered;
   }
 }
 

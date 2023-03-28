@@ -2,7 +2,7 @@ import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { prepareHeatmapData } from './fields';
-import { PanelOptions, defaultPanelOptions } from './types';
+import { PanelOptions, defaultPanelOptions } from './models.gen';
 
 export class HeatmapSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {

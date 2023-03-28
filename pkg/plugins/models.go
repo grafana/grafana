@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -254,10 +255,11 @@ type PanelDTO struct {
 }
 
 type AppDTO struct {
-	ID      string `json:"id"`
-	Path    string `json:"path"`
-	Version string `json:"version"`
-	Preload bool   `json:"preload"`
+	ID         string                      `json:"id"`
+	Path       string                      `json:"path"`
+	Version    string                      `json:"version"`
+	Preload    bool                        `json:"preload"`
+	Extensions []*plugindef.ExtensionsLink `json:"extensions,omitempty"`
 }
 
 const (

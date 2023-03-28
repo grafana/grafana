@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { ConfirmModal, FilterInput, Icon, LinkButton, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, ConfirmModal, FilterInput, Icon, LinkButton, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -21,6 +21,9 @@ import {
   updateServiceAccount,
   changeStateFilter,
   createServiceAccountToken,
+  getApiKeysMigrationStatus,
+  getApiKeysMigrationInfo,
+  closeApiKeysMigrationInfo,
 } from './state/actions';
 
 interface OwnProps {}
@@ -41,6 +44,9 @@ const mapDispatchToProps = {
   updateServiceAccount,
   changeStateFilter,
   createServiceAccountToken,
+  getApiKeysMigrationStatus,
+  getApiKeysMigrationInfo,
+  closeApiKeysMigrationInfo,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -51,6 +57,8 @@ export const ServiceAccountsListPageUnconnected = ({
   roleOptions,
   query,
   serviceAccountStateFilter,
+  apiKeysMigrated,
+  showApiKeysMigrationInfo,
   changeQuery,
   fetchACOptions,
   fetchServiceAccounts,
@@ -58,6 +66,9 @@ export const ServiceAccountsListPageUnconnected = ({
   updateServiceAccount,
   changeStateFilter,
   createServiceAccountToken,
+  getApiKeysMigrationStatus,
+  getApiKeysMigrationInfo,
+  closeApiKeysMigrationInfo,
 }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -68,10 +79,12 @@ export const ServiceAccountsListPageUnconnected = ({
 
   useEffect(() => {
     fetchServiceAccounts({ withLoadingIndicator: true });
+    getApiKeysMigrationStatus();
+    getApiKeysMigrationInfo();
     if (contextSrv.licensedAccessControlEnabled()) {
       fetchACOptions();
     }
-  }, [fetchACOptions, fetchServiceAccounts]);
+  }, [fetchACOptions, fetchServiceAccounts, getApiKeysMigrationStatus, getApiKeysMigrationInfo]);
 
   const noServiceAccountsCreated =
     serviceAccounts.length === 0 && serviceAccountStateFilter === ServiceAccountStateFilter.All && !query;
@@ -147,6 +160,10 @@ export const ServiceAccountsListPageUnconnected = ({
     setCurrentServiceAccount(null);
   };
 
+  const onMigrationInfoClose = () => {
+    closeApiKeysMigrationInfo();
+  };
+
   const docsLink = (
     <a
       className="external-link"
@@ -166,6 +183,14 @@ export const ServiceAccountsListPageUnconnected = ({
   return (
     <Page navId="serviceaccounts" subTitle={subTitle}>
       <Page.Contents>
+        {apiKeysMigrated && showApiKeysMigrationInfo && (
+          <Alert
+            title="API keys migrated to Service accounts. Your keys are now called tokens and live inside respective service
+          accounts. Learn more."
+            severity="success"
+            onRemove={onMigrationInfoClose}
+          ></Alert>
+        )}
         <Page.OldNavOnly>
           <div className={styles.pageHeader}>
             <h2>Service accounts</h2>

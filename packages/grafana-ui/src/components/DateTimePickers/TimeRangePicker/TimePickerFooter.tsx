@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
-import React, { useCallback, useState } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 
 import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -23,7 +23,7 @@ interface Props {
   onChangeFiscalYearStartMonth?: (month: number) => void;
 }
 
-export const TimePickerFooter = (props: Props) => {
+export const TimePickerFooter: FC<Props> = (props) => {
   const {
     timeZone,
     fiscalYearStartMonth,

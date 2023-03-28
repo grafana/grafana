@@ -13,8 +13,8 @@ import (
 
 // ListAlertInstances is a handler for retrieving alert instances within specific organisation
 // based on various filters.
-func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) (result []*models.AlertInstance, err error) {
-	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		alertInstances := make([]*models.AlertInstance, 0)
 
 		s := strings.Builder{}
@@ -37,10 +37,9 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 			return err
 		}
 
-		result = alertInstances
+		cmd.Result = alertInstances
 		return nil
 	})
-	return result, err
 }
 
 // SaveAlertInstances saves all the provided alert instances to the store.

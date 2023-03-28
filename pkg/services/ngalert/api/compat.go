@@ -19,10 +19,10 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 		RuleGroup:    a.RuleGroup,
 		Title:        a.Title,
 		Condition:    a.Condition,
-		Data:         AlertQueriesFromApiAlertQueries(a.Data),
+		Data:         a.Data,
 		Updated:      a.Updated,
-		NoDataState:  models.NoDataState(a.NoDataState),          // TODO there must be a validation
-		ExecErrState: models.ExecutionErrorState(a.ExecErrState), // TODO there must be a validation
+		NoDataState:  a.NoDataState,
+		ExecErrState: a.ExecErrState,
 		For:          time.Duration(a.For),
 		Annotations:  a.Annotations,
 		Labels:       a.Labels,
@@ -41,10 +41,10 @@ func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.
 		Title:        rule.Title,
 		For:          model.Duration(rule.For),
 		Condition:    rule.Condition,
-		Data:         ApiAlertQueriesFromAlertQueries(rule.Data),
+		Data:         rule.Data,
 		Updated:      rule.Updated,
-		NoDataState:  definitions.NoDataState(rule.NoDataState),          // TODO there may be a validation
-		ExecErrState: definitions.ExecutionErrorState(rule.ExecErrState), // TODO there may be a validation
+		NoDataState:  rule.NoDataState,
+		ExecErrState: rule.ExecErrState,
 		Annotations:  rule.Annotations,
 		Labels:       rule.Labels,
 		Provenance:   definitions.Provenance(provenance), // TODO validate enum conversion?
@@ -61,43 +61,7 @@ func ProvisionedAlertRuleFromAlertRules(rules []*models.AlertRule) definitions.P
 	return result
 }
 
-// AlertQueriesFromApiAlertQueries converts a collection of definitions.AlertQuery to collection of models.AlertQuery
-func AlertQueriesFromApiAlertQueries(queries []definitions.AlertQuery) []models.AlertQuery {
-	result := make([]models.AlertQuery, 0, len(queries))
-	for _, q := range queries {
-		result = append(result, models.AlertQuery{
-			RefID:     q.RefID,
-			QueryType: q.QueryType,
-			RelativeTimeRange: models.RelativeTimeRange{
-				From: models.Duration(q.RelativeTimeRange.From),
-				To:   models.Duration(q.RelativeTimeRange.To),
-			},
-			DatasourceUID: q.DatasourceUID,
-			Model:         q.Model,
-		})
-	}
-	return result
-}
-
-// ApiAlertQueriesFromAlertQueries converts a collection of models.AlertQuery to collection of definitions.AlertQuery
-func ApiAlertQueriesFromAlertQueries(queries []models.AlertQuery) []definitions.AlertQuery {
-	result := make([]definitions.AlertQuery, 0, len(queries))
-	for _, q := range queries {
-		result = append(result, definitions.AlertQuery{
-			RefID:     q.RefID,
-			QueryType: q.QueryType,
-			RelativeTimeRange: definitions.RelativeTimeRange{
-				From: definitions.Duration(q.RelativeTimeRange.From),
-				To:   definitions.Duration(q.RelativeTimeRange.To),
-			},
-			DatasourceUID: q.DatasourceUID,
-			Model:         q.Model,
-		})
-	}
-	return result
-}
-
-func AlertRuleGroupFromApiAlertRuleGroup(a definitions.AlertRuleGroup) (models.AlertRuleGroup, error) {
+func AlertRuleGroupFromApi(a definitions.AlertRuleGroup) (models.AlertRuleGroup, error) {
 	ruleGroup := models.AlertRuleGroup{
 		Title:     a.Title,
 		FolderUID: a.FolderUID,
@@ -113,7 +77,7 @@ func AlertRuleGroupFromApiAlertRuleGroup(a definitions.AlertRuleGroup) (models.A
 	return ruleGroup, nil
 }
 
-func ApiAlertRuleGroupFromAlertRuleGroup(d models.AlertRuleGroup) definitions.AlertRuleGroup {
+func AlertRuleGroupToApi(d models.AlertRuleGroup) definitions.AlertRuleGroup {
 	rules := make([]definitions.ProvisionedAlertRule, 0, len(d.Rules))
 	for i := range d.Rules {
 		rules = append(rules, ProvisionedAlertRuleFromAlertRule(d.Rules[i], d.Provenance))

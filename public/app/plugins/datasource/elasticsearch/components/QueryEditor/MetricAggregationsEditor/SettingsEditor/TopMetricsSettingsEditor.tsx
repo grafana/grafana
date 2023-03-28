@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { FunctionComponent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { AsyncMultiSelect, InlineField, SegmentAsync, Select } from '@grafana/ui';
@@ -16,7 +16,7 @@ interface Props {
 
 const toMultiSelectValue = (value: string): SelectableValue<string> => ({ value, label: value });
 
-export const TopMetricsSettingsEditor = ({ metric }: Props) => {
+export const TopMetricsSettingsEditor: FunctionComponent<Props> = ({ metric }) => {
   const dispatch = useDispatch();
   const getOrderByOptions = useFields(['number', 'date']);
   const getMetricsOptions = useFields(metric.type);

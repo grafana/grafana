@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 import { LdapUser } from 'app/types';
 
@@ -12,7 +12,7 @@ interface Props {
   showAttributeMapping?: boolean;
 }
 
-export const LdapUserInfo = ({ ldapUser, showAttributeMapping }: Props) => {
+export const LdapUserInfo: FC<Props> = ({ ldapUser, showAttributeMapping }) => {
   return (
     <>
       <LdapUserMappingInfo info={ldapUser.info} showAttributeMapping={showAttributeMapping} />

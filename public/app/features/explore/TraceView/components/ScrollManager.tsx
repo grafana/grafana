@@ -157,7 +157,9 @@ export default class ScrollManager {
     const _collapsed = xrs.getCollapsedChildren();
     const childrenAreHidden = _collapsed ? new Set(_collapsed) : null;
     // use empty Map as fallback to make flow happy
-    const spansMap: Map<string, TraceSpan> = childrenAreHidden ? new Map(spans.map((s) => [s.spanID, s])) : new Map();
+    const spansMap: Map<string, TraceSpan> = childrenAreHidden
+      ? new Map(spans.map((s) => [s.spanID, s] as [string, TraceSpan]))
+      : new Map();
     const boundary = direction < 0 ? -1 : spans.length;
     let nextSpanIndex: number | undefined;
     for (let i = fullViewSpanIndex + direction; i !== boundary; i += direction) {
@@ -266,7 +268,7 @@ export default class ScrollManager {
 
   destroy() {
     this._trace = undefined;
-    this._scroller = undefined;
+    this._scroller = undefined as any;
     this._accessors = undefined;
   }
 }

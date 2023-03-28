@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { FC, useMemo } from 'react';
 
 import { PanelData } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -21,7 +21,7 @@ interface Props {
   onUpdateQueryExpression: (query: ExpressionQuery) => void;
 }
 
-export const ExpressionsEditor = ({
+export const ExpressionsEditor: FC<Props> = ({
   condition,
   onSetCondition,
   queries,
@@ -30,7 +30,7 @@ export const ExpressionsEditor = ({
   onRemoveExpression,
   onUpdateExpressionType,
   onUpdateQueryExpression,
-}: Props) => {
+}) => {
   const expressionQueries = useMemo(() => {
     return queries.reduce((acc: ExpressionQuery[], query) => {
       return isExpressionQuery(query.model) ? acc.concat(query.model) : acc;

@@ -1,35 +1,34 @@
-import { type PluginExtension } from '@grafana/data';
+import { getPluginsExtensionRegistry, PluginsExtension } from './registry';
 
-import { getPluginsExtensionRegistry } from './registry';
-
-export type PluginExtensionsOptions<T extends object> = {
+export type GetPluginExtensionsOptions = {
   placement: string;
-  context?: T;
 };
 
 export type PluginExtensionsResult = {
-  extensions: PluginExtension[];
+  extensions: PluginsExtension[];
+  error?: Error;
 };
 
-export function getPluginExtensions<T extends object = {}>(
-  options: PluginExtensionsOptions<T>
-): PluginExtensionsResult {
-  const { placement, context } = options;
+export class PluginExtensionsMissingError extends Error {
+  readonly placement: string;
+
+  constructor(placement: string) {
+    super(`Could not find extensions for '${placement}'`);
+    this.placement = placement;
+    this.name = PluginExtensionsMissingError.name;
+  }
+}
+
+export function getPluginExtensions({ placement }: GetPluginExtensionsOptions): PluginExtensionsResult {
   const registry = getPluginsExtensionRegistry();
-  const configureFuncs = registry[placement] ?? [];
+  const extensions = registry[placement];
 
-  const extensions = configureFuncs.reduce<PluginExtension[]>((result, configure) => {
-    const extension = configure(context);
+  if (!Array.isArray(extensions)) {
+    return {
+      extensions: [],
+      error: new PluginExtensionsMissingError(placement),
+    };
+  }
 
-    // If the configure() function returns `undefined`, the extension is not displayed
-    if (extension) {
-      result.push(extension);
-    }
-
-    return result;
-  }, []);
-
-  return {
-    extensions: extensions,
-  };
+  return { extensions };
 }

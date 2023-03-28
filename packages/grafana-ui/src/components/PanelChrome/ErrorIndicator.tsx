@@ -17,7 +17,7 @@ export type ErrorIndicatorProps = {
 /**
  * @internal
  */
-export const ErrorIndicator = ({ error, onClick }: ErrorIndicatorProps) => {
+export const ErrorIndicator: React.FC<ErrorIndicatorProps> = ({ error, onClick }) => {
   const styles = useStyles2(getStyles);
 
   if (!error) {

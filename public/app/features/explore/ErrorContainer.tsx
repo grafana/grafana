@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FunctionComponent } from 'react';
 
 import { DataQueryError } from '@grafana/data';
 import { Alert } from '@grafana/ui';
@@ -8,7 +8,7 @@ export interface ErrorContainerProps {
   queryError?: DataQueryError;
 }
 
-export const ErrorContainer = (props: ErrorContainerProps) => {
+export const ErrorContainer: FunctionComponent<ErrorContainerProps> = (props) => {
   const { queryError } = props;
   const showError = queryError ? true : false;
   const duration = showError ? 100 : 10;

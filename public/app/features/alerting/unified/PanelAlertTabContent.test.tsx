@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render, act, waitFor } from '@testing-library/react';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId } from 'testing-library-selector';
@@ -68,11 +68,13 @@ const renderAlertTabContent = (
   panel: PanelModel,
   initialStore?: ReturnType<typeof configureStore>
 ) => {
-  render(
-    <TestProvider store={initialStore}>
-      <PanelAlertTabContent dashboard={dashboard} panel={panel} />
-    </TestProvider>
-  );
+  return act(async () => {
+    render(
+      <TestProvider store={initialStore}>
+        <PanelAlertTabContent dashboard={dashboard} panel={panel} />
+      </TestProvider>
+    );
+  });
 };
 
 const rules = [
@@ -194,7 +196,7 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('Will take into account panel maxDataPoints', async () => {
-    renderAlertTabContent(
+    await renderAlertTabContent(
       dashboard,
       new PanelModel({
         ...panel,
@@ -223,7 +225,7 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('Will work with default datasource', async () => {
-    renderAlertTabContent(
+    await renderAlertTabContent(
       dashboard,
       new PanelModel({
         ...panel,
@@ -255,7 +257,7 @@ describe('PanelAlertTabContent', () => {
   it('Will take into account datasource minInterval', async () => {
     (getDatasourceSrv() as unknown as MockDataSourceSrv).datasources[dataSources.prometheus.uid].interval = '7m';
 
-    renderAlertTabContent(
+    await renderAlertTabContent(
       dashboard,
       new PanelModel({
         ...panel,
@@ -286,7 +288,7 @@ describe('PanelAlertTabContent', () => {
     mocks.api.fetchRules.mockResolvedValue(rules);
     mocks.api.fetchRulerRules.mockResolvedValue(rulerRules);
 
-    renderAlertTabContent(dashboard, panel);
+    await renderAlertTabContent(dashboard, panel);
 
     const rows = await ui.row.findAll();
     expect(rows).toHaveLength(1);
@@ -329,7 +331,7 @@ describe('PanelAlertTabContent', () => {
     const panelToRuleValuesSpy = jest.spyOn(ruleFormUtils, 'panelToRuleFormValues');
 
     const store = configureStore();
-    renderAlertTabContent(dashboard, panel, store);
+    await renderAlertTabContent(dashboard, panel, store);
 
     store.dispatch(
       toKeyedAction(

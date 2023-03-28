@@ -136,18 +136,17 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		return nil, err
 	}
 
-	revision := savedDashboard.Data.Get("revision").MustInt64(0)
 	return &dashboardimport.ImportDashboardResponse{
 		UID:              savedDashboard.UID,
 		PluginId:         req.PluginId,
 		Title:            savedDashboard.Title,
 		Path:             req.Path,
-		Revision:         revision, // only used for plugin version tracking
+		Revision:         savedDashboard.Data.Get("revision").MustInt64(1),
 		FolderId:         savedDashboard.FolderID,
 		FolderUID:        req.FolderUid,
 		ImportedUri:      "db/" + savedDashboard.Slug,
 		ImportedUrl:      savedDashboard.GetURL(),
-		ImportedRevision: revision,
+		ImportedRevision: savedDashboard.Data.Get("revision").MustInt64(1),
 		Imported:         true,
 		DashboardId:      savedDashboard.ID,
 		Slug:             savedDashboard.Slug,

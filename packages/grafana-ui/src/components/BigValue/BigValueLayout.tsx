@@ -12,7 +12,6 @@ import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from 
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
-const VALUE_FONT_WEIGHT = 500;
 
 export abstract class BigValueLayout {
   titleFontSize: number;
@@ -67,10 +66,7 @@ export abstract class BigValueLayout {
       styles.paddingRight = '0.75ch';
     }
 
-    if (
-      this.props.colorMode === BigValueColorMode.Background ||
-      this.props.colorMode === BigValueColorMode.BackgroundSolid
-    ) {
+    if (this.props.colorMode === BigValueColorMode.Background) {
       styles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
     }
 
@@ -80,7 +76,7 @@ export abstract class BigValueLayout {
   getValueStyles(): CSSProperties {
     const styles: CSSProperties = {
       fontSize: this.valueFontSize,
-      fontWeight: VALUE_FONT_WEIGHT,
+      fontWeight: 500,
       lineHeight: LINE_HEIGHT,
       position: 'relative',
       zIndex: 1,
@@ -95,7 +91,6 @@ export abstract class BigValueLayout {
         styles.color = this.valueColor;
         break;
       case BigValueColorMode.Background:
-      case BigValueColorMode.BackgroundSolid:
         styles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
         break;
       case BigValueColorMode.None:
@@ -127,7 +122,7 @@ export abstract class BigValueLayout {
       width: `${width}px`,
       height: `${height}px`,
       padding: `${this.panelPadding}px`,
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: '3px',
       position: 'relative',
       display: 'flex',
     };
@@ -145,9 +140,6 @@ export abstract class BigValueLayout {
           .spin(-8)
           .toRgbString();
         panelStyles.background = `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
-        break;
-      case BigValueColorMode.BackgroundSolid:
-        panelStyles.background = tinycolor(this.valueColor).toString();
         break;
       case BigValueColorMode.Value:
         panelStyles.background = `transparent`;
@@ -174,7 +166,6 @@ export abstract class BigValueLayout {
 
     switch (colorMode) {
       case BigValueColorMode.Background:
-      case BigValueColorMode.BackgroundSolid:
         fillColor = 'rgba(255,255,255,0.4)';
         lineColor = tinycolor(this.valueColor).brighten(40).toRgbString();
         break;
@@ -229,9 +220,7 @@ export class WideNoChartLayout extends BigValueLayout {
         this.valueToAlignTo,
         this.maxTextWidth * valueWidthPercent,
         this.maxTextHeight,
-        LINE_HEIGHT,
-        undefined,
-        VALUE_FONT_WEIGHT
+        LINE_HEIGHT
       );
     }
 
@@ -303,9 +292,7 @@ export class WideWithChartLayout extends BigValueLayout {
         this.valueToAlignTo,
         this.maxTextWidth * valueWidthPercent,
         this.maxTextHeight * chartHeightPercent,
-        LINE_HEIGHT,
-        undefined,
-        VALUE_FONT_WEIGHT
+        LINE_HEIGHT
       );
     }
   }
@@ -359,9 +346,7 @@ export class StackedWithChartLayout extends BigValueLayout {
         this.valueToAlignTo,
         this.maxTextWidth,
         this.maxTextHeight - this.chartHeight - titleHeight,
-        LINE_HEIGHT,
-        undefined,
-        VALUE_FONT_WEIGHT
+        LINE_HEIGHT
       );
     }
 
@@ -413,9 +398,7 @@ export class StackedWithNoChartLayout extends BigValueLayout {
         this.valueToAlignTo,
         this.maxTextWidth,
         this.maxTextHeight - titleHeight,
-        LINE_HEIGHT,
-        undefined,
-        VALUE_FONT_WEIGHT
+        LINE_HEIGHT
       );
     }
 
@@ -430,10 +413,6 @@ export class StackedWithNoChartLayout extends BigValueLayout {
     styles.flexDirection = 'column';
     styles.flexGrow = 1;
     return styles;
-  }
-
-  renderChart(): JSX.Element | null {
-    return null;
   }
 
   getPanelStyles() {

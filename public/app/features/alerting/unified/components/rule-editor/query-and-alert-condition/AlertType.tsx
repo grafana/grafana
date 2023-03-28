@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { FC } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -15,7 +15,7 @@ interface Props {
   editingExistingRule: boolean;
 }
 
-export const AlertType = ({ editingExistingRule }: Props) => {
+export const AlertType: FC<Props> = ({ editingExistingRule }) => {
   const { enabledRuleTypes, defaultRuleType } = getAvailableRuleTypes();
 
   const {
@@ -52,7 +52,7 @@ export const AlertType = ({ editingExistingRule }: Props) => {
       )}
 
       <div className={styles.flexRow}>
-        {(ruleFormType === RuleFormType.cloudAlerting || ruleFormType === RuleFormType.cloudRecording) && (
+        {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) && (
           <Field
             className={styles.formInput}
             label="Select data source"

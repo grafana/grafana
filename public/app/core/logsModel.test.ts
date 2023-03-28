@@ -15,7 +15,6 @@ import {
   LogsMetaKind,
   LogsVolumeType,
   MutableDataFrame,
-  sortDataFrame,
   toDataFrame,
 } from '@grafana/data';
 
@@ -29,8 +28,8 @@ import {
   getSeriesProperties,
   LIMIT_LABEL,
   logSeriesToLogsModel,
-  queryLogsSample,
   queryLogsVolume,
+  queryLogsSample,
 } from './logsModel';
 
 const FROM = dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' });
@@ -1123,9 +1122,8 @@ describe('logs volume', () => {
     datasource: MockObservableDataSourceApi,
     request: DataQueryRequest<TestDataQuery>;
 
-  function createFrame(labels: object, timestamps: number[], values: number[], refId: string) {
+  function createFrame(labels: object, timestamps: number[], values: number[]) {
     return toDataFrame({
-      refId,
       fields: [
         { name: 'Time', type: FieldType.time, values: timestamps },
         {
@@ -1138,13 +1136,20 @@ describe('logs volume', () => {
     });
   }
 
+  function createExpectedFields(levelName: string) {
+    return [
+      expect.objectContaining({ name: 'Time' }),
+      expect.objectContaining({
+        name: 'Value',
+        config: expect.objectContaining({ displayNameFromDS: levelName }),
+      }),
+    ];
+  }
+
   function setup(datasourceSetup: () => void) {
     datasourceSetup();
     request = {
-      targets: [
-        { refId: 'A', target: 'volume query 1' },
-        { refId: 'B', target: 'volume query 2' },
-      ],
+      targets: [{ target: 'volume query 1' }, { target: 'volume query 2' }],
       scopedVars: {},
     } as unknown as DataQueryRequest<TestDataQuery>;
     volumeProvider = queryLogsVolume(datasource, request, {
@@ -1162,21 +1167,19 @@ describe('logs volume', () => {
 
   function setupMultipleResults() {
     // level=unknown
-    const resultAFrame1 = createFrame({ app: 'app01' }, [100, 200, 300], [5, 5, 5], 'A');
+    const resultAFrame1 = createFrame({ app: 'app01' }, [100, 200, 300], [5, 5, 5]);
     // level=error
-    const resultAFrame2 = createFrame({ app: 'app01', level: 'error' }, [100, 200, 300], [0, 1, 0], 'B');
+    const resultAFrame2 = createFrame({ app: 'app01', level: 'error' }, [100, 200, 300], [0, 1, 0]);
     // level=unknown
-    const resultBFrame1 = createFrame({ app: 'app02' }, [100, 200, 300], [1, 2, 3], 'A');
+    const resultBFrame1 = createFrame({ app: 'app02' }, [100, 200, 300], [1, 2, 3]);
     // level=error
-    const resultBFrame2 = createFrame({ app: 'app02', level: 'error' }, [100, 200, 300], [1, 1, 1], 'B');
+    const resultBFrame2 = createFrame({ app: 'app02', level: 'error' }, [100, 200, 300], [1, 1, 1]);
 
     datasource = new MockObservableDataSourceApi('loki', [
       {
-        state: LoadingState.Loading,
         data: [resultAFrame1, resultAFrame2],
       },
       {
-        state: LoadingState.Done,
         data: [resultBFrame1, resultBFrame2],
       },
     ]);
@@ -1184,9 +1187,9 @@ describe('logs volume', () => {
 
   function setupMultipleResultsStreaming() {
     // level=unknown
-    const resultAFrame1 = createFrame({ app: 'app01' }, [100, 200, 300], [5, 5, 5], 'A');
+    const resultAFrame1 = createFrame({ app: 'app01' }, [100, 200, 300], [5, 5, 5]);
     // level=error
-    const resultAFrame2 = createFrame({ app: 'app01', level: 'error' }, [100, 200, 300], [0, 1, 0], 'B');
+    const resultAFrame2 = createFrame({ app: 'app01', level: 'error' }, [100, 200, 300], [0, 1, 0]);
 
     datasource = new MockObservableDataSourceApi('loki', [
       {
@@ -1194,7 +1197,7 @@ describe('logs volume', () => {
         data: [resultAFrame1],
       },
       {
-        state: LoadingState.Done,
+        state: LoadingState.Streaming,
         data: [resultAFrame1, resultAFrame2],
       },
     ]);
@@ -1217,8 +1220,14 @@ describe('logs volume', () => {
             fields: expect.anything(),
             meta: {
               custom: {
-                sourceQuery: { refId: 'A', target: 'volume query 1' },
-                datasourceName: 'loki',
+                targets: [
+                  {
+                    target: 'volume query 1',
+                  },
+                  {
+                    target: 'volume query 2',
+                  },
+                ],
                 logsVolumeType: LogsVolumeType.FullRange,
                 absoluteRange: {
                   from: FROM.valueOf(),
@@ -1233,7 +1242,7 @@ describe('logs volume', () => {
     });
   });
 
-  it('applies correct meta data when streaming', async () => {
+  it('applies correct meta datya when streaming', async () => {
     setup(setupMultipleResultsStreaming);
 
     await expect(volumeProvider).toEmitValuesWith((received) => {
@@ -1246,8 +1255,14 @@ describe('logs volume', () => {
             fields: expect.anything(),
             meta: {
               custom: {
-                sourceQuery: { refId: 'A', target: 'volume query 1' },
-                datasourceName: 'loki',
+                targets: [
+                  {
+                    target: 'volume query 1',
+                  },
+                  {
+                    target: 'volume query 2',
+                  },
+                ],
                 logsVolumeType: LogsVolumeType.FullRange,
                 absoluteRange: {
                   from: FROM.valueOf(),
@@ -1258,6 +1273,22 @@ describe('logs volume', () => {
           }),
           expect.anything(),
         ],
+      });
+    });
+  });
+
+  it('aggregates data frames by level', async () => {
+    setup(setupMultipleResults);
+
+    await expect(volumeProvider).toEmitValuesWith((received) => {
+      expect(received).toContainEqual({
+        state: LoadingState.Done,
+        error: undefined,
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            fields: expect.arrayContaining(createExpectedFields('error')),
+          }),
+        ]),
       });
     });
   });
@@ -1314,14 +1345,14 @@ describe('logs sample', () => {
   const resultAFrame1 = createFrame([{ app: 'app01' }], [100, 200, 300], ['line 1', 'line 2', 'line 3']);
   const resultAFrame2 = createFrame(
     [{ app: 'app01', level: 'error' }],
-    [400, 500, 600],
+    [100, 200, 300],
     ['line 4', 'line 5', 'line 6']
   );
 
-  const resultBFrame1 = createFrame([{ app: 'app02' }], [700, 800, 900], ['line A', 'line B', 'line C']);
+  const resultBFrame1 = createFrame([{ app: 'app02' }], [100, 200, 300], ['line A', 'line B', 'line C']);
   const resultBFrame2 = createFrame(
     [{ app: 'app02', level: 'error' }],
-    [1000, 1100, 1200],
+    [100, 200, 300],
     ['line D', 'line E', 'line F']
   );
 
@@ -1331,7 +1362,7 @@ describe('logs sample', () => {
         data: [resultAFrame1, resultAFrame2],
       },
       {
-        data: [resultBFrame1, resultBFrame2, resultAFrame1, resultAFrame2],
+        data: [resultBFrame1, resultBFrame2],
       },
     ]);
   }
@@ -1343,17 +1374,14 @@ describe('logs sample', () => {
   it('returns data', async () => {
     setup(setupMultipleResults);
     await expect(logsSampleProvider).toEmitValuesWith((received) => {
-      expect(received).toContainEqual({ state: LoadingState.Loading, error: undefined, data: [] });
-      expect(received).toContainEqual(
-        expect.objectContaining({
-          data: expect.arrayContaining([
-            sortDataFrame(resultAFrame1, 0),
-            sortDataFrame(resultAFrame2, 0),
-            sortDataFrame(resultBFrame1, 0),
-            sortDataFrame(resultBFrame2, 0),
-          ]),
-        })
-      );
+      expect(received).toMatchObject([
+        { state: LoadingState.Loading, error: undefined, data: [] },
+        {
+          state: LoadingState.Done,
+          error: undefined,
+          data: [resultAFrame1, resultAFrame2, resultBFrame1, resultBFrame2],
+        },
+      ]);
     });
   });
 

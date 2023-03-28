@@ -143,9 +143,6 @@ var (
 	// MStatTotalUsers is a metric total amount of users
 	MStatTotalUsers prometheus.Gauge
 
-	// MStatTotalTeams is a metric total amount of teams
-	MStatTotalTeams prometheus.Gauge
-
 	// MStatActiveUsers is a metric number of active users
 	MStatActiveUsers prometheus.Gauge
 
@@ -448,12 +445,6 @@ func init() {
 		Namespace: ExporterName,
 	})
 
-	MStatTotalTeams = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name:      "stat_total_teams",
-		Help:      "total amount of teams",
-		Namespace: ExporterName,
-	})
-
 	MStatActiveUsers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_active_users",
 		Help:      "number of active users",
@@ -670,7 +661,6 @@ func initMetricVars() {
 		MStatTotalDashboards,
 		MStatTotalFolders,
 		MStatTotalUsers,
-		MStatTotalTeams,
 		MStatActiveUsers,
 		MStatTotalOrgs,
 		MStatTotalPlaylists,

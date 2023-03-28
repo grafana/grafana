@@ -69,7 +69,7 @@ export const getFieldStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-export const Field = ({
+export const Field: React.FC<FieldProps> = ({
   label,
   description,
   horizontal,
@@ -83,7 +83,7 @@ export const Field = ({
   validationMessageHorizontalOverflow,
   htmlFor,
   ...otherProps
-}: FieldProps) => {
+}) => {
   const theme = useTheme2();
   const styles = getFieldStyles(theme);
   const inputId = htmlFor ?? getChildId(children);

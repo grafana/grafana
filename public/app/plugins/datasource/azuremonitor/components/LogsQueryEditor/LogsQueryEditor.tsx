@@ -24,7 +24,7 @@ interface LogsQueryEditorProps {
   hideFormatAs?: boolean;
 }
 
-const LogsQueryEditor = ({
+const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
   query,
   datasource,
   subscriptionId,
@@ -32,7 +32,7 @@ const LogsQueryEditor = ({
   onChange,
   setError,
   hideFormatAs,
-}: LogsQueryEditorProps) => {
+}) => {
   const migrationError = useMigrations(datasource, query, onChange);
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {

@@ -21,12 +21,10 @@ describe('filterPanelDataToQuery', () => {
       toDataFrame({ refId: 'B', fields: [{ name: 'B333' }], meta: {} }),
       toDataFrame({ refId: 'C', fields: [{ name: 'CCCC' }], meta: { requestId: 'sub3' } }),
     ],
-    errors: [
-      {
-        refId: 'B',
-        message: 'Error!!',
-      },
-    ],
+    error: {
+      refId: 'B',
+      message: 'Error!!',
+    },
     request: makePretendRequest('111', [
       makePretendRequest('sub1'),
       makePretendRequest('sub2'),
@@ -40,7 +38,6 @@ describe('filterPanelDataToQuery', () => {
     expect(panelData?.series.length).toBe(1);
     expect(panelData?.series[0].refId).toBe('A');
     expect(panelData?.error).toBeUndefined();
-    expect(panelData?.errors).toBeUndefined();
   });
 
   it('should match the error to the query', () => {
@@ -48,7 +45,6 @@ describe('filterPanelDataToQuery', () => {
     expect(panelData?.series.length).toBe(3);
     expect(panelData?.series[0].refId).toBe('B');
     expect(panelData?.error!.refId).toBe('B');
-    expect(panelData?.errors![0].refId).toBe('B');
   });
 
   it('should include errors when missing data', () => {
@@ -57,14 +53,12 @@ describe('filterPanelDataToQuery', () => {
       error: {
         message: 'Error!!',
       },
-      errors: [{ message: 'Error!!' }],
     } as unknown as PanelData;
 
     const panelData = filterPanelDataToQuery(withError, 'B');
     expect(panelData).toBeDefined();
     expect(panelData?.state).toBe(LoadingState.Error);
     expect(panelData?.error).toBe(withError.error);
-    expect(panelData?.errors).toEqual(withError.errors);
   });
 
   it('should set the state to done if the frame has no errors', () => {
@@ -97,7 +91,6 @@ describe('filterPanelDataToQuery', () => {
     const panelDataB = filterPanelDataToQuery(withError, 'Q');
     expect(panelDataB?.series.length).toBe(0);
     expect(panelDataB?.error?.refId).toBe('Q');
-    expect(panelDataB?.errors![0].refId).toBe('Q');
   });
 
   it('should not set the state to done if the frame is loading and has no errors', () => {

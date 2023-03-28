@@ -2,21 +2,16 @@ import { of } from 'rxjs';
 import { BackendSrv, BackendSrvRequest, FetchResponse } from 'src/services';
 
 import {
+  DataSourceJsonData,
   DataQuery,
+  DataSourceInstanceSettings,
   DataQueryRequest,
   DataQueryResponseData,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourceRef,
   MutableDataFrame,
+  DataSourceRef,
 } from '@grafana/data';
 
-import {
-  DataSourceWithBackend,
-  isExpressionReference,
-  standardStreamOptionsProvider,
-  toStreamingDataResponse,
-} from './DataSourceWithBackend';
+import { DataSourceWithBackend, standardStreamOptionsProvider, toStreamingDataResponse } from './DataSourceWithBackend';
 
 class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> {
   constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
@@ -54,7 +49,6 @@ describe('DataSourceWithBackend', () => {
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
       dashboardUID: 'dashA',
       panelId: 123,
-      queryGroupId: 'abc',
     } as DataQueryRequest);
 
     const args = mock.calls[0][0];
@@ -93,7 +87,6 @@ describe('DataSourceWithBackend', () => {
           "X-Datasource-Uid": "abc, <mockuid>",
           "X-Panel-Id": "123",
           "X-Plugin-Id": "dummy, sample",
-          "X-Query-Group-Id": "abc",
         },
         "hideFromInspector": false,
         "method": "POST",
@@ -242,16 +235,6 @@ describe('DataSourceWithBackend', () => {
       },
       method: 'GET',
       url: '/api/datasources/uid/abc/health',
-    });
-  });
-
-  describe('isExpressionReference', () => {
-    test('check all possible expression references', () => {
-      expect(isExpressionReference('__expr__')).toBeTruthy(); // New UID
-      expect(isExpressionReference('-100')).toBeTruthy(); // Legacy UID
-      expect(isExpressionReference('Expression')).toBeTruthy(); // Name
-      expect(isExpressionReference({ type: '__expr__' })).toBeTruthy();
-      expect(isExpressionReference({ type: '-100' })).toBeTruthy();
     });
   });
 });

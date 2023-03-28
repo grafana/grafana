@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import {
@@ -137,7 +137,12 @@ export const getRowContexts = async (
   };
 };
 
-export const LogRowContextProvider = ({ getRowContext, row, children, logsSortOrder }: LogRowContextProviderProps) => {
+export const LogRowContextProvider: React.FunctionComponent<LogRowContextProviderProps> = ({
+  getRowContext,
+  row,
+  children,
+  logsSortOrder,
+}) => {
   // React Hook that creates a number state value called limit to component state and a setter function called setLimit
   // The initial value for limit is 10
   // Used for the number of rows to retrieve from backend from a specific point in time
@@ -206,45 +211,31 @@ export const LogRowContextProvider = ({ getRowContext, row, children, logsSortOr
     }
   }, [results]);
 
-  const updateLimit = useCallback(() => {
-    setLimit(limit + 10);
-
-    const { datasourceType, uid: logRowUid } = row;
-    reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
-      datasourceType,
-      logRowUid,
-      newLimit: limit + 10,
-    });
-  }, [limit, row]);
-
-  const runContextQuery = useCallback(async () => {
-    const results = await getRowContexts(getRowContext, row, limit, logsSortOrder);
-    results.doNotCheckForMore = true;
-    setResults(results);
-  }, [getRowContext, limit, logsSortOrder, row]);
-
-  const resultData = useMemo(
-    () => ({
+  return children({
+    result: {
       before: result ? result.data[0] : [],
       after: result ? result.data[1] : [],
-    }),
-    [result]
-  );
-
-  const errorsData = useMemo(
-    () => ({
+    },
+    errors: {
       before: result ? result.errors[0] : undefined,
       after: result ? result.errors[1] : undefined,
-    }),
-    [result]
-  );
-
-  return children({
-    result: resultData,
-    errors: errorsData,
+    },
     hasMoreContextRows,
-    updateLimit,
-    runContextQuery,
+    updateLimit: () => {
+      setLimit(limit + 10);
+
+      const { datasourceType, uid: logRowUid } = row;
+      reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
+        datasourceType,
+        logRowUid,
+        newLimit: limit + 10,
+      });
+    },
+    runContextQuery: async () => {
+      const results = await getRowContexts(getRowContext, row, limit, logsSortOrder);
+      results.doNotCheckForMore = true;
+      setResults(results);
+    },
     limit,
     logsSortOrder,
   });

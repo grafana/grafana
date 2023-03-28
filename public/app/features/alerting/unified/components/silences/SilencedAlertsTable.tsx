@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -13,7 +13,7 @@ interface Props {
   silencedAlerts: AlertmanagerAlert[];
 }
 
-const SilencedAlertsTable = ({ silencedAlerts }: Props) => {
+const SilencedAlertsTable: FC<Props> = ({ silencedAlerts }) => {
   const tableStyles = useStyles2(getAlertTableStyles);
   const styles = useStyles2(getStyles);
 

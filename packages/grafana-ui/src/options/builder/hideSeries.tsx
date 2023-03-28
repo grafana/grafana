@@ -6,7 +6,9 @@ import { HideableFieldConfig, HideSeriesConfig } from '@grafana/schema';
 
 import { FilterPill, HorizontalGroup } from '../../index';
 
-const SeriesConfigEditor = ({ value, onChange }: FieldConfigEditorProps<HideSeriesConfig, {}>) => {
+const SeriesConfigEditor: React.FC<FieldConfigEditorProps<HideSeriesConfig, {}>> = (props) => {
+  const { value, onChange } = props;
+
   const onChangeToggle = useCallback(
     (prop: keyof HideSeriesConfig) => {
       onChange({ ...value, [prop]: !value[prop] });

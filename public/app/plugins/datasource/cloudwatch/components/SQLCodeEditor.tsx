@@ -1,5 +1,5 @@
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
-import React, { useCallback, useEffect } from 'react';
+import React, { FunctionComponent, useCallback, useEffect } from 'react';
 
 import { CodeEditor, Monaco } from '@grafana/ui';
 
@@ -15,7 +15,7 @@ export interface Props {
   datasource: CloudWatchDatasource;
 }
 
-export const SQLCodeEditor = ({ region, sql, onChange, datasource }: Props) => {
+export const SQLCodeEditor: FunctionComponent<Props> = ({ region, sql, onChange, datasource }) => {
   useEffect(() => {
     datasource.sqlCompletionItemProvider.setRegion(region);
   }, [region, datasource]);

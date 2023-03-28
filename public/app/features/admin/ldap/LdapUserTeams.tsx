@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 import { Tooltip, Icon } from '@grafana/ui';
 import { LdapTeam } from 'app/types';
@@ -8,7 +8,7 @@ interface Props {
   showAttributeMapping?: boolean;
 }
 
-export const LdapUserTeams = ({ teams, showAttributeMapping }: Props) => {
+export const LdapUserTeams: FC<Props> = ({ teams, showAttributeMapping }) => {
   const items = showAttributeMapping ? teams : teams.filter((item) => item.teamName);
 
   return (

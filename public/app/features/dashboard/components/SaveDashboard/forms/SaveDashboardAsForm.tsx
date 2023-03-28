@@ -38,7 +38,13 @@ export interface SaveDashboardAsFormProps extends SaveDashboardFormProps {
   isNew?: boolean;
 }
 
-export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSuccess }: SaveDashboardAsFormProps) => {
+export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
+  dashboard,
+  isNew,
+  onSubmit,
+  onCancel,
+  onSuccess,
+}) => {
   const defaultValues: SaveDashboardAsFormDTO = {
     title: isNew ? dashboard.title : `${dashboard.title} Copy`,
     $folder: {

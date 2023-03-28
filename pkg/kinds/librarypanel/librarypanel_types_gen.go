@@ -10,18 +10,14 @@
 
 package librarypanel
 
-import (
-	"time"
-)
-
 // LibraryElementDTOMeta defines model for LibraryElementDTOMeta.
 type LibraryElementDTOMeta struct {
 	ConnectedDashboards int64                     `json:"connectedDashboards"`
-	Created             time.Time                 `json:"created"`
+	Created             string                    `json:"created"`
 	CreatedBy           LibraryElementDTOMetaUser `json:"createdBy"`
 	FolderName          string                    `json:"folderName"`
 	FolderUid           string                    `json:"folderUid"`
-	Updated             time.Time                 `json:"updated"`
+	Updated             string                    `json:"updated"`
 	UpdatedBy           LibraryElementDTOMetaUser `json:"updatedBy"`
 }
 

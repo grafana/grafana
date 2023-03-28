@@ -1,13 +1,12 @@
 import pluralize from 'pluralize';
-import React, { Fragment, useState } from 'react';
-import { useDebounce } from 'react-use';
+import React, { FC, Fragment, useMemo } from 'react';
 
 import { Stack } from '@grafana/experimental';
 import { Badge } from '@grafana/ui';
 import { CombinedRule, CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { isAlertingRule, isRecordingRule, isRecordingRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
+import { isAlertingRule, isRecordingRule, isRecordingRulerRule } from '../../utils/rules';
 
 interface Props {
   includeTotal?: boolean;
@@ -21,54 +20,41 @@ const emptyStats = {
   [PromAlertingRuleState.Firing]: 0,
   [PromAlertingRuleState.Pending]: 0,
   [PromAlertingRuleState.Inactive]: 0,
-  paused: 0,
   error: 0,
 } as const;
 
-export const RuleStats = ({ group, namespaces, includeTotal }: Props) => {
+export const RuleStats: FC<Props> = ({ group, namespaces, includeTotal }) => {
   const evaluationInterval = group?.interval;
-  const [calculated, setCalculated] = useState(emptyStats);
 
-  // Performance optimization allowing reducing number of stats calculation
-  // The problem occurs when we load many data sources.
-  // Then redux store gets updated multiple times in a pretty short period, triggering calculating stats many times.
-  // debounce allows to skip calculations which results would be abandoned in milliseconds
-  useDebounce(
-    () => {
-      const stats = { ...emptyStats };
+  const calculated = useMemo(() => {
+    const stats = { ...emptyStats };
 
-      const calcRule = (rule: CombinedRule) => {
-        if (rule.promRule && isAlertingRule(rule.promRule)) {
-          if (isGrafanaRulerRulePaused(rule)) {
-            stats.paused += 1;
-          }
-          stats[rule.promRule.state] += 1;
-        }
-        if (ruleHasError(rule)) {
-          stats.error += 1;
-        }
-        if (
-          (rule.promRule && isRecordingRule(rule.promRule)) ||
-          (rule.rulerRule && isRecordingRulerRule(rule.rulerRule))
-        ) {
-          stats.recording += 1;
-        }
-        stats.total += 1;
-      };
-
-      if (group) {
-        group.rules.forEach(calcRule);
+    const calcRule = (rule: CombinedRule) => {
+      if (rule.promRule && isAlertingRule(rule.promRule)) {
+        stats[rule.promRule.state] += 1;
       }
-
-      if (namespaces) {
-        namespaces.forEach((namespace) => namespace.groups.forEach((group) => group.rules.forEach(calcRule)));
+      if (ruleHasError(rule)) {
+        stats.error += 1;
       }
+      if (
+        (rule.promRule && isRecordingRule(rule.promRule)) ||
+        (rule.rulerRule && isRecordingRulerRule(rule.rulerRule))
+      ) {
+        stats.recording += 1;
+      }
+      stats.total += 1;
+    };
 
-      setCalculated(stats);
-    },
-    400,
-    [group, namespaces]
-  );
+    if (group) {
+      group.rules.forEach(calcRule);
+    }
+
+    if (namespaces) {
+      namespaces.forEach((namespace) => namespace.groups.forEach((group) => group.rules.forEach(calcRule)));
+    }
+
+    return stats;
+  }, [group, namespaces]);
 
   const statsComponents: React.ReactNode[] = [];
 
@@ -96,17 +82,7 @@ export const RuleStats = ({ group, namespaces, includeTotal }: Props) => {
     );
   }
 
-  if (calculated[PromAlertingRuleState.Inactive] && calculated.paused) {
-    statsComponents.push(
-      <Badge
-        color="green"
-        key="paused"
-        text={`${calculated[PromAlertingRuleState.Inactive]} normal (${calculated.paused} paused)`}
-      />
-    );
-  }
-
-  if (calculated[PromAlertingRuleState.Inactive] && !calculated.paused) {
+  if (calculated[PromAlertingRuleState.Inactive]) {
     statsComponents.push(
       <Badge color="green" key="inactive" text={`${calculated[PromAlertingRuleState.Inactive]} normal`} />
     );

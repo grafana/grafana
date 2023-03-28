@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { LoadingPlaceholder, MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
+import { MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
 
 import LokiLanguageProvider from '../LanguageProvider';
 import { ContextFilter } from '../types';
@@ -35,19 +35,6 @@ function getStyles(theme: GrafanaTheme2) {
         overscroll-behavior: contain;
       }
     `,
-    loadingPlaceholder: css`
-      margin-bottom: 0px;
-      float: right;
-      display: inline;
-      margin-left: auto;
-    `,
-    textWrapper: css`
-      display: flex;
-      align-items: center;
-    `,
-    hidden: css`
-      visibility: hidden;
-    `,
   };
 }
 
@@ -64,7 +51,6 @@ export function LokiContextUi(props: LokiContextUiProps) {
   const [contextFilters, setContextFilters] = useState<ContextFilter[]>([]);
 
   const [initialized, setInitialized] = useState(false);
-  const [loading, setLoading] = useState(false);
   const timerHandle = React.useRef<number>();
   const previousInitialized = React.useRef<boolean>(false);
   const previousContextFilters = React.useRef<ContextFilter[]>([]);
@@ -89,10 +75,8 @@ export function LokiContextUi(props: LokiContextUiProps) {
     if (timerHandle.current) {
       clearTimeout(timerHandle.current);
     }
-    setLoading(true);
     timerHandle.current = window.setTimeout(() => {
       updateFilter(contextFilters);
-      setLoading(false);
     }, 1500);
 
     return () => {
@@ -150,7 +134,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   return (
     <div className={styles.multiSelectWrapper}>
-      <div className={styles.textWrapper}>
+      <div>
         {' '}
         <Tooltip
           content={
@@ -169,7 +153,6 @@ export function LokiContextUi(props: LokiContextUiProps) {
           />
         </Tooltip>{' '}
         Select labels to be included in the context query:
-        <LoadingPlaceholder text="" className={`${styles.loadingPlaceholder} ${loading ? '' : styles.hidden}`} />
       </div>
       <div>
         <MultiSelect

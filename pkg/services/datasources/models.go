@@ -157,7 +157,9 @@ type GetDataSourcesQuery struct {
 	User            *user.SignedInUser
 }
 
-type GetAllDataSourcesQuery struct{}
+type GetAllDataSourcesQuery struct {
+	Result []*DataSource
+}
 
 type GetDataSourcesByTypeQuery struct {
 	OrgID int64 // optional: filter by org_id

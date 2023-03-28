@@ -12,7 +12,7 @@ import { VisualizationSelectPane } from './VisualizationSelectPane';
 import { OptionPaneRenderProps } from './types';
 import { usePanelLatestData } from './usePanelLatestData';
 
-export const OptionsPane = ({
+export const OptionsPane: React.FC<OptionPaneRenderProps> = ({
   plugin,
   panel,
   onFieldConfigsChange,
@@ -20,7 +20,7 @@ export const OptionsPane = ({
   onPanelConfigChange,
   dashboard,
   instanceState,
-}: OptionPaneRenderProps) => {
+}) => {
   const styles = useStyles2(getStyles);
   const isVizPickerOpen = useSelector((state) => state.panelEditor.isVizPickerOpen);
   const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false }, true);

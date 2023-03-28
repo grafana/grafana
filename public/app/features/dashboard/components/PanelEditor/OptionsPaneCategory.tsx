@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactNode, useCallback, useEffect, useState, useRef } from 'react';
+import React, { FC, ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -23,18 +23,8 @@ export interface OptionsPaneCategoryProps {
 
 const CATEGORY_PARAM_NAME = 'showCategory';
 
-export const OptionsPaneCategory = React.memo(
-  ({
-    id,
-    title,
-    children,
-    forceOpen,
-    isOpenDefault,
-    renderTitle,
-    className,
-    itemsCount,
-    isNested = false,
-  }: OptionsPaneCategoryProps) => {
+export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
+  ({ id, title, children, forceOpen, isOpenDefault, renderTitle, className, itemsCount, isNested = false }) => {
     const initialIsExpanded = isOpenDefault !== false;
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
       isExpanded: initialIsExpanded,

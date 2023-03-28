@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import React from 'react';
+import React, { FC } from 'react';
 
 import { stylesFactory } from '../../themes';
 import { Icon } from '../Icon/Icon';
@@ -28,7 +28,8 @@ export type Props = {
 /**
  * @public
  */
-export const Spinner = ({ className, inline = false, iconClassName, style, size = 16 }: Props) => {
+export const Spinner: FC<Props> = (props: Props) => {
+  const { className, inline = false, iconClassName, style, size = 16 } = props;
   const styles = getStyles(size, inline);
   return (
     <div data-testid="Spinner" style={style} className={cx(styles.wrapper, className)}>

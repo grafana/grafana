@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import React from 'react';
 
 import { createTheme } from '@grafana/data';
@@ -29,7 +29,7 @@ describe('<QueryField />', () => {
   });
 
   describe('syntaxLoaded', () => {
-    it('should re-render the editor after syntax has fully loaded', async () => {
+    it('should re-render the editor after syntax has fully loaded', () => {
       const mockOnRichValueChange = jest.fn();
       const { rerender } = render(
         <UnThemedQueryField
@@ -49,12 +49,9 @@ describe('<QueryField />', () => {
         />
       );
       expect(mockOnRichValueChange).toHaveBeenCalled();
-
-      // wait for the query to appear to prevent act warnings
-      await screen.findByText('my query');
     });
 
-    it('should not re-render the editor if syntax is already loaded', async () => {
+    it('should not re-render the editor if syntax is already loaded', () => {
       const mockOnRichValueChange = jest.fn();
       const { rerender } = render(
         <UnThemedQueryField
@@ -75,12 +72,9 @@ describe('<QueryField />', () => {
         />
       );
       expect(mockOnRichValueChange).not.toBeCalled();
-
-      // wait for the query to appear to prevent act warnings
-      await screen.findByText('my query');
     });
 
-    it('should not re-render the editor twice once syntax is fully loaded', async () => {
+    it('should not re-render the editor twice once syntax is fully loaded', () => {
       const mockOnRichValueChange = jest.fn();
       const { rerender } = render(
         <UnThemedQueryField
@@ -109,9 +103,6 @@ describe('<QueryField />', () => {
         />
       );
       expect(mockOnRichValueChange).toBeCalledTimes(1);
-
-      // wait for the query to appear to prevent act warnings
-      await screen.findByText('my query');
     });
   });
 });

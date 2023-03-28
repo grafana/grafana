@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
@@ -61,7 +60,6 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 			ConnMaxLifetime:   14400,
 			Encrypt:           "false",
 			ConnectionTimeout: 0,
-			SecureDSProxy:     false,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -92,18 +90,8 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 		if cfg.Env == setting.Dev {
 			logger.Debug("GetEngine", "connection", cnnstr)
 		}
-
-		driverName := "mssql"
-		// register a new proxy driver if the secure socks proxy is enabled
-		if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
-			driverName, err = createMSSQLProxyDriver(&cfg.SecureSocksDSProxy, cnnstr)
-			if err != nil {
-				return nil, err
-			}
-		}
-
 		config := sqleng.DataPluginConfiguration{
-			DriverName:        driverName,
+			DriverName:        "mssql",
 			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},

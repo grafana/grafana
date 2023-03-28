@@ -70,8 +70,7 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 		return usr, err
 	}
 
-	userResult, err := hs.NotificationService.ValidateResetPasswordCode(c.Req.Context(), &query, getUserByLogin)
-	if err != nil {
+	if err := hs.NotificationService.ValidateResetPasswordCode(c.Req.Context(), &query, getUserByLogin); err != nil {
 		if errors.Is(err, notifications.ErrInvalidEmailCode) {
 			return response.Error(400, "Invalid or expired reset password code", nil)
 		}
@@ -88,8 +87,9 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 	}
 
 	cmd := user.ChangeUserPasswordCommand{}
-	cmd.UserID = userResult.ID
-	cmd.NewPassword, err = util.EncodePassword(form.NewPassword, userResult.Salt)
+	cmd.UserID = query.Result.ID
+	var err error
+	cmd.NewPassword, err = util.EncodePassword(form.NewPassword, query.Result.Salt)
 	if err != nil {
 		return response.Error(500, "Failed to encode password", err)
 	}

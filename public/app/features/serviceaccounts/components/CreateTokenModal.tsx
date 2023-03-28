@@ -38,10 +38,8 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
   tomorrow.setDate(tomorrow.getDate() + 1);
 
   const maxExpirationDate = new Date();
-  if (config.tokenExpirationDayLimit !== undefined && config.tokenExpirationDayLimit > -1) {
+  if (config.tokenExpirationDayLimit !== undefined) {
     maxExpirationDate.setDate(maxExpirationDate.getDate() + config.tokenExpirationDayLimit + 1);
-  } else {
-    maxExpirationDate.setDate(8640000000000000);
   }
   const defaultExpirationDate = config.tokenExpirationDayLimit !== undefined && config.tokenExpirationDayLimit > 0;
 

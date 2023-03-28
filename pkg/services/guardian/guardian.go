@@ -42,7 +42,6 @@ type DashboardGuardian interface {
 }
 
 type dashboardGuardianImpl struct {
-	cfg              *setting.Cfg
 	user             *user.SignedInUser
 	dashId           int64
 	orgId            int64
@@ -74,7 +73,7 @@ var NewByDashboard = func(ctx context.Context, dash *dashboards.Dashboard, orgId
 }
 
 // newDashboardGuardian creates a dashboard guardian by the provided dashId.
-func newDashboardGuardian(ctx context.Context, cfg *setting.Cfg, dashId int64, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
+func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
 	if dashId != 0 {
 		q := &dashboards.GetDashboardQuery{
 			ID:    dashId,
@@ -90,7 +89,6 @@ func newDashboardGuardian(ctx context.Context, cfg *setting.Cfg, dashId int64, o
 	}
 
 	return &dashboardGuardianImpl{
-		cfg:              cfg,
 		user:             user,
 		dashId:           dashId,
 		orgId:            orgId,
@@ -103,7 +101,7 @@ func newDashboardGuardian(ctx context.Context, cfg *setting.Cfg, dashId int64, o
 }
 
 // newDashboardGuardianByUID creates a dashboard guardian by the provided dashUID.
-func newDashboardGuardianByUID(ctx context.Context, cfg *setting.Cfg, dashUID string, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
+func newDashboardGuardianByUID(ctx context.Context, dashUID string, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
 	dashID := int64(0)
 	if dashUID != "" {
 		q := &dashboards.GetDashboardQuery{
@@ -122,7 +120,6 @@ func newDashboardGuardianByUID(ctx context.Context, cfg *setting.Cfg, dashUID st
 	}
 
 	return &dashboardGuardianImpl{
-		cfg:              cfg,
 		user:             user,
 		dashId:           dashID,
 		orgId:            orgId,
@@ -137,9 +134,8 @@ func newDashboardGuardianByUID(ctx context.Context, cfg *setting.Cfg, dashUID st
 // newDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboard.
 // This constructor should be preferred over the other two if the dashboard in available
 // since it avoids querying the database for fetching the dashboard.
-func newDashboardGuardianByDashboard(ctx context.Context, cfg *setting.Cfg, dash *dashboards.Dashboard, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
+func newDashboardGuardianByDashboard(ctx context.Context, dash *dashboards.Dashboard, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
 	return &dashboardGuardianImpl{
-		cfg:              cfg,
 		user:             user,
 		dashId:           dash.ID,
 		orgId:            orgId,
@@ -156,7 +152,7 @@ func (g *dashboardGuardianImpl) CanSave() (bool, error) {
 }
 
 func (g *dashboardGuardianImpl) CanEdit() (bool, error) {
-	if g.cfg.ViewersCanEdit {
+	if setting.ViewersCanEdit {
 		return g.HasPermission(dashboards.PERMISSION_VIEW)
 	}
 

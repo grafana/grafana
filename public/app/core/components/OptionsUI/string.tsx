@@ -10,20 +10,18 @@ interface Props extends StandardEditorProps<string, StringFieldConfigSettings> {
 export const StringValueEditor = ({ value, onChange, item, suffix }: Props) => {
   const Component = item.settings?.useTextarea ? TextArea : Input;
   const onValueChange = useCallback(
-    (
-      e:
-        | React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>
-        | React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => {
+    (e: React.SyntheticEvent) => {
       let nextValue = value ?? '';
-      if ('key' in e) {
+      if (e.hasOwnProperty('key')) {
         // handling keyboard event
-        if (e.key === 'Enter' && !item.settings?.useTextarea) {
-          nextValue = e.currentTarget.value.trim();
+        const evt = e as React.KeyboardEvent<HTMLInputElement>;
+        if (evt.key === 'Enter' && !item.settings?.useTextarea) {
+          nextValue = evt.currentTarget.value.trim();
         }
       } else {
-        // handling blur event
-        nextValue = e.currentTarget.value.trim();
+        // handling form event
+        const evt = e as React.FormEvent<HTMLInputElement>;
+        nextValue = evt.currentTarget.value.trim();
       }
       if (nextValue === value) {
         return; // no change

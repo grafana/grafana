@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
 import Slider, { SliderProps } from 'rc-slider';
-import React, { useCallback } from 'react';
+import React, { FunctionComponent, useCallback } from 'react';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
@@ -14,7 +14,7 @@ import { RangeSliderProps } from './types';
  *
  * RichHistoryQueriesTab uses this Range Component
  */
-export const RangeSlider = ({
+export const RangeSlider: FunctionComponent<RangeSliderProps> = ({
   min,
   max,
   onChange,
@@ -25,7 +25,7 @@ export const RangeSlider = ({
   formatTooltipResult,
   value,
   tooltipAlwaysVisible = true,
-}: RangeSliderProps) => {
+}) => {
   const handleChange = useCallback(
     (v: number | number[]) => {
       const value = typeof v === 'number' ? [v, v] : v;

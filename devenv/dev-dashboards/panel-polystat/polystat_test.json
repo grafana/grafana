@@ -2867,10 +2867,6 @@
               "value": "opm"
             },
             {
-              "text": "requests/min (rpm)",
-              "value": "reqpm"
-            },
-            {
               "text": "reads/min (rpm)",
               "value": "rpm"
             },

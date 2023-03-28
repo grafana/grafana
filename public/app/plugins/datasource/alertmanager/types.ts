@@ -92,7 +92,7 @@ export type Receiver = {
   [key: string]: any;
 };
 
-export type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
+type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
 
 export type Route = {
   receiver?: string;
@@ -112,11 +112,6 @@ export type Route = {
   /** only the root policy might have a provenance field defined */
   provenance?: string;
 };
-
-export interface RouteWithID extends Route {
-  id: string;
-  routes?: RouteWithID[];
-}
 
 export type InhibitRule = {
   target_match: Record<string, string>;

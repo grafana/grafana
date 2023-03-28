@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 import { Alert } from 'app/types/unified-alerting';
 
@@ -10,7 +10,7 @@ interface Props {
   instance: Alert;
 }
 
-export const AlertInstanceDetails = ({ instance }: Props) => {
+export const AlertInstanceDetails: FC<Props> = ({ instance }) => {
   const annotations = useCleanAnnotations(instance.annotations);
   const annotationLinks = useAnnotationLinks(annotations);
 

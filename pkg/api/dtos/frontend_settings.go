@@ -181,7 +181,6 @@ type FrontendSettingsDTO struct {
 	LicenseInfo FrontendSettingsLicenseInfoDTO `json:"licenseInfo"`
 
 	FeatureToggles                   map[string]bool                `json:"featureToggles"`
-	AnonymousEnabled                 bool                           `json:"anonymousEnabled"`
 	RendererAvailable                bool                           `json:"rendererAvailable"`
 	RendererVersion                  string                         `json:"rendererVersion"`
 	SecretsManagerPluginEnabled      bool                           `json:"secretsManagerPluginEnabled"`

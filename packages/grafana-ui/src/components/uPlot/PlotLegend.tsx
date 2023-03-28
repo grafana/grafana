@@ -27,8 +27,8 @@ interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, '
   config: UPlotConfigBuilder;
 }
 
-export const PlotLegend = React.memo(
-  ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
+export const PlotLegend: React.FC<PlotLegendProps> = React.memo(
+  ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }) => {
     const theme = useTheme2();
     const legendItems = config
       .getSeries()

@@ -1,4 +1,3 @@
-import { css, cx } from '@emotion/css';
 import { t } from 'i18next';
 import React, { PureComponent } from 'react';
 
@@ -16,18 +15,17 @@ interface Props {
 class UserSessions extends PureComponent<Props> {
   render() {
     const { isLoading, sessions, revokeUserSession } = this.props;
-    const styles = getStyles();
 
     if (isLoading) {
       return <LoadingPlaceholder text={<Trans i18nKey="user-sessions.loading">Loading sessions...</Trans>} />;
     }
 
     return (
-      <div className={styles.wrapper}>
+      <div>
         {sessions.length > 0 && (
           <>
             <h3 className="page-sub-heading">Sessions</h3>
-            <div className={cx('gf-form-group', styles.table)}>
+            <div className="gf-form-group">
               <table className="filter-table form-inline" data-testid={selectors.components.UserProfile.sessionsTable}>
                 <thead>
                   <tr>
@@ -77,14 +75,5 @@ class UserSessions extends PureComponent<Props> {
     );
   }
 }
-
-const getStyles = () => ({
-  wrapper: css({
-    maxWidth: '100%',
-  }),
-  table: css({
-    overflow: 'auto',
-  }),
-});
 
 export default UserSessions;

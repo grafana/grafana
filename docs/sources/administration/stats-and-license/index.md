@@ -11,10 +11,6 @@ keywords:
   - configuration
   - server
   - settings
-labels:
-  products:
-    - enterprise
-    - oss
 title: Stats and license
 weight: 400
 ---
@@ -34,7 +30,7 @@ If you are a Grafana server administrator, use the Settings tab to view the sett
 ### View server settings
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
-1. Click **Administration** in the left-side menu, and then **Settings**.
+1. Hover your cursor over the **Server Admin** (shield) icon in the side menu and then click the **Settings** tab.
 
 ### Available settings
 
@@ -51,7 +47,7 @@ If you are a Grafana server admin, then you can view useful statistics about you
 ### View server stats
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
-1. Click **Administration** in the left-side menu, and then **Stats and license**.
+1. Hover your cursor over the **Server Admin** (shield) icon in the side menu and then click the **Stats & Licensing** tab.
 
 ### Available stats
 

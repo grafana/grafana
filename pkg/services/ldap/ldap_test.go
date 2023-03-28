@@ -68,7 +68,7 @@ func TestServer_Users(t *testing.T) {
 
 		// Set up attribute map without surname and email
 		cfg := setting.NewCfg()
-		cfg.LDAPAuthEnabled = true
+		cfg.LDAPEnabled = true
 
 		server := &Server{
 			cfg: cfg,
@@ -212,7 +212,7 @@ func TestServer_Users(t *testing.T) {
 		})
 
 		cfg := setting.NewCfg()
-		cfg.LDAPAuthEnabled = true
+		cfg.LDAPEnabled = true
 
 		server := &Server{
 			cfg: cfg,
@@ -289,7 +289,7 @@ func TestServer_Users(t *testing.T) {
 		})
 
 		cfg := setting.NewCfg()
-		cfg.LDAPAuthEnabled = true
+		cfg.LDAPEnabled = true
 
 		server := &Server{
 			cfg: cfg,

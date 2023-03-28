@@ -103,8 +103,6 @@ func (ctx *ReqContext) WriteErrOrFallback(status int, message string, err error)
 
 func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error) {
 	data := make(map[string]interface{})
-	statusResponse := status
-
 	traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
 
 	if err != nil {
@@ -123,8 +121,6 @@ func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error)
 			data["message"] = publicErr.Message
 			data["messageId"] = publicErr.MessageID
 			data["statusCode"] = publicErr.StatusCode
-
-			statusResponse = publicErr.StatusCode
 		} else {
 			if message != "" {
 				logMessage = message
@@ -145,7 +141,7 @@ func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error)
 		data["message"] = message
 	}
 
-	ctx.JSON(statusResponse, data)
+	ctx.JSON(status, data)
 }
 
 func (ctx *ReqContext) HasUserRole(role org.RoleType) bool {

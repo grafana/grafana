@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { MouseEvent, useCallback } from 'react';
+import React, { FC, MouseEvent, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -20,7 +20,7 @@ interface Props {
   id: string;
 }
 
-export const VariableLink = ({ loading, disabled, onClick: propsOnClick, text, onCancel, id }: Props) => {
+export const VariableLink: FC<Props> = ({ loading, disabled, onClick: propsOnClick, text, onCancel, id }) => {
   const styles = useStyles2(getStyles);
   const onClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
@@ -66,7 +66,7 @@ interface VariableLinkTextProps {
   text: string;
 }
 
-const VariableLinkText = ({ text }: VariableLinkTextProps) => {
+const VariableLinkText: FC<VariableLinkTextProps> = ({ text }) => {
   const styles = useStyles2(getStyles);
   return (
     <span className={styles.textAndTags}>
@@ -75,7 +75,7 @@ const VariableLinkText = ({ text }: VariableLinkTextProps) => {
   );
 };
 
-const LoadingIndicator = ({ onCancel }: Pick<Props, 'onCancel'>) => {
+const LoadingIndicator: FC<Pick<Props, 'onCancel'>> = ({ onCancel }) => {
   const onClick = useCallback(
     (event: MouseEvent) => {
       event.preventDefault();

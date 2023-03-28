@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { FC } from 'react';
 
 import { FieldConfigOptionsRegistry, GrafanaTheme2, ConfigOverrideRule } from '@grafana/data';
 import { HorizontalGroup, Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { FieldMatcherUIRegistryItem } from '@grafana/ui/src/components/MatchersUI/types';
 
-interface Props {
+interface OverrideCategoryTitleProps {
   isExpanded: boolean;
   registry: FieldConfigOptionsRegistry;
   matcherUi: FieldMatcherUIRegistryItem<any>;
@@ -13,14 +13,14 @@ interface Props {
   overrideName: string;
   onOverrideRemove: () => void;
 }
-export const OverrideCategoryTitle = ({
+export const OverrideCategoryTitle: FC<OverrideCategoryTitleProps> = ({
   isExpanded,
   registry,
   matcherUi,
   overrideName,
   override,
   onOverrideRemove,
-}: Props) => {
+}) => {
   const styles = useStyles2(getStyles);
   const properties = override.properties.map((p) => registry.getIfExists(p.id)).filter((prop) => !!prop);
   const propertyNames = properties.map((p) => p?.name).join(', ');

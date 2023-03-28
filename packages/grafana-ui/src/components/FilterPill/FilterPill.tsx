@@ -15,7 +15,7 @@ export interface FilterPillProps {
   icon?: IconName;
 }
 
-export const FilterPill = ({ label, selected, onClick, icon = 'check' }: FilterPillProps) => {
+export const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick, icon = 'check' }) => {
   const styles = useStyles2(getStyles);
   const clearButton = useStyles2(clearButtonStyles);
   return (

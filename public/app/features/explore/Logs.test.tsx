@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 import { LoadingState, LogLevel, LogRowModel, MutableDataFrame, toUtc, EventBusSrv } from '@grafana/data';
@@ -44,6 +43,14 @@ describe('Logs', () => {
       />
     );
   };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
 
   it('should render logs', () => {
     setup();
@@ -182,10 +189,11 @@ describe('Logs', () => {
     expect(scanningStopped).toHaveBeenCalled();
   });
 
-  it('should flip the order', async () => {
+  it('should flip the order', () => {
     setup();
     const oldestFirstSelection = screen.getByLabelText('Oldest first');
-    await userEvent.click(oldestFirstSelection);
+    fireEvent.click(oldestFirstSelection);
+    jest.advanceTimersByTime(1000);
     const logsSection = screen.getByTestId('logRows');
     let logRows = logsSection.querySelectorAll('tr');
     expect(logRows.length).toBe(3);

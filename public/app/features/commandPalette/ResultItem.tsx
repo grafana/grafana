@@ -35,12 +35,11 @@ export const ResultItem = React.forwardRef(
 
     let name = action.name;
 
-    const hasCommandOrLink = (action: ActionImpl) =>
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      Boolean(action.command?.perform || (action as ActionImpl & { url?: string }).url);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const hasAction = Boolean(action.command?.perform || (action as ActionImpl & { url?: string }).url);
 
     // TODO: does this needs adjusting for i18n?
-    if (action.children.length && !hasCommandOrLink(action) && !name.endsWith('...')) {
+    if (action.children.length && !hasAction && !name.endsWith('...')) {
       name += '...';
     }
 
@@ -49,17 +48,16 @@ export const ResultItem = React.forwardRef(
         <div className={styles.actionContainer}>
           {action.icon}
           <div className={styles.textContainer}>
-            {ancestors.map((ancestor) => (
-              <React.Fragment key={ancestor.id}>
-                {!hasCommandOrLink(ancestor) && (
-                  <>
+            <div>
+              {ancestors.length > 0 &&
+                ancestors.map((ancestor) => (
+                  <React.Fragment key={ancestor.id}>
                     <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
-                    <span className={styles.breadcrumbSeparator}>&rsaquo;</span>
-                  </>
-                )}
-              </React.Fragment>
-            ))}
-            <span>{name}</span>
+                    <span className={styles.breadcrumbAncestor}>&rsaquo;</span>
+                  </React.Fragment>
+                ))}
+              <span>{name}</span>
+            </div>
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
         </div>
@@ -79,7 +77,7 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'space-between',
       cursor: 'pointer',
       position: 'relative',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.borderRadius(2),
       margin: theme.spacing(0, 1),
     }),
     activeRow: css({
@@ -93,42 +91,37 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
         top: 0,
         bottom: 0,
         width: theme.spacing(0.5),
-        borderRadius: theme.shape.radius.default,
+        borderRadius: theme.shape.borderRadius(2),
         backgroundImage: theme.colors.gradients.brandVertical,
       },
     }),
     actionContainer: css({
       display: 'flex',
       gap: theme.spacing(1),
-      alignItems: 'baseline',
+      alignItems: 'center',
       fontSize: theme.typography.fontSize,
-      width: '100%',
     }),
     textContainer: css({
-      display: 'block',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    shortcut: css({
+      padding: theme.spacing(0, 1),
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.borderRadius(),
+      fontSize: theme.typography.fontSize,
     }),
     breadcrumbAncestor: css({
-      color: theme.colors.text.secondary,
-    }),
-    breadcrumbSeparator: css({
-      color: theme.colors.text.secondary,
-      marginLeft: theme.spacing(1),
       marginRight: theme.spacing(1),
+      color: theme.colors.text.secondary,
     }),
     subtitleText: css({
-      ...theme.typography.bodySmall,
-      color: theme.colors.text.secondary,
-      display: 'block',
-      flexBasis: '20%',
-      flexGrow: 1,
-      flexShrink: 0,
-      maxWidth: 'fit-content',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
+      fontSize: theme.typography.fontSize - 2,
+    }),
+    shortcutContainer: css({
+      display: 'grid',
+      gridAutoFlow: 'column',
+      gap: theme.spacing(1),
     }),
   };
 };

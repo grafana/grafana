@@ -6,7 +6,6 @@ import {
   Matcher,
   TimeInterval,
   TimeRange,
-  ObjectMatcher,
 } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
@@ -159,13 +158,8 @@ export function parseMatcher(matcher: string): Matcher {
   };
 }
 
-export function matcherToObjectMatcher(matcher: Matcher): ObjectMatcher {
-  const operator = matcherToOperator(matcher);
-  return [matcher.name, operator, matcher.value];
-}
-
 export function parseMatchers(matcherQueryString: string): Matcher[] {
-  const matcherRegExp = /\b([\w.-]+)(=~|!=|!~|=(?="?\w))"?([^"\n,} ]*)"?/g;
+  const matcherRegExp = /\b([\w.-]+)(=~|!=|!~|=(?="?\w))"?([^"\n,]*)"?/g;
   const matchers: Matcher[] = [];
 
   matcherQueryString.replace(matcherRegExp, (_, key, operator, value) => {
@@ -173,7 +167,7 @@ export function parseMatchers(matcherQueryString: string): Matcher[] {
     const isRegex = operator === MatcherOperator.regex || operator === MatcherOperator.notRegex;
     matchers.push({
       name: key,
-      value: value.trim(),
+      value,
       isEqual,
       isRegex,
     });

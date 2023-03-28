@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
 import { upperFirst } from 'lodash';
-import React from 'react';
+import React, { FunctionComponent } from 'react';
 
 import { GrafanaTheme2, ThemeVizHue } from '@grafana/data';
 
@@ -17,7 +17,12 @@ interface NamedColorsGroupProps {
   key?: string;
 }
 
-const NamedColorsGroup = ({ hue, selectedColor, onColorSelect, ...otherProps }: NamedColorsGroupProps) => {
+const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
+  hue,
+  selectedColor,
+  onColorSelect,
+  ...otherProps
+}) => {
   const label = upperFirst(hue.name);
   const styles = useStyles2(getStyles);
 

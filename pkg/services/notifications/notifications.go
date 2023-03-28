@@ -54,9 +54,8 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUser
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
-		"Subject":                 subjectTemplateFunc,
-		"HiddenSubject":           hiddenSubjectTemplateFunc,
-		"__dangerouslyInjectHTML": __dangerouslyInjectHTML,
+		"Subject":       subjectTemplateFunc,
+		"HiddenSubject": hiddenSubjectTemplateFunc,
 	})
 	mailTemplates.Funcs(sprig.FuncMap())
 
@@ -175,17 +174,6 @@ func subjectTemplateFunc(obj map[string]interface{}, data map[string]interface{}
 	return subj
 }
 
-// __dangerouslyInjectHTML allows marking areas of am email template as HTML safe, this will _not_ sanitize the string and will allow HTML snippets to be rendered verbatim.
-// Use with absolute care as this _could_ allow for XSS attacks when used in an insecure context.
-//
-// It's safe to ignore gosec warning G203 when calling this function in an HTML template because we assume anyone who has write access
-// to the email templates folder is an administrator.
-//
-// nolint:gosec
-func __dangerouslyInjectHTML(s string) template.HTML {
-	return template.HTML(s)
-}
-
 func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, cmd *SendEmailCommandSync) error {
 	message, err := ns.buildEmailMessage(&SendEmailCommand{
 		Data:          cmd.Data,
@@ -235,26 +223,27 @@ func (ns *NotificationService) SendResetPasswordEmail(ctx context.Context, cmd *
 
 type GetUserByLoginFunc = func(c context.Context, login string) (*user.User, error)
 
-func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, query *ValidateResetPasswordCodeQuery, userByLogin GetUserByLoginFunc) (*user.User, error) {
+func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, query *ValidateResetPasswordCodeQuery, userByLogin GetUserByLoginFunc) error {
 	login := getLoginForEmailCode(query.Code)
 	if login == "" {
-		return nil, ErrInvalidEmailCode
+		return ErrInvalidEmailCode
 	}
 
 	user, err := userByLogin(ctx, login)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	validEmailCode, err := validateUserEmailCode(ns.Cfg, user, query.Code)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if !validEmailCode {
-		return nil, ErrInvalidEmailCode
+		return ErrInvalidEmailCode
 	}
 
-	return user, nil
+	query.Result = user
+	return nil
 }
 
 func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *events.SignUpStarted) error {

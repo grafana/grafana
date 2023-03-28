@@ -32,8 +32,8 @@ func (c *GroupDelta) IsEmpty() bool {
 }
 
 type RuleReader interface {
-	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
-	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error)
+	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) error
+	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) error
 }
 
 // CalculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).
@@ -45,10 +45,10 @@ func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 		NamespaceUIDs: []string{groupKey.NamespaceUID},
 		RuleGroup:     groupKey.RuleGroup,
 	}
-	existingGroupRules, err := ruleReader.ListAlertRules(ctx, q)
-	if err != nil {
+	if err := ruleReader.ListAlertRules(ctx, q); err != nil {
 		return nil, fmt.Errorf("failed to query database for rules in the group %s: %w", groupKey, err)
 	}
+	existingGroupRules := q.Result
 	if len(existingGroupRules) > 0 {
 		affectedGroups[groupKey] = existingGroupRules
 	}
@@ -76,11 +76,10 @@ func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 			} else if existing, ok = loadedRulesByUID[r.UID]; !ok { // check the "cache" and if there is no hit, query the database
 				// Rule can be from other group or namespace
 				q := &models.GetAlertRulesGroupByRuleUIDQuery{OrgID: groupKey.OrgID, UID: r.UID}
-				ruleList, err := ruleReader.GetAlertRulesGroupByRuleUID(ctx, q)
-				if err != nil {
+				if err := ruleReader.GetAlertRulesGroupByRuleUID(ctx, q); err != nil {
 					return nil, fmt.Errorf("failed to query database for a group of alert rules: %w", err)
 				}
-				for _, rule := range ruleList {
+				for _, rule := range q.Result {
 					if rule.UID == r.UID {
 						existing = rule
 					}
@@ -89,7 +88,7 @@ func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 				if existing == nil {
 					return nil, fmt.Errorf("failed to update rule with UID %s because %w", r.UID, models.ErrAlertRuleNotFound)
 				}
-				affectedGroups[existing.GetGroupKey()] = ruleList
+				affectedGroups[existing.GetGroupKey()] = q.Result
 			}
 		}
 

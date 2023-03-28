@@ -9,7 +9,6 @@ import {
   getDisplayProcessor,
   PanelData,
   standardTransformers,
-  preProcessPanelData,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -20,6 +19,7 @@ import { ExplorePanelData } from '../../../types';
 import { CorrelationData } from '../../correlations/useCorrelations';
 import { attachCorrelationsToDataFrames } from '../../correlations/utils';
 import { sortLogsResult } from '../../logs/utils';
+import { preProcessPanelData } from '../../query/state/runRequest';
 
 /**
  * When processing response first we try to determine what kind of dataframes we got as one query can return multiple
@@ -56,7 +56,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
         nodeGraphFrames.push(frame);
         break;
       case 'flamegraph':
-        flameGraphFrames.push(frame);
+        config.featureToggles.flameGraph ? flameGraphFrames.push(frame) : tableFrames.push(frame);
         break;
       default:
         if (isTimeSeries(frame)) {

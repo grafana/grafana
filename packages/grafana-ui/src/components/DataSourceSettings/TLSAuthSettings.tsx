@@ -10,7 +10,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import { CertificationKey } from './CertificationKey';
 import { HttpSettingsBaseProps } from './types';
 
-export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBaseProps) => {
+export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceConfig, onChange }) => {
   const hasTLSCACert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsCACert;
   const hasTLSClientCert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientCert;
   const hasTLSClientKey = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientKey;

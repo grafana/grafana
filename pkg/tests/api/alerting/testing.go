@@ -99,12 +99,12 @@ func alertRuleGen() func() apimodels.PostableExtendedRuleNode {
 			GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 				Title:     fmt.Sprintf("rule-%s", util.GenerateShortUID()),
 				Condition: "A",
-				Data: []apimodels.AlertQuery{
+				Data: []ngmodels.AlertQuery{
 					{
 						RefID: "A",
-						RelativeTimeRange: apimodels.RelativeTimeRange{
-							From: apimodels.Duration(time.Duration(5) * time.Hour),
-							To:   apimodels.Duration(time.Duration(3) * time.Hour),
+						RelativeTimeRange: ngmodels.RelativeTimeRange{
+							From: ngmodels.Duration(time.Duration(5) * time.Hour),
+							To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 						},
 						DatasourceUID: expr.DatasourceUID,
 						Model: json.RawMessage(`{

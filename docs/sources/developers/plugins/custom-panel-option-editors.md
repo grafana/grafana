@@ -17,7 +17,7 @@ import React from 'react';
 import { Button } from '@grafana/ui';
 import { StandardEditorProps } from '@grafana/data';
 
-export const SimpleEditor = ({ value, onChange }: StandardEditorProps<boolean>) => {
+export const SimpleEditor: React.FC<StandardEditorProps<boolean>> = ({ value, onChange }) => {
   return <Button onClick={() => onChange(!value)}>{value ? 'Disable' : 'Enable'}</Button>;
 };
 ```
@@ -51,9 +51,7 @@ interface Settings {
   to: number;
 }
 
-type Props = StandardEditorProps<number, Settings>;
-
-export const SimpleEditor = ({ item, value, onChange }: Props) => {
+export const SimpleEditor: React.FC<StandardEditorProps<number, Settings>> = ({ item, value, onChange }) => {
   const options: Array<SelectableValue<number>> = [];
 
   // Default values
@@ -99,7 +97,7 @@ The editor context is available through the `context` prop. The data frames retu
 **SimpleEditor.tsx**
 
 ```ts
-export const SimpleEditor = ({ item, value, onChange, context }: StandardEditorProps<string>) => {
+export const SimpleEditor: React.FC<StandardEditorProps<string>> = ({ item, value, onChange, context }) => {
   const options: SelectableValue<string>[] = [];
 
   if (context.data) {

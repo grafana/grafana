@@ -6,30 +6,28 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"path"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
-	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var (
-	ErrFileNotExist   = errors.New("file does not exist")
-	ErrPluginFileRead = errors.New("file could not be read")
-)
+var ErrFileNotExist = errors.New("file does not exist")
 
 type Plugin struct {
 	JSONData
 
-	FS    FS
-	Class Class
+	PluginDir string
+	Class     Class
 
 	// App fields
 	IncludedInAppID string
@@ -57,8 +55,8 @@ type Plugin struct {
 type PluginDTO struct {
 	JSONData
 
-	fs                FS
 	logger            log.Logger
+	pluginDir         string
 	supportsStreaming bool
 
 	Class Class
@@ -83,10 +81,6 @@ func (p PluginDTO) SupportsStreaming() bool {
 	return p.supportsStreaming
 }
 
-func (p PluginDTO) Base() string {
-	return p.fs.Base()
-}
-
 func (p PluginDTO) IsApp() bool {
 	return p.Type == App
 }
@@ -102,15 +96,21 @@ func (p PluginDTO) File(name string) (fs.File, error) {
 		return nil, err
 	}
 
-	if p.fs == nil {
-		return nil, ErrFileNotExist
-	}
-
-	f, err := p.fs.Open(cleanPath)
+	absPluginDir, err := filepath.Abs(p.pluginDir)
 	if err != nil {
 		return nil, err
 	}
 
+	absFilePath := filepath.Join(absPluginDir, cleanPath)
+	// Wrapping in filepath.Clean to properly handle
+	// gosec G304 Potential file inclusion via variable rule.
+	f, err := os.Open(filepath.Clean(absFilePath))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, ErrFileNotExist
+		}
+		return nil, err
+	}
 	return f, nil
 }
 
@@ -137,7 +137,8 @@ type JSONData struct {
 	SkipDataQuery bool `json:"skipDataQuery"`
 
 	// App settings
-	AutoEnabled bool `json:"autoEnabled"`
+	AutoEnabled bool                        `json:"autoEnabled"`
+	Extensions  []*plugindef.ExtensionsLink `json:"extensions"`
 
 	// Datasource settings
 	Annotations  bool            `json:"annotations"`
@@ -337,18 +338,6 @@ func (p *Plugin) Client() (PluginClient, bool) {
 }
 
 func (p *Plugin) ExecutablePath() string {
-	if p.IsRenderer() {
-		return p.executablePath("plugin_start")
-	}
-
-	if p.IsSecretsManager() {
-		return p.executablePath("secrets_plugin_start")
-	}
-
-	return p.executablePath(p.Executable)
-}
-
-func (p *Plugin) executablePath(f string) string {
 	os := strings.ToLower(runtime.GOOS)
 	arch := runtime.GOARCH
 	extension := ""
@@ -356,7 +345,15 @@ func (p *Plugin) executablePath(f string) string {
 	if os == "windows" {
 		extension = ".exe"
 	}
-	return path.Join(p.FS.Base(), fmt.Sprintf("%s_%s_%s%s", f, os, strings.ToLower(arch), extension))
+	if p.IsRenderer() {
+		return filepath.Join(p.PluginDir, fmt.Sprintf("%s_%s_%s%s", "plugin_start", os, strings.ToLower(arch), extension))
+	}
+
+	if p.IsSecretsManager() {
+		return filepath.Join(p.PluginDir, fmt.Sprintf("%s_%s_%s%s", "secrets_plugin_start", os, strings.ToLower(arch), extension))
+	}
+
+	return filepath.Join(p.PluginDir, fmt.Sprintf("%s_%s_%s%s", p.Executable, os, strings.ToLower(arch), extension))
 }
 
 type PluginClient interface {
@@ -370,10 +367,9 @@ type PluginClient interface {
 func (p *Plugin) ToDTO() PluginDTO {
 	return PluginDTO{
 		logger:            p.Logger(),
-		fs:                p.FS,
-		supportsStreaming: p.client != nil && p.client.(backend.StreamHandler) != nil,
-		Class:             p.Class,
+		pluginDir:         p.PluginDir,
 		JSONData:          p.JSONData,
+		Class:             p.Class,
 		IncludedInAppID:   p.IncludedInAppID,
 		DefaultNavURL:     p.DefaultNavURL,
 		Pinned:            p.Pinned,
@@ -383,6 +379,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 		SignatureError:    p.SignatureError,
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
+		supportsStreaming: p.client != nil && p.client.(backend.StreamHandler) != nil,
 	}
 }
 
@@ -391,11 +388,7 @@ func (p *Plugin) StaticRoute() *StaticRoute {
 		return nil
 	}
 
-	if p.FS == nil {
-		return nil
-	}
-
-	return &StaticRoute{Directory: p.FS.Base(), PluginID: p.ID}
+	return &StaticRoute{Directory: p.PluginDir, PluginID: p.ID}
 }
 
 func (p *Plugin) IsRenderer() bool {
@@ -422,6 +415,15 @@ func (p *Plugin) IsExternalPlugin() bool {
 	return p.Class == External
 }
 
+func (p *Plugin) Manifest() []byte {
+	d, err := os.ReadFile(filepath.Join(p.PluginDir, "MANIFEST.txt"))
+	if err != nil {
+		return []byte{}
+	}
+
+	return d
+}
+
 type Class string
 
 const (
@@ -429,10 +431,6 @@ const (
 	Bundled  Class = "bundled"
 	External Class = "external"
 )
-
-func (c Class) String() string {
-	return string(c)
-}
 
 var PluginTypes = []Type{
 	DataSource,

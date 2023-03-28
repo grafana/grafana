@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { FC } from 'react';
 import { useLocation } from 'react-use';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
@@ -22,12 +22,12 @@ import { AlertInstances } from '../AlertInstances';
 import { getStyles } from '../UnifiedAlertList';
 import { UnifiedAlertListOptions } from '../types';
 
-type Props = {
+type UngroupedModeProps = {
   rules: CombinedRuleWithLocation[];
   options: UnifiedAlertListOptions;
 };
 
-const UngroupedModeView = ({ rules, options }: Props) => {
+const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
   const styles = useStyles2(getStyles);
   const stateStyle = useStyles2(getStateTagStyles);
   const { href: returnTo } = useLocation();

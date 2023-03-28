@@ -4,7 +4,7 @@ import React, { HTMLProps } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes';
+import { stylesFactory, useTheme2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
@@ -26,7 +26,8 @@ export interface TabProps extends HTMLProps<HTMLAnchorElement> {
 
 export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
   ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, ...otherProps }, ref) => {
-    const tabsStyles = useStyles2(getStyles);
+    const theme = useTheme2();
+    const tabsStyles = getTabStyles(theme);
     const content = () => (
       <>
         {icon && <Icon name={icon} />}
@@ -60,37 +61,24 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
 
 Tab.displayName = 'Tab';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     item: css`
       list-style: none;
       position: relative;
       display: flex;
-      white-space: nowrap;
     `,
     link: css`
       color: ${theme.colors.text.secondary};
       padding: ${theme.spacing(1.5, 2, 1)};
       display: block;
       height: 100%;
-
       svg {
         margin-right: ${theme.spacing(1)};
       }
 
       &:focus-visible {
-        ${getFocusStyles(theme)}
-      }
-
-      &::before {
-        display: block;
-        content: ' ';
-        position: absolute;
-        left: 0;
-        right: 0;
-        height: 4px;
-        border-radius: ${theme.shape.radius.default};
-        bottom: 0px;
++        ${getFocusStyles(theme)}
       }
     `,
     notActive: css`
@@ -100,7 +88,15 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: ${theme.colors.text.primary};
 
         &::before {
-          background-color: ${theme.colors.action.hover};
+          display: block;
+          content: ' ';
+          position: absolute;
+          left: 0;
+          right: 0;
+          height: 4px;
+          border-radius: 2px;
+          bottom: 0px;
+          background: ${theme.colors.action.hover};
         }
       }
     `,
@@ -108,17 +104,26 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: activeTabStyle;
       color: ${theme.colors.text.primary};
       overflow: hidden;
+      font-weight: ${theme.typography.fontWeightMedium};
 
       a {
         color: ${theme.colors.text.primary};
       }
 
       &::before {
-        background-image: ${theme.colors.gradients.brandHorizontal};
+        display: block;
+        content: ' ';
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 4px;
+        border-radius: 2px;
+        bottom: 0px;
+        background-image: ${theme.colors.gradients.brandHorizontal} !important;
       }
     `,
     suffix: css`
       margin-left: ${theme.spacing(1)};
     `,
   };
-};
+});

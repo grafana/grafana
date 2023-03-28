@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React, { FC, ReactElement } from 'react';
 
 import { usePluginBridge } from '../hooks/usePluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
@@ -13,12 +13,7 @@ export interface PluginBridgeProps {
   loadingComponent?: ReactElement;
 }
 
-export const PluginBridge = ({
-  children,
-  plugin,
-  loadingComponent,
-  notInstalledFallback,
-}: React.PropsWithChildren<PluginBridgeProps>) => {
+export const PluginBridge: FC<PluginBridgeProps> = ({ children, plugin, loadingComponent, notInstalledFallback }) => {
   const { loading, installed } = usePluginBridge(plugin);
 
   if (loading) {

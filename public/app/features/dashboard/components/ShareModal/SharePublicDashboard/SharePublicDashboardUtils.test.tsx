@@ -56,12 +56,6 @@ describe('getUnsupportedDashboardDatasources', () => {
         {
           datasource: { type: 'prometheus' } as DataSourceRef,
         } as DataQuery,
-        {
-          datasource: { type: '__expr__' } as DataSourceRef,
-        } as DataQuery,
-        {
-          datasource: { type: 'datasource' } as DataSourceRef,
-        } as DataQuery,
       ] as DataQuery[],
     } as PanelModel;
     const panelArray: PanelModel[] = [pm];

@@ -27,7 +27,7 @@ export interface Team {
   /**
    * Created indicates when the team was created.
    */
-  created: string;
+  created: number;
   /**
    * Email of the team.
    */
@@ -51,5 +51,5 @@ export interface Team {
   /**
    * Updated indicates when the team was updated.
    */
-  updated: string;
+  updated: number;
 }

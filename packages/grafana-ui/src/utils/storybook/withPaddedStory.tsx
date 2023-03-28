@@ -1,9 +1,9 @@
-import { DecoratorFn } from '@storybook/react';
 import React from 'react';
 
 import { GlobalStyles, useTheme2 } from '../../themes';
+import { RenderFunction } from '../../types';
 
-const PaddedStory = ({ children }: React.PropsWithChildren<{}>) => {
+const PaddedStory: React.FunctionComponent<{}> = ({ children }) => {
   const theme = useTheme2();
 
   return (
@@ -22,4 +22,4 @@ const PaddedStory = ({ children }: React.PropsWithChildren<{}>) => {
   );
 };
 
-export const withPaddedStory: DecoratorFn = (story) => <PaddedStory>{story()}</PaddedStory>;
+export const withPaddedStory = (story: RenderFunction) => <PaddedStory>{story()}</PaddedStory>;

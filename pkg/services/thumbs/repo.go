@@ -64,13 +64,13 @@ func (r *sqlThumbnailRepository) saveFromBytes(ctx context.Context, content []by
 		DatasourceUIDs:         dsUids,
 	}
 
-	result, err := r.store.SaveThumbnail(ctx, cmd)
+	_, err := r.store.SaveThumbnail(ctx, cmd)
 	if err != nil {
 		r.log.Error("Error saving to the db", "dashboardUID", meta.DashboardUID, "err", err)
 		return 0, err
 	}
 
-	return result.Id, nil
+	return cmd.Result.Id, nil
 }
 
 func (r *sqlThumbnailRepository) updateThumbnailState(ctx context.Context, state ThumbnailState, meta DashboardThumbnailMeta) error {

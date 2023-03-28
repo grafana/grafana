@@ -23,7 +23,7 @@ const supplier = (
   addHeatmapCalculationOptions('', builder, options);
 };
 
-export const HeatmapTransformerEditor = (props: TransformerUIProps<HeatmapTransformerOptions>) => {
+export const HeatmapTransformerEditor: React.FC<TransformerUIProps<HeatmapTransformerOptions>> = (props) => {
   useEffect(() => {
     if (!props.options.xBuckets?.mode) {
       const opts = getDefaultOptions(supplier);

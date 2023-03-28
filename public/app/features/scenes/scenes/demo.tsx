@@ -13,6 +13,7 @@ import { TestDataQueryType } from 'app/plugins/datasource/testdata/dataquery.gen
 
 import { panelBuilders } from '../builders/panelBuilders';
 import { DashboardScene } from '../dashboard/DashboardScene';
+import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
@@ -59,6 +60,7 @@ export function getFlexLayoutTest(): DashboardScene {
         }),
       ],
     }),
+    $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
@@ -110,6 +112,7 @@ export function getScenePanelRepeaterTest(): DashboardScene {
         });
       },
     }),
+    $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(),
     $data: queryRunner,
     actions: [

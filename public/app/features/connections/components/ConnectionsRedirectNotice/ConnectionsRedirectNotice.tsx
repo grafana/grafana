@@ -28,8 +28,7 @@ export enum DestinationPage {
 
 const destinationLinks = {
   [DestinationPage.dataSources]: ROUTES.DataSources,
-  // Set category filter for the cloud version of ConnectData page
-  [DestinationPage.connectData]: `${ROUTES.ConnectData}?cat=data-source`,
+  [DestinationPage.connectData]: ROUTES.ConnectData,
 };
 
 export function ConnectionsRedirectNotice({ destinationPage }: { destinationPage: DestinationPage }) {

@@ -10,10 +10,6 @@
 
 package dashboard
 
-import (
-	"time"
-)
-
 // Defines values for Style.
 const (
 	StyleDark  Style = "dark"
@@ -637,7 +633,7 @@ type RowPanelType string
 // TODO docs
 type Snapshot struct {
 	// TODO docs
-	Created time.Time `json:"created"`
+	Created string `json:"created"`
 
 	// TODO docs
 	Expires string `json:"expires"`
@@ -661,7 +657,7 @@ type Snapshot struct {
 	OrgId int `json:"orgId"`
 
 	// TODO docs
-	Updated time.Time `json:"updated"`
+	Updated string `json:"updated"`
 
 	// TODO docs
 	Url *string `json:"url,omitempty"`
@@ -704,9 +700,6 @@ type Target = map[string]interface{}
 type Threshold struct {
 	// TODO docs
 	Color string `json:"color"`
-
-	// Threshold index, an old property that is not needed an should only appear in older dashboards
-	Index *int32 `json:"index,omitempty"`
 
 	// TODO docs
 	// TODO are the values here enumerable into a disjunction?

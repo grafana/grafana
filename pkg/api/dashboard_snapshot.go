@@ -366,19 +366,17 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 	if dashboardID != 0 {
 		g, err := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
 		if err != nil {
-			if !errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return response.Err(err)
-			}
-		} else {
-			canEdit, err := g.CanEdit()
-			// check for permissions only if the dashboard is found
-			if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return response.Error(http.StatusInternalServerError, "Error while checking permissions for snapshot", err)
-			}
+			return response.Err(err)
+		}
 
-			if !canEdit && queryResult.UserID != c.SignedInUser.UserID && !errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return response.Error(http.StatusForbidden, "Access denied to this snapshot", nil)
-			}
+		canEdit, err := g.CanEdit()
+		// check for permissions only if the dashboard is found
+		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return response.Error(http.StatusInternalServerError, "Error while checking permissions for snapshot", err)
+		}
+
+		if !canEdit && queryResult.UserID != c.SignedInUser.UserID && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return response.Error(http.StatusForbidden, "Access denied to this snapshot", nil)
 		}
 	}
 

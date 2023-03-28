@@ -99,8 +99,6 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           getSession: jest.fn(),
           resetUser: jest.fn(),
           resetSession: jest.fn(),
-          setView: jest.fn(),
-          getView: jest.fn(),
         },
         config: {
           globalObjectKey: '',
@@ -195,8 +193,6 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           getSession: jest.fn(),
           resetUser: jest.fn(),
           resetSession: jest.fn(),
-          setView: jest.fn(),
-          getView: jest.fn(),
         },
         config: {
           globalObjectKey: '',

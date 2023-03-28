@@ -1,18 +1,8 @@
-import debounce from 'debounce-promise';
 import { size } from 'lodash';
 import React, { useCallback, useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import {
-  InlineLabel,
-  Select,
-  InlineFormLabel,
-  InlineSwitch,
-  Icon,
-  clearButtonStyles,
-  useStyles2,
-  AsyncSelect,
-} from '@grafana/ui';
+import { InlineLabel, Select, InlineFormLabel, InlineSwitch, Icon, clearButtonStyles, useStyles2 } from '@grafana/ui';
 
 import { OpenTsdbFilter, OpenTsdbQuery } from '../types';
 
@@ -22,7 +12,7 @@ export interface FilterSectionProps {
   onRunQuery: () => void;
   suggestTagKeys: (query: OpenTsdbQuery) => Promise<string[]>;
   filterTypes: string[];
-  suggestTagValues: (value: string) => Promise<SelectableValue[]>;
+  suggestTagValues: () => Promise<SelectableValue[]>;
 }
 
 export function FilterSection({
@@ -37,6 +27,9 @@ export function FilterSection({
 
   const [tagKeys, updTagKeys] = useState<Array<SelectableValue<string>>>();
   const [keyIsLoading, updKeyIsLoading] = useState<boolean>();
+
+  const [tagValues, updTagValues] = useState<Array<SelectableValue<string>>>();
+  const [valueIsLoading, updValueIsLoading] = useState<boolean>();
 
   const [addFilterMode, updAddFilterMode] = useState<boolean>(false);
 
@@ -115,8 +108,6 @@ export function FilterSection({
     return searchWords.reduce((acc, cur) => acc && label.toLowerCase().includes(cur.toLowerCase()), true);
   }, []);
 
-  const tagValueSearch = debounce((query: string) => suggestTagValues(query), 350);
-
   return (
     <div className="gf-form-inline" data-testid={testIds.section}>
       <div className="gf-form">
@@ -194,14 +185,23 @@ export function FilterSection({
           </div>
 
           <div className="gf-form">
-            <AsyncSelect
+            <Select
               inputId="opentsdb-suggested-tagv-select"
               className="gf-form-input"
               value={curFilterValue ? toOption(curFilterValue) : undefined}
               placeholder="filter"
               allowCustomValue
-              loadOptions={tagValueSearch}
-              defaultOptions={[]}
+              filterOption={customFilterOption}
+              onOpenMenu={async () => {
+                if (!tagValues) {
+                  updValueIsLoading(true);
+                  const tVs = await suggestTagValues();
+                  updTagValues(tVs);
+                  updValueIsLoading(false);
+                }
+              }}
+              isLoading={valueIsLoading}
+              options={tagValues}
               onChange={({ value }) => {
                 if (value) {
                   updCurFilterValue(value);

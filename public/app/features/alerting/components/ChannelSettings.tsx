@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 import { Alert, CollapsableSection } from '@grafana/ui';
 
@@ -13,7 +13,7 @@ interface Props extends NotificationSettingsProps {
   resetSecureField: (key: string) => void;
 }
 
-export const ChannelSettings = ({
+export const ChannelSettings: FC<Props> = ({
   control,
   currentFormValues,
   errors,
@@ -21,7 +21,7 @@ export const ChannelSettings = ({
   secureFields,
   register,
   resetSecureField,
-}: Props) => {
+}) => {
   return (
     <CollapsableSection label={`Optional ${selectedChannel.heading}`} isOpen={false}>
       {selectedChannel.info !== '' && <Alert severity="info" title={selectedChannel.info ?? ''} />}

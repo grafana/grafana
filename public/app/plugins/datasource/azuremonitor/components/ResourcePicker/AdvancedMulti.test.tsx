@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import AdvancedMulti from './AdvancedMulti';
@@ -10,7 +9,7 @@ describe('AdvancedMulti', () => {
     const renderAdvanced = jest.fn().mockReturnValue(<div>details!</div>);
     render(<AdvancedMulti onChange={onChange} resources={[{}]} renderAdvanced={renderAdvanced} />);
     const advancedSection = screen.getByText('Advanced');
-    await userEvent.click(advancedSection);
+    advancedSection.click();
 
     expect(await screen.findByText('details!')).toBeInTheDocument();
   });

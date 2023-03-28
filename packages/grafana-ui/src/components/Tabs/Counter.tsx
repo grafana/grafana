@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { FC } from 'react';
 
 import { GrafanaTheme2, locale } from '@grafana/data';
 
@@ -24,7 +24,7 @@ export interface CounterProps {
   value: number;
 }
 
-export const Counter = ({ value }: CounterProps) => {
+export const Counter: FC<CounterProps> = ({ value }) => {
   const styles = useStyles2(getStyles);
 
   return <span className={styles.counter}>{locale(value, 0).text}</span>;

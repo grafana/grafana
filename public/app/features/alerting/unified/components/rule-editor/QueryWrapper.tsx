@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { ChangeEvent, useState } from 'react';
+import React, { ChangeEvent, FC, useState } from 'react';
 
 import {
   CoreApp,
@@ -60,7 +60,7 @@ interface Props {
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
 }
 
-export const QueryWrapper = ({
+export const QueryWrapper: FC<Props> = ({
   data,
   error,
   dsSettings,
@@ -79,7 +79,7 @@ export const QueryWrapper = ({
   condition,
   onSetCondition,
   onChangeQueryOptions,
-}: Props) => {
+}) => {
   const styles = useStyles2(getStyles);
   const isExpression = isExpressionQuery(query.model);
   const [pluginId, changePluginId] = useState<SupportedPanelPlugins>(isExpression ? TABLE : TIMESERIES);

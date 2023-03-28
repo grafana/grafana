@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 import { CombinedRuleGroup } from 'app/types/unified-alerting';
 
@@ -8,7 +8,7 @@ interface Props {
   group: CombinedRuleGroup;
 }
 
-const RuleDetailsFederatedSources = ({ group }: Props) => {
+const RuleDetailsFederatedSources: FC<Props> = ({ group }) => {
   const sourceTenants = group.source_tenants ?? [];
 
   return (
