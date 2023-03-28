@@ -29,7 +29,7 @@ export default function filterSpans(searchProps: SearchProps, spans: TraceSpan[]
   if (searchProps.spanName) {
     arraysToMatchAcross.push(getSpanNameMatches(spans, searchProps));
   }
-  if (searchProps.tags) {
+  if (searchProps.tags[0].key || searchProps.tags[0].value) {
     arraysToMatchAcross.push(getTagMatches(spans, searchProps.tags));
   }
   if (searchProps.from || searchProps.to) {
@@ -47,22 +47,21 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
     .filter((span: TraceSpan) => {
       const spanTags = getTagsFromSpan(span);
 
-      return tags.some((tag: Tag) => {
+      // match against every tag filter
+      return tags.every((tag: Tag) => {
         if (tag.key && tag.value) {
           if (spanTags[tag.key]) {
-            if (tag.operator === '=') {
-              return spanTags[tag.key] === tag.value;
-            } else {
-              return spanTags[tag.key] !== tag.value;
-            }
+            return tag.operator === '='
+              ? spanTags[tag.key].includes(tag.value)
+              : !spanTags[tag.key].includes(tag.value);
           }
           return false;
         } else if (tag.key) {
-          const match = checkForMatch(tag.key, Object.keys(spanTags), tag.operator);
+          const match = checkTagsForMatch(tag.key, Object.keys(spanTags), tag.operator);
           console.log('key matches', match);
           return match;
         } else if (tag.value) {
-          const match = checkForMatch(tag.value, Object.values(spanTags), tag.operator);
+          const match = checkTagsForMatch(tag.value, Object.values(spanTags).flat(), tag.operator);
           console.log('value matches', match);
           return match;
         }
@@ -70,74 +69,40 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
       });
     })
     .map((span: TraceSpan) => span.spanID);
-
-  // // if a span field includes at least one filter in includeFilters, the span is a match
-  // const includeFilters: string[] = [];
-
-  // // values with keys that include text in any one of the excludeKeys will be ignored
-  // const excludeKeys: string[] = [];
-
-  // // split textFilter by whitespace, remove empty strings, and extract includeFilters and excludeKeys
-  // tags
-  //   .split(/\s+/)
-  //   .filter(Boolean)
-  //   .forEach((w) => {
-  //     if (w[0] === '-') {
-  //       excludeKeys.push(w.slice(1).toLowerCase());
-  //     } else {
-  //       includeFilters.push(w.toLowerCase());
-  //     }
-  //   });
-
-  // const isTextInFilters = (filters: string[], text: string) =>
-  //   filters.some((filter) => text.toLowerCase().includes(filter));
-  // const isTextInKeyValues = (kvs: TraceKeyValuePair[]) => {
-  //   return kvs.some((kv) => {
-  //     // ignore checking key and value for a match if key is in excludeKeys
-  //     if (isTextInFilters(excludeKeys, kv.key)) {
-  //       return false;
-  //     }
-
-  //     const match = includeFilters.some((filter) => {
-  //       if (filter.includes('=')) {
-  //         // match if key and value matches an item in includeFilters
-  //         const a = `${kv.key}=${kv.value}`.toLowerCase().includes(filter);
-  //         if (a) {
-  //           // console.log('f=', filter, kv);
-  //         }
-  //         return a;
-  //       } else {
-  //         // match if key or value matches an item in includeFilters
-  //         const b = kv.key.toLowerCase().includes(filter) || kv.value.toString().toLowerCase().includes(filter);
-  //         if (b) {
-  //           // console.log('f', filter, kv);
-  //         }
-  //         return b;
-  //       }
-  //     });
-
-  //     return match;
-  //   });
-  // };
-
-  // const areTagsAMatch = (span: TraceSpan) =>
-  //   isTextInKeyValues(span.tags) ||
-  //   (span.logs !== null && span.logs.some((log) => isTextInKeyValues(log.fields))) ||
-  //   isTextInKeyValues(span.process.tags) ||
-  //   includeFilters.some((filter) => filter === span.spanID);
-
-  // return spans.filter(areTagsAMatch).map((span: TraceSpan) => span.spanID);
 };
 
 export const getTagsFromSpan = (span: TraceSpan) => {
-  const spanTags: { [x: string]: string } = {};
-  span.tags.map((x) => (spanTags[x.key.toString()] = x.value.toString()));
-  span.process.tags.map((x) => (spanTags[x.key.toString()] = x.value.toString()));
-  // TODO: JOEY: logs tags
+  const spanTags: { [tag: string]: string[] } = {};
+  span.tags.map((tag) =>
+    spanTags[tag.key.toString()]
+      ? spanTags[tag.key.toString()].push(tag.value.toString())
+      : (spanTags[tag.key.toString()] = [tag.value.toString()])
+  );
+  span.process.tags.map((tag) =>
+    spanTags[tag.key.toString()]
+      ? spanTags[tag.key.toString()].push(tag.value.toString())
+      : (spanTags[tag.key.toString()] = [tag.value.toString()])
+  );
+  if (span.logs !== null) {
+    span.logs.map((log) => {
+      log.fields.map((field) => {
+        // there can be fields in logs that have the same key across logs but different values
+        if (spanTags[field.key.toString()]) {
+          spanTags[field.key.toString()].push(field.value.toString());
+        } else {
+          spanTags[field.key.toString()] = [field.value.toString()];
+        }
+      });
+    });
+  }
   return spanTags;
 };
 
-const checkForMatch = (needle: string, haystack: string[], operator: string) => {
+// const addTagFromSpan = (spanTags: { [tag: string]: string[] }, tag: Tag) => {
+//   spanTags[tag.key!.toString()] ? spanTags[tag.key!.toString()].push(tag.value!.toString()) : spanTags[tag.key!.toString()] = [tag.value!.toString()];
+// }
+
+const checkTagsForMatch = (needle: string, haystack: string[], operator: string) => {
   return operator === '=' ? haystack.includes(needle) : !haystack.includes(needle);
 };
 
@@ -172,9 +137,15 @@ const getDurationMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
     });
   }
   if (to) {
-    filteredSpans = filteredSpans.filter((span: TraceSpan) => {
-      return searchProps.toOperator === '<' ? span.duration < to : span.duration <= to;
-    });
+    if (filteredSpans.length > 0) {
+      filteredSpans = filteredSpans.filter((span: TraceSpan) => {
+        return searchProps.toOperator === '<' ? span.duration < to : span.duration <= to;
+      });
+    } else {
+      filteredSpans = spans.filter((span: TraceSpan) => {
+        return searchProps.toOperator === '<' ? span.duration < to : span.duration <= to;
+      });
+    }
   }
 
   return filteredSpans.map((span: TraceSpan) => span.spanID);

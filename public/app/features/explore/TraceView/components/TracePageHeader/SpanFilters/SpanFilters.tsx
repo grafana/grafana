@@ -86,7 +86,7 @@ export function SpanFilters(props: SpanFilterProps) {
       ...new Set(
         trace.spans
           .map((span) => {
-            return type === 'keys' ? Object.keys(getTagsFromSpan(span)) : Object.values<string>(getTagsFromSpan(span));
+            return type === 'keys' ? Object.keys(getTagsFromSpan(span)) : Object.values(getTagsFromSpan(span)).flat();
           })
           .flat()
           .sort()

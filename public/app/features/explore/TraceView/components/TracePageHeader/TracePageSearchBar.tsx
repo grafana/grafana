@@ -82,7 +82,9 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     (search.serviceName && search.serviceName !== '') ||
     (search.spanName && search.spanName !== '') ||
     (search.from && search.from !== '') ||
-    (search.to && search.to !== '');
+    (search.to && search.to !== '') ||
+    (search.tags[0].key && search.tags[0].key !== '') ||
+    (search.tags[0].value && search.tags[0].value !== '');
 
   return (
     <div className={styles.searchBar}>
