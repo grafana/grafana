@@ -198,9 +198,8 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] 
     for (let pointIndex = 0; pointIndex < length; pointIndex++) {
       const time: number = timeField.values.get(pointIndex);
       const value: number = valueField.values.get(pointIndex);
-      aggregated[level] = aggregated[level] || {};
-      aggregated[level][time] = aggregated[level][time] || 0;
-      aggregated[level][time] = aggregated[level][time] + value;
+      aggregated[level] ??= {};
+      aggregated[level][time] = (aggregated[level][time] || 0) + value;
     }
   });
 
