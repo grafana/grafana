@@ -19,6 +19,7 @@ import {
   rowsToCellsHeatmap,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
+import { parseSampleValue, sortSeriesByLabel } from 'app/plugins/datasource/prometheus/result_transformer';
 
 import { CellValues, PanelOptions } from './models.gen';
 import { boundedMinMax } from './utils';
@@ -94,6 +95,14 @@ export function prepareHeatmapData(
   // Everything past here assumes a field for each row in the heatmap (buckets)
   if (!rowsHeatmap) {
     if (frames.length > 1) {
+      let allNamesNumeric = frames.every(
+        (frame) => !Number.isNaN(parseSampleValue(frame.name ?? frame.fields[1].name))
+      );
+
+      if (allNamesNumeric) {
+        frames.sort(sortSeriesByLabel);
+      }
+
       rowsHeatmap = [
         outerJoinDataFrames({
           frames,
