@@ -393,7 +393,7 @@ describe('ElasticDatasource', () => {
       const query = { ...DATAQUERY_BASE, range, targets };
       const data = { responses: [] };
 
-      const { ds, fetchMock } = getTestContext({ jsonData: {}, data, database: 'test' });
+      const { ds, fetchMock } = getTestContext({ data, database: 'test' });
 
       await expect(ds.query(query)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
@@ -499,7 +499,6 @@ describe('ElasticDatasource', () => {
       const { ds } = getTestContext({
         fetchMockImplementation: () => throwError(response),
         from: undefined,
-        jsonData: {},
       });
 
       const errObject = {
@@ -700,7 +699,6 @@ describe('ElasticDatasource', () => {
       const { ds } = getTestContext({
         data,
         database: 'genuine.es7._mapping.response',
-        jsonData: {},
       });
 
       await expect(ds.getFields()).toEmitValuesWith((received) => {
@@ -731,7 +729,6 @@ describe('ElasticDatasource', () => {
       const { ds } = getTestContext({
         data,
         database: 'genuine.es7._mapping.response',
-        jsonData: {},
       });
 
       await expect(ds.getFields(['number'])).toEmitValuesWith((received) => {
@@ -747,7 +744,6 @@ describe('ElasticDatasource', () => {
       const { ds } = getTestContext({
         data,
         database: 'genuine.es7._mapping.response',
-        jsonData: {},
       });
 
       await expect(ds.getFields(['date'])).toEmitValuesWith((received) => {
@@ -774,7 +770,7 @@ describe('ElasticDatasource', () => {
       const query = { ...DATAQUERY_BASE, range, targets };
       const data = { responses: [] };
 
-      const { ds, fetchMock } = getTestContext({ jsonData: {}, data, database: 'test' });
+      const { ds, fetchMock } = getTestContext({ data, database: 'test' });
 
       await expect(ds.query(query)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
@@ -822,7 +818,7 @@ describe('ElasticDatasource', () => {
         ],
       };
 
-      const { ds, fetchMock } = getTestContext({ jsonData: {}, data, database: 'test' });
+      const { ds, fetchMock } = getTestContext({ data, database: 'test' });
 
       const results = await ds.metricFindQuery('{"find": "terms", "field": "test"}');
 
