@@ -650,7 +650,6 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
   return seriesList;
 }
 
-/** @internal */
 export function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
   let le1, le2;
 
