@@ -127,7 +127,9 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 
 	contentType := rawLokiResponse.ContentType
 
-	if contentType == "" {
+	if strings.HasPrefix(contentType, "text/plain") {
+		contentType = "text/plain"
+	} else {
 		contentType = "application/json"
 	}
 
