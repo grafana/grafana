@@ -194,7 +194,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	rulesTotals := make(map[string]int64, len(groupedRules))
 	for _, groupKey := range sortedGroups {
 		rules := groupedRules[groupKey]
-		numRulesWithoutLimit := len(rules)
 		if limitRulesPerGroup > -1 && int64(len(rules)) > limitRulesPerGroup {
 			rules = rules[0:limitRulesPerGroup]
 		}
@@ -202,17 +201,18 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		if !authorizeAccessToRuleGroup(rules, hasAccess) {
 			continue
 		}
+		// TODO(grobinson): These totals are incorrect as calculated after limit
 		ruleGroup, totals := srv.toRuleGroup(groupKey, rules, limitAlertsPerRule, labelOptions)
 
 		for k, v := range totals {
 			rulesTotals[k] += v
 		}
 
-		ruleGroup.Total = int64(numRulesWithoutLimit)
+		ruleGroup.Totals = totals
 		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, ruleGroup)
 	}
 
-	ruleResponse.Data.RulesTotals = rulesTotals
+	ruleResponse.Data.Totals = rulesTotals
 	if limitGroups > -1 && int64(len(sortedGroups)) >= limitGroups {
 		ruleResponse.Data.RuleGroups = ruleResponse.Data.RuleGroups[0:limitGroups]
 	}
@@ -227,7 +227,7 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, rules 
 		File: groupKey.Folder,
 	}
 
-	rulesTotal := make(map[string]int64, len(rules))
+	rulesTotals := make(map[string]int64, len(rules))
 
 	ngmodels.RulesGroup(rules).SortByGroupIndex()
 	for _, rule := range rules {
@@ -248,7 +248,7 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, rules 
 		}
 
 		states := srv.manager.GetStatesForRuleUID(rule.OrgID, rule.UID)
-		totals := make(map[string]int)
+		totals := make(map[string]int64)
 		for _, alertState := range states {
 			activeAt := alertState.StartsAt
 			valString := ""
@@ -256,6 +256,9 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, rules 
 				valString = formatValues(alertState)
 			}
 			totals[strings.ToLower(alertState.State.String())] += 1
+			if alertState.Error != nil {
+				totals["error"] += 1
+			}
 			alert := &apimodels.Alert{
 				Labels:      alertState.GetLabels(labelOptions...),
 				Annotations: alertState.Annotations,
@@ -296,11 +299,11 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, rules 
 		}
 
 		if alertingRule.State != "" {
-			rulesTotal[alertingRule.State] += 1
+			rulesTotals[alertingRule.State] += 1
 		}
 
 		if newRule.Health == "error" || newRule.Health == "nodata" {
-			rulesTotal[newRule.Health] += 1
+			rulesTotals[newRule.Health] += 1
 		}
 
 		if limitAlerts > -1 && int64(len(alertingRule.Alerts)) > limitAlerts {
@@ -308,7 +311,7 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, rules 
 		}
 
 		alertingRule.Rule = newRule
-		alertingRule.Total = totals
+		alertingRule.Totals = totals
 		newGroup.Rules = append(newGroup.Rules, alertingRule)
 		newGroup.Interval = float64(rule.IntervalSeconds)
 		// TODO yuri. Change that when scheduler will process alerts in groups
@@ -316,7 +319,7 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, rules 
 		newGroup.LastEvaluation = newRule.LastEvaluation
 	}
 
-	return newGroup, rulesTotal
+	return newGroup, rulesTotals
 }
 
 // ruleToQuery attempts to extract the datasource queries from the alert query model.
