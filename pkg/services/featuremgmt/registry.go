@@ -460,5 +460,23 @@ var (
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:        "alertStateHistoryDualWrites",
+			Description: "Enable alert state history to be written to an external loki instance in addition to Grafana annotations.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertStateHistoryLokiPrimary",
+			Description: "Enable usage of a remote Loki instance as the primary source for state history reads.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertStateHistoryDisableAnnotations",
+			Description: "Allow Grafana annotations emitted by alerting to be disabled completely when remote Loki is in place.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
+		},
 	}
 )
