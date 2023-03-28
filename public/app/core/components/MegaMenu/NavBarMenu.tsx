@@ -140,12 +140,14 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
     content: css({
       display: 'flex',
       flexDirection: 'column',
-      overflow: 'auto',
+      height: '100%',
     }),
     mobileHeader: css({
       display: 'flex',
       justifyContent: 'space-between',
-      padding: theme.spacing(1, 2),
+      padding: theme.spacing(1, 1, 1, 2),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+
       [theme.breakpoints.up('md')]: {
         display: 'none',
       },
