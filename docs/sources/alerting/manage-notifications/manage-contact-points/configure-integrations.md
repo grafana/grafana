@@ -18,7 +18,7 @@ Configure integrations in Grafana to select your preferred communication channel
 
 Once configured, you can use integrations as part of your contact points to receive notifications whenever your alert changes its state. In this section, we'll cover the basic steps to configure your integrations, so you can start receiving real-time alerts and stay on top of your monitoring data.
 
-## List of supported notifiers
+## List of supported integrations
 
 | Name                    | Type                      |
 | ----------------------- | ------------------------- |
