@@ -144,7 +144,7 @@ const (
 	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
-	// Displays new top nav and page layouts
+	// Enables new top navigation and page layouts
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer
