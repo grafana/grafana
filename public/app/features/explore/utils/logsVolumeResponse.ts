@@ -1,9 +1,7 @@
-// Currently we can only infer if an error response is a timeout or not.
-// TODO: add backend support for specifying the type of error.
 import { DataQueryResponse } from '@grafana/data';
 
-const timeoutKeywords = ['timeout', 'exceeded'];
-
+// Currently we can only infer if an error response is a timeout or not.
+// TODO: add backend support for specifying the type of error.
 export function isTimeoutErrorResponse(response: DataQueryResponse | undefined): boolean {
   if (!response) {
     return false;
@@ -15,13 +13,7 @@ export function isTimeoutErrorResponse(response: DataQueryResponse | undefined):
   const errors = response?.error ? [response?.error] : response?.errors || [];
 
   return errors.reduce((isTimeoutError, error) => {
-    if (isTimeoutError) {
-      return true;
-    }
-    return timeoutKeywords.reduce(
-      (timeoutFound, keyword) =>
-        timeoutFound || Boolean(error.message?.includes(keyword) || error.data?.message?.includes(keyword)),
-      false
-    );
+    const message = `${error.message || error.data?.message}`?.toLowerCase();
+    return isTimeoutError || message.includes('timeout');
   }, false);
 }
