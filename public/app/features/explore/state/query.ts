@@ -49,7 +49,7 @@ import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history
 import { stateSave } from './main';
 import { getSupplementaryQueryProvider } from './supplementaryQueries';
 import { updateTime } from './time';
-import { createCacheKey, getResultsFromCache } from './utils';
+import { createCacheKey, getResultsFromCache, filterLogRowsByTime } from './utils';
 
 //
 // Actions and Payloads
@@ -1033,26 +1033,6 @@ const getCorrelations = () => {
     }
   });
 };
-
-const filterLogRowsByTime = (
-  clearedAt: ExploreItemState['clearedAt'],
-  logsResult: ExplorePanelData['logsResult']
-): ExploreItemState['logsResult'] => {
-  if (!logsResult) {
-    return logsResult;
-  }
-
-  if (clearedAt) {
-    const filteredRows = logsResult.rows.filter((row) => row.timeEpochMs > (clearedAt ?? 0));
-    return {
-      ...logsResult,
-      rows: filteredRows,
-    };
-  }
-
-  return logsResult;
-};
-
 export const processQueryResponse = (
   state: ExploreItemState,
   action: PayloadAction<QueryEndedPayload>
@@ -1108,7 +1088,10 @@ export const processQueryResponse = (
     graphResult,
     tableResult,
     rawPrometheusResult,
-    logsResult: state.isLive ? filterLogRowsByTime(state.clearedAt, logsResult) : logsResult,
+    logsResult:
+      state.isLive && logsResult
+        ? { ...logsResult, rows: filterLogRowsByTime(state.clearedAt, logsResult.rows) }
+        : logsResult,
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     showLogs: !!logsResult,
     showMetrics: !!graphResult,

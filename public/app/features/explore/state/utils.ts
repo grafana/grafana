@@ -8,6 +8,7 @@ import {
   getDefaultTimeRange,
   HistoryItem,
   LoadingState,
+  LogRowModel,
   PanelData,
 } from '@grafana/data';
 import { DataSourceRef } from '@grafana/schema';
@@ -159,3 +160,19 @@ export function getResultsFromCache(
   const cacheValue = cacheIdx >= 0 ? cache[cacheIdx].value : undefined;
   return cacheValue;
 }
+
+export const filterLogRowsByTime = (
+  clearedAt: ExploreItemState['clearedAt'],
+  logRows?: LogRowModel[]
+): LogRowModel[] => {
+  if (!logRows) {
+    return [];
+  }
+
+  if (clearedAt) {
+    const filteredRows = logRows.filter((row) => row.timeEpochMs > (clearedAt ?? 0));
+    return filteredRows;
+  }
+
+  return logRows;
+};

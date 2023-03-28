@@ -10,6 +10,7 @@ import { getLogRowStyles } from '../logs/components/getLogRowStyles';
 import { sortLogRows } from '../logs/utils';
 
 import { ElapsedTime } from './ElapsedTime';
+import { filterLogRowsByTime } from './state/utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   logsRowsLive: css`
@@ -81,7 +82,7 @@ class LiveLogs extends PureComponent<Props, State> {
   static getDerivedStateFromProps(nextProps: Props, state: State) {
     if (nextProps.isPaused && nextProps.clearedAt) {
       return {
-        logRowsToRender: state.logRowsToRender?.filter((row) => row.timeEpochMs > (nextProps.clearedAt ?? 0)),
+        logRowsToRender: filterLogRowsByTime(nextProps.clearedAt, state.logRowsToRender),
       };
     }
 
