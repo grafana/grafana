@@ -171,7 +171,7 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] 
   const aggregated: Record<string, Record<number, number>> = {};
   const configs: Record<
     string,
-    { name?: string; meta: QueryResultMeta; valueFieldConfig: FieldConfig; timeFieldConfig: FieldConfig }
+    { meta: QueryResultMeta; valueFieldConfig: FieldConfig; timeFieldConfig: FieldConfig }
   > = {};
   let results: DataFrame[] = [];
 
@@ -191,7 +191,6 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] 
     const level = valueField.config.displayNameFromDS || dataFrame.name || 'logs';
     const length = valueField.values.length;
     configs[level] = {
-      name: dataFrame.name,
       meta: { ...(dataFrame.meta || {}) },
       valueFieldConfig: { ...valueField.config },
       timeFieldConfig: { ...timeField.config },
@@ -209,8 +208,7 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] 
   // convert aggregated into data frames
   Object.keys(aggregated).forEach((level) => {
     const levelDataFrame = new MutableDataFrame();
-    const { name, meta, timeFieldConfig, valueFieldConfig } = configs[level];
-    levelDataFrame.name = name;
+    const { meta, timeFieldConfig, valueFieldConfig } = configs[level];
     levelDataFrame.meta = meta;
     levelDataFrame.addField({ name: 'Time', type: FieldType.time, config: timeFieldConfig });
     levelDataFrame.addField({ name: 'Value', type: FieldType.number, config: valueFieldConfig });
