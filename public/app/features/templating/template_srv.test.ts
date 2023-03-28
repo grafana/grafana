@@ -1,5 +1,5 @@
 import { dateTime, TimeRange } from '@grafana/data';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { setDataSourceSrv, InterpolationsMap } from '@grafana/runtime';
 import { FormatRegistryID, TestVariable } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
@@ -125,6 +125,36 @@ describe('templateSrv', () => {
         test: { value: 'mupp', text: 'asd' },
       });
       expect(target).toBe('this.mupp.filters');
+    });
+  });
+
+  describe('replace with interpolations map', function () {
+    beforeEach(() => {
+      _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'test', current: { value: 'testValue' } }]);
+    });
+
+    it('replace can save interpolation result', () => {
+      let interpolationsMap: InterpolationsMap = new Map<string, string | null>();
+      const target = _templateSrv.replace(
+        'test.${test}.${scoped}.${nested.name}.${test}.${optionTest:raw}',
+        {
+          scoped: { value: 'scopedValue', text: 'scopedText' },
+          optionTest: { value: 'optionTestValue', text: 'optionTestText' },
+          nested: { value: { name: 'nestedValue' } },
+        },
+        undefined,
+        interpolationsMap
+      );
+      expect(target).toBe('test.testValue.scopedValue.nestedValue.testValue.optionTestValue');
+      expect(interpolationsMap.size).toBe(4);
+      expect(interpolationsMap).toMatchObject(
+        new Map([
+          ['test', 'testValue'],
+          ['scoped', 'scopedValue'],
+          ['nested.name', 'nestedValue'],
+          ['optionTest', 'optionTestValue'],
+        ])
+      );
     });
   });
 

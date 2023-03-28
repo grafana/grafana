@@ -8,7 +8,7 @@ import {
   AdHocVariableModel,
   TypedVariableModel,
 } from '@grafana/data';
-import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
+import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv, InterpolationsMap } from '@grafana/runtime';
 import { sceneGraph, FormatRegistryID, formatRegistry, VariableCustomFormatterFn } from '@grafana/scenes';
 
 import { variableAdapters } from '../variables/adapters';
@@ -22,11 +22,6 @@ import { getVariableWrapper } from './LegacyVariableWrapper';
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
 }
-
-/**
- * Represents interpolated expressions
- */
-export type InterpolationsMap = Map<string, string | null>;
 
 /**
  * Internal regex replace function
@@ -55,9 +50,6 @@ export class TemplateSrv implements BaseTemplateSrv {
 
   constructor(private dependencies: TemplateSrvDependencies = runtimeDependencies) {
     this._variables = [];
-  }
-  getAllVariablesInTarget(target: string, scopedVars: ScopedVars, format?: string | Function | undefined): VariableMap {
-    throw new Error('Method not implemented.');
   }
 
   init(variables: any, timeRange?: TimeRange) {
