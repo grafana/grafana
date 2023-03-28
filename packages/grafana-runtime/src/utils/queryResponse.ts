@@ -90,18 +90,21 @@ export function toDataQueryResponse(
 
     for (const dr of data) {
       if (dr.error) {
+        const errorObj: DataQueryError = {
+          refId: dr.refId,
+          message: dr.error,
+          status: dr.status,
+        };
+        if (traceId != null) {
+          errorObj.traceId = traceId;
+        }
         if (!rsp.error) {
-          rsp.error = {
-            refId: dr.refId,
-            message: dr.error,
-            status: dr.status,
-            traceId,
-          };
+          rsp.error = { ...errorObj };
         }
         if (rsp.errors) {
-          rsp.errors.push({ refId: dr.refId, message: dr.error, status: dr.status, traceId });
+          rsp.errors.push({ ...errorObj });
         } else {
-          rsp.errors = [{ refId: dr.refId, message: dr.error, status: dr.status, traceId }];
+          rsp.errors = [{ ...errorObj }];
         }
         rsp.state = LoadingState.Error;
       }
