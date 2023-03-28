@@ -34,9 +34,9 @@ export interface TemplateSrv {
   /**
    * Replace the values within the target string.  See also {@link InterpolateFunction}
    *
-   * Note: interpolations map is being mutated by replace function by adding information about variables that
+   * Note: interpolations array is being mutated by replace function by adding information about variables that
    * have been interpolated during replacement. Variables that were specified in the target but not found in
-   * the list of available variables are also added to the map. See {@link VariableInterpolation} for more details.
+   * the list of available variables are also added to the array. See {@link VariableInterpolation} for more details.
    *
    * @param {VariableInterpolation[]} interpolations an optional map that is updated with interpolated variables
    */
