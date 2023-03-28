@@ -32,7 +32,7 @@ jest.mock('./components/rule-editor/RecordingRuleEditor', () => ({
         },
       };
 
-      onChangeQuery([merged], expr);
+      onChangeQuery([merged]);
     };
 
     return <input data-testid="expr" onChange={(e) => onChange(e.target.value)} />;

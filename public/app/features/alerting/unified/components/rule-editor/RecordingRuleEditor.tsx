@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { PanelData, CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { LoadingState } from '@grafana/schema';
+import { DataQuery, LoadingState } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -55,7 +55,7 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
     return getDataSourceSrv().get(dataSourceName);
   }, [dataSourceName]);
 
-  const handleChangedQuery = (changedQuery: AlertQuery) => {
+  const handleChangedQuery = (changedQuery: DataQuery) => {
     const query = queries[0];
 
     if (!isPromOrLokiQuery(query.model)) {
