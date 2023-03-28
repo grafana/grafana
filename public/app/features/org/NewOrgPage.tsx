@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
@@ -27,7 +27,7 @@ const pageNav: NavModelItem = {
   breadcrumbs: [{ title: 'Server admin', url: 'admin/orgs' }],
 };
 
-export const NewOrgPage: FC<Props> = ({ createOrganization }) => {
+export const NewOrgPage = ({ createOrganization }: Props) => {
   const createOrg = async (newOrg: { name: string }) => {
     await createOrganization(newOrg);
     window.location.href = getConfig().appSubUrl + '/org';

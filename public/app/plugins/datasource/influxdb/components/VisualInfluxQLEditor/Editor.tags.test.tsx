@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -10,11 +10,17 @@ import { Editor } from './Editor';
 
 jest.mock('../../influxQLMetadataQuery', () => {
   return {
+    __esModule: true,
+    getAllPolicies: jest.fn().mockReturnValueOnce(Promise.resolve(['default', 'autogen'])),
+    getFieldKeysForMeasurement: jest
+      .fn()
+      .mockReturnValueOnce(Promise.resolve(['free', 'total']))
+      .mockReturnValueOnce(Promise.resolve([])),
     getTagKeysForMeasurementAndTags: jest
       .fn()
       // first time we are called when the widget mounts,
-      // we respond by saying `cpu, host` are the real tags
-      .mockReturnValueOnce(Promise.resolve(['cpu', 'host']))
+      // we respond by saying `cpu, host, device` are the real tags
+      .mockReturnValueOnce(Promise.resolve(['cpu', 'host', 'device']))
       // afterwards we will be called once when we click
       // on a tag-key in the WHERE section.
       // it does not matter what we return, as long as it is
@@ -43,6 +49,7 @@ jest.mock('@grafana/runtime', () => {
 
 beforeEach(() => {
   (mockedMeta.getTagKeysForMeasurementAndTags as jest.Mock).mockClear();
+  (mockedMeta.getFieldKeysForMeasurement as jest.Mock).mockClear();
 });
 
 const ONLY_TAGS = [
@@ -56,6 +63,12 @@ const ONLY_TAGS = [
     key: 'host',
     operator: '=',
     value: 'host2',
+  },
+  {
+    condition: 'AND',
+    key: 'device::tag',
+    operator: '=',
+    value: 'sdd',
   },
 ];
 
@@ -76,9 +89,21 @@ const query: InfluxQuery = {
     },
     {
       condition: 'AND',
-      key: 'field1',
+      key: 'device::tag',
+      operator: '=',
+      value: 'sdd',
+    },
+    {
+      condition: 'AND',
+      key: 'free',
       operator: '=',
       value: '45',
+    },
+    {
+      condition: 'AND',
+      key: 'total::field',
+      operator: '=',
+      value: '200',
     },
   ],
   select: [
@@ -101,16 +126,13 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
     } as unknown as InfluxDatasource;
     render(<Editor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />);
 
+    await waitFor(() => {});
+
+    // when the editor-widget mounts, it calls getFieldKeysForMeasurement
+    expect(mockedMeta.getFieldKeysForMeasurement).toHaveBeenCalledTimes(1);
+
     // when the editor-widget mounts, it calls getTagKeysForMeasurementAndTags
     expect(mockedMeta.getTagKeysForMeasurementAndTags).toHaveBeenCalledTimes(1);
-
-    // we click the WHERE/cpu button
-    await userEvent.click(screen.getByRole('button', { name: 'cpu' }));
-
-    // and verify getTagKeysForMeasurementAndTags was called again,
-    // and in the tags-param we did not receive the `field1` part.
-    expect(mockedMeta.getTagKeysForMeasurementAndTags).toHaveBeenCalledTimes(2);
-    expect((mockedMeta.getTagKeysForMeasurementAndTags as jest.Mock).mock.calls[1][2]).toStrictEqual(ONLY_TAGS);
 
     // now we click on the WHERE/host2 button
     await userEvent.click(screen.getByRole('button', { name: 'host2' }));

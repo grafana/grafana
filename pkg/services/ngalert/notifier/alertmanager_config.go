@@ -29,12 +29,12 @@ func (e AlertmanagerConfigRejectedError) Error() string {
 }
 
 type configurationStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
+	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
 }
 
 func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64) (definitions.GettableUserConfig, error) {
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
-	err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query)
+	amConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query)
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to get latest configuration: %w", err)
 	}

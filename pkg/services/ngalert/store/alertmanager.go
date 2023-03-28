@@ -24,8 +24,8 @@ var (
 
 // GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.
 // It returns ErrNoAlertmanagerConfiguration if no configuration is found.
-func (st *DBstore) GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+func (st *DBstore) GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (result *models.AlertConfiguration, err error) {
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		c := &models.AlertConfiguration{}
 		// The ID is already an auto incremental column, using the ID as an order should guarantee the latest.
 		ok, err := sess.Table("alert_configuration").Where("org_id = ?", query.OrgID).Get(c)
@@ -37,9 +37,10 @@ func (st *DBstore) GetLatestAlertmanagerConfiguration(ctx context.Context, query
 			return ErrNoAlertmanagerConfiguration
 		}
 
-		query.Result = c
+		result = c
 		return nil
 	})
+	return result, err
 }
 
 // GetAllLatestAlertmanagerConfiguration returns the latest configuration of every organization

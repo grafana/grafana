@@ -4,9 +4,8 @@ import React, { useContext } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { config, reportInteraction } from '@grafana/runtime/src';
+import { config, featureEnabled, reportInteraction } from '@grafana/runtime/src';
 import {
   ClipboardButton,
   Field,
@@ -42,7 +41,7 @@ import { EmailSharingConfiguration } from './EmailSharingConfiguration';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
-export interface ConfigPublicDashoardForm {
+export interface ConfigPublicDashboardForm {
   isAnnotationsEnabled: boolean;
   isTimeSelectionEnabled: boolean;
   isPaused: boolean;
@@ -55,7 +54,7 @@ const ConfigPublicDashboard = () => {
 
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const hasEmailSharingEnabled =
-    config.licenseInfo.edition === GrafanaEdition.Enterprise && !!config.featureToggles.publicDashboardsEmailSharing;
+    !!config.featureToggles.publicDashboardsEmailSharing && featureEnabled('publicDashboardsEmailSharing');
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
   const dashboardVariables = dashboard.getVariables();
@@ -65,7 +64,7 @@ const ConfigPublicDashboard = () => {
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
   const disableInputs = !hasWritePermissions || isUpdateLoading || isGetLoading;
 
-  const { handleSubmit, setValue, register } = useForm<ConfigPublicDashoardForm>({
+  const { handleSubmit, setValue, register } = useForm<ConfigPublicDashboardForm>({
     defaultValues: {
       isAnnotationsEnabled: publicDashboard?.annotationsEnabled,
       isTimeSelectionEnabled: publicDashboard?.timeSelectionEnabled,
@@ -73,7 +72,7 @@ const ConfigPublicDashboard = () => {
     },
   });
 
-  const onUpdate = async (values: ConfigPublicDashoardForm) => {
+  const onUpdate = async (values: ConfigPublicDashboardForm) => {
     const { isAnnotationsEnabled, isTimeSelectionEnabled, isPaused } = values;
 
     const req = {
@@ -89,7 +88,7 @@ const ConfigPublicDashboard = () => {
     update(req);
   };
 
-  const onChange = async (name: keyof ConfigPublicDashoardForm, value: boolean) => {
+  const onChange = async (name: keyof ConfigPublicDashboardForm, value: boolean) => {
     setValue(name, value);
     await handleSubmit((data) => onUpdate(data))();
   };
@@ -199,10 +198,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(3)};
   `,
   deleteButton: css`
-    margin-left: ${theme.spacing(3)}; ;
+    margin-left: ${theme.spacing(3)};
   `,
   deleteButtonMobile: css`
-    margin-top: ${theme.spacing(2)}; ;
+    margin-top: ${theme.spacing(2)};
   `,
 });
 

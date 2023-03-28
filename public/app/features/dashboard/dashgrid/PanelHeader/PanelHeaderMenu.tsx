@@ -2,6 +2,7 @@ import classnames from 'classnames';
 import React, { PureComponent } from 'react';
 
 import { PanelMenuItem } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Menu } from '@grafana/ui';
 
 import { PanelHeaderMenuItem } from './PanelHeaderMenuItem';
@@ -30,6 +31,7 @@ export class PanelHeaderMenu extends PureComponent<Props> {
               iconClassName={menuItem.iconClassName}
               onClick={menuItem.onClick}
               shortcut={menuItem.shortcut}
+              href={menuItem.href}
             >
               {menuItem.subMenu && this.renderItems(menuItem.subMenu, true)}
             </PanelHeaderMenuItem>
@@ -62,6 +64,7 @@ export function PanelHeaderMenuNew({ items }: Props) {
           url={item.href}
           onClick={item.onClick}
           shortcut={item.shortcut}
+          testId={selectors.components.Panels.Panel.menuItems(item.text)}
         />
       )
     );

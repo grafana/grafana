@@ -27,9 +27,9 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -42,6 +42,8 @@ var pluginsCDNFallbackRedirectRequests = promauto.NewCounterVec(prometheus.Count
 	Name:      "plugins_cdn_fallback_redirect_requests_total",
 	Help:      "Number of requests to the plugins CDN backend redirect fallback handler.",
 }, []string{"plugin_id", "plugin_version"})
+
+var ErrUnexpectedFileExtension = errors.New("unexpected file extension")
 
 func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Response {
 	typeFilter := c.Query("type")
@@ -61,7 +63,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	canListNonCorePlugins := reqOrgAdmin(c) || hasAccess(reqOrgAdmin, ac.EvalAny(
 		ac.EvalPermission(datasources.ActionCreate),
-		ac.EvalPermission(plugins.ActionInstall),
+		ac.EvalPermission(pluginaccesscontrol.ActionInstall),
 	))
 
 	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgID)
@@ -91,7 +93,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 		// Should be able to list this installed plugin:
 		//  * anyone that can edit its settings
 		if !pluginDef.IsCorePlugin() && !canListNonCorePlugins && !hasAccess(reqOrgAdmin,
-			ac.EvalPermission(plugins.ActionWrite, plugins.ScopeProvider.GetResourceScope(pluginDef.ID))) {
+			ac.EvalPermission(pluginaccesscontrol.ActionWrite, pluginaccesscontrol.ScopeProvider.GetResourceScope(pluginDef.ID))) {
 			continue
 		}
 
@@ -116,17 +118,13 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			}
 		}
 
-		if (pluginDef.ID == "parca" || pluginDef.ID == "phlare") && !hs.Features.IsEnabled(featuremgmt.FlagFlameGraph) {
-			continue
-		}
-
 		filteredPluginDefinitions = append(filteredPluginDefinitions, pluginDef)
 		filteredPluginIDs[pluginDef.ID] = true
 	}
 
 	// Compute metadata
 	pluginsMetadata := hs.getMultiAccessControlMetadata(c, c.OrgID,
-		plugins.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
+		pluginaccesscontrol.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
 
 	// Prepare DTO
 	result := make(dtos.PluginList, 0)
@@ -181,7 +179,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 	if plugin.IsApp() {
 		hasAccess := ac.HasAccess(hs.AccessControl, c)
 		if !hasAccess(ac.ReqSignedIn,
-			ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
+			ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID))) {
 			return response.Error(http.StatusForbidden, "Access Denied", nil)
 		}
 	}
@@ -276,17 +274,20 @@ func (hs *HTTPServer) GetPluginMarkdown(c *contextmodel.ReqContext) response.Res
 	if err != nil {
 		var notFound plugins.NotFoundError
 		if errors.As(err, &notFound) {
-			return response.Error(404, notFound.Error(), nil)
+			return response.Error(http.StatusNotFound, notFound.Error(), nil)
 		}
 
-		return response.Error(500, "Could not get markdown file", err)
+		return response.Error(http.StatusInternalServerError, "Could not get markdown file", err)
 	}
 
 	// fallback try readme
 	if len(content) == 0 {
 		content, err = hs.pluginMarkdown(c.Req.Context(), pluginID, "readme")
 		if err != nil {
-			return response.Error(501, "Could not get markdown file", err)
+			if errors.Is(err, plugins.ErrFileNotExist) {
+				return response.Error(http.StatusNotFound, plugins.ErrFileNotExist.Error(), nil)
+			}
+			return response.Error(http.StatusNotImplemented, "Could not get markdown file", err)
 		}
 	}
 
@@ -540,12 +541,17 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name string) ([]byte, error) {
 	plugin, exists := hs.pluginStore.Plugin(ctx, pluginId)
 	if !exists {
-		return nil, plugins.NotFoundError{PluginID: pluginId}
+		return make([]byte, 0), plugins.NotFoundError{PluginID: pluginId}
 	}
 
-	md, err := plugin.File(mdFilepath(strings.ToUpper(name)))
+	file, err := mdFilepath(strings.ToUpper(name))
 	if err != nil {
-		md, err = plugin.File(mdFilepath(strings.ToUpper(name)))
+		return make([]byte, 0), err
+	}
+
+	md, err := plugin.File(file)
+	if err != nil {
+		md, err = plugin.File(strings.ToLower(file))
 		if err != nil {
 			return make([]byte, 0), nil
 		}
@@ -555,7 +561,6 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 			hs.log.Error("Failed to close plugin markdown file", "err", err)
 		}
 	}()
-
 	d, err := io.ReadAll(md)
 	if err != nil {
 		return make([]byte, 0), nil
@@ -563,6 +568,14 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 	return d, nil
 }
 
-func mdFilepath(mdFilename string) string {
-	return filepath.Clean(filepath.Join("/", fmt.Sprintf("%s.md", mdFilename)))
+func mdFilepath(mdFilename string) (string, error) {
+	fileExt := filepath.Ext(mdFilename)
+	switch fileExt {
+	case "md":
+		return util.CleanRelativePath(mdFilename)
+	case "":
+		return util.CleanRelativePath(fmt.Sprintf("%s.md", mdFilename))
+	default:
+		return "", ErrUnexpectedFileExtension
+	}
 }

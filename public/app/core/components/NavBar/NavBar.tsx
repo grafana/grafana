@@ -5,7 +5,7 @@ import { cloneDeep } from 'lodash';
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
+import { GrafanaTheme2, locationUtil, NavModelItem, NavSection, textUtil } from '@grafana/data';
 import { config, locationSearchToObject, locationService, reportInteraction } from '@grafana/runtime';
 import { useTheme2, CustomScrollbar, IconButton } from '@grafana/ui';
 import { getKioskMode } from 'app/core/navigation/kiosk';
@@ -51,11 +51,16 @@ export const NavBar = React.memo(() => {
     menuOpen
   );
 
+  let homeUrl = config.appSubUrl || '/';
+  if (!config.bootData.user.isSignedIn && !config.anonymousEnabled) {
+    homeUrl = textUtil.sanitizeUrl(locationUtil.getUrlForPartial(location, { forceLogin: 'true' }));
+  }
+
   const homeItem: NavModelItem = enrichWithInteractionTracking(
     {
       id: 'home',
       text: 'Home',
-      url: config.bootData.user.isSignedIn ? config.appSubUrl || '/' : '/login',
+      url: homeUrl,
       icon: 'grafana',
     },
     menuOpen
