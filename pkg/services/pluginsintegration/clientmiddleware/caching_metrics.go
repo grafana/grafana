@@ -6,9 +6,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var (
-	Mixed          = "mixed"
-	None           = "none"
+const (
 	QueryPubdash   = "pubdash"
 	QueryDashboard = "dashboard"
 )
