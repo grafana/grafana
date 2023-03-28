@@ -201,7 +201,9 @@ export class QueryCache {
             // we assume that fields cannot appear/disappear and will all exist in same order
 
             // amend & re-cache
+            // eslint-ignore-next-line
             let prevTable: Table = cachedFrame.fields.map((field) => field.values.toArray()) as Table;
+            // eslint-ignore-next-line
             let nextTable: Table = respFrame.fields.map((field) => field.values.toArray()) as Table;
 
             let amendedTable = amendTable(prevTable, nextTable);
@@ -218,6 +220,7 @@ export class QueryCache {
         let nonEmptyCachedFrames: DataFrame[] = [];
 
         cachedFrames.forEach((frame) => {
+          // eslint-ignore-next-line
           let table: Table = frame.fields.map((field) => field.values.toArray()) as Table;
 
           let trimmed = trimTable(table, newFrom, newTo);
