@@ -85,6 +85,8 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     (search.tags[0].key && search.tags[0].key !== '') ||
     (search.tags[0].value && search.tags[0].value !== '');
 
+  console.log('render TracePageSearchBar');
+
   return (
     <div className={styles.searchBar}>
       <span className={ubJustifyEnd} style={{ display: 'flex' }}>

@@ -48,7 +48,7 @@ export type NewTracePageHeaderProps = {
   setFocusedSearchMatch: React.Dispatch<React.SetStateAction<string>>;
 };
 
-export function NewTracePageHeader(props: NewTracePageHeaderProps) {
+export const NewTracePageHeader = React.memo((props: NewTracePageHeaderProps) => {
   const {
     trace,
     updateNextViewRangeTime,
@@ -94,6 +94,8 @@ export function NewTracePageHeader(props: NewTracePageHeaderProps) {
       statusColor = 'red';
     }
   }
+
+  console.log('render newTracePageHeader');
 
   return (
     <header className={styles.header}>
@@ -144,7 +146,9 @@ export function NewTracePageHeader(props: NewTracePageHeaderProps) {
       />
     </header>
   );
-}
+});
+
+NewTracePageHeader.displayName = 'NewTracePageHeader';
 
 const getNewStyles = (theme: GrafanaTheme2) => {
   return {

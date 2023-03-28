@@ -72,6 +72,7 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
 };
 
 export const getTagsFromSpan = (span: TraceSpan) => {
+  // there can be fields in logs that have the same key across logs but different values
   const spanTags: { [tag: string]: string[] } = {};
   span.tags.map((tag) =>
     spanTags[tag.key.toString()]
@@ -86,7 +87,6 @@ export const getTagsFromSpan = (span: TraceSpan) => {
   if (span.logs !== null) {
     span.logs.map((log) => {
       log.fields.map((field) => {
-        // there can be fields in logs that have the same key across logs but different values
         if (spanTags[field.key.toString()]) {
           spanTags[field.key.toString()].push(field.value.toString());
         } else {

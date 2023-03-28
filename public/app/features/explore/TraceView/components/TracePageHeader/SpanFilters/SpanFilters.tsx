@@ -14,19 +14,20 @@
 
 import { css } from '@emotion/css';
 import * as React from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 import { Collapse, HorizontalGroup, InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
 
-import { SearchProps, TagType } from '../../../useSearch';
+import { SearchProps } from '../../../useSearch';
 import { Trace } from '../../types';
-import { getTagsFromSpan, randomId } from '../../utils/filter-spans';
+import { randomId } from '../../utils/filter-spans';
 import TracePageSearchBar from '../TracePageSearchBar';
 
 export type SpanFilterProps = {
-  trace: Trace | null;
+  trace: Trace;
   search: SearchProps;
   setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
   searchMatches: Set<string> | undefined;
@@ -34,58 +35,97 @@ export type SpanFilterProps = {
   setFocusedSearchMatch: React.Dispatch<React.SetStateAction<string>>;
 };
 
-export function SpanFilters(props: SpanFilterProps) {
+interface SpanData {
+  serviceNames: string[];
+  spanNames: string[];
+  tagKeys: string[];
+  tagValues: string[];
+}
+
+export const SpanFilters = React.memo((props: SpanFilterProps) => {
   const { trace, search, setSearch, searchMatches, focusedSearchMatch, setFocusedSearchMatch } = props;
   const styles = { ...useStyles2(getStyles) };
   const [showSpanFilters, setShowSpanFilters] = useToggle(true);
-
-  if (!trace) {
-    return null;
-  }
+  const [spanData, setSpanData] = useState<SpanData>({
+    serviceNames: [],
+    spanNames: [],
+    tagKeys: [],
+    tagValues: [],
+  });
 
   // TODO: combine all options methods into one iteration of all spans and return object
+  // combine getTagsFromSpan with useSearch
 
-  const serviceNameOptions = (trace: Trace) => {
-    return [
-      ...new Set(
-        trace.spans.map((span) => {
-          return span.process.serviceName;
-        })
-      ),
-    ].map((name) => {
+  useEffect(() => {
+    const serviceNames: string[] = [];
+    const spanNames: string[] = [];
+    const tagKeys: string[] = [];
+    const tagValues: string[] = [];
+
+    trace.spans.map((span) => {
+      serviceNames.push(span.process.serviceName);
+      spanNames.push(span.operationName);
+
+      span.tags.map((tag) => {
+        tagKeys.push(tag.key.toString());
+        tagValues.push(tag.value.toString());
+      });
+
+      span.process.tags.map((tag) => {
+        tagKeys.push(tag.key.toString());
+        tagValues.push(tag.value.toString());
+      });
+
+      // if (span.logs !== null) {
+      //   span.logs.map((log) => {
+      //     log.fields.map((field) => {
+      //       tagKeys.push(field.key.toString());
+      //       tagValues.push(field.value.toString());
+      //     });
+      //   });
+      // }
+    });
+
+    const spanData = {
+      serviceNames,
+      spanNames,
+      tagKeys,
+      tagValues,
+    };
+
+    console.log('spanData', spanData);
+    setSpanData(spanData);
+  }, [trace]);
+
+  const serviceNameOptions = () => {
+    console.log('serviceNameOptions');
+    return [...new Set(spanData.serviceNames)].sort().map((name) => {
       return toOption(name);
     });
   };
 
-  const spanNameOptions = (trace: Trace) => {
-    return [
-      ...new Set(
-        trace.spans.map((span) => {
-          return span.operationName;
-        })
-      ),
-    ].map((name) => {
+  const spanNameOptions = () => {
+    console.log('spanNameOptions');
+    return [...new Set(spanData.spanNames)].sort().map((name) => {
       return toOption(name);
     });
   };
 
-  const tagOptions = (trace: Trace, type: TagType) => {
-    // console.log('rendering');
-    return [
-      ...new Set(
-        trace.spans
-          .map((span) => {
-            return type === TagType.Keys
-              ? Object.keys(getTagsFromSpan(span))
-              : Object.values(getTagsFromSpan(span)).flat();
-          })
-          .flat()
-          .sort()
-      ),
-    ].map((name) => {
+  const allTagOptions = () => {
+    console.log('allTagOptions');
+    return {
+      keys: getDedupedOptions(spanData.tagKeys),
+      values: getDedupedOptions(spanData.tagValues),
+    };
+  };
+
+  const getDedupedOptions = (options: string[]) => {
+    return [...new Set(options)].sort().map((name) => {
       return toOption(name);
     });
   };
+
+  const tagOptions = allTagOptions();
 
   const addTag = () => {
     console.log('add tag');
@@ -117,6 +157,12 @@ export function SpanFilters(props: SpanFilterProps) {
     setSearch({ ...search, tags: tags });
   };
 
+  if (!trace) {
+    return null;
+  }
+
+  console.log('render SpanFilters');
+
   return (
     <Collapse label="Span Filters" collapsible={true} isOpen={showSpanFilters} onToggle={setShowSpanFilters}>
       <InlineFieldRow>
@@ -130,8 +176,11 @@ export function SpanFilters(props: SpanFilterProps) {
             <Select
               aria-label={'select-service-name'}
               isClearable
-              onChange={(v) => setSearch({ ...search, serviceName: v?.value || '' })}
-              options={serviceNameOptions(trace)}
+              onChange={(v) => {
+                console.log('serviceName change');
+                setSearch({ ...search, serviceName: v?.value || '' });
+              }}
+              options={serviceNameOptions()}
               placeholder="All service names"
             />
           </HorizontalGroup>
@@ -149,7 +198,7 @@ export function SpanFilters(props: SpanFilterProps) {
               aria-label={'select-span-name'}
               isClearable
               onChange={(v) => setSearch({ ...search, spanName: v?.value || '' })}
-              options={spanNameOptions(trace)}
+              options={spanNameOptions()}
               placeholder="All span names"
             />
           </HorizontalGroup>
@@ -203,7 +252,7 @@ export function SpanFilters(props: SpanFilterProps) {
                         }),
                       });
                     }}
-                    options={tagOptions(trace, TagType.Keys)}
+                    options={tagOptions.keys}
                     placeholder="Select tag"
                     value={tag.key}
                   />
@@ -221,7 +270,7 @@ export function SpanFilters(props: SpanFilterProps) {
                   />
                   <Select
                     isClearable
-                    options={tagOptions(trace, TagType.Values)}
+                    options={tagOptions.values}
                     onChange={(v) => {
                       setSearch({
                         ...search,
@@ -260,7 +309,9 @@ export function SpanFilters(props: SpanFilterProps) {
       />
     </Collapse>
   );
-}
+});
+
+SpanFilters.displayName = 'SpanFilters';
 
 const getStyles = () => {
   return {

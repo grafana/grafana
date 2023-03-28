@@ -23,11 +23,6 @@ export interface Tag {
   hideText?: boolean;
 }
 
-export enum TagType {
-  Keys = 'keys',
-  Values = 'values',
-}
-
 /**
  * Controls the state of search input that highlights spans if they match the search string.
  * @param spans
