@@ -28,8 +28,9 @@ This topic shows you how to:
 3. Restart the Grafana server
 
 ## Before you begin
-- [list prereqs here, like permissions etc.]
-- [list prereqs here, like knowledge of certain subjects...]
+
+- You will need shell access to the system and `sudo` access to perform actions as root, or administrator.
+- For the CA-signed option, you will need a domain name you control assigned to the machine you are working on.
 
 ## Obtain a certificate and key
 
@@ -40,13 +41,13 @@ You can use one of two methods to obtain a certificate and a key. The faster and
 
 This section shows you how to use `openssl` tooling to generate all necessary files from the command line.  
 
-1. Run the following command to [add what this does]:
+1. Run the following command to generate a 2048-bit RSA private key, which will be used to decrypt traffic:
    
    ```bash
    $ sudo openssl genrsa -out /etc/grafana/grafana.key 2048
    ```
 
-1. Run the following command to [add what this does]:
+1. Run the following command to generate a certificate, using the private key from the previous step.
 
    ```bash
    $ sudo openssl req -new -key /etc/grafana/grafana.key -out /etc/grafana/grafana.csr
@@ -76,7 +77,7 @@ This section shows you how to use `openssl` tooling to generate all necessary fi
    An optional company name []:
    ```
 
-1. Run the following command to [add what this does]:
+1. Run the following command to self-sign the certificate with the private key, for a period of validity of 365 days:
 
    ```bash
    sudo openssl x509 -req -days 365 -in grafana.csr -signkey /etc/grafana/grafana.key -out /etc/grafana/grafana.crt
@@ -181,7 +182,7 @@ To generate certificates using `certbot`, complete the following steps:
 
 #### Set up symlinks to Grafana
 
-[Need an introduction here that explains what this is]
+Symlinks are like pointers on your filesystem that allow us to refer to the LetsEncrypt files, from within the `/etc/grafana` directory.  The reason we use symlinks to the "live" files instead of copying the files is to permit you to later refresh or re-request updated certificates from LetsEncrypt using `certbot`, without needing to change any Grafana configuration.  
 
 To set up symlinks to Grafana, run the following commands:
 
@@ -192,7 +193,7 @@ $ sudo ln -s /etc/letsencrypt/live/subdomain.mysite.com/fullchain.pem /etc/grafa
 
 #### Adjust permissions
 
-[Need intro here to explain what this is]
+Grafana typically runs under the `grafana` linux group, and we must ensure that the Grafana server process has permissions to read the relevant files.  Without read access, the HTTPS server will fail to start properly.
 
 To adjust permissions, perform the following steps:
 
