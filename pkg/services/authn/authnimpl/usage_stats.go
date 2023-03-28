@@ -12,10 +12,12 @@ func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, er
 	// Add stats about auth configuration
 	authTypes := map[string]bool{}
 	authTypes["basic_auth"] = s.cfg.BasicAuthEnabled
-	authTypes["ldap"] = s.cfg.LDAPEnabled
+	authTypes["ldap"] = s.cfg.LDAPAuthEnabled
 	authTypes["auth_proxy"] = s.cfg.AuthProxyEnabled
 	authTypes["anonymous"] = s.cfg.AnonymousEnabled
 	authTypes["jwt"] = s.cfg.JWTAuthEnabled
+	authTypes["grafana_password"] = !s.cfg.DisableLogin
+	authTypes["login_form"] = !s.cfg.DisableLoginForm
 
 	for authType, enabled := range authTypes {
 		enabledValue := 0

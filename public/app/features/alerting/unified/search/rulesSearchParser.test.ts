@@ -7,7 +7,7 @@ describe('Alert rules searchParser', () => {
   describe('getSearchFilterFromQuery', () => {
     it.each(['datasource:prometheus'])('should parse data source filter from "%s" query', (query) => {
       const filter = getSearchFilterFromQuery(query);
-      expect(filter.dataSourceName).toBe('prometheus');
+      expect(filter.dataSourceNames).toEqual(['prometheus']);
     });
 
     it.each(['namespace:integrations-node'])('should parse namespace filter from "%s" query', (query) => {
@@ -79,7 +79,7 @@ describe('Alert rules searchParser', () => {
         'datasource:"prom dev" namespace:"node one" label:"team=frontend us" group:"cpu alerts" rule:"cpu failure"';
       const filter = getSearchFilterFromQuery(query);
 
-      expect(filter.dataSourceName).toBe('prom dev');
+      expect(filter.dataSourceNames).toEqual(['prom dev']);
       expect(filter.namespace).toBe('node one');
       expect(filter.labels).toContain('team=frontend us');
       expect(filter.groupName).toContain('cpu alerts');
@@ -91,7 +91,7 @@ describe('Alert rules searchParser', () => {
         'datasource:prom::dev/linux>>; namespace:"[{node}] (#20+)" label:_region=apac|emea\\nasa group:$20.00%$ rule:"cpu!! & memory.,?"';
       const filter = getSearchFilterFromQuery(query);
 
-      expect(filter.dataSourceName).toBe('prom::dev/linux>>;');
+      expect(filter.dataSourceNames).toEqual(['prom::dev/linux>>;']);
       expect(filter.namespace).toBe('[{node}] (#20+)');
       expect(filter.labels).toContain('_region=apac|emea\\nasa');
       expect(filter.groupName).toContain('$20.00%$');
@@ -110,7 +110,7 @@ describe('Alert rules searchParser', () => {
       const query = 'datasource:prometheus utilization label:team cpu';
       const filter = getSearchFilterFromQuery(query);
 
-      expect(filter.dataSourceName).toBe('prometheus');
+      expect(filter.dataSourceNames).toEqual(['prometheus']);
       expect(filter.labels).toContain('team');
       expect(filter.freeFormWords).toContain('utilization');
       expect(filter.freeFormWords).toContain('cpu');
@@ -130,7 +130,7 @@ describe('Alert rules searchParser', () => {
     it('should apply filters to an empty query', () => {
       const filter = getFilter({
         freeFormWords: ['cpu', 'eighty'],
-        dataSourceName: 'Mimir Dev',
+        dataSourceNames: ['Mimir Dev'],
         namespace: '/etc/prometheus',
         labels: ['team', 'region=apac'],
         groupName: 'cpu-usage',
@@ -149,7 +149,7 @@ describe('Alert rules searchParser', () => {
 
     it('should update filters in existing query', () => {
       const filter = getFilter({
-        dataSourceName: 'Mimir Dev',
+        dataSourceNames: ['Mimir Dev'],
         namespace: '/etc/prometheus',
         labels: ['team', 'region=apac'],
         groupName: 'cpu-usage',
@@ -166,7 +166,7 @@ describe('Alert rules searchParser', () => {
 
     it('should preserve the order of parameters when updating', () => {
       const filter = getFilter({
-        dataSourceName: 'Mimir Dev',
+        dataSourceNames: ['Mimir Dev'],
         namespace: '/etc/prometheus',
         labels: ['region=emea'],
         groupName: 'cpu-usage',

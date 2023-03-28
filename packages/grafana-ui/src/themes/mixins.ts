@@ -10,7 +10,7 @@ export function cardChrome(theme: GrafanaTheme2): string {
       background: ${hoverColor(theme.colors.background.secondary, theme)};
     }
     box-shadow: ${theme.components.panel.boxShadow};
-    border-radius: ${theme.shape.borderRadius(2)};
+    border-radius: ${theme.shape.radius.default};
 `;
 }
 
@@ -25,7 +25,7 @@ export function listItem(theme: GrafanaTheme2): string {
     background: ${hoverColor(theme.colors.background.secondary, theme)};
   }
   box-shadow: ${theme.components.panel.boxShadow};
-  border-radius: ${theme.shape.borderRadius(2)};
+  border-radius: ${theme.shape.radius.default};
 `;
 }
 
@@ -80,6 +80,6 @@ export const getTooltipContainerStyles = (theme: GrafanaTheme2) => `
   box-shadow: ${theme.shadows.z2};
   max-width: 800px;
   padding: ${theme.spacing(1)};
-  border-radius: ${theme.shape.borderRadius()};
+  border-radius: ${theme.shape.radius.default};
   z-index: ${theme.zIndex.tooltip};
 `;

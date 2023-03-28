@@ -30,12 +30,7 @@ import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
 
 import { Matchers } from './Matchers';
-
-type TimingOptions = {
-  group_wait?: string;
-  group_interval?: string;
-  repeat_interval?: string;
-};
+import { TimingOptions, TIMING_OPTIONS_DEFAULTS } from './timingOptions';
 
 type InhertitableProperties = Pick<
   Route,
@@ -184,7 +179,14 @@ const Policy: FC<PolicyComponentProps> = ({
                       </Menu>
                     }
                   >
-                    <Button variant="secondary" size="sm" icon="ellipsis-h" type="button" data-testid="more-actions" />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="ellipsis-h"
+                      type="button"
+                      aria-label="more-actions"
+                      data-testid="more-actions"
+                    />
                   </Dropdown>
                 </Stack>
               )}
@@ -415,12 +417,6 @@ const MuteTimings: FC<{ timings: string[]; alertManagerSourceName: string }> = (
       </Strong>
     </div>
   );
-};
-
-const TIMING_OPTIONS_DEFAULTS = {
-  group_wait: '30s',
-  group_interval: '5m',
-  repeat_interval: '4h',
 };
 
 const TimingOptionsMeta: FC<{ timingOptions: TimingOptions }> = ({ timingOptions }) => {

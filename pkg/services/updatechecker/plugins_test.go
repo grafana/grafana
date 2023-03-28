@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -166,10 +167,11 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			httpClient: &fakeHTTPClient{
 				fakeResp: jsonResp,
 			},
-			log: log.NewNopLogger(),
+			log:    log.NewNopLogger(),
+			tracer: tracing.InitializeTracerForTest(),
 		}
 
-		svc.checkForUpdates(context.Background())
+		svc.instrumentedCheckForUpdates(context.Background())
 
 		require.Equal(t, 1, len(svc.availableUpdates))
 
@@ -198,8 +200,8 @@ type fakeHTTPClient struct {
 	requestURL string
 }
 
-func (c *fakeHTTPClient) Get(url string) (*http.Response, error) {
-	c.requestURL = url
+func (c *fakeHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	c.requestURL = req.URL.String()
 
 	resp := &http.Response{
 		Body: io.NopCloser(strings.NewReader(c.fakeResp)),
