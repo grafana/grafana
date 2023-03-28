@@ -42,7 +42,7 @@ const (
 type OAuth2ServiceImpl struct {
 	cache         *localcache.CacheService
 	memstore      *storage.MemoryStore
-	sqlstore      oauthstore.Store
+	sqlstore      oauthserver.Store
 	oauthProvider fosite.OAuth2Provider
 	logger        log.Logger
 	accessControl ac.AccessControl
@@ -428,14 +428,16 @@ func (s *OAuth2ServiceImpl) UpdateExternalService(ctx context.Context, cmd *oaut
 			}
 		}
 	}
+	var keys *oauthserver.KeyResult
 	if cmd.Key != nil {
-		keyResult, errKeyHandling := s.handleKeyOptions(ctx, cmd.Key)
+		var errKeyHandling error
+		keys, errKeyHandling = s.handleKeyOptions(ctx, cmd.Key)
 		if errKeyHandling != nil {
 			s.logger.Error("Error handling key options", "externale service", cmd.ExternalServiceName, "error", errKeyHandling)
 			return nil, errKeyHandling
 		}
-		if keyResult != nil {
-			cmd.PublicPem = []byte(keyResult.PublicPem)
+		if keys != nil {
+			cmd.PublicPem = []byte(keys.PublicPem)
 		}
 	}
 	// If we have an update in permissions => recompute grant types
@@ -457,7 +459,9 @@ func (s *OAuth2ServiceImpl) UpdateExternalService(ctx context.Context, cmd *oaut
 		s.logger.Error("Error updating service", "externale service", cmd.ExternalServiceName, "error", errUpdate)
 		return nil, errUpdate
 	}
-	return client.ToDTO(), nil
+	dto := client.ToDTO()
+	dto.KeyResult = keys
+	return dto, nil
 }
 
 // TODO cache scopes

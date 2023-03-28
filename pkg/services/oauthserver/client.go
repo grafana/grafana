@@ -62,16 +62,17 @@ type Client struct {
 }
 
 func (c *Client) ToDTO() *ClientDTO {
-	return &ClientDTO{
+	c2 := ClientDTO{
 		ExternalServiceName: c.ExternalServiceName,
 		ID:                  c.ClientID,
 		Secret:              c.Secret,
 		GrantTypes:          c.GrantTypes,
 		RedirectURI:         c.RedirectURI,
-		KeyResult: &KeyResult{
-			PublicPem: string(c.PublicPem),
-		},
 	}
+	if len(c.PublicPem) > 0 {
+		c2.KeyResult = &KeyResult{PublicPem: string(c.PublicPem)}
+	}
+	return &c2
 }
 
 // GetID returns the client ID.

@@ -220,7 +220,7 @@ func TestStore_UpdateExternalService(t *testing.T) {
 	}
 }
 
-func compareClientToStored(t *testing.T, s Store, wanted *oauthserver.Client) {
+func compareClientToStored(t *testing.T, s *store, wanted *oauthserver.Client) {
 	ctx := context.Background()
 	stored, err := s.GetExternalService(ctx, wanted.ClientID)
 	require.NoError(t, err)

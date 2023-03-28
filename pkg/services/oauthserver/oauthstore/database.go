@@ -9,20 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthserver"
 )
 
-type Store interface {
-	RegisterExternalService(ctx context.Context, client *oauthserver.Client) error
-	GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error)
-	GetExternalServiceByName(ctx context.Context, app string) (*oauthserver.Client, error)
-
-	GetExternalServicePublicKey(ctx context.Context, id string) (*jose.JSONWebKey, error)
-	UpdateExternalService(ctx context.Context, cmd *oauthserver.UpdateClientCommand) (*oauthserver.Client, error)
-}
-
 type store struct {
 	db db.DB
 }
 
-func NewStore(db db.DB) Store {
+func NewStore(db db.DB) oauthserver.Store {
 	return &store{
 		db: db,
 	}
