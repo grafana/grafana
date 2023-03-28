@@ -160,7 +160,12 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
           </InlineSearchField>
           <InlineSearchField label={'Tags'}>
             <TagsInput
-              filters={query.filters?.filter((f) => f.type === 'dynamic')}
+              filters={query.filters?.filter(
+                // All dynamic fields plus all "static" fields in the page state that aren't a part of the "static" fields for this datasource.
+                // Useful when switching between datasources that have different static field configurations.
+                (f) =>
+                  f.type === 'dynamic' || (datasource.search?.filters?.findIndex((sf) => sf.tag === f.tag) || 0) === -1
+              )}
               datasource={datasource}
               setError={setError}
               updateFilter={updateFilter}

@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { uniq } from 'lodash';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
@@ -134,7 +135,7 @@ const SearchField = ({
           inputId={`${filter.id}-tag`}
           isLoading={isTagsLoading}
           // Add the current tag to the list if it doesn't exist in the tags prop, otherwise the field will be empty even though the state has a value
-          options={(!filter.tag || tags.find((t) => t === filter.tag) ? tags : [filter.tag, ...tags]).map((t) => ({
+          options={uniq([filter.tag, ...tags]).map((t) => ({
             label: t,
             value: t,
           }))}
