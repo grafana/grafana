@@ -1034,16 +1034,16 @@ const getCorrelations = () => {
   });
 };
 
-const filterLogRows = (
-  state: ExploreItemState,
+const filterLogRowsByTime = (
+  clearedAt: ExploreItemState['clearedAt'],
   logsResult: ExplorePanelData['logsResult']
 ): ExploreItemState['logsResult'] => {
   if (!logsResult) {
     return logsResult;
   }
 
-  if (state.clearedAt && state.isLive) {
-    const filteredRows = logsResult.rows.filter((row) => row.timeEpochMs > (state.clearedAt ?? 0));
+  if (clearedAt) {
+    const filteredRows = logsResult.rows.filter((row) => row.timeEpochMs > (clearedAt ?? 0));
     return {
       ...logsResult,
       rows: filteredRows,
@@ -1108,7 +1108,7 @@ export const processQueryResponse = (
     graphResult,
     tableResult,
     rawPrometheusResult,
-    logsResult: filterLogRows(state, logsResult),
+    logsResult: state.isLive ? filterLogRowsByTime(state.clearedAt, logsResult) : logsResult,
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     showLogs: !!logsResult,
     showMetrics: !!graphResult,
