@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import React, { FC, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import React, { FC, ReactNode, useContext, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { locationUtil, textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   ButtonGroup,
   ModalsController,
@@ -16,9 +16,6 @@ import {
   ToolbarButtonRow,
   ModalsContext,
   ConfirmModal,
-  Dropdown,
-  Menu,
-  Button,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbarSeparator';
@@ -28,23 +25,16 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { appEvents } from 'app/core/core';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import { t, Trans } from 'app/core/internationalization';
+import { setStarred } from 'app/core/reducers/navBarTree';
+import { AddPanelButton } from 'app/features/dashboard/components/AddPanelButton';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
-import {
-  getCopiedPanelPlugin,
-  onAddLibraryPanel,
-  onCreateNewPanel,
-  onCreateNewRow,
-  onPasteCopiedPanel,
-} from 'app/features/dashboard/utils/dashboard';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { KioskMode } from 'app/types';
 import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
-
-import { setStarred } from '../../../../core/reducers/navBarTree';
-import { getDashboardSrv } from '../../services/DashboardSrv';
-import { DashboardModel } from '../../state';
 
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
@@ -92,10 +82,6 @@ export const DashNav = React.memo<Props>((props) => {
   const forceUpdate = useForceUpdate();
   const { chrome } = useGrafana();
   const { showModal, hideModal } = useContext(ModalsContext);
-
-  const [addMenuOpen, setAddMenuOpen] = useState(true);
-
-  const copiedPanelPlugin = useMemo(() => getCopiedPanelPlugin(), []);
 
   // We don't really care about the event payload here only that it triggeres a re-render of this component
   useBusEvent(props.dashboard.events, DashboardMetaChangedEvent);
@@ -295,53 +281,6 @@ export const DashNav = React.memo<Props>((props) => {
     );
   };
 
-  const renderAddPanelOptions = () => {
-    const { dashboard } = props;
-
-    return (
-      <Menu>
-        <Menu.Item
-          key="add-visualisation"
-          label="Visualisation"
-          ariaLabel="Add new panel"
-          onClick={() => {
-            reportInteraction('Create new panel');
-            const id = onCreateNewPanel(dashboard);
-            locationService.partial({ editPanel: id });
-          }}
-        />
-        <Menu.Item
-          key="add-row"
-          label="Row"
-          ariaLabel="Add new row"
-          onClick={() => {
-            reportInteraction('Create new row');
-            onCreateNewRow(dashboard);
-          }}
-        />
-        <Menu.Item
-          key="add-panel-lib"
-          label="Import from library"
-          ariaLabel="Add new panel from panel library"
-          onClick={() => {
-            reportInteraction('Add a panel from the panel library');
-            onAddLibraryPanel(dashboard);
-          }}
-        />
-        <Menu.Item
-          key="add-panel-clipboard"
-          label="Paste panel"
-          ariaLabel="Add new panel from clipboard"
-          onClick={() => {
-            reportInteraction('Paste panel from clipboard');
-            onPasteCopiedPanel(dashboard, copiedPanelPlugin);
-          }}
-          disabled={!copiedPanelPlugin}
-        />
-      </Menu>
-    );
-  };
-
   const renderRightActions = () => {
     const { dashboard, onAddPanel, isFullscreen, kioskMode } = props;
     const { canSave, canEdit, showSettings } = dashboard.meta;
@@ -367,24 +306,7 @@ export const DashNav = React.memo<Props>((props) => {
 
     if (canEdit && !isFullscreen) {
       if (config.featureToggles.emptyDashboardPage) {
-        buttons.push(
-          <Dropdown
-            overlay={renderAddPanelOptions}
-            placement="bottom"
-            onVisibleChange={setAddMenuOpen}
-            key="button-panel-add-dropdown"
-          >
-            <Button
-              tooltip={t('dashboard.toolbar.add-panel', 'Add panel')}
-              icon="panel-add"
-              size="md"
-              fill="outline"
-              key="button-panel-add"
-            >
-              Add
-            </Button>
-          </Dropdown>
-        );
+        buttons.push(<AddPanelButton dashboard={dashboard} key="panel-add-dropdown" />);
       } else {
         buttons.push(
           <ToolbarButton
