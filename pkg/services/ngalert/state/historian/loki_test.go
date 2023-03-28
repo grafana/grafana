@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/prometheus/client_golang/prometheus"
@@ -161,6 +162,47 @@ func TestRemoteLokiBackend(t *testing.T) {
 
 		selector, err = NewSelector("label", "invalid", "value")
 		require.Error(t, err)
+	})
+
+	t.Run("buildLogQuery", func(t *testing.T) {
+		cases := []struct {
+			name  string
+			query models.HistoryQuery
+			exp   string
+		}{
+			{
+				name:  "default includes state history label and orgID label",
+				query: models.HistoryQuery{},
+				exp:   `{orgID="0",from="state-history"}`,
+			},
+			{
+				name: "adds stream label filter for ruleUID and orgID",
+				query: models.HistoryQuery{
+					RuleUID: "rule-uid",
+					OrgID:   123,
+				},
+				exp: `{orgID="123",from="state-history",ruleUID="rule-uid"}`,
+			},
+			{
+				name: "filters instance labels in log line",
+				query: models.HistoryQuery{
+					OrgID: 123,
+					Labels: map[string]string{
+						"customlabel": "customvalue",
+						"labeltwo":    "labelvaluetwo",
+					},
+				},
+				exp: `{orgID="123",from="state-history"} | json | labels.customlabel="customvalue" | labels.labeltwo="labelvaluetwo"`,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				res, err := buildLogQuery(tc.query)
+				require.NoError(t, err)
+				require.Equal(t, tc.exp, res)
+			})
+		}
 	})
 }
 
