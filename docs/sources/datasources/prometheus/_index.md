@@ -96,6 +96,8 @@ datasources:
       manageAlerts: true
       prometheusType: Prometheus
       prometheusVersion: 2.37.0
+      incrementalQuerying: true
+      incrementalQueryOverlapWindow: 10m
       exemplarTraceIdDestinations:
         # Field with internal link pointing to data source in Grafana.
         # datasourceUid value can be anything, but it should be unique across all defined data source uids.
@@ -171,3 +173,11 @@ Grafana lists these variables in dropdown select boxes at the top of the dashboa
 Grafana refers to such variables as template variables.
 
 For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+
+## Incremental Dashboard Queries (beta)
+
+As of Grafana 9.6, data sources can be configured to query dashboards incrementally, instead of querying the entire duration on each dashboard refresh.
+This can be toggled on or off in the datasource configuration or provisioning file (under `incrementalQuerying` in jsonData).
+Additionally, the amount of overlap between incremental queries can be configured using the `incrementalQueryOverlapWindow` jsonData field, the default value is 10m (10 minutes).
+
+Increasing the duration of the `incrementalQueryOverlapWindow` will increase the size of every incremental query, but might be helpful for instances that have inconsistent results for recent data.

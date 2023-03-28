@@ -165,15 +165,13 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 
 ##@ Docker
 
-TMP_DIR!=mktemp -d
 TAG_SUFFIX=$(if $(WIRE_TAGS)!=oss,-$(WIRE_TAGS))
 PLATFORM=linux/amd64
 
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
-	cp -Lrf . $(TMP_DIR)
-	DOCKER_BUILDKIT=1 \
-	docker build $(TMP_DIR) \
+	tar -ch . | \
+	docker buildx build - \
 	--platform $(PLATFORM) \
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
@@ -183,9 +181,8 @@ build-docker-full: ## Build Docker image for development.
 
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	@echo "build docker container"
-	cp -Lrf . $(TMP_DIR)
-	DOCKER_BUILDKIT=1 \
-	docker build $(TMP_DIR) \
+	tar -ch . | \
+	docker buildx build - \
 	--platform $(PLATFORM) \
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
