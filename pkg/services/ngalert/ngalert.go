@@ -391,6 +391,12 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		return nil, err
 	}
 
+	ftMsg := "Alternate state history backend was configured but feature flag is not yet enabled, ignoring"
+	if !ft.IsEnabled("alertStateHistoryDualWrites") {
+		backend = historian.BackendTypeAnnotations
+		l.Warn(ftMsg, "toggle", "alertStateHistoryDualWrites", "configured", cfg.Backend, "actual", historian.BackendTypeAnnotations)
+	}
+
 	met.Info.WithLabelValues(backend.String()).Set(1)
 	if backend == historian.BackendTypeMultiple {
 		primaryCfg := cfg

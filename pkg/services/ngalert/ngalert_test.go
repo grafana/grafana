@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -64,7 +66,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 	t.Run("fail initialization if invalid backend", func(t *testing.T) {
 		met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
 		logger := log.NewNopLogger()
-		tog := featureTogglesOn()
+		tog := ashTogglesOn()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: true,
 			Backend: "invalid-backend",
@@ -78,7 +80,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 	t.Run("fail initialization if invalid multi-backend primary", func(t *testing.T) {
 		met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
 		logger := log.NewNopLogger()
-		tog := featureTogglesOn()
+		tog := ashTogglesOn()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled:      true,
 			Backend:      "multiple",
@@ -94,7 +96,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 	t.Run("fail initialization if invalid multi-backend secondary", func(t *testing.T) {
 		met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
 		logger := log.NewNopLogger()
-		tog := featureTogglesOn()
+		tog := ashTogglesOn()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled:          true,
 			Backend:          "multiple",
@@ -111,7 +113,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 	t.Run("do not fail initialization if pinging Loki fails", func(t *testing.T) {
 		met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
 		logger := log.NewNopLogger()
-		tog := featureTogglesOn()
+		tog := ashTogglesOn()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: true,
 			Backend: "loki",
@@ -130,7 +132,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		reg := prometheus.NewRegistry()
 		met := metrics.NewHistorianMetrics(reg)
 		logger := log.NewNopLogger()
-		tog := featureTogglesOn()
+		tog := ashTogglesOn()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: true,
 			Backend: "annotations",
@@ -153,7 +155,7 @@ grafana_alerting_state_history_info{backend="annotations"} 1
 		reg := prometheus.NewRegistry()
 		met := metrics.NewHistorianMetrics(reg)
 		logger := log.NewNopLogger()
-		tog := featureTogglesOn()
+		tog := ashTogglesOn()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: false,
 		}
@@ -170,12 +172,39 @@ grafana_alerting_state_history_info{backend="noop"} 0
 		err = testutil.GatherAndCompare(reg, exp, "grafana_alerting_state_history_info")
 		require.NoError(t, err)
 	})
+
+	t.Run("alertStateHistoryDualWrites disabled forces annotations regardless of configuration", func(t *testing.T) {
+		reg := prometheus.NewRegistry()
+		met := metrics.NewHistorianMetrics(reg)
+		logger := log.NewNopLogger()
+		tog := toggles()
+		cfg := setting.UnifiedAlertingStateHistorySettings{
+			Enabled: true,
+			Backend: "loki",
+		}
+
+		h, err := configureHistorianBackend(context.Background(), cfg, tog, nil, nil, nil, met, logger)
+
+		require.NoError(t, err)
+		_, is := h.(*historian.AnnotationBackend)
+		require.Truef(t, is, "backend was not convertible to AnnotationBackend, actual: %T", h)
+	})
 }
 
-func featureTogglesOn() featuremgmt.FeatureToggles {
-	return alwaysOnToggles{}
+func ashTogglesOn() featuremgmt.FeatureToggles {
+	return toggles("alertStateHistoryDualWrites", "alertStateHistoryLokiPrimary", "alertStateHistoryDisableAnnotations")
 }
 
-type alwaysOnToggles struct{}
+func toggles(ns ...string) featuremgmt.FeatureToggles {
+	return fakeToggles{
+		toggles: ns,
+	}
+}
 
-func (a alwaysOnToggles) IsEnabled(_ string) bool { return true }
+type fakeToggles struct {
+	toggles []string
+}
+
+func (f fakeToggles) IsEnabled(s string) bool {
+	return slices.Contains(f.toggles, s)
+}
