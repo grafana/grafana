@@ -455,8 +455,11 @@ export class LokiDatasource
 
   async formatQuery(query: string) {
     const transformedQuery = transformForFormatting(query, this.interpolateString.bind(this));
-
     let formatted = query;
+
+    if (!isValidQuery(transformedQuery.query)) {
+      return query;
+    }
 
     try {
       // Try because this might error
