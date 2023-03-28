@@ -47,10 +47,7 @@ export function OperationEditor({
   const def = queryModeller.getOperationDef(operation.id);
   const shouldFlash = useFlash(flash);
 
-  let isConflicting = false;
-  if (operation.id === LokiOperationId.LabelFilter) {
-    isConflicting = isConflictingFilter(operation, query.operations);
-  }
+  const isConflicting = operation.id === LokiOperationId.LabelFilter && isConflictingFilter(operation, query.operations);
 
   const theme = useTheme2();
   const styles = getStyles(theme, isConflicting);
