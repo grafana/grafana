@@ -170,7 +170,7 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] 
   const aggregated: Record<string, Record<number, number>> = {};
   const configs: Record<
     string,
-    { meta: QueryResultMeta; valueFieldConfig: FieldConfig; timeFieldConfig: FieldConfig }
+    { meta?: QueryResultMeta; valueFieldConfig: FieldConfig; timeFieldConfig: FieldConfig }
   > = {};
   let results: DataFrame[] = [];
 
@@ -190,9 +190,9 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] 
     const level = valueField.config.displayNameFromDS || dataFrame.name || 'logs';
     const length = valueField.values.length;
     configs[level] = {
-      meta: { ...(dataFrame.meta || {}) },
-      valueFieldConfig: { ...valueField.config },
-      timeFieldConfig: { ...timeField.config },
+      meta: dataFrame.meta,
+      valueFieldConfig: valueField.config,
+      timeFieldConfig: timeField.config,
     };
 
     for (let pointIndex = 0; pointIndex < length; pointIndex++) {
