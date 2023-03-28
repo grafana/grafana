@@ -195,8 +195,6 @@ The host for the server to listen on. If your machine has more than one network 
 
 In environments where network address translation (NAT) is used, ensure you use the network interface address and not a final public address; otherwise, you might see errors such as `bind: cannot assign requested address` in the logs. 
 
-> **Note:** It is recommended that you keep this value empty unless you have network security requirements that call for this configuration.
-
 ### http_port
 
 The port to bind to, defaults to `3000`. To use port 80 you need to either give the Grafana binary permission for example:
