@@ -175,6 +175,11 @@ export interface ExploreItemState {
    */
   isPaused: boolean;
 
+  /**
+   * The last time, in milliseconds, the live tailing view was cleared.
+   */
+  clearedAt: number | null;
+
   querySubscription?: Unsubscribable;
 
   queryResponse: ExplorePanelData;
@@ -212,8 +217,6 @@ export interface ExploreItemState {
   panelsState: ExplorePanelsState;
 
   isFromCompactUrl?: boolean;
-
-  clearedAt: number | null;
 }
 
 export interface ExploreUpdateState {
