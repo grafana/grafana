@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -12,8 +13,8 @@ import (
 type RuleStore interface {
 	GetUserVisibleNamespaces(context.Context, int64, *user.SignedInUser) (map[string]*folder.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *user.SignedInUser, bool) (*folder.Folder, error)
-	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) error
-	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
+	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error)
+	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (models.RulesGroup, error)
 
 	// InsertAlertRules will insert all alert rules passed into the function
 	// and return the map of uuid to id.

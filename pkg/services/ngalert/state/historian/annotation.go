@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
@@ -34,7 +35,7 @@ type AnnotationBackend struct {
 }
 
 type RuleStore interface {
-	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
+	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*models.AlertRule, error)
 }
 
 type AnnotationStore interface {
@@ -89,16 +90,16 @@ func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQue
 		UID:   query.RuleUID,
 		OrgID: query.OrgID,
 	}
-	err := h.rules.GetAlertRuleByUID(ctx, &rq)
+	rule, err := h.rules.GetAlertRuleByUID(ctx, &rq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to look up the requested rule")
 	}
-	if rq.Result == nil {
+	if rule == nil {
 		return nil, fmt.Errorf("no such rule exists")
 	}
 
 	q := annotations.ItemQuery{
-		AlertID:      rq.Result.ID,
+		AlertID:      rule.ID,
 		OrgID:        query.OrgID,
 		From:         query.From.Unix(),
 		To:           query.To.Unix(),
