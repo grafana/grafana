@@ -22,8 +22,9 @@ Grafana uses other open source software. Refer to [package.json](https://github.
 
 The following operating systems are supported for Grafana installation:
 
-- [Debian / Ubuntu]({{< relref "debian/" >}})
-- [RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)]({{< relref "rpm/" >}})
+- [Debian/Ubuntu]({{< relref "debian/" >}})
+- [Red Hat/RHEL/Fedora]({{< relref "redhat-rhel-fedora/" >}})
+- [SUSE/OpenSUSE]({{< relref "suse-opensuse/" >}})
 - [macOS]({{< relref "mac/" >}})
 - [Windows]({{< relref "windows/" >}})
 
