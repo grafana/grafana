@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -63,12 +64,13 @@ func TestConfigureHistorianBackend(t *testing.T) {
 	t.Run("fail initialization if invalid backend", func(t *testing.T) {
 		met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
 		logger := log.NewNopLogger()
+		tog := featureTogglesOn()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: true,
 			Backend: "invalid-backend",
 		}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger)
+		_, err := configureHistorianBackend(context.Background(), cfg, tog, nil, nil, nil, met, logger)
 
 		require.ErrorContains(t, err, "unrecognized")
 	})
@@ -76,13 +78,14 @@ func TestConfigureHistorianBackend(t *testing.T) {
 	t.Run("fail initialization if invalid multi-backend primary", func(t *testing.T) {
 		met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
 		logger := log.NewNopLogger()
+		tog := featureTogglesOn()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled:      true,
 			Backend:      "multiple",
 			MultiPrimary: "invalid-backend",
 		}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger)
+		_, err := configureHistorianBackend(context.Background(), cfg, tog, nil, nil, nil, met, logger)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -91,6 +94,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 	t.Run("fail initialization if invalid multi-backend secondary", func(t *testing.T) {
 		met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
 		logger := log.NewNopLogger()
+		tog := featureTogglesOn()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled:          true,
 			Backend:          "multiple",
@@ -98,7 +102,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 			MultiSecondaries: []string{"sql", "invalid-backend"},
 		}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger)
+		_, err := configureHistorianBackend(context.Background(), cfg, tog, nil, nil, nil, met, logger)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -107,6 +111,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 	t.Run("do not fail initialization if pinging Loki fails", func(t *testing.T) {
 		met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
 		logger := log.NewNopLogger()
+		tog := featureTogglesOn()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: true,
 			Backend: "loki",
@@ -115,7 +120,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 			LokiWriteURL: "http://gone.invalid",
 		}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger)
+		h, err := configureHistorianBackend(context.Background(), cfg, tog, nil, nil, nil, met, logger)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -125,12 +130,13 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		reg := prometheus.NewRegistry()
 		met := metrics.NewHistorianMetrics(reg)
 		logger := log.NewNopLogger()
+		tog := featureTogglesOn()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: true,
 			Backend: "annotations",
 		}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger)
+		h, err := configureHistorianBackend(context.Background(), cfg, tog, nil, nil, nil, met, logger)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -147,11 +153,12 @@ grafana_alerting_state_history_info{backend="annotations"} 1
 		reg := prometheus.NewRegistry()
 		met := metrics.NewHistorianMetrics(reg)
 		logger := log.NewNopLogger()
+		tog := featureTogglesOn()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: false,
 		}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger)
+		h, err := configureHistorianBackend(context.Background(), cfg, tog, nil, nil, nil, met, logger)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -164,3 +171,11 @@ grafana_alerting_state_history_info{backend="noop"} 0
 		require.NoError(t, err)
 	})
 }
+
+func featureTogglesOn() featuremgmt.FeatureToggles {
+	return alwaysOnToggles{}
+}
+
+type alwaysOnToggles struct{}
+
+func (a alwaysOnToggles) IsEnabled(_ string) bool { return true }
