@@ -9,7 +9,12 @@ import {
   TypedVariableModel,
   ScopedVar,
 } from '@grafana/data';
-import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
+import {
+  getDataSourceSrv,
+  setTemplateSrv,
+  TemplateSrv as BaseTemplateSrv,
+  VariableInterpolation,
+} from '@grafana/runtime';
 import { sceneGraph, FormatRegistryID, VariableCustomFormatterFn } from '@grafana/scenes';
 
 import { variableAdapters } from '../variables/adapters';
@@ -24,6 +29,11 @@ import { macroRegistry } from './macroRegistry';
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
 }
+
+/**
+ * Internal regex replace function
+ */
+type ReplaceFunction = (fullMatch: string, variableName: string, fieldPath: string, format: string) => string;
 
 export interface TemplateSrvDependencies {
   getFilteredVariables: typeof getFilteredVariables;
@@ -176,9 +186,8 @@ export class TemplateSrv implements BaseTemplateSrv {
     }
 
     str = escape(str);
-    this.regex.lastIndex = 0;
-    return str.replace(this.regex, (match, var1, var2, fmt2, var3) => {
-      if (this.getVariableAtIndex(var1 || var2 || var3)) {
+    return this._replaceWithVariableRegex(str, undefined, (match, variableName) => {
+      if (this.getVariableAtIndex(variableName)) {
         return '<span class="template-variable">' + match + '</span>';
       }
       return match;
@@ -221,7 +230,12 @@ export class TemplateSrv implements BaseTemplateSrv {
     return value;
   }
 
-  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
+  replace(
+    target?: string,
+    scopedVars?: ScopedVars,
+    format?: string | Function | undefined,
+    interpolations?: VariableInterpolation[]
+  ): string {
     if (scopedVars && scopedVars.__sceneObject) {
       return sceneGraph.interpolate(
         scopedVars.__sceneObject.value,
@@ -237,63 +251,89 @@ export class TemplateSrv implements BaseTemplateSrv {
 
     this.regex.lastIndex = 0;
 
-    return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
-      const variableName: string = var1 || var2 || var3;
-      const variable = this.getVariableAtIndex(variableName);
-      let fmt = fmt2 || fmt3 || format;
+    return this._replaceWithVariableRegex(target, format, (match, variableName, fieldPath, fmt) => {
+      const value = this._evaluateVariableExpression(match, variableName, fieldPath, fmt, scopedVars);
 
-      const scopedVar = scopedVars && scopedVars[variableName];
-
-      if (scopedVar) {
-        const value = this.getVariableValue(scopedVar, fieldPath);
-        const text = this.getVariableText(scopedVar, value);
-
-        if (value !== null && value !== undefined) {
-          return formatVariableValue(value, fmt, variable, text);
-        }
+      // If we get passed this interpolations map we will also record all the expressions that were replaced
+      if (interpolations) {
+        interpolations.push({ match, variableName, fieldPath, format: fmt, value, found: value !== match });
       }
 
-      if (!variable) {
-        if (macroRegistry[variableName]) {
-          return macroRegistry[variableName](match, fieldPath, scopedVars, fmt);
-        }
+      return value;
+    });
+  }
 
-        return match;
+  private _evaluateVariableExpression(
+    match: string,
+    variableName: string,
+    fieldPath: string,
+    format: string | VariableCustomFormatterFn | undefined,
+    scopedVars: ScopedVars | undefined
+  ) {
+    const variable = this.getVariableAtIndex(variableName);
+    const scopedVar = scopedVars?.[variableName];
+
+    if (scopedVar) {
+      const value = this.getVariableValue(scopedVar, fieldPath);
+      const text = this.getVariableText(scopedVar, value);
+
+      if (value !== null && value !== undefined) {
+        return formatVariableValue(value, format, variable, text);
+      }
+    }
+
+    if (!variable) {
+      if (macroRegistry[variableName]) {
+        return macroRegistry[variableName](match, fieldPath, scopedVars, format);
       }
 
-      if (fmt === FormatRegistryID.queryParam || isAdHoc(variable)) {
-        const value = variableAdapters.get(variable.type).getValueForUrl(variable);
-        const text = isAdHoc(variable) ? variable.id : variable.current.text;
+      return match;
+    }
 
-        return formatVariableValue(value, fmt, variable, text);
+    if (format === FormatRegistryID.queryParam || isAdHoc(variable)) {
+      const value = variableAdapters.get(variable.type).getValueForUrl(variable);
+      const text = isAdHoc(variable) ? variable.id : variable.current.text;
+
+      return formatVariableValue(value, format, variable, text);
+    }
+
+    const systemValue = this.grafanaVariables.get(variable.current.value);
+    if (systemValue) {
+      return formatVariableValue(systemValue, format, variable);
+    }
+
+    let value = variable.current.value;
+    let text = variable.current.text;
+
+    if (this.isAllValue(value)) {
+      value = this.getAllValue(variable);
+      text = ALL_VARIABLE_TEXT;
+      // skip formatting of custom all values unless format set to text or percentencode
+      if (variable.allValue && format !== FormatRegistryID.text && format !== FormatRegistryID.percentEncode) {
+        return this.replace(value);
       }
+    }
 
-      const systemValue = this.grafanaVariables.get(variable.current.value);
-      if (systemValue) {
-        return formatVariableValue(systemValue, fmt, variable);
+    if (fieldPath) {
+      const fieldValue = this.getVariableValue({ value, text }, fieldPath);
+      if (fieldValue !== null && fieldValue !== undefined) {
+        return formatVariableValue(fieldValue, format, variable, text);
       }
+    }
 
-      let value = variable.current.value;
-      let text = variable.current.text;
+    return formatVariableValue(value, format, variable, text);
+  }
 
-      if (this.isAllValue(value)) {
-        value = this.getAllValue(variable);
-        text = ALL_VARIABLE_TEXT;
-        // skip formatting of custom all values unless format set to text or percentencode
-        if (variable.allValue && fmt !== FormatRegistryID.text && fmt !== FormatRegistryID.percentEncode) {
-          return this.replace(value);
-        }
-      }
+  /**
+   * Tries to unify the different variable format capture groups into a simpler replacer function
+   */
+  private _replaceWithVariableRegex(text: string, format: string | Function | undefined, replace: ReplaceFunction) {
+    this.regex.lastIndex = 0;
 
-      if (fieldPath) {
-        const fieldValue = this.getVariableValue({ value, text }, fieldPath);
-        if (fieldValue !== null && fieldValue !== undefined) {
-          return formatVariableValue(fieldValue, fmt, variable, text);
-        }
-      }
-
-      const res = formatVariableValue(value, fmt, variable, text);
-      return res;
+    return text.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
+      const variableName = var1 || var2 || var3;
+      const fmt = fmt2 || fmt3 || format;
+      return replace(match, variableName, fieldPath, fmt);
     });
   }
 

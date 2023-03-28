@@ -6,7 +6,6 @@ import { Alert, DataSourceHttpSettings, SecureSocksProxySettings } from '@grafan
 import { config } from 'app/core/config';
 
 import { ElasticsearchOptions } from '../types';
-import { isSupportedVersion } from '../utils';
 
 import { DataLinks } from './DataLinks';
 import { ElasticDetails } from './ElasticDetails';
@@ -34,18 +33,11 @@ export const ConfigEditor = (props: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const supportedVersion = isSupportedVersion(options.jsonData.esVersion);
-
   return (
     <>
       {options.access === 'direct' && (
         <Alert title="Error" severity="error">
           Browser access mode in the Elasticsearch datasource is no longer available. Switch to server access mode.
-        </Alert>
-      )}
-      {!supportedVersion && (
-        <Alert title="Deprecation notice" severity="error">
-          {`Support for Elasticsearch versions after their end-of-life (currently versions < 7.10) was removed`}
         </Alert>
       )}
       <DataSourceHttpSettings

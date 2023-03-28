@@ -548,7 +548,7 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 
 	switch {
 	case bucketOptions.LinearBuckets != nil:
-		bucketBound = strconv.FormatInt(bucketOptions.LinearBuckets.Offset+(bucketOptions.LinearBuckets.Width*int64(n-1)), 10)
+		bucketBound = strconv.FormatFloat(bucketOptions.LinearBuckets.Offset+(bucketOptions.LinearBuckets.Width*float64(n-1)), 'f', 2, 64)
 	case bucketOptions.ExponentialBuckets != nil:
 		bucketBound = strconv.FormatInt(int64(bucketOptions.ExponentialBuckets.Scale*math.Pow(bucketOptions.ExponentialBuckets.GrowthFactor, float64(n-1))), 10)
 	case bucketOptions.ExplicitBuckets != nil:
