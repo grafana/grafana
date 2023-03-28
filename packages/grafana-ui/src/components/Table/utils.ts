@@ -170,18 +170,15 @@ export function getColumns(
   this way, on other column's sort, the row numbers will persist in their proper place.
 */
 export function buildFieldsForOptionalRowNums(totalRows: number): Field {
+  const array = new Array(totalRows);
+  for (let i = 0; i < totalRows; i++) {
+    array[i] = i + 1;
+  }
+
   return {
     ...defaultRowNumberColumnFieldData,
-    values: buildBufferedEmptyValues(totalRows),
+    values: new ArrayVector(array),
   };
-}
-
-/*
-  This gives us an empty buffered ArrayVector of the desired length to match the table data.
-  It is simply a data placeholder for the Row Number column data.
-*/
-export function buildBufferedEmptyValues(totalRows: number): ArrayVector<string> {
-  return new ArrayVector(new Array(totalRows));
 }
 
 export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
@@ -547,4 +544,17 @@ function addMissingColumnIndex(columns: Array<{ id: string; field?: Field } | un
 
   // Recurse
   addMissingColumnIndex(columns);
+}
+
+// This adds the `Field` data needed to display a column with Row Numbers.
+export function addRowNumbersFieldToData(data: DataFrame): DataFrame {
+  /*
+      The `length` prop in a DataFrame tells us the amount of rows of data that will appear in our table;
+      with that we can build the correct buffered incrementing values for our Row Number column data.
+    */
+  const rowField: Field = buildFieldsForOptionalRowNums(data.length);
+  // Clone data to avoid unwanted mutation.
+  const clonedData = clone(data);
+  clonedData.fields = [rowField, ...data.fields];
+  return clonedData;
 }

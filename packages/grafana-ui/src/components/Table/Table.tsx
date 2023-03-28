@@ -1,4 +1,3 @@
-import { clone } from 'lodash';
 import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState, UIEventHandler } from 'react';
 import {
   Cell,
@@ -12,7 +11,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { DataFrame, Field, ReducerID } from '@grafana/data';
+import { Field, ReducerID } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
@@ -33,7 +32,7 @@ import {
   getFooterItems,
   createFooterCalculationValues,
   EXPANDER_WIDTH,
-  buildFieldsForOptionalRowNums,
+  addRowNumbersFieldToData,
 } from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
@@ -278,15 +277,6 @@ export const Table = memo((props: Props) => {
           {/*add the subtable to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
           {renderSubTable(rowIndex)}
           {row.cells.map((cell: Cell, index: number) => {
-            /*
-              Here we test if the `row.cell` is of id === "0"; only if the user has toggled ON `Show row numbers` in the panelOptions panel will this cell exist.
-              This cell had already been built, but with undefined values. This is so we can now update our empty/undefined `cell.value` to the current `rowIndex + 1`.
-              This will assure that on sort, our row numbers don't also sort; but instewad stay in their respective rows.
-            */
-            if (cell.column.id === '0') {
-              cell.value = rowIndex + 1;
-            }
-
             return (
               <TableCell
                 key={index}
@@ -335,19 +325,6 @@ export const Table = memo((props: Props) => {
         )}
       </div>
     );
-  }
-
-  // This adds the `Field` data needed to display a column with Row Numbers.
-  function addRowNumbersFieldToData(data: DataFrame): DataFrame {
-    /*
-      The `length` prop in a DataFrame tells us the amount of rows of data that will appear in our table;
-      with that we can build the correct buffered incrementing values for our Row Number column data.
-    */
-    const rowField: Field = buildFieldsForOptionalRowNums(data.length);
-    // Clone data to avoid unwanted mutation.
-    const clonedData = clone(data);
-    clonedData.fields = [rowField, ...data.fields];
-    return clonedData;
   }
 
   const getItemSize = (index: number): number => {
