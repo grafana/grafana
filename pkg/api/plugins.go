@@ -42,6 +42,8 @@ var pluginsCDNFallbackRedirectRequests = promauto.NewCounterVec(prometheus.Count
 	Help:      "Number of requests to the plugins CDN backend redirect fallback handler.",
 }, []string{"plugin_id", "plugin_version"})
 
+var ErrUnexpectedFileExtension = errors.New("unexpected file extension")
+
 func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
@@ -515,13 +517,17 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 }
 
 func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name string) ([]byte, error) {
-	md, err := hs.pluginFiles.GetFile(ctx, pluginID, mdFilepath(strings.ToUpper(name)))
+	file, err := mdFilepath(strings.ToUpper(name))
+	if err != nil {
+		return make([]byte, 0), err
+	}
+	md, err := hs.pluginFiles.GetFile(ctx, pluginID, file)
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotInstalled) {
-			return nil, plugins.NotFoundError{PluginID: pluginID}
+			return make([]byte, 0), plugins.NotFoundError{PluginID: pluginID}
 		}
 
-		md, err = hs.pluginFiles.GetFile(ctx, pluginID, mdFilepath(strings.ToUpper(name)))
+		md, err = hs.pluginFiles.GetFile(ctx, pluginID, strings.ToLower(file))
 		if err != nil {
 			return make([]byte, 0), nil
 		}
@@ -529,6 +535,14 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name 
 	return md.Content, nil
 }
 
-func mdFilepath(mdFilename string) string {
-	return filepath.Clean(filepath.Join("/", fmt.Sprintf("%s.md", mdFilename)))
+func mdFilepath(mdFilename string) (string, error) {
+	fileExt := filepath.Ext(mdFilename)
+	switch fileExt {
+	case "md":
+		return util.CleanRelativePath(mdFilename)
+	case "":
+		return util.CleanRelativePath(fmt.Sprintf("%s.md", mdFilename))
+	default:
+		return "", ErrUnexpectedFileExtension
+	}
 }

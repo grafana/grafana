@@ -390,7 +390,7 @@ func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ str
 }
 
 type FakePluginFiles struct {
-	FS fs.FS
+	OpenFunc func(name string) (fs.File, error)
 
 	base string
 }
@@ -402,7 +402,10 @@ func NewFakePluginFiles(base string) *FakePluginFiles {
 }
 
 func (f *FakePluginFiles) Open(name string) (fs.File, error) {
-	return f.FS.Open(name)
+	if f.OpenFunc != nil {
+		return f.OpenFunc(name)
+	}
+	return nil, nil
 }
 
 func (f *FakePluginFiles) Base() string {

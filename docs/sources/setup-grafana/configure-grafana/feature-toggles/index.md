@@ -29,24 +29,25 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `internationalization`              | Enables internationalization                                                                                                                                                 | Yes                |
 | `cloudWatchCrossAccountQuerying`    | Enables cross-account querying in CloudWatch datasources                                                                                                                     | Yes                |
 | `accessTokenExpirationCheck`        | Enable OAuth access_token expiration check and token refresh using the refresh_token                                                                                         |                    |
-| `disablePrometheusExemplarSampling` | Disable Prometheus examplar sampling                                                                                                                                         |                    |
+| `disablePrometheusExemplarSampling` | Disable Prometheus exemplar sampling                                                                                                                                         |                    |
 | `logsSampleInExplore`               | Enables access to the logs sample feature in Explore                                                                                                                         | Yes                |
 
 ## Beta feature toggles
 
-| Feature toggle name               | Description                                                                                                                                                                                  |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `trimDefaults`                    | Use cue schema to remove values that will be applied automatically                                                                                                                           |
-| `panelTitleSearch`                | Search for dashboards using panel title                                                                                                                                                      |
-| `prometheusAzureOverrideAudience` | Experimental. Allow override default AAD audience for Azure Prometheus endpoint                                                                                                              |
-| `migrationLocking`                | Lock database during migrations                                                                                                                                                              |
-| `newDBLibrary`                    | Use jmoiron/sqlx rather than xorm for a few backend services                                                                                                                                 |
-| `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                                                                                                                                          |
-| `autoMigrateOldPanels`            | Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)                                                                                                           |
-| `disableAngular`                  | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
-| `topnav`                          | Displays new top nav and page layouts                                                                                                                                                        |
-| `accessControlOnCall`             | Access control primitives for OnCall                                                                                                                                                         |
-| `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                                                                                                                                         |
+| Feature toggle name                       | Description                                                                                                                                                                                  |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `trimDefaults`                            | Use cue schema to remove values that will be applied automatically                                                                                                                           |
+| `panelTitleSearch`                        | Search for dashboards using panel title                                                                                                                                                      |
+| `prometheusAzureOverrideAudience`         | Experimental. Allow override default AAD audience for Azure Prometheus endpoint                                                                                                              |
+| `migrationLocking`                        | Lock database during migrations                                                                                                                                                              |
+| `newDBLibrary`                            | Use jmoiron/sqlx rather than xorm for a few backend services                                                                                                                                 |
+| `validateDashboardsOnSave`                | Validate dashboard JSON POSTed to api/dashboards/db                                                                                                                                          |
+| `autoMigrateOldPanels`                    | Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)                                                                                                           |
+| `disableAngular`                          | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
+| `topnav`                                  | Displays new top nav and page layouts                                                                                                                                                        |
+| `accessControlOnCall`                     | Access control primitives for OnCall                                                                                                                                                         |
+| `alertingNoNormalState`                   | Stop maintaining state of alerts that are not firing                                                                                                                                         |
+| `disableElasticsearchBackendExploreQuery` | Disable executing of Elasticsearch Explore queries trough backend                                                                                                                            |
 
 ## Alpha feature toggles
 
@@ -81,6 +82,7 @@ Alpha features might be changed or removed without prior notice.
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                      |
 | `elasticsearchBackendMigration`    | Use Elasticsearch as backend data source                                                                  |
 | `datasourceOnboarding`             | Enable data source onboarding page                                                                        |
+| `emptyDashboardPage`               | Enable the redesigned user interface of a dashboard page that includes no panels                          |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                              |
 | `authnService`                     | Use new auth service to perform authentication                                                            |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                         |
