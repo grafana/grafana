@@ -217,7 +217,7 @@ const AddPanelWidgetHandle = ({ children, onBack, onCancel, styles }: AddPanelWi
       )}
       {!onBack && (
         <div className={styles.backButton}>
-          <Icon name="panel-add" size="md" />
+          <Icon name="panel-add" size="xl" />
         </div>
       )}
       {children && <span>{children}</span>}

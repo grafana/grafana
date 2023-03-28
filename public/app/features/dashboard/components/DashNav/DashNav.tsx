@@ -390,6 +390,7 @@ export const DashNav = React.memo<Props>((props) => {
           <ToolbarButton
             tooltip={t('dashboard.toolbar.add-panel', 'Add panel')}
             icon="panel-add"
+            iconSize="xl"
             onClick={onAddPanel}
             key="button-panel-add"
           />
