@@ -286,7 +286,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
           title={exploreId === ExploreId.left && !isTopnav ? 'Explore' : undefined}
           pageIcon={exploreId === ExploreId.left && !isTopnav ? 'compass' : undefined}
           leftItems={toolbarLeftItems}
-          showLeftItemsOnSmallScreen={true}
+          forceShowLeftItems
         >
           {this.renderActions()}
         </PageToolbar>

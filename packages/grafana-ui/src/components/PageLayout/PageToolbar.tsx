@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactNode, useCallback } from 'react';
+import React, { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -25,7 +25,11 @@ export interface Props {
   isFullscreen?: boolean;
   'aria-label'?: string;
   buttonOverflowAlignment?: 'left' | 'right';
-  showLeftItemsOnSmallScreen?: boolean;
+  /**
+   * Forces left items to be visible on small screens.
+   * By default left items are hidden on small screens.
+   */
+  forceShowLeftItems?: boolean;
 }
 
 /** @alpha */
@@ -45,11 +49,9 @@ export const PageToolbar = React.memo(
     /** main nav-container aria-label **/
     'aria-label': ariaLabel,
     buttonOverflowAlignment = 'right',
-    showLeftItemsOnSmallScreen = false,
+    forceShowLeftItems = false,
   }: Props) => {
-    const styles = useStyles2(
-      useCallback((theme) => getStyles(theme, showLeftItemsOnSmallScreen), [showLeftItemsOnSmallScreen])
-    );
+    const styles = useStyles2(getStyles);
 
     /**
      * .page-toolbar css class is used for some legacy css view modes (TV/Kiosk) and
@@ -131,7 +133,10 @@ export const PageToolbar = React.memo(
                 )}
 
                 {leftItems?.map((child, index) => (
-                  <div className={styles.leftActionItem} key={index}>
+                  <div
+                    className={cx(styles.leftActionItem, { [styles.forceShowLeftActionItems]: forceShowLeftItems })}
+                    key={index}
+                  >
                     {child}
                   </div>
                 ))}
@@ -149,16 +154,10 @@ export const PageToolbar = React.memo(
 
 PageToolbar.displayName = 'PageToolbar';
 
-const getStyles = (theme: GrafanaTheme2, showLeftItemsOnSmallScreen: boolean) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const { spacing, typography } = theme;
 
   const focusStyle = getFocusStyles(theme);
-
-  const showLeftItemsStyles = css`
-    align-items: center;
-    display: flex;
-    padding-right: ${spacing(0.5)};
-  `;
 
   return {
     pre: css`
@@ -244,13 +243,16 @@ const getStyles = (theme: GrafanaTheme2, showLeftItemsOnSmallScreen: boolean) =>
         flex: 1;
       }
     `,
-    leftActionItem: showLeftItemsOnSmallScreen
-      ? showLeftItemsStyles
-      : css`
-          display: 'none';
-          ${theme.breakpoints.up('md')} {
-            ${showLeftItemsStyles}
-          }
-        `,
+    leftActionItem: css`
+      display: none;
+      align-items: center;
+      padding-right: ${spacing(0.5)};
+      ${theme.breakpoints.up('md')} {
+        display: flex;
+      }
+    `,
+    forceShowLeftActionItems: css`
+      display: flex;
+    `,
   };
 };
