@@ -335,5 +335,10 @@
     <script nonce="[[.Nonce]]">
       performance.mark('frontend_boot_js_done_time_seconds');
     </script>
+
+    <!-- @PERCONA -->
+    [[ if eq .Env "development" ]]
+      <script src="http://localhost:35729/livereload.js"></script>
+    [[end]]
   </body>
 </html>

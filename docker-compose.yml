@@ -3,9 +3,11 @@ version: "3"
 services:
   pmm-server:
     container_name: pmm-server
-    image: perconalab/pmm-server:dev-latest
+    image: perconalab/pmm-server:dev-container
     volumes:
-      - "../grafana/public:/usr/share/grafana/public"
+      - "./:/workspace"
+      - "./public:/usr/share/grafana/public"
+      - "./conf/grafana.local-dev.ini:/usr/share/grafana/conf/defaults.ini"
     ports:
       - 80:80
       - 443:443
