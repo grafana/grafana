@@ -120,8 +120,8 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 }
 
 func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
-	// +2 as OrgID and the state history label will always be selectors at the API level.
-	selectors := make([]Selector, len(query.Labels)+2)
+	// OrgID and the state history label are static and will be included in all queries.
+	selectors := make([]Selector, 2)
 
 	// Set the predefined selector orgID.
 	selector, err := NewSelector(OrgIDLabel, "=", fmt.Sprintf("%d", query.OrgID))
@@ -136,17 +136,6 @@ func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
 		return nil, err
 	}
 	selectors[1] = selector
-
-	// Set the label selectors
-	i := 2
-	for label, val := range query.Labels {
-		selector, err = NewSelector(label, "=", val)
-		if err != nil {
-			return nil, err
-		}
-		selectors[i] = selector
-		i++
-	}
 
 	// Set the optional special selector rule_id
 	if query.RuleUID != "" {
