@@ -136,6 +136,13 @@ type AlertRuleGroup struct {
 	Rules      []AlertRule
 }
 
+// AlertRuleGroupWithFolderTitle extends AlertRuleGroup with orgID and folder title
+type AlertRuleGroupWithFolderTitle struct {
+	*AlertRuleGroup
+	OrgID       int64
+	FolderTitle string
+}
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64 `xorm:"pk autoincr 'id'"`

@@ -9,7 +9,6 @@ import (
 
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
@@ -32,11 +31,11 @@ type AlertRuleGroupV1 struct {
 	Rules    []AlertRuleV1      `json:"rules" yaml:"rules"`
 }
 
-func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (AlertRuleGroupWithFolderTitle, error) {
-	ruleGroup := AlertRuleGroupWithFolderTitle{AlertRuleGroup: &models.AlertRuleGroup{}}
+func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (models.AlertRuleGroupWithFolderTitle, error) {
+	ruleGroup := models.AlertRuleGroupWithFolderTitle{AlertRuleGroup: &models.AlertRuleGroup{}}
 	ruleGroup.Title = ruleGroupV1.Name.Value()
 	if strings.TrimSpace(ruleGroup.Title) == "" {
-		return AlertRuleGroupWithFolderTitle{}, errors.New("rule group has no name set")
+		return models.AlertRuleGroupWithFolderTitle{}, errors.New("rule group has no name set")
 	}
 	ruleGroup.OrgID = ruleGroupV1.OrgID.Value()
 	if ruleGroup.OrgID < 1 {
@@ -44,27 +43,21 @@ func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (AlertRuleGroupWithFolderTitle
 	}
 	interval, err := model.ParseDuration(ruleGroupV1.Interval.Value())
 	if err != nil {
-		return AlertRuleGroupWithFolderTitle{}, err
+		return models.AlertRuleGroupWithFolderTitle{}, err
 	}
 	ruleGroup.Interval = int64(time.Duration(interval).Seconds())
 	ruleGroup.FolderTitle = ruleGroupV1.Folder.Value()
 	if strings.TrimSpace(ruleGroup.FolderTitle) == "" {
-		return AlertRuleGroupWithFolderTitle{}, errors.New("rule group has no folder set")
+		return models.AlertRuleGroupWithFolderTitle{}, errors.New("rule group has no folder set")
 	}
 	for _, ruleV1 := range ruleGroupV1.Rules {
 		rule, err := ruleV1.mapToModel(ruleGroup.OrgID)
 		if err != nil {
-			return AlertRuleGroupWithFolderTitle{}, err
+			return models.AlertRuleGroupWithFolderTitle{}, err
 		}
 		ruleGroup.Rules = append(ruleGroup.Rules, rule)
 	}
 	return ruleGroup, nil
-}
-
-type AlertRuleGroupWithFolderTitle struct {
-	*models.AlertRuleGroup
-	OrgID       int64
-	FolderTitle string
 }
 
 type AlertRuleV1 struct {
@@ -174,94 +167,5 @@ func (queryV1 *QueryV1) mapToModel() (models.AlertQuery, error) {
 		DatasourceUID:     queryV1.DatasourceUID.Value(),
 		RelativeTimeRange: queryV1.RelativeTimeRange,
 		Model:             rawMessage,
-	}, nil
-}
-
-// NewAlertingFileExport creates an AlertingFileExport DTO from []AlertRuleGroupWithFolderTitle.
-func NewAlertingFileExport(groups []AlertRuleGroupWithFolderTitle) (definitions.AlertingFileExport, error) {
-	f := definitions.AlertingFileExport{APIVersion: 1}
-	for _, group := range groups {
-		export, err := newAlertRuleGroupExport(group)
-		if err != nil {
-			return definitions.AlertingFileExport{}, err
-		}
-		f.Groups = append(f.Groups, export)
-	}
-	return f, nil
-}
-
-// newAlertRuleGroupExport creates a AlertRuleGroupExport DTO from models.AlertRuleGroup.
-func newAlertRuleGroupExport(d AlertRuleGroupWithFolderTitle) (definitions.AlertRuleGroupExport, error) {
-	rules := make([]definitions.AlertRuleExport, 0, len(d.Rules))
-	for i := range d.Rules {
-		alert, err := newAlertRuleExport(d.Rules[i])
-		if err != nil {
-			return definitions.AlertRuleGroupExport{}, err
-		}
-		rules = append(rules, alert)
-	}
-	return definitions.AlertRuleGroupExport{
-		OrgID:    d.OrgID,
-		Name:     d.Title,
-		Folder:   d.FolderTitle,
-		Interval: definitions.Duration(time.Duration(d.Interval) * time.Second),
-		Rules:    rules,
-	}, nil
-}
-
-// newAlertRuleExport creates a AlertRuleExport DTO from models.AlertRule.
-func newAlertRuleExport(rule models.AlertRule) (definitions.AlertRuleExport, error) {
-	data := make([]definitions.AlertQueryExport, 0, len(rule.Data))
-	for i := range rule.Data {
-		query, err := newAlertQueryExport(rule.Data[i])
-		if err != nil {
-			return definitions.AlertRuleExport{}, err
-		}
-		data = append(data, query)
-	}
-
-	var dashboardUID string
-	if rule.DashboardUID != nil {
-		dashboardUID = *rule.DashboardUID
-	}
-
-	var panelID int64
-	if rule.PanelID != nil {
-		panelID = *rule.PanelID
-	}
-
-	return definitions.AlertRuleExport{
-		UID:          rule.UID,
-		Title:        rule.Title,
-		For:          definitions.Duration(rule.For),
-		Condition:    rule.Condition,
-		Data:         data,
-		DashboardUID: dashboardUID,
-		PanelID:      panelID,
-		NoDataState:  definitions.NoDataState(rule.NoDataState),
-		ExecErrState: definitions.ExecutionErrorState(rule.ExecErrState),
-		Annotations:  rule.Annotations,
-		Labels:       rule.Labels,
-		IsPaused:     rule.IsPaused,
-	}, nil
-}
-
-// newAlertQueryExport creates a AlertQueryExport DTO from models.AlertQuery.
-func newAlertQueryExport(query models.AlertQuery) (definitions.AlertQueryExport, error) {
-	// We unmarshal the json.RawMessage model into a map in order to facilitate yaml marshalling.
-	var mdl map[string]interface{}
-	err := json.Unmarshal(query.Model, &mdl)
-	if err != nil {
-		return definitions.AlertQueryExport{}, err
-	}
-	return definitions.AlertQueryExport{
-		RefID:     query.RefID,
-		QueryType: query.QueryType,
-		RelativeTimeRange: definitions.RelativeTimeRange{
-			From: definitions.Duration(query.RelativeTimeRange.From),
-			To:   definitions.Duration(query.RelativeTimeRange.To),
-		},
-		DatasourceUID: query.DatasourceUID,
-		Model:         mdl,
 	}, nil
 }
