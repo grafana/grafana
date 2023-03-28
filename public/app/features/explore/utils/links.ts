@@ -13,7 +13,7 @@ import {
   DataLink,
   DisplayValue,
 } from '@grafana/data';
-import { getTemplateSrv, InterpolationsMap } from '@grafana/runtime';
+import { getTemplateSrv, VariableInterpolation } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTransformationVars } from 'app/features/correlations/transformations';
 
@@ -39,7 +39,7 @@ const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasRequiredPermissionsFilte
  * for internal links and undefined for non-internal links
  */
 export interface ExploreFieldLinkModel extends LinkModel<Field> {
-  variables?: InterpolationsMap;
+  variables?: VariableInterpolation[];
 }
 
 /**
@@ -134,10 +134,10 @@ export const getFieldLinksForExplore = (options: {
 
         const allVars = { ...scopedVars, ...internalLinkSpecificVars };
         const variableData = getVariableUsageInfo(link, allVars);
-        let variables: InterpolationsMap = new Map();
+        let variables: VariableInterpolation[] = [];
         if (Array.from(variableData.variables.keys()).length === 0) {
           const fieldName = field.name.toString();
-          variables.set(fieldName, '');
+          variables.push({ variableName: fieldName, value: '', match: '' });
         } else {
           variables = variableData.variables;
         }
@@ -214,17 +214,13 @@ export function useLinks(range: TimeRange, splitOpenFn?: SplitOpen) {
 export function getVariableUsageInfo<T extends DataLink>(
   query: T,
   scopedVars: ScopedVars
-): { variables: InterpolationsMap; allVariablesDefined: boolean } {
-  const variables: InterpolationsMap = new Map();
+): { variables: VariableInterpolation[]; allVariablesDefined: boolean } {
+  const variables: VariableInterpolation[] = [];
   const replaceFn = getTemplateSrv().replace.bind(getTemplateSrv());
   replaceFn(getStringsFromObject(query), scopedVars, undefined, variables);
-  // the string processor will convert null to '' but is not ran in all scenarios
   return {
     variables: variables,
-    allVariablesDefined: Array.from(variables.keys()).every((key) => {
-      const val = variables.get(key);
-      return val !== undefined && val !== null && val !== '';
-    }),
+    allVariablesDefined: variables.every((variable) => variable.found),
   };
 }
 

@@ -133,10 +133,10 @@ describe('logParser', () => {
         },
         title: 'test',
         target: '_self',
-        variables: new Map([
-          ['path', 'test'],
-          ['msg', 'test msg'],
-        ]),
+        variables: [
+          { variableName: 'path', value: 'test', match: '${path}' },
+          { variableName: 'msg', value: 'test msg', match: '${msg}' },
+        ],
       };
 
       const fieldWithVarLink: FieldDef = {
@@ -155,6 +155,7 @@ describe('logParser', () => {
       expect(fields[0].values[1]).toBe('test msg');
     });
 
+    // TODO is this relevant
     it('should convert null value to empty string and non string to string', () => {
       const variableLink: ExploreFieldLinkModel = {
         href: 'test',
@@ -167,10 +168,7 @@ describe('logParser', () => {
         },
         title: 'test',
         target: '_self',
-        variables: new Map([
-          ['path', null],
-          ['message', 'false'],
-        ]),
+        variables: [{ variableName: 'path', value: 'test', match: '${path}' }],
       };
       // TODO FIX TEST
       const fieldWithVarLink: FieldDef = {
