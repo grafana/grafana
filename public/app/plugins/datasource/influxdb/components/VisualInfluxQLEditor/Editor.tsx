@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -68,7 +68,6 @@ function filterTags(parts: InfluxQueryTag[], allTagKeys: Set<string>): InfluxQue
 }
 
 export const Editor = (props: Props): JSX.Element => {
-  const [retentionPolicies, setRetentionPolicies] = useState<string[]>([]);
   const uniqueId = useUniqueId();
   const formatAsId = `influxdb-qe-format-as-${uniqueId}`;
   const orderByTimeId = `influxdb-qe-order-by${uniqueId}`;
@@ -78,10 +77,8 @@ export const Editor = (props: Props): JSX.Element => {
   const { datasource } = props;
   const { measurement, policy } = query;
 
-  useAsync(async () => {
-    const response = await getAllPolicies(datasource);
-    await setRetentionPolicies(response);
-  }, [datasource]);
+  const policyData = useAsync(() => getAllPolicies(datasource), [datasource]);
+  const retentionPolicies = policyData.error != null ? [] : policyData.value ?? [];
 
   const allTagKeys = useMemo(async () => {
     const tagKeys = (await getTagKeysForMeasurementAndTags(measurement, policy, [], datasource)).map(
