@@ -9,7 +9,6 @@ export function createDefaultConfigOptions(
   return getMockDataSource<ElasticsearchOptions>({
     jsonData: {
       timeField: '@time',
-      esVersion: '7.0.0',
       interval: 'Hourly',
       timeInterval: '10s',
       maxConcurrentShardRequests: 300,
