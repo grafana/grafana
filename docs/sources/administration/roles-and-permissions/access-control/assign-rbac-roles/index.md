@@ -54,10 +54,12 @@ In both cases, the assignment applies only to the user, team or service account 
 
 **To assign a fixed role as a server administrator:**
 
-1. Sign in to Grafana, hover your cursor over **Server Admin** (the shield icon) in the left navigation menu, and click **Users**.
+1. Sign in to Grafana as a server administrator.
+1. Click **Administration** in the left-side menu, and then **Users**.
 1. Click a user.
-1. In the **Organizations** section, select a role within an organization that you want to assign to the user.
-1. Click **Update**.
+1. In the Organizations section, click **Change role**.
+1. Select a role within an organization that you want to assign to the user.
+1. Click **Save**.
 
 ## Assign fixed or custom roles to a team using provisioning
 

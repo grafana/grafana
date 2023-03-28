@@ -32,7 +32,7 @@ You can use AWS Marketplace to make the following modifications to your Grafana 
 
 1. Sign in to Grafana as a Server Administrator.
 
-1. Hover over **Server Admin** in the navigation bar and click **Statistics and Licensing**.
+1. Click **Administration** in the left-side menu, and then **Stats and license**.
 
 1. In the **Token** section under **Enterprise License**, click **Renew License**.
 
