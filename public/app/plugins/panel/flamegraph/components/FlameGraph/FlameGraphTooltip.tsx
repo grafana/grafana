@@ -59,7 +59,7 @@ type TooltipData = {
   samples: string;
 };
 
-const getTooltipData = (data: FlameGraphDataContainer, item: LevelItem, totalTicks: number): TooltipData => {
+export const getTooltipData = (data: FlameGraphDataContainer, item: LevelItem, totalTicks: number): TooltipData => {
   const displayValue = data.getValueDisplay(item.itemIndex);
   const displaySelf = data.getSelfDisplay(item.itemIndex);
 
