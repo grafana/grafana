@@ -56,7 +56,7 @@ export const Messages = {
     changeOrg: 'Change the organization role assigned to the user account.',
   },
   advisors: {
-    title: 'Advisor checks',
+    title: 'Advisors',
     pmmIncludes:
       'PMM includes a set of Advisors that run checks against the databases connected to PMM. The checks identify and alert you of potential security threats, performance degradation, data loss, data corruption, non-compliance issues, etc.',
     findOutMore: 'To find out more, check out the ',

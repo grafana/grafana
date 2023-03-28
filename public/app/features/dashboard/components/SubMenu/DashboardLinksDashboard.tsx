@@ -37,7 +37,7 @@ export const DashboardLinksDashboard = (props: Props) => {
     if (isPmmAdmin(config.bootData.user)) {
       resolvedLinks = [
         { uid: '1000', url: '/graph/add-instance', title: 'PMM Add Instance' },
-        { uid: '1001', url: '/graph/advisors/insights', title: 'PMM Advisor Checks' },
+        { uid: '1001', url: '/graph/advisors/insights', title: 'PMM Advisors' },
         { uid: '1002', url: '/graph/inventory', title: 'PMM Inventory' },
         { uid: '1003', url: '/graph/settings', title: 'PMM Settings' },
       ];
