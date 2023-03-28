@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { memo, Dispatch, SetStateAction } from 'react';
+import React, { memo, Dispatch, SetStateAction, useEffect } from 'react';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -23,7 +23,6 @@ import { ubJustifyEnd } from '../uberUtilityStyles';
 
 export type TracePageSearchBarProps = {
   search: SearchProps;
-  // setSearch: (value: string) => void;
   searchMatches: Set<string> | undefined;
   focusedSearchMatch: string;
   setFocusedSearchMatch: Dispatch<SetStateAction<string>>;
@@ -34,9 +33,9 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   const { search, searchMatches, focusedSearchMatch, setFocusedSearchMatch, datasourceType } = props;
   const styles = useStyles2(getStyles);
 
-  // const setTraceSearch = (value: string) => {
-  //   setFocusedSearchMatch('');
-  // };
+  useEffect(() => {
+    setFocusedSearchMatch('');
+  }, [search, setFocusedSearchMatch]);
 
   const nextResult = () => {
     reportInteraction('grafana_traces_trace_view_find_next_prev_clicked', {

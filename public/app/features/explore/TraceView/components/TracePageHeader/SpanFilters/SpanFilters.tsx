@@ -43,17 +43,6 @@ export function SpanFilters(props: SpanFilterProps) {
     return null;
   }
 
-  // const handleServiceNameChange = useCallback(
-  //   (e) => {
-  //     setFocusedSearchMatch('');
-  //     setSearch({
-  //       ...search,
-  //       serviceName: e?.value || '',
-  //     });
-  //   },
-  //   [search, setFocusedSearchMatch, setSearch]
-  // );
-
   // TODO: combine all options methods into one iteration of all spans and return object
 
   const serviceNameOptions = (trace: Trace) => {
