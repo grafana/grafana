@@ -268,7 +268,7 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 			Values:         valuesAsDataBlob(state.State),
 			DashboardUID:   rule.DashboardUID,
 			PanelID:        rule.PanelID,
-			InstanceLabels: state.Labels,
+			InstanceLabels: removePrivateLabels(state.Labels),
 		}
 		if state.State.State == eval.Error {
 			entry.Error = state.Error.Error()
