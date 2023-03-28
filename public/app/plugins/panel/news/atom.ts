@@ -1,9 +1,11 @@
+import { textUtil } from '@grafana/data';
+
 import { getProperty } from './feed';
 import { Feed } from './types';
 
 export function parseAtomFeed(txt: string): Feed {
   const domParser = new DOMParser();
-  const doc = domParser.parseFromString(txt, 'text/xml'); // TT: this is considered a security risk and will cause trusted types violations
+  const doc = domParser.parseFromString(textUtil.sanitizeTrustedTypes(txt, 'rss') as unknown as string, 'text/xml');
 
   const feed: Feed = {
     items: Array.from(doc.querySelectorAll('entry')).map((node) => ({

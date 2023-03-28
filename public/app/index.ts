@@ -4,8 +4,8 @@ declare let __webpack_public_path__: string;
 declare let __webpack_nonce__: string;
 
 //@ts-ignore
-window.sanitizett = (s: string): TrustedHTML => {
-  const sanitizedString = textUtil.sanitizeTT(s);
+window.sanitizeTrustedTypes = (s: string): TrustedHTML => {
+  const sanitizedString = textUtil.sanitizeTrustedTypes(s);
   return sanitizedString;
 };
 

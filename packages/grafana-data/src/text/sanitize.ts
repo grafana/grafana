@@ -47,8 +47,20 @@ export function sanitize(unsanitizedString: string): string {
   }
 }
 
-export function sanitizeTT(unsanitizedString: string): TrustedHTML {
-  return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true });
+export function sanitizeTrustedTypes(unsanitizedString: string, conf?: string): TrustedHTML {
+  switch (conf) {
+    case 'svg':
+      return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true, USE_PROFILES: { svg: true, svgFilters: true } });
+    case 'rss':
+      return DOMPurify.sanitize(unsanitizedString, {
+        RETURN_TRUSTED_TYPE: true, 
+        ADD_ATTR: ['xmlns:atom', 'version', 'property', 'content'], 
+        ADD_TAGS: ['rss', 'meta', 'channel', 'title', 'link', 'description', 'atom:link', 'item', 'pubDate', 'guid'],
+        ALLOWED_ATTR: ['property'], 
+        PARSER_MEDIA_TYPE: 'application/xhtml+xml'
+      });
+  }
+  return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true, USE_PROFILES: { html: true }});
 }
 
 /**

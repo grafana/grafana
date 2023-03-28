@@ -8,7 +8,7 @@ import {
   sanitizeUrl,
   sanitizeTextPanelContent,
   sanitizeSVGContent,
-  sanitizeTT,
+  sanitizeTrustedTypes,
 } from './sanitize';
 
 export const textUtil = {
@@ -18,5 +18,5 @@ export const textUtil = {
   sanitizeTextPanelContent,
   sanitizeUrl,
   sanitizeSVGContent,
-  sanitizeTT,
+  sanitizeTrustedTypes,
 };
