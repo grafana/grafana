@@ -21,7 +21,6 @@ func TestStore_RegisterAndGetClient(t *testing.T) {
 		{
 			name: "register without impersonate permissions and get",
 			client: oauthserver.Client{
-				ID:                  1,
 				ExternalServiceName: "The Worst App Ever",
 				ClientID:            "ANonRandomClientID",
 				Secret:              "ICouldKeepSecrets",
@@ -59,7 +58,6 @@ dCBBIFJlZ3VsYXIgQmFzZTY0IEVuY29kZWQgU3RyaW5nLi4uCg==
 		{
 			name: "register and get",
 			client: oauthserver.Client{
-				ID:                  2,
 				ExternalServiceName: "The Best App Ever",
 				ClientID:            "AnAlmostRandomClientID",
 				Secret:              "ICannotKeepSecrets",
@@ -95,127 +93,76 @@ dCBBIFJlZ3VsYXIgQmFzZTY0IEVuY29kZWQgU3RyaW5nLi4uCg==
 	}
 }
 
-func TestStore_UpdateExternalService(t *testing.T) {
-	s := &store{db: db.InitTestDB(t)}
-
-	client1 := &oauthserver.Client{
-		ID:                     1,
-		ExternalServiceName:    "The Worst App Ever",
-		ClientID:               "ANonRandomClientID",
-		Secret:                 "ICouldKeepSecrets",
-		GrantTypes:             "clients_credentials",
-		PublicPem:              []byte(`fake public key`),
+func TestStore_SaveExternalService(t *testing.T) {
+	client1 := oauthserver.Client{
+		ExternalServiceName:    "my-external-service",
+		ClientID:               "ClientID",
+		Secret:                 "Secret",
+		GrantTypes:             "client_credentials",
+		PublicPem:              []byte("test"),
 		ServiceAccountID:       2,
-		ImpersonatePermissions: nil,
+		ImpersonatePermissions: []accesscontrol.Permission{},
 		RedirectURI:            "/whereto",
 	}
-	err := s.RegisterExternalService(context.Background(), client1)
-	require.NoError(t, err)
-
-	newStr := func(v string) *string { return &v }
-	newInt64 := func(v int64) *int64 { return &v }
+	client1WithPerm := client1
+	client1WithPerm.ImpersonatePermissions = []accesscontrol.Permission{
+		{Action: "dashboards:read", Scope: "folders:*"},
+		{Action: "dashboards:read", Scope: "dashboards:*"},
+	}
+	client1WithNewSecrets := client1
+	client1WithNewSecrets.ClientID = "NewClientID"
+	client1WithNewSecrets.Secret = "NewSecret"
+	client1WithNewSecrets.PublicPem = []byte("newtest")
 
 	tests := []struct {
 		name    string
-		update  *oauthserver.UpdateClientCommand
-		want    func() *oauthserver.Client
+		runs    []oauthserver.Client
 		wantErr bool
 	}{
 		{
-			name: "error no previous",
-			update: &oauthserver.UpdateClientCommand{
-				ExternalServiceName: "Does Not Exist",
-			},
-			want:    nil,
-			wantErr: true,
-		},
-		{
 			name:    "error no name",
-			update:  &oauthserver.UpdateClientCommand{},
-			want:    nil,
+			runs:    []oauthserver.Client{{}},
 			wantErr: true,
 		},
 		{
-			name: "no update",
-			update: &oauthserver.UpdateClientCommand{
-				ExternalServiceName: client1.ExternalServiceName,
-			},
-			want:    func() *oauthserver.Client { return client1 },
+			name:    "simple register",
+			runs:    []oauthserver.Client{client1},
 			wantErr: false,
 		},
 		{
-			// Note that this will update Client1 for the rest of the tests
-			name: "add permissions",
-			update: &oauthserver.UpdateClientCommand{
-				ExternalServiceName: client1.ExternalServiceName,
-				ImpersonatePermissions: []accesscontrol.Permission{
-					{Action: "dashboards:create", Scope: "folders:*"},
-					{Action: "dashboards:read", Scope: "folders:*"},
-					{Action: "dashboards:read", Scope: "dashboards:*"},
-					{Action: "dashboards:write", Scope: "folders:*"},
-					{Action: "dashboards:write", Scope: "dashboards:*"},
-				},
-			},
-			want: func() *oauthserver.Client {
-				client := *client1
-				client.ImpersonatePermissions = []accesscontrol.Permission{
-					{Action: "dashboards:create", Scope: "folders:*"},
-					{Action: "dashboards:read", Scope: "folders:*"},
-					{Action: "dashboards:read", Scope: "dashboards:*"},
-					{Action: "dashboards:write", Scope: "folders:*"},
-					{Action: "dashboards:write", Scope: "dashboards:*"},
-				}
-				return &client
-			},
+			name:    "no update",
+			runs:    []oauthserver.Client{client1, client1},
 			wantErr: false,
 		},
 		{
-			// Note that this will update Client1 for the rest of the tests
-			name: "remove permissions",
-			update: &oauthserver.UpdateClientCommand{
-				ExternalServiceName:    client1.ExternalServiceName,
-				ImpersonatePermissions: []accesscontrol.Permission{},
-			},
-			want:    func() *oauthserver.Client { return client1 },
+			name:    "add permissions",
+			runs:    []oauthserver.Client{client1, client1WithPerm},
 			wantErr: false,
 		},
 		{
-			name: "update everything else",
-			update: &oauthserver.UpdateClientCommand{
-				ExternalServiceName: client1.ExternalServiceName,
-				ClientID:            newStr("newID"),
-				Secret:              newStr("newSecret"),
-				PublicPem:           []byte("new public key"),
-				RedirectURI:         newStr(""),
-				ServiceAccountID:    newInt64(3),
-				GrantTypes:          newStr("authorization_code"),
-			},
-			want: func() *oauthserver.Client {
-				return &oauthserver.Client{
-					ID:                  client1.ID,
-					ExternalServiceName: client1.ExternalServiceName,
-					ClientID:            "newID",
-					Secret:              "newSecret",
-					GrantTypes:          "authorization_code",
-					PublicPem:           []byte("new public key"),
-					ServiceAccountID:    3,
-					RedirectURI:         "",
-				}
-			},
+			name:    "remove permissions",
+			runs:    []oauthserver.Client{client1WithPerm, client1},
+			wantErr: false,
+		},
+		{
+			name:    "update id and secrets",
+			runs:    []oauthserver.Client{client1, client1WithNewSecrets},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := s.UpdateExternalService(context.Background(), tt.update)
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
+			s := &store{db: db.InitTestDB(t)}
+			for i := range tt.runs {
+				err := s.SaveExternalService(context.Background(), &tt.runs[i])
+				if tt.wantErr {
+					require.Error(t, err)
+					return
+				}
+				require.NoError(t, err)
 
-			// Compare results
-			compareClientToStored(t, s, tt.want())
+				compareClientToStored(t, s, &tt.runs[i])
+			}
 		})
 	}
 }
@@ -226,6 +173,11 @@ func compareClientToStored(t *testing.T, s *store, wanted *oauthserver.Client) {
 	require.NoError(t, err)
 	require.NotNil(t, stored)
 
+	// Reset ID so we can compare
+	require.NotZero(t, stored.ID)
+	stored.ID = 0
+
+	// Compare permissions separately
 	wantedPerms := wanted.ImpersonatePermissions
 	storedPerms := stored.ImpersonatePermissions
 	wanted.ImpersonatePermissions = nil

@@ -13,7 +13,6 @@ import (
 	"github.com/ory/fosite"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -73,6 +72,10 @@ func (c *Client) ToDTO() *ClientDTO {
 		c2.KeyResult = &KeyResult{PublicPem: string(c.PublicPem)}
 	}
 	return &c2
+}
+
+func (c *Client) LogID() string {
+	return "{externalServiceName: " + c.ExternalServiceName + ", clientID: " + c.ClientID + "}"
 }
 
 // GetID returns the client ID.
@@ -192,23 +195,4 @@ func (c *Client) IsPublic() bool {
 func (c *Client) GetAudience() fosite.Arguments {
 	// TODO: This is to be inline with the PoC, check what we should really return here
 	return fosite.Arguments{c.ClientID}
-}
-
-type UpdateClientCommand struct {
-	// Required field
-	ExternalServiceName string `json:"name"`
-
-	// Update options
-	Permissions            []accesscontrol.Permission `json:"permissions,omitempty"`
-	ImpersonatePermissions []accesscontrol.Permission `json:"impersonatePermissions,omitempty"`
-	RedirectURI            *string                    `json:"redirectUri,omitempty"`
-	GenCredentials         bool                       `json:"genCredentials,omitempty"`
-	Key                    *KeyOption                 `json:"key,omitempty"`
-
-	// Computed fields
-	ServiceAccountID *int64  `json:"-"`
-	ClientID         *string `json:"-"`
-	Secret           *string `json:"-"`
-	PublicPem        []byte  `json:"-"`
-	GrantTypes       *string `json:"-"` // CSV value
 }

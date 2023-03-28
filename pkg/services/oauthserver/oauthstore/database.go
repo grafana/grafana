@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type store struct {
@@ -19,36 +20,98 @@ func NewStore(db db.DB) oauthserver.Store {
 	}
 }
 
+func createImpersonatePermissions(sess *db.Session, client *oauthserver.Client) error {
+	if len(client.ImpersonatePermissions) == 0 {
+		return nil
+	}
+
+	insertPermQuery := make([]interface{}, 1, len(client.ImpersonatePermissions)*3+1)
+	insertPermStmt := `INSERT INTO oauth_impersonate_permission (client_id, action, scope) VALUES `
+	for _, perm := range client.ImpersonatePermissions {
+		insertPermStmt += "(?, ?, ?),"
+		insertPermQuery = append(insertPermQuery, client.ClientID, perm.Action, perm.Scope)
+	}
+	insertPermQuery[0] = insertPermStmt[:len(insertPermStmt)-1]
+	_, err := sess.Exec(insertPermQuery...)
+	return err
+}
+
+func registerExternalService(sess *db.Session, client *oauthserver.Client) error {
+	insertQuery := []interface{}{
+		`INSERT INTO oauth_client (app_name, client_id, secret, grant_types, service_account_id, public_pem, redirect_uri) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		client.ExternalServiceName,
+		client.ClientID,
+		client.Secret,
+		client.GrantTypes,
+		client.ServiceAccountID,
+		client.PublicPem,
+		client.RedirectURI,
+	}
+	_, err := sess.Exec(insertQuery...)
+	if err != nil {
+		return err
+	}
+
+	return createImpersonatePermissions(sess, client)
+}
+
 func (s *store) RegisterExternalService(ctx context.Context, client *oauthserver.Client) error {
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		insertQuery := []interface{}{
-			`INSERT INTO oauth_client (app_name, client_id, secret, grant_types, service_account_id, public_pem, redirect_uri) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-			client.ExternalServiceName,
-			client.ClientID,
-			client.Secret,
-			client.GrantTypes,
-			client.ServiceAccountID,
-			client.PublicPem,
-			client.RedirectURI,
-		}
-		_, err := sess.Exec(insertQuery...)
-		if err != nil {
-			return err
-		}
+		return registerExternalService(sess, client)
+	})
+}
 
-		if len(client.ImpersonatePermissions) == 0 {
-			return nil
-		}
+func recreateImpersonatePermissions(sess *db.Session, client *oauthserver.Client, prevClientID string) error {
+	deletePermQuery := `DELETE FROM oauth_impersonate_permission WHERE client_id = ?`
+	_, errDelPerm := sess.Exec(deletePermQuery, prevClientID)
+	if errDelPerm != nil {
+		return errDelPerm
+	}
 
-		insertPermQuery := make([]interface{}, 1, len(client.ImpersonatePermissions)*3+1)
-		insertPermStmt := `INSERT INTO oauth_impersonate_permission (client_id, action, scope) VALUES `
-		for _, perm := range client.ImpersonatePermissions {
-			insertPermStmt += "(?, ?, ?),"
-			insertPermQuery = append(insertPermQuery, client.ClientID, perm.Action, perm.Scope)
-		}
-		insertPermQuery[0] = insertPermStmt[:len(insertPermStmt)-1]
-		_, err = sess.Exec(insertPermQuery...)
+	if len(client.ImpersonatePermissions) == 0 {
+		return nil
+	}
+
+	return createImpersonatePermissions(sess, client)
+}
+
+func updateExternalService(sess *db.Session, client *oauthserver.Client, prevClientID string) error {
+	updateQuery := []interface{}{
+		`UPDATE oauth_client SET client_id = ?, secret = ?, grant_types = ?, service_account_id = ?, public_pem = ?, redirect_uri = ? WHERE app_name = ?`,
+		client.ClientID,
+		client.Secret,
+		client.GrantTypes,
+		client.ServiceAccountID,
+		client.PublicPem,
+		client.RedirectURI,
+		client.ExternalServiceName,
+	}
+	_, err := sess.Exec(updateQuery...)
+	if err != nil {
 		return err
+	}
+
+	// TODO rethink this maybe recreating isn't performant enough
+	return recreateImpersonatePermissions(sess, client, prevClientID)
+}
+
+func (s *store) SaveExternalService(ctx context.Context, client *oauthserver.Client) error {
+	if client.ExternalServiceName == "" {
+		return oauthserver.ErrClientRequiredName
+	}
+	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		previous, errFetchExtSvc := getExternalServiceByName(sess, client.ExternalServiceName)
+		if errFetchExtSvc != nil {
+			if srcError, ok := errFetchExtSvc.(errutil.Error); ok {
+				if srcError.MessageID != oauthserver.ErrClientNotFoundMessageID {
+					return errFetchExtSvc
+				}
+			}
+		}
+		if previous == nil {
+			return registerExternalService(sess, client)
+		}
+		return updateExternalService(sess, client, previous.ClientID)
 	})
 }
 
@@ -144,85 +207,4 @@ func getExternalServiceByName(sess *db.Session, app string) (*oauthserver.Client
 	impersonatePermQuery := `SELECT action, scope FROM oauth_impersonate_permission WHERE client_id = ?`
 	errPerm := sess.SQL(impersonatePermQuery, res.ClientID).Find(&res.ImpersonatePermissions)
 	return res, errPerm
-}
-
-func (s *store) UpdateExternalService(ctx context.Context, cmd *oauthserver.UpdateClientCommand) (*oauthserver.Client, error) {
-	res := &oauthserver.Client{}
-	if cmd == nil || cmd.ExternalServiceName == "" {
-		return nil, oauthserver.ErrClientRequiredName
-	}
-
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		previous, errFetchPrevious := getExternalServiceByName(sess, cmd.ExternalServiceName)
-		if errFetchPrevious != nil {
-			return errFetchPrevious
-		}
-		newID := previous.ClientID
-
-		query := `UPDATE oauth_client SET `
-		args := []interface{}{"query_placeholder"}
-		if cmd.RedirectURI != nil {
-			query += ` redirect_uri = ? ,`
-			args = append(args, *cmd.RedirectURI)
-		}
-		if cmd.GrantTypes != nil {
-			query += ` grant_types = ? ,`
-			args = append(args, *cmd.GrantTypes)
-		}
-		if cmd.PublicPem != nil {
-			query += ` public_pem = ? ,`
-			args = append(args, cmd.PublicPem)
-		}
-		if cmd.ServiceAccountID != nil {
-			query += ` service_account_id = ? ,`
-			args = append(args, *cmd.ServiceAccountID)
-		}
-		if cmd.Secret != nil {
-			query += ` secret = ? ,`
-			args = append(args, *cmd.Secret)
-		}
-		if cmd.ClientID != nil {
-			newID = *cmd.ClientID
-			query += ` client_id = ? ,`
-			args = append(args, newID)
-		}
-
-		// Only update if there are any changes
-		if len(args) > 1 {
-			query = query[:len(query)-1]
-			query += `WHERE app_name = ?`
-			args = append(args, cmd.ExternalServiceName)
-
-			args[0] = query
-			_, errUpdate := sess.Exec(args...)
-			if errUpdate != nil {
-				return errUpdate
-			}
-		}
-
-		if cmd.ImpersonatePermissions != nil {
-			deletePermQuery := `DELETE FROM oauth_impersonate_permission WHERE client_id = ?`
-			_, errDelPerm := sess.Exec(deletePermQuery, previous.ClientID)
-			if errDelPerm != nil {
-				return errDelPerm
-			}
-
-			if len(cmd.ImpersonatePermissions) == 0 {
-				return nil
-			}
-
-			insertPermQuery := make([]interface{}, 1, len(cmd.ImpersonatePermissions)*3+1)
-			insertPermStmt := `INSERT INTO oauth_impersonate_permission (client_id, action, scope) VALUES `
-			for _, perm := range cmd.ImpersonatePermissions {
-				insertPermStmt += "(?, ?, ?),"
-				insertPermQuery = append(insertPermQuery, newID, perm.Action, perm.Scope)
-			}
-			insertPermQuery[0] = insertPermStmt[:len(insertPermStmt)-1]
-			_, errInsertPerm := sess.Exec(insertPermQuery...)
-			return errInsertPerm
-		}
-		return nil
-	})
-
-	return res, err
 }

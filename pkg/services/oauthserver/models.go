@@ -22,7 +22,7 @@ var (
 
 type OAuth2Service interface {
 	RegisterExternalService(ctx context.Context, app *ExternalServiceRegistration) (*ClientDTO, error)
-	UpdateExternalService(ctx context.Context, cmd *UpdateClientCommand) (*ClientDTO, error)
+	SaveExternalService(ctx context.Context, cmd *ExternalServiceRegistration) (*ClientDTO, error)
 	GetExternalService(ctx context.Context, id string) (*Client, error)
 	HandleTokenRequest(rw http.ResponseWriter, req *http.Request)
 	HandleIntrospectionRequest(rw http.ResponseWriter, req *http.Request)
@@ -31,11 +31,11 @@ type OAuth2Service interface {
 
 type Store interface {
 	RegisterExternalService(ctx context.Context, client *Client) error
+	SaveExternalService(ctx context.Context, client *Client) error
 	GetExternalService(ctx context.Context, id string) (*Client, error)
 	GetExternalServiceByName(ctx context.Context, app string) (*Client, error)
 
 	GetExternalServicePublicKey(ctx context.Context, id string) (*jose.JSONWebKey, error)
-	UpdateExternalService(ctx context.Context, cmd *UpdateClientCommand) (*Client, error)
 }
 
 type KeyOption struct {

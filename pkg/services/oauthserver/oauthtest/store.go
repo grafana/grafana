@@ -35,7 +35,7 @@ func (fs *FakeStore) RegisterExternalService(ctx context.Context, client *oauths
 	return fs.ExpectedErr
 }
 
-// UpdateExternalService implements oauthserver.Store
-func (fs *FakeStore) UpdateExternalService(ctx context.Context, cmd *oauthserver.UpdateClientCommand) (*oauthserver.Client, error) {
-	return fs.ExpectedClient, fs.ExpectedErr
+// RegisterExternalService implements oauthserver.Store
+func (fs *FakeStore) SaveExternalService(ctx context.Context, client *oauthserver.Client) error {
+	return fs.ExpectedErr
 }
