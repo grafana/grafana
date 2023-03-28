@@ -131,6 +131,8 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       top: searchBarHidden ? 0 : TOP_BAR_LEVEL_HEIGHT,
       backgroundColor: theme.colors.background.primary,
       boxSizing: 'content-box',
+      flex: '1 1 0',
+
       [theme.breakpoints.up('md')]: {
         borderRight: `1px solid ${theme.colors.border.weak}`,
         right: 'unset',
@@ -140,7 +142,8 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
     content: css({
       display: 'flex',
       flexDirection: 'column',
-      height: '100%',
+      flexGrow: 1,
+      minHeight: 0,
     }),
     mobileHeader: css({
       display: 'flex',
