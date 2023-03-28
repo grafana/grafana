@@ -42,22 +42,19 @@ describe('Date time picker', () => {
 
   it('should be able to select values in TimeOfDayPicker without blurring the element', async () => {
     renderDatetimePicker();
-    await userEvent.click(screen.getByLabelText('Time picker'));
 
+    await userEvent.click(screen.getByLabelText('Time picker'));
     await userEvent.click(screen.getAllByRole('textbox')[1]);
 
     const hourElement = screen.getAllByRole('button', {
       name: '00',
     })[0];
-
     expect(hourElement).toBeVisible();
 
     await userEvent.click(hourElement);
-
     expect(hourElement).toBeVisible();
 
     await userEvent.click(document.body);
-
     expect(
       screen.queryByRole('button', {
         name: '00',
