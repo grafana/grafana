@@ -90,7 +90,7 @@ func (rule *AlertRuleV1) UnmarshalJSON(b []byte) error {
 	}
 	*rule = t.AlertRuleV1
 
-	if rule.DashboardUID.Value() == "" && t.DasboardUID.Value() != "" {
+	if rule.DashboardUID.Value() == "" {
 		rule.DashboardUID = t.DasboardUID
 	}
 
@@ -111,7 +111,7 @@ func (rule *AlertRuleV1) UnmarshalYAML(value *yaml.Node) error {
 	}
 	*rule = AlertRuleV1(t.plain)
 
-	if rule.DashboardUID.Value() == "" && t.DasboardUID.Value() != "" {
+	if rule.DashboardUID.Value() == "" {
 		rule.DashboardUID = t.DasboardUID
 	}
 
