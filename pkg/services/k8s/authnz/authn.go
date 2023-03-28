@@ -1,27 +1,23 @@
-package authn
+package authnz
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"io"
+	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web"
 	"net/http"
 
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/user"
-
 	v1 "k8s.io/api/authentication/v1"
 )
 
@@ -38,12 +34,10 @@ type K8sAuthnAPIImpl struct {
 	Log           log.Logger
 }
 
-func ProvideService(
+func ProvideAuthn(
 	rr routing.RouteRegister,
 	apikeyService apikey.Service,
 	userService user.Service,
-	ac accesscontrol.AccessControl,
-	features *featuremgmt.FeatureManager,
 ) *K8sAuthnAPIImpl {
 	k8sAuthnAPI := &K8sAuthnAPIImpl{
 		RouteRegister: rr,
@@ -54,6 +48,7 @@ func ProvideService(
 	k8sAuthnAPI.RegisterAPIEndpoints()
 
 	return k8sAuthnAPI
+
 }
 
 func (api *K8sAuthnAPIImpl) RegisterAPIEndpoints() {
@@ -61,21 +56,12 @@ func (api *K8sAuthnAPIImpl) RegisterAPIEndpoints() {
 }
 
 func (api *K8sAuthnAPIImpl) parseToken(c *contextmodel.ReqContext) (*authn.Identity, error) {
-	req, err := io.ReadAll(c.Req.Body)
-	if err != nil {
-		return nil, errors.New("could not parse the request body")
-	}
-
-	reqJSON, err := simplejson.NewJson(req)
-	if err != nil {
-		return nil, errors.New("could not read the request body as JSON")
-	}
-
-	token := reqJSON.Get("spec").Get("token").MustString()
+	tokenReview := v1.TokenReview{}
+	web.Bind(c.Req, &tokenReview)
 
 	// K8s authn operates with a TokenReview construct. We use a slight hack below to set the Authorization header
-	// to be able to use existing authn authentication methods
-	c.Req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	// to be able to use existing authentication methods in Grafana
+	c.Req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenReview.Spec.Token))
 	return api.ApiKey.Authenticate(context.Background(), &authn.Request{
 		HTTPRequest: c.Req,
 	})

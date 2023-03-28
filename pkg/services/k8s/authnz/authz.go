@@ -1,0 +1,70 @@
+package authnz
+
+import (
+	"net/http"
+
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authn/clients"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/web"
+	v1 "k8s.io/api/authorization/v1"
+)
+
+type K8sAuthzAPI interface {
+	Authorize(c *contextmodel.ReqContext) response.Response
+}
+
+type K8sAuthzAPIImpl struct {
+	// *services.BasicService
+	RouteRegister routing.RouteRegister
+	AccessControl accesscontrol.AccessControl
+	Features      *featuremgmt.FeatureManager
+	ApiKey        clients.APIKey
+	Log           log.Logger
+}
+
+func ProvideAuthz(
+	rr routing.RouteRegister,
+	_ accesscontrol.AccessControl,
+) *K8sAuthzAPIImpl {
+	k8sAuthzAPI := &K8sAuthzAPIImpl{
+		RouteRegister: rr,
+		Log:           log.New("k8s.webhooks.authn"),
+	}
+
+	k8sAuthzAPI.RegisterAPIEndpoints()
+
+	return k8sAuthzAPI
+}
+
+func (api *K8sAuthzAPIImpl) RegisterAPIEndpoints() {
+	api.RouteRegister.Post("/k8s/authz", api.Authorize)
+}
+
+func (api *K8sAuthzAPIImpl) Authorize(c *contextmodel.ReqContext) response.Response {
+	subjectAccessReview := v1.SubjectAccessReview{}
+	web.Bind(c.Req, &subjectAccessReview)
+
+	// TODO: expand this logic so it isn't just limited to letting Admin through
+	if subjectAccessReview.Spec.User == GrafanaAdminK8sUser {
+		return response.JSON(http.StatusOK, v1.SubjectAccessReview{
+			Status: v1.SubjectAccessReviewStatus{
+				Allowed: true,
+			},
+		})
+
+	} else {
+		return response.JSON(http.StatusOK, v1.SubjectAccessReview{
+			Status: v1.SubjectAccessReviewStatus{
+				Allowed: false,
+				Denied:  true,
+				Reason:  "specified user doesn't have Admin role",
+			},
+		})
+	}
+	return response.JSON(http.StatusOK, subjectAccessReview)
+}
