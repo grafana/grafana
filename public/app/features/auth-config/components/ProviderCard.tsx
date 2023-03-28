@@ -1,12 +1,9 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, useStyles2 } from '@grafana/ui';
 
-import { AuthBadge, OAuthBadge } from './AuthBadges';
-
-// const configPath = 'admin/authentication';
 export const LOGO_SIZE = '48px';
 
 type Props = {
@@ -25,14 +22,6 @@ export function ProviderCard({ providerId, displayName, enabled, configPath, aut
   return (
     <a href={`${basePath}/${providerId}`}>
       <div className={styles.container}>
-        {/* <div className={styles.header}>
-          <IconButton
-            name={enabled ? 'pen' : 'plus-circle'}
-            size="lg"
-            variant="secondary"
-            className={styles.actionButton}
-          />
-        </div> */}
         <h2 className={styles.name}>{displayName}</h2>
         <div className={styles.content}></div>
         <div className={styles.footer}>
@@ -46,30 +35,6 @@ export function ProviderCard({ providerId, displayName, enabled, configPath, aut
       </div>
     </a>
   );
-}
-
-function getProviderBadges(providerId: string): JSX.Element[] {
-  switch (providerId) {
-    case 'generic_oauth':
-      return [<OAuthBadge key="oauth" />];
-    case 'azuread':
-      return [<OAuthBadge key="oauth" />, <AuthBadge key="name" icon="microsoft" text="azuread" />];
-    case 'github':
-      return [<OAuthBadge key="oauth" />, <AuthBadge key="name" icon="github" text="github" />];
-    case 'gitlab':
-      return [<OAuthBadge key="oauth" />, <AuthBadge key="name" icon="gitlab" text="gitlab" />];
-    case 'google':
-      return [<OAuthBadge key="oauth" />, <AuthBadge key="name" icon="google" text="google" />];
-    case 'okta':
-      return [<OAuthBadge key="oauth" />, <AuthBadge key="name" icon="okta" text="okta" />];
-    case 'grafana_com':
-      return [<OAuthBadge key="oauth" />, <AuthBadge key="name" text="grafana.com" />];
-    case 'saml':
-      return [<AuthBadge key="name" icon="sitemap" text="SAML" />];
-    default:
-      return [];
-  }
-  return [];
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
