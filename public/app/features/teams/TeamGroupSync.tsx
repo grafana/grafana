@@ -163,7 +163,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
               buttonTitle="Add group"
               proTip={headerTooltip}
               proTipLinkTitle="Learn more"
-              proTipLink="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/enhanced-ldap/"
+              proTipLink="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-team-sync/"
               proTipTarget="_blank"
               buttonDisabled={isReadOnly}
             />
