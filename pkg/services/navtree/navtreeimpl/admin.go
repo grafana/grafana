@@ -136,17 +136,14 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 		}
 	}
 
-	// TODO: create permission for authentication page
-	if s.license.FeatureEnabled("saml") {
-		if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)) {
-			adminNavLinks = append(adminNavLinks, &navtree.NavLink{
-				Text:     "Authentication",
-				Id:       "authentication",
-				SubTitle: "Manage your auth settings and configure single sign-on",
-				Icon:     "signin",
-				Url:      s.cfg.AppSubURL + "/admin/authentication",
-			})
-		}
+	if s.license.FeatureEnabled("saml") && hasAccess(ac.ReqGrafanaAdmin, evalAuthenticationSettings()) {
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+			Text:     "Authentication",
+			Id:       "authentication",
+			SubTitle: "Manage your auth settings and configure single sign-on",
+			Icon:     "signin",
+			Url:      s.cfg.AppSubURL + "/admin/authentication",
+		})
 	}
 
 	if hasGlobalAccess(ac.ReqGrafanaAdmin, orgsAccessEvaluator) {
@@ -201,4 +198,13 @@ func (s *ServiceImpl) ReqCanAdminTeams(c *contextmodel.ReqContext) bool {
 func enableServiceAccount(s *ServiceImpl, c *contextmodel.ReqContext) bool {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	return hasAccess(ac.ReqOrgAdmin, serviceaccounts.AccessEvaluator)
+}
+
+func evalAuthenticationSettings() ac.Evaluator {
+	return ac.EvalAll(
+		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsAuth),
+		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML),
+		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAuth),
+		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsSAML),
+	)
 }
