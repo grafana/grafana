@@ -18,6 +18,7 @@ import {
   ConfirmModal,
   Dropdown,
   Menu,
+  Button,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbarSeparator';
@@ -92,7 +93,7 @@ export const DashNav = React.memo<Props>((props) => {
   const { chrome } = useGrafana();
   const { showModal, hideModal } = useContext(ModalsContext);
 
-  const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const [addMenuOpen, setAddMenuOpen] = useState(true);
 
   const copiedPanelPlugin = useMemo(() => getCopiedPanelPlugin(), []);
 
@@ -371,16 +372,17 @@ export const DashNav = React.memo<Props>((props) => {
             overlay={renderAddPanelOptions}
             placement="bottom"
             onVisibleChange={setAddMenuOpen}
-            key="button-panel-add"
+            key="button-panel-add-dropdown"
           >
-            <ToolbarButton
+            <Button
               tooltip={t('dashboard.toolbar.add-panel', 'Add panel')}
               icon="panel-add"
-              isOpen={addMenuOpen}
+              size="md"
+              fill="outline"
               key="button-panel-add"
             >
               Add
-            </ToolbarButton>
+            </Button>
           </Dropdown>
         );
       } else {
