@@ -374,17 +374,19 @@ func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Fra
 	labelField := NewEnumField("label", nil)
 	fileNameField := NewEnumField("fileName", nil)
 
-	walkTree(tree, func(tree *ProfileTree) {
-
-		levelField.Append(int64(tree.Level))
-		valueField.Append(tree.Value)
-		selfField.Append(tree.Self)
-		// todo: inline functions
-		// tree.Inlined
-		lineNumberField.Append(tree.Function.Line)
-		labelField.Append(tree.Function.FunctionName)
-		fileNameField.Append(tree.Function.FileName)
-	})
+	// Tree can be nil if profile was empty, we can still send empty frame in that case
+	if tree != nil {
+		walkTree(tree, func(tree *ProfileTree) {
+			levelField.Append(int64(tree.Level))
+			valueField.Append(tree.Value)
+			selfField.Append(tree.Self)
+			// todo: inline functions
+			// tree.Inlined
+			lineNumberField.Append(tree.Function.Line)
+			labelField.Append(tree.Function.FunctionName)
+			fileNameField.Append(tree.Function.FileName)
+		})
+	}
 
 	frame.Fields = append(frame.Fields, labelField.GetField(), fileNameField.GetField())
 	return frame

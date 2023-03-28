@@ -173,9 +173,6 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	}
 
 	m["stats.avg_auth_token_per_user.count"] = avgAuthTokensPerUser
-	if s.cfg.RemoteCacheOptions != nil && s.cfg.RemoteCacheOptions.Name != "" {
-		m["stats.remote_cache."+s.cfg.RemoteCacheOptions.Name+".count"] = 1
-	}
 	m["stats.packaging."+s.cfg.Packaging+".count"] = 1
 	m["stats.distributor."+s.cfg.ReportingDistributor+".count"] = 1
 
@@ -315,6 +312,7 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.MStatTotalDashboards.Set(float64(statsQuery.Result.Dashboards))
 	metrics.MStatTotalFolders.Set(float64(statsQuery.Result.Folders))
 	metrics.MStatTotalUsers.Set(float64(statsQuery.Result.Users))
+	metrics.MStatTotalTeams.Set(float64(statsQuery.Result.Teams))
 	metrics.MStatActiveUsers.Set(float64(statsQuery.Result.ActiveUsers))
 	metrics.MStatTotalPlaylists.Set(float64(statsQuery.Result.Playlists))
 	metrics.MStatTotalOrgs.Set(float64(statsQuery.Result.Orgs))

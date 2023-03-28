@@ -3,7 +3,7 @@ import { ComponentType } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
-import { extensionLinkConfigIsValid, PluginExtensionLink } from './pluginExtensions';
+import { extensionLinkConfigIsValid, type PluginExtensionCommand, type PluginExtensionLink } from './pluginExtensions';
 
 /**
  * @public
@@ -51,23 +51,43 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
 }
 
 /**
- * These types are towards the plugin developer when extending Grafana or other
- * plugins from the module.ts
+ * The `configure()` function can only update certain properties of the extension, and due to this
+ * it only receives a subset of the original extension object.
  */
-export type AppConfigureExtension<T, C = object> = (extension: T, context: C) => Partial<T> | undefined;
-
 export type AppPluginExtensionLink = Pick<PluginExtensionLink, 'description' | 'path' | 'title'>;
+
+// A list of helpers that can be used in the command handler
+export type AppPluginExtensionCommandHelpers = {
+  // Opens a modal dialog and renders the provided React component inside it
+  openModal: (options: {
+    // The title of the modal
+    title: string;
+    // A React element that will be rendered inside the modal
+    body: React.ElementType<{ onDismiss?: () => void }>;
+  }) => void;
+};
+
+export type AppPluginExtensionCommand = Pick<PluginExtensionCommand, 'description' | 'title'>;
 
 export type AppPluginExtensionLinkConfig<C extends object = object> = {
   title: string;
   description: string;
   placement: string;
   path: string;
-  configure?: AppConfigureExtension<AppPluginExtensionLink, C>;
+  configure?: (context?: C) => Partial<AppPluginExtensionLink> | undefined;
+};
+
+export type AppPluginExtensionCommandConfig<C extends object = object> = {
+  title: string;
+  description: string;
+  placement: string;
+  handler: (context?: C, helpers?: AppPluginExtensionCommandHelpers) => void;
+  configure?: (context?: C) => Partial<AppPluginExtensionCommand> | undefined;
 };
 
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
   private linkExtensions: AppPluginExtensionLinkConfig[] = [];
+  private commandExtensions: AppPluginExtensionCommandConfig[] = [];
 
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
@@ -113,6 +133,10 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this.linkExtensions;
   }
 
+  get extensionCommands(): AppPluginExtensionCommandConfig[] {
+    return this.commandExtensions;
+  }
+
   configureExtensionLink<C extends object>(config: AppPluginExtensionLinkConfig<C>) {
     const { path, description, title, placement } = config;
 
@@ -122,6 +146,11 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     }
 
     this.linkExtensions.push(config as AppPluginExtensionLinkConfig);
+    return this;
+  }
+
+  configureExtensionCommand<C extends object>(config: AppPluginExtensionCommandConfig<C>) {
+    this.commandExtensions.push(config as AppPluginExtensionCommandConfig);
     return this;
   }
 }

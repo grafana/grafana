@@ -32,7 +32,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "Åčŧįőŉş",
       "data-tab": "Đäŧä",
       "error-tab": "Ēřřőř",
       "json-tab": "ĴŜØŃ",
@@ -243,18 +242,6 @@
     "library-panels": {
       "subtitle": "Ŗęūşäþľę päŉęľş ŧĥäŧ čäŉ þę äđđęđ ŧő mūľŧįpľę đäşĥþőäřđş",
       "title": "Ŀįþřäřy päŉęľş"
-    },
-    "live": {
-      "title": "Ēvęŉŧ şŧřęämįŉģ"
-    },
-    "live-cloud": {
-      "title": "Cľőūđ"
-    },
-    "live-pipeline": {
-      "title": "Pįpęľįŉę"
-    },
-    "live-status": {
-      "title": "Ŝŧäŧūş"
     },
     "manage-dashboards": {
       "title": "ßřőŵşę"

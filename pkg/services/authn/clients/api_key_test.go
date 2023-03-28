@@ -52,6 +52,9 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				ID:       "api-key:1",
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+				},
 			},
 		},
 		{
@@ -82,6 +85,9 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				Name:           "test",
 				OrgRoles:       map[int64]org.RoleType{1: org.RoleViewer},
 				IsGrafanaAdmin: boolPtr(false),
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+				},
 			},
 		},
 		{

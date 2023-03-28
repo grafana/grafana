@@ -25,7 +25,7 @@ export interface MenuGroupProps extends Partial<MenuItemsGroup> {
 }
 
 /** @internal */
-export const MenuGroup: React.FC<MenuGroupProps> = ({ label, ariaLabel, children }) => {
+export const MenuGroup = ({ label, ariaLabel, children }: MenuGroupProps) => {
   const styles = useStyles2(getStyles);
   const labelID = `group-label-${uniqueId()}`;
 

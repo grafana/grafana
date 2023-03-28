@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { DataFrame, CoreApp } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH, PIXELS_PER_LEVEL } from '../constants';
 
@@ -14,7 +14,7 @@ import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer'
 import { SelectedView } from './types';
 
 type Props = {
-  data: DataFrame;
+  data?: DataFrame;
   app: CoreApp;
   // Height for flame graph when not used in explore.
   // This needs to be different to explore flame graph height as we
@@ -30,18 +30,19 @@ const FlameGraphContainer = (props: Props) => {
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+  const theme = useTheme2();
 
   const [dataContainer, levels] = useMemo((): [FlameGraphDataContainer, LevelItem[][]] | [undefined, undefined] => {
     if (!props.data) {
       return [undefined, undefined];
     }
-    const container = new FlameGraphDataContainer(props.data);
+    const container = new FlameGraphDataContainer(props.data, theme);
 
     // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular
     // level of the flame graph. We do this temporary as in the end we should be able to render directly by iterating
     // over the dataFrame rows.
     return [container, nestedSetToLevels(container)];
-  }, [props.data]);
+  }, [props.data, theme]);
 
   const styles = useStyles2(() => getStyles(props.app, PIXELS_PER_LEVEL * (levels?.length ?? 0)));
 

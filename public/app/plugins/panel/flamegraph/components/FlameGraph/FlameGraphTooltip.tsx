@@ -7,9 +7,9 @@ import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;
-  item?: LevelItem;
   totalTicks: number;
-  tooltipRef: LegacyRef<HTMLDivElement>;
+  item?: LevelItem;
+  tooltipRef?: LegacyRef<HTMLDivElement>;
 };
 
 const FlameGraphTooltip = ({ data, tooltipRef, item, totalTicks }: Props) => {

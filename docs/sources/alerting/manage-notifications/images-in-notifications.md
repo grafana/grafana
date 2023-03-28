@@ -21,22 +21,29 @@ Grafana takes at most two screenshots for each alert: once when the alert fires 
 
 Once a screenshot has been taken Grafana can either upload it to a cloud storage service such as Amazon S3, Azure Blob Storage or Google Cloud Storage; upload the screenshot to it's internal web server; or upload it to the service that is receiving the notification, such as Slack. Which option you should choose depends on how your Grafana is managed and which integrations you use. More information on this can be found in Requirements.
 
-Please refer to the table at the end of this page for a list of contact points and their support for images in notifications.
+Refer to the table at the end of this page for a list of contact points and their support for images in notifications.
 
 ## Requirements
 
-1. To use images in notifications, Grafana must be set up to use [image rendering](https://grafana.com/docs/grafana/next/setup-grafana/image-rendering/). You can either install the image rendering plugin or run it as a remote rendering service.
-2. When a screenshot is taken it is saved to the [data]({{< relref "../../setup-grafana/configure-grafana/#paths" >}}) folder, even if Grafana is configured to upload screenshots to a cloud storage service. Grafana must have write-access to this folder otherwise screenshots cannot be saved to disk and an error will be logged for each failed screenshot attempt.
-3. You should configure Grafana to upload screenshots if sending alerts to integrations other than Discord, Email, Pushover, Slack or Telegram. If Grafana is behind a corporate network or VPN you should use a cloud storage service such as Amazon S3, Azure Blob Storage or Google Cloud Storage, otherwise you can configure Grafana to upload screenshots to its internal web server.
-4. If uploading screenshots to a cloud storage service, uploaded images might need to be accessible outside of your VPN or corporate network as some instant messaging and communication platforms rewrite URLs to go via their CDN. If this is not an option for due to security concerns we recommend using integrations that [supports uploading images]({{<relref "#supported-contact-points">}}) or [disabling images in notifications]({{<relref "#configuration">}}) altogether.
-5. When uploading screenshots to a cloud storage service Grafana uses a random 20 character (30 characters for Azure Blob Storage) filename for each image. This makes URLs hard to guess, but not impossible. If this is a security concern we recommend using integrations that [supports uploading images]({{<relref "#supported-contact-points">}}) or [disabling images in notifications]({{<relref "#configuration">}}) altogether.
+1. To use images in notifications, Grafana must be set up to use [image rendering]({{< relref "/docs/grafana/latest/setup-grafana/image-rendering" >}}). You can either install the image rendering plugin or run it as a remote rendering service.
+
+2. When a screenshot is taken it is saved to the [data]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#paths" >}}) folder, even if Grafana is configured to upload screenshots to a cloud storage service. Grafana must have write-access to this folder otherwise screenshots cannot be saved to disk and an error will be logged for each failed screenshot attempt.
+
+3. You should use a cloud storage service unless sending alerts to Discord, Email, Pushover, Slack or Telegram. These integrations support either embedding screenshots in the email or attaching screenshots to the notification, while other integrations must link screenshots uploaded to a cloud storage bucket. If a cloud storage service has been configured then integrations that support both will link screenshots from the cloud storage bucket instead of embedding or attaching screenshots to the notification.
+
+4. If uploading screenshots to a cloud storage service such as Amazon S3, Azure Blob Storage or Google Cloud Storage; and accessing screenshots in the bucket requires authentication, logging into a VPN or corporate network; then image previews might not work in all instant messaging and communication platforms as some services rewrite URLs to use their CDN. If this happens we recommend using [integrations which support uploading images]({{<relref "#supported-contact-points">}}) or [disabling images in notifications]({{<relref "#configuration">}}) altogether.
+
+5. When uploading screenshots to a cloud storage service Grafana uses a random 20 character (30 characters for Azure Blob Storage) filename for each image. This makes URLs hard to guess but not impossible.
+
 6. Grafana does not delete screenshots from cloud storage. We recommend configuring a retention policy with your cloud storage service to delete screenshots older than 1 month.
-7. If Grafana is configured to upload screenshots to its internal web server then this web server might need to be accessible via the Internet outside your VPN or corporate network as some instant messaging and communication platforms rewrite URLs to go via their CDN. You should understand there are risks involved with this, and at a minimum make sure Grafana is secured with https and that all Grafana users have strong passwords. If this is not an option for you due to security concerns we recommend using integrations that [supports uploading images]({{<relref "#supported-contact-points">}}) or [disabling images in notifications]({{<relref "#configuration">}}) altogether.
+
+7. If Grafana is configured to upload screenshots to its internal web server, and accessing Grafana requires logging into a VPN or corporate network; image previews might not work in all instant messaging and communication platforms as some services rewrite URLs to use their CDN. If this happens we recommend using [integrations which support uploading images]({{<relref "#supported-contact-points">}}) or [disabling images in notifications]({{<relref "#configuration">}}) altogether.
+
 8. Grafana does not delete screenshots uploaded to its internal web server. To delete screenshots from `static_root_path/images/attachments` after a certain amount of time we recommend setting up a CRON job.
 
 ## Configuration
 
-> **Note:** Grafana Cloud users can request this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
+> **Note:** Grafana Cloud users can request this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
 
 Having installed either the image rendering plugin, or set up Grafana to use a remote rendering service, set `capture` in `[unified_alerting.screenshots]` to `true`:
 
@@ -52,9 +59,9 @@ If screenshots should be uploaded to cloud storage then `upload_external_image_s
     # will be persisted to disk for up to temp_data_lifetime.
     upload_external_image_storage = false
 
-Please see [`[external_image_storage]`](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#external_image_storage) for instructions on how to configure cloud storage. Grafana will not start if `upload_external_image_storage` is `true` and `[external_image_storage]` contains missing or invalid configuration.
+Please see [`[external_image_storage]`]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#external_image_storage" >}}) for instructions on how to configure cloud storage. Grafana will not start if `upload_external_image_storage` is `true` and `[external_image_storage]` contains missing or invalid configuration.
 
-If Grafana is acting as its own cloud storage then `[upload_external_image_storage]` should be set to `true` and the `local` provider should be set in [`[external_image_storage]`](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#external_image_storage).
+If Grafana is acting as its own cloud storage then `[upload_external_image_storage]` should be set to `true` and the `local` provider should be set in [`[external_image_storage]`]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#external_image_storage" >}}).
 
 Restart Grafana for the changes to take effect.
 
@@ -97,7 +104,7 @@ Grafana supports a wide range of contact points with varied support for images i
 - This feature is not supported in Mimir or Loki, or when Grafana is configured to send alerts to other Alertmanagers such as the Prometheus Alertmanager.
 - A number of contact points support at most one image per notification. In this case, just the first image is either uploaded to the receiving service or referenced from cloud storage per notification.
 - When multiple alerts are sent in a single notification a screenshot might be included for each alert. The order the images are shown is random.
-- Screenshots might not be shown in notifications if your cloud storage is behind a firewall, gateway service, or VPN as some instant messaging and communication platforms rewrite URLs to go via their CDN.
+- If uploading screenshots to a cloud storage service such as Amazon S3, Azure Blob Storage or Google Cloud Storage; and accessing screenshots in the bucket requires authentication, logging into a VPN or corporate network; image previews might not work in all instant messaging and communication platforms as some services rewrite URLs to use their CDN.
 
 ## Troubleshooting
 
@@ -109,7 +116,6 @@ If Grafana has been set up to send images in notifications, however notification
 4. If the alert is associated with a dashboard, but no panel in the dashboard, there will be logs for `Cannot take screenshot for alert rule as it is not associated with a panel`.
 5. If images cannot be taken because of mis-configuration or an issue with image rendering there will be logs for `Failed to take an image` including the Dashboard UID, Panel ID, and the error message.
 6. Check that the contact point supports images in notifications and whether it supports uploading images to the receiving service or referencing images that have been uploaded to a cloud storage service.
-7. If the image was uploaded to cloud storage make sure that it is public. Screenshots might not be shown in notifications if your cloud storage is behind a firewall, gateway service, or VPN as some instant messaging and communication platforms rewrite URLs to go via their CDN.
 
 ## Metrics
 

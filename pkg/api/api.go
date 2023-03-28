@@ -65,6 +65,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqCanAccessTeams := middleware.AdminOrEditorAndFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
+	ensureEditorOrViewerCanEdit := middleware.EnsureEditorOrViewerCanEdit(hs.Cfg)
 	authorize := ac.Middleware(hs.AccessControl)
 	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.accesscontrolService, hs.userService)
 	quota := middleware.Quota(hs.QuotaService)
@@ -101,7 +102,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/org/apikeys/", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAPIKeyRead)), hs.Index)
 	r.Get("/dashboard/import/", reqSignedIn, hs.Index)
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin", reqGrafanaAdmin, hs.Index)
+	r.Get("/admin", reqOrgAdmin, hs.Index)
 	r.Get("/admin/settings", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), hs.Index)
 	// Show the combined users page for org admins if topnav is enabled
 	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
@@ -156,10 +157,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
-	if hs.Features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
-		r.Get("/g/*", reqSignedIn, hs.Index)
-	}
-
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		// list public dashboards
 		r.Get("/public-dashboards/list", reqSignedIn, hs.Index)
@@ -177,7 +174,7 @@ func (hs *HTTPServer) registerRoutes() {
 		if f, ok := reqSignedIn.(func(c *contextmodel.ReqContext)); ok {
 			f(c)
 		}
-		middleware.EnsureEditorOrViewerCanEdit(c)
+		ensureEditorOrViewerCanEdit(c)
 	}, ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
 
 	r.Get("/playlists/", reqSignedIn, hs.Index)
@@ -306,10 +303,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		if hs.Features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {
 			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
-		}
-
-		if hs.QueryLibraryHTTPService != nil && !hs.QueryLibraryHTTPService.IsDisabled() {
-			apiRoute.Group("/query-library", hs.QueryLibraryHTTPService.RegisterHTTPRoutes)
 		}
 
 		// current org
@@ -598,30 +591,10 @@ func (hs *HTTPServer) registerRoutes() {
 
 			// Some channels may have info
 			liveRoute.Get("/info/*", routing.Wrap(hs.Live.HandleInfoHTTP))
-
-			if hs.Features.IsEnabled(featuremgmt.FlagLivePipeline) {
-				// POST Live data to be processed according to channel rules.
-				liveRoute.Post("/pipeline/push/*", hs.LivePushGateway.HandlePipelinePush)
-				liveRoute.Post("/pipeline-convert-test", routing.Wrap(hs.Live.HandlePipelineConvertTestHTTP), reqOrgAdmin)
-				liveRoute.Get("/pipeline-entities", routing.Wrap(hs.Live.HandlePipelineEntitiesListHTTP), reqOrgAdmin)
-				liveRoute.Get("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesListHTTP), reqOrgAdmin)
-				liveRoute.Post("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesPostHTTP), reqOrgAdmin)
-				liveRoute.Put("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesPutHTTP), reqOrgAdmin)
-				liveRoute.Delete("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesDeleteHTTP), reqOrgAdmin)
-				liveRoute.Get("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsListHTTP), reqOrgAdmin)
-				liveRoute.Post("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsPostHTTP), reqOrgAdmin)
-				liveRoute.Put("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsPutHTTP), reqOrgAdmin)
-				liveRoute.Delete("/write-configs", routing.Wrap(hs.Live.HandleWriteConfigsDeleteHTTP), reqOrgAdmin)
-			}
 		})
 
 		// short urls
 		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
-
-		apiRoute.Group("/comments", func(commentRoute routing.RouteRegister) {
-			commentRoute.Post("/get", routing.Wrap(hs.commentsGet))
-			commentRoute.Post("/create", routing.Wrap(hs.commentsCreate))
-		})
 	}, reqSignedIn)
 
 	// admin api

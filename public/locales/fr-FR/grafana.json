@@ -32,7 +32,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "Actions",
       "data-tab": "Données",
       "error-tab": "Erreur",
       "json-tab": "JSON",
@@ -243,18 +242,6 @@
     "library-panels": {
       "subtitle": "Panneaux réutilisables pouvant être ajoutés à plusieurs tableaux de bord",
       "title": "Panneaux de bibliothèque"
-    },
-    "live": {
-      "title": "Diffusion d'événements"
-    },
-    "live-cloud": {
-      "title": "Cloud"
-    },
-    "live-pipeline": {
-      "title": "Pipeline"
-    },
-    "live-status": {
-      "title": "Statut"
     },
     "manage-dashboards": {
       "title": "Parcourir"

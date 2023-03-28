@@ -24,9 +24,10 @@ type Installer interface {
 	Remove(ctx context.Context, pluginID string) error
 }
 
-type PluginSource struct {
-	Class Class
-	Paths []string
+type PluginSource interface {
+	PluginClass(ctx context.Context) Class
+	PluginURIs(ctx context.Context) []string
+	DefaultSignature(ctx context.Context) (Signature, bool)
 }
 
 type CompatOpts struct {
@@ -99,6 +100,8 @@ type Licensing interface {
 	Edition() string
 
 	Path() string
+
+	AppURL() string
 }
 
 // RoleRegistry handles the plugin RBAC roles and their assignments

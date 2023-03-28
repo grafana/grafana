@@ -32,7 +32,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "操作",
       "data-tab": "数据",
       "error-tab": "错误",
       "json-tab": "JSON",
@@ -243,18 +242,6 @@
     "library-panels": {
       "subtitle": "可重复使用的面板，可以添加到多个仪表板",
       "title": "库面板"
-    },
-    "live": {
-      "title": "事件流"
-    },
-    "live-cloud": {
-      "title": "云"
-    },
-    "live-pipeline": {
-      "title": "管道"
-    },
-    "live-status": {
-      "title": "状态"
     },
     "manage-dashboards": {
       "title": "浏览"

@@ -5,6 +5,7 @@ import {
   Field,
   getDisplayProcessor,
   getEnumDisplayProcessor,
+  GrafanaTheme2,
 } from '@grafana/data';
 
 import { SampleUnit } from '../types';
@@ -52,7 +53,7 @@ export class FlameGraphDataContainer {
   valueDisplayProcessor: DisplayProcessor;
   uniqueLabels: string[];
 
-  constructor(data: DataFrame) {
+  constructor(data: DataFrame, theme: GrafanaTheme2 = createTheme()) {
     this.data = data;
     this.labelField = data.fields.find((f) => f.name === 'label')!;
     this.levelField = data.fields.find((f) => f.name === 'level')!;
@@ -68,11 +69,11 @@ export class FlameGraphDataContainer {
     // both a backward compatibility but also to allow using a simple dataFrame without enum config. This would allow
     // users to use this panel with correct query from data sources that do not return profiles natively.
     if (enumConfig) {
-      this.labelDisplayProcessor = getEnumDisplayProcessor(createTheme(), enumConfig);
+      this.labelDisplayProcessor = getEnumDisplayProcessor(theme, enumConfig);
       this.uniqueLabels = enumConfig.text || [];
     } else {
       this.labelDisplayProcessor = (value) => ({
-        text: value,
+        text: value + '',
         numeric: 0,
       });
       this.uniqueLabels = [...new Set<string>(this.labelField.values.toArray())];
@@ -80,7 +81,7 @@ export class FlameGraphDataContainer {
 
     this.valueDisplayProcessor = getDisplayProcessor({
       field: this.valueField,
-      theme: createTheme() /* theme does not matter for us here */,
+      theme,
     });
   }
 

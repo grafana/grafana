@@ -148,7 +148,7 @@ func TestCollectingUsageStats(t *testing.T) {
 		BuildVersion:         "5.0.0",
 		AnonymousEnabled:     true,
 		BasicAuthEnabled:     true,
-		LDAPEnabled:          true,
+		LDAPAuthEnabled:      true,
 		AuthProxyEnabled:     true,
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",
@@ -182,7 +182,6 @@ func TestCollectingUsageStats(t *testing.T) {
 	assert.EqualValues(t, 11, metrics["stats.data_keys.count"])
 	assert.EqualValues(t, 3, metrics["stats.active_data_keys.count"])
 	assert.EqualValues(t, 5, metrics["stats.public_dashboards.count"])
-	assert.EqualValues(t, 1, metrics["stats.remote_cache.database.count"])
 
 	assert.InDelta(t, int64(65), metrics["stats.uptime"], 6)
 }
@@ -214,7 +213,7 @@ func TestElasticStats(t *testing.T) {
 		BuildVersion:         "5.0.0",
 		AnonymousEnabled:     true,
 		BasicAuthEnabled:     true,
-		LDAPEnabled:          true,
+		LDAPAuthEnabled:      true,
 		AuthProxyEnabled:     true,
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",

@@ -186,7 +186,7 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 			})
 		}
 
-		if !isNested {
+		if !isNested || !hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 				{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
 				{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
@@ -209,9 +209,11 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 		}
 		var theFolder *folder.Folder
 		var err error
+
 		if cmd.NewParentUID != "" {
 			cmd.OrgID = c.OrgID
 			cmd.UID = web.Params(c.Req)[":uid"]
+			cmd.SignedInUser = c.SignedInUser
 			theFolder, err = hs.folderService.Move(c.Req.Context(), &cmd)
 			if err != nil {
 				return response.Error(http.StatusInternalServerError, "update folder uid failed", err)
@@ -227,9 +229,6 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 // swagger:route PUT /folders/{folder_uid} folders updateFolder
 //
 // Update folder.
-//
-// If nested folders are enabled then it optionally expects a new parent folder UID that moves the folder and
-// includes it into the response.
 //
 // Responses:
 // 200: folderResponse

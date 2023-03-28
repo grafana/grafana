@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -118,7 +119,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		pathsToScan = append(pathsToScan, depArchive.Path)
 	}
 
-	_, err = m.pluginLoader.Load(ctx, plugins.External, pathsToScan)
+	_, err = m.pluginLoader.Load(ctx, sources.NewLocalSource(plugins.External, pathsToScan))
 	if err != nil {
 		m.log.Error("Could not load plugins", "paths", pathsToScan, "err", err)
 		return err
