@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/resourcegraph"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
@@ -246,7 +246,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 		return dataResponse
 	}
 
-	azurePortalUrl, err := resourcegraph.GetAzurePortalUrl(dsInfo.Cloud)
+	azurePortalUrl, err := loganalytics.GetAzurePortalUrl(dsInfo.Cloud)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
@@ -379,7 +379,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			return nil, err
 		}
 
-		frameWithLink := resourcegraph.AddConfigLinks(*frame, queryUrl)
+		frameWithLink := loganalytics.AddConfigLinks(*frame, queryUrl)
 		frames = append(frames, &frameWithLink)
 	}
 
