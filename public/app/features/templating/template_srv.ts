@@ -9,7 +9,7 @@ import {
   TypedVariableModel,
 } from '@grafana/data';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
-import { sceneGraph, FormatRegistryID, formatRegistry, CustomFormatterFn } from '@grafana/scenes';
+import { sceneGraph, FormatRegistryID, formatRegistry, VariableCustomFormatterFn } from '@grafana/scenes';
 
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
@@ -281,7 +281,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         scopedVars.__sceneObject.value,
         target,
         scopedVars,
-        format as string | CustomFormatterFn | undefined
+        format as string | VariableCustomFormatterFn | undefined
       );
     }
 
@@ -294,13 +294,17 @@ export class TemplateSrv implements BaseTemplateSrv {
     return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const variableName = var1 || var2 || var3;
       const variable = this.getVariableAtIndex(variableName);
-      const fmt = fmt2 || fmt3 || format;
+      let fmt = fmt2 || fmt3 || format;
 
       if (scopedVars) {
         const value = this.getVariableValue(variableName, fieldPath, scopedVars);
         const text = this.getVariableText(variableName, value, scopedVars);
 
         if (value !== null && value !== undefined) {
+          if (scopedVars[variableName].skipFormat) {
+            fmt = undefined;
+          }
+
           return this.formatValue(value, fmt, variable, text);
         }
       }
@@ -327,8 +331,8 @@ export class TemplateSrv implements BaseTemplateSrv {
       if (this.isAllValue(value)) {
         value = this.getAllValue(variable);
         text = ALL_VARIABLE_TEXT;
-        // skip formatting of custom all values
-        if (variable.allValue && fmt !== FormatRegistryID.text) {
+        // skip formatting of custom all values unless format set to text or percentencode
+        if (variable.allValue && fmt !== FormatRegistryID.text && fmt !== FormatRegistryID.percentEncode) {
           return this.replace(value);
         }
       }

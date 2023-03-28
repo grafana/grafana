@@ -12,7 +12,7 @@ import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@
 import { Button, HorizontalGroup, Icon, InlineField, Input, Portal } from '../..';
 import { useStyles2, useTheme2 } from '../../../themes';
 import { getModalStyles } from '../../Modal/getModalStyles';
-import { TimeOfDayPicker } from '../TimeOfDayPicker';
+import { TimeOfDayPicker, POPUP_CLASS_NAME } from '../TimeOfDayPicker';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 import { isValid } from '../utils';
 
@@ -32,7 +32,15 @@ export const DateTimePicker = ({ date, maxDate, label, onChange }: Props) => {
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps, underlayProps } = useOverlay(
-    { onClose: () => setOpen(false), isDismissable: true, isOpen },
+    {
+      onClose: () => setOpen(false),
+      isDismissable: true,
+      isOpen,
+      shouldCloseOnInteractOutside: (element) => {
+        const popupElement = document.getElementsByClassName(POPUP_CLASS_NAME)[0];
+        return !(popupElement && popupElement.contains(element));
+      },
+    },
     ref
   );
   const { dialogProps } = useDialog({}, ref);

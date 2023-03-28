@@ -1,7 +1,6 @@
 package navtreeimpl
 
 import (
-	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/correlations"
@@ -9,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
@@ -59,7 +59,7 @@ func (s *ServiceImpl) getOrgAdminNode(c *contextmodel.ReqContext) (*navtree.NavL
 	}
 
 	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
-	if plugins.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(s.cfg), plugins.AdminAccessEvaluator) {
+	if pluginaccesscontrol.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(pluginaccesscontrol.ReqCanAdminPlugins(s.cfg), pluginaccesscontrol.AdminAccessEvaluator) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Plugins",
 			Id:       "plugins",
@@ -159,7 +159,7 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 		adminNavLinks = append(adminNavLinks, storage)
 	}
 
-	if s.cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {
+	if s.cfg.LDAPAuthEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {
 		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
 			Text: "LDAP", Id: "ldap", Url: s.cfg.AppSubURL + "/admin/ldap", Icon: "book",
 		})

@@ -1,6 +1,7 @@
 package social
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -34,37 +36,40 @@ type SocialService struct {
 }
 
 type OAuthInfo struct {
-	ClientId, ClientSecret  string
-	Scopes                  []string
-	AuthUrl, TokenUrl       string
-	Enabled                 bool
-	EmailAttributeName      string
-	EmailAttributePath      string
-	RoleAttributePath       string
-	RoleAttributeStrict     bool
-	GroupsAttributePath     string
-	TeamIdsAttributePath    string
-	AllowedDomains          []string
-	AllowAssignGrafanaAdmin bool
-	HostedDomain            string
-	ApiUrl                  string
-	TeamsUrl                string
-	AllowSignup             bool
-	Name                    string
-	Icon                    string
-	TlsClientCert           string
-	TlsClientKey            string
-	TlsClientCa             string
-	TlsSkipVerify           bool
-	UsePKCE                 bool
-	AutoLogin               bool
+	ApiUrl                  string   `toml:"api_url"`
+	AuthUrl                 string   `toml:"auth_url"`
+	ClientId                string   `toml:"client_id"`
+	ClientSecret            string   `toml:"-"`
+	EmailAttributeName      string   `toml:"email_attribute_name"`
+	EmailAttributePath      string   `toml:"email_attribute_path"`
+	GroupsAttributePath     string   `toml:"groups_attribute_path"`
+	HostedDomain            string   `toml:"hosted_domain"`
+	Icon                    string   `toml:"icon"`
+	Name                    string   `toml:"name"`
+	RoleAttributePath       string   `toml:"role_attribute_path"`
+	TeamIdsAttributePath    string   `toml:"team_ids_attribute_path"`
+	TeamsUrl                string   `toml:"teams_url"`
+	TlsClientCa             string   `toml:"tls_client_ca"`
+	TlsClientCert           string   `toml:"tls_client_cert"`
+	TlsClientKey            string   `toml:"tls_client_key"`
+	TokenUrl                string   `toml:"token_url"`
+	AllowedDomains          []string `toml:"allowed_domains"`
+	Scopes                  []string `toml:"scopes"`
+	AllowAssignGrafanaAdmin bool     `toml:"allow_assign_grafana_admin"`
+	AllowSignup             bool     `toml:"allow_signup"`
+	AutoLogin               bool     `toml:"auto_login"`
+	Enabled                 bool     `toml:"enabled"`
+	RoleAttributeStrict     bool     `toml:"role_attribute_strict"`
+	TlsSkipVerify           bool     `toml:"tls_skip_verify"`
+	UsePKCE                 bool     `toml:"use_pkce"`
 }
 
 func ProvideService(cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
 	usageStats usagestats.Service,
+	bundleRegistry supportbundles.Service,
 ) *SocialService {
-	ss := SocialService{
+	ss := &SocialService{
 		cfg:           cfg,
 		oAuthProvider: make(map[string]*OAuthInfo),
 		socialMap:     make(map[string]SocialConnector),
@@ -151,7 +156,7 @@ func ProvideService(cfg *setting.Cfg,
 				apiUrl:               info.ApiUrl,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
-				skipOrgRoleSync:      cfg.GithubSkipOrgRoleSync,
+				skipOrgRoleSync:      cfg.GitHubSkipOrgRoleSync,
 			}
 		}
 
@@ -234,7 +239,9 @@ func ProvideService(cfg *setting.Cfg,
 		}
 	}
 
-	return &ss
+	ss.registerSupportBundleCollectors(bundleRegistry)
+
+	return ss
 }
 
 type BasicUserInfo struct {
@@ -261,6 +268,7 @@ type SocialConnector interface {
 	Exchange(ctx context.Context, code string, authOptions ...oauth2.AuthCodeOption) (*oauth2.Token, error)
 	Client(ctx context.Context, t *oauth2.Token) *http.Client
 	TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource
+	SupportBundleContent(*bytes.Buffer) error
 }
 
 type SocialBase struct {
@@ -329,6 +337,27 @@ func newSocialBase(name string,
 
 type groupStruct struct {
 	Groups []string `json:"groups"`
+}
+
+func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
+	bf.WriteString("## Client configuration\n\n")
+	bf.WriteString("```ini\n")
+	bf.WriteString(fmt.Sprintf("allow_assign_grafana_admin = %v\n", s.allowAssignGrafanaAdmin))
+	bf.WriteString(fmt.Sprintf("allow_sign_up = %v\n", s.allowSignup))
+	bf.WriteString(fmt.Sprintf("allowed_domains = %v\n", s.allowedDomains))
+	bf.WriteString(fmt.Sprintf("auto_assign_org_role = %v\n", s.autoAssignOrgRole))
+	bf.WriteString(fmt.Sprintf("role_attribute_path = %v\n", s.roleAttributePath))
+	bf.WriteString(fmt.Sprintf("role_attribute_strict = %v\n", s.roleAttributeStrict))
+	bf.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", s.skipOrgRoleSync))
+	bf.WriteString(fmt.Sprintf("client_id = %v\n", s.Config.ClientID))
+	bf.WriteString(fmt.Sprintf("client_secret = %v ; issue if empty\n", strings.Repeat("*", len(s.Config.ClientSecret))))
+	bf.WriteString(fmt.Sprintf("auth_url = %v\n", s.Config.Endpoint.AuthURL))
+	bf.WriteString(fmt.Sprintf("token_url = %v\n", s.Config.Endpoint.TokenURL))
+	bf.WriteString(fmt.Sprintf("auth_style = %v\n", s.Config.Endpoint.AuthStyle))
+	bf.WriteString(fmt.Sprintf("redirect_url = %v\n", s.Config.RedirectURL))
+	bf.WriteString(fmt.Sprintf("scopes = %v\n", s.Config.Scopes))
+	bf.WriteString("```\n\n")
+	return nil
 }
 
 func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy bool) (org.RoleType, bool) {

@@ -104,7 +104,7 @@ func callAPI(server *web.Mux, method, path string, body io.Reader, t *testing.T)
 
 // helper to query.Service
 // allows us to stub the cache and plugin clients
-func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakePluginClient, store db.DB) *query.Service {
+func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakePluginClient, store db.DB) *query.ServiceImpl {
 	//	build database if we need one
 	if store == nil {
 		store = db.InitTestDB(t)

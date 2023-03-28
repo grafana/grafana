@@ -1472,19 +1472,19 @@ func TestResponseParser(t *testing.T) {
 
 			require.Len(t, result.response.Responses, 1)
 			frames := result.response.Responses["A"].Frames
-			require.True(t, len(frames) > 0) // FIXME
+			require.True(t, len(frames) > 0)
 
 			for _, field := range frames[0].Fields {
 				trueValue := true
 				filterableConfig := data.FieldConfig{Filterable: &trueValue}
 
 				// we need to test that the only changed setting is `filterable`
-				require.Equal(t, filterableConfig, *field.Config) // FIXME
+				require.Equal(t, filterableConfig, *field.Config)
 			}
 		})
 	})
 
-	t.Run("With top_metrics", func(t *testing.T) {
+	t.Run("With top_metrics and date_histogram agg", func(t *testing.T) {
 		targets := map[string]string{
 			"A": `{
 				"metrics": [
@@ -1570,6 +1570,162 @@ func TestResponseParser(t *testing.T) {
 		assert.Equal(t, 1609459210000., v)
 		v, _ = frame.FloatAt(1, 1)
 		assert.Equal(t, 2., v)
+	})
+
+	t.Run("With top_metrics and terms agg", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+				"metrics": [
+					{
+						"type": "top_metrics",
+						"settings": {
+							"order": "desc",
+							"orderBy": "@timestamp",
+							"metrics": ["@value", "@anotherValue"]
+						},
+						"id": "1"
+					}
+				],
+				"bucketAggs": [{ "type": "terms", "field": "id", "id": "3" }]
+			}`,
+		}
+		response := `{
+			"responses": [{
+				"aggregations": {
+					"3": {
+						"buckets": [
+							{
+								"key": "id1",
+								"1": {
+									"top": [
+										{ "sort": [10], "metrics": { "@value": 10, "@anotherValue": 2 } }
+									]
+								}
+							},
+							{
+								"key": "id2",
+								"1": {
+									"top": [
+										{ "sort": [5], "metrics": { "@value": 5, "@anotherValue": 2 } }
+									]
+								}
+							}
+						]
+					}
+				}
+			}]
+		}`
+
+		result, err := parseTestResponse(targets, response)
+		assert.Nil(t, err)
+		assert.Len(t, result.Responses, 1)
+		frames := result.Responses["A"].Frames
+		require.Len(t, frames, 1)
+		requireFrameLength(t, frames[0], 2)
+		require.Len(t, frames[0].Fields, 3)
+
+		f1 := frames[0].Fields[0]
+		f2 := frames[0].Fields[1]
+		f3 := frames[0].Fields[2]
+
+		require.Equal(t, "id", f1.Name)
+		require.Equal(t, "Top Metrics @value", f2.Name)
+		require.Equal(t, "Top Metrics @anotherValue", f3.Name)
+
+		requireStringAt(t, "id1", f1, 0)
+		requireStringAt(t, "id2", f1, 1)
+
+		requireFloatAt(t, 10, f2, 0)
+		requireFloatAt(t, 5, f2, 1)
+
+		requireFloatAt(t, 2, f3, 0)
+		requireFloatAt(t, 2, f3, 1)
+	})
+
+	t.Run("With max and multiple terms agg", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+				"metrics": [
+					{
+						"type": "max",
+						"field": "counter",
+						"id": "1"
+					}
+				],
+				"bucketAggs": [{ "type": "terms", "field": "label", "id": "2" }, { "type": "terms", "field": "level", "id": "3" }]
+			}`,
+		}
+		response := `{
+			"responses": [{
+				"aggregations": {
+					"2": {
+						"buckets": [
+							{
+								"key": "val3",
+								"3": {
+									"buckets": [
+										{ "key": "info", "1": { "value": "299" } }, { "key": "error", "1": {"value": "300"} }
+									]
+								}
+							},
+							{
+								"key": "val2",
+								"3": {
+									"buckets": [
+										{"key": "info", "1": {"value": "300"}}, {"key": "error", "1": {"value": "298"} }
+									]
+								}
+							},
+							{
+								"key": "val1",
+								"3": {
+									"buckets": [
+										{"key": "info", "1": {"value": "299"}}, {"key": "error", "1": {"value": "296"} }
+									]
+								}
+							}
+						]
+					}
+				}
+			}]
+		}`
+
+		result, err := parseTestResponse(targets, response)
+		assert.Nil(t, err)
+		assert.Len(t, result.Responses, 1)
+		frames := result.Responses["A"].Frames
+		require.Len(t, frames, 1)
+		requireFrameLength(t, frames[0], 6)
+		require.Len(t, frames[0].Fields, 3)
+
+		f1 := frames[0].Fields[0]
+		f2 := frames[0].Fields[1]
+		f3 := frames[0].Fields[2]
+
+		require.Equal(t, "label", f1.Name)
+		require.Equal(t, "level", f2.Name)
+		require.Equal(t, "Max", f3.Name)
+
+		requireStringAt(t, "val3", f1, 0)
+		requireStringAt(t, "val3", f1, 1)
+		requireStringAt(t, "val2", f1, 2)
+		requireStringAt(t, "val2", f1, 3)
+		requireStringAt(t, "val1", f1, 4)
+		requireStringAt(t, "val1", f1, 5)
+
+		requireStringAt(t, "info", f2, 0)
+		requireStringAt(t, "error", f2, 1)
+		requireStringAt(t, "info", f2, 2)
+		requireStringAt(t, "error", f2, 3)
+		requireStringAt(t, "info", f2, 4)
+		requireStringAt(t, "error", f2, 5)
+
+		requireFloatAt(t, 299, f3, 0)
+		requireFloatAt(t, 300, f3, 1)
+		requireFloatAt(t, 300, f3, 2)
+		requireFloatAt(t, 298, f3, 3)
+		requireFloatAt(t, 299, f3, 4)
+		requireFloatAt(t, 296, f3, 5)
 	})
 }
 

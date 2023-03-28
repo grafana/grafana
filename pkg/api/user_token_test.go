@@ -3,19 +3,24 @@ package api
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestUserTokenAPIEndpoint(t *testing.T) {
@@ -144,6 +149,97 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 			assert.Equal(t, "11.0", resultTwo.Get("osVersion").MustString())
 		}, mockUser)
 	})
+}
+
+func TestHTTPServer_RotateUserAuthToken(t *testing.T) {
+	type testCase struct {
+		desc                 string
+		cookie               *http.Cookie
+		rotatedToken         *auth.UserToken
+		rotatedErr           error
+		expectedStatus       int
+		expectNewSession     bool
+		expectSessionDeleted bool
+	}
+
+	tests := []testCase{
+		{
+			desc:                 "Should return 401 and delete cookie if the token is invalid",
+			cookie:               &http.Cookie{Name: "grafana_session", Value: "123", Path: "/"},
+			rotatedErr:           auth.ErrInvalidSessionToken,
+			expectSessionDeleted: true,
+			expectedStatus:       http.StatusUnauthorized,
+		},
+		{
+			desc:           "Should return 404 and when token s not found",
+			cookie:         &http.Cookie{Name: "grafana_session", Value: "123", Path: "/"},
+			rotatedErr:     auth.ErrUserTokenNotFound,
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			desc:           "Should return 200 and but not set new cookie if token was not rotated",
+			cookie:         &http.Cookie{Name: "grafana_session", Value: "123", Path: "/"},
+			rotatedToken:   &auth.UserToken{UnhashedToken: "123"},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:             "Should return 200 and set new session and expiry cookies",
+			cookie:           &http.Cookie{Name: "grafana_session", Value: "123", Path: "/"},
+			rotatedToken:     &auth.UserToken{UnhashedToken: "new"},
+			expectNewSession: true,
+			expectedStatus:   http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				cfg := setting.NewCfg()
+				cfg.LoginCookieName = "grafana_session"
+				cfg.LoginMaxLifetime = 10 * time.Hour
+				hs.Cfg = cfg
+				hs.log = log.New()
+				hs.Cfg.LoginCookieName = "grafana_session"
+				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagClientTokenRotation)
+				hs.AuthTokenService = &authtest.FakeUserAuthTokenService{
+					RotateTokenProvider: func(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
+						return tt.rotatedToken, tt.rotatedErr
+					},
+				}
+			})
+
+			req := server.NewPostRequest("/api/user/auth-tokens/rotate", nil)
+			if tt.cookie != nil {
+				req.AddCookie(tt.cookie)
+			}
+
+			res, err := server.Send(req)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedStatus, res.StatusCode)
+
+			if tt.expectedStatus != http.StatusOK {
+				if tt.expectSessionDeleted {
+					cookies := res.Header.Values("Set-Cookie")
+					require.Len(t, cookies, 2)
+					assert.Equal(t, "grafana_session=; Path=/; Max-Age=0; HttpOnly", cookies[0])
+					assert.Equal(t, "grafana_session_expiry=; Path=/; Max-Age=0", cookies[1])
+				} else {
+					assert.Empty(t, res.Header.Get("Set-Cookie"))
+				}
+			} else {
+				if tt.expectNewSession {
+					cookies := res.Header.Values("Set-Cookie")
+					require.Len(t, cookies, 2)
+					assert.Equal(t, "grafana_session=new; Path=/; Max-Age=36000; HttpOnly", cookies[0])
+					assert.Equal(t, "grafana_session_expiry=-5; Path=/; Max-Age=36000", cookies[1])
+				} else {
+					assert.Empty(t, res.Header.Get("Set-Cookie"))
+				}
+			}
+
+			require.NoError(t, res.Body.Close())
+		})
+	}
 }
 
 func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd auth.RevokeAuthTokenCmd,

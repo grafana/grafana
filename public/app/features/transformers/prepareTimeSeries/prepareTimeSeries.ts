@@ -15,6 +15,8 @@ import {
 } from '@grafana/data';
 import { Labels } from 'app/types/unified-alerting-dto';
 
+import { partitionByValues } from '../partitionByValues/partitionByValues';
+
 /**
  * There is currently an effort to figure out consistent names
  * for the various formats/types we produce and use.
@@ -27,9 +29,11 @@ import { Labels } from 'app/types/unified-alerting-dto';
 
 export enum timeSeriesFormat {
   TimeSeriesWide = 'wide',
-  TimeSeriesMany = 'many',
   TimeSeriesLong = 'long',
   TimeSeriesMulti = 'multi',
+
+  /** @deprecated use multi */
+  TimeSeriesMany = 'many',
 }
 
 export type PrepareTimeSeriesOptions = {
@@ -282,6 +286,20 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
   return result;
 }
 
+export function longToMultiTimeSeries(frame: DataFrame): DataFrame[] {
+  // All the string fields
+  const matcher = (field: Field) => field.type === FieldType.string;
+
+  // transform one dataFrame at a time and concat into DataFrame[]
+  return partitionByValues(frame, matcher).map((frame) => {
+    if (!frame.meta) {
+      frame.meta = {};
+    }
+    frame.meta.type = DataFrameType.TimeSeriesMulti;
+    return frame;
+  });
+}
+
 export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<PrepareTimeSeriesOptions> = {
   id: DataTransformerID.prepareTimeSeries,
   name: 'Prepare time series',
@@ -293,20 +311,43 @@ export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<Prepar
 
   transformer: (options: PrepareTimeSeriesOptions) => {
     const format = options?.format ?? timeSeriesFormat.TimeSeriesWide;
-    if (format === timeSeriesFormat.TimeSeriesMany || timeSeriesFormat.TimeSeriesMulti) {
+    if (format === timeSeriesFormat.TimeSeriesMany || format === timeSeriesFormat.TimeSeriesMulti) {
       return toTimeSeriesMulti;
     } else if (format === timeSeriesFormat.TimeSeriesLong) {
       return toTimeSeriesLong;
     }
+    const joinBy = fieldMatchers.get(FieldMatcherID.firstTimeField).get({});
 
+    // Single TimeSeriesWide frame (joined by time)
     return (data: DataFrame[]) => {
+      if (!data.length) {
+        return [];
+      }
+
+      // Convert long to wide first
+      const join: DataFrame[] = [];
+      for (const df of data) {
+        if (df.meta?.type === DataFrameType.TimeSeriesLong) {
+          longToMultiTimeSeries(df).forEach((v) => join.push(v));
+        } else {
+          join.push(df);
+        }
+      }
+
       // Join by the first frame
       const frame = outerJoinDataFrames({
-        frames: data,
-        joinBy: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+        frames: join,
+        joinBy,
         keepOriginIndices: true,
       });
-      return frame ? [frame] : [];
+      if (frame) {
+        if (!frame.meta) {
+          frame.meta = {};
+        }
+        frame.meta.type = DataFrameType.TimeSeriesWide;
+        return [frame];
+      }
+      return [];
     };
   },
 };

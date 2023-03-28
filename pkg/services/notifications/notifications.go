@@ -54,8 +54,9 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUser
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
-		"Subject":       subjectTemplateFunc,
-		"HiddenSubject": hiddenSubjectTemplateFunc,
+		"Subject":                 subjectTemplateFunc,
+		"HiddenSubject":           hiddenSubjectTemplateFunc,
+		"__dangerouslyInjectHTML": __dangerouslyInjectHTML,
 	})
 	mailTemplates.Funcs(sprig.FuncMap())
 
@@ -172,6 +173,17 @@ func subjectTemplateFunc(obj map[string]interface{}, data map[string]interface{}
 	// Since we have already executed the template, save it to subject data so we don't have to do it again later on
 	obj["executed_template"] = subj
 	return subj
+}
+
+// __dangerouslyInjectHTML allows marking areas of am email template as HTML safe, this will _not_ sanitize the string and will allow HTML snippets to be rendered verbatim.
+// Use with absolute care as this _could_ allow for XSS attacks when used in an insecure context.
+//
+// It's safe to ignore gosec warning G203 when calling this function in an HTML template because we assume anyone who has write access
+// to the email templates folder is an administrator.
+//
+// nolint:gosec
+func __dangerouslyInjectHTML(s string) template.HTML {
+	return template.HTML(s)
 }
 
 func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, cmd *SendEmailCommandSync) error {
