@@ -83,7 +83,7 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 		defer close(errCh)
 
 		org := fmt.Sprint(rule.OrgID)
-		h.metrics.WritesTotal.WithLabelValues(org).Inc()
+		h.metrics.WritesTotal.WithLabelValues(org, "loki").Inc()
 		samples := 0
 		for _, s := range streams {
 			samples += len(s.Values)
@@ -92,7 +92,7 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 
 		if err := h.recordStreams(ctx, streams, logger); err != nil {
 			logger.Error("Failed to save alert state history batch", "error", err)
-			h.metrics.WritesFailed.WithLabelValues(org).Inc()
+			h.metrics.WritesFailed.WithLabelValues(org, "loki").Inc()
 			h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(samples))
 			errCh <- fmt.Errorf("failed to save alert state history batch: %w", err)
 		}
