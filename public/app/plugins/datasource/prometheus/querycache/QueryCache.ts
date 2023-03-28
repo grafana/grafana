@@ -81,13 +81,23 @@ export class QueryCache {
       const duration = parseDuration(defaultPrometheusQueryOverlapWindow);
       this.overlapWindowMs = durationToMilliseconds(duration);
     }
+    this.profile();
+  }
 
-    if (typeof PerformanceObserver === 'function') {
+  private profile() {
+    // Check if PerformanceObserver is supported, and if we have Faro enabled for internal profiling
+    if (typeof PerformanceObserver === 'function' && config.grafanaJavascriptAgent.enabled) {
       this.perfObeserver = new PerformanceObserver((list: PerformanceObserverEntryList) => {
         list.getEntries().forEach((entry) => {
-          // https://github.com/microsoft/TypeScript/issues/33866 PerformanceResourceTiming types are not available from getEntries()?
+          // eslint-ignore-next-line
           const entryTypeCast: PerformanceResourceTiming = entry as PerformanceResourceTiming;
-          if (entryTypeCast?.initiatorType === 'fetch') {
+
+          // Safari support for this is coming in 16.4:
+          // https://caniuse.com/mdn-api_performanceresourcetiming_transfersize
+          // Gating that this exists to prevent runtime errors
+          const isSupported = typeof entryTypeCast?.transferSize === 'number';
+
+          if (entryTypeCast?.initiatorType === 'fetch' && isSupported) {
             let fetchUrl = entryTypeCast.name;
 
             if (fetchUrl.includes('/api/ds/query')) {
@@ -96,54 +106,39 @@ export class QueryCache {
               if (match) {
                 let requestId = match[1];
 
-                // Safari support for this is coming in 16.4:
-                // https://caniuse.com/mdn-api_performanceresourcetiming_transfersize
-                // Gating that this exists to prevent runtime errors
-                if (typeof entryTypeCast?.transferSize === 'number') {
-                  // TODO: store full initial request size by targSig so we can diff follow-up partial requests
-                  // TODO: log savings between full initial request and incremental request to Faro
-                  const requestTransferSize = Math.round(entryTypeCast.transferSize);
-                  const idToBytes = this.pendingRequestIdsToTargSig[requestId];
+                // TODO: store full initial request size by targSig so we can diff follow-up partial requests
+                // TODO: log savings between full initial request and incremental request to Faro
+                const requestTransferSize = Math.round(entryTypeCast.transferSize);
+                const idToBytes = this.pendingRequestIdsToTargSig[requestId];
 
-                  if (idToBytes) {
-                    // Set the transfer size for this current request
-                    Object.keys(idToBytes).forEach((key) => {
-                      for (let otherRequestIds in this.pendingRequestIdsToTargSig) {
-                        const firstKey = Object.keys(this.pendingRequestIdsToTargSig[otherRequestIds])[0];
-                        const firstValue = Object.values(this.pendingRequestIdsToTargSig[otherRequestIds])[0];
-                        if (firstKey === key && firstValue !== null) {
-                          console.log('SENDING EVENT', {
+                if (idToBytes) {
+                  // Set the transfer size for this current request
+                  Object.keys(idToBytes).forEach((key) => {
+                    for (let otherRequestIds in this.pendingRequestIdsToTargSig) {
+                      const firstKey = Object.keys(this.pendingRequestIdsToTargSig[otherRequestIds])[0];
+                      const firstValue = Object.values(this.pendingRequestIdsToTargSig[otherRequestIds])[0];
+                      if (firstKey === key && firstValue !== null) {
+                        faro.api.pushEvent(
+                          'prometheus incremental query response size',
+                          {
                             id: firstKey,
                             initialRequestBytes: firstValue.toString(),
                             subsequentRequestBytes: requestTransferSize.toString(10),
-                          });
-
-                          if (config.grafanaJavascriptAgent.enabled) {
-                            faro.api.pushEvent(
-                              'prometheus incremental query response size',
-                              {
-                                id: firstKey,
-                                initialRequestBytes: firstValue.toString(),
-                                subsequentRequestBytes: requestTransferSize.toString(10),
-                              },
-                              'no-interaction',
-                              {
-                                skipDedupe: true,
-                              }
-                            );
+                          },
+                          'no-interaction',
+                          {
+                            skipDedupe: true,
                           }
-                          // Send event with requestTransferSize, and otherValue
+                        );
 
-                          // We've already saved the initial request, lets just send an event with the delta
-                          delete this.pendingRequestIdsToTargSig[requestId];
-                          break;
-                        }
+                        delete this.pendingRequestIdsToTargSig[requestId];
+                        break;
                       }
+                    }
 
-                      // Set the transfer size
-                      idToBytes[key] = requestTransferSize;
-                    });
-                  }
+                    // Set the transfer size
+                    idToBytes[key] = requestTransferSize;
+                  });
                 }
               }
             }
