@@ -135,8 +135,7 @@ export const escapeUnescapedString = (string: string) =>
 export function logRowsToReadableJson(logs: LogRowModel[]) {
   return logs.map((log) => {
     const fields = getDataframeFields(log).reduce<Record<string, string>>((acc, field) => {
-      const key = field.keys[0];
-      acc[key] = field.values[0];
+      acc[field.key] = field.value;
       return acc;
     }, {});
 
