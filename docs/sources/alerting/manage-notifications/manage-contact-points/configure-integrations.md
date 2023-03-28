@@ -1,22 +1,22 @@
 ---
-description: Notifier configuration guide
+description: Configure integrations
 draft: true
 keywords:
   - Grafana
   - alerting
   - guide
   - notifications
-  - notifiers
+  - integrations
   - contact points
-title: Configure notifiers
+title: Configure integrations
 weight: 100
 ---
 
-# Configure notifiers
+# Configure integrations
 
-Configuring notifiers in Grafana allows you to receive notifications for your alert rules in your preferred communication channels. Each notifier has its own configuration options and setup process, but in general, the process involves providing an API key or webhook URL.
+Configure integrations in Grafana to select your preferred communication channel for receiving notifications when your alert rules are fire. Each integration has its own configuration options and setup process. In most cases, this involves providing an API key or a Webhook URL.
 
-Once configured, you can use notifiers as part of your contact points to receive notifications whenever your alert changes its state. In this section, we'll cover the basic steps to configure your notifiers, so you can start receiving real-time alerts and stay on top of your monitoring data.
+Once configured, you can use integrations as part of your contact points to receive notifications whenever your alert changes its state. In this section, we'll cover the basic steps to configure your integrations, so you can start receiving real-time alerts and stay on top of your monitoring data.
 
 ## List of supported notifiers
 
@@ -44,7 +44,7 @@ Once configured, you can use notifiers as part of your contact points to receive
 
 ### PagerDuty
 
-To set up PagerDuty, all you have to do is to provide an integration key.
+To set up PagerDuty, provide an integration key.
 
 | Setting         | Description                                            |
 | --------------- | ------------------------------------------------------ |
@@ -52,7 +52,7 @@ To set up PagerDuty, all you have to do is to provide an integration key.
 | Severity        | Level for dynamic notifications, default is `critical` |
 | Custom Details  | Additional details about the event                     |
 
-The `CustomDetails` field is an object containing arbitrary key-value pairs. The user-defined details get merged with the ones we use by default.
+The `CustomDetails` field is an object containing arbitrary key-value pairs. The user-defined details are merged with the ones we use by default.
 
 Our default values for `CustomDetails` are:
 
