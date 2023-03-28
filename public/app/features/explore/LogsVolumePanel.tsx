@@ -44,7 +44,7 @@ export function LogsVolumePanel(props: Props) {
   const logsVolumeData = props.logsVolumeData;
 
   const logsVolumeInfo = getLogsVolumeDataSourceInfo(logsVolumeData?.data);
-  let extraInfo = logsVolumeInfo ? `${logsVolumeInfo.name}` : '';
+  let extraInfo = logsVolumeInfo && !hideTitle ? `${logsVolumeInfo.name}` : '';
 
   if (isLogsVolumeLimited(logsVolumeData.data)) {
     extraInfo = [
@@ -83,7 +83,7 @@ export function LogsVolumePanel(props: Props) {
     }
   }
 
-  let extraInfoComponent = hideTitle ? null : <span>{extraInfo}</span>;
+  let extraInfoComponent = <span>{extraInfo}</span>;
 
   if (logsVolumeData.state === LoadingState.Streaming) {
     extraInfoComponent = (
