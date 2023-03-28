@@ -23,9 +23,7 @@ weight: 1
 
 # Panel editor overview
 
-{{< figure src="/static/img/docs/panel-editor/panel-editor-8-0.png" class="docs-image--no-shadow" max-width="1500px" >}}
-
-<!-- replace screenshot -->
+![Panel editor](/media/docs/grafana/panels-visualizations/screenshot-panel-editor-view.png)
 
 This section describes the areas of the Grafana panel editor.
 
