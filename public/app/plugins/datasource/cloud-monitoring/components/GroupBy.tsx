@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
@@ -19,14 +19,14 @@ export interface Props {
   query: TimeSeriesList;
 }
 
-export const GroupBy: FunctionComponent<Props> = ({
+export const GroupBy = ({
   refId,
   labels: groupBys = [],
   query,
   onChange,
   variableOptionGroup,
   metricDescriptor,
-}) => {
+}: Props) => {
   const options = useMemo(
     () => [variableOptionGroup, ...labelsToGroupedOptions([...groupBys, ...SYSTEM_LABELS])],
     [groupBys, variableOptionGroup]

@@ -195,6 +195,7 @@ export const availableIconsIndex = {
   'step-backward': true,
   'stopwatch-slash': true,
   sync: true,
+  'sync-slash': true,
   table: true,
   'tag-alt': true,
   'telegram-alt': true,

@@ -206,6 +206,8 @@ export const Pages = {
         EmailSharingInput: 'data-testid public dashboard email sharing input',
         EmailSharingInviteButton: 'data-testid public dashboard email sharing invite button',
         EmailSharingList: 'data-testid public dashboard email sharing list',
+        DeleteEmail: 'data-testid public dashboard delete email button',
+        ReshareLink: 'data-testid public dashboard reshare link button',
       },
     },
   },
