@@ -44,7 +44,7 @@ export function LogsVolumePanel(props: Props) {
   const logsVolumeData = props.logsVolumeData;
 
   const logsVolumeInfo = getLogsVolumeDataSourceInfo(logsVolumeData?.data);
-  let extraInfo = logsVolumeInfo ? `(${logsVolumeInfo.name})` : '';
+  let extraInfo = logsVolumeInfo ? `${logsVolumeInfo.name}` : '';
 
   if (isLogsVolumeLimited(logsVolumeData.data)) {
     extraInfo = [
