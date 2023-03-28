@@ -6,17 +6,20 @@ keywords:
   - https
   - ssl
   - certificates
-title: Set up Grafana HTTPS for Secure Web Traffic
+title: Set up Grafana HTTPS for secure web traffic
+menuTitle: Set up HTTPS
 weight: 900
 ---
 
-# Set up Grafana HTTPS for Secure Web Traffic
+# Set up Grafana HTTPS for secure web traffic
 
 When accessing the Grafana UI through the web, it is important to set up HTTPS to ensure the communication between Grafana and the end user is encrypted, including login credentials and retrieved metric data.
 
-In order to ensure secure traffic over the internet, Grafana must have a key for encryption as well as a [Secure Socket Layer (SSL) Certificate](https://www.kaspersky.com/resource-center/definitions/what-is-a-ssl-certificate) to verify the identity of the site. This will display a browser "lock icon" which confirms the connection is safe.
+In order to ensure secure traffic over the internet, Grafana must have a key for encryption and a [Secure Socket Layer (SSL) Certificate](https://www.kaspersky.com/resource-center/definitions/what-is-a-ssl-certificate) to verify the identity of the site. 
 
-![secure HTTPS connection](/media/docs/grafana/https-config/screenshot-secure-https.png)
+The following image shows a browser lock icon which confirms the connection is safe.
+
+{{< figure src="/media/docs/grafana/https-config/screenshot-secure-https.png" max-width="500px" caption="Secure HTTPS connection" >}}
 
 This topic shows you how to:
 
@@ -24,140 +27,163 @@ This topic shows you how to:
 2. Configure Grafana HTTPS
 3. Restart the Grafana server
 
+## Before you begin
+- [list prereqs here, like permissions etc.]
+- [list prereqs here, like knowledge of certain subjects...]
+
 ## Obtain a certificate and key
 
-There are two methods you can use to obtain a certificate and a key. The faster and easier _self-signed_ option might show browser warnings to the user that they will have to accept each time they visit the site. Alternatively, the Certificate Authority (CA) signed option requires more steps to complete, but it enables full trust with the browser. To learn more about the difference between these options, refer to [Difference between self-signed CA and self-signed certificate](https://www.baeldung.com/cs/self-signed-ca-vs-certificate). Choose only one of the two sections to follow.
+You can use one of two methods to obtain a certificate and a key. The faster and easier _self-signed_ option might show browser warnings to the user that they will have to accept each time they visit the site. Alternatively, the Certificate Authority (CA) signed option requires more steps to complete, but it enables full trust with the browser. To learn more about the difference between these options, refer to [Difference between self-signed CA and self-signed certificate](https://www.baeldung.com/cs/self-signed-ca-vs-certificate).
 
 
 ### Generate a self-signed certificate
 
-This section shows you how to use `openssl` tooling to generate all necessary files from 
-the command line.  
+This section shows you how to use `openssl` tooling to generate all necessary files from the command line.  
 
-```bash
-$ sudo openssl genrsa -out /etc/grafana/grafana.key 2048
-```
+1. Run the following command to [add what this does]:
+   
+   ```bash
+   $ sudo openssl genrsa -out /etc/grafana/grafana.key 2048
+   ```
 
+1. Run the following command to [add what this does]:
 
-```bash
-$ sudo openssl req -new -key /etc/grafana/grafana.key -out /etc/grafana/grafana.csr
-```
+   ```bash
+   $ sudo openssl req -new -key /etc/grafana/grafana.key -out /etc/grafana/grafana.csr
+   ```
 
-When prompted, answer the questions, which might include your fully-qualified domain name, email address, country code, and others. The following example is similar to the prompts you will see.
+   When prompted, answer the questions, which might include your fully-qualified domain name, email address, country code, and others. The following example is similar to the prompts you will see.
 
-```
-You are about to be asked to enter information that will be incorporated
-into your certificate request.
-What you are about to enter is what is called a Distinguished Name or a DN.
-There are quite a few fields but you can leave some blank
-For some fields there will be a default value,
-If you enter '.', the field will be left blank.
------
-Country Name (2 letter code) [AU]:US
-State or Province Name (full name) [Some-State]:Virginia
-Locality Name (eg, city) []:Richmond
-Organization Name (eg, company) [Internet Widgits Pty Ltd]:
-Organizational Unit Name (eg, section) []:
-Common Name (e.g. server FQDN or YOUR name) []:subdomain.mysite.com
-Email Address []:me@mysite.com
+   ```
+   You are about to be asked to enter information that will be incorporated
+   into your certificate request.
+   What you are about to enter is what is called a Distinguished Name or a DN.
+   There are quite a few fields but you can leave some blank
+   For some fields there will be a default value,
+   If you enter '.', the field will be left blank.
+   -----
+   Country Name (2 letter code) [AU]:US
+   State or Province Name (full name) [Some-State]:Virginia
+   Locality Name (eg, city) []:Richmond
+   Organization Name (eg, company) [Internet Widgits Pty Ltd]:
+   Organizational Unit Name (eg, section) []:
+   Common Name (e.g. server FQDN or YOUR name) []:subdomain.mysite.com
+   Email Address []:me@mysite.com
 
-Please enter the following 'extra' attributes
-to be sent with your certificate request
-A challenge password []:
-An optional company name []:
-```
+   Please enter the following 'extra' attributes
+   to be sent with your certificate request
+   A challenge password []:
+   An optional company name []:
+   ```
 
-```bash
-sudo openssl x509 -req -days 365 -in grafana.csr -signkey /etc/grafana/grafana.key -out /etc/grafana/grafana.crt
-```
+1. Run the following command to [add what this does]:
 
-1. Run the following command to set the appropriate permissions for the files:
+   ```bash
+   sudo openssl x509 -req -days 365 -in grafana.csr -signkey /etc/grafana/grafana.key -out /etc/grafana/grafana.crt
+   ```
 
-```bash
-sudo chown grafana:grafana /etc/grafana/grafana.crt
-sudo chown grafana:grafana /etc/grafana/grafana.key
-sudo chmod 400 grafana.key /etc/grafana/grafana.crt
-```
+1. Run the following commands to set the appropriate permissions for the files:
 
-**Note**: When using these files, browsers might provide warnings for the resulting website because a third-party source does not trust the certificate. Browsers will show trust warnings; however, the connection will remain encrypted.
+   ```bash
+   sudo chown grafana:grafana /etc/grafana/grafana.crt
+   sudo chown grafana:grafana /etc/grafana/grafana.key
+   sudo chmod 400 grafana.key /etc/grafana/grafana.crt
+   ```
 
-![Unsecure HTTPS connection](/media/docs/grafana/https-config/screenshot-insecure-https.png)
+   **Note**: When using these files, browsers might provide warnings for the resulting website because a third-party source does not trust the certificate. Browsers will show trust warnings; however, the connection will remain encrypted.
+
+   The following image shows an insecure HTTP connection.
+
+   {{< figure src="/media/docs/grafana/https-config/screenshot-insecure-https.png" max-width="750px" caption="Insecure HTTPS connection" >}}
 
 
 ### Obtain a signed certificate from LetsEncrypt
 
 [LetsEncrypt](https://letsencrypt.org/) is a nonprofit certificate authority that provides certificates without any charge. For signed certificates, there are multiple companies and certificate authorities (CAs) available. The principles for generating the certificates might vary slightly in accordance with the provider but will generally remain the same. 
 
-The examples in this section use LetsEncrypt because it is free for everyone.
+The examples in this section use LetsEncrypt because it is free.
 
 > **Note**: The instructions provided in this section are for a Debian-based Linux system. For other distributions and operating systems, please refer to the [certbot instructions](https://certbot.eff.org/instructions). Also, these instructions require you to have a domain name that you are in control of. Dynamic domain names like those from Amazon EC2 or DynDNS providers will not function.
 
-#### Install snapd and certbot
+#### Install `snapd` and `certbot`
 
 `certbot` is an open-source program used to manage LetsEncrypt certificates, and `snapd` is a tool that assists in running `certbot` and installing the certificates.
 
-```bash
-sudo apt-get install snapd
-sudo snap install core; sudo snap refresh core
-```
+1. To install `snapd`, run the following commands:
 
-Before proceeding, ensure certbot is not installed on your system via a regular package manager,
-because we will use it via snap.
+   ```bash
+   sudo apt-get install snapd
+   sudo snap install core; sudo snap refresh core
+   ```
 
-```bash
-sudo apt-get remove certbot
-sudo snap install --classic certbot
-sudo ln -s /snap/bin/certbot /usr/bin/certbot
-```
+1. Run the following commands:
 
-#### Generate certificates with certbot
+   ```bash
+   sudo apt-get remove certbot
+   sudo snap install --classic certbot
+   sudo ln -s /snap/bin/certbot /usr/bin/certbot
+   ```
 
-We run the command `sudo certbot certonly --standalone`, which will prompt for the answer
-to a few questions before generating the certificate.  This process will temporarily open a
-service on port 80 that LetsEncrypt can use to verify communication with your host, so before
-proceeding ensure that port 80 traffic is permitted by any applicable firewall rules.
+   These commands:
+   - Uninstall `certbot` from your system if it has been installed using a package manager
+   - Install `certbot` using `snapd`   
 
-```bash
-$ sudo certbot certonly --standalone
-Saving debug log to /var/log/letsencrypt/letsencrypt.log
-Enter email address (used for urgent renewal and security notices)
- (Enter 'c' to cancel): me@mysite.com
+#### Generate certificates using `certbot`
 
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Please read the Terms of Service at
-https://letsencrypt.org/documents/LE-SA-v1.3-September-21-2022.pdf. You must
-agree in order to register with the ACME server. Do you agree?
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-(Y)es/(N)o: y
+The `sudo certbot certonly --standalone` command prompts you to answer questions before it generates a certificate. This process temporarily opens a service on port `80` that LetsEncrypt uses to verify communication with your host.
 
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Would you be willing, once your first certificate is successfully issued, to
-share your email address with the Electronic Frontier Foundation, a founding
-partner of the Let's Encrypt project and the non-profit organization that
-develops Certbot? We'd like to send you email about our work encrypting the web,
-EFF news, campaigns, and ways to support digital freedom.
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-(Y)es/(N)o: n
-Account registered.
-Please enter the domain name(s) you would like on your certificate (comma and/or
-space separated) (Enter 'c' to cancel): subdomain.mysite.com
-Requesting a certificate for subdomain.mysite.com
+To generate certificates using `certbot`, complete the following steps: 
 
-Successfully received certificate.
-Certificate is saved at: /etc/letsencrypt/live/subdomain.mysite.com/fullchain.pem
-Key is saved at:         /etc/letsencrypt/live/subdomain.mysite.com/privkey.pem
-This certificate expires on 2023-06-20.
-These files will be updated when the certificate renews.
-Certbot has set up a scheduled task to automatically renew this certificate in the background.
+1. Ensure that port `80` traffic is permitted by applicable firewall rules.
 
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-If you like Certbot, please consider supporting our work by:
- * Donating to ISRG / Let's Encrypt:   https://letsencrypt.org/donate
- * Donating to EFF:                    https://eff.org/donate-le
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-```
+1. Run the following command to generate certificates:
 
-#### Set up Symlinks to Grafana
+   ```bash
+   $ sudo certbot certonly --standalone
+   
+   Saving debug log to /var/log/letsencrypt/letsencrypt.log
+   Enter email address (used for urgent renewal and security notices)
+   (Enter 'c' to cancel): me@mysite.com
+
+   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   Please read the Terms of Service at
+   https://letsencrypt.org/documents/LE-SA-v1.3-September-21-2022.pdf. You must
+   agree in order to register with the ACME server. Do you agree?
+   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   (Y)es/(N)o: y
+   
+   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   Would you be willing, once your first certificate is successfully issued, to
+   share your email address with the Electronic Frontier Foundation, a founding
+   partner of the Let’s Encrypt project and the non-profit organization that
+   develops Certbot? We’d like to send you email about our work encrypting the web,
+   EFF news, campaigns, and ways to support digital freedom.
+   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   (Y)es/(N)o: n
+   Account registered.
+   Please enter the domain name(s) you would like on your certificate (comma and/or
+   space separated) (Enter 'c' to cancel): subdomain.mysite.com
+   Requesting a certificate for subdomain.mysite.com
+   
+   Successfully received certificate.
+   Certificate is saved at: /etc/letsencrypt/live/subdomain.mysite.com/fullchain.pem
+   Key is saved at:         /etc/letsencrypt/live/subdomain.mysite.com/privkey.pem
+   This certificate expires on 2023-06-20.
+   These files will be updated when the certificate renews.
+   Certbot has set up a scheduled task to automatically renew this certificate in the background.
+   
+   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   If you like Certbot, please consider supporting our work by:
+   * Donating to ISRG / Let’s Encrypt:   https://letsencrypt.org/donate
+   * Donating to EFF:                    https://eff.org/donate-le
+   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   ```
+
+#### Set up symlinks to Grafana
+
+[Need an introduction here that explains what this is]
+
+To set up symlinks to Grafana, run the following commands:
 
 ```bash
 $ sudo ln -s /etc/letsencrypt/live/subdomain.mysite.com/privkey.pem /etc/grafana/grafana.key
@@ -166,72 +192,85 @@ $ sudo ln -s /etc/letsencrypt/live/subdomain.mysite.com/fullchain.pem /etc/grafa
 
 #### Adjust Permissions
 
-```bash
-$ sudo chgrp -R grafana /etc/letsencrypt/*
-$ sudo chmod -R g+rx /etc/letsencrypt/*
-$ sudo chgrp -R grafana /etc/grafana/grafana.crt /etc/grafana/grafana.key 
-$ sudo chmod 400 /etc/grafana/grafana.crt /etc/grafana/grafana.key
-```
+[Need intro here to explain what this is]
 
-**Important**: verify that the `grafana` group can read the symlinks:
+To adjust permissions, perform the following steps:
 
-```bash
-$ $ ls -l /etc/grafana/grafana.*
-lrwxrwxrwx 1 root grafana    67 Mar 22 14:15 /etc/grafana/grafana.crt -> /etc/letsencrypt/live/subdomain.mysite.com/fullchain.pem
--rw-r----- 1 root grafana 54554 Mar 22 14:13 /etc/grafana/grafana.ini
-lrwxrwxrwx 1 root grafana    65 Mar 22 14:15 /etc/grafana/grafana.key -> /etc/letsencrypt/live/subdomain.mysite.com/privkey.pem
-```
+1. Run the following commands to [assign permissions to ??]:
 
-## Configure Grafana HTTPS & Restart
+   ```bash
+   $ sudo chgrp -R grafana /etc/letsencrypt/*
+   $ sudo chmod -R g+rx /etc/letsencrypt/*
+   $ sudo chgrp -R grafana /etc/grafana/grafana.crt /etc/grafana/grafana.key 
+   $ sudo chmod 400 /etc/grafana/grafana.crt /etc/grafana/grafana.key
+   ```
 
-Edit your `grafana.ini` configuration file to contain the following configuration parameters.  If you need help identifying where to find this file, or what each key means, refer to the [configuration reference documentation]({{< relref "./_index.md#configuration-file-location" >}}).
+1. Run the following command to verify that the `grafana` group can read the symlinks:
 
-```
-[server]
-http_addr = 
-http_port = 3000
-domain = mysite.com
-root_url = https://subdomain.mysite.com:3000
-cert_key = /etc/grafana/grafana.key
-cert_file = /etc/grafana/grafana.crt
-enforce_domain = False
-protocol = https
-```
+   ```bash
+   $ $ ls -l /etc/grafana/grafana.*
 
-> **Note**: the standard port for SSL traffic is 443, which you may use instead of Grafana's default port 3000;
-this may require additional operating system privileges or configuration to bind to lower-numbered privileged ports.
+   lrwxrwxrwx 1 root grafana    67 Mar 22 14:15 /etc/grafana/grafana.crt -> /etc/letsencrypt/live/subdomain.mysite.com/fullchain.pem
+   -rw-r----- 1 root grafana 54554 Mar 22 14:13 /etc/grafana/grafana.ini
+   lrwxrwxrwx 1 root grafana    65 Mar 22 14:15 /etc/grafana/grafana.key -> /etc/letsencrypt/live/subdomain.mysite.com/privkey.pem
+   ```
 
-After saving the configuration file, you will need to 
-[restart the Grafana server]({{< relref "./installation/debian/_index.md#2-start-the-server" >}}) using
-systemd, init.d, or the binary as appropriate for your environment.
+## Configure Grafana HTTPS and restart Grafana
+
+In this section you edit the `grafana.ini` file so that it includes the certificate you created. If you need help identifying where to find this file, or what each key means, refer to [Configuration file location]({{< relref "./configure-grafana#configuration-file-location" >}}).
+
+To configure Grafana HTTPS and restart Grafana, complete the following steps.
+
+1. Open the `grafana.ini` file and edit the following configuration parameters:
+
+   ```
+   [server]
+   http_addr = 
+   http_port = 3000
+   domain = mysite.com
+   root_url = https://subdomain.mysite.com:3000
+   cert_key = /etc/grafana/grafana.key
+   cert_file = /etc/grafana/grafana.crt
+   enforce_domain = False
+   protocol = https
+   ```
+
+   > **Note**: The standard port for SSL traffic is 443, which you can use instead of Grafana's default port 3000. This change might require additional operating system privileges or configuration to bind to lower-numbered privileged ports.
+
+1. [Restart the Grafana server]({{< relref "./start-restart-grafana/#linux" >}}) using `systemd`, `init.d`, or the binary as appropriate for your environment.
 
 ## Troubleshooting
 
-#### Failure to obtain a certificate
+Refer to the following troubleshooting tips, if required.
 
-There are two common reasons why the `certbot` process fails:
+### Failure to obtain a certificate
 
-1. LetsEncrypt requires a short communication with the machine requesting the certificate over port 80. If port 80 is firewalled off this exchange will fail, and a certificate will not be issued.  Ensure traffic on port 80 is open.
-2. LetsEncrypt requires _proof you control the domain_, so attempts to obtain certificates for domains you do not
-control may be rejected.
+The following reasons explain why the `certbot` process might fail:
+
+- To make sure you can get a certificate from LetsEncrypt, you need to ensure that port 80 is open so that LetsEncrypt can communicate with your machine. If port 80 is blocked or firewall is enabled, the exchange will fail and you won't be able to receive a certificate.
+- LetsEncrypt requires proof that you control the domain, so attempts to obtain certificates for domains you do not
+control might be rejected.
  
-#### Grafana starts, but HTTPS unavailable
+### Grafana starts, but HTTPS is unavailable
 
-In the process of configuring HTTPS, the following are common errors you may encounter in Grafana's
-logs, and how to resolve them.
+When you configure HTTPS, the following errors might appear in Grafana's logs.
+
+#### Permission denied
 
 ```
 level=error msg="Stopped background service" service=*api.HTTPServer reason="open /etc/grafana/grafana.crt: permission denied"
 ```
 
-Cryptographic keys and certificates should be kept with file permissions as restricted as possible; but if
-the Grafana process cannot access the file, HTTPS cannot be properly set up.  Double check file permissions
-according to the guide steps above and try again.
+##### Resolution
+
+To ensure secure HTTPS setup, it is essential that the cryptographic keys and certificates are as restricted as possible. However, if the file permissions are too restricted, the Grafana process may not have access to the necessary files, thus impeding a successful HTTPS setup. Please re-examine the listed instructions to double check the file permissions and try again.
+
+#### Cannot assign requested address
 
 ```
 listen tcp 34.148.30.243:3000: bind: cannot assign requested address
 ```
 
-This can occur when `http_addr` in the config to be your server's address.  This setting is for specifying the network interface or address the grafana process binds to, not about the end serving URL.  Make sure `http_addr` is blank in your config to bind to all interfaces. In particular, if you set `http_addr: subdomain.mysite.com` and
-layers such as Network Address Translation (NAT) are in place, this will result in Grafana being unable to bind to
-the external address.
+##### Resolution
+
+Check the config to ensure the `http_addr` is left blank, allowing Grafana to bind to all interfaces. If you have set `http_addr` to a specific subdomain, such as `subdomain.mysite.com`, this might prevent the Grafana process from binding to an external address, due to network address translation layers being present.
