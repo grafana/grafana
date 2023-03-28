@@ -20,6 +20,7 @@ export interface Tag {
   key?: string;
   operator: string;
   value?: string;
+  hideText?: boolean;
 }
 
 /**

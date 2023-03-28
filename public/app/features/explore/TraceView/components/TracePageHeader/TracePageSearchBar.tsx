@@ -13,17 +13,16 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
 import React, { memo, Dispatch, SetStateAction } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 
+import { SearchProps } from '../../useSearch';
 import { ubJustifyEnd } from '../uberUtilityStyles';
 
 export type TracePageSearchBarProps = {
-  // searchValue: string;
+  search: SearchProps;
   // setSearch: (value: string) => void;
   searchMatches: Set<string> | undefined;
   focusedSearchMatch: string;
@@ -32,17 +31,8 @@ export type TracePageSearchBarProps = {
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
-  const {
-    // searchValue,
-    searchMatches,
-    focusedSearchMatch,
-    setFocusedSearchMatch,
-    datasourceType,
-  } = props;
+  const { search, searchMatches, focusedSearchMatch, setFocusedSearchMatch, datasourceType } = props;
   const styles = useStyles2(getStyles);
-
-  // const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
-  const btnClass = cx(styles.TracePageSearchBarBtn);
 
   // const setTraceSearch = (value: string) => {
   //   setFocusedSearchMatch('');
@@ -88,72 +78,52 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     setFocusedSearchMatch(spanMatches[prevMatchedIndex - 1]);
   };
 
+  const buttonEnabled =
+    (search.serviceName && search.serviceName !== '') ||
+    (search.spanName && search.spanName !== '') ||
+    (search.from && search.from !== '') ||
+    (search.to && search.to !== '');
+
   return (
-    <div className={styles.TracePageSearchBar}>
+    <div className={styles.searchBar}>
       <span className={ubJustifyEnd} style={{ display: 'flex' }}>
         <>
           <Button
-            className={btnClass}
+            className={styles.button}
             variant="secondary"
-            // disabled={!searchValue}
-            disabled={false}
+            disabled={!buttonEnabled}
             type="button"
-            icon="arrow-down"
-            aria-label="Next results button"
-            onClick={nextResult}
-          />
-          <Button
-            className={btnClass}
-            variant="secondary"
-            // disabled={!searchValue}
-            disabled={false}
-            type="button"
-            icon="arrow-up"
-            aria-label="Prev results button"
+            fill={'outline'}
+            aria-label="Prev result button"
             onClick={prevResult}
-          />
+          >
+            Prev
+          </Button>
+          <Button
+            className={styles.button}
+            variant="secondary"
+            disabled={!buttonEnabled}
+            type="button"
+            fill={'outline'}
+            aria-label="Next result button"
+            onClick={nextResult}
+          >
+            Next
+          </Button>
         </>
       </span>
     </div>
   );
 });
 
-export const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = () => {
   return {
-    TracePageSearchBar: css`
-      label: TracePageSearchBar;
-      float: right;
-      position: absolute;
-      top: 0;
-      right: 0;
-      z-index: ${theme.zIndex.navbarFixed};
-      background: ${theme.colors.background.primary};
-      margin-bottom: -48px;
-      padding: 8px;
-      margin-right: 2px;
-      border-radius: ${theme.shape.borderRadius()};
-      box-shadow: ${theme.shadows.z2};
+    searchBar: css`
+      display: inline;
     `,
-    TracePageSearchBarBar: css`
-      label: TracePageSearchBarBar;
-      max-width: 20rem;
-      transition: max-width 0.5s;
-      &:focus-within {
-        max-width: 100%;
-      }
-    `,
-    TracePageSearchBarBtn: css`
-      label: TracePageSearchBarBtn;
+    button: css`
       transition: 0.2s;
       margin-left: 8px;
-    `,
-    TracePageSearchBarBtnDisabled: css`
-      label: TracePageSearchBarBtnDisabled;
-      opacity: 0.5;
-    `,
-    TracePageSearchBarLocateBtn: css`
-      label: TracePageSearchBarLocateBtn;
-      padding: 1px 8px 4px;
     `,
   };
 };

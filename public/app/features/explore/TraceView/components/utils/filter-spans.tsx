@@ -45,19 +45,25 @@ export default function filterSpans(searchProps: SearchProps, spans: TraceSpan[]
 const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
   return spans
     .filter((span: TraceSpan) => {
-      const spanTagKeys = getTagsFromSpan(span, 'keys');
-      const spanTagValues = getTagsFromSpan(span, 'values');
+      const spanTags = getTagsFromSpan(span);
 
       return tags.some((tag: Tag) => {
         if (tag.key && tag.value) {
-          const keyMatch = checkForMatch(tag.key, spanTagKeys, tag.operator);
-          const valueMatch = checkForMatch(tag.value, spanTagValues, tag.operator);
-          return keyMatch && valueMatch;
+          if (spanTags[tag.key]) {
+            if (tag.operator === '=') {
+              return spanTags[tag.key] === tag.value;
+            } else {
+              return spanTags[tag.key] !== tag.value;
+            }
+          }
+          return false;
         } else if (tag.key) {
-          const match = checkForMatch(tag.key, spanTagKeys, tag.operator);
+          const match = checkForMatch(tag.key, Object.keys(spanTags), tag.operator);
+          console.log('key matches', match);
           return match;
         } else if (tag.value) {
-          const match = checkForMatch(tag.value, spanTagValues, tag.operator);
+          const match = checkForMatch(tag.value, Object.values(spanTags), tag.operator);
+          console.log('value matches', match);
           return match;
         }
         return false;
@@ -123,12 +129,12 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
   // return spans.filter(areTagsAMatch).map((span: TraceSpan) => span.spanID);
 };
 
-export const getTagsFromSpan = (span: TraceSpan, type: 'keys' | 'values') => {
-  const tags = type === 'keys' ? span.tags.map((x) => x.key.toString()) : span.tags.map((x) => x.value.toString());
-  const processTags =
-    type === 'keys' ? span.process.tags.map((x) => x.key.toString()) : span.process.tags.map((x) => x.value.toString());
+export const getTagsFromSpan = (span: TraceSpan) => {
+  const spanTags: { [x: string]: string } = {};
+  span.tags.map((x) => (spanTags[x.key.toString()] = x.value.toString()));
+  span.process.tags.map((x) => (spanTags[x.key.toString()] = x.value.toString()));
   // TODO: JOEY: logs tags
-  return [...tags, ...processTags];
+  return spanTags;
 };
 
 const checkForMatch = (needle: string, haystack: string[], operator: string) => {

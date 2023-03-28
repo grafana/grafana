@@ -54,7 +54,7 @@ export function SpanFilters(props: SpanFilterProps) {
   //   [search, setFocusedSearchMatch, setSearch]
   // );
 
-  // TODO: JOEY: move span filters to new component (in SpanFilters folder)
+  // TODO: combine all options methods into one iteration of all spans and return object
 
   const serviceNameOptions = (trace: Trace) => {
     return [
@@ -86,7 +86,7 @@ export function SpanFilters(props: SpanFilterProps) {
       ...new Set(
         trace.spans
           .map((span) => {
-            return getTagsFromSpan(span, type);
+            return type === 'keys' ? Object.keys(getTagsFromSpan(span)) : Object.values<string>(getTagsFromSpan(span));
           })
           .flat()
           .sort()
@@ -106,22 +106,42 @@ export function SpanFilters(props: SpanFilterProps) {
     setSearch({ ...search, tags: tags });
   };
 
+  const removeTag = (id: string) => {
+    console.log('remove tag');
+    let tags = [...search.tags];
+    tags = tags.filter((tag) => {
+      return tag.id !== id;
+    });
+    if (tags.length === 0) {
+      const newId = randomId();
+      console.log(newId);
+      tags = [
+        {
+          id: newId,
+          operator: '=',
+          hideText: true,
+        },
+      ];
+    }
+    setSearch({ ...search, tags: tags });
+  };
+
   return (
     <Collapse label="Span Filters" collapsible={true} isOpen={showSpanFilters} onToggle={setShowSpanFilters}>
       <InlineFieldRow>
         <InlineField label="Service Name" labelWidth={16}>
           <HorizontalGroup spacing={'none'}>
             <Select
+              onChange={(v) => setSearch({ ...search, serviceNameOperator: v?.value || '=' })}
               options={[toOption('='), toOption('!=')]}
               value={search.serviceNameOperator}
-              onChange={(e) => setSearch({ ...search, serviceNameOperator: e?.value || '' })}
             />
             <Select
-              placeholder="All service names"
-              options={serviceNameOptions(trace)}
-              onChange={(e) => setSearch({ ...search, serviceName: e?.value || '' })}
-              isClearable
               aria-label={'select-service-name'}
+              isClearable
+              onChange={(v) => setSearch({ ...search, serviceName: v?.value || '' })}
+              options={serviceNameOptions(trace)}
+              placeholder="All service names"
             />
           </HorizontalGroup>
         </InlineField>
@@ -130,16 +150,16 @@ export function SpanFilters(props: SpanFilterProps) {
         <InlineField label="Span Name" labelWidth={16}>
           <HorizontalGroup spacing={'none'}>
             <Select
+              onChange={(v) => setSearch({ ...search, spanNameOperator: v?.value || '=' })}
               options={[toOption('='), toOption('!=')]}
               value={search.spanNameOperator}
-              onChange={(e) => setSearch({ ...search, spanNameOperator: e?.value || '' })}
             />
             <Select
-              placeholder="All span names"
-              options={spanNameOptions(trace)}
-              onChange={(e) => setSearch({ ...search, spanName: e?.value || '' })}
-              isClearable
               aria-label={'select-span-name'}
+              isClearable
+              onChange={(v) => setSearch({ ...search, spanName: v?.value || '' })}
+              options={spanNameOptions(trace)}
+              placeholder="All span names"
             />
           </HorizontalGroup>
         </InlineField>
@@ -148,27 +168,27 @@ export function SpanFilters(props: SpanFilterProps) {
         <InlineField label="Duration" labelWidth={16}>
           <HorizontalGroup spacing={'none'}>
             <Select
+              onChange={(v) => setSearch({ ...search, fromOperator: v?.value || '>' })}
               options={[toOption('>'), toOption('>=')]}
               value={search.fromOperator}
-              onChange={(e) => setSearch({ ...search, fromOperator: e?.value || '' })}
             />
             <Input
+              // invalid={invalid}
+              onChange={(v) => setSearch({ ...search, from: v.currentTarget.value })}
               placeholder="e.g. 100ms, 1.2s"
               value={search.from}
-              onChange={(v) => setSearch({ ...search, from: v.currentTarget.value || '' })}
-              // invalid={invalid}
               width={18}
             />
             <Select
+              onChange={(v) => setSearch({ ...search, toOperator: v?.value || '<' })}
               options={[toOption('<'), toOption('<=')]}
               value={search.toOperator}
-              onChange={(e) => setSearch({ ...search, toOperator: e?.value || '' })}
             />
             <Input
+              // invalid={invalid}
+              onChange={(v) => setSearch({ ...search, to: v.currentTarget.value })}
               placeholder="e.g. 100ms, 1.2s"
               value={search.to}
-              onChange={(v) => setSearch({ ...search, to: v.currentTarget.value || '' })}
-              // invalid={invalid}
               width={18}
             />
           </HorizontalGroup>
@@ -177,44 +197,63 @@ export function SpanFilters(props: SpanFilterProps) {
       <InlineFieldRow>
         <InlineField label="Tags" labelWidth={16}>
           <div>
-            {search.tags?.map((tag, i) => (
-              <div key={i} className={styles.queryRow}>
-                <Select
-                  options={tagOptions(trace, 'keys')}
-                  value={tag.key}
-                  onChange={(e) => {
-                    let tags = search.tags?.map((x) => {
-                      return x.id === tag.id ? { ...x, key: e?.value || '' } : x;
-                    });
-                    setSearch({ ...search, tags: tags });
-                  }}
-                  placeholder="service.name"
-                />
-                <Select
-                  options={[toOption('='), toOption('!=')]}
-                  value={tag.operator}
-                  onChange={(e) => {
-                    let tags = search.tags?.map((x) => {
-                      return x.id === tag.id ? { ...x, operator: e?.value || '' } : x;
-                    });
-                    setSearch({ ...search, tags: tags });
-                  }}
-                  width={18}
-                />
-                <Select
-                  options={tagOptions(trace, 'values')}
-                  value={tag.value}
-                  onChange={(e) => {
-                    let tags = search.tags?.map((x) => {
-                      return x.id === tag.id ? { ...x, value: e?.value || '' } : x;
-                    });
-                    setSearch({ ...search, tags: tags });
-                  }}
-                  placeholder="app"
-                />
-                {search?.tags?.length && i === search.tags.length - 1 && (
-                  <AccessoryButton variant={'secondary'} icon={'plus'} onClick={addTag} title={'Add tag'} />
-                )}
+            {search.tags.map((tag, i) => (
+              <div key={i}>
+                <HorizontalGroup spacing={'none'} width={'auto'}>
+                  <Select
+                    aria-label={`select tag`}
+                    inputId={`${tag.id}-tag`}
+                    isClearable
+                    onChange={(v) => {
+                      setSearch({
+                        ...search,
+                        tags: search.tags?.map((x) => {
+                          return x.id === tag.id ? { ...x, key: v?.value || '' } : x;
+                        }),
+                      });
+                    }}
+                    options={tagOptions(trace, 'keys')}
+                    placeholder="Select tag"
+                    value={tag.key}
+                  />
+                  <Select
+                    options={[toOption('='), toOption('!=')]}
+                    onChange={(v) => {
+                      setSearch({
+                        ...search,
+                        tags: search.tags?.map((x) => {
+                          return x.id === tag.id ? { ...x, operator: v?.value || '=' } : x;
+                        }),
+                      });
+                    }}
+                    value={tag.operator}
+                  />
+                  <Select
+                    isClearable
+                    options={tagOptions(trace, 'values')}
+                    onChange={(v) => {
+                      setSearch({
+                        ...search,
+                        tags: search.tags?.map((x) => {
+                          return x.id === tag.id ? { ...x, value: v?.value || '' } : x;
+                        }),
+                      });
+                    }}
+                    placeholder="Select value"
+                    value={tag.value}
+                  />
+                  <AccessoryButton
+                    variant={'secondary'}
+                    icon={'times'}
+                    onClick={() => removeTag(tag.id)}
+                    title={'Remove tag'}
+                  />
+                  <span className={styles.addTag}>
+                    {search?.tags?.length && i === search.tags.length - 1 && (
+                      <AccessoryButton variant={'secondary'} icon={'plus'} onClick={addTag} title={'Add tag'} />
+                    )}
+                  </span>
+                </HorizontalGroup>
               </div>
             ))}
           </div>
@@ -222,7 +261,7 @@ export function SpanFilters(props: SpanFilterProps) {
       </InlineFieldRow>
 
       <TracePageSearchBar
-        // searchValue={search}
+        search={search}
         searchMatches={searchMatches}
         focusedSearchMatch={focusedSearchMatch}
         setFocusedSearchMatch={setFocusedSearchMatch}
@@ -234,8 +273,8 @@ export function SpanFilters(props: SpanFilterProps) {
 
 const getStyles = () => {
   return {
-    queryRow: css`
-      display: flex;
+    addTag: css`
+      margin: 0 0 0 10px;
     `,
   };
 };
