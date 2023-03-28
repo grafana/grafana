@@ -4,21 +4,21 @@ import { useAsync } from 'react-use';
 
 import { PanelData, CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery, LoadingState } from '@grafana/schema';
+import { LoadingState } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { TABLE, TIMESERIES } from '../../utils/constants';
+import { isPromOrLokiQuery } from '../../utils/rule-form';
 import { SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
 
-import { useQueryMappers } from './ExpressionEditor';
 import { VizWrapper } from './VizWrapper';
 
 export interface RecordingRuleEditorProps {
   queries: AlertQuery[];
-  onChangeQuery: (updatedQueries: AlertQuery[], expression: string) => void;
+  onChangeQuery: (updatedQueries: AlertQuery[]) => void;
   runQueries: (queries: AlertQuery[]) => void;
   panelData: Record<string, PanelData>;
   dataSourceName: string;
@@ -55,12 +55,14 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
     return getDataSourceSrv().get(dataSourceName);
   }, [dataSourceName]);
 
-  const { mapToValue } = useQueryMappers(dataSourceName);
-
-  const handleChangedQuery = (changedQuery: DataQuery) => {
+  const handleChangedQuery = (changedQuery: AlertQuery) => {
     const query = queries[0];
 
-    const expr = mapToValue(changedQuery);
+    if (!isPromOrLokiQuery(query.model)) {
+      return;
+    }
+
+    const expr = query.model.expr;
 
     const merged = {
       ...query,
@@ -73,7 +75,7 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
         editorMode: 'code',
       },
     };
-    onChangeQuery([merged], expr);
+    onChangeQuery([merged]);
   };
 
   if (loading || dataSource?.name !== dataSourceName) {
