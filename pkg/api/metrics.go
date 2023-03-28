@@ -56,7 +56,6 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}
-
 	return hs.toJsonStreamingResponse(resp)
 }
 

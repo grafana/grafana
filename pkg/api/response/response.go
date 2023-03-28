@@ -150,13 +150,6 @@ func (r StreamingResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	}
 }
 
-func (r StreamingResponse) SetHeaders(key string, values []string) StreamingResponse {
-	for _, v := range values {
-		r.header.Add(key, v)
-	}
-	return r
-}
-
 // RedirectResponse represents a redirect response.
 type RedirectResponse struct {
 	location string
