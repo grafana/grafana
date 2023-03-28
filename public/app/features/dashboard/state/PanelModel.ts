@@ -27,7 +27,6 @@ import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import { SavedQueryLink } from 'app/features/query-library/types';
 import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
@@ -131,7 +130,19 @@ const defaults: any = {
     overrides: [],
   },
   title: '',
-  savedQueryLink: null,
+};
+
+export const autoMigrateAngular: Record<string, string> = {
+  graph: 'timeseries',
+  'table-old': 'table',
+  singlestat: 'stat', // also automigrated if dashboard schemaVerion < 27
+  'grafana-singlestat-panel': 'stat',
+  'grafana-piechart-panel': 'piechart',
+  'grafana-worldmap-panel': 'geomap',
+};
+
+const autoMigratePanelType: Record<string, string> = {
+  'heatmap-new': 'heatmap', // this was a temporary development panel that is now standard
 };
 
 export class PanelModel implements DataConfigSource, IPanelModel {
@@ -156,8 +167,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   datasource: DataSourceRef | null = null;
   thresholds?: any;
   pluginVersion?: string;
-  savedQueryLink: SavedQueryLink | null = null; // Used by the experimental feature queryLibrary
-
   snapshotData?: DataFrameDTO[];
   timeFrom?: any;
   timeShift?: any;
@@ -239,23 +248,10 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       (this as any)[property] = model[property];
     }
 
-    switch (this.type) {
-      case 'graph':
-        if (config.featureToggles?.autoMigrateGraphPanels || !config.angularSupportEnabled) {
-          this.autoMigrateFrom = this.type;
-          this.type = 'timeseries';
-        }
-        break;
-      case 'table-old':
-        if (!config.angularSupportEnabled) {
-          this.autoMigrateFrom = this.type;
-          this.type = 'table';
-        }
-        break;
-      case 'heatmap-new':
-        this.autoMigrateFrom = this.type;
-        this.type = 'heatmap';
-        break;
+    const newType = autoMigratePanelType[this.type];
+    if (newType) {
+      this.autoMigrateFrom = this.type;
+      this.type = newType;
     }
 
     // defaults
@@ -431,7 +427,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const version = getPluginVersion(plugin);
 
     if (this.autoMigrateFrom) {
-      const wasAngular = this.autoMigrateFrom === 'graph' || this.autoMigrateFrom === 'table-old';
+      const wasAngular = autoMigrateAngular[this.autoMigrateFrom] != null;
       this.callPanelTypeChangeHandler(
         plugin,
         this.autoMigrateFrom,
@@ -523,17 +519,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       uid: dataSource.uid,
       type: dataSource.type,
     };
-
-    if (options.savedQueryUid) {
-      this.savedQueryLink = {
-        ref: {
-          uid: options.savedQueryUid,
-        },
-        variables: [],
-      };
-    } else {
-      this.savedQueryLink = null;
-    }
 
     this.cacheTimeout = options.cacheTimeout;
     this.queryCachingTTL = options.queryCachingTTL;
@@ -662,11 +647,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     vars[DataLinkBuiltInVars.keepTime] = {
       text: timeRangeUrl,
       value: timeRangeUrl,
+      skipFormat: true,
     };
 
     vars[DataLinkBuiltInVars.includeVars] = {
       text: variablesQuery,
       value: variablesQuery,
+      skipFormat: true,
     };
 
     return getTemplateSrv().replace(value, vars, format);

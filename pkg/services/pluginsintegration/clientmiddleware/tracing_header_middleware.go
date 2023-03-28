@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -33,7 +34,7 @@ func (m *TracingHeaderMiddleware) applyHeaders(ctx context.Context, req backend.
 		return
 	}
 
-	var headersList = []string{query.HeaderPanelID, query.HeaderDashboardUID, query.HeaderDatasourceUID, `X-Grafana-Org-Id`}
+	var headersList = []string{query.HeaderQueryGroupID, query.HeaderPanelID, query.HeaderDashboardUID, query.HeaderDatasourceUID, `X-Grafana-Org-Id`}
 
 	for _, headerName := range headersList {
 		gotVal := reqCtx.Req.Header.Get(headerName)

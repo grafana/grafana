@@ -56,7 +56,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
       background: ${theme.colors.background.primary};
       box-shadow: 0 0 10px ${theme.v1.palette.black};
       border: 1px solid ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.borderRadius(2)};
+      border-radius: ${theme.shape.borderRadius()};
       width: 100%;
     `,
     header: css`
@@ -88,12 +88,7 @@ interface LogRowContextGroupProps extends LogRowContextGroupHeaderProps {
   error?: string;
 }
 
-const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeaderProps> = ({
-  row,
-  rows,
-  onLoadMoreContext,
-  canLoadMoreRows,
-}) => {
+const LogRowContextGroupHeader = ({ row, rows, onLoadMoreContext, canLoadMoreRows }: LogRowContextGroupHeaderProps) => {
   const { header } = useStyles2(getLogRowContextStyles);
 
   return (
@@ -124,7 +119,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
 };
 
 /** @deprecated will be removed in the next major version */
-export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
+export const LogRowContextGroup = ({
   row,
   rows,
   error,
@@ -132,7 +127,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   shouldScrollToBottom,
   canLoadMoreRows,
   onLoadMoreContext,
-}) => {
+}: LogRowContextGroupProps) => {
   const { commonStyles, logs } = useStyles2(getLogRowContextStyles);
   const [scrollTop, setScrollTop] = useState(0);
   const listContainerRef = useRef<HTMLDivElement>(null);
@@ -186,7 +181,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
 };
 
 /** @deprecated will be removed in the next major version */
-export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
+export const LogRowContext = ({
   row,
   context,
   errors,
@@ -194,7 +189,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   onLoadMoreContext,
   hasMoreContextRows,
   wrapLogMessage,
-}) => {
+}: LogRowContextProps) => {
   useEffect(() => {
     const handleEscKeyDown = (e: KeyboardEvent): void => {
       if (e.keyCode === 27) {

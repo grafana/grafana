@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -61,7 +62,7 @@ func TestIntegrationFolderService(t *testing.T) {
 		folderStore := foldertest.NewFakeFolderStore(t)
 
 		cfg := setting.NewCfg()
-		cfg.RBACEnabled = false
+		cfg.RBACEnabled = true
 		features := featuremgmt.WithFeatures()
 
 		service := &Service{
@@ -73,6 +74,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			features:             features,
 			bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 			db:                   db,
+			accessControl:        acimpl.ProvideAccessControl(cfg),
 		}
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
@@ -168,6 +170,7 @@ func TestIntegrationFolderService(t *testing.T) {
 		t.Run("Given user has permission to save", func(t *testing.T) {
 			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+			service.features = featuremgmt.WithFeatures()
 
 			t.Run("When creating folder should not return access denied error", func(t *testing.T) {
 				dash := dashboards.NewDashboardFolder("Test-Folder")
@@ -342,9 +345,12 @@ func TestIntegrationDeleteNestedFolders(t *testing.T) {
 		features:             featuresFlagOn,
 		bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 		db:                   db,
+		accessControl:        acimpl.ProvideAccessControl(cfg),
 	}
 
-	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID}
+	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
+		orgID: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+	}}
 	createCmd := folder.CreateFolderCommand{
 		OrgID:        orgID,
 		ParentUID:    "",
@@ -355,6 +361,7 @@ func TestIntegrationDeleteNestedFolders(t *testing.T) {
 		origNewGuardian := guardian.New
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
+		serviceWithFlagOn.store = nestedFolderStore
 		ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, 3, "", createCmd)
 
 		deleteCmd := folder.DeleteFolderCommand{
@@ -450,6 +457,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		dashboardFolderStore: dashboardFolderStore,
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		log:                  log.New("test-folder-service"),
+		accessControl:        acimpl.ProvideAccessControl(cfg),
 	}
 	t.Run("create folder", func(t *testing.T) {
 		nestedFolderStore.ExpectedFolder = &folder.Folder{ParentUID: util.GenerateShortUID()}
@@ -479,7 +487,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			nestedFolderStore := NewFakeStore()
 
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures(), nil, dbtest.NewFakeDB())
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures(), acimpl.ProvideAccessControl(setting.NewCfg()), dbtest.NewFakeDB())
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 				OrgID:        orgID,
 				Title:        "myFolder",
@@ -493,7 +501,7 @@ func TestNestedFolderService(t *testing.T) {
 	})
 
 	t.Run("with nested folder feature flag on", func(t *testing.T) {
-		t.Run("create, no error", func(t *testing.T) {
+		t.Run("Should be able to create a nested folder under the root", func(t *testing.T) {
 			g := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 			t.Cleanup(func() {
@@ -510,9 +518,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			nestedFolderStore := NewFakeStore()
 
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
-				ExpectedEvaluate: true,
-			}, dbtest.NewFakeDB())
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), acimpl.ProvideAccessControl(setting.NewCfg()), dbtest.NewFakeDB())
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 				OrgID:        orgID,
 				Title:        "myFolder",
@@ -521,6 +527,71 @@ func TestNestedFolderService(t *testing.T) {
 			})
 			require.NoError(t, err)
 			// CreateFolder should also call the folder store's create method.
+			require.True(t, nestedFolderStore.CreateCalled)
+		})
+
+		t.Run("Should not be able to create new folder under another folder without the right permissions", func(t *testing.T) {
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
+			dash := dashboards.NewDashboardFolder("Test-Folder")
+			dash.ID = rand.Int63()
+			dash.UID = "some_uid"
+
+			tempUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+			tempUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("wrong_uid")}}
+
+			// dashboard store commands that should be called.
+			dashStore := &dashboards.FakeDashboardStore{}
+			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
+
+			folderSvc := setup(t, dashStore, nil, nil, featuremgmt.WithFeatures("nestedFolders"), acimpl.ProvideAccessControl(setting.NewCfg()), dbtest.NewFakeDB())
+			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+				OrgID:        orgID,
+				Title:        dash.Title,
+				UID:          dash.UID,
+				SignedInUser: tempUser,
+				ParentUID:    "some_parent",
+			})
+			require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
+		})
+
+		t.Run("Should be able to create new folder under another folder with the right permissions", func(t *testing.T) {
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
+			dash := dashboards.NewDashboardFolder("Test-Folder")
+			dash.ID = rand.Int63()
+			dash.UID = "some_uid"
+
+			// dashboard store commands that should be called.
+			dashStore := &dashboards.FakeDashboardStore{}
+			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
+
+			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
+			dashboardFolderStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
+
+			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_parent")}}
+
+			nestedFolderStore := NewFakeStore()
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), acimpl.ProvideAccessControl(setting.NewCfg()), dbtest.NewFakeDB())
+			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+				OrgID:        orgID,
+				Title:        dash.Title,
+				UID:          dash.UID,
+				SignedInUser: nestedFolderUser,
+				ParentUID:    "some_parent",
+			})
+			require.NoError(t, err)
 			require.True(t, nestedFolderStore.CreateCalled)
 		})
 
@@ -646,56 +717,22 @@ func TestNestedFolderService(t *testing.T) {
 			require.NotNil(t, actualCmd)
 		})
 
-		t.Run("move, no view permission should fail", func(t *testing.T) {
-			// This test creates and deletes the dashboard, so needs some extra setup.
-			g := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: false})
-			t.Cleanup(func() {
-				guardian.New = g
-			})
-
+		t.Run("move without the right permissions should fail", func(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 
 			nestedFolderStore := NewFakeStore()
 			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
 
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
-				ExpectedEvaluate: true,
-			}, dbtest.NewFakeDB())
-			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
-			require.Error(t, err, dashboards.ErrFolderAccessDenied)
+			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("wrong_uid")}}
+
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), acimpl.ProvideAccessControl(setting.NewCfg()), dbtest.NewFakeDB())
+			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
+			require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
 		})
 
-		t.Run("move, no save permission should fail", func(t *testing.T) {
-			// This test creates and deletes the dashboard, so needs some extra setup.
-			g := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: false, CanViewValue: true})
-			t.Cleanup(func() {
-				guardian.New = g
-			})
-
-			dashStore := &dashboards.FakeDashboardStore{}
-			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
-
-			nestedFolderStore := NewFakeStore()
-			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
-
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
-				ExpectedEvaluate: true,
-			}, dbtest.NewFakeDB())
-			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
-			require.Error(t, err, dashboards.ErrFolderAccessDenied)
-		})
-
-		t.Run("move, no error", func(t *testing.T) {
-			// This test creates and deletes the dashboard, so needs some extra setup.
-			g := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
-			t.Cleanup(func() {
-				guardian.New = g
-			})
-
+		t.Run("move with the right permissions succeeds", func(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 
@@ -707,10 +744,47 @@ func TestNestedFolderService(t *testing.T) {
 				{UID: "newFolder3", ParentUID: "newFolder3"},
 			}
 
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
-				ExpectedEvaluate: true,
-			}, dbtest.NewFakeDB())
-			f, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
+			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("newFolder")}}
+
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), acimpl.ProvideAccessControl(setting.NewCfg()), dbtest.NewFakeDB())
+			f, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
+			require.NoError(t, err)
+			require.NotNil(t, f)
+		})
+
+		t.Run("move to the root folder without folder creation permissions fails", func(t *testing.T) {
+			dashStore := &dashboards.FakeDashboardStore{}
+			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
+
+			nestedFolderStore := NewFakeStore()
+			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+
+			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("")}}
+
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), acimpl.ProvideAccessControl(setting.NewCfg()), dbtest.NewFakeDB())
+			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "", OrgID: orgID, SignedInUser: nestedFolderUser})
+			require.Error(t, err, dashboards.ErrFolderAccessDenied)
+		})
+
+		t.Run("move to the root folder with folder creation permissions succeeds", func(t *testing.T) {
+			dashStore := &dashboards.FakeDashboardStore{}
+			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
+
+			nestedFolderStore := NewFakeStore()
+			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			nestedFolderStore.ExpectedParentFolders = []*folder.Folder{
+				{UID: "newFolder", ParentUID: "newFolder"},
+				{UID: "newFolder2", ParentUID: "newFolder2"},
+				{UID: "newFolder3", ParentUID: "newFolder3"},
+			}
+
+			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersCreate: {}}
+
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), acimpl.ProvideAccessControl(setting.NewCfg()), dbtest.NewFakeDB())
+			f, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "", OrgID: orgID, SignedInUser: nestedFolderUser})
 			require.NoError(t, err)
 			require.NotNil(t, f)
 		})

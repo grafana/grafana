@@ -326,15 +326,12 @@ export const Table = memo((props: Props) => {
     }
     paginationEl = (
       <div className={tableStyles.paginationWrapper}>
-        {isSmall ? null : <div className={tableStyles.paginationItem} />}
-        <div className={tableStyles.paginationCenterItem}>
-          <Pagination
-            currentPage={state.pageIndex + 1}
-            numberOfPages={pageOptions.length}
-            showSmallVersion={isSmall}
-            onNavigate={onNavigate}
-          />
-        </div>
+        <Pagination
+          currentPage={state.pageIndex + 1}
+          numberOfPages={pageOptions.length}
+          showSmallVersion={isSmall}
+          onNavigate={onNavigate}
+        />
         {isSmall ? null : (
           <div className={tableStyles.paginationSummary}>
             {itemsRangeStart} - {itemsRangeEnd} of {data.length} rows
