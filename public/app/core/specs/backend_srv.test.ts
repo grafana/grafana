@@ -21,6 +21,7 @@ const getTestContext = (overides?: object) => {
     redirected: false,
     type: 'basic',
     url: 'http://localhost:3000/api/some-mock',
+    headers: new Map(),
   };
   const props = { ...defaults, ...overides };
   const textMock = jest.fn().mockResolvedValue(JSON.stringify(props.data));
@@ -29,6 +30,7 @@ const getTestContext = (overides?: object) => {
       ok: props.ok,
       status: props.status,
       statusText: props.statusText,
+      headers: props.headers,
       text: textMock,
       redirected: false,
       type: 'basic',
@@ -369,6 +371,7 @@ describe('backendSrv', () => {
             ok: true,
             status: 200,
             statusText: 'Ok',
+            headers: new Map(),
             text: () => Promise.resolve(JSON.stringify(slowData)),
             redirected: false,
             type: 'basic',
@@ -382,6 +385,7 @@ describe('backendSrv', () => {
           ok: true,
           status: 200,
           statusText: 'Ok',
+          headers: new Map(),
           text: () => Promise.resolve(JSON.stringify(fastData)),
           redirected: false,
           type: 'basic',
