@@ -71,10 +71,10 @@ func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
 // Record writes a number of state transitions for a given rule to an external Loki instance.
 func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
-	streams := statesToStreams(rule, states, h.externalLabels, logger)
+	logStream := statesToStream(rule, states, h.externalLabels, logger)
 
 	errCh := make(chan error, 1)
-	if len(streams) == 0 {
+	if len(logStream.Values) == 0 {
 		close(errCh)
 		return errCh
 	}
@@ -84,16 +84,12 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 
 		org := fmt.Sprint(rule.OrgID)
 		h.metrics.WritesTotal.WithLabelValues(org, "loki").Inc()
-		samples := 0
-		for _, s := range streams {
-			samples += len(s.Values)
-		}
-		h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(samples))
+		h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(logStream.Values)))
 
-		if err := h.recordStreams(ctx, streams, logger); err != nil {
+		if err := h.recordStreams(ctx, []stream{logStream}, logger); err != nil {
 			logger.Error("Failed to save alert state history batch", "error", err)
 			h.metrics.WritesFailed.WithLabelValues(org, "loki").Inc()
-			h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(samples))
+			h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(logStream.Values)))
 			errCh <- fmt.Errorf("failed to save alert state history batch: %w", err)
 		}
 	}()
@@ -241,7 +237,7 @@ func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 	return frame, nil
 }
 
-func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) []stream {
+func statesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) stream {
 	labels := mergeLabels(make(map[string]string), externalLabels)
 	// System-defined labels take precedence over user-defined external labels.
 	labels[StateHistoryLabelKey] = StateHistoryLabelValue
@@ -282,11 +278,9 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 		})
 	}
 
-	return []stream{
-		{
-			Stream: labels,
-			Values: samples,
-		},
+	return stream{
+		Stream: labels,
+		Values: samples,
 	}
 }
 
