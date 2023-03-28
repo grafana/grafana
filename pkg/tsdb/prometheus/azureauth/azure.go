@@ -18,7 +18,7 @@ import (
 var (
 	azurePrometheusScopes = map[string][]string{
 		azsettings.AzurePublic:       {"https://prometheus.monitor.azure.com/.default"},
-		azsettings.AzureChina:        {"https://prometheus.monitor.chinacloudapp.cn/.default"},
+		azsettings.AzureChina:        {"https://prometheus.monitor.azure.cn/.default"},
 		azsettings.AzureUSGovernment: {"https://prometheus.monitor.azure.us/.default"},
 	}
 )
