@@ -20,12 +20,6 @@ steps:
   image: alpine:3.17.1
   name: identify-runner
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
@@ -75,12 +69,6 @@ steps:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.17.1
   name: identify-runner
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
@@ -948,12 +936,6 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.17.1
   name: identify-runner
@@ -1064,12 +1046,6 @@ platform:
   os: linux
 services: []
 steps:
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.17.1
@@ -4367,28 +4343,10 @@ steps:
   image: golang:1.20.1
   name: compile-build-cmd
 - commands:
-  - ./bin/build artifacts docker fetch --edition enterprise
-  depends_on:
-  - compile-build-cmd
-  environment:
-    DOCKER_ENTERPRISE2_REPO:
-      from_secret: docker_enterprise2_repo
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-    DOCKER_USER:
-      from_secret: docker_username
-    GCP_KEY:
-      from_secret: gcp_key
-  image: google/cloud-sdk
-  name: fetch-images-enterprise
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-- commands:
   - ./bin/build publish aws --image grafana/grafana-enterprise --repo grafana-labs/grafanaenterprise
     --product 422b46fb-bea6-4f27-8bcc-832117bd627e
   depends_on:
-  - fetch-images-enterprise
+  - compile-build-cmd
   environment:
     AWS_ACCESS_KEY_ID:
       from_secret: aws_access_key_id
@@ -4597,12 +4555,6 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
@@ -4610,7 +4562,7 @@ steps:
   image: golang:1.20.1
   name: compile-build-cmd
 - depends_on:
-  - grabpl
+  - compile-build-cmd
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-deb
   privileged: true
@@ -4631,7 +4583,7 @@ steps:
       from_secret: packages_service_account
     target_bucket: grafana-packages
 - depends_on:
-  - grabpl
+  - compile-build-cmd
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-rpm
   privileged: true
@@ -4694,12 +4646,6 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
@@ -4707,7 +4653,7 @@ steps:
   image: golang:1.20.1
   name: compile-build-cmd
 - depends_on:
-  - grabpl
+  - compile-build-cmd
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-deb
   privileged: true
@@ -4728,7 +4674,7 @@ steps:
       from_secret: packages_service_account
     target_bucket: grafana-packages
 - depends_on:
-  - grabpl
+  - compile-build-cmd
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages-rpm
   privileged: true
@@ -6688,6 +6634,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: c97e54e16b8399bef42b71fda9826579f274c537ced6124682cbd29a986332c9
+hmac: 7ed023fb45c28415f26835221bd1e1e440c6f6796a5262da866f8ce9c4314542
 
 ...

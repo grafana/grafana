@@ -24,6 +24,7 @@ import {
   TemplateSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
+import { BarGaugeDisplayMode, TableCellDisplayMode } from '@grafana/schema';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { serializeParams } from 'app/core/utils/fetch';
@@ -205,7 +206,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           subQueries.push(
             this._request('/api/search', {
               q: queryValue,
-              limit: options.targets[0].limit,
+              limit: options.targets[0].limit ?? DEFAULT_LIMIT,
               start: options.range.from.unix(),
               end: options.range.to.unix(),
             }).pipe(
@@ -236,7 +237,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         subQueries.push(
           this._request('/api/search', {
             q: queryValue,
-            limit: options.targets[0].limit,
+            limit: options.targets[0].limit ?? DEFAULT_LIMIT,
             start: options.range.from.unix(),
             end: options.range.to.unix(),
           }).pipe(
@@ -552,7 +553,7 @@ function rateQuery(
   datasourceUid: string
 ) {
   const serviceMapRequest = makePromServiceMapRequest(request);
-  serviceMapRequest.targets = makeApmRequest([buildExpr(rateMetric, defaultTableFilter, request)]);
+  serviceMapRequest.targets = makeServiceGraphViewRequest([buildExpr(rateMetric, defaultTableFilter, request)]);
 
   return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
     toArray(),
@@ -577,23 +578,23 @@ function errorAndDurationQuery(
   datasourceUid: string,
   tempoDatasourceUid: string
 ) {
-  let apmMetrics = [];
+  let serviceGraphViewMetrics = [];
   let errorRateBySpanName = '';
   let durationsBySpanName: string[] = [];
   const spanNames = rateResponse.data[0][0]?.fields[1]?.values.toArray() ?? [];
 
   if (spanNames.length > 0) {
     errorRateBySpanName = buildExpr(errorRateMetric, 'span_name=~"' + spanNames.join('|') + '"', request);
-    apmMetrics.push(errorRateBySpanName);
+    serviceGraphViewMetrics.push(errorRateBySpanName);
     spanNames.map((name: string) => {
       const metric = buildExpr(durationMetric, 'span_name=~"' + name + '"', request);
       durationsBySpanName.push(metric);
-      apmMetrics.push(metric);
+      serviceGraphViewMetrics.push(metric);
     });
   }
 
   const serviceMapRequest = makePromServiceMapRequest(request);
-  serviceMapRequest.targets = makeApmRequest(apmMetrics);
+  serviceMapRequest.targets = makeServiceGraphViewRequest(serviceGraphViewMetrics);
 
   return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
     // Just collect all the responses first before processing into node graph data
@@ -604,7 +605,7 @@ function errorAndDurationQuery(
         throw new Error(errorRes.error!.message);
       }
 
-      const apmTable = getApmTable(
+      const serviceGraphView = getServiceGraphView(
         request,
         rateResponse,
         errorAndDurationResponse[0],
@@ -614,7 +615,7 @@ function errorAndDurationQuery(
         tempoDatasourceUid
       );
 
-      if (apmTable.fields.length === 0) {
+      if (serviceGraphView.fields.length === 0) {
         return {
           data: [rateResponse.data[1], rateResponse.data[2]],
           state: LoadingState.Done,
@@ -622,7 +623,7 @@ function errorAndDurationQuery(
       }
 
       return {
-        data: [apmTable, rateResponse.data[1], rateResponse.data[2]],
+        data: [serviceGraphView, rateResponse.data[1], rateResponse.data[2]],
         state: LoadingState.Done,
       };
     })
@@ -715,7 +716,7 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
   };
 }
 
-function getApmTable(
+function getServiceGraphView(
   request: DataQueryRequest<TempoQuery>,
   rateResponse: DataQueryResponse,
   secondResponse: DataQueryResponse,
@@ -762,14 +763,17 @@ function getApmTable(
 
     df.fields.push({
       ...rate[0].fields[2],
-      name: ' ',
+      name: '  ',
       labels: null,
       config: {
         color: {
           mode: 'continuous-BlPu',
         },
         custom: {
-          displayMode: 'lcd-gauge',
+          cellOptions: {
+            mode: BarGaugeDisplayMode.Lcd,
+            type: TableCellDisplayMode.Gauge,
+          },
         },
         decimals: 3,
       },
@@ -805,7 +809,7 @@ function getApmTable(
 
     df.fields.push({
       ...errorRate[0].fields[2],
-      name: '  ',
+      name: '   ',
       values: values,
       labels: null,
       config: {
@@ -813,7 +817,10 @@ function getApmTable(
           mode: 'continuous-RdYlGr',
         },
         custom: {
-          displayMode: 'lcd-gauge',
+          cellOptions: {
+            mode: BarGaugeDisplayMode.Lcd,
+            type: TableCellDisplayMode.Gauge,
+          },
         },
         decimals: 3,
       },
@@ -872,7 +879,7 @@ export function buildExpr(
   if (serviceMapQueryMatch?.length) {
     serviceMapQuery = serviceMapQueryMatch[1];
   }
-  // map serviceGraph metric tags to APM metric tags
+  // map serviceGraph metric tags to serviceGraphView metric tags
   serviceMapQuery = serviceMapQuery.replace('client', 'service').replace('server', 'service');
   const metricParams = serviceMapQuery.includes('span_name')
     ? metric.params.concat(serviceMapQuery)
@@ -909,7 +916,7 @@ export function getRateAlignedValues(
   return values;
 }
 
-export function makeApmRequest(metrics: any[]) {
+export function makeServiceGraphViewRequest(metrics: any[]) {
   return metrics.map((metric) => {
     return {
       refId: metric,

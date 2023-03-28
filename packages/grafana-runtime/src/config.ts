@@ -188,6 +188,10 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
     overrideFeatureTogglesFromUrl(this);
 
+    if (this.featureToggles.disableAngular) {
+      this.angularSupportEnabled = false;
+    }
+
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
     this.theme2 = createTheme(getThemeCustomizations(this));
 

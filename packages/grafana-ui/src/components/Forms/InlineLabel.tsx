@@ -64,7 +64,7 @@ export const getInlineLabelStyles = (theme: GrafanaTheme2, transparent = false, 
       height: ${theme.spacing(theme.components.height.md)};
       line-height: ${theme.spacing(theme.components.height.md)};
       margin-right: ${theme.spacing(0.5)};
-      border-radius: ${theme.shape.borderRadius(2)};
+      border-radius: ${theme.shape.radius.default};
       border: none;
       width: ${width ? (width !== 'auto' ? `${8 * width}px` : width) : '100%'};
       color: ${theme.colors.text.primary};
