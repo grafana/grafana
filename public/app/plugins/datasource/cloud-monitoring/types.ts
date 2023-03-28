@@ -1,4 +1,5 @@
-import { DataQuery, DataSourceJsonData, SelectableValue } from '@grafana/data';
+import { DataQuery, SelectableValue } from '@grafana/data';
+import { DataSourceOptions, DataSourceSecureJsonData } from '@grafana/google-sdk';
 
 export enum MetricFindQueryTypes {
   Projects = 'projects',
@@ -173,17 +174,11 @@ export interface CloudMonitoringQuery extends DataQuery {
   intervalMs: number;
 }
 
-export interface CloudMonitoringOptions extends DataSourceJsonData {
-  defaultProject?: string;
+export interface CloudMonitoringOptions extends DataSourceOptions {
   gceDefaultProject?: string;
-  authenticationType: string;
-  clientEmail?: string;
-  tokenUri?: string;
 }
 
-export interface CloudMonitoringSecureJsonData {
-  privateKey?: string;
-}
+export interface CloudMonitoringSecureJsonData extends DataSourceSecureJsonData {}
 
 export interface LegacyCloudMonitoringAnnotationQuery {
   projectName: string;
