@@ -9,8 +9,7 @@
     "action": {
       "change-theme": "Thema ändern...",
       "dark-theme": "Dunkel",
-      "light-theme": "Hell",
-      "search": "Suche"
+      "light-theme": "Hell"
     },
     "search-box": {
       "placeholder": ""
@@ -18,6 +17,7 @@
     "section": {
       "actions": "Aktionen",
       "dashboard-search-results": "Dashboards",
+      "folder-search-results": "",
       "pages": "Seiten",
       "preferences": "Einstellungen",
       "recent-dashboards": "Kürzliche Dashboards"
@@ -31,7 +31,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "Aktionen",
       "data-tab": "Daten",
       "error-tab": "Fehler",
       "json-tab": "JSON",
@@ -84,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "Panel hinzufügen",
-      "comments-show": "Dashboard-Kommentare anzeigen",
       "mark-favorite": "Als Favorit markieren",
       "open-original": "Original-Dashboard öffnen",
       "playlist-next": "Zum nächsten Dashboard",
@@ -109,6 +107,13 @@
   },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
+  },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "",
+      "loading": "",
+      "no-options": ""
+    }
   },
   "library-panel": {
     "add-modal": {
@@ -236,20 +241,11 @@
       "subtitle": "Wiederverwendbare Panels, die zu mehreren Dashboards hinzugefügt werden können",
       "title": "Bibliotheks-Panels"
     },
-    "live": {
-      "title": "Event-Streaming"
-    },
-    "live-cloud": {
-      "title": "Cloud"
-    },
-    "live-pipeline": {
-      "title": "In Vorbereitung"
-    },
-    "live-status": {
-      "title": "Status"
-    },
     "manage-dashboards": {
       "title": "Durchsuchen"
+    },
+    "manage-folder": {
+      "subtitle": ""
     },
     "monitoring": {
       "subtitle": "Überwachungs- und Infrastruktur-Apps",
@@ -294,7 +290,6 @@
       "title": "Szenen"
     },
     "search": {
-      "placeholder": "Grafana durchsuchen",
       "placeholderCommandPalette": ""
     },
     "search-dashboards": {
@@ -345,6 +340,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Drücke ESC, um den Kiosk-Modus zu verlassen"
+    },
+    "toolbar": {
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
     }
   },
   "news": {
@@ -393,11 +393,42 @@
     }
   },
   "search": {
+    "actions": {
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
+      "starred": "Hervorgehoben",
+      "view-as-folders": "",
+      "view-as-grid": "",
+      "view-as-list": ""
+    },
     "dashboard-actions": {
       "import": "Importieren",
       "new": "Neu",
       "new-dashboard": "Neues Dashboard",
       "new-folder": "Neuer Ordner"
+    },
+    "folder-view": {
+      "go-to-folder": "",
+      "select-folder": ""
+    },
+    "result-kind": {
+      "dashboard": "Dashboard",
+      "folder": "Ordner",
+      "panel": ""
+    },
+    "results-table": {
+      "datasource-header": "",
+      "location-header": "",
+      "name-header": "Name",
+      "tags-header": "",
+      "type-dashboard": "Dashboard",
+      "type-folder": "Ordner",
+      "type-header": ""
+    },
+    "search-input": {
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
@@ -497,6 +528,11 @@
     },
     "title": "Einstellungen"
   },
+  "tag-filter": {
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Kürzlich verwendete absolute Bereiche",
@@ -572,12 +608,20 @@
     "loading": "Sitzungen werden geladen …"
   },
   "variable": {
+    "adhoc": {
+      "placeholder": ""
+    },
+    "dropdown": {
+      "placeholder": ""
+    },
     "picker": {
-      "input": "Variablenwert eingeben",
       "link-all": "Alle",
       "option-all": "Alle",
       "option-selected-values": "Ausgewählt",
       "option-tooltip": "Auswahl löschen"
+    },
+    "textbox": {
+      "placeholder": ""
     }
   }
 }
