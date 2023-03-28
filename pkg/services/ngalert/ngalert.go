@@ -444,26 +444,31 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 
 // applyStateHistoryFeatureToggles edits state history configuration to comply with currently active feature toggles.
 func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, logger log.Logger) {
+	backend, _ := historian.ParseBackendType(cfg.Backend)
 	// These feature toggles represent specific, common backend configurations.
 	// If all toggles are enabled, we listen to the state history config as written.
 	// If any of them are disabled, we ignore the configured backend and treat the toggles as an override.
 	// If multiple toggles are disabled, we go with the most "restrictive" one.
 	if !ft.IsEnabled("alertStateHistoryLokiSecondary") {
 		// If we cannot even treat Loki as a secondary, we must use annotations only.
-		cfg.Backend = "annotations"
-		cfg.MultiPrimary = ""
-		cfg.MultiSecondaries = make([]string, 0)
+		if backend == historian.BackendTypeMultiple || backend == historian.BackendTypeLoki {
+			logger.Info("Forcing Annotation backend due to state history feature toggles")
+			cfg.Backend = "annotations"
+			cfg.MultiPrimary = ""
+			cfg.MultiSecondaries = make([]string, 0)
+		}
 		return
 	}
 	if !ft.IsEnabled("alertStateHistoryLokiPrimary") {
 		// If we're using multiple backends, Loki must be the secondary.
-		backend, _ := historian.ParseBackendType(cfg.Backend)
 		if backend == historian.BackendTypeMultiple {
+			logger.Info("Coercing Loki to a secondary backend due to state history feature toggles")
 			cfg.MultiPrimary = "annotations"
 			cfg.MultiSecondaries = []string{"loki"}
 		}
 		// If we're using loki, we are only allowed to use it as a secondary. Dual write to it, plus annotations.
 		if backend == historian.BackendTypeLoki {
+			logger.Info("Coercing Loki to dual writes with a secondary backend due to state history feature toggles")
 			cfg.Backend = "multiple"
 			cfg.MultiPrimary = "annotations"
 			cfg.MultiSecondaries = []string{"loki"}
@@ -472,8 +477,8 @@ func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 	}
 	if !ft.IsEnabled("alertStateHistoryLokiOnly") {
 		// If we're not allowed to use Loki only, make it the primary but keep the annotation writes.
-		backend, _ := historian.ParseBackendType(cfg.Backend)
 		if backend == historian.BackendTypeLoki {
+			logger.Info("Forcing dual writes to Loki and Annotations due to state history feature toggles")
 			cfg.Backend = "multiple"
 			cfg.MultiPrimary = "loki"
 			cfg.MultiSecondaries = []string{"annotations"}
