@@ -1,4 +1,4 @@
-import { map, find, filter, indexOf } from 'lodash';
+import { filter, find, indexOf, map } from 'lodash';
 
 import { escapeRegex, ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
@@ -20,7 +20,6 @@ export default class InfluxQueryModel {
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
 
-    target.policy = target.policy || 'default';
     target.resultFormat = target.resultFormat || 'time_series';
     target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
@@ -183,7 +182,7 @@ export default class InfluxQueryModel {
     return str + escapedKey + ' ' + operator + ' ' + value;
   }
 
-  getMeasurementAndPolicy(interpolate: any) {
+  getMeasurementAndPolicy(interpolate?: boolean) {
     let policy = this.target.policy;
     let measurement = this.target.measurement || 'measurement';
 
@@ -193,13 +192,7 @@ export default class InfluxQueryModel {
       measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
     }
 
-    if (policy !== 'default') {
-      policy = '"' + this.target.policy + '".';
-    } else {
-      policy = '';
-    }
-
-    return policy + measurement;
+    return `"${policy}".${measurement}`;
   }
 
   interpolateQueryStr(value: any[], variable: { multi: any; includeAll: any }, defaultFormatFn: any) {
