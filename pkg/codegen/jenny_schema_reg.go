@@ -1,8 +1,6 @@
 package codegen
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 
 	"cuelang.org/go/cue"
@@ -28,24 +26,6 @@ func (j *schemaregjenny) JennyName() string {
 }
 
 func (j *schemaregjenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
-	// Get 
-	wd, err := os.Getwd()
-	if err != nil {
-		return nil, fmt.Errorf("error retrieving working directory", err)
-	}
-
-	groot := filepath.Join(wd, "..", "..")
-	bytes, err := os.ReadFile(filepath.Join(groot, "latest.json"))
-
-	type latestJSON struct {
-		Stable  string `json:"stable"`
-	}
-	var latest latestJSON
-	err = json.Unmarshal(bytes, &latest)
-	if err != nil {
-		return nil fmt.Errorf("error unmarshalling latest.json", err)
-	}
-
 	node := kind.Lineage().Underlying().Syntax(
 		cue.All(),
 		cue.Definitions(true),
@@ -58,7 +38,7 @@ func (j *schemaregjenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 	}
 
 	name := kind.Props().Common().MachineName
-	path := filepath.Join(j.path, latest.Stable, name+"_gen.cue")
+	path := filepath.Join(j.path, "next", name+"_gen.cue")
 
 	return codejen.NewFile(path, bytes, j), nil
 }
