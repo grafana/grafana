@@ -3,7 +3,7 @@ import { defaultsDeep } from 'lodash';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import { getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { ArrayVector, FieldType, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { PanelDataErrorViewProps } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
@@ -12,6 +12,41 @@ import { PanelDataErrorView } from './PanelDataErrorView';
 describe('PanelDataErrorView', () => {
   it('show No data when there is no data', () => {
     renderWithProps();
+
+    expect(screen.getByText('No data')).toBeInTheDocument();
+  });
+
+  it('show No data when there is no data', () => {
+    renderWithProps({
+      data: {
+        state: LoadingState.Done,
+        timeRange: getDefaultTimeRange(),
+        series: [
+          {
+            fields: [
+              {
+                name: 'time',
+                type: FieldType.time,
+                config: {},
+                values: new ArrayVector([]),
+              },
+            ],
+            length: 0,
+          },
+          {
+            fields: [
+              {
+                name: 'value',
+                type: FieldType.number,
+                config: {},
+                values: new ArrayVector([]),
+              },
+            ],
+            length: 0,
+          },
+        ],
+      },
+    });
 
     expect(screen.getByText('No data')).toBeInTheDocument();
   });
