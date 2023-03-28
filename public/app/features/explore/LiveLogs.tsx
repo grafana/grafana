@@ -2,11 +2,12 @@ import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
+import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { Icon, Button, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { LogMessageAnsi } from '../logs/components/LogMessageAnsi';
 import { getLogRowStyles } from '../logs/components/getLogRowStyles';
+import { sortLogRows } from '../logs/utils';
 
 import { ElapsedTime } from './ElapsedTime';
 
@@ -115,13 +116,9 @@ class LiveLogs extends PureComponent<Props, State> {
     let { logRowsToRender: rowsToRender = [] } = this.state;
     if (!isPaused) {
       // A perf optimisation here. Show just 100 rows when streaming and full length when the streaming is paused.
-      rowsToRender = this.orderRowsByTime(rowsToRender).slice(-100);
+      rowsToRender = sortLogRows(rowsToRender, LogsSortOrder.Ascending).slice(-100);
     }
     return rowsToRender;
-  };
-
-  orderRowsByTime = (rows: LogRowModel[]) => {
-    return rows.sort((a, b) => a.timeEpochMs - b.timeEpochMs);
   };
 
   render() {
@@ -159,14 +156,16 @@ class LiveLogs extends PureComponent<Props, State> {
           </tbody>
         </table>
         <div className={styles.logsRowsIndicator}>
-          <Button variant="secondary" onClick={onClear} className={styles.button}>
-            <Icon name={'trash-alt'} />
-            &nbsp; Clear logs
-          </Button>
-          <Button variant="secondary" onClick={isPaused ? onResume : onPause} className={styles.button}>
-            <Icon name={isPaused ? 'play' : 'pause'} />
-            &nbsp;
+          <Button
+            icon={isPaused ? 'play' : 'pause'}
+            variant="secondary"
+            onClick={isPaused ? onResume : onPause}
+            className={styles.button}
+          >
             {isPaused ? 'Resume' : 'Pause'}
+          </Button>
+          <Button icon="trash-alt" variant="secondary" onClick={onClear} className={styles.button}>
+            Clear logs
           </Button>
           <Button variant="secondary" onClick={this.props.stopLive} className={styles.button}>
             <Icon name="square-shape" size="lg" type="mono" />
