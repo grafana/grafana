@@ -12,7 +12,7 @@ import (
 )
 
 func TestStore_RegisterAndGetClient(t *testing.T) {
-	s := &Store{db: db.InitTestDB(t)}
+	s := &store{db: db.InitTestDB(t)}
 	tests := []struct {
 		name    string
 		client  oauthserver.Client
@@ -96,7 +96,7 @@ dCBBIFJlZ3VsYXIgQmFzZTY0IEVuY29kZWQgU3RyaW5nLi4uCg==
 }
 
 func TestStore_UpdateExternalService(t *testing.T) {
-	s := &Store{db: db.InitTestDB(t)}
+	s := &store{db: db.InitTestDB(t)}
 
 	client1 := &oauthserver.Client{
 		ID:                     1,
@@ -220,7 +220,7 @@ func TestStore_UpdateExternalService(t *testing.T) {
 	}
 }
 
-func compareClientToStored(t *testing.T, s *Store, wanted *oauthserver.Client) {
+func compareClientToStored(t *testing.T, s Store, wanted *oauthserver.Client) {
 	ctx := context.Background()
 	stored, err := s.GetExternalService(ctx, wanted.ClientID)
 	require.NoError(t, err)

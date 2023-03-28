@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
-// TODO do we really need to implement the all of the following interfaces?
+// TODO do we really need to implement all of the following interfaces?
 var _ openid.OpenIDConnectRequestStorage = &OAuth2ServiceImpl{}
 var _ fosite.ClientManager = &OAuth2ServiceImpl{}
 var _ oauth2.AuthorizeCodeStorage = &OAuth2ServiceImpl{}

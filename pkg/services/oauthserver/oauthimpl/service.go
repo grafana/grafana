@@ -42,7 +42,7 @@ const (
 type OAuth2ServiceImpl struct {
 	cache         *localcache.CacheService
 	memstore      *storage.MemoryStore
-	sqlstore      *oauthstore.Store
+	sqlstore      oauthstore.Store
 	oauthProvider fosite.OAuth2Provider
 	logger        log.Logger
 	accessControl ac.AccessControl

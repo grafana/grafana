@@ -9,17 +9,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthserver"
 )
 
-type Store struct {
+type Store interface {
+	RegisterExternalService(ctx context.Context, client *oauthserver.Client) error
+	GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error)
+	GetExternalServiceByName(ctx context.Context, app string) (*oauthserver.Client, error)
+
+	GetExternalServicePublicKey(ctx context.Context, id string) (*jose.JSONWebKey, error)
+	UpdateExternalService(ctx context.Context, cmd *oauthserver.UpdateClientCommand) (*oauthserver.Client, error)
+}
+
+type store struct {
 	db db.DB
 }
 
-func NewStore(db db.DB) *Store {
-	return &Store{
+func NewStore(db db.DB) Store {
+	return &store{
 		db: db,
 	}
 }
 
-func (s *Store) RegisterExternalService(ctx context.Context, client *oauthserver.Client) error {
+func (s *store) RegisterExternalService(ctx context.Context, client *oauthserver.Client) error {
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		insertQuery := []interface{}{
 			`INSERT INTO oauth_client (app_name, client_id, secret, grant_types, service_account_id, public_pem, redirect_uri) VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -52,7 +61,7 @@ func (s *Store) RegisterExternalService(ctx context.Context, client *oauthserver
 	})
 }
 
-func (s *Store) GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error) {
+func (s *store) GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error) {
 	res := &oauthserver.Client{}
 	if id == "" {
 		return nil, oauthserver.ErrClientRequiredID
@@ -80,7 +89,7 @@ func (s *Store) GetExternalService(ctx context.Context, id string) (*oauthserver
 
 // GetPublicKey returns public key, issued by 'issuer', and assigned for subject. Public key is used to check
 // signature of jwt assertion in authorization grants.
-func (s *Store) GetExternalServicePublicKey(ctx context.Context, id string) (*jose.JSONWebKey, error) {
+func (s *store) GetExternalServicePublicKey(ctx context.Context, id string) (*jose.JSONWebKey, error) {
 	res := &oauthserver.Client{}
 	if id == "" {
 		return nil, oauthserver.ErrClientRequiredID
@@ -112,7 +121,7 @@ func (s *Store) GetExternalServicePublicKey(ctx context.Context, id string) (*jo
 	}, nil
 }
 
-func (s *Store) GetExternalServiceByName(ctx context.Context, app string) (*oauthserver.Client, error) {
+func (s *store) GetExternalServiceByName(ctx context.Context, app string) (*oauthserver.Client, error) {
 	res := &oauthserver.Client{}
 	if app == "" {
 		return nil, oauthserver.ErrClientRequiredName
@@ -146,7 +155,7 @@ func getExternalServiceByName(sess *db.Session, app string) (*oauthserver.Client
 	return res, errPerm
 }
 
-func (s *Store) UpdateExternalService(ctx context.Context, cmd *oauthserver.UpdateClientCommand) (*oauthserver.Client, error) {
+func (s *store) UpdateExternalService(ctx context.Context, cmd *oauthserver.UpdateClientCommand) (*oauthserver.Client, error) {
 	res := &oauthserver.Client{}
 	if cmd == nil || cmd.ExternalServiceName == "" {
 		return nil, oauthserver.ErrClientRequiredName
