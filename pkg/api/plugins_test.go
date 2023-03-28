@@ -1,10 +1,13 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -23,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -465,6 +469,114 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 	require.Zero(t, resp.Header().Get("Content-Type"))
 }
 
+func TestPluginMarkdown(t *testing.T) {
+	t.Run("Plugin not installed returns error", func(t *testing.T) {
+		hs := HTTPServer{
+			pluginStore: &plugins.FakePluginStore{
+				PluginList: []plugins.PluginDTO{},
+			},
+		}
+
+		pluginID := "test-datasource"
+		md, err := hs.pluginMarkdown(context.Background(), pluginID, "test")
+		require.ErrorAs(t, err, &plugins.NotFoundError{PluginID: pluginID})
+		require.Equal(t, []byte{}, md)
+	})
+
+	t.Run("File fetch will be retried using different casing if error occurs", func(t *testing.T) {
+		var requestedFiles []string
+		pluginFiles := &fakes.FakePluginFiles{
+			OpenFunc: func(name string) (fs.File, error) {
+				requestedFiles = append(requestedFiles, name)
+				return nil, errors.New("some error")
+			},
+		}
+
+		p := createPluginDTO(plugins.JSONData{ID: "test-app"}, plugins.External, pluginFiles)
+
+		hs := HTTPServer{
+			pluginStore: &plugins.FakePluginStore{PluginList: []plugins.PluginDTO{p}},
+		}
+
+		md, err := hs.pluginMarkdown(context.Background(), p.ID, "reAdMe")
+		require.NoError(t, err)
+		require.Equal(t, []byte{}, md)
+		require.Equal(t, []string{"README.md", "readme.md"}, requestedFiles)
+	})
+
+	t.Run("File fetch receive cleaned file paths", func(t *testing.T) {
+		tcs := []struct {
+			filePath string
+			expected []string
+		}{
+			{
+				filePath: "../../docs",
+				expected: []string{"DOCS.md"},
+			},
+			{
+				filePath: "/../../docs/../docs",
+				expected: []string{"DOCS.md"},
+			},
+			{
+				filePath: "readme.md/../../secrets",
+				expected: []string{"SECRETS.md"},
+			},
+		}
+
+		for _, tc := range tcs {
+			var requestedFiles []string
+			pluginFiles := &fakes.FakePluginFiles{
+				OpenFunc: func(name string) (fs.File, error) {
+					requestedFiles = append(requestedFiles, name)
+					return &FakeFile{data: bytes.NewReader(nil)}, nil
+				},
+			}
+
+			p := createPluginDTO(plugins.JSONData{ID: "test-app"}, plugins.External, pluginFiles)
+
+			hs := HTTPServer{
+				pluginStore: &plugins.FakePluginStore{PluginList: []plugins.PluginDTO{p}},
+			}
+
+			md, err := hs.pluginMarkdown(context.Background(), p.ID, tc.filePath)
+			require.NoError(t, err)
+			require.Equal(t, []byte{}, md)
+			require.Equal(t, tc.expected, requestedFiles)
+		}
+	})
+
+	t.Run("Non markdown file request returns an error", func(t *testing.T) {
+		p := createPluginDTO(plugins.JSONData{ID: "test-app"}, plugins.External, nil)
+		hs := HTTPServer{
+			pluginStore: &plugins.FakePluginStore{PluginList: []plugins.PluginDTO{p}},
+		}
+
+		md, err := hs.pluginMarkdown(context.Background(), p.ID, "test.json")
+		require.ErrorIs(t, err, ErrUnexpectedFileExtension)
+		require.Equal(t, []byte{}, md)
+	})
+
+	t.Run("Happy path", func(t *testing.T) {
+		data := []byte{1, 2, 3}
+		fakeFile := &FakeFile{data: bytes.NewReader(data)}
+
+		pluginFiles := &fakes.FakePluginFiles{
+			OpenFunc: func(name string) (fs.File, error) {
+				return fakeFile, nil
+			},
+		}
+
+		p := createPluginDTO(plugins.JSONData{ID: "test-app"}, plugins.External, pluginFiles)
+		hs := HTTPServer{
+			pluginStore: &plugins.FakePluginStore{PluginList: []plugins.PluginDTO{p}},
+		}
+
+		md, err := hs.pluginMarkdown(context.Background(), p.ID, "someFile")
+		require.NoError(t, err)
+		require.Equal(t, data, md)
+	})
+}
+
 func callGetPluginAsset(sc *scenarioContext) {
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
@@ -609,4 +721,22 @@ func createPluginDTO(jd plugins.JSONData, class plugins.Class, files plugins.FS)
 	}
 
 	return p.ToDTO()
+}
+
+var _ fs.File = (*FakeFile)(nil)
+
+type FakeFile struct {
+	data io.Reader
+}
+
+func (f *FakeFile) Stat() (fs.FileInfo, error) {
+	return nil, nil
+}
+
+func (f *FakeFile) Read(bytes []byte) (int, error) {
+	return f.data.Read(bytes)
+}
+
+func (f *FakeFile) Close() error {
+	return nil
 }
