@@ -225,7 +225,7 @@ type AlertRuleGroupExport struct {
 	OrgID    int64             `json:"orgId" yaml:"orgId"`
 	Name     string            `json:"name" yaml:"name"`
 	Folder   string            `json:"folder" yaml:"folder"`
-	Interval Duration          `json:"interval" yaml:"interval"`
+	Interval model.Duration    `json:"interval" yaml:"interval"`
 	Rules    []AlertRuleExport `json:"rules" yaml:"rules"`
 }
 
@@ -239,7 +239,7 @@ type AlertRuleExport struct {
 	PanelID      int64               `json:"panelId,omitempty" yaml:"panelId,omitempty"`
 	NoDataState  NoDataState         `json:"noDataState" yaml:"noDataState"`
 	ExecErrState ExecutionErrorState `json:"execErrState" yaml:"execErrState"`
-	For          Duration            `json:"for" yaml:"for"`
+	For          model.Duration      `json:"for" yaml:"for"`
 	Annotations  map[string]string   `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 	Labels       map[string]string   `json:"labels,omitempty" yaml:"labels,omitempty"`
 	IsPaused     bool                `json:"isPaused" yaml:"isPaused"`
