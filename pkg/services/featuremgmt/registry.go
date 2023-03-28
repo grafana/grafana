@@ -437,5 +437,11 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:        "disableAuthenticationConfigUI",
+			Description: "Disable authentication configuration UI",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAuthnzSquad,
+		},
 	}
 )

@@ -136,7 +136,8 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 		}
 	}
 
-	if s.license.FeatureEnabled("saml") && hasAccess(ac.ReqGrafanaAdmin, evalAuthenticationSettings()) {
+	authConfigUIAvailable := s.license.FeatureEnabled("saml") && !s.features.IsEnabled(featuremgmt.FlagDisableAuthenticationConfigUI)
+	if authConfigUIAvailable && hasAccess(ac.ReqGrafanaAdmin, evalAuthenticationSettings()) {
 		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
 			Text:     "Authentication",
 			Id:       "authentication",
