@@ -182,6 +182,22 @@ const getDataSourceOptions = (input: { pluginId: string; pluginName: string }, i
   }
 };
 
+export function moveFolders(folderUids: string[], toFolder: FolderInfo) {
+  const tasks = [];
+
+  for (const uid of folderUids) {
+    tasks.push(createTask(moveFolder, true, uid, toFolder));
+  }
+
+  return executeInOrder(tasks).then((result: any) => {
+    return {
+      totalCount: result.length,
+      successCount: result.filter((res: any) => res.succeeded).length,
+      // alreadyInFolderCount: result.filter((res: any) => res.alreadyInFolder).length,
+    };
+  });
+}
+
 export function moveDashboards(dashboardUids: string[], toFolder: FolderInfo) {
   const tasks = [];
 
@@ -284,6 +300,13 @@ export function createFolder(payload: any) {
   return getBackendSrv().post('/api/folders', payload);
 }
 
+export function moveFolder(uid: string, toFolder: FolderInfo) {
+  const payload = {
+    parentUid: toFolder.uid,
+  };
+  return getBackendSrv().post(`/api/folders/${uid}/move`, payload);
+}
+
 export const SLICE_FOLDER_RESULTS_TO = 1000;
 
 export function searchFolders(
@@ -311,7 +334,7 @@ export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
   return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
 }
 
-function executeInOrder(tasks: any[]) {
+function executeInOrder(tasks: any[]): Promise<unknown> {
   return tasks.reduce((acc, task) => {
     return Promise.resolve(acc).then(task);
   }, []);
