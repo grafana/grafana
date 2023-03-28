@@ -213,6 +213,8 @@ export const getSupplementaryQueryProvider = (
       ),
       distinct()
     );
+  } else if (type === SupplementaryQueryType.LogsSample) {
+    return undefined;
   } else {
     // Create a fallback to results based logs volume
     return getSupplementaryQueryFallback(type, explorePanelData, request.targets, datasourceInstance.name);

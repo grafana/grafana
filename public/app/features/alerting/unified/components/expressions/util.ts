@@ -10,7 +10,10 @@ import { DataFrame, Labels, roundDecimals } from '@grafana/data';
  */
 
 const getSeriesName = (frame: DataFrame): string => {
-  return frame.name ?? formatLabels(frame.fields[0]?.labels ?? {});
+  const firstField = frame.fields[0];
+
+  const displayNameFromDS = firstField?.config?.displayNameFromDS;
+  return displayNameFromDS ?? frame.name ?? formatLabels(firstField?.labels ?? {});
 };
 
 const getSeriesValue = (frame: DataFrame) => {
