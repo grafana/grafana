@@ -95,7 +95,9 @@ export function prepareHeatmapData(
   // Everything past here assumes a field for each row in the heatmap (buckets)
   if (!rowsHeatmap) {
     if (frames.length > 1) {
-      let allNamesNumeric = frames.every((frame) => !Number.isNaN(parseSampleValue(frame.name ?? frame.fields[1].name)));
+      let allNamesNumeric = frames.every(
+        (frame) => !Number.isNaN(parseSampleValue(frame.name ?? frame.fields[1].name))
+      );
 
       if (allNamesNumeric) {
         frames.sort(sortSeriesByLabel);
