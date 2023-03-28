@@ -1,5 +1,5 @@
 import { dateTime, TimeRange } from '@grafana/data';
-import { setDataSourceSrv, InterpolationsMap } from '@grafana/runtime';
+import { setDataSourceSrv, VariableInterpolation } from '@grafana/runtime';
 import { FormatRegistryID, TestVariable } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
@@ -134,27 +134,61 @@ describe('templateSrv', () => {
     });
 
     it('replace can save interpolation result', () => {
-      let interpolationsMap: InterpolationsMap = new Map<string, string | null>();
+      let interpolations: VariableInterpolation[] = [];
+
       const target = _templateSrv.replace(
-        'test.${test}.${scoped}.${nested.name}.${test}.${optionTest:raw}',
+        'test.${test}.${scoped}.${nested.name}.${test}.${optionTest:raw}.$notfound',
         {
           scoped: { value: 'scopedValue', text: 'scopedText' },
           optionTest: { value: 'optionTestValue', text: 'optionTestText' },
           nested: { value: { name: 'nestedValue' } },
         },
         undefined,
-        interpolationsMap
+        interpolations
       );
-      expect(target).toBe('test.testValue.scopedValue.nestedValue.testValue.optionTestValue');
-      expect(interpolationsMap.size).toBe(4);
-      expect(interpolationsMap).toMatchObject(
-        new Map([
-          ['test', 'testValue'],
-          ['scoped', 'scopedValue'],
-          ['nested.name', 'nestedValue'],
-          ['optionTest', 'optionTestValue'],
-        ])
-      );
+
+      expect(target).toBe('test.testValue.scopedValue.nestedValue.testValue.optionTestValue.$notfound');
+      expect(interpolations.length).toBe(6);
+      expect(interpolations).toEqual([
+        {
+          match: '${test}',
+          found: true,
+          value: 'testValue',
+          variableName: 'test',
+        },
+        {
+          match: '${scoped}',
+          found: true,
+          value: 'scopedValue',
+          variableName: 'scoped',
+        },
+        {
+          fieldPath: 'name',
+          match: '${nested.name}',
+          found: true,
+          value: 'nestedValue',
+          variableName: 'nested',
+        },
+        {
+          match: '${test}',
+          found: true,
+          value: 'testValue',
+          variableName: 'test',
+        },
+        {
+          format: 'raw',
+          match: '${optionTest:raw}',
+          found: true,
+          value: 'optionTestValue',
+          variableName: 'optionTest',
+        },
+        {
+          match: '$notfound',
+          found: false,
+          value: '$notfound',
+          variableName: 'notfound',
+        },
+      ]);
     });
   });
 

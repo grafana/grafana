@@ -8,7 +8,12 @@ import {
   AdHocVariableModel,
   TypedVariableModel,
 } from '@grafana/data';
-import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv, InterpolationsMap } from '@grafana/runtime';
+import {
+  getDataSourceSrv,
+  setTemplateSrv,
+  TemplateSrv as BaseTemplateSrv,
+  VariableInterpolation,
+} from '@grafana/runtime';
 import { sceneGraph, FormatRegistryID, formatRegistry, VariableCustomFormatterFn } from '@grafana/scenes';
 
 import { variableAdapters } from '../variables/adapters';
@@ -224,9 +229,8 @@ export class TemplateSrv implements BaseTemplateSrv {
     }
 
     str = escape(str);
-    this.regex.lastIndex = 0;
-    return str.replace(this.regex, (match, var1, var2, fmt2, var3) => {
-      if (this.getVariableAtIndex(var1 || var2 || var3)) {
+    return this._replaceWithVariableRegex(str, undefined, (match, variableName) => {
+      if (this.getVariableAtIndex(variableName)) {
         return '<span class="template-variable">' + match + '</span>';
       }
       return match;
@@ -284,7 +288,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     target?: string,
     scopedVars?: ScopedVars,
     format?: string | Function,
-    interpolations?: InterpolationsMap
+    interpolations?: VariableInterpolation[]
   ): string {
     if (scopedVars && scopedVars.__sceneObject) {
       return sceneGraph.interpolate(
@@ -301,22 +305,19 @@ export class TemplateSrv implements BaseTemplateSrv {
 
     this.regex.lastIndex = 0;
 
-    // If we get passed this interpolations map we will also record all the expressions that were replaced
-    if (interpolations) {
-      return this._replaceInVariableRegex(target, format, (match, variableName, fieldPath, fmt) => {
-        const expr = `${variableName}${fieldPath ? `.${fieldPath}` : ''}`;
-        const result = this.evaluateVariableExpression(match, variableName, fieldPath, fmt, scopedVars);
-        interpolations.set(expr, result === match ? null : result);
-        return result;
-      });
-    }
+    return this._replaceWithVariableRegex(target, format, (match, variableName, fieldPath, fmt) => {
+      const value = this._evaluateVariableExpression(match, variableName, fieldPath, fmt, scopedVars);
 
-    return this._replaceInVariableRegex(target, format, (match, variableName, fieldPath, fmt) => {
-      return this.evaluateVariableExpression(match, variableName, fieldPath, fmt, scopedVars);
+      // If we get passed this interpolations map we will also record all the expressions that were replaced
+      if (interpolations) {
+        interpolations.push({ match, variableName, fieldPath, format: fmt, value, found: value !== match });
+      }
+
+      return value;
     });
   }
 
-  private evaluateVariableExpression(
+  private _evaluateVariableExpression(
     match: string,
     variableName: string,
     fieldPath: string,
@@ -375,18 +376,15 @@ export class TemplateSrv implements BaseTemplateSrv {
       }
     }
 
-    const res = this.formatValue(value, format, variable, text);
-    return res;
+    return this.formatValue(value, format, variable, text);
   }
 
   /**
-   * The replace function, for every match, will return a function that has the full match as a param
-   * followed by one param per capture group of the variable regex.
-   *
-   * See the definition of this.regex for further comments on the variable definitions.
+   * Tries to unify the different variable format capture groups into a simpler replacer function
    */
-  private _replaceInVariableRegex(text: string, format: string | Function | undefined, replace: ReplaceFunction) {
+  private _replaceWithVariableRegex(text: string, format: string | Function | undefined, replace: ReplaceFunction) {
     this.regex.lastIndex = 0;
+
     return text.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const variableName = var1 || var2 || var3;
       const fmt = fmt2 || fmt3 || format;
