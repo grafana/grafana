@@ -86,5 +86,6 @@ export interface FeatureToggles {
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
   disableElasticsearchBackendExploreQuery?: boolean;
+  prometheusDataplane?: boolean;
   renderAuthJWT?: boolean;
 }
