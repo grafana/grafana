@@ -109,7 +109,6 @@ export class LogRowMessage extends PureComponent<Props> {
       wrapLogMessage,
       prettifyLogMessage,
       onToggleContext,
-      app,
       logsSortOrder,
       showContextToggle,
       getLogRowContextUi,
@@ -118,7 +117,6 @@ export class LogRowMessage extends PureComponent<Props> {
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
-    const inExplore = app === CoreApp.Explore;
 
     return (
       <>
