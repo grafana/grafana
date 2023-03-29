@@ -66,7 +66,6 @@ type ListDashboardVersionsQuery struct {
 	Limit        int
 	Start        int
 }
-
 type DashboardVersionDTO struct {
 	ID            int64            `json:"id"`
 	DashboardID   int64            `json:"dashboardId"`
@@ -75,8 +74,7 @@ type DashboardVersionDTO struct {
 	RestoredFrom  int              `json:"restoredFrom"`
 	Version       int              `json:"version"`
 	Created       time.Time        `json:"created"`
-	CreatedBy     int64            `json:"-"`
-	CreatedByStr  string           `json:"createdBy"`
+	CreatedBy     int64            `json:"createdBy"`
 	Message       string           `json:"message"`
 	Data          *simplejson.Json `json:"data" db:"data"`
 }

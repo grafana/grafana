@@ -144,7 +144,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		fakeDash.FolderID = 1
 		fakeDash.HasACL = false
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
-		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersionDTO{}
+		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersionDTO{CreatedBy: 1}
 		teamService := &teamtest.FakeService{}
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(fakeDash, nil)
@@ -160,6 +160,9 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			dashboardVersionService: fakeDashboardVersionService,
 			Kinds:                   corekind.NewBase(nil),
 			QuotaService:            quotatest.New(false, nil),
+			userService: &usertest.FakeUserService{
+				ExpectedUser: &user.User{ID: 1, Login: "test-user"},
+			},
 		}
 
 		setUp := func() {
@@ -232,7 +235,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					var version *dashver.DashboardVersionMeta
 					err := json.NewDecoder(sc.resp.Body).Decode(&version)
 					require.NoError(t, err)
-					assert.NotEmpty(t, version.CreatedBy)
+					assert.NotEqual(t, anonString, version.CreatedBy)
 				}, mockSQLStore)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions",
@@ -1005,11 +1008,11 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			}).callGetDashboardVersions(sc)
 
 			assert.Equal(t, 200, sc.resp.Code)
-			var versions []*dashver.DashboardVersionDTO
+			var versions []dashver.DashboardVersionMeta
 			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
 			require.NoError(t, err)
 			for _, v := range versions {
-				assert.Equal(t, "test-user", v.CreatedByStr)
+				assert.Equal(t, "test-user", v.CreatedBy)
 			}
 		}, mockSQLStore)
 
@@ -1031,11 +1034,11 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			}).callGetDashboardVersions(sc)
 
 			assert.Equal(t, 200, sc.resp.Code)
-			var versions []*dashver.DashboardVersionDTO
+			var versions []dashver.DashboardVersionMeta
 			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
 			require.NoError(t, err)
 			for _, v := range versions {
-				assert.Empty(t, v.CreatedByStr)
+				assert.Equal(t, anonString, v.CreatedBy)
 			}
 		}, mockSQLStore)
 
@@ -1057,11 +1060,11 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			}).callGetDashboardVersions(sc)
 
 			assert.Equal(t, 200, sc.resp.Code)
-			var versions []*dashver.DashboardVersionDTO
+			var versions []dashver.DashboardVersionMeta
 			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
 			require.NoError(t, err)
 			for _, v := range versions {
-				assert.Empty(t, v.CreatedByStr)
+				assert.Equal(t, anonString, v.CreatedBy)
 			}
 		}, mockSQLStore)
 }
