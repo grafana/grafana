@@ -214,7 +214,7 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 		cmd.SignedInUser = c.SignedInUser
 		theFolder, err := hs.folderService.Move(c.Req.Context(), &cmd)
 		if err != nil {
-			return response.Error(http.StatusInternalServerError, "update folder uid failed", err)
+			return response.Error(http.StatusInternalServerError, "move folder failed", err)
 		}
 
 		g, err := guardian.NewByUID(c.Req.Context(), cmd.UID, c.OrgID, c.SignedInUser)
