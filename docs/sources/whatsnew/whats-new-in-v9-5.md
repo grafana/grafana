@@ -22,3 +22,37 @@ Welcome to Grafana 9.5! Read on to learn about changes to search and navigation,
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
 
 > **Note:** You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).-->
+
+## Nav navigation
+
+_Generally available in all editions of Grafana._
+
+The navigation in Grafana has been updated with a new design and an improved structure to make it easier for you to access the data you need. With this update, you'll be able to quickly navigate between features, giving you full visibility into the health of your systems.
+
+Grafana’s navigation has received a major overhaul. The new design and improved structure make it easier for users to access the data they need, enabling quick navigation between features and providing full visibility into the health of their systems.
+
+As Grafana evolved from a visualization platform to a comprehensive observability solution, we added numerous tools to support users throughout the software development life cycle. These tools focus on preventing incidents, monitoring applications or infrastructure, and aiding in incident response. However, the added functionality needs to be easily discoverable and navigable for it to be truly helpful.
+
+These are the key updates to Grafana’s navigation experience:
+
+- A redesigned navigation menu that groups related tools together for easy access.
+- Updated layouts featuring breadcrumbs and a sidebar, allowing users to quickly jump between pages.
+- A new header that appears on all pages in Grafana, which includes a search function.
+
+Join the [discussion on GitHub](https://github.com/grafana/grafana/discussions/58910) and share your feedback.
+
+{{< figure src="/media/docs/grafana/navigation-9-4.png" max-width="750px" caption="Grafana new navigation" >}}
+
+## Nested folders
+
+_Available in experimental in all editions of Grafana._
+
+You can now create nested folders in Grafana to help you better organize your dashboards and alerts. This new feature allows you to create, read, update, and delete nested folders, making it easier to sort resources by business units, departments, and teams.
+
+You can also set up permissions using Role-Based Access Control (RBAC). Folder permissions will cascade, being inherited from the parent folder, which simplifies access management.
+
+It's worth noting that the nested folders feature is currently experimental. As such, it's recommended to enable it only on test or development instances, rather than in production environments.
+
+To try out the nested folders feature, you'll need to enable the `nestedFolders` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+
+In subsequent releases, we’ll be refining and enhancing the user interface for managing dashboards and folders, to provide a more streamlined user experience.
