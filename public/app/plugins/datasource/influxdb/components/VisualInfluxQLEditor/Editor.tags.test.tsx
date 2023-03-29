@@ -11,6 +11,7 @@ import { Editor } from './Editor';
 jest.mock('../../influxQLMetadataQuery', () => {
   return {
     __esModule: true,
+    getAllPolicies: jest.fn().mockReturnValueOnce(Promise.resolve(['default', 'autogen'])),
     getFieldKeysForMeasurement: jest
       .fn()
       .mockReturnValueOnce(Promise.resolve(['free', 'total']))
