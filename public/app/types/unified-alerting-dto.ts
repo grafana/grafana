@@ -2,6 +2,8 @@
 
 import { DataQuery, RelativeTimeRange } from '@grafana/data';
 
+import { AlertGroupTotals } from './unified-alerting';
+
 export type Labels = Record<string, string>;
 export type Annotations = Record<string, string>;
 
@@ -153,7 +155,10 @@ export interface PromResponse<T> {
   warnings?: string[];
 }
 
-export type PromRulesResponse = PromResponse<{ groups: PromRuleGroupDTO[] }>;
+export type PromRulesResponse = PromResponse<{
+  groups: PromRuleGroupDTO[];
+  totals?: AlertGroupTotals;
+}>;
 
 // Ruler rule DTOs
 interface RulerRuleBaseDTO {

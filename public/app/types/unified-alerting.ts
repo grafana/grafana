@@ -60,10 +60,16 @@ export type Rule = AlertingRule | RecordingRule;
 
 export type BaseRuleGroup = { name: string };
 
+type TotalsWithoutAlerting = Exclude<AlertInstanceState, AlertInstanceState.Alerting>;
+enum FiringTotal {
+  Firing = 'firing',
+}
 export interface RuleGroup {
   name: string;
   interval: number;
   rules: Rule[];
+  // totals only exist for Grafana Managed rules
+  totals?: Partial<Record<TotalsWithoutAlerting | FiringTotal, number>>;
 }
 
 export interface RuleNamespace {
@@ -104,17 +110,22 @@ export enum AlertInstanceState {
 
 export type AlertInstanceTotals = Partial<Record<AlertInstanceState, number>>;
 
+// AlertGroupTotals also contain the amount of recording and paused rules
+export type AlertGroupTotals = Partial<Record<AlertInstanceState | 'paused' | 'recording', number>>;
+
 export interface CombinedRuleGroup {
   name: string;
   interval?: string;
   source_tenants?: string[];
   rules: CombinedRule[];
+  totals: AlertGroupTotals;
 }
 
 export interface CombinedRuleNamespace {
   rulesSource: RulesSource;
   name: string;
   groups: CombinedRuleGroup[];
+  totals: AlertGroupTotals;
 }
 
 export interface RuleWithLocation<T = RulerRuleDTO> {

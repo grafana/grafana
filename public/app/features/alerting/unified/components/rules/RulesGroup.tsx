@@ -23,7 +23,7 @@ import { RuleLocation } from '../RuleLocation';
 import { ActionIcon } from './ActionIcon';
 import { EditCloudGroupModal } from './EditRuleGroupModal';
 import { ReorderCloudGroupModal } from './ReorderRuleGroupModal';
-import { RuleStats } from './RuleStats';
+import { RuleGroupStats } from './RuleStats';
 import { RulesTable } from './RulesTable';
 
 type ViewMode = 'grouped' | 'list';
@@ -214,7 +214,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         </h6>
         <div className={styles.spacer} />
         <div className={styles.headerStats}>
-          <RuleStats group={group} />
+          <RuleGroupStats group={group} />
         </div>
         {isProvisioned && (
           <>

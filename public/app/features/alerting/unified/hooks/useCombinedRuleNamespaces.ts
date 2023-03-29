@@ -2,6 +2,7 @@ import { countBy, isEqual } from 'lodash';
 import { useMemo, useRef } from 'react';
 
 import {
+  AlertGroupTotals,
   AlertingRule,
   AlertInstanceState,
   AlertInstanceTotals,
@@ -13,7 +14,12 @@ import {
   RuleNamespace,
   RulesSource,
 } from 'app/types/unified-alerting';
-import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import {
+  PromAlertingRuleState,
+  RulerRuleDTO,
+  RulerRuleGroupDTO,
+  RulerRulesConfigDTO,
+} from 'app/types/unified-alerting-dto';
 
 import {
   getAllRulesSources,
@@ -21,7 +27,13 @@ import {
   isCloudRulesSource,
   isGrafanaRulesSource,
 } from '../utils/datasource';
-import { isAlertingRule, isAlertingRulerRule, isRecordingRulerRule } from '../utils/rules';
+import {
+  isAlertingRule,
+  isAlertingRulerRule,
+  isGrafanaRulerRule,
+  isRecordingRule,
+  isRecordingRulerRule,
+} from '../utils/rules';
 
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
@@ -70,6 +82,7 @@ export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRul
             rulesSource,
             name: namespaceName,
             groups: [],
+            totals: {},
           };
           namespaces[namespaceName] = namespace;
           addRulerGroupsToCombinedNamespace(namespace, groups);
@@ -107,6 +120,8 @@ export function flattenGrafanaManagedRules(namespaces: CombinedRuleNamespace[]) 
     newNamespace.groups.push({
       name: 'default',
       rules: sortRulesByName(namespace.groups.flatMap((group) => group.rules)),
+      // TODO – calculate totals here?
+      totals: calculateTotalsFromCombinedRuleGroups(namespace.groups),
     });
 
     return newNamespace;
@@ -119,15 +134,61 @@ export function sortRulesByName(rules: CombinedRule[]) {
 
 function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RulerRuleGroupDTO[] = []): void {
   namespace.groups = groups.map((group) => {
+    const numRecordingRules = group.rules.filter((rule) => isRecordingRulerRule(rule)).length;
+    const numPaused = group.rules.filter((rule) => isGrafanaRulerRule(rule) && rule.grafana_alert.is_paused).length;
+
     const combinedGroup: CombinedRuleGroup = {
       name: group.name,
       interval: group.interval,
       source_tenants: group.source_tenants,
       rules: [],
+      totals: {
+        paused: numPaused,
+        recording: numRecordingRules,
+      },
     };
     combinedGroup.rules = group.rules.map((rule) => rulerRuleToCombinedRule(rule, namespace, combinedGroup));
     return combinedGroup;
   });
+}
+
+function calculateTotalsFromGroup(group: RuleGroup): AlertGroupTotals {
+  if (group.totals) {
+    return {
+      ...group.totals,
+      alerting: group.totals.firing,
+    };
+  }
+
+  const countsByState = countBy(group.rules, (rule) => isAlertingRule(rule) && rule.state);
+  const countsByHealth = countBy(group.rules, (rule) => rule.health);
+  const recordingCount = group.rules.filter((rule) => isRecordingRule(rule)).length;
+
+  return {
+    alerting: countsByState[PromAlertingRuleState.Firing],
+    error: countsByHealth.error,
+    nodata: countsByHealth.nodata,
+    inactive: countsByState[PromAlertingRuleState.Inactive],
+    pending: countsByState[PromAlertingRuleState.Pending],
+    recording: recordingCount,
+  };
+}
+
+function calculateTotalsFromCombinedRuleGroups(groups: CombinedRuleGroup[]): AlertGroupTotals {
+  const totals: Record<string, number> = {};
+
+  groups.forEach((group) => {
+    const groupTotals = group.totals;
+    Object.entries(groupTotals).forEach(([key, value]) => {
+      if (!totals[key]) {
+        totals[key] = 0;
+      }
+
+      totals[key] += value;
+    });
+  });
+
+  return totals;
 }
 
 function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RuleGroup[]): void {
@@ -140,10 +201,17 @@ function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, grou
       combinedGroup = {
         name: group.name,
         rules: [],
+        totals: calculateTotalsFromGroup(group),
       };
       namespace.groups.push(combinedGroup);
       existingGroupsByName.set(group.name, combinedGroup);
     }
+
+    // combine totals from ruler with totals from prometheus state API
+    combinedGroup.totals = {
+      ...combinedGroup.totals,
+      ...calculateTotalsFromGroup(group),
+    };
 
     const combinedRulesByName = new Map<string, CombinedRule[]>();
     combinedGroup!.rules.forEach((r) => {
@@ -176,7 +244,7 @@ function calculateTotals(rule: AlertingRule): AlertInstanceTotals {
     pending: result[AlertInstanceState.Pending],
     inactive: result[AlertInstanceState.Normal],
     nodata: result[AlertInstanceState.NoData],
-    error: result[AlertInstanceState.Error],
+    error: result[AlertInstanceState.Error] + result['err'], // Prometheus uses "err" instead of "error"
   };
 }
 
