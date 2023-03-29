@@ -61,9 +61,6 @@ function Editor({
 
   const onChangeTimeSeriesQuery = useCallback(
     (timeSeriesQuery: TimeSeriesQuery) => {
-      if (timeSeriesQuery.projectName !== query.projectName) {
-        query.projectName = timeSeriesQuery.projectName;
-      }
       onQueryChange({ ...query, timeSeriesQuery });
       onRunQuery();
     },
@@ -107,8 +104,8 @@ function Editor({
             refId={refId}
             datasource={datasource}
             onChange={(projectName) => onChangeTimeSeriesQuery({ ...query.timeSeriesQuery!, projectName: projectName })}
-            templateVariableOptions={[]}
-            projectName={query.projectName!}
+            templateVariableOptions={variableOptionGroup.options}
+            projectName={query.timeSeriesQuery.projectName!}
           />
           <MQLQueryEditor
             onChange={(q: string) => onChangeTimeSeriesQuery({ ...query.timeSeriesQuery!, query: q })}
