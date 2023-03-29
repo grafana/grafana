@@ -697,7 +697,7 @@ func setUpACL() {
 		}
 	}).Return(result, nil)
 
-	guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
+	guardian.InitLegacyGuardian(setting.NewCfg(), store, dashSvc, teamSvc)
 }
 
 func setUpRBACGuardian(t *testing.T) {

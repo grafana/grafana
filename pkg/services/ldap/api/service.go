@@ -65,7 +65,7 @@ func ProvideService(cfg *setting.Cfg, router routing.RouteRegister, accessContro
 		adminRoute.Get("/ldap/status", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)), routing.Wrap(s.GetLDAPStatus))
 	}, middleware.ReqSignedIn)
 
-	if cfg.LDAPEnabled {
+	if cfg.LDAPAuthEnabled {
 		bundleRegistry.RegisterSupportItemCollector(supportbundles.Collector{
 			UID:               "auth-ldap",
 			DisplayName:       "LDAP",
@@ -94,7 +94,7 @@ func ProvideService(cfg *setting.Cfg, router routing.RouteRegister, accessContro
 // 403: forbiddenError
 // 500: internalServerError
 func (s *Service) ReloadLDAPCfg(c *contextmodel.ReqContext) response.Response {
-	if !s.cfg.LDAPEnabled {
+	if !s.cfg.LDAPAuthEnabled {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
@@ -120,7 +120,7 @@ func (s *Service) ReloadLDAPCfg(c *contextmodel.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (s *Service) GetLDAPStatus(c *contextmodel.ReqContext) response.Response {
-	if !s.cfg.LDAPEnabled {
+	if !s.cfg.LDAPAuthEnabled {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
@@ -167,7 +167,7 @@ func (s *Service) GetLDAPStatus(c *contextmodel.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Response {
-	if !s.cfg.LDAPEnabled {
+	if !s.cfg.LDAPAuthEnabled {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
@@ -262,7 +262,7 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 // 403: forbiddenError
 // 500: internalServerError
 func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response {
-	if !s.cfg.LDAPEnabled {
+	if !s.cfg.LDAPAuthEnabled {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 

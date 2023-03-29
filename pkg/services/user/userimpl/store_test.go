@@ -809,7 +809,7 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 	users := make([]user.User, 5)
 	for i := 0; i < 5; i++ {
 		cmd := fn(i)
-		user, err := svc.CreateUserForTests(context.Background(), cmd)
+		user, err := svc.Create(context.Background(), cmd)
 		require.Nil(t, err)
 		users[i] = *user
 	}

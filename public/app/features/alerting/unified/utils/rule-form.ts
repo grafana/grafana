@@ -1,8 +1,5 @@
 import {
-  CoreApp,
   DataQuery,
-  DataSourceApi,
-  DataSourceJsonData,
   DataSourceRef,
   getDefaultRelativeTimeRange,
   IntervalValues,
@@ -10,13 +7,14 @@ import {
   RelativeTimeRange,
   ScopedVars,
   TimeRange,
+  DataSourceInstanceSettings,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { DataSourceJsonData } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionQuery, ExpressionQueryType, ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -60,6 +58,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     // grafana
     folder: null,
     queries: [],
+    recordingRulesQueries: [],
     condition: '',
     noDataState: GrafanaAlertStateDecision.NoData,
     execErrState: GrafanaAlertStateDecision.Error,
@@ -202,46 +201,9 @@ export function recordingRulerRuleToRuleForm(
   };
 }
 
-export const getDefaultQueriesAsync = async (): Promise<{
-  queries: AlertQuery[] | null;
-  ds?: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
-}> => {
+export const getDefaultQueries = (): AlertQuery[] => {
   const dataSource = getDefaultOrFirstCompatibleDataSource();
 
-  if (!dataSource) {
-    return { queries: [...getDefaultExpressions('A', 'B')] };
-  }
-  const relativeTimeRange = getDefaultRelativeTimeRange();
-
-  let ds;
-  try {
-    ds = await getDataSourceSrv().get(dataSource.uid);
-  } catch (error) {
-    return { queries: [...getDefaultExpressions('A', 'B')] };
-  }
-
-  return {
-    queries: [
-      {
-        refId: 'A',
-        datasourceUid: dataSource.uid,
-        queryType: '',
-        relativeTimeRange,
-        model: {
-          refId: 'A',
-          hide: false,
-          ...ds?.getDefaultQuery?.(CoreApp.UnifiedAlerting),
-        },
-      },
-      ...getDefaultExpressions('B', 'C'),
-    ],
-    ds: ds,
-  };
-};
-
-// Needed to init default queries before the async call
-export const getInitialDefaultQueries = (): AlertQuery[] => {
-  const dataSource = getDefaultOrFirstCompatibleDataSource();
   if (!dataSource) {
     return [...getDefaultExpressions('A', 'B')];
   }
@@ -251,6 +213,26 @@ export const getInitialDefaultQueries = (): AlertQuery[] => {
     {
       refId: 'A',
       datasourceUid: dataSource.uid,
+      queryType: '',
+      relativeTimeRange,
+      model: {
+        refId: 'A',
+        hide: false,
+      },
+    },
+    ...getDefaultExpressions('B', 'C'),
+  ];
+};
+
+export const getDefaultRecordingRulesQueries = (
+  rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>
+): AlertQuery[] => {
+  const relativeTimeRange = getDefaultRelativeTimeRange();
+
+  return [
+    {
+      refId: 'A',
+      datasourceUid: rulesSourcesWithRuler[0]?.uid || '',
       queryType: '',
       relativeTimeRange,
       model: {

@@ -206,7 +206,7 @@ func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *
 }
 
 func (s *Implementation) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
-	return nil
+	return s.authInfoStore.DeleteUserAuthInfo(ctx, userID)
 }
 
 func (s *Implementation) Run(ctx context.Context) error {

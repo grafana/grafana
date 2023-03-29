@@ -20,10 +20,12 @@ import {
   DataSourceVariable,
   QueryVariable,
   ConstantVariable,
+  SceneDataTransformer,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { graphToTimeseriesOptions } from 'app/plugins/panel/timeseries/migrations';
 import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
@@ -71,6 +73,10 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
 
     this.cache[rsp.dashboard.uid] = dashboard;
     this.setState({ dashboard, isLoading: false });
+  }
+
+  public clearState() {
+    this.setState({ dashboard: undefined, loadError: undefined, isLoading: false });
   }
 }
 
@@ -151,7 +157,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
   let variables: SceneVariableSet | undefined = undefined;
 
-  if (oldModel.templating.list.length) {
+  if (oldModel.templating?.list?.length) {
     const variableObjects = oldModel.templating.list
       .map((v) => {
         try {
@@ -229,7 +235,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
       text: variable.current.text,
       description: variable.description,
       regex: variable.regex,
-      query: variable.query,
+      pluginId: variable.query,
       allValue: variable.allValue || undefined,
       includeAll: variable.includeAll,
       defaultToAll: Boolean(variable.includeAll),
@@ -251,6 +257,19 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
 }
 
 export function createVizPanelFromPanelModel(panel: PanelModel) {
+  const queryRunner = new SceneQueryRunner({
+    queries: panel.targets,
+    maxDataPoints: panel.maxDataPoints ?? undefined,
+  });
+
+  // Migrate graph to timeseries
+  if (panel.type === 'graph') {
+    const { fieldConfig, options } = graphToTimeseriesOptions(panel);
+    panel.fieldConfig = fieldConfig;
+    panel.options = options;
+    panel.type = 'timeseries';
+  }
+
   return new VizPanel({
     title: panel.title,
     pluginId: panel.type,
@@ -260,13 +279,18 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
       width: panel.gridPos.w,
       height: panel.gridPos.h,
     },
-    options: panel.options,
+    options: panel.options ?? {},
     fieldConfig: panel.fieldConfig,
     pluginVersion: panel.pluginVersion,
-    $data: new SceneQueryRunner({
-      transformations: panel.transformations,
-      queries: panel.targets,
-    }),
+    displayMode: panel.transparent ? 'transparent' : undefined,
+    // To be replaced with it's own option persited option instead derived
+    hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
+    $data: panel.transformations?.length
+      ? new SceneDataTransformer({
+          $data: queryRunner,
+          transformations: panel.transformations,
+        })
+      : queryRunner,
   });
 }
 

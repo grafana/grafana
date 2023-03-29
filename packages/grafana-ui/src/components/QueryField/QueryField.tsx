@@ -113,7 +113,6 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
 
   componentDidUpdate(prevProps: QueryFieldProps, prevState: QueryFieldState) {
     const { query, syntax, syntaxLoaded } = this.props;
-
     if (!prevProps.syntaxLoaded && syntaxLoaded && this.editor) {
       // Need a bogus edit to re-render the editor after syntax has fully loaded
       const editor = this.editor.insertText(' ').deleteBackward(1);

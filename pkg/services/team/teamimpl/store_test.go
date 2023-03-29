@@ -396,7 +396,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					Login:            fmt.Sprint("login-sa", 1),
 					IsServiceAccount: true,
 				}
-				serviceAccount, err := userSvc.CreateUserForTests(context.Background(), &userCmd)
+				serviceAccount, err := userSvc.Create(context.Background(), &userCmd)
 				require.NoError(t, err)
 
 				groupId := team2.ID

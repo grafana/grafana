@@ -62,3 +62,39 @@ func TestSearch_SortedResults(t *testing.T) {
 	assert.Equal(t, "BB", query.Result[3].Tags[1])
 	assert.Equal(t, "EE", query.Result[3].Tags[2])
 }
+
+func TestSearch_StarredResults(t *testing.T) {
+	ss := startest.NewStarServiceFake()
+	db := dbtest.NewFakeDB()
+	us := usertest.NewUserServiceFake()
+	ds := dashboards.NewFakeDashboardService(t)
+	ds.On("SearchDashboards", mock.Anything, mock.AnythingOfType("*dashboards.FindPersistedDashboardsQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*dashboards.FindPersistedDashboardsQuery)
+		q.Result = model.HitList{
+			&model.Hit{ID: 1, Title: "A", Type: "dash-db"},
+			&model.Hit{ID: 2, Title: "B", Type: "dash-db"},
+			&model.Hit{ID: 3, Title: "C", Type: "dash-db"},
+		}
+	}).Return(nil)
+	us.ExpectedSignedInUser = &user.SignedInUser{}
+	ss.ExpectedUserStars = &star.GetUserStarsResult{UserStars: map[int64]bool{1: true, 3: true, 4: true}}
+	svc := &SearchService{
+		sqlstore:         db,
+		starService:      ss,
+		dashboardService: ds,
+	}
+
+	query := &Query{
+		Limit:        2000,
+		IsStarred:    true,
+		SignedInUser: &user.SignedInUser{},
+	}
+
+	err := svc.SearchHandler(context.Background(), query)
+	require.Nil(t, err)
+
+	// Assert only starred dashboards are returned
+	assert.Equal(t, 2, query.Result.Len())
+	assert.Equal(t, "A", query.Result[0].Title)
+	assert.Equal(t, "C", query.Result[1].Title)
+}

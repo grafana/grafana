@@ -7,7 +7,13 @@ import {
   standardEditorsRegistry,
   identityOverrideProcessor,
 } from '@grafana/data';
-import { TableFieldOptions, TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions } from '@grafana/schema';
+import {
+  TableFieldOptions,
+  TableCellOptions,
+  TableCellDisplayMode,
+  defaultTableFieldOptions,
+  TableCellHeight,
+} from '@grafana/schema';
 
 import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
@@ -17,7 +23,7 @@ import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
 import { TableSuggestionsSupplier } from './suggestions';
 
 const footerCategory = 'Table footer';
-const cellCategory = ['Cell Options'];
+const cellCategory = ['Cell options'];
 
 export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -64,7 +70,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         .addCustomEditor<void, TableCellOptions>({
           id: 'cellOptions',
           path: 'cellOptions',
-          name: 'Cell Type',
+          name: 'Cell type',
           editor: TableCellOptionEditor,
           override: TableCellOptionEditor,
           defaultValue: defaultTableFieldOptions.cellOptions,
@@ -107,6 +113,18 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         path: 'showHeader',
         name: 'Show table header',
         defaultValue: defaultPanelOptions.showHeader,
+      })
+      .addRadio({
+        path: 'cellHeight',
+        name: 'Cell height',
+        defaultValue: defaultPanelOptions.cellHeight,
+        settings: {
+          options: [
+            { value: TableCellHeight.Sm, label: 'Small' },
+            { value: TableCellHeight.Md, label: 'Medium' },
+            { value: TableCellHeight.Lg, label: 'Large' },
+          ],
+        },
       })
       .addBooleanSwitch({
         path: 'showRowNums',

@@ -548,7 +548,7 @@ describe('Table', () => {
   });
 
   describe('when mounted with data and sub-data', () => {
-    it('then correct rows should be rendered and new table is rendered when expander is clicked', () => {
+    it('then correct rows should be rendered and new table is rendered when expander is clicked', async () => {
       getTestContext({
         subData: new Array(getDefaultDataFrame().length).fill(0).map((i) =>
           toDataFrame({
@@ -588,7 +588,7 @@ describe('Table', () => {
         { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
       ]);
 
-      within(rows[1]).getByLabelText('Expand row').click();
+      await userEvent.click(within(rows[1]).getByLabelText('Expand row'));
       const rowsAfterClick = within(getTable()).getAllByRole('row');
       expect(within(rowsAfterClick[1]).getByRole('table')).toBeInTheDocument();
       expect(within(rowsAfterClick[1]).getByText(/number0/)).toBeInTheDocument();

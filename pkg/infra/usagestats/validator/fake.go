@@ -1,9 +1,12 @@
 package validator
 
-import "context"
+import (
+	"context"
+	"strings"
+)
 
 type FakeUsageStatsValidator struct{}
 
-func (uss *FakeUsageStatsValidator) ShouldBeReported(ctx context.Context, dsType string) bool {
-	return true
+func (uss *FakeUsageStatsValidator) ShouldBeReported(ctx context.Context, s string) bool {
+	return !strings.HasPrefix(s, "unknown")
 }

@@ -2,12 +2,13 @@
 
 ARG BASE_IMAGE=alpine:3.17
 ARG JS_IMAGE=node:18-alpine3.17
+ARG JS_PLATFORM=linux/amd64
 ARG GO_IMAGE=golang:1.20.1-alpine3.17
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
 
-FROM ${JS_IMAGE} as js-builder
+FROM --platform=${JS_PLATFORM} ${JS_IMAGE} as js-builder
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -53,6 +54,7 @@ RUN if [[ "$BINGO" = "true" ]]; then \
 COPY embed.go Makefile build.go package.json ./
 COPY cue.mod cue.mod
 COPY kinds kinds
+COPY local local
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins
 COPY public/api-merged.json public/api-merged.json

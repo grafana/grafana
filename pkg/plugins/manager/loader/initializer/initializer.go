@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
@@ -66,6 +65,7 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) ([]string, error) {
 			hostEnv,
 			fmt.Sprintf("GF_EDITION=%s", i.license.Edition()),
 			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", i.license.Path()),
+			fmt.Sprintf("GF_ENTERPRISE_APP_URL=%s", i.license.AppURL()),
 		)
 		hostEnv = append(hostEnv, i.license.Environment()...)
 	}
@@ -118,19 +118,15 @@ func (ps pluginSettings) asEnvVar(prefix string, hostEnv []string) []string {
 }
 
 func (i *Initializer) registerService(pluginID string, oauthAppInfo *oauthserver.ExternalServiceRegistration) (*oauthserver.ClientDTO, error) {
-	// Note: This generates a new app every time the plugin is loaded
-	u := uuid.New().String()
-	name := fmt.Sprintf("Test App - %s", u)
-
 	svc := &oauthserver.ExternalServiceRegistration{
-		ExternalServiceName:    name,
+		ExternalServiceName:    pluginID,
 		Permissions:            oauthAppInfo.Permissions,
 		ImpersonatePermissions: oauthAppInfo.ImpersonatePermissions,
 		RedirectURI:            oauthAppInfo.RedirectURI,
 		Key:                    oauthAppInfo.Key,
 	}
 
-	cli, err := i.oauthServer.RegisterExternalService(context.Background(), svc)
+	cli, err := i.oauthServer.SaveExternalService(context.Background(), svc)
 	if err != nil {
 		return nil, err
 	}

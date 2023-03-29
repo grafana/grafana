@@ -70,6 +70,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
 			FetchSyncedUser: true,
+			SyncPermissions: true,
 			SyncOrgRoles:    !s.cfg.JWTAuthSkipOrgRoleSync,
 			AllowSignUp:     s.cfg.JWTAuthAutoSignUp,
 		}}

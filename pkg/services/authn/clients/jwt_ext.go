@@ -82,7 +82,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 	signedInUser.Permissions[targetOrgID] = s.parseEntitlements(claims["entitlements"].(map[string]interface{}))
 
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissionsFromDB: false}), nil
+	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: false}), nil
 }
 
 func (s *ExtendedJWT) parseOrgIDFromScopes(scopes interface{}) (int64, error) {

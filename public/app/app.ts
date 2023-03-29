@@ -34,6 +34,7 @@ import {
   setRunRequest,
   setPluginImportUtils,
   setPluginsExtensionRegistry,
+  setAppEvents,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -46,6 +47,7 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 import { AppWrapper } from './AppWrapper';
+import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/PageNew/PluginPage';
@@ -123,6 +125,9 @@ export class GrafanaApp {
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
+
+      // Expose the app-wide eventbus
+      setAppEvents(appEvents);
 
       // We must wait for translations to load because some preloaded store state requires translating
       await initI18nPromise;

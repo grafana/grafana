@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, HTMLProps } from 'react';
+import React, { HTMLProps } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -13,7 +13,7 @@ export interface Props extends Omit<HTMLProps<HTMLFieldSetElement>, 'label'> {
   label?: React.ReactNode;
 }
 
-export const FieldSet: FC<Props> = ({ label, children, className, ...rest }) => {
+export const FieldSet = ({ label, children, className, ...rest }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 

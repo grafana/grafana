@@ -130,7 +130,7 @@ class FullResultCache {
         }
       }
       // > 1000 matches (unranked)
-      else {
+      else if (idxs) {
         for (let i = 0; i < idxs.length; i++) {
           let haystackIdx = idxs[i];
           dst.push(src[haystackIdx]);

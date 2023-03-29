@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FunctionComponent } from 'react';
+import React, { ChangeEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { LegacyForms, Button, Select, InlineField } from '@grafana/ui';
@@ -30,7 +30,7 @@ const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
 
 const LABEL_WIDTH = 18;
 
-export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => {
+export const AzureCredentialsForm = (props: Props) => {
   const { credentials, azureCloudOptions, onCredentialsChange, disabled, managedIdentityEnabled } = props;
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {

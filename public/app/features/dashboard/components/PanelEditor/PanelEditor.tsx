@@ -167,13 +167,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     });
   };
 
-  onPanelOptionsChanged = (options: any) => {
+  onPanelOptionsChanged = (options: PanelModel['options']) => {
     // we do not need to trigger force update here as the function call below
     // fires PanelOptionsChangedEvent which we subscribe to above
     this.props.panel.updateOptions(options);
   };
 
-  onPanelConfigChanged = (configKey: keyof PanelModel, value: any) => {
+  onPanelConfigChanged = (configKey: keyof PanelModel, value: unknown) => {
     this.props.panel.setProperty(configKey, value);
     this.props.panel.render();
     this.forceUpdate();

@@ -147,7 +147,7 @@ export function OperationEditor({
         <InlineField
           error={'You have conflicting label filters'}
           invalid={isInvalid(snapshot.isDragging)}
-          className={styles.error}
+          className={cx(styles.error, styles.cardWrapper)}
         >
           <div
             className={cx(
@@ -245,6 +245,9 @@ function callParamChangedThenOnChange(
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    cardWrapper: css({
+      alignItems: 'stretch',
+    }),
     error: css({
       marginBottom: theme.spacing(1),
     }),
@@ -258,6 +261,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginBottom: theme.spacing(1),
       position: 'relative',
       transition: 'all 0.5s ease-in 0s',
+      height: '100%',
     }),
     cardError: css({
       boxShadow: `0px 0px 4px 0px ${theme.colors.warning.main}`,

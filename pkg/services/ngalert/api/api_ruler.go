@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,7 +36,6 @@ type RulerSrv struct {
 	provenanceStore    provisioning.ProvisioningStore
 	store              RuleStore
 	QuotaService       quota.Service
-	scheduleService    schedule.ScheduleService
 	log                log.Logger
 	cfg                *setting.UnifiedAlertingSettings
 	ac                 accesscontrol.AccessControl
@@ -144,12 +142,6 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete rule group")
 	}
-
-	logger.Debug("rules have been deleted from the store. updating scheduler")
-	for _, ruleKeys := range deletedGroups {
-		srv.scheduleService.DeleteAlertRule(ruleKeys...)
-	}
-
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rules deleted"})
 }
 
@@ -419,21 +411,6 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return ErrResp(http.StatusConflict, err, "")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
-	}
-
-	for _, rule := range finalChanges.Update {
-		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
-			OrgID: c.SignedInUser.OrgID,
-			UID:   rule.Existing.UID,
-		}, rule.Existing.Version+1, rule.New.IsPaused)
-	}
-
-	if len(finalChanges.Delete) > 0 {
-		keys := make([]ngmodels.AlertRuleKey, 0, len(finalChanges.Delete))
-		for _, rule := range finalChanges.Delete {
-			keys = append(keys, rule.GetKey())
-		}
-		srv.scheduleService.DeleteAlertRule(keys...)
 	}
 
 	if finalChanges.IsEmpty() {

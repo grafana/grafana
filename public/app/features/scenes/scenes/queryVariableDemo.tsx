@@ -24,7 +24,7 @@ export function getQueryVariableDemo(): DashboardScene {
         }),
         new DataSourceVariable({
           name: 'datasource',
-          query: 'prometheus',
+          pluginId: 'prometheus',
         }),
         new QueryVariable({
           name: 'instance (using datasource variable)',

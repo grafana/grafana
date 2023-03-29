@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -28,7 +28,7 @@ export interface Props {
 }
 
 /** @alpha */
-export const PageToolbar: FC<Props> = React.memo(
+export const PageToolbar = React.memo(
   ({
     title,
     section,
@@ -44,7 +44,7 @@ export const PageToolbar: FC<Props> = React.memo(
     /** main nav-container aria-label **/
     'aria-label': ariaLabel,
     buttonOverflowAlignment = 'right',
-  }) => {
+  }: Props) => {
     const styles = useStyles2(getStyles);
 
     /**
@@ -213,7 +213,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       font-size: ${typography.size.lg};
       margin: 0;
       max-width: 300px;
-      border-radius: 2px;
+      border-radius: ${theme.shape.radius.default};
     `,
     titleLink: css`
       &:focus-visible {

@@ -7,12 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { TagBadge } from './TagBadge';
 
-// https://github.com/JedWatson/react-select/issues/3038
-interface ExtendedOptionProps extends OptionProps<any, any> {
-  data: any;
-}
-
-export const TagOption = ({ data, className, label, isFocused, innerProps }: ExtendedOptionProps) => {
+export const TagOption = ({ data, className, label, isFocused, innerProps }: OptionProps<any, any>) => {
   const styles = useStyles2(getStyles);
 
   return (

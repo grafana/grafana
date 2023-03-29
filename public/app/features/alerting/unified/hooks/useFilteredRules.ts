@@ -1,3 +1,4 @@
+import uFuzzy from '@leeoniya/ufuzzy';
 import produce from 'immer';
 import { compact, isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
@@ -18,8 +19,8 @@ export function useRulesFilter() {
   const [queryParams, updateQueryParams] = useURLSearchParams();
   const searchQuery = queryParams.get('search') ?? '';
 
-  const filterState = getSearchFilterFromQuery(searchQuery);
-  const hasActiveFilters = Object.values(filterState).some((filter) => !isEmpty(filter));
+  const filterState = useMemo(() => getSearchFilterFromQuery(searchQuery), [searchQuery]);
+  const hasActiveFilters = useMemo(() => Object.values(filterState).some((filter) => !isEmpty(filter)), [filterState]);
 
   const updateFilters = useCallback(
     (newFilter: RulesFilter) => {
@@ -51,7 +52,7 @@ export function useRulesFilter() {
       // Existing query filters takes precedence over legacy ones
       updateFilters(
         produce(filterState, (draft) => {
-          draft.dataSourceName ??= legacyFilters.dataSource;
+          draft.dataSourceNames ??= legacyFilters.dataSource ? [legacyFilters.dataSource] : [];
           if (legacyFilters.alertState && isPromAlertingRuleState(legacyFilters.alertState)) {
             draft.ruleState ??= legacyFilters.alertState;
           }
@@ -76,37 +77,67 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
   return useMemo(() => filterRules(namespaces, filterState), [namespaces, filterState]);
 };
 
+// Options details can be found here https://github.com/leeoniya/uFuzzy#options
+// The following configuration complies with Damerau-Levenshtein distance
+// https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance
+const ufuzzy = new uFuzzy({
+  intraMode: 1,
+  intraIns: 1,
+  intraSub: 1,
+  intraTrn: 1,
+  intraDel: 1,
+});
+
 export const filterRules = (
   namespaces: CombinedRuleNamespace[],
-  filterState: RulesFilter = { labels: [], freeFormWords: [] }
+  filterState: RulesFilter = { dataSourceNames: [], labels: [], freeFormWords: [] }
 ): CombinedRuleNamespace[] => {
-  return (
-    namespaces
-      .filter((ns) =>
-        filterState.namespace ? ns.name.toLowerCase().includes(filterState.namespace.toLowerCase()) : true
-      )
-      .filter(({ rulesSource }) =>
-        filterState.dataSourceName && isCloudRulesSource(rulesSource)
-          ? rulesSource.name === filterState.dataSourceName
-          : true
-      )
-      // If a namespace and group have rules that match the rules filters then keep them.
-      .reduce(reduceNamespaces(filterState), [] as CombinedRuleNamespace[])
-  );
+  let filteredNamespaces = namespaces;
+
+  const dataSourceFilter = filterState.dataSourceNames;
+  if (dataSourceFilter.length) {
+    filteredNamespaces = filteredNamespaces.filter(({ rulesSource }) =>
+      isCloudRulesSource(rulesSource) ? dataSourceFilter.includes(rulesSource.name) : true
+    );
+  }
+
+  const namespaceFilter = filterState.namespace;
+  if (namespaceFilter) {
+    const namespaceHaystack = filteredNamespaces.map((ns) => ns.name);
+
+    const [idxs, info, order] = ufuzzy.search(namespaceHaystack, namespaceFilter);
+    if (info && order) {
+      filteredNamespaces = order.map((idx) => filteredNamespaces[info.idx[idx]]);
+    } else if (idxs) {
+      filteredNamespaces = idxs.map((idx) => filteredNamespaces[idx]);
+    }
+  }
+
+  // If a namespace and group have rules that match the rules filters then keep them.
+  return filteredNamespaces.reduce(reduceNamespaces(filterState), [] as CombinedRuleNamespace[]);
 };
 
-const reduceNamespaces = (filterStateFilters: RulesFilter) => {
+const reduceNamespaces = (filterState: RulesFilter) => {
   return (namespaceAcc: CombinedRuleNamespace[], namespace: CombinedRuleNamespace) => {
-    const groups = namespace.groups
-      .filter((g) =>
-        filterStateFilters.groupName ? g.name.toLowerCase().includes(filterStateFilters.groupName.toLowerCase()) : true
-      )
-      .reduce(reduceGroups(filterStateFilters), [] as CombinedRuleGroup[]);
+    const groupNameFilter = filterState.groupName;
+    let filteredGroups = namespace.groups;
 
-    if (groups.length) {
+    if (groupNameFilter) {
+      const groupsHaystack = filteredGroups.map((g) => g.name);
+      const [idxs, info, order] = ufuzzy.search(groupsHaystack, groupNameFilter);
+      if (info && order) {
+        filteredGroups = order.map((idx) => filteredGroups[info.idx[idx]]);
+      } else if (idxs) {
+        filteredGroups = idxs.map((idx) => filteredGroups[idx]);
+      }
+    }
+
+    filteredGroups = filteredGroups.reduce(reduceGroups(filterState), [] as CombinedRuleGroup[]);
+
+    if (filteredGroups.length) {
       namespaceAcc.push({
         ...namespace,
-        groups,
+        groups: filteredGroups,
       });
     }
 
@@ -116,27 +147,28 @@ const reduceNamespaces = (filterStateFilters: RulesFilter) => {
 
 // Reduces groups to only groups that have rules matching the filters
 const reduceGroups = (filterState: RulesFilter) => {
+  const ruleNameQuery = filterState.ruleName ?? filterState.freeFormWords.join(' ');
+
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
-    const rules = group.rules.filter((rule) => {
+    let filteredRules = group.rules;
+
+    if (ruleNameQuery) {
+      const rulesHaystack = filteredRules.map((r) => r.name);
+      const [idxs, info, order] = ufuzzy.search(rulesHaystack, ruleNameQuery);
+      if (info && order) {
+        filteredRules = order.map((idx) => filteredRules[info.idx[idx]]);
+      } else if (idxs) {
+        filteredRules = idxs.map((idx) => filteredRules[idx]);
+      }
+    }
+
+    filteredRules = filteredRules.filter((rule) => {
       if (filterState.ruleType && filterState.ruleType !== rule.promRule?.type) {
         return false;
       }
 
       const doesNotQueryDs = isGrafanaRulerRule(rule.rulerRule) && !isQueryingDataSource(rule.rulerRule, filterState);
-      if (filterState.dataSourceName && doesNotQueryDs) {
-        return false;
-      }
-
-      const ruleNameLc = rule.name?.toLocaleLowerCase();
-      // Free Form Query is used to filter by rule name
-      if (
-        filterState.freeFormWords.length > 0 &&
-        !filterState.freeFormWords.every((w) => ruleNameLc.includes(w.toLocaleLowerCase()))
-      ) {
-        return false;
-      }
-
-      if (filterState.ruleName && !rule.name?.toLocaleLowerCase().includes(filterState.ruleName.toLocaleLowerCase())) {
+      if (filterState.dataSourceNames?.length && doesNotQueryDs) {
         return false;
       }
 
@@ -171,10 +203,10 @@ const reduceGroups = (filterState: RulesFilter) => {
       return true;
     });
     // Add rules to the group that match the rule list filters
-    if (rules.length) {
+    if (filteredRules.length) {
       groupAcc.push({
         ...group,
-        rules,
+        rules: filteredRules,
       });
     }
     return groupAcc;
@@ -191,7 +223,7 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
 }
 
 const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: RulesFilter): boolean => {
-  if (!filterState.dataSourceName) {
+  if (!filterState.dataSourceNames?.length) {
     return true;
   }
 
@@ -200,6 +232,6 @@ const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: Rules
       return false;
     }
     const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-    return ds?.name === filterState.dataSourceName;
+    return ds?.name && filterState?.dataSourceNames?.includes(ds.name);
   });
 };

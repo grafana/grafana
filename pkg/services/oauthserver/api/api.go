@@ -46,7 +46,7 @@ func (a *api) register(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "invalid registration", err)
 	}
 
-	app, err := a.oauthService.RegisterExternalService(c.Req.Context(), registration)
+	app, err := a.oauthService.SaveExternalService(c.Req.Context(), registration)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not register app", err)
 	}

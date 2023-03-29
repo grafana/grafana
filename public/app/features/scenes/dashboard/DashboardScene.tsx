@@ -53,14 +53,16 @@ function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) 
 
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
-  toolbarActions.push(
-    <ToolbarButton
-      icon="apps"
-      onClick={() => locationService.push(`/d/${uid}`)}
-      tooltip="View as Dashboard"
-      key="scene-to-dashboard-switch"
-    />
-  );
+  if (uid?.length) {
+    toolbarActions.push(
+      <ToolbarButton
+        icon="apps"
+        onClick={() => locationService.push(`/d/${uid}`)}
+        tooltip="View as Dashboard"
+        key="scene-to-dashboard-switch"
+      />
+    );
+  }
   const pageToolbar = config.featureToggles.topnav ? (
     <AppChromeUpdate actions={toolbarActions} />
   ) : (

@@ -21,8 +21,10 @@ import {
   SecretInput,
   Select,
   useStyles2,
+  SecureSocksProxySettings,
 } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
+import { config } from 'app/core/config';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { useMigrateDatabaseField } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseField';
 
@@ -153,6 +155,10 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
           </InlineFieldRow>
         )}
       </FieldSet>
+
+      {config.featureToggles.secureSocksDatasourceProxy && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
 
       <FieldSet label="TLS/SSL Auth">
         <InlineField
