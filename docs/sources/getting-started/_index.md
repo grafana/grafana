@@ -31,7 +31,8 @@ You can [browse data source plugins](https://grafana.com/grafana/plugins/?type=d
 1. Decide which data source you want to visualize. Browse the (data source plugin catalog](https://grafana.com/grafana/plugins/?type=datasource)) to see what you can connect with Grafana.
 1. Ensure the data source plugin is installed.
    See ([how to install data source plugins]({{< relref "../administration/data-source-management/" >}})).
-3. Connect the data source to Grafana. See ([how to setup a data source]({{< relref "../administration/data-source-management/" >}})), which configures an instance of a connection from Grafana to that data source.
+1. Connect the data source to Grafana.
+   See ([how to setup a data source]({{< relref "../administration/data-source-management/" >}})), which configures an instance of a connection from Grafana to that data source.
 
 ## Step 3. Create your first dashboard
 
