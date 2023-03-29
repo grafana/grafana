@@ -13,8 +13,9 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
+import { uniq } from 'lodash';
 import * as React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
@@ -39,7 +40,6 @@ interface SpanData {
   serviceNames: string[];
   spanNames: string[];
   tagKeys: string[];
-  tagValues: string[];
 }
 
 export const SpanFilters = React.memo((props: SpanFilterProps) => {
@@ -50,17 +50,13 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
     serviceNames: [],
     spanNames: [],
     tagKeys: [],
-    tagValues: [],
   });
-  const [tagValues, setTagValues] = useState<Array<SelectableValue<string>>>([]);
-  const [isLoadingTagValues, setIsLoadingTagValues] = useState(false);
+  const [tagValues, setTagValues] = useState<{ [key: string]: Array<SelectableValue<string>> }>({});
 
   useEffect(() => {
-    // console.log('useEffect setSpanData');
     const serviceNames: string[] = [];
     const spanNames: string[] = [];
     const tagKeys: string[] = [];
-    const tagValues: string[] = [];
 
     trace.spans.map((span) => {
       serviceNames.push(span.process.serviceName);
@@ -82,58 +78,52 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
     });
 
     const spanData = {
-      serviceNames,
-      spanNames,
-      tagKeys,
-      tagValues,
+      serviceNames: uniq(serviceNames).sort(),
+      spanNames: uniq(spanNames).sort(),
+      tagKeys: uniq(tagKeys).sort(),
     };
 
     setSpanData(spanData);
   }, [trace]);
 
-  const serviceNameOptions = useCallback(() => {
-    // console.log('serviceNameOptions');
-    return [...new Set(spanData.serviceNames)].sort().map((name) => {
+  const serviceNameOptions = () => {
+    return spanData.serviceNames.map((name) => {
       return toOption(name);
     });
-  }, [spanData.serviceNames]);
+  };
 
   const spanNameOptions = () => {
-    // console.log('spanNameOptions');
-    return [...new Set(spanData.spanNames)].sort().map((name) => {
+    return spanData.spanNames.map((name) => {
       return toOption(name);
     });
   };
 
   const tagKeyOptions = () => {
-    // console.log('tagKeyOptions');
-    return [...new Set(spanData.tagKeys)].sort().map((name) => {
+    return spanData.tagKeys.map((name) => {
       return toOption(name);
     });
   };
 
-  const tagValueOptions = async (key: string | undefined) => {
-    // console.log('tagValueOptions');
-    setIsLoadingTagValues(true);
+  const tagValueOptions = (key: string | undefined) => {
     let values: string[] = [];
 
     if (key) {
       trace.spans.map((span) => {
         span.tags.map((tag) => {
           if (tag.key === key) {
-            values.push(tag.value);
+            values.push(tag.value.toString());
           }
         });
         span.process.tags.map((tag) => {
           if (tag.key === key) {
-            values.push(tag.value);
+            values.push(tag.value.toString());
           }
         });
         if (span.logs !== null) {
           span.logs.map((log) => {
             log.fields.map((field) => {
               if (field.key === key) {
-                values.push(field.value);
+                values.push(field.value.toString());
               }
             });
           });
@@ -141,12 +131,25 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
       });
     }
 
-    const options = [...new Set(values)].sort().map((name) => {
-      return toOption(name);
-    });
-    setTagValues(options);
-    setIsLoadingTagValues(false);
+    return uniq(values)
+      .sort()
+      .map((name) => {
+        return toOption(name);
+      });
   };
+
+  // keep tagValues in sync with tags that have selected keys
+  // so only tags with keys will show values when select opened
+  useEffect(() => {
+    for (const key of Object.keys(tagValues)) {
+      search.tags.map((tag) => {
+        if (tag.id === key && tag.key === '') {
+          delete tagValues[key];
+          setTagValues(tagValues);
+        }
+      });
+    }
+  }, [search.tags, tagValues]);
 
   const addTag = () => {
     console.log('add tag');
@@ -182,8 +185,6 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
     return null;
   }
 
-  // console.log('render SpanFilters');
-
   return (
     <Collapse label="Span Filters" collapsible={true} isOpen={showSpanFilters} onToggle={setShowSpanFilters}>
       <InlineFieldRow>
@@ -198,7 +199,6 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
               aria-label={'select-service-name'}
               isClearable
               onChange={(v) => {
-                console.log('serviceName change');
                 setSearch({ ...search, serviceName: v?.value || '' });
               }}
               options={serviceNameOptions()}
@@ -262,8 +262,7 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
               <div key={i}>
                 <HorizontalGroup spacing={'none'} width={'auto'}>
                   <Select
-                    aria-label={`select tag`}
-                    inputId={`${tag.id}-tag`}
+                    aria-label={`select tag-${tag.id} key`}
                     isClearable
                     onChange={(v) => {
                       setSearch({
@@ -272,7 +271,22 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
                           return x.id === tag.id ? { ...x, key: v?.value || '' } : x;
                         }),
                       });
-                      tagValueOptions(v?.value || '');
+
+                      setTimeout(() => {
+                        if (v?.value) {
+                          setTagValues({
+                            ...tagValues,
+                            [tag.id]: tagValueOptions(v.value),
+                          });
+                        } else {
+                          // removed value
+                          const updatedValues = { ...tagValues };
+                          if (updatedValues[tag.id]) {
+                            delete updatedValues[tag.id];
+                          }
+                          setTagValues(updatedValues);
+                        }
+                      }, 20);
                     }}
                     options={tagKeyOptions()}
                     placeholder="Select tag"
@@ -290,22 +304,23 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
                     options={[toOption('='), toOption('!=')]}
                     value={tag.operator}
                   />
-                  <Select
-                    isClearable
-                    isLoading={isLoadingTagValues}
-                    onChange={(v) => {
-                      setSearch({
-                        ...search,
-                        tags: search.tags?.map((x) => {
-                          return x.id === tag.id ? { ...x, value: v?.value || '' } : x;
-                        }),
-                      });
-                    }}
-                    options={tagValues}
-                    // onOpenMenu={async () => setTagValues(await tagValueOptions(tag.key))}
-                    placeholder="Select value"
-                    value={tag.value}
-                  />
+                  <span className={styles.tagValues}>
+                    <Select
+                      aria-label={`select tag-${tag.id} value`}
+                      isClearable
+                      onChange={(v) => {
+                        setSearch({
+                          ...search,
+                          tags: search.tags?.map((x) => {
+                            return x.id === tag.id ? { ...x, value: v?.value || '' } : x;
+                          }),
+                        });
+                      }}
+                      options={tagValues[tag.id] ? tagValues[tag.id] : []}
+                      placeholder="Select value"
+                      value={tag.value}
+                    />
+                  </span>
                   <AccessoryButton
                     variant={'secondary'}
                     icon={'times'}
@@ -341,6 +356,9 @@ const getStyles = () => {
   return {
     addTag: css`
       margin: 0 0 0 10px;
+    `,
+    tagValues: css`
+      max-width: 200px;
     `,
   };
 };

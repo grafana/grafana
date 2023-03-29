@@ -43,6 +43,11 @@ export default function filterSpans(searchProps: SearchProps, spans: TraceSpan[]
 }
 
 const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
+  // remove empty tags
+  tags = tags.filter((tag) => {
+    return tag.key || tag.value;
+  });
+
   return spans
     .filter((span: TraceSpan) => {
       // match against every tag filter
@@ -69,11 +74,11 @@ const checkForMatch = (operator: string, found: boolean, found2: boolean, found3
 };
 
 const checkKeyForMatch = (tagKey: string, key: string) => {
-  return tagKey === key ? true : false;
+  return tagKey === key.toString() ? true : false;
 };
 
 const checkKeyAndValueForMatch = (tag: Tag, kv: TraceKeyValuePair) => {
-  return tag.key === kv.key && tag.value === kv.value ? true : false;
+  return tag.key === kv.key.toString() && tag.value === kv.value.toString() ? true : false;
 };
 
 const getServiceNameMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
