@@ -526,6 +526,39 @@ describe('explore links utils', () => {
       const links = [getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame })];
       expect(links[0]).toHaveLength(0);
     });
+
+    it('does return internal link when there are no variables (static link)', () => {
+      const transformationLink: DataLink = {
+        title: '',
+        url: '',
+        internal: {
+          query: { query: 'http_requests{app=test}' },
+          datasourceUid: 'uid_1',
+          datasourceName: 'test_ds',
+          transformations: [{ type: SupportedTransformationTypes.Logfmt }],
+        },
+      };
+
+      const { field, range, dataFrame } = setup(transformationLink, true, {
+        name: 'msg',
+        type: FieldType.string,
+        values: new ArrayVector(['application=foo host=dev-001']),
+        config: {
+          links: [transformationLink],
+        },
+      });
+
+      const links = getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame });
+      expect(links).toHaveLength(1);
+      expect(links[0].variables?.length).toBe(1);
+      expect(links[0].variables![0].variableName).toBe('msg');
+      expect(links[0].variables![0].value).toBe('');
+      expect(links[0].href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=test}"}]}'
+        )}`
+      );
+    });
   });
 
   describe('getVariableUsageInfo', () => {
