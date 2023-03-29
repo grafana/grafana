@@ -25,7 +25,6 @@ import {
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { graphToTimeseriesOptions } from 'app/plugins/panel/timeseries/migrations';
 import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
@@ -63,7 +62,9 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
 
   private initDashboard(rsp: DashboardDTO) {
     // Just to have migrations run
-    const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
+    const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
+      autoMigrateOldPanels: true,
+    });
 
     const dashboard = createDashboardSceneFromDashboardModel(oldModel);
 
@@ -235,7 +236,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
       text: variable.current.text,
       description: variable.description,
       regex: variable.regex,
-      query: variable.query,
+      pluginId: variable.query,
       allValue: variable.allValue || undefined,
       includeAll: variable.includeAll,
       defaultToAll: Boolean(variable.includeAll),
@@ -261,14 +262,6 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
     queries: panel.targets,
     maxDataPoints: panel.maxDataPoints ?? undefined,
   });
-
-  // Migrate graph to timeseries
-  if (panel.type === 'graph') {
-    const { fieldConfig, options } = graphToTimeseriesOptions(panel);
-    panel.fieldConfig = fieldConfig;
-    panel.options = options;
-    panel.type = 'timeseries';
-  }
 
   return new VizPanel({
     title: panel.title,

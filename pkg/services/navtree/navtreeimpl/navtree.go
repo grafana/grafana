@@ -149,31 +149,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 		}
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagLivePipeline) {
-		liveNavLinks := []*navtree.NavLink{}
-
-		liveNavLinks = append(liveNavLinks, &navtree.NavLink{
-			Text: "Status", Id: "live-status", Url: s.cfg.AppSubURL + "/live", Icon: "exchange-alt",
-		})
-		liveNavLinks = append(liveNavLinks, &navtree.NavLink{
-			Text: "Pipeline", Id: "live-pipeline", Url: s.cfg.AppSubURL + "/live/pipeline", Icon: "arrow-to-right",
-		})
-		liveNavLinks = append(liveNavLinks, &navtree.NavLink{
-			Text: "Cloud", Id: "live-cloud", Url: s.cfg.AppSubURL + "/live/cloud", Icon: "cloud-upload",
-		})
-
-		treeRoot.AddSection(&navtree.NavLink{
-			Id:           "live",
-			Text:         "Live",
-			SubTitle:     "Event streaming",
-			Icon:         "exchange-alt",
-			Url:          s.cfg.AppSubURL + "/live",
-			Children:     liveNavLinks,
-			Section:      navtree.NavSectionConfig,
-			HideFromTabs: true,
-		})
-	}
-
 	orgAdminNode, err := s.getOrgAdminNode(c)
 
 	if orgAdminNode != nil {

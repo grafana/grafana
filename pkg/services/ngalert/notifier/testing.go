@@ -51,14 +51,12 @@ func (f *fakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context)
 	return result, nil
 }
 
-func (f *fakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
-	var ok bool
-	query.Result, ok = f.configs[query.OrgID]
+func (f *fakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error) {
+	config, ok := f.configs[query.OrgID]
 	if !ok {
-		return store.ErrNoAlertmanagerConfiguration
+		return nil, store.ErrNoAlertmanagerConfiguration
 	}
-
-	return nil
+	return config, nil
 }
 
 func (f *fakeConfigStore) SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {

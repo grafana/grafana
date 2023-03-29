@@ -424,6 +424,9 @@ type = grpc
 url = localhost:9095
 # Defaults to true. If true, it establishes a secure connection to Loki
 tls = true
+# Set the tenant ID for Loki communication, which is disabled by default.
+# The tenant ID is required to interact with Loki running in multi-tenant mode.
+tenant_id =
 ```
 
 If you have multiple Grafana instances sending logs to the same Loki service or if you are using Loki for non-audit logs, audit logs come with additional labels to help identifying them:

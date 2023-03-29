@@ -38,10 +38,12 @@ export const createLogLineLinks = memoizeOne((hiddenFieldsWithLinks: FieldDef[])
   hiddenFieldsWithLinks.forEach((linkField) => {
     linkField.links?.forEach((link: ExploreFieldLinkModel) => {
       if (link.variables) {
-        const variableKeys = Object.keys(link.variables);
-        const variableValues = Object.keys(link.variables).map((key) =>
-          link.variables && link.variables[key] != null ? link.variables[key]!.toString() : ''
-        );
+        const variableKeys = link.variables.map((variable) => {
+          const varName = variable.variableName;
+          const fieldPath = variable.fieldPath ? `.${variable.fieldPath}` : '';
+          return `${varName}${fieldPath}`;
+        });
+        const variableValues = link.variables.map((variable) => (variable.found ? variable.value : ''));
         fieldsWithLinksFromVariableMap.push({
           keys: variableKeys,
           values: variableValues,

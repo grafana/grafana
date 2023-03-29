@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	loginpkg "github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -145,10 +144,11 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
 			identity, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 			if err != nil {
-				if errors.Is(err, auth.ErrUserTokenNotFound) || errors.Is(err, auth.ErrInvalidSessionToken) {
+				if errors.Is(err, auth.ErrInvalidSessionToken) {
 					// Burn the cookie in case of invalid, expired or missing token
 					reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 				}
+
 				// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 				reqContext.LookupTokenErr = err
 			} else {
@@ -493,6 +493,13 @@ func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContex
 		return false
 	}
 
+	if h.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+		if token.NeedsRotation(time.Duration(h.Cfg.TokenRotationIntervalMinutes) * time.Minute) {
+			reqContext.LookupTokenErr = authn.ErrTokenNeedsRotation.Errorf("token needs rotation")
+			return true
+		}
+	}
+
 	query := user.GetSignedInUserQuery{UserID: token.UserId, OrgID: orgID}
 	queryResult, err := h.userService.GetSignedInUserWithCacheCtx(ctx, &query)
 	if err != nil {
@@ -541,18 +548,25 @@ func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContex
 
 func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
+		if h.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+			return
+		}
+
 		if w.Written() {
 			reqContext.Logger.Debug("Response written, skipping invalid cookie delete")
 			return
 		}
 
 		reqContext.Logger.Debug("Expiring invalid cookie")
-		cookies.DeleteCookie(reqContext.Resp, h.Cfg.LoginCookieName, nil)
+		authn.DeleteSessionCookie(reqContext.Resp, h.Cfg)
 	}
 }
 
 func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
+		if h.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+			return
+		}
 		// if response has already been written, skip.
 		if w.Written() {
 			return
@@ -587,7 +601,7 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *contextmodel.ReqCont
 
 		if rotated {
 			reqContext.UserToken = newToken
-			cookies.WriteSessionCookie(reqContext, h.Cfg, newToken.UnhashedToken, h.Cfg.LoginMaxLifetime)
+			authn.WriteSessionCookie(reqContext.Resp, h.Cfg, newToken)
 		}
 	}
 }

@@ -54,7 +54,7 @@ export function getVariablesDemo(): DashboardScene {
         }),
         new DataSourceVariable({
           name: 'ds',
-          query: 'testdata',
+          pluginId: 'testdata',
         }),
         new TextBoxVariable({
           name: 'textbox',
