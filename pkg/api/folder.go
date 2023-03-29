@@ -201,6 +201,16 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 	return nil
 }
 
+// swagger:route GET /folders/{folder_uid}.move folders moveFolder
+//
+// Move folder.
+//
+// Responses:
+// 200: folderResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		cmd := folder.MoveFolderCommand{}
@@ -409,6 +419,16 @@ type CreateFolderParams struct {
 	// in:body
 	// required:true
 	Body folder.CreateFolderCommand `json:"body"`
+}
+
+// swagger:parameters moveFolder
+type MoveFolderParams struct {
+	// in:path
+	// required:true
+	FolderUID string `json:"folder_uid"`
+	// in:body
+	// required:true
+	Body folder.MoveFolderCommand `json:"body"`
 }
 
 // swagger:parameters deleteFolder
