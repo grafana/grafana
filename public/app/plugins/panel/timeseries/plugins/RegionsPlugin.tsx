@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useLayoutEffect, useRef } from 'react';
 import uPlot from 'uplot';
 
 import { DataFrame, colorManipulator } from '@grafana/data';
@@ -28,14 +28,9 @@ export const RegionsPlugin = ({ regions, config }: RegionsPluginProps) => {
     [regions]
   );
 
-  const { froms, tos, colors } = useMemo(
-    () => ({
-      froms: getValues('time'),
-      tos: getValues('timeEnd'),
-      colors: getValues('color'),
-    }),
-    [getValues]
-  );
+  const fromsRef = useRef<number[]>(getValues('time'));
+  const tosRef = useRef<number[]>(getValues('timeEnd'));
+  const colorsRef = useRef<string[]>(getValues('color'));
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
@@ -51,16 +46,16 @@ export const RegionsPlugin = ({ regions, config }: RegionsPluginProps) => {
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
-      for (let i = 0; i < froms.length; i++) {
-        let from = froms[i];
-        let to = tos[i];
+      for (let i = 0; i < fromsRef.current.length; i++) {
+        let from = fromsRef.current[i];
+        let to = tosRef.current[i];
 
         let x = u.valToPos(from, 'x', true);
         let y = u.bbox.top;
         let w = u.valToPos(to, 'x', true) - x;
         let h = u.bbox.height;
 
-        const color = theme.visualization.getColorByName(colors[i]);
+        const color = theme.visualization.getColorByName(colorsRef.current[i]);
 
         ctx.fillStyle = color;
         ctx.fillRect(x, y, w, h);
@@ -73,7 +68,7 @@ export const RegionsPlugin = ({ regions, config }: RegionsPluginProps) => {
 
       ctx.restore();
     });
-  }, [config, froms, tos, colors, theme]);
+  }, [config, theme.visualization]);
 
   return null;
 };
