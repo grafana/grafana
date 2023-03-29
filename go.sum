@@ -1396,6 +1396,8 @@ github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWm
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/alerting v0.0.0-20230209203114-508391225cd4 h1:5/+He0gIt2Rr2EVijLEj+E2T6lhbEYsDoOP61qyBwM8=
 github.com/grafana/alerting v0.0.0-20230209203114-508391225cd4/go.mod h1:NoSLbfmUwE+omWFReFrLtbtOItmvTbuQERJ6XFYp9ME=
+github.com/grafana/alerting v0.0.0-20230328192025-518e63bb07c5 h1:mGAFon+7Vq5a/eiGIUBSzvbMyUJuY0qr3YFHVsOGNb8=
+github.com/grafana/alerting v0.0.0-20230328192025-518e63bb07c5/go.mod h1:NoSLbfmUwE+omWFReFrLtbtOItmvTbuQERJ6XFYp9ME=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cuetsy v0.1.5 h1:mnFwAXdbqCsyL8r7kkdUMJ4kOAR26cxIPmrZj7JzTeY=
