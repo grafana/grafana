@@ -13,7 +13,7 @@ Getting started with Grafana involves three steps:
 1. Connect your first data source
 1. Create your first dashboard
 
-## Step 1. Setup Grafana
+## Step 1. Set up Grafana
 
 You have two ways to set up Grafana:
 
