@@ -599,6 +599,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/scripts/pr-get-job-link.js @grafana/plugins-platform-frontend
 /.github/workflows/stale.yml @grafana/grafana-frontend-platform
 /.github/workflows/update-changelog.yml @grafana/grafana-delivery
+/.github/workflows/delivery-*.yml @grafana/delivery-team
 /.github/workflows/snyk.yml @grafana/security-team
 
 

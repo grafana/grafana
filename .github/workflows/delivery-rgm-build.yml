@@ -1,0 +1,31 @@
+# This workflow checks out the grafana-build repository, then builds, packages, and uploads Grafana to GCS.
+name: "[RGM] Build and Package"
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+    branches:
+      - main
+      - 'v*.*.*'
+concurrency:
+  group: rgm-build-package-${{ github.event.number }}
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Actions
+        uses: actions/checkout@v3
+        with:
+          repository: grafana/grafana-build
+          ref: add-package-publish-action
+      - name: Build Backend
+        uses: ./actions/package/publish
+        with:
+          distros: ["linux/amd64", "linux/arm64"]
+          enterprise: true
+          grafana_ref: ${{ github.sha }}
+          enterprise_ref: ${{ github.head_ref }}
+          gcp_service_account_key: ${{ secrets.RGM_GCP_KEY }}
+          destination: ${{ secrets.RCM_DESTINATION }}
+          github_token: ${{secrets.GITHUB_TOKEN}}
