@@ -121,12 +121,14 @@ describe('QueryCache', function () {
     // Should return the request frames unaltered
     expect(firstStoredFrames).toEqual(firstFrames);
 
+    const secondRequest = mockRequest({
+      range: secondRange,
+      dashboardUID: dashboardId,
+      panelId: panelId,
+    });
+
     const secondStoredFrames = storage.procFrames(
-      mockRequest({
-        range: secondRange,
-        dashboardUID: dashboardId,
-        panelId: panelId,
-      }),
+      secondRequest,
       {
         requests: [], // unused
         targSigs: cache,
@@ -209,9 +211,7 @@ describe('QueryCache', function () {
       });
 
       // But the signature can, and we should clean up any non-matching signatures
-      const targetSignature = `${request.targets[0].expr}|${request.intervalMs}|${JSON.stringify(
-        request.rangeRaw ?? ''
-      )}`;
+      const targetSignature = getTargSig(request.targets[0].expr, request, request.targets[0]);
 
       targetSignatures.set(targetIdentity, targetSignature);
 
@@ -233,12 +233,14 @@ describe('QueryCache', function () {
       // Should return the request frames unaltered
       expect(firstStoredFrames).toEqual(firstFrames);
 
+      const secondRequest = mockRequest({
+        range: secondRange,
+        dashboardUID: dashboardId,
+        panelId: panelId,
+      });
+
       const secondStoredFrames = storage.procFrames(
-        mockRequest({
-          range: secondRange,
-          dashboardUID: dashboardId,
-          panelId: panelId,
-        }),
+        secondRequest,
         {
           requests: [], // unused
           targSigs: targetSignatures,
@@ -272,10 +274,27 @@ describe('QueryCache', function () {
           });
         });
       });
+
+      const interpolateString = (s: string) => {
+        return s;
+      };
+      const secondRequestModified = {
+        ...secondRequest,
+        range: {
+          ...secondRequest.range,
+          to: dateTime(secondRequest.range.to.valueOf() + 30000),
+        },
+      };
+      const cacheRequest = storage.requestInfo(secondRequestModified, interpolateString);
+      expect(cacheRequest.requests[0].targets).toEqual(secondRequestModified.targets);
+      expect(cacheRequest.requests[0].range.to).toEqual(secondRequestModified.range.to);
+      expect(cacheRequest.requests[0].range.raw).toEqual(secondRequestModified.range.raw);
+      expect(cacheRequest.requests[0].range.from.valueOf() - 21000000).toEqual(
+        secondRequestModified.range.from.valueOf()
+      );
+      expect(cacheRequest.shouldCache).toBe(true);
     });
   });
-
-  it('Modifying request interval will create new empty in cache, the old should be purged from cache', () => {});
 
   it('Will evict old dataframes, and use stored data when user shortens query window', () => {
     const storage = new QueryCache();
@@ -429,5 +448,45 @@ describe('QueryCache', function () {
     const targSig = getTargSig('__EXPR__', request, target);
     expect(targSig).toContain(targetInterval);
     expect(targSig.includes(requestInterval)).toBeFalsy();
+  });
+
+  it('will not modify request with absolute duration', () => {
+    const request = mockRequest({
+      range: {
+        from: moment('2023-01-30T19:33:01.332Z') as DateTime,
+        to: moment('2023-01-30T20:33:01.332Z') as DateTime,
+        raw: { from: '2023-01-30T19:33:01.332Z', to: '2023-01-30T20:33:01.332Z' },
+      },
+      rangeRaw: { from: '2023-01-30T19:33:01.332Z', to: '2023-01-30T20:33:01.332Z' },
+    });
+    const storage = new QueryCache();
+    const interpolateString = (s: string) => {
+      return s;
+    };
+    const cacheRequest = storage.requestInfo(request, interpolateString);
+    expect(cacheRequest.requests[0]).toBe(request);
+    expect(cacheRequest.shouldCache).toBe(false);
+  });
+
+  it('mark request as shouldCache', () => {
+    const request = mockRequest();
+    const storage = new QueryCache();
+    const interpolateString = (s: string) => {
+      return s;
+    };
+    const cacheRequest = storage.requestInfo(request, interpolateString);
+    expect(cacheRequest.requests[0]).toBe(request);
+    expect(cacheRequest.shouldCache).toBe(true);
+  });
+
+  it('Should modify request', () => {
+    const request = mockRequest();
+    const storage = new QueryCache();
+    const interpolateString = (s: string) => {
+      return s;
+    };
+    const cacheRequest = storage.requestInfo(request, interpolateString);
+    expect(cacheRequest.requests[0]).toBe(request);
+    expect(cacheRequest.shouldCache).toBe(true);
   });
 });
