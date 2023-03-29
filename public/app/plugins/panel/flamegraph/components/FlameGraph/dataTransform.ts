@@ -16,21 +16,20 @@ export type LevelItem = { start: number; itemIndex: number };
  * Convert data frame with nested set format into array of level. This is mainly done for compatibility with current
  * rendering code.
  */
-export function nestedSetToLevels(data: FlameGraphDataContainer): LevelItem[][] {
+export function nestedSetToLevels(container: FlameGraphDataContainer): LevelItem[][] {
   const levels: LevelItem[][] = [];
   let offset = 0;
 
-  for (let i = 0; i < data.data.length; i++) {
-    // We have to clone the items as .get(i) returns a changing pointer not the data themselves.
-    const currentLevel = data.getLevel(i);
-    const prevLevel = i > 0 ? data.getLevel(i - 1) : undefined;
+  for (let i = 0; i < container.data.length; i++) {
+    const currentLevel = container.getLevel(i);
+    const prevLevel = i > 0 ? container.getLevel(i - 1) : undefined;
 
     levels[currentLevel] = levels[currentLevel] || [];
     if (prevLevel && prevLevel >= currentLevel) {
       // We are going down a level or staying at the same level, so we are adding a sibling to the last item in a level.
       // So we have to compute the correct offset based on the last sibling.
       const lastItem = levels[currentLevel][levels[currentLevel].length - 1];
-      offset = lastItem.start + data.getValue(lastItem.itemIndex);
+      offset = lastItem.start + container.getValue(lastItem.itemIndex);
     }
     const newItem: LevelItem = {
       itemIndex: i,

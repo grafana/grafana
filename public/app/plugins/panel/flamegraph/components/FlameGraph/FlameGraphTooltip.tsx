@@ -42,6 +42,8 @@ const FlameGraphTooltip = ({ data, tooltipRef, item, totalTicks }: Props) => {
     );
   }
 
+  // Even if we don't show tooltip we need this div so the ref is consistently attached. Would need some refactor in
+  // FlameGraph.tsx to make it work without it.
   return (
     <div ref={tooltipRef} className={styles.tooltip}>
       {content}
