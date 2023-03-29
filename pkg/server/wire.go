@@ -95,6 +95,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
+	publicdashboardsmetric "github.com/grafana/grafana/pkg/services/publicdashboards/metric"
 	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
@@ -326,6 +327,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(publicdashboards.Service), new(*publicdashboardsService.PublicDashboardServiceImpl)),
 	publicdashboardsStore.ProvideStore,
 	wire.Bind(new(publicdashboards.Store), new(*publicdashboardsStore.PublicDashboardStoreImpl)),
+	publicdashboardsmetric.ProvideService,
 	publicdashboardsApi.ProvideApi,
 	starApi.ProvideApi,
 	userimpl.ProvideService,

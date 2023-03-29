@@ -2,7 +2,6 @@ package publicdashboards
 
 import (
 	"context"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -61,4 +60,5 @@ type Store interface {
 	FindByDashboardFolder(ctx context.Context, dashboard *dashboards.Dashboard) ([]*PublicDashboard, error)
 	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)
 	ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
+	GetMetrics(ctx context.Context) (*Metrics, error)
 }
