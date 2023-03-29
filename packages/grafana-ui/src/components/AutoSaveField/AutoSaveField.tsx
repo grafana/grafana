@@ -86,8 +86,9 @@ export function AutoSaveField<T = string>(props: GenericProps<T>) {
   );
 
   const lodashDebounce = useMemo(() => debounce(handleChange, 600, { leading: false }), [handleChange]);
-  const isInvalid = invalid || fieldState.showError;
-  const isLoading = loading || fieldState.isLoading;
+  //We never want to pass false to field, because it won't be deleted with deleteUndefinedProps() being false
+  const isInvalid = invalid || fieldState.showError || undefined;
+  const isLoading = loading || fieldState.isLoading || undefined;
   /**
    * use Field around input to pass the error message
    * use InlineToast.tsx to show the save message
@@ -98,18 +99,19 @@ export function AutoSaveField<T = string>(props: GenericProps<T>) {
         {...restProps}
         loading={isLoading}
         invalid={isInvalid}
+        disabled={disabled}
         error={error || (fieldState.showError && saveErrorMessage)}
       >
         <div ref={inputRef}>
           {React.cloneElement(
             children((newValue) => {
               lodashDebounce(newValue);
-            }),
-            {
-              loading: isLoading,
-              invalid: isInvalid,
-              disabled,
-            }
+            })
+            // {
+            //   loading: isLoading,
+            //   invalid: isInvalid,
+            //   disabled,
+            // }
           )}
         </div>
       </Field>
