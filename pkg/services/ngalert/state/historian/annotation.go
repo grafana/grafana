@@ -68,7 +68,11 @@ func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleM
 		return errCh
 	}
 
-	// New background job, so start with a completely new context to avoid pollution.
+	// This is a new background job, so let's create a brand new context for it.
+	// We want it to be isolated, i.e. we don't want grafana shutdowns to interrupt this work
+	// immediately but rather try to flush writes.
+	// This also prevents timeouts or other lingering objects (like transactions) from being
+	// incorrectly propagated here from other areas.
 	writeCtx := context.Background()
 	writeCtx, cancel := context.WithTimeout(writeCtx, StateHistoryWriteTimeout)
 	writeCtx = history_model.WithRuleData(writeCtx, rule)
