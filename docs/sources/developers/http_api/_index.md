@@ -58,7 +58,7 @@ Users can browser and try out both via the Swagger UI editor (served by the graf
 
 ## Grafana Enterprise HTTP APIs
 
-Grafana Enterprise includes all of the Grafana OSS APIs as well as those that follow:
+Grafana Enterprise includes all of the Grafana OSS APIs as well as the Enterprise-only APIs listed below:
 
 - [Role-based access control API]({{< relref "access_control/" >}})
 - [Data source permissions API]({{< relref "datasource_permissions/" >}})
