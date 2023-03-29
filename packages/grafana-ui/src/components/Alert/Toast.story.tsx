@@ -17,6 +17,7 @@ const meta: ComponentMeta<typeof Alert> = {
     docs: {
       page: mdx,
     },
+    controls: { exclude: ['onRemove'] },
   },
   argTypes: {
     severity: { control: { type: 'select', options: severities } },

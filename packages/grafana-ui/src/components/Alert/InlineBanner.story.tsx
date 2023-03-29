@@ -17,7 +17,7 @@ const meta: Meta = {
     docs: {
       page: mdx,
     },
-    controls: {},
+    controls: { exclude: ['onRemove'] },
   },
   argTypes: {
     severity: {
