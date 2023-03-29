@@ -381,6 +381,15 @@ func TestFolderMoveAPIEndpoint(t *testing.T) {
 			},
 		},
 		{
+			description:  "can move folder to the root folder with specific permissions",
+			newParentUid: "",
+			expectedCode: http.StatusOK,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
+				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("newParentUid")},
+			},
+		},
+		{
 			description:  "forbidden to move folder to another folder without the write access on the folder being moved",
 			newParentUid: "newParentUid",
 			expectedCode: http.StatusForbidden,
