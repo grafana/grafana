@@ -485,7 +485,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const oldOptions: any = this.getOptionsToRemember();
     const prevFieldConfig = this.fieldConfig;
     const oldPluginId = this.type;
-    const wasAngular = this.isAngularPlugin();
+    const wasAngular = this.isAngularPlugin() || Boolean(autoMigrateAngular[oldPluginId]);
     this.cachedPluginOptions[oldPluginId] = {
       properties: oldOptions,
       fieldConfig: prevFieldConfig,

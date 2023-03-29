@@ -82,11 +82,10 @@ export async function getLocationMatchers(src?: FrameGeometrySource): Promise<Lo
       }
       break;
     case FrameGeometrySourceMode.Lookup:
-      if (src?.lookup) {
-        info.lookup = getFieldFinder(getFieldMatcher({ id: FieldMatcherID.byName, options: src.lookup }));
-      } else {
-        info.lookup = () => undefined; // In manual mode, don't automatically find field
-      }
+      const m = src?.lookup?.length
+        ? getFieldMatcher({ id: FieldMatcherID.byName, options: src.lookup })
+        : getFieldMatcher({ id: FieldMatcherID.byType, options: FieldType.string });
+      info.lookup = getFieldFinder(m);
       break;
     case FrameGeometrySourceMode.Coords:
       if (src?.latitude) {
