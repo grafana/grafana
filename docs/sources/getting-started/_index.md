@@ -9,7 +9,7 @@ weight: 9
 
 Getting started with Grafana involves three steps:
 
-1. Setup Grafana
+1. Set up Grafana
 2. Connect your first data source
 3. Create your first dashboard
 
