@@ -29,7 +29,7 @@ This topic shows you how to:
 
 ## Before you begin
 
-- You will need shell access to the system and `sudo` access to perform actions as root, or administrator.
+- You must have shell access to the system and `sudo` access to perform actions as root or administrator.
 - For the CA-signed option, you will need a domain name you control assigned to the machine you are working on.
 
 ## Obtain a certificate and key
