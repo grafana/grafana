@@ -21,6 +21,7 @@ import { buildVisualQueryFromString } from '../querybuilder/parsing';
 import { changeEditorMode, getQueryWithDefaults } from '../querybuilder/state';
 import { LokiQuery, QueryStats } from '../types';
 
+import ChunkProgressDisplay from './ChunkProgressDisplay';
 import { getStats, shouldUpdateStats } from './stats';
 import { LokiQueryEditorProps } from './types';
 
@@ -29,7 +30,7 @@ export const testIds = {
 };
 
 export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
-  const { onChange, onRunQuery, onAddQuery, data, app, queries, datasource } = props;
+  const { onChange, onRunQuery, onAddQuery, data, app, queries, datasource, exploreId } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
@@ -201,6 +202,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           maxLines={datasource.maxLines}
           queryStats={queryStats}
         />
+        <ChunkProgressDisplay exploreId={exploreId} />
       </EditorRows>
     </>
   );
