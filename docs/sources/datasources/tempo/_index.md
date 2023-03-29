@@ -94,16 +94,16 @@ To use a variable you need to wrap it in `${}`. For example `${__span.name}`.
 
 The following table describes the ways in which you can configure your trace to logs settings:
 
-| Setting name              | Description                                                                                                                                                                                                                                                                |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Data source**           | Defines the target data source. You can select only Loki or Splunk \[logs\] data sources.                                                                                                                                                                                  |
-| **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default: `0`.                                                                            |
-| **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default: `0`.                                                                                                                                                                |
-| **Tags**                  | Defines the the tags to use in the logs query. Default: `cluster`, `hostname`, `namespace`, `pod`. You can change the tag name for example to remove dots from the name if they are not allowed in the target data source. For example map `http.status` to `http_status`. |
-| **Filter by trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                                                                                                                  |
-| **Filter by span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                                                                                                                   |
-| **Use custom query**      | Toggles use of custom query with interpolation.                                                                                                                                                                                                                            |
-| **Query**                 | Input to write custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                                          |
+| Setting name              | Description                                                                                                                                                                                                                                                             |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data source**           | Defines the target data source. You can select only Loki or Splunk \[logs\] data sources.                                                                                                                                                                               |
+| **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default: `0`.                                                                         |
+| **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default: `0`.                                                                                                                                                             |
+| **Tags**                  | Defines the tags to use in the logs query. Default: `cluster`, `hostname`, `namespace`, `pod`. You can change the tag name for example to remove dots from the name if they are not allowed in the target data source. For example, map `http.status` to `http_status`. |
+| **Filter by trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                                                                                                               |
+| **Filter by span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                                                                                                                |
+| **Use custom query**      | Toggles use of custom query with interpolation.                                                                                                                                                                                                                         |
+| **Query**                 | Input to write custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                                       |
 
 ### Trace to metrics
 
@@ -183,7 +183,7 @@ You can choose one of three options:
 ### Provision the data source
 
 You can define and configure the Tempo data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning and available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
 #### Provisioning example
 
@@ -352,9 +352,9 @@ To open a query in Tempo with the span name of that row automatically set in the
 
 ## Link to a trace ID from logs
 
-You can link to Tempo traces from logs in Loki, Elasticsearch, Splunk and other logs data sources by configuring an internal link.
+You can link to Tempo traces from logs in Loki, Elasticsearch, Splunk, and other logs data sources by configuring an internal link.
 
-To configure this feature, see the [Derived fields]({{< relref "../loki#configure-derived-fields" >}}) section of the Loki data source docs, or the [Data links]({{< relref "../elasticsearch#data-links" >}}) section of the Elasticsearch or Splunk data source docs.
+To configure this feature, see the [Derived fields]({{< relref "../loki#configure-derived-fields" >}}) section of the Loki data source docs or the [Data links]({{< relref "../elasticsearch#data-links" >}}) section of the Elasticsearch or Splunk data source docs.
 
 ## Link to a trace ID from metrics
 
