@@ -187,6 +187,10 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float
 func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger log.Logger) {
 	if state.State == eval.Normal {
 		logger.Debug("Keeping state", "state", state.State)
+		if state.StartsAt.IsZero() {
+			// If this is the first evaluation, ensure StartsAt and EndsAt are correctly set to EvaluatedAt.
+			state.SetNormal(state.StateReason, result.EvaluatedAt, result.EvaluatedAt)
+		}
 	} else {
 		logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Normal)
 		// Normal states have the same start and end timestamps
@@ -259,21 +263,25 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 	}
 }
 
-func resultNoData(state *State, rule *models.AlertRule, result eval.Result, _ log.Logger) {
-	state.Error = result.Error
-
-	if state.StartsAt.IsZero() {
-		state.StartsAt = result.EvaluatedAt
-	}
-	state.EndsAt = nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-
+func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
 	switch rule.NoDataState {
 	case models.Alerting:
-		state.State = eval.Alerting
+		logger.Debug("Execution no data state is Alerting", "handler", "resultAlerting", "previous_handler", "resultNoData")
+		resultAlerting(state, rule, result, logger)
+		state.StateReason = models.NoData.String()
 	case models.NoData:
-		state.State = eval.NoData
+		if state.State == eval.NoData {
+			logger.Debug("Keeping state", "state", state.State)
+			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+		} else {
+			// This is the first occurrence of no data
+			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.NoData)
+			state.SetNoData("", result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+		}
 	case models.OK:
-		state.State = eval.Normal
+		logger.Debug("Execution no data state is Normal", "handler", "resultNormal", "previous_handler", "resultNoData")
+		resultNormal(state, rule, result, logger)
+		state.StateReason = models.NoData.String()
 	}
 }
 
