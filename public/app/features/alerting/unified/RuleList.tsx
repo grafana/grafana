@@ -15,6 +15,7 @@ import { CombinedRuleNamespace } from '../../../types/unified-alerting';
 import { LogMessages } from './Analytics';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
+import { INSTANCES_DISPLAY_LIMIT } from './components/rules/RuleDetails';
 import { RuleListErrors } from './components/rules/RuleListErrors';
 import { RuleListGroupView } from './components/rules/RuleListGroupView';
 import { RuleListStateView } from './components/rules/RuleListStateView';
@@ -33,6 +34,9 @@ const VIEWS = {
   groups: RuleListGroupView,
   state: RuleListStateView,
 };
+
+// make sure we ask for 1 more so we show the "show x more" button
+const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
 
 const RuleList = withErrorBoundary(
   () => {
@@ -71,13 +75,13 @@ const RuleList = withErrorBoundary(
     // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
     const [_, fetchRules] = useAsyncFn(async () => {
       if (!loading) {
-        await dispatch(fetchAllPromAndRulerRulesAction());
+        await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts: LIMIT_ALERTS }));
       }
     }, [loading]);
 
     // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
     useEffect(() => {
-      dispatch(fetchAllPromAndRulerRulesAction());
+      dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts: LIMIT_ALERTS }));
     }, [dispatch]);
     useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
 

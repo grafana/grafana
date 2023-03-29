@@ -13,14 +13,22 @@ export interface FetchPromRulesFilter {
 
 export interface PrometheusDataSourceConfig {
   dataSourceName: string;
+  limitAlerts?: number;
 }
 
 export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
-  const { dataSourceName } = dataSourceConfig;
+  const { dataSourceName, limitAlerts } = dataSourceConfig;
 
   return {
     rules: (filter?: FetchPromRulesFilter) => {
       const searchParams = new URLSearchParams();
+
+      // if we're fetching for Grafana managed rules, we should add a limit to the number of alert instances
+      // we do this because the response is large otherwise and we don't show all of them in the UI anyway.
+      if (dataSourceName === GRAFANA_RULES_SOURCE_NAME && limitAlerts) {
+        searchParams.set('limit_alerts', String(limitAlerts));
+      }
+
       const params = prepareRulesFilterQueryParams(searchParams, filter);
 
       return {
@@ -45,12 +53,16 @@ export function prepareRulesFilterQueryParams(
   return Object.fromEntries(params);
 }
 
-export async function fetchRules(dataSourceName: string, filter?: FetchPromRulesFilter): Promise<RuleNamespace[]> {
+export async function fetchRules(
+  dataSourceName: string,
+  filter?: FetchPromRulesFilter,
+  limitAlerts?: number
+): Promise<RuleNamespace[]> {
   if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
     throw new Error('Filtering by dashboard UID is only supported for Grafana Managed rules.');
   }
 
-  const { url, params } = prometheusUrlBuilder({ dataSourceName }).rules(filter);
+  const { url, params } = prometheusUrlBuilder({ dataSourceName, limitAlerts }).rules(filter);
 
   const response = await lastValueFrom(
     getBackendSrv().fetch<PromRulesResponse>({
