@@ -50,6 +50,26 @@ func ProvideService(
 
 }
 
+func wrapStatusInTokenReview(status authnV1.TokenReviewStatus) authnV1.TokenReview {
+	return authnV1.TokenReview{
+		Status: status,
+	}
+}
+
+func sendDeniedV1Response(errorMsg string) response.Response {
+	return response.JSON(http.StatusOK, wrapStatusInTokenReview(authnV1.TokenReviewStatus{
+		Authenticated: false,
+		Error:         errorMsg,
+	}))
+}
+
+func sendV1Response(userInfo authnV1.UserInfo) response.Response {
+	return response.JSON(http.StatusOK, wrapStatusInTokenReview(authnV1.TokenReviewStatus{
+		Authenticated: true,
+		User:          userInfo,
+	}))
+}
+
 func (api *K8sAuthnzAPIImpl) registerAPIEndpoints() {
 	api.RouteRegister.Post("/k8s/authn", api.authenticate)
 	api.RouteRegister.Post("/k8s/authz", api.authorize)
@@ -118,24 +138,4 @@ func (api *K8sAuthnzAPIImpl) authorize(c *contextmodel.ReqContext) response.Resp
 			Reason:  "specified user doesn't have Admin role",
 		},
 	})
-}
-
-func wrapStatusInTokenReview(status authnV1.TokenReviewStatus) authnV1.TokenReview {
-	return authnV1.TokenReview{
-		Status: status,
-	}
-}
-
-func sendDeniedV1Response(errorMsg string) response.Response {
-	return response.JSON(http.StatusOK, wrapStatusInTokenReview(authnV1.TokenReviewStatus{
-		Authenticated: false,
-		Error:         errorMsg,
-	}))
-}
-
-func sendV1Response(userInfo authnV1.UserInfo) response.Response {
-	return response.JSON(http.StatusOK, wrapStatusInTokenReview(authnV1.TokenReviewStatus{
-		Authenticated: true,
-		User:          userInfo,
-	}))
 }
