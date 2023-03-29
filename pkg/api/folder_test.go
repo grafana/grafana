@@ -386,7 +386,6 @@ func TestFolderMoveAPIEndpoint(t *testing.T) {
 			expectedCode: http.StatusOK,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
-				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("newParentUid")},
 			},
 		},
 		{
