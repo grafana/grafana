@@ -32,50 +32,57 @@ type renderJWT struct {
 }
 
 func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*RenderUser, bool) {
-	var (
-		from   string
-		exists bool
-		err    error
-		start  = time.Now()
-	)
+	var from string
+	start := time.Now()
 
-	defer func() {
-		success := strconv.FormatBool(err == nil && exists)
-		metrics.MRenderingUserLookupSummary.WithLabelValues(success, from).Observe(float64(time.Since(start)))
-	}()
+	var renderUser *RenderUser
 
-	if looksLikeJWT(key) && rs.features.IsEnabled(featuremgmt.FlagRenderingOverJWT) {
+	if looksLikeJWT(key) && rs.features.IsEnabled(featuremgmt.FlagRenderAuthJWT) {
 		from = "jwt"
-		claims := new(renderJWT)
-		var tkn *jwt.Token
-		tkn, err = jwt.ParseWithClaims(key, claims, func(_ *jwt.Token) (interface{}, error) {
-			return []byte(rs.Cfg.RendererAuthToken), nil
-		})
-
-		if err != nil || !tkn.Valid {
-			rs.log.Error("Could not get render user from JWT", "err", err)
-			return nil, exists
-		}
-
-		exists = true
-		return claims.RenderUser, exists
+		renderUser = rs.getRenderUserFromJWT(key)
+	} else {
+		from = "cache"
+		renderUser = rs.getRenderUserFromCache(ctx, key)
 	}
 
-	from = "cache"
-	var val []byte
-	val, err = rs.RemoteCacheService.Get(ctx, fmt.Sprintf(renderKeyPrefix, key))
+	found := renderUser != nil
+	success := strconv.FormatBool(found)
+	metrics.MRenderingUserLookupSummary.WithLabelValues(success, from).Observe(float64(time.Since(start)))
+
+	return renderUser, found
+}
+
+func (rs *RenderingService) getRenderUserFromJWT(key string) *RenderUser {
+	claims := new(renderJWT)
+	tkn, err := jwt.ParseWithClaims(key, claims, func(_ *jwt.Token) (interface{}, error) {
+		return []byte(rs.Cfg.RendererAuthToken), nil
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS512.Alg()}))
+
+	if err != nil || !tkn.Valid {
+		rs.log.Error("Could not get render user from JWT", "err", err)
+		return nil
+	}
+
+	return claims.RenderUser
+}
+
+func (rs *RenderingService) getRenderUserFromCache(ctx context.Context, key string) *RenderUser {
+	val, err := rs.RemoteCacheService.Get(ctx, fmt.Sprintf(renderKeyPrefix, key))
 	if err != nil {
-		rs.log.Error("Failed to get render key from cache", "error", err)
+		rs.log.Error("Could not get render user from remote cache", "err", err)
+		return nil
 	}
 
-	ru := &RenderUser{}
+	ru := new(RenderUser)
 	buf := bytes.NewBuffer(val)
+
 	err = gob.NewDecoder(buf).Decode(&ru)
 	if err != nil {
-		return nil, false
+		rs.log.Error("Could not decode render user from remote cache", "err", err)
+		return nil
 	}
 
-	return ru, true
+	return ru
 }
 
 func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, renderKey string, expiry time.Duration) error {
@@ -177,17 +184,11 @@ type jwtRenderKeyProvider struct {
 
 func (j *jwtRenderKeyProvider) get(_ context.Context, opts AuthOpts) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, j.buildJWTClaims(opts))
-
-	signed, err := token.SignedString(j.authToken)
-	if err != nil {
-		return "", err
-	}
-
-	return signed, nil
+	return token.SignedString(j.authToken)
 }
 
 func (j *jwtRenderKeyProvider) buildJWTClaims(opts AuthOpts) renderJWT {
-	claims := renderJWT{
+	return renderJWT{
 		RenderUser: &RenderUser{
 			OrgID:   opts.OrgID,
 			UserID:  opts.UserID,
@@ -197,7 +198,6 @@ func (j *jwtRenderKeyProvider) buildJWTClaims(opts AuthOpts) renderJWT {
 			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(j.keyExpiry)),
 		},
 	}
-	return claims
 }
 
 func (j *jwtRenderKeyProvider) afterRequest(_ context.Context, _ AuthOpts, _ string) {

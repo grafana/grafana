@@ -46,10 +46,7 @@ const (
 	InvalidAPIKey = "invalid API key"
 )
 
-const ServiceName = "ContextHandler"
-
 func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtService jwt.JWTService,
-func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtService models.JWTService,
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore db.DB,
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
