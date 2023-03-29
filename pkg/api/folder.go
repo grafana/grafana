@@ -232,7 +232,6 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 			return response.Err(err)
 		}
 		return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, theFolder))
-
 	}
 	result := map[string]string{}
 	result["message"] = "To use this service, you need to activate nested folder feature."
