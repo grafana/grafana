@@ -48,7 +48,6 @@ export const SearchItem = ({ item, isSelected, editable, onToggleChecked, onTagS
   const handleCheckboxClick = useCallback(
     (ev: React.MouseEvent) => {
       ev.stopPropagation();
-      ev.preventDefault();
 
       if (onToggleChecked) {
         onToggleChecked(item);
@@ -68,38 +67,38 @@ export const SearchItem = ({ item, isSelected, editable, onToggleChecked, onTagS
   );
 
   return (
-    <Card
-      data-testid={selectors.dashboardItem(item.title)}
-      href={item.url}
-      style={{ minHeight: SEARCH_ITEM_HEIGHT }}
-      className={styles.container}
-      onClick={onClickItem}
-    >
-      <Card.Heading>{item.title}</Card.Heading>
+    <div className={styles.cardContainer}>
+      <SearchCheckbox
+        aria-label="Select dashboard"
+        editable={editable}
+        checked={isSelected}
+        onClick={handleCheckboxClick}
+      />
 
-      <Card.Figure align={'center'} className={styles.checkbox}>
-        <SearchCheckbox
-          aria-label="Select dashboard"
-          editable={editable}
-          checked={isSelected}
-          onClick={handleCheckboxClick}
-        />
-      </Card.Figure>
+      <Card
+        className={styles.card}
+        data-testid={selectors.dashboardItem(item.title)}
+        href={item.url}
+        style={{ minHeight: SEARCH_ITEM_HEIGHT }}
+        onClick={onClickItem}
+      >
+        <Card.Heading>{item.title}</Card.Heading>
 
-      <Card.Meta separator={''}>
-        <span className={styles.metaContainer}>{description}</span>
+        <Card.Meta separator={''}>
+          <span className={styles.metaContainer}>{description}</span>
 
-        {item.sortMetaName && (
-          <span className={styles.metaContainer}>
-            <Icon name={getIconFromMeta(item.sortMetaName)} />
-            {item.sortMeta} {item.sortMetaName}
-          </span>
-        )}
-      </Card.Meta>
-      <Card.Tags>
-        <TagList tags={item.tags ?? []} onClick={tagSelected} getAriaLabel={(tag) => `Filter by tag "${tag}"`} />
-      </Card.Tags>
-    </Card>
+          {item.sortMetaName && (
+            <span className={styles.metaContainer}>
+              <Icon name={getIconFromMeta(item.sortMetaName)} />
+              {item.sortMeta} {item.sortMetaName}
+            </span>
+          )}
+        </Card.Meta>
+        <Card.Tags>
+          <TagList tags={item.tags ?? []} onClick={tagSelected} getAriaLabel={(tag) => `Filter by tag "${tag}"`} />
+        </Card.Tags>
+      </Card>
+    </div>
   );
 };
 
@@ -116,9 +115,15 @@ function kindName(kind: DashboardViewItem['kind']) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
+    cardContainer: css`
+      display: flex;
+      list-style: none;
+      align-items: center;
       margin-bottom: ${theme.spacing(0.75)};
+    `,
+    card: css`
       padding: ${theme.spacing(1)} ${theme.spacing(2)};
+      margin-bottom: 0;
     `,
     metaContainer: css`
       display: flex;
@@ -128,9 +133,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       svg {
         margin-right: ${theme.spacing(0.5)};
       }
-    `,
-    checkbox: css`
-      margin-right: 0;
     `,
   };
 };
