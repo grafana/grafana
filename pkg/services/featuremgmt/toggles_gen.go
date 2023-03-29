@@ -282,4 +282,16 @@ const (
 	// FlagPrometheusDataplane
 	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
 	FlagPrometheusDataplane = "prometheusDataplane"
+
+	// FlagAlertStateHistoryLokiSecondary
+	// Enable alert state history to be written to an external loki instance in addition to Grafana annotations.
+	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
+
+	// FlagAlertStateHistoryLokiPrimary
+	// Enable usage of a remote Loki instance as the primary source for state history reads.
+	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
+
+	// FlagAlertStateHistoryLokiOnly
+	// Allow Grafana annotations emitted by alerting to be disabled completely when remote Loki is in place.
+	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
 )
