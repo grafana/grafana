@@ -13,7 +13,7 @@ import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
-import { usePreviewPayloadMutation } from '../../api/templateApi';
+import { TemplatePreviewResult, usePreviewPayloadMutation } from '../../api/templateApi';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { makeAMLink } from '../../utils/misc';
@@ -26,18 +26,18 @@ import { TemplateDataDocs } from './TemplateDataDocs';
 import { TemplateEditor } from './TemplateEditor';
 import { snippets } from './editor/templateDataSuggestions';
 
-export interface Values {
+export interface TemplateFormValues {
   name: string;
   content: string;
 }
 
-const defaults: Values = Object.freeze({
+export const defaults: TemplateFormValues = Object.freeze({
   name: '',
   content: '',
 });
 
 interface Props {
-  existing?: Values;
+  existing?: TemplateFormValues;
   config: AlertManagerCortexConfig;
   alertManagerSourceName: string;
   provenance?: string;
@@ -63,7 +63,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   const [isPayloadEditorOpen, toggleIsPayloadEditorOpen] = useToggle(false);
   const [isTemplateDataDocsOpen, toggleTemplateDataDocsOpen] = useToggle(false);
 
-  const submit = (values: Values) => {
+  const submit = (values: TemplateFormValues) => {
     // wrap content in "define" if it's not already wrapped, in case user did not do it/
     // it's not obvious that this is needed for template to work
     const content = ensureDefine(values.name, values.content);
@@ -103,7 +103,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     );
   };
 
-  const formApi = useForm<Values>({
+  const formApi = useForm<TemplateFormValues>({
     mode: 'onSubmit',
     defaultValues: existing ?? defaults,
   });
@@ -260,6 +260,10 @@ function ExpandableSection({ isOpen, toggleOpen, children, title }: ExpandableSe
     </Stack>
   );
 }
+
+function getResultsString(results: TemplatePreviewResult[]) {
+  return results.map((result: TemplatePreviewResult) => `Template: ${result.name}\n${result.text}`).join(`\n\n`);
+}
 export const PREVIEW_NOT_AVAILABLE = 'Preview is not available';
 export function TemplatePreview({
   payload,
@@ -272,19 +276,18 @@ export function TemplatePreview({
 }) {
   const styles = useStyles2(getStyles);
 
-  const { watch } = useFormContext<Values>();
+  const { watch } = useFormContext<TemplateFormValues>();
 
   const templateContent = watch('content');
-  const [trigger, { data }] = usePreviewPayloadMutation();
+  const [trigger, { data, isError: isPreviewError }] = usePreviewPayloadMutation();
   const previewResults = data?.results;
-  const previewError = data?.error;
+  const previewError = isPreviewError ? data?.error ?? PREVIEW_NOT_AVAILABLE : undefined;
 
-  const errorToRender: boolean = Boolean(previewError) || Boolean(payloadFormatError);
-  const errorString = payloadFormatError || previewError;
-  const previewString = !errorToRender && previewResults ? previewResults?.toString() : '';
-  //TODO: render previewResults array ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  const hasError: boolean = isPreviewError || Boolean(payloadFormatError);
+  const errorToRender = payloadFormatError || previewError;
+  const previewResultsToRender = previewResults ? getResultsString(previewResults) : '';
 
-  const previewToRender = errorToRender ? errorString : previewString ?? PREVIEW_NOT_AVAILABLE;
+  const previewToRender = hasError ? errorToRender : previewResultsToRender ?? PREVIEW_NOT_AVAILABLE;
 
   const onPreview = () => {
     try {
@@ -311,6 +314,7 @@ export function TemplatePreview({
           className={styles.preview.textArea}
           rows={10}
           cols={50}
+          data-testid="payloadJSON"
         />
       </Stack>
     </Stack>

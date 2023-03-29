@@ -38,7 +38,7 @@ export function PayloadEditor({
   return (
     <Stack direction="row" alignItems="center">
       <div>
-        <Stack direction="column">
+        <Stack direction="column" gap={1}>
           <h5> Payload</h5>
           <TextArea
             required={true}
@@ -51,8 +51,10 @@ export function PayloadEditor({
             rows={10}
             cols={50}
           />
+          <Button onClick={onReset} className={styles.button}>
+            {RESET_TO_DEFAULT}
+          </Button>
         </Stack>
-        <Button onClick={onReset}>{RESET_TO_DEFAULT}</Button>
       </div>
     </Stack>
   );
@@ -62,5 +64,9 @@ const getStyles = () => ({
   jsonEditor: css`
     width: 605px;
     height: 291px;
+  `,
+  button: css`
+    flex: none;
+    width: fit-content;
   `,
 });
