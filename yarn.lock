@@ -5279,10 +5279,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/google-sdk@npm:0.0.4":
-  version: 0.0.4
-  resolution: "@grafana/google-sdk@npm:0.0.4"
-  checksum: f8a1abfba7c7e41d197ff576a4afa1216e157e0803717f3d836e4c5050d173582757e195ff44f17a31946482f5bb32941bc9f6d62ea1fab84edfeaccd065cb6d
+"@grafana/google-sdk@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@grafana/google-sdk@npm:0.1.1"
+  peerDependencies:
+    "@grafana/data": 9.4.1
+    "@grafana/ui": 9.4.1
+    react: 17.0.2
+    react-dom: 17.0.2
+  checksum: a49e8b09eed421ddaed0e32ef5e7bed55d2342550cdf6c0b59b60f4a038ccb3a31566ca55ad0e22c3a6c8ad145d534c31de949df07ec6eb4f4c5c6e4ce778cc7
   languageName: node
   linkType: hard
 
@@ -22138,7 +22143,7 @@ __metadata:
     "@grafana/experimental": 1.1.0
     "@grafana/faro-core": 1.0.2
     "@grafana/faro-web-sdk": 1.0.2
-    "@grafana/google-sdk": 0.0.4
+    "@grafana/google-sdk": 0.1.1
     "@grafana/lezer-logql": 0.1.2
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"

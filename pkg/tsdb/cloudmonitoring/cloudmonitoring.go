@@ -131,7 +131,7 @@ type Service struct {
 	resourceHandler backend.CallResourceHandler
 
 	// mocked in tests
-	gceDefaultProjectGetter func(ctx context.Context) (string, error)
+	gceDefaultProjectGetter func(ctx context.Context, scope string) (string, error)
 }
 
 type datasourceInfo struct {
@@ -143,8 +143,7 @@ type datasourceInfo struct {
 	clientEmail        string
 	tokenUri           string
 	services           map[string]datasourceService
-
-	decryptedSecureJSONData map[string]string
+	privateKey         string
 }
 
 type datasourceJSONData struct {
@@ -172,15 +171,19 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		dsInfo := &datasourceInfo{
-			id:                      settings.ID,
-			updated:                 settings.Updated,
-			url:                     settings.URL,
-			authenticationType:      jsonData.AuthenticationType,
-			defaultProject:          jsonData.DefaultProject,
-			clientEmail:             jsonData.ClientEmail,
-			tokenUri:                jsonData.TokenURI,
-			decryptedSecureJSONData: settings.DecryptedSecureJSONData,
-			services:                map[string]datasourceService{},
+			id:                 settings.ID,
+			updated:            settings.Updated,
+			url:                settings.URL,
+			authenticationType: jsonData.AuthenticationType,
+			defaultProject:     jsonData.DefaultProject,
+			clientEmail:        jsonData.ClientEmail,
+			tokenUri:           jsonData.TokenURI,
+			services:           map[string]datasourceService{},
+		}
+
+		dsInfo.privateKey, err = utils.GetPrivateKey(&settings)
+		if err != nil {
+			return nil, err
 		}
 
 		opts, err := settings.HTTPClientOptions()
@@ -571,7 +574,7 @@ func (s *Service) ensureProject(ctx context.Context, dsInfo datasourceInfo, proj
 
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
 	if dsInfo.authenticationType == gceAuthentication {
-		return s.gceDefaultProjectGetter(ctx)
+		return s.gceDefaultProjectGetter(ctx, cloudMonitorScope)
 	}
 	return dsInfo.defaultProject, nil
 }
