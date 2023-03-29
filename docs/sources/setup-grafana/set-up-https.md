@@ -43,7 +43,7 @@ You can use one of two methods to obtain a certificate and a key. The faster and
 
 This section shows you how to use `openssl` tooling to generate all necessary files from the command line.  
 
-1. Run the following command to generate a 2048-bit RSA private key, which will be used to decrypt traffic:
+1. Run the following command to generate a 2048-bit RSA private key, which is used to decrypt traffic:
    
    ```bash
    $ sudo openssl genrsa -out /etc/grafana/grafana.key 2048
