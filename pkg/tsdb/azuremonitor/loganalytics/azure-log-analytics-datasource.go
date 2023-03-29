@@ -215,13 +215,11 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 	}
 
 	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) && query.ResultFormat == string(dataquery.ResultFormatTrace) {
-		if frame.Meta == nil {
-			frame.Meta = &data.FrameMeta{
-				PreferredVisualization: "trace",
-			}
-		} else {
-			frame.Meta.PreferredVisualization = "trace"
-		}
+		frame.Meta.PreferredVisualization = "trace"
+	}
+
+	if query.ResultFormat == string(dataquery.ResultFormatTable) {
+		frame.Meta.PreferredVisualization = "table"
 	}
 
 	var queryUrl string

@@ -15,6 +15,7 @@ const FormatAsField = ({
   onQueryChange,
   inputId,
   options: formatOptions,
+  defaultValue,
 }: FormatAsFieldProps) => {
   const options = useMemo(() => [...formatOptions, variableOptionGroup], [variableOptionGroup, formatOptions]);
 
@@ -35,7 +36,7 @@ const FormatAsField = ({
     <Field label="Format as" data-testid={selectors.components.queryEditor.logsQueryEditor.formatSelection.input}>
       <Select
         inputId={`${inputId}-format-as-field`}
-        value={query.azureLogAnalytics?.resultFormat}
+        value={query.azureLogAnalytics?.resultFormat ?? defaultValue}
         onChange={handleChange}
         options={options}
         width={38}

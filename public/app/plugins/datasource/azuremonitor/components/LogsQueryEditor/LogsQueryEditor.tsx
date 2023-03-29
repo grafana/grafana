@@ -104,6 +104,7 @@ const LogsQueryEditor = ({
                   { label: 'Time series', value: ResultFormat.TimeSeries },
                   { label: 'Table', value: ResultFormat.Table },
                 ]}
+                defaultValue={ResultFormat.Table}
               />
             )}
 

@@ -197,6 +197,7 @@ const TracesQueryEditor = ({
                 { label: 'Table', value: ResultFormat.Table },
                 { label: 'Trace', value: ResultFormat.Trace },
               ]}
+              defaultValue={ResultFormat.Table}
             />
           </EditorFieldGroup>
         </EditorRow>

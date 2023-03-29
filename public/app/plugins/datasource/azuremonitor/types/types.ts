@@ -174,6 +174,7 @@ export interface AzureQueryEditorFieldProps {
 export interface FormatAsFieldProps extends AzureQueryEditorFieldProps {
   inputId: string;
   options: Array<SelectableValue<ResultFormat>>;
+  defaultValue: ResultFormat;
 }
 
 export interface AzureResourceSummaryItem {
