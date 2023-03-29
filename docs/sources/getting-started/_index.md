@@ -36,6 +36,9 @@ You can [browse data source plugins](https://grafana.com/grafana/plugins/?type=d
 
 ## Step 3. Create your first dashboard
 
-Once you have connected Grafana with one or more data sources, you can create a dashboard to visualize data from those data sources. This section provides guidance on how build your first dashboard after you have installed Grafana. It also provides step-by-step instructions on how to add a Prometheus, InfluxDB, or an MS SQL Server data source. Refer to [Data sources]({{< relref "../administration/data-source-management/" >}}) for a list of all supported data sources.
+Once you have connected Grafana with one or more data sources, you can create a dashboard to visualize data from those data sources.
+This section provides guidance on how build your first dashboard after you have installed Grafana.
+It also provides step-by-step instructions on how to add a Prometheus, InfluxDB, or an MS SQL Server data source.
+Refer to [Data sources]({{< relref "../administration/data-source-management/" >}}) for a list of all supported data sources.
 
 {{< section >}}
