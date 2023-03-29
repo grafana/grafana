@@ -171,6 +171,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 	tracer.Inject(ctx, req.Header, span)
 
 	logger.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
+	//nolint:bodyclose // fixed in main
 	res, err := client.Do(req)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)

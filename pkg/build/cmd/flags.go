@@ -41,6 +41,7 @@ var (
 		Name:  "dry-run",
 		Usage: "Only simulate actions",
 	}
+	//nolint:unused
 	gcpKeyFlag = cli.StringFlag{
 		Name:     "gcp-key",
 		Usage:    "Google Cloud Platform key file",

@@ -21,6 +21,7 @@ import (
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) doRequestFilterPage(ctx context.Context, r *http.Request, dsInfo datasourceInfo) (cloudMonitoringResponse, error) {
 	r.URL.RawQuery = timeSeriesFilter.Params.Encode()
 	r = r.WithContext(ctx)
+	//nolint:bodyclose // fixed in main
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
 	if err != nil {
 		return cloudMonitoringResponse{}, err

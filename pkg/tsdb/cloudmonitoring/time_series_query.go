@@ -42,6 +42,7 @@ func doRequestQueryPage(log log.Logger, requestBody map[string]interface{}, r *h
 		return cloudMonitoringResponse{}, err
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(buf))
+	//nolint:bodyclose // fixed in main
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
