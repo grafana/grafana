@@ -46,8 +46,9 @@ export const fetchDBClustersAction = createAsyncThunk(
       (async () => {
         thunkAPI.dispatch(setDBClustersLoading());
         const requests = args.kubernetes.map((k, idx) => DBClusterService.getDBClusters(k, args.tokens[idx]));
-        const promiseResults = await Promise.all(requests);
-        const dbClusters = formatDBClusters(promiseResults, args.kubernetes);
+        const promises = await Promise.all(requests);
+
+        const dbClusters = formatDBClusters(promises, args.kubernetes);
         thunkAPI.dispatch(setDBClusters(dbClusters));
       })()
     )

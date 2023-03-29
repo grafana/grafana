@@ -5,7 +5,7 @@ import { withAppEvents } from '../../../../../../features/alerting/unified/utils
 import { KubernetesService } from '../../../../../dbaas/components/Kubernetes/Kubernetes.service';
 import { NewKubernetesCluster } from '../../../../../dbaas/components/Kubernetes/Kubernetes.types';
 import { SETTINGS_TIMEOUT } from '../../../constants';
-import { fetchKubernetesAction, updateSettingsAction } from '../../index';
+import { updateSettingsAction } from '../../index';
 
 import { PerconaK8SClusterState } from './k8sCluster.types';
 
@@ -54,7 +54,6 @@ export const addKubernetesAction = createAsyncThunk(
       .catch(() => {
         thunkAPI.dispatch(setAddK8SClusterResult('error'));
       });
-    await thunkAPI.dispatch(fetchKubernetesAction());
   }
 );
 

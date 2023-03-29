@@ -13,16 +13,13 @@ import { TechnicalPreview } from 'app/percona/shared/components/Elements/Technic
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { useCatchCancellationError } from 'app/percona/shared/components/hooks/catchCancellationError';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
-import { deleteKubernetesAction, fetchKubernetesAction } from 'app/percona/shared/core/reducers';
-import {
-  getAddKubernetes,
-  getDeleteKubernetes,
-  getKubernetes as getKubernetesSelector,
-  getPerconaSettingFlag,
-} from 'app/percona/shared/core/selectors';
+import { deleteKubernetesAction } from 'app/percona/shared/core/reducers';
+import { fetchK8sListAction } from 'app/percona/shared/core/reducers/dbaas/k8sClusterList/k8sClusterList';
+import { getAddKubernetes, getDeleteKubernetes, getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { useSelector } from 'app/types';
 
 import { useAppDispatch } from '../../../../store/store';
+import { useKubernetesList } from '../../hooks/useKubernetesList';
 import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
 
 import { clusterActionsRender } from './ColumnRenderers/ColumnRenderers';
@@ -57,7 +54,7 @@ export const KubernetesInventory: FC<KubernetesInventoryProps> = ({ setMode }) =
   const [operatorToUpdate, setOperatorToUpdate] = useState<OperatorToUpdate | null>(null);
   const [updateOperatorModalVisible, setUpdateOperatorModalVisible] = useState(false);
   const [generateToken] = useCancelToken();
-  const { result: kubernetes, loading: kubernetesLoading } = useSelector(getKubernetesSelector);
+  const [kubernetes, kubernetesLoading] = useKubernetesList();
   const { loading: deleteKubernetesLoading } = useSelector(getDeleteKubernetes);
   const { loading: addKubernetesLoading } = useSelector(getAddKubernetes);
   const [update, setUpdate] = useState(false);
@@ -82,9 +79,11 @@ export const KubernetesInventory: FC<KubernetesInventoryProps> = ({ setMode }) =
     async (triggerLoading = true) => {
       await catchFromAsyncThunkAction(
         appDispatch(
-          fetchKubernetesAction({
-            kubernetes: generateToken(GET_KUBERNETES_CANCEL_TOKEN),
-            operator: generateToken(CHECK_OPERATOR_UPDATE_CANCEL_TOKEN),
+          fetchK8sListAction({
+            tokens: {
+              kubernetes: generateToken(GET_KUBERNETES_CANCEL_TOKEN),
+              operator: generateToken(CHECK_OPERATOR_UPDATE_CANCEL_TOKEN),
+            },
           })
         )
       );
@@ -141,16 +140,6 @@ export const KubernetesInventory: FC<KubernetesInventoryProps> = ({ setMode }) =
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const featureSelector = useCallback(getPerconaSettingFlag('dbaasEnabled'), []);
-
-  useEffect(() => {
-    appDispatch(
-      fetchKubernetesAction({
-        kubernetes: generateToken(GET_KUBERNETES_CANCEL_TOKEN),
-        operator: generateToken(CHECK_OPERATOR_UPDATE_CANCEL_TOKEN),
-      })
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;

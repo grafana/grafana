@@ -3,18 +3,8 @@ import { combineReducers, createAsyncThunk, createSlice, PayloadAction } from '@
 import { CancelToken } from 'axios';
 
 import { createAsyncSlice, withAppEvents, withSerializedError } from 'app/features/alerting/unified/utils/redux';
-import { OPERATOR_COMPONENT_TO_UPDATE_MAP } from 'app/percona/dbaas/components/Kubernetes/Kubernetes.constants';
 import { KubernetesService } from 'app/percona/dbaas/components/Kubernetes/Kubernetes.service';
-import {
-  CheckOperatorUpdateAPI,
-  ComponentToUpdate,
-  Kubernetes,
-  KubernetesAPI,
-  KubernetesListAPI,
-  Operator,
-  OperatorsList,
-} from 'app/percona/dbaas/components/Kubernetes/Kubernetes.types';
-import { KubernetesClusterStatus } from 'app/percona/dbaas/components/Kubernetes/KubernetesClusterStatus/KubernetesClusterStatus.types';
+import { ComponentToUpdate, Kubernetes } from 'app/percona/dbaas/components/Kubernetes/Kubernetes.types';
 import { AlertRuleTemplateService } from 'app/percona/integrated-alerting/components/AlertRuleTemplate/AlertRuleTemplate.service';
 import { TemplatesList } from 'app/percona/integrated-alerting/components/AlertRuleTemplate/AlertRuleTemplate.types';
 import { SettingsService } from 'app/percona/settings/Settings.service';
@@ -30,6 +20,7 @@ import perconaAddDBCluster from './dbaas/addDBCluster/addDBCluster';
 import perconaDBClustersReducer from './dbaas/dbClusters/dbClusters';
 import perconaDBaaSReducer from './dbaas/dbaas';
 import perconaK8SCluster from './dbaas/k8sCluster/k8sCluster';
+import perconaK8SClusterListReducer, { fetchK8sListAction } from './dbaas/k8sClusterList/k8sClusterList';
 import perconaUpdateDBCluster from './dbaas/updateDBCluster/updateDBCluster';
 import rolesReducers from './roles/roles';
 import servicesReducer from './services';
@@ -130,61 +121,13 @@ export const updateSettingsAction = createAsyncThunk(
     )
 );
 
-const toKubernetesListModel = (
-  response: KubernetesListAPI,
-  checkUpdateResponse: CheckOperatorUpdateAPI
-): Kubernetes[] => (response.kubernetes_clusters ?? []).map(toKubernetesModel(checkUpdateResponse));
-
-const toKubernetesModel =
-  (checkUpdateResponse: CheckOperatorUpdateAPI) =>
-  ({ kubernetes_cluster_name: kubernetesClusterName, operators, status }: KubernetesAPI): Kubernetes => ({
-    kubernetesClusterName,
-    operators: toModelOperators(kubernetesClusterName, operators, checkUpdateResponse),
-    status: status as KubernetesClusterStatus,
-  });
-
-const toModelOperators = (
-  kubernetesClusterName: string,
-  operators: OperatorsList,
-  { cluster_to_components }: CheckOperatorUpdateAPI
-): OperatorsList => {
-  const modelOperators = {} as OperatorsList;
-  const componentToUpdate = cluster_to_components
-    ? cluster_to_components[kubernetesClusterName]?.component_to_update_information
-    : undefined;
-
-  Object.entries(operators).forEach(([operatorKey, operator]: [string, Operator]) => {
-    const component = OPERATOR_COMPONENT_TO_UPDATE_MAP[operatorKey as keyof OperatorsList];
-
-    modelOperators[operatorKey as keyof OperatorsList] = {
-      availableVersion:
-        componentToUpdate && componentToUpdate[component] ? componentToUpdate[component].available_version : undefined,
-      ...operator,
-    };
-  });
-
-  return modelOperators;
-};
-
-export const fetchKubernetesAction = createAsyncThunk(
-  'percona/fetchKubernetes',
-  async (tokens?: { kubernetes?: CancelToken; operator?: CancelToken }): Promise<Kubernetes[]> => {
-    const [results, checkUpdateResults] = await Promise.all([
-      KubernetesService.getKubernetes(tokens?.kubernetes),
-      KubernetesService.checkForOperatorUpdate(tokens?.operator),
-    ]);
-
-    return toKubernetesListModel(results, checkUpdateResults);
-  }
-);
-
 export const deleteKubernetesAction = createAsyncThunk(
   'percona/deleteKubernetes',
   async (args: { kubernetesToDelete: Kubernetes; force?: boolean }, thunkAPI): Promise<void> => {
     await withAppEvents(KubernetesService.deleteKubernetes(args.kubernetesToDelete, args.force), {
       successMessage: 'Cluster successfully unregistered',
     });
-    await thunkAPI.dispatch(fetchKubernetesAction());
+    await thunkAPI.dispatch(fetchK8sListAction({}));
   }
 );
 
@@ -195,7 +138,7 @@ export const instalKuberneteslOperatorAction = createAsyncThunk(
     thunkAPI
   ): Promise<void> => {
     await KubernetesService.installOperator(args.kubernetesClusterName, args.operatorType, args.availableVersion);
-    await thunkAPI.dispatch(fetchKubernetesAction());
+    await thunkAPI.dispatch(fetchK8sListAction({}));
   }
 );
 
@@ -270,7 +213,6 @@ export const fetchTemplatesAction = createAsyncThunk(
     )
 );
 
-const kubernetesReducer = createAsyncSlice('kubernetes', fetchKubernetesAction).reducer;
 const deleteKubernetesReducer = createAsyncSlice('deleteKubernetes', deleteKubernetesAction).reducer;
 const installKubernetesOperatorReducer = createAsyncSlice(
   'instalKuberneteslOperator',
@@ -286,7 +228,7 @@ export default {
     updateSettings: updateSettingsReducer,
     user: perconaUserReducers,
     dbaas: perconaDBaaSReducer,
-    kubernetes: kubernetesReducer,
+    kubernetes: perconaK8SClusterListReducer,
     deleteKubernetes: deleteKubernetesReducer,
     addKubernetes: perconaK8SCluster,
     addDBCluster: perconaAddDBCluster,

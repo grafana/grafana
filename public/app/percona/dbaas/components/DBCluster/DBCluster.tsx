@@ -4,9 +4,10 @@ import { CancelToken } from 'axios';
 import React, { FC, useCallback, useMemo, useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 
+import { AppEvents } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
-import { Messages } from 'app/percona/dbaas/DBaaS.messages';
+import { Messages as DBaaSMessages } from 'app/percona/dbaas/DBaaS.messages';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { Table } from 'app/percona/shared/components/Elements/Table';
 import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
@@ -17,11 +18,13 @@ import { getDBaaS, getPerconaDBClusters, getPerconaSettingFlag } from 'app/perco
 import { useAppDispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
 
+import { appEvents } from '../../../../core/core';
 import { fetchDBClustersAction } from '../../../shared/core/reducers/dbaas/dbClusters/dbClusters';
 import { selectDBCluster, selectKubernetesCluster } from '../../../shared/core/reducers/dbaas/dbaas';
 import { useUpdateOfKubernetesList } from '../../hooks/useKubernetesList';
 import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
 import { isKubernetesListUnavailable } from '../Kubernetes/Kubernetes.utils';
+import { KubernetesClusterStatus } from '../Kubernetes/KubernetesClusterStatus/KubernetesClusterStatus.types';
 
 import {
   clusterStatusRender,
@@ -32,6 +35,7 @@ import {
   clusterActionsRender,
 } from './ColumnRenderers/ColumnRenderers';
 import { GET_CLUSTERS_CANCEL_TOKEN } from './DBCluster.constants';
+import { Messages } from './DBCluster.messages';
 import { getStyles } from './DBCluster.styles';
 import { DBClusterLogsModal } from './DBClusterLogsModal/DBClusterLogsModal';
 import { DeleteDBClusterModal } from './DeleteDBClusterModal/DeleteDBClusterModal';
@@ -58,9 +62,35 @@ export const DBCluster: FC = () => {
   const [loading, setLoading] = useState(kubernetesLoading);
   const addDisabled = kubernetes?.length === 0 || isKubernetesListUnavailable(kubernetes) || loading;
 
+  const unAvailableK8s = useMemo(
+    () =>
+      kubernetes.filter(
+        (k) => k.status === KubernetesClusterStatus.invalid || k.status === KubernetesClusterStatus.unavailable
+      ),
+    [kubernetes]
+  );
+
+  const availableK8s = useMemo(
+    () =>
+      kubernetes.filter(
+        (k) => k.status !== KubernetesClusterStatus.invalid && k.status !== KubernetesClusterStatus.unavailable
+      ),
+    [kubernetes]
+  );
+
+  useEffect(() => {
+    if (unAvailableK8s.length) {
+      unAvailableK8s.forEach((k) => {
+        appEvents.emit(AppEvents.alertError, [
+          Messages.clusterUnavailable(k.kubernetesClusterName, DBaaSMessages.kubernetes.kubernetesStatus[k.status]),
+        ]);
+      });
+    }
+  }, [unAvailableK8s]);
+
   const getDBClusters = useCallback(
     async (triggerLoading = true) => {
-      if (!kubernetes.length) {
+      if (!availableK8s.length) {
         return;
       }
 
@@ -68,12 +98,13 @@ export const DBCluster: FC = () => {
         setLoading(true);
       }
 
-      const tokens: CancelToken[] = kubernetes.map((k) =>
+      const tokens: CancelToken[] = availableK8s.map((k) =>
         generateToken(`${GET_CLUSTERS_CANCEL_TOKEN}-${k.kubernetesClusterName}`)
       );
 
-      const result = await catchFromAsyncThunkAction(dispatch(fetchDBClustersAction({ kubernetes, tokens })));
-
+      const result = await catchFromAsyncThunkAction(
+        dispatch(fetchDBClustersAction({ kubernetes: availableK8s, tokens }))
+      );
       // undefined means request was cancelled
       if (result === undefined) {
         return;
@@ -82,35 +113,35 @@ export const DBCluster: FC = () => {
       setLoading(false);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [kubernetes]
+    [availableK8s]
   );
 
   const columns = useMemo(
     () => [
       {
-        Header: Messages.dbcluster.table.nameColumn,
+        Header: DBaaSMessages.dbcluster.table.nameColumn,
         accessor: clusterNameRender,
       },
       {
-        Header: Messages.dbcluster.table.databaseTypeColumn,
+        Header: DBaaSMessages.dbcluster.table.databaseTypeColumn,
         accessor: databaseTypeRender,
       },
       {
-        Header: Messages.dbcluster.table.connectionColumn,
+        Header: DBaaSMessages.dbcluster.table.connectionColumn,
         accessor: connectionRender,
       },
       {
-        Header: Messages.dbcluster.table.clusterParametersColumn,
+        Header: DBaaSMessages.dbcluster.table.clusterParametersColumn,
         accessor: parametersRender,
       },
       {
-        Header: Messages.dbcluster.table.clusterStatusColumn,
+        Header: DBaaSMessages.dbcluster.table.clusterStatusColumn,
         accessor: clusterStatusRender({
           setLogsModalVisible,
         }),
       },
       {
-        Header: Messages.dbcluster.table.actionsColumn,
+        Header: DBaaSMessages.dbcluster.table.actionsColumn,
         accessor: clusterActionsRender({
           setDeleteModalVisible,
           setLogsModalVisible,
@@ -125,7 +156,7 @@ export const DBCluster: FC = () => {
   const AddNewClusterButton = useCallback(
     () => (
       <AddClusterButton
-        label={Messages.dbcluster.addAction}
+        label={DBaaSMessages.dbcluster.addAction}
         disabled={addDisabled}
         action={() => history.push(DB_CLUSTER_CREATION_URL)}
         data-testid="dbcluster-add-cluster-button"
@@ -157,7 +188,7 @@ export const DBCluster: FC = () => {
   useEffect(() => {
     getDBClusters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kubernetes]);
+  }, [availableK8s]);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
@@ -183,7 +214,7 @@ export const DBCluster: FC = () => {
     <OldPage navModel={navModel}>
       <OldPage.Contents>
         <TechnicalPreview />
-        <FeatureLoader featureName={Messages.dbaas} featureSelector={featureSelector}>
+        <FeatureLoader featureName={DBaaSMessages.dbaas} featureSelector={featureSelector}>
           <div>
             <div className={styles.actionPanel}>
               <AddNewClusterButton />

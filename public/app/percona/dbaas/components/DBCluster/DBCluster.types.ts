@@ -6,7 +6,7 @@ import { DBClusterService } from './DBCluster.service';
 import { Operators } from './EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 
 export type AddDBClusterAction = (dbCluster: DBCluster) => void;
-export type GetDBClustersAction = () => void;
+export type GetDBClustersAction = (triggerLoading?: boolean) => Promise<void>;
 export type SetDBClustersLoadingAction = (loading: boolean) => void;
 export type ManageDBClusters = [DBCluster[], GetDBClustersAction, SetDBClustersLoadingAction, boolean];
 
@@ -198,6 +198,23 @@ export interface DBClusterPayload {
   template?: DBClusterTemplate;
 }
 
+export interface DBClusterResponse {
+  name: string;
+  state?: DBClusterStatus;
+  operation?: DBClusterOperationAPI;
+  params: DBClusterParamsAPI;
+  suspend?: boolean;
+  resume?: boolean;
+  expose?: boolean;
+  exposed?: boolean;
+  installed_image?: string;
+  available_image?: string;
+  image?: string;
+  pxcConfiguration?: string;
+  internet_facing?: boolean;
+  source_ranges?: string[];
+}
+
 export interface DBClusterActionAPI {
   kubernetes_cluster_name: string;
   name: string;
@@ -349,8 +366,8 @@ export interface DBClusterChangeComponentVersionAPI {
 }
 
 export interface DBClusterListResponse {
-  pxc_clusters: DBClusterPayload[];
-  psmdb_clusters: DBClusterPayload[];
+  pxc_clusters?: DBClusterResponse[];
+  psmdb_clusters?: DBClusterResponse[];
 }
 
 export interface DBClusterSuspendResumeRequest {
