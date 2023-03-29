@@ -48,6 +48,9 @@ export interface ExploreFieldLinkModel extends LinkModel<Field> {
  * that we just supply datasource name and field value and Explore split window will know how to render that
  * appropriately. This is for example used for transition from log with traceId to trace datasource to show that
  * trace.
+ *
+ * Note: accessing a field via ${__data.fields.variable} will stay consistent with dashboards and return as existing but with an empty string
+ * Accessing a field with ${variable} will return undefined as this is unique to explore.
  */
 export const getFieldLinksForExplore = (options: {
   field: Field;
@@ -135,7 +138,9 @@ export const getFieldLinksForExplore = (options: {
         const allVars = { ...scopedVars, ...internalLinkSpecificVars };
         const variableData = getVariableUsageInfo(link, allVars);
         let variables: VariableInterpolation[] = [];
-        if (Array.from(variableData.variables.keys()).length === 0) {
+
+        // if the link has no variables (static link), add it with the right key but an empty value so we know what field the static link is associated with
+        if (variableData.variables.length === 0) {
           const fieldName = field.name.toString();
           variables.push({ variableName: fieldName, value: '', match: '' });
         } else {

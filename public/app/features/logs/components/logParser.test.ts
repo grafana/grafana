@@ -134,8 +134,8 @@ describe('logParser', () => {
         title: 'test',
         target: '_self',
         variables: [
-          { variableName: 'path', value: 'test', match: '${path}' },
-          { variableName: 'msg', value: 'test msg', match: '${msg}' },
+          { variableName: 'path', value: 'test', match: '${path}', found: true },
+          { variableName: 'msg', value: 'test msg', match: '${msg}', found: true },
         ],
       };
 

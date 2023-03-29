@@ -474,12 +474,26 @@ describe('explore links utils', () => {
       );
     });
 
-    it('returns no internal links when target contains empty template variables', () => {
+    it('returns internal links for non-existing fields accessed with __data.fields', () => {
       const { field, range, dataFrame } = setup({
         title: '',
         url: '',
         internal: {
           query: { query: 'query_1-${__data.fields.flux-dimensions}' },
+          datasourceUid: 'uid_1',
+          datasourceName: 'test_ds',
+        },
+      });
+      const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_NULL_VALUE.index, range, dataFrame });
+      expect(links).toHaveLength(1);
+    });
+
+    it('returns no internal links when target contains empty template variables', () => {
+      const { field, range, dataFrame } = setup({
+        title: '',
+        url: '',
+        internal: {
+          query: { query: 'query_1-${mementoMori}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
         },
