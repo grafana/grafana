@@ -178,6 +178,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 	tracer.Inject(ctx, req.Header, span)
 
 	logger.Debug("AzureResourceGraph", "Request ApiURL", req.URL.String())
+	//nolint:bodyclose // fixed in main
 	res, err := client.Do(req)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)

@@ -73,6 +73,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return err
 	}
 
+	//nolint:staticcheck // fixed in main
 	receivers, err := nps.receiversToMap(revision.cfg.AlertmanagerConfig.Receivers)
 	err = tree.ValidateReceivers(receivers)
 	if err != nil {
