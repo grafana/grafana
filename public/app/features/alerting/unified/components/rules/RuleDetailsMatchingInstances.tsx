@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { countBy } from 'lodash';
+import { sum } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -52,7 +52,7 @@ function ShowMoreInstances(props: { ruleViewPageLink: string; stats: ShowMoreSta
 
 export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
   const {
-    rule: { promRule, namespace },
+    rule: { promRule, namespace, instanceTotals },
     itemsDisplayLimit = Number.POSITIVE_INFINITY,
     pagination,
   } = props;
@@ -82,17 +82,17 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
 
   const visibleInstances = alerts.slice(0, itemsDisplayLimit);
 
-  const countAllByState = countBy(promRule.alerts, (alert) => mapStateWithReasonToBaseState(alert.state));
-  const hiddenItemsCount = alerts.length - visibleInstances.length;
+  const totalInstancesCount = sum(Object.values(instanceTotals));
+  const hiddenInstancesCount = totalInstancesCount - visibleInstances.length;
 
   const stats: ShowMoreStats = {
-    totalItemsCount: alerts.length,
+    totalItemsCount: totalInstancesCount,
     visibleItemsCount: visibleInstances.length,
   };
 
   const ruleViewPageLink = createViewLink(namespace.rulesSource, props.rule, location.pathname + location.search);
 
-  const footerRow = hiddenItemsCount ? (
+  const footerRow = hiddenInstancesCount ? (
     <ShowMoreInstances stats={stats} ruleViewPageLink={ruleViewPageLink} />
   ) : undefined;
 
@@ -111,7 +111,7 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
             filterType={stateFilterType}
             stateFilter={alertState}
             onStateFilterChange={setAlertState}
-            itemPerStateStats={countAllByState}
+            itemPerStateStats={instanceTotals}
           />
         </div>
       </div>

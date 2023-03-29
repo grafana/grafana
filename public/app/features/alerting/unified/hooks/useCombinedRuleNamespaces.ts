@@ -1,7 +1,10 @@
-import { isEqual } from 'lodash';
+import { countBy, isEqual } from 'lodash';
 import { useMemo, useRef } from 'react';
 
 import {
+  AlertingRule,
+  AlertInstanceState,
+  AlertInstanceTotals,
   CombinedRule,
   CombinedRuleGroup,
   CombinedRuleNamespace,
@@ -153,11 +156,28 @@ function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, grou
       const existingRule = getExistingRuleInGroup(rule, combinedRulesByName, namespace.rulesSource);
       if (existingRule) {
         existingRule.promRule = rule;
+        existingRule.instanceTotals = isAlertingRule(rule) ? calculateTotals(rule) : {};
       } else {
         combinedGroup!.rules.push(promRuleToCombinedRule(rule, namespace, combinedGroup!));
       }
     });
   });
+}
+
+function calculateTotals(rule: AlertingRule): AlertInstanceTotals {
+  const result = countBy(rule.alerts, 'state');
+
+  if (rule.totals) {
+    return rule.totals;
+  }
+
+  return {
+    alerting: result[AlertInstanceState.Alerting],
+    pending: result[AlertInstanceState.Pending],
+    inactive: result[AlertInstanceState.Normal],
+    nodata: result[AlertInstanceState.NoData],
+    error: result[AlertInstanceState.Error],
+  };
 }
 
 function promRuleToCombinedRule(rule: Rule, namespace: CombinedRuleNamespace, group: CombinedRuleGroup): CombinedRule {
@@ -169,6 +189,7 @@ function promRuleToCombinedRule(rule: Rule, namespace: CombinedRuleNamespace, gr
     promRule: rule,
     namespace: namespace,
     group,
+    instanceTotals: isAlertingRule(rule) ? calculateTotals(rule) : {},
   };
 }
 
@@ -186,6 +207,7 @@ function rulerRuleToCombinedRule(
         rulerRule: rule,
         namespace,
         group,
+        instanceTotals: {},
       }
     : isRecordingRulerRule(rule)
     ? {
@@ -196,6 +218,7 @@ function rulerRuleToCombinedRule(
         rulerRule: rule,
         namespace,
         group,
+        instanceTotals: {},
       }
     : {
         name: rule.grafana_alert.title,
@@ -205,6 +228,7 @@ function rulerRuleToCombinedRule(
         rulerRule: rule,
         namespace,
         group,
+        instanceTotals: {},
       };
 }
 

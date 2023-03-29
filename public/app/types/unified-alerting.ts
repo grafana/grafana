@@ -45,6 +45,7 @@ export interface AlertingRule extends RuleBase {
   };
   state: PromAlertingRuleState;
   type: PromRuleType.Alerting;
+  totals?: AlertInstanceTotals;
 }
 
 export interface RecordingRule extends RuleBase {
@@ -89,7 +90,19 @@ export interface CombinedRule {
   rulerRule?: RulerRuleDTO;
   group: CombinedRuleGroup;
   namespace: CombinedRuleNamespace;
+  instanceTotals: AlertInstanceTotals;
 }
+
+// export type AlertInstanceState = PromAlertingRuleState | 'nodata' | 'error';
+export enum AlertInstanceState {
+  Alerting = 'alerting',
+  Pending = 'pending',
+  Normal = 'inactive',
+  NoData = 'nodata',
+  Error = 'error',
+}
+
+export type AlertInstanceTotals = Partial<Record<AlertInstanceState, number>>;
 
 export interface CombinedRuleGroup {
   name: string;

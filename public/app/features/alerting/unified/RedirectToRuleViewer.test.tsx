@@ -140,6 +140,7 @@ const mockedRules: CombinedRule[] = [
         readOnly: false,
       },
     },
+    instanceTotals: {},
   },
   {
     name: 'Cloud test alert',
@@ -170,5 +171,6 @@ const mockedRules: CombinedRule[] = [
         readOnly: false,
       },
     },
+    instanceTotals: {},
   },
 ];
