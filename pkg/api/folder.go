@@ -207,23 +207,26 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 		if err := web.Bind(c.Req, &cmd); err != nil {
 			return response.Error(http.StatusBadRequest, "bad request data", err)
 		}
-		var theFolder *folder.Folder
 		var err error
 
-		if cmd.NewParentUID != "" {
-			cmd.OrgID = c.OrgID
-			cmd.UID = web.Params(c.Req)[":uid"]
-			cmd.SignedInUser = c.SignedInUser
-			theFolder, err = hs.folderService.Move(c.Req.Context(), &cmd)
-			if err != nil {
-				return response.Error(http.StatusInternalServerError, "update folder uid failed", err)
-			}
+		if cmd.NewParentUID == "" {
+			return response.Error(http.StatusBadRequest, "bad request data: missing parent", err)
 		}
-		g, err := guardian.NewByUID(c.Req.Context(), theFolder.UID, c.OrgID, c.SignedInUser)
+
+		cmd.OrgID = c.OrgID
+		cmd.UID = web.Params(c.Req)[":uid"]
+		cmd.SignedInUser = c.SignedInUser
+		theFolder, err := hs.folderService.Move(c.Req.Context(), &cmd)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "update folder uid failed", err)
+		}
+
+		g, err := guardian.NewByUID(c.Req.Context(), cmd.UID, c.OrgID, c.SignedInUser)
 		if err != nil {
 			return response.Err(err)
 		}
 		return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, theFolder))
+
 	}
 	result := map[string]string{}
 	result["message"] = "To use this service, you need to activate nested folder feature."

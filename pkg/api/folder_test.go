@@ -359,7 +359,9 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 }
 
 func TestFolderMoveAPIEndpoint(t *testing.T) {
-	folderService := &foldertest.FakeService{}
+	folderService := &foldertest.FakeService{
+		ExpectedFolder: &folder.Folder{},
+	}
 	setUpRBACGuardian(t)
 
 	type testCase struct {
