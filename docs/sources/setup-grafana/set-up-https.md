@@ -29,6 +29,8 @@ This topic shows you how to:
 
 ## Before you begin
 
+To follow these instructions, you need:
+
 - You must have shell access to the system and `sudo` access to perform actions as root or administrator.
 - For the CA-signed option, you need a domain name that you possess and that is associated with the machine you are using.
 
