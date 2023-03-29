@@ -29,7 +29,7 @@ func TestNewOpentelemetryCfg(t *testing.T) {
 			{"w3c", "w3c"},
 			{"multiple", "jaeger,w3c"},
 		} {
-			t.Run(tc.propagation, func(t *testing.T) {
+			t.Run(tc.name, func(t *testing.T) {
 				const address = "127.0.0.1:4317"
 
 				cfg := setting.NewCfg()
