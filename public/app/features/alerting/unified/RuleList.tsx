@@ -112,7 +112,7 @@ const RuleList = withErrorBoundary(
                     {expandAll ? 'Collapse all' : 'Expand all'}
                   </Button>
                 )}
-                <RuleStats namespaces={filteredNamespaces} includeTotal />
+                <RuleStats namespaces={filteredNamespaces} />
               </div>
               <Stack direction="row" gap={0.5}>
                 {canReadProvisioning && (

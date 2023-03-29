@@ -1,4 +1,4 @@
-import { AsyncThunk, createAsyncThunk } from '@reduxjs/toolkit';
+import { AsyncThunk, createAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
 import { config, locationService } from '@grafana/runtime';
@@ -15,6 +15,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO, NotifierDTO, StoreState, ThunkResult } from 'app/types';
 import {
+  AlertGroupTotals,
   CombinedRuleGroup,
   CombinedRuleNamespace,
   PromBasedDataSource,
