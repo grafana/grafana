@@ -89,7 +89,7 @@ export class QueryCache {
     if (typeof PerformanceObserver === 'function' && config.grafanaJavascriptAgent.enabled) {
       this.perfObeserver = new PerformanceObserver((list: PerformanceObserverEntryList) => {
         list.getEntries().forEach((entry) => {
-          // eslint-ignore-next-line
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const entryTypeCast: PerformanceResourceTiming = entry as PerformanceResourceTiming;
 
           // Safari support for this is coming in 16.4:
