@@ -7,6 +7,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/weaveworks/common/http/client"
 
@@ -43,9 +44,11 @@ type remoteLokiClient interface {
 	rangeQuery(ctx context.Context, selectors []Selector, start, end int64) (queryRes, error)
 }
 
+// RemoteLokibackend is a state.Historian that records state history to an external Loki instance.
 type RemoteLokiBackend struct {
 	client         remoteLokiClient
 	externalLabels map[string]string
+	clock          clock.Clock
 	metrics        *metrics.Historian
 	log            log.Logger
 }
@@ -55,6 +58,7 @@ func NewRemoteLokiBackend(cfg LokiConfig, req client.Requester, metrics *metrics
 	return &RemoteLokiBackend{
 		client:         newLokiClient(cfg, req, metrics, logger),
 		externalLabels: cfg.ExternalLabels,
+		clock:          clock.New(),
 		metrics:        metrics,
 		log:            logger,
 	}
@@ -64,21 +68,40 @@ func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
 	return h.client.ping(ctx)
 }
 
-func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
+// Record writes a number of state transitions for a given rule to an external Loki instance.
+func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	streams := statesToStreams(rule, states, h.externalLabels, logger)
+
 	errCh := make(chan error, 1)
+	if len(streams) == 0 {
+		close(errCh)
+		return errCh
+	}
+
 	go func() {
 		defer close(errCh)
+
+		org := fmt.Sprint(rule.OrgID)
+		h.metrics.WritesTotal.WithLabelValues(org, "loki").Inc()
+		samples := 0
+		for _, s := range streams {
+			samples += len(s.Values)
+		}
+		h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(samples))
+
 		if err := h.recordStreams(ctx, streams, logger); err != nil {
 			logger.Error("Failed to save alert state history batch", "error", err)
+			h.metrics.WritesFailed.WithLabelValues(org, "loki").Inc()
+			h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(samples))
 			errCh <- fmt.Errorf("failed to save alert state history batch: %w", err)
 		}
 	}()
 	return errCh
 }
 
-func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
+// Query retrieves state history entries from an external Loki instance and formats the results into a dataframe.
+func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
 	selectors, err := buildSelectors(query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build the provided selectors: %w", err)
@@ -219,7 +242,7 @@ func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 }
 
 func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) []stream {
-	buckets := make(map[string][]sample) // label repr -> entries
+	buckets := make(map[string][]sample) // label repr (JSON) -> entries
 	for _, state := range states {
 		if !shouldRecord(state) {
 			continue
@@ -231,15 +254,21 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 		labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
 		labels[GroupLabel] = fmt.Sprint(rule.Group)
 		labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
-		repr := labels.String()
+		lblJsn, err := json.Marshal(labels)
+		if err != nil {
+			logger.Error("Failed to marshal labels to JSON", "error", err)
+			continue
+		}
+		repr := string(lblJsn)
 
 		entry := lokiEntry{
-			SchemaVersion: 1,
-			Previous:      state.PreviousFormatted(),
-			Current:       state.Formatted(),
-			Values:        valuesAsDataBlob(state.State),
-			DashboardUID:  rule.DashboardUID,
-			PanelID:       rule.PanelID,
+			SchemaVersion:  1,
+			Previous:       state.PreviousFormatted(),
+			Current:        state.Formatted(),
+			Values:         valuesAsDataBlob(state.State),
+			DashboardUID:   rule.DashboardUID,
+			PanelID:        rule.PanelID,
+			InstanceLabels: state.Labels,
 		}
 		if state.State.State == eval.Error {
 			entry.Error = state.Error.Error()
@@ -278,6 +307,7 @@ func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream,
 	if err := h.client.push(ctx, streams); err != nil {
 		return err
 	}
+
 	logger.Debug("Done saving alert state history batch")
 	return nil
 }
@@ -290,6 +320,9 @@ type lokiEntry struct {
 	Values        *simplejson.Json `json:"values"`
 	DashboardUID  string           `json:"dashboardUID"`
 	PanelID       int64            `json:"panelID"`
+	// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.
+	// These should not be conflated with labels associated with log streams.
+	InstanceLabels map[string]string `json:"labels"`
 }
 
 func valuesAsDataBlob(state *state.State) *simplejson.Json {

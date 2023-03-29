@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"math"
 	"net/http"
@@ -16,6 +17,10 @@ import (
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
+
+	"github.com/grafana/kindsys"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -65,9 +70,11 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.NoError(t, err)
 
 		qm := models.QueryModel{
-			LegendFormat:  "legend {{app}}",
-			UtcOffsetSec:  0,
-			ExemplarQuery: true,
+			LegendFormat: "legend {{app}}",
+			UtcOffsetSec: 0,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Exemplar: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -112,7 +119,9 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "legend {{app}}",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -159,7 +168,9 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -202,7 +213,9 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -243,7 +256,9 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -278,7 +293,9 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "legend {{app}}",
 			UtcOffsetSec: 0,
-			InstantQuery: true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Instant: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -317,7 +334,9 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			InstantQuery: true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Instant: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -354,19 +373,19 @@ func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr interface
 	}
 
 	promRes, err := toAPIResponse(qr)
+	defer func() {
+		if err := promRes.Body.Close(); err != nil {
+			fmt.Println(fmt.Errorf("response body close error: %v", err))
+		}
+	}()
 	if err != nil {
 		return nil, err
 	}
-
 	tctx.httpProvider.setResponse(promRes)
 
 	res, err := tctx.queryData.Execute(context.Background(), &req)
-	errClose := promRes.Body.Close()
 	if err != nil {
 		return nil, err
-	}
-	if errClose != nil {
-		return nil, errClose
 	}
 
 	return res.Responses[req.Queries[0].RefID].Frames, nil

@@ -20,14 +20,15 @@ import (
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager, pstore plugins.Store, psettings pluginSettings.Service) (*web.Mux, *HTTPServer) {
+func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager, pstore plugins.Store, psettings pluginsettings.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	db.InitTestDB(t)
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
@@ -50,7 +51,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 
 	var pluginsSettings = psettings
 	if pluginsSettings == nil {
-		pluginsSettings = &pluginSettings.FakePluginSettings{}
+		pluginsSettings = &pluginsettings.FakePluginSettings{}
 	}
 
 	hs := &HTTPServer{
@@ -71,7 +72,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 			PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
 			PluginSettings:        cfg.PluginSettings,
 		}),
-		SocialService: social.ProvideService(cfg, features, &usagestats.UsageStatsMock{}),
+		SocialService: social.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService()),
 	}
 
 	m := web.New()
@@ -210,7 +211,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 	tests := []struct {
 		desc           string
 		pluginStore    func() plugins.Store
-		pluginSettings func() pluginSettings.Service
+		pluginSettings func() pluginsettings.Service
 		expected       settings
 	}{
 		{
@@ -230,8 +231,8 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					},
 				}
 			},
-			pluginSettings: func() pluginSettings.Service {
-				return &pluginSettings.FakePluginSettings{
+			pluginSettings: func() pluginsettings.Service {
+				return &pluginsettings.FakePluginSettings{
 					Plugins: newAppSettings("test-app", false),
 				}
 			},
@@ -263,8 +264,8 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					},
 				}
 			},
-			pluginSettings: func() pluginSettings.Service {
-				return &pluginSettings.FakePluginSettings{
+			pluginSettings: func() pluginsettings.Service {
+				return &pluginsettings.FakePluginSettings{
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
@@ -298,8 +299,8 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 	}
 }
 
-func newAppSettings(id string, enabled bool) map[string]*pluginSettings.DTO {
-	return map[string]*pluginSettings.DTO{
+func newAppSettings(id string, enabled bool) map[string]*pluginsettings.DTO {
+	return map[string]*pluginsettings.DTO{
 		id: {
 			ID:       0,
 			OrgID:    1,

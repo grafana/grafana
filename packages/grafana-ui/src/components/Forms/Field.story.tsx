@@ -47,7 +47,10 @@ Simple.args = {
 
 export const HorizontalLayout: ComponentStory<typeof Field> = (args) => {
   const [checked, setChecked] = useState(false);
-  const onChange = useCallback((e) => setChecked(e.currentTarget.checked), [setChecked]);
+  const onChange = useCallback(
+    (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
+    [setChecked]
+  );
   return (
     <div>
       <Field {...args}>

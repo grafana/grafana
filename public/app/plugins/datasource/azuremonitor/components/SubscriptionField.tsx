@@ -15,13 +15,13 @@ interface SubscriptionFieldProps extends AzureQueryEditorFieldProps {
   multiSelect?: boolean;
 }
 
-const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
+const SubscriptionField = ({
   query,
   subscriptions,
   variableOptionGroup,
   onQueryChange,
   multiSelect = false,
-}) => {
+}: SubscriptionFieldProps) => {
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
       if (!change.value) {

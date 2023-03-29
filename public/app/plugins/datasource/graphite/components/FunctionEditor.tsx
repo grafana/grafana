@@ -26,7 +26,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-const FunctionEditor: React.FC<FunctionEditorProps> = ({ onMoveLeft, onMoveRight, func, ...props }) => {
+const FunctionEditor = ({ onMoveLeft, onMoveRight, func, ...props }: FunctionEditorProps) => {
   const styles = useStyles2(getStyles);
 
   const renderContent = ({ updatePopperPosition }: any) => (

@@ -14,14 +14,7 @@ interface DatasetSelectorProps extends ResourceSelectorProps {
   onChange: (v: SelectableValue) => void;
 }
 
-export const DatasetSelector: React.FC<DatasetSelectorProps> = ({
-  db,
-  value,
-  onChange,
-  disabled,
-  className,
-  applyDefault,
-}) => {
+export const DatasetSelector = ({ db, value, onChange, disabled, className, applyDefault }: DatasetSelectorProps) => {
   const state = useAsync(async () => {
     const datasets = await db.datasets();
     return datasets.map(toOption);

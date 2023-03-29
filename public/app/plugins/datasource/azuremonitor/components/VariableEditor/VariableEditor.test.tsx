@@ -47,7 +47,7 @@ describe('VariableEditor:', () => {
     render(<VariableEditor {...defaultProps} onChange={onChange} query={legacyQuery} />);
     await waitFor(() => screen.getByLabelText('select query type'));
     expect(screen.getByLabelText('select query type')).toBeInTheDocument();
-    screen.getByLabelText('select query type').click();
+    await userEvent.click(screen.getByLabelText('select query type'));
     await select(screen.getByLabelText('select query type'), 'Grafana Query Function', {
       container: document.body,
     });
@@ -185,7 +185,7 @@ describe('VariableEditor:', () => {
       rerender: (ui: React.ReactElement) => void
     ) => {
       openMenu(screen.getByLabelText(label));
-      screen.getByText(text).click();
+      await userEvent.click(screen.getByText(text));
       // Simulate onChange behavior
       const newQuery = onChange.mock.calls.at(-1)[0];
       rerender(<VariableEditor {...defaultProps} query={newQuery} onChange={onChange} />);
@@ -226,7 +226,7 @@ describe('VariableEditor:', () => {
       // Select a subscription
       openMenu(screen.getByLabelText('select subscription'));
       await waitFor(() => expect(screen.getByText('Primary Subscription')).toBeInTheDocument());
-      screen.getByText('Template Variables').click();
+      await userEvent.click(screen.getByText('Template Variables'));
       // Simulate onChange behavior
       const lastQuery = onChange.mock.calls.at(-1)[0];
       rerender(<VariableEditor {...defaultProps} query={lastQuery} onChange={onChange} />);

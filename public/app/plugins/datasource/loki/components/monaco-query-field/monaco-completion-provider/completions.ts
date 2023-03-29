@@ -1,4 +1,7 @@
+import { trimEnd } from 'lodash';
+
 import { escapeLabelValueInExactSelector } from '../../../languageUtils';
+import { isQueryWithParser } from '../../../queryUtils';
 import { explainOperator } from '../../../querybuilder/operations';
 import { LokiOperationId } from '../../../querybuilder/types';
 import { AGGREGATION_OPERATORS, RANGE_VEC_FUNCTIONS, BUILT_IN_FUNCTIONS } from '../../../syntax';
@@ -171,15 +174,18 @@ async function getParserCompletions(
   prefix: string,
   hasJSON: boolean,
   hasLogfmt: boolean,
-  extractedLabelKeys: string[]
+  extractedLabelKeys: string[],
+  hasParserInQuery: boolean
 ) {
   const allParsers = new Set(PARSERS);
   const completions: Completion[] = [];
+  // We use this to improve documentation specifically for level label as it is tied to showing color-coded logs volume
   const hasLevelInExtractedLabels = extractedLabelKeys.some((key) => key === 'level');
 
   if (hasJSON) {
     allParsers.delete('json');
-    const extra = hasLevelInExtractedLabels ? '' : ' (detected)';
+    // We show "detected" label only if there is no previous parser in the query
+    const extra = hasParserInQuery ? '' : ' (detected)';
     completions.push({
       type: 'PARSER',
       label: `json${extra}`,
@@ -192,7 +198,8 @@ async function getParserCompletions(
 
   if (hasLogfmt) {
     allParsers.delete('logfmt');
-    const extra = hasLevelInExtractedLabels ? '' : ' (detected)';
+    // We show "detected" label only if there is no previous parser in the query
+    const extra = hasParserInQuery ? '' : ' (detected)';
     completions.push({
       type: 'PARSER',
       label: `logfmt${extra}`,
@@ -216,31 +223,28 @@ async function getParserCompletions(
   return completions;
 }
 
-async function getAfterSelectorCompletions(
+export async function getAfterSelectorCompletions(
   logQuery: string,
   afterPipe: boolean,
   hasSpace: boolean,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(logQuery);
+  let query = logQuery;
+  if (afterPipe) {
+    query = trimEnd(logQuery, '| ');
+  }
+
+  const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(query);
+  const hasQueryParser = isQueryWithParser(query).queryWithParser;
 
   const prefix = `${hasSpace ? '' : ' '}${afterPipe ? '' : '| '}`;
-  const completions: Completion[] = await getParserCompletions(prefix, hasJSON, hasLogfmt, extractedLabelKeys);
-
-  extractedLabelKeys.forEach((key) => {
-    completions.push({
-      type: 'PIPE_OPERATION',
-      label: `unwrap ${key}`,
-      insertText: `${prefix}unwrap ${key}`,
-    });
-  });
-
-  completions.push({
-    type: 'PIPE_OPERATION',
-    label: 'unwrap',
-    insertText: `${prefix}unwrap`,
-    documentation: explainOperator(LokiOperationId.Unwrap),
-  });
+  const completions: Completion[] = await getParserCompletions(
+    prefix,
+    hasJSON,
+    hasLogfmt,
+    extractedLabelKeys,
+    hasQueryParser
+  );
 
   completions.push({
     type: 'PIPE_OPERATION',
@@ -258,10 +262,32 @@ async function getAfterSelectorCompletions(
     documentation: explainOperator(LokiOperationId.LabelFormat),
   });
 
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'unwrap',
+    insertText: `${prefix}unwrap`,
+    documentation: explainOperator(LokiOperationId.Unwrap),
+  });
+
+  // Let's show label options only if query has parser
+  if (hasQueryParser) {
+    extractedLabelKeys.forEach((key) => {
+      completions.push({
+        type: 'LABEL_NAME',
+        label: `${key} (detected)`,
+        insertText: `${prefix}${key}`,
+        documentation: `"${key}" was suggested based on the content of your log lines for the label filter expression.`,
+      });
+    });
+  }
+
+  // If we have parser, we don't need to consider line filters
+  if (hasQueryParser) {
+    return [...completions];
+  }
   // With a space between the pipe and the cursor, we omit line filters
   // E.g. `{label="value"} | `
   const lineFilters = afterPipe && hasSpace ? [] : getLineFilterCompletions(afterPipe);
-
   return [...lineFilters, ...completions];
 }
 

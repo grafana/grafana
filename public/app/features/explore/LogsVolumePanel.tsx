@@ -1,26 +1,26 @@
 import { css } from '@emotion/css';
+import { identity } from 'lodash';
 import React from 'react';
 
 import {
   AbsoluteTimeRange,
   DataQueryResponse,
-  GrafanaTheme2,
   LoadingState,
   SplitOpen,
   TimeZone,
   EventBus,
-  LogsVolumeType,
+  isLogsVolumeLimited,
+  getLogsVolumeAbsoluteRange,
+  GrafanaTheme2,
+  getLogsVolumeDataSourceInfo,
 } from '@grafana/data';
-import { Button, Collapse, Icon, InlineField, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { ExploreGraph } from './Graph/ExploreGraph';
-import { SupplementaryResultError } from './SupplementaryResultError';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
   absoluteRange: AbsoluteTimeRange;
-  logLinesBasedData: DataQueryResponse | undefined;
-  logLinesBasedDataVisibleRange: AbsoluteTimeRange | undefined;
   timeZone: TimeZone;
   splitOpen: SplitOpen;
   width: number;
@@ -31,7 +31,7 @@ type Props = {
 };
 
 export function LogsVolumePanel(props: Props) {
-  const { width, timeZone, splitOpen, onUpdateTimeRange, onLoadLogsVolume, onHiddenSeriesChanged } = props;
+  const { width, timeZone, splitOpen, onUpdateTimeRange, onHiddenSeriesChanged } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -42,17 +42,26 @@ export function LogsVolumePanel(props: Props) {
   }
 
   const logsVolumeData = props.logsVolumeData;
-  const range = logsVolumeData.data[0]?.meta?.custom?.absoluteRange || props.absoluteRange;
 
-  if (logsVolumeData.error !== undefined) {
-    return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
+  const logsVolumeInfo = getLogsVolumeDataSourceInfo(logsVolumeData?.data);
+  let extraInfo = logsVolumeInfo ? `${logsVolumeInfo.name}` : '';
+
+  if (isLogsVolumeLimited(logsVolumeData.data)) {
+    extraInfo = [
+      extraInfo,
+      'This datasource does not support full-range histograms. The graph below is based on the logs seen in the response.',
+    ]
+      .filter(identity)
+      .join('. ');
   }
+
+  const range = isLogsVolumeLimited(logsVolumeData.data)
+    ? getLogsVolumeAbsoluteRange(logsVolumeData.data, props.absoluteRange)
+    : props.absoluteRange;
 
   let LogsVolumePanelContent;
 
-  if (logsVolumeData?.state === LoadingState.Loading) {
-    LogsVolumePanelContent = <span>Log volume is loading...</span>;
-  } else if (logsVolumeData?.data) {
+  if (logsVolumeData?.data) {
     if (logsVolumeData.data.length > 0) {
       LogsVolumePanelContent = (
         <ExploreGraph
@@ -76,41 +85,24 @@ export function LogsVolumePanel(props: Props) {
     }
   }
 
-  let extraInfo;
-  if (logsVolumeData.data[0]?.meta?.custom?.logsVolumeType !== LogsVolumeType.Limited) {
-    const zoomRatio = logsLevelZoomRatio(logsVolumeData, range);
+  let extraInfoComponent = <span>{extraInfo}</span>;
 
-    if (zoomRatio !== undefined && zoomRatio < 1) {
-      extraInfo = (
-        <InlineField label="Reload log volume" transparent>
-          <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} id="reload-volume" />
-        </InlineField>
-      );
-    }
-  } else {
-    extraInfo = (
-      <div className={styles.oldInfoText}>
-        This datasource does not support full-range histograms. The graph is based on the logs seen in the response.
-      </div>
-    );
-  }
   if (logsVolumeData.state === LoadingState.Streaming) {
-    extraInfo = (
+    extraInfoComponent = (
       <>
-        {extraInfo}
+        {extraInfoComponent}
         <Tooltip content="Streaming">
           <Icon name="circle-mono" size="md" className={styles.streaming} data-testid="logs-volume-streaming" />
         </Tooltip>
       </>
     );
   }
+
   return (
-    <Collapse label="" isOpen={true}>
-      <div style={{ height }} className={styles.contentContainer}>
-        {LogsVolumePanelContent}
-      </div>
-      <div className={styles.extraInfoContainer}>{extraInfo}</div>
-    </Collapse>
+    <div style={{ height }} className={styles.contentContainer}>
+      {LogsVolumePanelContent}
+      {extraInfoComponent && <div className={styles.extraInfoContainer}>{extraInfoComponent}</div>}
+    </div>
   );
 }
 
@@ -121,27 +113,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       justify-content: end;
       position: absolute;
       right: 5px;
-      top: 5px;
+      top: -10px;
+      font-size: ${theme.typography.bodySmall.fontSize};
+      color: ${theme.colors.text.secondary};
     `,
     contentContainer: css`
       display: flex;
       align-items: center;
       justify-content: center;
-    `,
-    oldInfoText: css`
-      font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.text.secondary};
+      position: relative;
     `,
     streaming: css`
       color: ${theme.colors.success.text};
     `,
   };
 };
-
-function logsLevelZoomRatio(
-  logsVolumeData: DataQueryResponse | undefined,
-  selectedTimeRange: AbsoluteTimeRange
-): number | undefined {
-  const dataRange = logsVolumeData && logsVolumeData.data[0] && logsVolumeData.data[0].meta?.custom?.absoluteRange;
-  return dataRange ? (selectedTimeRange.from - selectedTimeRange.to) / (dataRange.from - dataRange.to) : undefined;
-}

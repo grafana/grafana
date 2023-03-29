@@ -1,4 +1,4 @@
-import React, { FC, FormEvent, useEffect, useState } from 'react';
+import React, { FormEvent, useEffect, useState } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select, TextArea } from '@grafana/ui';
@@ -28,7 +28,7 @@ export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOption
 
 const refId = 'PrometheusVariableQueryEditor-VariableQuery';
 
-export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource }) => {
+export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) => {
   // to select the query type, i.e. label_names, label_values, etc.
   const [qryType, setQryType] = useState<number | undefined>(undefined);
 

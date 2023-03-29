@@ -6,8 +6,8 @@ import (
 
 	{{range .Kinds }}
 	{{ .Props.MachineName }} "{{ $.KindPackagePrefix }}/{{ .Props.MachineName }}/crd"{{end}}
-	"github.com/grafana/grafana/pkg/kindsys"
-	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
+	"github.com/grafana/kindsys"
+	"github.com/grafana/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"gopkg.in/yaml.v3"
 )

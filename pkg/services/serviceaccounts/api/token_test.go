@@ -92,7 +92,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 			body:         `{"name": "test"}`,
 			tokenTTL:     -1,
 			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
-			expectedErr:  serviceaccounts.ErrServiceAccountNotFound,
+			expectedErr:  serviceaccounts.ErrServiceAccountNotFound.Errorf(""),
 			expectedCode: http.StatusNotFound,
 		},
 		{
@@ -155,7 +155,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			saID:         1,
 			apikeyID:     1,
 			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
-			expectedErr:  serviceaccounts.ErrServiceAccountNotFound,
+			expectedErr:  serviceaccounts.ErrServiceAccountNotFound.Errorf(""),
 			expectedCode: http.StatusNotFound,
 		},
 	}

@@ -1358,6 +1358,10 @@ Sets a global limit on number of users that can be logged in at one time. Defaul
 
 Sets a global limit on number of alert rules that can be created. Default is -1 (unlimited).
 
+### global_correlations
+
+Sets a global limit on number of correlations that can be created. Default is -1 (unlimited).
+
 <hr>
 
 ## [unified_alerting]
@@ -1748,7 +1752,7 @@ The host:port destination for reporting spans. (ex: `localhost:14268/api/traces`
 
 ### propagation
 
-The propagation specifies the text map propagation format.(ex: jaeger, w3c)
+The propagation specifies the text map propagation format. The values `jaeger` and `w3c` are supported. Add a comma (`,`) between values to specify multiple formats (for example, `"jaeger,w3c"`). The default value is `w3c`.
 
 <hr>
 
@@ -1762,7 +1766,7 @@ The host:port destination for reporting spans. (ex: `localhost:4317`)
 
 ### propagation
 
-The propagation specifies the text map propagation format.(ex: jaeger, w3c)
+The propagation specifies the text map propagation format. The values `jaeger` and `w3c` are supported. Add a comma (`,`) between values to specify multiple formats (for example, `"jaeger,w3c"`). The default value is `w3c`.
 
 <hr>
 

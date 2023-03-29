@@ -3,7 +3,6 @@ package remotecache
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -17,8 +16,7 @@ import (
 const redisCacheType = "redis"
 
 type redisStorage struct {
-	c     *redis.Client
-	codec codec
+	c *redis.Client
 }
 
 // parseRedisConnStr parses k=v pairs in csv and builds a redis Options object
@@ -79,58 +77,22 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 	return options, nil
 }
 
-func newRedisStorage(opts *setting.RemoteCacheOptions, codec codec) (*redisStorage, error) {
+func newRedisStorage(opts *setting.RemoteCacheOptions) (*redisStorage, error) {
 	opt, err := parseRedisConnStr(opts.ConnStr)
 	if err != nil {
 		return nil, err
 	}
-	return &redisStorage{c: redis.NewClient(opt), codec: codec}, nil
-}
-
-// Set sets value to given key in session.
-func (s *redisStorage) Set(ctx context.Context, key string, val interface{}, expires time.Duration) error {
-	item := &cachedItem{Val: val}
-	value, err := s.codec.Encode(ctx, item)
-	if err != nil {
-		return err
-	}
-
-	return s.SetByteArray(ctx, key, value, expires)
+	return &redisStorage{c: redis.NewClient(opt)}, nil
 }
 
 // Set sets value to a given key
-func (s *redisStorage) SetByteArray(ctx context.Context, key string, data []byte, expires time.Duration) error {
+func (s *redisStorage) Set(ctx context.Context, key string, data []byte, expires time.Duration) error {
 	status := s.c.Set(ctx, key, data, expires)
 	return status.Err()
 }
 
-// Get gets value by given key in session.
-func (s *redisStorage) Get(ctx context.Context, key string) (interface{}, error) {
-	v, err := s.GetByteArray(ctx, key)
-
-	if err != nil {
-		// Get() returns redis.Nil error when key does not exist
-		if errors.Is(err, redis.Nil) {
-			return nil, ErrCacheItemNotFound
-		}
-		if err.Error() == "EOF" {
-			return nil, ErrCacheItemNotFound
-		}
-		return nil, err
-	}
-
-	item := &cachedItem{}
-	err = s.codec.Decode(ctx, v, item)
-
-	if err == nil {
-		return item.Val, nil
-	}
-
-	return nil, err
-}
-
 // GetByteArray returns the value as byte array
-func (s *redisStorage) GetByteArray(ctx context.Context, key string) ([]byte, error) {
+func (s *redisStorage) Get(ctx context.Context, key string) ([]byte, error) {
 	return s.c.Get(ctx, key).Bytes()
 }
 

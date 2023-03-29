@@ -212,7 +212,7 @@ const renderPublicDashboardItemCorrectly = (pd: ListPublicDashboardResponse, idx
   const rowDataCells = within(tableRow).getAllByRole('cell');
   expect(rowDataCells).toHaveLength(3);
 
-  const statusTag = within(rowDataCells[1]).getByText(pd.isEnabled ? 'enabled' : 'disabled');
+  const statusTag = within(rowDataCells[1]).getByText(pd.isEnabled ? 'enabled' : 'paused');
   const linkButton = within(rowDataCells[2]).getByTestId(selectors.ListItem.linkButton);
   const configButton = within(rowDataCells[2]).getByTestId(selectors.ListItem.configButton);
   const trashcanButton = within(rowDataCells[2]).queryByTestId(selectors.ListItem.trashcanButton);

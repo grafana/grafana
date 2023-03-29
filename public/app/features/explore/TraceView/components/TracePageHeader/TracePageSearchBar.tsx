@@ -38,7 +38,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin-bottom: -48px;
       padding: 8px;
       margin-right: 2px;
-      border-radius: 4px;
+      border-radius: ${theme.shape.borderRadius()};
       box-shadow: ${theme.shadows.z2};
     `,
     TracePageSearchBarBar: css`

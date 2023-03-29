@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, DataFrameView, CoreApp } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { DataFrame, DataFrameView, CoreApp, getEnumDisplayProcessor } from '@grafana/data';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH, PIXELS_PER_LEVEL } from '../constants';
 
@@ -14,7 +14,7 @@ import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer'
 import { SelectedView } from './types';
 
 type Props = {
-  data: DataFrame;
+  data?: DataFrame;
   app: CoreApp;
   // Height for flame graph when not used in explore.
   // This needs to be different to explore flame graph height as we
@@ -30,6 +30,25 @@ const FlameGraphContainer = (props: Props) => {
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+
+  const labelField = props.data?.fields.find((f) => f.name === 'label');
+
+  const theme = useTheme2();
+
+  // Label can actually be an enum field so depending on that we have to access it through display processor. This is
+  // both a backward compatibility but also to allow using a simple dataFrame without enum config. This would allow
+  // users to use this panel with correct query from data sources that do not return profiles natively.
+  const getLabelValue = useCallback(
+    (label: string | number) => {
+      const enumConfig = labelField?.config?.type?.enum;
+      if (enumConfig) {
+        return getEnumDisplayProcessor(theme, enumConfig)(label).text;
+      } else {
+        return label.toString();
+      }
+    },
+    [labelField, theme]
+  );
 
   // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular
   // level of the flame graph. We do this temporary as in the end we should be able to render directly by iterating
@@ -91,6 +110,7 @@ const FlameGraphContainer = (props: Props) => {
               setSelectedBarIndex={setSelectedBarIndex}
               setRangeMin={setRangeMin}
               setRangeMax={setRangeMax}
+              getLabelValue={getLabelValue}
             />
           )}
 
@@ -110,6 +130,7 @@ const FlameGraphContainer = (props: Props) => {
               setRangeMin={setRangeMin}
               setRangeMax={setRangeMax}
               selectedView={selectedView}
+              getLabelValue={getLabelValue}
             />
           )}
         </div>

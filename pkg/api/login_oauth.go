@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -90,7 +89,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 		if code == "" {
 			redirect, err := hs.authnService.RedirectURL(ctx.Req.Context(), authn.ClientWithPrefix(name), req)
 			if err != nil {
-				hs.handleAuthnOAuthErr(ctx, "failed to generate oauth redirect url", err)
+				ctx.Redirect(hs.redirectURLWithErrorCookie(ctx, err))
 				return
 			}
 
@@ -109,7 +108,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 		cookies.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.CookieOptionsFromCfg)
 
 		if err != nil {
-			hs.handleAuthnOAuthErr(ctx, "failed to perform login for oauth request", err)
+			ctx.Redirect(hs.redirectURLWithErrorCookie(ctx, err))
 			return
 		}
 
@@ -293,16 +292,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 	hs.HooksService.RunLoginHook(&loginInfo, ctx)
 	metrics.MApiLoginOAuth.Inc()
 
-	if redirectTo := ctx.GetCookie("redirect_to"); len(redirectTo) > 0 {
-		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
-			cookies.DeleteCookie(ctx.Resp, "redirect_to", hs.CookieOptionsFromCfg)
-			ctx.Redirect(redirectTo)
-			return
-		}
-		ctx.Logger.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
-	}
-
-	ctx.Redirect(setting.AppSubUrl + "/")
+	ctx.Redirect(hs.GetRedirectURL(ctx))
 }
 
 // buildExternalUserInfo returns a ExternalUserInfo struct from OAuth user profile
@@ -361,36 +351,24 @@ func (hs *HTTPServer) SyncUser(
 		},
 	}
 
-	if err := hs.Login.UpsertUser(ctx.Req.Context(), cmd); err != nil {
+	upsertedUser, err := hs.Login.UpsertUser(ctx.Req.Context(), cmd)
+	if err != nil {
 		return nil, err
 	}
 
 	// Do not expose disabled status,
 	// just show incorrect user credentials error (see #17947)
-	if cmd.Result.IsDisabled {
-		oauthLogger.Warn("User is disabled", "user", cmd.Result.Login)
+	if upsertedUser.IsDisabled {
+		oauthLogger.Warn("User is disabled", "user", upsertedUser.Login)
 		return nil, login.ErrInvalidCredentials
 	}
 
-	return cmd.Result, nil
+	return upsertedUser, nil
 }
 
 func (hs *HTTPServer) hashStatecode(code, seed string) string {
 	hashBytes := sha256.Sum256([]byte(code + hs.Cfg.SecretKey + seed))
 	return hex.EncodeToString(hashBytes[:])
-}
-
-func (hs *HTTPServer) handleAuthnOAuthErr(c *contextmodel.ReqContext, msg string, err error) {
-	gfErr := &errutil.Error{}
-	if errors.As(err, gfErr) {
-		if gfErr.Public().Message != "" {
-			c.Handle(hs.Cfg, gfErr.Public().StatusCode, gfErr.Public().Message, err)
-			return
-		}
-	}
-
-	c.Logger.Warn(msg, "err", err)
-	c.Redirect(hs.Cfg.AppSubURL + "/login")
 }
 
 type LoginError struct {

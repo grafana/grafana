@@ -190,7 +190,7 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('customQueryParams', () => {
-    const target = { expr: 'test{job="testjob"}', format: 'time_series', refId: '' };
+    const target: PromQuery = { expr: 'test{job="testjob"}', format: 'time_series', refId: '' };
 
     function makeQuery(target: PromQuery) {
       return {
@@ -618,7 +618,7 @@ describe('PrometheusDatasource', () => {
 
   describe('interpolateVariablesInQueries', () => {
     it('should call replace function 2 times', () => {
-      const query = {
+      const query: PromQuery = {
         expr: 'test{job="testjob"}',
         format: 'time_series',
         interval: '$Interval',

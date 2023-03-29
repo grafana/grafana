@@ -42,7 +42,7 @@ In this tutorial, you'll:
 
 To build a backend for your data source plugin, Grafana requires a binary that it can execute when it loads the plugin during start-up. In this guide, we will build a binary using the [Grafana plugin SDK for Go](/docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/).
 
-The easiest way to get started is to use the Grafana [create-plugin tool](https://www.npmjs.com/package/@grafana/create-plugin). Navigate to the plugin folder that you configured in step 1 and type:
+The easiest way to get started is to use the Grafana [create-plugin tool](https://www.npmjs.com/package/@grafana/create-plugin). Navigate to the plugin folder that you configured in step 1 and enter:
 
 ```
 npx @grafana/create-plugin@latest

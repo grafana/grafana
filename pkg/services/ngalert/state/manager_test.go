@@ -220,7 +220,8 @@ func TestDashboardAnnotations(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-	hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{}, nil)
+	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+	hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{}, nil, metrics)
 	cfg := state.ManagerCfg{
 		Metrics:       testMetrics.GetStateMetrics(),
 		ExternalURL:   nil,
@@ -2209,7 +2210,8 @@ func TestProcessEvalResults(t *testing.T) {
 
 	for _, tc := range testCases {
 		fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-		hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{}, nil)
+		metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+		hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{}, nil, metrics)
 		cfg := state.ManagerCfg{
 			Metrics:       testMetrics.GetStateMetrics(),
 			ExternalURL:   nil,
@@ -2637,12 +2639,12 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 			st := state.NewManager(cfg)
 			st.Warm(ctx, dbstore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
-			_ = dbstore.ListAlertInstances(ctx, q)
+			alerts, _ := dbstore.ListAlertInstances(ctx, q)
 			existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 			// We have loaded the expected number of entries from the db
 			assert.Equal(t, tc.startingStateCacheCount, len(existingStatesForRule))
-			assert.Equal(t, tc.startingInstanceDBCount, len(q.Result))
+			assert.Equal(t, tc.startingInstanceDBCount, len(alerts))
 
 			expectedReason := util.GenerateShortUID()
 			transitions := st.DeleteStateByRuleUID(ctx, rule.GetKey(), expectedReason)
@@ -2669,12 +2671,12 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 			}
 
 			q = &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
-			_ = dbstore.ListAlertInstances(ctx, q)
+			alertInstances, _ := dbstore.ListAlertInstances(ctx, q)
 			existingStatesForRule = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 			// The expected number of state entries remains after states are deleted
 			assert.Equal(t, tc.finalStateCacheCount, len(existingStatesForRule))
-			assert.Equal(t, tc.finalInstanceDBCount, len(q.Result))
+			assert.Equal(t, tc.finalInstanceDBCount, len(alertInstances))
 		})
 	}
 }
@@ -2774,12 +2776,12 @@ func TestResetStateByRuleUID(t *testing.T) {
 			st := state.NewManager(cfg)
 			st.Warm(ctx, dbstore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
-			_ = dbstore.ListAlertInstances(ctx, q)
+			alerts, _ := dbstore.ListAlertInstances(ctx, q)
 			existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 			// We have loaded the expected number of entries from the db
 			assert.Equal(t, tc.startingStateCacheCount, len(existingStatesForRule))
-			assert.Equal(t, tc.startingInstanceDBCount, len(q.Result))
+			assert.Equal(t, tc.startingInstanceDBCount, len(alerts))
 
 			transitions := st.ResetStateByRuleUID(ctx, rule, models.StateReasonPaused)
 
@@ -2809,12 +2811,12 @@ func TestResetStateByRuleUID(t *testing.T) {
 			assert.Equal(t, transitions, fakeHistorian.StateTransitions)
 
 			q = &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
-			_ = dbstore.ListAlertInstances(ctx, q)
+			alertInstances, _ := dbstore.ListAlertInstances(ctx, q)
 			existingStatesForRule = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 			// The expected number of state entries remains after states are deleted
 			assert.Equal(t, tc.finalStateCacheCount, len(existingStatesForRule))
-			assert.Equal(t, tc.finalInstanceDBCount, len(q.Result))
+			assert.Equal(t, tc.finalInstanceDBCount, len(alertInstances))
 		})
 	}
 }

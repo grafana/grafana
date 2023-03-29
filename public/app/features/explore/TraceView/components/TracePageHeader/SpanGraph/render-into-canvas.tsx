@@ -39,22 +39,24 @@ export default function renderIntoCanvas(
   const itemHeight = Math.min(MAX_ITEM_HEIGHT, Math.max(MIN_ITEM_HEIGHT, cHeight / items.length));
   const itemYChange = cHeight / items.length;
 
-  const ctx = canvas.getContext('2d', { alpha: false }) as CanvasRenderingContext2D;
-  ctx.fillStyle = bgColor;
-  ctx.fillRect(0, 0, cWidth, cHeight);
-  for (let i = 0; i < items.length; i++) {
-    const { valueWidth, valueOffset, serviceName } = items[i];
-    const x = (valueOffset / totalValueWidth) * cWidth;
-    let width = (valueWidth / totalValueWidth) * cWidth;
-    if (width < MIN_ITEM_WIDTH) {
-      width = MIN_ITEM_WIDTH;
+  const ctx = canvas.getContext('2d', { alpha: false });
+  if (ctx) {
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, cWidth, cHeight);
+    for (let i = 0; i < items.length; i++) {
+      const { valueWidth, valueOffset, serviceName } = items[i];
+      const x = (valueOffset / totalValueWidth) * cWidth;
+      let width = (valueWidth / totalValueWidth) * cWidth;
+      if (width < MIN_ITEM_WIDTH) {
+        width = MIN_ITEM_WIDTH;
+      }
+      let fillStyle = fillCache.get(serviceName);
+      if (!fillStyle) {
+        fillStyle = `rgba(${getFillColor(serviceName).concat(ITEM_ALPHA).join()})`;
+        fillCache.set(serviceName, fillStyle);
+      }
+      ctx.fillStyle = fillStyle;
+      ctx.fillRect(x, i * itemYChange, width, itemHeight);
     }
-    let fillStyle = fillCache.get(serviceName);
-    if (!fillStyle) {
-      fillStyle = `rgba(${getFillColor(serviceName).concat(ITEM_ALPHA).join()})`;
-      fillCache.set(serviceName, fillStyle);
-    }
-    ctx.fillStyle = fillStyle;
-    ctx.fillRect(x, i * itemYChange, width, itemHeight);
   }
 }

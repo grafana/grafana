@@ -64,7 +64,7 @@ interface Props<TQuery extends DataQuery> {
 
 interface State<TQuery extends DataQuery> {
   /** DatasourceUid or ds variable expression used to resolve current datasource */
-  loadedDataSourceIdentifier?: string | null;
+  queriedDataSourceIdentifier?: string | null;
   datasource: DataSourceApi<TQuery> | null;
   datasourceUid?: string | null;
   hasTextEditMode: boolean;
@@ -77,6 +77,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   element: HTMLElement | null = null;
   angularScope: AngularQueryComponentScope<TQuery> | null = null;
   angularQueryEditor: AngularComponent | null = null;
+  dataSourceSrv = getDataSourceSrv();
   id = '';
 
   state: State<TQuery> = {
@@ -136,31 +137,40 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     };
   }
 
-  getQueryDataSourceIdentifier(): string | null | undefined {
-    const { query, dataSource: dsSettings } = this.props;
-    return query.datasource?.uid ?? dsSettings.uid;
+  /**
+   * When datasource variables are used the query.datasource.uid property is a string variable expression
+   * DataSourceSettings.uid can also be this variable expression.
+   * This function always returns the current interpolated datasource uid.
+   */
+  getInterpolatedDataSourceUID(): string | undefined {
+    if (this.props.query.datasource) {
+      const instanceSettings = this.dataSourceSrv.getInstanceSettings(this.props.query.datasource);
+      return instanceSettings?.rawRef?.uid ?? instanceSettings?.uid;
+    }
+
+    return this.props.dataSource.rawRef?.uid ?? this.props.dataSource.uid;
   }
 
   async loadDatasource() {
-    const dataSourceSrv = getDataSourceSrv();
     let datasource: DataSourceApi;
-    const dataSourceIdentifier = this.getQueryDataSourceIdentifier();
+    const interpolatedUID = this.getInterpolatedDataSourceUID();
 
     try {
-      datasource = await dataSourceSrv.get(dataSourceIdentifier);
+      datasource = await this.dataSourceSrv.get(interpolatedUID);
     } catch (error) {
-      datasource = await dataSourceSrv.get();
+      // If the DS doesn't exist, it fails. Getting with no args returns the default DS.
+      datasource = await this.dataSourceSrv.get();
     }
 
     this.setState({
       datasource: datasource as unknown as DataSourceApi<TQuery>,
-      loadedDataSourceIdentifier: dataSourceIdentifier,
+      queriedDataSourceIdentifier: interpolatedUID,
       hasTextEditMode: has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
     });
   }
 
   componentDidUpdate(prevProps: Props<TQuery>) {
-    const { datasource, loadedDataSourceIdentifier } = this.state;
+    const { datasource, queriedDataSourceIdentifier } = this.state;
     const { data, query } = this.props;
 
     if (prevProps.id !== this.props.id) {
@@ -182,7 +192,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
 
     // check if we need to load another datasource
-    if (datasource && loadedDataSourceIdentifier !== this.getQueryDataSourceIdentifier()) {
+    if (datasource && queriedDataSourceIdentifier !== this.getInterpolatedDataSourceUID()) {
       if (this.angularQueryEditor) {
         this.angularQueryEditor.destroy();
         this.angularQueryEditor = null;
@@ -243,7 +253,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   isWaitingForDatasourceToLoad(): boolean {
     // if we not yet have loaded the datasource in state the
     // ds in props and the ds in state will have different values.
-    return this.props.dataSource.uid !== this.state.loadedDataSourceIdentifier;
+    return this.getInterpolatedDataSourceUID() !== this.state.queriedDataSourceIdentifier;
   }
 
   renderPluginEditor = () => {

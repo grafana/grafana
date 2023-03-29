@@ -20,5 +20,5 @@ const getStyles = (theme: GrafanaTheme2) =>
   css`
     background-color: ${theme.components.panel.background};
     border: 1px solid ${theme.components.panel.borderColor};
-    border-radius: 3px;
+    border-radius: ${theme.shape.radius.default};
   `;

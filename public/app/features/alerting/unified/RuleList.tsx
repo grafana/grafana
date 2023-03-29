@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAsyncFn, useInterval } from 'react-use';
 
@@ -41,6 +41,8 @@ const RuleList = withErrorBoundary(
     const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
     const location = useLocation();
     const [expandAll, setExpandAll] = useState(false);
+
+    const onFilterCleared = useCallback(() => setExpandAll(false), []);
 
     const [queryParams] = useQueryParams();
     const { filterState, hasActiveFilters } = useRulesFilter();
@@ -90,7 +92,7 @@ const RuleList = withErrorBoundary(
       // We show separate indicators for Grafana-managed and Cloud rules
       <AlertingPageWrapper pageId="alert-list" isLoading={false}>
         <RuleListErrors />
-        <RulesFilter onFilterCleared={() => setExpandAll(false)} />
+        <RulesFilter onFilterCleared={onFilterCleared} />
         {!hasNoAlertRulesCreatedYet && (
           <>
             <div className={styles.break} />
