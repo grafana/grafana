@@ -6,9 +6,33 @@ import { FetchError } from '@grafana/runtime';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
-import TempoLanguageProvider from '../language_provider';
 
 import SearchField from './SearchField';
+
+const getOptionsV2 = jest.fn().mockImplementation(() => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        {
+          value: 'customer',
+          label: 'customer',
+          type: 'string',
+        },
+        {
+          value: 'driver',
+          label: 'driver',
+          type: 'string',
+        },
+      ]);
+    }, 1000);
+  });
+});
+
+jest.mock('../language_provider', () => {
+  return jest.fn().mockImplementation(() => {
+    return { getOptionsV2 };
+  });
+});
 
 describe('SearchField', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -29,6 +53,7 @@ describe('SearchField', () => {
       return val;
     });
     const filter: TraceqlFilter = { id: 'test1', type: 'static', valueType: 'string', tag: 'test-tag' };
+
     const { container } = renderSearchField(updateFilter, filter, [], true);
 
     expect(container.querySelector(`input[aria-label="select test1 tag"]`)).not.toBeInTheDocument();
@@ -138,26 +163,6 @@ const renderSearchField = (
   hideTag?: boolean
 ) => {
   const datasource: TempoDatasource = {
-    languageProvider: {
-      getOptionsV2: () => {
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve([
-              {
-                value: 'customer',
-                label: 'customer',
-                type: 'string',
-              },
-              {
-                value: 'driver',
-                label: 'driver',
-                type: 'string',
-              },
-            ]);
-          }, 1000);
-        });
-      },
-    } as unknown as TempoLanguageProvider,
     search: {
       filters: [
         {
