@@ -35,7 +35,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       animation: 0.5s ease-out ${drawerSlide(theme)};
     `,
     rzHandle: css`
-      background: ${theme.colors.secondary.main};
+      background: indianred;
       transition: 0.3s background ease-in-out;
       position: relative;
       width: 200px !important;
@@ -43,7 +43,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       left: calc(50% - 100px) !important;
       top: -4px !important;
       cursor: grab;
-      border-radius: 4px;
+      border-radius: ${theme.shape.borderRadius(2)};
       &:hover {
         background: ${theme.colors.secondary.shade};
       }
