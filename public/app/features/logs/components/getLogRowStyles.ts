@@ -245,21 +245,11 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       position: sticky;
       z-index: ${theme.zIndex.dropdown};
       margin-top: -${theme.spacing(0.125)};
-    `,
-    logRowMenuCellDefaultPosition: css`
-      right: 40px;
-    `,
-    logRowMenuCellExplore: css`
-      right: calc(32px + ${theme.spacing(1)});
-    `,
-    logRowMenuCellExploreWithContextButton: css`
-      right: calc(72px + ${theme.spacing(1)});165
-    `,
-    logRowMenuCellExploreWrapped: css`
-      right: calc(124px + ${theme.spacing(1)});
-    `,
-    logRowMenuCellExploreWithContextButtonWrapped: css`
-      right: calc(165px + ${theme.spacing(1)});
+      right: 0px;
+
+      & > span {
+        transform: translateX(-100%);
+      }
     `,
     logLine: css`
       background-color: transparent;

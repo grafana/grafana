@@ -161,16 +161,7 @@ export class LogRowMessage extends PureComponent<Props> {
           </div>
         </td>
         {showRowMenu && (
-          <td
-            className={cx('log-row-menu-cell', styles.logRowMenuCell, {
-              [styles.logRowMenuCellDefaultPosition]: !inExplore,
-              [styles.logRowMenuCellExplore]: inExplore && !shouldShowContextToggle && !wrapLogMessage,
-              [styles.logRowMenuCellExploreWithContextButton]: inExplore && shouldShowContextToggle && !wrapLogMessage,
-              [styles.logRowMenuCellExploreWrapped]: inExplore && !shouldShowContextToggle && wrapLogMessage,
-              [styles.logRowMenuCellExploreWithContextButtonWrapped]:
-                inExplore && shouldShowContextToggle && wrapLogMessage,
-            })}
-          >
+          <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
             <span
               className={cx('log-row-menu', styles.rowMenu, {
                 [styles.rowMenuWithContextButton]: shouldShowContextToggle,
