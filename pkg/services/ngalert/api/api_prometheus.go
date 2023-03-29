@@ -203,9 +203,8 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 
 	ruleResponse.Data.Totals = rulesTotals
 
-	// sort
+	// Sort Rule Groups before checking limits
 	apimodels.RuleGroupsBy(apimodels.RuleGroupsByFileAndName).Sort(ruleResponse.Data.RuleGroups)
-
 	if limitGroups > -1 && int64(len(ruleResponse.Data.RuleGroups)) >= limitGroups {
 		ruleResponse.Data.RuleGroups = ruleResponse.Data.RuleGroups[0:limitGroups]
 	}
