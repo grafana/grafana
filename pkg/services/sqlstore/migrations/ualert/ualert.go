@@ -267,6 +267,11 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	// cache for the general folders
 	generalFolderCache := make(map[int64]*dashboard)
 
+	folderHelper := folderHelper{
+		sess: sess,
+		mg:   mg,
+	}
+
 	gf := func(dash dashboard, da dashAlert) (*dashboard, error) {
 		f, ok := generalFolderCache[dash.OrgId]
 		if !ok {
@@ -312,11 +317,6 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 				Err:     fmt.Errorf("dashboard with UID %v under organisation %d not found: %w", da.DashboardUID, da.OrgId, err),
 				AlertId: da.Id,
 			}
-		}
-
-		folderHelper := folderHelper{
-			sess: sess,
-			mg:   mg,
 		}
 
 		var folder *dashboard
