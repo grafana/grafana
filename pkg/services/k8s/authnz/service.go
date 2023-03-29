@@ -119,7 +119,9 @@ func (api *K8sAuthnzAPIImpl) authenticate(c *contextmodel.ReqContext) response.R
 
 func (api *K8sAuthnzAPIImpl) authorize(c *contextmodel.ReqContext) response.Response {
 	inputSAR := authzV1.SubjectAccessReview{}
-	web.Bind(c.Req, &inputSAR)
+	if err := web.Bind(c.Req, &inputSAR); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 
 	// TODO: expand this logic so it isn't just limited to letting Admin through
 	if inputSAR.Spec.User == GrafanaAdminK8sUser {
