@@ -23,7 +23,7 @@ jobs:
       - name: Build Backend
         uses: ./actions/package/publish
         with:
-          distros: ["linux/amd64", "linux/arm64"]
+          distros: 'linux/amd64,linux/arm64'
           enterprise: true
           grafana_ref: ${{ github.sha }}
           enterprise_ref: ${{ github.head_ref }}
