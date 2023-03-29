@@ -3,14 +3,13 @@ import { AnyAction } from 'redux';
 
 import { ExploreUrlState, serializeStateToUrlParam, SplitOpenOptions, UrlQueryMap } from '@grafana/data';
 import { DataSourceSrv, locationService } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
-import { ThunkResult } from '../../../types';
+import { createAsyncThunk, ThunkResult } from '../../../types';
 import { CorrelationData } from '../../correlations/useCorrelations';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 
@@ -101,9 +100,10 @@ export const lastSavedUrl: UrlQueryMap = {};
  * or uses values from options arg. This does only navigation each pane is then responsible for initialization from
  * the URL.
  */
-export const splitOpen = <T extends DataQuery = DataQuery>(options?: SplitOpenOptions<T>): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const leftState: ExploreItemState = getState().explore[ExploreId.left];
+export const splitOpen = createAsyncThunk(
+  'explore/splitOpen',
+  async (options: SplitOpenOptions | undefined, { getState }) => {
+    const leftState: ExploreItemState = getState().explore.left;
     const leftUrlState = getUrlStateFromPaneState(leftState);
     let rightUrlState: ExploreUrlState = leftUrlState;
 
@@ -120,8 +120,8 @@ export const splitOpen = <T extends DataQuery = DataQuery>(options?: SplitOpenOp
 
     const urlState = serializeStateToUrlParam(rightUrlState);
     locationService.partial({ right: urlState }, true);
-  };
-};
+  }
+);
 
 /**
  * Close the split view and save URL state. We need to update the state here because when closing we cannot just
@@ -288,12 +288,19 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
+  if (splitOpen.pending.match(action)) {
+    return {
+      ...state,
+      right: initialExploreItemState,
+    };
+  }
+
   if (action.payload) {
     const { exploreId } = action.payload;
-    if (exploreId !== undefined) {
-      // @ts-ignore
-      const explorePaneState = state[exploreId];
-      return { ...state, [exploreId]: paneReducer(explorePaneState, action) };
+    // @ts-expect-error
+    if (exploreId !== undefined && state[exploreId]) {
+      // @ts-expect-error
+      return { ...state, [exploreId]: paneReducer(state[exploreId], action) };
     }
   }
 

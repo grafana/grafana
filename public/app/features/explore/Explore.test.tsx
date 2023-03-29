@@ -88,7 +88,7 @@ const dummyProps: Props = {
   showTrace: true,
   showNodeGraph: true,
   showFlameGraph: true,
-  splitOpen: () => {},
+  splitOpen: jest.fn(),
   splitted: false,
   isFromCompactUrl: false,
   eventBus: new EventBusSrv(),
