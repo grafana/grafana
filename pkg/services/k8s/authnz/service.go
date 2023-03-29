@@ -77,7 +77,10 @@ func (api *K8sAuthnzAPI) registerAPIEndpoints() {
 
 func (api *K8sAuthnzAPI) parseToken(c *contextmodel.ReqContext) (*authn.Identity, error) {
 	tokenReview := authnV1.TokenReview{}
-	web.Bind(c.Req, &tokenReview)
+
+	if err := web.Bind(c.Req, &tokenReview); err != nil {
+		return nil, err
+	}
 
 	// K8s authn operates with a TokenReview construct. We use a slight hack below to set the Authorization header
 	// to be able to use existing authentication methods in Grafana
@@ -120,7 +123,13 @@ func (api *K8sAuthnzAPI) authenticate(c *contextmodel.ReqContext) response.Respo
 func (api *K8sAuthnzAPI) authorize(c *contextmodel.ReqContext) response.Response {
 	inputSAR := authzV1.SubjectAccessReview{}
 	if err := web.Bind(c.Req, &inputSAR); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.JSON(http.StatusOK, authzV1.SubjectAccessReview{
+			Status: authzV1.SubjectAccessReviewStatus{
+				Allowed: false,
+				Denied:  false,
+				Reason:  "invalid SubjectAccessReview in request",
+			},
+		})
 	}
 
 	// TODO: expand this logic so it isn't just limited to letting Admin through
