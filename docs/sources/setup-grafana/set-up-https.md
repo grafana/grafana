@@ -242,7 +242,7 @@ To configure Grafana HTTPS and restart Grafana, complete the following steps.
 
 ## Troubleshooting
 
-Refer to the following troubleshooting tips, if required.
+Refer to the following troubleshooting tips as required.
 
 ### Failure to obtain a certificate
 
