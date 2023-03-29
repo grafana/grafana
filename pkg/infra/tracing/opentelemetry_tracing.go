@@ -79,17 +79,15 @@ func (noopTracerProvider) Shutdown(ctx context.Context) error {
 }
 
 func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
-	section, err := ots.Cfg.Raw.GetSection("tracing.opentelemetry")
-	if err != nil {
-		return err
-	}
+	section := ots.Cfg.Raw.Section("tracing.opentelemetry")
 
+	var err error
 	ots.customAttribs, err = splitCustomAttribs(section.Key("custom_attributes").MustString(""))
 	if err != nil {
 		return err
 	}
 
-	section, err = ots.Cfg.Raw.GetSection("tracing.opentelemetry.jaeger")
+	section = ots.Cfg.Raw.Section("tracing.opentelemetry.jaeger")
 	if err != nil {
 		return err
 	}
@@ -102,7 +100,7 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 		return nil
 	}
 
-	section, err = ots.Cfg.Raw.GetSection("tracing.opentelemetry.otlp")
+	section = ots.Cfg.Raw.Section("tracing.opentelemetry.otlp")
 	if err != nil {
 		return err
 	}
