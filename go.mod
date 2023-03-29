@@ -128,7 +128,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
-	xorm.io/builder v0.3.6 // indirect
+	xorm.io/builder v0.3.6
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
@@ -272,7 +272,7 @@ require (
 	github.com/grafana/kindsys v0.0.0-20230309200316-812b9884a375
 	github.com/grafana/thema v0.0.0-20230302221249-6952e4a999b7
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
-	github.com/ory/fosite v0.44.0
+	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f
 	github.com/ory/x v0.0.214
 	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
@@ -449,5 +449,3 @@ replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
-
-replace github.com/ory/fosite => github.com/mgyongyosi/fosite v0.0.0-20230308123433-81b6dd77c674
