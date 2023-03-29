@@ -21,6 +21,7 @@ func logf(format string, a ...interface{}) {
 type Options struct {
 	MatrixWideSeries bool
 	VectorWideSeries bool
+	Dataplane        bool
 }
 
 // ReadPrometheusStyleResult will read results from a prometheus or loki server and return data frames
@@ -115,15 +116,15 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataRespon
 			switch resultType {
 			case "matrix":
 				if opt.MatrixWideSeries {
-					rsp = readMatrixOrVectorWide(iter, resultType)
+					rsp = readMatrixOrVectorWide(iter, resultType, opt)
 				} else {
-					rsp = readMatrixOrVectorMulti(iter, resultType)
+					rsp = readMatrixOrVectorMulti(iter, resultType, opt)
 				}
 			case "vector":
 				if opt.VectorWideSeries {
-					rsp = readMatrixOrVectorWide(iter, resultType)
+					rsp = readMatrixOrVectorWide(iter, resultType, opt)
 				} else {
-					rsp = readMatrixOrVectorMulti(iter, resultType)
+					rsp = readMatrixOrVectorMulti(iter, resultType, opt)
 				}
 			case "streams":
 				rsp = readStream(iter)
@@ -364,16 +365,25 @@ func readScalar(iter *jsoniter.Iterator) backend.DataResponse {
 	}
 }
 
-func readMatrixOrVectorWide(iter *jsoniter.Iterator, resultType string) backend.DataResponse {
+func readMatrixOrVectorWide(iter *jsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
 	rowIdx := 0
 	timeMap := map[int64]int{}
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 	timeField.Name = data.TimeSeriesTimeFieldName
 	frame := data.NewFrame("", timeField)
-	frame.Meta = &data.FrameMeta{
+
+	frame.Meta = &data.FrameMeta{ // Overwritten if histogram
 		Type:   data.FrameTypeTimeSeriesWide,
 		Custom: resultTypeToCustomMeta(resultType),
 	}
+
+	if opt.Dataplane && resultType == "vector" {
+		frame.Meta.Type = data.FrameTypeNumericWide
+	}
+	if opt.Dataplane {
+		frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
+	}
+
 	rsp := backend.DataResponse{
 		Frames: []*data.Frame{},
 	}
@@ -390,8 +400,10 @@ func readMatrixOrVectorWide(iter *jsoniter.Iterator, resultType string) backend.
 			switch l1Field {
 			case "metric":
 				iter.ReadVal(&valueField.Labels)
-				if n, ok := valueField.Labels["__name__"]; ok {
-					valueField.Name = n
+				if opt.Dataplane {
+					if n, ok := valueField.Labels["__name__"]; ok {
+						valueField.Name = n
+					}
 				}
 
 			case "value":
@@ -475,7 +487,7 @@ func addValuePairToFrame(frame *data.Frame, timeMap map[int64]int, rowIdx int, i
 	return timeMap, rowIdx
 }
 
-func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string) backend.DataResponse {
+func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
 	rsp := backend.DataResponse{}
 
 	for iter.ReadArray() {
@@ -491,8 +503,10 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string) backend
 			switch l1Field {
 			case "metric":
 				iter.ReadVal(&valueField.Labels)
-				if n, ok := valueField.Labels["__name__"]; ok {
-					valueField.Name = n
+				if opt.Dataplane {
+					if n, ok := valueField.Labels["__name__"]; ok {
+						valueField.Name = n
+					}
 				}
 
 			case "value":
@@ -550,13 +564,15 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string) backend
 			rsp.Frames = append(rsp.Frames, frame)
 		} else {
 			frame := data.NewFrame("", timeField, valueField)
-			ft := data.FrameTypeTimeSeriesMulti
-			if resultType == "vector" {
-				ft = data.FrameTypeNumericMulti
-			}
 			frame.Meta = &data.FrameMeta{
-				Type:   ft,
+				Type:   data.FrameTypeTimeSeriesMulti,
 				Custom: resultTypeToCustomMeta(resultType),
+			}
+			if opt.Dataplane && resultType == "vector" {
+				frame.Meta.Type = data.FrameTypeNumericMulti
+			}
+			if opt.Dataplane {
+				frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
 			}
 			rsp.Frames = append(rsp.Frames, frame)
 		}
