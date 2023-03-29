@@ -305,6 +305,9 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"activeAt": "0001-01-01T00:00:00Z",
 					"value": ""
 				}],
+				"totals": {
+					"normal": 1
+				},
 				"labels": {
 					"__a_private_label_on_the_rule__": "a_value"
 				},
@@ -314,10 +317,16 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"duration": 180,
 				"evaluationTime": 60
 			}],
+			"totals": {
+				"inactive": 1
+			},
 			"interval": 60,
 			"lastEvaluation": "2022-03-10T14:01:00Z",
 			"evaluationTime": 60
-		}]
+		}],
+		"totals": {
+			"inactive": 1
+		}
 	}
 }
 `, folder.Title), string(r.Body()))
@@ -358,6 +367,9 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"activeAt": "0001-01-01T00:00:00Z",
 					"value": ""
 				}],
+				"totals": {
+					"normal": 1
+				},
 				"labels": {
 					"__a_private_label_on_the_rule__": "a_value",
 					"__alert_rule_uid__": "RuleUID"
@@ -368,10 +380,16 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"duration": 180,
 				"evaluationTime": 60
 			}],
+			"totals": {
+				"inactive": 1
+			},
 			"interval": 60,
 			"lastEvaluation": "2022-03-10T14:01:00Z",
 			"evaluationTime": 60
-		}]
+		}],
+		"totals": {
+			"inactive": 1
+		}
 	}
 }
 `, folder.Title), string(r.Body()))
@@ -406,6 +424,9 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"activeAt": "0001-01-01T00:00:00Z",
 					"value": ""
 				}],
+				"totals": {
+					"normal": 1
+				},
 				"labels": {
 					"__a_private_label_on_the_rule__": "a_value"
 				},
@@ -415,10 +436,16 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"duration": 180,
 				"evaluationTime": 60
 			}],
+			"totals": {
+				"inactive": 1
+			},
 			"interval": 60,
 			"lastEvaluation": "2022-03-10T14:01:00Z",
 			"evaluationTime": 60
-		}]
+		}],
+		"totals": {
+			"inactive": 1
+		}
 	}
 }
 `, folder.Title), string(r.Body()))
