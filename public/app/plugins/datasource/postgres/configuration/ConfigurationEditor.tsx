@@ -1,3 +1,4 @@
+import { merge } from 'lodash';
 import React, { SyntheticEvent, useState } from 'react';
 
 import {
@@ -6,6 +7,7 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
+  updateDatasourcePluginOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import {
@@ -247,6 +249,10 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
       ) : null}
 
       <ConnectionLimits
+        onJsonDataChanged={(values: {}) => {
+          const newJsonData = merge(jsonData, values);
+          updateDatasourcePluginOption(props, 'jsonData', newJsonData);
+        }}
         labelWidth={labelWidthShort}
         jsonData={jsonData}
         onPropertyChanged={(property, value) => {
