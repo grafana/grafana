@@ -18,9 +18,7 @@ import (
 )
 
 func NewRequester() client.Requester {
-	return &http.Client{
-		Timeout: StateHistoryWriteTimeout,
-	}
+	return &http.Client{}
 }
 
 // encoder serializes log streams to some byte format.

@@ -13,7 +13,7 @@ import (
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
-const StateHistoryWriteTimeout = 30 * time.Second
+const StateHistoryWriteTimeout = time.Minute
 
 func shouldRecord(transition state.StateTransition) bool {
 	if !transition.Changed() {
