@@ -174,18 +174,29 @@ type AlertRuleWithOptionals struct {
 	HasPause bool
 }
 
-// SortableAlertRules sorts alert rules by AlertRuleGroupKey and then their index.
-type SortableAlertRules []*AlertRule
+// AlertsRulesBy is a function that defines the ordering of alert rules.
+type AlertRulesBy func(a1, a2 *AlertRule) bool
 
-func (s SortableAlertRules) Len() int      { return len(s) }
-func (s SortableAlertRules) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-func (s SortableAlertRules) Less(i, j int) bool {
-	gk1, gk2 := s[i].GetGroupKey(), s[j].GetGroupKey()
-	if gk1 == gk2 {
-		return s[i].RuleGroupIndex < s[j].RuleGroupIndex
-	}
-	return gk1.Less(gk2)
+func (by AlertRulesBy) Sort(rules []*AlertRule) {
+	sort.Sort(AlertRulesSorter{rules: rules, by: by})
 }
+
+func AlertRulesByGroupKey(a1, a2 *AlertRule) bool {
+	k1, k2 := a1.GetGroupKey(), a2.GetGroupKey()
+	if k1 == k2 {
+		return a1.RuleGroupIndex < a2.RuleGroupIndex
+	}
+	return AlertRuleGroupKeyByFolderAndNamespace(&k1, &k2)
+}
+
+type AlertRulesSorter struct {
+	rules []*AlertRule
+	by    AlertRulesBy
+}
+
+func (s AlertRulesSorter) Len() int           { return len(s.rules) }
+func (s AlertRulesSorter) Swap(i, j int)      { s.rules[i], s.rules[j] = s.rules[j], s.rules[i] }
+func (s AlertRulesSorter) Less(i, j int) bool { return s.by(s.rules[i], s.rules[j]) }
 
 // GetDashboardUID returns the DashboardUID or "".
 func (alertRule *AlertRule) GetDashboardUID() string {
@@ -303,14 +314,6 @@ type AlertRuleGroupKey struct {
 	Folder       string
 }
 
-func (k AlertRuleGroupKey) Less(v AlertRuleGroupKey) bool {
-	if strings.ToLower(k.Folder) == strings.ToLower(v.Folder) {
-		return strings.ToLower(k.RuleGroup) < strings.ToLower(v.RuleGroup)
-	}
-
-	return strings.ToLower(k.Folder) < strings.ToLower(v.Folder)
-}
-
 func (k AlertRuleGroupKey) String() string {
 	return fmt.Sprintf("{orgID: %d, namespaceUID: %s, groupName: %s}", k.OrgID, k.NamespaceUID, k.RuleGroup)
 }
@@ -319,12 +322,29 @@ func (k AlertRuleKey) String() string {
 	return fmt.Sprintf("{orgID: %d, UID: %s}", k.OrgID, k.UID)
 }
 
-// SortableRuleGroupKeys sorts AlertRuleGroupKeys by Org ID, Namespace UID and RuleGroup.
-type SortableRuleGroupKeys []AlertRuleGroupKey
+// AlertRuleGroupKeyBy is a function that defines the ordering of alert rule group keys.
+type AlertRuleGroupKeyBy func(a1, a2 *AlertRuleGroupKey) bool
 
-func (s SortableRuleGroupKeys) Len() int           { return len(s) }
-func (s SortableRuleGroupKeys) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s SortableRuleGroupKeys) Less(i, j int) bool { return s[i].Less(s[j]) }
+func (by AlertRuleGroupKeyBy) Sort(keys []AlertRuleGroupKey) {
+	sort.Sort(AlertRuleGroupKeySorter{keys: keys, by: by})
+}
+
+func AlertRuleGroupKeyByFolderAndNamespace(k1, k2 *AlertRuleGroupKey) bool {
+	if strings.ToLower(k1.Folder) == strings.ToLower(k2.Folder) {
+		return strings.ToLower(k1.RuleGroup) < strings.ToLower(k2.RuleGroup)
+	}
+
+	return strings.ToLower(k1.Folder) < strings.ToLower(k2.Folder)
+}
+
+type AlertRuleGroupKeySorter struct {
+	keys []AlertRuleGroupKey
+	by   AlertRuleGroupKeyBy
+}
+
+func (s AlertRuleGroupKeySorter) Len() int           { return len(s.keys) }
+func (s AlertRuleGroupKeySorter) Swap(i, j int)      { s.keys[i], s.keys[j] = s.keys[j], s.keys[i] }
+func (s AlertRuleGroupKeySorter) Less(i, j int) bool { return s.by(&s.keys[i], &s.keys[j]) }
 
 // GetKey returns the alert definitions identifier
 func (alertRule *AlertRule) GetKey() AlertRuleKey {

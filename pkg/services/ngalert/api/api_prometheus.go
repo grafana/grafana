@@ -164,7 +164,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqViewer, evaluator)
 	}
 
-	groupedRules := make(map[ngmodels.AlertRuleGroupKey]ngmodels.SortableAlertRules)
+	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
 	for _, rule := range ruleList {
 		key := rule.GetGroupKey()
 
@@ -182,14 +182,14 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 
 	// sort the rules once at the end instead of after each append
 	for _, groupRules := range groupedRules {
-		sort.Sort(groupRules)
+		ngmodels.AlertRulesBy(ngmodels.AlertRulesByGroupKey).Sort(groupRules)
 	}
 
-	sortedGroups := make(ngmodels.SortableRuleGroupKeys, 0, len(groupedRules))
+	sortedGroups := make([]ngmodels.AlertRuleGroupKey, 0, len(groupedRules))
 	for groupKey := range groupedRules {
 		sortedGroups = append(sortedGroups, groupKey)
 	}
-	sort.Sort(sortedGroups)
+	ngmodels.AlertRuleGroupKeyBy(ngmodels.AlertRuleGroupKeyByFolderAndNamespace).Sort(sortedGroups)
 
 	rulesTotals := make(map[string]int64, len(groupedRules))
 	for _, groupKey := range sortedGroups {
@@ -307,9 +307,7 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, rules 
 			rulesTotals[newRule.Health] += 1
 		}
 
-		sortedAlerts := apimodels.SortableAlerts(alertingRule.Alerts)
-		sort.Sort(sortedAlerts)
-		alertingRule.Alerts = sortedAlerts
+		apimodels.AlertsBy(apimodels.AlertsByImportance).Sort(alertingRule.Alerts)
 
 		if limitAlerts > -1 && int64(len(alertingRule.Alerts)) > limitAlerts {
 			alertingRule.Alerts = alertingRule.Alerts[0:limitAlerts]

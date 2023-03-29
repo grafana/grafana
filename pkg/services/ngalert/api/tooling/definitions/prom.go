@@ -174,23 +174,33 @@ func stateByImportanceFromString(s string) (StateByImportance, error) {
 	}
 }
 
-func (a Alert) Less(v Alert) bool {
-	// Compare the importance of each alert's state
-	imp1, _ := stateByImportanceFromString(a.State)
-	imp2, _ := stateByImportanceFromString(v.State)
-	if imp1 == imp2 {
-		// The first alert is active but not the second
-		if a.ActiveAt != nil && v.ActiveAt == nil {
-			return true
-			// The second alert is active but not the first
-		} else if a.ActiveAt == nil && v.ActiveAt != nil {
-			return false
-			// Both alerts are active so compare their timestamps
-		} else if a.ActiveAt != nil && v.ActiveAt != nil && a.ActiveAt.Before(*v.ActiveAt) {
-			return true
+// AlertsBy is a function that defines the ordering of alerts.
+type AlertsBy func(a1, a2 *Alert) bool
+
+func (by AlertsBy) Sort(alerts []Alert) {
+	sort.Sort(AlertsSorter{alerts: alerts, by: by})
+}
+
+// AlertsByImportance orders alerts by importance. An alert is more important
+// than another alert if its status has higher importance. For example, "alerting"
+// is more important than "normal". If two alerts have the same importance
+// then the ordering is based on their ActiveAt time and their labels.
+func AlertsByImportance(a1, a2 *Alert) bool {
+	// labelsForComparison concatenates each key/value pair into a string and
+	// sorts them.
+	labelsForComparison := func(m map[string]string) []string {
+		s := make([]string, 0, len(m))
+		for k, v := range m {
+			s = append(s, k+v)
 		}
-		// Both alerts are active from the same time so compare the labels
-		labels1, labels2 := sortLabels(a.Labels), sortLabels(v.Labels)
+		sort.Strings(s)
+		return s
+	}
+
+	// compareLabels returns true if labels1 are less than labels2. This happens
+	// when labels1 has fewer labels than labels2, or if the next label from
+	// labels1 is lexicographically less than the next label from labels2.
+	compareLabels := func(labels1, labels2 []string) bool {
 		if len(labels1) == len(labels2) {
 			for i := range labels1 {
 				if labels1[i] != labels2[i] {
@@ -201,23 +211,42 @@ func (a Alert) Less(v Alert) bool {
 		return len(labels1) < len(labels2)
 	}
 
-	return imp1 < imp2
-}
+	// The importance of an alert is first based on the importance of their states.
+	// This ordering is intended to show the most important alerts first when
+	// using pagination.
+	importance1, _ := stateByImportanceFromString(a1.State)
+	importance2, _ := stateByImportanceFromString(a2.State)
 
-func sortLabels(m map[string]string) []string {
-	s := make([]string, 0, len(m))
-	for k, v := range m {
-		s = append(s, k+v)
+	// If both alerts have the same importance then the ordering is based on
+	// their ActiveAt time, and if those are equal, their labels.
+	if importance1 == importance2 {
+		if a1.ActiveAt != nil && a2.ActiveAt == nil {
+			// The first alert is active but not the second
+			return true
+		} else if a1.ActiveAt == nil && a2.ActiveAt != nil {
+			// The second alert is active but not the first
+			return false
+		} else if a1.ActiveAt != nil && a2.ActiveAt != nil && a1.ActiveAt.Before(*a2.ActiveAt) {
+			// Both alerts are active but a1 happened before a2
+			return true
+		}
+		// Both alerts are active since the same time so compare their labels
+		labels1 := labelsForComparison(a1.Labels)
+		labels2 := labelsForComparison(a2.Labels)
+		return compareLabels(labels1, labels2)
 	}
-	sort.Strings(s)
-	return s
+
+	return importance1 < importance2
 }
 
-type SortableAlerts []Alert
+type AlertsSorter struct {
+	alerts []Alert
+	by     AlertsBy
+}
 
-func (s SortableAlerts) Len() int           { return len(s) }
-func (s SortableAlerts) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s SortableAlerts) Less(i, j int) bool { return s[i].Less(s[j]) }
+func (s AlertsSorter) Len() int           { return len(s.alerts) }
+func (s AlertsSorter) Swap(i, j int)      { s.alerts[i], s.alerts[j] = s.alerts[j], s.alerts[i] }
+func (s AlertsSorter) Less(i, j int) bool { return s.by(&s.alerts[i], &s.alerts[j]) }
 
 // override the labels type with a map for generation.
 // The custom marshaling for labels.Labels ends up doing this anyways.

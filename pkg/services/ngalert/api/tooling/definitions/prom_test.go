@@ -1,14 +1,13 @@
 package definitions
 
 import (
-	"sort"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_SortableAlerts(t *testing.T) {
+func Test_SortAlertsByImportance(t *testing.T) {
 	tm1, tm2 := time.Now(), time.Now().Add(time.Second)
 	tc := []struct {
 		name     string
@@ -60,9 +59,8 @@ func Test_SortableAlerts(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := SortableAlerts(tt.input)
-			sort.Sort(actual)
-			assert.EqualValues(t, tt.expected, actual)
+			AlertsBy(AlertsByImportance).Sort(tt.input)
+			assert.EqualValues(t, tt.expected, tt.input)
 		})
 	}
 }
