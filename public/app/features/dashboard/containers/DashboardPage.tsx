@@ -38,6 +38,7 @@ import { findTemplateVarChanges } from '../../variables/utils';
 import { DashNav } from '../components/DashNav';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
+import { DashboardNotFound } from '../components/DashboardLoading/DashboardNotFound';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
@@ -440,47 +441,53 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         >
           <DashboardPrompt dashboard={dashboard} />
           {initError && <DashboardFailed />}
-          {showSubMenu && (
-            <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
-              <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
-            </section>
-          )}
-          {config.featureToggles.editPanelCSVDragAndDrop ? (
-            <DropZone
-              onDrop={this.onFileDrop}
-              accept={DFImport.acceptedFiles}
-              maxSize={DFImport.maxFileSize}
-              noClick={true}
-            >
-              {({ getRootProps, isDragActive }) => {
-                const styles = getStyles(this.props.theme, isDragActive);
-                return (
-                  <div {...getRootProps({ className: styles.dropZone })}>
-                    <div className={styles.dropOverlay}>
-                      <div className={styles.dropHint}>
-                        <Icon name="upload" size="xxxl"></Icon>
-                        <h3>Create tables from spreadsheets</h3>
-                      </div>
-                    </div>
-                    <DashboardGrid
-                      dashboard={dashboard}
-                      isEditable={!!dashboard.meta.canEdit}
-                      viewPanel={viewPanel}
-                      editPanel={editPanel}
-                    />
-                  </div>
-                );
-              }}
-            </DropZone>
+          {dashboard.meta.dashboardNotFound ? (
+            <DashboardNotFound />
           ) : (
-            <DashboardGrid
-              dashboard={dashboard}
-              isEditable={!!dashboard.meta.canEdit}
-              viewPanel={viewPanel}
-              editPanel={editPanel}
-            />
+            <>
+              {showSubMenu && (
+                <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+                  <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+                </section>
+              )}
+              {config.featureToggles.editPanelCSVDragAndDrop ? (
+                <DropZone
+                  onDrop={this.onFileDrop}
+                  accept={DFImport.acceptedFiles}
+                  maxSize={DFImport.maxFileSize}
+                  noClick={true}
+                >
+                  {({ getRootProps, isDragActive }) => {
+                    const styles = getStyles(this.props.theme, isDragActive);
+                    return (
+                      <div {...getRootProps({ className: styles.dropZone })}>
+                        <div className={styles.dropOverlay}>
+                          <div className={styles.dropHint}>
+                            <Icon name="upload" size="xxxl"></Icon>
+                            <h3>Create tables from spreadsheets</h3>
+                          </div>
+                        </div>
+                        <DashboardGrid
+                          dashboard={dashboard}
+                          isEditable={!!dashboard.meta.canEdit}
+                          viewPanel={viewPanel}
+                          editPanel={editPanel}
+                        />
+                      </div>
+                    );
+                  }}
+                </DropZone>
+              ) : (
+                <DashboardGrid
+                  dashboard={dashboard}
+                  isEditable={!!dashboard.meta.canEdit}
+                  viewPanel={viewPanel}
+                  editPanel={editPanel}
+                />
+              )}
+              {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
+            </>
           )}
-          {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
         </Page>
         {editPanel && (
           <PanelEditor
