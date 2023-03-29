@@ -24,11 +24,11 @@ import (
 
 const GrafanaAdminK8sUser = "gl-admin"
 
-type K8sAuthnzAPIImpl struct {
+type K8sAuthnzAPI struct {
 	RouteRegister routing.RouteRegister
-	AccessControl accesscontrol.AccessControl
-	ApiKey        *clients.APIKey
-	Log           log.Logger
+	accessControl accesscontrol.AccessControl
+	apiKey        *clients.APIKey
+	log           log.Logger
 }
 
 func ProvideService(
@@ -36,12 +36,12 @@ func ProvideService(
 	apikeyService apikey.Service,
 	userService user.Service,
 	ac accesscontrol.AccessControl,
-) *K8sAuthnzAPIImpl {
-	k8sAuthnzAPI := &K8sAuthnzAPIImpl{
+) *K8sAuthnzAPI {
+	k8sAuthnzAPI := &K8sAuthnzAPI{
 		RouteRegister: rr,
-		AccessControl: ac,
-		ApiKey:        clients.ProvideAPIKey(apikeyService, userService),
-		Log:           log.New("k8s.webhooks.authnz"),
+		accessControl: ac,
+		apiKey:        clients.ProvideAPIKey(apikeyService, userService),
+		log:           log.New("k8s.webhooks.authnz"),
 	}
 
 	k8sAuthnzAPI.registerAPIEndpoints()
@@ -70,28 +70,28 @@ func sendV1Response(userInfo authnV1.UserInfo) response.Response {
 	}))
 }
 
-func (api *K8sAuthnzAPIImpl) registerAPIEndpoints() {
+func (api *K8sAuthnzAPI) registerAPIEndpoints() {
 	api.RouteRegister.Post("/k8s/authn", api.authenticate)
 	api.RouteRegister.Post("/k8s/authz", api.authorize)
 }
 
-func (api *K8sAuthnzAPIImpl) parseToken(c *contextmodel.ReqContext) (*authn.Identity, error) {
+func (api *K8sAuthnzAPI) parseToken(c *contextmodel.ReqContext) (*authn.Identity, error) {
 	tokenReview := authnV1.TokenReview{}
 	web.Bind(c.Req, &tokenReview)
 
 	// K8s authn operates with a TokenReview construct. We use a slight hack below to set the Authorization header
 	// to be able to use existing authentication methods in Grafana
 	c.Req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenReview.Spec.Token))
-	return api.ApiKey.Authenticate(context.Background(), &authn.Request{
+	return api.apiKey.Authenticate(context.Background(), &authn.Request{
 		HTTPRequest: c.Req,
 	})
 }
 
-func (api *K8sAuthnzAPIImpl) authenticate(c *contextmodel.ReqContext) response.Response {
+func (api *K8sAuthnzAPI) authenticate(c *contextmodel.ReqContext) response.Response {
 	identity, err := api.parseToken(c)
 
 	if err != nil {
-		api.Log.Error("K8s authn webhook failed to authenticate a request", "error", err)
+		api.log.Error("K8s authn webhook failed to authenticate a request", "error", err)
 
 		return sendDeniedV1Response("authorization token is invalid")
 	}
@@ -117,7 +117,7 @@ func (api *K8sAuthnzAPIImpl) authenticate(c *contextmodel.ReqContext) response.R
 	return sendDeniedV1Response("authorization token does not have sufficient privileges")
 }
 
-func (api *K8sAuthnzAPIImpl) authorize(c *contextmodel.ReqContext) response.Response {
+func (api *K8sAuthnzAPI) authorize(c *contextmodel.ReqContext) response.Response {
 	inputSAR := authzV1.SubjectAccessReview{}
 	if err := web.Bind(c.Req, &inputSAR); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

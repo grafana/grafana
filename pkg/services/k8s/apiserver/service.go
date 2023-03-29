@@ -53,7 +53,7 @@ type service struct {
 // NOTE: k8sAuthnAPI and k8sAuthzAPI aren't code-dependencies of apiserver. However, they need to be exercised somewhere
 // in order for Wire to pull them in.
 // It's possible, registering it in the modules registry is the correct way to go (TBD - given it's reliance on httpserver)
-func ProvideService(etcdProvider kine.EtcdProvider, _ *authnz.K8sAuthnzAPIImpl, cfg *setting.Cfg) (*service, error) {
+func ProvideService(etcdProvider kine.EtcdProvider, _ *authnz.K8sAuthnzAPI, cfg *setting.Cfg) (*service, error) {
 	s := &service{
 		dataPath:     path.Join(cfg.DataPath, "k8s"),
 		etcdProvider: etcdProvider,
@@ -76,7 +76,6 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	serverRunOptions := options.NewServerRunOptions()
-	serverRunOptions.Logs.Verbosity = 5
 	serverRunOptions.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
 
 	serverRunOptions.SecureServing.ServerCert.CertKey = serveroptions.CertKey{
