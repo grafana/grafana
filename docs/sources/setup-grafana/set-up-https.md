@@ -184,7 +184,7 @@ To generate certificates using `certbot`, complete the following steps:
 
 #### Set up symlinks to Grafana
 
-Symlinks are like pointers on your filesystem that allow us to refer to the LetsEncrypt files, from within the `/etc/grafana` directory.  The reason we use symlinks to the "live" files instead of copying the files is to permit you to later refresh or re-request updated certificates from LetsEncrypt using `certbot`, without needing to change any Grafana configuration.  
+Symbolic links, also known as symlinks, enable you to create pointers to existing LetsEncrypt files in the `/etc/grafana` directory. By using symlinks rather than copying files, you can use `certbot` to refresh or request updated certificates from LetsEncrypt without the need to reconfigure the Grafana settings.
 
 To set up symlinks to Grafana, run the following commands:
 
