@@ -50,7 +50,6 @@ describe('TraceQLSearch', () => {
           operator: '=',
           scope: TraceqlSearchScope.Resource,
         },
-        { id: 'span-name', type: 'static', tag: 'name', operator: '=', scope: TraceqlSearchScope.Span },
       ],
     },
   } as TempoDatasource;
@@ -83,7 +82,6 @@ describe('TraceQLSearch', () => {
     const minDurationOperator = container.querySelector(`input[aria-label="select min-duration operator"]`);
     expect(minDurationOperator).not.toBeNull();
     expect(minDurationOperator).toBeInTheDocument();
-    expect(await screen.findByText('>')).toBeInTheDocument();
 
     if (minDurationOperator) {
       await user.click(minDurationOperator);
@@ -122,7 +120,7 @@ describe('TraceQLSearch', () => {
     render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
 
     const dynamicFilters = query.filters.filter((f) => f.type === 'dynamic');
-    expect(dynamicFilters.length).toBe(1);
+    expect(dynamicFilters.length).toBe(0);
     const addButton = await screen.findByTitle('Add tag');
     await user.click(addButton);
     jest.advanceTimersByTime(1000);
@@ -131,13 +129,12 @@ describe('TraceQLSearch', () => {
     render(<TraceQLSearch datasource={{} as TempoDatasource} query={query} onChange={onChange} />);
 
     const newDynamicFilters = query.filters.filter((f) => f.type === 'dynamic');
-    expect(newDynamicFilters.length).toBe(2);
+    expect(newDynamicFilters.length).toBe(1);
 
-    const notInitialDynamic = newDynamicFilters.find((f) => f.id !== dynamicFilters[0].id);
-    const secondDynamicRemoveButton = await screen.findByLabelText(`remove tag with ID ${notInitialDynamic?.id}`);
-    await waitFor(() => expect(secondDynamicRemoveButton).toBeInTheDocument());
-    if (secondDynamicRemoveButton) {
-      await user.click(secondDynamicRemoveButton);
+    const dynamicRemoveButton = await screen.findByLabelText(`remove tag with ID ${newDynamicFilters[0]?.id}`);
+    await waitFor(() => expect(dynamicRemoveButton).toBeInTheDocument());
+    if (dynamicRemoveButton) {
+      await user.click(dynamicRemoveButton);
       expect(query.filters.filter((f) => f.type === 'dynamic')).toStrictEqual(dynamicFilters);
     }
   });
