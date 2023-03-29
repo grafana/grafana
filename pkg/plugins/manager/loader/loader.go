@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -38,7 +39,8 @@ type Loader struct {
 	log                log.Logger
 	cfg                *config.Cfg
 
-	errs map[string]*plugins.SignatureError
+	errs    map[string]*plugins.SignatureError
+	errsMux sync.Mutex
 }
 
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
@@ -78,7 +80,7 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 	return l.loadPlugins(ctx, src, found)
 }
 
-func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
+func (l *Loader) getLoadedPlugins(ctx context.Context, src plugins.PluginSource, found []*plugins.FoundBundle) []*plugins.Plugin {
 	var loadedPlugins []*plugins.Plugin
 	for _, p := range found {
 		if _, exists := l.pluginRegistry.Plugin(ctx, p.Primary.JSONData.ID); exists {
@@ -132,50 +134,138 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 			loadedPlugins = append(loadedPlugins, cp)
 		}
 	}
+	return loadedPlugins
+}
+func (l *Loader) deleteSignatureErr(pluginID string) {
+	l.errsMux.Lock()
+	delete(l.errs, pluginID)
+	l.errsMux.Unlock()
+}
 
-	// validate signatures
-	verifiedPlugins := make([]*plugins.Plugin, 0)
-	for _, plugin := range loadedPlugins {
-		signingError := l.signatureValidator.Validate(plugin)
-		if signingError != nil {
-			l.log.Warn("Skipping loading plugin due to problem with signature",
-				"pluginID", plugin.ID, "status", signingError.SignatureStatus)
-			plugin.SignatureError = signingError
-			l.errs[plugin.ID] = signingError
-			// skip plugin so it will not be loaded any further
-			continue
-		}
-
-		// clear plugin error if a pre-existing error has since been resolved
-		delete(l.errs, plugin.ID)
-
-		// verify module.js exists for SystemJS to load.
-		// CDN plugins can be loaded with plugin.json only, so do not warn for those.
-		if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
-			_, err := plugin.FS.Open("module.js")
-			if err != nil {
-				if errors.Is(err, plugins.ErrFileNotExist) && !l.pluginsCDN.PluginSupported(plugin.ID) {
-					l.log.Warn("Plugin missing module.js", "pluginID", plugin.ID,
-						"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
-				}
-			}
-		}
-
-		if plugin.IsApp() {
-			setDefaultNavURL(plugin)
-		}
-
-		if plugin.Parent != nil && plugin.Parent.IsApp() {
-			configureAppChildPlugin(plugin.Parent, plugin)
-		}
-
-		verifiedPlugins = append(verifiedPlugins, plugin)
+func (l *Loader) validateSignature(plugin *plugins.Plugin) *plugins.SignatureError {
+	signingError := l.signatureValidator.Validate(plugin)
+	if signingError != nil {
+		l.log.Warn("Skipping loading plugin due to problem with signature",
+			"pluginID", plugin.ID, "status", signingError.SignatureStatus)
+		plugin.SignatureError = signingError
+		// skip plugin so it will not be loaded any further
+		return signingError
 	}
 
+	// clear plugin error if a pre-existing error has since been resolved
+	// TODO: move to chan so we do not use mutex?
+	l.deleteSignatureErr(plugin.ID)
+
+	// verify module.js exists for SystemJS to load.
+	// CDN plugins can be loaded with plugin.json only, so do not warn for those.
+	if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
+		_, err := plugin.FS.Open("module.js")
+		if err != nil {
+			if errors.Is(err, plugins.ErrFileNotExist) && !l.pluginsCDN.PluginSupported(plugin.ID) {
+				l.log.Warn("Plugin missing module.js", "pluginID", plugin.ID,
+					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
+			}
+		}
+	}
+
+	if plugin.IsApp() {
+		setDefaultNavURL(plugin)
+	}
+
+	if plugin.Parent != nil && plugin.Parent.IsApp() {
+		configureAppChildPlugin(plugin.Parent, plugin)
+	}
+	return nil
+}
+
+func (l *Loader) validateSignatures(ctx context.Context, loadedPlugins []*plugins.Plugin) []*plugins.Plugin {
+	const workers = 24
+
+	var wg sync.WaitGroup
+
+	pluginsToValidate := make(chan *plugins.Plugin, workers)
+	signatureErrors := make(chan *plugins.SignatureError, workers)
+	validatedPlugins := make(chan *plugins.Plugin, workers)
+
+	workerCtx, workerCanc := context.WithCancel(ctx)
+	defer workerCanc()
+
+	wg.Add(workers)
+	for i := 0; i < workers; i++ {
+		go func() {
+			defer func() {
+				wg.Done()
+				l.log.Debug("stopped validate worker")
+			}()
+			l.log.Debug("started validate worker")
+			for {
+				select {
+				case <-workerCtx.Done():
+					return
+				case p, ok := <-pluginsToValidate:
+					if !ok {
+						// Channel closed and empty
+						return
+					}
+					l.log.Debug("validating plugin signature", "pluginID", p.ID)
+					if signatureErr := l.validateSignature(p); signatureErr != nil {
+						signatureErrors <- signatureErr
+					} else {
+						validatedPlugins <- p
+					}
+				}
+			}
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		l.log.Debug("closing output channels")
+		close(signatureErrors)
+		close(validatedPlugins)
+	}()
+
+	done := make(chan struct{}, 1)
+	verifiedPlugins := make([]*plugins.Plugin, 0)
+	go func() {
+		defer func() {
+			done <- struct{}{}
+			l.log.Debug("stopped plugins verification reader goroutine")
+		}()
+		l.log.Debug("started plugins verification reader goroutine")
+		for {
+			select {
+			case <-workerCtx.Done():
+				return
+			case signatureErr, ok := <-signatureErrors:
+				if !ok {
+					return
+				}
+				l.errs[signatureErr.PluginID] = signatureErr
+			case p, ok := <-validatedPlugins:
+				if !ok {
+					return
+				}
+				verifiedPlugins = append(verifiedPlugins, p)
+			}
+		}
+	}()
+
+	for _, plugin := range loadedPlugins {
+		pluginsToValidate <- plugin
+	}
+	close(pluginsToValidate)
+	l.log.Debug("waiting for workers to finish")
+	<-done
+	l.log.Debug("all plugins workers have exited")
+	return verifiedPlugins
+}
+
+func (l *Loader) initializePlugins(ctx context.Context, verifiedPlugins []*plugins.Plugin) error {
 	for _, p := range verifiedPlugins {
 		err := l.pluginInitializer.Initialize(ctx, p)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 
@@ -183,13 +273,24 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 			l.log.Warn("Declare plugin roles failed.", "pluginID", p.ID, "err", errDeclareRoles)
 		}
 	}
+	return nil
+}
 
+func (l *Loader) startPlugins(ctx context.Context, verifiedPlugins []*plugins.Plugin) {
 	for _, p := range verifiedPlugins {
 		if err := l.load(ctx, p); err != nil {
 			l.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
 		}
 	}
+}
 
+func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
+	loadedPlugins := l.getLoadedPlugins(ctx, src, found)
+	verifiedPlugins := l.validateSignatures(ctx, loadedPlugins)
+	if err := l.initializePlugins(ctx, verifiedPlugins); err != nil {
+		return nil, err
+	}
+	l.startPlugins(ctx, verifiedPlugins)
 	return verifiedPlugins, nil
 }
 
