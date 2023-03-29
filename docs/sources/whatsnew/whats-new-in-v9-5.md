@@ -67,4 +67,4 @@ Dashboards have been updated so that it’s easier to begin building from an emp
 
 Also, a text Add dropdown with these options has replaced the previous icon at the top of the dashboard. This makes it clearer that this element allows you to not just add new panels, but to take all the actions associated with building a new dashboard.
 
-{{< figure src="/media/docs/grafana/screenshot-empty-dashboard-whats-new-9-5.png" max-width="750px" caption="Admin view of data source connection page on dashboard creation" >}}
+{{< figure src="/media/docs/grafana/screenshot-empty-dashboard-whats-new-9-5.png" max-width="750px" caption="Dashboard without any visualizations added" >}}
