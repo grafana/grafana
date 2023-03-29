@@ -5,7 +5,7 @@ import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@gra
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
 
-import { QueryCache } from './QueryCache';
+import { getTargSig, QueryCache } from './QueryCache';
 import { IncrementalStorageDataFrameScenarios } from './QueryCacheTestData';
 
 const mockRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQueryRequest<PromQuery> => {
@@ -404,6 +404,30 @@ describe('QueryCache', function () {
     expect(storageLengthAfterThirdQuery).toEqual(20);
   });
 
-  // Length mismatch?
-  //storage.requestInfo() @todo
+  it('Will build signature using target overrides', () => {
+    const targetInterval = '30s';
+    const requestInterval = '15s';
+
+    const target: PromQuery = {
+      datasource: { type: 'prometheus', uid: 'OPQv8Kc4z' },
+      editorMode: QueryEditorMode.Code,
+      exemplar: false,
+      expr: 'sum by(le) (rate(cortex_request_duration_seconds_bucket{cluster="dev-us-central-0", job="cortex-dev-01/cortex-gw-internal", namespace="cortex-dev-01"}[$__rate_interval]))',
+      format: 'heatmap',
+      interval: targetInterval,
+      legendFormat: '{{le}}',
+      range: true,
+      refId: 'A',
+      requestId: '2A',
+      utcOffsetSec: -21600,
+    };
+
+    const request = mockRequest({
+      interval: requestInterval,
+      targets: [target],
+    });
+    const targSig = getTargSig('__EXPR__', request, target);
+    expect(targSig).toContain(targetInterval);
+    expect(targSig.includes(requestInterval)).toBeFalsy();
+  });
 });

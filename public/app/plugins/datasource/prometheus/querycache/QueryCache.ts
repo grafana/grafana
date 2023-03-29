@@ -52,7 +52,7 @@ export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JS
  * @param request
  * @param targ
  */
-function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ: PromQuery) {
+export function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ: PromQuery) {
   return `${targExpr}|${targ.interval ?? request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.exemplar}`;
 }
 
