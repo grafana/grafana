@@ -28,6 +28,7 @@ describe('alertRuleToQueries', () => {
         labels: {},
         grafana_alert: grafanaAlert,
       },
+      instanceTotals: {},
     };
 
     const result = alertRuleToQueries(combinedRule);
@@ -58,6 +59,7 @@ describe('alertRuleToQueries', () => {
           readOnly: false,
         },
       },
+      instanceTotals: {},
     };
 
     const result = alertRuleToQueries(combinedRule);
