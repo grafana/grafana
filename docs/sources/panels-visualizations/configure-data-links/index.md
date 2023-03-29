@@ -93,9 +93,13 @@ When creating or updating a data link, press Cmd+Space or Ctrl+Space on your key
 
 ### Add a data link
 
-1. Hover your cursor over the panel that you want to add a link to and then press `e`. Or click the dropdown arrow next to the panel title and then click **Edit**.
-1. On the Field tab, scroll down to the Data links section.
-1. Expand Data links and then click **Add link**.
+1. Hover over any part of the panel you want to which you want to add the data link to display the actions menu on the top right corner.
+1. Click the menu and select **Edit**.
+
+   To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
+
+1. Scroll down to the Data links section and expand it.
+1. Click **Add link**.
 1. Enter a **Title**. **Title** is a human-readable label for the link that will be displayed in the UI.
 1. Enter the **URL** you want to link to.
 
@@ -107,7 +111,7 @@ When creating or updating a data link, press Cmd+Space or Ctrl+Space on your key
 
 ### Update a data link
 
-1. On the Field tab, find the link that you want to make changes to.
+1. Scroll down to the Data links section, expand it, and find the link that you want to make changes to.
 1. Click the Edit (pencil) icon to open the Edit link window.
 1. Make any necessary changes.
 1. Click **Save** to save changes and close the window.
@@ -115,6 +119,6 @@ When creating or updating a data link, press Cmd+Space or Ctrl+Space on your key
 
 ### Delete a data link
 
-1. On the Field tab, find the link that you want to delete.
+1. Scroll down to the Data links section, expand it, and find the link that you want to delete.
 1. Click the **X** icon next to the link you want to delete.
 1. Click **Save** in the upper right to save your changes to the dashboard.

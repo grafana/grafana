@@ -23,6 +23,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
@@ -693,7 +694,9 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 				hs.Cfg = setting.NewCfg()
 				hs.PluginSettings = &pluginSettings
 				hs.pluginStore = pluginStore
-				hs.pluginsUpdateChecker = updatechecker.ProvidePluginsService(hs.Cfg, pluginStore)
+				var err error
+				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, pluginStore, tracing.InitializeTracerForTest())
+				require.NoError(t, err)
 			})
 
 			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/plugins"), userWithPermissions(1, tc.permissions)))
