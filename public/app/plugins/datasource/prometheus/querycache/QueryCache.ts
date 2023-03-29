@@ -54,7 +54,7 @@ export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JS
  * @param request
  * @param targ
  */
-function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ: PromQuery) {
+export function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ: PromQuery) {
   return `${targExpr}|${targ.interval ?? request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.exemplar}`;
 }
 
@@ -275,9 +275,9 @@ export class QueryCache {
             // we assume that fields cannot appear/disappear and will all exist in same order
 
             // amend & re-cache
-            // eslint-ignore-next-line
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             let prevTable: Table = cachedFrame.fields.map((field) => field.values.toArray()) as Table;
-            // eslint-ignore-next-line
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             let nextTable: Table = respFrame.fields.map((field) => field.values.toArray()) as Table;
 
             let amendedTable = amendTable(prevTable, nextTable);
@@ -297,7 +297,7 @@ export class QueryCache {
         let nonEmptyCachedFrames: DataFrame[] = [];
 
         cachedFrames.forEach((frame) => {
-          // eslint-ignore-next-line
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           let table: Table = frame.fields.map((field) => field.values.toArray()) as Table;
 
           let trimmed = trimTable(table, newFrom, newTo);
