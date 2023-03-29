@@ -1,6 +1,7 @@
 # This workflow checks out the grafana-build repository, then builds, packages, and uploads Grafana to GCS.
 name: "[RGM] Build and Package"
 on:
+  pull_request:
   push:
     tags:
       - 'v*.*.*'
@@ -27,5 +28,5 @@ jobs:
           grafana_ref: ${{ github.sha }}
           enterprise_ref: ${{ github.head_ref }}
           gcp_service_account_key: ${{ secrets.RGM_GCP_KEY }}
-          destination: ${{ secrets.RCM_DESTINATION }}
-          github_token: ${{secrets.GITHUB_TOKEN}}
+          destination: ${{ secrets.RCM_DESTINATION }}/${{ github.event_name }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
