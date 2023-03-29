@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, HorizontalGroup, Modal, useStyles2 } from '@grafana/ui';
@@ -31,6 +31,10 @@ export const MoveToFolderModal = ({ results, onMoveItems, onDismiss }: Props) =>
     ? Array.from(results.get('folder') ?? []).filter((v) => v !== GENERAL_FOLDER_UID)
     : [];
 
+  const handleFolderChange = useCallback((newFolder: FolderInfo) => {
+    setFolder(newFolder);
+  }, []);
+
   const moveTo = async () => {
     console.log({ folder, selectedDashboards, selectedFolders });
 
@@ -40,18 +44,46 @@ export const MoveToFolderModal = ({ results, onMoveItems, onDismiss }: Props) =>
 
     if (nestedFoldersEnabled) {
       setMoving(true);
+      let totalCount = 0;
+      let successCount = 0;
 
       if (selectedDashboards.length) {
         const moveDashboardsResult = await moveDashboards(selectedDashboards, folder);
-        console.log({ moveDashboardsResult });
+
+        totalCount += moveDashboardsResult.totalCount;
+        successCount += moveDashboardsResult.successCount;
       }
 
       if (selectedFolders.length) {
         const moveFoldersResult = await moveFolders(selectedFolders, folder);
-        console.log({ moveFoldersResult });
+
+        totalCount += moveFoldersResult.totalCount;
+        successCount += moveFoldersResult.successCount;
       }
 
-      notifyApp.success('something might have happened successfully');
+      let header: string | undefined;
+      let message: string | undefined;
+      const destTitle = folder.title ?? 'General';
+      const plural = successCount === 1 ? '' : 's';
+
+      if (selectedDashboards.length && selectedFolders.length) {
+        header = `Item${plural} moved`;
+        message = `Moved ${successCount} of ${totalCount} item${plural} to ${destTitle}`;
+      } else if (selectedDashboards.length) {
+        header = `Dashboard${plural} moved`;
+        message = `Moved ${successCount} of ${totalCount} dashboard${plural} to ${destTitle}`;
+      } else if (selectedFolders.length) {
+        header = `Folder${plural} moved`;
+        message = `Moved ${successCount} of ${totalCount} folder${plural} to ${destTitle}`;
+      }
+
+      if (header && message) {
+        if (totalCount === successCount) {
+          notifyApp.success(header, message);
+        } else {
+          notifyApp.warning(header, message);
+        }
+      }
 
       onMoveItems();
       setMoving(false);
@@ -84,6 +116,14 @@ export const MoveToFolderModal = ({ results, onMoveItems, onDismiss }: Props) =>
     }
   };
 
+  const thingsMoving = [
+    ['folder', 'folders', selectedFolders.length] as const,
+    ['dashboard', 'dashboards', selectedDashboards.length] as const,
+  ]
+    .filter(([single, plural, count]) => count > 0)
+    .map(([single, plural, count]) => `${count.toLocaleString()} ${count === 1 ? single : plural}`)
+    .join(' and ');
+
   return (
     <Modal
       className={styles.modal}
@@ -93,27 +133,21 @@ export const MoveToFolderModal = ({ results, onMoveItems, onDismiss }: Props) =>
     >
       <>
         <div className={styles.content}>
-          {selectedFolders.length > 0 && (
+          {nestedFoldersEnabled && selectedFolders.length > 0 && (
             <>
               <Alert severity="warning" title="Careful!">
                 This may change the permission of the folders and all of it&apos;s children
               </Alert>
-              <p>
-                Moving {selectedFolders.length} folder{selectedFolders.length === 1 ? '' : 's'}
-              </p>
             </>
           )}
 
-          {selectedDashboards.length > 0 && (
-            <p>
-              Moving {selectedDashboards.length} dashboard{selectedDashboards.length === 1 ? '' : 's'}
-            </p>
-          )}
-          <FolderPicker allowEmpty={true} enableCreateNew={false} onChange={(f) => setFolder(f)} />
+          <p>Move the {thingsMoving} to the following folder:</p>
+
+          <FolderPicker allowEmpty={true} enableCreateNew={false} onChange={handleFolderChange} />
         </div>
 
-        <HorizontalGroup justify="center">
-          <Button icon={moving ? 'fa fa-spinner' : undefined} disabled={!folder} variant="primary" onClick={moveTo}>
+        <HorizontalGroup justify="flex-end">
+          <Button icon={moving ? 'fa fa-spinner' : undefined} variant="primary" onClick={moveTo}>
             Move
           </Button>
           <Button variant="secondary" onClick={onDismiss}>

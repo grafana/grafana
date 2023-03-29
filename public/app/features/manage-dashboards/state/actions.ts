@@ -182,20 +182,24 @@ const getDataSourceOptions = (input: { pluginId: string; pluginName: string }, i
   }
 };
 
-export function moveFolders(folderUids: string[], toFolder: FolderInfo) {
-  const tasks = [];
+export async function moveFolders(folderUIDs: string[], toFolder: FolderInfo) {
+  const result = {
+    totalCount: folderUIDs.length,
+    successCount: 0,
+  };
 
-  for (const uid of folderUids) {
-    tasks.push(createTask(moveFolder, true, uid, toFolder));
+  for (const folderUID of folderUIDs) {
+    try {
+      const newFolderDTO = await moveFolder(folderUID, toFolder);
+      if (newFolderDTO !== null) {
+        result.successCount += 1;
+      }
+    } catch (err) {
+      console.error('Failed to move a folder', err);
+    }
   }
 
-  return executeInOrder(tasks).then((result: any) => {
-    return {
-      totalCount: result.length,
-      successCount: result.filter((res: any) => res.succeeded).length,
-      // alreadyInFolderCount: result.filter((res: any) => res.alreadyInFolder).length,
-    };
-  });
+  return result;
 }
 
 export function moveDashboards(dashboardUids: string[], toFolder: FolderInfo) {
