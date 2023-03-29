@@ -331,5 +331,13 @@ func (s OpentelemetrySpan) AddEvents(keys []string, values []EventValue) {
 }
 
 func (s OpentelemetrySpan) contextWithSpan(ctx context.Context) context.Context {
-	return trace.ContextWithSpan(ctx, s.span)
+	if s.span != nil {
+		ctx = trace.ContextWithSpan(ctx, s.span)
+		// Grafana also manages its own separate traceID in the context in addition to what opentracing handles.
+		// It's derived from the span. Ensure that we propagate this too.
+		if traceID := s.span.SpanContext().TraceID(); traceID.IsValid() {
+			ctx = context.WithValue(ctx, traceKey{}, traceValue{traceID.String(), s.span.SpanContext().IsSampled()})
+		}
+	}
+	return ctx
 }
