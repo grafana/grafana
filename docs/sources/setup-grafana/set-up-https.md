@@ -193,7 +193,7 @@ $ sudo ln -s /etc/letsencrypt/live/subdomain.mysite.com/fullchain.pem /etc/grafa
 
 #### Adjust permissions
 
-Grafana typically runs under the `grafana` linux group, and we must ensure that the Grafana server process has permissions to read the relevant files.  Without read access, the HTTPS server will fail to start properly.
+Grafana usually runs under the `grafana` Linux group, and you must ensure that the Grafana server process has permission to read the relevant files. Without read access, the HTTPS server fails to start properly.
 
 To adjust permissions, perform the following steps:
 
