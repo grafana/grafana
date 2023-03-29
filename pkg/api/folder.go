@@ -219,7 +219,11 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 				return response.Error(http.StatusInternalServerError, "update folder uid failed", err)
 			}
 		}
-		return response.JSON(http.StatusOK, theFolder)
+		g, err := guardian.NewByUID(c.Req.Context(), theFolder.UID, c.OrgID, c.SignedInUser)
+		if err != nil {
+			return response.Err(err)
+		}
+		return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, theFolder))
 	}
 	result := map[string]string{}
 	result["message"] = "To use this service, you need to activate nested folder feature."
