@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/k8s/authnz"
 	"net"
 	"net/http"
 	"os"
@@ -256,6 +257,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
 	starApi *starApi.API,
+	// NOTE: k8sAuthnzAPI isn't a code-dependency of httpserver. However, it needs to be exercised somewhere
+	// in order for Wire to pull it in.
+	// It's possible, registering it in the modules registry is the correct way to go
+	_ *authnz.K8sAuthnzAPI,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()

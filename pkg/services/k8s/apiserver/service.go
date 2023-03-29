@@ -2,6 +2,9 @@ package apiserver
 
 import (
 	"context"
+	"net"
+	"path"
+
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/modules"
@@ -15,8 +18,7 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
-	"net"
-	"path"
+	authzmodes "k8s.io/kubernetes/pkg/kubeapiserver/authorizer/modes"
 )
 
 const (
@@ -78,6 +80,13 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{DefaultAPIServerHost}
+	serverRunOptions.Authentication.WebHook.ConfigFile = "conf/k8s-authn-webhook-config"
+	serverRunOptions.Authentication.WebHook.Version = "v1"
+
+	serverRunOptions.Authorization.Modes = []string{authzmodes.ModeRBAC, authzmodes.ModeWebhook}
+	serverRunOptions.Authorization.WebhookConfigFile = "conf/k8s-authz-webhook-config"
+	serverRunOptions.Authorization.WebhookVersion = "v1"
+
 	etcdConfig := s.etcdProvider.GetConfig()
 	serverRunOptions.Etcd.StorageConfig.Transport.ServerList = etcdConfig.Endpoints
 	serverRunOptions.Etcd.StorageConfig.Transport.CertFile = etcdConfig.TLSConfig.CertFile
