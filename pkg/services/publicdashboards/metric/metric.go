@@ -24,6 +24,7 @@ func ProvideService(
 	}
 
 	err := prom.Register(s.Metrics.PublicDashboardsTotal)
+	//TODO: check what could happen here
 	if err != nil {
 		return nil, fmt.Errorf("failed to register metrics: %w", err)
 	}
