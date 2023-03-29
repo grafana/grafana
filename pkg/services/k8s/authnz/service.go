@@ -3,20 +3,17 @@ package authnz
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/api/routing"
 
 	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/authn/clients"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 	authnV1 "k8s.io/api/authentication/v1"
 	authzV1 "k8s.io/api/authorization/v1"
@@ -25,26 +22,24 @@ import (
 const GrafanaAdminK8sUser = "gl-admin"
 
 type K8sAuthnzAPI struct {
-	RouteRegister routing.RouteRegister
 	accessControl accesscontrol.AccessControl
-	apiKey        *clients.APIKey
+	authnService  authn.Service
 	log           log.Logger
 }
 
 func ProvideService(
 	rr routing.RouteRegister,
-	apikeyService apikey.Service,
-	userService user.Service,
+	authnService authn.Service,
 	ac accesscontrol.AccessControl,
 ) *K8sAuthnzAPI {
 	k8sAuthnzAPI := &K8sAuthnzAPI{
-		RouteRegister: rr,
 		accessControl: ac,
-		apiKey:        clients.ProvideAPIKey(apikeyService, userService),
+		authnService:  authnService,
 		log:           log.New("k8s.webhooks.authnz"),
 	}
 
-	k8sAuthnzAPI.registerAPIEndpoints()
+	rr.Post("/k8s/authn", k8sAuthnzAPI.authenticate)
+	rr.Post("/k8s/authz", k8sAuthnzAPI.authorize)
 
 	return k8sAuthnzAPI
 
@@ -70,11 +65,6 @@ func sendV1Response(userInfo authnV1.UserInfo) response.Response {
 	}))
 }
 
-func (api *K8sAuthnzAPI) registerAPIEndpoints() {
-	api.RouteRegister.Post("/k8s/authn", api.authenticate)
-	api.RouteRegister.Post("/k8s/authz", api.authorize)
-}
-
 func (api *K8sAuthnzAPI) parseToken(c *contextmodel.ReqContext) (*authn.Identity, error) {
 	tokenReview := authnV1.TokenReview{}
 
@@ -85,7 +75,7 @@ func (api *K8sAuthnzAPI) parseToken(c *contextmodel.ReqContext) (*authn.Identity
 	// K8s authn operates with a TokenReview construct. We use a slight hack below to set the Authorization header
 	// to be able to use existing authentication methods in Grafana
 	c.Req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenReview.Spec.Token))
-	return api.apiKey.Authenticate(context.Background(), &authn.Request{
+	return api.authnService.Authenticate(context.Background(), &authn.Request{
 		HTTPRequest: c.Req,
 	})
 }
