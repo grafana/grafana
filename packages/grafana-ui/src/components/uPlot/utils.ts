@@ -350,7 +350,7 @@ function getStackDirection(transform: GraphTransform, data: unknown[]) {
 }
 
 // similar to isLikelyAscendingVector()
-function hasNegSample(data: unknown[], samples = 50) {
+function hasNegSample(data: unknown[], samples = 100) {
   const len = data.length;
 
   if (len === 0) {
@@ -369,15 +369,29 @@ function hasNegSample(data: unknown[], samples = 50) {
     lastIdx--;
   }
 
+  let negCount = 0;
+  let zeroCount = 0;
+  let posCount = 0;
+
   if (lastIdx >= firstIdx) {
     const stride = Math.max(1, Math.floor((lastIdx - firstIdx + 1) / samples));
 
     for (let i = firstIdx; i <= lastIdx; i += stride) {
       const v = data[i];
 
-      if (v != null && (v < 0 || Object.is(v, -0))) {
-        return true;
+      if (v != null) {
+        if (v < 0 || Object.is(v, -0)) {
+          negCount++;
+        } else if (v > 0) {
+          posCount++;
+        } else if (v === 0) {
+          zeroCount++;
+        }
       }
+    }
+
+    if (negCount > posCount) {
+      return true;
     }
   }
 
