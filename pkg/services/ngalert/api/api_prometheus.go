@@ -275,6 +275,9 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 					alertingRule.State = "pending"
 				}
 			case eval.Alerting:
+				if alertingRule.ActiveAt == nil || alertingRule.ActiveAt.After(activeAt) {
+					alertingRule.ActiveAt = &activeAt
+				}
 				alertingRule.State = "firing"
 			case eval.Error:
 				newRule.Health = "error"
