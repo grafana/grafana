@@ -70,6 +70,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       font-family: ${theme.typography.fontFamilyMonospace};
       font-size: ${theme.typography.bodySmall.fontSize};
       width: 100%;
+      margin-bottom: ${theme.spacing(2.25)}; /* This is to make sure the last row's LogRowMenu is not cut off. */
     `,
     contextBackground: css`
       background: ${hoverBgColor};
@@ -241,17 +242,14 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       width: ${theme.spacing(10)};
     `,
     logRowMenuCell: css`
-      position: absolute;
+      position: sticky;
+      z-index: ${theme.zIndex.dropdown};
       margin-top: -${theme.spacing(0.125)};
-    `,
-    logRowMenuCellDefaultPosition: css`
-      right: 40px;
-    `,
-    logRowMenuCellExplore: css`
-      right: calc(115px + ${theme.spacing(1)});
-    `,
-    logRowMenuCellExploreWithContextButton: css`
-      right: calc(155px + ${theme.spacing(1)});
+      right: 0px;
+
+      & > span {
+        transform: translateX(-100%);
+      }
     `,
     logLine: css`
       background-color: transparent;

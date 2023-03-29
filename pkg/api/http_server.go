@@ -136,6 +136,7 @@ type HTTPServer struct {
 	pluginClient                 plugins.Client
 	pluginStore                  plugins.Store
 	pluginInstaller              plugins.Installer
+	pluginFileStore              plugins.FileStore
 	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
 	pluginErrorResolver          plugins.ErrorResolver
@@ -235,7 +236,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	quotaService quota.Service, socialService social.Service, tracer tracing.Tracer,
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
-	dataSourcesService datasources.DataSourceService, queryDataService query.Service,
+	dataSourcesService datasources.DataSourceService, queryDataService query.Service, pluginFileStore plugins.FileStore,
 	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService, httpEntityStore httpentitystore.HTTPEntityStore,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
@@ -276,6 +277,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,
 		pluginDashboardService:       pluginDashboardService,
 		pluginErrorResolver:          pluginErrorResolver,
+		pluginFileStore:              pluginFileStore,
 		grafanaUpdateChecker:         grafanaUpdateChecker,
 		pluginsUpdateChecker:         pluginsUpdateChecker,
 		SettingsProvider:             settingsProvider,

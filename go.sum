@@ -1238,8 +1238,8 @@ github.com/grafana/grafana-aws-sdk v0.12.0 h1:eUjFdFZeZE+nyu/RMRz+qFxTBew69ToLBr
 github.com/grafana/grafana-aws-sdk v0.12.0/go.mod h1:rCXLYoMpPqF90U7XqgVJ1HIAopFVF0bB3SXBVEJIm3I=
 github.com/grafana/grafana-azure-sdk-go v1.6.0 h1:lxvH/mVY7gKBtJKhZ4B/6tIZFY7Jth97HxBA38olaxs=
 github.com/grafana/grafana-azure-sdk-go v1.6.0/go.mod h1:X4PdEQIYgHfn0KTa2ZTKvufhNz6jbCEKUQPZIlcyOGw=
-github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58 h1:2ud7NNM7LrGPO4x0NFR8qLq68CqI4SmB7I2yRN2w9oE=
-github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58/go.mod h1:Vo2TKWfDVmNTELBUM+3lkrZvFtBws0qSZdXhQxRdJrE=
+github.com/grafana/grafana-google-sdk-go v0.1.0 h1:LKGY8z2DSxKjYfr2flZsWgTRTZ6HGQbTqewE3JvRaNA=
+github.com/grafana/grafana-google-sdk-go v0.1.0/go.mod h1:Vo2TKWfDVmNTELBUM+3lkrZvFtBws0qSZdXhQxRdJrE=
 github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW39s+c+LetqSCjFj7xxPC5+M=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.153.0 h1:5Z3NU/W32BsElkiqalvh6ow0Mx81GhAk94+GddIuTrQ=
@@ -2318,6 +2318,8 @@ go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.2
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.35.0/go.mod h1:h8TWwRAhQpOd0aM5nYsRD8+flnkj+526GEIVlarH7eY=
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.37.0 h1:+uFejS4DCfNH6d3xODVIGsdhzgzhh45p9gpbHQMbdZI=
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.37.0/go.mod h1:HSmzQvagH8pS2/xrK7ScWsk0vAMtRTGbMFgInXCi8Tc=
+go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.40.0 h1:ZjF6qLnAVNq6xUh0sK2mCEqwnRrpgr0mLALQXJL34NI=
+go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.40.0/go.mod h1:SD34NWTW0VMH2VvFVfArHPoF+L1ddT4MOQCTb2l8T5I=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.35.0/go.mod h1:9NiG9I2aHTKkcxqCILhjtyNA1QEiCjdBACv4IvrFQ+c=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.37.0 h1:yt2NKzK7Vyo6h0+X8BA4FpreZQTlVEIarnsBP/H5mzs=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.37.0/go.mod h1:+ARmXlUlc51J7sZeCBkBJNdHGySrdOzgzxp6VWRWM1U=
@@ -2329,8 +2331,8 @@ go.opentelemetry.io/otel v1.6.1/go.mod h1:blzUabWHkX6LJewxvadmzafgh/wnvBSDBdOuwk
 go.opentelemetry.io/otel v1.8.0/go.mod h1:2pkj+iMj0o03Y+cW6/m8Y4WkRdYN3AvCXCnzRMp9yvM=
 go.opentelemetry.io/otel v1.10.0/go.mod h1:NbvWjCthWHKBEUMpf0/v8ZRZlni86PpGFEMA9pnQSnQ=
 go.opentelemetry.io/otel v1.11.1/go.mod h1:1nNhXBbWSD0nsL38H6btgnFN2k4i0sNLHNNMZMSbUGE=
-go.opentelemetry.io/otel v1.12.0 h1:IgfC7kqQrRccIKuB7Cl+SRUmsKbEwSGPr0Eu+/ht1SQ=
-go.opentelemetry.io/otel v1.12.0/go.mod h1:geaoz0L0r1BEOR81k7/n9W4TCXYCJ7bPO7K374jQHG0=
+go.opentelemetry.io/otel v1.14.0 h1:/79Huy8wbf5DnIPhemGB+zEPVwnN6fuQybr/SRXa6hM=
+go.opentelemetry.io/otel v1.14.0/go.mod h1:o4buv+dJzx8rohcUeRmWUZhqupFvzWis188WlggnNeU=
 go.opentelemetry.io/otel/exporters/jaeger v1.0.0 h1:cLhx8llHw02h5JTqGqaRbYn+QVKHmrzD9vEbKnSPk5U=
 go.opentelemetry.io/otel/exporters/jaeger v1.0.0/go.mod h1:q10N1AolE1JjqKrFJK2tYw0iZpmX+HBaXBtuCzRnBGQ=
 go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.10.0/go.mod h1:78XhIg8Ht9vR4tbLNUhXsiOnE2HOuSeKAiAcoVQEpOY=
@@ -2359,8 +2361,8 @@ go.opentelemetry.io/otel/trace v1.6.1/go.mod h1:RkFRM1m0puWIq10oxImnGEduNBzxiN7T
 go.opentelemetry.io/otel/trace v1.8.0/go.mod h1:0Bt3PXY8w+3pheS3hQUt+wow8b1ojPaTBoTCh2zIFI4=
 go.opentelemetry.io/otel/trace v1.10.0/go.mod h1:Sij3YYczqAdz+EhmGhE6TpTxUO5/F/AzrK+kxfGqySM=
 go.opentelemetry.io/otel/trace v1.11.1/go.mod h1:f/Q9G7vzk5u91PhbmKbg1Qn0rzH1LJ4vbPHFGkTPtOk=
-go.opentelemetry.io/otel/trace v1.12.0 h1:p28in++7Kd0r2d8gSt931O57fdjUyWxkVbESuILAeUc=
-go.opentelemetry.io/otel/trace v1.12.0/go.mod h1:pHlgBynn6s25qJ2szD+Bv+iwKJttjHSI3lUAyf0GNuQ=
+go.opentelemetry.io/otel/trace v1.14.0 h1:wp2Mmvj41tDsyAJXiWDWpfNsOiIyd38fy85pyKcFq/M=
+go.opentelemetry.io/otel/trace v1.14.0/go.mod h1:8avnQLK+CG77yNLUae4ea2JDQ6iT+gozhnZjy/rw9G8=
 go.opentelemetry.io/proto/otlp v0.7.0/go.mod h1:PqfVotwruBrMGOCsRd/89rSnXhoiJIqeYNgFYFoEGnI=
 go.opentelemetry.io/proto/otlp v0.9.0/go.mod h1:1vKfU9rv61e9EVGthD1zNvUbiwPcimSsOPU9brfSHJg=
 go.opentelemetry.io/proto/otlp v0.15.0/go.mod h1:H7XAot3MsfNsj7EXtrA2q5xSNQ10UqI405h3+duxN4U=

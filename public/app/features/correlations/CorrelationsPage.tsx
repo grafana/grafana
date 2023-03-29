@@ -145,7 +145,6 @@ export default function CorrelationsPage() {
         <div>
           <HorizontalGroup justify="space-between">
             <div>
-              <h4>Correlations</h4>
               <p>Define how data living in different data sources relates to each other.</p>
             </div>
             {canWriteCorrelations && data?.length !== 0 && data !== undefined && !isAdding && (

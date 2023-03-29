@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path"
 	"regexp"
 	"time"
@@ -16,7 +18,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
@@ -204,17 +205,16 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		return dataResponse
 	}
 
-	model, err := simplejson.NewJson(query.JSON)
+	azurePortalBaseUrl, err := GetAzurePortalUrl(dsInfo.Cloud)
 	if err != nil {
-		return dataResponseErrorWithExecuted(err)
+		dataResponse.Error = err
+		return dataResponse
 	}
 
-	err = setAdditionalFrameMeta(frame,
-		query.Query,
-		model.Get("azureLogAnalytics").Get("resource").MustString())
+	queryUrl, err := getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl)
 	if err != nil {
-		frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityWarning, Text: "could not add custom metadata: " + err.Error()})
-		logger.Warn("failed to add custom metadata to azure log analytics response", err)
+		dataResponse.Error = err
+		return dataResponse
 	}
 
 	if query.ResultFormat == types.TimeSeries {
@@ -228,6 +228,8 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 			}
 		}
 	}
+
+	AddConfigLinks(*frame, queryUrl)
 
 	dataResponse.Frames = data.Frames{frame}
 	return dataResponse
@@ -266,6 +268,43 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, logger 
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
 
 	return req, nil
+}
+
+type AzureLogAnalyticsURLResources struct {
+	Resources []AzureLogAnalyticsURLResource `json:"resources"`
+}
+
+type AzureLogAnalyticsURLResource struct {
+	ResourceID string `json:"resourceId"`
+}
+
+func getQueryUrl(query string, resources []string, azurePortalUrl string) (string, error) {
+	encodedQuery, err := encodeQuery(query)
+	if err != nil {
+		return "", fmt.Errorf("failed to encode the query: %s", err)
+	}
+
+	portalUrl := azurePortalUrl
+	if err != nil {
+		return "", fmt.Errorf("failed to parse base portal URL: %s", err)
+	}
+
+	portalUrl += "/#blade/Microsoft_OperationsManagementSuite_Workspace/AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/"
+	resourcesJson := AzureLogAnalyticsURLResources{
+		Resources: make([]AzureLogAnalyticsURLResource, 0),
+	}
+	for _, resource := range resources {
+		resourcesJson.Resources = append(resourcesJson.Resources, AzureLogAnalyticsURLResource{
+			ResourceID: resource,
+		})
+	}
+	resourcesMarshalled, err := json.Marshal(resourcesJson)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal log analytics resources: %s", err)
+	}
+	portalUrl += url.QueryEscape(string(resourcesMarshalled))
+	portalUrl += "/query/" + url.PathEscape(encodedQuery) + "/isQueryBase64Compressed/true/timespanInIsoFormat/P1D"
+	return portalUrl, nil
 }
 
 // Error definition has been inferred from real data and other model definitions like
@@ -336,41 +375,20 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(logger log.Logger, res *
 
 // LogAnalyticsMeta is a type for the a Frame's Meta's Custom property.
 type LogAnalyticsMeta struct {
-	ColumnTypes  []string `json:"azureColumnTypes"`
-	EncodedQuery []byte   `json:"encodedQuery"` // EncodedQuery is used for deep links.
-	Resource     string   `json:"resource"`
-}
-
-func setAdditionalFrameMeta(frame *data.Frame, query, resource string) error {
-	if frame.Meta == nil || frame.Meta.Custom == nil {
-		// empty response
-		return nil
-	}
-	frame.Meta.ExecutedQueryString = query
-	la, ok := frame.Meta.Custom.(*LogAnalyticsMeta)
-	if !ok {
-		return fmt.Errorf("unexpected type found for frame's custom metadata")
-	}
-	la.Resource = resource
-	encodedQuery, err := encodeQuery(query)
-	if err == nil {
-		la.EncodedQuery = encodedQuery
-		return nil
-	}
-	return fmt.Errorf("failed to encode the query into the encodedQuery property")
+	ColumnTypes []string `json:"azureColumnTypes"`
 }
 
 // encodeQuery encodes the query in gzip so the frontend can build links.
-func encodeQuery(rawQuery string) ([]byte, error) {
+func encodeQuery(rawQuery string) (string, error) {
 	var b bytes.Buffer
 	gz := gzip.NewWriter(&b)
 	if _, err := gz.Write([]byte(rawQuery)); err != nil {
-		return nil, err
+		return "", err
 	}
 
 	if err := gz.Close(); err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return b.Bytes(), nil
+	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
 }

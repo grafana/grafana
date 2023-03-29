@@ -40,12 +40,6 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:        "live-pipeline",
-			Description: "Enable a generic live processing pipeline",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
 			Name:         "live-service-web-worker",
 			Description:  "This will use a webworker thread to processes events rather than the main thread",
 			State:        FeatureStateAlpha,
@@ -175,8 +169,15 @@ var (
 			Owner:           grafanaAsCodeSquad,
 		},
 		{
-			Name:         "autoMigrateGraphPanels",
-			Description:  "Replace the angular graph panel with timeseries",
+			Name:         "autoMigrateOldPanels",
+			Description:  "Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:         "disableAngular",
+			Description:  "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
@@ -320,6 +321,13 @@ var (
 			Owner:       grafanaDashboardsSquad,
 		},
 		{
+			Name:         "emptyDashboardPage",
+			Description:  "Enable the redesigned user interface of a dashboard page that includes no panels",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:        "secureSocksDatasourceProxy",
 			Description: "Enable secure socks tunneling for supported core datasources",
 			State:       FeatureStateAlpha,
@@ -333,7 +341,7 @@ var (
 		},
 		{
 			Name:        "disablePrometheusExemplarSampling",
-			Description: "Disable Prometheus examplar sampling",
+			Description: "Disable Prometheus exemplar sampling",
 			State:       FeatureStateStable,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
@@ -433,6 +441,24 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "clientTokenRotation",
+			Description: "Replaces the current in-request token rotation so that the client initiates the rotation",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAuthnzSquad,
+		},
+		{
+			Name:        "disableElasticsearchBackendExploreQuery",
+			Description: "Disable executing of Elasticsearch Explore queries trough backend",
+			State:       FeatureStateBeta,
+			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:        "prometheusDataplane",
+			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 	}
 )

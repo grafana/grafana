@@ -104,10 +104,10 @@ require (
 	github.com/yalue/merged_fs v1.2.2
 	github.com/yudai/gojsondiff v1.0.0
 	go.opentelemetry.io/collector/model v0.50.0
-	go.opentelemetry.io/otel v1.12.0
+	go.opentelemetry.io/otel v1.14.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.0.0
 	go.opentelemetry.io/otel/sdk v1.11.2
-	go.opentelemetry.io/otel/trace v1.12.0
+	go.opentelemetry.io/otel/trace v1.14.0
 	golang.org/x/crypto v0.5.0
 	golang.org/x/exp v0.0.0-20221211140036-ad323defaf05
 	golang.org/x/net v0.7.0
@@ -177,7 +177,7 @@ require (
 	github.com/google/flatbuffers v2.0.8+incompatible // indirect
 	github.com/googleapis/gax-go/v2 v2.7.0
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58
+	github.com/grafana/grafana-google-sdk-go v0.1.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
@@ -261,7 +261,7 @@ require (
 	gocloud.dev v0.25.0
 	k8s.io/api v0.26.2
 	k8s.io/apimachinery v0.26.2
-	k8s.io/apiserver v0.26.2 // indirect
+	k8s.io/apiserver v0.26.2
 	k8s.io/client-go v12.0.0+incompatible // gets replaced with v0.25.0
 	k8s.io/component-base v0.26.2
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
@@ -279,10 +279,13 @@ require (
 	github.com/hmarr/codeowners v1.1.2
 	github.com/k3s-io/kine v0.9.9
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
+	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.40.0
 	gomodules.xyz/jsonpatch/v2 v2.2.0
 	k8s.io/apiextensions-apiserver v0.26.2
+	k8s.io/klog/v2 v2.80.1
 	k8s.io/kubectl v0.0.0
 	k8s.io/kubernetes v1.26.2
+	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d
 )
 
 require (
@@ -416,7 +419,6 @@ require (
 	k8s.io/cluster-bootstrap v0.0.0 // indirect
 	k8s.io/component-helpers v0.26.2 // indirect
 	k8s.io/csi-translation-lib v0.26.2 // indirect
-	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kms v0.26.2 // indirect
 	k8s.io/kube-aggregator v0.0.0 // indirect
 	k8s.io/kubelet v0.0.0 // indirect
@@ -424,7 +426,6 @@ require (
 	k8s.io/metrics v0.26.2 // indirect
 	k8s.io/mount-utils v0.0.0 // indirect
 	k8s.io/pod-security-admission v0.0.0 // indirect
-	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.35 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/kustomize/api v0.12.1 // indirect
@@ -463,7 +464,7 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
-	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/go-logr/logr v1.2.3
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.0 // indirect
