@@ -48,6 +48,13 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		cfg.PluginCatalogHiddenPlugins = append(cfg.PluginCatalogHiddenPlugins, plug)
 	}
 
+	// Plugin extensions
+	mockExtensions := pluginsSection.Key("plugin_extensions_mocked_points").MustString("")
+	for _, pointId := range strings.Split(mockExtensions, ",") {
+		pointId = strings.TrimSpace(pointId)
+		cfg.PluginExtensionMockedPoints = append(cfg.PluginExtensionMockedPoints, pointId)
+	}
+
 	// Plugins CDN settings
 	cfg.PluginsCDNURLTemplate = strings.TrimRight(pluginsSection.Key("cdn_base_url").MustString(""), "/")
 	cfg.PluginLogBackendRequests = pluginsSection.Key("log_backend_requests").MustBool(false)
