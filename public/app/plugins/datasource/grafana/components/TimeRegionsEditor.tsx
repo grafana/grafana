@@ -9,6 +9,7 @@ import {
   HorizontalGroup,
   IconButton,
   Button,
+  InlineSwitch,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import { formatTimeOfDayString, parseTimeOfDay } from 'app/core/utils/timeRegions';
@@ -20,7 +21,7 @@ interface Props {
   onChange: (value?: TimeRegionConfig[]) => void;
 }
 
-const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((v, idx) => {
+const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((v, idx) => {
   return {
     label: v,
     value: idx + 1,
@@ -30,7 +31,7 @@ const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 export function TimeRegionsEditor({ value, onChange }: Props) {
   const addTimeRegion = () => {
     const len = value?.length ?? 0;
-    const r: TimeRegionConfig = { name: `T${len + 1}`, color: 'red' };
+    const r: TimeRegionConfig = { name: `T${len + 1}`, color: 'red', line: false };
     onChange(value ? [...value, r] : [r]);
   };
 
@@ -86,10 +87,10 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
     <InlineFieldRow>
       <InlineField label="Region" labelWidth={12}>
         <Input
-          width={10}
           placeholder="enter name"
           value={value.name}
           onChange={(v) => onChange(index, { ...value, name: v.currentTarget.value })}
+          width={10}
         />
       </InlineField>
       <InlineField label="From">
@@ -100,13 +101,17 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
             placeholder="Everyday"
             value={days.find((v) => v.value === value.fromDayOfWeek)}
             onChange={(v) => onChange(index, { ...value, fromDayOfWeek: v.value })}
+            width={20}
           />
           <Input
-            width={8}
             value={fromTxt}
-            onChange={(v) => setFromText(v.currentTarget.value)}
+            onChange={(v) => {
+              console.log('fromTxt:', v.currentTarget.value);
+              setFromText(v.currentTarget.value);
+            }}
             placeholder="hh:mm"
             onBlur={validateFrom}
+            width={10}
           />
         </HorizontalGroup>
       </InlineField>
@@ -118,18 +123,27 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
             placeholder="Everyday"
             value={days.find((v) => v.value === value.toDayOfWeek)}
             onChange={(v) => onChange(index, { ...value, toDayOfWeek: v.value })}
+            width={20}
           />
           <Input
-            width={8}
             value={toTxt}
             onChange={(v) => setToText(v.currentTarget.value)}
             placeholder="hh:mm"
             onBlur={validateTo}
+            width={10}
           />
         </HorizontalGroup>
       </InlineField>
       <InlineField label="Color">
         <ColorValueEditor value={value.color} onChange={(color) => onChange(index, { ...value, color: color! })} />
+      </InlineField>
+      <InlineField>
+        <InlineSwitch
+          label="Line"
+          showLabel={true}
+          value={value.line}
+          onChange={(ev) => onChange(index, { ...value, line: ev.currentTarget.checked })}
+        />
       </InlineField>
       <InlineField
         label={

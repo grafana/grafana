@@ -21,11 +21,13 @@ export function doTimeRegionQuery(config: TimeRegionConfig, range: TimeRange, tz
   const times: number[] = [];
   const timesEnd: number[] = [];
   const colors: string[] = [];
+  const lines: boolean[] = [];
 
   for (const region of regions) {
     times.push(region.from);
     timesEnd.push(region.to);
     colors.push(config.color);
+    lines.push(config.line ?? false);
   }
 
   return {
@@ -42,6 +44,7 @@ export function doTimeRegionQuery(config: TimeRegionConfig, range: TimeRange, tz
         values: new ArrayVector(colors),
         config: { color: { mode: FieldColorModeId.Fixed, fixedColor: config.color } },
       },
+      { name: 'line', type: FieldType.boolean, values: new ArrayVector(lines), config: {} },
     ],
     length: times.length,
   };

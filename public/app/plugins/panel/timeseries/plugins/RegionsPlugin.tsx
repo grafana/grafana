@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import uPlot from 'uplot';
 
-import { DataFrame } from '@grafana/data';
+import { DataFrame, colorManipulator } from '@grafana/data';
 import { UPlotConfigBuilder, useTheme2 } from '@grafana/ui';
 
 interface RegionsPluginProps {
@@ -47,6 +47,10 @@ export const RegionsPlugin = ({ regions, config }: RegionsPluginProps) => {
 
       ctx.save();
 
+      ctx.beginPath();
+      ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+      ctx.clip();
+
       for (let i = 0; i < froms.length; i++) {
         let from = froms[i];
         let to = tos[i];
@@ -56,8 +60,15 @@ export const RegionsPlugin = ({ regions, config }: RegionsPluginProps) => {
         let w = u.valToPos(to, 'x', true) - x;
         let h = u.bbox.height;
 
-        ctx.fillStyle = theme.visualization.getColorByName(colors[i]);
+        const color = theme.visualization.getColorByName(colors[i]);
+
+        ctx.fillStyle = color;
         ctx.fillRect(x, y, w, h);
+
+        // line
+        ctx.strokeStyle = colorManipulator.alpha(color, 1);
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x, y, w, h);
       }
 
       ctx.restore();
