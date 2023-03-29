@@ -9,6 +9,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { moveDashboards, moveFolders } from 'app/features/manage-dashboards/state/actions';
 import { FolderInfo } from 'app/types';
 
+import { GENERAL_FOLDER_UID } from '../../constants';
 import { OnMoveOrDeleleSelectedItems } from '../../types';
 
 interface Props {
@@ -26,7 +27,9 @@ export const MoveToFolderModal = ({ results, onMoveItems, onDismiss }: Props) =>
   const nestedFoldersEnabled = config.featureToggles.nestedFolders;
 
   const selectedDashboards = Array.from(results.get('dashboard') ?? []);
-  const selectedFolders = nestedFoldersEnabled ? Array.from(results.get('folder') ?? []) : [];
+  const selectedFolders = nestedFoldersEnabled
+    ? Array.from(results.get('folder') ?? []).filter((v) => v !== GENERAL_FOLDER_UID)
+    : [];
 
   const moveTo = async () => {
     console.log({ folder, selectedDashboards, selectedFolders });
@@ -82,24 +85,28 @@ export const MoveToFolderModal = ({ results, onMoveItems, onDismiss }: Props) =>
   };
 
   return (
-    <Modal className={styles.modal} title="Choose Dashboard Folder" icon="folder-plus" onDismiss={onDismiss}>
+    <Modal
+      className={styles.modal}
+      title={nestedFoldersEnabled ? 'Move' : 'Choose Dashboard Folder'}
+      icon="folder-plus"
+      onDismiss={onDismiss}
+    >
       <>
         <div className={styles.content}>
           {selectedFolders.length > 0 && (
             <>
-              <Alert severity={'warning'} title="Careful!">
-                Moving folders may change it and all {"it's children's"} permissions permissions
+              <Alert severity="warning" title="Careful!">
+                This may change the permission of the folders and all of it&apos;s children
               </Alert>
               <p>
-                Move the {selectedFolders.length} selected folder{selectedFolders.length === 1 ? '' : 's'} to the
-                following folder:
+                Moving {selectedFolders.length} folder{selectedFolders.length === 1 ? '' : 's'}
               </p>
             </>
           )}
+
           {selectedDashboards.length > 0 && (
             <p>
-              Move the {selectedDashboards.length} selected dashboard{selectedDashboards.length === 1 ? '' : 's'} to the
-              following folder:
+              Moving {selectedDashboards.length} dashboard{selectedDashboards.length === 1 ? '' : 's'}
             </p>
           )}
           <FolderPicker allowEmpty={true} enableCreateNew={false} onChange={(f) => setFolder(f)} />
