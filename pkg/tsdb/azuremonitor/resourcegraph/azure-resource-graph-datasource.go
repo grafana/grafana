@@ -11,7 +11,6 @@ import (
 	"path"
 	"time"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
@@ -206,13 +205,13 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 		return dataResponse
 	}
 
-	azurePortalUrl, err := GetAzurePortalUrl(dsInfo.Cloud)
+	azurePortalUrl, err := loganalytics.GetAzurePortalUrl(dsInfo.Cloud)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
 
 	url := azurePortalUrl + "/#blade/HubsExtension/ArgQueryBlade/query/" + url.PathEscape(query.InterpolatedQuery)
-	frameWithLink := AddConfigLinks(*frame, url)
+	frameWithLink := loganalytics.AddConfigLinks(*frame, url)
 	if frameWithLink.Meta == nil {
 		frameWithLink.Meta = &data.FrameMeta{}
 	}
@@ -220,21 +219,6 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 
 	dataResponse.Frames = data.Frames{&frameWithLink}
 	return dataResponse
-}
-
-func AddConfigLinks(frame data.Frame, dl string) data.Frame {
-	for i := range frame.Fields {
-		if frame.Fields[i].Config == nil {
-			frame.Fields[i].Config = &data.FieldConfig{}
-		}
-		deepLink := data.DataLink{
-			Title:       "View in Azure Portal",
-			TargetBlank: true,
-			URL:         dl,
-		}
-		frame.Fields[i].Config.Links = append(frame.Fields[i].Config.Links, deepLink)
-	}
-	return frame
 }
 
 func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, logger log.Logger, reqBody []byte, url string) (*http.Request, error) {
@@ -275,17 +259,4 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(logger log.Logger, res 
 	}
 
 	return data, nil
-}
-
-func GetAzurePortalUrl(azureCloud string) (string, error) {
-	switch azureCloud {
-	case azsettings.AzurePublic:
-		return "https://portal.azure.com", nil
-	case azsettings.AzureChina:
-		return "https://portal.azure.cn", nil
-	case azsettings.AzureUSGovernment:
-		return "https://portal.azure.us", nil
-	default:
-		return "", fmt.Errorf("the cloud is not supported")
-	}
 }

@@ -83,7 +83,7 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 		defer close(errCh)
 
 		org := fmt.Sprint(rule.OrgID)
-		h.metrics.WritesTotal.WithLabelValues(org).Inc()
+		h.metrics.WritesTotal.WithLabelValues(org, "loki").Inc()
 		samples := 0
 		for _, s := range streams {
 			samples += len(s.Values)
@@ -92,7 +92,7 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 
 		if err := h.recordStreams(ctx, streams, logger); err != nil {
 			logger.Error("Failed to save alert state history batch", "error", err)
-			h.metrics.WritesFailed.WithLabelValues(org).Inc()
+			h.metrics.WritesFailed.WithLabelValues(org, "loki").Inc()
 			h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(samples))
 			errCh <- fmt.Errorf("failed to save alert state history batch: %w", err)
 		}
@@ -262,12 +262,13 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 		repr := string(lblJsn)
 
 		entry := lokiEntry{
-			SchemaVersion: 1,
-			Previous:      state.PreviousFormatted(),
-			Current:       state.Formatted(),
-			Values:        valuesAsDataBlob(state.State),
-			DashboardUID:  rule.DashboardUID,
-			PanelID:       rule.PanelID,
+			SchemaVersion:  1,
+			Previous:       state.PreviousFormatted(),
+			Current:        state.Formatted(),
+			Values:         valuesAsDataBlob(state.State),
+			DashboardUID:   rule.DashboardUID,
+			PanelID:        rule.PanelID,
+			InstanceLabels: state.Labels,
 		}
 		if state.State.State == eval.Error {
 			entry.Error = state.Error.Error()
@@ -319,6 +320,9 @@ type lokiEntry struct {
 	Values        *simplejson.Json `json:"values"`
 	DashboardUID  string           `json:"dashboardUID"`
 	PanelID       int64            `json:"panelID"`
+	// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.
+	// These should not be conflated with labels associated with log streams.
+	InstanceLabels map[string]string `json:"labels"`
 }
 
 func valuesAsDataBlob(state *state.State) *simplejson.Json {

@@ -8,7 +8,6 @@ import { QueryEditor } from '.';
 
 const noop = () => void 0;
 const datasourceMock = {
-  esVersion: '7.10.0',
   getDatabaseVersion: () => Promise.resolve(null),
 } as ElasticDatasource;
 
