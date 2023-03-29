@@ -6,21 +6,22 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
 
 // ValidatePluginPermissions errors when a permission does not match expected pattern for plugins
 func ValidatePluginPermissions(pluginID string, permissions []ac.Permission) error {
 	for i := range permissions {
-		if permissions[i].Action != plugins.ActionAppAccess &&
+		if permissions[i].Action != pluginaccesscontrol.ActionAppAccess &&
 			!strings.HasPrefix(permissions[i].Action, pluginID+":") &&
 			!strings.HasPrefix(permissions[i].Action, pluginID+".") {
 			return &ac.ErrorActionPrefixMissing{Action: permissions[i].Action,
-				Prefixes: []string{plugins.ActionAppAccess, pluginID + ":", pluginID + "."}}
+				Prefixes: []string{pluginaccesscontrol.ActionAppAccess, pluginID + ":", pluginID + "."}}
 		}
-		if strings.HasPrefix(permissions[i].Action, plugins.ActionAppAccess) &&
-			permissions[i].Scope != plugins.ScopeProvider.GetResourceScope(pluginID) {
+		if strings.HasPrefix(permissions[i].Action, pluginaccesscontrol.ActionAppAccess) &&
+			permissions[i].Scope != pluginaccesscontrol.ScopeProvider.GetResourceScope(pluginID) {
 			return &ac.ErrorScopeTarget{Action: permissions[i].Action, Scope: permissions[i].Scope,
-				ExpectedScope: plugins.ScopeProvider.GetResourceScope(pluginID)}
+				ExpectedScope: pluginaccesscontrol.ScopeProvider.GetResourceScope(pluginID)}
 		}
 	}
 

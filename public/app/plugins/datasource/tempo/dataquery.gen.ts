@@ -62,6 +62,12 @@ export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceM
  */
 export type TraceqlSearchFilterType = ('static' | 'dynamic');
 
+export enum TraceqlSearchScope {
+  Resource = 'resource',
+  Span = 'span',
+  Unscoped = 'unscoped',
+}
+
 export interface TraceqlFilter {
   /**
    * Uniquely identify the filter, will not be used in the query generation
@@ -71,6 +77,10 @@ export interface TraceqlFilter {
    * The operator that connects the tag to the value, for example: =, >, !=, =~
    */
   operator?: string;
+  /**
+   * The scope of the filter, can either be unscoped/all scopes, resource or span
+   */
+  scope?: TraceqlSearchScope;
   /**
    * The tag for the search filter, for example: .http.status_code, .service.name, status
    */

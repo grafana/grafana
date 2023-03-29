@@ -68,15 +68,7 @@ const propsToDiff: Array<string | PropDiffFn> = [
 
 interface Props extends PanelProps<PanelOptions> {}
 
-export const BarChartPanel: React.FunctionComponent<Props> = ({
-  data,
-  options,
-  fieldConfig,
-  width,
-  height,
-  timeZone,
-  id,
-}) => {
+export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZone, id }: Props) => {
   const theme = useTheme2();
   const { eventBus } = usePanelContext();
 

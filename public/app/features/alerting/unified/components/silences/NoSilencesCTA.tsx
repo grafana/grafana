@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { CallToActionCard } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -11,7 +11,7 @@ type Props = {
   alertManagerSourceName: string;
 };
 
-export const NoSilencesSplash: FC<Props> = ({ alertManagerSourceName }) => {
+export const NoSilencesSplash = ({ alertManagerSourceName }: Props) => {
   const permissions = getInstancesPermissions(alertManagerSourceName);
 
   if (contextSrv.hasAccess(permissions.create, contextSrv.isEditor)) {

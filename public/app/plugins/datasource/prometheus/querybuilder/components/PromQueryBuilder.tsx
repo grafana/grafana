@@ -225,8 +225,9 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
             </Button>
             {query.metric && (
               <Tag
-                name={query.metric}
+                name={' ' + query.metric}
                 color="#3D71D9"
+                icon="times"
                 onClick={() => {
                   onChange({ ...query, metric: '' });
                 }}

@@ -77,6 +77,18 @@ func TestLokiConfig(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("captures external labels", func(t *testing.T) {
+		set := setting.UnifiedAlertingStateHistorySettings{
+			LokiRemoteURL:  "http://url.com",
+			ExternalLabels: map[string]string{"a": "b"},
+		}
+
+		res, err := NewLokiConfig(set)
+
+		require.NoError(t, err)
+		require.Contains(t, res.ExternalLabels, "a")
+	})
 }
 
 func TestLokiHTTPClient(t *testing.T) {
@@ -117,6 +129,7 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 		client := newLokiClient(LokiConfig{
 			ReadPathURL:  url,
 			WritePathURL: url,
+			Encoder:      JsonEncoder{},
 		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry()), log.NewNopLogger())
 
 		// Unauthorized request should fail against Grafana Cloud.
@@ -144,6 +157,7 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 			WritePathURL:      url,
 			BasicAuthUser:     "<your_username>",
 			BasicAuthPassword: "<your_password>",
+			Encoder:           JsonEncoder{},
 		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry()), log.NewNopLogger())
 
 		// When running on prem, you might need to set the tenant id,
@@ -259,6 +273,7 @@ func createTestLokiClient(req client.Requester) *httpLokiClient {
 	cfg := LokiConfig{
 		WritePathURL: url,
 		ReadPathURL:  url,
+		Encoder:      JsonEncoder{},
 	}
 	met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
 	return newLokiClient(cfg, req, met, log.NewNopLogger())

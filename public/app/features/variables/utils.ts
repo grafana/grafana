@@ -9,7 +9,7 @@ import { StoreState } from '../../types';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 
 import { variableAdapters } from './adapters';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from './constants';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from './constants';
 import { getVariablesState } from './state/selectors';
 import { KeyedVariableIdentifier, VariableIdentifier, VariablePayload } from './state/types';
 import { QueryVariableModel, TransactionStatus, VariableModel, VariableRefresh, VariableWithOptions } from './types';
@@ -224,7 +224,7 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ex
   const changes: ExtendedUrlQueryMap = {};
 
   for (const key in query) {
-    if (!key.startsWith('var-')) {
+    if (!key.startsWith(VARIABLE_PREFIX)) {
       continue;
     }
 
@@ -238,7 +238,7 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ex
   }
 
   for (const key in old) {
-    if (!key.startsWith('var-')) {
+    if (!key.startsWith(VARIABLE_PREFIX)) {
       continue;
     }
 

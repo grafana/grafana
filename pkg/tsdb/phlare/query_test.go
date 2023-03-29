@@ -109,27 +109,50 @@ func makeDataQuery() *backend.DataQuery {
 }
 
 func Test_treeToNestedDataFrame(t *testing.T) {
-	tree := &ProfileTree{
-		Value: 100, Level: 0, Self: 1, Function: &Function{FunctionName: "root"}, Nodes: []*ProfileTree{
-			{
-				Value: 40, Level: 1, Self: 2, Function: &Function{FunctionName: "func1", FileName: "1", Line: 1},
+	t.Run("sample profile tree", func(t *testing.T) {
+		tree := &ProfileTree{
+			Value: 100, Level: 0, Self: 1, Function: &Function{FunctionName: "root"}, Nodes: []*ProfileTree{
+				{
+					Value: 40, Level: 1, Self: 2, Function: &Function{FunctionName: "func1", FileName: "1", Line: 1},
+				},
+				{Value: 30, Level: 1, Self: 3, Function: &Function{FunctionName: "func2", FileName: "2", Line: 2}, Nodes: []*ProfileTree{
+					{Value: 15, Level: 2, Self: 4, Function: &Function{FunctionName: "func1:func3", FileName: "3", Line: 3}},
+				}},
 			},
-			{Value: 30, Level: 1, Self: 3, Function: &Function{FunctionName: "func2", FileName: "2", Line: 2}, Nodes: []*ProfileTree{
-				{Value: 15, Level: 2, Self: 4, Function: &Function{FunctionName: "func1:func3", FileName: "3", Line: 3}},
-			}},
-		},
-	}
+		}
 
-	frame := treeToNestedSetDataFrame(tree, "memory:alloc_objects:count:space:bytes")
-	require.Equal(t,
-		[]*data.Field{
-			data.NewField("level", nil, []int64{0, 1, 1, 2}),
-			data.NewField("value", nil, []int64{100, 40, 30, 15}).SetConfig(&data.FieldConfig{Unit: "short"}),
-			data.NewField("self", nil, []int64{1, 2, 3, 4}).SetConfig(&data.FieldConfig{Unit: "short"}),
-			data.NewField("label", nil, []string{"root", "func1", "func2", "func1:func3"}),
-			data.NewField("line", nil, []int64{0, 1, 2, 3}),
-			data.NewField("fileName", nil, []string{"", "1", "2", "3"}),
-		}, frame.Fields)
+		frame := treeToNestedSetDataFrame(tree, "memory:alloc_objects:count:space:bytes")
+
+		labelConfig := &data.FieldConfig{
+			TypeConfig: &data.FieldTypeConfig{
+				Enum: &data.EnumFieldConfig{
+					Text: []string{"root", "func1", "func2", "func1:func3"},
+				},
+			},
+		}
+		filenameConfig := &data.FieldConfig{
+			TypeConfig: &data.FieldTypeConfig{
+				Enum: &data.EnumFieldConfig{
+					Text: []string{"", "1", "2", "3"},
+				},
+			},
+		}
+		require.Equal(t,
+			[]*data.Field{
+				data.NewField("level", nil, []int64{0, 1, 1, 2}),
+				data.NewField("value", nil, []int64{100, 40, 30, 15}).SetConfig(&data.FieldConfig{Unit: "short"}),
+				data.NewField("self", nil, []int64{1, 2, 3, 4}).SetConfig(&data.FieldConfig{Unit: "short"}),
+				data.NewField("line", nil, []int64{0, 1, 2, 3}),
+				data.NewField("label", nil, []int64{0, 1, 2, 3}).SetConfig(labelConfig),
+				data.NewField("fileName", nil, []int64{0, 1, 2, 3}).SetConfig(filenameConfig),
+			}, frame.Fields)
+	})
+
+	t.Run("nil profile tree", func(t *testing.T) {
+		frame := treeToNestedSetDataFrame(nil, "memory:alloc_objects:count:space:bytes")
+		require.Equal(t, 6, len(frame.Fields))
+		require.Equal(t, 0, frame.Fields[0].Len())
+	})
 }
 
 var fooProfile = &googlev1.Profile{

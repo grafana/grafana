@@ -34,7 +34,7 @@ export interface CSVParseCallbacks {
   onHeader: (fields: Field[]) => void;
 
   // Called after each row is read
-  onRow: (row: any[]) => void;
+  onRow: (row: string[]) => void;
 }
 
 export interface CSVOptions {
@@ -73,9 +73,9 @@ export class CSVReader {
   }
 
   // PapaParse callback on each line
-  private chunk = (results: ParseResult<any>, parser: Parser): void => {
+  private chunk = (results: ParseResult<string[]>, parser: Parser): void => {
     for (let i = 0; i < results.data.length; i++) {
-      const line: string[] = results.data[i];
+      const line = results.data[i];
       if (line.length < 1) {
         continue;
       }
@@ -191,15 +191,18 @@ export class CSVReader {
   }
 }
 
-type FieldWriter = (value: any) => string;
+type FieldWriter = (value: unknown) => string;
 
-function writeValue(value: any, config: CSVConfig): string {
+function writeValue(value: unknown, config: CSVConfig): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
   const str = value.toString();
   if (str.includes('"')) {
     // Escape the double quote characters
     return config.quoteChar + str.replace(/"/gi, '""') + config.quoteChar;
   }
-  if (str.includes('\n') || str.includes(config.delimiter)) {
+  if (str.includes('\n') || (config.delimiter && str.includes(config.delimiter))) {
     return config.quoteChar + str + config.quoteChar;
   }
   return str;
@@ -207,13 +210,13 @@ function writeValue(value: any, config: CSVConfig): string {
 
 function makeFieldWriter(field: Field, config: CSVConfig): FieldWriter {
   if (field.display) {
-    return (value: any) => {
+    return (value: unknown) => {
       const displayValue = field.display!(value);
       return writeValue(formattedValueToString(displayValue), config);
     };
   }
 
-  return (value: any) => writeValue(value, config);
+  return (value: unknown) => writeValue(value, config);
 }
 
 function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string {
@@ -229,7 +232,7 @@ function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string 
           line = line + config.delimiter;
         }
 
-        let v: any = fields[i].name;
+        let v = fields[i].name;
         if (isType) {
           v = fields[i].type;
         } else if (isName) {

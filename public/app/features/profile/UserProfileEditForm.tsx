@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Field, FieldSet, Form, Icon, Input, Tooltip } from '@grafana/ui';
@@ -16,7 +16,7 @@ export interface Props {
 
 const { disableLoginForm } = config;
 
-export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfile }) => {
+export const UserProfileEditForm = ({ user, isSavingUser, updateProfile }: Props) => {
   const onSubmitProfileUpdate = (data: ProfileUpdateFields) => {
     updateProfile(data);
   };

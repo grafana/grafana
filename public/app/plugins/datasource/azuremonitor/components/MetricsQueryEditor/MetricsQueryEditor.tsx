@@ -29,14 +29,14 @@ interface MetricsQueryEditorProps {
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
 }
 
-const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
+const MetricsQueryEditor = ({
   data,
   query,
   datasource,
   variableOptionGroup,
   onChange,
   setError,
-}) => {
+}: MetricsQueryEditorProps) => {
   const metricsMetadata = useMetricMetadata(query, datasource, onChange);
   const metricNamespaces = useMetricNamespaces(query, datasource, onChange, setError);
   const metricNames = useMetricNames(query, datasource, onChange, setError);

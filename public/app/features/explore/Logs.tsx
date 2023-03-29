@@ -110,6 +110,14 @@ const styleOverridesForStickyNavigation = css`
   }
 `;
 
+// we need to define the order of these explicitly
+const DEDUP_OPTIONS = [
+  LogsDedupStrategy.none,
+  LogsDedupStrategy.exact,
+  LogsDedupStrategy.numbers,
+  LogsDedupStrategy.signature,
+];
+
 class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
   cancelFlippingTimer?: number;
@@ -428,7 +436,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               </InlineField>
               <InlineField label="Deduplication" className={styles.horizontalInlineLabel} transparent>
                 <RadioButtonGroup
-                  options={Object.values(LogsDedupStrategy).map((dedupType) => ({
+                  options={DEDUP_OPTIONS.map((dedupType) => ({
                     label: capitalize(dedupType),
                     value: dedupType,
                     description: LogsDedupDescription[dedupType],

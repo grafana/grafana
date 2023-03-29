@@ -2,13 +2,15 @@ package featuremgmt
 
 import (
 	"bytes"
+	"encoding/csv"
 	"fmt"
 	"html/template"
+	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
-	"unicode"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/olekukonko/tablewriter"
@@ -22,7 +24,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"httpclientprovider_azure_auth": true,
 		"service-accounts":              true,
 		"database_metrics":              true,
-		"live-pipeline":                 true,
 		"live-service-web-worker":       true,
 		"k8s":                           true, // Camel case does not like this one
 	}
@@ -41,58 +42,10 @@ func TestFeatureToggleFiles(t *testing.T) {
 		}
 	})
 
-	ownerlessFeatures := map[string]bool{
-		"alertingBigTransactions":           true,
-		"trimDefaults":                      true,
-		"database_metrics":                  true,
-		"prometheusAzureOverrideAudience":   true,
-		"lokiDataframeApi":                  true,
-		"featureHighlights":                 true,
-		"exploreMixedDatasource":            true,
-		"tracing":                           true,
-		"newTraceView":                      true,
-		"correlations":                      true,
-		"cloudWatchDynamicLabels":           true,
-		"traceToMetrics":                    true,
-		"validateDashboardsOnSave":          true,
-		"prometheusWideSeries":              true,
-		"disableSecretsCompatibility":       true,
-		"logRequestsInstrumentedAsUnknown":  true,
-		"dataConnectionsConsole":            true,
-		"cloudWatchCrossAccountQuerying":    true,
-		"redshiftAsyncQueryDataSupport":     true,
-		"athenaAsyncQueryDataSupport":       true,
-		"newPanelChromeUI":                  true,
-		"showDashboardValidationWarnings":   true,
-		"elasticsearchBackendMigration":     true,
-		"datasourceOnboarding":              true,
-		"secureSocksDatasourceProxy":        true,
-		"disablePrometheusExemplarSampling": true,
-		"alertingBacktesting":               true,
-		"alertingNoNormalState":             true,
-		"logsSampleInExplore":               true,
-		"logsContextDatasourceUi":           true,
-		"lokiQuerySplitting":                true,
-		"individualCookiePreferences":       true,
-		"traceqlSearch":                     true,
-	}
-
 	t.Run("all new features should have an owner", func(t *testing.T) {
 		for _, flag := range standardFeatureFlags {
 			if flag.Owner == "" {
-				if _, ok := ownerlessFeatures[flag.Name]; !ok {
-					t.Errorf("feature %s does not have an owner", flag.Name)
-				}
-			}
-		}
-	})
-
-	t.Run("features with assigned owner should not be on the ownerless list", func(t *testing.T) {
-		for _, flag := range standardFeatureFlags {
-			if flag.Owner != "" {
-				if _, ok := ownerlessFeatures[flag.Name]; ok {
-					t.Errorf("feature %s should be removed from the ownerless list", flag.Name)
-				}
+				t.Errorf("feature %s does not have an owner. please fill the FeatureFlag.Owner property", flag.Name)
 			}
 		}
 	})
@@ -114,6 +67,12 @@ func TestFeatureToggleFiles(t *testing.T) {
 		verifyAndGenerateFile(t,
 			"../../../docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md",
 			generateDocsMD(),
+		)
+
+		// CSV Analytics
+		verifyAndGenerateFile(t,
+			"toggles_gen.csv",
+			generateCSV(),
 		)
 	})
 
@@ -168,13 +127,15 @@ func generateTypeScript() string {
  * conf/custom.ini to enable features under development or not yet available in
  * stable version.
  *
- * Only enabled values will be returned in this interface
+ * Only enabled values will be returned in this interface.
+ *
+ * NOTE: the possible values may change between versions without notice, although
+ * this may cause compilation issues when depending on removed feature keys, the
+ * runtime state will continue to work.
  *
  * @public
  */
 export interface FeatureToggles {
-  [name: string]: boolean | undefined; // support any string value
-
 `
 	for _, flag := range standardFeatureFlags {
 		buf += "  " + getTypeScriptKey(flag.Name) + "?: boolean;\n"
@@ -189,18 +150,6 @@ func getTypeScriptKey(key string) string {
 		return "['" + key + "']"
 	}
 	return key
-}
-
-func isLetterOrNumber(c rune) bool {
-	return !unicode.IsLetter(c) && !unicode.IsNumber(c)
-}
-
-func asCamelCase(key string) string {
-	parts := strings.FieldsFunc(key, isLetterOrNumber)
-	for idx, part := range parts {
-		parts[idx] = strings.Title(part)
-	}
-	return strings.Join(parts, "")
 }
 
 func generateRegistry(t *testing.T) string {
@@ -234,7 +183,7 @@ package featuremgmt
 const (`)
 
 	for _, flag := range standardFeatureFlags {
-		data.CamelCase = asCamelCase(flag.Name)
+		data.CamelCase = strcase.ToCamel(flag.Name)
 		data.Flag = flag
 		data.Ext = ""
 
@@ -247,6 +196,40 @@ const (`)
 	buff.WriteString(")\n")
 
 	return buff.String()
+}
+
+func generateCSV() string {
+	var buf bytes.Buffer
+
+	w := csv.NewWriter(&buf)
+	if err := w.Write([]string{
+		"Name",
+		"State",           //flag.State.String(),
+		"Owner",           // string(flag.Owner),
+		"requiresDevMode", //strconv.FormatBool(flag.RequiresDevMode),
+		"RequiresLicense", //strconv.FormatBool(flag.RequiresLicense),
+		"RequiresRestart", //strconv.FormatBool(flag.RequiresRestart),
+		"FrontendOnly",    //strconv.FormatBool(flag.FrontendOnly),
+	}); err != nil {
+		log.Fatalln("error writing record to csv:", err)
+	}
+
+	for _, flag := range standardFeatureFlags {
+		if err := w.Write([]string{
+			flag.Name,
+			flag.State.String(),
+			string(flag.Owner),
+			strconv.FormatBool(flag.RequiresDevMode),
+			strconv.FormatBool(flag.RequiresLicense),
+			strconv.FormatBool(flag.RequiresRestart),
+			strconv.FormatBool(flag.FrontendOnly),
+		}); err != nil {
+			log.Fatalln("error writing record to csv:", err)
+		}
+	}
+
+	w.Flush()
+	return buf.String()
 }
 
 func generateDocsMD() string {

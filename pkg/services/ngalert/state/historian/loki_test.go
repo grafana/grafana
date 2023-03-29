@@ -269,7 +269,7 @@ func TestRecordStates(t *testing.T) {
 			Labels: data.Labels{"a": "b"},
 		})
 
-		err := <-loki.RecordStatesAsync(context.Background(), rule, states)
+		err := <-loki.Record(context.Background(), rule, states)
 
 		require.NoError(t, err)
 		require.Contains(t, "/loki/api/v1/push", req.lastRequest.URL.Path)
@@ -286,8 +286,8 @@ func TestRecordStates(t *testing.T) {
 			Labels: data.Labels{"a": "b"},
 		})
 
-		<-loki.RecordStatesAsync(context.Background(), rule, states)
-		<-errLoki.RecordStatesAsync(context.Background(), rule, states)
+		<-loki.Record(context.Background(), rule, states)
+		<-errLoki.Record(context.Background(), rule, states)
 
 		exp := bytes.NewBufferString(`
 # HELP grafana_alerting_state_history_transitions_failed_total The total number of state transitions that failed to be written - they are not retried.
@@ -311,13 +311,67 @@ grafana_alerting_state_history_writes_total{org="1"} 2
 		)
 		require.NoError(t, err)
 	})
+
+	t.Run("elides request if nothing to send", func(t *testing.T) {
+		req := NewFakeRequester()
+		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
+		rule := createTestRule()
+		states := []state.StateTransition{}
+
+		err := <-loki.Record(context.Background(), rule, states)
+
+		require.NoError(t, err)
+		require.Nil(t, req.lastRequest)
+	})
+
+	t.Run("succeeds with special chars in labels", func(t *testing.T) {
+		req := NewFakeRequester()
+		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
+		rule := createTestRule()
+		states := singleFromNormal(&state.State{
+			State: eval.Alerting,
+			Labels: data.Labels{
+				"dots":   "contains.dot",
+				"equals": "contains=equals",
+				"emoji":  "contains🤔emoji",
+			},
+		})
+
+		err := <-loki.Record(context.Background(), rule, states)
+
+		require.NoError(t, err)
+		require.Contains(t, "/loki/api/v1/push", req.lastRequest.URL.Path)
+		sent := string(readBody(t, req.lastRequest))
+		require.Contains(t, sent, "contains.dot")
+		require.Contains(t, sent, "contains=equals")
+		require.Contains(t, sent, "contains🤔emoji")
+	})
+
+	t.Run("adds external labels to log lines", func(t *testing.T) {
+		req := NewFakeRequester()
+		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
+		rule := createTestRule()
+		states := singleFromNormal(&state.State{
+			State: eval.Alerting,
+		})
+
+		err := <-loki.Record(context.Background(), rule, states)
+
+		require.NoError(t, err)
+		require.Contains(t, "/loki/api/v1/push", req.lastRequest.URL.Path)
+		sent := string(readBody(t, req.lastRequest))
+		require.Contains(t, sent, "externalLabelKey")
+		require.Contains(t, sent, "externalLabelValue")
+	})
 }
 
 func createTestLokiBackend(req client.Requester, met *metrics.Historian) *RemoteLokiBackend {
 	url, _ := url.Parse("http://some.url")
 	cfg := LokiConfig{
-		WritePathURL: url,
-		ReadPathURL:  url,
+		WritePathURL:   url,
+		ReadPathURL:    url,
+		Encoder:        JsonEncoder{},
+		ExternalLabels: map[string]string{"externalLabelKey": "externalLabelValue"},
 	}
 	return NewRemoteLokiBackend(cfg, req, met)
 }
@@ -365,4 +419,12 @@ func badResponse() *http.Response {
 		ContentLength: int64(0),
 		Header:        make(http.Header, 0),
 	}
+}
+
+func readBody(t *testing.T, req *http.Request) []byte {
+	t.Helper()
+
+	val, err := io.ReadAll(req.Body)
+	require.NoError(t, err)
+	return val
 }

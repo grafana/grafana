@@ -97,7 +97,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
           label="Span start time shift"
           labelWidth={26}
           grow
-          tooltip="Shifts the start time of the span. Default 0 (Time units can be used here, for example: 5s, 1m, 3h)"
+          tooltip="Shifts the start time of the span. Default: 0 (Time units can be used here, for example: 5s, 1m, 3h)"
         >
           <Input
             type="text"
@@ -119,7 +119,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
           label="Span end time shift"
           labelWidth={26}
           grow
-          tooltip="Shifts the end time of the span. Default 0 Time units can be used here, for example: 5s, 1m, 3h"
+          tooltip="Shifts the end time of the span. Default: 0 (Time units can be used here, for example: 5s, 1m, 3h)"
         >
           <Input
             type="text"

@@ -15,10 +15,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/phlare/kinds/dataquery"
-	"github.com/xlab/treeprint"
-
 	googlev1 "github.com/grafana/phlare/api/gen/proto/go/google/v1"
 	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
+	"github.com/xlab/treeprint"
 )
 
 type queryModel struct {
@@ -92,7 +91,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 			response.Error = err
 			return response
 		}
-		frame := responseToDataFrames(resp, qm.ProfileTypeId)
+		frame := responseToDataFrames(resp.Msg, qm.ProfileTypeId)
 		response.Frames = append(response.Frames, frame)
 
 		// If query called with streaming on then return a channel
@@ -125,8 +124,8 @@ func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querie
 // responseToDataFrames turns Phlare response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
-func responseToDataFrames(resp *connect.Response[googlev1.Profile], profileTypeID string) *data.Frame {
-	tree := profileAsTree(resp.Msg)
+func responseToDataFrames(prof *googlev1.Profile, profileTypeID string) *data.Frame {
+	tree := profileAsTree(prof)
 	return treeToNestedSetDataFrame(tree, profileTypeID)
 }
 
@@ -354,8 +353,8 @@ type CustomMeta struct {
 }
 
 // treeToNestedSetDataFrame walks the tree depth first and adds items into the dataframe. This is a nested set format
-// where by ordering the items in depth first order and knowing the level/depth of each item we can recreate the
-// parent - child relationship without explicitly needing parent/child column and we can later just iterate over the
+// where ordering the items in depth first order and knowing the level/depth of each item we can recreate the
+// parent - child relationship without explicitly needing parent/child column, and we can later just iterate over the
 // dataFrame to again basically walking depth first over the tree/profile.
 func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Frame {
 	frame := data.NewFrame("response")
@@ -369,22 +368,68 @@ func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Fra
 	parts := strings.Split(profileTypeID, ":")
 	valueField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
 	selfField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
-	labelField := data.NewField("label", nil, []string{})
 	lineNumberField := data.NewField("line", nil, []int64{})
-	fileNameField := data.NewField("fileName", nil, []string{})
-	frame.Fields = data.Fields{levelField, valueField, selfField, labelField, lineNumberField, fileNameField}
+	frame.Fields = data.Fields{levelField, valueField, selfField, lineNumberField}
 
-	walkTree(tree, func(tree *ProfileTree) {
-		levelField.Append(int64(tree.Level))
-		valueField.Append(tree.Value)
-		selfField.Append(tree.Self)
-		// todo: inline functions
-		// tree.Inlined
-		labelField.Append(tree.Function.FunctionName)
-		lineNumberField.Append(tree.Function.Line)
-		fileNameField.Append(tree.Function.FileName)
-	})
+	labelField := NewEnumField("label", nil)
+	fileNameField := NewEnumField("fileName", nil)
+
+	// Tree can be nil if profile was empty, we can still send empty frame in that case
+	if tree != nil {
+		walkTree(tree, func(tree *ProfileTree) {
+			levelField.Append(int64(tree.Level))
+			valueField.Append(tree.Value)
+			selfField.Append(tree.Self)
+			// todo: inline functions
+			// tree.Inlined
+			lineNumberField.Append(tree.Function.Line)
+			labelField.Append(tree.Function.FunctionName)
+			fileNameField.Append(tree.Function.FileName)
+		})
+	}
+
+	frame.Fields = append(frame.Fields, labelField.GetField(), fileNameField.GetField())
 	return frame
+}
+
+type EnumField struct {
+	field     *data.Field
+	valuesMap map[string]int64
+	counter   int64
+}
+
+func NewEnumField(name string, labels data.Labels) *EnumField {
+	return &EnumField{
+		field:     data.NewField(name, labels, []int64{}),
+		valuesMap: make(map[string]int64),
+	}
+}
+
+func (e *EnumField) Append(value string) {
+	if valueIndex, ok := e.valuesMap[value]; ok {
+		e.field.Append(valueIndex)
+	} else {
+		e.valuesMap[value] = e.counter
+		e.field.Append(e.counter)
+		e.counter++
+	}
+}
+
+func (e *EnumField) GetField() *data.Field {
+	s := make([]string, len(e.valuesMap))
+	for k, v := range e.valuesMap {
+		s[v] = k
+	}
+
+	e.field.SetConfig(&data.FieldConfig{
+		TypeConfig: &data.FieldTypeConfig{
+			Enum: &data.EnumFieldConfig{
+				Text: s,
+			},
+		},
+	})
+
+	return e.field
 }
 
 func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {

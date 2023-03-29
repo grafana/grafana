@@ -22,20 +22,36 @@ const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerCon
 } as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
 
 const MetricValueDisplay = (props: CanvasElementProps<TextConfig, TextData>) => {
-  const { data, isSelected } = props;
+  const { data, isSelected, config } = props;
   const styles = useStyles2(getStyles(data));
 
   const context = usePanelContext();
   const scene = context.instanceState?.scene;
+  let panelData: DataFrame[];
+  panelData = context.instanceState?.scene?.data.series;
 
   const isEditMode = useObservable<boolean>(scene?.editModeEnabled ?? of(false));
+
+  const getDisplayValue = () => {
+    if (panelData && config.text?.field && fieldNotFound()) {
+      return 'Field not found';
+    }
+
+    return data?.text ? data.text : 'Double click to set field';
+  };
+
+  const fieldNotFound = () => {
+    const field = panelData.filter((series) => series.fields.find((field) => field.name === config.text?.field));
+    return !field.length;
+  };
 
   if (isEditMode && isSelected) {
     return <MetricValueEdit {...props} />;
   }
+
   return (
     <div className={styles.container}>
-      <span className={styles.span}>{data?.text ? data.text : 'Double click to set field'}</span>
+      <span className={styles.span}>{getDisplayValue()}</span>
     </div>
   );
 };
@@ -48,6 +64,7 @@ const MetricValueEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
 
   const onFieldChange = useCallback(
     (field) => {
+      console.log('onfieldchange', field);
       let selectedElement: ElementState;
       selectedElement = context.instanceState?.selected[0];
       if (selectedElement) {

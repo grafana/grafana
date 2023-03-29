@@ -73,10 +73,10 @@ describe('SearchField', () => {
     if (select) {
       await user.click(select);
       jest.advanceTimersByTime(1000);
-      const largerThanOp = await screen.findByText('>');
+      const largerThanOp = await screen.findByText('!=');
       await user.click(largerThanOp);
 
-      expect(updateFilter).toHaveBeenCalledWith({ ...filter, operator: '>' });
+      expect(updateFilter).toHaveBeenCalledWith({ ...filter, operator: '!=' });
     }
   });
 

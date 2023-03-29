@@ -292,16 +292,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 	hs.HooksService.RunLoginHook(&loginInfo, ctx)
 	metrics.MApiLoginOAuth.Inc()
 
-	if redirectTo := ctx.GetCookie("redirect_to"); len(redirectTo) > 0 {
-		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
-			cookies.DeleteCookie(ctx.Resp, "redirect_to", hs.CookieOptionsFromCfg)
-			ctx.Redirect(redirectTo)
-			return
-		}
-		ctx.Logger.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
-	}
-
-	ctx.Redirect(setting.AppSubUrl + "/")
+	ctx.Redirect(hs.GetRedirectURL(ctx))
 }
 
 // buildExternalUserInfo returns a ExternalUserInfo struct from OAuth user profile

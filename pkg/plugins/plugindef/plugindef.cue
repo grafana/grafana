@@ -146,38 +146,33 @@ seqs: [
 				// Schema definition for the plugin.json file. Used primarily for schema validation.
 				$schema?: string 
 
-				// FIXME there appears to be a bug in thema that prevents this from working. Maybe it'd
-				// help to refer to it with an alias, but thema can't support using current list syntax.
-				// syntax (fixed by grafana/thema#82). Either way, for now, pascalName gets populated in Go.
-				let sani = (strings.ToTitle(regexp.ReplaceAllLiteral("[^a-zA-Z]+", name, "")))
-
-				// The PascalCase name for the plugin. Used for creating machine-friendly
-				// identifiers, typically in code generation.
-				//
-				// If not provided, defaults to name, but title-cased and sanitized (only
-				// alphabetical characters allowed).
-				pascalName: string & =~"^([A-Z][a-zA-Z]{1,62})$" | *sani
-
-				// Plugin category used on the Add data source page.
-				category?: "tsdb" | "logging" | "cloud" | "tracing" | "sql" | "enterprise" | "profiling" | "other"
+				// For data source plugins, if the plugin supports alerting. Requires `backend` to be set to `true`.
+				alerting?: bool
 
 				// For data source plugins, if the plugin supports annotation
 				// queries.
 				annotations?: bool
 
-				// For data source plugins, if the plugin supports alerting.
-				alerting?: bool
+				// Set to true for app plugins that should be enabled and pinned to the navigation bar in all orgs.
+				autoEnabled?: bool
 
 				// If the plugin has a backend component.
 				backend?: bool
 
-				// builtin indicates whether the plugin is developed and shipped as part
-				// of Grafana. Also known as a "core plugin."
+				// [internal only] Indicates whether the plugin is developed and shipped as part
+				// of Grafana. Also known as a 'core plugin'.
 				builtIn: bool | *false
 
-				// hideFromList excludes the plugin from listings in Grafana's UI. Only
-				// allowed for builtin plugins.
-				hideFromList: bool | *false
+				// Plugin category used on the Add data source page.
+				category?: "tsdb" | "logging" | "cloud" | "tracing" | "profiling" | "sql" | "enterprise" | "iot" | "other"
+
+				// Grafana Enterprise specific features.
+				enterpriseFeatures?: {
+					// Enable/Disable health diagnostics errors. Requires Grafana
+					// >=7.5.5.
+					healthDiagnosticsErrors?: bool | *false
+					...
+				}
 
 				// The first part of the file name of the backend component
 				// executable. There can be multiple executables built for
@@ -188,15 +183,9 @@ seqs: [
 				// https://golang.org/doc/install/source#environment.
 				executable?: string
 
-				// Initialize plugin on startup. By default, the plugin
-				// initializes on first use.
-				preload?: bool
-
-				// Marks a plugin as a pre-release.
-				state?: #ReleaseState
-
-				// ReleaseState indicates release maturity state of a plugin.
-				#ReleaseState: "alpha" | "beta" | "deprecated" | *"stable"
+				// [internal only] Excludes the plugin from listings in Grafana's UI. Only
+				// allowed for `builtIn` plugins.
+				hideFromList: bool | *false
 
 				// Resources to include in plugin.
 				includes?: [...#Include]
@@ -233,32 +222,63 @@ seqs: [
 					...
 				}
 
-				// For data source plugins, if the plugin supports logs.
+				// For data source plugins, if the plugin supports logs. It may be used to filter logs only features.
 				logs?: bool
+
+				// For data source plugins, if the plugin supports metric queries.
+				// Used to enable the plugin in the panel editor.
+				metrics?: bool
+
+				// FIXME there appears to be a bug in thema that prevents this from working. Maybe it'd
+				// help to refer to it with an alias, but thema can't support using current list syntax.
+				// syntax (fixed by grafana/thema#82). Either way, for now, pascalName gets populated in Go.
+				let sani = (strings.ToTitle(regexp.ReplaceAllLiteral("[^a-zA-Z]+", name, "")))
+
+				// [internal only] The PascalCase name for the plugin. Used for creating machine-friendly
+				// identifiers, typically in code generation.
+				//
+				// If not provided, defaults to name, but title-cased and sanitized (only
+				// alphabetical characters allowed).
+				pascalName: string & =~"^([A-Z][a-zA-Z]{1,62})$" | *sani
+
+				// Initialize plugin on startup. By default, the plugin
+				// initializes on first use.
+				preload?: bool
+
+				// For data source plugins. There is a query options section in
+				// the plugin's query editor and these options can be turned on
+				// if needed.
+				queryOptions?: {
+					// For data source plugins. If the `max data points` option should
+					// be shown in the query options section in the query editor.
+					maxDataPoints?: bool
+
+					// For data source plugins. If the `min interval` option should be
+					// shown in the query options section in the query editor.
+					minInterval?: bool
+
+					// For data source plugins. If the `cache timeout` option should
+					// be shown in the query options section in the query editor.
+					cacheTimeout?: bool
+				}
+
+				// Routes is a list of proxy routes, if any. For datasource plugins only.
+				routes?: [...#Route]
 
 				// For panel plugins. Hides the query editor.
 				skipDataQuery?: bool
 
-				// For data source plugins, if the plugin supports metric queries.
-				// Used in Explore.
-				metrics?: bool
+				// Marks a plugin as a pre-release.
+				state?: #ReleaseState
 
-				// For data source plugins, if the plugin supports streaming.
+				// ReleaseState indicates release maturity state of a plugin.
+				#ReleaseState: "alpha" | "beta" | "deprecated" | *"stable"
+
+				// For data source plugins, if the plugin supports streaming. Used in Explore to start live streaming.
 				streaming?: bool
 
-				// This is an undocumented feature.
-				tables?: bool
-
-				// For data source plugins, if the plugin supports tracing.
+				// For data source plugins, if the plugin supports tracing. Used for example to link logs (e.g. Loki logs) with tracing plugins.
 				tracing?: bool
-
-				// For data source plugins, include hidden queries in the data
-				// request.
-				hiddenQueries?: bool
-
-				// Set to true for app plugins that should be enabled by default
-				// in all orgs
-				autoEnabled?: bool
 
 				// Optional list of RBAC RoleRegistrations.
 				// Describes and organizes the default permissions associated with any of the Grafana basic roles,
@@ -304,26 +324,6 @@ seqs: [
 				// With RBAC, the Admin basic role inherits its default permissions from the Editor basic role which
 				// in turn inherits them from the Viewer basic role.
 				#BasicRole: "Grafana Admin" | "Admin" | "Editor" | "Viewer"
-
-				// For data source plugins. There is a query options section in
-				// the plugin's query editor and these options can be turned on
-				// if needed.
-				queryOptions?: {
-					// For data source plugins. If the `max data points` option should
-					// be shown in the query options section in the query editor.
-					maxDataPoints?: bool
-
-					// For data source plugins. If the `min interval` option should be
-					// shown in the query options section in the query editor.
-					minInterval?: bool
-
-					// For data source plugins. If the `cache timeout` option should
-					// be shown in the query options section in the query editor.
-					cacheTimeout?: bool
-				}
-
-				// Routes is a list of proxy routes, if any. For datasource plugins only.
-				routes?: [...#Route]
 
 				// Header describes an HTTP header that is forwarded with a proxied request for
 				// a plugin route.
@@ -405,14 +405,6 @@ seqs: [
 
 					// Parameters for the JWT token authentication request.
 					params: [string]: string
-				}
-
-				// Grafana Enerprise specific features.
-				enterpriseFeatures?: {
-					// Enable/Disable health diagnostics errors. Requires Grafana
-					// >=7.5.5.
-					healthDiagnosticsErrors?: bool | *false
-					...
 				}
 			},
 		]

@@ -79,7 +79,7 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 		}
 		item, err := collector.Fn(ctx)
 		if err != nil {
-			s.log.Warn("Failed to collect support bundle item", "error", err)
+			s.log.Warn("Failed to collect support bundle item", "error", err, "collector", collector.UID)
 		}
 
 		// write item to file

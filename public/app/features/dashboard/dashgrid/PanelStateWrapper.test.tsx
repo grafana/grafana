@@ -1,10 +1,11 @@
-import { act, render, screen } from '@testing-library/react';
-import React, { FC } from 'react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { ReplaySubject } from 'rxjs';
 
-import { EventBusSrv, getDefaultTimeRange, LoadingState, PanelData, PanelPlugin, PanelProps } from '@grafana/data';
+import { EventBusSrv, getDefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
@@ -98,6 +99,46 @@ describe('PanelStateWrapper', () => {
       expect(screen.getByText(/plugin panel to render/i)).toBeInTheDocument();
     });
   });
+
+  describe('when there are error(s)', () => {
+    [
+      { errors: [{ message: 'boom!' }], expectedMessage: 'boom!' },
+      {
+        errors: [{ message: 'boom!' }, { message: 'boom2!' }],
+        expectedMessage: 'Multiple errors found. Click for more details',
+      },
+    ].forEach((scenario) => {
+      it(`then it should show the error message: ${scenario.expectedMessage}`, async () => {
+        const { rerender, props, subject, store } = setupTestContext({});
+
+        act(() => {
+          subject.next({ state: LoadingState.Loading, series: [], timeRange: getDefaultTimeRange() });
+          subject.next({
+            state: LoadingState.Error,
+            series: [],
+            errors: scenario.errors,
+            timeRange: getDefaultTimeRange(),
+          });
+        });
+
+        const newProps = { ...props, isInView: true };
+        rerender(
+          <Provider store={store}>
+            <PanelStateWrapper {...newProps} />
+          </Provider>
+        );
+
+        const button = screen.getByRole('button', {
+          name: selectors.components.Panels.Panel.headerCornerInfo('error'),
+        });
+        expect(button).toBeInTheDocument();
+        await act(async () => {
+          fireEvent.focus(button);
+        });
+        expect(await screen.findByText(scenario.expectedMessage)).toBeInTheDocument();
+      });
+    });
+  });
 });
 
-const TestPanelComponent: FC<PanelProps> = () => <div>Plugin Panel to Render</div>;
+const TestPanelComponent = () => <div>Plugin Panel to Render</div>;

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { PanelPluginMeta } from '@grafana/data';
 import { Button, VerticalGroup } from '@grafana/ui';
@@ -19,7 +19,7 @@ interface Props {
   searchQuery: string;
 }
 
-export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
+export const PanelLibraryOptionsGroup = ({ panel, searchQuery }: Props) => {
   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
   const [changeToPanel, setChangeToPanel] = useState<LibraryElementDTO | undefined>(undefined);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);

@@ -707,7 +707,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	ac := acmock.New()
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	service := dashboardservice.ProvideDashboardService(
+	service := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, dashAlertService,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), acmock.NewMockedPermissionsService(), ac,
 		foldertest.NewFakeService(),
@@ -779,7 +779,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 			UID: q.UID,
 		}
 	}).Return(result, nil)
-	guardian.InitLegacyGuardian(store, dashSvc, &teamtest.FakeService{})
+	guardian.InitLegacyGuardian(setting.NewCfg(), store, dashSvc, &teamtest.FakeService{})
 	t.Helper()
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {

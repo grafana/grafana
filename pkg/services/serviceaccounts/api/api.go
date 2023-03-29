@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -114,22 +113,12 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 	}
 
 	if err := api.validateRole(cmd.Role, &c.OrgRole); err != nil {
-		switch {
-		case errors.Is(err, serviceaccounts.ErrServiceAccountInvalidRole):
-			return response.Error(http.StatusBadRequest, err.Error(), err)
-		case errors.Is(err, serviceaccounts.ErrServiceAccountRolePrivilegeDenied):
-			return response.Error(http.StatusForbidden, err.Error(), err)
-		default:
-			return response.Error(http.StatusInternalServerError, "failed to create service account", err)
-		}
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create service account", err)
 	}
 
 	serviceAccount, err := api.service.CreateServiceAccount(c.Req.Context(), c.OrgID, &cmd)
-	switch {
-	case errors.Is(err, serviceaccounts.ErrServiceAccountAlreadyExists):
-		return response.Error(http.StatusBadRequest, "Failed to create service account", err)
-	case err != nil:
-		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to create service account", err)
 	}
 
 	if !api.accesscontrol.IsDisabled() {
@@ -169,12 +158,7 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *contextmodel.ReqConte
 
 	serviceAccount, err := api.service.RetrieveServiceAccount(ctx.Req.Context(), ctx.OrgID, scopeID)
 	if err != nil {
-		switch {
-		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
-			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
-		default:
-			return response.Error(http.StatusInternalServerError, "Failed to retrieve service account", err)
-		}
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to retrieve service account", err)
 	}
 
 	saIDString := strconv.FormatInt(serviceAccount.Id, 10)
@@ -220,24 +204,12 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) 
 	}
 
 	if err := api.validateRole(cmd.Role, &c.OrgRole); err != nil {
-		switch {
-		case errors.Is(err, serviceaccounts.ErrServiceAccountInvalidRole):
-			return response.Error(http.StatusBadRequest, err.Error(), err)
-		case errors.Is(err, serviceaccounts.ErrServiceAccountRolePrivilegeDenied):
-			return response.Error(http.StatusForbidden, err.Error(), err)
-		default:
-			return response.Error(http.StatusInternalServerError, "failed to update service account", err)
-		}
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update service account", err)
 	}
 
 	resp, err := api.service.UpdateServiceAccount(c.Req.Context(), c.OrgID, scopeID, &cmd)
 	if err != nil {
-		switch {
-		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
-			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
-		default:
-			return response.Error(http.StatusInternalServerError, "Failed update service account", err)
-		}
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed update service account", err)
 	}
 
 	saIDString := strconv.FormatInt(resp.Id, 10)
@@ -255,10 +227,10 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) 
 
 func (api *ServiceAccountsAPI) validateRole(r *org.RoleType, orgRole *org.RoleType) error {
 	if r != nil && !r.IsValid() {
-		return serviceaccounts.ErrServiceAccountInvalidRole
+		return serviceaccounts.ErrServiceAccountInvalidRole.Errorf("invalid role specified")
 	}
 	if r != nil && !orgRole.Includes(*r) {
-		return serviceaccounts.ErrServiceAccountRolePrivilegeDenied
+		return serviceaccounts.ErrServiceAccountRolePrivilegeDenied.Errorf("can not assign a role higher than user's role")
 	}
 	return nil
 }

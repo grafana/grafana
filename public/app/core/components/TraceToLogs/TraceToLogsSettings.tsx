@@ -75,6 +75,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
     'elasticsearch',
     'grafana-splunk-datasource', // external
     'grafana-opensearch-datasource', // external
+    'grafana-falconlogscale-datasource', // external
   ];
 
   const traceToLogs = useMemo(
@@ -240,7 +241,7 @@ function TimeRangeShift(props: TimeRangeShiftProps) {
         label={`Span ${props.type} time shift`}
         labelWidth={26}
         grow
-        tooltip={`Shifts the ${props.type} time of the span. Default 0 Time units can be used here, for example: 5s, 1m, 3h`}
+        tooltip={`Shifts the ${props.type} time of the span. Default: 0 (Time units can be used here, for example: 5s, 1m, 3h)`}
       >
         <Input
           type="text"

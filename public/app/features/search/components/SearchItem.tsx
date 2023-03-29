@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
-import React, { FC, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { Card, Icon, IconName, TagList, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { SEARCH_ITEM_HEIGHT } from '../constants';
 import { getIconForKind } from '../service/utils';
@@ -32,7 +34,7 @@ const getIconFromMeta = (meta = ''): IconName => {
 };
 
 /** @deprecated */
-export const SearchItem: FC<Props> = ({ item, isSelected, editable, onToggleChecked, onTagSelected, onClickItem }) => {
+export const SearchItem = ({ item, isSelected, editable, onToggleChecked, onTagSelected, onClickItem }: Props) => {
   const styles = useStyles2(getStyles);
   const tagSelected = useCallback(
     (tag: string, event: React.MouseEvent<HTMLElement>) => {
@@ -55,6 +57,16 @@ export const SearchItem: FC<Props> = ({ item, isSelected, editable, onToggleChec
     [item, onToggleChecked]
   );
 
+  const description = config.featureToggles.nestedFolders ? (
+    <>
+      <Icon name={getIconForKind(item.kind)} aria-hidden /> {kindName(item.kind)}
+    </>
+  ) : (
+    <>
+      <Icon name={getIconForKind(item.parentKind ?? 'folder')} aria-hidden /> {item.parentTitle || 'General'}
+    </>
+  );
+
   return (
     <Card
       data-testid={selectors.dashboardItem(item.title)}
@@ -64,6 +76,7 @@ export const SearchItem: FC<Props> = ({ item, isSelected, editable, onToggleChec
       onClick={onClickItem}
     >
       <Card.Heading>{item.title}</Card.Heading>
+
       <Card.Figure align={'center'} className={styles.checkbox}>
         <SearchCheckbox
           aria-label="Select dashboard"
@@ -72,11 +85,9 @@ export const SearchItem: FC<Props> = ({ item, isSelected, editable, onToggleChec
           onClick={handleCheckboxClick}
         />
       </Card.Figure>
+
       <Card.Meta separator={''}>
-        <span className={styles.metaContainer}>
-          <Icon name={getIconForKind(item.parentKind ?? 'folder')} aria-hidden />
-          {item.parentTitle || 'General'}
-        </span>
+        <span className={styles.metaContainer}>{description}</span>
 
         {item.sortMetaName && (
           <span className={styles.metaContainer}>
@@ -91,6 +102,17 @@ export const SearchItem: FC<Props> = ({ item, isSelected, editable, onToggleChec
     </Card>
   );
 };
+
+function kindName(kind: DashboardViewItem['kind']) {
+  switch (kind) {
+    case 'folder':
+      return t('search.result-kind.folder', 'Folder');
+    case 'dashboard':
+      return t('search.result-kind.dashboard', 'Dashboard');
+    case 'panel':
+      return t('search.result-kind.panel', 'Panel');
+  }
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

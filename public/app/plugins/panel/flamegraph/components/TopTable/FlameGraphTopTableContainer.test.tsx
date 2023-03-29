@@ -30,6 +30,7 @@ describe('FlameGraphTopTableContainer', () => {
         setSelectedBarIndex={jest.fn()}
         setRangeMin={jest.fn()}
         setRangeMax={jest.fn()}
+        getLabelValue={(val) => val.toString()}
       />
     );
   };

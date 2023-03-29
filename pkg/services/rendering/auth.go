@@ -62,8 +62,8 @@ func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*Ren
 	}
 
 	from = "cache"
-	var val interface{}
-	val, err = rs.RemoteCacheService.GetByteArray(ctx, fmt.Sprintf(renderKeyPrefix, key))
+	var val []byte
+	val, err = rs.RemoteCacheService.Get(ctx, fmt.Sprintf(renderKeyPrefix, key))
 	if err != nil {
 		rs.log.Error("Failed to get render key from cache", "error", err)
 	}
@@ -89,7 +89,7 @@ func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts Auth
 		return err
 	}
 
-	return cache.SetByteArray(ctx, fmt.Sprintf(renderKeyPrefix, renderKey), buf.Bytes(), expiry)
+	return cache.Set(ctx, fmt.Sprintf(renderKeyPrefix, renderKey), buf.Bytes(), expiry)
 }
 
 func generateAndSetRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, expiry time.Duration) (string, error) {

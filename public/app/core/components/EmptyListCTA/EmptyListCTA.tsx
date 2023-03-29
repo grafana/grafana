@@ -28,7 +28,7 @@ const infoBoxStyles = css`
   margin: 0 auto;
 `;
 
-const EmptyListCTA: React.FunctionComponent<Props> = ({
+const EmptyListCTA = ({
   title,
   buttonIcon,
   buttonLink,
@@ -41,7 +41,7 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
   proTipTarget,
   infoBox,
   infoBoxTitle,
-}) => {
+}: Props) => {
   const footer = () => {
     return (
       <>

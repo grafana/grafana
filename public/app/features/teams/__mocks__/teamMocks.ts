@@ -18,9 +18,9 @@ export const getMockTeam = (i = 1, overrides = {}): Team => {
     memberCount: i,
     permission: TeamPermissionLevel.Member,
     accessControl: { isEditor: false },
-    created: 0,
+    created: '',
     orgId: 0,
-    updated: 0,
+    updated: '',
     ...overrides,
   };
 };

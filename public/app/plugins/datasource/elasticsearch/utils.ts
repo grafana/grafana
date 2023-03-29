@@ -1,4 +1,4 @@
-import { valid, gte } from 'semver';
+import { valid, gte, SemVer } from 'semver';
 
 import { isMetricAggregationWithField } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
@@ -117,10 +117,13 @@ export const coerceESVersion = (version: string | number | undefined): string =>
   }
 };
 
-export const isSupportedVersion = (version: string): boolean => {
+export const isSupportedVersion = (version: SemVer): boolean => {
   if (gte(version, '7.10.0')) {
     return true;
   }
 
   return false;
 };
+
+export const unsupportedVersionMessage =
+  'Support for Elasticsearch versions after their end-of-life (currently versions < 7.10) was removed. Using unsupported version of Elasticsearch may lead to unexpected and incorrect results.';

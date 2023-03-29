@@ -1,11 +1,12 @@
 import { SelectableValue } from '@grafana/data';
 
-import { TraceqlFilter } from '../dataquery.gen';
+import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
+import { CompletionProvider } from '../traceql/autocomplete';
 
 export const generateQueryFromFilters = (filters: TraceqlFilter[]) => {
   return `{${filters
     .filter((f) => f.tag && f.operator && f.value?.length)
-    .map((f) => `${f.tag}${f.operator}${valueHelper(f)}`)
+    .map((f) => `${scopeHelper(f)}${f.tag}${f.operator}${valueHelper(f)}`)
     .join(' && ')}}`;
 };
 
@@ -17,6 +18,15 @@ const valueHelper = (f: TraceqlFilter) => {
     return `"${f.value}"`;
   }
   return f.value;
+};
+export const scopeHelper = (f: TraceqlFilter) => {
+  // Intrinsic fields don't have a scope
+  if (CompletionProvider.intrinsics.find((t) => t === f.tag)) {
+    return '';
+  }
+  return (
+    (f.scope === TraceqlSearchScope.Resource || f.scope === TraceqlSearchScope.Span ? f.scope?.toLowerCase() : '') + '.'
+  );
 };
 
 export function replaceAt<T>(array: T[], index: number, value: T) {

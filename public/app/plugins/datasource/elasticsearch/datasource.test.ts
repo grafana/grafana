@@ -181,14 +181,14 @@ describe('ElasticDatasource', () => {
   });
 
   describe('When testing datasource with index pattern', () => {
-    it('should translate index pattern to current day', () => {
+    it('should translate index pattern to current day', async () => {
       const { ds, fetchMock } = getTestContext({ jsonData: { interval: 'Daily', esVersion: '7.10.0' } });
 
-      ds.testDatasource();
+      await ds.testDatasource();
 
       const today = toUtc().format('YYYY.MM.DD');
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock.mock.calls[0][0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/test-${today}/_mapping`);
+      const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1];
+      expect(lastCall[0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/test-${today}/_mapping`);
     });
   });
 
