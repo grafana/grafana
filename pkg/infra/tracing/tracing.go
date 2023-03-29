@@ -136,6 +136,31 @@ func TraceIDFromContext(c context.Context, requireSampled bool) string {
 	return ""
 }
 
+// SpanFromContext returns the Span previously associated with ctx, or nil, if no such span could be found.
+// It is the equivalent of opentracing.SpanFromContext, adapted to Grafana's Span type.
+func SpanFromContext(ctx context.Context) Span {
+	return OpentracingSpan{opentracing.SpanFromContext(ctx)}
+}
+
+// ContextWithSpan reutrns a new context.Context that holds a reference to the given span.
+// If span is nil, a new context without an active span is returned.
+// It is the equivalent of opentracing.ContextWithSpan, adapted to Grafana's Span type.
+func ContextWithSpan(ctx context.Context, span Span) context.Context {
+	if span != nil {
+		opentracingSpan, ok := span.(OpentracingSpan)
+		if !ok {
+			logger.Error("Failed to cast opentracing span")
+		}
+		ctx = opentracing.ContextWithSpan(ctx, opentracingSpan.span)
+		// Grafana also manages its own separate traceID in the context in addition to what opentracing handles.
+		// It's derived from the span. Ensure that we propagate this too.
+		if sctx, ok := opentracingSpan.span.Context().(jaeger.SpanContext); ok {
+			ctx = context.WithValue(ctx, traceKey{}, traceValue{sctx.TraceID().String(), sctx.IsSampled()})
+		}
+	}
+	return ctx
+}
+
 type Opentracing struct {
 	enabled                  bool
 	address                  string

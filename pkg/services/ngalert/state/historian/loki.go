@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -83,6 +84,7 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 	writeCtx := context.Background()
 	writeCtx, cancel := context.WithTimeout(writeCtx, StateHistoryWriteTimeout)
 	writeCtx = history_model.WithRuleData(writeCtx, rule)
+	writeCtx = tracing.ContextWithSpan(writeCtx, tracing.SpanFromContext(ctx))
 
 	go func(ctx context.Context) {
 		defer cancel()

@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -71,6 +72,7 @@ func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleM
 	writeCtx := context.Background()
 	writeCtx, cancel := context.WithTimeout(writeCtx, StateHistoryWriteTimeout)
 	writeCtx = history_model.WithRuleData(writeCtx, rule)
+	writeCtx = tracing.ContextWithSpan(writeCtx, tracing.SpanFromContext(ctx))
 
 	go func(ctx context.Context) {
 		defer cancel()
