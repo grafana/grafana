@@ -17,10 +17,11 @@ import (
 	"time"
 
 	"github.com/grafana/alerting/alerting/notifier/channels"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/expr"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -1050,6 +1051,7 @@ func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.
 
 	nc.receivedNotifications[key] = append(nc.receivedNotifications[key], body)
 	res.WriteHeader(http.StatusOK)
+	res.Header().Set("Content-Type", "application/json")
 	fmt.Fprint(res, nc.responses[paths[0]])
 }
 
