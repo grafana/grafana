@@ -355,12 +355,15 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			// get folder if exists
 			f, err := folderHelper.getFolder(dash, da)
 			if err != nil {
-				return MigrationError{
-					Err:     err,
-					AlertId: da.Id,
+				// if folder does not exist then the dashboard is an orphan and therefore rules can be skipped
+				l.Warn("Failed to find folder for dashboard. Migrate rule to the default folder", "rule_name", da.Name, "dashboard_uid", da.DashboardUID, "missing_folder_id", dash.FolderId)
+				folder, err = gf(dash, da)
+				if err != nil {
+					return err
 				}
+			} else {
+				folder = &f
 			}
-			folder = &f
 		default:
 			folder, err = gf(dash, da)
 			if err != nil {
