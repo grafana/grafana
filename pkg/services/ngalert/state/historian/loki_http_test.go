@@ -132,18 +132,14 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 		// so the x-scope-orgid header is set.
 		// client.cfg.TenantID = "<your_tenant_id>"
 
-		// Create an array of selectors that should be used for the
-		// query.
-		selectors := []Selector{
-			{Label: "probe", Op: Eq, Value: "Paris"},
-		}
+		logQL := `{probe="Paris"}`
 
 		// Define the query time range
 		start := time.Now().Add(-30 * time.Minute).UnixNano()
 		end := time.Now().UnixNano()
 
 		// Authorized request should not fail against Grafana Cloud.
-		res, err := client.query(context.Background(), selectors, start, end)
+		res, err := client.query(context.Background(), logQL, start, end)
 		require.NoError(t, err)
 		require.NotNil(t, res)
 	})
