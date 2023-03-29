@@ -1,6 +1,4 @@
 ---
-aliases:
-  -
 keywords:
   - grafana
   - https
