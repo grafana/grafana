@@ -101,7 +101,11 @@ function getDataSourceRulerConfig(getState: () => unknown, rulesSourceName: stri
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
   async (
-    { rulesSourceName, filter }: { rulesSourceName: string; filter?: FetchPromRulesFilter },
+    {
+      rulesSourceName,
+      filter,
+      limitAlerts,
+    }: { rulesSourceName: string; filter?: FetchPromRulesFilter; limitAlerts?: number },
     thunkAPI
   ): Promise<RuleNamespace[]> => {
     await thunkAPI.dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
@@ -111,7 +115,7 @@ export const fetchPromRulesAction = createAsyncThunk(
       thunk: 'unifiedalerting/fetchPromRules',
     });
 
-    return await withSerializedError(fetchRulesWithLogging(rulesSourceName, filter));
+    return await withSerializedError(fetchRulesWithLogging(rulesSourceName, filter, limitAlerts));
   }
 );
 
@@ -339,7 +343,14 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
   }
 );
 
-export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<Promise<void>> {
+interface FetchPromRulesRulesActionProps {
+  limitAlerts?: number;
+}
+
+export function fetchAllPromAndRulerRulesAction(
+  force = false,
+  options: FetchPromRulesRulesActionProps = {}
+): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
     const allStartLoadingTs = performance.now();
 
@@ -359,7 +370,7 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<Prom
           (force || !rulerRules[rulesSourceName]?.loading) && Boolean(dataSourceConfig.rulerConfig);
 
         await Promise.allSettled([
-          shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName })),
+          shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName, ...options })),
           shouldLoadRuler && dispatch(fetchRulerRulesAction({ rulesSourceName })),
         ]);
       })

@@ -62,7 +62,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   useEffect(() => {
     //we need promRules and rulerRules for getting the uid when creating the alert link in panel in case of being a rulerRule.
-    dispatch(fetchAllPromAndRulerRulesAction());
+    dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts: 1 }));
     const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => dispatch(fetchAllPromAndRulerRulesAction()));
     return () => {
       sub?.unsubscribe();
