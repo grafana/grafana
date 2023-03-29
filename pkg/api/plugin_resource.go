@@ -129,7 +129,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 
 	var flushStreamErr error
 	go func() {
-		flushStreamErr = hs.flushStream(crReq, stream, w)
+		flushStreamErr = hs.flushStream(req.Context(), crReq, stream, w)
 		wg.Done()
 	}()
 
@@ -140,18 +140,20 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 	return flushStreamErr
 }
 
-func (hs *HTTPServer) flushStream(req *backend.CallResourceRequest, stream callResourceClientResponseStream, w http.ResponseWriter) error {
+func (hs *HTTPServer) flushStream(ctx context.Context, req *backend.CallResourceRequest, stream callResourceClientResponseStream, w http.ResponseWriter) error {
 	processedStreams := 0
-
+	ctx, cancel := context.WithCancel(ctx)
 	for {
 		resp, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
+			cancel()
 			if processedStreams == 0 {
 				return errors.New("received empty resource response")
 			}
 			return nil
 		}
 		if err != nil {
+			cancel()
 			if processedStreams == 0 {
 				return fmt.Errorf("%v: %w", "failed to receive response from resource call", err)
 			}
@@ -199,7 +201,7 @@ func (hs *HTTPServer) flushStream(req *backend.CallResourceRequest, stream callR
 		if _, err := w.Write(resp.Body); err != nil {
 			hs.log.Error("Failed to write resource response", "err", err)
 		} else {
-			hs.cachingService.CacheResourceResponse(context.Background(), req, resp)
+			hs.cachingService.CacheResourceResponse(ctx, req, resp)
 		}
 
 		if flusher, ok := w.(http.Flusher); ok {

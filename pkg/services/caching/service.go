@@ -24,7 +24,6 @@ type CachedQueryDataResponse struct {
 	Response *backend.QueryDataResponse
 	// A function that should be used to cache a QueryDataResponse for a given query - can be set to nil by the method implementation
 	UpdateCacheFn CacheQueryResponseFn
-	Headers       map[string][]string
 }
 
 func ProvideCachingService() *OSSCachingService {

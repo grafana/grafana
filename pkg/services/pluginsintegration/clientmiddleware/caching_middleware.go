@@ -51,18 +51,20 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	// First look in the query cache if enabled
 	cr := m.caching.HandleQueryRequest(ctx, req)
 
+	ch := reqCtx.Resp.Header().Get(caching.XCacheHeader)
+
 	defer func() {
 		// record request duration if caching was used
-		if h, ok := cr.Headers[caching.XCacheHeader]; ok && len(h) > 0 {
+		if ch != "" {
 			QueryRequestHistogram.With(prometheus.Labels{
 				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
-				"cache":           cr.Headers[caching.XCacheHeader][0],
+				"cache":           ch,
 				"query_type":      getQueryType(reqCtx),
 			}).Observe(time.Since(start).Seconds())
 		}
 	}()
 
-	if isCacheHit(cr.Headers) {
+	if ch == caching.StatusHit {
 		return cr.Response, nil
 	}
 
