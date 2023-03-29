@@ -134,7 +134,7 @@ export const tracesSchema = omit(
 export const tablesSchema = {
   availabilityResults: availabilityResultsSchema,
   dependencies: dependenciesSchema,
-  events: eventsSchema,
+  customEvents: eventsSchema,
   exceptions: exceptionsSchema,
   pageViews: pageViewsSchema,
   requests: requestsSchema,
