@@ -40,7 +40,7 @@ type Loader struct {
 	cfg                *config.Cfg
 
 	errs map[string]*plugins.SignatureError
-	
+
 	// TODO: remove
 	errsMux sync.Mutex
 }
@@ -237,8 +237,6 @@ func (l *Loader) validateSignatures(ctx context.Context, loadedPlugins []*plugin
 		l.log.Debug("started plugins verification reader goroutine")
 		for {
 			select {
-			case <-workerCtx.Done():
-				return
 			case signatureErr, ok := <-signatureErrors:
 				if !ok {
 					return
