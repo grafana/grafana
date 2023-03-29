@@ -7,13 +7,19 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-func AddConfigLinks(frame data.Frame, dl string) data.Frame {
+func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
+	linkTitle := "View in Azure Portal"
+	if title != nil {
+		linkTitle = *title
+	}
+
 	for i := range frame.Fields {
 		if frame.Fields[i].Config == nil {
 			frame.Fields[i].Config = &data.FieldConfig{}
 		}
+
 		deepLink := data.DataLink{
-			Title:       "View in Azure Portal",
+			Title:       linkTitle,
 			TargetBlank: true,
 			URL:         dl,
 		}

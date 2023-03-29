@@ -222,17 +222,6 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		frame.Meta.PreferredVisualization = "table"
 	}
 
-	var queryUrl string
-	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
-		queryUrl, err = getTracesQueryUrl(query.Resources, azurePortalBaseUrl)
-	} else {
-		queryUrl, err = getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl)
-	}
-	if err != nil {
-		dataResponse.Error = err
-		return dataResponse
-	}
-
 	if query.ResultFormat == types.TimeSeries {
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
@@ -245,7 +234,22 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		}
 	}
 
-	AddConfigLinks(*frame, queryUrl)
+	queryUrl, err := getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl)
+	if err != nil {
+		dataResponse.Error = err
+		return dataResponse
+	}
+	AddConfigLinks(*frame, queryUrl, nil)
+
+	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
+		tracesUrl, err := getTracesQueryUrl(query.Resources, azurePortalBaseUrl)
+		if err != nil {
+			dataResponse.Error = err
+			return dataResponse
+		}
+		linkTitle := "View E2E transaction in Application Insights"
+		AddConfigLinks(*frame, tracesUrl, &linkTitle)
+	}
 
 	dataResponse.Frames = data.Frames{frame}
 	return dataResponse

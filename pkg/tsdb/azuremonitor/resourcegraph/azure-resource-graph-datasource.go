@@ -211,7 +211,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 	}
 
 	url := azurePortalUrl + "/#blade/HubsExtension/ArgQueryBlade/query/" + url.PathEscape(query.InterpolatedQuery)
-	frameWithLink := loganalytics.AddConfigLinks(*frame, url)
+	frameWithLink := loganalytics.AddConfigLinks(*frame, url, nil)
 	if frameWithLink.Meta == nil {
 		frameWithLink.Meta = &data.FrameMeta{}
 	}
