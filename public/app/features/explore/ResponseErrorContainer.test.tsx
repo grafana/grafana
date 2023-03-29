@@ -6,7 +6,6 @@ import { DataQueryError, LoadingState, getDefaultTimeRange } from '@grafana/data
 import { selectors } from '@grafana/e2e-selectors';
 
 import { configureStore } from '../../store/configureStore';
-import { ExploreId } from '../../types';
 
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 
@@ -46,7 +45,7 @@ describe('ResponseErrorContainer', () => {
 
 function setup(error: DataQueryError) {
   const store = configureStore();
-  store.getState().explore[ExploreId.left].queryResponse = {
+  store.getState().explore.panes.left!.queryResponse = {
     timeRange: getDefaultTimeRange(),
     series: [],
     state: LoadingState.Error,
@@ -65,7 +64,7 @@ function setup(error: DataQueryError) {
   };
   render(
     <Provider store={store}>
-      <ResponseErrorContainer exploreId={ExploreId.left} />
+      <ResponseErrorContainer exploreId={'left'} />
     </Provider>
   );
 }

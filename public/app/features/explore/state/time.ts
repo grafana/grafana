@@ -43,12 +43,10 @@ export const updateTimeRange = (options: {
   return (dispatch, getState) => {
     const { syncedTimes } = getState().explore;
     if (syncedTimes) {
-      dispatch(updateTime({ ...options, exploreId: ExploreId.left }));
-      // When running query by updating time range, we want to preserve cache.
-      // Cached results are currently used in Logs pagination.
-      dispatch(runQueries(ExploreId.left, { preserveCache: true }));
-      dispatch(updateTime({ ...options, exploreId: ExploreId.right }));
-      dispatch(runQueries(ExploreId.right, { preserveCache: true }));
+      Object.keys(getState().explore.panes).forEach((exploreId) => {
+        dispatch(updateTime({ ...options, exploreId }));
+        dispatch(runQueries(exploreId, { preserveCache: true }));
+      });
     } else {
       dispatch(updateTime({ ...options }));
       dispatch(runQueries(options.exploreId, { preserveCache: true }));
@@ -73,7 +71,7 @@ export const updateTime = (config: {
 }): ThunkResult<void> => {
   return (dispatch, getState) => {
     const { exploreId, absoluteRange: absRange, rawRange: actionRange } = config;
-    const itemState = getState().explore[exploreId]!;
+    const itemState = getState().explore.panes[exploreId]!;
     const timeZone = getTimeZone(getState().user);
     const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
     const { range: rangeInState } = itemState;
@@ -118,13 +116,14 @@ export const updateTime = (config: {
  */
 export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
-    if (exploreId === ExploreId.left) {
-      const leftState = getState().explore.left;
-      dispatch(updateTimeRange({ exploreId: ExploreId.right, rawRange: leftState.range.raw }));
-    } else {
-      const rightState = getState().explore.right!;
-      dispatch(updateTimeRange({ exploreId: ExploreId.left, rawRange: rightState.range.raw }));
-    }
+    const range = getState().explore.panes[exploreId]!.range.raw;
+
+    Object.keys(getState().explore.panes)
+      .filter((key) => key !== exploreId)
+      .forEach((exploreId) => {
+        dispatch(updateTimeRange({ exploreId, rawRange: range }));
+      });
+
     const isTimeSynced = getState().explore.syncedTimes;
     dispatch(syncTimesAction({ syncedTimes: !isTimeSynced }));
     dispatch(stateSave());
@@ -140,16 +139,13 @@ export function makeAbsoluteTime(): ThunkResult<void> {
   return (dispatch, getState) => {
     const timeZone = getTimeZone(getState().user);
     const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
-    const leftState = getState().explore.left;
-    const leftRange = getTimeRange(timeZone, leftState.range.raw, fiscalYearStartMonth);
-    const leftAbsoluteRange: AbsoluteTimeRange = { from: leftRange.from.valueOf(), to: leftRange.to.valueOf() };
-    dispatch(updateTime({ exploreId: ExploreId.left, absoluteRange: leftAbsoluteRange }));
-    const rightState = getState().explore.right!;
-    if (rightState) {
-      const rightRange = getTimeRange(timeZone, rightState.range.raw, fiscalYearStartMonth);
-      const rightAbsoluteRange: AbsoluteTimeRange = { from: rightRange.from.valueOf(), to: rightRange.to.valueOf() };
-      dispatch(updateTime({ exploreId: ExploreId.right, absoluteRange: rightAbsoluteRange }));
-    }
+
+    Object.entries(getState().explore.panes).forEach(([exploreId, exploreItemState]) => {
+      const range = getTimeRange(timeZone, exploreItemState!.range.raw, fiscalYearStartMonth);
+      const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
+      dispatch(updateTime({ exploreId, absoluteRange }));
+    });
+
     dispatch(stateSave());
   };
 }

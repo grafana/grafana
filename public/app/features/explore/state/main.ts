@@ -72,12 +72,12 @@ export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/s
  * Not all of the redux state is reflected in URL though.
  */
 export const stateSave = (options?: { replace?: boolean }): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    const { left, right } = getState().explore;
+  return (_, getState) => {
+    const { left, right } = getState().explore.panes;
     const orgId = getState().user.orgId.toString();
     const urlStates: { [index: string]: string | null } = { orgId };
 
-    urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left));
+    urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left!));
 
     if (right) {
       urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right));
@@ -103,7 +103,7 @@ export const lastSavedUrl: UrlQueryMap = {};
 export const splitOpen = createAsyncThunk(
   'explore/splitOpen',
   async (options: SplitOpenOptions | undefined, { getState }) => {
-    const leftState: ExploreItemState = getState().explore.left;
+    const leftState: ExploreItemState = getState().explore.panes.left!;
     const leftUrlState = getUrlStateFromPaneState(leftState);
     let rightUrlState: ExploreUrlState = leftUrlState;
 
@@ -170,8 +170,9 @@ export const navigateToExplore = (
 const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
-  left: initialExploreItemState,
-  right: undefined,
+  panes: {
+    left: initialExploreItemState,
+  },
   correlations: undefined,
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
@@ -188,13 +189,12 @@ export const initialExploreState: ExploreState = {
 export const exploreReducer = (state = initialExploreState, action: AnyAction): ExploreState => {
   if (splitCloseAction.match(action)) {
     const { itemId } = action.payload;
-    const targetSplit = {
-      left: itemId === ExploreId.left ? state.right! : state.left,
-      right: undefined,
+    const panes = {
+      left: itemId === 'left' ? state.panes.right : state.panes.left,
     };
     return {
       ...state,
-      ...targetSplit,
+      panes,
       largerExploreId: undefined,
       maxedExploreId: undefined,
       evenSplitPanes: true,
@@ -264,18 +264,18 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
   }
 
   if (resetExploreAction.match(action)) {
-    const leftState = state[ExploreId.left];
-    const rightState = state[ExploreId.right];
-    stopQueryState(leftState.querySubscription);
-    if (rightState) {
-      stopQueryState(rightState.querySubscription);
+    // FIXME: reducers should REALLY not have side effects.
+    for (const [, pane] of Object.entries(state.panes).filter(([exploreId]) => exploreId !== 'left')) {
+      stopQueryState(pane!.querySubscription);
     }
 
     return {
       ...initialExploreState,
-      left: {
-        ...initialExploreItemState,
-        queries: state.left.queries,
+      panes: {
+        left: {
+          ...initialExploreItemState,
+          queries: state.panes.left!.queries,
+        },
       },
     };
   }
@@ -291,16 +291,27 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
   if (splitOpen.pending.match(action)) {
     return {
       ...state,
-      right: initialExploreItemState,
+      panes: {
+        ...state.panes,
+        right: initialExploreItemState,
+      },
     };
   }
 
   if (action.payload) {
     const { exploreId } = action.payload;
-    // @ts-expect-error
-    if (exploreId !== undefined && state[exploreId]) {
-      // @ts-expect-error
-      return { ...state, [exploreId]: paneReducer(state[exploreId], action) };
+    if (exploreId !== undefined) {
+      return {
+        ...state,
+        panes: Object.entries(state.panes).reduce<ExploreState['panes']>((acc, [id, pane]) => {
+          if (id === exploreId) {
+            acc[id] = paneReducer(pane, action);
+          } else {
+            acc[id] = pane;
+          }
+          return acc;
+        }, {}),
+      };
     }
   }
 

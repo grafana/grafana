@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import { FieldType, getDefaultTimeRange, InternalTimeZones, toDataFrame } from '@grafana/data';
-import { ExploreId, TABLE_RESULTS_STYLE } from 'app/types/explore';
+import { TABLE_RESULTS_STYLE } from 'app/types/explore';
 
 import { RawPrometheusContainer } from './RawPrometheusContainer';
 
@@ -52,7 +52,7 @@ const dataFrame = toDataFrame({
 });
 
 const defaultProps = {
-  exploreId: ExploreId.left,
+  exploreId: 'left',
   loading: false,
   width: 800,
   onCellFilterAdded: jest.fn(),

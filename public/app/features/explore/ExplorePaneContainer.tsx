@@ -181,7 +181,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
     : getTimeRange(timeZone, DEFAULT_RANGE, fiscalYearStartMonth);
 
   return {
-    initialized: state.explore[props.exploreId]?.initialized,
+    initialized: state.explore.panes[props.exploreId]?.initialized,
     initialDatasource,
     initialQueries: queries,
     initialRange,

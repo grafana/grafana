@@ -2,7 +2,7 @@ import { of } from 'rxjs';
 
 import { serializeStateToUrlParam } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
-import { ExploreId, StoreState, ThunkDispatch } from 'app/types';
+import { StoreState, ThunkDispatch } from 'app/types';
 
 import { configureStore } from '../../../store/configureStore';
 
@@ -29,9 +29,11 @@ function setupStore(state?: any) {
   return configureStore({
     ...defaultInitialState,
     explore: {
-      [ExploreId.left]: {
-        ...defaultInitialState.explore[ExploreId.left],
-        ...(state || {}),
+      panes: {
+        ['left']: {
+          ...defaultInitialState.explore.panes.left,
+          ...(state || {}),
+        },
       },
     },
   } as any);
@@ -96,9 +98,9 @@ describe('refreshExplore', () => {
   it('should change data source when datasource in url changes', async () => {
     const { dispatch, getState } = setup();
     await dispatch(
-      refreshExplore(ExploreId.left, serializeStateToUrlParam({ datasource: 'newDs', queries: [], range: testRange }))
+      refreshExplore('left', serializeStateToUrlParam({ datasource: 'newDs', queries: [], range: testRange }))
     );
-    expect(getState().explore[ExploreId.left].datasourceInstance?.name).toBe('newDs');
+    expect(getState().explore.panes.left!.datasourceInstance?.name).toBe('newDs');
   });
 
   it('should change and run new queries from the URL', async () => {
@@ -106,12 +108,12 @@ describe('refreshExplore', () => {
     datasources.someDs.query.mockReturnValueOnce(of({}));
     await dispatch(
       refreshExplore(
-        ExploreId.left,
+        'left',
         serializeStateToUrlParam({ datasource: 'someDs', queries: [{ expr: 'count()', refId: 'A' }], range: testRange })
       )
     );
     // same
-    const state = getState().explore[ExploreId.left];
+    const state = getState().explore.panes.left!;
     expect(state.datasourceInstance?.name).toBe('someDs');
     expect(state.queries.length).toBe(1);
     expect(state.queries).toMatchObject([{ expr: 'count()' }]);
@@ -125,7 +127,7 @@ describe('refreshExplore', () => {
     const state = getState();
     await dispatch(
       refreshExplore(
-        ExploreId.left,
+        'left',
         serializeStateToUrlParam({ datasource: 'newDs', queries: [{ expr: 'count()', refId: 'A' }], range: testRange })
       )
     );

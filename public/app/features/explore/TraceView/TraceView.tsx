@@ -218,7 +218,7 @@ function useFocusSpanLink(options: {
   refId?: string;
   datasource?: DataSourceApi;
 }): [string | undefined, (traceId: string, spanId: string) => LinkModel<Field>] {
-  const panelState = useSelector((state) => state.explore[options.exploreId]?.panelsState.trace);
+  const panelState = useSelector((state) => state.explore.panes[options.exploreId]?.panelsState.trace);
   const focusedSpanId = panelState?.spanId;
 
   const dispatch = useDispatch();
@@ -231,7 +231,7 @@ function useFocusSpanLink(options: {
     );
 
   const query = useSelector((state) =>
-    state.explore[options.exploreId]?.queries.find((query) => query.refId === options.refId)
+    state.explore.panes[options.exploreId]?.queries.find((query) => query.refId === options.refId)
   );
 
   const createFocusSpanLink = (traceId: string, spanId: string) => {

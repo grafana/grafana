@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreId, ExploreState } from 'app/types';
+import { ExploreState } from 'app/types';
 
 import { UserState } from '../profile/state/reducers';
 
@@ -50,15 +50,16 @@ function setup(queries: DataQuery[]) {
 
   const leftState = makeExplorePaneState();
   const initialState: ExploreState = {
-    left: {
-      ...leftState,
-      richHistory: [],
-      datasourceInstance: datasources['someDs-uid'],
-      queries,
+    panes: {
+      left: {
+        ...leftState,
+        richHistory: [],
+        datasourceInstance: datasources['someDs-uid'],
+        queries,
+      },
     },
     syncedTimes: false,
     correlations: [],
-    right: undefined,
     richHistoryStorageFull: false,
     richHistoryLimitExceededWarningShown: false,
     richHistoryMigrationFailed: false,
@@ -77,7 +78,7 @@ describe('Explore QueryRows', () => {
 
     render(
       <Provider store={store}>
-        <QueryRows exploreId={ExploreId.left} />
+        <QueryRows exploreId={'left'} />
       </Provider>
     );
 

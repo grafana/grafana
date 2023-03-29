@@ -67,7 +67,7 @@ export function changePanelState(
   panelState: ExplorePanelsState[PreferredVisualisationType]
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const exploreItem = getState().explore[exploreId];
+    const exploreItem = getState().explore.panes[exploreId];
     if (exploreItem === undefined) {
       return;
     }
@@ -89,7 +89,7 @@ export function changePanelState(
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
  */
-export interface InitializeExplorePayload {
+interface InitializeExplorePayload {
   exploreId: ExploreId;
   containerWidth: number;
   eventBridge: EventBusExtended;
@@ -99,7 +99,7 @@ export interface InitializeExplorePayload {
   datasourceInstance?: DataSourceApi;
   isFromCompactUrl?: boolean;
 }
-export const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExplore');
+const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExplore');
 
 export interface SetUrlReplacedPayload {
   exploreId: ExploreId;
@@ -179,7 +179,7 @@ export function initializeExplore(
  */
 export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const itemState = getState().explore[exploreId];
+    const itemState = getState().explore.panes[exploreId];
     if (!itemState?.initialized) {
       return;
     }

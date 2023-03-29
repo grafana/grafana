@@ -73,8 +73,9 @@ const updateRichHistoryState = ({ updatedQuery, deletedId }: SyncHistoryUpdatesO
 };
 
 const forEachExplorePane = (state: ExploreState, callback: (item: ExploreItemState, exploreId: ExploreId) => void) => {
-  callback(state.left, ExploreId.left);
-  state.right && callback(state.right, ExploreId.right);
+  Object.entries(state.panes).forEach(([exploreId, item]) => {
+    callback(item!, exploreId);
+  });
 };
 
 export const addHistoryItem = (
@@ -125,18 +126,14 @@ export const deleteHistoryItem = (id: string): ThunkResult<void> => {
 export const deleteRichHistory = (): ThunkResult<void> => {
   return async (dispatch) => {
     await deleteAllFromRichHistory();
-    dispatch(
-      richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId: ExploreId.left })
-    );
-    dispatch(
-      richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId: ExploreId.right })
-    );
+    dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId: 'left' }));
+    dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId: 'right' }));
   };
 };
 
 export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const filters = getState().explore![exploreId]?.richHistorySearchFilters;
+    const filters = getState().explore.panes[exploreId]!.richHistorySearchFilters;
     if (filters) {
       const richHistoryResults = await getRichHistory(filters);
       dispatch(richHistoryUpdatedAction({ richHistoryResults, exploreId }));
@@ -146,8 +143,8 @@ export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
 
 export const loadMoreRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const currentFilters = getState().explore![exploreId]?.richHistorySearchFilters;
-    const currentRichHistory = getState().explore![exploreId]?.richHistory;
+    const currentFilters = getState().explore.panes[exploreId]?.richHistorySearchFilters;
+    const currentRichHistory = getState().explore.panes[exploreId]?.richHistory;
     if (currentFilters && currentRichHistory) {
       const nextFilters = { ...currentFilters, page: (currentFilters?.page || 1) + 1 };
       const moreRichHistory = await getRichHistory(nextFilters);

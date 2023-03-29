@@ -7,7 +7,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
-import { ExploreId, ExploreItemState, ExploreState } from '../../../types';
+import { ExploreItemState, ExploreState } from '../../../types';
 
 import { exploreReducer, navigateToExplore, splitCloseAction } from './main';
 
@@ -134,7 +134,7 @@ describe('Explore reducer', () => {
         // closing left item
         reducerTester<ExploreState>()
           .givenReducer(exploreReducer, initialState)
-          .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.left }))
+          .whenActionIsDispatched(splitCloseAction({ itemId: 'left' }))
           .thenStateShouldEqual({
             evenSplitPanes: true,
             largerExploreId: undefined,
@@ -161,7 +161,7 @@ describe('Explore reducer', () => {
         // closing left item
         reducerTester<ExploreState>()
           .givenReducer(exploreReducer, initialState)
-          .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.right }))
+          .whenActionIsDispatched(splitCloseAction({ itemId: 'right' }))
           .thenStateShouldEqual({
             evenSplitPanes: true,
             largerExploreId: undefined,
@@ -185,7 +185,7 @@ describe('Explore reducer', () => {
 
         reducerTester<ExploreState>()
           .givenReducer(exploreReducer, initialState)
-          .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.right }))
+          .whenActionIsDispatched(splitCloseAction({ itemId: 'right' }))
           .thenStateShouldEqual({
             evenSplitPanes: true,
             left: itemMock,

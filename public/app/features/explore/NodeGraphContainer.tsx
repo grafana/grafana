@@ -108,7 +108,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
 
 function mapStateToProps(state: StoreState, { exploreId }: OwnProps) {
   return {
-    range: state.explore[exploreId]!.range,
+    range: state.explore.panes[exploreId]!.range,
   };
 }
 

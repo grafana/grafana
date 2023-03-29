@@ -269,7 +269,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 
     const toolbarLeftItems = [
       // We only want to show the shortened link button in the left Toolbar if topnav is not enabled as with topnav enabled it sits next to the brecrumbs
-      !isTopnav && exploreId === ExploreId.left && shareButton,
+      !isTopnav && exploreId === 'left' && shareButton,
       getDataSourcePicker(),
     ].filter(Boolean);
 
@@ -283,8 +283,8 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         )}
         <PageToolbar
           aria-label="Explore toolbar"
-          title={exploreId === ExploreId.left && !isTopnav ? 'Explore' : undefined}
-          pageIcon={exploreId === ExploreId.left && !isTopnav ? 'compass' : undefined}
+          title={exploreId === 'left' && !isTopnav ? 'Explore' : undefined}
+          pageIcon={exploreId === 'left' && !isTopnav ? 'compass' : undefined}
           leftItems={toolbarLeftItems}
           forceShowLeftItems
         >
@@ -297,7 +297,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
   const { syncedTimes, largerExploreId } = state.explore;
-  const exploreItem = state.explore[exploreId]!;
+  const exploreItem = state.explore.panes[exploreId]!;
   const { datasourceInstance, datasourceMissing, range, refreshInterval, loading, isLive, isPaused, containerWidth } =
     exploreItem;
 
