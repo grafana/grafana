@@ -40,12 +40,9 @@ Once created, you can modify the library panel using any dashboard on which it a
 
 Add a Grafana library panel to a dashboard when you want to provide visualizations to other dashboard users.
 
-1. Hover over the **Dashboards** option on the left menu, then select **New dashboard** from the drop-down options.
-
-   The **Add** panel dialog opens.
-   {{< figure src="/static/img/docs/library-panels/add-library-panel-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
-
-1. Click the **Add a panel from the panel library** option.
+1. Click **Dashboards** in the left-side menu.
+1. Click **New** and select **New Dashboard**.
+1. On the empty dashboard, click **Import panel**.
 
    You will see a list of your library panels.
 
@@ -56,17 +53,20 @@ Add a Grafana library panel to a dashboard when you want to provide visualizatio
 
 Unlink a library panel when you want to make a change to the panel and not affect other instances of the library panel.
 
-1. Hover over **Dashboard** on the left menu, and then click **Library panels**.
+1. Click **Dashboards** in the left-side menu.
+1. Click **Library panels**.
 1. Select a library panel that is being used in different dashboards.
 1. Select the panel you want to unlink.
-1. Click the title of the panel and then click **Edit**. The panel opens in edit mode.
-1. Click the **Unlink** option on the top right corner of the page.
+1. Hover over any part of the panel to display the actions menu on the top right corner.
+1. Click the menu and select **Edit**.
+1. Click **Unlink** on the top right corner of the page.
 
 ## View a list of library panels
 
 You can view a list of available library panels and search for a library panel.
 
-1. Hover over the **Dashboard** option on the left menu, then click **Library panels**.
+1. Click **Dashboards** in the left-side menu.
+1. Click **Library panels**.
 
    You can see a list of previously defined library panels.
    {{< figure src="/static/img/docs/library-panels/library-panel-list-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
@@ -79,8 +79,6 @@ You can view a list of available library panels and search for a library panel.
 
 Delete a library panel when you no longer need it.
 
-1. Hover over **Dashboard** on the left menu, and select **Library panels**.
-
-1. Select the panel you want to delete.
-
+1. Click **Dashboards** in the left-side menu.
+1. Click **Library panels**.
 1. Click the delete icon next to the library panel name.
