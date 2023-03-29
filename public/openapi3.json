@@ -16947,7 +16947,7 @@
       }
     },
     "/folders/{folder_uid}/move": {
-      "get": {
+      "post": {
         "operationId": "moveFolder",
         "parameters": [
           {

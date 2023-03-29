@@ -5646,7 +5646,7 @@
       }
     },
     "/folders/{folder_uid}/move": {
-      "get": {
+      "post": {
         "tags": [
           "folders"
         ],
