@@ -13,6 +13,7 @@ import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler
 import { AlertingQueryRunner } from '../../../state/AlertingQueryRunner';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
+import { isPromOrLokiQuery } from '../../../utils/rule-form';
 import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
 import { QueryEditor } from '../QueryEditor';
@@ -169,13 +170,19 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   );
 
   const onChangeRecordingRulesQueries = useCallback(
-    (updatedQueries) => {
-      const dataSourceSettings = getDataSourceSrv().getInstanceSettings(updatedQueries[0].datasourceUid);
+    (updatedQueries: AlertQuery[]) => {
+      const query = updatedQueries[0];
+
+      const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
       if (!dataSourceSettings) {
         throw new Error('The Data source has not been defined.');
       }
 
-      const expression = updatedQueries[0].model?.expr || '';
+      if (!isPromOrLokiQuery(query.model)) {
+        return;
+      }
+
+      const expression = query.model.expr;
 
       setValue('dataSourceName', dataSourceSettings.name);
       setValue('expression', expression);
