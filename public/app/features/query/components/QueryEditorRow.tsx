@@ -33,6 +33,7 @@ import {
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { ExploreId } from 'app/types';
 
 import { RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
@@ -57,6 +58,7 @@ interface Props<TQuery extends DataQuery> {
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
   alerting?: boolean;
+  exploreId?: ExploreId;
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
@@ -257,7 +259,16 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderPluginEditor = () => {
-    const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history } = this.props;
+    const {
+      query,
+      onChange,
+      queries,
+      onRunQuery,
+      onAddQuery,
+      app = CoreApp.PanelEditor,
+      history,
+      exploreId,
+    } = this.props;
     const { datasource, data } = this.state;
 
     if (this.isWaitingForDatasourceToLoad()) {
@@ -286,6 +297,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
               queries={queries}
               app={app}
               history={history}
+              exploreId={exploreId}
             />
           </DataSourcePluginContextProvider>
         );

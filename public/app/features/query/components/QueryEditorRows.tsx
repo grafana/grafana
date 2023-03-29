@@ -11,6 +11,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { ExploreId } from 'app/types';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
@@ -31,6 +32,7 @@ export interface Props {
   app?: CoreApp;
   history?: Array<HistoryItem<DataQuery>>;
   eventBus?: EventBusExtended;
+  exploreId?: ExploreId;
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
@@ -139,6 +141,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       app,
       history,
       eventBus,
+      exploreId,
       onAddQuery,
       onRunQueries,
       onQueryCopied,
@@ -178,6 +181,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       app={app}
                       history={history}
                       eventBus={eventBus}
+                      exploreId={exploreId}
                     />
                   );
                 })}
