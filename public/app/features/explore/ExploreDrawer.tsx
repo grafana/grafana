@@ -35,7 +35,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       animation: 0.5s ease-out ${drawerSlide(theme)};
     `,
     rzHandle: css`
-      background: indianred;
+      background: ${theme.colors.secondary.main};
       transition: 0.3s background ease-in-out;
       position: relative;
       width: 200px !important;
