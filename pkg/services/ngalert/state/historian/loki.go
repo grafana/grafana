@@ -361,7 +361,7 @@ func buildLogQuery(query models.HistoryQuery) (string, error) {
 
 	labelFilters := ""
 	for k, v := range query.Labels {
-		labelFilters += fmt.Sprintf(" | labels.%s=%q", k, v)
+		labelFilters += fmt.Sprintf(" | labels_%s=%q", k, v)
 	}
 
 	if labelFilters != "" {

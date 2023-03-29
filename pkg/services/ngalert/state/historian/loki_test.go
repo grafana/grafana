@@ -192,7 +192,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 						"labeltwo":    "labelvaluetwo",
 					},
 				},
-				exp: `{orgID="123",from="state-history"} | json | labels.customlabel="customvalue" | labels.labeltwo="labelvaluetwo"`,
+				exp: `{orgID="123",from="state-history"} | json | labels_customlabel="customvalue" | labels_labeltwo="labelvaluetwo"`,
 			},
 		}
 
