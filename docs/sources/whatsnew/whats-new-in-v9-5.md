@@ -56,3 +56,15 @@ It's worth noting that the nested folders feature is currently experimental. As 
 To try out the nested folders feature, you'll need to enable the `nestedFolders` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
 In subsequent releases, we’ll be refining and enhancing the user interface for managing dashboards and folders, to provide a more streamlined user experience.
+
+## Dashboards and visualizations
+
+### Redesigned empty dashboard state
+
+_Generally available in all editions of Grafana using the emptyDashboardPage [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#feature_toggles). The default value is `true` and you can disable it in config._
+
+Dashboards have been updated so that it’s easier to begin building from an empty dashboard state. The options displayed when you add a new dashboard—adding a visualization, a row, or importing panels—each include brief explanations of what those steps will do, so you can begin building with confidence. 
+
+Also, a text Add dropdown with these options has replaced the previous icon at the top of the dashboard. This makes it clearer that this element allows you to not just add new panels, but to take all the actions associated with building a new dashboard.
+
+{{< figure src="/media/docs/grafana/screenshot-empty-dashboard-whats-new-9-5.png" max-width="750px" caption="Admin view of data source connection page on dashboard creation" >}}
