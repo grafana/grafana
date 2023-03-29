@@ -9,24 +9,36 @@ describe('correlations utils', () => {
     attachCorrelationsToDataFrames(testDataFrames, correlations, refIdMap);
 
     // Loki line (no links)
-    expect(testDataFrames[0].fields[0].config.links).toBeUndefined();
-    // Loki traceId (linked to Prometheus)
-    expect(testDataFrames[0].fields[1].config.links).toHaveLength(1);
-    expect(testDataFrames[0].fields[1].config.links![0]).toMatchObject({
-      title: 'logs to metrics',
-      internal: {
-        datasourceUid: prometheus.uid,
-        datasourceName: prometheus.name,
-        query: {
-          expr: 'target Prometheus query',
+    expect(testDataFrames[0].fields[0].config.links).toHaveLength(0);
+    // Loki traceId (linked to Prometheus and Elastic)
+    expect(testDataFrames[0].fields[1].config.links).toHaveLength(2);
+    expect(testDataFrames[0].fields[1].config.links).toMatchObject([
+      {
+        title: 'logs to metrics',
+        internal: {
+          datasourceUid: prometheus.uid,
+          datasourceName: prometheus.name,
+          query: {
+            expr: 'target Prometheus query',
+          },
         },
       },
-    });
+      {
+        title: 'logs to logs',
+        internal: {
+          datasourceUid: elastic.uid,
+          datasourceName: elastic.name,
+          query: {
+            expr: 'target Elastic query',
+          },
+        },
+      },
+    ]);
 
     // Elastic line (no links)
-    expect(testDataFrames[1].fields[0].config.links).toBeUndefined();
+    expect(testDataFrames[1].fields[0].config.links).toHaveLength(0);
     // Elastic traceId (no links)
-    expect(testDataFrames[1].fields[0].config.links).toBeUndefined();
+    expect(testDataFrames[1].fields[0].config.links).toHaveLength(0);
 
     // Prometheus value (linked to Elastic)
     expect(testDataFrames[2].fields[0].config.links).toHaveLength(1);
@@ -47,8 +59,11 @@ describe('correlations utils', () => {
     attachCorrelationsToDataFrames(testDataFrames, correlations, refIdMap);
     attachCorrelationsToDataFrames(testDataFrames, correlations, refIdMap);
 
-    attachCorrelationsToDataFrames(testDataFrames, correlations, refIdMap);
-    expect(testDataFrames[0].fields[1].config.links).toHaveLength(1);
+    // Loki traceId (linked to Prometheus and Elastic)
+    expect(testDataFrames[0].fields[1].config.links).toHaveLength(2);
+    // Elastic line (no links)
+    expect(testDataFrames[1].fields[0].config.links).toHaveLength(0);
+    // Prometheus value (linked to Elastic)
     expect(testDataFrames[2].fields[0].config.links).toHaveLength(1);
   });
 });
@@ -95,6 +110,14 @@ function setup() {
       source: loki,
       target: prometheus,
       config: { type: 'query', field: 'traceId', target: { expr: 'target Prometheus query' } },
+    },
+    // Test multiple correlations attached to the same field
+    {
+      uid: 'loki-to-elastic',
+      label: 'logs to logs',
+      source: loki,
+      target: elastic,
+      config: { type: 'query', field: 'traceId', target: { expr: 'target Elastic query' } },
     },
     {
       uid: 'prometheus-to-elastic',
