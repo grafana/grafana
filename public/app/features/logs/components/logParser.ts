@@ -1,12 +1,11 @@
 import memoizeOne from 'memoize-one';
 
 import { DataFrame, Field, FieldType, LinkModel, LogRowModel } from '@grafana/data';
-import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 
-export type FieldDef = {
-  keys: string[];
-  values: string[];
-  links?: Array<LinkModel<Field>> | ExploreFieldLinkModel[];
+type FieldDef = {
+  key: string;
+  value: string;
+  links?: Array<LinkModel<Field>>;
   fieldIndex: number;
 };
 
@@ -17,42 +16,13 @@ export type FieldDef = {
 export const getAllFields = memoizeOne(
   (
     row: LogRowModel,
-    getFieldLinks?: (
-      field: Field,
-      rowIndex: number,
-      dataFrame: DataFrame
-    ) => Array<LinkModel<Field>> | ExploreFieldLinkModel[]
+    getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>
   ) => {
     const dataframeFields = getDataframeFields(row, getFieldLinks);
 
     return Object.values(dataframeFields);
   }
 );
-
-/**
- * A log line may contain many links that would all need to go on their own logs detail row
- * This iterates through and creates a FieldDef (row) per link.
- */
-export const createLogLineLinks = memoizeOne((hiddenFieldsWithLinks: FieldDef[]): FieldDef[] => {
-  let fieldsWithLinksFromVariableMap: FieldDef[] = [];
-  hiddenFieldsWithLinks.forEach((linkField) => {
-    linkField.links?.forEach((link: ExploreFieldLinkModel) => {
-      if (link.variables) {
-        const variableKeys = Object.keys(link.variables);
-        const variableValues = Object.keys(link.variables).map((key) =>
-          link.variables && link.variables[key] != null ? link.variables[key]!.toString() : ''
-        );
-        fieldsWithLinksFromVariableMap.push({
-          keys: variableKeys,
-          values: variableValues,
-          links: [link],
-          fieldIndex: linkField.fieldIndex,
-        });
-      }
-    });
-  });
-  return fieldsWithLinksFromVariableMap;
-});
 
 /**
  * creates fields from the dataframe-fields, adding data-links, when field.config.links exists
@@ -68,8 +38,8 @@ export const getDataframeFields = memoizeOne(
       .map((field) => {
         const links = getFieldLinks ? getFieldLinks(field, row.rowIndex, row.dataFrame) : [];
         return {
-          keys: [field.name],
-          values: [field.values.get(row.rowIndex).toString()],
+          key: field.name,
+          value: field.values.get(row.rowIndex).toString(),
           links: links,
           fieldIndex: field.index,
         };
@@ -85,6 +55,10 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
   }
   // id and tsNs are arbitrary added fields in the backend and should be hidden in the UI
   if (field.name === 'id' || field.name === 'tsNs') {
+    return true;
+  }
+  // entry field which we are showing as the log message
+  if (row.entryFieldIndex === index) {
     return true;
   }
   const firstTimeField = row.dataFrame.fields.find((f) => f.type === FieldType.time);

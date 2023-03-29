@@ -22,16 +22,16 @@ class UnThemedLogRowMessageDisplayedFields extends PureComponent<Props> {
       : css`
           white-space: nowrap;
         `;
-    // only single key/value rows are filterable, so we only need the first field key for filtering
+
     const line = showDetectedFields
       .map((parsedKey) => {
         const field = fields.find((field) => {
-          const { keys } = field;
-          return keys[0] === parsedKey;
+          const { key } = field;
+          return key === parsedKey;
         });
 
         if (field !== undefined && field !== null) {
-          return `${parsedKey}=${field.values}`;
+          return `${parsedKey}=${field.value}`;
         }
 
         if (row.labels[parsedKey] !== undefined && row.labels[parsedKey] !== null) {

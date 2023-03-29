@@ -13,9 +13,8 @@ import { getLogRowStyles } from './getLogRowStyles';
 //Components
 
 export interface Props extends Themeable2 {
-  parsedValues: string[];
-  parsedKeys: string[];
-  disableActions: boolean;
+  parsedValue: string;
+  parsedKey: string;
   wrapLogMessage?: boolean;
   isLabel?: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -61,9 +60,6 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
         }
       }
     `,
-    adjoiningLinkButton: css`
-      margin-left: ${theme.spacing(1)};
-    `,
     wrapLine: css`
       label: wrapLine;
       white-space: pre-wrap;
@@ -72,8 +68,8 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
       padding: 0 ${theme.spacing(1)};
     `,
     logDetailsValue: css`
-      display: flex;
-      align-items: center;
+      display: table-cell;
+      vertical-align: middle;
       line-height: 22px;
 
       .show-on-hover {
@@ -109,9 +105,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 
   showField = () => {
-    const { onClickShowField: onClickShowDetectedField, parsedKeys, row } = this.props;
+    const { onClickShowField: onClickShowDetectedField, parsedKey, row } = this.props;
     if (onClickShowDetectedField) {
-      onClickShowDetectedField(parsedKeys[0]);
+      onClickShowDetectedField(parsedKey);
     }
 
     reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
@@ -122,9 +118,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   hideField = () => {
-    const { onClickHideField: onClickHideDetectedField, parsedKeys, row } = this.props;
+    const { onClickHideField: onClickHideDetectedField, parsedKey, row } = this.props;
     if (onClickHideDetectedField) {
-      onClickHideDetectedField(parsedKeys[0]);
+      onClickHideDetectedField(parsedKey);
     }
 
     reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
@@ -135,9 +131,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   filterLabel = () => {
-    const { onClickFilterLabel, parsedKeys, parsedValues, row } = this.props;
+    const { onClickFilterLabel, parsedKey, parsedValue, row } = this.props;
     if (onClickFilterLabel) {
-      onClickFilterLabel(parsedKeys[0], parsedValues[0]);
+      onClickFilterLabel(parsedKey, parsedValue);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
@@ -148,9 +144,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   filterOutLabel = () => {
-    const { onClickFilterOutLabel, parsedKeys, parsedValues, row } = this.props;
+    const { onClickFilterOutLabel, parsedKey, parsedValue, row } = this.props;
     if (onClickFilterOutLabel) {
-      onClickFilterOutLabel(parsedKeys[0], parsedValues[0]);
+      onClickFilterOutLabel(parsedKey, parsedValue);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
@@ -194,68 +190,25 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   }
 
-  generateClipboardButton(val: string) {
-    const { theme } = this.props;
-    const styles = getStyles(theme);
-
-    return (
-      <div className={cx('show-on-hover', styles.copyButton)}>
-        <ClipboardButton
-          getText={() => val}
-          title="Copy value to clipboard"
-          fill="text"
-          variant="secondary"
-          icon="copy"
-          size="md"
-        />
-      </div>
-    );
-  }
-
-  generateMultiVal(value: string[], showCopy?: boolean) {
-    return (
-      <table>
-        <tbody>
-          {value?.map((val, i) => {
-            return (
-              <tr key={`${val}-${i}`}>
-                <td>
-                  {val}
-                  {showCopy && val !== '' && this.generateClipboardButton(val)}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    );
-  }
-
   render() {
     const {
       theme,
-      parsedKeys,
-      parsedValues,
+      parsedKey,
+      parsedValue,
       isLabel,
       links,
       displayedFields,
       wrapLogMessage,
       onClickFilterLabel,
       onClickFilterOutLabel,
-      disableActions,
     } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
-    const singleKey = parsedKeys == null ? false : parsedKeys.length === 1;
-    const singleVal = parsedValues == null ? false : parsedValues.length === 1;
-    const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
-
-    const isMultiParsedValueWithNoContent =
-      !singleVal && parsedValues != null && !parsedValues.every((val) => val === '');
+    const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
 
     const toggleFieldButton =
-      displayedFields && parsedKeys != null && displayedFields.includes(parsedKeys[0]) ? (
+      displayedFields && displayedFields.includes(parsedKey) ? (
         <IconButton variant="primary" tooltip="Hide this field" name="eye" onClick={this.hideField} />
       ) : (
         <IconButton tooltip="Show this field instead of the message" name="eye" onClick={this.showField} />
@@ -272,37 +225,44 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               {hasFilteringFunctionality && (
                 <IconButton name="search-minus" tooltip="Filter out value" onClick={this.filterOutLabel} />
               )}
-              {!disableActions && displayedFields && toggleFieldButton}
-              {!disableActions && (
-                <IconButton
-                  variant={showFieldsStats ? 'primary' : 'secondary'}
-                  name="signal"
-                  tooltip="Ad-hoc statistics"
-                  className="stats-button"
-                  disabled={!singleKey}
-                  onClick={this.showStats}
-                />
-              )}
+              {displayedFields && toggleFieldButton}
+              <IconButton
+                variant={showFieldsStats ? 'primary' : 'secondary'}
+                name="signal"
+                tooltip="Ad-hoc statistics"
+                className="stats-button"
+                onClick={this.showStats}
+              />
             </div>
           </td>
 
           {/* Key - value columns */}
-          <td className={style.logDetailsLabel}>{singleKey ? parsedKeys[0] : this.generateMultiVal(parsedKeys)}</td>
+          <td className={style.logDetailsLabel}>{parsedKey}</td>
           <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
             <div className={styles.logDetailsValue}>
-              {singleVal ? parsedValues[0] : this.generateMultiVal(parsedValues, true)}
-              {singleVal && this.generateClipboardButton(parsedValues[0])}
-              <div className={cx((singleVal || isMultiParsedValueWithNoContent) && styles.adjoiningLinkButton)}>
-                {links?.map((link, i) => (
-                  <span key={`${link.title}-${i}`}>
-                    <DataLinkButton link={link} />
-                  </span>
-                ))}
+              {parsedValue}
+
+              <div className={cx('show-on-hover', styles.copyButton)}>
+                <ClipboardButton
+                  getText={() => parsedValue}
+                  title="Copy value to clipboard"
+                  fill="text"
+                  variant="secondary"
+                  icon="copy"
+                  size="md"
+                />
               </div>
+
+              {links?.map((link) => (
+                <span key={link.title}>
+                  &nbsp;
+                  <DataLinkButton link={link} />
+                </span>
+              ))}
             </div>
           </td>
         </tr>
-        {showFieldsStats && singleKey && singleVal && (
+        {showFieldsStats && (
           <tr>
             <td>
               <IconButton
@@ -316,8 +276,8 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               <div className={styles.logDetailsStats}>
                 <LogLabelStats
                   stats={fieldStats!}
-                  label={parsedKeys[0]}
-                  value={parsedValues[0]}
+                  label={parsedKey}
+                  value={parsedValue}
                   rowCount={fieldCount}
                   isLabel={isLabel}
                 />

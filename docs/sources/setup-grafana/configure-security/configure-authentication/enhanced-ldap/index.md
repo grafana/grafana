@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../enterprise/enhanced_ldap/
-  - enhanced_ldap/
+  - ../../../auth/enhanced_ldap/
 description: Grafana Enhanced LDAP Integration Guide
 keywords:
   - grafana
