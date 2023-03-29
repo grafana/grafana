@@ -15,7 +15,7 @@ Getting started with Grafana involves three steps:
 
 ## Step 1. Setup Grafana
 
-You have two ways to setup Grafana:
+You have two ways to set up Grafana:
 
 * [Setup Grafana on Grafana Cloud]("https://grafana.com/docs/grafana-cloud/quickstart/") without having to install it or run it yourself. This is the fastest way to get started and the easiest way to use Grafana.
 * [Setup Grafana on your own infrastructure]({{< relref "../setup-grafana/installation/" >}}) such as an operating system, Kubernetes cluster, or Docker container.
