@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
@@ -31,6 +32,19 @@ const FormatAsField = ({
     },
     [onQueryChange, query]
   );
+
+  useEffectOnce(() => {
+    if (!query.azureLogAnalytics?.resultFormat) {
+      handleChange({ value: defaultValue });
+    } else {
+      if (
+        !formatOptions.find((item) => item.value === query.azureLogAnalytics?.resultFormat) &&
+        !query.azureLogAnalytics?.resultFormat.includes('$')
+      ) {
+        handleChange({ value: defaultValue });
+      }
+    }
+  });
 
   return (
     <Field label="Format as" data-testid={selectors.components.queryEditor.logsQueryEditor.formatSelection.input}>
