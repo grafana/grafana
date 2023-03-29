@@ -23,7 +23,7 @@ For our plugins that do not return time series, it might be useful to plot histo
 
 > **Note:** An administrator must configure a Prometheus data source and associate it with a [Remote write target](#remote-write-target) before recorded queries can be used.
 
-Recorded queries only work with backend data source plugins. Refer to [Backend data source plugin](/tutorials/build-a-data-source-backend-plugin/) for more information about backend data source plugins. You can recorded three types of queries:
+Recorded queries only work with backend data source plugins. Refer to [Backend data source plugin](/tutorials/build-a-data-source-backend-plugin/) for more information about backend data source plugins. You can record three types of queries:
 
 - single row and column - A query that returns a single row and column.
 - row count - A query that returns meaningful rows to be counted.
