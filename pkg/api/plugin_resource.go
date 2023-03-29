@@ -143,17 +143,16 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 func (hs *HTTPServer) flushStream(ctx context.Context, req *backend.CallResourceRequest, stream callResourceClientResponseStream, w http.ResponseWriter) error {
 	processedStreams := 0
 	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	for {
 		resp, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
-			cancel()
 			if processedStreams == 0 {
 				return errors.New("received empty resource response")
 			}
 			return nil
 		}
 		if err != nil {
-			cancel()
 			if processedStreams == 0 {
 				return fmt.Errorf("%v: %w", "failed to receive response from resource call", err)
 			}

@@ -39,18 +39,22 @@ type CachingMiddleware struct {
 
 // QueryData receives a data request and attempts to access results already stored in the cache for that request.
 // If data is found, it will return it immediately. Otherwise, it will perform the queries as usual, then write the response to the cache.
-// If the cache service is implemented, we write any provided headers to the response and capture the request duration as a metric.
+// If the cache service is implemented, we capture the request duration as a metric. The service is expected to write any response headers.
 func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if req == nil {
 		return m.next.QueryData(ctx, req)
 	}
 
-	start := time.Now() // time how long this request takes
 	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx == nil {
+		return m.next.QueryData(ctx, req)
+	}
+
+	// time how long this request takes
+	start := time.Now()
 
 	// First look in the query cache if enabled
 	cr := m.caching.HandleQueryRequest(ctx, req)
-
 	ch := reqCtx.Resp.Header().Get(caching.XCacheHeader)
 
 	defer func() {
@@ -64,11 +68,12 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 		}
 	}()
 
+	// Cache hit; return the response
 	if ch == caching.StatusHit {
 		return cr.Response, nil
 	}
 
-	// do the actual queries
+	// Cache miss; do the actual queries
 	resp, err := m.next.QueryData(ctx, req)
 
 	// Update the query cache with the result for this metrics request
@@ -79,19 +84,29 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	return resp, err
 }
 
+// CallResource receives a resource request and attempts to access results already stored in the cache for that request.
+// If data is found, it will return it immediately. Otherwise, it will perform the request as usual. The caller of CallResource is expected to explicitly update the cache with any responses.
+// If the cache service is implemented, we capture the request duration as a metric. The service is expected to write any response headers.
 func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
 		return m.next.CallResource(ctx, req, sender)
 	}
 
-	start := time.Now() // time how long this request takes
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx == nil {
+		return m.next.CallResource(ctx, req, sender)
+	}
+
+	// time how long this request takes
+	start := time.Now()
 
 	// First look in the resource cache if enabled
 	resp := m.caching.HandleResourceRequest(ctx, req)
+	ch := reqCtx.Resp.Header().Get(caching.XCacheHeader)
 
 	defer func() {
 		// record request duration if caching was used
-		if h, ok := resp.Headers[caching.XCacheHeader]; ok && len(h) > 0 {
+		if ch != "" {
 			ResourceRequestHistogram.With(prometheus.Labels{
 				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
 				"cache":           resp.Headers[caching.XCacheHeader][0],
@@ -99,23 +114,13 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 		}
 	}()
 
-	if isCacheHit(resp.Headers) {
+	// Cache hit; send the response and return
+	if ch == caching.StatusHit {
 		return sender.Send(resp)
 	}
 
-	// do the actual request
+	// Cache miss; do the actual request
 	return m.next.CallResource(ctx, req, sender)
-}
-
-func isCacheHit(headers map[string][]string) bool {
-	if headers == nil {
-		return false
-	}
-
-	if v, ok := headers[caching.XCacheHeader]; ok {
-		return len(v) > 0 && v[0] == caching.StatusHit
-	}
-	return false
 }
 
 func (m *CachingMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
