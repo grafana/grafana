@@ -24,6 +24,9 @@ type TargetSig = string;
 
 type TimestampMs = number;
 
+// Look like Q001, Q002, etc
+type RequestID = string;
+
 type StringInterpolator = (expr: string) => string;
 
 // string matching requirements defined in durationutil.ts
@@ -67,7 +70,14 @@ export function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery
 export class QueryCache {
   private overlapWindowMs;
   private perfObeserver?: PerformanceObserver;
-  private pendingRequestIdsToTargSig: Record<string, Record<string, number | null>> = {};
+
+  pendingRequestIdsToTargSigs = new Map<
+    RequestID,
+    {
+      identity: string;
+      bytes: number | null;
+    }
+  >();
 
   cache = new Map<TargetIdent, TargetCache>();
 
@@ -106,39 +116,35 @@ export class QueryCache {
               if (match) {
                 let requestId = match[1];
 
-                // TODO: store full initial request size by targSig so we can diff follow-up partial requests
-                // TODO: log savings between full initial request and incremental request to Faro
                 const requestTransferSize = Math.round(entryTypeCast.transferSize);
-                const idToBytes = this.pendingRequestIdsToTargSig[requestId];
+                const currentRequest = this.pendingRequestIdsToTargSigs.get(requestId);
 
-                if (idToBytes) {
-                  // Set the transfer size for this current request
-                  Object.keys(idToBytes).forEach((key) => {
-                    for (let otherRequestIds in this.pendingRequestIdsToTargSig) {
-                      const firstKey = Object.keys(this.pendingRequestIdsToTargSig[otherRequestIds])[0];
-                      const firstValue = Object.values(this.pendingRequestIdsToTargSig[otherRequestIds])[0];
-                      if (firstKey === key && firstValue !== null) {
-                        faro.api.pushEvent(
-                          'prometheus incremental query response size',
-                          {
-                            id: firstKey,
-                            initialRequestBytes: firstValue.toString(),
-                            subsequentRequestBytes: requestTransferSize.toString(10),
-                          },
-                          'no-interaction',
-                          {
-                            skipDedupe: true,
-                          }
-                        );
+                if (currentRequest) {
+                  const entries = this.pendingRequestIdsToTargSigs.entries();
 
-                        delete this.pendingRequestIdsToTargSig[requestId];
-                        break;
-                      }
+                  for (let [, value] of entries) {
+                    if (value.identity === currentRequest.identity && value.bytes !== null) {
+                      faro.api.pushEvent(
+                        'prometheus incremental query response size',
+                        {
+                          id: currentRequest.identity,
+                          initialRequestBytes: value.bytes.toString(10),
+                          subsequentRequestBytes: requestTransferSize.toString(10),
+                        },
+                        'no-interaction',
+                        {
+                          skipDedupe: true,
+                        }
+                      );
+                      // We don't need to save each subsequent request, only the first one
+                      this.pendingRequestIdsToTargSigs.delete(requestId);
+
+                      return;
                     }
+                  }
 
-                    // Set the transfer size
-                    idToBytes[key] = requestTransferSize;
-                  });
+                  // If we didn't return above, this should be the first request, let's save the observed size
+                  this.pendingRequestIdsToTargSigs.set(requestId, { ...currentRequest, bytes: requestTransferSize });
                 }
               }
             }
@@ -170,11 +176,10 @@ export class QueryCache {
       let targExpr = interpolateString(targ.expr);
       let targSig = getTargSig(targExpr, request, targ); // ${request.maxDataPoints} ?
 
-      if (!this.pendingRequestIdsToTargSig[request.requestId]) {
-        this.pendingRequestIdsToTargSig[request.requestId] = {};
-      }
-      this.pendingRequestIdsToTargSig[request.requestId][targIdent + '|' + targSig] = null;
-
+      this.pendingRequestIdsToTargSigs.set(request.requestId, {
+        identity: targIdent + '|' + targSig,
+        bytes: null,
+      });
       reqTargSigs.set(targIdent, targSig);
     });
 
