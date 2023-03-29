@@ -122,7 +122,8 @@ export const getFieldLinksForExplore = (options: {
           linkModel.title = getTitleFromHref(linkModel.href);
         }
 
-        // take over the onClick to report the click, then either call the original onClick or navigate to the URL
+        // Take over the onClick to report the click, then either call the original onClick or navigate to the URL
+        // Note: it is likely that an external link that opens in the same tab will not be reported, as the browser redirect might cancel reporting the interaction
         const origOnClick = linkModel.onClick;
 
         linkModel.onClick = (...args) => {
