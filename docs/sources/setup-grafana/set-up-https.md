@@ -99,7 +99,6 @@ This section shows you how to use `openssl` tooling to generate all necessary fi
 
    {{< figure src="/media/docs/grafana/https-config/screenshot-insecure-https.png" max-width="750px" caption="Insecure HTTPS connection" >}}
 
-
 ### Obtain a signed certificate from LetsEncrypt
 
 [LetsEncrypt](https://letsencrypt.org/) is a nonprofit certificate authority that provides certificates without any charge. For signed certificates, there are multiple companies and certificate authorities (CAs) available. The principles for generating the certificates might vary slightly in accordance with the provider but will generally remain the same. 
@@ -119,7 +118,7 @@ The examples in this section use LetsEncrypt because it is free.
    sudo snap install core; sudo snap refresh core
    ```
 
-1. Run the following commands:
+1. Run the following commands to install:
 
    ```bash
    sudo apt-get remove certbot
@@ -129,7 +128,7 @@ The examples in this section use LetsEncrypt because it is free.
 
    These commands:
    - Uninstall `certbot` from your system if it has been installed using a package manager
-   - Install `certbot` using `snapd`   
+   - Install `certbot` using `snapd`
 
 #### Generate certificates using `certbot`
 
@@ -199,7 +198,7 @@ Grafana usually runs under the `grafana` Linux group, and you must ensure that t
 
 To adjust permissions, perform the following steps:
 
-1. Run the following commands to [assign permissions to ??]:
+1. Run the following commands to set the appropriate permissions and groups for the files:
 
    ```bash
    $ sudo chgrp -R grafana /etc/letsencrypt/*
