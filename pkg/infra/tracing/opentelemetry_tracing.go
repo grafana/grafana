@@ -329,3 +329,7 @@ func (s OpentelemetrySpan) AddEvents(keys []string, values []EventValue) {
 		}
 	}
 }
+
+func (s OpentelemetrySpan) contextWithSpan(ctx context.Context) context.Context {
+	return trace.ContextWithSpan(ctx, s.span)
+}
