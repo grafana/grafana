@@ -45,7 +45,7 @@ export const LoginLayout = ({ children, branding }: React.PropsWithChildren<Logi
         </div>
         <div className={loginStyles.loginOuterBox}>{children}</div>
       </div>
-      {branding?.hideFooter ? <></> : <Footer customLinks={branding?.footerLinks} />}
+      {branding?.hideFooter ? <></> : <Footer />}
     </Branding.LoginBackground>
   );
 };

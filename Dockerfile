@@ -87,7 +87,8 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
     GF_PATHS_HOME="/usr/share/grafana" \
     GF_PATHS_LOGS="/var/log/grafana" \
     GF_PATHS_PLUGINS="/var/lib/grafana/plugins" \
-    GF_PATHS_PROVISIONING="/etc/grafana/provisioning"
+    GF_PATHS_PROVISIONING="/etc/grafana/provisioning" \
+    GF_INSTALL_PLUGINS="volkovlabs-echarts-panel"
 
 WORKDIR $GF_PATHS_HOME
 
