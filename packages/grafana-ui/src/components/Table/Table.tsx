@@ -92,7 +92,7 @@ export const Table = memo((props: Props) => {
     if (!data.fields.length) {
       return [];
     }
-    // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
+    // As we only use this to fake the length of our data set for react-table we need to make sure we always return an array
     // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
     // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
     return Array(data.length).fill(0);
