@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
@@ -94,7 +95,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	t.Run("Should be able to get dashboard by title and folderID", func(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
-			Title:    util.Pointer("test dash 23"),
+			Title:    pointer.String("test dash 23"),
 			FolderID: &savedFolder.ID,
 			OrgID:    1,
 		}
@@ -112,7 +113,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	t.Run("Should not be able to get dashboard by title alone", func(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
-			Title: util.Pointer("test dash 23"),
+			Title: pointer.String("test dash 23"),
 			OrgID: 1,
 		}
 
@@ -123,8 +124,8 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	t.Run("Folder=0 should not be able to get a dashboard in a folder", func(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
-			Title:    util.Pointer("test dash 23"),
-			FolderID: util.Pointer(int64(0)),
+			Title:    pointer.String("test dash 23"),
+			FolderID: pointer.Int64(0),
 			OrgID:    1,
 		}
 

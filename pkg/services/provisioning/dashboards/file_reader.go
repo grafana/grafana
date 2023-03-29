@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/xorcare/pointer"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -300,7 +302,7 @@ func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, serv
 
 	cmd := &dashboards.GetDashboardQuery{
 		Title:    &folderName,
-		FolderID: util.Pointer(int64(0)),
+		FolderID: pointer.Int64(0),
 		OrgID:    cfg.OrgID,
 	}
 	result, err := fr.dashboardStore.GetDashboard(ctx, cmd)
