@@ -70,12 +70,17 @@ export function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery
 export class QueryCache {
   private overlapWindowMs;
   private perfObeserver?: PerformanceObserver;
+  private shouldProfile: boolean;
 
   pendingRequestIdsToTargSigs = new Map<
     RequestID,
     {
       identity: string;
       bytes: number | null;
+      dashboardUID?: string;
+      interval?: string;
+      panelId?: number;
+      expr?: string;
     }
   >();
 
@@ -94,6 +99,9 @@ export class QueryCache {
 
     if (config.grafanaJavascriptAgent.enabled) {
       this.profile();
+      this.shouldProfile = true;
+    } else {
+      this.shouldProfile = false;
     }
   }
 
@@ -130,9 +138,12 @@ export class QueryCache {
                       faro.api.pushEvent(
                         'prometheus incremental query response size',
                         {
-                          id: currentRequest.identity,
                           initialRequestBytes: value.bytes.toString(10),
                           subsequentRequestBytes: requestTransferSize.toString(10),
+                          panelId: currentRequest.panelId?.toString(10) ?? '',
+                          dashId: currentRequest.dashboardUID ?? '',
+                          expr: currentRequest.expr ?? '',
+                          interval: currentRequest.interval ?? '',
                         },
                         'no-interaction',
                         {
@@ -179,10 +190,17 @@ export class QueryCache {
       let targExpr = interpolateString(targ.expr);
       let targSig = getTargSig(targExpr, request, targ); // ${request.maxDataPoints} ?
 
-      this.pendingRequestIdsToTargSigs.set(request.requestId, {
-        identity: targIdent + '|' + targSig,
-        bytes: null,
-      });
+      if (this.shouldProfile) {
+        this.pendingRequestIdsToTargSigs.set(request.requestId, {
+          identity: targIdent + '|' + targSig,
+          dashboardUID: request.dashboardUID ?? '',
+          interval: targ.interval ?? request.interval,
+          panelId: request.panelId,
+          expr: targExpr,
+          bytes: null,
+        });
+      }
+
       reqTargSigs.set(targIdent, targSig);
     });
 
