@@ -60,6 +60,69 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         }
       : {};
 
+    // guard against invalid log scale limits <= 0, or snap to log boundaries
+    if (distr === ScaleDistribution.Log) {
+      let logBase = this.props.log!;
+      let logFn = logBase === 2 ? Math.log2 : Math.log10;
+
+      if (hardMin != null) {
+        if (hardMin <= 0) {
+          hardMin = null;
+        } else {
+          hardMin = logBase ** Math.floor(logFn(hardMin));
+        }
+      }
+
+      if (hardMax != null) {
+        if (hardMax <= 0) {
+          hardMax = null;
+        } else {
+          hardMax = logBase ** Math.ceil(logFn(hardMax));
+        }
+      }
+
+      if (softMin != null) {
+        if (softMin <= 0) {
+          softMin = null;
+        } else {
+          softMin = logBase ** Math.floor(logFn(softMin));
+        }
+      }
+
+      if (softMax != null) {
+        if (softMax <= 0) {
+          softMax = null;
+        } else {
+          softMax = logBase ** Math.ceil(logFn(softMax));
+        }
+      }
+    }
+    /*
+    // snap to symlog boundaries
+    else if (distr === ScaleDistribution.Symlog) {
+      let logBase = this.props.log!;
+      let logFn = logBase === 2 ? Math.log2 : Math.log10;
+
+      let sign = Math.sign(hardMin);
+
+      if (hardMin != null) {
+        hardMin = logBase ** Math.floor(logFn(hardMin));
+      }
+
+      if (hardMax != null) {
+        hardMax = logBase ** Math.ceil(logFn(hardMax));
+      }
+
+      if (softMin != null) {
+        softMin = logBase ** Math.floor(logFn(softMin));
+      }
+
+      if (softMax != null) {
+        softMax = logBase ** Math.ceil(logFn(softMax));
+      }
+    }
+    */
+
     // uPlot's default ranging config for both min & max is {pad: 0.1, hard: null, soft: 0, mode: 3}
     let softMinMode: Range.SoftMode = softMin == null ? 3 : 1;
     let softMaxMode: Range.SoftMode = softMax == null ? 3 : 1;
@@ -154,7 +217,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         }
       }
 
-      if (scale.distr === 1) {
+      if (scale.distr === 1 || scale.distr === 4) {
         // if all we got were hard limits, treat them as static min/max
         if (hardMinOnly) {
           minMax[0] = hardMin!;

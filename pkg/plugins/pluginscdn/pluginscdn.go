@@ -2,16 +2,17 @@ package pluginscdn
 
 import (
 	"errors"
-	"fmt"
-	"net/url"
-	"path"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins/config"
 )
 
 const (
-	// systemJSCDNKeyword is the path prefix used by system.js to identify the plugins CDN.
-	systemJSCDNKeyword = "plugin-cdn"
+	// cdnAssetPathTemplate is the relative path template used to locate plugin CDN assets
+	cdnAssetPathTemplate = "{id}/{version}/public/plugins/{id}/{assetPath}"
+
+	// systemJSCDNURLTemplate is a special path template used by system.js to identify plugin CDN assets
+	systemJSCDNURLTemplate = "plugin-cdn/" + cdnAssetPathTemplate
 )
 
 var ErrPluginNotCDN = errors.New("plugin is not a cdn plugin")
@@ -30,7 +31,7 @@ func ProvideService(cfg *config.Cfg) *Service {
 // and invalid base url.
 func (s *Service) NewCDNURLConstructor(pluginID, pluginVersion string) URLConstructor {
 	return URLConstructor{
-		cdnURLTemplate: s.cfg.PluginsCDNURLTemplate,
+		cdnURLTemplate: strings.TrimRight(s.cfg.PluginsCDNURLTemplate, "/") + "/" + cdnAssetPathTemplate,
 		pluginID:       pluginID,
 		pluginVersion:  pluginVersion,
 	}
@@ -47,27 +48,28 @@ func (s *Service) PluginSupported(pluginID string) bool {
 }
 
 // BaseURL returns the absolute base URL of the plugins CDN.
+// This is the "fixed" part of the URL (protocol + host + root url).
 // If the plugins CDN is disabled, it returns an empty string.
 func (s *Service) BaseURL() (string, error) {
 	if !s.IsEnabled() {
 		return "", nil
 	}
-	u, err := url.Parse(s.cfg.PluginsCDNURLTemplate)
-	if err != nil {
-		return "", fmt.Errorf("url parse: %w", err)
-	}
-	return u.Scheme + "://" + u.Host, nil
+	return s.cfg.PluginsCDNURLTemplate, nil
 }
 
 // SystemJSAssetPath returns a system-js path for the specified asset on the plugins CDN.
-// It replaces the base path of the CDN with systemJSCDNKeyword.
+// The returned path will follow the template specified in systemJSCDNURLTemplate.
 // If assetPath is an empty string, the base path for the plugin is returned.
 func (s *Service) SystemJSAssetPath(pluginID, pluginVersion, assetPath string) (string, error) {
-	u, err := s.NewCDNURLConstructor(pluginID, pluginVersion).Path(assetPath)
+	u, err := URLConstructor{
+		cdnURLTemplate: systemJSCDNURLTemplate,
+		pluginID:       pluginID,
+		pluginVersion:  pluginVersion,
+	}.Path(assetPath)
 	if err != nil {
 		return "", err
 	}
-	return path.Join(systemJSCDNKeyword, u.Path), nil
+	return u.String(), nil
 }
 
 // AssetURL returns the URL of a CDN asset for a CDN plugin. If the specified plugin is not a CDN plugin,

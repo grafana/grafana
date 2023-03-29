@@ -99,6 +99,10 @@ func (s *Service) handleDownload(ctx *contextmodel.ReqContext) response.Response
 
 	ctx.Resp.Header().Set("Content-Type", "application/tar+gzip")
 	ctx.Resp.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.tar.gz", uid))
+	if len(s.encryptionPublicKeys) > 0 {
+		ctx.Resp.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.tar.gz.age", uid))
+	}
+
 	return response.CreateNormalResponse(ctx.Resp.Header(), bundle.TarBytes, http.StatusOK)
 }
 
@@ -113,9 +117,9 @@ func (s *Service) handleRemove(ctx *contextmodel.ReqContext) response.Response {
 }
 
 func (s *Service) handleGetCollectors(ctx *contextmodel.ReqContext) response.Response {
-	collectors := make([]supportbundles.Collector, 0, len(s.collectors))
+	collectors := make([]supportbundles.Collector, 0, len(s.bundleRegistry.Collectors()))
 
-	for _, c := range s.collectors {
+	for _, c := range s.bundleRegistry.Collectors() {
 		collectors = append(collectors, c)
 	}
 

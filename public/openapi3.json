@@ -4976,6 +4976,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "is_paused": {
+            "type": "boolean"
+          },
           "namespace_id": {
             "format": "int64",
             "type": "integer"
@@ -6930,6 +6933,9 @@
               "Error"
             ],
             "type": "string"
+          },
+          "is_paused": {
+            "type": "boolean"
           },
           "no_data_state": {
             "enum": [

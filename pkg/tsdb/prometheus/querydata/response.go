@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/converter"
 )
 
-func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) (backend.DataResponse, error) {
+func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) backend.DataResponse {
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.log.FromContext(ctx).Error("Failed to close response body", "err", err)
@@ -30,6 +30,12 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		VectorWideSeries: s.enableWideSeries,
 	})
 
+	// Add frame to attach metadata
+	if len(r.Frames) == 0 && !q.ExemplarQuery {
+		r.Frames = append(r.Frames, data.NewFrame(""))
+	}
+
+	// The ExecutedQueryString can be viewed in QueryInspector in UI
 	for _, frame := range r.Frames {
 		if s.enableWideSeries {
 			addMetadataToWideFrame(q, frame)
@@ -38,12 +44,11 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		}
 	}
 
-	if r.Error != nil {
-		return r, r.Error
+	if r.Error == nil {
+		r = s.processExemplars(q, r)
 	}
 
-	r = s.processExemplars(q, r)
-	return r, nil
+	return r
 }
 
 func (s *QueryData) processExemplars(q *models.Query, dr backend.DataResponse) backend.DataResponse {
@@ -73,14 +78,15 @@ func (s *QueryData) processExemplars(q *models.Query, dr backend.DataResponse) b
 
 		seriesLabels := getSeriesLabels(frame)
 		labelTracker.Add(seriesLabels)
+		labelTracker.AddFields(frame.Fields[2:])
 		for rowIdx := 0; rowIdx < frame.Fields[0].Len(); rowIdx++ {
-			row := frame.RowCopy(rowIdx)
-			labels := getLabels(frame, row)
-			labelTracker.Add(labels)
+			ts := frame.CopyAt(0, rowIdx).(time.Time)
+			val := frame.CopyAt(1, rowIdx).(float64)
 			ex := models.Exemplar{
-				Labels:       labels,
-				Value:        row[1].(float64),
-				Timestamp:    row[0].(time.Time),
+				RowIdx:       rowIdx,
+				Fields:       frame.Fields[2:],
+				Value:        val,
+				Timestamp:    ts,
 				SeriesLabels: seriesLabels,
 			}
 			sampler.Add(ex)
@@ -194,12 +200,4 @@ func isExemplarFrame(frame *data.Frame) bool {
 func getSeriesLabels(frame *data.Frame) data.Labels {
 	// series labels are stored on the value field (index 1)
 	return frame.Fields[1].Labels.Copy()
-}
-
-func getLabels(frame *data.Frame, row []interface{}) map[string]string {
-	labels := make(map[string]string)
-	for i := 2; i < len(row); i++ {
-		labels[frame.Fields[i].Name] = row[i].(string)
-	}
-	return labels
 }

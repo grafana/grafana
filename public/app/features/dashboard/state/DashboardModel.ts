@@ -16,7 +16,7 @@ import {
   TimeZone,
   UrlQueryValue,
 } from '@grafana/data';
-import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { RefreshEvent, TimeRangeUpdatedEvent, config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
@@ -41,7 +41,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
-import { GridPos, PanelModel } from './PanelModel';
+import { GridPos, PanelModel, autoMigrateAngular } from './PanelModel';
 import { TimeModel } from './TimeModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
@@ -90,7 +90,7 @@ export class DashboardModel implements TimeModel {
   snapshot: any;
   schemaVersion: number;
   version: number;
-  revision: number;
+  revision?: number; // Only used for dashboards managed by plugins
   links: DashboardLink[];
   gnetId: any;
   panels: PanelModel[];
@@ -108,6 +108,7 @@ export class DashboardModel implements TimeModel {
   // repeat process cycles
   declare meta: DashboardMeta;
   events: EventBusExtended;
+  private getVariablesFromState: GetVariables;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
@@ -126,12 +127,23 @@ export class DashboardModel implements TimeModel {
     lastRefresh: true,
   };
 
-  constructor(data: Dashboard, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
+  constructor(
+    data: Dashboard,
+    meta?: DashboardMeta,
+    options?: {
+      // By default this uses variables from redux state
+      getVariablesFromState?: GetVariables;
+
+      // Force the loader to migrate panels
+      autoMigrateOldPanels?: boolean;
+    }
+  ) {
+    this.getVariablesFromState = options?.getVariablesFromState ?? getVariablesByKey;
     this.events = new EventBusSrv();
     this.id = data.id || null;
     // UID is not there for newly created dashboards
     this.uid = data.uid || null;
-    this.revision = data.revision || 1;
+    this.revision = data.revision ?? undefined;
     this.title = data.title ?? 'No Title';
     this.description = data.description;
     this.tags = data.tags ?? [];
@@ -161,6 +173,17 @@ export class DashboardModel implements TimeModel {
 
     this.initMeta(meta);
     this.updateSchema(data);
+
+    // Auto-migrate old angular panels
+    if (options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels) {
+      this.panels.forEach((p) => {
+        const newType = autoMigrateAngular[p.type];
+        if (!p.autoMigrateFrom && newType) {
+          p.autoMigrateFrom = p.type;
+          p.type = newType;
+        }
+      });
+    }
 
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
@@ -1045,14 +1068,8 @@ export class DashboardModel implements TimeModel {
 
     const navbarHeight = 55;
     const margin = 20;
-    const submenuHeight = 50;
 
     let visibleHeight = viewHeight - navbarHeight - margin;
-
-    // Remove submenu height if visible
-    if (this.meta.submenuEnabled && !kioskMode) {
-      visibleHeight -= submenuHeight;
-    }
 
     // add back navbar height
     if (kioskMode && kioskMode !== KioskMode.TV) {

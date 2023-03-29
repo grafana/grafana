@@ -9,8 +9,10 @@ import { PanelChrome, PanelChromeProps } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
+import { HorizontalGroup } from '../Layout/Layout';
 import { Menu } from '../Menu/Menu';
+
+import mdx from './PanelChrome.mdx';
 
 const meta: ComponentMeta<typeof PanelChrome> = {
   title: 'Visualizations/PanelChrome',
@@ -20,7 +22,9 @@ const meta: ComponentMeta<typeof PanelChrome> = {
     controls: {
       exclude: ['children'],
     },
-    docs: {},
+    docs: {
+      page: mdx,
+    },
   },
 };
 
@@ -91,8 +95,8 @@ export const Examples = () => {
 
   return (
     <DashboardStoryCanvas>
-      <HorizontalGroup spacing="md" align="flex-start">
-        <VerticalGroup spacing="md">
+      <div>
+        <HorizontalGroup spacing="md" align="flex-start" wrap>
           {renderPanel('Has statusMessage', {
             title: 'Default title',
             statusMessage: 'Error text',
@@ -116,8 +120,7 @@ export const Examples = () => {
             title: 'Default title',
             loadingState: LoadingState.Loading,
           })}
-        </VerticalGroup>
-        <VerticalGroup spacing="md">
+
           {renderPanel('Default panel: no non-required props')}
           {renderPanel('No padding', {
             padding: 'none',
@@ -131,8 +134,7 @@ export const Examples = () => {
           {renderPanel('No title, loading loadingState', {
             loadingState: LoadingState.Loading,
           })}
-        </VerticalGroup>
-        <VerticalGroup spacing="md">
+
           {renderPanel('Error status, menu', {
             title: 'Default title',
             menu,
@@ -155,16 +157,11 @@ export const Examples = () => {
             menu,
             loadingState: LoadingState.Streaming,
           })}
-
           {renderPanel('loadingState is Loading, menu', {
             title: 'Default title',
             menu,
             loadingState: LoadingState.Loading,
           })}
-        </VerticalGroup>
-      </HorizontalGroup>
-      <HorizontalGroup spacing="md" align="flex-start">
-        <VerticalGroup spacing="md">
           {renderPanel('Deprecated error indicator', {
             title: 'Default title',
             leftItems: [
@@ -186,8 +183,6 @@ export const Examples = () => {
               />,
             ],
           })}
-        </VerticalGroup>
-        <VerticalGroup spacing="md">
           {renderPanel('Deprecated error indicator, menu', {
             title: 'Default title',
             menu,
@@ -199,8 +194,14 @@ export const Examples = () => {
               />,
             ],
           })}
-        </VerticalGroup>
-      </HorizontalGroup>
+          {renderPanel('Display mode = transparent', {
+            title: 'Default title',
+            displayMode: 'transparent',
+            menu,
+            leftItems: [],
+          })}
+        </HorizontalGroup>
+      </div>
     </DashboardStoryCanvas>
   );
 };

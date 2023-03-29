@@ -1,11 +1,23 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
+import DropZone, { FileRejection, DropEvent, ErrorCode } from 'react-dropzone';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
+import {
+  NavModel,
+  NavModelItem,
+  TimeRange,
+  PageLayoutType,
+  locationUtil,
+  dataFrameToJSON,
+  DataFrameJSON,
+  GrafanaTheme2,
+  getValueFormat,
+  formattedValueToString,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
-import { Themeable2, withTheme2 } from '@grafana/ui';
+import { Icon, Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
@@ -14,8 +26,10 @@ import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state';
+import * as DFImport from 'app/features/dataframe-import';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
@@ -34,6 +48,7 @@ import { liveTimer } from '../dashgrid/liveTimer';
 import { getTimeSrv } from '../services/TimeSrv';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
+import { calculateNewPanelGridPos } from '../utils/panel';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -97,6 +112,60 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
+
+  onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
+    const grafanaDS = {
+      type: 'grafana',
+      uid: 'grafana',
+    };
+    DFImport.filesToDataframes(acceptedFiles).subscribe((next) => {
+      const snapshot: DataFrameJSON[] = [];
+      next.dataFrames.forEach((df) => {
+        const dataframeJson = dataFrameToJSON(df);
+        snapshot.push(dataframeJson);
+      });
+      this.props.dashboard?.addPanel({
+        type: 'table',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        title: next.file.name,
+        datasource: grafanaDS,
+        targets: [
+          {
+            queryType: GrafanaQueryType.Snapshot,
+            snapshot,
+            file: { name: next.file.name, size: next.file.size },
+            datasource: grafanaDS,
+          },
+        ],
+      });
+    });
+
+    fileRejections.forEach((fileRejection) => {
+      const errors = fileRejection.errors.map((error) => {
+        switch (error.code) {
+          case ErrorCode.FileTooLarge:
+            const formattedSize = getValueFormat('decbytes')(DFImport.maxFileSize);
+            return `File size must be less than ${formattedValueToString(formattedSize)}.`;
+          case ErrorCode.FileInvalidType:
+            return `File type must be one of the following types ${DFImport.formatFileTypes(DFImport.acceptedFiles)}.`;
+          default:
+            return error.message;
+        }
+      });
+      this.props.notifyApp(
+        createErrorNotification(
+          `Failed to load ${fileRejection.file.name}`,
+          undefined,
+          undefined,
+          <ul>
+            {errors.map((err) => {
+              return <li key={err}>{err}</li>;
+            })}
+          </ul>
+        )
+      );
+    });
+  };
 
   getCleanState(): State {
     return {
@@ -293,17 +362,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       return;
     }
 
-    // Move all panels down by the height of the "add panel" widget.
-    // This is to work around an issue with react-grid-layout that can mess up the layout
-    // in certain configurations. (See https://github.com/react-grid-layout/react-grid-layout/issues/1787)
-    const addPanelWidgetHeight = 8;
-    for (const panel of dashboard.panelIterator()) {
-      panel.gridPos.y += addPanelWidgetHeight;
-    }
-
     dashboard.addPanel({
       type: 'add-panel',
-      gridPos: { x: 0, y: 0, w: 12, h: addPanelWidgetHeight },
+      gridPos: calculateNewPanelGridPos(dashboard),
       title: 'Panel Title',
     });
 
@@ -378,21 +439,47 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           scrollTop={updateScrollTop}
         >
           <DashboardPrompt dashboard={dashboard} />
-
           {initError && <DashboardFailed />}
           {showSubMenu && (
             <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
               <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
             </section>
           )}
-
-          <DashboardGrid
-            dashboard={dashboard}
-            isEditable={!!dashboard.meta.canEdit}
-            viewPanel={viewPanel}
-            editPanel={editPanel}
-          />
-
+          {config.featureToggles.editPanelCSVDragAndDrop ? (
+            <DropZone
+              onDrop={this.onFileDrop}
+              accept={DFImport.acceptedFiles}
+              maxSize={DFImport.maxFileSize}
+              noClick={true}
+            >
+              {({ getRootProps, isDragActive }) => {
+                const styles = getStyles(this.props.theme, isDragActive);
+                return (
+                  <div {...getRootProps({ className: styles.dropZone })}>
+                    <div className={styles.dropOverlay}>
+                      <div className={styles.dropHint}>
+                        <Icon name="upload" size="xxxl"></Icon>
+                        <h3>Create tables from spreadsheets</h3>
+                      </div>
+                    </div>
+                    <DashboardGrid
+                      dashboard={dashboard}
+                      isEditable={!!dashboard.meta.canEdit}
+                      viewPanel={viewPanel}
+                      editPanel={editPanel}
+                    />
+                  </div>
+                );
+              }}
+            </DropZone>
+          ) : (
+            <DashboardGrid
+              dashboard={dashboard}
+              isEditable={!!dashboard.meta.canEdit}
+              viewPanel={viewPanel}
+              editPanel={editPanel}
+            />
+          )}
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
         </Page>
         {editPanel && (
@@ -477,6 +564,32 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     ...state,
     pageNav,
     sectionNav,
+  };
+}
+
+function getStyles(theme: GrafanaTheme2, isDragActive: boolean) {
+  return {
+    dropZone: css`
+      height: 100%;
+    `,
+    dropOverlay: css`
+      background-color: ${isDragActive ? theme.colors.action.hover : `inherit`};
+      border: ${isDragActive ? `2px dashed ${theme.colors.border.medium}` : 0};
+      position: absolute;
+      display: ${isDragActive ? 'flex' : 'none'};
+      z-index: ${theme.zIndex.modal};
+      top: 0px;
+      left: 0px;
+      height: 100%;
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+    `,
+    dropHint: css`
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+    `,
   };
 }
 

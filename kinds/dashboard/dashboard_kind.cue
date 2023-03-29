@@ -1,9 +1,15 @@
 package kind
 
-import "strings"
+import (
+	"strings"
+	t "time"
+)
 
-name:     "Dashboard"
-maturity: "experimental"
+name:        "Dashboard"
+maturity:    "experimental"
+description: "A Grafana dashboard."
+
+crd: dummySchema: true
 
 lineage: seqs: [
 	{
@@ -21,10 +27,11 @@ lineage: seqs: [
 				title?: string
 				// Description of dashboard.
 				description?: string
-
-				// Version of the current dashboard data
-				revision: int64 | *-1 @grafanamaturity(NeedsExpertReview)
-
+				// This property should only be used in dashboards defined by plugins.  It is a quick check
+				// to see if the version has changed since the last time.  Unclear why using the version property
+				// is insufficient.
+				revision?: int64 @grafanamaturity(NeedsExpertReview)
+				// For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
 				gnetId?: string @grafanamaturity(NeedsExpertReview)
 				// Tags associated with dashboard.
 				tags?: [...string] @grafanamaturity(NeedsExpertReview)
@@ -58,7 +65,9 @@ lineage: seqs: [
 				} @grafanamaturity(NeedsExpertReview)
 				// The month that the fiscal year starts on.  0 = January, 11 = December
 				fiscalYearStartMonth?: uint8 & <12 | *0
-				// TODO docs
+				// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
+				// This will keep data "moving left" regardless of the query refresh rate.  This setting helps
+				// avoid dashboards presenting stale live data
 				liveNow?: bool @grafanamaturity(NeedsExpertReview)
 				// TODO docs
 				weekStart?: string @grafanamaturity(NeedsExpertReview)
@@ -214,6 +223,8 @@ lineage: seqs: [
 					value?: number @grafanamaturity(NeedsExpertReview)
 					// TODO docs
 					color: string @grafanamaturity(NeedsExpertReview)
+					// Threshold index, an old property that is not needed an should only appear in older dashboards
+					index?: int32 @grafanamaturity(NeedsExpertReview)
 					// TODO docs
 					// TODO are the values here enumerable into a disjunction?
 					// Some seem to be listed in typescript comment
@@ -283,13 +294,18 @@ lineage: seqs: [
 				} @cuetsy(kind="interface")
 
 				// TODO docs
-				// FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
-				#Transformation: {
-					id:   string
-					hide: bool | *false
-					// only apply to some frames
+				#DataTransformerConfig: {
+					@grafana(TSVeneer="type")
+
+					// Unique identifier of transformer
+					id: string
+					// Disabled transformations are skipped
+					disabled?: bool
+					// Optional frame matcher.  When missing it will be applied to all results
 					filter?: #MatcherConfig
-					options: {...}
+					// Options to be passed to the transformer
+					// Valid options depend on the transformer id
+					options: _
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 				// 0 for no shared crosshair or tooltip (default).
@@ -309,7 +325,7 @@ lineage: seqs: [
 				// TODO docs
 				#Snapshot: {
 					// TODO docs
-					created: string @grafanamaturity(NeedsExpertReview)
+					created: string & t.Time
 					// TODO docs
 					expires: string @grafanamaturity(NeedsExpertReview)
 					// TODO docs
@@ -325,7 +341,7 @@ lineage: seqs: [
 					// TODO docs
 					orgId: uint32 @grafanamaturity(NeedsExpertReview)
 					// TODO docs
-					updated: string @grafanamaturity(NeedsExpertReview)
+					updated: string & t.Time
 					// TODO docs
 					url?: string @grafanamaturity(NeedsExpertReview)
 					// TODO docs
@@ -386,7 +402,7 @@ lineage: seqs: [
 					// TODO docs
 					timeRegions?: [...] @grafanamaturity(NeedsExpertReview)
 
-					transformations: [...#Transformation] @grafanamaturity(NeedsExpertReview)
+					transformations: [...#DataTransformerConfig] @grafanamaturity(NeedsExpertReview)
 
 					// TODO docs
 					// TODO tighter constraint

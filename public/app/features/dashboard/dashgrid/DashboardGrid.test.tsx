@@ -1,20 +1,22 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 
+import { Dashboard } from '@grafana/schema';
 import { DashboardMeta } from 'app/types';
 
 import { DashboardModel } from '../state';
+import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
 import { DashboardGrid, Props } from './DashboardGrid';
 
 jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
-  const LazyLoader: React.FC = ({ children }) => {
+  const LazyLoader = ({ children }: React.PropsWithChildren<{}>) => {
     return <>{children}</>;
   };
   return { LazyLoader };
 });
 
-function getTestDashboard(overrides?: any, metaOverrides?: Partial<DashboardMeta>): DashboardModel {
+function getTestDashboard(overrides?: Partial<Dashboard>, metaOverrides?: Partial<DashboardMeta>): DashboardModel {
   const data = Object.assign(
     {
       title: 'My dashboard',
@@ -48,8 +50,7 @@ function getTestDashboard(overrides?: any, metaOverrides?: Partial<DashboardMeta
     overrides
   );
 
-  const meta = Object.assign({ canSave: true, canEdit: true }, metaOverrides);
-  return new DashboardModel(data, meta);
+  return createDashboardModelFixture(data, metaOverrides);
 }
 
 describe('DashboardGrid', () => {

@@ -6,32 +6,30 @@ title: AnnotationsListPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# AnnotationsListPanelCfg kind
+## AnnotationsListPanelCfg
 
-## Maturity: experimental
-## Version: 0.0
+#### Maturity: [experimental](../../../maturity/#experimental)
+#### Version: 0.0
 
-## Properties
 
-| Property       | Type                    | Required | Description |
-|----------------|-------------------------|----------|-------------|
-| `PanelOptions` | [object](#paneloptions) | **Yes**  |             |
 
-## PanelOptions
+| Property       | Type                    | Required | Default | Description |
+|----------------|-------------------------|----------|---------|-------------|
+| `PanelOptions` | [object](#paneloptions) | **Yes**  |         |             |
 
-### Properties
+### PanelOptions
 
-| Property                | Type     | Required | Description       |
-|-------------------------|----------|----------|-------------------|
-| `limit`                 | integer  | **Yes**  | Default: `10`.    |
-| `navigateAfter`         | string   | **Yes**  | Default: `10m`.   |
-| `navigateBefore`        | string   | **Yes**  | Default: `10m`.   |
-| `navigateToPanel`       | boolean  | **Yes**  | Default: `true`.  |
-| `onlyFromThisDashboard` | boolean  | **Yes**  | Default: `false`. |
-| `onlyInTimeRange`       | boolean  | **Yes**  | Default: `false`. |
-| `showTags`              | boolean  | **Yes**  | Default: `true`.  |
-| `showTime`              | boolean  | **Yes**  | Default: `true`.  |
-| `showUser`              | boolean  | **Yes**  | Default: `true`.  |
-| `tags`                  | string[] | **Yes**  |                   |
+| Property                | Type     | Required | Default | Description |
+|-------------------------|----------|----------|---------|-------------|
+| `limit`                 | uint32   | **Yes**  | `10`    |             |
+| `navigateAfter`         | string   | **Yes**  | `10m`   |             |
+| `navigateBefore`        | string   | **Yes**  | `10m`   |             |
+| `navigateToPanel`       | boolean  | **Yes**  | `true`  |             |
+| `onlyFromThisDashboard` | boolean  | **Yes**  | `false` |             |
+| `onlyInTimeRange`       | boolean  | **Yes**  | `false` |             |
+| `showTags`              | boolean  | **Yes**  | `true`  |             |
+| `showTime`              | boolean  | **Yes**  | `true`  |             |
+| `showUser`              | boolean  | **Yes**  | `true`  |             |
+| `tags`                  | string[] | **Yes**  |         |             |
 
 

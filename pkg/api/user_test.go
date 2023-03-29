@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -67,7 +68,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		hs.authInfoService = srv
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
-		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sc.cfg, nil, nil, quotatest.New(false, nil))
+		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sc.cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 		hs.userService = userSvc
 
@@ -77,7 +78,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:   "loginuser",
 			IsAdmin: true,
 		}
-		usr, err := userSvc.CreateUserForTests(context.Background(), &createUserCmd)
+		usr, err := userSvc.Create(context.Background(), &createUserCmd)
 		require.NoError(t, err)
 
 		sc.handlerFunc = hs.GetUserByID
@@ -135,7 +136,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
-		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sc.cfg, nil, nil, quotatest.New(false, nil))
+		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sc.cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 		_, err = userSvc.Create(context.Background(), &createUserCmd)
 		require.Nil(t, err)

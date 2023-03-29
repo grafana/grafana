@@ -5,6 +5,7 @@ import { DataFrame } from './dataFrame';
 import { DataQueryRequest, DataQueryResponse } from './datasource';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
+export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -37,11 +38,6 @@ export enum LogsMetaKind {
   String,
   LabelsMap,
   Error,
-}
-
-export enum LogsSortOrder {
-  Descending = 'Descending',
-  Ascending = 'Ascending',
 }
 
 export interface LogsMetaItem {
@@ -91,6 +87,7 @@ export interface LogsModel {
   // visibleRange is time range for histogram created from log results
   visibleRange?: AbsoluteTimeRange;
   queries?: DataQuery[];
+  bucketSize?: number;
 }
 
 export interface LogSearchMatch {
@@ -104,13 +101,6 @@ export interface LogLabelStatsModel {
   count: number;
   proportion: number;
   value: string;
-}
-
-export enum LogsDedupStrategy {
-  none = 'none',
-  exact = 'exact',
-  numbers = 'numbers',
-  signature = 'signature',
 }
 
 /** @deprecated will be removed in the next major version */
@@ -194,6 +184,49 @@ export enum SupplementaryQueryType {
   LogsVolume = 'LogsVolume',
   LogsSample = 'LogsSample',
 }
+
+/**
+ * Types of logs volume responses. A data source may return full range histogram (based on selected range)
+ * or limited (based on returned results). This information is attached to DataFrame.meta.custom object.
+ * @internal
+ */
+export enum LogsVolumeType {
+  FullRange = 'FullRange',
+  Limited = 'Limited',
+}
+
+/**
+ * Custom meta information required by Logs Volume responses
+ */
+export type LogsVolumeCustomMetaData = {
+  absoluteRange: AbsoluteTimeRange;
+  logsVolumeType: LogsVolumeType;
+  datasourceName: string;
+  sourceQuery: DataQuery;
+};
+
+export const getLogsVolumeAbsoluteRange = (
+  dataFrames: DataFrame[],
+  defaultRange: AbsoluteTimeRange
+): AbsoluteTimeRange => {
+  return dataFrames[0].meta?.custom?.absoluteRange || defaultRange;
+};
+
+export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: string } | null => {
+  const customMeta = dataFrames[0]?.meta?.custom;
+
+  if (customMeta && customMeta.datasourceName) {
+    return {
+      name: customMeta.datasourceName,
+    };
+  }
+
+  return null;
+};
+
+export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
+  return dataFrames[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
+};
 
 /**
  * Data sources that support supplementary queries in Explore.

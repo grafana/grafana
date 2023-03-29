@@ -8,6 +8,12 @@ export type TooltipData = {
   samples: string;
 };
 
+export type ContextMenuData = {
+  e: MouseEvent;
+  levelIndex: number;
+  barIndex: number;
+};
+
 export type Metadata = {
   percentValue: number;
   unitTitle: string;

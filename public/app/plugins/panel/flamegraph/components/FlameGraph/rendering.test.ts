@@ -12,7 +12,8 @@ describe('getRectDimensionsForLevel', () => {
       100,
       0,
       10,
-      getDisplayProcessor({ field: { config: {} }, theme: createTheme() })
+      getDisplayProcessor({ field: { config: {} }, theme: createTheme() }),
+      (val) => val.toString()
     );
     expect(result).toEqual([
       {
@@ -40,7 +41,8 @@ describe('getRectDimensionsForLevel', () => {
       100,
       0,
       10,
-      getDisplayProcessor({ field: { config: {} }, theme: createTheme() })
+      getDisplayProcessor({ field: { config: {} }, theme: createTheme() }),
+      (val) => val.toString()
     );
     expect(result).toEqual([
       { width: 999, height: 22, x: 0, y: 44, collapsed: false, ticks: 100, label: '1', unitLabel: '100' },
@@ -61,7 +63,8 @@ describe('getRectDimensionsForLevel', () => {
       100,
       0,
       1,
-      getDisplayProcessor({ field: { config: {} }, theme: createTheme() })
+      getDisplayProcessor({ field: { config: {} }, theme: createTheme() }),
+      (val) => val.toString()
     );
     expect(result).toEqual([
       { width: 99, height: 22, x: 0, y: 44, collapsed: false, ticks: 100, label: '1', unitLabel: '100' },

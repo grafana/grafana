@@ -22,10 +22,10 @@ Use contact points to define how your contacts are notified when an alert rule f
 
 Complete the following steps to add a contact point.
 
-1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
-1. Click **Contact points** to open the page listing existing contact points.
-1. Click **Add contact point**.
-1. From the **Alertmanager** dropdown, select an Alertmanager. By default, Grafana Alertmanager is selected.
+1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. Click **Contact points**.
+1. Click **+ Add contact point**.
+1. From the **Alertmanager** dropdown, select an Alertmanager. By default, **Grafana Alertmanager** is selected.
 1. In **Name**, enter a descriptive name for the contact point.
 1. From **Contact point integration**, select a type and fill out mandatory fields. For example, if you choose email, enter the email addresses. Or if you choose Slack, enter the Slack channel(s) and users who should be contacted.
 1. Some contact point integrations, like email or webhook, have optional settings. In **Optional settings**, specify additional settings for the selected contact point integration.
@@ -37,16 +37,18 @@ Complete the following steps to add a contact point.
 
 Complete the following steps to edit a contact point.
 
-1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
-1. Find the contact point to edit, then click **Edit** (pen icon).
+1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. Click **Contact points** to view a list of existing contact points.
+1. Find the contact point to edit, and then click **Edit** (pen icon).
 1. Make any changes and click **Save contact point**.
 
 ## Delete a contact point
 
 Complete the following steps to delete a contact point.
 
-1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
-1. Find the contact point to delete, then click **Delete** (trash icon).
+1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. Click **Contact points** to view a list of existing contact points.
+1. Find the contact point to delete, and then click **Delete** (trash icon).
 1. In the confirmation dialog, click **Yes, delete**.
 
 > **Note:** You cannot delete contact points that are in use by a notification policy. You will have to either delete the notification policy or update it to use another contact point.
@@ -55,8 +57,9 @@ Complete the following steps to delete a contact point.
 
 Complete the following steps to test a contact point.
 
-1. In the Grafana side bar, hover your cursor over the **Alerting** (bell) icon and then click **Contact** points.
+1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. Click **Contact points** to view a list of existing contact points.
 1. Find the contact point to test, then click **Edit** (pen icon). You can also create a new contact point if needed.
-1. Click **Test** (paper airplane icon) to open the contact point testing modal.
+1. Click **Test** to open the contact point testing modal.
 1. Choose whether to send a predefined test notification or choose custom to add your own custom annotations and labels to include in the notification.
 1. Click **Send test notification** to fire the alert.

@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -186,7 +186,7 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 			})
 		}
 
-		if !isNested {
+		if !isNested || !hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 				{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
 				{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
@@ -209,9 +209,11 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 		}
 		var theFolder *folder.Folder
 		var err error
+
 		if cmd.NewParentUID != "" {
 			cmd.OrgID = c.OrgID
 			cmd.UID = web.Params(c.Req)[":uid"]
+			cmd.SignedInUser = c.SignedInUser
 			theFolder, err = hs.folderService.Move(c.Req.Context(), &cmd)
 			if err != nil {
 				return response.Error(http.StatusInternalServerError, "update folder uid failed", err)
@@ -227,9 +229,6 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 // swagger:route PUT /folders/{folder_uid} folders updateFolder
 //
 // Update folder.
-//
-// If nested folders are enabled then it optionally expects a new parent folder UID that moves the folder and
-// includes it into the response.
 //
 // Responses:
 // 200: folderResponse
@@ -277,7 +276,7 @@ func (hs *HTTPServer) UpdateFolder(c *contextmodel.ReqContext) response.Response
 func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
 	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
-		if errors.Is(err, libraryelements.ErrFolderHasConnectedLibraryElements) {
+		if errors.Is(err, model.ErrFolderHasConnectedLibraryElements) {
 			return response.Error(403, "Folder could not be deleted because it contains library elements in use", err)
 		}
 		return apierrors.ToFolderErrorResponse(err)

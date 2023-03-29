@@ -98,7 +98,7 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 		return nil, status.Error(codes.Unauthenticated, "api key does not have a service account")
 	}
 
-	querySignedInUser := user.GetSignedInUserQuery{UserID: *apikey.ServiceAccountId, OrgID: apikey.OrgId}
+	querySignedInUser := user.GetSignedInUserQuery{UserID: *apikey.ServiceAccountId, OrgID: apikey.OrgID}
 	signedInUser, err := a.UserService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
 	if err != nil {
 		return nil, err

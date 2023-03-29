@@ -49,8 +49,7 @@ export const Basic: ComponentStory<typeof LoadingBar> = (args: LoadingBarProps) 
 };
 
 Basic.args = {
-  width: '128px',
-  height: '2px',
+  width: 400,
 };
 
 export default meta;

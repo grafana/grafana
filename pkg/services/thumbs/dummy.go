@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
@@ -31,9 +32,9 @@ func (ds *dummyService) Enabled() bool {
 	return false
 }
 
-func (ds *dummyService) GetDashboardPreviewsSetupSettings(c *contextmodel.ReqContext) dashboardPreviewsSetupConfig {
-	return dashboardPreviewsSetupConfig{
-		SystemRequirements: dashboardPreviewsSystemRequirements{
+func (ds *dummyService) GetDashboardPreviewsSetupSettings(c *contextmodel.ReqContext) dtos.DashboardPreviewsSetupConfig {
+	return dtos.DashboardPreviewsSetupConfig{
+		SystemRequirements: dtos.DashboardPreviewsSystemRequirements{
 			Met:                                false,
 			RequiredImageRendererPluginVersion: "",
 		},

@@ -149,6 +149,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('datadata-macros', import '../dev-dashboards/feature-templating/datadata-macros.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('demo1', import '../dev-dashboards/datasource-testdata/demo1.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -303,6 +310,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('heatmap-x', import '../dev-dashboards/panel-heatmap/heatmap-x.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('histogram_tests', import '../dev-dashboards/panel-histogram/histogram_tests.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -360,6 +374,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('loki_fakedata', import '../dev-dashboards/datasource-loki/loki_fakedata.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('migrations', import '../dev-dashboards/migrations/migrations.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {

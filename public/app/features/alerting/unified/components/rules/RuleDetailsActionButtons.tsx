@@ -1,16 +1,19 @@
 import { css } from '@emotion/css';
-import React, { FC, Fragment, useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, textUtil, urlUtil } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction, useDispatch } from 'app/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { deleteRuleAction } from '../../state/actions';
@@ -31,7 +34,7 @@ interface Props {
   isViewMode: boolean;
 }
 
-export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewMode }) => {
+export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Props) => {
   const style = useStyles2(getStyles);
   const { namespace, group, rulerRule } = rule;
   const alertId = isGrafanaRulerRule(rule.rulerRule) ? rule.rulerRule.grafana_alert.id ?? '' : '';
@@ -84,6 +87,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   const rulesPermissions = getRulesPermissions(rulesSourceName);
   const hasCreateRulePermission = contextSrv.hasPermission(rulesPermissions.create);
   const { isEditable, isRemovable } = useIsRuleEditable(rulesSourceName, rulerRule);
+  const canSilence = useCanSilence(rule);
 
   const returnTo = location.pathname + location.search;
   // explore does not support grafana rule queries atm
@@ -149,7 +153,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
     }
   }
 
-  if (alertmanagerSourceName && contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor)) {
+  if (canSilence && alertmanagerSourceName) {
     buttons.push(
       <LinkButton
         size="sm"
@@ -174,7 +178,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
     );
   }
 
-  if (isFiringRule) {
+  if (isFiringRule && shouldShowDeclareIncidentButton()) {
     buttons.push(
       <Fragment key="declare-incident">
         <DeclareIncident title={rule.name} url={buildShareUrl()} />
@@ -219,7 +223,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
 
     if (hasCreateRulePermission && !isFederated) {
       rightButtons.push(
-        <CloneRuleButton key="clone" text="Clone" ruleIdentifier={identifier} isProvisioned={isProvisioned} />
+        <CloneRuleButton key="clone" text="Copy" ruleIdentifier={identifier} isProvisioned={isProvisioned} />
       );
     }
 
@@ -262,6 +266,43 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   }
   return null;
 };
+
+/**
+ * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
+ * We should show it in development mode
+ */
+function shouldShowDeclareIncidentButton() {
+  const buildInfo = config.buildInfo;
+  const isOpenSourceEdition = buildInfo.edition === GrafanaEdition.OpenSource;
+  const isDevelopment = buildInfo.env === 'development';
+
+  return !isOpenSourceEdition || isDevelopment;
+}
+
+/**
+ * We don't want to show the silence button if either
+ * 1. the user has no permissions to create silences
+ * 2. the admin has configured to only send instances to external AMs
+ */
+function useCanSilence(rule: CombinedRule) {
+  const isGrafanaManagedRule = isGrafanaRulerRule(rule.rulerRule);
+
+  const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
+  const { currentData: amConfigStatus, isLoading } = useGetAlertmanagerChoiceStatusQuery(undefined, {
+    skip: !isGrafanaManagedRule,
+  });
+
+  if (!isGrafanaManagedRule || isLoading) {
+    return false;
+  }
+
+  const hasPermissions = contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor);
+
+  const interactsOnlyWithExternalAMs = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.External;
+  const interactsWithAll = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.All;
+
+  return hasPermissions && (!interactsOnlyWithExternalAMs || interactsWithAll);
+}
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`

@@ -16,7 +16,7 @@ export function showTables() {
                              '_timescaledb_config',
                              'timescaledb_information',
                              'timescaledb_experimental')
-      and table_type = 'BASE TABLE' and ${buildSchemaConstraint()}`;
+      and ${buildSchemaConstraint()}`;
 }
 
 export function getSchema(table?: string) {

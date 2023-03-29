@@ -7,6 +7,10 @@ keywords:
   - auditing
   - audit
   - logs
+labels:
+  products:
+    - cloud
+    - enterprise
 title: Audit a Grafana instance
 weight: 800
 ---
@@ -45,12 +49,12 @@ Audit logs contain the following fields. The fields followed by **\*** are alway
 | `request`\*             | object  | Information about the HTTP request.                                                                                                                                                                                      |
 | `request.params`        | object  | Request’s path parameters.                                                                                                                                                                                               |
 | `request.query`         | object  | Request’s query parameters.                                                                                                                                                                                              |
-| `request.body`          | string  | Request’s body.                                                                                                                                                                                                          |
+| `request.body`          | string  | Request’s body. Filled with `<non-marshalable format>` when it isn't a valid JSON.                                                                                                                                       |
 | `result`\*              | object  | Information about the HTTP response.                                                                                                                                                                                     |
 | `result.statusType`     | string  | If the request action was successful, `success`. Otherwise, `failure`.                                                                                                                                                   |
 | `result.statusCode`     | number  | HTTP status of the request.                                                                                                                                                                                              |
 | `result.failureMessage` | string  | HTTP error message.                                                                                                                                                                                                      |
-| `result.body`           | string  | Response body.                                                                                                                                                                                                           |
+| `result.body`           | string  | Response body. Filled with `<non-marshalable format>` when it isn't a valid JSON.                                                                                                                                        |
 | `resources`             | array   | Information about the resources that the request action affected. This field can be null for non-resource actions such as `login` or `logout`.                                                                           |
 | `resources[x].id`\*     | number  | ID of the resource.                                                                                                                                                                                                      |
 | `resources[x].type`\*   | string  | The type of the resource that was logged: `alert`, `alert-notification`, `annotation`, `api-key`, `auth-token`, `dashboard`, `datasource`, `folder`, `org`, `panel`, `playlist`, `report`, `team`, `user`, or `version`. |
@@ -420,6 +424,9 @@ type = grpc
 url = localhost:9095
 # Defaults to true. If true, it establishes a secure connection to Loki
 tls = true
+# Set the tenant ID for Loki communication, which is disabled by default.
+# The tenant ID is required to interact with Loki running in multi-tenant mode.
+tenant_id =
 ```
 
 If you have multiple Grafana instances sending logs to the same Loki service or if you are using Loki for non-audit logs, audit logs come with additional labels to help identifying them:

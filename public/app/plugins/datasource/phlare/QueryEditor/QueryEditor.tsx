@@ -5,8 +5,9 @@ import { useAsync } from 'react-use';
 import { CoreApp, QueryEditorProps } from '@grafana/data';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
+import { defaultPhlare, defaultPhlareQueryType, Phlare } from '../dataquery.gen';
 import { PhlareDataSource } from '../datasource';
-import { defaultQuery, PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
+import { PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
 
 import { EditorRow } from './EditorRow';
 import { EditorRows } from './EditorRows';
@@ -14,6 +15,11 @@ import { LabelsEditor } from './LabelsEditor';
 import { QueryOptions } from './QueryOptions';
 
 export type Props = QueryEditorProps<PhlareDataSource, Query, PhlareDataSourceOptions>;
+
+export const defaultQuery: Partial<Phlare> = {
+  ...defaultPhlare,
+  queryType: defaultPhlareQueryType,
+};
 
 export function QueryEditor(props: Props) {
   const profileTypes = useProfileTypes(props.datasource);

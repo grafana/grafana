@@ -228,7 +228,7 @@ func (c *EvalContext) evaluateNotificationTemplateFields() error {
 	return nil
 }
 
-func (c *EvalContext) GetDataSource(ctx context.Context, q *datasources.GetDataSourceQuery) error {
+func (c *EvalContext) GetDataSource(ctx context.Context, q *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	return c.DatasourceService.GetDataSource(ctx, q)
 }
 

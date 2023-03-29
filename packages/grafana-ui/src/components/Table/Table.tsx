@@ -1,4 +1,5 @@
-import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { clone } from 'lodash';
+import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState, UIEventHandler } from 'react';
 import {
   Cell,
   useAbsoluteLayout,
@@ -11,9 +12,10 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { Field, ReducerID } from '@grafana/data';
+import { DataFrame, Field, ReducerID } from '@grafana/data';
+import { TableCellHeight } from '@grafana/schema';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../Pagination/Pagination';
 
@@ -22,7 +24,7 @@ import { HeaderRow } from './HeaderRow';
 import { TableCell } from './TableCell';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks';
 import { getInitialState, useTableStateReducer } from './reducer';
-import { getTableStyles } from './styles';
+import { useTableStyles } from './styles';
 import { FooterItem, GrafanaTableState, Props } from './types';
 import {
   getColumns,
@@ -31,9 +33,11 @@ import {
   getFooterItems,
   createFooterCalculationValues,
   EXPANDER_WIDTH,
+  buildFieldsForOptionalRowNums,
 } from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
+const FOOTER_ROW_HEIGHT = 36;
 
 export const Table = memo((props: Props) => {
   const {
@@ -47,23 +51,25 @@ export const Table = memo((props: Props) => {
     columnMinWidth = COLUMN_MIN_WIDTH,
     noHeader,
     resizable = true,
+    showRowNums,
     initialSortBy,
     footerOptions,
     showTypeIcons,
     footerValues,
     enablePagination,
+    cellHeight = TableCellHeight.Sm,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
   const variableSizeListScrollbarRef = useRef<HTMLDivElement>(null);
-  const tableStyles = useStyles2(getTableStyles);
   const theme = useTheme2();
+  const tableStyles = useTableStyles(theme, cellHeight);
   const headerHeight = noHeader ? 0 : tableStyles.rowHeight;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
 
   const footerHeight = useMemo(() => {
-    const EXTENDED_ROW_HEIGHT = headerHeight;
+    const EXTENDED_ROW_HEIGHT = FOOTER_ROW_HEIGHT;
     let length = 0;
 
     if (!footerItems) {
@@ -81,10 +87,10 @@ export const Table = memo((props: Props) => {
     }
 
     return EXTENDED_ROW_HEIGHT;
-  }, [footerItems, headerHeight]);
+  }, [footerItems]);
 
-  // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
-  // The cells use the field to look up values
+  // React table data array. This data acts just like a dummy array to let react-table know how many rows exist.
+  // The cells use the field to look up values, therefore this is simply a length/size placeholder.
   const memoizedData = useMemo(() => {
     if (!data.fields.length) {
       return [];
@@ -95,6 +101,7 @@ export const Table = memo((props: Props) => {
     return Array(data.length).fill(0);
   }, [data]);
 
+  // This checks whether `Show table footer` is toggled on, the `Calculation` is set to `Count`, and finally, whether `Count rows` is toggled on.
   const isCountRowsSet = Boolean(
     footerOptions?.countRows &&
       footerOptions.reducer &&
@@ -104,7 +111,8 @@ export const Table = memo((props: Props) => {
 
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(data, width, columnMinWidth, !!subData?.length, footerItems, isCountRowsSet),
+    () =>
+      getColumns(addRowNumbersFieldToData(data), width, columnMinWidth, !!subData?.length, footerItems, isCountRowsSet),
     [data, width, columnMinWidth, footerItems, subData, isCountRowsSet]
   );
 
@@ -117,14 +125,14 @@ export const Table = memo((props: Props) => {
       data: memoizedData,
       disableResizing: !resizable,
       stateReducer: stateReducer,
-      initialState: getInitialState(initialSortBy, memoizedColumns),
+      initialState: getInitialState(initialSortBy, showRowNums, memoizedColumns),
       autoResetFilters: false,
       sortTypes: {
         number: sortNumber, // the builtin number type on react-table does not handle NaN values
         'alphanumeric-insensitive': sortCaseInsensitive, // should be replace with the builtin string when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
       },
     }),
-    [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer]
+    [initialSortBy, showRowNums, memoizedColumns, memoizedData, resizable, stateReducer]
   );
 
   const {
@@ -133,15 +141,20 @@ export const Table = memo((props: Props) => {
     rows,
     prepareRow,
     totalColumnsWidth,
-    footerGroups,
     page,
     state,
     gotoPage,
     setPageSize,
     pageOptions,
+    setHiddenColumns,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
 
   const extendedState = state as GrafanaTableState;
+
+  // Hide Row Number column on toggle
+  useEffect(() => {
+    !!showRowNums ? setHiddenColumns([]) : setHiddenColumns(['0']);
+  }, [showRowNums, setHiddenColumns]);
 
   /*
     Footer value calculation is being moved in the Table component and the footerValues prop will be deprecated.
@@ -165,20 +178,31 @@ export const Table = memo((props: Props) => {
       return;
     }
 
+    if (isCountRowsSet) {
+      const footerItemsCountRows: FooterItem[] = [];
+      /*
+        Update the 1st index of the empty array with the row length, which will then default the 0th index to `undefined`,
+        which will therefore account for our Row Numbers column, and render the count in the following column.
+        This will work with tables with only a single column as well, since our Row Numbers column is being prepended reguardless.
+      */
+      footerItemsCountRows[1] = headerGroups[0]?.headers[0]?.filteredRows.length.toString() ?? data.length.toString();
+      setFooterItems(footerItemsCountRows);
+      return;
+    }
+
     const footerItems = getFooterItems(
-      headerGroups[0].headers as unknown as Array<{ field: Field }>,
+      /*
+        The `headerGroups` object is NOT based on the `data.fields`, but instead on the currently rendered headers in the Table,
+        which may or may not include the Row Numbers column.
+      */
+      headerGroups[0].headers as unknown as Array<{ id: string; field: Field }>,
+      // The `rows` object, on the other hand, is based on the `data.fields` data, and therefore ALWAYS include the Row Numbers column data.
       createFooterCalculationValues(rows),
       footerOptions,
       theme
     );
 
-    if (isCountRowsSet) {
-      const footerItemsCountRows: FooterItem[] = new Array(footerItems.length).fill(undefined);
-      footerItemsCountRows[0] = data.length.toString();
-      setFooterItems(footerItemsCountRows);
-    } else {
-      setFooterItems(footerItems);
-    }
+    setFooterItems(footerItems);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [footerOptions, theme, state.filters, data]);
 
@@ -213,7 +237,7 @@ export const Table = memo((props: Props) => {
   useResetVariableListSizeCache(extendedState, listRef, data);
   useFixScrollbarContainer(variableSizeListScrollbarRef, tableDivRef);
 
-  const renderSubTable = React.useCallback(
+  const renderSubTable = useCallback(
     (rowIndex: number) => {
       if (state.expanded[rowIndex]) {
         const rowSubData = subData?.find((frame) => frame.meta?.custom?.parentRowIndex === rowIndex);
@@ -244,28 +268,40 @@ export const Table = memo((props: Props) => {
     [state.expanded, subData, tableStyles.rowHeight, theme.colors, width]
   );
 
-  const RenderRow = React.useCallback(
+  const RenderRow = useCallback(
     ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
       let row = rows[rowIndex];
       if (enablePagination) {
         row = page[rowIndex];
       }
+
       prepareRow(row);
 
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
           {/*add the subtable to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
           {renderSubTable(rowIndex)}
-          {row.cells.map((cell: Cell, index: number) => (
-            <TableCell
-              key={index}
-              tableStyles={tableStyles}
-              cell={cell}
-              onCellFilterAdded={onCellFilterAdded}
-              columnIndex={index}
-              columnCount={row.cells.length}
-            />
-          ))}
+          {row.cells.map((cell: Cell, index: number) => {
+            /*
+              Here we test if the `row.cell` is of id === "0"; only if the user has toggled ON `Show row numbers` in the panelOptions panel will this cell exist.
+              This cell had already been built, but with undefined values. This is so we can now update our empty/undefined `cell.value` to the current `rowIndex + 1`.
+              This will assure that on sort, our row numbers don't also sort; but instewad stay in their respective rows.
+            */
+            if (cell.column.id === '0') {
+              cell.value = rowIndex + 1;
+            }
+
+            return (
+              <TableCell
+                key={index}
+                tableStyles={tableStyles}
+                cell={cell}
+                onCellFilterAdded={onCellFilterAdded}
+                columnIndex={index}
+                columnCount={row.cells.length}
+              />
+            );
+          })}
         </div>
       );
     },
@@ -290,15 +326,12 @@ export const Table = memo((props: Props) => {
     }
     paginationEl = (
       <div className={tableStyles.paginationWrapper}>
-        {isSmall ? null : <div className={tableStyles.paginationItem} />}
-        <div className={tableStyles.paginationCenterItem}>
-          <Pagination
-            currentPage={state.pageIndex + 1}
-            numberOfPages={pageOptions.length}
-            showSmallVersion={isSmall}
-            onNavigate={onNavigate}
-          />
-        </div>
+        <Pagination
+          currentPage={state.pageIndex + 1}
+          numberOfPages={pageOptions.length}
+          showSmallVersion={isSmall}
+          onNavigate={onNavigate}
+        />
         {isSmall ? null : (
           <div className={tableStyles.paginationSummary}>
             {itemsRangeStart} - {itemsRangeEnd} of {data.length} rows
@@ -306,6 +339,19 @@ export const Table = memo((props: Props) => {
         )}
       </div>
     );
+  }
+
+  // This adds the `Field` data needed to display a column with Row Numbers.
+  function addRowNumbersFieldToData(data: DataFrame): DataFrame {
+    /*
+      The `length` prop in a DataFrame tells us the amount of rows of data that will appear in our table;
+      with that we can build the correct buffered incrementing values for our Row Number column data.
+    */
+    const rowField: Field = buildFieldsForOptionalRowNums(data.length);
+    // Clone data to avoid unwanted mutation.
+    const clonedData = clone(data);
+    clonedData.fields = [rowField, ...data.fields];
+    return clonedData;
   }
 
   const getItemSize = (index: number): number => {
@@ -319,7 +365,7 @@ export const Table = memo((props: Props) => {
     return tableStyles.rowHeight;
   };
 
-  const handleScroll: React.UIEventHandler = (event) => {
+  const handleScroll: UIEventHandler = (event) => {
     const { scrollTop } = event.target as HTMLDivElement;
 
     if (listRef.current !== null) {
@@ -338,6 +384,8 @@ export const Table = memo((props: Props) => {
             <div ref={variableSizeListScrollbarRef}>
               <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true}>
                 <VariableSizeList
+                  // This component needs an unmount/remount when row height changes
+                  key={tableStyles.rowHeight}
                   height={listHeight}
                   itemCount={itemCount}
                   itemSize={getItemSize}
@@ -358,7 +406,11 @@ export const Table = memo((props: Props) => {
             <FooterRow
               isPaginationVisible={Boolean(enablePagination)}
               footerValues={footerItems}
-              footerGroups={footerGroups}
+              /*
+                The `headerGroups` and `footerGroups` objects destructured from the `useTable` hook are perfectly equivalent, in deep value, but not reference.
+                So we can use `headerGroups` here for building the footer, and no longer have a need for `footerGroups`.
+              */
+              footerGroups={headerGroups}
               totalColumnsWidth={totalColumnsWidth}
               tableStyles={tableStyles}
             />

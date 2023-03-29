@@ -721,6 +721,47 @@ describe('Prometheus Result Transformer', () => {
       expect(tableDf.fields[2].values.get(0)).toBe('value2');
       expect(tableDf.fields[3].name).toBe('Value');
     });
+
+    // Queries do not always return results
+    it('transforms dataFrame and empty dataFrame mock responses to table dataFrames', () => {
+      const value1 = 'value1';
+      const value2 = 'value2';
+
+      const dataframes = [
+        new MutableDataFrame({
+          refId: 'A',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [6, 5, 4] },
+            {
+              name: 'value',
+              type: FieldType.number,
+              values: [6, 5, 4],
+              labels: { label1: value1, label2: value2 },
+            },
+          ],
+        }),
+        new MutableDataFrame({
+          refId: 'B',
+          fields: [],
+        }),
+      ];
+
+      const transformedTableDataFrames = transformDFToTable(dataframes);
+      // Expect the first query to still return valid results
+      expect(transformedTableDataFrames[0].fields.length).toBe(4);
+      expect(transformedTableDataFrames[0].fields[0].name).toBe('Time');
+      expect(transformedTableDataFrames[0].fields[1].name).toBe('label1');
+      expect(transformedTableDataFrames[0].fields[1].values.get(0)).toBe(value1);
+      expect(transformedTableDataFrames[0].fields[2].name).toBe('label2');
+      expect(transformedTableDataFrames[0].fields[2].values.get(0)).toBe(value2);
+      expect(transformedTableDataFrames[0].fields[3].name).toBe('Value #A');
+
+      // Expect the invalid/empty results not to throw an error and to return empty arrays
+      expect(transformedTableDataFrames[1].fields[1].labels).toBe(undefined);
+      expect(transformedTableDataFrames[1].fields[1].name).toBe('Value #B');
+      expect(transformedTableDataFrames[1].fields[1].values.toArray()).toEqual([]);
+      expect(transformedTableDataFrames[1].fields[0].values.toArray()).toEqual([]);
+    });
   });
 
   describe('transform', () => {

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 type UnknownReceiverError struct {
@@ -27,16 +28,16 @@ func (e AlertmanagerConfigRejectedError) Error() string {
 }
 
 type configurationStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
+	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
 }
 
 func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64) (definitions.GettableUserConfig, error) {
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
-	err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query)
+	amConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query)
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to get latest configuration: %w", err)
 	}
-	cfg, err := Load([]byte(query.Result.AlertmanagerConfiguration))
+	cfg, err := Load([]byte(amConfig.AlertmanagerConfiguration))
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to unmarshal alertmanager configuration: %w", err)
 	}
@@ -92,7 +93,8 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
 	// Get the last known working configuration
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
-	if err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query); err != nil {
+	_, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query)
+	if err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return fmt.Errorf("failed to get latest configuration %w", err)
@@ -103,7 +105,9 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 		return err
 	}
 
-	if err := config.ProcessConfig(moa.Crypto.Encrypt); err != nil {
+	if err := config.ProcessConfig(func(ctx context.Context, payload []byte) ([]byte, error) {
+		return moa.Crypto.Encrypt(ctx, payload, secrets.WithoutScope())
+	}); err != nil {
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
 	}
 
@@ -129,7 +133,7 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 		if err != nil {
 			return definitions.GettableUserConfig{}, err
 		}
-		config.AlertmanagerConfig.Route.Provenance = provenance
+		config.AlertmanagerConfig.Route.Provenance = definitions.Provenance(provenance)
 	}
 
 	cp := definitions.EmbeddedContactPoint{}
@@ -140,7 +144,7 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 	for _, receiver := range config.AlertmanagerConfig.Receivers {
 		for _, contactPoint := range receiver.GrafanaManagedReceivers {
 			if provenance, exists := cpProvs[contactPoint.UID]; exists {
-				contactPoint.Provenance = provenance
+				contactPoint.Provenance = definitions.Provenance(provenance)
 			}
 		}
 	}
@@ -150,14 +154,20 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 	if err != nil {
 		return definitions.GettableUserConfig{}, nil
 	}
-	config.TemplateFileProvenances = tmplProvs
+	config.TemplateFileProvenances = make(map[string]definitions.Provenance, len(tmplProvs))
+	for key, provenance := range tmplProvs {
+		config.TemplateFileProvenances[key] = definitions.Provenance(provenance)
+	}
 
 	mt := definitions.MuteTimeInterval{}
 	mtProvs, err := moa.ProvStore.GetProvenances(ctx, org, mt.ResourceType())
 	if err != nil {
 		return definitions.GettableUserConfig{}, nil
 	}
-	config.AlertmanagerConfig.MuteTimeProvenances = mtProvs
+	config.AlertmanagerConfig.MuteTimeProvenances = make(map[string]definitions.Provenance, len(mtProvs))
+	for key, provenance := range mtProvs {
+		config.AlertmanagerConfig.MuteTimeProvenances[key] = definitions.Provenance(provenance)
+	}
 
 	return config, nil
 }

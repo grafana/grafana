@@ -31,12 +31,14 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Span bar label</h3>
+      <h3 className="page-heading">Span bar</h3>
 
-      <div className={styles.infoText}>Span bar label lets you add additional info to the span bar row.</div>
+      <div className={styles.infoText}>
+        Add additional info next to the service and operation on a span bar row in the trace view.
+      </div>
 
       <InlineFieldRow className={styles.row}>
-        <InlineField label="Label" labelWidth={26} grow>
+        <InlineField label="Label" labelWidth={26} tooltip="Default: duration" grow>
           <Select
             inputId="label"
             options={selectOptions}
@@ -56,7 +58,11 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
       </InlineFieldRow>
       {options.jsonData.spanBar?.type === TAG && (
         <InlineFieldRow className={styles.row}>
-          <InlineField label="Tag key" labelWidth={26} tooltip="Tag key which will be used to get the tag value">
+          <InlineField
+            label="Tag key"
+            labelWidth={26}
+            tooltip="Tag key which will be used to get the tag value. A span's attributes and resources will be searched for the tag key"
+          >
             <Input
               type="text"
               placeholder="Enter tag key"

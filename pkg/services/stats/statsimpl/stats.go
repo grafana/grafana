@@ -2,25 +2,30 @@ package statsimpl
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/stats"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
 
-func ProvideService(db db.DB) stats.Service {
-	return &sqlStatsService{db: db}
+func ProvideService(cfg *setting.Cfg, db db.DB) stats.Service {
+	return &sqlStatsService{cfg: cfg, db: db}
 }
 
-type sqlStatsService struct{ db db.DB }
+type sqlStatsService struct {
+	db  db.DB
+	cfg *setting.Cfg
+}
 
 func (ss *sqlStatsService) GetAlertNotifiersUsageStats(ctx context.Context, query *stats.GetAlertNotifierUsageStatsQuery) error {
 	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
@@ -111,8 +116,8 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("user_auth_token") + `) AS auth_tokens,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("alert_rule") + `) AS alert_rules,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("api_key") + `WHERE service_account_id IS NULL) AS api_keys,`)
-		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_panels,`, models.PanelElement)
-		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_variables,`, models.VariableElement)
+		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_panels,`, model.PanelElement)
+		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_variables,`, model.VariableElement)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `) AS data_keys,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `WHERE active = true) AS active_data_keys,`)
 
@@ -173,6 +178,11 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 		dailyActiveEndDate := now.Add(-dailyActiveUserTimeLimit)
 		monthlyActiveEndDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 
+		alertsQuery := fmt.Sprintf("SELECT COUNT(*) FROM %s", dialect.Quote("alert"))
+		if ss.IsUnifiedAlertingEnabled() {
+			alertsQuery = fmt.Sprintf("SELECT COUNT(*) FROM %s", dialect.Quote("alert_rule"))
+		}
+
 		var rawSQL = `SELECT
 		(
 			SELECT COUNT(*)
@@ -202,10 +212,7 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("star") + `
 		) AS stars,
-		(
-			SELECT COUNT(*)
-			FROM ` + dialect.Quote("alert") + `
-		) AS alerts,
+		(` + alertsQuery + ` ) AS alerts,
 		(
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `
@@ -256,6 +263,10 @@ func (ss *sqlStatsService) GetSystemUserCountStats(ctx context.Context, query *s
 
 		return nil
 	})
+}
+
+func (ss *sqlStatsService) IsUnifiedAlertingEnabled() bool {
+	return ss.cfg != nil && ss.cfg.UnifiedAlerting.IsEnabled()
 }
 
 func (ss *sqlStatsService) updateUserRoleCountsIfNecessary(ctx context.Context, forced bool) error {

@@ -10,49 +10,43 @@
 
 package dashboard
 
+import (
+	"time"
+)
+
 // Defines values for Style.
 const (
-	StyleDark Style = "dark"
-
+	StyleDark  Style = "dark"
 	StyleLight Style = "light"
 )
 
 // Defines values for CursorSync.
 const (
 	CursorSyncN0 CursorSync = 0
-
 	CursorSyncN1 CursorSync = 1
-
 	CursorSyncN2 CursorSync = 2
 )
 
 // Defines values for LinkType.
 const (
 	LinkTypeDashboards LinkType = "dashboards"
-
-	LinkTypeLink LinkType = "link"
+	LinkTypeLink       LinkType = "link"
 )
 
 // Defines values for FieldColorModeId.
 const (
 	FieldColorModeIdContinuousGrYlRd FieldColorModeId = "continuous-GrYlRd"
-
-	FieldColorModeIdFixed FieldColorModeId = "fixed"
-
-	FieldColorModeIdPaletteClassic FieldColorModeId = "palette-classic"
-
+	FieldColorModeIdFixed            FieldColorModeId = "fixed"
+	FieldColorModeIdPaletteClassic   FieldColorModeId = "palette-classic"
 	FieldColorModeIdPaletteSaturated FieldColorModeId = "palette-saturated"
-
-	FieldColorModeIdThresholds FieldColorModeId = "thresholds"
+	FieldColorModeIdThresholds       FieldColorModeId = "thresholds"
 )
 
 // Defines values for FieldColorSeriesByMode.
 const (
 	FieldColorSeriesByModeLast FieldColorSeriesByMode = "last"
-
-	FieldColorSeriesByModeMax FieldColorSeriesByMode = "max"
-
-	FieldColorSeriesByModeMin FieldColorSeriesByMode = "min"
+	FieldColorSeriesByModeMax  FieldColorSeriesByMode = "max"
+	FieldColorSeriesByModeMin  FieldColorSeriesByMode = "min"
 )
 
 // Defines values for GraphPanelType.
@@ -67,33 +61,41 @@ const (
 
 // Defines values for LoadingState.
 const (
-	LoadingStateDone LoadingState = "Done"
-
-	LoadingStateError LoadingState = "Error"
-
-	LoadingStateLoading LoadingState = "Loading"
-
+	LoadingStateDone       LoadingState = "Done"
+	LoadingStateError      LoadingState = "Error"
+	LoadingStateLoading    LoadingState = "Loading"
 	LoadingStateNotStarted LoadingState = "NotStarted"
-
-	LoadingStateStreaming LoadingState = "Streaming"
+	LoadingStateStreaming  LoadingState = "Streaming"
 )
 
 // Defines values for MappingType.
 const (
-	MappingTypeRange MappingType = "range"
-
-	MappingTypeRegex MappingType = "regex"
-
+	MappingTypeRange   MappingType = "range"
+	MappingTypeRegex   MappingType = "regex"
 	MappingTypeSpecial MappingType = "special"
-
-	MappingTypeValue MappingType = "value"
+	MappingTypeValue   MappingType = "value"
 )
 
 // Defines values for PanelRepeatDirection.
 const (
 	PanelRepeatDirectionH PanelRepeatDirection = "h"
-
 	PanelRepeatDirectionV PanelRepeatDirection = "v"
+)
+
+// Defines values for RangeMapType.
+const (
+	RangeMapTypeRange   RangeMapType = "range"
+	RangeMapTypeRegex   RangeMapType = "regex"
+	RangeMapTypeSpecial RangeMapType = "special"
+	RangeMapTypeValue   RangeMapType = "value"
+)
+
+// Defines values for RegexMapType.
+const (
+	RegexMapTypeRange   RegexMapType = "range"
+	RegexMapTypeRegex   RegexMapType = "regex"
+	RegexMapTypeSpecial RegexMapType = "special"
+	RegexMapTypeValue   RegexMapType = "value"
 )
 
 // Defines values for RowPanelType.
@@ -104,58 +106,58 @@ const (
 // Defines values for SpecialValueMapOptionsMatch.
 const (
 	SpecialValueMapOptionsMatchFalse SpecialValueMapOptionsMatch = "false"
+	SpecialValueMapOptionsMatchTrue  SpecialValueMapOptionsMatch = "true"
+)
 
-	SpecialValueMapOptionsMatchTrue SpecialValueMapOptionsMatch = "true"
+// Defines values for SpecialValueMapType.
+const (
+	SpecialValueMapTypeRange   SpecialValueMapType = "range"
+	SpecialValueMapTypeRegex   SpecialValueMapType = "regex"
+	SpecialValueMapTypeSpecial SpecialValueMapType = "special"
+	SpecialValueMapTypeValue   SpecialValueMapType = "value"
 )
 
 // Defines values for SpecialValueMatch.
 const (
-	SpecialValueMatchEmpty SpecialValueMatch = "empty"
-
-	SpecialValueMatchFalse SpecialValueMatch = "false"
-
-	SpecialValueMatchNan SpecialValueMatch = "nan"
-
-	SpecialValueMatchNull SpecialValueMatch = "null"
-
+	SpecialValueMatchEmpty   SpecialValueMatch = "empty"
+	SpecialValueMatchFalse   SpecialValueMatch = "false"
+	SpecialValueMatchNan     SpecialValueMatch = "nan"
+	SpecialValueMatchNull    SpecialValueMatch = "null"
 	SpecialValueMatchNullNan SpecialValueMatch = "null+nan"
-
-	SpecialValueMatchTrue SpecialValueMatch = "true"
+	SpecialValueMatchTrue    SpecialValueMatch = "true"
 )
 
 // Defines values for ThresholdsMode.
 const (
-	ThresholdsModeAbsolute ThresholdsMode = "absolute"
-
+	ThresholdsModeAbsolute   ThresholdsMode = "absolute"
 	ThresholdsModePercentage ThresholdsMode = "percentage"
+)
+
+// Defines values for ValueMapType.
+const (
+	ValueMapTypeRange   ValueMapType = "range"
+	ValueMapTypeRegex   ValueMapType = "regex"
+	ValueMapTypeSpecial ValueMapType = "special"
+	ValueMapTypeValue   ValueMapType = "value"
 )
 
 // Defines values for VariableHide.
 const (
 	VariableHideN0 VariableHide = 0
-
 	VariableHideN1 VariableHide = 1
-
 	VariableHideN2 VariableHide = 2
 )
 
 // Defines values for VariableType.
 const (
-	VariableTypeAdhoc VariableType = "adhoc"
-
-	VariableTypeConstant VariableType = "constant"
-
-	VariableTypeCustom VariableType = "custom"
-
+	VariableTypeAdhoc      VariableType = "adhoc"
+	VariableTypeConstant   VariableType = "constant"
+	VariableTypeCustom     VariableType = "custom"
 	VariableTypeDatasource VariableType = "datasource"
-
-	VariableTypeInterval VariableType = "interval"
-
-	VariableTypeQuery VariableType = "query"
-
-	VariableTypeSystem VariableType = "system"
-
-	VariableTypeTextbox VariableType = "textbox"
+	VariableTypeInterval   VariableType = "interval"
+	VariableTypeQuery      VariableType = "query"
+	VariableTypeSystem     VariableType = "system"
+	VariableTypeTextbox    VariableType = "textbox"
 )
 
 // TODO docs
@@ -202,7 +204,7 @@ type AnnotationTarget struct {
 type Dashboard struct {
 	// TODO docs
 	Annotations *struct {
-		List *[]AnnotationQuery `json:"list,omitempty"`
+		List []AnnotationQuery `json:"list,omitempty"`
 	} `json:"annotations,omitempty"`
 
 	// Description of dashboard.
@@ -212,8 +214,10 @@ type Dashboard struct {
 	Editable bool `json:"editable"`
 
 	// The month that the fiscal year starts on.  0 = January, 11 = December
-	FiscalYearStartMonth *int    `json:"fiscalYearStartMonth,omitempty"`
-	GnetId               *string `json:"gnetId,omitempty"`
+	FiscalYearStartMonth *int `json:"fiscalYearStartMonth,omitempty"`
+
+	// For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
+	GnetId *string `json:"gnetId,omitempty"`
 
 	// 0 for no shared crosshair or tooltip (default).
 	// 1 for shared crosshair.
@@ -225,17 +229,21 @@ type Dashboard struct {
 	Id *int64 `json:"id,omitempty"`
 
 	// TODO docs
-	Links *[]Link `json:"links,omitempty"`
+	Links []Link `json:"links,omitempty"`
 
-	// TODO docs
-	LiveNow *bool          `json:"liveNow,omitempty"`
-	Panels  *[]interface{} `json:"panels,omitempty"`
+	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
+	// This will keep data "moving left" regardless of the query refresh rate.  This setting helps
+	// avoid dashboards presenting stale live data
+	LiveNow *bool         `json:"liveNow,omitempty"`
+	Panels  []interface{} `json:"panels,omitempty"`
 
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
 	Refresh *interface{} `json:"refresh,omitempty"`
 
-	// Version of the current dashboard data
-	Revision int `json:"revision"`
+	// This property should only be used in dashboards defined by plugins.  It is a quick check
+	// to see if the version has changed since the last time.  Unclear why using the version property
+	// is insufficient.
+	Revision *int64 `json:"revision,omitempty"`
 
 	// Version of the JSON schema, incremented each time a Grafana update brings
 	// changes to said schema.
@@ -249,11 +257,11 @@ type Dashboard struct {
 	Style Style `json:"style"`
 
 	// Tags associated with dashboard.
-	Tags *[]string `json:"tags,omitempty"`
+	Tags []string `json:"tags,omitempty"`
 
 	// TODO docs
 	Templating *struct {
-		List *[]VariableModel `json:"list,omitempty"`
+		List []VariableModel `json:"list,omitempty"`
 	} `json:"templating,omitempty"`
 
 	// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
@@ -334,6 +342,20 @@ type DataSourceRef struct {
 	Uid *string `json:"uid,omitempty"`
 }
 
+// TODO docs
+type DataTransformerConfig struct {
+	// Disabled transformations are skipped
+	Disabled *bool          `json:"disabled,omitempty"`
+	Filter   *MatcherConfig `json:"filter,omitempty"`
+
+	// Unique identifier of transformer
+	Id string `json:"id"`
+
+	// Options to be passed to the transformer
+	// Valid options depend on the transformer id
+	Options interface{} `json:"options"`
+}
+
 // DynamicConfigValue defines model for DynamicConfigValue.
 type DynamicConfigValue struct {
 	Id    string       `json:"id"`
@@ -346,7 +368,7 @@ type FieldColor struct {
 	FixedColor *string `json:"fixedColor,omitempty"`
 
 	// The main color scheme mode
-	Mode interface{} `json:"mode"`
+	Mode string `json:"mode"`
 
 	// TODO docs
 	SeriesBy *FieldColorSeriesByMode `json:"seriesBy,omitempty"`
@@ -365,7 +387,7 @@ type FieldConfig struct {
 
 	// custom is specified by the PanelFieldConfig field
 	// in panel plugin schemas.
-	Custom *map[string]interface{} `json:"custom,omitempty"`
+	Custom map[string]interface{} `json:"custom,omitempty"`
 
 	// Significant digits (for display)
 	Decimals *float32 `json:"decimals,omitempty"`
@@ -384,12 +406,12 @@ type FieldConfig struct {
 	Filterable *bool `json:"filterable,omitempty"`
 
 	// The behavior when clicking on a result
-	Links *[]interface{} `json:"links,omitempty"`
+	Links []interface{} `json:"links,omitempty"`
 
 	// Convert input values into a display string
-	Mappings *[]ValueMapping `json:"mappings,omitempty"`
-	Max      *float32        `json:"max,omitempty"`
-	Min      *float32        `json:"min,omitempty"`
+	Mappings []interface{} `json:"mappings,omitempty"`
+	Max      *float32      `json:"max,omitempty"`
+	Min      *float32      `json:"min,omitempty"`
 
 	// Alternative to empty string
 	NoValue *string `json:"noValue,omitempty"`
@@ -434,13 +456,13 @@ type GraphPanelType string
 
 // GridPos defines model for GridPos.
 type GridPos struct {
-	// Panel
+	// H Panel
 	H int `json:"h"`
 
-	// true if fixed
+	// Static true if fixed
 	Static *bool `json:"static,omitempty"`
 
-	// Panel
+	// W Panel
 	W int `json:"w"`
 
 	// Panel x
@@ -486,7 +508,7 @@ type Panel struct {
 		Uid  *string `json:"uid,omitempty"`
 	} `json:"datasource,omitempty"`
 
-	// Description.
+	// Description Description.
 	Description *string           `json:"description,omitempty"`
 	FieldConfig FieldConfigSource `json:"fieldConfig"`
 	GridPos     *GridPos          `json:"gridPos,omitempty"`
@@ -501,7 +523,7 @@ type Panel struct {
 
 	// Panel links.
 	// TODO fill this out - seems there are a couple variants?
-	Links *[]Link `json:"links,omitempty"`
+	Links []Link `json:"links,omitempty"`
 
 	// TODO docs
 	MaxDataPoints *float32 `json:"maxDataPoints,omitempty"`
@@ -525,28 +547,28 @@ type Panel struct {
 	RepeatPanelId *int64 `json:"repeatPanelId,omitempty"`
 
 	// TODO docs
-	Tags *[]string `json:"tags,omitempty"`
+	Tags []string `json:"tags,omitempty"`
 
 	// TODO docs
-	Targets *[]Target `json:"targets,omitempty"`
+	Targets []Target `json:"targets,omitempty"`
 
 	// TODO docs - seems to be an old field from old dashboard alerts?
-	Thresholds *[]interface{} `json:"thresholds,omitempty"`
+	Thresholds []interface{} `json:"thresholds,omitempty"`
 
 	// TODO docs
 	// TODO tighter constraint
 	TimeFrom *string `json:"timeFrom,omitempty"`
 
 	// TODO docs
-	TimeRegions *[]interface{} `json:"timeRegions,omitempty"`
+	TimeRegions []interface{} `json:"timeRegions,omitempty"`
 
 	// TODO docs
 	// TODO tighter constraint
 	TimeShift *string `json:"timeShift,omitempty"`
 
 	// Panel title.
-	Title           *string          `json:"title,omitempty"`
-	Transformations []Transformation `json:"transformations"`
+	Title           *string                 `json:"title,omitempty"`
+	Transformations []DataTransformerConfig `json:"transformations"`
 
 	// Whether to display the panel without a background.
 	Transparent bool `json:"transparent"`
@@ -563,19 +585,18 @@ type PanelRepeatDirection string
 // TODO docs
 type RangeMap struct {
 	Options struct {
-		// to and from are `number | null` in current ts, really not sure what to do
+		// From to and from are `number | null` in current ts, really not sure what to do
 		From float64 `json:"from"`
 
 		// TODO docs
 		Result ValueMappingResult `json:"result"`
 		To     float64            `json:"to"`
 	} `json:"options"`
-	Type struct {
-		// Embedded struct due to allOf(#/components/schemas/MappingType)
-		MappingType `yaml:",inline"`
-		// Embedded fields due to inline allOf schema
-	} `json:"type"`
+	Type RangeMapType `json:"type"`
 }
+
+// RangeMapType defines model for RangeMap.Type.
+type RangeMapType string
 
 // TODO docs
 type RegexMap struct {
@@ -585,12 +606,11 @@ type RegexMap struct {
 		// TODO docs
 		Result ValueMappingResult `json:"result"`
 	} `json:"options"`
-	Type struct {
-		// Embedded struct due to allOf(#/components/schemas/MappingType)
-		MappingType `yaml:",inline"`
-		// Embedded fields due to inline allOf schema
-	} `json:"type"`
+	Type RegexMapType `json:"type"`
 }
+
+// RegexMapType defines model for RegexMap.Type.
+type RegexMapType string
 
 // Row panel
 type RowPanel struct {
@@ -617,7 +637,7 @@ type RowPanelType string
 // TODO docs
 type Snapshot struct {
 	// TODO docs
-	Created string `json:"created"`
+	Created time.Time `json:"created"`
 
 	// TODO docs
 	Expires string `json:"expires"`
@@ -641,7 +661,7 @@ type Snapshot struct {
 	OrgId int `json:"orgId"`
 
 	// TODO docs
-	Updated string `json:"updated"`
+	Updated time.Time `json:"updated"`
 
 	// TODO docs
 	Url *string `json:"url,omitempty"`
@@ -659,15 +679,14 @@ type SpecialValueMap struct {
 		// TODO docs
 		Result ValueMappingResult `json:"result"`
 	} `json:"options"`
-	Type struct {
-		// Embedded struct due to allOf(#/components/schemas/MappingType)
-		MappingType `yaml:",inline"`
-		// Embedded fields due to inline allOf schema
-	} `json:"type"`
+	Type SpecialValueMapType `json:"type"`
 }
 
 // SpecialValueMapOptionsMatch defines model for SpecialValueMap.Options.Match.
 type SpecialValueMapOptionsMatch string
+
+// SpecialValueMapType defines model for SpecialValueMap.Type.
+type SpecialValueMapType string
 
 // TODO docs
 type SpecialValueMatch string
@@ -679,12 +698,15 @@ type SpecialValueMatch string
 // with types derived from plugins in the Instance variant.
 // When working directly from CUE, importers can extend this
 // type directly to achieve the same effect.
-type Target map[string]interface{}
+type Target = map[string]interface{}
 
 // TODO docs
 type Threshold struct {
 	// TODO docs
 	Color string `json:"color"`
+
+	// Threshold index, an old property that is not needed an should only appear in older dashboards
+	Index *int32 `json:"index,omitempty"`
 
 	// TODO docs
 	// TODO are the values here enumerable into a disjunction?
@@ -708,26 +730,13 @@ type ThresholdsConfig struct {
 type ThresholdsMode string
 
 // TODO docs
-// FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
-type Transformation struct {
-	Filter  *MatcherConfig         `json:"filter,omitempty"`
-	Hide    bool                   `json:"hide"`
-	Id      string                 `json:"id"`
-	Options map[string]interface{} `json:"options"`
-}
-
-// TODO docs
 type ValueMap struct {
 	Options map[string]ValueMappingResult `json:"options"`
-	Type    struct {
-		// Embedded struct due to allOf(#/components/schemas/MappingType)
-		MappingType `yaml:",inline"`
-		// Embedded fields due to inline allOf schema
-	} `json:"type"`
+	Type    ValueMapType                  `json:"type"`
 }
 
-// TODO docs
-type ValueMapping interface{}
+// ValueMapType defines model for ValueMap.Type.
+type ValueMapType string
 
 // TODO docs
 type ValueMappingResult struct {
@@ -746,15 +755,15 @@ type VariableHide int
 // TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
 type VariableModel struct {
 	// Ref to a DataSource instance
-	Datasource  *DataSourceRef          `json:"datasource,omitempty"`
-	Description *string                 `json:"description,omitempty"`
-	Error       *map[string]interface{} `json:"error,omitempty"`
-	Global      bool                    `json:"global"`
-	Hide        VariableHide            `json:"hide"`
-	Id          string                  `json:"id"`
-	Index       int                     `json:"index"`
-	Label       *string                 `json:"label,omitempty"`
-	Name        string                  `json:"name"`
+	Datasource  *DataSourceRef         `json:"datasource,omitempty"`
+	Description *string                `json:"description,omitempty"`
+	Error       map[string]interface{} `json:"error,omitempty"`
+	Global      bool                   `json:"global"`
+	Hide        VariableHide           `json:"hide"`
+	Id          string                 `json:"id"`
+	Index       int                    `json:"index"`
+	Label       *string                `json:"label,omitempty"`
+	Name        string                 `json:"name"`
 
 	// TODO: Move this into a separated QueryVariableModel type
 	Query        *interface{} `json:"query,omitempty"`

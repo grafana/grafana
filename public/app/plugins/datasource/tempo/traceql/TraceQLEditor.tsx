@@ -20,6 +20,7 @@ interface Props {
   onChange: (val: string) => void;
   onRunQuery: () => void;
   datasource: TempoDatasource;
+  readOnly?: boolean;
 }
 
 export function TraceQLEditor(props: Props) {
@@ -35,6 +36,7 @@ export function TraceQLEditor(props: Props) {
       onBlur={onChange}
       onChange={onChange}
       containerStyles={styles.queryField}
+      readOnly={props.readOnly}
       monacoOptions={{
         folding: false,
         fontSize: 14,
@@ -52,9 +54,11 @@ export function TraceQLEditor(props: Props) {
       }}
       onBeforeEditorMount={ensureTraceQL}
       onEditorDidMount={(editor, monaco) => {
-        setupAutocompleteFn(editor, monaco, setupRegisterInteractionCommand(editor));
-        setupActions(editor, monaco, onRunQuery);
-        setupPlaceholder(editor, monaco, styles);
+        if (!props.readOnly) {
+          setupAutocompleteFn(editor, monaco, setupRegisterInteractionCommand(editor));
+          setupActions(editor, monaco, onRunQuery);
+          setupPlaceholder(editor, monaco, styles);
+        }
         setupAutoSize(editor);
       }}
     />
@@ -148,6 +152,11 @@ function useAutocomplete(datasource: TempoDatasource) {
         const tags = datasource.languageProvider.getTags();
 
         if (tags) {
+          // This is needed because the /api/v2/search/tag/${tag}/values API expects "status" and the v1 API expects "status.code"
+          // so Tempo doesn't send anything and we inject it here for the autocomplete
+          if (!tags.find((t) => t === 'status')) {
+            tags.push('status');
+          }
           providerRef.current.setTags(tags);
         }
       } catch (error) {

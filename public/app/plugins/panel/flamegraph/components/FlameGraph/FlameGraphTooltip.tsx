@@ -9,19 +9,19 @@ import { TooltipData, SampleUnit } from '../types';
 type Props = {
   tooltipRef: LegacyRef<HTMLDivElement>;
   tooltipData: TooltipData;
-  showTooltip: boolean;
+  getLabelValue: (label: string | number) => string;
 };
 
-const FlameGraphTooltip = ({ tooltipRef, tooltipData, showTooltip }: Props) => {
+const FlameGraphTooltip = ({ tooltipRef, tooltipData, getLabelValue }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div ref={tooltipRef} className={styles.tooltip}>
-      {tooltipData && showTooltip && (
+      {tooltipData && (
         <Tooltip
           content={
             <div>
-              <p>{tooltipData.name}</p>
+              <p>{getLabelValue(tooltipData.name)}</p>
               <p className={styles.lastParagraph}>
                 {tooltipData.unitTitle}
                 <br />

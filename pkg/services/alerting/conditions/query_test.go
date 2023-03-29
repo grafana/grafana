@@ -10,7 +10,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
-	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -22,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func newTimeSeriesPointsFromArgs(values ...float64) legacydata.DataTimeSeriesPoints {
@@ -48,7 +48,7 @@ func TestQueryCondition(t *testing.T) {
 			Store:            store,
 			DatasourceService: &fd.FakeDataSourceService{
 				DataSources: []*datasources.DataSource{
-					{Id: 1, Type: datasources.DS_GRAPHITE},
+					{ID: 1, Type: datasources.DS_GRAPHITE},
 				},
 			},
 		}
@@ -276,7 +276,7 @@ func TestFrameToSeriesSlice(t *testing.T) {
 				}),
 				data.NewField(`Values Int64s`, data.Labels{"Animal Factor": "cat"}, []*int64{
 					nil,
-					pointer.Int64(3),
+					util.Pointer(int64(3)),
 				}),
 				data.NewField(`Values Floats`, data.Labels{"Animal Factor": "sloth"}, []float64{
 					2.0,

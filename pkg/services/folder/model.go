@@ -42,6 +42,12 @@ type Folder struct {
 	HasACL    bool
 }
 
+var GeneralFolder = Folder{ID: 0, Title: "General"}
+
+func (f *Folder) IsGeneral() bool {
+	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
+}
+
 type FolderDTO struct {
 	Folder
 

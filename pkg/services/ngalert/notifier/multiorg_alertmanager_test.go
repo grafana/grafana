@@ -24,9 +24,7 @@ import (
 )
 
 func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
-	configStore := &FakeConfigStore{
-		configs: map[int64]*models.AlertConfiguration{},
-	}
+	configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{})
 	orgStore := &FakeOrgStore{
 		orgs: []int64{1, 2, 3},
 	}
@@ -62,6 +60,13 @@ grafana_alerting_active_configurations 3
 # TYPE grafana_alerting_discovered_configurations gauge
 grafana_alerting_discovered_configurations 3
 `), "grafana_alerting_discovered_configurations", "grafana_alerting_active_configurations"))
+
+		// Configurations should be marked as successfully applied.
+		for _, org := range orgStore.orgs {
+			configs, ok := configStore.appliedConfigs[org]
+			require.True(t, ok)
+			require.Len(t, configs, 1)
+		}
 	}
 	// When an org is removed, it should detect it.
 	{
@@ -148,13 +153,14 @@ grafana_alerting_discovered_configurations 4
 
 func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T) {
 	// Include a broken configuration for organization 2.
-	configStore := &FakeConfigStore{
-		configs: map[int64]*models.AlertConfiguration{
-			2: {AlertmanagerConfiguration: brokenConfig, OrgID: 2},
-		},
-	}
+	var orgWithBadConfig int64 = 2
+	configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{
+		2: {AlertmanagerConfiguration: brokenConfig, OrgID: orgWithBadConfig},
+	})
+
+	orgs := []int64{1, 2, 3}
 	orgStore := &FakeOrgStore{
-		orgs: []int64{1, 2, 3},
+		orgs: orgs,
 	}
 
 	tmpDir := t.TempDir()
@@ -175,6 +181,14 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 	require.NoError(t, err)
 	ctx := context.Background()
 
+	// No successfully applied configurations should be found at first.
+	{
+		for _, org := range orgs {
+			_, ok := configStore.appliedConfigs[org]
+			require.False(t, ok)
+		}
+	}
+
 	// When you sync the first time, the alertmanager is created but is doesn't become ready until you have a configuration applied.
 	{
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
@@ -182,6 +196,17 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		require.True(t, mam.alertmanagers[1].Ready())
 		require.False(t, mam.alertmanagers[2].Ready())
 		require.True(t, mam.alertmanagers[3].Ready())
+
+		// Configurations should be marked as successfully applied for all orgs except for org 2.
+		for _, org := range orgs {
+			configs, ok := configStore.appliedConfigs[org]
+			if org == orgWithBadConfig {
+				require.False(t, ok)
+			} else {
+				require.True(t, ok)
+				require.Len(t, configs, 1)
+			}
+		}
 	}
 
 	// On the next sync, it never panics and alertmanager is still not ready.
@@ -191,6 +216,17 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		require.True(t, mam.alertmanagers[1].Ready())
 		require.False(t, mam.alertmanagers[2].Ready())
 		require.True(t, mam.alertmanagers[3].Ready())
+
+		// The configuration should still be marked as successfully applied for all orgs except for org 2.
+		for _, org := range orgs {
+			configs, ok := configStore.appliedConfigs[org]
+			if org == orgWithBadConfig {
+				require.False(t, ok)
+			} else {
+				require.True(t, ok)
+				require.Len(t, configs, 1)
+			}
+		}
 	}
 
 	// If we fix the configuration, it becomes ready.
@@ -201,13 +237,18 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		require.True(t, mam.alertmanagers[1].Ready())
 		require.True(t, mam.alertmanagers[2].Ready())
 		require.True(t, mam.alertmanagers[3].Ready())
+
+		// All configurations should be marked as successfully applied.
+		for _, org := range orgs {
+			configs, ok := configStore.appliedConfigs[org]
+			require.True(t, ok)
+			require.Len(t, configs, 1)
+		}
 	}
 }
 
 func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
-	configStore := &FakeConfigStore{
-		configs: map[int64]*models.AlertConfiguration{},
-	}
+	configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{})
 	orgStore := &FakeOrgStore{
 		orgs: []int64{1, 2, 3},
 	}

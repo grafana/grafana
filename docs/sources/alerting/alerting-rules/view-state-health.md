@@ -22,8 +22,9 @@ There are three key components: [alert rule state](#alert-rule-state), [alert in
 
 To view the state and health of your alert rules:
 
-1. Navigate to Alerting > Alert rules.
-2. Click an alert rule to view its state, health and state history.
+1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. Click **Alert rules** to view the list of existing alerts.
+1. Click an alert rule to view its state, health, and state history.
 
 ## Alert rule state
 

@@ -1,11 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { BackendSrv, setBackendSrv } from '@grafana/runtime';
-
-import { configureStore } from '../../store/configureStore';
 
 import { CreateTeam } from './CreateTeam';
 
@@ -35,11 +33,10 @@ setBackendSrv({
 } as unknown as BackendSrv);
 
 const setup = () => {
-  const store = configureStore();
   return render(
-    <Provider store={store}>
+    <TestProvider>
       <CreateTeam />
-    </Provider>
+    </TestProvider>
   );
 };
 

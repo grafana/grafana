@@ -1,7 +1,7 @@
 package migrations
 
 import (
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -34,7 +34,7 @@ func addLibraryElementsMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add index library_element org_id-folder_id-name-kind", migrator.NewAddIndexMigration(libraryElementsV1, libraryElementsV1.Indices[0]))
 
 	libraryElementConnectionV1 := migrator.Table{
-		Name: models.LibraryElementConnectionTableName,
+		Name: model.LibraryElementConnectionTableName,
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "element_id", Type: migrator.DB_BigInt, Nullable: false},
@@ -48,8 +48,8 @@ func addLibraryElementsMigrations(mg *migrator.Migrator) {
 		},
 	}
 
-	mg.AddMigration("create "+models.LibraryElementConnectionTableName+" table v1", migrator.NewAddTableMigration(libraryElementConnectionV1))
-	mg.AddMigration("add index "+models.LibraryElementConnectionTableName+" element_id-kind-connection_id", migrator.NewAddIndexMigration(libraryElementConnectionV1, libraryElementConnectionV1.Indices[0]))
+	mg.AddMigration("create "+model.LibraryElementConnectionTableName+" table v1", migrator.NewAddTableMigration(libraryElementConnectionV1))
+	mg.AddMigration("add index "+model.LibraryElementConnectionTableName+" element_id-kind-connection_id", migrator.NewAddIndexMigration(libraryElementConnectionV1, libraryElementConnectionV1.Indices[0]))
 
 	mg.AddMigration("add unique index library_element org_id_uid", migrator.NewAddIndexMigration(libraryElementsV1, &migrator.Index{
 		Cols: []string{"org_id", "uid"}, Type: migrator.UniqueIndex,
@@ -58,4 +58,7 @@ func addLibraryElementsMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("increase max description length to 2048", migrator.NewTableCharsetMigration("library_element", []*migrator.Column{
 		{Name: "description", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false},
 	}))
+
+	mg.AddMigration("alter library_element model to mediumtext", migrator.NewRawSQLMigration("").
+		Mysql("ALTER TABLE library_element MODIFY model MEDIUMTEXT NOT NULL;"))
 }

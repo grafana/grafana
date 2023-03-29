@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 // Define the storage implementation. We're generating the mock implementation
@@ -190,11 +191,11 @@ func (d *PublicDashboardStoreImpl) ExistsEnabledByAccessToken(ctx context.Contex
 	return hasPublicDashboard, err
 }
 
-// GetOrgIdByAccessToken Returns the public dashboard OrgId if exists and is enabled.
+// GetOrgIdByAccessToken Returns the public dashboard OrgId if exists.
 func (d *PublicDashboardStoreImpl) GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error) {
 	var orgId int64
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		sql := "SELECT org_id FROM dashboard_public WHERE access_token=? AND is_enabled=true"
+		sql := "SELECT org_id FROM dashboard_public WHERE access_token=?"
 
 		_, err := dbSession.SQL(sql, accessToken).Get(&orgId)
 		if err != nil {
@@ -232,10 +233,11 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 			return err
 		}
 
-		sqlResult, err := sess.Exec("UPDATE dashboard_public SET is_enabled = ?, annotations_enabled = ?, time_selection_enabled = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
+		sqlResult, err := sess.Exec("UPDATE dashboard_public SET is_enabled = ?, annotations_enabled = ?, time_selection_enabled = ?, share = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
 			cmd.PublicDashboard.IsEnabled,
 			cmd.PublicDashboard.AnnotationsEnabled,
 			cmd.PublicDashboard.TimeSelectionEnabled,
+			cmd.PublicDashboard.Share,
 			string(timeSettingsJSON),
 			cmd.PublicDashboard.UpdatedBy,
 			cmd.PublicDashboard.UpdatedAt.UTC().Format("2006-01-02 15:04:05"),
@@ -254,8 +256,8 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 }
 
 // Deletes a public dashboard
-func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid string) (int64, error) {
-	dashboard := &PublicDashboard{OrgId: orgId, Uid: uid}
+func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, uid string) (int64, error) {
+	dashboard := &PublicDashboard{Uid: uid}
 	var affectedRows int64
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
@@ -265,4 +267,21 @@ func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid 
 	})
 
 	return affectedRows, err
+}
+
+func (d *PublicDashboardStoreImpl) FindByDashboardFolder(ctx context.Context, dashboard *dashboards.Dashboard) ([]*PublicDashboard, error) {
+	if dashboard == nil || !dashboard.IsFolder {
+		return nil, nil
+	}
+
+	var pubdashes []*PublicDashboard
+
+	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return sess.SQL("SELECT * from dashboard_public WHERE (dashboard_uid, org_id) IN (SELECT uid, org_id FROM dashboard WHERE folder_id = ?)", dashboard.ID).Find(&pubdashes)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return pubdashes, nil
 }

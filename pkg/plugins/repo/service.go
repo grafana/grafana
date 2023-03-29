@@ -8,22 +8,22 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type Manager struct {
 	client  *Client
 	baseURL string
 
-	log logger.Logger
+	log log.PrettyLogger
 }
 
 func ProvideService() *Manager {
 	defaultBaseURL := "https://grafana.com/api/plugins"
-	return New(false, defaultBaseURL, logger.NewLogger("plugin.repository"))
+	return New(false, defaultBaseURL, log.NewPrettyLogger("plugin.repository"))
 }
 
-func New(skipTLSVerify bool, baseURL string, logger logger.Logger) *Manager {
+func New(skipTLSVerify bool, baseURL string, logger log.PrettyLogger) *Manager {
 	return &Manager{
 		client:  newClient(skipTLSVerify, logger),
 		baseURL: baseURL,

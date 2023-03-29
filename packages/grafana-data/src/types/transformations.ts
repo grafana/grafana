@@ -1,6 +1,6 @@
 import { MonoTypeOperatorFunction } from 'rxjs';
 
-import { MatcherConfig } from '@grafana/schema';
+import { MatcherConfig, DataTransformerConfig } from '@grafana/schema';
 
 import { RegistryItemWithOptions } from '../utils/Registry';
 
@@ -31,6 +31,13 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
 }
 
 /**
+ * Function that returns a cutsom transform operator for transforming data frames
+ *
+ * @public
+ */
+export type CustomTransformOperator = (context: DataTransformContext) => MonoTypeOperatorFunction<DataFrame[]>;
+
+/**
  * Many transformations can be called with a simple synchronous function.
  * When a transformer is defined, it should have identical behavior to using the operator
  *
@@ -41,27 +48,9 @@ export interface SynchronousDataTransformerInfo<TOptions = any> extends DataTran
 }
 
 /**
- * @public
+ * @deprecated use TransformationConfig from schema
  */
-export interface DataTransformerConfig<TOptions = any> {
-  /**
-   * Unique identifier of transformer
-   */
-  id: string;
-
-  /**
-   * Disabled transformations are skipped
-   */
-  disabled?: boolean;
-
-  /** Optional frame matcher.  When missing it will be applied to all results  */
-  filter?: MatcherConfig;
-
-  /**
-   * Options to be passed to the transformer
-   */
-  options: TOptions;
-}
+export type { DataTransformerConfig };
 
 export type FrameMatcher = (frame: DataFrame) => boolean;
 export type FieldMatcher = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;

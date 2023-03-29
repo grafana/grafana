@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy/ts"
 	"github.com/grafana/cuetsy/ts/ast"
-	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/typescript"
 )
@@ -39,20 +39,20 @@ func (gen *genTSVeneerIndex) JennyName() string {
 	return "TSVeneerIndexJenny"
 }
 
-func (gen *genTSVeneerIndex) Generate(decls ...*DefForGen) (*codejen.File, error) {
+func (gen *genTSVeneerIndex) Generate(kinds ...kindsys.Kind) (*codejen.File, error) {
 	tsf := new(ast.File)
-	for _, def := range decls {
+	for _, def := range kinds {
 		sch := def.Lineage().Latest()
 		f, err := typescript.GenerateTypes(sch, &typescript.TypeConfig{
-			RootName: def.Properties.Common().Name,
-			Group:    def.Properties.Common().LineageIsGroup,
+			RootName: def.Props().Common().Name,
+			Group:    def.Props().Common().LineageIsGroup,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", def.Properties.Common().Name, err)
+			return nil, fmt.Errorf("%s: %w", def.Props().Common().Name, err)
 		}
 		elems, err := gen.extractTSIndexVeneerElements(def, f)
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", def.Properties.Common().Name, err)
+			return nil, fmt.Errorf("%s: %w", def.Props().Common().Name, err)
 		}
 		tsf.Nodes = append(tsf.Nodes, elems...)
 	}
@@ -60,9 +60,9 @@ func (gen *genTSVeneerIndex) Generate(decls ...*DefForGen) (*codejen.File, error
 	return codejen.NewFile(filepath.Join(gen.dir, "index.gen.ts"), []byte(tsf.String()), gen), nil
 }
 
-func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def *DefForGen, tf *ast.File) ([]ast.Decl, error) {
+func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def kindsys.Kind, tf *ast.File) ([]ast.Decl, error) {
 	lin := def.Lineage()
-	comm := def.Properties.Common()
+	comm := def.Props().Common()
 
 	// Check the root, then walk the tree
 	rootv := lin.Latest().Underlying()
@@ -139,7 +139,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def *DefForGen, tf *as
 	}
 
 	vpath := fmt.Sprintf("v%v", thema.LatestVersion(lin)[0])
-	if def.Properties.Common().Maturity.Less(kindsys.MaturityStable) {
+	if def.Props().Common().Maturity.Less(kindsys.MaturityStable) {
 		vpath = "x"
 	}
 

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/alerting/alerting"
+	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -19,6 +19,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -77,11 +78,11 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postab
 
 	silenceID, err := am.CreateSilence(&postableSilence)
 	if err != nil {
-		if errors.Is(err, alerting.ErrSilenceNotFound) {
+		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
 		}
 
-		if errors.Is(err, alerting.ErrCreateSilenceBadPayload) {
+		if errors.Is(err, alertingNotify.ErrCreateSilenceBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 
@@ -113,7 +114,7 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *contextmodel.ReqContext, silenc
 	}
 
 	if err := am.DeleteSilence(silenceID); err != nil {
-		if errors.Is(err, alerting.ErrSilenceNotFound) {
+		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -146,7 +147,7 @@ func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *contextmodel.ReqContext) res
 		c.Query("receiver"),
 	)
 	if err != nil {
-		if errors.Is(err, alerting.ErrGetAlertGroupsBadPayload) {
+		if errors.Is(err, alertingNotify.ErrGetAlertGroupsBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error
@@ -170,10 +171,10 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *contextmodel.ReqContext) response
 		c.Query("receiver"),
 	)
 	if err != nil {
-		if errors.Is(err, alerting.ErrGetAlertsBadPayload) {
+		if errors.Is(err, alertingNotify.ErrGetAlertsBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
-		if errors.Is(err, alerting.ErrGetAlertsUnavailable) {
+		if errors.Is(err, alertingNotify.ErrGetAlertsUnavailable) {
 			return ErrResp(http.StatusServiceUnavailable, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error
@@ -191,7 +192,7 @@ func (srv AlertmanagerSrv) RouteGetSilence(c *contextmodel.ReqContext, silenceID
 
 	gettableSilence, err := am.GetSilence(silenceID)
 	if err != nil {
-		if errors.Is(err, alerting.ErrSilenceNotFound) {
+		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error
@@ -208,7 +209,7 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *contextmodel.ReqContext) response
 
 	gettableSilences, err := am.ListSilences(c.QueryStrings("filter"))
 	if err != nil {
-		if errors.Is(err, alerting.ErrListSilencesBadPayload) {
+		if errors.Is(err, alertingNotify.ErrListSilencesBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error
@@ -267,7 +268,9 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	if err := body.ProcessConfig(srv.crypto.Encrypt); err != nil {
+	if err := body.ProcessConfig(func(ctx context.Context, payload []byte) ([]byte, error) {
+		return srv.crypto.Encrypt(ctx, payload, secrets.WithoutScope())
+	}); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
 	}
 
@@ -288,7 +291,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 
 	result, err := am.TestReceivers(ctx, body)
 	if err != nil {
-		if errors.Is(err, alerting.ErrNoReceivers) {
+		if errors.Is(err, alertingNotify.ErrNoReceivers) {
 			return response.Error(http.StatusBadRequest, "", err)
 		}
 		return response.Error(http.StatusInternalServerError, "", err)
@@ -362,7 +365,7 @@ func statusForTestReceivers(v []notifier.TestReceiverResult) int {
 			if next.Error != nil {
 				var (
 					invalidReceiverErr notifier.InvalidReceiverError
-					receiverTimeoutErr alerting.ReceiverTimeoutError
+					receiverTimeoutErr alertingNotify.ReceiverTimeoutError
 				)
 				if errors.As(next.Error, &invalidReceiverErr) {
 					numBadRequests += 1

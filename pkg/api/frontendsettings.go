@@ -4,15 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -20,7 +19,7 @@ import (
 )
 
 func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
-	settings, err := hs.getFrontendSettingsMap(c)
+	settings, err := hs.getFrontendSettings(c)
 	if err != nil {
 		c.JsonApiErr(400, "Failed to get frontend settings", err)
 		return
@@ -29,24 +28,22 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 	c.JSON(http.StatusOK, settings)
 }
 
-// getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
-func (hs *HTTPServer) getFrontendSettingsMap(c *contextmodel.ReqContext) (map[string]interface{}, error) {
-	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgID)
+// getFrontendSettings returns a json object with all the settings needed for front end initialisation.
+func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.FrontendSettingsDTO, error) {
+	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return nil, err
 	}
 
-	pluginsToPreload := make([]*plugins.PreloadPlugin, 0)
-	for _, app := range enabledPlugins[plugins.App] {
-		if app.Preload {
-			pluginsToPreload = append(pluginsToPreload, &plugins.PreloadPlugin{
-				Path:    app.Module,
-				Version: app.Info.Version,
-			})
-		}
+	apps := make(map[string]*plugins.AppDTO, 0)
+	for _, ap := range availablePlugins[plugins.App] {
+		apps[ap.Plugin.ID] = newAppDTO(
+			ap.Plugin,
+			ap.Settings,
+		)
 	}
 
-	dataSources, err := hs.getFSDataSources(c, enabledPlugins)
+	dataSources, err := hs.getFSDataSources(c, availablePlugins)
 	if err != nil {
 		return nil, err
 	}
@@ -59,14 +56,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *contextmodel.ReqContext) (map[st
 	}
 
 	panels := make(map[string]plugins.PanelDTO)
-	for _, panel := range enabledPlugins[plugins.Panel] {
+	for _, ap := range availablePlugins[plugins.Panel] {
+		panel := ap.Plugin
 		if panel.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
 			continue
-		}
-
-		hideFromList := panel.HideFromList
-		if panel.ID == "flamegraph" {
-			hideFromList = !hs.Features.IsEnabled(featuremgmt.FlagFlameGraph)
 		}
 
 		panels[panel.ID] = plugins.PanelDTO{
@@ -76,7 +69,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *contextmodel.ReqContext) (map[st
 			Module:        panel.Module,
 			BaseURL:       panel.BaseURL,
 			SkipDataQuery: panel.SkipDataQuery,
-			HideFromList:  hideFromList,
+			HideFromList:  panel.HideFromList,
 			ReleaseState:  string(panel.State),
 			Signature:     string(panel.Signature),
 			Sort:          getPanelSort(panel.ID),
@@ -97,121 +90,139 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *contextmodel.ReqContext) (map[st
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
 	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 
-	jsonObj := map[string]interface{}{
-		"defaultDatasource":                   defaultDS,
-		"datasources":                         dataSources,
-		"minRefreshInterval":                  setting.MinRefreshInterval,
-		"panels":                              panels,
-		"appUrl":                              hs.Cfg.AppURL,
-		"appSubUrl":                           hs.Cfg.AppSubURL,
-		"allowOrgCreate":                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		"authProxyEnabled":                    setting.AuthProxyEnabled,
-		"ldapEnabled":                         hs.Cfg.LDAPEnabled,
-		"jwtHeaderName":                       hs.Cfg.JWTAuthHeaderName,
-		"jwtUrlLogin":                         hs.Cfg.JWTAuthURLLogin,
-		"alertingEnabled":                     setting.AlertingEnabled,
-		"alertingErrorOrTimeout":              setting.AlertingErrorOrTimeout,
-		"alertingNoDataOrNullValues":          setting.AlertingNoDataOrNullValues,
-		"alertingMinInterval":                 setting.AlertingMinInterval,
-		"liveEnabled":                         hs.Cfg.LiveMaxConnections != 0,
-		"autoAssignOrg":                       setting.AutoAssignOrg,
-		"verifyEmailEnabled":                  setting.VerifyEmailEnabled,
-		"sigV4AuthEnabled":                    setting.SigV4AuthEnabled,
-		"azureAuthEnabled":                    setting.AzureAuthEnabled,
-		"rbacEnabled":                         hs.Cfg.RBACEnabled,
-		"exploreEnabled":                      setting.ExploreEnabled,
-		"helpEnabled":                         setting.HelpEnabled,
-		"profileEnabled":                      setting.ProfileEnabled,
-		"queryHistoryEnabled":                 hs.Cfg.QueryHistoryEnabled,
-		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
-		"googleAnalytics4Id":                  setting.GoogleAnalytics4Id,
-		"GoogleAnalytics4SendManualPageViews": setting.GoogleAnalytics4SendManualPageViews,
-		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
-		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
-		"rudderstackSdkUrl":                   setting.RudderstackSdkUrl,
-		"rudderstackConfigUrl":                setting.RudderstackConfigUrl,
-		"feedbackLinksEnabled":                hs.Cfg.FeedbackLinksEnabled,
-		"applicationInsightsConnectionString": hs.Cfg.ApplicationInsightsConnectionString,
-		"applicationInsightsEndpointUrl":      hs.Cfg.ApplicationInsightsEndpointUrl,
-		"disableLoginForm":                    setting.DisableLoginForm,
-		"disableUserSignUp":                   !setting.AllowUserSignUp,
-		"loginHint":                           setting.LoginHint,
-		"passwordHint":                        setting.PasswordHint,
-		"externalUserMngInfo":                 setting.ExternalUserMngInfo,
-		"externalUserMngLinkUrl":              setting.ExternalUserMngLinkUrl,
-		"externalUserMngLinkName":             setting.ExternalUserMngLinkName,
-		"viewersCanEdit":                      setting.ViewersCanEdit,
-		"angularSupportEnabled":               hs.Cfg.AngularSupportEnabled,
-		"editorsCanAdmin":                     hs.Cfg.EditorsCanAdmin,
-		"disableSanitizeHtml":                 hs.Cfg.DisableSanitizeHtml,
-		"pluginsToPreload":                    pluginsToPreload,
-		"auth": map[string]interface{}{
-			"OAuthSkipOrgRoleUpdateSync": hs.Cfg.OAuthSkipOrgRoleUpdateSync,
-			"SAMLSkipOrgRoleSync":        hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
-			"LDAPSkipOrgRoleSync":        hs.Cfg.LDAPSkipOrgRoleSync,
-			"GithubSkipOrgRoleSync":      hs.Cfg.GithubSkipOrgRoleSync,
-			"GoogleSkipOrgRoleSync":      hs.Cfg.GoogleSkipOrgRoleSync,
-			"JWTAuthSkipOrgRoleSync":     hs.Cfg.JWTAuthSkipOrgRoleSync,
-			"GrafanaComSkipOrgRoleSync":  hs.Cfg.GrafanaComSkipOrgRoleSync,
-			"GitLabSkipOrgRoleSync":      hs.Cfg.GitLabSkipOrgRoleSync,
-			"AzureADSkipOrgRoleSync":     hs.Cfg.AzureADSkipOrgRoleSync,
-			"OktaSkipOrgRoleSync":        hs.Cfg.OktaSkipOrgRoleSync,
-			"DisableSyncLock":            hs.Cfg.DisableSyncLock,
+	frontendSettings := &dtos.FrontendSettingsDTO{
+		DefaultDatasource:                   defaultDS,
+		Datasources:                         dataSources,
+		MinRefreshInterval:                  setting.MinRefreshInterval,
+		Panels:                              panels,
+		Apps:                                apps,
+		AppUrl:                              hs.Cfg.AppURL,
+		AppSubUrl:                           hs.Cfg.AppSubURL,
+		AllowOrgCreate:                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		AuthProxyEnabled:                    hs.Cfg.AuthProxyEnabled,
+		LdapEnabled:                         hs.Cfg.LDAPAuthEnabled,
+		JwtHeaderName:                       hs.Cfg.JWTAuthHeaderName,
+		JwtUrlLogin:                         hs.Cfg.JWTAuthURLLogin,
+		AlertingErrorOrTimeout:              setting.AlertingErrorOrTimeout,
+		AlertingNoDataOrNullValues:          setting.AlertingNoDataOrNullValues,
+		AlertingMinInterval:                 setting.AlertingMinInterval,
+		LiveEnabled:                         hs.Cfg.LiveMaxConnections != 0,
+		AutoAssignOrg:                       hs.Cfg.AutoAssignOrg,
+		VerifyEmailEnabled:                  setting.VerifyEmailEnabled,
+		SigV4AuthEnabled:                    setting.SigV4AuthEnabled,
+		AzureAuthEnabled:                    setting.AzureAuthEnabled,
+		RbacEnabled:                         hs.Cfg.RBACEnabled,
+		ExploreEnabled:                      setting.ExploreEnabled,
+		HelpEnabled:                         setting.HelpEnabled,
+		ProfileEnabled:                      setting.ProfileEnabled,
+		QueryHistoryEnabled:                 hs.Cfg.QueryHistoryEnabled,
+		GoogleAnalyticsId:                   hs.Cfg.GoogleAnalyticsID,
+		GoogleAnalytics4Id:                  hs.Cfg.GoogleAnalytics4ID,
+		GoogleAnalytics4SendManualPageViews: hs.Cfg.GoogleAnalytics4SendManualPageViews,
+		RudderstackWriteKey:                 hs.Cfg.RudderstackWriteKey,
+		RudderstackDataPlaneUrl:             hs.Cfg.RudderstackDataPlaneURL,
+		RudderstackSdkUrl:                   hs.Cfg.RudderstackSDKURL,
+		RudderstackConfigUrl:                hs.Cfg.RudderstackConfigURL,
+		FeedbackLinksEnabled:                hs.Cfg.FeedbackLinksEnabled,
+		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
+		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,
+		DisableLoginForm:                    hs.Cfg.DisableLoginForm,
+		DisableUserSignUp:                   !setting.AllowUserSignUp,
+		LoginHint:                           setting.LoginHint,
+		PasswordHint:                        setting.PasswordHint,
+		ExternalUserMngInfo:                 setting.ExternalUserMngInfo,
+		ExternalUserMngLinkUrl:              setting.ExternalUserMngLinkUrl,
+		ExternalUserMngLinkName:             setting.ExternalUserMngLinkName,
+		ViewersCanEdit:                      hs.Cfg.ViewersCanEdit,
+		AngularSupportEnabled:               hs.Cfg.AngularSupportEnabled,
+		EditorsCanAdmin:                     hs.Cfg.EditorsCanAdmin,
+		DisableSanitizeHtml:                 hs.Cfg.DisableSanitizeHtml,
+		DateFormats:                         hs.Cfg.DateFormats,
+
+		Auth: dtos.FrontendSettingsAuthDTO{
+			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
+			SAMLSkipOrgRoleSync:         hs.Cfg.SAMLSkipOrgRoleSync,
+			LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
+			GoogleSkipOrgRoleSync:       hs.Cfg.GoogleSkipOrgRoleSync,
+			JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuthSkipOrgRoleSync,
+			GrafanaComSkipOrgRoleSync:   hs.Cfg.GrafanaComSkipOrgRoleSync,
+			GenericOAuthSkipOrgRoleSync: hs.Cfg.GenericOAuthSkipOrgRoleSync,
+			AzureADSkipOrgRoleSync:      hs.Cfg.AzureADSkipOrgRoleSync,
+			GithubSkipOrgRoleSync:       hs.Cfg.GitHubSkipOrgRoleSync,
+			GitLabSkipOrgRoleSync:       hs.Cfg.GitLabSkipOrgRoleSync,
+			OktaSkipOrgRoleSync:         hs.Cfg.OktaSkipOrgRoleSync,
+			DisableSyncLock:             hs.Cfg.DisableSyncLock,
 		},
-		"buildInfo": map[string]interface{}{
-			"hideVersion":   hideVersion,
-			"version":       version,
-			"commit":        commit,
-			"buildstamp":    buildstamp,
-			"edition":       hs.License.Edition(),
-			"latestVersion": hs.grafanaUpdateChecker.LatestVersion(),
-			"hasUpdate":     hs.grafanaUpdateChecker.UpdateAvailable(),
-			"env":           setting.Env,
+
+		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
+			HideVersion:   hideVersion,
+			Version:       version,
+			Commit:        commit,
+			Buildstamp:    buildstamp,
+			Edition:       hs.License.Edition(),
+			LatestVersion: hs.grafanaUpdateChecker.LatestVersion(),
+			HasUpdate:     hs.grafanaUpdateChecker.UpdateAvailable(),
+			Env:           setting.Env,
 		},
-		"licenseInfo": map[string]interface{}{
-			"expiry":          hs.License.Expiry(),
-			"stateInfo":       hs.License.StateInfo(),
-			"licenseUrl":      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, licensing.PageAccess)),
-			"edition":         hs.License.Edition(),
-			"enabledFeatures": hs.License.EnabledFeatures(),
+
+		LicenseInfo: dtos.FrontendSettingsLicenseInfoDTO{
+			Expiry:          hs.License.Expiry(),
+			StateInfo:       hs.License.StateInfo(),
+			LicenseUrl:      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, licensing.PageAccess)),
+			Edition:         hs.License.Edition(),
+			EnabledFeatures: hs.License.EnabledFeatures(),
 		},
-		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
-		"rendererAvailable":                hs.RenderService.IsAvailable(c.Req.Context()),
-		"rendererVersion":                  hs.RenderService.Version(),
-		"secretsManagerPluginEnabled":      secretsManagerPluginEnabled,
-		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
-		"sentry":                           hs.Cfg.Sentry,
-		"grafanaJavascriptAgent":           hs.Cfg.GrafanaJavascriptAgent,
-		"pluginCatalogURL":                 hs.Cfg.PluginCatalogURL,
-		"pluginAdminEnabled":               hs.Cfg.PluginAdminEnabled,
-		"pluginAdminExternalManageEnabled": hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
-		"pluginCatalogHiddenPlugins":       hs.Cfg.PluginCatalogHiddenPlugins,
-		"expressionsEnabled":               hs.Cfg.ExpressionsEnabled,
-		"awsAllowedAuthProviders":          hs.Cfg.AWSAllowedAuthProviders,
-		"awsAssumeRoleEnabled":             hs.Cfg.AWSAssumeRoleEnabled,
-		"supportBundlesEnabled":            isSupportBundlesEnabled(hs),
-		"azure": map[string]interface{}{
-			"cloud":                  hs.Cfg.Azure.Cloud,
-			"managedIdentityEnabled": hs.Cfg.Azure.ManagedIdentityEnabled,
+
+		FeatureToggles:                   hs.Features.GetEnabled(c.Req.Context()),
+		AnonymousEnabled:                 hs.Cfg.AnonymousEnabled,
+		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
+		RendererVersion:                  hs.RenderService.Version(),
+		SecretsManagerPluginEnabled:      secretsManagerPluginEnabled,
+		Http2Enabled:                     hs.Cfg.Protocol == setting.HTTP2Scheme,
+		Sentry:                           hs.Cfg.Sentry,
+		GrafanaJavascriptAgent:           hs.Cfg.GrafanaJavascriptAgent,
+		PluginCatalogURL:                 hs.Cfg.PluginCatalogURL,
+		PluginAdminEnabled:               hs.Cfg.PluginAdminEnabled,
+		PluginAdminExternalManageEnabled: hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
+		PluginCatalogHiddenPlugins:       hs.Cfg.PluginCatalogHiddenPlugins,
+		ExpressionsEnabled:               hs.Cfg.ExpressionsEnabled,
+		AwsAllowedAuthProviders:          hs.Cfg.AWSAllowedAuthProviders,
+		AwsAssumeRoleEnabled:             hs.Cfg.AWSAssumeRoleEnabled,
+		SupportBundlesEnabled:            isSupportBundlesEnabled(hs),
+
+		Azure: dtos.FrontendSettingsAzureDTO{
+			Cloud:                  hs.Cfg.Azure.Cloud,
+			ManagedIdentityEnabled: hs.Cfg.Azure.ManagedIdentityEnabled,
 		},
-		"caching": map[string]bool{
-			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
+
+		Caching: dtos.FrontendSettingsCachingDTO{
+			Enabled: hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
-		"recordedQueries": map[string]bool{
-			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
+		RecordedQueries: dtos.FrontendSettingsRecordedQueriesDTO{
+			Enabled: hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
 		},
-		"reporting": map[string]bool{
-			"enabled": hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
+		Reporting: dtos.FrontendSettingsReportingDTO{
+			Enabled: hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
 		},
-		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
-		"unifiedAlerting": map[string]interface{}{
-			"minInterval": hs.Cfg.UnifiedAlerting.MinInterval.String(),
+
+		UnifiedAlerting: dtos.FrontendSettingsUnifiedAlertingDTO{
+			MinInterval: hs.Cfg.UnifiedAlerting.MinInterval.String(),
 		},
-		"oauth":                   hs.getEnabledOAuthProviders(),
-		"samlEnabled":             hs.samlEnabled(),
-		"samlName":                hs.samlName(),
-		"tokenExpirationDayLimit": hs.Cfg.SATokenExpirationDayLimit,
-		"snapshotEnabled":         hs.Cfg.SnapshotEnabled,
+
+		Oauth:                   hs.getEnabledOAuthProviders(),
+		SamlEnabled:             hs.samlEnabled(),
+		SamlName:                hs.samlName(),
+		TokenExpirationDayLimit: hs.Cfg.SATokenExpirationDayLimit,
+
+		SnapshotEnabled: hs.Cfg.SnapshotEnabled,
+	}
+
+	if hs.Cfg.UnifiedAlerting.Enabled != nil {
+		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled
+	}
+
+	if setting.AlertingEnabled != nil {
+		frontendSettings.AlertingEnabled = *setting.AlertingEnabled
 	}
 
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {
@@ -219,42 +230,42 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *contextmodel.ReqContext) (map[st
 		if err != nil {
 			return nil, fmt.Errorf("plugins cdn base url: %w", err)
 		}
-		jsonObj["pluginsCDNBaseURL"] = cdnBaseURL
+		frontendSettings.PluginsCDNBaseURL = cdnBaseURL
 	}
 
 	if hs.ThumbService != nil {
-		jsonObj["dashboardPreviews"] = hs.ThumbService.GetDashboardPreviewsSetupSettings(c)
+		frontendSettings.DashboardPreviews = hs.ThumbService.GetDashboardPreviewsSetupSettings(c)
 	}
 
 	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {
-		jsonObj["geomapDefaultBaseLayerConfig"] = hs.Cfg.GeomapDefaultBaseLayerConfig
-	}
-	if !hs.Cfg.GeomapEnableCustomBaseLayers {
-		jsonObj["geomapDisableCustomBaseLayer"] = true
+		frontendSettings.GeomapDefaultBaseLayerConfig = &hs.Cfg.GeomapDefaultBaseLayerConfig
 	}
 
-	return jsonObj, nil
+	if !hs.Cfg.GeomapEnableCustomBaseLayers {
+		frontendSettings.GeomapDisableCustomBaseLayer = true
+	}
+
+	return frontendSettings, nil
 }
 
 func isSupportBundlesEnabled(hs *HTTPServer) bool {
-	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true) &&
-		hs.Features.IsEnabled(featuremgmt.FlagSupportBundles)
+	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
 }
 
-func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
+func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*datasources.DataSource, 0)
 	if c.OrgID != 0 {
-		query := datasources.GetDataSourcesQuery{OrgId: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
-		err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
+		query := datasources.GetDataSourcesQuery{OrgID: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
+		dataSources, err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
 		if err != nil {
 			return nil, err
 		}
 
 		if c.IsPublicDashboardView {
 			// If RBAC is enabled, it will filter out all datasources for a public user, so we need to skip it
-			orgDataSources = query.Result
+			orgDataSources = dataSources
 		} else {
-			filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
+			filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, dataSources)
 			if err != nil {
 				return nil, err
 			}
@@ -265,15 +276,15 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 	dataSources := make(map[string]plugins.DataSourceDTO)
 
 	for _, ds := range orgDataSources {
-		url := ds.Url
+		url := ds.URL
 
 		if ds.Access == datasources.DS_ACCESS_PROXY {
-			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
+			url = "/api/datasources/proxy/uid/" + ds.UID
 		}
 
 		dsDTO := plugins.DataSourceDTO{
-			ID:        ds.Id,
-			UID:       ds.Uid,
+			ID:        ds.ID,
+			UID:       ds.UID,
 			Type:      ds.Type,
 			Name:      ds.Name,
 			URL:       url,
@@ -282,11 +293,12 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 			ReadOnly:  ds.ReadOnly,
 		}
 
-		plugin, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)
+		ap, exists := availablePlugins.Get(plugins.DataSource, ds.Type)
 		if !exists {
 			c.Logger.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
 			continue
 		}
+		plugin := ap.Plugin
 		dsDTO.Preload = plugin.Preload
 		dsDTO.Module = plugin.Module
 		dsDTO.PluginMeta = &plugins.PluginMetaDTO{
@@ -347,7 +359,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 
 		if ds.Type == datasources.DS_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
-			ds.JsonData.Set("directUrl", ds.Url)
+			ds.JsonData.Set("directUrl", ds.URL)
 		}
 
 		dataSources[ds.Name] = dsDTO
@@ -377,6 +389,21 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 	}
 
 	return dataSources, nil
+}
+
+func newAppDTO(plugin plugins.PluginDTO, settings pluginsettings.InfoDTO) *plugins.AppDTO {
+	app := &plugins.AppDTO{
+		ID:      plugin.ID,
+		Version: plugin.Info.Version,
+		Path:    plugin.Module,
+		Preload: false,
+	}
+
+	if settings.Enabled {
+		app.Preload = plugin.Preload
+	}
+
+	return app
 }
 
 func getPanelSort(id string) int {
@@ -420,52 +447,66 @@ func getPanelSort(id string) int {
 	return sort
 }
 
-// EnabledPlugins represents a mapping from plugin types (panel, data source, etc.) to plugin IDs to plugins
-// For example ["panel"] -> ["piechart"] -> {pie chart plugin DTO}
-type EnabledPlugins map[plugins.Type]map[string]plugins.PluginDTO
-
-func (ep EnabledPlugins) Get(pluginType plugins.Type, pluginID string) (plugins.PluginDTO, bool) {
-	if _, exists := ep[pluginType][pluginID]; exists {
-		return ep[pluginType][pluginID], true
-	}
-
-	return plugins.PluginDTO{}, false
+type availablePluginDTO struct {
+	Plugin   plugins.PluginDTO
+	Settings pluginsettings.InfoDTO
 }
 
-func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledPlugins, error) {
-	ep := make(EnabledPlugins)
+// AvailablePlugins represents a mapping from plugin types (panel, data source, etc.) to plugin IDs to plugins
+// For example ["panel"] -> ["piechart"] -> {pie chart plugin DTO}
+type AvailablePlugins map[plugins.Type]map[string]*availablePluginDTO
+
+func (ap AvailablePlugins) Get(pluginType plugins.Type, pluginID string) (*availablePluginDTO, bool) {
+	if _, exists := ap[pluginType][pluginID]; exists {
+		return ap[pluginType][pluginID], true
+	}
+
+	return nil, false
+}
+
+func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (AvailablePlugins, error) {
+	ap := make(AvailablePlugins)
 
 	pluginSettingMap, err := hs.pluginSettings(ctx, orgID)
 	if err != nil {
-		return ep, err
+		return ap, err
 	}
 
-	apps := make(map[string]plugins.PluginDTO)
+	apps := make(map[string]*availablePluginDTO)
 	for _, app := range hs.pluginStore.Plugins(ctx, plugins.App) {
-		if b, exists := pluginSettingMap[app.ID]; exists {
-			app.Pinned = b.Pinned
-			apps[app.ID] = app
+		if s, exists := pluginSettingMap[app.ID]; exists {
+			app.Pinned = s.Pinned
+			apps[app.ID] = &availablePluginDTO{
+				Plugin:   app,
+				Settings: *s,
+			}
 		}
 	}
-	ep[plugins.App] = apps
+	ap[plugins.App] = apps
 
-	dataSources := make(map[string]plugins.PluginDTO)
+	dataSources := make(map[string]*availablePluginDTO)
 	for _, ds := range hs.pluginStore.Plugins(ctx, plugins.DataSource) {
-		if _, exists := pluginSettingMap[ds.ID]; exists {
-			dataSources[ds.ID] = ds
+		if s, exists := pluginSettingMap[ds.ID]; exists {
+			dataSources[ds.ID] = &availablePluginDTO{
+				Plugin:   ds,
+				Settings: *s,
+			}
 		}
 	}
-	ep[plugins.DataSource] = dataSources
+	ap[plugins.DataSource] = dataSources
 
-	panels := make(map[string]plugins.PluginDTO)
+	panels := make(map[string]*availablePluginDTO)
 	for _, p := range hs.pluginStore.Plugins(ctx, plugins.Panel) {
-		if _, exists := pluginSettingMap[p.ID]; exists {
-			panels[p.ID] = p
+		if s, exists := pluginSettingMap[p.ID]; exists {
+			panels[p.ID] = &availablePluginDTO{
+				Plugin:   p,
+				Settings: *s,
+			}
 		}
 	}
-	ep[plugins.Panel] = panels
+	ap[plugins.Panel] = panels
 
-	return ep, nil
+	return ap, nil
 }
 
 func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*pluginsettings.InfoDTO, error) {

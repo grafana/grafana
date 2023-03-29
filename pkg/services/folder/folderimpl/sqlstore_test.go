@@ -25,7 +25,6 @@ func TestIntegrationCreate(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
@@ -141,7 +140,6 @@ func TestIntegrationDelete(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
@@ -155,7 +153,7 @@ func TestIntegrationDelete(t *testing.T) {
 		})
 	*/
 
-	ancestorUIDs := CreateSubTree(t, folderStore, orgID, "", folder.MaxNestedFolderDepth, "")
+	ancestorUIDs := CreateSubtree(t, folderStore, orgID, "", folder.MaxNestedFolderDepth, "")
 	require.Len(t, ancestorUIDs, folder.MaxNestedFolderDepth)
 
 	t.Cleanup(func() {
@@ -189,7 +187,6 @@ func TestIntegrationUpdate(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
@@ -294,7 +291,6 @@ func TestIntegrationGet(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
@@ -373,7 +369,6 @@ func TestIntegrationGetParents(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
@@ -440,7 +435,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
@@ -594,7 +588,6 @@ func TestIntegrationGetHeight(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
@@ -610,8 +603,7 @@ func TestIntegrationGetHeight(t *testing.T) {
 		UID:         uid1,
 	})
 	require.NoError(t, err)
-	subTree := CreateSubTree(t, folderStore, orgID, parent.UID, 4, "sub")
-
+	subTree := CreateSubtree(t, folderStore, orgID, parent.UID, 4, "sub")
 	t.Run("should successfully get height", func(t *testing.T) {
 		height, err := folderStore.GetHeight(context.Background(), parent.UID, orgID, nil)
 		require.NoError(t, err)
@@ -639,7 +631,7 @@ func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 	return orgID
 }
 
-func CreateSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string, depth int, prefix string) []string {
+func CreateSubtree(t *testing.T, store *sqlStore, orgID int64, parentUID string, depth int, prefix string) []string {
 	t.Helper()
 
 	ancestorUIDs := []string{}

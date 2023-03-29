@@ -129,6 +129,7 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     Returns:
       List of Drone pipelines.
     """
+
     environment = {"EDITION": "oss"}
 
     services = integration_test_services(edition = "oss")
@@ -257,11 +258,11 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
       List of Drone pipelines.
     """
     if ver_mode == "release":
-        committish = "${DRONE_TAG}"
+        source = "${DRONE_TAG}"
     elif ver_mode == "release-branch":
-        committish = "${DRONE_BRANCH}"
+        source = "${DRONE_BRANCH}"
     else:
-        committish = "${DRONE_COMMIT}"
+        source = "${DRONE_COMMIT}"
 
     environment = {"EDITION": "enterprise"}
 
@@ -271,7 +272,7 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     init_steps = [
         download_grabpl_step(),
         identify_runner_step(),
-        clone_enterprise_step(committish = committish),
+        clone_enterprise_step(source = source),
         init_enterprise_step(ver_mode),
         compile_build_cmd("enterprise"),
     ] + with_deps(
@@ -365,8 +366,8 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
             environment = environment,
             volumes = volumes,
         ),
-        test_frontend_enterprise(trigger, ver_mode, committish = committish),
-        test_backend_enterprise(trigger, ver_mode, committish = committish),
+        test_frontend_enterprise(trigger, ver_mode, source = source),
+        test_backend_enterprise(trigger, ver_mode, source = source),
         pipeline(
             name = "{}-enterprise-integration-tests".format(ver_mode),
             edition = "enterprise",
@@ -375,7 +376,7 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
             steps = [
                         download_grabpl_step(),
                         identify_runner_step(),
-                        clone_enterprise_step(committish = committish),
+                        clone_enterprise_step(source = source),
                         init_enterprise_step(ver_mode),
                     ] +
                     with_deps(
@@ -419,11 +420,11 @@ def enterprise2_pipelines(prefix = "", ver_mode = ver_mode, trigger = release_tr
       List of Drone pipelines.
     """
     if ver_mode == "release":
-        committish = "${DRONE_TAG}"
+        source = "${DRONE_TAG}"
     elif ver_mode == "release-branch":
-        committish = "${DRONE_BRANCH}"
+        source = "${DRONE_BRANCH}"
     else:
-        committish = "${DRONE_COMMIT}"
+        source = "${DRONE_COMMIT}"
 
     environment = {
         "EDITION": "enterprise2",
@@ -434,7 +435,7 @@ def enterprise2_pipelines(prefix = "", ver_mode = ver_mode, trigger = release_tr
     init_steps = [
         download_grabpl_step(),
         identify_runner_step(),
-        clone_enterprise_step(committish = committish),
+        clone_enterprise_step(source = source),
         init_enterprise_step(ver_mode),
         compile_build_cmd("enterprise"),
     ] + with_deps(
@@ -474,7 +475,6 @@ def enterprise2_pipelines(prefix = "", ver_mode = ver_mode, trigger = release_tr
             package_step(
                 edition = "enterprise2",
                 ver_mode = ver_mode,
-                variants = ["linux-amd64"],
             ),
             upload_cdn,
             copy_packages_for_docker_step(edition = "enterprise2"),
@@ -576,7 +576,6 @@ def publish_packages_pipeline():
         "target": ["public"],
     }
     oss_steps = [
-        download_grabpl_step(),
         compile_build_cmd(),
         publish_linux_packages_step(edition = "oss", package_manager = "deb"),
         publish_linux_packages_step(edition = "oss", package_manager = "rpm"),
@@ -584,7 +583,6 @@ def publish_packages_pipeline():
     ]
 
     enterprise_steps = [
-        download_grabpl_step(),
         compile_build_cmd(),
         publish_linux_packages_step(edition = "enterprise", package_manager = "deb"),
         publish_linux_packages_step(edition = "enterprise", package_manager = "rpm"),
@@ -646,8 +644,14 @@ def artifacts_page_pipeline():
         pipeline(
             name = "publish-artifacts-page",
             trigger = trigger,
-            steps = [download_grabpl_step(), artifacts_page_step()],
-            edition = "all",
-            environment = {"EDITION": "all"},
+            steps = [
+                download_grabpl_step(),
+                clone_enterprise_step(source = "${DRONE_TAG}"),
+                init_enterprise_step("release"),
+                compile_build_cmd("enterprise"),
+                artifacts_page_step(),
+            ],
+            edition = "enterprise",
+            environment = {"EDITION": "enterprise"},
         ),
     ]

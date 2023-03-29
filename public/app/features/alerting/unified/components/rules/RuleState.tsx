@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
@@ -14,9 +14,10 @@ interface Props {
   rule: CombinedRule;
   isDeleting: boolean;
   isCreating: boolean;
+  isPaused?: boolean;
 }
 
-export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating }) => {
+export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => {
   const style = useStyles2(getStyle);
   const { promRule } = rule;
 
@@ -68,7 +69,7 @@ export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating }) => {
   } else if (promRule && isAlertingRule(promRule)) {
     return (
       <HorizontalGroup align="flex-start">
-        <AlertStateTag state={promRule.state} />
+        <AlertStateTag state={promRule.state} isPaused={isPaused} />
         {forTime}
       </HorizontalGroup>
     );

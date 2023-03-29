@@ -34,8 +34,8 @@ func formatShort(interval time.Duration) string {
 
 func NewAlertNotification(notification *models.AlertNotification) *AlertNotification {
 	dto := &AlertNotification{
-		Id:                    notification.Id,
-		Uid:                   notification.Uid,
+		Id:                    notification.ID,
+		Uid:                   notification.UID,
 		Name:                  notification.Name,
 		Type:                  notification.Type,
 		IsDefault:             notification.IsDefault,
@@ -74,8 +74,8 @@ type AlertNotification struct {
 
 func NewAlertNotificationLookup(notification *models.AlertNotification) *AlertNotificationLookup {
 	return &AlertNotificationLookup{
-		Id:        notification.Id,
-		Uid:       notification.Uid,
+		Id:        notification.ID,
+		Uid:       notification.UID,
 		Name:      notification.Name,
 		Type:      notification.Type,
 		IsDefault: notification.IsDefault,

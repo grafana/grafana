@@ -8,15 +8,15 @@ load(
     "prerelease_bucket",
 )
 
-grabpl_version = "v3.0.20"
-build_image = "grafana/build-container:v1.7.1"
+grabpl_version = "v3.0.30"
+build_image = "grafana/build-container:1.7.2"
 publish_image = "grafana/grafana-ci-deploy:1.3.3"
 deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
-alpine_image = "alpine:3.15.6"
+alpine_image = "alpine:3.17.1"
 curl_image = "byrnedo/alpine-curl:0.1.8"
 windows_image = "mcr.microsoft.com/windows:1809"
 wix_image = "grafana/ci-wix:0.1.1"
-go_image = "golang:1.19.4"
+go_image = "golang:1.20.1"
 
 trigger_oss = {
     "repo": [
@@ -75,16 +75,26 @@ def identify_runner_step(platform = "linux"):
             ],
         }
 
-def clone_enterprise_step(committish = "${DRONE_COMMIT}"):
+def enterprise_setup_step(source = "${DRONE_SOURCE_BRANCH}", canFail = True):
+    step = clone_enterprise_step_pr(source = source, target = "${DRONE_TARGET_BRANCH}", canFail = canFail, location = "../grafana-enterprise")
+    step["commands"] += [
+        "cd ../",
+        "ln -s src grafana",
+        "cd ./grafana-enterprise",
+        "./build.sh",
+    ]
+
+    return step
+
+def clone_enterprise_step(source = "${DRONE_COMMIT}"):
     """Clone the enterprise source into the ./grafana-enterprise directory.
 
     Args:
-      committish: controls which revision of grafana-enterprise is cloned.
-
+      source: controls which revision of grafana-enterprise is checked out, if it exists. The name 'source' derives from the 'source branch' of a pull request.
     Returns:
       Drone step.
     """
-    return {
+    step = {
         "name": "clone-enterprise",
         "image": build_image,
         "environment": {
@@ -93,9 +103,42 @@ def clone_enterprise_step(committish = "${DRONE_COMMIT}"):
         "commands": [
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
             "cd grafana-enterprise",
-            "git checkout {}".format(committish),
+            "git checkout {}".format(source),
         ],
     }
+
+    return step
+
+def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFail = False, location = "grafana-enterprise"):
+    """Clone the enterprise source into the ./grafana-enterprise directory.
+
+    Args:
+      source: controls which revision of grafana-enterprise is checked out, if it exists. The name 'source' derives from the 'source branch' of a pull request.
+      target: controls which revision of grafana-enterprise is checked out, if it 'source' does not exist. The name 'target' derives from the 'target branch' of a pull request. If this does not exist, then 'main' will be checked out.
+      canFail: controls whether or not this step is allowed to fail. If it fails and this is true, then the pipeline will continue. canFail is used in pull request pipelines where enterprise may be cloned but may not clone in forks.
+      location: the path where grafana-enterprise is cloned.
+    Returns:
+      Drone step.
+    """
+    step = {
+        "name": "clone-enterprise",
+        "image": build_image,
+        "environment": {
+            "GITHUB_TOKEN": from_secret("github_token"),
+        },
+        "commands": [
+            'is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
+            'if [ "$is_fork" != false ]; then return 1; fi',  # Only clone if we're confident that 'fork' is 'false'. Fail if it's also empty.
+            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" ' + location,
+            "cd {}".format(location),
+            'if git checkout {0}; then echo "checked out {0}"; elif git checkout {1}; then echo "git checkout {1}"; else git checkout main; fi'.format(source, target),
+        ],
+    }
+
+    if canFail:
+        step["failure"] = "ignore"
+
+    return step
 
 def init_enterprise_step(ver_mode):
     """Adds the enterprise deployment configuration into the source directory.
@@ -736,7 +779,7 @@ def codespell_step():
         ],
     }
 
-def package_step(edition, ver_mode, variants = None):
+def package_step(edition, ver_mode):
     """Packages Grafana with the Grafana build tool.
 
     Args:
@@ -744,9 +787,6 @@ def package_step(edition, ver_mode, variants = None):
       ver_mode: controls whether the packages are signed for a release.
         If ver_mode != 'release', use the DRONE_BUILD_NUMBER environment
         variable as a build identifier.
-      variants: a list of variants be passed to the package subcommand
-        using the --variants option.
-        Defaults to None.
 
     Returns:
       Drone step.
@@ -757,10 +797,6 @@ def package_step(edition, ver_mode, variants = None):
         "build-frontend",
         "build-frontend-packages",
     ]
-
-    variants_str = ""
-    if variants:
-        variants_str = " --variants {}".format(",".join(variants))
 
     if ver_mode in ("main", "release", "release-branch"):
         sign_args = " --sign"
@@ -788,7 +824,7 @@ def package_step(edition, ver_mode, variants = None):
         build_no = "${DRONE_BUILD_NUMBER}"
         cmds = [
             "{}./bin/build package --jobs 8 --edition {} ".format(test_args, edition) +
-            "--build-id {}{}{}".format(build_no, variants_str, sign_args),
+            "--build-id {}{}".format(build_no, sign_args),
         ]
 
     return {
@@ -880,7 +916,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
             paths = {
                 "include": [
                     "pkg/tsdb/azuremonitor/**",
-                    "public/app/plugins/datasource/grafana-azure-monitor-datasource/**",
+                    "public/app/plugins/datasource/azuremonitor/**",
                     "e2e/cloud-plugins-suite/azure-monitor.spec.ts",
                 ],
             },
@@ -904,7 +940,7 @@ def build_docs_website_step():
         # Use latest revision here, since we want to catch if it breaks
         "image": "grafana/docs-base:latest",
         "commands": [
-            "mkdir -p /hugo/content/docs/grafana",
+            "mkdir -p /hugo/content/docs/grafana/latest",
             "cp -r docs/sources/* /hugo/content/docs/grafana/latest/",
             "cd /hugo && make prod",
         ],
@@ -1106,7 +1142,8 @@ def redis_integration_tests_step():
         },
         "commands": [
             "dockerize -wait tcp://redis:6379/0 -timeout 120s",
-            "./bin/grabpl integration-tests",
+            "go clean -testcache",
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
         ],
     }
 
@@ -1231,7 +1268,7 @@ def publish_linux_packages_step(edition, package_manager = "deb"):
         "name": "publish-linux-packages-{}".format(package_manager),
         # See https://github.com/grafana/deployment_tools/blob/master/docker/package-publish/README.md for docs on that image
         "image": "us.gcr.io/kubernetes-dev/package-publish:latest",
-        "depends_on": ["grabpl"],
+        "depends_on": ["compile-build-cmd"],
         "privileged": True,
         "settings": {
             "access_key_id": from_secret("packages_access_key_id"),
@@ -1265,11 +1302,11 @@ def get_windows_steps(edition, ver_mode):
 
     if edition in ("enterprise", "enterprise2"):
         if ver_mode == "release":
-            committish = "${DRONE_TAG}"
+            source = "${DRONE_TAG}"
         elif ver_mode == "release-branch":
-            committish = "$$env:DRONE_BRANCH"
+            source = "$$env:DRONE_BRANCH"
         else:
-            committish = "$$env:DRONE_COMMIT"
+            source = "$$env:DRONE_COMMIT"
 
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
         download_grabpl_cmds = [
@@ -1282,7 +1319,7 @@ def get_windows_steps(edition, ver_mode):
         clone_cmds = [
             'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
             "cd grafana-enterprise",
-            "git checkout {}".format(committish),
+            "git checkout {}".format(source),
         ]
 
         init_cmds = [
@@ -1444,7 +1481,6 @@ def trigger_test_release():
         "image": build_image,
         "environment": {
             "GITHUB_TOKEN": from_secret("github_token_pr"),
-            "DOWNSTREAM_REPO": from_secret("downstream"),
             "TEST_TAG": "v0.0.0-test",
         },
         "commands": [
@@ -1477,13 +1513,13 @@ def artifacts_page_step():
         "name": "artifacts-page",
         "image": build_image,
         "depends_on": [
-            "grabpl",
+            "compile-build-cmd",
         ],
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
         },
         "commands": [
-            "./bin/grabpl artifacts-page",
+            "./bin/build artifacts-page",
         ],
     }
 

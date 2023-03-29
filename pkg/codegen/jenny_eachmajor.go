@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/kindsys"
 )
 
 // LatestMajorsOrXJenny returns a jenny that repeats the input for the latest in each major version,
@@ -29,8 +29,8 @@ func (j *lmox) JennyName() string {
 	return "LatestMajorsOrXJenny"
 }
 
-func (j *lmox) Generate(def *DefForGen) (codejen.Files, error) {
-	comm := def.Properties.Common()
+func (j *lmox) Generate(kind kindsys.Kind) (codejen.Files, error) {
+	comm := kind.Props().Common()
 	sfg := SchemaForGen{
 		Name:    comm.Name,
 		IsGroup: comm.LineageIsGroup,
@@ -39,7 +39,7 @@ func (j *lmox) Generate(def *DefForGen) (codejen.Files, error) {
 	do := func(sfg SchemaForGen, infix string) (codejen.Files, error) {
 		f, err := j.inner.Generate(sfg)
 		if err != nil {
-			return nil, fmt.Errorf("%s jenny failed on %s schema for %s: %w", j.inner.JennyName(), sfg.Schema.Version(), def.Properties.Common().Name, err)
+			return nil, fmt.Errorf("%s jenny failed on %s schema for %s: %w", j.inner.JennyName(), sfg.Schema.Version(), kind.Props().Common().Name, err)
 		}
 		if f == nil || !f.Exists() {
 			return nil, nil
@@ -51,12 +51,18 @@ func (j *lmox) Generate(def *DefForGen) (codejen.Files, error) {
 	}
 
 	if comm.Maturity.Less(kindsys.MaturityStable) {
-		sfg.Schema = def.Lineage().Latest()
+		sfg.Schema = kind.Lineage().Latest()
 		return do(sfg, "x")
 	}
 
 	var fl codejen.Files
-	for sch := def.Lineage().First(); sch != nil; sch = sch.Successor() {
+	major := -1
+	for sch := kind.Lineage().First(); sch != nil; sch = sch.Successor() {
+		if int(sch.Version()[0]) == major {
+			continue
+		}
+		major = int(sch.Version()[0])
+
 		sfg.Schema = sch.LatestInMajor()
 		files, err := do(sfg, fmt.Sprintf("v%v", sch.Version()[0]))
 		if err != nil {

@@ -18,9 +18,10 @@ import (
 	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
+	"github.com/grafana/kindsys"
+
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 func main() {
@@ -31,17 +32,20 @@ func main() {
 
 	// Core kinds composite code generator. Produces all generated code in
 	// grafana/grafana that derives from core kinds.
-	coreKindsGen := codejen.JennyListWithNamer(func(def *codegen.DefForGen) string {
-		return def.Properties.Common().MachineName
+	coreKindsGen := codejen.JennyListWithNamer(func(def kindsys.Kind) string {
+		return def.Props().Common().MachineName
 	})
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		codegen.LatestJenny(kindsys.GoCoreKindParentPath, codegen.GoTypesJenny{}),
-		codegen.CoreKindJenny(kindsys.GoCoreKindParentPath, nil),
-		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
-		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
+		codegen.LatestJenny(cuectx.GoCoreKindParentPath, codegen.GoTypesJenny{}),
+		codegen.CoreKindJenny(cuectx.GoCoreKindParentPath, nil),
+		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), cuectx.GoCoreKindParentPath),
+		codegen.LatestMajorsOrXJenny(cuectx.TSCoreKindParentPath, codegen.TSTypesJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
+		codegen.CRDTypesJenny(cuectx.GoCoreKindParentPath),
+		codegen.YamlCRDJenny(cuectx.GoCoreKindParentPath),
+		codegen.CRDKindRegistryJenny(filepath.Join("pkg", "registry", "corecrd")),
 		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)
 
@@ -56,28 +60,28 @@ func main() {
 	groot := filepath.Dir(cwd)
 
 	rt := cuectx.GrafanaThemaRuntime()
-	var all []*codegen.DefForGen
+	var all []kindsys.Kind
 
-	f := os.DirFS(filepath.Join(groot, kindsys.CoreDeclParentPath))
+	f := os.DirFS(filepath.Join(groot, cuectx.CoreDefParentPath))
 	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
-	for _, ent := range kinddirs {
-		if !ent.IsDir() {
+	for _, kinddir := range kinddirs {
+		if !kinddir.IsDir() {
 			continue
 		}
-		rel := filepath.Join(kindsys.CoreDeclParentPath, ent.Name())
-		decl, err := kindsys.LoadCoreKind(rel, rt.Context(), nil)
+		rel := filepath.Join(cuectx.CoreDefParentPath, kinddir.Name())
+		def, err := cuectx.LoadCoreKindDef(rel, rt.Context(), nil)
 		if err != nil {
 			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
 		}
-		if decl.Properties.MachineName != ent.Name() {
-			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Properties.Name, ent.Name()))
+		if def.Properties.MachineName != kinddir.Name() {
+			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, def.Properties.Name, kinddir.Name()))
 		}
 
-		all = append(all, elsedie(codegen.ForGen(rt, decl.Some()))(rel))
+		all = append(all, elsedie(kindsys.BindCore(rt, def))(rel))
 	}
 
 	sort.Slice(all, func(i, j int) bool {
-		return nameFor(all[i].Properties) < nameFor(all[j].Properties)
+		return nameFor(all[i].Props()) < nameFor(all[j].Props())
 	})
 
 	jfs, err := coreKindsGen.GenerateFS(all...)

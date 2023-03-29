@@ -19,4 +19,5 @@ export interface RouteDescriptor {
   routeName?: string;
   chromeless?: boolean;
   exact?: boolean;
+  sensitive?: boolean;
 }

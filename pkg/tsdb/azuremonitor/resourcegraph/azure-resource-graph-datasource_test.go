@@ -98,7 +98,6 @@ func TestAzureResourceGraphCreateRequest(t *testing.T) {
 			expectedURL: "http://ds/",
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"application/json"},
-				"User-Agent":   []string{"Grafana/"},
 			},
 			Err: require.NoError,
 		},

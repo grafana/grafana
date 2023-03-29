@@ -9,10 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/alerting/alerting"
-	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/cluster"
 	"github.com/prometheus/client_golang/prometheus"
+
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -41,21 +42,21 @@ type MultiOrgAlertmanager struct {
 	logger   log.Logger
 
 	// clusterPeer represents the clustering peers of Alertmanagers between Grafana instances.
-	peer         alerting.ClusterPeer
+	peer         alertingNotify.ClusterPeer
 	settleCancel context.CancelFunc
 
 	configStore AlertingStore
 	orgStore    store.OrgStore
 	kvStore     kvstore.KVStore
 
-	decryptFn channels.GetDecryptedValueFn
+	decryptFn receivers.GetDecryptedValueFn
 
 	metrics *metrics.MultiOrgAlertmanager
 	ns      notifications.Service
 }
 
 func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgStore store.OrgStore,
-	kvStore kvstore.KVStore, provStore provisioning.ProvisioningStore, decryptFn channels.GetDecryptedValueFn,
+	kvStore kvstore.KVStore, provStore provisioning.ProvisioningStore, decryptFn receivers.GetDecryptedValueFn,
 	m *metrics.MultiOrgAlertmanager, ns notifications.Service, l log.Logger, s secrets.Service,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
@@ -205,7 +206,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			continue
 		}
 
-		err := alertmanager.ApplyConfig(dbConfig)
+		err := alertmanager.ApplyConfig(ctx, dbConfig)
 		if err != nil {
 			moa.logger.Error("failed to apply Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "error", err)
 			continue

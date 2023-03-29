@@ -1,6 +1,7 @@
 import { cloneDeep, find, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
 import { generate, lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
+import { SemVer } from 'semver';
 
 import {
   DataFrame,
@@ -39,21 +40,17 @@ import { IndexPattern } from './IndexPattern';
 import LanguageProvider from './LanguageProvider';
 import { ElasticQueryBuilder } from './QueryBuilder';
 import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
-import {
-  BucketAggregation,
-  isBucketAggregationWithField,
-} from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
 import {
   isMetricAggregationWithField,
   isPipelineAggregationWithMultipleBucketPaths,
-  Logs,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { defaultBucketAgg, hasMetricOfType } from './queryDef';
 import { trackQuery } from './tracking';
-import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
-import { coerceESVersion, getScriptValue, isSupportedVersion } from './utils';
+import { Logs, BucketAggregation, DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
+import { getScriptValue, isSupportedVersion, unsupportedVersionMessage } from './utils';
 
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
@@ -83,7 +80,6 @@ export class ElasticDatasource
   name: string;
   index: string;
   timeField: string;
-  esVersion: string;
   xpack: boolean;
   interval: string;
   maxConcurrentShardRequests?: number;
@@ -96,6 +92,7 @@ export class ElasticDatasource
   includeFrozen: boolean;
   isProxyAccess: boolean;
   timeSrv: TimeSrv;
+  databaseVersion: SemVer | null;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
@@ -111,7 +108,6 @@ export class ElasticDatasource
     const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
 
     this.timeField = settingsData.timeField;
-    this.esVersion = coerceESVersion(settingsData.esVersion);
     this.xpack = Boolean(settingsData.xpack);
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
     this.interval = settingsData.timeInterval;
@@ -123,6 +119,7 @@ export class ElasticDatasource
     this.logLevelField = settingsData.logLevelField || '';
     this.dataLinks = settingsData.dataLinks || [];
     this.includeFrozen = settingsData.includeFrozen ?? false;
+    this.databaseVersion = null;
     this.annotations = {
       QueryEditor: ElasticsearchAnnotationsQueryEditor,
     };
@@ -147,13 +144,6 @@ export class ElasticDatasource
     if (!this.isProxyAccess) {
       const error = new Error(
         'Browser access mode in the Elasticsearch datasource is no longer available. Switch to server access mode.'
-      );
-      return throwError(() => error);
-    }
-
-    if (!isSupportedVersion(this.esVersion)) {
-      const error = new Error(
-        'Support for Elasticsearch versions after their end-of-life (currently versions < 7.10) was removed.'
       );
       return throwError(() => error);
     }
@@ -395,52 +385,28 @@ export class ElasticDatasource
     return this.templateSrv.replace(queryString, scopedVars, 'lucene');
   }
 
-  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
-    // We need a separate interpolation format for lucene queries, therefore we first interpolate any
-    // lucene query string and then everything else
-    const interpolateBucketAgg = (bucketAgg: BucketAggregation): BucketAggregation => {
-      if (bucketAgg.type === 'filters') {
-        return {
-          ...bucketAgg,
-          settings: {
-            ...bucketAgg.settings,
-            filters: bucketAgg.settings?.filters?.map((filter) => ({
-              ...filter,
-              query: this.interpolateLuceneQuery(filter.query, scopedVars) || '*',
-            })),
-          },
-        };
-      }
-
-      return bucketAgg;
-    };
-
-    const expandedQueries = queries.map(
-      (query): ElasticsearchQuery => ({
-        ...query,
-        datasource: this.getRef(),
-        query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars)),
-        bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
-      })
-    );
-
-    const finalQueries: ElasticsearchQuery[] = JSON.parse(
-      this.templateSrv.replace(JSON.stringify(expandedQueries), scopedVars)
-    );
-
-    return finalQueries;
+  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars | {}): ElasticsearchQuery[] {
+    return queries.map((q) => this.applyTemplateVariables(q, scopedVars));
   }
 
-  testDatasource() {
+  async testDatasource() {
+    // we explicitly ask for uncached, "fresh" data here
+    const dbVersion = await this.getDatabaseVersion(false);
+    // if we are not able to determine the elastic-version, we assume it is a good version.
+    const isSupported = dbVersion != null ? isSupportedVersion(dbVersion) : true;
+    const versionMessage = isSupported ? '' : `WARNING: ${unsupportedVersionMessage} `;
     // validate that the index exist and has date field
     return lastValueFrom(
       this.getFields(['date']).pipe(
         mergeMap((dateFields) => {
           const timeField: any = find(dateFields, { text: this.timeField });
           if (!timeField) {
-            return of({ status: 'error', message: 'No date field named ' + this.timeField + ' found' });
+            return of({
+              status: 'error',
+              message: 'No date field named ' + this.timeField + ' found',
+            });
           }
-          return of({ status: 'success', message: 'Index OK. Time field name OK.' });
+          return of({ status: 'success', message: `${versionMessage}Index OK. Time field name OK` });
         }),
         catchError((err) => {
           console.error(err);
@@ -677,8 +643,12 @@ export class ElasticDatasource
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
+    // Run request through backend if it is coming from Explore and disableElasticsearchBackendExploreQuery is not set
+    // or if elasticsearchBackendMigration feature toggle is enabled
+    const { elasticsearchBackendMigration, disableElasticsearchBackendExploreQuery } = config.featureToggles;
     const shouldRunTroughBackend =
-      request.app === CoreApp.Explore && config.featureToggles.elasticsearchBackendMigration;
+      (request.app === CoreApp.Explore && !disableElasticsearchBackendExploreQuery) || elasticsearchBackendMigration;
+
     if (shouldRunTroughBackend) {
       const start = new Date();
       return super.query(request).pipe(tap((response) => trackQuery(response, request, start)));
@@ -687,9 +657,6 @@ export class ElasticDatasource
     const targets = this.interpolateVariablesInQueries(cloneDeep(request.targets), request.scopedVars);
     const sentTargets: ElasticsearchQuery[] = [];
     let targetsContainsLogsQuery = targets.some((target) => hasMetricOfType(target, 'logs'));
-
-    // add global adhoc filters to timeFilter
-    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
 
     const logLimits: Array<number | undefined> = [];
 
@@ -713,14 +680,14 @@ export class ElasticDatasource
 
         target.metrics = [];
         // Setting this for metrics queries that are typed as logs
-        queryObj = this.queryBuilder.getLogsQuery(target, limit, adhocFilters);
+        queryObj = this.queryBuilder.getLogsQuery(target, limit);
       } else {
         logLimits.push();
         if (target.alias) {
           target.alias = this.interpolateLuceneQuery(target.alias, request.scopedVars);
         }
 
-        queryObj = this.queryBuilder.build(target, adhocFilters);
+        queryObj = this.queryBuilder.build(target);
       }
 
       const esQuery = JSON.stringify(queryObj);
@@ -1042,6 +1009,73 @@ export class ElasticDatasource
 
     const finalQuery = [query, ...esFilters].filter((f) => f).join(' AND ');
     return finalQuery;
+  }
+
+  // Used when running queries through backend
+  applyTemplateVariables(query: ElasticsearchQuery, scopedVars: ScopedVars): ElasticsearchQuery {
+    // We need a separate interpolation format for lucene queries, therefore we first interpolate any
+    // lucene query string and then everything else
+    const interpolateBucketAgg = (bucketAgg: BucketAggregation): BucketAggregation => {
+      if (bucketAgg.type === 'filters') {
+        return {
+          ...bucketAgg,
+          settings: {
+            ...bucketAgg.settings,
+            filters: bucketAgg.settings?.filters?.map((filter) => ({
+              ...filter,
+              query: this.interpolateLuceneQuery(filter.query, scopedVars) || '*',
+            })),
+          },
+        };
+      }
+
+      return bucketAgg;
+    };
+
+    const expandedQuery = {
+      ...query,
+      datasource: this.getRef(),
+      query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars)),
+      bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
+    };
+
+    const finalQuery = JSON.parse(this.templateSrv.replace(JSON.stringify(expandedQuery), scopedVars));
+    return finalQuery;
+  }
+
+  private getDatabaseVersionUncached(): Promise<SemVer | null> {
+    // we want this function to never fail
+    return lastValueFrom(this.request('GET', '/')).then(
+      (data) => {
+        const versionNumber = data?.version?.number;
+        if (typeof versionNumber !== 'string') {
+          return null;
+        }
+        try {
+          return new SemVer(versionNumber);
+        } catch (error) {
+          console.error(error);
+          return null;
+        }
+      },
+      (error) => {
+        console.error(error);
+        return null;
+      }
+    );
+  }
+
+  async getDatabaseVersion(useCachedData = true): Promise<SemVer | null> {
+    if (useCachedData) {
+      const cached = this.databaseVersion;
+      if (cached != null) {
+        return cached;
+      }
+    }
+
+    const freshDatabaseVersion = await this.getDatabaseVersionUncached();
+    this.databaseVersion = freshDatabaseVersion;
+    return freshDatabaseVersion;
   }
 }
 

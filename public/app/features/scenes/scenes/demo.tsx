@@ -1,3 +1,4 @@
+import { getFrameDisplayName } from '@grafana/data';
 import {
   SceneFlexLayout,
   SceneTimeRange,
@@ -12,7 +13,6 @@ import { TestDataQueryType } from 'app/plugins/datasource/testdata/dataquery.gen
 
 import { panelBuilders } from '../builders/panelBuilders';
 import { DashboardScene } from '../dashboard/DashboardScene';
-import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
@@ -59,7 +59,6 @@ export function getFlexLayoutTest(): DashboardScene {
         }),
       ],
     }),
-    $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
@@ -94,7 +93,7 @@ export function getScenePanelRepeaterTest(): DashboardScene {
           children: [
             new VizPanel({
               pluginId: 'timeseries',
-              title: 'Title',
+              title: getFrameDisplayName(frame),
               options: {
                 legend: { displayMode: 'hidden' },
               },
@@ -111,12 +110,65 @@ export function getScenePanelRepeaterTest(): DashboardScene {
         });
       },
     }),
-    $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(),
     $data: queryRunner,
     actions: [
       new SceneToolbarInput({
         value: '2',
+        onChange: (newValue) => {
+          queryRunner.setState({
+            queries: [
+              {
+                ...queryRunner.state.queries[0],
+                seriesCount: newValue,
+              },
+            ],
+          });
+          queryRunner.runQueries();
+        },
+      }),
+      new SceneTimePicker({}),
+    ],
+  });
+}
+
+export function getRepeaterSceneWithFlexWrap(): DashboardScene {
+  const queryRunner = getQueryRunnerWithRandomWalkQuery({
+    seriesCount: 10,
+    alias: '__server_names',
+    scenarioId: TestDataQueryType.RandomWalk,
+  });
+
+  return new DashboardScene({
+    title: 'Flex layout with wrap test',
+    body: new SceneByFrameRepeater({
+      body: new SceneFlexLayout({
+        direction: 'row',
+        wrap: 'wrap',
+        children: [],
+      }),
+      getLayoutChild: (data, frame, frameIndex) => {
+        return new VizPanel({
+          pluginId: 'timeseries',
+          title: getFrameDisplayName(frame),
+          $data: new SceneDataNode({
+            data: {
+              ...data,
+              series: [frame],
+            },
+          }),
+          placement: { height: 300, minWidth: 400 },
+          options: {
+            legend: { displayMode: 'hidden' },
+          },
+        });
+      },
+    }),
+    $timeRange: new SceneTimeRange(),
+    $data: queryRunner,
+    actions: [
+      new SceneToolbarInput({
+        value: '10',
         onChange: (newValue) => {
           queryRunner.setState({
             queries: [

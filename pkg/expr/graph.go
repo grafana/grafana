@@ -131,7 +131,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 	dp := simple.NewDirectedGraph()
 
 	for _, query := range req.Queries {
-		if query.DataSource == nil || query.DataSource.Uid == "" {
+		if query.DataSource == nil || query.DataSource.UID == "" {
 			return nil, fmt.Errorf("missing datasource uid in query with refId %v", query.RefID)
 		}
 
@@ -157,7 +157,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 
 		var node Node
 
-		if IsDataSource(rn.DataSource.Uid) {
+		if IsDataSource(rn.DataSource.UID) {
 			node, err = buildCMDNode(dp, rn)
 		} else {
 			node, err = s.buildDSNode(dp, rn, req)

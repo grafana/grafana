@@ -127,7 +127,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *contextmodel.ReqContext, orgId 
 				Email:  &query.Email,
 			},
 		}
-		if err := h.loginService.UpsertUser(ctx.Req.Context(), upsert); err != nil {
+		if _, err := h.loginService.UpsertUser(ctx.Req.Context(), upsert); err != nil {
 			ctx.Logger.Error("Failed to upsert JWT user", "error", err)
 			return false
 		}
@@ -149,9 +149,6 @@ func (h *ContextHandler) initContextWithJWT(ctx *contextmodel.ReqContext, orgId 
 		}
 		return true
 	}
-
-	newCtx := WithAuthHTTPHeader(ctx.Req.Context(), h.Cfg.JWTAuthHeaderName)
-	*ctx.Req = *ctx.Req.WithContext(newCtx)
 
 	ctx.SignedInUser = queryResult
 	ctx.IsSignedIn = true

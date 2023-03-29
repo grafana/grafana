@@ -10,9 +10,11 @@
 package playlist
 
 import (
-	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/vmux"
+
+	"github.com/grafana/grafana/pkg/cuectx"
 )
 
 // rootrel is the relative path from the grafana repository root to the
@@ -23,33 +25,30 @@ const rootrel string = "kinds/playlist"
 
 // TODO standard generated docs
 type Kind struct {
+	kindsys.Core
 	lin    thema.ConvergentLineage[*Playlist]
 	jcodec vmux.Codec
 	valmux vmux.ValueMux[*Playlist]
-	def    kindsys.Def[kindsys.CoreProperties]
 }
 
-// type guard
+// type guard - ensure generated Kind type satisfies the kindsys.Core interface
 var _ kindsys.Core = &Kind{}
 
 // TODO standard generated docs
 func NewKind(rt *thema.Runtime, opts ...thema.BindOption) (*Kind, error) {
-	def, err := kindsys.LoadCoreKind(rootrel, rt.Context(), nil)
-	if err != nil {
-		return nil, err
-	}
-	k := &Kind{
-		def: def,
-	}
-
-	lin, err := def.Some().BindKindLineage(rt, opts...)
+	def, err := cuectx.LoadCoreKindDef(rootrel, rt.Context(), nil)
 	if err != nil {
 		return nil, err
 	}
 
+	k := &Kind{}
+	k.Core, err = kindsys.BindCore(rt, def, opts...)
+	if err != nil {
+		return nil, err
+	}
 	// Get the thema.Schema that the meta says is in the current version (which
 	// codegen ensures is always the latest)
-	cursch := thema.SchemaP(lin, k.def.Properties.CurrentVersion)
+	cursch := thema.SchemaP(k.Core.Lineage(), def.Properties.CurrentVersion)
 	tsch, err := thema.BindType[*Playlist](cursch, &Playlist{})
 	if err != nil {
 		// Should be unreachable, modulo bugs in the Thema->Go code generator
@@ -62,22 +61,8 @@ func NewKind(rt *thema.Runtime, opts ...thema.BindOption) (*Kind, error) {
 	return k, nil
 }
 
-// TODO standard generated docs
-func (k *Kind) Name() string {
-	return "playlist"
-}
-
-// TODO standard generated docs
-func (k *Kind) MachineName() string {
-	return "playlist"
-}
-
-// TODO standard generated docs
-func (k *Kind) Lineage() thema.Lineage {
-	return k.lin
-}
-
-// TODO standard generated docs
+// ConvergentLineage returns the same [thema.Lineage] as Lineage, but bound (see [thema.BindType])
+// to the the Playlist type generated from the current schema, v0.0.
 func (k *Kind) ConvergentLineage() thema.ConvergentLineage[*Playlist] {
 	return k.lin
 }
@@ -91,23 +76,4 @@ func (k *Kind) ConvergentLineage() thema.ConvergentLineage[*Playlist] {
 // This is a thin wrapper around Thema's [vmux.ValueMux].
 func (k *Kind) JSONValueMux(b []byte) (*Playlist, thema.TranslationLacunas, error) {
 	return k.valmux(b)
-}
-
-// TODO standard generated docs
-func (k *Kind) Maturity() kindsys.Maturity {
-	return k.def.Properties.Maturity
-}
-
-// Def returns the [kindsys.Def] containing both CUE and Go representations of the
-// playlist declaration in .cue files.
-func (k *Kind) Def() kindsys.Def[kindsys.CoreProperties] {
-	return k.def
-}
-
-// Props returns a [kindsys.SomeKindProps], with underlying type [kindsys.CoreProperties],
-// representing the static properties declared in the playlist kind.
-//
-// This method is identical to calling Def().Props. It is provided to satisfy [kindsys.Interface].
-func (k *Kind) Props() kindsys.SomeKindProperties {
-	return k.def.Properties
 }

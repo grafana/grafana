@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 
 import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Button, PageToolbar } from '@grafana/ui';
+import { Button, PageToolbar, ToolbarButtonRow } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/PageNew/Page';
 import config from 'app/core/config';
@@ -82,7 +82,7 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
           {actions}
         </PageToolbar>
       ) : (
-        <AppChromeUpdate actions={actions} />
+        <AppChromeUpdate actions={<ToolbarButtonRow alignment="right">{actions}</ToolbarButtonRow>} />
       )}
       <currentPage.component sectionNav={subSectionNav} dashboard={dashboard} editIndex={editIndex} />
     </>

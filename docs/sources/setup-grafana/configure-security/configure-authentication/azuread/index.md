@@ -254,15 +254,12 @@ their organization membership will be reset to the default organization.
 
 ## Skip organization role sync
 
-If Azure AD authentication is not intended to sync user roles and organization membership,
-`oauth_skip_org_role_update_sync` should be enabled, this is not recommended to use in favor of setting provider specific `skip_org_role_sync` option.
-See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more details.
-
-To prevent the sync of org roles from Grafana.com, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+If Azure AD authentication is not intended to sync user roles and organization membership and prevent the sync of org roles from AzureAD, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana or that your organization roles are synced from another provider.
+See [configure-grafana]({{< relref "../../../configure-grafana#authazuread-skip-org-role-sync" >}}) for more details.
 
 ```ini
 [auth.azuread]
 # ..
-# prevents the sync of org roles from Grafana.com
+# prevents the sync of org roles from AzureAD
 skip_org_role_sync = true
 ```

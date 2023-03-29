@@ -1,19 +1,46 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataSourceJsonData } from '@grafana/data';
 
 import {
-  BucketAggregation,
   BucketAggregationType,
-} from './components/QueryEditor/BucketAggregationsEditor/aggregations';
-import {
   MetricAggregation,
   MetricAggregationType,
-} from './components/QueryEditor/MetricAggregationsEditor/aggregations';
+  MovingAverageEWMAModelSettings,
+  MovingAverageHoltModelSettings,
+  MovingAverageHoltWintersModelSettings,
+  MovingAverageLinearModelSettings,
+  MovingAverageModel,
+  MovingAverageSimpleModelSettings,
+  ExtendedStats,
+  MovingAverage as SchemaMovingAverage,
+  BucketAggregation,
+} from './dataquery.gen';
+
+export * from './dataquery.gen';
+export { Elasticsearch as ElasticsearchQuery } from './dataquery.gen';
+
+export type MetricAggregationWithMeta = ExtendedStats;
+
+export type MovingAverageModelSettings<T extends MovingAverageModel = MovingAverageModel> = Partial<
+  Extract<
+    | MovingAverageSimpleModelSettings
+    | MovingAverageLinearModelSettings
+    | MovingAverageEWMAModelSettings
+    | MovingAverageHoltModelSettings
+    | MovingAverageHoltWintersModelSettings,
+    { model: T }
+  >
+>;
+
+export interface MovingAverage<T extends MovingAverageModel = MovingAverageModel> extends SchemaMovingAverage {
+  settings?: MovingAverageModelSettings<T>;
+}
 
 export type Interval = 'Hourly' | 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
 
 export interface ElasticsearchOptions extends DataSourceJsonData {
   timeField: string;
-  esVersion: string;
+  // we used to have a field named `esVersion` in the past,
+  // please do not use that name in the future.
   xpack?: boolean;
   interval?: Interval;
   timeInterval: string;
@@ -30,7 +57,6 @@ interface MetricConfiguration<T extends MetricAggregationType> {
   supportsInlineScript: boolean;
   supportsMissing: boolean;
   isPipelineAgg: boolean;
-  xpack?: boolean;
   /**
    * A valid semver range for which the metric is known to be available.
    * If omitted defaults to '*'.
@@ -63,14 +89,6 @@ export interface ElasticsearchAggregation {
   settings?: unknown;
   field?: string;
   hide: boolean;
-}
-
-export interface ElasticsearchQuery extends DataQuery {
-  alias?: string;
-  query?: string;
-  bucketAggs?: BucketAggregation[];
-  metrics?: MetricAggregation[];
-  timeField?: string;
 }
 
 export interface TermsQuery {

@@ -3,13 +3,11 @@ import { rest } from 'msw';
 import { setupServer } from 'msw/node';
 import React from 'react';
 import { DeepPartial } from 'react-hook-form';
-import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourcePluginMeta } from '@grafana/data';
 import * as runtime from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { configureStore } from 'app/store/configureStore';
 import 'whatwg-fetch';
 
 import { EmptyStateNoDatasource } from './EmptyStateNoDatasource';
@@ -28,8 +26,6 @@ afterEach(() => {
 });
 
 beforeAll(() => {
-  runtime.setBackendSrv(backendSrv);
-
   server.listen({ onUnhandledRequest: 'bypass' });
 });
 
@@ -60,9 +56,9 @@ describe('EmptyStateNoDatasource', () => {
       })
     );
     render(
-      <Provider store={configureStore()}>
+      <TestProvider>
         <EmptyStateNoDatasource title="A Title" CTAText="CTA" />
-      </Provider>
+      </TestProvider>
     );
 
     await waitFor(() => {

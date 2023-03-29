@@ -20,9 +20,9 @@ Supported data sources are:
 
 For information on how to configure queries for the data sources listed above, refer to the documentation for specific data source.
 
-## Trace View explanation
+## Trace View
 
-This section explains the elements of the Trace View dashboard.
+This section explains the elements of the Trace View.
 
 {{< figure src="/static/img/docs/explore/explore-trace-view-full-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
 
@@ -63,12 +63,6 @@ Clicking anywhere on the span row shows span details.
 - Process metadata: Metadata about the process that logged this span.
 - Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
 
-### Node graph
-
-You can optionally expand the node graph for the displayed trace. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service graph based on the current trace.
-
-![Node graph](/static/img/docs/explore/explore-trace-view-node-graph-8-0.png 'Node graph')
-
 ### Trace to logs
 
 > **Note:** Available in Grafana 7.4 and later versions.
@@ -79,16 +73,20 @@ You can navigate from a span in a trace view directly to logs relevant for that 
 
 Click the document icon to open a split view in Explore with the configured data source and query relevant logs for the span.
 
-## APM dashboard
+## Node Graph
 
-Application performance management (APM) uses data gathered from services, agents, systems, and microservices to visualize and identify areas of concern.
+You can optionally expand the node graph for the displayed trace. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service graph based on the current trace.
 
-The Grafana APM dashboard visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
-Once the requirements are set up, this pre-configured dashboard is immediately available.
+![Node graph](/static/img/docs/explore/explore-trace-view-node-graph-8-0.png 'Node graph')
 
-For more information, refer to the [APM table section](https://grafana.com/docs/grafana/latest/datasources/tempo/#apm-table) of the Tempo data source page and the [APM dashboard page](https://grafana.com/docs/tempo/latest/metrics-generator/app-performance-mgmt/) in the Tempo documentation.
+## Service Graph
 
-{{< figure src="/static/img/docs/grafana-cloud/apm-overview.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the APM dashboard" >}}
+The Service Graph visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
+Once the requirements are set up, this pre-configured view is immediately available.
+
+For more information, refer to the [Service Graph view table section](https://grafana.com/docs/grafana/latest/datasources/tempo/#service-graph-view-table) of the Tempo data source page and the [service graph view page](https://grafana.com/docs/tempo/latest/metrics-generator/service-graph-view/) in the Tempo documentation.
+
+{{< figure src="/static/img/docs/grafana-cloud/apm-overview.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the Service Graph view" >}}
 
 ## Data API
 

@@ -1,21 +1,22 @@
 package util
 
 import (
+	"math/rand"
 	"regexp"
+	"time"
 
-	"github.com/teris-io/shortid"
+	"github.com/google/uuid"
 )
 
-var allowedChars = shortid.DefaultABC
+var uidrand = rand.New(rand.NewSource(time.Now().UnixNano()))
+var alphaRunes = []rune("abcdefghijklmnopqrstuvwxyz")
+var hexLetters = []rune("abcdef")
 
+// Legacy UID pattern
 var validUIDPattern = regexp.MustCompile(`^[a-zA-Z0-9\-\_]*$`).MatchString
 
-func init() {
-	gen, _ := shortid.New(1, allowedChars, 1)
-	shortid.SetDefault(gen)
-}
-
 // IsValidShortUID checks if short unique identifier contains valid characters
+// NOTE: future Grafana UIDs will need conform to https://github.com/kubernetes/apimachinery/blob/master/pkg/util/validation/validation.go#L43
 func IsValidShortUID(uid string) bool {
 	return validUIDPattern(uid)
 }
@@ -25,7 +26,20 @@ func IsShortUIDTooLong(uid string) bool {
 	return len(uid) > 40
 }
 
-// GenerateShortUID generates a short unique identifier.
+// GenerateShortUID will generate a UUID that can also be a k8s name
+// it is guaranteed to have a character as the first letter
+// This UID will be a valid k8s name
 func GenerateShortUID() string {
-	return shortid.MustGenerate()
+	uid, err := uuid.NewRandom()
+	if err != nil {
+		// This should never happen... but this seems better than a panic
+		for i := range uid {
+			uid[i] = byte(uidrand.Intn(255))
+		}
+	}
+	uuid := uid.String()
+	if rune(uuid[0]) < rune('a') {
+		return string(hexLetters[uidrand.Intn(len(hexLetters))]) + uuid[1:]
+	}
+	return uuid
 }

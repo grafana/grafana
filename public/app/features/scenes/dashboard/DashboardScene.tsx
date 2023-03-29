@@ -26,24 +26,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public static Component = DashboardSceneRenderer;
   private urlSyncManager?: UrlSyncManager;
 
-  public activate() {
-    super.activate();
-  }
-
   /**
    * It's better to do this before activate / mount to not trigger unnessary re-renders
    */
   public initUrlSync() {
-    this.urlSyncManager = new UrlSyncManager(this);
-    this.urlSyncManager.initSync();
-  }
-
-  public deactivate() {
-    super.deactivate();
-
-    if (this.urlSyncManager) {
-      this.urlSyncManager!.cleanUp();
+    if (!this.urlSyncManager) {
+      this.urlSyncManager = new UrlSyncManager(this);
     }
+
+    this.urlSyncManager.initSync();
   }
 }
 
@@ -53,9 +44,16 @@ function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) 
 
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
-  toolbarActions.push(
-    <ToolbarButton icon="apps" onClick={() => locationService.push(`/d/${uid}`)} tooltip="View as Dashboard" />
-  );
+  if (uid?.length) {
+    toolbarActions.push(
+      <ToolbarButton
+        icon="apps"
+        onClick={() => locationService.push(`/d/${uid}`)}
+        tooltip="View as Dashboard"
+        key="scene-to-dashboard-switch"
+      />
+    );
+  }
   const pageToolbar = config.featureToggles.topnav ? (
     <AppChromeUpdate actions={toolbarActions} />
   ) : (
@@ -87,8 +85,10 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     controls: css({
       display: 'flex',
-      gap: theme.spacing(1),
+      paddingBottom: theme.spacing(2),
+      flexWrap: 'wrap',
       alignItems: 'center',
+      gap: theme.spacing(1),
     }),
   };
 }

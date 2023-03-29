@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -26,7 +26,7 @@ interface Props {
   rulesSource: RulesSource;
 }
 
-export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
+export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
   const dispatch = useDispatch();
   const location = useLocation();
   const notifyApp = useAppNotification();
@@ -129,7 +129,7 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
     }
 
     buttons.push(
-      <Tooltip placement="top" content="Clone">
+      <Tooltip placement="top" content="Copy">
         <CloneRuleButton ruleIdentifier={identifier} isProvisioned={isProvisioned} className={style.button} />
       </Tooltip>
     );

@@ -24,6 +24,14 @@ const getOptionsV1 = jest.fn().mockImplementation(() => {
   });
 });
 
+// Have to mock CodeEditor else it causes act warnings
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  CodeEditor: function CodeEditor({ value, onSave }: { value: string; onSave: (newQuery: string) => void }) {
+    return <input data-testid="mockeditor" value={value} onChange={(event) => onSave(event.target.value)} />;
+  },
+}));
+
 jest.mock('../language_provider', () => {
   return jest.fn().mockImplementation(() => {
     return { getOptionsV1 };

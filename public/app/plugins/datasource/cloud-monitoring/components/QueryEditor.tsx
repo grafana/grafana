@@ -20,10 +20,13 @@ export const QueryEditor = (props: Props) => {
   const query = useMemo(() => {
     if (!migrated) {
       setMigrated(true);
-      return datasource.migrateQuery(oldQ);
+      const migratedQuery = datasource.migrateQuery(oldQ);
+      // Update the query once the migrations have been completed.
+      onChange({ ...migratedQuery });
+      return migratedQuery;
     }
     return oldQ;
-  }, [oldQ, datasource, migrated]);
+  }, [oldQ, datasource, onChange, migrated]);
 
   const sloQuery = { ...defaultSLOQuery(datasource), ...query.sloQuery };
   const onSLOQueryChange = (q: SLOQuery) => {
