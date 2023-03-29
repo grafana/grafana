@@ -95,7 +95,7 @@ export const NewTracePageHeader = React.memo((props: NewTracePageHeaderProps) =>
     }
   }
 
-  console.log('render newTracePageHeader');
+  // console.log('render newTracePageHeader');
 
   return (
     <header className={styles.header}>

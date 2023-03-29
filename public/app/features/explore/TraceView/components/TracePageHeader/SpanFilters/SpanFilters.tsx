@@ -17,7 +17,7 @@ import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useToggle } from 'react-use';
 
-import { toOption } from '@grafana/data';
+import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 import { Collapse, HorizontalGroup, InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
 
@@ -52,11 +52,11 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
     tagKeys: [],
     tagValues: [],
   });
-
-  // TODO: combine all options methods into one iteration of all spans and return object
-  // combine getTagsFromSpan with useSearch
+  const [tagValues, setTagValues] = useState<Array<SelectableValue<string>>>([]);
+  const [isLoadingTagValues, setIsLoadingTagValues] = useState(false);
 
   useEffect(() => {
+    // console.log('useEffect setSpanData');
     const serviceNames: string[] = [];
     const spanNames: string[] = [];
     const tagKeys: string[] = [];
@@ -67,23 +67,18 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
       spanNames.push(span.operationName);
 
       span.tags.map((tag) => {
-        tagKeys.push(tag.key.toString());
-        tagValues.push(tag.value.toString());
+        tagKeys.push(tag.key);
       });
-
       span.process.tags.map((tag) => {
-        tagKeys.push(tag.key.toString());
-        tagValues.push(tag.value.toString());
+        tagKeys.push(tag.key);
       });
-
-      // if (span.logs !== null) {
-      //   span.logs.map((log) => {
-      //     log.fields.map((field) => {
-      //       tagKeys.push(field.key.toString());
-      //       tagValues.push(field.value.toString());
-      //     });
-      //   });
-      // }
+      if (span.logs !== null) {
+        span.logs.map((log) => {
+          log.fields.map((field) => {
+            tagKeys.push(field.key);
+          });
+        });
+      }
     });
 
     const spanData = {
@@ -93,39 +88,65 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
       tagValues,
     };
 
-    console.log('spanData', spanData);
     setSpanData(spanData);
   }, [trace]);
 
-  const serviceNameOptions = () => {
-    console.log('serviceNameOptions');
+  const serviceNameOptions = useCallback(() => {
+    // console.log('serviceNameOptions');
     return [...new Set(spanData.serviceNames)].sort().map((name) => {
       return toOption(name);
     });
-  };
+  }, [spanData.serviceNames]);
 
   const spanNameOptions = () => {
-    console.log('spanNameOptions');
+    // console.log('spanNameOptions');
     return [...new Set(spanData.spanNames)].sort().map((name) => {
       return toOption(name);
     });
   };
 
-  const allTagOptions = () => {
-    console.log('allTagOptions');
-    return {
-      keys: getDedupedOptions(spanData.tagKeys),
-      values: getDedupedOptions(spanData.tagValues),
-    };
-  };
-
-  const getDedupedOptions = (options: string[]) => {
-    return [...new Set(options)].sort().map((name) => {
+  const tagKeyOptions = () => {
+    // console.log('tagKeyOptions');
+    return [...new Set(spanData.tagKeys)].sort().map((name) => {
       return toOption(name);
     });
   };
 
-  const tagOptions = allTagOptions();
+  const tagValueOptions = async (key: string | undefined) => {
+    // console.log('tagValueOptions');
+    setIsLoadingTagValues(true);
+    let values: string[] = [];
+
+    if (key) {
+      trace.spans.map((span) => {
+        span.tags.map((tag) => {
+          if (tag.key === key) {
+            values.push(tag.value);
+          }
+        });
+        span.process.tags.map((tag) => {
+          if (tag.key === key) {
+            values.push(tag.value);
+          }
+        });
+        if (span.logs !== null) {
+          span.logs.map((log) => {
+            log.fields.map((field) => {
+              if (field.key === key) {
+                values.push(field.value);
+              }
+            });
+          });
+        }
+      });
+    }
+
+    const options = [...new Set(values)].sort().map((name) => {
+      return toOption(name);
+    });
+    setTagValues(options);
+    setIsLoadingTagValues(false);
+  };
 
   const addTag = () => {
     console.log('add tag');
@@ -161,7 +182,7 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
     return null;
   }
 
-  console.log('render SpanFilters');
+  // console.log('render SpanFilters');
 
   return (
     <Collapse label="Span Filters" collapsible={true} isOpen={showSpanFilters} onToggle={setShowSpanFilters}>
@@ -251,13 +272,13 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
                           return x.id === tag.id ? { ...x, key: v?.value || '' } : x;
                         }),
                       });
+                      tagValueOptions(v?.value || '');
                     }}
-                    options={tagOptions.keys}
+                    options={tagKeyOptions()}
                     placeholder="Select tag"
                     value={tag.key}
                   />
                   <Select
-                    options={[toOption('='), toOption('!=')]}
                     onChange={(v) => {
                       setSearch({
                         ...search,
@@ -266,11 +287,12 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
                         }),
                       });
                     }}
+                    options={[toOption('='), toOption('!=')]}
                     value={tag.operator}
                   />
                   <Select
                     isClearable
-                    options={tagOptions.values}
+                    isLoading={isLoadingTagValues}
                     onChange={(v) => {
                       setSearch({
                         ...search,
@@ -279,6 +301,8 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
                         }),
                       });
                     }}
+                    options={tagValues}
+                    // onOpenMenu={async () => setTagValues(await tagValueOptions(tag.key))}
                     placeholder="Select value"
                     value={tag.value}
                   />

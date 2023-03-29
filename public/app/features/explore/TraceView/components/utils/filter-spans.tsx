@@ -15,7 +15,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { SearchProps, Tag } from '../../useSearch';
-import { TNil, TraceSpan } from '../types';
+import { TNil, TraceKeyValuePair, TraceSpan } from '../types';
 
 export default function filterSpans(searchProps: SearchProps, spans: TraceSpan[] | TNil) {
   if (!spans) {
@@ -45,25 +45,18 @@ export default function filterSpans(searchProps: SearchProps, spans: TraceSpan[]
 const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
   return spans
     .filter((span: TraceSpan) => {
-      const spanTags = getTagsFromSpan(span);
-
       // match against every tag filter
       return tags.every((tag: Tag) => {
         if (tag.key && tag.value) {
-          if (spanTags[tag.key]) {
-            return tag.operator === '='
-              ? spanTags[tag.key].includes(tag.value)
-              : !spanTags[tag.key].includes(tag.value);
-          }
-          return false;
+          const found = span.tags.some((kv) => checkKeyAndValueForMatch(tag, kv));
+          const found2 = span.process.tags.some((kv) => checkKeyAndValueForMatch(tag, kv));
+          const found3 = span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForMatch(tag, kv)));
+          return checkForMatch(tag.operator, found, found2, found3);
         } else if (tag.key) {
-          const match = checkTagsForMatch(tag.key, Object.keys(spanTags), tag.operator);
-          console.log('key matches', match);
-          return match;
-        } else if (tag.value) {
-          const match = checkTagsForMatch(tag.value, Object.values(spanTags).flat(), tag.operator);
-          console.log('value matches', match);
-          return match;
+          const found = span.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key));
+          const found2 = span.process.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key));
+          const found3 = span.logs.some((log) => log.fields.some((kv) => checkKeyForMatch(tag.key!, kv.key)));
+          return checkForMatch(tag.operator, found, found2, found3);
         }
         return false;
       });
@@ -71,39 +64,16 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
     .map((span: TraceSpan) => span.spanID);
 };
 
-export const getTagsFromSpan = (span: TraceSpan) => {
-  // there can be fields in logs that have the same key across logs but different values
-  const spanTags: { [tag: string]: string[] } = {};
-  span.tags.map((tag) =>
-    spanTags[tag.key.toString()]
-      ? spanTags[tag.key.toString()].push(tag.value.toString())
-      : (spanTags[tag.key.toString()] = [tag.value.toString()])
-  );
-  span.process.tags.map((tag) =>
-    spanTags[tag.key.toString()]
-      ? spanTags[tag.key.toString()].push(tag.value.toString())
-      : (spanTags[tag.key.toString()] = [tag.value.toString()])
-  );
-  if (span.logs !== null) {
-    span.logs.map((log) => {
-      log.fields.map((field) => {
-        if (spanTags[field.key.toString()]) {
-          spanTags[field.key.toString()].push(field.value.toString());
-        } else {
-          spanTags[field.key.toString()] = [field.value.toString()];
-        }
-      });
-    });
-  }
-  return spanTags;
+const checkForMatch = (operator: string, found: boolean, found2: boolean, found3: boolean) => {
+  return operator === '=' ? found || found2 || found3 : !found && !found2 && !found3;
 };
 
-// const addTagFromSpan = (spanTags: { [tag: string]: string[] }, tag: Tag) => {
-//   spanTags[tag.key!.toString()] ? spanTags[tag.key!.toString()].push(tag.value!.toString()) : spanTags[tag.key!.toString()] = [tag.value!.toString()];
-// }
+const checkKeyForMatch = (tagKey: string, key: string) => {
+  return tagKey === key ? true : false;
+};
 
-const checkTagsForMatch = (needle: string, haystack: string[], operator: string) => {
-  return operator === '=' ? haystack.includes(needle) : !haystack.includes(needle);
+const checkKeyAndValueForMatch = (tag: Tag, kv: TraceKeyValuePair) => {
+  return tag.key === kv.key && tag.value === kv.value ? true : false;
 };
 
 const getServiceNameMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
