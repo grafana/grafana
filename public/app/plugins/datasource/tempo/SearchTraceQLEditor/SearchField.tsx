@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { uniq } from 'lodash';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
@@ -12,7 +12,6 @@ import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
-import TempoLanguageProvider from '../language_provider';
 import { operators as allOperators, stringOperators, numberOperators } from '../traceql/traceql';
 
 import { filterScopedTag, operatorSelectableValue } from './utils';
@@ -48,7 +47,6 @@ const SearchField = ({
   allowDelete,
 }: Props) => {
   const styles = useStyles2(getStyles);
-  const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [isLoadingValues, setIsLoadingValues] = useState(false);
   const [options, setOptions] = useState<Array<SelectableValue<string>>>([]);
   const [scopedTag, setScopedTag] = useState(filterScopedTag(filter));
@@ -82,7 +80,7 @@ const SearchField = ({
   const updateOptions = useCallback(async () => {
     try {
       setIsLoadingValues(true);
-      setOptions(await languageProvider.getOptionsV2(scopedTag));
+      setOptions(await datasource.languageProvider.getOptionsV2(scopedTag));
     } catch (error) {
       // Display message if Tempo is connected but search 404's
       if (isFetchError(error) && error?.status === 404) {
@@ -93,7 +91,7 @@ const SearchField = ({
     } finally {
       setIsLoadingValues(false);
     }
-  }, [scopedTag, languageProvider, setError]);
+  }, [datasource.languageProvider, scopedTag, setError]);
 
   useEffect(() => {
     updateOptions();
