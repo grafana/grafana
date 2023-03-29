@@ -2215,7 +2215,6 @@ describe('prepareTargets', () => {
           hinting: undefined,
           instant: true,
           refId: target.refId,
-          requestId: panelId + target.refId,
           start,
           step: 1,
         });
@@ -2251,7 +2250,6 @@ describe('prepareTargets', () => {
         hinting: undefined,
         instant: false,
         refId: target.refId,
-        requestId: panelId + target.refId,
         start,
         step: 1,
       });
