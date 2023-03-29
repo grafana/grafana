@@ -35,11 +35,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
   azureMonitorPath: string;
   firstWorkspace?: string;
-  cache: Map<string, any>;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
-    this.cache = new Map();
 
     this.resourcePath = `${routeNames.logAnalytics}`;
     this.azureMonitorPath = `${routeNames.azureMonitor}/subscriptions`;
