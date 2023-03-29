@@ -199,6 +199,10 @@ const (
 	// Enable data source onboarding page
 	FlagDatasourceOnboarding = "datasourceOnboarding"
 
+	// FlagEmptyDashboardPage
+	// Enable the redesigned user interface of a dashboard page that includes no panels
+	FlagEmptyDashboardPage = "emptyDashboardPage"
+
 	// FlagSecureSocksDatasourceProxy
 	// Enable secure socks tunneling for supported core datasources
 	FlagSecureSocksDatasourceProxy = "secureSocksDatasourceProxy"
@@ -208,7 +212,7 @@ const (
 	FlagAuthnService = "authnService"
 
 	// FlagDisablePrometheusExemplarSampling
-	// Disable Prometheus examplar sampling
+	// Disable Prometheus exemplar sampling
 	FlagDisablePrometheusExemplarSampling = "disablePrometheusExemplarSampling"
 
 	// FlagAlertingBacktesting
@@ -270,4 +274,12 @@ const (
 	// FlagClientTokenRotation
 	// Replaces the current in-request token rotation so that the client initiates the rotation
 	FlagClientTokenRotation = "clientTokenRotation"
+
+	// FlagDisableElasticsearchBackendExploreQuery
+	// Disable executing of Elasticsearch Explore queries trough backend
+	FlagDisableElasticsearchBackendExploreQuery = "disableElasticsearchBackendExploreQuery"
+
+	// FlagPrometheusDataplane
+	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
+	FlagPrometheusDataplane = "prometheusDataplane"
 )

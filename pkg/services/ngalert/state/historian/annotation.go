@@ -34,7 +34,7 @@ type AnnotationBackend struct {
 }
 
 type RuleStore interface {
-	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
+	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*ngmodels.AlertRule, error)
 }
 
 type AnnotationStore interface {
@@ -89,16 +89,16 @@ func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQue
 		UID:   query.RuleUID,
 		OrgID: query.OrgID,
 	}
-	err := h.rules.GetAlertRuleByUID(ctx, &rq)
+	rule, err := h.rules.GetAlertRuleByUID(ctx, &rq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to look up the requested rule")
 	}
-	if rq.Result == nil {
+	if rule == nil {
 		return nil, fmt.Errorf("no such rule exists")
 	}
 
 	q := annotations.ItemQuery{
-		AlertID:      rq.Result.ID,
+		AlertID:      rule.ID,
 		OrgID:        query.OrgID,
 		From:         query.From.Unix(),
 		To:           query.To.Unix(),
@@ -199,11 +199,11 @@ func (h *AnnotationBackend) recordAnnotations(ctx context.Context, panel *panelK
 	}
 
 	org := fmt.Sprint(orgID)
-	h.metrics.WritesTotal.WithLabelValues(org).Inc()
+	h.metrics.WritesTotal.WithLabelValues(org, "annotations").Inc()
 	h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(annotations)))
 	if err := h.annotations.SaveMany(ctx, annotations); err != nil {
 		logger.Error("Error saving alert annotation batch", "error", err)
-		h.metrics.WritesFailed.WithLabelValues(org).Inc()
+		h.metrics.WritesFailed.WithLabelValues(org, "annotations").Inc()
 		h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(annotations)))
 		return fmt.Errorf("error saving alert annotation batch: %w", err)
 	}
