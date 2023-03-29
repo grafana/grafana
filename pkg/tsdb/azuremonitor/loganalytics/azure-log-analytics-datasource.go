@@ -224,7 +224,12 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		}
 	}
 
-	queryUrl, err := getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl)
+	var queryUrl string
+	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
+		queryUrl, err = getTracesQueryUrl(query.Resources, azurePortalBaseUrl)
+	} else {
+		queryUrl, err = getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl)
+	}
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
@@ -317,6 +322,33 @@ func getQueryUrl(query string, resources []string, azurePortalUrl string) (strin
 	}
 	portalUrl += url.QueryEscape(string(resourcesMarshalled))
 	portalUrl += "/query/" + url.PathEscape(encodedQuery) + "/isQueryBase64Compressed/true/timespanInIsoFormat/P1D"
+	return portalUrl, nil
+}
+
+func getTracesQueryUrl(resources []string, azurePortalUrl string) (string, error) {
+	portalUrl := azurePortalUrl
+	portalUrl += "/#view/AppInsightsExtension/DetailsV2Blade/ComponentId~/"
+	resource := struct {
+		ResourceId string `json:"ResourceId"`
+	}{
+		resources[0],
+	}
+	resourceMarshalled, err := json.Marshal(resource)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal application insights resource: %s", err)
+	}
+
+	portalUrl += url.PathEscape(string(resourceMarshalled))
+	portalUrl += "/DataModel~/"
+
+	// We're making use of data link variables to select the necessary fields in the frontend
+	eventId := "%22eventId%22%3A%22${__data.fields.itemId}%22%2C"
+	timestamp := "%22timestamp%22%3A%22${__data.fields.startTime}%22%2C"
+	eventTable := "%22eventTable%22%3A%22${__data.fields.itemType}%22"
+	traceObject := fmt.Sprintf("%%7B%s%s%s%%7D", eventId, timestamp, eventTable)
+
+	portalUrl += traceObject
+
 	return portalUrl, nil
 }
 
