@@ -197,15 +197,9 @@ describe('SupplementaryQueries utils', function () {
         ]);
       });
     });
-    it('Does not use a fallback for logs sample', async () => {
+    it('Returns undefined for logs sample', async () => {
       const testProvider = await setup('no-data-providers', SupplementaryQueryType.LogsSample);
-      await expect(testProvider).toEmitValuesWith((received) => {
-        expect(received).toMatchObject([
-          {
-            state: LoadingState.NotStarted,
-          },
-        ]);
-      });
+      await expect(testProvider).toBe(undefined);
     });
   });
 

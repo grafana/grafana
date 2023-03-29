@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"google.golang.org/grpc"
@@ -23,8 +24,6 @@ import (
 	pluginProto "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginmod/proto"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-var errPluginNotFound = errors.New("errPluginNotFound")
 
 type Server struct {
 	*services.BasicService
@@ -181,27 +180,14 @@ func (s *Server) StaticRoute(_ context.Context, _ *pluginProto.GetStaticRoutesRe
 }
 
 func (s *Server) File(ctx context.Context, req *pluginProto.GetPluginFileRequest) (*pluginProto.GetPluginFileResponse, error) {
-	p, exists := s.pm.s.Plugin(ctx, req.Id)
-	if !exists {
-		return nil, errPluginNotFound
+	p, err := s.pm.File(ctx, req.Id, req.File)
+	if err != nil {
+		return nil, err
 	}
 
-	f, err := p.File(req.File)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		err = f.Close()
-		if err != nil {
-			s.log.Error("Could not close plugin file", "pluginID", p.ID, "file", req.File)
-		}
-	}()
-	b, err := io.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
 	return &pluginProto.GetPluginFileResponse{
-		File: b,
+		File:    p.Content,
+		ModTime: timestamppb.New(p.ModTime),
 	}, nil
 }
 

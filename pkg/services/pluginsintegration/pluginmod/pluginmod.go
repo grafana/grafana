@@ -138,9 +138,9 @@ func (m *PluginsModule) PluginErrors() []*plugins.Error {
 	return []*plugins.Error{}
 }
 
-func (m *PluginsModule) GetFile(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+func (m *PluginsModule) File(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
 	if pm, exists := m.manager(); exists {
-		return pm.GetFile(ctx, pluginID, filename)
+		return pm.File(ctx, pluginID, filename)
 	}
 	return &plugins.File{}, nil
 }

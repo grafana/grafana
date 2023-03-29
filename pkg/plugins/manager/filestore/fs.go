@@ -1,4 +1,4 @@
-package fs
+package filestore
 
 import (
 	"context"
@@ -6,22 +6,23 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
 type Service struct {
-	pluginStore plugins.Store
-	log         log.Logger
+	pluginRegistry registry.Service
+	log            log.Logger
 }
 
-func ProvideService(pluginStore plugins.Store) *Service {
+func ProvideService(pluginRegistry registry.Service) *Service {
 	return &Service{
-		pluginStore: pluginStore,
-		log:         log.New("manager.fs"),
+		pluginRegistry: pluginRegistry,
+		log:            log.New("plugin.fs"),
 	}
 }
 
-func (s *Service) GetFile(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
-	if p, exists := s.pluginStore.Plugin(ctx, pluginID); exists {
+func (s *Service) File(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+	if p, exists := s.pluginRegistry.Plugin(ctx, pluginID); exists {
 		f, err := p.File(filename)
 		if err != nil {
 			return nil, err

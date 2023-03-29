@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/plugins/manager/fs"
+	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
@@ -41,7 +41,7 @@ type core struct {
 	c   *client.Decorator
 	l   *loader.Loader
 	p   *process.Manager
-	fs  *fs.Service
+	fs  *filestore.Service
 	log log.Logger
 }
 
@@ -64,7 +64,7 @@ func NewCore(cfg *setting.Cfg, coreRegistry *coreplugin.Registry, reg *registry.
 		c:   cl,
 		l:   l,
 		p:   proc,
-		fs:  fs.ProvideService(s),
+		fs:  filestore.ProvideService(reg),
 		log: log.New("plugin.manager"),
 	}
 	c.BasicService = services.NewBasicService(c.start, c.run, c.stop)
@@ -128,8 +128,8 @@ func (c *core) PluginErrors() []*plugins.Error {
 	return c.l.PluginErrors()
 }
 
-func (c *core) GetFile(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
-	return c.fs.GetFile(ctx, pluginID, filename)
+func (c *core) File(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+	return c.fs.File(ctx, pluginID, filename)
 }
 
 func (c *core) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

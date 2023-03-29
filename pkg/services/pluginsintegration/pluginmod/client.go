@@ -191,7 +191,7 @@ func (c *Client) PluginErrors() []*plugins.Error {
 	return res
 }
 
-func (c *Client) GetFile(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+func (c *Client) File(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
 	res, err := c.pm.File(ctx, &pluginProto.GetPluginFileRequest{
 		Id:   pluginID,
 		File: filename,

@@ -349,7 +349,7 @@ func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 
 // serveLocalPluginAsset returns the content of a plugin asset file from the local filesystem to the http client.
 func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin plugins.PluginDTO, assetPath string) {
-	f, err := hs.pluginFiles.GetFile(c.Req.Context(), plugin.ID, assetPath)
+	f, err := hs.pluginFileStore.File(c.Req.Context(), plugin.ID, assetPath)
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
 			c.JsonApiErr(404, "Plugin file not found", nil)
@@ -521,13 +521,14 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name 
 	if err != nil {
 		return make([]byte, 0), err
 	}
-	md, err := hs.pluginFiles.GetFile(ctx, pluginID, file)
+
+	md, err := hs.pluginFileStore.File(ctx, pluginID, file)
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotInstalled) {
 			return make([]byte, 0), plugins.NotFoundError{PluginID: pluginID}
 		}
 
-		md, err = hs.pluginFiles.GetFile(ctx, pluginID, strings.ToLower(file))
+		md, err = hs.pluginFileStore.File(ctx, pluginID, strings.ToLower(file))
 		if err != nil {
 			return make([]byte, 0), nil
 		}

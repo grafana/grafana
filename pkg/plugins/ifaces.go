@@ -31,9 +31,9 @@ type PluginSource interface {
 	DefaultSignature(ctx context.Context) (Signature, bool)
 }
 
-type FileSystem interface {
-	// GetFile finds a plugin file.
-	GetFile(ctx context.Context, pluginID, filename string) (*File, error)
+type FileStore interface {
+	// File retrieves a plugin file.
+	File(ctx context.Context, pluginID, filename string) (*File, error)
 }
 
 type File struct {

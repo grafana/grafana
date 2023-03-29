@@ -130,6 +130,38 @@ func TestRemoteLokiBackend(t *testing.T) {
 			require.NotContains(t, res[0].Stream, "__private__")
 		})
 
+		t.Run("includes instance labels in log line", func(t *testing.T) {
+			rule := createTestRule()
+			l := log.NewNopLogger()
+			states := singleFromNormal(&state.State{
+				State:  eval.Alerting,
+				Labels: data.Labels{"statelabel": "labelvalue"},
+			})
+
+			res := statesToStreams(rule, states, nil, l)
+
+			entry := requireSingleEntry(t, res)
+			require.Contains(t, entry.InstanceLabels, "statelabel")
+		})
+
+		t.Run("does not include labels other than instance labels in log line", func(t *testing.T) {
+			rule := createTestRule()
+			l := log.NewNopLogger()
+			states := singleFromNormal(&state.State{
+				State: eval.Alerting,
+				Labels: data.Labels{
+					"statelabel": "labelvalue",
+					"labeltwo":   "labelvalue",
+					"labelthree": "labelvalue",
+				},
+			})
+
+			res := statesToStreams(rule, states, nil, l)
+
+			entry := requireSingleEntry(t, res)
+			require.Len(t, entry.InstanceLabels, 3)
+		})
+
 		t.Run("serializes values when regular", func(t *testing.T) {
 			rule := createTestRule()
 			l := log.NewNopLogger()
@@ -298,10 +330,10 @@ grafana_alerting_state_history_transitions_failed_total{org="1"} 1
 grafana_alerting_state_history_transitions_total{org="1"} 2
 # HELP grafana_alerting_state_history_writes_failed_total The total number of failed writes of state history batches.
 # TYPE grafana_alerting_state_history_writes_failed_total counter
-grafana_alerting_state_history_writes_failed_total{org="1"} 1
+grafana_alerting_state_history_writes_failed_total{backend="loki",org="1"} 1
 # HELP grafana_alerting_state_history_writes_total The total number of state history batches that were attempted to be written.
 # TYPE grafana_alerting_state_history_writes_total counter
-grafana_alerting_state_history_writes_total{org="1"} 2
+grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 `)
 		err := testutil.GatherAndCompare(reg, exp,
 			"grafana_alerting_state_history_transitions_total",
