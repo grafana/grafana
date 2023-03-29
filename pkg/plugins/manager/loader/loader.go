@@ -39,7 +39,9 @@ type Loader struct {
 	log                log.Logger
 	cfg                *config.Cfg
 
-	errs    map[string]*plugins.SignatureError
+	errs map[string]*plugins.SignatureError
+	
+	// TODO: remove
 	errsMux sync.Mutex
 }
 
@@ -241,7 +243,9 @@ func (l *Loader) validateSignatures(ctx context.Context, loadedPlugins []*plugin
 				if !ok {
 					return
 				}
+				l.errsMux.Lock()
 				l.errs[signatureErr.PluginID] = signatureErr
+				l.errsMux.Unlock()
 			case p, ok := <-validatedPlugins:
 				if !ok {
 					return
