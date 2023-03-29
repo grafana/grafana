@@ -52,7 +52,7 @@ type service struct {
 
 // NOTE: k8sAuthnAPI and k8sAuthzAPI aren't code-dependencies of apiserver. However, they need to be exercised somewhere
 // in order for Wire to pull them in. These can be moved to a better place, if there is such a candidate.
-func ProvideService(etcdProvider kine.EtcdProvider, _ authnz.K8sAuthnAPI, _ authnz.K8sAuthzAPI, cfg *setting.Cfg) (*service, error) {
+func ProvideService(etcdProvider kine.EtcdProvider, _ *authnz.K8sAuthnzAPIImpl, cfg *setting.Cfg) (*service, error) {
 	s := &service{
 		dataPath:     path.Join(cfg.DataPath, "k8s"),
 		etcdProvider: etcdProvider,
