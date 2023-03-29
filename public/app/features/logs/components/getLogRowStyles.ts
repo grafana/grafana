@@ -70,7 +70,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       font-family: ${theme.typography.fontFamilyMonospace};
       font-size: ${theme.typography.bodySmall.fontSize};
       width: 100%;
-      margin-bottom: ${theme.spacing(2.25)}; // to make sure the last row is not cut off
+      margin-bottom: ${theme.spacing(2.25)};
     `,
     contextBackground: css`
       background: ${hoverBgColor};
