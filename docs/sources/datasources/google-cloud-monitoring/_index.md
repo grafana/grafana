@@ -108,6 +108,23 @@ datasources:
         -----END PRIVATE KEY-----
 ```
 
+**Using the JWT (Service Account private key path) authentication type:**
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Google Cloud Monitoring
+    type: stackdriver
+    access: proxy
+    jsonData:
+      tokenUri: https://oauth2.googleapis.com/token
+      clientEmail: stackdriver@myproject.iam.gserviceaccount.com
+      authenticationType: jwt
+      defaultProject: my-project-name
+      privateKeyPath: /etc/secrets/gce.pem
+```
+
 **Using GCE Default Service Account authentication:**
 
 ```yaml

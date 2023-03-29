@@ -20,9 +20,9 @@ Supported data sources are:
 
 For information on how to configure queries for the data sources listed above, refer to the documentation for specific data source.
 
-## Trace View explanation
+## Trace View
 
-This section explains the elements of the Trace View dashboard.
+This section explains the elements of the Trace View.
 
 {{< figure src="/static/img/docs/explore/explore-trace-view-full-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
 
@@ -63,12 +63,6 @@ Clicking anywhere on the span row shows span details.
 - Process metadata: Metadata about the process that logged this span.
 - Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
 
-### Node graph
-
-You can optionally expand the node graph for the displayed trace. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service graph based on the current trace.
-
-![Node graph](/static/img/docs/explore/explore-trace-view-node-graph-8-0.png 'Node graph')
-
 ### Trace to logs
 
 > **Note:** Available in Grafana 7.4 and later versions.
@@ -85,9 +79,15 @@ Click the document icon to open a split view in Explore with the configured data
 
 You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/#trace-to-metrics) for configuration instructions.
 
-## Service Graph view
+## Node Graph
 
-The Service Graph view visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
+You can optionally expand the node graph for the displayed trace. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service graph based on the current trace.
+
+![Node graph](/static/img/docs/explore/explore-trace-view-node-graph-8-0.png 'Node graph')
+
+## Service Graph
+
+The Service Graph visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
 Once the requirements are set up, this pre-configured view is immediately available.
 
 For more information, refer to the [Service Graph view section]({{< relref "/docs/grafana/latest/datasources/tempo/#open-the-service-graph-view" >}}) of the Tempo data source page and the [service graph view page]({{< relref "/docs/tempo/latest/metrics-generator/service-graph-view/" >}}) in the Tempo documentation.

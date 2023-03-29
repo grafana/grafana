@@ -11,6 +11,7 @@ import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { TABLE, TIMESERIES } from '../../utils/constants';
+import { isPromOrLokiQuery } from '../../utils/rule-form';
 import { SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
 
 import { VizWrapper } from './VizWrapper';
@@ -57,16 +58,20 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
   const handleChangedQuery = (changedQuery: DataQuery) => {
     const query = queries[0];
 
+    if (!isPromOrLokiQuery(query.model)) {
+      return;
+    }
+
+    const expr = query.model.expr;
+
     const merged = {
       ...query,
       refId: changedQuery.refId,
       queryType: query.model.queryType ?? '',
-      //@ts-ignore
-      expr: changedQuery?.expr,
+      expr,
       model: {
         refId: changedQuery.refId,
-        //@ts-ignore
-        expr: changedQuery?.expr,
+        expr,
         editorMode: 'code',
       },
     };
