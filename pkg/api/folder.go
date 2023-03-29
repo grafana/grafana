@@ -209,10 +209,6 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 		}
 		var err error
 
-		if cmd.NewParentUID == "" {
-			return response.Error(http.StatusBadRequest, "bad request data: missing parent", err)
-		}
-
 		cmd.OrgID = c.OrgID
 		cmd.UID = web.Params(c.Req)[":uid"]
 		cmd.SignedInUser = c.SignedInUser
