@@ -44,7 +44,7 @@ export function AutoSaveField<T = string>(props: GenericProps<T>) {
     showError: invalid,
   });
 
-  const inputRef = useRef<null | HTMLInputElement>(null);
+  const fieldRef = useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
@@ -101,24 +101,23 @@ export function AutoSaveField<T = string>(props: GenericProps<T>) {
         invalid={isInvalid}
         disabled={disabled}
         error={error || (fieldState.showError && saveErrorMessage)}
+        ref={fieldRef}
       >
-        <div ref={inputRef}>
-          {React.cloneElement(
-            children((newValue) => {
-              lodashDebounce(newValue);
-            })
-            // {
-            //   loading: isLoading,
-            //   invalid: isInvalid,
-            //   disabled,
-            // }
-          )}
-        </div>
+        {React.cloneElement(
+          children((newValue) => {
+            lodashDebounce(newValue);
+          }),
+          {
+            loading: isLoading,
+            invalid: isInvalid,
+            disabled,
+          }
+        )}
       </Field>
       {fieldState.showSuccess && (
         <InlineToast
           suffixIcon={'check'}
-          referenceElement={inputRef.current}
+          referenceElement={fieldRef.current}
           placement="right"
           alternativePlacement="bottom"
         >
