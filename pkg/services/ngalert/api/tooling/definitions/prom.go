@@ -68,7 +68,7 @@ type DiscoveryBase struct {
 // swagger:model
 type RuleDiscovery struct {
 	// required: true
-	RuleGroups []*RuleGroup     `json:"groups"`
+	RuleGroups []RuleGroup      `json:"groups"`
 	Totals     map[string]int64 `json:"totals,omitempty"`
 }
 
@@ -96,6 +96,29 @@ type RuleGroup struct {
 	LastEvaluation time.Time `json:"lastEvaluation"`
 	EvaluationTime float64   `json:"evaluationTime"`
 }
+
+// RuleGroupsBy is a function that defines the ordering of Rule Groups.
+type RuleGroupsBy func(a1, a2 *RuleGroup) bool
+
+func (by RuleGroupsBy) Sort(groups []RuleGroup) {
+	sort.Sort(RuleGroupsSorter{groups: groups, by: by})
+}
+
+func RuleGroupsByFileAndName(a1, a2 *RuleGroup) bool {
+	if a1.File == a2.File {
+		return a1.Name < a2.Name
+	}
+	return a1.File < a2.File
+}
+
+type RuleGroupsSorter struct {
+	groups []RuleGroup
+	by     RuleGroupsBy
+}
+
+func (s RuleGroupsSorter) Len() int           { return len(s.groups) }
+func (s RuleGroupsSorter) Swap(i, j int)      { s.groups[i], s.groups[j] = s.groups[j], s.groups[i] }
+func (s RuleGroupsSorter) Less(i, j int) bool { return s.by(&s.groups[i], &s.groups[j]) }
 
 // adapted from cortex
 // swagger:model

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -181,12 +180,19 @@ func (by AlertRulesBy) Sort(rules []*AlertRule) {
 	sort.Sort(AlertRulesSorter{rules: rules, by: by})
 }
 
-func AlertRulesByGroupKey(a1, a2 *AlertRule) bool {
+// AlertRulesByIndex orders alert rules by rule group index. You should
+// make sure that all alert rules belong to the same rule group (have the
+// same RuleGroupKey) before using this ordering.
+func AlertRulesByIndex(a1, a2 *AlertRule) bool {
+	return a1.RuleGroupIndex < a2.RuleGroupIndex
+}
+
+func AlertRulesByGroupKeyAndIndex(a1, a2 *AlertRule) bool {
 	k1, k2 := a1.GetGroupKey(), a2.GetGroupKey()
 	if k1 == k2 {
 		return a1.RuleGroupIndex < a2.RuleGroupIndex
 	}
-	return AlertRuleGroupKeyByFolderAndNamespace(&k1, &k2)
+	return AlertRuleGroupKeyByNamespaceAndRuleGroup(&k1, &k2)
 }
 
 type AlertRulesSorter struct {
@@ -311,7 +317,6 @@ type AlertRuleGroupKey struct {
 	OrgID        int64
 	NamespaceUID string
 	RuleGroup    string
-	Folder       string
 }
 
 func (k AlertRuleGroupKey) String() string {
@@ -329,12 +334,11 @@ func (by AlertRuleGroupKeyBy) Sort(keys []AlertRuleGroupKey) {
 	sort.Sort(AlertRuleGroupKeySorter{keys: keys, by: by})
 }
 
-func AlertRuleGroupKeyByFolderAndNamespace(k1, k2 *AlertRuleGroupKey) bool {
-	if strings.ToLower(k1.Folder) == strings.ToLower(k2.Folder) {
-		return strings.ToLower(k1.RuleGroup) < strings.ToLower(k2.RuleGroup)
+func AlertRuleGroupKeyByNamespaceAndRuleGroup(k1, k2 *AlertRuleGroupKey) bool {
+	if k1.NamespaceUID == k2.NamespaceUID {
+		return k1.RuleGroup < k2.RuleGroup
 	}
-
-	return strings.ToLower(k1.Folder) < strings.ToLower(k2.Folder)
+	return k1.NamespaceUID < k2.NamespaceUID
 }
 
 type AlertRuleGroupKeySorter struct {
