@@ -1,5 +1,12 @@
-import { TimeRange, DataFrame, FieldType, ArrayVector } from '@grafana/data';
-import { FieldColorModeId } from '@grafana/schema';
+import {
+  TimeRange,
+  DataFrame,
+  FieldType,
+  ArrayVector,
+  DataFrameType,
+  FieldColorModeId,
+  DataTopic,
+} from '@grafana/data';
 import { calculateTimesWithin } from 'app/core/utils/timeRegions';
 
 import { TimeRegionConfig } from './types';
@@ -12,26 +19,28 @@ export function doTimeRegionQuery(config: TimeRegionConfig, range: TimeRange, tz
   }
 
   const times: number[] = [];
-  const values: boolean[] = [];
+  const timesEnd: number[] = [];
+  const colors: string[] = [];
+
   for (const region of regions) {
     times.push(region.from);
-    values.push(true);
-    times.push(region.to);
-    values.push(false);
+    timesEnd.push(region.to);
+    colors.push(config.color);
   }
+
   return {
+    meta: {
+      type: DataFrameType.TimeRanges,
+      dataTopic: DataTopic.Annotations,
+    },
     fields: [
-      { name: 'Time', type: FieldType.time, values: new ArrayVector(times), config: {} },
+      { name: 'time', type: FieldType.time, values: new ArrayVector(times), config: {} },
+      { name: 'timeEnd', type: FieldType.time, values: new ArrayVector(timesEnd), config: {} },
       {
-        name: config.name ?? 'Region',
-        type: FieldType.boolean,
-        values: new ArrayVector(values),
-        config: {
-          color: {
-            mode: FieldColorModeId.Fixed,
-            fixedColor: config.color,
-          },
-        },
+        name: 'color',
+        type: FieldType.string,
+        values: new ArrayVector(colors),
+        config: { color: { mode: FieldColorModeId.Fixed, fixedColor: config.color } },
       },
     ],
     length: times.length,

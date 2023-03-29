@@ -53,11 +53,8 @@ export const TimeSeriesPanel = ({
       }
     }
 
-    // TEMP HACK
-    regions.push(data.series.pop()!);
-
-    return {annotations, exemplars, regions};
-  }, [data.annotations, data.series]);
+    return { annotations, exemplars, regions };
+  }, [data.annotations]);
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
@@ -109,16 +106,9 @@ export const TimeSeriesPanel = ({
                 timeZone={timeZone}
               />
             )}
-            {regions.length && (
-              <RegionsPlugin
-                config={config}
-                regions={regions}
-              />
-            )}
+            {regions.length && <RegionsPlugin config={config} regions={regions} />}
             {/* Renders annotation markers*/}
-            {annotations.length && (
-              <AnnotationsPlugin annotations={annotations} config={config} timeZone={timeZone} />
-            )}
+            {annotations.length && <AnnotationsPlugin annotations={annotations} config={config} timeZone={timeZone} />}
             {/* Enables annotations creation*/}
             {enableAnnotationCreation ? (
               <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>

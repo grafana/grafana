@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import uPlot from 'uplot';
 
 import { DataFrame } from '@grafana/data';
@@ -13,13 +13,28 @@ export const RegionsPlugin = ({ regions, config }: RegionsPluginProps) => {
   const theme = useTheme2();
   const plotInstance = useRef<uPlot>();
 
+  const getValues = useCallback(
+    (fieldName: string) => {
+      let values: any[] = [];
+      regions.forEach((region) => {
+        region.fields
+          .find((f) => f.name === fieldName)!
+          .values.toArray()
+          .map((v) => values.push(v));
+      });
+
+      return values;
+    },
+    [regions]
+  );
+
   const { froms, tos, colors } = useMemo(
     () => ({
-      froms: regions[0].fields.find((f) => f.name === 'time')!.values.toArray(),
-      tos: regions[0].fields.find((f) => f.name === 'timeEnd')!.values.toArray(),
-      colors: regions[0].fields.find((f) => f.name === 'color')!.values.toArray(),
+      froms: getValues('time'),
+      tos: getValues('timeEnd'),
+      colors: getValues('color'),
     }),
-    [regions]
+    [getValues]
   );
 
   useLayoutEffect(() => {
