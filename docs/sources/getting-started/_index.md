@@ -23,7 +23,10 @@ You have two ways to set up Grafana:
 
 ## Step 2. Connect your first data source
 
-Grafana dashboards work by querying [data sources]({{< relref "../datasources/" >}}) that you connect to Grafana. You will need to [setup a data source]({{< relref "../administration/data-source-management/" >}}) connection before you can visualize data. Data sources are setup by [installing data source plugins]({{< relref "../administration/plugin-management/#install-grafana-plugins" >}})). You can [browse data source plugins](https://grafana.com/grafana/plugins/?type=datasource) from the plugin catalog.
+Grafana dashboards work by querying [data sources]({{< relref "../datasources/" >}}) that you connect to Grafana.
+You will need to [setup a data source]({{< relref "../administration/data-source-management/" >}}) connection before you can visualize data.
+Data sources are setup by [installing data source plugins]({{< relref "../administration/plugin-management/#install-grafana-plugins" >}})).
+You can [browse data source plugins](https://grafana.com/grafana/plugins/?type=datasource) from the plugin catalog.
 
 1. Decide which data source you want to visualize. Browse the (data source plugin catalog](https://grafana.com/grafana/plugins/?type=datasource)) to see what you can connect with Grafana.
 2. Ensure the data source plugin is installed. See ([how to install data source plugins]({{< relref "../administration/data-source-management/" >}})).
