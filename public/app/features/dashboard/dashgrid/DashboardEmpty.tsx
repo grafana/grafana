@@ -22,10 +22,10 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           <h1 className={cx(styles.headerSection, styles.headerBig)}>
             Start your new dashboard by adding a visualization
           </h1>
-          <h4 className={cx(styles.bodySection, styles.bodyBig)}>
+          <div className={cx(styles.bodySection, styles.bodyBig)}>
             Select a data source and then query and visualize your data with charts, stats and tables or create lists,
             markdowns and other widgets.
-          </h4>
+          </div>
           <Button
             size="lg"
             icon="plus"
@@ -42,10 +42,10 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
         </div>
         <div className={cx(styles.centeredContent, styles.others)}>
           <div className={cx(styles.containerBox, styles.centeredContent, styles.rowContainer)}>
-            <h2 className={cx(styles.headerSection, styles.headerSmall)}>Add a row</h2>
-            <h5 className={cx(styles.bodySection, styles.bodySmall)}>
+            <h3 className={cx(styles.headerSection, styles.headerSmall)}>Add a row</h3>
+            <div className={cx(styles.bodySection, styles.bodySmall)}>
               Group your visualizations into expandable sections.
-            </h5>
+            </div>
             <Button
               icon="plus"
               fill="outline"
@@ -60,10 +60,10 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             </Button>
           </div>
           <div className={cx(styles.containerBox, styles.centeredContent, styles.libraryContainer)}>
-            <h2 className={cx(styles.headerSection, styles.headerSmall)}>Import panel</h2>
-            <h5 className={cx(styles.bodySection, styles.bodySmall)}>
+            <h3 className={cx(styles.headerSection, styles.headerSmall)}>Import panel</h3>
+            <div className={cx(styles.bodySection, styles.bodySmall)}>
               Import visualizations that are shared with other dashboards.
-            </h5>
+            </div>
             <Button
               icon="plus"
               fill="outline"
@@ -142,6 +142,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     bodySection: css({
       label: 'body-section',
       fontWeight: theme.typography.fontWeightRegular,
+      fontSize: theme.typography.body.fontSize,
+      lineHeight: theme.typography.body.lineHeight,
       color: theme.colors.text.secondary,
       textAlign: 'center',
     }),
