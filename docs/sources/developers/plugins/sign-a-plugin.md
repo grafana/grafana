@@ -41,6 +41,8 @@ Public plugins need to be reviewed by the Grafana team before you can sign them.
 
 ## Sign a private plugin
 
+> **Important:** Private plugins are not supported in Grafana Cloud.
+
 1. In your plugin directory, sign the plugin with the API key you just created. Grafana Sign Plugin creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
 
    The `rootUrls` flag accepts a comma-separated list of URLs to the Grafana instances where you intend to install the plugin.
