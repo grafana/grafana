@@ -198,7 +198,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		if !authorizeAccessToRuleGroup(rules, hasAccess) {
 			continue
 		}
-		
+
 		ruleGroup, totals := srv.toRuleGroup(groupKey, rules, limitAlertsPerRule, labelOptions)
 
 		for k, v := range totals {
@@ -260,7 +260,7 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, rules 
 			if alertState.Error != nil {
 				totals["error"] += 1
 			}
-			alert := &apimodels.Alert{
+			alert := apimodels.Alert{
 				Labels:      alertState.GetLabels(labelOptions...),
 				Annotations: alertState.Annotations,
 
@@ -306,6 +306,10 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, rules 
 		if newRule.Health == "error" || newRule.Health == "nodata" {
 			rulesTotals[newRule.Health] += 1
 		}
+
+		sortedAlerts := apimodels.SortableAlerts(alertingRule.Alerts)
+		sort.Sort(sortedAlerts)
+		alertingRule.Alerts = sortedAlerts
 
 		if limitAlerts > -1 && int64(len(alertingRule.Alerts)) > limitAlerts {
 			alertingRule.Alerts = alertingRule.Alerts[0:limitAlerts]

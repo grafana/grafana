@@ -1,6 +1,9 @@
 package definitions
 
 import (
+	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -108,7 +111,7 @@ type AlertingRule struct {
 	// required: true
 	Annotations overrideLabels `json:"annotations,omitempty"`
 	// required: true
-	Alerts []*Alert         `json:"alerts,omitempty"`
+	Alerts []Alert          `json:"alerts,omitempty"`
 	Totals map[string]int64 `json:"totals,omitempty"`
 	Rule
 }
@@ -143,6 +146,78 @@ type Alert struct {
 	// required: true
 	Value string `json:"value"`
 }
+
+type StateByImportance int
+
+const (
+	StateAlerting = iota
+	StatePending
+	StateError
+	StateNoData
+	StateNormal
+)
+
+func stateByImportanceFromString(s string) (StateByImportance, error) {
+	switch s = strings.ToLower(s); s {
+	case "alerting":
+		return StateAlerting, nil
+	case "pending":
+		return StatePending, nil
+	case "error":
+		return StateError, nil
+	case "nodata":
+		return StateNoData, nil
+	case "normal":
+		return StateNormal, nil
+	default:
+		return -1, fmt.Errorf("unknown state: %s", s)
+	}
+}
+
+func (a Alert) Less(v Alert) bool {
+	// Compare the importance of each alert's state
+	imp1, _ := stateByImportanceFromString(a.State)
+	imp2, _ := stateByImportanceFromString(v.State)
+	if imp1 == imp2 {
+		// The first alert is active but not the second
+		if a.ActiveAt != nil && v.ActiveAt == nil {
+			return true
+			// The second alert is active but not the first
+		} else if a.ActiveAt == nil && v.ActiveAt != nil {
+			return false
+			// Both alerts are active so compare their timestamps
+		} else if a.ActiveAt != nil && v.ActiveAt != nil && a.ActiveAt.Before(*v.ActiveAt) {
+			return true
+		}
+		// Both alerts are active from the same time so compare the labels
+		labels1, labels2 := sortLabels(a.Labels), sortLabels(v.Labels)
+		if len(labels1) == len(labels2) {
+			for i := range labels1 {
+				if labels1[i] != labels2[i] {
+					return labels1[i] < labels2[i]
+				}
+			}
+		}
+		return len(labels1) < len(labels2)
+	}
+
+	return imp1 < imp2
+}
+
+func sortLabels(m map[string]string) []string {
+	s := make([]string, 0, len(m))
+	for k, v := range m {
+		s = append(s, k+v)
+	}
+	sort.Strings(s)
+	return s
+}
+
+type SortableAlerts []Alert
+
+func (s SortableAlerts) Len() int           { return len(s) }
+func (s SortableAlerts) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s SortableAlerts) Less(i, j int) bool { return s[i].Less(s[j]) }
 
 // override the labels type with a map for generation.
 // The custom marshaling for labels.Labels ends up doing this anyways.
