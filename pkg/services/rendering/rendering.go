@@ -84,7 +84,7 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remo
 	}
 
 	var renderKeyProvider renderKeyProvider
-	if features.IsEnabled(featuremgmt.FlagRenderingOverJWT) {
+	if features.IsEnabled(featuremgmt.FlagRenderAuthJWT) {
 		renderKeyProvider = &jwtRenderKeyProvider{
 			log:       logger,
 			authToken: []byte(cfg.RendererAuthToken),
