@@ -370,7 +370,6 @@ function hasNegSample(data: unknown[], samples = 100) {
   }
 
   let negCount = 0;
-  let zeroCount = 0;
   let posCount = 0;
 
   if (lastIdx >= firstIdx) {
@@ -384,8 +383,6 @@ function hasNegSample(data: unknown[], samples = 100) {
           negCount++;
         } else if (v > 0) {
           posCount++;
-        } else if (v === 0) {
-          zeroCount++;
         }
       }
     }
