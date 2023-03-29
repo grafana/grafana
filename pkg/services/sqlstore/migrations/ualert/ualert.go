@@ -267,6 +267,25 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	// cache for the general folders
 	generalFolderCache := make(map[int64]*dashboard)
 
+	gf := func(dash dashboard, da dashAlert) (*dashboard, error) {
+		f, ok := generalFolderCache[dash.OrgId]
+		if !ok {
+			// get or create general folder
+			f, err = folderHelper.getOrCreateGeneralFolder(dash.OrgId)
+			if err != nil {
+				return nil, MigrationError{
+					Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgId, err),
+					AlertId: da.Id,
+				}
+			}
+			generalFolderCache[dash.OrgId] = f
+		}
+		// No need to assign default permissions to general folder
+		// because they are included to the query result if it's a folder with no permissions
+		// https://github.com/grafana/grafana/blob/076e2ce06a6ecf15804423fcc8dca1b620a321e5/pkg/services/sqlstore/dashboard_acl.go#L109
+		return f, nil
+	}
+
 	// Per org map of newly created rules to which notification channels it should send to.
 	rulesPerOrg := make(map[int64]map[*alertRule][]uidOrID)
 
@@ -342,22 +361,10 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			}
 			folder = &f
 		default:
-			f, ok := generalFolderCache[dash.OrgId]
-			if !ok {
-				// get or create general folder
-				f, err = folderHelper.getOrCreateGeneralFolder(dash.OrgId)
-				if err != nil {
-					return MigrationError{
-						Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgId, err),
-						AlertId: da.Id,
-					}
-				}
-				generalFolderCache[dash.OrgId] = f
+			folder, err = gf(dash, da)
+			if err != nil {
+				return err
 			}
-			// No need to assign default permissions to general folder
-			// because they are included to the query result if it's a folder with no permissions
-			// https://github.com/grafana/grafana/blob/076e2ce06a6ecf15804423fcc8dca1b620a321e5/pkg/services/sqlstore/dashboard_acl.go#L109
-			folder = f
 		}
 
 		if folder.Uid == "" {
