@@ -31,13 +31,14 @@ export const MoveToFolderModal = ({ results, onMoveItems, onDismiss }: Props) =>
     ? Array.from(results.get('folder') ?? []).filter((v) => v !== GENERAL_FOLDER_UID)
     : [];
 
-  const handleFolderChange = useCallback((newFolder: FolderInfo) => {
-    setFolder(newFolder);
-  }, []);
+  const handleFolderChange = useCallback(
+    (newFolder: FolderInfo) => {
+      setFolder(newFolder);
+    },
+    [setFolder]
+  );
 
   const moveTo = async () => {
-    console.log({ folder, selectedDashboards, selectedFolders });
-
     if (!folder) {
       return;
     }
@@ -141,7 +142,7 @@ export const MoveToFolderModal = ({ results, onMoveItems, onDismiss }: Props) =>
             </>
           )}
 
-          <p>Move the {thingsMoving} to the following folder:</p>
+          <p>Move {thingsMoving} to the following folder:</p>
 
           <FolderPicker allowEmpty={true} enableCreateNew={false} onChange={handleFolderChange} />
         </div>
