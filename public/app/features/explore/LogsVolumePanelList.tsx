@@ -80,7 +80,6 @@ export const LogsVolumePanelList = ({
             splitOpen={splitOpen}
             onLoadLogsVolume={onLoadLogsVolume}
             // TODO: Support filtering level from multiple log levels
-            hideTitle={numberOfLogVolumes === 1}
             onHiddenSeriesChanged={numberOfLogVolumes > 1 ? () => {} : onHiddenSeriesChanged}
             eventBus={eventBus}
           />

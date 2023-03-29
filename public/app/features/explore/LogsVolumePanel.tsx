@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { identity } from 'lodash';
 import React from 'react';
 
 import {
@@ -25,13 +26,12 @@ type Props = {
   width: number;
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
   onLoadLogsVolume: () => void;
-  hideTitle?: boolean;
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
 };
 
 export function LogsVolumePanel(props: Props) {
-  const { width, timeZone, splitOpen, onUpdateTimeRange, onHiddenSeriesChanged, hideTitle } = props;
+  const { width, timeZone, splitOpen, onUpdateTimeRange, onHiddenSeriesChanged } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -44,13 +44,15 @@ export function LogsVolumePanel(props: Props) {
   const logsVolumeData = props.logsVolumeData;
 
   const logsVolumeInfo = getLogsVolumeDataSourceInfo(logsVolumeData?.data);
-  let extraInfo = logsVolumeInfo && !hideTitle ? `${logsVolumeInfo.name}` : '';
+  let extraInfo = logsVolumeInfo ? `${logsVolumeInfo.name}` : '';
 
   if (isLogsVolumeLimited(logsVolumeData.data)) {
     extraInfo = [
       extraInfo,
       'This datasource does not support full-range histograms. The graph below is based on the logs seen in the response.',
-    ].join('. ');
+    ]
+      .filter(identity)
+      .join('. ');
   }
 
   const range = isLogsVolumeLimited(logsVolumeData.data)
