@@ -5645,7 +5645,7 @@
         }
       }
     },
-    "/folders/{folder_uid}.move": {
+    "/folders/{folder_uid}/move": {
       "get": {
         "tags": [
           "folders"

@@ -201,7 +201,7 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 	return nil
 }
 
-// swagger:route GET /folders/{folder_uid}.move folders moveFolder
+// swagger:route GET /folders/{folder_uid}/move folders moveFolder
 //
 // Move folder.
 //
