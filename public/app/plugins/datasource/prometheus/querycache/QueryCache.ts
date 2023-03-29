@@ -91,12 +91,15 @@ export class QueryCache {
       const duration = parseDuration(defaultPrometheusQueryOverlapWindow);
       this.overlapWindowMs = durationToMilliseconds(duration);
     }
-    this.profile();
+
+    if (config.grafanaJavascriptAgent.enabled) {
+      this.profile();
+    }
   }
 
   private profile() {
     // Check if PerformanceObserver is supported, and if we have Faro enabled for internal profiling
-    if (typeof PerformanceObserver === 'function' && config.grafanaJavascriptAgent.enabled) {
+    if (typeof PerformanceObserver === 'function') {
       this.perfObeserver = new PerformanceObserver((list: PerformanceObserverEntryList) => {
         list.getEntries().forEach((entry) => {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
