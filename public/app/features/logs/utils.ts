@@ -1,6 +1,18 @@
 import { countBy, chain } from 'lodash';
 
-import { LogLevel, LogRowModel, LogLabelStatsModel, LogsModel, LogsSortOrder } from '@grafana/data';
+import {
+  LogLevel,
+  LogRowModel,
+  LogLabelStatsModel,
+  LogsModel,
+  LogsSortOrder,
+  DataFrame,
+  FieldConfig,
+  FieldCache,
+  FieldType,
+  MutableDataFrame,
+  QueryResultMeta,
+} from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
 
@@ -149,3 +161,68 @@ export function logRowsToReadableJson(logs: LogRowModel[]) {
     };
   });
 }
+
+export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] => {
+  if (dataFrames.length === 0) {
+    throw new Error('Cannot aggregate data frames: there must be at least one data frame to aggregate');
+  }
+
+  const aggregated: Record<string, Record<number, number>> = {};
+  const configs: Record<
+    string,
+    { meta?: QueryResultMeta; valueFieldConfig: FieldConfig; timeFieldConfig: FieldConfig }
+  > = {};
+  let results: DataFrame[] = [];
+
+  // collect and aggregate into aggregated object
+  dataFrames.forEach((dataFrame) => {
+    const fieldCache = new FieldCache(dataFrame);
+    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
+    const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
+
+    if (!timeField) {
+      throw new Error('Missing time field');
+    }
+    if (!valueField) {
+      throw new Error('Missing value field');
+    }
+
+    const level = valueField.config.displayNameFromDS || dataFrame.name || 'logs';
+    const length = valueField.values.length;
+    configs[level] = {
+      meta: dataFrame.meta,
+      valueFieldConfig: valueField.config,
+      timeFieldConfig: timeField.config,
+    };
+
+    for (let pointIndex = 0; pointIndex < length; pointIndex++) {
+      const time: number = timeField.values.get(pointIndex);
+      const value: number = valueField.values.get(pointIndex);
+      aggregated[level] ??= {};
+      aggregated[level][time] = (aggregated[level][time] || 0) + value;
+    }
+  });
+
+  // convert aggregated into data frames
+  Object.keys(aggregated).forEach((level) => {
+    const levelDataFrame = new MutableDataFrame();
+    const { meta, timeFieldConfig, valueFieldConfig } = configs[level];
+    // Log Volume visualization uses the name when toggling the legend
+    levelDataFrame.name = level;
+    levelDataFrame.meta = meta;
+    levelDataFrame.addField({ name: 'Time', type: FieldType.time, config: timeFieldConfig });
+    levelDataFrame.addField({ name: 'Value', type: FieldType.number, config: valueFieldConfig });
+
+    for (const time in aggregated[level]) {
+      const value = aggregated[level][time];
+      levelDataFrame.add({
+        Time: Number(time),
+        Value: value,
+      });
+    }
+
+    results.push(levelDataFrame);
+  });
+
+  return results;
+};
