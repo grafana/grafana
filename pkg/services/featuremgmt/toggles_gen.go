@@ -280,6 +280,6 @@ const (
 	FlagDisableElasticsearchBackendExploreQuery = "disableElasticsearchBackendExploreQuery"
 
 	// FlagPrometheusDataplane
-	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the &#39;__name__&#39; label when present.
+	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
 	FlagPrometheusDataplane = "prometheusDataplane"
 )

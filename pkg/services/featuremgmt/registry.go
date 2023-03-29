@@ -456,7 +456,7 @@ var (
 		},
 		{
 			Name:        "prometheusDataplane",
-			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the '__name__' label when present.",
+			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
