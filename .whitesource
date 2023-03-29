@@ -15,10 +15,6 @@
   },
   "remediateSettings": {
     "enableRenovate": false,
-    "dependencyDashboard": true,
-    "extends": [
-      "github>whitesource/merge-confidence:beta",
-      "github>samq-ghdemo/renovate:demo"
-      ]
+    "dependencyDashboard": false
   }
 }
