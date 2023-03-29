@@ -1,6 +1,6 @@
 ---
 aliases:
-  - 
+  -
 keywords:
   - grafana
   - https
@@ -15,7 +15,7 @@ weight: 900
 
 When accessing the Grafana UI through the web, it is important to set up HTTPS to ensure the communication between Grafana and the end user is encrypted, including login credentials and retrieved metric data.
 
-In order to ensure secure traffic over the internet, Grafana must have a key for encryption and a [Secure Socket Layer (SSL) Certificate](https://www.kaspersky.com/resource-center/definitions/what-is-a-ssl-certificate) to verify the identity of the site. 
+In order to ensure secure traffic over the internet, Grafana must have a key for encryption and a [Secure Socket Layer (SSL) Certificate](https://www.kaspersky.com/resource-center/definitions/what-is-a-ssl-certificate) to verify the identity of the site.
 
 The following image shows a browser lock icon which confirms the connection is safe.
 
@@ -38,13 +38,12 @@ To follow these instructions, you need:
 
 You can use one of two methods to obtain a certificate and a key. The faster and easier _self-signed_ option might show browser warnings to the user that they will have to accept each time they visit the site. Alternatively, the Certificate Authority (CA) signed option requires more steps to complete, but it enables full trust with the browser. To learn more about the difference between these options, refer to [Difference between self-signed CA and self-signed certificate](https://www.baeldung.com/cs/self-signed-ca-vs-certificate).
 
-
 ### Generate a self-signed certificate
 
-This section shows you how to use `openssl` tooling to generate all necessary files from the command line.  
+This section shows you how to use `openssl` tooling to generate all necessary files from the command line.
 
 1. Run the following command to generate a 2048-bit RSA private key, which is used to decrypt traffic:
-   
+
    ```bash
    $ sudo openssl genrsa -out /etc/grafana/grafana.key 2048
    ```
@@ -101,7 +100,7 @@ This section shows you how to use `openssl` tooling to generate all necessary fi
 
 ### Obtain a signed certificate from LetsEncrypt
 
-[LetsEncrypt](https://letsencrypt.org/) is a nonprofit certificate authority that provides certificates without any charge. For signed certificates, there are multiple companies and certificate authorities (CAs) available. The principles for generating the certificates might vary slightly in accordance with the provider but will generally remain the same. 
+[LetsEncrypt](https://letsencrypt.org/) is a nonprofit certificate authority that provides certificates without any charge. For signed certificates, there are multiple companies and certificate authorities (CAs) available. The principles for generating the certificates might vary slightly in accordance with the provider but will generally remain the same.
 
 The examples in this section use LetsEncrypt because it is free.
 
@@ -127,6 +126,7 @@ The examples in this section use LetsEncrypt because it is free.
    ```
 
    These commands:
+
    - Uninstall `certbot` from your system if it has been installed using a package manager
    - Install `certbot` using `snapd`
 
@@ -134,7 +134,7 @@ The examples in this section use LetsEncrypt because it is free.
 
 The `sudo certbot certonly --standalone` command prompts you to answer questions before it generates a certificate. This process temporarily opens a service on port `80` that LetsEncrypt uses to verify communication with your host.
 
-To generate certificates using `certbot`, complete the following steps: 
+To generate certificates using `certbot`, complete the following steps:
 
 1. Ensure that port `80` traffic is permitted by applicable firewall rules.
 
@@ -142,7 +142,7 @@ To generate certificates using `certbot`, complete the following steps:
 
    ```bash
    $ sudo certbot certonly --standalone
-   
+
    Saving debug log to /var/log/letsencrypt/letsencrypt.log
    Enter email address (used for urgent renewal and security notices)
    (Enter 'c' to cancel): me@mysite.com
@@ -153,7 +153,7 @@ To generate certificates using `certbot`, complete the following steps:
    agree in order to register with the ACME server. Do you agree?
    - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    (Y)es/(N)o: y
-   
+
    - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    Would you be willing, once your first certificate is successfully issued, to
    share your email address with the Electronic Frontier Foundation, a founding
@@ -166,14 +166,14 @@ To generate certificates using `certbot`, complete the following steps:
    Please enter the domain name(s) you would like on your certificate (comma and/or
    space separated) (Enter 'c' to cancel): subdomain.mysite.com
    Requesting a certificate for subdomain.mysite.com
-   
+
    Successfully received certificate.
    Certificate is saved at: /etc/letsencrypt/live/subdomain.mysite.com/fullchain.pem
    Key is saved at:         /etc/letsencrypt/live/subdomain.mysite.com/privkey.pem
    This certificate expires on 2023-06-20.
    These files will be updated when the certificate renews.
    Certbot has set up a scheduled task to automatically renew this certificate in the background.
-   
+
    - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    If you like Certbot, please consider supporting our work by:
    * Donating to ISRG / Let’s Encrypt:   https://letsencrypt.org/donate
@@ -203,7 +203,7 @@ To adjust permissions, perform the following steps:
    ```bash
    $ sudo chgrp -R grafana /etc/letsencrypt/*
    $ sudo chmod -R g+rx /etc/letsencrypt/*
-   $ sudo chgrp -R grafana /etc/grafana/grafana.crt /etc/grafana/grafana.key 
+   $ sudo chgrp -R grafana /etc/grafana/grafana.crt /etc/grafana/grafana.key
    $ sudo chmod 400 /etc/grafana/grafana.crt /etc/grafana/grafana.key
    ```
 
@@ -227,7 +227,7 @@ To configure Grafana HTTPS and restart Grafana, complete the following steps.
 
    ```
    [server]
-   http_addr = 
+   http_addr =
    http_port = 3000
    domain = mysite.com
    root_url = https://subdomain.mysite.com:3000
@@ -251,8 +251,8 @@ The following reasons explain why the `certbot` process might fail:
 
 - To make sure you can get a certificate from LetsEncrypt, you need to ensure that port 80 is open so that LetsEncrypt can communicate with your machine. If port 80 is blocked or firewall is enabled, the exchange will fail and you won't be able to receive a certificate.
 - LetsEncrypt requires proof that you control the domain, so attempts to obtain certificates for domains you do not
-control might be rejected.
- 
+  control might be rejected.
+
 ### Grafana starts, but HTTPS is unavailable
 
 When you configure HTTPS, the following errors might appear in Grafana's logs.
