@@ -36,9 +36,9 @@ const (
 )
 
 type Opentelemetry struct {
-	enabled       string
-	address       string
-	propagation   string
+	Enabled       string
+	Address       string
+	Propagation   string
 	customAttribs []attribute.KeyValue
 
 	log log.Logger
@@ -93,12 +93,12 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 	if err != nil {
 		return err
 	}
-	ots.enabled = noopExporter
+	ots.Enabled = noopExporter
 
-	ots.address = section.Key("address").MustString("")
-	ots.propagation = section.Key("propagation").MustString("")
-	if ots.address != "" {
-		ots.enabled = jaegerExporter
+	ots.Address = section.Key("address").MustString("")
+	ots.Propagation = section.Key("propagation").MustString("")
+	if ots.Address != "" {
+		ots.Enabled = jaegerExporter
 		return nil
 	}
 
@@ -107,11 +107,11 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 		return err
 	}
 
-	ots.address = section.Key("address").MustString("")
-	if ots.address != "" {
-		ots.enabled = otlpExporter
+	ots.Address = section.Key("address").MustString("")
+	if ots.Address != "" {
+		ots.Enabled = otlpExporter
 	}
-	ots.propagation = section.Key("propagation").MustString("")
+	ots.Propagation = section.Key("propagation").MustString("")
 	return nil
 }
 
@@ -133,7 +133,7 @@ func splitCustomAttribs(s string) ([]attribute.KeyValue, error) {
 
 func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
 	// Create the Jaeger exporter
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.address)))
+	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.Address)))
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, 
 }
 
 func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, error) {
-	client := otlptracegrpc.NewClient(otlptracegrpc.WithEndpoint(ots.address), otlptracegrpc.WithInsecure())
+	client := otlptracegrpc.NewClient(otlptracegrpc.WithEndpoint(ots.Address), otlptracegrpc.WithInsecure())
 	exp, err := otlptrace.New(context.Background(), client)
 	if err != nil {
 		return nil, err
@@ -202,7 +202,7 @@ func (ots *Opentelemetry) initNoopTracerProvider() (tracerProvider, error) {
 func (ots *Opentelemetry) initOpentelemetryTracer() error {
 	var tp tracerProvider
 	var err error
-	switch ots.enabled {
+	switch ots.Enabled {
 	case jaegerExporter:
 		tp, err = ots.initJaegerTracerProvider()
 		if err != nil {
@@ -223,12 +223,12 @@ func (ots *Opentelemetry) initOpentelemetryTracer() error {
 	// Register our TracerProvider as the global so any imported
 	// instrumentation in the future will default to using it
 	// only if tracing is enabled
-	if ots.enabled != "" {
+	if ots.Enabled != "" {
 		otel.SetTracerProvider(tp)
 	}
 
 	propagators := []propagation.TextMapPropagator{}
-	for _, p := range strings.Split(ots.propagation, ",") {
+	for _, p := range strings.Split(ots.Propagation, ",") {
 		switch p {
 		case w3cPropagator:
 			propagators = append(propagators, propagation.TraceContext{}, propagation.Baggage{})

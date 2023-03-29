@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -227,7 +226,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		JSONData: plugins.JSONData{ID: pluginID},
 	}
 
-	defaultOtelCfg := tracing.OpentelemetryCfg{
+	defaultOtelCfg := config.OpentelemetryCfg{
 		Address:     "127.0.0.1:4317",
 		Propagation: "",
 	}
@@ -270,7 +269,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "disabled",
 			cfg: &config.Cfg{
-				Opentelemetry: tracing.OpentelemetryCfg{},
+				Opentelemetry: config.OpentelemetryCfg{},
 			},
 			exp: expNoTracing,
 		},
@@ -284,7 +283,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "otlp propagation",
 			cfg: &config.Cfg{
-				Opentelemetry: tracing.OpentelemetryCfg{
+				Opentelemetry: config.OpentelemetryCfg{
 					Address:     "127.0.0.1:4317",
 					Propagation: "w3c",
 				},

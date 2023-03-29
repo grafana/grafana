@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -34,7 +33,7 @@ type Cfg struct {
 
 	PluginsCDNURLTemplate string
 
-	Opentelemetry tracing.OpentelemetryCfg
+	Opentelemetry OpentelemetryCfg
 }
 
 func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) (*Cfg, error) {
@@ -57,7 +56,7 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) (*Cfg, er
 		allowedUnsigned = strings.Split(settingProvider.KeyValue("plugins", "allow_loading_unsigned_plugins").Value(), ",")
 	}
 
-	otelCfg, err := tracing.NewOpentelemetryCfg(grafanaCfg)
+	otelCfg, err := NewOpentelemetryCfg(grafanaCfg)
 	if err != nil {
 		return nil, fmt.Errorf("new opentelemetry cfg: %w", err)
 	}
