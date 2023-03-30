@@ -31,6 +31,6 @@ jobs:
           distros: 'linux/amd64'
           enterprise: true
           grafana_ref: ${{ github.sha }}
-          enterprise_ref: ${{ github.head_ref }}
+          enterprise_ref: ${{ github.head_ref }} main
           gcp_service_account_key_base64: ${{ secrets.RGM_GCP_KEY_BASE64 }}
           destination: ${{ secrets.RCM_DESTINATION }}/${{ github.event_name }}
