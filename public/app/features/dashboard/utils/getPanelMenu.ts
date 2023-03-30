@@ -369,5 +369,12 @@ function createExtensionTestData(): Array<PluginExtensionLink | PluginExtensionC
       key: 1,
       path: '/',
     },
+    {
+      type: PluginExtensionTypes.command,
+      title: 'Attach to incident',
+      description: 'Attach the values from the dashboard panel to an existing incident',
+      key: 2,
+      callHandlerWithContext: () => {},
+    },
   ];
 }
