@@ -46,6 +46,7 @@ export type NewTracePageHeaderProps = {
   searchMatches: Set<string> | undefined;
   focusedSearchMatch: string;
   setFocusedSearchMatch: React.Dispatch<React.SetStateAction<string>>;
+  datasourceType: string;
 };
 
 export const NewTracePageHeader = React.memo((props: NewTracePageHeaderProps) => {
@@ -60,6 +61,7 @@ export const NewTracePageHeader = React.memo((props: NewTracePageHeaderProps) =>
     searchMatches,
     focusedSearchMatch,
     setFocusedSearchMatch,
+    datasourceType,
   } = props;
   const styles = { ...useStyles2(getStyles), ...useStyles2(getNewStyles) };
 
@@ -94,8 +96,6 @@ export const NewTracePageHeader = React.memo((props: NewTracePageHeaderProps) =>
       statusColor = 'red';
     }
   }
-
-  // console.log('render newTracePageHeader');
 
   return (
     <header className={styles.header}>
@@ -136,6 +136,7 @@ export const NewTracePageHeader = React.memo((props: NewTracePageHeaderProps) =>
         searchMatches={searchMatches}
         focusedSearchMatch={focusedSearchMatch}
         setFocusedSearchMatch={setFocusedSearchMatch}
+        datasourceType={datasourceType}
       />
 
       <SpanGraph

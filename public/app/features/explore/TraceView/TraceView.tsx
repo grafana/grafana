@@ -137,8 +137,6 @@ export function TraceView(props: Props) {
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
 
-  // console.log('render traceView');
-
   return (
     <>
       {props.dataFrames?.length && props.dataFrames[0]?.meta?.preferredVisualisationType === 'trace' && traceProp ? (
@@ -155,6 +153,7 @@ export function TraceView(props: Props) {
               searchMatches={searchMatches}
               focusedSearchMatch={focusedSearchMatch}
               setFocusedSearchMatch={setFocusedSearchMatch}
+              datasourceType={datasourceType}
             />
           ) : (
             <TracePageHeader

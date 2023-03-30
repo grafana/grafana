@@ -27,11 +27,11 @@ export type TracePageSearchBarProps = {
   searchMatches: Set<string> | undefined;
   focusedSearchMatch: string;
   setFocusedSearchMatch: Dispatch<SetStateAction<string>>;
-  datasourceType?: string;
+  datasourceType: string;
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
-  const { search, setSearch, searchMatches, focusedSearchMatch, setFocusedSearchMatch, datasourceType } = props;
+  const { search, searchMatches, focusedSearchMatch, setFocusedSearchMatch, datasourceType } = props;
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
 
   const nextResult = () => {
     reportInteraction('grafana_traces_trace_view_find_next_prev_clicked', {
-      datasourceType: datasourceType, // TODO: JOEY: add this back in parent component
+      datasourceType: datasourceType,
       grafana_version: config.buildInfo.version,
       direction: 'next',
     });

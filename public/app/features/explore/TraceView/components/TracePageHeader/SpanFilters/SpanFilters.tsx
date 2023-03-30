@@ -33,6 +33,7 @@ export type SpanFilterProps = {
   searchMatches: Set<string> | undefined;
   focusedSearchMatch: string;
   setFocusedSearchMatch: React.Dispatch<React.SetStateAction<string>>;
+  datasourceType: string;
 };
 
 interface SpanData {
@@ -42,7 +43,7 @@ interface SpanData {
 }
 
 export const SpanFilters = React.memo((props: SpanFilterProps) => {
-  const { trace, search, setSearch, searchMatches, focusedSearchMatch, setFocusedSearchMatch } = props;
+  const { trace, search, setSearch, searchMatches, focusedSearchMatch, setFocusedSearchMatch, datasourceType } = props;
   const styles = { ...useStyles2(getStyles) };
   const [showSpanFilters, setShowSpanFilters] = useToggle(true);
   const [spanData, setSpanData] = useState<SpanData>({
@@ -335,7 +336,7 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
         searchMatches={searchMatches}
         focusedSearchMatch={focusedSearchMatch}
         setFocusedSearchMatch={setFocusedSearchMatch}
-        // datasourceType={datasourceType}
+        datasourceType={datasourceType}
       />
     </Collapse>
   );
