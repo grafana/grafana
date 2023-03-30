@@ -80,3 +80,43 @@ We are slowly rolling out a feature toggle for enforcing syncronization of organ
 If you want to enable this feature, you'll need to enable the `onlyExternalOrgRoleSync` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
 A reminder that there is a setting to prevent synchronization of organization roles from the authentication provider regardless of their role in the authentication provider, then refer to the `skip_org_role_sync` setting in your Grafana configuration. Refer to [skip org role sync](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#authgrafana_com-skip_org_role_sync) for more information.
+
+## Alerting
+
+### Search for alert rules from multiple data sources
+
+Allows you to search for and display alert rules for multiple data sources at the same time.
+
+### Fuzzy search on the Alert rule list view
+
+Search for namespaces or folders, evaluation groups, and alert rule names on the Alert rules list view with immediate results and regardless of typos.
+
+### Access an alert rule from a dashboard or a panel
+
+Navigate to an alert rule directly from a dashboard or a panel to easily dive into the alert rule details.
+
+### Access a dashboard or panel from an alert rule
+
+Navigate from an alert rule straight to a dashboard or a panel associated with the alert rule to visualize your alerting data.
+
+### Preview queries for recording rules
+
+Preview queries when creating or editing recording rules, so you can visualize the results of your query before saving your recording rule.
+
+### Updates alert behavior for no data evaluation
+
+Alert rules that are configured to fire when an evaluation returns no data now only fire when the entire duration of the evaluation period has finished. This means that rather than immediately firing when the alert rule condition is breached, the alert rule waits until the time set in the For field has finished and then fires, reducing alert noise and allowing for temporary data availability issues.
+
+### Improved Notification Policies view
+
+- Updates to the notification policies view make it easier to use and manage:
+- View default policy and nested policies at a glance
+- New tab for mute timings
+- View alert instances for each policy
+- View contact points and which integrations are configured for each policy
+- View inherited properties on nested policies
+  Search for labels and for contact points to see which notifications are going where
+
+### Guidance for configuring your Alertmanager
+
+Get additional help while configuring your Alertmanager. If you enter an invalid Alertmanager configuration, an error message displays, and you can choose from a previous working configuration to restart it.
