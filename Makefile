@@ -2,7 +2,7 @@
 ##
 ## For more information, refer to https://suva.sh/posts/well-documented-makefiles/
 
-WIRE_TAGS = "oss"
+WIRE_TAGS = oss
 
 -include local/Makefile
 include .bingo/Variables.mk
@@ -79,7 +79,7 @@ gen-cue: ## Do all CUE/Thema code generation
 
 gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
-	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server
+	$(WIRE) gen -header_file ./pkg/server/$(WIRE_TAGS)_tags -tags $(WIRE_TAGS) ./pkg/server
 
 fix-cue: $(CUE)
 	@echo "formatting cue files"
