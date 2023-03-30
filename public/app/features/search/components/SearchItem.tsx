@@ -67,7 +67,7 @@ export const SearchItem = ({ item, isSelected, editable, onToggleChecked, onTagS
   );
 
   return (
-    <div className={styles.cardContainer}>
+    <li className={styles.cardContainer}>
       <SearchCheckbox
         aria-label="Select dashboard"
         editable={editable}
@@ -98,7 +98,7 @@ export const SearchItem = ({ item, isSelected, editable, onToggleChecked, onTagS
           <TagList tags={item.tags ?? []} onClick={tagSelected} getAriaLabel={(tag) => `Filter by tag "${tag}"`} />
         </Card.Tags>
       </Card>
-    </div>
+    </li>
   );
 };
 
