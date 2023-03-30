@@ -464,7 +464,7 @@ lerna.json @grafana/frontend-ops
 /scripts/helpers/ @grafana/grafana-delivery
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist
-/scripts/openapi3/ @grafana/grafana-partnerships-team
+/scripts/openapi3/ @grafana/grafana-operator-experience-squad
 /scripts/prepare-packagejson.js @grafana/frontend-ops
 /scripts/protobuf-check.sh @grafana/plugins-platform-backend
 /scripts/stripnulls.sh @grafana/grafana-as-code
@@ -538,9 +538,9 @@ lerna.json @grafana/frontend-ops
 /public/app/features/support-bundles/ @grafana/grafana-authnz-team
 /pkg/services/supportbundles/ @grafana/grafana-authnz-team
 
-# Grafana Partnerships Team
-/pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team
-/pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-partnerships-team
+# Grafana Operator Experience Team
+/pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-operator-experience-squad
+/pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-operator-experience-squad
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad

@@ -12,8 +12,6 @@ import {
   sortNumber,
   sortOptions,
   valuesToOptions,
-  buildBufferedEmptyValues,
-  buildFieldsForOptionalRowNums,
 } from './utils';
 
 function getData() {
@@ -374,30 +372,6 @@ describe('Table utils', () => {
       ${{ label: 'a' }}       | ${{ label: 'a' }}       | ${0}
     `("when called with a: '$a.toString', b: '$b.toString' then result should be '$expected'", ({ a, b, expected }) => {
       expect(sortOptions(a, b)).toEqual(expected);
-    });
-  });
-
-  describe('buildBufferedEmptyValues', () => {
-    it('should build a buffered VectorArray of empty values the length of the number passed to it as an argument', () => {
-      const arrayVectorLength = 10;
-      const bufferedArray = buildBufferedEmptyValues(arrayVectorLength);
-      expect(bufferedArray).toBeInstanceOf(ArrayVector);
-
-      // Convert back into a standard array type.
-      const nonBufferedArray = Array.from(bufferedArray);
-      expect(nonBufferedArray[0]).toEqual(undefined);
-      expect(nonBufferedArray[nonBufferedArray.length - 1]).toEqual(undefined);
-    });
-  });
-
-  describe('buildFieldsForOptionalRowNums', () => {
-    it('should prepend a Field to a `DataFrame.field` so row numbers can be calculated and rendered', () => {
-      const builtField = buildFieldsForOptionalRowNums(10);
-
-      expect(builtField['name']).toEqual(' ');
-      expect(builtField['type']).toEqual(FieldType.string);
-      expect(typeof builtField['display']).toBe('function');
-      expect(typeof builtField['config']).toBe('object');
     });
   });
 

@@ -2534,6 +2534,13 @@
             "description": "Whether to initiate a download of the file or not.",
             "name": "download",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
           }
         ],
         "responses": {
@@ -2669,6 +2676,13 @@
             "default": false,
             "description": "Whether to initiate a download of the file or not.",
             "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
             "in": "query"
           }
         ],
@@ -2918,6 +2932,13 @@
             "default": false,
             "description": "Whether to initiate a download of the file or not.",
             "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
             "in": "query"
           }
         ],
@@ -5534,7 +5555,6 @@
         }
       },
       "put": {
-        "description": "If nested folders are enabled then it optionally expects a new parent folder UID that moves the folder and\nincludes it into the response.",
         "tags": [
           "folders"
         ],
@@ -5609,6 +5629,48 @@
           },
           "400": {
             "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/folders/{folder_uid}/move": {
+      "post": {
+        "tags": [
+          "folders"
+        ],
+        "summary": "Move folder.",
+        "operationId": "moveFolder",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "folder_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MoveFolderCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/folderResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -11519,6 +11581,10 @@
             "internal",
             "external"
           ]
+        },
+        "numExternalAlertmanagers": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -11560,6 +11626,10 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        },
+        "lastUsedAt": {
+          "type": "string",
+          "format": "date-time"
         },
         "name": {
           "type": "string"
@@ -11857,6 +11927,9 @@
         "$ref": "#/definitions/EmbeddedContactPoint"
       }
     },
+    "CookieType": {
+      "type": "string"
+    },
     "Correlation": {
       "description": "Correlation is the model for correlations definitions",
       "type": "object",
@@ -11912,6 +11985,9 @@
             "expr": "job=app"
           }
         },
+        "transformations": {
+          "$ref": "#/definitions/Transformations"
+        },
         "type": {
           "$ref": "#/definitions/CorrelationConfigType"
         }
@@ -11935,6 +12011,23 @@
           "example": {
             "expr": "job=app"
           }
+        },
+        "transformations": {
+          "description": "Source data transformations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Transformation"
+          },
+          "example": [
+            {
+              "type": "logfmt"
+            },
+            {
+              "expression": "(Superman|Batman)",
+              "type": "regex",
+              "variable": "name"
+            }
+          ]
         },
         "type": {
           "$ref": "#/definitions/CorrelationConfigType"
@@ -13117,6 +13210,40 @@
         }
       }
     },
+    "EnumFieldConfig": {
+      "description": "Enum field config\nVector values are used as lookup keys into the enum fields",
+      "type": "object",
+      "properties": {
+        "color": {
+          "description": "Color is the color value for a given index (empty is undefined)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "description": "Description of the enum state",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "icon": {
+          "description": "Icon supports setting an icon for a given index value",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "description": "Value is the string display value for a given index",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "ErrorResponseBody": {
       "type": "object",
       "required": [
@@ -13323,6 +13450,9 @@
         "thresholds": {
           "$ref": "#/definitions/ThresholdsConfig"
         },
+        "type": {
+          "$ref": "#/definitions/FieldTypeConfig"
+        },
         "unit": {
           "description": "Numeric Options",
           "type": "string"
@@ -13330,6 +13460,15 @@
         "writeable": {
           "description": "Writeable indicates that the datasource knows how to update this value",
           "type": "boolean"
+        }
+      }
+    },
+    "FieldTypeConfig": {
+      "description": "FieldTypeConfig has type specific configs, only one should be active at a time",
+      "type": "object",
+      "properties": {
+        "enum": {
+          "$ref": "#/definitions/EnumFieldConfig"
         }
       }
     },
@@ -13430,7 +13569,7 @@
       "title": "Frame is a columnar data structure where each column is a Field.",
       "properties": {
         "Fields": {
-          "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.",
+          "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.\nThere should be no `nil` entries in the Fields slice (making them pointers was a mistake).",
           "type": "array",
           "items": {
             "$ref": "#/definitions/Field"
@@ -13502,6 +13641,9 @@
         },
         "type": {
           "$ref": "#/definitions/FrameType"
+        },
+        "typeVersion": {
+          "$ref": "#/definitions/FrameTypeVersion"
         }
       }
     },
@@ -13509,8 +13651,16 @@
       "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
       "type": "string"
     },
+    "FrameTypeVersion": {
+      "type": "array",
+      "title": "FrameType is a 2 number version (Major / Minor).",
+      "items": {
+        "type": "integer",
+        "format": "uint64"
+      }
+    },
     "Frames": {
-      "description": "It is the main data container within a backend.DataResponse.",
+      "description": "It is the main data container within a backend.DataResponse.\nThere should be no `nil` entries in the Frames slice (making them pointers was a mistake).",
       "type": "array",
       "title": "Frames is a slice of Frame pointers.",
       "items": {
@@ -14408,7 +14558,7 @@
           "type": "string",
           "format": "date-time"
         },
-        "DashboardId": {
+        "DashboardID": {
           "type": "integer",
           "format": "int64"
         },
@@ -14429,7 +14579,7 @@
           "type": "integer",
           "format": "int64"
         },
-        "Id": {
+        "ID": {
           "type": "integer",
           "format": "int64"
         },
@@ -14443,11 +14593,11 @@
           "type": "string",
           "format": "date-time"
         },
-        "OrgId": {
+        "OrgID": {
           "type": "integer",
           "format": "int64"
         },
-        "PanelId": {
+        "PanelID": {
           "type": "integer",
           "format": "int64"
         },
@@ -14779,6 +14929,15 @@
         }
       }
     },
+    "MoveFolderCommand": {
+      "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
+      "type": "object",
+      "properties": {
+        "parentUid": {
+          "type": "string"
+        }
+      }
+    },
     "MultiStatus": {
       "type": "object"
     },
@@ -15098,6 +15257,9 @@
         "isDisabled": {
           "type": "boolean"
         },
+        "isExternallySynced": {
+          "type": "boolean"
+        },
         "lastSeenAt": {
           "type": "string",
           "format": "date-time"
@@ -15292,6 +15454,12 @@
     "PatchPrefsCmd": {
       "type": "object",
       "properties": {
+        "cookies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CookieType"
+          }
+        },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
           "type": "integer",
@@ -15828,7 +15996,7 @@
           "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
-          "description": "light, dark, empty is default",
+          "description": "Theme light, dark, empty is default",
           "type": "string"
         },
         "timezone": {
@@ -15836,7 +16004,7 @@
           "type": "string"
         },
         "weekStart": {
-          "description": "day of the week (sunday, monday, etc)",
+          "description": "WeekStart day of the week (sunday, monday, etc)",
           "type": "string"
         }
       }
@@ -16242,6 +16410,9 @@
         },
         "thresholds": {
           "$ref": "#/definitions/ThresholdsConfig"
+        },
+        "type": {
+          "$ref": "#/definitions/FieldTypeConfig"
         },
         "unit": {
           "description": "Numeric Options",
@@ -16982,7 +17153,7 @@
         "basicRole": {
           "type": "string"
         },
-        "orgID": {
+        "orgId": {
           "type": "integer",
           "format": "int64"
         },
@@ -16992,11 +17163,11 @@
         "scope": {
           "type": "string"
         },
-        "teamID": {
+        "teamId": {
           "type": "integer",
           "format": "int64"
         },
-        "userID": {
+        "userId": {
           "type": "integer",
           "format": "int64"
         },
@@ -18036,6 +18207,33 @@
       "type": "integer",
       "format": "int64"
     },
+    "Transformation": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "mapValue": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "regex",
+            "logfmt"
+          ]
+        }
+      }
+    },
+    "Transformations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Transformation"
+      }
+    },
     "TrimDashboardCommand": {
       "type": "object",
       "properties": {
@@ -18062,8 +18260,9 @@
       "type": "string"
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -18391,6 +18590,12 @@
     "UpdatePrefsCmd": {
       "type": "object",
       "properties": {
+        "cookies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CookieType"
+          }
+        },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
           "type": "integer",
@@ -18602,6 +18807,9 @@
           "type": "boolean"
         },
         "isExternal": {
+          "type": "boolean"
+        },
+        "isExternallySynced": {
           "type": "boolean"
         },
         "isGrafanaAdmin": {
@@ -18892,7 +19100,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -18916,6 +19123,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -19020,7 +19228,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -19131,14 +19338,12 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
       }
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -19319,7 +19524,6 @@
       }
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

@@ -41,7 +41,7 @@ const defaultQueryRange = 6 * time.Hour
 type remoteLokiClient interface {
 	ping(context.Context) error
 	push(context.Context, []stream) error
-	rangeQuery(ctx context.Context, selectors []Selector, start, end int64) (queryRes, error)
+	rangeQuery(ctx context.Context, logQL string, start, end int64) (queryRes, error)
 }
 
 // RemoteLokibackend is a state.Historian that records state history to an external Loki instance.
@@ -71,10 +71,10 @@ func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
 // Record writes a number of state transitions for a given rule to an external Loki instance.
 func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
-	streams := statesToStreams(rule, states, h.externalLabels, logger)
+	logStream := statesToStream(rule, states, h.externalLabels, logger)
 
 	errCh := make(chan error, 1)
-	if len(streams) == 0 {
+	if len(logStream.Values) == 0 {
 		close(errCh)
 		return errCh
 	}
@@ -84,16 +84,12 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 
 		org := fmt.Sprint(rule.OrgID)
 		h.metrics.WritesTotal.WithLabelValues(org, "loki").Inc()
-		samples := 0
-		for _, s := range streams {
-			samples += len(s.Values)
-		}
-		h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(samples))
+		h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(logStream.Values)))
 
-		if err := h.recordStreams(ctx, streams, logger); err != nil {
+		if err := h.recordStreams(ctx, []stream{logStream}, logger); err != nil {
 			logger.Error("Failed to save alert state history batch", "error", err)
 			h.metrics.WritesFailed.WithLabelValues(org, "loki").Inc()
-			h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(samples))
+			h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(logStream.Values)))
 			errCh <- fmt.Errorf("failed to save alert state history batch: %w", err)
 		}
 	}()
@@ -102,9 +98,9 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 
 // Query retrieves state history entries from an external Loki instance and formats the results into a dataframe.
 func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
-	selectors, err := buildSelectors(query)
+	logQL, err := buildLogQuery(query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build the provided selectors: %w", err)
+		return nil, err
 	}
 
 	now := time.Now().UTC()
@@ -116,7 +112,7 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 	}
 
 	// Timestamps are expected in RFC3339Nano.
-	res, err := h.client.rangeQuery(ctx, selectors, query.From.UnixNano(), query.To.UnixNano())
+	res, err := h.client.rangeQuery(ctx, logQL, query.From.UnixNano(), query.To.UnixNano())
 	if err != nil {
 		return nil, err
 	}
@@ -124,8 +120,8 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 }
 
 func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
-	// +2 as OrgID and the state history label will always be selectors at the API level.
-	selectors := make([]Selector, len(query.Labels)+2)
+	// OrgID and the state history label are static and will be included in all queries.
+	selectors := make([]Selector, 2)
 
 	// Set the predefined selector orgID.
 	selector, err := NewSelector(OrgIDLabel, "=", fmt.Sprintf("%d", query.OrgID))
@@ -140,17 +136,6 @@ func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
 		return nil, err
 	}
 	selectors[1] = selector
-
-	// Set the label selectors
-	i := 2
-	for label, val := range query.Labels {
-		selector, err = NewSelector(label, "=", val)
-		if err != nil {
-			return nil, err
-		}
-		selectors[i] = selector
-		i++
-	}
 
 	// Set the optional special selector rule_id
 	if query.RuleUID != "" {
@@ -241,25 +226,20 @@ func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 	return frame, nil
 }
 
-func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) []stream {
-	buckets := make(map[string][]sample) // label repr (JSON) -> entries
+func statesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) stream {
+	labels := mergeLabels(make(map[string]string), externalLabels)
+	// System-defined labels take precedence over user-defined external labels.
+	labels[StateHistoryLabelKey] = StateHistoryLabelValue
+	labels[OrgIDLabel] = fmt.Sprint(rule.OrgID)
+	labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
+	labels[GroupLabel] = fmt.Sprint(rule.Group)
+	labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
+
+	samples := make([]sample, 0, len(states))
 	for _, state := range states {
 		if !shouldRecord(state) {
 			continue
 		}
-
-		labels := mergeLabels(removePrivateLabels(state.State.Labels), externalLabels)
-		labels[StateHistoryLabelKey] = StateHistoryLabelValue
-		labels[OrgIDLabel] = fmt.Sprint(rule.OrgID)
-		labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
-		labels[GroupLabel] = fmt.Sprint(rule.Group)
-		labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
-		lblJsn, err := json.Marshal(labels)
-		if err != nil {
-			logger.Error("Failed to marshal labels to JSON", "error", err)
-			continue
-		}
-		repr := string(lblJsn)
 
 		entry := lokiEntry{
 			SchemaVersion:  1,
@@ -268,7 +248,7 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 			Values:         valuesAsDataBlob(state.State),
 			DashboardUID:   rule.DashboardUID,
 			PanelID:        rule.PanelID,
-			InstanceLabels: state.Labels,
+			InstanceLabels: removePrivateLabels(state.Labels),
 		}
 		if state.State.State == eval.Error {
 			entry.Error = state.Error.Error()
@@ -281,26 +261,16 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 		}
 		line := string(jsn)
 
-		buckets[repr] = append(buckets[repr], sample{
+		samples = append(samples, sample{
 			T: state.State.LastEvaluationTime,
 			V: line,
 		})
 	}
 
-	result := make([]stream, 0, len(buckets))
-	for repr, rows := range buckets {
-		labels, err := data.LabelsFromString(repr)
-		if err != nil {
-			logger.Error("Failed to parse frame labels, skipping state history batch: %w", err)
-			continue
-		}
-		result = append(result, stream{
-			Stream: labels,
-			Values: rows,
-		})
+	return stream{
+		Stream: labels,
+		Values: samples,
 	}
-
-	return result
 }
 
 func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream, logger log.Logger) error {
@@ -342,4 +312,61 @@ func jsonifyRow(line string) (json.RawMessage, error) {
 		return nil, err
 	}
 	return json.Marshal(entry)
+}
+
+type Selector struct {
+	// Label to Select
+	Label string
+	Op    Operator
+	// Value that is expected
+	Value string
+}
+
+func NewSelector(label, op, value string) (Selector, error) {
+	if !isValidOperator(op) {
+		return Selector{}, fmt.Errorf("'%s' is not a valid query operator", op)
+	}
+	return Selector{Label: label, Op: Operator(op), Value: value}, nil
+}
+
+func selectorString(selectors []Selector) string {
+	if len(selectors) == 0 {
+		return "{}"
+	}
+	// Build the query selector.
+	query := ""
+	for _, s := range selectors {
+		query += fmt.Sprintf("%s%s%q,", s.Label, s.Op, s.Value)
+	}
+	// Remove the last comma, as we append one to every selector.
+	query = query[:len(query)-1]
+	return "{" + query + "}"
+}
+
+func isValidOperator(op string) bool {
+	switch op {
+	case "=", "!=", "=~", "!~":
+		return true
+	}
+	return false
+}
+
+func buildLogQuery(query models.HistoryQuery) (string, error) {
+	selectors, err := buildSelectors(query)
+	if err != nil {
+		return "", fmt.Errorf("failed to build the provided selectors: %w", err)
+	}
+
+	logQL := selectorString(selectors)
+
+	labelFilters := ""
+	for k, v := range query.Labels {
+		labelFilters += fmt.Sprintf(" | labels_%s=%q", k, v)
+	}
+
+	if labelFilters != "" {
+		logQL = fmt.Sprintf("%s | json%s", logQL, labelFilters)
+	}
+
+	return logQL, nil
 }
