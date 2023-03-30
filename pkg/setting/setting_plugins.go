@@ -49,10 +49,10 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	}
 
 	// Plugin extensions
-	mockExtensions := pluginsSection.Key("plugin_extensions_mocked_points").MustString("")
-	for _, pointId := range strings.Split(mockExtensions, ",") {
+	testExtensions := pluginsSection.Key("plugin_extensions_test_enabled").MustString("")
+	for _, pointId := range strings.Split(testExtensions, ",") {
 		pointId = strings.TrimSpace(pointId)
-		cfg.PluginExtensionMockedPoints = append(cfg.PluginExtensionMockedPoints, pointId)
+		cfg.PluginExtensionsTestEnabled = append(cfg.PluginExtensionsTestEnabled, pointId)
 	}
 
 	// Plugins CDN settings

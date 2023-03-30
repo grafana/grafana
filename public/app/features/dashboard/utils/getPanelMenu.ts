@@ -2,7 +2,10 @@ import {
   isPluginExtensionCommand,
   isPluginExtensionLink,
   PanelMenuItem,
+  PluginExtensionCommand,
+  PluginExtensionLink,
   PluginExtensionPlacements,
+  PluginExtensionTypes,
 } from '@grafana/data';
 import {
   AngularComponent,
@@ -278,6 +281,7 @@ export function getPanelMenu(
   const { extensions } = getPluginExtensions({
     placement: PluginExtensionPlacements.DashboardPanelMenu,
     context: createExtensionContext(panel, dashboard),
+    testData: createExtensionTestData(),
   });
 
   if (extensions.length > 0) {
@@ -354,4 +358,16 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
       )
     ),
   });
+}
+
+function createExtensionTestData(): Array<PluginExtensionLink | PluginExtensionCommand> {
+  return [
+    {
+      type: PluginExtensionTypes.link,
+      title: 'Declare incident',
+      description: 'Declare a new incident based on the values from the dashboard panel',
+      key: 1,
+      path: '/',
+    },
+  ];
 }

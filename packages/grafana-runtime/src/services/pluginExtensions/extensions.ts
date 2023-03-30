@@ -1,13 +1,13 @@
-import { config } from 'src/config';
-
 import { type PluginExtension } from '@grafana/data';
+
+import { config } from '../../config';
 
 import { getPluginsExtensionRegistry } from './registry';
 
 export type PluginExtensionsOptions<T extends object> = {
   placement: string;
   context?: T;
-  createMocks?: () => PluginExtension[];
+  testData?: PluginExtension[];
 };
 
 export type PluginExtensionsResult = {
@@ -17,13 +17,14 @@ export type PluginExtensionsResult = {
 export function getPluginExtensions<T extends object = {}>(
   options: PluginExtensionsOptions<T>
 ): PluginExtensionsResult {
-  const { placement, context, createMocks } = options;
+  const { placement, context, testData } = options;
   const registry = getPluginsExtensionRegistry();
   const configureFuncs = registry[placement] ?? [];
 
-  if (config.pluginExtensionMockedPoints.find((p) => p === placement)) {
+  if (configuredToRunAsTest(placement)) {
+    console.log(`[PluginExtensions] running ${placement} in test mode.`, { testData });
     return {
-      extensions: createMocks?.() ?? [],
+      extensions: testData ?? [],
     };
   }
 
@@ -41,4 +42,20 @@ export function getPluginExtensions<T extends object = {}>(
   return {
     extensions: extensions,
   };
+}
+
+let pointIdTestCache: Record<string, boolean> | undefined;
+
+function configuredToRunAsTest(placement: string): boolean {
+  if (!pointIdTestCache) {
+    pointIdTestCache = config.pluginExtensionsTestEnabled.reduce((cache: Record<string, boolean>, pointId) => {
+      if (!cache) {
+        cache = {};
+      }
+      cache[pointId] = true;
+      return cache;
+    }, {});
+  }
+
+  return Boolean(pointIdTestCache[placement]);
 }

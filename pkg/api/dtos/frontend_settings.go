@@ -192,7 +192,7 @@ type FrontendSettingsDTO struct {
 	PluginAdminEnabled               bool                           `json:"pluginAdminEnabled"`
 	PluginAdminExternalManageEnabled bool                           `json:"pluginAdminExternalManageEnabled"`
 	PluginCatalogHiddenPlugins       []string                       `json:"pluginCatalogHiddenPlugins"`
-	PluginExtensionMockedPoints      []string                       `json:"pluginExtensionMockedPoints"`
+	PluginExtensionsTestEnabled      []string                       `json:"pluginExtensionsTestEnabled"`
 	ExpressionsEnabled               bool                           `json:"expressionsEnabled"`
 	AwsAllowedAuthProviders          []string                       `json:"awsAllowedAuthProviders"`
 	AwsAssumeRoleEnabled             bool                           `json:"awsAssumeRoleEnabled"`
