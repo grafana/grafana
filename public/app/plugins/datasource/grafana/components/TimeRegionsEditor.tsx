@@ -100,14 +100,12 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
             isClearable
             placeholder="Everyday"
             value={days.find((v) => v.value === value.fromDayOfWeek)}
-            onChange={(v) => onChange(index, { ...value, fromDayOfWeek: v.value })}
+            onChange={(v) => onChange(index, { ...value, fromDayOfWeek: v ? v.value : undefined })}
             width={20}
           />
           <Input
             value={fromTxt}
-            onChange={(v) => {
-              setFromText(v.currentTarget.value);
-            }}
+            onChange={(v) => setFromText(v.currentTarget.value)}
             placeholder="hh:mm"
             onBlur={validateFrom}
             width={10}
@@ -121,7 +119,7 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
             isClearable
             placeholder="Everyday"
             value={days.find((v) => v.value === value.toDayOfWeek)}
-            onChange={(v) => onChange(index, { ...value, toDayOfWeek: v.value })}
+            onChange={(v) => onChange(index, { ...value, toDayOfWeek: v ? v.value : undefined })}
             width={20}
           />
           <Input
