@@ -1,6 +1,7 @@
-import { MutableDataFrame, LogLevel, LogRowModel } from '@grafana/data';
+import { MutableDataFrame, LogLevel, LogRowModel, LogsSortOrder } from '@grafana/data';
+import { sortLogRows } from 'app/features/logs/utils';
 export const makeLogs = (numberOfLogsToCreate: number, overrides?: Partial<LogRowModel>): LogRowModel[] => {
-  const array = [];
+  const array: LogRowModel[] = [];
 
   for (let i = 0; i < numberOfLogsToCreate; i++) {
     const uuid = (i + 1).toString();
@@ -19,13 +20,13 @@ export const makeLogs = (numberOfLogsToCreate: number, overrides?: Partial<LogRo
       labels: {},
       raw: entry,
       timeFromNow: '',
-      timeEpochMs: timeInMs - i,
-      timeEpochNs: (timeInMs * 1000000 - i).toString(),
+      timeEpochMs: timeInMs + i,
+      timeEpochNs: (timeInMs * 1000000 + i).toString(),
       timeLocal: '',
       timeUtc: '',
       ...overrides,
     });
   }
 
-  return array.sort((a, b) => b.timeEpochMs - a.timeEpochMs);
+  return sortLogRows(array, LogsSortOrder.Ascending);
 };
