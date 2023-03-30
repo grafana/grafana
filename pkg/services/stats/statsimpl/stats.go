@@ -27,31 +27,34 @@ type sqlStatsService struct {
 	cfg *setting.Cfg
 }
 
-func (ss *sqlStatsService) GetAlertNotifiersUsageStats(ctx context.Context, query *stats.GetAlertNotifierUsageStatsQuery) error {
-	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+func (ss *sqlStatsService) GetAlertNotifiersUsageStats(ctx context.Context, query *stats.GetAlertNotifierUsageStatsQuery) (result []*stats.NotifierUsageStats, err error) {
+	err = ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + ss.db.GetDialect().Quote("alert_notification") + ` GROUP BY type`
-		query.Result = make([]*stats.NotifierUsageStats, 0)
-		err := dbSession.SQL(rawSQL).Find(&query.Result)
+		result = make([]*stats.NotifierUsageStats, 0)
+		err := dbSession.SQL(rawSQL).Find(&result)
 		return err
 	})
+	return result, err
 }
 
-func (ss *sqlStatsService) GetDataSourceStats(ctx context.Context, query *stats.GetDataSourceStatsQuery) error {
-	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+func (ss *sqlStatsService) GetDataSourceStats(ctx context.Context, query *stats.GetDataSourceStatsQuery) (result []*stats.DataSourceStats, err error) {
+	err = ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + ss.db.GetDialect().Quote("data_source") + ` GROUP BY type`
-		query.Result = make([]*stats.DataSourceStats, 0)
-		err := dbSession.SQL(rawSQL).Find(&query.Result)
+		result = make([]*stats.DataSourceStats, 0)
+		err := dbSession.SQL(rawSQL).Find(&result)
 		return err
 	})
+	return result, err
 }
 
-func (ss *sqlStatsService) GetDataSourceAccessStats(ctx context.Context, query *stats.GetDataSourceAccessStatsQuery) error {
-	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+func (ss *sqlStatsService) GetDataSourceAccessStats(ctx context.Context, query *stats.GetDataSourceAccessStatsQuery) (result []*stats.DataSourceAccessStats, err error) {
+	err = ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var rawSQL = `SELECT COUNT(*) AS count, type, access FROM ` + ss.db.GetDialect().Quote("data_source") + ` GROUP BY type, access`
-		query.Result = make([]*stats.DataSourceAccessStats, 0)
-		err := dbSession.SQL(rawSQL).Find(&query.Result)
+		result = make([]*stats.DataSourceAccessStats, 0)
+		err := dbSession.SQL(rawSQL).Find(&result)
 		return err
 	})
+	return result, err
 }
 
 func notServiceAccount(dialect migrator.Dialect) string {
@@ -59,8 +62,8 @@ func notServiceAccount(dialect migrator.Dialect) string {
 		dialect.BooleanStr(false)
 }
 
-func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetSystemStatsQuery) error {
-	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetSystemStatsQuery) (result *stats.SystemStats, err error) {
+	err = ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sb := &db.SQLBuilder{}
 		sb.Write("SELECT ")
 		dialect := ss.db.GetDialect()
@@ -132,10 +135,11 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 			return err
 		}
 
-		query.Result = &stats
+		result = &stats
 
 		return nil
 	})
+	return result, err
 }
 
 func (ss *sqlStatsService) roleCounterSQL(ctx context.Context) string {
@@ -170,8 +174,8 @@ func viewersPermissionsCounterSQL(db db.DB, statName string, isFolder bool, perm
 	) AS ` + statName + `, `
 }
 
-func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAdminStatsQuery) error {
-	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAdminStatsQuery) (result *stats.AdminStats, err error) {
+	err = ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		dialect := ss.db.GetDialect()
 		now := time.Now()
 		activeEndDate := now.Add(-activeUserTimeLimit)
@@ -245,13 +249,14 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 			return err
 		}
 
-		query.Result = &stats
+		result = &stats
 		return nil
 	})
+	return result, err
 }
 
-func (ss *sqlStatsService) GetSystemUserCountStats(ctx context.Context, query *stats.GetSystemUserCountStatsQuery) error {
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+func (ss *sqlStatsService) GetSystemUserCountStats(ctx context.Context, query *stats.GetSystemUserCountStatsQuery) (result *stats.SystemUserCountStats, err error) {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var rawSQL = `SELECT COUNT(id) AS Count FROM ` + ss.db.GetDialect().Quote("user")
 		var stats stats.SystemUserCountStats
 		_, err := sess.SQL(rawSQL).Get(&stats)
@@ -259,10 +264,11 @@ func (ss *sqlStatsService) GetSystemUserCountStats(ctx context.Context, query *s
 			return err
 		}
 
-		query.Result = &stats
+		result = &stats
 
 		return nil
 	})
+	return result, err
 }
 
 func (ss *sqlStatsService) IsUnifiedAlertingEnabled() bool {
