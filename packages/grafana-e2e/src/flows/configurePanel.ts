@@ -91,6 +91,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       e2e.components.Panels.Panel.headerItems('Edit').click();
     } else {
       try {
+        e2e.components.PageToolbar.item('Add panel').should('be.visible');
         e2e.components.PageToolbar.item('Add panel').click();
       } catch (e) {
         // Depending on the screen size, the "Add panel" button might be hidden
