@@ -20,7 +20,7 @@ export type BucketAggregationType = ('terms' | 'filters' | 'geohash_grid' | 'dat
 
 export interface BaseBucketAggregation {
   id: string;
-  settings?: Record<string, unknown>;
+  settings?: unknown;
   type: BucketAggregationType;
 }
 
@@ -29,6 +29,13 @@ export interface BucketAggregationWithField extends BaseBucketAggregation {
 }
 
 export interface DateHistogram extends BucketAggregationWithField {
+  settings?: {
+    interval?: string;
+    min_doc_count?: string;
+    trimEdges?: string;
+    offset?: string;
+    timeZone?: string;
+  };
   type: 'date_histogram';
 }
 
@@ -41,6 +48,10 @@ export interface DateHistogramSettings {
 }
 
 export interface Histogram extends BucketAggregationWithField {
+  settings?: {
+    interval?: string;
+    min_doc_count?: string;
+  };
   type: 'histogram';
 }
 
@@ -52,10 +63,18 @@ export interface HistogramSettings {
 export type TermsOrder = ('desc' | 'asc');
 
 export interface Nested extends BucketAggregationWithField {
+  settings?: Record<string, unknown>;
   type: 'nested';
 }
 
 export interface Terms extends BucketAggregationWithField {
+  settings?: {
+    order?: TermsOrder;
+    size?: string;
+    min_doc_count?: string;
+    orderBy?: string;
+    missing?: string;
+  };
   type: 'terms';
 }
 
@@ -68,6 +87,9 @@ export interface TermsSettings {
 }
 
 export interface Filters extends BaseBucketAggregation {
+  settings?: {
+    filters?: Array<Filter>;
+  };
   type: 'filters';
 }
 
@@ -85,6 +107,9 @@ export const defaultFiltersSettings: Partial<FiltersSettings> = {
 };
 
 export interface GeoHashGrid extends BucketAggregationWithField {
+  settings?: {
+    precision?: string;
+  };
   type: 'geohash_grid';
 }
 
@@ -134,7 +159,7 @@ export interface Count extends BaseMetricAggregation {
 export interface Average extends MetricAggregationWithField, MetricAggregationWithMissingSupport, MetricAggregationWithInlineScript {
   field?: string;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
   };
   type: 'avg';
@@ -143,7 +168,7 @@ export interface Average extends MetricAggregationWithField, MetricAggregationWi
 export interface Sum extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   field?: string;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
   };
   type: 'sum';
@@ -152,7 +177,7 @@ export interface Sum extends MetricAggregationWithField, MetricAggregationWithIn
 export interface Max extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   field?: string;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
   };
   type: 'max';
@@ -161,7 +186,7 @@ export interface Max extends MetricAggregationWithField, MetricAggregationWithIn
 export interface Min extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   field?: string;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
   };
   type: 'min';
@@ -178,7 +203,7 @@ export interface ExtendedStats extends MetricAggregationWithField, MetricAggrega
   field?: string;
   meta?: Record<string, unknown>;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
     sigma?: string;
   };
@@ -188,7 +213,7 @@ export interface ExtendedStats extends MetricAggregationWithField, MetricAggrega
 export interface Percentiles extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   field?: string;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
     percents?: Array<string>;
   };
@@ -233,18 +258,11 @@ export interface Rate extends MetricAggregationWithField {
 }
 
 export interface BasePipelineMetricAggregation extends MetricAggregationWithField {
-  /**
-   * TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-   * type:         #PipelineMetricAggregationType
-   */
   pipelineAgg?: string;
+  type: PipelineMetricAggregationType;
 }
 
 export interface PipelineMetricAggregationWithMultipleBucketPaths extends BaseMetricAggregation {
-  /**
-   * TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-   * type: #PipelineMetricAggregationType
-   */
   pipelineVariables?: Array<PipelineVariable>;
 }
 
@@ -361,10 +379,25 @@ export type PipelineMetricAggregation = (MovingAverage | Derivative | Cumulative
 export type MetricAggregationWithSettings = (BucketScript | CumulativeSum | Derivative | SerialDiff | RawData | RawDocument | UniqueCount | Percentiles | ExtendedStats | Min | Max | Sum | Average | MovingAverage | MovingFunction | Logs | Rate | TopMetrics);
 
 export interface Elasticsearch extends common.DataQuery {
+  /**
+   * Alias pattern
+   */
   alias?: string;
+  /**
+   * List of bucket aggregations
+   */
   bucketAggs?: Array<BucketAggregation>;
+  /**
+   * List of metric aggregations
+   */
   metrics?: Array<MetricAggregation>;
+  /**
+   * Lucene query
+   */
   query?: string;
+  /**
+   * Name of time field
+   */
   timeField?: string;
 }
 

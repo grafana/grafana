@@ -8,74 +8,45 @@ title: NodeGraphPanelCfg kind
 
 ## NodeGraphPanelCfg
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 
 
-| Property       | Type                    | Required | Description |
-|----------------|-------------------------|----------|-------------|
-| `ArcOption`    | [object](#arcoption)    | **Yes**  |             |
-| `EdgeOptions`  | [object](#edgeoptions)  | **Yes**  |             |
-| `NodeOptions`  | [object](#nodeoptions)  | **Yes**  |             |
-| `PanelOptions` | [object](#paneloptions) | **Yes**  |             |
+| Property       | Type                    | Required | Default | Description |
+|----------------|-------------------------|----------|---------|-------------|
+| `ArcOption`    | [object](#arcoption)    | **Yes**  |         |             |
+| `EdgeOptions`  | [object](#edgeoptions)  | **Yes**  |         |             |
+| `NodeOptions`  | [object](#nodeoptions)  | **Yes**  |         |             |
+| `PanelOptions` | [object](#paneloptions) | **Yes**  |         |             |
 
 ### ArcOption
 
-| Property | Type   | Required | Description                                                                                         |
-|----------|--------|----------|-----------------------------------------------------------------------------------------------------|
-| `color`  | string | No       | The color of the arc.                                                                               |
-| `field`  | string | No       | Field from which to get the value. Values should be less than 1, representing fraction of a circle. |
+| Property | Type   | Required | Default | Description                                                                                         |
+|----------|--------|----------|---------|-----------------------------------------------------------------------------------------------------|
+| `color`  | string | No       |         | The color of the arc.                                                                               |
+| `field`  | string | No       |         | Field from which to get the value. Values should be less than 1, representing fraction of a circle. |
 
 ### EdgeOptions
 
-| Property            | Type   | Required | Description                                                                 |
-|---------------------|--------|----------|-----------------------------------------------------------------------------|
-| `mainStatUnit`      | string | No       | Unit for the main stat to override what ever is set in the data frame.      |
-| `secondaryStatUnit` | string | No       | Unit for the secondary stat to override what ever is set in the data frame. |
+| Property            | Type   | Required | Default | Description                                                                 |
+|---------------------|--------|----------|---------|-----------------------------------------------------------------------------|
+| `mainStatUnit`      | string | No       |         | Unit for the main stat to override what ever is set in the data frame.      |
+| `secondaryStatUnit` | string | No       |         | Unit for the secondary stat to override what ever is set in the data frame. |
 
 ### NodeOptions
 
-| Property            | Type                      | Required | Description                                                                             |
-|---------------------|---------------------------|----------|-----------------------------------------------------------------------------------------|
-| `arcs`              | [ArcOption](#arcoption)[] | No       | Define which fields are shown as part of the node arc (colored circle around the node). |
-| `mainStatUnit`      | string                    | No       | Unit for the main stat to override what ever is set in the data frame.                  |
-| `secondaryStatUnit` | string                    | No       | Unit for the secondary stat to override what ever is set in the data frame.             |
-
-### ArcOption
-
-| Property | Type   | Required | Description                                                                                         |
-|----------|--------|----------|-----------------------------------------------------------------------------------------------------|
-| `color`  | string | No       | The color of the arc.                                                                               |
-| `field`  | string | No       | Field from which to get the value. Values should be less than 1, representing fraction of a circle. |
+| Property            | Type                      | Required | Default | Description                                                                             |
+|---------------------|---------------------------|----------|---------|-----------------------------------------------------------------------------------------|
+| `arcs`              | [ArcOption](#arcoption)[] | No       |         | Define which fields are shown as part of the node arc (colored circle around the node). |
+| `mainStatUnit`      | string                    | No       |         | Unit for the main stat to override what ever is set in the data frame.                  |
+| `secondaryStatUnit` | string                    | No       |         | Unit for the secondary stat to override what ever is set in the data frame.             |
 
 ### PanelOptions
 
-| Property | Type                        | Required | Description |
-|----------|-----------------------------|----------|-------------|
-| `edges`  | [EdgeOptions](#edgeoptions) | No       |             |
-| `nodes`  | [NodeOptions](#nodeoptions) | No       |             |
-
-### EdgeOptions
-
-| Property            | Type   | Required | Description                                                                 |
-|---------------------|--------|----------|-----------------------------------------------------------------------------|
-| `mainStatUnit`      | string | No       | Unit for the main stat to override what ever is set in the data frame.      |
-| `secondaryStatUnit` | string | No       | Unit for the secondary stat to override what ever is set in the data frame. |
-
-### NodeOptions
-
-| Property            | Type                      | Required | Description                                                                             |
-|---------------------|---------------------------|----------|-----------------------------------------------------------------------------------------|
-| `arcs`              | [ArcOption](#arcoption)[] | No       | Define which fields are shown as part of the node arc (colored circle around the node). |
-| `mainStatUnit`      | string                    | No       | Unit for the main stat to override what ever is set in the data frame.                  |
-| `secondaryStatUnit` | string                    | No       | Unit for the secondary stat to override what ever is set in the data frame.             |
-
-### ArcOption
-
-| Property | Type   | Required | Description                                                                                         |
-|----------|--------|----------|-----------------------------------------------------------------------------------------------------|
-| `color`  | string | No       | The color of the arc.                                                                               |
-| `field`  | string | No       | Field from which to get the value. Values should be less than 1, representing fraction of a circle. |
+| Property | Type                        | Required | Default | Description |
+|----------|-----------------------------|----------|---------|-------------|
+| `edges`  | [EdgeOptions](#edgeoptions) | No       |         |             |
+| `nodes`  | [NodeOptions](#nodeoptions) | No       |         |             |
 
 

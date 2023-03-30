@@ -151,7 +151,7 @@ func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejso
 			Store:            store,
 			DatasourceService: &fd.FakeDataSourceService{
 				DataSources: []*datasources.DataSource{
-					{Id: 1, Type: datasources.DS_GRAPHITE, JsonData: dataSourceJsonData},
+					{ID: 1, Type: datasources.DS_GRAPHITE, JsonData: dataSourceJsonData},
 				},
 			},
 		}

@@ -203,6 +203,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       publicDashboardAccessToken: this.dashboard.meta.publicDashboardAccessToken,
       scopedVars: panel.scopedVars,
       cacheTimeout: panel.cacheTimeout,
+      queryCachingTTL: panel.queryCachingTTL,
       transformations: panel.transformations,
     });
   }

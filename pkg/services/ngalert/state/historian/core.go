@@ -57,3 +57,10 @@ func parsePanelKey(rule history_model.RuleMeta, logger log.Logger) *panelKey {
 	}
 	return nil
 }
+
+func mergeLabels(base, into data.Labels) data.Labels {
+	for k, v := range into {
+		base[k] = v
+	}
+	return base
+}

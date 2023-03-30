@@ -7,9 +7,10 @@ import InfiniteLoader from 'react-window-infinite-loader';
 import { Observable } from 'rxjs';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { TableCellHeight } from '@grafana/schema';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
-import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
+import { useTableStyles } from '@grafana/ui/src/components/Table/styles';
 
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
 import { QueryResponse } from '../../service';
@@ -51,7 +52,7 @@ export const SearchResultsTable = React.memo(
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
     const columnStyles = useStyles2(getColumnStyles);
-    const tableStyles = useStyles2(getTableStyles);
+    const tableStyles = useTableStyles(useTheme2(), TableCellHeight.Sm);
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
     const [listEl, setListEl] = useState<FixedSizeList | null>(null);
     const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, 0, response);

@@ -20,6 +20,10 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	// should come in the form of a new migration appended to the end of AddTablesMigrations
 	// instead of modifying an existing one. This ensure that tables are modified in a consistent and correct order.
 	historicalTableMigrations(mg)
+
+	mg.AddMigration("add last_applied column to alert_configuration_history", migrator.NewAddColumnMigration(migrator.Table{Name: "alert_configuration_history"}, &migrator.Column{
+		Name: "last_applied", Type: migrator.DB_Int, Nullable: false, Default: "0",
+	}))
 }
 
 // historicalTableMigrations contains those migrations that existed prior to creating the improved messaging around migration immutability.
@@ -283,9 +287,14 @@ func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 			Name:     "is_paused",
 			Type:     migrator.DB_Bool,
 			Nullable: false,
-			Default:  "false",
+			Default:  "0",
 		},
 	))
+
+	// This migration fixes a bug where "false" for the default value created a column with default "true" in PostgreSQL databases
+	mg.AddMigration("fix is_paused column for alert_rule table", migrator.NewRawSQLMigration("").
+		Postgres(`ALTER TABLE alert_rule ALTER COLUMN is_paused SET DEFAULT false;
+UPDATE alert_rule SET is_paused = false;`))
 }
 
 func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
@@ -347,9 +356,14 @@ func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
 			Name:     "is_paused",
 			Type:     migrator.DB_Bool,
 			Nullable: false,
-			Default:  "false",
+			Default:  "0",
 		},
 	))
+
+	// This migration fixes a bug where "false" for the default value created a column with default "true" in PostgreSQL databases
+	mg.AddMigration("fix is_paused column for alert_rule_version table", migrator.NewRawSQLMigration("").
+		Postgres(`ALTER TABLE alert_rule_version ALTER COLUMN is_paused SET DEFAULT false;
+UPDATE alert_rule_version SET is_paused = false;`))
 }
 
 func addAlertmanagerConfigMigrations(mg *migrator.Migrator) {

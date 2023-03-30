@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	loginpkg "github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/middleware/cookies"
+	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -53,48 +53,50 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
 	orgService org.Service, oauthTokenService oauthtoken.OAuthTokenService, features *featuremgmt.FeatureManager,
-	authnService authn.Service,
+	authnService authn.Service, anonSessionService anonymous.Service,
 ) *ContextHandler {
 	return &ContextHandler{
-		Cfg:               cfg,
-		AuthTokenService:  tokenService,
-		JWTAuthService:    jwtService,
-		RemoteCache:       remoteCache,
-		RenderService:     renderService,
-		SQLStore:          sqlStore,
-		tracer:            tracer,
-		authProxy:         authProxy,
-		authenticator:     authenticator,
-		loginService:      loginService,
-		apiKeyService:     apiKeyService,
-		userService:       userService,
-		orgService:        orgService,
-		oauthTokenService: oauthTokenService,
-		features:          features,
-		authnService:      authnService,
-		singleflight:      new(singleflight.Group),
+		Cfg:                cfg,
+		AuthTokenService:   tokenService,
+		JWTAuthService:     jwtService,
+		RemoteCache:        remoteCache,
+		RenderService:      renderService,
+		SQLStore:           sqlStore,
+		tracer:             tracer,
+		authProxy:          authProxy,
+		authenticator:      authenticator,
+		loginService:       loginService,
+		apiKeyService:      apiKeyService,
+		userService:        userService,
+		orgService:         orgService,
+		oauthTokenService:  oauthTokenService,
+		features:           features,
+		authnService:       authnService,
+		anonSessionService: anonSessionService,
+		singleflight:       new(singleflight.Group),
 	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg               *setting.Cfg
-	AuthTokenService  auth.UserTokenService
-	JWTAuthService    auth.JWTVerifierService
-	RemoteCache       *remotecache.RemoteCache
-	RenderService     rendering.Service
-	SQLStore          db.DB
-	tracer            tracing.Tracer
-	authProxy         *authproxy.AuthProxy
-	authenticator     loginpkg.Authenticator
-	loginService      login.Service
-	apiKeyService     apikey.Service
-	userService       user.Service
-	orgService        org.Service
-	oauthTokenService oauthtoken.OAuthTokenService
-	features          *featuremgmt.FeatureManager
-	authnService      authn.Service
-	singleflight      *singleflight.Group
+	Cfg                *setting.Cfg
+	AuthTokenService   auth.UserTokenService
+	JWTAuthService     auth.JWTVerifierService
+	RemoteCache        *remotecache.RemoteCache
+	RenderService      rendering.Service
+	SQLStore           db.DB
+	tracer             tracing.Tracer
+	authProxy          *authproxy.AuthProxy
+	authenticator      loginpkg.Authenticator
+	loginService       login.Service
+	apiKeyService      apikey.Service
+	userService        user.Service
+	orgService         org.Service
+	oauthTokenService  oauthtoken.OAuthTokenService
+	features           *featuremgmt.FeatureManager
+	authnService       authn.Service
+	singleflight       *singleflight.Group
+	anonSessionService anonymous.Service
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -119,8 +121,10 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		defer span.End()
 
 		reqContext := &contextmodel.ReqContext{
-			Context:        mContext,
-			SignedInUser:   &user.SignedInUser{},
+			Context: mContext,
+			SignedInUser: &user.SignedInUser{
+				Permissions: map[int64]map[string][]string{},
+			},
 			IsSignedIn:     false,
 			AllowAnonymous: false,
 			SkipCache:      false,
@@ -140,16 +144,17 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
 			identity, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 			if err != nil {
-				if errors.Is(err, auth.ErrUserTokenNotFound) || errors.Is(err, auth.ErrInvalidSessionToken) {
+				if errors.Is(err, auth.ErrInvalidSessionToken) {
 					// Burn the cookie in case of invalid, expired or missing token
 					reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 				}
+
 				// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 				reqContext.LookupTokenErr = err
 			} else {
-				reqContext.IsSignedIn = true
 				reqContext.UserToken = identity.SessionToken
 				reqContext.SignedInUser = identity.SignedInUser()
+				reqContext.IsSignedIn = !identity.IsAnonymous
 				reqContext.AllowAnonymous = identity.IsAnonymous
 				reqContext.IsRenderCall = identity.AuthModule == login.RenderModule
 			}
@@ -214,11 +219,6 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			}
 		}
 
-		// this can be used by proxies to identify certain users
-		if h.features.IsEnabled(featuremgmt.FlagReturnUnameHeader) {
-			w.Header().Add("grafana-uname", reqContext.Login)
-		}
-
 		next.ServeHTTP(w, r)
 	})
 }
@@ -238,6 +238,17 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *contextmodel.R
 		reqContext.Logger.Error("Anonymous access organization error.", "org_name", h.Cfg.AnonymousOrgName, "error", err)
 		return false
 	}
+
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				reqContext.Logger.Warn("tag anon session panic", "err", err)
+			}
+		}()
+		if err := h.anonSessionService.TagSession(context.Background(), reqContext.Req); err != nil {
+			reqContext.Logger.Warn("Failed to tag anonymous session", "error", err)
+		}
+	}()
 
 	reqContext.IsSignedIn = false
 	reqContext.AllowAnonymous = true
@@ -270,13 +281,14 @@ func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*apik
 	}
 
 	// fetch key
-	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
-	if err := h.apiKeyService.GetApiKeyByName(ctx, &keyQuery); err != nil {
+	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgID: decoded.OrgId}
+	key, err := h.apiKeyService.GetApiKeyByName(ctx, &keyQuery)
+	if err != nil {
 		return nil, err
 	}
 
 	// validate api key
-	isValid, err := apikeygen.IsValid(decoded, keyQuery.Result.Key)
+	isValid, err := apikeygen.IsValid(decoded, key.Key)
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +296,7 @@ func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*apik
 		return nil, apikeygen.ErrInvalidApiKey
 	}
 
-	return keyQuery.Result, nil
+	return key, nil
 }
 
 func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqContext) bool {
@@ -357,15 +369,15 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqConte
 		if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
 			reqContext.Logger.Warn("failed to update last use date for api key", "id", id)
 		}
-	}(apiKey.Id)
+	}(apiKey.ID)
 
 	if apiKey.ServiceAccountId == nil || *apiKey.ServiceAccountId < 1 { //There is no service account attached to the apikey
 		// Use the old APIkey method.  This provides backwards compatibility.
 		// will probably have to be supported for a long time.
 		reqContext.SignedInUser = &user.SignedInUser{}
 		reqContext.OrgRole = apiKey.Role
-		reqContext.ApiKeyID = apiKey.Id
-		reqContext.OrgID = apiKey.OrgId
+		reqContext.ApiKeyID = apiKey.ID
+		reqContext.OrgID = apiKey.OrgID
 		reqContext.IsSignedIn = true
 		return true
 	}
@@ -373,7 +385,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqConte
 	//There is a service account attached to the API key
 
 	//Use service account linked to API key as the signed in user
-	querySignedInUser := user.GetSignedInUserQuery{UserID: *apiKey.ServiceAccountId, OrgID: apiKey.OrgId}
+	querySignedInUser := user.GetSignedInUserQuery{UserID: *apiKey.ServiceAccountId, OrgID: apiKey.OrgID}
 	querySignedInUserResult, err := h.userService.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &querySignedInUser)
 	if err != nil {
 		reqContext.Logger.Error(
@@ -481,6 +493,13 @@ func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContex
 		return false
 	}
 
+	if h.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+		if token.NeedsRotation(time.Duration(h.Cfg.TokenRotationIntervalMinutes) * time.Minute) {
+			reqContext.LookupTokenErr = authn.ErrTokenNeedsRotation.Errorf("token needs rotation")
+			return true
+		}
+	}
+
 	query := user.GetSignedInUserQuery{UserID: token.UserId, OrgID: orgID}
 	queryResult, err := h.userService.GetSignedInUserWithCacheCtx(ctx, &query)
 	if err != nil {
@@ -529,18 +548,25 @@ func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContex
 
 func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
+		if h.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+			return
+		}
+
 		if w.Written() {
 			reqContext.Logger.Debug("Response written, skipping invalid cookie delete")
 			return
 		}
 
 		reqContext.Logger.Debug("Expiring invalid cookie")
-		cookies.DeleteCookie(reqContext.Resp, h.Cfg.LoginCookieName, nil)
+		authn.DeleteSessionCookie(reqContext.Resp, h.Cfg)
 	}
 }
 
 func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
+		if h.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+			return
+		}
 		// if response has already been written, skip.
 		if w.Written() {
 			return
@@ -575,7 +601,7 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *contextmodel.ReqCont
 
 		if rotated {
 			reqContext.UserToken = newToken
-			cookies.WriteSessionCookie(reqContext, h.Cfg, newToken.UnhashedToken, h.Cfg.LoginMaxLifetime)
+			authn.WriteSessionCookie(reqContext.Resp, h.Cfg, newToken)
 		}
 	}
 }

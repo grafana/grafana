@@ -5,8 +5,9 @@ import { useMount } from 'react-use';
 import { CoreApp, QueryEditorProps } from '@grafana/data';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
+import { defaultParca, defaultParcaQueryType, Parca } from '../dataquery.gen';
 import { ParcaDataSource } from '../datasource';
-import { defaultQuery, ParcaDataSourceOptions, ProfileTypeMessage, Query } from '../types';
+import { ParcaDataSourceOptions, ProfileTypeMessage, Query } from '../types';
 
 import { EditorRow } from './EditorRow';
 import { EditorRows } from './EditorRows';
@@ -14,6 +15,11 @@ import { LabelsEditor } from './LabelsEditor';
 import { QueryOptions } from './QueryOptions';
 
 export type Props = QueryEditorProps<ParcaDataSource, Query, ParcaDataSourceOptions>;
+
+export const defaultQuery: Partial<Parca> = {
+  ...defaultParca,
+  queryType: defaultParcaQueryType,
+};
 
 export function QueryEditor(props: Props) {
   const [profileTypes, setProfileTypes] = useState<ProfileTypeMessage[]>([]);

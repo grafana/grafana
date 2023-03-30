@@ -2,7 +2,7 @@ import { lastValueFrom } from 'rxjs';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { DatasourceSrvMock, MockObservableDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { LoadingState } from '@grafana/data';
+import { DataQueryRequest, DataSourceInstanceSettings, LoadingState } from '@grafana/data';
 
 import { MIXED_DATASOURCE_NAME } from './MixedDataSource';
 import { MixedDatasource } from './module';
@@ -23,14 +23,14 @@ const datasourceSrv = new DatasourceSrvMock(defaultDS, {
 
 const getDataSourceSrvMock = jest.fn().mockReturnValue(datasourceSrv);
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => getDataSourceSrvMock(),
 }));
 
 describe('MixedDatasource', () => {
   describe('with no errors', () => {
     it('direct query should return results', async () => {
-      const ds = new MixedDatasource({} as any);
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
       const requestMixed = getQueryOptions({
         targets: [
           { refId: 'QA', datasource: { uid: 'A' } }, // 1
@@ -52,7 +52,7 @@ describe('MixedDatasource', () => {
 
   describe('with errors', () => {
     it('direct query should return results', async () => {
-      const ds = new MixedDatasource({} as any);
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
       const requestMixed = getQueryOptions({
         targets: [
           { refId: 'QA', datasource: { uid: 'A' } }, // 1
@@ -84,14 +84,14 @@ describe('MixedDatasource', () => {
   });
 
   it('should return both query results from the same data source', async () => {
-    const ds = new MixedDatasource({} as any);
-    const request: any = {
+    const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+    const request = {
       targets: [
         { refId: 'A', datasource: { uid: 'Loki' } },
         { refId: 'B', datasource: { uid: 'Loki' } },
         { refId: 'C', datasource: { uid: 'A' } },
       ],
-    };
+    } as DataQueryRequest;
 
     await expect(ds.query(request)).toEmitValuesWith((results) => {
       expect(results).toHaveLength(3);
@@ -104,14 +104,14 @@ describe('MixedDatasource', () => {
   });
 
   it('should not return the error for the second time', async () => {
-    const ds = new MixedDatasource({} as any);
-    const request: any = {
+    const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+    const request = {
       targets: [
         { refId: 'A', datasource: 'Loki' },
         { refId: 'DD', datasource: 'D' },
         { refId: 'C', datasource: 'A' },
       ],
-    };
+    } as unknown as DataQueryRequest;
 
     await lastValueFrom(ds.query(request));
 
@@ -121,7 +121,7 @@ describe('MixedDatasource', () => {
           { refId: 'QA', datasource: { uid: 'A' } },
           { refId: 'QB', datasource: { uid: 'B' } },
         ],
-      } as any)
+      } as DataQueryRequest)
     ).toEmitValuesWith((results) => {
       expect(results).toHaveLength(2);
       expect(results[0].key).toBe('mixed-0-');
@@ -131,12 +131,12 @@ describe('MixedDatasource', () => {
   });
 
   it('should filter out MixedDataSource queries', async () => {
-    const ds = new MixedDatasource({} as any);
+    const ds = new MixedDatasource({} as DataSourceInstanceSettings);
 
     await expect(
       ds.query({
         targets: [{ refId: 'A', datasource: { uid: MIXED_DATASOURCE_NAME, id: 'datasource' } }],
-      } as any)
+      } as unknown as DataQueryRequest)
     ).toEmitValuesWith((results) => {
       expect(results).toHaveLength(1);
       expect(results[0].data).toHaveLength(0);

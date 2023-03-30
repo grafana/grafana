@@ -15,6 +15,20 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('LokiContextUi', () => {
+  const savedGlobal = global;
+  beforeAll(() => {
+    // TODO: `structuredClone` is not yet in jsdom https://github.com/jsdom/jsdom/issues/3363
+    if (!global.structuredClone) {
+      global.structuredClone = function structuredClone(objectToClone: unknown) {
+        const stringified = JSON.stringify(objectToClone);
+        const parsed = JSON.parse(stringified);
+        return parsed;
+      };
+    }
+  });
+  afterAll(() => {
+    global = savedGlobal;
+  });
   const setupProps = (): LokiContextUiProps => {
     const mockLanguageProvider = {
       start: jest.fn().mockImplementation(() => Promise.resolve()),
@@ -66,7 +80,7 @@ describe('LokiContextUi', () => {
     render(<LokiContextUi {...props} />);
 
     // Initial set of labels is available and not selected
-    expect(await screen.findByText(/Select labels to include in the context query/)).toBeInTheDocument();
+    expect(await screen.findByText(/Select labels to be included in the context query/)).toBeInTheDocument();
   });
 
   it('starts the languageProvider', async () => {

@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
@@ -16,32 +17,33 @@ import { SignInLink } from './TopBar/SignInLink';
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
 import { TopSearchBarSection } from './TopBar/TopSearchBarSection';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
-import { TopSearchBarInput } from './TopSearchBarInput';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
-export function TopSearchBar() {
+export const TopSearchBar = React.memo(function TopSearchBar() {
   const styles = useStyles2(getStyles);
   const navIndex = useSelector((state) => state.navIndex);
+  const location = useLocation();
 
   const helpNode = navIndex['help'];
   const profileNode = navIndex['profile'];
 
-  const search = config.featureToggles.topNavCommandPalette ? (
-    <TopSearchBarCommandPaletteTrigger />
-  ) : (
-    <TopSearchBarInput />
-  );
+  let homeUrl = config.appSubUrl || '/';
+  if (!config.bootData.user.isSignedIn && !config.anonymousEnabled) {
+    homeUrl = textUtil.sanitizeUrl(locationUtil.getUrlForPartial(location, { forceLogin: 'true' }));
+  }
 
   return (
     <div className={styles.layout}>
       <TopSearchBarSection>
-        <a className={styles.logo} href="/" title="Go to home">
+        <a className={styles.logo} href={homeUrl} title="Go to home">
           <Branding.MenuLogo className={styles.img} />
         </a>
         <OrganizationSwitcher />
       </TopSearchBarSection>
 
-      <TopSearchBarSection>{search}</TopSearchBarSection>
+      <TopSearchBarSection>
+        <TopSearchBarCommandPaletteTrigger />
+      </TopSearchBarSection>
 
       <TopSearchBarSection align="right">
         <QuickAdd />
@@ -65,7 +67,7 @@ export function TopSearchBar() {
       </TopSearchBarSection>
     </div>
   );
-}
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   layout: css({

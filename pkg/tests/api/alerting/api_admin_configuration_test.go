@@ -129,11 +129,11 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// Add an alertmanager datasource
 	{
 		cmd := datasources.AddDataSourceCommand{
-			OrgId:  1,
+			OrgID:  1,
 			Name:   "AM1",
 			Type:   datasources.DS_ALERTMANAGER,
 			Access: "proxy",
-			Url:    fakeAM1.URL(),
+			URL:    fakeAM1.URL(),
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"handleGrafanaManagedAlerts": true,
 				"implementation":             "prometheus",
@@ -156,11 +156,11 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// Add another alertmanager datasource
 	{
 		cmd := datasources.AddDataSourceCommand{
-			OrgId:  1,
+			OrgID:  1,
 			Name:   "AM2",
 			Type:   datasources.DS_ALERTMANAGER,
 			Access: "proxy",
-			Url:    fakeAM2.URL(),
+			URL:    fakeAM2.URL(),
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"handleGrafanaManagedAlerts": true,
 				"implementation":             "prometheus",
@@ -247,12 +247,12 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiring",
 						Condition: "A",
-						Data: []ngmodels.AlertQuery{
+						Data: []apimodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: ngmodels.RelativeTimeRange{
-									From: ngmodels.Duration(time.Duration(5) * time.Hour),
-									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(time.Duration(5) * time.Hour),
+									To:   apimodels.Duration(time.Duration(3) * time.Hour),
 								},
 								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
@@ -285,11 +285,11 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// Add an alertmanager datasource fot the other organisation
 	{
 		cmd := datasources.AddDataSourceCommand{
-			OrgId:  2,
+			OrgID:  2,
 			Name:   "AM3",
 			Type:   datasources.DS_ALERTMANAGER,
 			Access: "proxy",
-			Url:    fakeAM3.URL(),
+			URL:    fakeAM3.URL(),
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"handleGrafanaManagedAlerts": true,
 				"implementation":             "prometheus",

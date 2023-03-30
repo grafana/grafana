@@ -10,7 +10,8 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -42,7 +43,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		}
 
 		if !hasAccess(ac.ReqSignedIn,
-			ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
+			ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID))) {
 			continue
 		}
 
@@ -179,6 +180,10 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *contextmodel
 func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot, plugin plugins.PluginDTO, appLink *navtree.NavLink) {
 	// Handle moving apps into specific navtree sections
 	alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
+	if alertingNode == nil {
+		// Search for legacy alerting node just in case
+		alertingNode = treeRoot.FindById(navtree.NavIDAlertingLegacy)
+	}
 	sectionID := navtree.NavIDApps
 
 	if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride {
@@ -222,19 +227,22 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Url:        s.cfg.AppSubURL + "/monitoring",
 			})
 		case navtree.NavIDAlertsAndIncidents:
+			alertsAndIncidentsChildren := []*navtree.NavLink{}
 			if alertingNode != nil {
-				treeRoot.AddSection(&navtree.NavLink{
-					Text:       "Alerts & incidents",
-					Id:         navtree.NavIDAlertsAndIncidents,
-					SubTitle:   "Alerting and incident management apps",
-					Icon:       "bell",
-					Section:    navtree.NavSectionCore,
-					SortWeight: navtree.WeightAlertsAndIncidents,
-					Children:   []*navtree.NavLink{alertingNode, appLink},
-					Url:        s.cfg.AppSubURL + "/alerts-and-incidents",
-				})
+				alertsAndIncidentsChildren = append(alertsAndIncidentsChildren, alertingNode)
 				treeRoot.RemoveSection(alertingNode)
 			}
+			alertsAndIncidentsChildren = append(alertsAndIncidentsChildren, appLink)
+			treeRoot.AddSection(&navtree.NavLink{
+				Text:       "Alerts & incidents",
+				Id:         navtree.NavIDAlertsAndIncidents,
+				SubTitle:   "Alerting and incident management apps",
+				Icon:       "bell",
+				Section:    navtree.NavSectionCore,
+				SortWeight: navtree.WeightAlertsAndIncidents,
+				Children:   alertsAndIncidentsChildren,
+				Url:        s.cfg.AppSubURL + "/alerts-and-incidents",
+			})
 		default:
 			s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", sectionID)
 		}
@@ -266,8 +274,8 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "Incident"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Machine Learning"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
-		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightSavedItems + 1, Text: "Connections", Icon: "adjust-circle"},
-		"grafana-k6-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAlertsAndIncidents + 1, Text: "Performance testing", Icon: "k6"},
+		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
+		"k6-app":                           {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAlertsAndIncidents + 1, Text: "Performance testing", Icon: "k6"},
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{

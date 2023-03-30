@@ -58,6 +58,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     return (
       <Route
         exact={route.exact === undefined ? true : route.exact}
+        sensitive={route.sensitive === undefined ? false : route.sensitive}
         path={route.path}
         key={route.path}
         render={(props) => {

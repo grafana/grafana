@@ -72,8 +72,8 @@ func TestService(t *testing.T) {
 
 		// Delete the created alert notification
 		delCmd := models.DeleteAlertNotificationCommand{
-			Id:    an.Id,
-			OrgId: an.OrgId,
+			ID:    an.ID,
+			OrgID: an.OrgID,
 		}
 		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
@@ -90,14 +90,14 @@ func TestService(t *testing.T) {
 		require.NoError(t, err)
 
 		// Try to update it with an invalid type.
-		updateCmd := models.UpdateAlertNotificationCommand{Id: n.Id, Settings: simplejson.New(), SecureSettings: ss, Type: "invalid"}
+		updateCmd := models.UpdateAlertNotificationCommand{ID: n.ID, Settings: simplejson.New(), SecureSettings: ss, Type: "invalid"}
 		_, err = s.UpdateAlertNotification(ctx, &updateCmd)
 		require.Error(t, err)
 
 		// Delete the created alert notification.
 		delCmd := models.DeleteAlertNotificationCommand{
-			Id:    n.Id,
-			OrgId: n.OrgId,
+			ID:    n.ID,
+			OrgID: n.OrgID,
 		}
 		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
@@ -114,7 +114,7 @@ func TestService(t *testing.T) {
 		require.NoError(t, err)
 
 		// Update test notification.
-		updateCmd := models.UpdateAlertNotificationCommand{Id: n.Id, Settings: simplejson.New(), SecureSettings: ss, Type: nType}
+		updateCmd := models.UpdateAlertNotificationCommand{ID: n.ID, Settings: simplejson.New(), SecureSettings: ss, Type: nType}
 		n2, err := s.UpdateAlertNotification(ctx, &updateCmd)
 		require.NoError(t, err)
 
@@ -124,8 +124,8 @@ func TestService(t *testing.T) {
 
 		// Delete the created alert notification.
 		delCmd := models.DeleteAlertNotificationCommand{
-			Id:    n.Id,
-			OrgId: n.OrgId,
+			ID:    n.ID,
+			OrgID: n.OrgID,
 		}
 		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
@@ -134,7 +134,7 @@ func TestService(t *testing.T) {
 	t.Run("create alert notification should reject an invalid command", func(t *testing.T) {
 		uid := strings.Repeat("A", 41)
 
-		_, err := s.CreateAlertNotificationCommand(context.Background(), &models.CreateAlertNotificationCommand{Uid: uid})
+		_, err := s.CreateAlertNotificationCommand(context.Background(), &models.CreateAlertNotificationCommand{UID: uid})
 		require.ErrorIs(t, err, ValidationError{Reason: "Invalid UID: Must be 40 characters or less"})
 	})
 
@@ -144,10 +144,10 @@ func TestService(t *testing.T) {
 		uid := strings.Repeat("A", 41)
 		expectedErr := ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
 
-		_, err := s.UpdateAlertNotification(ctx, &models.UpdateAlertNotificationCommand{Uid: uid})
+		_, err := s.UpdateAlertNotification(ctx, &models.UpdateAlertNotificationCommand{UID: uid})
 		require.ErrorIs(t, err, expectedErr)
 
-		_, err = s.UpdateAlertNotificationWithUid(ctx, &models.UpdateAlertNotificationWithUidCommand{NewUid: uid})
+		_, err = s.UpdateAlertNotificationWithUid(ctx, &models.UpdateAlertNotificationWithUidCommand{NewUID: uid})
 		require.ErrorIs(t, err, expectedErr)
 	})
 }

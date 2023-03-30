@@ -11,7 +11,7 @@ import { PromQuery } from './types';
 
 describe('Language completion provider', () => {
   const datasource: PrometheusDatasource = {
-    metadataRequest: () => ({ data: { data: [] as any[] } }),
+    metadataRequest: () => ({ data: { data: [] } }),
     getTimeRangeParams: () => ({ start: '0', end: '1' }),
     interpolateString: (string: string) => string,
     hasLabelsMatchAPISupport: () => false,
@@ -373,7 +373,7 @@ describe('Language completion provider', () => {
 
     it('returns label suggestions on label context and metric', async () => {
       const datasources: PrometheusDatasource = {
-        metadataRequest: () => ({ data: { data: [{ __name__: 'metric', bar: 'bazinga' }] as any[] } }),
+        metadataRequest: () => ({ data: { data: [{ __name__: 'metric', bar: 'bazinga' }] } }),
         getTimeRangeParams: () => ({ start: '0', end: '1' }),
         interpolateString: (string: string) => string,
       } as unknown as PrometheusDatasource;
@@ -647,7 +647,7 @@ describe('Language completion provider', () => {
 
     it('does not re-fetch default labels', async () => {
       const datasource: PrometheusDatasource = {
-        metadataRequest: jest.fn(() => ({ data: { data: [] as any[] } })),
+        metadataRequest: jest.fn(() => ({ data: { data: [] } })),
         getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
         interpolateString: (string: string) => string,
       } as unknown as PrometheusDatasource;

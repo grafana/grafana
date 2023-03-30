@@ -1,6 +1,6 @@
-import { CSVWave, TestData, TestDataQueryType } from './dataquery.gen';
+import { CSVWave, PulseWaveQuery, TestData, TestDataQueryType } from './dataquery.gen';
 
-export const defaultPulseQuery: any = {
+export const defaultPulseQuery: PulseWaveQuery = {
   timeStep: 60,
   onCount: 3,
   onValue: 2,

@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -294,7 +295,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	service := dashboardservice.ProvideDashboardService(
+	service := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, dashAlertExtractor,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
@@ -332,7 +333,7 @@ func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user user.S
 	return folder
 }
 
-func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, folderID int64, items []folderACLItem) {
+func updateFolderACL(t *testing.T, dashboardStore dashboards.Store, folderID int64, items []folderACLItem) {
 	t.Helper()
 
 	if len(items) == 0 {
@@ -391,7 +392,7 @@ func validateAndUnMarshalArrayResponse(t *testing.T, resp response.Response) lib
 func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
 	store := dbtest.NewFakeDB()
-	guardian.InitLegacyGuardian(store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
+	guardian.InitLegacyGuardian(setting.NewCfg(), store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel")
@@ -440,12 +441,12 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		folderPermissions := acmock.NewMockedPermissionsService()
 		dashboardPermissions := acmock.NewMockedPermissionsService()
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-		dashboardService := dashboardservice.ProvideDashboardService(
+		dashboardService := dashboardservice.ProvideDashboardServiceImpl(
 			sqlStore.Cfg, dashboardStore, folderStore, nil,
 			features, folderPermissions, dashboardPermissions, ac,
 			foldertest.NewFakeService(),
 		)
-		guardian.InitLegacyGuardian(sqlStore, dashboardService, &teamtest.FakeService{})
+		guardian.InitLegacyGuardian(sqlStore.Cfg, sqlStore, dashboardService, &teamtest.FakeService{})
 		service := LibraryElementService{
 			Cfg:           sqlStore.Cfg,
 			SQLStore:      sqlStore,
@@ -462,7 +463,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		}
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
 		require.NoError(t, err)
-		usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, quotaService)
+		usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 		_, err = usrSvc.Create(context.Background(), &cmd)
 		require.NoError(t, err)

@@ -19,19 +19,19 @@ type Preferences struct {
 	Language     *string                 `json:"language,omitempty"`
 	QueryHistory *QueryHistoryPreference `json:"queryHistory,omitempty"`
 
-	// light, dark, empty is default
+	// Theme light, dark, empty is default
 	Theme *string `json:"theme,omitempty"`
 
 	// The timezone selection
 	// TODO: this should use the timezone defined in common
 	Timezone *string `json:"timezone,omitempty"`
 
-	// day of the week (sunday, monday, etc)
+	// WeekStart day of the week (sunday, monday, etc)
 	WeekStart *string `json:"weekStart,omitempty"`
 }
 
 // QueryHistoryPreference defines model for QueryHistoryPreference.
 type QueryHistoryPreference struct {
-	// one of: '' | 'query' | 'starred';
+	// HomeTab one of: '' | 'query' | 'starred';
 	HomeTab *string `json:"homeTab,omitempty"`
 }

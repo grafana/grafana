@@ -1,6 +1,12 @@
 ---
 aliases:
   - features/explore/
+cascade:
+  labels:
+    products:
+      - cloud
+      - enterprise
+      - oss
 keywords:
   - explore
   - loki
@@ -38,12 +44,14 @@ To access Explore:
 
    {{< figure src="/static/img/docs/explore/panel_dropdown-7-4.png" class="docs-image--no-shadow" max-width= "650px" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-1. Choose your data source from the dropdown in the top left. [Prometheus](https://grafana.com/oss/prometheus/) has a custom Explore implementation, the other data sources use their standard query editor.
-1. In the query field, write your query to explore your data. There are three buttons beside the query field, a clear button (X), an add query button (+) and the remove query button (-). Just like the normal query editor, you can add and remove multiple queries.
+1. Choose your data source from the dropdown in the top left.
+1. Write the query using a query editor provided by the selected data source. Please check [data sources documentation]({{< relref "../datasources" >}}) to see how to use various query editors.
+1. For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../panels-visualizations/query-transform-data" >}}).
+1. Run the query using the button in the top right corner.
 
 ## Split and compare
 
-The split view provides an easy way to compare graphs and tables side-by-side or to look at related data together on one page.
+The split view provides an easy way to compare visualizations side-by-side or to look at related data together on one page.
 
 To open the split view:
 
@@ -67,4 +75,6 @@ The Share shortened link capability allows you to create smaller and simpler URL
 
 ### exploreMixedDatasource
 
-Disabled by default, allows users in Explore to have different datasources for different queries. If compatible, results will be combined.
+Disabled by default, allows users in Explore to have different data sources for different queries. If compatible, results will be combined.
+
+Learn more about how to use [Mixed data source]({{< relref "../datasources/#special-data-sources" >}}).

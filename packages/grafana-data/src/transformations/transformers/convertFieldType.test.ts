@@ -338,6 +338,31 @@ describe('field convert types transformer', () => {
       },
     ]);
   });
+
+  it('will convert time fields to strings', () => {
+    const options = {
+      conversions: [{ targetField: 'time', destinationType: FieldType.string, dateFormat: 'YYYY-MM' }],
+    };
+
+    const stringified = convertFieldTypes(options, [
+      toDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000],
+          },
+        ],
+      }),
+    ])[0].fields[0];
+    expect(stringified.values.toArray()).toEqual([
+      '2021-07',
+      '2021-07',
+      '2021-07', // can group by month
+      '2021-08',
+      '2021-08',
+    ]);
+  });
 });
 
 describe('ensureTimeField', () => {
@@ -366,12 +391,12 @@ describe('fieldToTimeField', () => {
   // this needs to run in a non-UTC timezone env to ensure the parsing is not dependent on env tz settings
   //process.env.TZ = 'Pacific/Easter';
 
-  it('should always parse ISO 8601 date strings in UTC timezone (e.g. 2011-10-05T14:48:00.000Z)', () => {
+  it('should properly parse ISO 8601 date strings in UTC offset timezone', () => {
     const stringTimeField: Field = {
       config: {},
       name: 'ISO 8601 date strings',
       type: FieldType.time,
-      values: new ArrayVector(['2021-11-11T19:45:00.000Z']),
+      values: new ArrayVector(['2021-11-11T19:45:00Z']),
     };
 
     expect(fieldToTimeField(stringTimeField)).toEqual({
@@ -379,6 +404,34 @@ describe('fieldToTimeField', () => {
       name: 'ISO 8601 date strings',
       type: FieldType.time,
       values: new ArrayVector([1636659900000]),
+    });
+  });
+
+  it('should properly parse additional ISO 8601 date strings with tz offsets and millis', () => {
+    const stringTimeField: Field = {
+      config: {},
+      name: 'ISO 8601 date strings',
+      type: FieldType.time,
+      values: new ArrayVector([
+        '2021-11-11T19:45:00+05:30',
+        '2021-11-11T19:45:00-05:30',
+        '2021-11-11T19:45:00+0530',
+        '2021-11-11T19:45:00-0530',
+        '2021-11-11T19:45:00.0000000000+05:30',
+        '2021-11-11T19:45:00.0000000000-0530',
+        '2021-11-11T19:45:00.000Z',
+        '2021-11-11T19:45:00.0000000000Z',
+      ]),
+    };
+
+    expect(fieldToTimeField(stringTimeField)).toEqual({
+      config: {},
+      name: 'ISO 8601 date strings',
+      type: FieldType.time,
+      values: new ArrayVector([
+        1636640100000, 1636679700000, 1636640100000, 1636679700000, 1636640100000, 1636679700000, 1636659900000,
+        1636659900000,
+      ]),
     });
   });
 });

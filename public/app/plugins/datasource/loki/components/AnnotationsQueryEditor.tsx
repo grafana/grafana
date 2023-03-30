@@ -56,7 +56,6 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
           query={queryWithRefId}
           onChange={onChangeQuery}
           onRunQuery={() => {}}
-          onBlur={() => {}}
           history={history}
           ExtraFieldElement={
             <LokiOptionFields

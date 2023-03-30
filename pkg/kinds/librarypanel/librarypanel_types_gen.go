@@ -10,14 +10,18 @@
 
 package librarypanel
 
+import (
+	"time"
+)
+
 // LibraryElementDTOMeta defines model for LibraryElementDTOMeta.
 type LibraryElementDTOMeta struct {
 	ConnectedDashboards int64                     `json:"connectedDashboards"`
-	Created             string                    `json:"created"`
+	Created             time.Time                 `json:"created"`
 	CreatedBy           LibraryElementDTOMetaUser `json:"createdBy"`
 	FolderName          string                    `json:"folderName"`
 	FolderUid           string                    `json:"folderUid"`
-	Updated             string                    `json:"updated"`
+	Updated             time.Time                 `json:"updated"`
 	UpdatedBy           LibraryElementDTOMetaUser `json:"updatedBy"`
 }
 
@@ -53,6 +57,6 @@ type LibraryPanel struct {
 	// Library element UID
 	Uid string `json:"uid"`
 
-	// panel version, incremented each time the dashboard is updated.
+	// Version panel version, incremented each time the dashboard is updated.
 	Version int64 `json:"version"`
 }

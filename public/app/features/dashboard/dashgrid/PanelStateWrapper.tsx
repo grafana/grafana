@@ -24,7 +24,7 @@ import {
   toUtc,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getTemplateSrv, config, locationService, RefreshEvent } from '@grafana/runtime';
+import { getTemplateSrv, config, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
 import { VizLegendOptions } from '@grafana/schema';
 import {
   ErrorBoundary,
@@ -54,7 +54,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
+import { PanelHeaderMenuWrapperNew } from './PanelHeader/PanelHeaderMenuWrapper';
 import { PanelHeaderTitleItems } from './PanelHeader/PanelHeaderTitleItems';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
@@ -72,6 +72,7 @@ export interface Props {
   height: number;
   onInstanceStateChange: (value: any) => void;
   timezone?: string;
+  hideMenu?: boolean;
 }
 
 export interface State {
@@ -88,6 +89,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
   private eventFilter: EventFilterOptions = { onlyLocal: true };
+  private descriptionInteractionReported = false;
 
   constructor(props: Props) {
     super(props);
@@ -299,8 +301,14 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         }
         break;
       case LoadingState.Error:
-        const { error } = data;
-        if (error) {
+        const { error, errors } = data;
+        if (errors?.length) {
+          if (errors.length === 1) {
+            errorMessage = errors[0].message;
+          } else {
+            errorMessage = 'Multiple errors found. Click for more details';
+          }
+        } else if (error) {
           if (errorMessage !== error.message) {
             errorMessage = error.message;
           }
@@ -595,6 +603,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const { panel } = this.props;
     const descriptionMarkdown = getTemplateSrv().replace(panel.description, panel.scopedVars);
     const interpolatedDescription = renderMarkdown(descriptionMarkdown);
+
+    if (!this.descriptionInteractionReported) {
+      // Description rendering function can be called multiple times due to re-renders but we want to report the interaction once.
+      reportInteraction('dashboards_panelheader_description_displayed');
+      this.descriptionInteractionReported = true;
+    }
+
     return interpolatedDescription;
   };
 
@@ -603,7 +618,14 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const linkSupplier = getPanelLinksSupplier(panel);
     if (linkSupplier) {
       const panelLinks = linkSupplier && linkSupplier.getLinks(panel.replaceVariables);
-      return panelLinks;
+
+      return panelLinks.map((panelLink) => ({
+        ...panelLink,
+        onClick: (...args) => {
+          reportInteraction('dashboards_panelheader_datalink_clicked', { has_multiple_links: panelLinks.length > 1 });
+          panelLink.onClick?.(...args);
+        },
+      }));
     }
     return [];
   };
@@ -616,6 +638,12 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   onOpenErrorInspect = (e: React.SyntheticEvent) => {
     e.stopPropagation();
     locationService.partial({ inspect: this.props.panel.id, inspectTab: InspectTab.Error });
+    reportInteraction('dashboards_panelheader_statusmessage_clicked');
+  };
+
+  onCancelQuery = () => {
+    this.props.panel.getQueryRunner().cancelQuery();
+    reportInteraction('dashboards_panelheader_cancelquery_clicked', { data_state: this.state.data.state });
   };
 
   render() {
@@ -624,21 +652,26 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const { transparent } = panel;
 
     const alertState = data.alertState?.state;
+    const hasHoverHeader = this.hasOverlayHeader();
 
     const containerClassNames = classNames({
       'panel-container': true,
       'panel-container--absolute': isSoloRoute(locationService.getLocation().pathname),
       'panel-container--transparent': transparent,
-      'panel-container--no-title': this.hasOverlayHeader(),
+      'panel-container--no-title': hasHoverHeader,
       [`panel-alert-state--${alertState}`]: alertState !== undefined,
     });
 
     const title = panel.getDisplayTitle();
     const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
 
-    const dragClass = !(isViewing || isEditing) ? 'grid-drag-handle' : '';
+    const showTitleItems =
+      (panel.links && panel.links.length > 0 && this.onShowPanelLinks) ||
+      (data.series.length > 0 && data.series.some((v) => (v.meta?.notices?.length ?? 0) > 0)) ||
+      (data.request && data.request.timeInfo) ||
+      alertState;
 
-    const titleItems = [
+    const titleItems = showTitleItems && (
       <PanelHeaderTitleItems
         key="title-items"
         alertState={alertState}
@@ -646,25 +679,20 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         panelId={panel.id}
         panelLinks={panel.links}
         onShowPanelLinks={this.onShowPanelLinks}
-      />,
-    ];
+      />
+    );
 
-    let menu;
-    if (!dashboard.meta.publicDashboardAccessToken) {
-      menu = (
+    const dragClass = !(isViewing || isEditing) ? 'grid-drag-handle' : '';
+    if (config.featureToggles.newPanelChromeUI) {
+      // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
+      const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
+
+      const menu = (
         <div data-testid="panel-dropdown">
-          <PanelHeaderMenuWrapper
-            style={{ top: 0 }}
-            panel={panel}
-            dashboard={dashboard}
-            loadingState={data.state}
-            onClose={() => {}}
-          />
+          <PanelHeaderMenuWrapperNew panel={panel} dashboard={dashboard} loadingState={data.state} />
         </div>
       );
-    }
 
-    if (config.featureToggles.newPanelChromeUI) {
       return (
         <PanelChrome
           width={width}
@@ -675,11 +703,14 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           statusMessageOnClick={this.onOpenErrorInspect}
           description={!!panel.description ? this.onShowPanelDescription : undefined}
           titleItems={titleItems}
-          menu={menu}
+          menu={this.props.hideMenu ? undefined : menu}
           dragClass={dragClass}
           dragClassCancel="grid-drag-cancel"
           padding={padding}
+          hoverHeaderOffset={hoverHeaderOffset}
+          hoverHeader={this.hasOverlayHeader()}
           displayMode={transparent ? 'transparent' : 'default'}
+          onCancelQuery={this.onCancelQuery}
         >
           {(innerWidth, innerHeight) => (
             <>

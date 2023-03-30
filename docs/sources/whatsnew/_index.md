@@ -53,6 +53,11 @@ aliases:
   - whats-new-in-v6-5/
   - whats-new-in-v6-6/
   - whats-new-in-v6-7/
+cascade:
+  labels:
+    products:
+      - cloud
+      - oss
 title: What's new
 weight: 1
 ---
@@ -67,6 +72,7 @@ For a complete list of every change, with links to pull requests and related iss
 
 ## Grafana 9
 
+- [What's new in 9.4]({{< relref "whats-new-in-v9-4/" >}})
 - [What's new in 9.3]({{< relref "whats-new-in-v9-3/" >}})
 - [What's new in 9.2]({{< relref "whats-new-in-v9-2/" >}})
 - [What's new in 9.1]({{< relref "whats-new-in-v9-1/" >}})

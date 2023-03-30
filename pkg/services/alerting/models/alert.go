@@ -67,11 +67,11 @@ func (s ExecutionErrorOption) ToAlertState() AlertStateType {
 
 // swagger:model LegacyAlert
 type Alert struct {
-	Id             int64
+	ID             int64 `xorm:"pk autoincr 'id'"`
 	Version        int64
-	OrgId          int64
-	DashboardId    int64
-	PanelId        int64
+	OrgID          int64 `xorm:"org_id"`
+	DashboardID    int64 `xorm:"dashboard_id"`
+	PanelID        int64 `xorm:"panel_id"`
 	Name           string
 	Message        string
 	Severity       string // Unused
@@ -93,7 +93,7 @@ type Alert struct {
 }
 
 func (a *Alert) ValidDashboardPanel() bool {
-	return a.OrgId != 0 && a.DashboardId != 0 && a.PanelId != 0
+	return a.OrgID != 0 && a.DashboardID != 0 && a.PanelID != 0
 }
 
 func (a *Alert) ValidTags() bool {
@@ -141,8 +141,8 @@ func (a *Alert) GetTagsFromSettings() []*tag.Tag {
 }
 
 type PauseAlertCommand struct {
-	OrgId       int64
-	AlertIds    []int64
+	OrgID       int64   `xorm:"org_id"`
+	AlertIDs    []int64 `xorm:"alert_ids"`
 	ResultCount int64
 	Paused      bool
 }
@@ -153,8 +153,8 @@ type PauseAllAlertCommand struct {
 }
 
 type SetAlertStateCommand struct {
-	AlertId  int64
-	OrgId    int64
+	AlertID  int64 `xorm:"alert_id"`
+	OrgID    int64 `xorm:"org_id"`
 	State    AlertStateType
 	Error    string
 	EvalData *simplejson.Json
@@ -162,10 +162,10 @@ type SetAlertStateCommand struct {
 
 // Queries
 type GetAlertsQuery struct {
-	OrgId        int64
+	OrgID        int64 `xorm:"org_id"`
 	State        []string
-	DashboardIDs []int64
-	PanelId      int64
+	DashboardIDs []int64 `xorm:"dashboard_ids"`
+	PanelID      int64   `xorm:"panel_id"`
 	Limit        int64
 	Query        string
 	User         *user.SignedInUser
@@ -174,33 +174,33 @@ type GetAlertsQuery struct {
 type GetAllAlertsQuery struct{}
 
 type GetAlertByIdQuery struct {
-	Id int64
+	ID int64 `xorm:"id"`
 }
 
 type GetAlertStatesForDashboardQuery struct {
-	OrgId       int64
-	DashboardId int64
+	OrgID       int64 `xorm:"org_id"`
+	DashboardID int64 `xorm:"dashboard_id"`
 }
 
 type AlertListItemDTO struct {
-	Id             int64            `json:"id"`
-	DashboardId    int64            `json:"dashboardId"`
-	DashboardUid   string           `json:"dashboardUid"`
+	ID             int64            `json:"id" xorm:"id"`
+	DashboardID    int64            `json:"dashboardId" xorm:"dashboard_id"`
+	DashboardUID   string           `json:"dashboardUid" xorm:"dashboard_uid"`
 	DashboardSlug  string           `json:"dashboardSlug"`
-	PanelId        int64            `json:"panelId"`
+	PanelID        int64            `json:"panelId" xorm:"panel_id"`
 	Name           string           `json:"name"`
 	State          AlertStateType   `json:"state"`
 	NewStateDate   time.Time        `json:"newStateDate"`
 	EvalDate       time.Time        `json:"evalDate"`
 	EvalData       *simplejson.Json `json:"evalData"`
 	ExecutionError string           `json:"executionError"`
-	Url            string           `json:"url"`
+	URL            string           `json:"url" xorm:"url"`
 }
 
 type AlertStateInfoDTO struct {
-	Id           int64          `json:"id"`
-	DashboardId  int64          `json:"dashboardId"`
-	PanelId      int64          `json:"panelId"`
+	ID           int64          `json:"id" xorm:"id"`
+	DashboardID  int64          `json:"dashboardId" xorm:"dashboard_id"`
+	PanelID      int64          `json:"panelId" xorm:"panel_id"`
 	State        AlertStateType `json:"state"`
 	NewStateDate time.Time      `json:"newStateDate"`
 }

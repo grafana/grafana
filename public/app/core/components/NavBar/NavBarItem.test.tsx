@@ -4,7 +4,7 @@ import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import { locationUtil } from '@grafana/data';
-import { config, setLocationService } from '@grafana/runtime';
+import { config, LocationService, setLocationService } from '@grafana/runtime';
 
 // Need to mock createBrowserHistory here to avoid errors
 jest.mock('history', () => ({
@@ -38,7 +38,7 @@ async function getTestContext(overrides: Partial<Props> = {}, subUrl = '', isMen
   config.appSubUrl = subUrl;
   locationUtil.initialize({ config, getTimeRangeForUrl: jest.fn(), getVariablesUrlParams: jest.fn() });
   const pushMock = jest.fn();
-  const locationService: any = { push: pushMock };
+  const locationService = { push: pushMock } as unknown as LocationService;
   setLocationService(locationService);
   const props = { ...defaults, ...overrides };
 

@@ -27,8 +27,8 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	// mock data
-	defaultDs := &datasources.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true, Uid: "def-uid"}
-	graphite2Ds := &datasources.DataSource{Id: 15, OrgId: 1, Name: "graphite2", Uid: "graphite2-uid"}
+	defaultDs := &datasources.DataSource{ID: 12, OrgID: 1, Name: "I am default", IsDefault: true, UID: "def-uid"}
+	graphite2Ds := &datasources.DataSource{ID: 15, OrgID: 1, Name: "graphite2", UID: "graphite2-uid"}
 
 	json, err := os.ReadFile("./testdata/graphite-alert.json")
 	require.Nil(t, err)
@@ -36,7 +36,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	dsPermissions := permissions.NewMockDatasourcePermissionService()
 	dsPermissions.DsResult = []*datasources.DataSource{
 		{
-			Id: 1,
+			ID: 1,
 		},
 	}
 
@@ -74,7 +74,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
 
-		dsService.ExpectedDatasource = &datasources.DataSource{Id: 12}
+		dsService.ExpectedDatasource = &datasources.DataSource{ID: 12}
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
 			Dash:  dashboards.NewDashboardFromJson(dashJSON),
@@ -86,7 +86,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		require.Len(t, alerts, 2)
 
 		for _, v := range alerts {
-			require.EqualValues(t, v.DashboardId, 57)
+			require.EqualValues(t, v.DashboardID, 57)
 			require.NotEmpty(t, v.Name)
 			require.NotEmpty(t, v.Message)
 
@@ -100,8 +100,8 @@ func TestAlertRuleExtraction(t *testing.T) {
 		require.EqualValues(t, alerts[0].Frequency, 60)
 		require.EqualValues(t, alerts[1].Frequency, 60)
 
-		require.EqualValues(t, alerts[0].PanelId, 3)
-		require.EqualValues(t, alerts[1].PanelId, 4)
+		require.EqualValues(t, alerts[0].PanelID, 3)
+		require.EqualValues(t, alerts[1].PanelID, 4)
 
 		require.Equal(t, alerts[0].For, time.Minute*2)
 		require.Equal(t, alerts[1].For, time.Duration(0))
@@ -173,7 +173,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(panelWithoutSpecifiedDatasource)
 		require.Nil(t, err)
 
-		dsService.ExpectedDatasource = &datasources.DataSource{Id: 12}
+		dsService.ExpectedDatasource = &datasources.DataSource{ID: 12}
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
 			Dash:  dashboards.NewDashboardFromJson(dashJSON),
@@ -206,11 +206,11 @@ func TestAlertRuleExtraction(t *testing.T) {
 	t.Run("Alert notifications are in DB", func(t *testing.T) {
 		sqlStore := sqlStore{db: sqlstore.InitTestDB(t)}
 
-		firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
+		firstNotification := models.CreateAlertNotificationCommand{UID: "notifier1", OrgID: 1, Name: "1"}
 		_, err = sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
 		require.Nil(t, err)
 
-		secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
+		secondNotification := models.CreateAlertNotificationCommand{UID: "notifier2", OrgID: 1, Name: "2"}
 		_, err = sqlStore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
 		require.Nil(t, err)
 
@@ -230,7 +230,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		require.Len(t, alerts, 1)
 
 		for _, alert := range alerts {
-			require.EqualValues(t, alert.DashboardId, 4)
+			require.EqualValues(t, alert.DashboardID, 4)
 
 			conditions := alert.Settings.Get("conditions").MustArray()
 			cond := simplejson.NewFromAny(conditions[0])
@@ -310,7 +310,7 @@ func TestFilterPermissionsErrors(t *testing.T) {
 	})
 
 	// mock data
-	defaultDs := &datasources.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true, Uid: "def-uid"}
+	defaultDs := &datasources.DataSource{ID: 12, OrgID: 1, Name: "I am default", IsDefault: true, UID: "def-uid"}
 
 	json, err := os.ReadFile("./testdata/graphite-alert.json")
 	require.Nil(t, err)
@@ -372,12 +372,10 @@ type fakeDatasourceService struct {
 	datasources.DataSourceService
 }
 
-func (f *fakeDatasourceService) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
-	query.Result = f.ExpectedDatasource
-	return nil
+func (f *fakeDatasourceService) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (*datasources.DataSource, error) {
+	return f.ExpectedDatasource, nil
 }
 
-func (f *fakeDatasourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
-	query.Result = f.ExpectedDatasource
-	return nil
+func (f *fakeDatasourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	return f.ExpectedDatasource, nil
 }

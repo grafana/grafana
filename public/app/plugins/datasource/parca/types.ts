@@ -1,9 +1,9 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataSourceJsonData } from '@grafana/data';
 
-export interface Query extends DataQuery {
-  labelSelector: string;
-  profileTypeId: string;
-  queryType: 'metrics' | 'profile' | 'both';
+import { Parca as ParcaBase, ParcaQueryType } from './dataquery.gen';
+
+export interface Query extends ParcaBase {
+  queryType: ParcaQueryType;
 }
 
 export interface ProfileTypeMessage {
@@ -14,11 +14,6 @@ export interface ProfileTypeMessage {
   sample_type: string;
   sample_unit: string;
 }
-
-export const defaultQuery: Partial<Query> = {
-  labelSelector: '{}',
-  queryType: 'both',
-};
 
 /**
  * These are options configured for each DataSource instance.

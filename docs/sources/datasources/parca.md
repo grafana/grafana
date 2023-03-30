@@ -14,10 +14,6 @@ weight: 1110
 
 # Parca data source
 
-> **Note:** This feature is behind the `flameGraph` feature toggle.
-> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
-> Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
-
 Grafana ships with built-in support for Parca, a continuous profiling OSS database for analysis of CPU and memory usage, down to the line number and throughout time. Add it as a data source, and you are ready to query your profiles in [Explore]({{< relref "../explore" >}}).
 
 ## Configure the Parca data source
@@ -28,8 +24,8 @@ To access Parca settings, click the **Configuration** (gear) icon, then click **
 | ------------ | ------------------------------------------------------------------ |
 | `Name`       | A name to specify the data source in panels, queries, and Explore. |
 | `Default`    | The default data source will be pre-selected for new panels.       |
-| `URL`        | The URL of the Tempo instance, e.g., `http://localhost:4100`       |
-| `Basic Auth` | Enable basic authentication to the Tempo data source.              |
+| `URL`        | The URL of the Parca instance, e.g., `http://localhost:4100`       |
+| `Basic Auth` | Enable basic authentication to the Parca data source.              |
 | `User`       | User name for basic authentication.                                |
 | `Password`   | Password for basic authentication.                                 |
 

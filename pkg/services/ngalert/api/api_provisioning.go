@@ -14,7 +14,6 @@ import (
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/provisioning/alerting/file"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -64,8 +63,8 @@ type AlertRuleService interface {
 	GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroup, error)
 	ReplaceRuleGroup(ctx context.Context, orgID int64, group alerting_models.AlertRuleGroup, userID int64, provenance alerting_models.Provenance) error
 	GetAlertRuleWithFolderTitle(ctx context.Context, orgID int64, ruleUID string) (provisioning.AlertRuleWithFolderTitle, error)
-	GetAlertRuleGroupWithFolderTitle(ctx context.Context, orgID int64, folder, group string) (file.AlertRuleGroupWithFolderTitle, error)
-	GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64) ([]file.AlertRuleGroupWithFolderTitle, error)
+	GetAlertRuleGroupWithFolderTitle(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroupWithFolderTitle, error)
+	GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64) ([]alerting_models.AlertRuleGroupWithFolderTitle, error)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) response.Response {
@@ -177,7 +176,7 @@ func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body de
 	tmpl := definitions.NotificationTemplate{
 		Name:       name,
 		Template:   body.Template,
-		Provenance: alerting_models.ProvenanceAPI,
+		Provenance: definitions.Provenance(alerting_models.ProvenanceAPI),
 	}
 	modified, err := srv.templates.SetTemplate(c.Req.Context(), c.OrgID, tmpl)
 	if err != nil {
@@ -219,7 +218,7 @@ func (srv *ProvisioningSrv) RouteGetMuteTimings(c *contextmodel.ReqContext) resp
 }
 
 func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval) response.Response {
-	mt.Provenance = alerting_models.ProvenanceAPI
+	mt.Provenance = definitions.Provenance(alerting_models.ProvenanceAPI)
 	created, err := srv.muteTimings.CreateMuteTiming(c.Req.Context(), mt, c.OrgID)
 	if err != nil {
 		if errors.Is(err, provisioning.ErrValidation) {
@@ -232,7 +231,7 @@ func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt d
 
 func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval, name string) response.Response {
 	mt.Name = name
-	mt.Provenance = alerting_models.ProvenanceAPI
+	mt.Provenance = definitions.Provenance(alerting_models.ProvenanceAPI)
 	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.OrgID)
 	if err != nil {
 		if errors.Is(err, provisioning.ErrValidation) {
@@ -259,7 +258,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRules(c *contextmodel.ReqContext) respo
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, definitions.NewAlertRules(rules))
+	return response.JSON(http.StatusOK, ProvisionedAlertRuleFromAlertRules(rules))
 }
 
 func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *contextmodel.ReqContext, UID string) response.Response {
@@ -267,11 +266,11 @@ func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *contextmodel.ReqContext, U
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, definitions.NewAlertRule(rule, provenace))
+	return response.JSON(http.StatusOK, ProvisionedAlertRuleFromAlertRule(rule, provenace))
 }
 
 func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar definitions.ProvisionedAlertRule) response.Response {
-	upstreamModel, err := ar.UpstreamModel()
+	upstreamModel, err := AlertRuleFromProvisionedAlertRule(ar)
 	upstreamModel.OrgID = c.OrgID
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
@@ -291,12 +290,12 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	resp := definitions.NewAlertRule(createdAlertRule, provenance)
+	resp := ProvisionedAlertRuleFromAlertRule(createdAlertRule, provenance)
 	return response.JSON(http.StatusCreated, resp)
 }
 
 func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar definitions.ProvisionedAlertRule, UID string) response.Response {
-	updated, err := ar.UpstreamModel()
+	updated, err := AlertRuleFromProvisionedAlertRule(ar)
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -317,7 +316,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	resp := definitions.NewAlertRule(updatedAlertRule, provenance)
+	resp := ProvisionedAlertRuleFromAlertRule(updatedAlertRule, provenance)
 	return response.JSON(http.StatusOK, resp)
 }
 
@@ -337,7 +336,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *contextmodel.ReqContext, f
 		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, definitions.NewAlertRuleGroupFromModel(g))
+	return response.JSON(http.StatusOK, ApiAlertRuleGroupFromAlertRuleGroup(g))
 }
 
 // RouteGetAlertRulesExport retrieves all alert rules in a format compatible with file provisioning.
@@ -347,7 +346,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
-	e, err := file.NewAlertingFileExport(groupsWithTitle)
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle(groupsWithTitle)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
@@ -365,7 +364,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqCont
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rule group")
 	}
 
-	e, err := file.NewAlertingFileExport([]file.AlertRuleGroupWithFolderTitle{g})
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]alerting_models.AlertRuleGroupWithFolderTitle{g})
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
@@ -383,7 +382,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, 
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	e, err := file.NewAlertingFileExport([]file.AlertRuleGroupWithFolderTitle{{
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]alerting_models.AlertRuleGroupWithFolderTitle{{
 		AlertRuleGroup: &alerting_models.AlertRuleGroup{
 			Title:     rule.AlertRule.RuleGroup,
 			FolderUID: rule.AlertRule.NamespaceUID,
@@ -403,7 +402,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, 
 func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, ag definitions.AlertRuleGroup, folderUID string, group string) response.Response {
 	ag.FolderUID = folderUID
 	ag.Title = group
-	groupModel, err := ag.ToModel()
+	groupModel, err := AlertRuleGroupFromApiAlertRuleGroup(ag)
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -428,10 +427,20 @@ func determineProvenance(ctx *contextmodel.ReqContext) alerting_models.Provenanc
 }
 
 func exportResponse(c *contextmodel.ReqContext, body any) response.Response {
-	format := "json"
+	var format = "yaml"
+
 	acceptHeader := c.Req.Header.Get("Accept")
-	if strings.Contains(acceptHeader, "yaml") && !strings.Contains(acceptHeader, "json") {
+	if strings.Contains(acceptHeader, "yaml") {
 		format = "yaml"
+	}
+
+	if strings.Contains(acceptHeader, "json") {
+		format = "json"
+	}
+
+	queryFormat := c.Query("format")
+	if queryFormat == "yaml" || queryFormat == "json" {
+		format = queryFormat
 	}
 
 	download := c.QueryBoolWithDefault("download", false)

@@ -75,7 +75,11 @@ describe('PromLink', () => {
     render(
       <div>
         <PromLink datasource={getDataSource()} panelData={getPanelData()} query={{} as PromQuery} />
-        <PromLink datasource={getDataSource({ directUrl: 'prom2' })} panelData={getPanelData()} query={{} as any} />
+        <PromLink
+          datasource={getDataSource({ directUrl: 'prom2' })}
+          panelData={getPanelData()}
+          query={{} as PromQuery}
+        />
       </div>
     );
     const promLinkButtons = screen.getAllByText('Prometheus');

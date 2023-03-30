@@ -11,8 +11,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/alerting/alerting"
-	"github.com/grafana/alerting/alerting/notifier/channels"
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers"
+	alertingTemplates "github.com/grafana/alerting/templates"
+
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -20,7 +22,6 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,7 +46,7 @@ type AlertingStore interface {
 }
 
 type Alertmanager struct {
-	Base   *alerting.GrafanaAlertmanager
+	Base   *alertingNotify.GrafanaAlertmanager
 	logger log.Logger
 
 	Settings            *setting.Cfg
@@ -53,7 +54,7 @@ type Alertmanager struct {
 	fileStore           *FileStore
 	NotificationService notifications.Service
 
-	decryptFn channels.GetDecryptedValueFn
+	decryptFn receivers.GetDecryptedValueFn
 	orgID     int64
 }
 
@@ -63,7 +64,7 @@ type maintenanceOptions struct {
 	filepath             string
 	retention            time.Duration
 	maintenanceFrequency time.Duration
-	maintenanceFunc      func(alerting.State) (int64, error)
+	maintenanceFunc      func(alertingNotify.State) (int64, error)
 }
 
 func (m maintenanceOptions) Filepath() string {
@@ -78,12 +79,12 @@ func (m maintenanceOptions) MaintenanceFrequency() time.Duration {
 	return m.maintenanceFrequency
 }
 
-func (m maintenanceOptions) MaintenanceFunc(state alerting.State) (int64, error) {
+func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, error) {
 	return m.maintenanceFunc(state)
 }
 
 func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
-	peer alerting.ClusterPeer, decryptFn channels.GetDecryptedValueFn, ns notifications.Service,
+	peer alertingNotify.ClusterPeer, decryptFn receivers.GetDecryptedValueFn, ns notifications.Service,
 	m *metrics.Alertmanager) (*Alertmanager, error) {
 	workingPath := filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID)))
 	fileStore := NewFileStore(orgID, kvStore, workingPath)
@@ -101,8 +102,9 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		filepath:             silencesFilePath,
 		retention:            retentionNotificationsAndSilences,
 		maintenanceFrequency: silenceMaintenanceInterval,
-		maintenanceFunc: func(state alerting.State) (int64, error) {
-			return fileStore.Persist(ctx, silencesFilename, state)
+		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
+			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
+			return fileStore.Persist(context.Background(), silencesFilename, state)
 		},
 	}
 
@@ -110,12 +112,13 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		filepath:             nflogFilepath,
 		retention:            retentionNotificationsAndSilences,
 		maintenanceFrequency: notificationLogMaintenanceInterval,
-		maintenanceFunc: func(state alerting.State) (int64, error) {
-			return fileStore.Persist(ctx, notificationLogFilename, state)
+		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
+			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
+			return fileStore.Persist(context.Background(), notificationLogFilename, state)
 		},
 	}
 
-	amcfg := &alerting.GrafanaAlertmanagerConfig{
+	amcfg := &alertingNotify.GrafanaAlertmanagerConfig{
 		WorkingDirectory:   workingDir,
 		AlertStoreCallback: nil,
 		PeerTimeout:        cfg.UnifiedAlerting.HAPeerTimeout,
@@ -124,7 +127,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	}
 
 	l := log.New("alertmanager", "org", orgID)
-	gam, err := alerting.NewGrafanaAlertmanager("orgID", orgID, amcfg, peer, l, alerting.NewGrafanaAlertmanagerMetrics(m.Registerer))
+	gam, err := alertingNotify.NewGrafanaAlertmanager("orgID", orgID, amcfg, peer, l, alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer))
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +157,7 @@ func (am *Alertmanager) StopAndWait() {
 	am.Base.StopAndWait()
 }
 
-// SaveAndApplyDefaultConfig saves the default configuration the database and applies the configuration to the Alertmanager.
+// SaveAndApplyDefaultConfig saves the default configuration to the database and applies it to the Alertmanager.
 // It rolls back the save if we fail to apply the configuration.
 func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	var outerErr error
@@ -164,6 +167,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 			Default:                   true,
 			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 			OrgID:                     am.orgID,
+			LastApplied:               time.Now().UTC().Unix(),
 		}
 
 		cfg, err := Load([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
@@ -173,10 +177,8 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			if err := am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration)); err != nil {
-				return err
-			}
-			return nil
+			_, err := am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
+			return err
 		})
 		if err != nil {
 			outerErr = nil
@@ -201,13 +203,12 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 			AlertmanagerConfiguration: string(rawConfig),
 			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 			OrgID:                     am.orgID,
+			LastApplied:               time.Now().UTC().Unix(),
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			if err := am.applyConfig(cfg, rawConfig); err != nil {
-				return err
-			}
-			return nil
+			_, err := am.applyConfig(cfg, rawConfig)
+			return err
 		})
 		if err != nil {
 			outerErr = err
@@ -219,7 +220,7 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 }
 
 // ApplyConfig applies the configuration to the Alertmanager.
-func (am *Alertmanager) ApplyConfig(dbCfg *ngmodels.AlertConfiguration) error {
+func (am *Alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertConfiguration) error {
 	var err error
 	cfg, err := Load([]byte(dbCfg.AlertmanagerConfiguration))
 	if err != nil {
@@ -228,7 +229,7 @@ func (am *Alertmanager) ApplyConfig(dbCfg *ngmodels.AlertConfiguration) error {
 
 	var outerErr error
 	am.Base.WithLock(func() {
-		if err = am.applyConfig(cfg, nil); err != nil {
+		if err := am.applyAndMarkConfig(ctx, dbCfg.ConfigurationHash, cfg, nil); err != nil {
 			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
 			return
 		}
@@ -238,44 +239,45 @@ func (am *Alertmanager) ApplyConfig(dbCfg *ngmodels.AlertConfiguration) error {
 }
 
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
+// It returns a boolean indicating whether the user config was changed and an error.
 // It is not safe to call concurrently.
-func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) (err error) {
+func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) (bool, error) {
 	// First, let's make sure this config is not already loaded
-	var configChanged bool
+	var amConfigChanged bool
 	if rawConfig == nil {
 		enc, err := json.Marshal(cfg.AlertmanagerConfig)
 		if err != nil {
 			// In theory, this should never happen.
-			return err
+			return false, err
 		}
 		rawConfig = enc
 	}
 
 	if am.Base.ConfigHash() != md5.Sum(rawConfig) {
-		configChanged = true
+		amConfigChanged = true
 	}
 
 	if cfg.TemplateFiles == nil {
 		cfg.TemplateFiles = map[string]string{}
 	}
-	cfg.TemplateFiles["__default__.tmpl"] = channels.DefaultTemplateString
+	cfg.TemplateFiles["__default__.tmpl"] = alertingTemplates.DefaultTemplateString
 
 	// next, we need to make sure we persist the templates to disk.
 	paths, templatesChanged, err := PersistTemplates(cfg, am.WorkingDirPath())
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	// If neither the configuration nor templates have changed, we've got nothing to do.
-	if !configChanged && !templatesChanged {
+	if !amConfigChanged && !templatesChanged {
 		am.logger.Debug("neither config nor template have changed, skipping configuration sync.")
-		return nil
+		return false, nil
 	}
 
 	// With the templates persisted, create the template list using the paths.
 	tmpl, err := am.Base.TemplateFromPaths(am.Settings.AppURL, paths...)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	err = am.Base.ApplyConfig(AlertingConfiguration{
@@ -286,7 +288,25 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		ReceiverIntegrationsFunc: am.buildReceiverIntegration,
 	})
 	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// applyAndMarkConfig applies a configuration and marks it as applied if no errors occur.
+func (am *Alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg *apimodels.PostableUserConfig, rawConfig []byte) error {
+	configChanged, err := am.applyConfig(cfg, rawConfig)
+	if err != nil {
 		return err
+	}
+
+	if configChanged {
+		markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
+			OrgID:             am.orgID,
+			ConfigurationHash: hash,
+		}
+		return am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd)
 	}
 
 	return nil
@@ -297,8 +317,8 @@ func (am *Alertmanager) WorkingDirPath() string {
 }
 
 // buildIntegrationsMap builds a map of name to the list of Grafana integration notifiers off of a list of receiver config.
-func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiReceiver, templates *alerting.Template) (map[string][]*alerting.Integration, error) {
-	integrationsMap := make(map[string][]*alerting.Integration, len(receivers))
+func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiReceiver, templates *alertingNotify.Template) (map[string][]*alertingNotify.Integration, error) {
+	integrationsMap := make(map[string][]*alertingNotify.Integration, len(receivers))
 	for _, receiver := range receivers {
 		integrations, err := am.buildReceiverIntegrations(receiver, templates)
 		if err != nil {
@@ -311,19 +331,19 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiR
 }
 
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
-func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *alerting.Template) ([]*alerting.Integration, error) {
-	integrations := make([]*alerting.Integration, 0, len(receiver.GrafanaManagedReceivers))
+func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *alertingNotify.Template) ([]*alertingNotify.Integration, error) {
+	integrations := make([]*alertingNotify.Integration, 0, len(receiver.GrafanaManagedReceivers))
 	for i, r := range receiver.GrafanaManagedReceivers {
 		n, err := am.buildReceiverIntegration(r, tmpl)
 		if err != nil {
 			return nil, err
 		}
-		integrations = append(integrations, alerting.NewIntegration(n, n, r.Type, i))
+		integrations = append(integrations, alertingNotify.NewIntegration(n, n, r.Type, i))
 	}
 	return integrations, nil
 }
 
-func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaReceiver, tmpl *alerting.Template) (channels.NotificationChannel, error) {
+func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.NotificationChannel, error) {
 	// secure settings are already encrypted at this point
 	secureSettings := make(map[string][]byte, len(r.SecureSettings))
 
@@ -339,7 +359,7 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 	}
 
 	var (
-		cfg = &channels.NotificationChannelConfig{
+		cfg = &receivers.NotificationChannelConfig{
 			UID:                   r.UID,
 			OrgID:                 am.orgID,
 			Name:                  r.Name,
@@ -349,14 +369,14 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 			SecureSettings:        secureSettings,
 		}
 	)
-	factoryConfig, err := channels.NewFactoryConfig(cfg, NewNotificationSender(am.NotificationService), am.decryptFn, tmpl, newImageStore(am.Store), LoggerFactory, setting.BuildVersion)
+	factoryConfig, err := receivers.NewFactoryConfig(cfg, NewNotificationSender(am.NotificationService), am.decryptFn, tmpl, newImageStore(am.Store), LoggerFactory, setting.BuildVersion)
 	if err != nil {
 		return nil, InvalidReceiverError{
 			Receiver: r,
 			Err:      err,
 		}
 	}
-	receiverFactory, exists := channels_config.Factory(r.Type)
+	receiverFactory, exists := alertingNotify.Factory(r.Type)
 	if !exists {
 		return nil, InvalidReceiverError{
 			Receiver: r,
@@ -375,9 +395,9 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 
 // PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
 func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error {
-	alerts := make(alerting.PostableAlerts, 0, len(postableAlerts.PostableAlerts))
+	alerts := make(alertingNotify.PostableAlerts, 0, len(postableAlerts.PostableAlerts))
 	for _, pa := range postableAlerts.PostableAlerts {
-		alerts = append(alerts, &alerting.PostableAlert{
+		alerts = append(alerts, &alertingNotify.PostableAlert{
 			Annotations: pa.Annotations,
 			EndsAt:      pa.EndsAt,
 			StartsAt:    pa.StartsAt,

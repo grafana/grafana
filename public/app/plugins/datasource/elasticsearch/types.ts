@@ -2,7 +2,6 @@ import { DataSourceJsonData } from '@grafana/data';
 
 import {
   BucketAggregationType,
-  Filter,
   MetricAggregation,
   MetricAggregationType,
   MovingAverageEWMAModelSettings,
@@ -11,31 +10,15 @@ import {
   MovingAverageLinearModelSettings,
   MovingAverageModel,
   MovingAverageSimpleModelSettings,
-  PipelineMetricAggregationType,
-  TermsOrder,
-  BasePipelineMetricAggregation as SchemaBasePipelineMetricAggregation,
-  PipelineMetricAggregationWithMultipleBucketPaths as SchemaPipelineMetricAggregationWithMultipleBucketPaths,
+  ExtendedStats,
   MovingAverage as SchemaMovingAverage,
-  Filters as SchemaFilters,
-  Terms as SchemaTerms,
-  DateHistogram as SchemaDateHistogram,
-  Histogram as SchemaHistogram,
-  GeoHashGrid as SchemaGeoHashGrid,
-  Nested as SchemaNested,
+  BucketAggregation,
 } from './dataquery.gen';
 
 export * from './dataquery.gen';
 export { Elasticsearch as ElasticsearchQuery } from './dataquery.gen';
 
-// Start of temporary overrides because of incorrect type generation in dataquery.gen.ts
-export interface BasePipelineMetricAggregation extends SchemaBasePipelineMetricAggregation {
-  type: PipelineMetricAggregationType;
-}
-
-export interface PipelineMetricAggregationWithMultipleBucketPaths
-  extends SchemaPipelineMetricAggregationWithMultipleBucketPaths {
-  type: PipelineMetricAggregationType;
-}
+export type MetricAggregationWithMeta = ExtendedStats;
 
 export type MovingAverageModelSettings<T extends MovingAverageModel = MovingAverageModel> = Partial<
   Extract<
@@ -52,57 +35,12 @@ export interface MovingAverage<T extends MovingAverageModel = MovingAverageModel
   settings?: MovingAverageModelSettings<T>;
 }
 
-export interface Filters extends SchemaFilters {
-  settings?: {
-    filters?: Filter[];
-  };
-}
-
-export interface Terms extends SchemaTerms {
-  settings?: {
-    min_doc_count?: string;
-    missing?: string;
-    order?: TermsOrder;
-    orderBy?: string;
-    size?: string;
-  };
-}
-
-export interface DateHistogram extends SchemaDateHistogram {
-  settings?: {
-    interval?: string;
-    min_doc_count?: string;
-    offset?: string;
-    timeZone?: string;
-    trimEdges?: string;
-  };
-}
-
-export interface Histogram extends SchemaHistogram {
-  settings?: {
-    interval?: string;
-    min_doc_count?: string;
-  };
-}
-
-interface GeoHashGrid extends SchemaGeoHashGrid {
-  settings?: {
-    precision?: string;
-  };
-}
-
-interface Nested extends SchemaNested {
-  settings?: {};
-}
-
-export type BucketAggregation = DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested;
-// End of temporary overrides
-
 export type Interval = 'Hourly' | 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
 
 export interface ElasticsearchOptions extends DataSourceJsonData {
   timeField: string;
-  esVersion: string;
+  // we used to have a field named `esVersion` in the past,
+  // please do not use that name in the future.
   xpack?: boolean;
   interval?: Interval;
   timeInterval: string;
@@ -120,7 +58,6 @@ interface MetricConfiguration<T extends MetricAggregationType> {
   supportsInlineScript: boolean;
   supportsMissing: boolean;
   isPipelineAgg: boolean;
-  xpack?: boolean;
   /**
    * A valid semver range for which the metric is known to be available.
    * If omitted defaults to '*'.

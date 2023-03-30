@@ -274,7 +274,7 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 201, response.Status())
 				created := deserializeRule(t, response.Body())
 				require.Equal(t, int64(3), created.OrgID)
-				require.Equal(t, models.ProvenanceNone, created.Provenance)
+				require.Equal(t, definitions.Provenance(models.ProvenanceNone), created.Provenance)
 			})
 
 			t.Run("PUT sets expected fields with no provenance", func(t *testing.T) {
@@ -293,7 +293,7 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 200, response.Status())
 				created := deserializeRule(t, response.Body())
 				require.Equal(t, int64(3), created.OrgID)
-				require.Equal(t, models.ProvenanceNone, created.Provenance)
+				require.Equal(t, definitions.Provenance(models.ProvenanceNone), created.Provenance)
 			})
 		})
 
@@ -410,6 +410,34 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
 			})
 
+			t.Run("query format contains yaml, GET returns text yaml", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule", 1))
+
+				rc.Context.Req.Form.Set("format", "yaml")
+
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
+			})
+
+			t.Run("query format contains unknown value, GET returns text yaml", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule", 1))
+
+				rc.Context.Req.Form.Set("format", "foo")
+
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
+			})
+
 			t.Run("accept header contains json, GET returns json", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
@@ -474,12 +502,31 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
 			})
 
+			t.Run("yaml body content is the default", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule1", 1))
+				insertRule(t, sut, createTestAlertRule("rule2", 1))
+
+				expectedResponse := "apiVersion: 1\ngroups:\n    - orgId: 1\n      name: my-cool-group\n      folder" +
+					": Folder Title\n      interval: 1m\n      rules:\n        - uid: rule1\n          title: rule1\n" +
+					"          condition: A\n          data:\n            - refId: A\n              datasourceUid" +
+					": \"\"\n              model:\n                conditions:\n                    - evaluator:\n" +
+					"                        params:\n                            - 3\n                        type: gt\n                      operator:\n                        type: and\n                      query:\n                        params:\n                            - A\n                      reducer:\n                        type: last\n                      type: query\n                datasource:\n                    type: __expr__\n                    uid: __expr__\n                expression: 1==0\n                intervalMs: 1000\n                maxDataPoints: 43200\n                refId: A\n                type: math\n          noDataState: OK\n          execErrState: OK\n          for: 0s\n          isPaused: false\n        - uid: rule2\n          title: rule2\n          condition: A\n          data:\n            - refId: A\n              datasourceUid: \"\"\n              model:\n                conditions:\n                    - evaluator:\n                        params:\n                            - 3\n                        type: gt\n                      operator:\n                        type: and\n                      query:\n                        params:\n                            - A\n                      reducer:\n                        type: last\n                      type: query\n                datasource:\n                    type: __expr__\n                    uid: __expr__\n                expression: 1==0\n                intervalMs: 1000\n                maxDataPoints: 43200\n                refId: A\n                type: math\n          noDataState: OK\n          execErrState: OK\n          for: 0s\n          isPaused: false\n"
+
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+
 			t.Run("json body content is as expected", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule1", 1))
 				insertRule(t, sut, createTestAlertRule("rule2", 1))
 
+				rc.Context.Req.Header.Add("Accept", "application/json")
 				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"my-cool-group","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false},{"uid":"rule2","title":"rule2","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]}]}`
 
 				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
@@ -613,6 +660,7 @@ func TestProvisioningApi(t *testing.T) {
 
 				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"my-cool-group","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]}]}`
 
+				rc.Context.Req.Header.Add("Accept", "application/json")
 				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
 
 				require.Equal(t, 200, response.Status())
@@ -729,6 +777,7 @@ func TestProvisioningApi(t *testing.T) {
 				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule2", 1, "folder-uid", "groupb"))
 				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule3", 1, "folder-uid2", "groupb"))
 
+				rc.Context.Req.Header.Add("Accept", "application/json")
 				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]},{"orgId":1,"name":"groupb","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule2","title":"rule2","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]},{"orgId":1,"name":"groupb","folder":"Folder Title2","interval":"1m","rules":[{"uid":"rule3","title":"rule3","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]}]}`
 
 				response := sut.RouteGetAlertRulesExport(&rc)
@@ -872,7 +921,7 @@ func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID
 		return definitions.Route{}, store.ErrNoAlertmanagerConfiguration
 	}
 	result := f.tree
-	result.Provenance = f.prov
+	result.Provenance = definitions.Provenance(f.prov)
 	return result, nil
 }
 
@@ -972,21 +1021,21 @@ func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlert
 		OrgID:     orgID,
 		Title:     title,
 		Condition: "A",
-		Data: []models.AlertQuery{
+		Data: []definitions.AlertQuery{
 			{
 				RefID: "A",
 				Model: json.RawMessage(testModel),
-				RelativeTimeRange: models.RelativeTimeRange{
-					From: models.Duration(60),
-					To:   models.Duration(0),
+				RelativeTimeRange: definitions.RelativeTimeRange{
+					From: definitions.Duration(60),
+					To:   definitions.Duration(0),
 				},
 			},
 		},
 		RuleGroup:    "my-cool-group",
 		FolderUID:    "folder-uid",
 		For:          model.Duration(60),
-		NoDataState:  models.OK,
-		ExecErrState: models.OkErrState,
+		NoDataState:  definitions.OK,
+		ExecErrState: definitions.OkErrState,
 	}
 }
 

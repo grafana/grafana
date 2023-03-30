@@ -1,6 +1,6 @@
+import { BucketAggregation } from '../../../../types';
 import { describeMetric, convertOrderByToMetricId } from '../../../../utils';
 import { useQuery } from '../../ElasticsearchQueryContext';
-import { BucketAggregation } from '../aggregations';
 import { bucketAggregationConfig, orderByOptions, orderOptions } from '../utils';
 
 const hasValue = (value: string) => (object: { value?: string }) => object.value === value;

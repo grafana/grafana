@@ -18,7 +18,7 @@ import (
 
 // FindAnnotations returns annotations for a public dashboard
 func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDTO models.AnnotationsQueryDTO, accessToken string) ([]models.AnnotationEvent, error) {
-	pub, dash, err := pd.FindPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
+	pub, dash, err := pd.FindEnabledPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -43,16 +43,16 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 		annoQuery := &annotations.ItemQuery{
 			From:         reqDTO.From,
 			To:           reqDTO.To,
-			OrgId:        dash.OrgID,
-			DashboardId:  dash.ID,
-			DashboardUid: dash.UID,
+			OrgID:        dash.OrgID,
+			DashboardID:  dash.ID,
+			DashboardUID: dash.UID,
 			Limit:        anno.Target.Limit,
 			MatchAny:     anno.Target.MatchAny,
 			SignedInUser: anonymousUser,
 		}
 
 		if anno.Target.Type == "tags" {
-			annoQuery.DashboardId = 0
+			annoQuery.DashboardID = 0
 			annoQuery.Tags = anno.Target.Tags
 		}
 
@@ -63,8 +63,8 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 
 		for _, item := range annotationItems {
 			event := models.AnnotationEvent{
-				Id:          item.Id,
-				DashboardId: item.DashboardId,
+				Id:          item.ID,
+				DashboardId: item.DashboardID,
 				Tags:        item.Tags,
 				IsRegion:    item.TimeEnd > 0 && item.Time != item.TimeEnd,
 				Text:        item.Text,
@@ -77,7 +77,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 			// We want dashboard annotations to reference the panel they're for. If no panelId is provided, they'll show up on all panels
 			// which is only intended for tag and org annotations.
 			if anno.Type == "dashboard" {
-				event.PanelId = item.PanelId
+				event.PanelId = item.PanelID
 			}
 
 			// We want events from tag queries to overwrite existing events
@@ -119,7 +119,7 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 
 // GetQueryDataResponse returns a query data response for the given panel and query
 func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipCache bool, queryDto models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
-	publicDashboard, dashboard, err := pd.FindPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
+	publicDashboard, dashboard, err := pd.FindEnabledPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -164,6 +164,7 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 	for i := range queries {
 		queries[i].Set("intervalMs", safeInterval)
 		queries[i].Set("maxDataPoints", safeResolution)
+		queries[i].Set("queryCachingTTL", reqDTO.QueryCachingTTL)
 	}
 
 	return dtos.MetricRequest{
@@ -238,33 +239,41 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.Json {
 	result := make(map[int64][]*simplejson.Json)
 
-	for _, panelObj := range dashboard.Get("panels").MustArray() {
+	extractQueriesFromPanels(dashboard.Get("panels").MustArray(), result)
+
+	return result
+}
+
+func extractQueriesFromPanels(panels []interface{}, result map[int64][]*simplejson.Json) {
+	for _, panelObj := range panels {
 		panel := simplejson.NewFromAny(panelObj)
+
+		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
+		if panel.Get("type").MustString() == "row" && panel.Get("collapsed").MustBool() {
+			// recursive call to get queries from panels inside a row
+			extractQueriesFromPanels(panel.Get("panels").MustArray(), result)
+			continue
+		}
 
 		var panelQueries []*simplejson.Json
 
 		for _, queryObj := range panel.Get("targets").MustArray() {
 			query := simplejson.NewFromAny(queryObj)
 
-			if hideAttr, exists := query.CheckGet("hide"); !exists || !hideAttr.MustBool() {
-				// We dont support exemplars for public dashboards currently
-				query.Del("exemplar")
+			// We dont support exemplars for public dashboards currently
+			query.Del("exemplar")
 
-				// if query target has no datasource, set it to have the datasource on the panel
-				if _, ok := query.CheckGet("datasource"); !ok {
-					uid := getDataSourceUidFromJson(panel)
-					datasource := map[string]interface{}{"type": "public-ds", "uid": uid}
-					query.Set("datasource", datasource)
-				}
-
-				panelQueries = append(panelQueries, query)
+			// if query target has no datasource, set it to have the datasource on the panel
+			if _, ok := query.CheckGet("datasource"); !ok {
+				uid := getDataSourceUidFromJson(panel)
+				datasource := map[string]interface{}{"type": "public-ds", "uid": uid}
+				query.Set("datasource", datasource)
 			}
+			panelQueries = append(panelQueries, query)
 		}
 
 		result[panel.Get("id").MustInt64()] = panelQueries
 	}
-
-	return result
 }
 
 func getDataSourceUidFromJson(query *simplejson.Json) string {

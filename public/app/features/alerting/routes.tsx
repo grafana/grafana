@@ -18,7 +18,7 @@ const legacyRoutes: RouteDescriptor[] = [
   {
     path: '/alerting',
     component: () =>
-      config.featureToggles.topnav ? <NavLandingPage navId="alerting" /> : <Redirect to="/alerting/list" />,
+      config.featureToggles.topnav ? <NavLandingPage navId="alerting-legacy" /> : <Redirect to="/alerting/list" />,
   },
   {
     path: '/alerting/list',
@@ -120,7 +120,7 @@ const unifiedRoutes: RouteDescriptor[] = [
       [OrgRole.Editor, OrgRole.Admin]
     ),
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/AmRoutes')
+      () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/NotificationPolicies')
     ),
   },
   {

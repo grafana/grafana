@@ -33,14 +33,14 @@ const (
 type DsAccess string
 
 type DataSource struct {
-	Id      int64 `json:"id,omitempty"`
-	OrgId   int64 `json:"orgId,omitempty"`
+	ID      int64 `json:"id,omitempty" xorm:"pk autoincr 'id'"`
+	OrgID   int64 `json:"orgId,omitempty" xorm:"org_id"`
 	Version int   `json:"version,omitempty"`
 
 	Name   string   `json:"name"`
 	Type   string   `json:"type"`
 	Access DsAccess `json:"access"`
-	Url    string   `json:"url"`
+	URL    string   `json:"url" xorm:"url"`
 	// swagger:ignore
 	Password      string `json:"-"`
 	User          string `json:"user"`
@@ -54,7 +54,7 @@ type DataSource struct {
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string][]byte `json:"secureJsonData"`
 	ReadOnly          bool              `json:"readOnly"`
-	Uid               string            `json:"uid"`
+	UID               string            `json:"uid" xorm:"uid"`
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
@@ -89,7 +89,7 @@ type AddDataSourceCommand struct {
 	Name            string            `json:"name" binding:"Required"`
 	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
-	Url             string            `json:"url"`
+	URL             string            `json:"url"`
 	Database        string            `json:"database"`
 	User            string            `json:"user"`
 	BasicAuth       bool              `json:"basicAuth"`
@@ -98,15 +98,13 @@ type AddDataSourceCommand struct {
 	IsDefault       bool              `json:"isDefault"`
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
-	Uid             string            `json:"uid"`
+	UID             string            `json:"uid"`
 
-	OrgId                   int64             `json:"-"`
-	UserId                  int64             `json:"-"`
+	OrgID                   int64             `json:"-"`
+	UserID                  int64             `json:"-"`
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
-
-	Result *DataSource `json:"-"`
 }
 
 // Also acts as api DTO
@@ -114,7 +112,7 @@ type UpdateDataSourceCommand struct {
 	Name            string            `json:"name" binding:"Required"`
 	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
-	Url             string            `json:"url"`
+	URL             string            `json:"url"`
 	User            string            `json:"user"`
 	Database        string            `json:"database"`
 	BasicAuth       bool              `json:"basicAuth"`
@@ -124,15 +122,13 @@ type UpdateDataSourceCommand struct {
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	Version         int               `json:"version"`
-	Uid             string            `json:"uid"`
+	UID             string            `json:"uid"`
 
-	OrgId                   int64             `json:"-"`
-	Id                      int64             `json:"-"`
+	OrgID                   int64             `json:"-"`
+	ID                      int64             `json:"-"`
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
-
-	Result *DataSource `json:"-"`
 }
 
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
@@ -156,44 +152,36 @@ type UpdateSecretFn func() error
 // QUERIES
 
 type GetDataSourcesQuery struct {
-	OrgId           int64
+	OrgID           int64
 	DataSourceLimit int
 	User            *user.SignedInUser
-	Result          []*DataSource
 }
 
-type GetAllDataSourcesQuery struct {
-	Result []*DataSource
-}
+type GetAllDataSourcesQuery struct{}
 
 type GetDataSourcesByTypeQuery struct {
-	OrgId  int64 // optional: filter by org_id
-	Type   string
-	Result []*DataSource
+	OrgID int64 // optional: filter by org_id
+	Type  string
 }
 
 type GetDefaultDataSourceQuery struct {
-	OrgId  int64
-	User   *user.SignedInUser
-	Result *DataSource
+	OrgID int64
+	User  *user.SignedInUser
 }
 
 // GetDataSourceQuery will get a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
 // At least one of the UID, ID, or Name properties must be set in addition to OrgID.
 type GetDataSourceQuery struct {
-	Id   int64
-	Uid  string
+	ID   int64
+	UID  string
 	Name string
 
-	OrgId int64
-
-	Result *DataSource
+	OrgID int64
 }
 
 type DatasourcesPermissionFilterQuery struct {
 	User        *user.SignedInUser
 	Datasources []*DataSource
-	Result      []*DataSource
 }
 
 const (

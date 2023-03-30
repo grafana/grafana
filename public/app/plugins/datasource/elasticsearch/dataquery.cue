@@ -23,7 +23,7 @@ import (
 pfs.GrafanaPlugin
 
 composableKinds: DataQuery: {
-	maturity: "merged"
+	maturity: "experimental"
 
 	lineage: {
 		seqs: [
@@ -32,10 +32,15 @@ composableKinds: DataQuery: {
 					{
 						common.DataQuery
 
-						alias?:     string
-						query?:     string
+						// Alias pattern
+						alias?: string
+						// Lucene query
+						query?: string
+						// Name of time field
 						timeField?: string
+						// List of bucket aggregations
 						bucketAggs?: [...#BucketAggregation]
+						// List of metric aggregations
 						metrics?: [...#MetricAggregation]
 
 						#BucketAggregation: #DateHistogram | #Histogram | #Terms | #Filters | #GeoHashGrid | #Nested @cuetsy(kind="type")
@@ -44,9 +49,9 @@ composableKinds: DataQuery: {
 						#BucketAggregationType: "terms" | "filters" | "geohash_grid" | "date_histogram" | "histogram" | "nested" @cuetsy(kind="type")
 
 						#BaseBucketAggregation: {
-							id:   string
-							type: #BucketAggregationType
-							settings?: {...}
+							id:        string
+							type:      #BucketAggregationType
+							settings?: _
 						} @cuetsy(kind="interface")
 
 						#BucketAggregationWithField: {
@@ -281,17 +286,12 @@ composableKinds: DataQuery: {
 
 						#BasePipelineMetricAggregation: {
 							#MetricAggregationWithField
-
-							//TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.  
-							//type:         #PipelineMetricAggregationType
 							pipelineAgg?: string
+							type:         #PipelineMetricAggregationType
 						} @cuetsy(kind="interface")
 
 						#PipelineMetricAggregationWithMultipleBucketPaths: {
 							#BaseMetricAggregation
-
-							//TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.  
-							//type: #PipelineMetricAggregationType
 							pipelineVariables?: [...#PipelineVariable]
 						} @cuetsy(kind="interface")
 
@@ -365,7 +365,7 @@ composableKinds: DataQuery: {
 						// #MovingAverage's settings are overridden in types.ts
 						#MovingAverage: {
 							#BasePipelineMetricAggregation
-							type: "moving_avg"
+							type: #PipelineMetricAggregationType & "moving_avg"
 							settings?: {...}
 						} @cuetsy(kind="interface")
 

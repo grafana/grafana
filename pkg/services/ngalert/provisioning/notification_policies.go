@@ -37,12 +37,12 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 	q := models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}
-	err := nps.amStore.GetLatestAlertmanagerConfiguration(ctx, &q)
+	alertManagerConfig, err := nps.amStore.GetLatestAlertmanagerConfiguration(ctx, &q)
 	if err != nil {
 		return definitions.Route{}, err
 	}
 
-	cfg, err := deserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
+	cfg, err := deserializeAlertmanagerConfig([]byte(alertManagerConfig.AlertmanagerConfiguration))
 	if err != nil {
 		return definitions.Route{}, err
 	}
@@ -57,7 +57,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 	}
 
 	result := *cfg.AlertmanagerConfig.Route
-	result.Provenance = provenance
+	result.Provenance = definitions.Provenance(provenance)
 
 	return result, nil
 }
@@ -74,6 +74,10 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	}
 
 	receivers, err := nps.receiversToMap(revision.cfg.AlertmanagerConfig.Receivers)
+	if err != nil {
+		return err
+	}
+
 	err = tree.ValidateReceivers(receivers)
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())

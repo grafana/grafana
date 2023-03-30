@@ -12,12 +12,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/alerting/alerting/notifier/channels"
+	alertingLogging "github.com/grafana/alerting/logging"
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers"
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -41,6 +42,9 @@ var rmMigTitle = "remove unified alerting data"
 
 const clearMigrationEntryTitle = "clear migration entry %q"
 const codeMigration = "code migration"
+
+// It is defined in pkg/expr/service.go as "DatasourceType"
+const expressionDatasourceUID = "__expr__"
 
 type MigrationError struct {
 	AlertId int64
@@ -478,7 +482,7 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				return err
 			}
 			var (
-				cfg = &channels.NotificationChannelConfig{
+				cfg = &receivers.NotificationChannelConfig{
 					UID:                   gr.UID,
 					OrgID:                 orgID,
 					Name:                  gr.Name,
@@ -502,12 +506,12 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				}
 				return fallback
 			}
-			receiverFactory, exists := channels_config.Factory(gr.Type)
+			receiverFactory, exists := alertingNotify.Factory(gr.Type)
 			if !exists {
 				return fmt.Errorf("notifier %s is not supported", gr.Type)
 			}
-			factoryConfig, err := channels.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil, func(ctx ...interface{}) channels.Logger {
-				return &channels.FakeLogger{}
+			factoryConfig, err := receivers.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil, func(ctx ...interface{}) alertingLogging.Logger {
+				return &alertingLogging.FakeLogger{}
 			}, setting.BuildVersion)
 			if err != nil {
 				return err

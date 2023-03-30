@@ -47,6 +47,9 @@ export const OldPage: PageType = ({
       chrome.update({
         sectionNav: navModel.node,
       });
+    } else {
+      // Need to trigger a chrome state update for the route change to be processed
+      chrome.update({});
     }
   }, [navModel, chrome]);
 

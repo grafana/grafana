@@ -46,7 +46,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			Cfg:      settings,
 			SQLStore: mockSQLStore,
 			Features: features,
-			DashboardService: dashboardservice.ProvideDashboardService(
+			DashboardService: dashboardservice.ProvideDashboardServiceImpl(
 				settings, dashboardStore, foldertest.NewFakeFolderStore(t), nil, features, folderPermissions, dashboardPermissions, ac,
 				folderSvc,
 			),

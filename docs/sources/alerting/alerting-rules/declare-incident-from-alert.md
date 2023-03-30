@@ -9,7 +9,7 @@ title: Declare an incident from a firing alert
 weight: 430
 ---
 
-# Declare an incident from a firing alert
+# Declare incidents from firing alerts
 
 Declare an incident from a firing alert to streamline your alert to incident workflow.
 

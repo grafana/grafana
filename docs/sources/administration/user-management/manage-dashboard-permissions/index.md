@@ -24,15 +24,12 @@ When you grant user permissions for folders, that setting applies to all dashboa
 **To grant dashboard folder permissions**:
 
 1. Sign in to Grafana as an organization administrator.
-2. In the sidebar, hover your mouse over the **Dashboards** (squares) icon and click **Browse**.
-3. Hover your mouse cursor over a folder and click **Go to folder**.
-4. Click the **Permissions** tab, and then click **Add Permission**.
-5. In the **Add Permission For** dropdown menu, select **User**, **Team**, or one of the role options.
-6. Select the user or team.
-
-   If you select a role option, you do not select a user or team.
-
-7. Select the permission and click **Save**.
+1. In the left-side menu, click **Dashboards**.
+1. Hover your mouse cursor over a folder and click **Go to folder**.
+1. Click the **Permissions** tab, and then click **Add a permission**.
+1. In the **Add Permission For** dropdown menu, select **User**, **Team**, or **Role**.
+1. Select the user, team, or role.
+1. Select the permission and click **Save**.
 
 ## Grant dashboard permissions
 
@@ -52,12 +49,12 @@ Grant dashboard permissions when you want to restrict or enhance dashboard acces
 **To grant dashboard permissions**:
 
 1. Sign in to Grafana as an organization administrator.
-1. In the sidebar, hover your mouse over the **Dashboards** (squares) icon and click **Browse**.
+1. In the left-side menu, click **Dashboards**.
 1. Open a dashboard.
 1. In the top right corner of the dashboard, click **Dashboard settings** (the cog icon).
-1. Click **Permissions** and then click **Add Permission**.
-1. In the **Add Permission For** dropdown menu, select **User** or **Team**.
-1. Select the user or team.
+1. Click **Permissions** in left-side menu, and then **Add a permission**.
+1. In the **Add Permission For** dropdown menu, select **User**, **Team**, or **Role**.
+1. Select the user, team, or role.
 1. Select the permission and click **Save**.
 
 ## Enable viewers to edit (but not save) dashboards and use Explore
@@ -94,10 +91,10 @@ Edit dashboard permissions when you are want to enhance or restrict a user's acc
 **To edit dashboard permissions**:
 
 1. Sign in to Grafana as an organization administrator.
-1. In the sidebar, hover your mouse over the **Dashboards** (squares) icon and click **Browse**.
+1. In the left-side menu, click **Dashboards**.
 1. Open a dashboard.
 1. In the top-right corner of the dashboard, click **Dashboard settings** (the cog icon).
-1. Click **Permissions**.
+1. Click **Permissions** in left-side menu.
 1. In the dropdown, update the permissions, and click **Save**.
 
 ## Restrict access to dashboards

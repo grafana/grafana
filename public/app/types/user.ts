@@ -13,6 +13,7 @@ export interface OrgUser extends WithAccessControlMetadata {
   userId: number;
   isDisabled: boolean;
   authLabels?: string[];
+  isExternallySynced?: boolean;
 }
 
 export interface User {
@@ -46,6 +47,7 @@ export interface UserDTO extends WithAccessControlMetadata {
   permissions?: string[];
   teams?: Unit[];
   orgs?: Unit[];
+  isExternallySynced?: boolean;
 }
 
 export interface Invitee {

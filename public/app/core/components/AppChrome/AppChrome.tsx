@@ -22,7 +22,6 @@ export function AppChrome({ children }: Props) {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const state = chrome.useState();
-  const featureToggles = config.featureToggles;
 
   if (!config.featureToggles.topnav) {
     return (
@@ -72,8 +71,7 @@ export function AppChrome({ children }: Props) {
       </div>
       <div className={contentClass}>{children}</div>
       <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
-      {featureToggles.commandPalette && <CommandPalette />}
-      {!featureToggles.topNavCommandPalette && <SearchWrapper />}
+      <CommandPalette />
     </main>
   );
 }

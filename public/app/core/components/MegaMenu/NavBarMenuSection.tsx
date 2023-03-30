@@ -7,7 +7,6 @@ import { Button, Icon, useStyles2 } from '@grafana/ui';
 
 import { NavBarItemIcon } from '../NavBar/NavBarItemIcon';
 import { NavFeatureHighlight } from '../NavBar/NavFeatureHighlight';
-import { getNavTitle } from '../NavBar/navBarItem-translations';
 import { hasChildMatch } from '../NavBar/utils';
 
 import { NavBarMenuItem } from './NavBarMenuItem';
@@ -53,7 +52,7 @@ export function NavBarMenuSection({
             <FeatureHighlightWrapper>
               <NavBarItemIcon link={link} />
             </FeatureHighlightWrapper>
-            {getNavTitle(link.id) ?? link.text}
+            {link.text}
           </div>
         </NavBarMenuItem>
         {children && (

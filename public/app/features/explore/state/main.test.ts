@@ -197,7 +197,7 @@ describe('Explore reducer', () => {
   });
 });
 
-export const setup = (urlStateOverrides?: any) => {
+export const setup = (urlStateOverrides?: Partial<ExploreUrlState>) => {
   const urlStateDefaults: ExploreUrlState = {
     datasource: 'some-datasource',
     queries: [],

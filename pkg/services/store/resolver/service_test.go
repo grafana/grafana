@@ -20,17 +20,17 @@ func TestResolver(t *testing.T) {
 	ds := &fakeDatasources.FakeDataSourceService{
 		DataSources: []*datasources.DataSource{
 			{
-				Id:        123,
-				OrgId:     1,
+				ID:        123,
+				OrgID:     1,
 				Type:      "influx",
-				Uid:       "influx-uid",
+				UID:       "influx-uid",
 				IsDefault: true,
 			},
 			{
-				Id:    234,
-				OrgId: 1,
+				ID:    234,
+				OrgID: 1,
 				Type:  "influx",
-				Uid:   "influx-uid2",
+				UID:   "influx-uid2",
 				Name:  "Influx2",
 			},
 		},

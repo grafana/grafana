@@ -17,8 +17,6 @@ import (
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -567,11 +565,13 @@ func (c *PostableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
+type Provenance string
+
 // swagger:model
 type GettableUserConfig struct {
-	TemplateFiles           map[string]string            `yaml:"template_files" json:"template_files"`
-	TemplateFileProvenances map[string]models.Provenance `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
-	AlertmanagerConfig      GettableApiAlertingConfig    `yaml:"alertmanager_config" json:"alertmanager_config"`
+	TemplateFiles           map[string]string         `yaml:"template_files" json:"template_files"`
+	TemplateFileProvenances map[string]Provenance     `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
+	AlertmanagerConfig      GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
 
 	// amSimple stores a map[string]interface of the decoded alertmanager config.
 	// This enables circumventing the underlying alertmanager secret type
@@ -635,7 +635,7 @@ func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafana
 
 type GettableApiAlertingConfig struct {
 	Config              `yaml:",inline"`
-	MuteTimeProvenances map[string]models.Provenance `yaml:"muteTimeProvenances,omitempty" json:"muteTimeProvenances,omitempty"`
+	MuteTimeProvenances map[string]Provenance `yaml:"muteTimeProvenances,omitempty" json:"muteTimeProvenances,omitempty"`
 	// Override with our superset receiver type
 	Receivers []*GettableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
@@ -722,7 +722,7 @@ type Route struct {
 	GroupInterval  *model.Duration `yaml:"group_interval,omitempty" json:"group_interval,omitempty"`
 	RepeatInterval *model.Duration `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty"`
 
-	Provenance models.Provenance `yaml:"provenance,omitempty" json:"provenance,omitempty"`
+	Provenance Provenance `yaml:"provenance,omitempty" json:"provenance,omitempty"`
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface for Route. This is a copy of alertmanager's upstream except it removes validation on the label key.
@@ -1006,13 +1006,13 @@ func (r RawMessage) MarshalYAML() (interface{}, error) {
 }
 
 type GettableGrafanaReceiver struct {
-	UID                   string            `json:"uid"`
-	Name                  string            `json:"name"`
-	Type                  string            `json:"type"`
-	DisableResolveMessage bool              `json:"disableResolveMessage"`
-	Settings              RawMessage        `json:"settings,omitempty"`
-	SecureFields          map[string]bool   `json:"secureFields"`
-	Provenance            models.Provenance `json:"provenance,omitempty"`
+	UID                   string          `json:"uid"`
+	Name                  string          `json:"name"`
+	Type                  string          `json:"type"`
+	DisableResolveMessage bool            `json:"disableResolveMessage"`
+	Settings              RawMessage      `json:"settings,omitempty"`
+	SecureFields          map[string]bool `json:"secureFields"`
+	Provenance            Provenance      `json:"provenance,omitempty"`
 }
 
 type PostableGrafanaReceiver struct {
@@ -1176,7 +1176,7 @@ type PostableGrafanaReceivers struct {
 	GrafanaManagedReceivers []*PostableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
 }
 
-type EncryptFn func(ctx context.Context, payload []byte, scope secrets.EncryptionOptions) ([]byte, error)
+type EncryptFn func(ctx context.Context, payload []byte) ([]byte, error)
 
 func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 	seenUIDs := make(map[string]struct{})
@@ -1186,7 +1186,7 @@ func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 		case GrafanaReceiverType:
 			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
 				for k, v := range gr.SecureSettings {
-					encryptedData, err := encrypt(context.Background(), []byte(v), secrets.WithoutScope())
+					encryptedData, err := encrypt(context.Background(), []byte(v))
 					if err != nil {
 						return fmt.Errorf("failed to encrypt secure settings: %w", err)
 					}

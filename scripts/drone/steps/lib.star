@@ -8,15 +8,15 @@ load(
     "prerelease_bucket",
 )
 
-grabpl_version = "v3.0.21"
-build_image = "grafana/build-container:v1.7.1"
+grabpl_version = "v3.0.30"
+build_image = "grafana/build-container:1.7.2"
 publish_image = "grafana/grafana-ci-deploy:1.3.3"
 deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
-alpine_image = "alpine:3.15.6"
+alpine_image = "alpine:3.17.1"
 curl_image = "byrnedo/alpine-curl:0.1.8"
 windows_image = "mcr.microsoft.com/windows:1809"
 wix_image = "grafana/ci-wix:0.1.1"
-go_image = "golang:1.19.4"
+go_image = "golang:1.20.1"
 
 trigger_oss = {
     "repo": [
@@ -779,7 +779,7 @@ def codespell_step():
         ],
     }
 
-def package_step(edition, ver_mode, variants = None):
+def package_step(edition, ver_mode):
     """Packages Grafana with the Grafana build tool.
 
     Args:
@@ -787,9 +787,6 @@ def package_step(edition, ver_mode, variants = None):
       ver_mode: controls whether the packages are signed for a release.
         If ver_mode != 'release', use the DRONE_BUILD_NUMBER environment
         variable as a build identifier.
-      variants: a list of variants be passed to the package subcommand
-        using the --variants option.
-        Defaults to None.
 
     Returns:
       Drone step.
@@ -800,10 +797,6 @@ def package_step(edition, ver_mode, variants = None):
         "build-frontend",
         "build-frontend-packages",
     ]
-
-    variants_str = ""
-    if variants:
-        variants_str = " --variants {}".format(",".join(variants))
 
     if ver_mode in ("main", "release", "release-branch"):
         sign_args = " --sign"
@@ -831,7 +824,7 @@ def package_step(edition, ver_mode, variants = None):
         build_no = "${DRONE_BUILD_NUMBER}"
         cmds = [
             "{}./bin/build package --jobs 8 --edition {} ".format(test_args, edition) +
-            "--build-id {}{}{}".format(build_no, variants_str, sign_args),
+            "--build-id {}{}".format(build_no, sign_args),
         ]
 
     return {
@@ -923,7 +916,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
             paths = {
                 "include": [
                     "pkg/tsdb/azuremonitor/**",
-                    "public/app/plugins/datasource/grafana-azure-monitor-datasource/**",
+                    "public/app/plugins/datasource/azuremonitor/**",
                     "e2e/cloud-plugins-suite/azure-monitor.spec.ts",
                 ],
             },
@@ -947,7 +940,7 @@ def build_docs_website_step():
         # Use latest revision here, since we want to catch if it breaks
         "image": "grafana/docs-base:latest",
         "commands": [
-            "mkdir -p /hugo/content/docs/grafana",
+            "mkdir -p /hugo/content/docs/grafana/latest",
             "cp -r docs/sources/* /hugo/content/docs/grafana/latest/",
             "cd /hugo && make prod",
         ],
@@ -1149,7 +1142,8 @@ def redis_integration_tests_step():
         },
         "commands": [
             "dockerize -wait tcp://redis:6379/0 -timeout 120s",
-            "./bin/grabpl integration-tests",
+            "go clean -testcache",
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
         ],
     }
 
@@ -1274,7 +1268,7 @@ def publish_linux_packages_step(edition, package_manager = "deb"):
         "name": "publish-linux-packages-{}".format(package_manager),
         # See https://github.com/grafana/deployment_tools/blob/master/docker/package-publish/README.md for docs on that image
         "image": "us.gcr.io/kubernetes-dev/package-publish:latest",
-        "depends_on": ["grabpl"],
+        "depends_on": ["compile-build-cmd"],
         "privileged": True,
         "settings": {
             "access_key_id": from_secret("packages_access_key_id"),
@@ -1487,7 +1481,6 @@ def trigger_test_release():
         "image": build_image,
         "environment": {
             "GITHUB_TOKEN": from_secret("github_token_pr"),
-            "DOWNSTREAM_REPO": from_secret("downstream"),
             "TEST_TAG": "v0.0.0-test",
         },
         "commands": [
