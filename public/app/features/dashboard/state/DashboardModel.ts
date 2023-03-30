@@ -165,7 +165,7 @@ export class DashboardModel implements TimeModel {
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
     this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
-    this.ensurePanelsHaveIds();
+    this.ensurePanelsHaveUniqueIds();
     this.formatDate = this.formatDate.bind(this);
 
     this.resetOriginalVariables(true);
@@ -447,10 +447,14 @@ export class DashboardModel implements TimeModel {
     this.panelsAffectedByVariableChange = null;
   }
 
-  private ensurePanelsHaveIds() {
+  private ensurePanelsHaveUniqueIds() {
+    const ids = new Set<number>();
     let nextPanelId = this.getNextPanelId();
     for (const panel of this.panelIterator()) {
-      panel.id ??= nextPanelId++;
+      if (!panel.id || ids.has(panel.id)) {
+        panel.id = nextPanelId++;
+      }
+      ids.add(panel.id);
     }
   }
 

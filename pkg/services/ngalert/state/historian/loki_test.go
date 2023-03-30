@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"sort"
 	"testing"
 	"time"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/prometheus/client_golang/prometheus"
@@ -25,15 +25,15 @@ import (
 )
 
 func TestRemoteLokiBackend(t *testing.T) {
-	t.Run("statesToStreams", func(t *testing.T) {
+	t.Run("statesToStream", func(t *testing.T) {
 		t.Run("skips non-transitory states", func(t *testing.T) {
 			rule := createTestRule()
 			l := log.NewNopLogger()
 			states := singleFromNormal(&state.State{State: eval.Normal})
 
-			res := statesToStreams(rule, states, nil, l)
+			res := statesToStream(rule, states, nil, l)
 
-			require.Empty(t, res)
+			require.Empty(t, res.Values)
 		})
 
 		t.Run("maps evaluation errors", func(t *testing.T) {
@@ -41,7 +41,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 			l := log.NewNopLogger()
 			states := singleFromNormal(&state.State{State: eval.Error, Error: fmt.Errorf("oh no")})
 
-			res := statesToStreams(rule, states, nil, l)
+			res := statesToStream(rule, states, nil, l)
 
 			entry := requireSingleEntry(t, res)
 			require.Contains(t, entry.Error, "oh no")
@@ -52,7 +52,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 			l := log.NewNopLogger()
 			states := singleFromNormal(&state.State{State: eval.NoData})
 
-			res := statesToStreams(rule, states, nil, l)
+			res := statesToStream(rule, states, nil, l)
 
 			_ = requireSingleEntry(t, res)
 		})
@@ -65,55 +65,16 @@ func TestRemoteLokiBackend(t *testing.T) {
 				Labels: data.Labels{"a": "b"},
 			})
 
-			res := statesToStreams(rule, states, nil, l)
+			res := statesToStream(rule, states, nil, l)
 
-			require.Len(t, res, 1)
 			exp := map[string]string{
 				StateHistoryLabelKey: StateHistoryLabelValue,
 				"folderUID":          rule.NamespaceUID,
 				"group":              rule.Group,
 				"orgID":              fmt.Sprint(rule.OrgID),
 				"ruleUID":            rule.UID,
-				"a":                  "b",
 			}
-			require.Equal(t, exp, res[0].Stream)
-		})
-
-		t.Run("groups streams based on combined labels", func(t *testing.T) {
-			rule := createTestRule()
-			l := log.NewNopLogger()
-			states := []state.StateTransition{
-				{
-					PreviousState: eval.Normal,
-					State: &state.State{
-						State:  eval.Alerting,
-						Labels: data.Labels{"a": "b"},
-					},
-				},
-				{
-					PreviousState: eval.Normal,
-					State: &state.State{
-						State:  eval.Alerting,
-						Labels: data.Labels{"a": "b"},
-					},
-				},
-				{
-					PreviousState: eval.Normal,
-					State: &state.State{
-						State:  eval.Alerting,
-						Labels: data.Labels{"c": "d"},
-					},
-				},
-			}
-
-			res := statesToStreams(rule, states, nil, l)
-
-			require.Len(t, res, 2)
-			sort.Slice(res, func(i, j int) bool { return len(res[i].Values) > len(res[j].Values) })
-			require.Contains(t, res[0].Stream, "a")
-			require.Len(t, res[0].Values, 2)
-			require.Contains(t, res[1].Stream, "c")
-			require.Len(t, res[1].Values, 1)
+			require.Equal(t, exp, res.Stream)
 		})
 
 		t.Run("excludes private labels", func(t *testing.T) {
@@ -124,10 +85,9 @@ func TestRemoteLokiBackend(t *testing.T) {
 				Labels: data.Labels{"__private__": "b"},
 			})
 
-			res := statesToStreams(rule, states, nil, l)
+			res := statesToStream(rule, states, nil, l)
 
-			require.Len(t, res, 1)
-			require.NotContains(t, res[0].Stream, "__private__")
+			require.NotContains(t, res.Stream, "__private__")
 		})
 
 		t.Run("includes instance labels in log line", func(t *testing.T) {
@@ -138,7 +98,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 				Labels: data.Labels{"statelabel": "labelvalue"},
 			})
 
-			res := statesToStreams(rule, states, nil, l)
+			res := statesToStream(rule, states, nil, l)
 
 			entry := requireSingleEntry(t, res)
 			require.Contains(t, entry.InstanceLabels, "statelabel")
@@ -156,7 +116,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 				},
 			})
 
-			res := statesToStreams(rule, states, nil, l)
+			res := statesToStream(rule, states, nil, l)
 
 			entry := requireSingleEntry(t, res)
 			require.Len(t, entry.InstanceLabels, 3)
@@ -170,7 +130,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 				Values: map[string]float64{"A": 2.0, "B": 5.5},
 			})
 
-			res := statesToStreams(rule, states, nil, l)
+			res := statesToStream(rule, states, nil, l)
 
 			entry := requireSingleEntry(t, res)
 			require.NotNil(t, entry.Values)
@@ -179,6 +139,70 @@ func TestRemoteLokiBackend(t *testing.T) {
 			require.InDelta(t, 2.0, entry.Values.Get("A").MustFloat64(), 1e-4)
 			require.InDelta(t, 5.5, entry.Values.Get("B").MustFloat64(), 1e-4)
 		})
+	})
+
+	t.Run("selector string", func(t *testing.T) {
+		selectors := []Selector{{"name", "=", "Bob"}, {"age", "=~", "30"}}
+		expected := "{name=\"Bob\",age=~\"30\"}"
+		result := selectorString(selectors)
+		require.Equal(t, expected, result)
+
+		selectors = []Selector{}
+		expected = "{}"
+		result = selectorString(selectors)
+		require.Equal(t, expected, result)
+	})
+
+	t.Run("new selector", func(t *testing.T) {
+		selector, err := NewSelector("label", "=", "value")
+		require.NoError(t, err)
+		require.Equal(t, "label", selector.Label)
+		require.Equal(t, Eq, selector.Op)
+		require.Equal(t, "value", selector.Value)
+
+		selector, err = NewSelector("label", "invalid", "value")
+		require.Error(t, err)
+	})
+
+	t.Run("buildLogQuery", func(t *testing.T) {
+		cases := []struct {
+			name  string
+			query models.HistoryQuery
+			exp   string
+		}{
+			{
+				name:  "default includes state history label and orgID label",
+				query: models.HistoryQuery{},
+				exp:   `{orgID="0",from="state-history"}`,
+			},
+			{
+				name: "adds stream label filter for ruleUID and orgID",
+				query: models.HistoryQuery{
+					RuleUID: "rule-uid",
+					OrgID:   123,
+				},
+				exp: `{orgID="123",from="state-history",ruleUID="rule-uid"}`,
+			},
+			{
+				name: "filters instance labels in log line",
+				query: models.HistoryQuery{
+					OrgID: 123,
+					Labels: map[string]string{
+						"customlabel": "customvalue",
+						"labeltwo":    "labelvaluetwo",
+					},
+				},
+				exp: `{orgID="123",from="state-history"} | json | labels_customlabel="customvalue" | labels_labeltwo="labelvaluetwo"`,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				res, err := buildLogQuery(tc.query)
+				require.NoError(t, err)
+				require.Equal(t, tc.exp, res)
+			})
+		}
 	})
 }
 
@@ -428,10 +452,9 @@ func createTestRule() history_model.RuleMeta {
 	}
 }
 
-func requireSingleEntry(t *testing.T, res []stream) lokiEntry {
-	require.Len(t, res, 1)
-	require.Len(t, res[0].Values, 1)
-	return requireEntry(t, res[0].Values[0])
+func requireSingleEntry(t *testing.T, res stream) lokiEntry {
+	require.Len(t, res.Values, 1)
+	return requireEntry(t, res.Values[0])
 }
 
 func requireEntry(t *testing.T, row sample) lokiEntry {

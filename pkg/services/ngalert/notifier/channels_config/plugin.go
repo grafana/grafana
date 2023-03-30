@@ -38,6 +38,8 @@ const (
 	ElementTypeCheckbox = "checkbox"
 	// ElementTypeTextArea will render a textarea
 	ElementTypeTextArea = "textarea"
+	// ElementTypeKeyValueMap will render inputs to add arbitrary key-value pairs
+	ElementTypeKeyValueMap = "key_value_map"
 )
 
 // InputType is the type of input that can be rendered in the frontend.
