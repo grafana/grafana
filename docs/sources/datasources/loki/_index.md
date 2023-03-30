@@ -28,11 +28,14 @@ Once you've added the Loki data source, you can [configure it]({{< relref "#conf
 
 **To access the data source configuration page:**
 
-1. Hover the cursor over the **Configuration** (gear) icon.
-1. Select **Data Sources**.
-1. Select the Loki data source.
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `Loki` in the search bar.
+1. Select **Loki**.
 
-Set the data source's basic configuration options carefully:
+   The **Settings** tab of the data source is displayed.
+
+1. Set the data source's basic configuration options carefully:
 
 | Name                | Description                                                                                                                                                         |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

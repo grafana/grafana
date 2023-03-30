@@ -26,9 +26,12 @@ Only users with the organization administrator role can add data sources.
 
 **To access the data source configuration page:**
 
-1. Hover the cursor over the **Configuration** (gear) icon.
-1. Select **Data Sources**.
-1. Select the TestData data source.
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `TestData` in the search bar.
+1. Select **TestData**.
+
+   The **Settings** tab of the data source is displayed.
 
 The data source doesn't provide any settings beyond the most basic options common to all data sources:
 

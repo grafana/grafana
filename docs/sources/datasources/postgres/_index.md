@@ -22,7 +22,16 @@ Administrators can also [configure the data source via YAML]({{< relref "#provis
 
 ## PostgreSQL settings
 
-To access PostgreSQL settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the PostgreSQL data source.
+**To access the data source configuration page:**
+
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `PostgreSQL` in the search bar.
+1. Select **PostgreSQL**.
+
+   The **Settings** tab of the data source is displayed.
+
+1. Set the data source's basic configuration options carefully:
 
 | Name                        | Description                                                                                                                                                                                                                                                                                                                                                                                                             |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
