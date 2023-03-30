@@ -41,14 +41,6 @@ export const ConfigStepContainerUnconnected = ({
 }: PropsWithChildren<Props>): JSX.Element => {
   const styles = useStyles2(getStyles);
 
-  const onDismissError = () => {
-    resetError();
-  };
-
-  const onDismissWarning = () => {
-    resetWarning();
-  };
-
   return (
     <div>
       <div className={styles.header}>
@@ -56,14 +48,14 @@ export const ConfigStepContainerUnconnected = ({
         <div>{showSavedBadge && <Badge text="Saved" color="green" icon="check" />}</div>
       </div>
       {error && (
-        <Alert title={error.message} onRemove={onDismissError}>
+        <Alert title={error.message} onRemove={() => resetError()}>
           {error.errors?.map((e, i) => (
             <div key={i}>{e}</div>
           ))}
         </Alert>
       )}
       {warning && (
-        <Alert title={warning.message} onRemove={onDismissWarning} severity="warning">
+        <Alert title={warning.message} onRemove={() => resetWarning()} severity="warning">
           {warning.errors?.map((e, i) => (
             <div key={i}>{e}</div>
           ))}
@@ -77,7 +69,7 @@ export const ConfigStepContainerUnconnected = ({
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     formContent: css`
-      margin: ${theme.spacing(2)} 0;
+      margin: ${theme.spacing(2, 0)};
     `,
     header: css`
       display: flex;

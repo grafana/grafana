@@ -48,7 +48,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       text-align: center;
     `,
     button: css`
-      margin-bottom: 20px;
+      margin-bottom: ${theme.spacing(2.5)};
     `,
   };
 };

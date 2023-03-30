@@ -29,9 +29,15 @@ export function loadSettings(): ThunkResult<Promise<Settings>> {
 export function loadProviderStatuses(): ThunkResult<void> {
   return async (dispatch) => {
     const registeredProviders = getRegisteredAuthProviders();
-    const providerStatuses: { [key: string]: AuthProviderStatus } = {};
+    const providerStatuses: Record<string, AuthProviderStatus> = {};
+    const getStatusPromises: Array<Promise<AuthProviderStatus>> = [];
     for (const provider of registeredProviders) {
-      const status = await getAuthProviderStatus(provider.id);
+      getStatusPromises.push(getAuthProviderStatus(provider.id));
+    }
+    const statuses = await Promise.all(getStatusPromises);
+    for (let i = 0; i < registeredProviders.length; i++) {
+      const provider = registeredProviders[i];
+      const status = statuses[i];
       providerStatuses[provider.id] = status;
     }
     dispatch(providerStatusesLoaded(providerStatuses));

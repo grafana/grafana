@@ -110,8 +110,8 @@ export const AuthConfigPageUnconnected = ({
                     </tr>
                     {Object.entries(sectionSettings).map(([settingName, settingValue], j) => (
                       <tr key={`property-${j}`}>
-                        <td style={{ paddingLeft: '25px' }}>{settingName}</td>
-                        <td style={{ whiteSpace: 'break-spaces' }}>{settingValue}</td>
+                        <td className={styles.settingName}>{settingName}</td>
+                        <td className={styles.settingName}>{settingValue}</td>
                       </tr>
                     ))}
                   </React.Fragment>
@@ -140,8 +140,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     settingsSection: css`
       margin-top: ${theme.spacing(4)};
     `,
+    settingName: css`
+      padding-left: 25px;
+    `,
+    settingValue: css`
+      white-space: break-spaces;
+    `,
   };
 };
 
-const AuthConfigPage = connector(AuthConfigPageUnconnected);
-export default AuthConfigPage;
+export default connector(AuthConfigPageUnconnected);

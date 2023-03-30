@@ -2,7 +2,7 @@ import { Settings } from 'app/types';
 
 export interface AuthConfigState {
   settings: Settings;
-  providerStatuses: { [key: string]: AuthProviderStatus };
+  providerStatuses: Record<string, AuthProviderStatus>;
   updateError?: SettingsError;
   warning?: SettingsError;
 }
