@@ -1558,7 +1558,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	rbac := iniFile.Section("rbac")
-	cfg.RBACEnabled = rbac.Key("enabled").MustBool(true)
+	cfg.RBACEnabled = true
 	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
 	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
