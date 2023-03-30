@@ -53,8 +53,6 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. Enter a name for your dashboard and select a folder, if applicable.
 1. Click **Save**.
 
-<!-- this part doesn't make sense for a first time dashboard creation - this interaction only happens when you update an existing dashboard
-   Notes can be helpful if you need to revert the dashboard to a previous version. -->
 
 ## Configure repeating rows
 
