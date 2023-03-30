@@ -46,7 +46,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
         return;
       }
       setChunkRangeValid(true);
-      onChange({ ...query, chunkDuration: value });
+      onChange({ ...query, splitDuration: value });
       onRunQuery();
     };
 
@@ -119,7 +119,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
                 minWidth={14}
                 type="string"
                 min={0}
-                defaultValue={query.chunkDuration ?? '1d'}
+                defaultValue={query.splitDuration ?? '1d'}
                 onCommitChange={onChunkRangeChange}
                 invalid={!chunkRangeValid}
               />

@@ -40,7 +40,7 @@ export interface LokiQuery extends LokiQueryFromSchema {
    * This is a property for the experimental query splitting feature.
    * @experimental
    */
-  chunkDuration?: string;
+  splitDuration?: string;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
