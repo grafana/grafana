@@ -45,7 +45,7 @@ describe('isLogLinePacked', () => {
     expect(isLogLinePacked('To Be or not to be')).toBe(false);
   });
 
-  test('should return true on key value patterns', () => {
+  test('should return false on key value patterns', () => {
     expect(isLogLinePacked('foo=bar baz="41 + 1')).toBe(false);
   });
 
@@ -53,7 +53,7 @@ describe('isLogLinePacked', () => {
     expect(isLogLinePacked('{"foo": "bar", "baz": "41 + 1"}')).toBe(false);
   });
 
-  test('should return false on JSON log lines', () => {
+  test('should return true on packed log lines', () => {
     expect(isLogLinePacked('{"foo": "bar", "_entry": "41 + 1"}')).toBe(true);
   });
 });
