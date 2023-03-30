@@ -20,6 +20,9 @@ jobs:
         with:
           repository: grafana/grafana-build
           ref: add-package-publish-action
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '^1.20.0'
       - name: Build Backend
         uses: ./actions/package/publish
         with:
