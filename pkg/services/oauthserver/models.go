@@ -2,7 +2,6 @@ package oauthserver
 
 import (
 	"context"
-	"crypto/rsa"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -26,7 +25,7 @@ type OAuth2Service interface {
 	GetExternalService(ctx context.Context, id string) (*Client, error)
 	HandleTokenRequest(rw http.ResponseWriter, req *http.Request)
 	HandleIntrospectionRequest(rw http.ResponseWriter, req *http.Request)
-	GetServerPublicKey() *rsa.PublicKey
+	GetServerPublicKey() interface{}
 }
 
 type Store interface {

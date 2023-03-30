@@ -2,7 +2,6 @@ package clients
 
 import (
 	"context"
-	"crypto/rsa"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -48,7 +47,7 @@ type ExtendedJWT struct {
 	log          log.Logger
 	userService  user.Service
 	oauthService oauthserver.OAuth2Service
-	publicKey    *rsa.PublicKey
+	publicKey    interface{}
 }
 
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {

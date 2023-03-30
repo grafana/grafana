@@ -7,7 +7,7 @@ if [[ $# -lt 1 ]]; then
 fi
 
 source $current_dir/utils.sh
-no_pause="$2"
+no_pause="$3"
 
 answer=$( cat $current_dir/registerapp_response.json )
 client_id=$( echo $answer | jq -r '.clientId' )
@@ -16,21 +16,18 @@ privateKey=$( echo $answer | jq -r '.key.private' )
 publicKey=$( echo $answer | jq -r '.key.public' )
 
 user_id="$1"
+alg="$2"
 auth_server="http://localhost:3000/oauth2/token"
 
 private_key_file="$current_dir/generated_private_key.pem"
-echo "-----BEGIN RSA PRIVATE KEY-----" > $private_key_file
-echo $privateKey | sed s@'-----BEGIN RSA PRIVATE KEY----- '@@g | sed s@' -----END RSA PRIVATE KEY-----'@@g  | tr ' ' '\n' >> $private_key_file
-echo "-----END RSA PRIVATE KEY-----" >> $private_key_file
+echo -e $privateKey | tr -d '"' > $private_key_file
 
 public_key_file="$current_dir/generated_public_key.pem"
-echo "-----BEGIN RSA PUBLIC KEY-----" > $public_key_file
-echo $publicKey | sed s@'-----BEGIN RSA PUBLIC KEY----- '@@g | sed s@' -----END RSA PUBLIC KEY-----'@@g  | tr ' ' '\n' >> $public_key_file
-echo "-----END RSA PUBLIC KEY-----" >> $public_key_file
+echo -e $publicKey | tr -d '"' > $public_key_file
 
 # Todo add jku and kid
 header="{
-    \"alg\": \"RS256\",
+    \"alg\": \"$alg\",
     \"typ\": \"JWT\",
     \"kid\": \"1\"
 }"
@@ -62,12 +59,22 @@ echo $payload | jq -c . | tr -d '\n' | tr -d '\r' | base64 | tr +/ -_ |tr -d '='
 printf "%s" "$(<header.b64)" "." "$(<payload.b64)" > unsigned.b64
 rm header.b64
 rm payload.b64
-openssl dgst -sha256 -sign $private_key_file -out sig.txt unsigned.b64
-cat sig.txt | base64 | tr +/ -_ | tr -d '=' | tr -d '\n' > sig.b64
+
+if [[ "$alg" == "ES256" ]]
+then
+    echo "Creating ES256 signature"
+    sign-jwt-ecdsa -pk $private_key_file -payload unsigned.b64 > sig.b64
+else
+    echo "Creating RS256 signature"
+    openssl dgst -sha256 -sign $private_key_file -out sig.txt unsigned.b64
+    cat sig.txt | basenc --base64url | tr +/ -_ | tr -d '=' | tr -d '\n' > sig.b64
+    rm sig.txt
+fi
+
 assertion2=$(printf "%s" "$(<unsigned.b64)" "." "$(<sig.b64)")
 rm unsigned.b64
 rm sig.b64
-rm sig.txt
+
 
 echo "assertion:"
 echo -e ${blue}$(echo $assertion2 | cut -d '.' -f 1)${reset}.${green}$(echo $assertion2 | cut -d '.' -f 2)${reset}.${red}$(echo $assertion2 | cut -d '.' -f 3)${reset}

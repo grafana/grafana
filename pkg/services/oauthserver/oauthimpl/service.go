@@ -2,6 +2,8 @@ package oauthimpl
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -149,17 +151,18 @@ func loadServerPrivateKey(skv kvstore.SecretsKVStore) (*rsa.PrivateKey, error) {
 }
 
 // GetServerPublicKey returns the public key of the server
-func (s *OAuth2ServiceImpl) GetServerPublicKey() *rsa.PublicKey {
+func (s *OAuth2ServiceImpl) GetServerPublicKey() interface{} {
 	return s.publicKey
 }
 
+// RandString generates a a cryptographically secure random string of n bytes
 func (s *OAuth2ServiceImpl) RandString(n int) (string, error) {
 	res := make([]byte, n)
 	_, err := rand.Read(res)
 	if err != nil {
 		return "", err
 	}
-	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(res), nil
+	return base64.RawURLEncoding.EncodeToString(res), nil
 }
 
 // TODO it would be great to create the service account in the same DB session as the client
@@ -216,13 +219,12 @@ func (s *OAuth2ServiceImpl) RegisterExternalService(ctx context.Context,
 }
 
 func (s *OAuth2ServiceImpl) genCredentials() (string, string, error) {
-	// TODO make the length configurable
 	id, err := s.RandString(20)
 	if err != nil {
 		return "", "", err
 	}
-	// TODO make the length configurable
-	secret, err := s.RandString(40)
+	// client_secret must be at least 32 bytes long
+	secret, err := s.RandString(32)
 	if err != nil {
 		return "", "", err
 	}
@@ -278,7 +280,7 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName
 		return oauthserver.NoServiceAccountID, err
 	}
 
-	s.logger.Debug("Create tailored role for service account", "external service name", extSvcName, "name", slug, "saID", sa.Id, "permissions", permissions)
+	s.logger.Debug("Create tailored role for service account", "external service name", extSvcName, "name", slug, "service_account_id", sa.Id, "permissions", permissions)
 	if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
 		OrgID:             ac.GlobalOrgID,
 		Global:            true,
@@ -297,22 +299,55 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 		return nil, nil
 	}
 
+	keyType := "ecdsa"
+	var publicPem, privatePem string
+
 	if keyOption.Generate {
-		RSAKey, err := rsa.GenerateKey(rand.Reader, 2048)
-		if err != nil {
-			return nil, err
-		}
-		return &oauthserver.KeyResult{
-			PrivatePem: string(pem.EncodeToMemory(&pem.Block{
+		switch keyType {
+		case "ecdsa":
+			privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+			if err != nil {
+				return nil, err
+			}
+			publicDer, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+			if err != nil {
+				return nil, err
+			}
+
+			privateDer, err := x509.MarshalPKCS8PrivateKey(privateKey)
+			if err != nil {
+				return nil, err
+			}
+
+			publicPem = string(pem.EncodeToMemory(&pem.Block{
+				Type:  "PUBLIC KEY",
+				Bytes: publicDer,
+			}))
+			privatePem = string(pem.EncodeToMemory(&pem.Block{
+				Type:  "PRIVATE KEY",
+				Bytes: privateDer,
+			}))
+		case "rsa":
+			privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+			if err != nil {
+				return nil, err
+			}
+			publicPem = string(pem.EncodeToMemory(&pem.Block{
+				Type:  "PUBLIC KEY",
+				Bytes: x509.MarshalPKCS1PublicKey(&privateKey.PublicKey),
+			}))
+			privatePem = string(pem.EncodeToMemory(&pem.Block{
 				Type:  "RSA PRIVATE KEY",
-				Bytes: x509.MarshalPKCS1PrivateKey(RSAKey),
-			})),
-			PublicPem: string(pem.EncodeToMemory(&pem.Block{
-				Type:  "RSA PUBLIC KEY",
-				Bytes: x509.MarshalPKCS1PublicKey(&RSAKey.PublicKey),
-			})),
-			Generated: true,
+				Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+			}))
+		}
+
+		return &oauthserver.KeyResult{
+			PrivatePem: privatePem,
+			PublicPem:  publicPem,
+			Generated:  true,
 		}, nil
+
 	}
 
 	// TODO allow specifying a URL to get the public key
@@ -391,7 +426,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	if errFetchExtSvc != nil {
 		if srcError, ok := errFetchExtSvc.(errutil.Error); ok {
 			if srcError.MessageID != oauthserver.ErrClientNotFoundMessageID {
-				s.logger.Error("Error fetching service", "externale service", registration.ExternalServiceName, "error", errFetchExtSvc)
+				s.logger.Error("Error fetching service", "external service", registration.ExternalServiceName, "error", errFetchExtSvc)
 				return nil, errFetchExtSvc
 			}
 		}

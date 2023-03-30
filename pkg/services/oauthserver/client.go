@@ -2,7 +2,6 @@ package oauthserver
 
 import (
 	"context"
-	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -18,14 +17,20 @@ import (
 )
 
 // ParsePublicKeyPem parses the public key from the PEM encoded public key.
-func ParsePublicKeyPem(publicPem []byte) (*rsa.PublicKey, error) {
+func ParsePublicKeyPem(publicPem []byte) (interface{}, error) {
 	block, _ := pem.Decode(publicPem)
 	if block == nil {
 		return nil, errors.New("could not decode PEM block")
 	}
 
-	// TODO: use x509.ParsePKIXPublicKey instead?
-	return x509.ParsePKCS1PublicKey(block.Bytes)
+	switch block.Type {
+	case "PUBLIC KEY":
+		return x509.ParsePKIXPublicKey(block.Bytes)
+	case "RSA PUBLIC KEY":
+		return x509.ParsePKCS1PublicKey(block.Bytes)
+	default:
+		return nil, fmt.Errorf("unknown key type %q", block.Type)
+	}
 }
 
 type KeyResult struct {
