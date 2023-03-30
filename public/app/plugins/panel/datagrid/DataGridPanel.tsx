@@ -1,5 +1,6 @@
+import { css } from '@emotion/css';
 import DataEditor, { GridCell, Item, GridColumn, GridCellKind, EditableGridCell } from '@glideapps/glide-data-grid';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   ArrayVector,
@@ -7,9 +8,12 @@ import {
   DataFrameJSON,
   dataFrameToJSON,
   Field,
-  FieldType,
   MutableDataFrame,
   PanelProps,
+  DatagridDataChangeEvent,
+  GrafanaTheme2,
+  getFieldDisplayName,
+  FieldType,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 // eslint-disable-next-line import/order
@@ -18,15 +22,15 @@ import { useTheme2 } from '@grafana/ui';
 import '@glideapps/glide-data-grid/dist/index.css';
 
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
+import { AddColumn } from './components/AddColumn';
 import { PanelOptions } from './models.gen';
 
 interface Props extends PanelProps<PanelOptions> {}
 
 export const DataGridPanel: React.FC<Props> = ({ options, data, id, width, height, fieldConfig }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [gridData, setGridData] = useState<DataFrame | null>(data.series[0]);
+  const [columns, setColumns] = useState<GridColumn[]>([]);
   const [isSnapshotted, setIsSnapshotted] = useState<boolean>(false);
 
   const theme = useTheme2();
@@ -49,6 +53,28 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, width, heigh
     uid: 'grafana',
   };
 
+  const frame = useMemo((): DataFrame => {
+    if (gridData && isSnapshotted) {
+      return gridData;
+    }
+
+    return data.series[0];
+  }, [gridData, data, isSnapshotted]);
+
+  const setGridColumns = useCallback(() => {
+    setColumns(
+      frame.fields.map((f, i) => {
+        const displayName = getFieldDisplayName(f, frame);
+        const width = displayName.length * theme.typography.fontSize;
+        return { title: displayName, width: width };
+      })
+    );
+  }, [frame, theme]);
+
+  useEffect(() => {
+    setGridColumns();
+  }, [frame, setGridColumns]);
+
   useEffect(() => {
     const panelModel = getDashboardSrv().getCurrent()?.getPanelById(id);
 
@@ -63,48 +89,21 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, width, heigh
       return;
     }
 
-    const panelModel = getDashboardSrv().getCurrent()?.getPanelById(id);
-
-    if (panelModel) {
+    if (gridData) {
       console.log('Updating panel model', gridData);
-
-      const snapshot: DataFrameJSON[] = [dataFrameToJSON(gridData!)];
-
-      const query: GrafanaQuery = {
-        refId: 'A',
-        queryType: GrafanaQueryType.Snapshot,
-        snapshot,
-        datasource: grafanaDS,
-      };
-
-      panelModel.updateQueries({
-        dataSource: grafanaDS,
-        queries: [query],
+      const snapshot: DataFrameJSON[] = [dataFrameToJSON(gridData)];
+      const dashboard = getDashboardSrv().getCurrent();
+      dashboard?.events.publish({
+        type: DatagridDataChangeEvent.type,
+        payload: {
+          snapshot,
+        },
       });
-
-      panelModel.refresh();
-      panelModel.render();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gridData]);
 
-  const getCorrectData = (): DataFrame => {
-    if (gridData && isSnapshotted) {
-      return gridData;
-    }
-
-    return data.series[0];
-  };
-
-  const getColumns = (): GridColumn[] => {
-    const frame = getCorrectData();
-
-    //TODO getDisplayName might be better, also calculate width dynamically
-    return frame.fields.map((f) => ({ title: f.name, width: f.type === FieldType.string ? 100 : 50 }));
-  };
-
   const getCellContent = ([col, row]: Item): GridCell => {
-    const frame = getCorrectData();
     const field: Field = frame.fields[col];
 
     if (!field) {
@@ -116,17 +115,6 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, width, heigh
     if (value === undefined || value === null) {
       throw new Error('OH NO 2');
     }
-
-    // If in panel edit, do not allow editing.
-    // if (getDashboardSrv().getCurrent()?.getPanelById(id)?.isEditing) {
-    //   return {
-    //     kind: GridCellKind.Text,
-    //     data: value,
-    //     allowOverlay: false,
-    //     readonly: true,
-    //     displayData: value.toString(),
-    //   };
-    // }
 
     //TODO there is an error with number gridcells when opening the overlay and editing. so I ignored and made everything text for now
 
@@ -176,12 +164,6 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, width, heigh
   };
 
   const onCellEdited = (cell: Item, newValue: EditableGridCell) => {
-    if (getDashboardSrv().getCurrent()?.getPanelById(id)?.isEditing) {
-      return;
-    }
-
-    const frame = getCorrectData();
-
     const [col, row] = cell;
     const field: Field = frame.fields[col];
 
@@ -204,17 +186,18 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, width, heigh
     }
   };
 
-  const createNewCol = () => {
+  const onColumnInputBlur = (columnName: string) => {
+    //todo need to rethink this for blank slate case
     if (!gridData) {
       return;
     }
 
-    const len = gridData.length ?? 50;
+    const len = gridData.length ?? 50; //todo ?????? 50????
 
     const newFrame = new MutableDataFrame(gridData);
 
     const field: Field = {
-      name: inputRef.current?.value ?? 'PLACEHOLDER',
+      name: columnName,
       type: FieldType.string,
       config: {},
       values: new ArrayVector(new Array(len).fill('')),
@@ -222,23 +205,32 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, width, heigh
 
     newFrame.addField(field);
 
+    setIsSnapshotted(true);
     setGridData(newFrame);
   };
 
-  const createNewRow = () => {
+  const addNewRow = () => {
+    //todo need to rethink this for blank slate case
     if (!gridData) {
       return;
     }
 
     const newFrame = new MutableDataFrame(gridData);
 
-    const fieldNames: string[] = newFrame.fields.map((f) => f.name);
+    for (const field of newFrame.fields) {
+      field.values.add('');
+    }
 
-    fieldNames.forEach((fieldName) => {
-      newFrame.add({ [fieldName]: '' });
-    });
-
+    setIsSnapshotted(true);
     setGridData(newFrame);
+  };
+
+  const onColumnResize = (column: GridColumn, newSize: number, colIndex: number, newSizeWithGrow: number) => {
+    setColumns((prevColumns) => {
+      const newColumns = [...prevColumns];
+      newColumns[colIndex] = { title: column.title, width: newSize };
+      return newColumns;
+    });
   };
 
   if (!document.getElementById('portal')) {
@@ -247,29 +239,76 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, width, heigh
     document.body.appendChild(portal);
   }
 
-  const usedData = getCorrectData();
-
-  if (!usedData) {
+  if (!frame) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
 
   //TODO multiple series support
-  const numRows = usedData.length;
+  const numRows = frame.length;
+  const styles = getStyles(theme);
 
   return (
     <>
       <DataEditor
         getCellContent={getCellContent}
-        columns={getColumns()}
+        columns={columns}
         rows={numRows}
         width={'100%'}
-        height={'90%'} //omg this is so ugly
+        height={'100%'}
         theme={gridTheme}
         onCellEdited={onCellEdited}
+        onHeaderClicked={() => {
+          console.log('header clicked');
+        }}
+        onRowAppended={addNewRow}
+        rowMarkers={'clickable-number'}
+        onColumnResize={onColumnResize}
+        trailingRowOptions={{
+          sticky: false,
+          tint: true,
+          targetColumn: 0,
+        }}
+        rightElement={<AddColumn onColumnInputBlur={onColumnInputBlur} divStyle={styles.addColumnDiv} />}
+        rightElementProps={{
+          fill: true,
+          sticky: false,
+        }}
       />
-      <input type="text" ref={inputRef} />
-      <button onClick={() => createNewCol()}>Create new col</button>
-      <button onClick={() => createNewRow()}>Create new row</button>
     </>
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  const height = '37px';
+  const width = '120px';
+
+  return {
+    addColumnDiv: css`
+      width: ${width};
+      display: flex;
+      flex-direction: column;
+      background-color: ${theme.colors.background.primary};
+      button {
+        border: none;
+        outline: none;
+        height: ${height};
+        font-size: 20px;
+        background-color: ${theme.colors.background.secondary};
+        color: ${theme.colors.text.primary};
+        border-bottom: 1px solid ${theme.components.panel.borderColor};
+        transition: background-color 200ms;
+        cursor: pointer;
+        :hover {
+          background-color: ${theme.colors.secondary.shade};
+        }
+      }
+      input {
+        height: ${height};
+        border: 1px solid ${theme.colors.primary.main};
+        :focus {
+          outline: none;
+        }
+      }
+    `,
+  };
 };
