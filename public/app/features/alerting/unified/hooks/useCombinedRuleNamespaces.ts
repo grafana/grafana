@@ -152,9 +152,11 @@ function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, gro
 
 function calculateTotalsFromGroup(group: RuleGroup): AlertGroupTotals {
   if (group.totals) {
+    const { firing, ...totals } = group.totals;
+
     return {
-      ...group.totals,
-      alerting: group.totals.firing,
+      ...totals,
+      alerting: firing,
     };
   }
 
