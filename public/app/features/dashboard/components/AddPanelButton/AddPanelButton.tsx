@@ -14,14 +14,14 @@ interface Props {
 
 export const AddPanelButton = ({ dashboard }: Props) => {
   const styles = getStyles(useTheme2());
-  const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <Dropdown
       overlay={() => <AddPanelMenu dashboard={dashboard} />}
       placement="bottom"
       offset={[0, 6]}
-      onVisibleChange={setAddMenuOpen}
+      onVisibleChange={setIsMenuOpen}
     >
       <Button
         tooltip={t('dashboard.toolbar.add-panel', 'Add panel')}
@@ -31,14 +31,13 @@ export const AddPanelButton = ({ dashboard }: Props) => {
         className={cx(styles.button, styles.buttonIcon, styles.buttonText)}
       >
         Add
-        {addMenuOpen === false && <Icon name="angle-down" size="lg" />}
-        {addMenuOpen === true && <Icon name="angle-up" size="lg" />}
+        <Icon name={isMenuOpen ? 'angle-up' : 'angle-down'} size="lg" />
       </Button>
     </Dropdown>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+function getStyles(theme: GrafanaTheme2) {
   return {
     button: css({
       label: 'add-panel-button',
@@ -59,4 +58,4 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
   };
-};
+}

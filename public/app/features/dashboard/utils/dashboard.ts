@@ -7,7 +7,7 @@ import store from 'app/core/store';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { calculateNewPanelGridPos } from 'app/features/dashboard/utils/panel';
 
-export const onCreateNewPanel = (dashboard: DashboardModel): number | undefined => {
+export function onCreateNewPanel(dashboard: DashboardModel): number | undefined {
   const newPanel: Partial<PanelModel> = {
     type: 'timeseries',
     title: 'Panel Title',
@@ -16,9 +16,9 @@ export const onCreateNewPanel = (dashboard: DashboardModel): number | undefined 
 
   dashboard.addPanel(newPanel);
   return newPanel.id;
-};
+}
 
-export const onCreateNewRow = (dashboard: DashboardModel) => {
+export function onCreateNewRow(dashboard: DashboardModel) {
   const newRow = {
     type: 'row',
     title: 'Row title',
@@ -26,20 +26,20 @@ export const onCreateNewRow = (dashboard: DashboardModel) => {
   };
 
   dashboard.addPanel(newRow);
-};
+}
 
-export const onAddLibraryPanel = (dashboard: DashboardModel) => {
+export function onAddLibraryPanel(dashboard: DashboardModel) {
   const newPanel = {
     type: 'add-library-panel',
     gridPos: calculateNewPanelGridPos(dashboard),
   };
 
   dashboard.addPanel(newPanel);
-};
+}
 
 type PanelPluginInfo = { defaults: { gridPos: { w: number; h: number }; title: string } };
 
-export const onPasteCopiedPanel = (dashboard: DashboardModel, panelPluginInfo?: PanelPluginMeta & PanelPluginInfo) => {
+export function onPasteCopiedPanel(dashboard: DashboardModel, panelPluginInfo?: PanelPluginMeta & PanelPluginInfo) {
   if (!panelPluginInfo) {
     return;
   }
@@ -65,9 +65,9 @@ export const onPasteCopiedPanel = (dashboard: DashboardModel, panelPluginInfo?: 
   }
 
   dashboard.addPanel(newPanel);
-};
+}
 
-export const getCopiedPanelPlugin = (): (PanelPluginMeta & PanelPluginInfo) | undefined => {
+export function getCopiedPanelPlugin(): (PanelPluginMeta & PanelPluginInfo) | undefined {
   const panels = chain(config.panels)
     .filter({ hideFromList: false })
     .map((item) => item)
@@ -88,4 +88,4 @@ export const getCopiedPanelPlugin = (): (PanelPluginMeta & PanelPluginInfo) | un
   }
 
   return undefined;
-};
+}

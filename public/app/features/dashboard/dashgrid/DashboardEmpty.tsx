@@ -83,7 +83,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+function getStyles(theme: GrafanaTheme2) {
   return {
     wrapper: css({
       label: 'dashboard-empty-wrapper',
@@ -155,4 +155,4 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginBottom: theme.spacing.gridSize * 3,
     }),
   };
-};
+}
