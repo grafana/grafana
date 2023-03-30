@@ -39,7 +39,7 @@ The panel automatically adjusts the layout depending on available width and heig
 
 ## Value options
 
-Use the following options to refine how your visualization displays its value/s:
+Use the following options to refine how your visualization displays its values:
 
 ### Show
 
