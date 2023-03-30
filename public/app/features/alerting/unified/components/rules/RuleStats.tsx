@@ -4,21 +4,28 @@ import React, { Fragment } from 'react';
 
 import { Stack } from '@grafana/experimental';
 import { Badge } from '@grafana/ui';
-import { AlertInstanceState, CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import {
+  AlertGroupTotals,
+  AlertInstanceState,
+  CombinedRuleGroup,
+  CombinedRuleNamespace,
+} from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
 }
 
-const emptyStats = {
+// All available states for a rule need to be initialized to prevent NaN values when adding a number and undefined
+const emptyStats: Required<AlertGroupTotals> = {
   recording: 0,
   alerting: 0,
   [PromAlertingRuleState.Pending]: 0,
   [PromAlertingRuleState.Inactive]: 0,
   paused: 0,
   error: 0,
-} as const;
+  nodata: 0,
+};
 
 export const RuleStats = ({ namespaces }: Props) => {
   const stats = { ...emptyStats };
