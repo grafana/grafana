@@ -70,7 +70,7 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 1. Navigate to the dashboard you want to work on.
 1. At the top of the dashboard, click **Add** and select **Row** in the dropdown.
 
-   If the dashboard is empty, you can just click the **+ Add row** button in the middle of the dashboard.
+   If the dashboard is empty, you can click the **+ Add row** button in the middle of the dashboard.
 
 1. Hover over the row title and click the cog icon.
 1. In the **Row Options** dialog box, add a title and select the variable for which you want to add repeating rows.
