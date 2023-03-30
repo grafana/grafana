@@ -604,6 +604,10 @@ export class LokiDatasource
         expression = addParserToQuery(expression, 'json');
         break;
       }
+      case 'ADD_UNPACK_PARSER': {
+        expression = addParserToQuery(expression, 'unpack');
+        break;
+      }
       case 'ADD_NO_PIPELINE_ERROR': {
         expression = addNoPipelineErrorToQuery(expression);
         break;

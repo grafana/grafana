@@ -16,3 +16,13 @@ const LOGFMT_REGEXP = /(?:^|\s)([\w\(\)\[\]\{\}]+)=(""|(?:".*?[^\\]"|[^"\s]\S*))
 export function isLogLineLogfmt(line: string): boolean {
   return LOGFMT_REGEXP.test(line);
 }
+
+export function isLogLinePacked(line: string): boolean {
+  let parsed;
+  try {
+    parsed = JSON.parse(line);
+    return parsed._entry !== undefined;
+  } catch (error) {
+    return false;
+  }
+}
