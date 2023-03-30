@@ -59,9 +59,7 @@ describe('explore links utils', () => {
       expect(links[0].title).toBe('external');
       expect(links[0].onClick).toBeDefined();
 
-      if (links[0].onClick) {
-        links[0].onClick({});
-      }
+      links[0].onClick!({});
 
       expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
         app: CoreApp.Explore,
