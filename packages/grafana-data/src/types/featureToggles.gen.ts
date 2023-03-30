@@ -93,4 +93,7 @@ export interface FeatureToggles {
   logsContextDatasourceUi?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   influxdbBackendMigration?: boolean;
+  alertStateHistoryLokiSecondary?: boolean;
+  alertStateHistoryLokiPrimary?: boolean;
+  alertStateHistoryLokiOnly?: boolean;
 }

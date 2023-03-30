@@ -314,4 +314,16 @@ const (
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
+
+	// FlagAlertStateHistoryLokiSecondary
+	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
+	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
+
+	// FlagAlertStateHistoryLokiPrimary
+	// Enable a remote Loki instance as the primary source for state history reads.
+	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
+
+	// FlagAlertStateHistoryLokiOnly
+	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
+	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
 )
