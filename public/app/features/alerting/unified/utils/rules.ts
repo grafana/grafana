@@ -5,6 +5,7 @@ import {
   Alert,
   AlertingRule,
   CloudRuleIdentifier,
+  CombinedRule,
   CombinedRuleGroup,
   CombinedRuleWithLocation,
   GrafanaRuleIdentifier,
@@ -53,6 +54,10 @@ export function isRecordingRulerRule(rule?: RulerRuleDTO): rule is RulerRecordin
 
 export function isGrafanaRulerRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
   return typeof rule === 'object' && 'grafana_alert' in rule;
+}
+
+export function isGrafanaRulerRulePaused(rule: CombinedRule) {
+  return rule.rulerRule && isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.is_paused);
 }
 
 export function alertInstanceKey(alert: Alert): string {

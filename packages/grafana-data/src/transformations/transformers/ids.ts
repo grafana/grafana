@@ -36,4 +36,5 @@ export enum DataTransformerID {
   groupingToMatrix = 'groupingToMatrix',
   limit = 'limit',
   partitionByValues = 'partitionByValues',
+  timeSeriesTable = 'timeSeriesTable',
 }

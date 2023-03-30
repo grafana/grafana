@@ -1,14 +1,6 @@
 import { map } from 'lodash';
-import { from, Observable } from 'rxjs';
-import { mergeMap } from 'rxjs/operators';
 
-import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  DataSourceRef,
-  ScopedVars,
-} from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
 import { isGUIDish } from '../components/ResourcePicker/utils';
@@ -43,11 +35,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
   azureMonitorPath: string;
   firstWorkspace?: string;
-  cache: Map<string, any>;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
-    this.cache = new Map();
 
     this.resourcePath = `${routeNames.logAnalytics}`;
     this.azureMonitorPath = `${routeNames.azureMonitor}/subscriptions`;
@@ -145,78 +135,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
         // Workspace was removed in Grafana 8, but remains for backwards compat
         workspace,
       },
-    };
-  }
-
-  /**
-   * Augment the results with links back to the azure console
-   */
-  query(request: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
-    return super.query(request).pipe(
-      mergeMap((res: DataQueryResponse) => {
-        return from(this.processResponse(res));
-      })
-    );
-  }
-
-  async processResponse(res: DataQueryResponse): Promise<DataQueryResponse> {
-    if (res.data) {
-      for (const df of res.data) {
-        const encodedQuery = df.meta?.custom?.encodedQuery;
-        if (encodedQuery && encodedQuery.length > 0) {
-          const url = await this.buildDeepLink(df.meta.custom);
-          if (url?.length) {
-            for (const field of df.fields) {
-              field.config.links = [
-                {
-                  url: url,
-                  title: 'View in Azure Portal',
-                  targetBlank: true,
-                },
-              ];
-            }
-          }
-        }
-      }
-    }
-    return res;
-  }
-
-  private async buildDeepLink(customMeta: Record<string, any>) {
-    const base64Enc = encodeURIComponent(customMeta.encodedQuery);
-    const resource = encodeURIComponent(customMeta.resource);
-
-    const url =
-      `${this.azurePortalUrl}/#blade/Microsoft_OperationsManagementSuite_Workspace/` +
-      `AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/` +
-      `%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22${resource}` +
-      `%22%7D%5D%7D/query/${base64Enc}/isQueryBase64Compressed/true/timespanInIsoFormat/P1D`;
-    return url;
-  }
-
-  async getWorkspaceDetails(workspaceId: string) {
-    if (!this.defaultSubscriptionId) {
-      return {};
-    }
-    const response = await this.getWorkspaceList(this.defaultSubscriptionId);
-
-    const details = response.value.find((o: any) => {
-      return o.properties.customerId === workspaceId;
-    });
-
-    if (!details) {
-      return {};
-    }
-
-    const regex = /.*resourcegroups\/(.*)\/providers.*/;
-    const results = regex.exec(details.id);
-    if (!results || results.length < 2) {
-      return {};
-    }
-
-    return {
-      workspace: details.name,
-      resourceGroup: results[1],
     };
   }
 

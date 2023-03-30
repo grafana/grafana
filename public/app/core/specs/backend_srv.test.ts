@@ -275,6 +275,26 @@ describe('backendSrv', () => {
             'bogus-trace-id',
           ]);
         });
+
+        it('It should favor error.message for fetch errors when error.data.message is Unexpected error', async () => {
+          const { backendSrv, appEventsMock } = getTestContext({});
+          backendSrv.showErrorAlert(
+            {
+              url: 'api/do/something',
+            } as BackendSrvRequest,
+            {
+              data: {
+                message: 'Unexpected error',
+              },
+              message: 'Failed to fetch',
+              status: 500,
+              config: {
+                url: '',
+              },
+            } as FetchError
+          );
+          expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertError, ['Failed to fetch', '']);
+        });
       });
     });
 

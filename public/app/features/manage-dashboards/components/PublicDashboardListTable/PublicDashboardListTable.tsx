@@ -65,7 +65,7 @@ export const PublicDashboardListTable = () => {
                 </td>
                 <td>
                   <Tag
-                    name={pd.isEnabled ? 'enabled' : 'disabled'}
+                    name={pd.isEnabled ? 'enabled' : 'paused'}
                     colorIndex={isOrphaned ? 9 : pd.isEnabled ? 20 : 15}
                   />
                 </td>

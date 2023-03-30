@@ -2,7 +2,6 @@ import { VizPanel, SceneGridRow, SceneTimePicker, SceneGridLayout, SceneTimeRang
 import { TestDataQueryType } from 'app/plugins/datasource/testdata/dataquery.gen';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
-import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
@@ -83,7 +82,6 @@ export function getGridWithMultipleData(): DashboardScene {
         }),
       ],
     }),
-    $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],

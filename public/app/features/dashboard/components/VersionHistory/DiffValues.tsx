@@ -11,7 +11,7 @@ type DiffProps = {
   diff: Diff;
 };
 
-export const DiffValues: React.FC<DiffProps> = ({ diff }) => {
+export const DiffValues = ({ diff }: DiffProps) => {
   const styles = useStyles2(getStyles);
   const hasLeftValue =
     !isUndefined(diff.originalValue) && !isArray(diff.originalValue) && !isObject(diff.originalValue);

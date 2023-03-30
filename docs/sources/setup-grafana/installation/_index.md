@@ -16,27 +16,27 @@ This page lists the minimum hardware and software requirements to install Grafan
 
 To run Grafana, you must have a supported operating system, hardware that meets or exceeds minimum requirements, a supported database, and a supported browser.
 
-Grafana uses other open source software. Refer to [package.json](https://github.com/grafana/grafana/blob/main/package.json) for a complete list.
+Grafana relies on other open source software to operate. For a list of open source software that Grafana uses, refer to [package.json](https://github.com/grafana/grafana/blob/main/package.json).
 
 ## Supported operating systems
 
-The following operating systems are supported for Grafana installation:
+Grafana supports the following operating systems:
 
 - [Debian / Ubuntu]({{< relref "debian/" >}})
-- [RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)]({{< relref "rpm/" >}})
+- [RPM-based Linux (Fedora, SUSE/OpenSUSE, RedHat)]({{< relref "rpm/" >}})
 - [macOS]({{< relref "mac/" >}})
 - [Windows]({{< relref "windows/" >}})
 
-Installation of Grafana on other operating systems is possible, but it is neither recommended nor supported.
+> **Note:** Installation of Grafana on other operating systems is possible, but is not recommended or supported.
 
 ## Hardware recommendations
 
-Grafana does not use a lot of resources and is very lightweight in use of memory and CPU.
+Grafana requires the minimum system resources:
 
-Minimum recommended memory: 255 MB
-Minimum recommended CPU: 1
+- Minimum recommended memory: 255 MB
+- Minimum recommended CPU: 1
 
-Some features might require more memory or CPUs. Features require more resources include:
+Some features might require more memory or CPUs, including:
 
 - [Server side rendering of images](https://grafana.com/grafana/plugins/grafana-image-renderer#requirements)
 - [Alerting]({{< relref "../../alerting/" >}})
@@ -44,7 +44,7 @@ Some features might require more memory or CPUs. Features require more resources
 
 ## Supported databases
 
-Grafana requires a database to store its configuration data, such as users, data sources, and dashboards. The exact requirements depend on the size of the Grafana installation and features used.
+Grafana requires a database to store its configuration data, such as users, data sources, and dashboards. The exact requirements depend on the size of the Grafana installation and the features you use.
 
 Grafana supports the following databases:
 
@@ -52,21 +52,23 @@ Grafana supports the following databases:
 - [MySQL 5.7+](https://www.mysql.com/support/supportedplatforms/database.html)
 - [PostgreSQL 10+](https://www.postgresql.org/support/versioning/)
 
-By default, Grafana installs with and uses SQLite, which is an embedded database stored in the Grafana installation location.
+By default Grafana uses an embedded SQLite database, which is stored in the Grafana installation location.
 
-Grafana will support the versions of these databases that are officially supported by the project at the time of a Grafana version's release. When a version becomes unsupported, Grafana may also drop support for that version. See the links above for the support policies for each project.
+> **Note:** SQLite works well if your environment is small, but is not recommended when your environment starts growing. For more information about the limitations of SQLite, refer to [Appropriate Uses For SQLite](https://www.sqlite.org/whentouse.html). If you want high availability, you must use a MySQL or PostgreSQL database. For information about how to define the database configuration parameters inside the `grafana.ini` file, refer to [[database]](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#database).
+
+Grafana supports the versions of these databases that are officially supported by the project at the time a version of Grafana is released. When a Grafana version becomes unsupported, Grafana Labs might also drop support for that database version. See the links above for the support policies for each project.
 
 > **Note:** PostgreSQL versions 10.9, 11.4, and 12-beta2 are affected by a bug (tracked by the PostgreSQL project as [bug #15865](https://www.postgresql.org/message-id/flat/15865-17940eacc8f8b081%40postgresql.org)) which prevents those versions from being used with Grafana. The bug has been fixed in more recent versions of PostgreSQL.
+
 > Grafana can report errors when relying on read-only MySQL servers, such as in high-availability failover scenarios or serverless AWS Aurora MySQL. This is a known issue; for more information, see [issue #13399](https://github.com/grafana/grafana/issues/13399).
 
 ## Supported web browsers
 
-Grafana is supported in the current version of the following browsers. Older versions of these browsers might not be supported, so you should always upgrade to the latest version when using Grafana.
+Grafana supports the current version of the following browsers. Older versions of these browsers might not be supported, so you should always upgrade to the latest browser version when using Grafana.
+
+> **Note:** Enable JavaScript in your browser. Running Grafana without JavaScript enabled in the browser is not supported.
 
 - Chrome/Chromium
 - Firefox
 - Safari
 - Microsoft Edge
-- Internet Explorer 11 is only fully supported in Grafana versions prior v6.0.
-
-> **Note:** Always enable JavaScript in your browser. Running Grafana without JavaScript enabled in the browser is not supported.

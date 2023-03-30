@@ -287,9 +287,14 @@ func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 			Name:     "is_paused",
 			Type:     migrator.DB_Bool,
 			Nullable: false,
-			Default:  "false",
+			Default:  "0",
 		},
 	))
+
+	// This migration fixes a bug where "false" for the default value created a column with default "true" in PostgreSQL databases
+	mg.AddMigration("fix is_paused column for alert_rule table", migrator.NewRawSQLMigration("").
+		Postgres(`ALTER TABLE alert_rule ALTER COLUMN is_paused SET DEFAULT false;
+UPDATE alert_rule SET is_paused = false;`))
 }
 
 func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
@@ -351,9 +356,14 @@ func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
 			Name:     "is_paused",
 			Type:     migrator.DB_Bool,
 			Nullable: false,
-			Default:  "false",
+			Default:  "0",
 		},
 	))
+
+	// This migration fixes a bug where "false" for the default value created a column with default "true" in PostgreSQL databases
+	mg.AddMigration("fix is_paused column for alert_rule_version table", migrator.NewRawSQLMigration("").
+		Postgres(`ALTER TABLE alert_rule_version ALTER COLUMN is_paused SET DEFAULT false;
+UPDATE alert_rule_version SET is_paused = false;`))
 }
 
 func addAlertmanagerConfigMigrations(mg *migrator.Migrator) {

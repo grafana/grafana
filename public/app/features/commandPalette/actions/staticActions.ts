@@ -14,7 +14,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
   const navActions: CommandPaletteAction[] = [];
 
   for (const navItem of navTree) {
-    const { url, text, isCreateAction, children } = navItem;
+    const { url, target, text, isCreateAction, children } = navItem;
     const hasChildren = Boolean(children?.length);
 
     if (!(url || hasChildren)) {
@@ -33,6 +33,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
       name: text,
       section: section,
       url: url && locationUtil.stripBaseFromUrl(url),
+      target,
       parent: parents.length > 0 && !isCreateAction ? idForNavItem(parents[parents.length - 1]) : undefined,
       priority: priority,
       subtitle: isCreateAction ? undefined : subtitle,

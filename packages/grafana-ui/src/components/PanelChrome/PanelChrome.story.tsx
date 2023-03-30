@@ -12,6 +12,8 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup } from '../Layout/Layout';
 import { Menu } from '../Menu/Menu';
 
+import mdx from './PanelChrome.mdx';
+
 const meta: ComponentMeta<typeof PanelChrome> = {
   title: 'Visualizations/PanelChrome',
   component: PanelChrome,
@@ -20,7 +22,9 @@ const meta: ComponentMeta<typeof PanelChrome> = {
     controls: {
       exclude: ['children'],
     },
-    docs: {},
+    docs: {
+      page: mdx,
+    },
   },
 };
 

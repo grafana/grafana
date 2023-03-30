@@ -13,14 +13,15 @@ type UserQuota struct {
 }
 
 type GlobalQuota struct {
-	Org        int64 `target:"org"`
-	User       int64 `target:"user"`
-	DataSource int64 `target:"data_source"`
-	Dashboard  int64 `target:"dashboard"`
-	ApiKey     int64 `target:"api_key"`
-	Session    int64 `target:"-"`
-	AlertRule  int64 `target:"alert_rule"`
-	File       int64 `target:"file"`
+	Org          int64 `target:"org"`
+	User         int64 `target:"user"`
+	DataSource   int64 `target:"data_source"`
+	Dashboard    int64 `target:"dashboard"`
+	ApiKey       int64 `target:"api_key"`
+	Session      int64 `target:"-"`
+	AlertRule    int64 `target:"alert_rule"`
+	File         int64 `target:"file"`
+	Correlations int64 `target:"correlations"`
 }
 
 type QuotaSettings struct {
@@ -57,13 +58,14 @@ func (cfg *Cfg) readQuotaSettings() {
 
 	// Global Limits
 	cfg.Quota.Global = GlobalQuota{
-		User:       quota.Key("global_user").MustInt64(-1),
-		Org:        quota.Key("global_org").MustInt64(-1),
-		DataSource: quota.Key("global_data_source").MustInt64(-1),
-		Dashboard:  quota.Key("global_dashboard").MustInt64(-1),
-		ApiKey:     quota.Key("global_api_key").MustInt64(-1),
-		Session:    quota.Key("global_session").MustInt64(-1),
-		File:       quota.Key("global_file").MustInt64(-1),
-		AlertRule:  alertGlobalQuota,
+		User:         quota.Key("global_user").MustInt64(-1),
+		Org:          quota.Key("global_org").MustInt64(-1),
+		DataSource:   quota.Key("global_data_source").MustInt64(-1),
+		Dashboard:    quota.Key("global_dashboard").MustInt64(-1),
+		ApiKey:       quota.Key("global_api_key").MustInt64(-1),
+		Session:      quota.Key("global_session").MustInt64(-1),
+		File:         quota.Key("global_file").MustInt64(-1),
+		AlertRule:    alertGlobalQuota,
+		Correlations: quota.Key("global_correlations").MustInt64(-1),
 	}
 }

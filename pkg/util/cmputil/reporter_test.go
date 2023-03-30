@@ -7,7 +7,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -111,11 +110,11 @@ func TestIsAddedDeleted_Collections(t *testing.T) {
 		left := testStruct{}
 		right := testStruct{
 			Number:    rand.Float64(),
-			NumberPtr: ptr.Float64(rand.Float64()),
+			NumberPtr: util.Pointer(rand.Float64()),
 			Text:      util.GenerateShortUID(),
-			TextPtr:   ptr.String(util.GenerateShortUID()),
+			TextPtr:   util.Pointer(util.GenerateShortUID()),
 			Flag:      true,
-			FlagPtr:   ptr.Bool(true),
+			FlagPtr:   util.Pointer(true),
 			SubStruct: subStruct{
 				Data: rand.Float64(),
 			},

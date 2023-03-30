@@ -152,7 +152,7 @@ export function getMockFrames() {
     ],
     meta: {
       stats: [
-        { displayName: 'Summary: total bytes processed', value: 11 },
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 11 },
         { displayName: 'Ingester: total reached', value: 1 },
       ],
     },
@@ -199,7 +199,7 @@ export function getMockFrames() {
     ],
     meta: {
       stats: [
-        { displayName: 'Summary: total bytes processed', value: 22 },
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 22 },
         { displayName: 'Ingester: total reached', value: 2 },
       ],
     },
@@ -225,7 +225,7 @@ export function getMockFrames() {
     meta: {
       stats: [
         { displayName: 'Ingester: total reached', value: 1 },
-        { displayName: 'Summary: total bytes processed', value: 11 },
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 11 },
       ],
     },
     length: 2,
@@ -250,7 +250,7 @@ export function getMockFrames() {
     meta: {
       stats: [
         { displayName: 'Ingester: total reached', value: 2 },
-        { displayName: 'Summary: total bytes processed', value: 22 },
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 22 },
       ],
     },
     length: 2,
@@ -276,7 +276,7 @@ export function getMockFrames() {
     meta: {
       stats: [
         { displayName: 'Ingester: total reached', value: 2 },
-        { displayName: 'Summary: total bytes processed', value: 33 },
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 33 },
       ],
     },
     length: 2,

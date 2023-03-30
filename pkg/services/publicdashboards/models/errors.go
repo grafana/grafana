@@ -20,4 +20,6 @@ var (
 	ErrInvalidMaxDataPoints                = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.maxDataPoints", errutil.WithPublicMessage("maxDataPoints should be greater than 0"))
 	ErrInvalidTimeRange                    = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.invalidTimeRange", errutil.WithPublicMessage("Invalid time range"))
 	ErrInvalidShareType                    = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.invalidShareType", errutil.WithPublicMessage("Invalid share type"))
+
+	ErrPublicDashboardNotEnabled = errutil.NewBase(errutil.StatusForbidden, "publicdashboards.notEnabled", errutil.WithPublicMessage("Public dashboard paused"))
 )

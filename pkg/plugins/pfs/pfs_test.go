@@ -84,10 +84,6 @@ func TestParsePluginTestdata(t *testing.T) {
 			rootid: "test-app",
 			skip:   "has a 'page'-type include which isn't a known part of spec",
 		},
-		"test-app-with-link-extensions": {
-			rootid: "test-app",
-			skip:   "has a 'page'-type include which isn't a known part of spec",
-		},
 		"test-app-with-roles": {
 			rootid: "test-app",
 		},

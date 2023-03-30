@@ -9,8 +9,7 @@
     "action": {
       "change-theme": "Change theme...",
       "dark-theme": "Dark",
-      "light-theme": "Light",
-      "search": "Search"
+      "light-theme": "Light"
     },
     "search-box": {
       "placeholder": "Search or jump to..."
@@ -32,7 +31,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "Actions",
       "data-tab": "Data",
       "error-tab": "Error",
       "json-tab": "JSON",
@@ -85,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "Add panel",
-      "comments-show": "Show dashboard comments",
       "mark-favorite": "Mark as favorite",
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
@@ -208,7 +205,7 @@
       "title": "Folder"
     },
     "create-import": {
-      "title": "Import"
+      "title": "Import dashboard"
     },
     "dashboards": {
       "subtitle": "Create and manage dashboards to visualize your data",
@@ -243,18 +240,6 @@
     "library-panels": {
       "subtitle": "Reusable panels that can be added to multiple dashboards",
       "title": "Library panels"
-    },
-    "live": {
-      "title": "Event streaming"
-    },
-    "live-cloud": {
-      "title": "Cloud"
-    },
-    "live-pipeline": {
-      "title": "Pipeline"
-    },
-    "live-status": {
-      "title": "Status"
     },
     "manage-dashboards": {
       "title": "Browse"
@@ -305,7 +290,6 @@
       "title": "Scenes"
     },
     "search": {
-      "placeholder": "Search Grafana",
       "placeholderCommandPalette": "Search or jump to..."
     },
     "search-dashboards": {
@@ -427,6 +411,11 @@
     "folder-view": {
       "go-to-folder": "Go to folder",
       "select-folder": "Select folder"
+    },
+    "result-kind": {
+      "dashboard": "Dashboard",
+      "folder": "Folder",
+      "panel": "Panel"
     },
     "results-table": {
       "datasource-header": "Data source",

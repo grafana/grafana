@@ -8,6 +8,7 @@ import {
   MutableDataFrame,
   PreferredVisualisationType,
 } from '@grafana/data';
+import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import TableModel from 'app/core/TableModel';
 import flatten from 'app/core/utils/flatten';
 
@@ -597,6 +598,14 @@ export class ElasticResponse {
 
           series.refId = target.refId;
           dataFrame.push(series);
+        }
+      }
+    }
+
+    for (let frame of dataFrame) {
+      for (let field of frame.fields) {
+        if (field.type === FieldType.time && typeof field.values.get(0) !== 'number') {
+          field.values = convertFieldType(field, { destinationType: FieldType.time }).values;
         }
       }
     }

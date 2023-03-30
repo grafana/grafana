@@ -17,7 +17,7 @@ The easiest way to start developing Grafana plugins is to use the Grafana [creat
 Open the terminal, and run the following command in your [plugin directory]({{< relref "../../setup-grafana/configure-grafana/#plugins" >}}):
 
 ```bash
-npx @grafana/create-plugin
+npx @grafana/create-plugin@latest
 ```
 
 Follow the questions and you will have a starter plugin ready to develop.

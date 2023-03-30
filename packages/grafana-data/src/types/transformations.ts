@@ -31,6 +31,13 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
 }
 
 /**
+ * Function that returns a cutsom transform operator for transforming data frames
+ *
+ * @public
+ */
+export type CustomTransformOperator = (context: DataTransformContext) => MonoTypeOperatorFunction<DataFrame[]>;
+
+/**
  * Many transformations can be called with a simple synchronous function.
  * When a transformer is defined, it should have identical behavior to using the operator
  *

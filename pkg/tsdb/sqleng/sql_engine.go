@@ -23,6 +23,9 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
+// XormDriverMu is used to allow safe concurrent registering and querying of drivers in xorm
+var XormDriverMu sync.RWMutex
+
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
 
@@ -67,6 +70,7 @@ type JsonData struct {
 	Servername          string `json:"servername"`
 	TimeInterval        string `json:"timeInterval"`
 	Database            string `json:"database"`
+	SecureDSProxy       bool   `json:"enableSecureSocksProxy"`
 }
 
 type DataSourceInfo struct {
@@ -98,6 +102,7 @@ type DataSourceHandler struct {
 	dsInfo                 DataSourceInfo
 	rowLimit               int64
 }
+
 type QueryJson struct {
 	RawSql       string  `json:"rawSql"`
 	Fill         bool    `json:"fill"`

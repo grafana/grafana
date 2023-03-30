@@ -338,9 +338,9 @@ describe('datasource', () => {
 
       datasource.interpolateVariablesInQueries([metricsQuery], {});
 
-      // We interpolate `expression`, `region`, `period`, `alias`, `metricName`, and `nameSpace` in CloudWatchMetricsQuery
+      // We interpolate `expression`, `sqlExpression`, `region`, `period`, `alias`, `metricName`, `dimensions`, and `nameSpace` in CloudWatchMetricsQuery
       expect(templateService.replace).toHaveBeenCalledWith(`$${variableName}`, {});
-      expect(templateService.replace).toHaveBeenCalledTimes(7);
+      expect(templateService.replace).toHaveBeenCalledTimes(8);
 
       expect(templateService.getVariableName).toHaveBeenCalledWith(`$${variableName}`);
       expect(templateService.getVariableName).toHaveBeenCalledTimes(1);

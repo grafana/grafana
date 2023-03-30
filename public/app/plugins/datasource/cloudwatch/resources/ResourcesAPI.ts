@@ -37,7 +37,7 @@ export class ResourcesAPI extends CloudWatchRequest {
 
   getAccounts({ region }: ResourceRequest): Promise<Account[]> {
     return this.memoizedGetRequest<Array<ResourceResponse<Account>>>('accounts', {
-      region: this.templateSrv.replace(region),
+      region: this.templateSrv.replace(this.getActualRegion(region)),
     }).then((accounts) => accounts.map((a) => a.value));
   }
 

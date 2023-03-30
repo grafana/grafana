@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { InlineField, Select, Button } from '@grafana/ui';
@@ -19,7 +19,7 @@ export interface Props {
   disabled?: boolean;
 }
 
-export const DefaultSubscription: FunctionComponent<Props> = (props: Props) => {
+export const DefaultSubscription = (props: Props) => {
   const {
     credentials,
     disabled,

@@ -1,0 +1,72 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
+//  }
+//  Name: Top Metrics float
+//  Dimensions: 2 Fields by 3 Rows
+//  +-----------------------------------+-------------------+
+//  | Name: Time                        | Name: Value       |
+//  | Labels:                           | Labels:           |
+//  | Type: []time.Time                 | Type: []*float64  |
+//  +-----------------------------------+-------------------+
+//  | 2023-03-17 13:53:00.123 +0000 UTC | 97.16779327392578 |
+//  | 2023-03-17 13:54:00.123 +0000 UTC | 99.32247161865234 |
+//  | 2023-03-17 13:55:00.123 +0000 UTC | 98.62533569335938 |
+//  +-----------------------------------+-------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "Top Metrics float",
+        "meta": {
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {}
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1679061180123,
+            1679061240123,
+            1679061300123
+          ],
+          [
+            97.16779327392578,
+            99.32247161865234,
+            98.62533569335938
+          ]
+        ]
+      }
+    }
+  ]
+}

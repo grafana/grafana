@@ -36,7 +36,7 @@ Public plugins need to be reviewed by the Grafana team before you can sign them.
 
    ```bash
    export GRAFANA_API_KEY=<YOUR_API_KEY>
-   npx @grafana/sign-plugin
+   npx @grafana/sign-plugin@latest
    ```
 
 ## Sign a private plugin
@@ -47,7 +47,7 @@ Public plugins need to be reviewed by the Grafana team before you can sign them.
 
    ```bash
    export GRAFANA_API_KEY=<YOUR_API_KEY>
-   npx @grafana/sign-plugin --rootUrls https://example.com/grafana
+   npx @grafana/sign-plugin@latest --rootUrls https://example.com/grafana
    ```
 
 ## Plugin signature levels

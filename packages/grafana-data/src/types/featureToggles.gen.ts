@@ -9,19 +9,20 @@
  * conf/custom.ini to enable features under development or not yet available in
  * stable version.
  *
- * Only enabled values will be returned in this interface
+ * Only enabled values will be returned in this interface.
+ *
+ * NOTE: the possible values may change between versions without notice, although
+ * this may cause compilation issues when depending on removed feature keys, the
+ * runtime state will continue to work.
  *
  * @public
  */
 export interface FeatureToggles {
-  [name: string]: boolean | undefined; // support any string value
-
   alertingBigTransactions?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
-  ['live-pipeline']?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
@@ -31,15 +32,10 @@ export interface FeatureToggles {
   lokiLive?: boolean;
   lokiDataframeApi?: boolean;
   featureHighlights?: boolean;
-  dashboardComments?: boolean;
-  annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
   k8s?: boolean;
-  dashboardsFromStorage?: boolean;
-  export?: boolean;
   exploreMixedDatasource?: boolean;
-  tracing?: boolean;
   newTraceView?: boolean;
   correlations?: boolean;
   cloudWatchDynamicLabels?: boolean;
@@ -47,7 +43,8 @@ export interface FeatureToggles {
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
   validateDashboardsOnSave?: boolean;
-  autoMigrateGraphPanels?: boolean;
+  autoMigrateOldPanels?: boolean;
+  disableAngular?: boolean;
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
   scenes?: boolean;
@@ -62,7 +59,6 @@ export interface FeatureToggles {
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   newPanelChromeUI?: boolean;
-  queryLibrary?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
@@ -70,6 +66,7 @@ export interface FeatureToggles {
   accessTokenExpirationCheck?: boolean;
   elasticsearchBackendMigration?: boolean;
   datasourceOnboarding?: boolean;
+  emptyDashboardPage?: boolean;
   secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;
   disablePrometheusExemplarSampling?: boolean;
@@ -79,6 +76,15 @@ export interface FeatureToggles {
   logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
+  lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
+  onlyExternalOrgRoleSync?: boolean;
   drawerDataSourcePicker?: boolean;
+  traceqlSearch?: boolean;
+  prometheusMetricEncyclopedia?: boolean;
+  timeSeriesTable?: boolean;
+  influxdbBackendMigration?: boolean;
+  clientTokenRotation?: boolean;
+  disableElasticsearchBackendExploreQuery?: boolean;
+  prometheusDataplane?: boolean;
 }

@@ -239,7 +239,7 @@ export function createGetLinks(linkPatterns: ProcessedLinkPattern[], cache: Weak
 
 const processedLinks = (getConfigValue('linkPatterns') || [])
   .map(processLinkPattern)
-  .filter((link): link is ProcessedLinkPattern => Boolean(link));
+  .filter((link: ProcessedLinkPattern | null): link is ProcessedLinkPattern => Boolean(link));
 
 export const getTraceLinks: (trace: Trace | undefined) => TLinksRV = memoize(10)((trace: Trace | undefined) => {
   const result: TLinksRV = [];

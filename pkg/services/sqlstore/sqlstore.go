@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/VividCortex/mysqlerr"
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -44,14 +46,15 @@ type SQLStore struct {
 	sqlxsession  *session.SessionDB
 	CacheService *localcache.CacheService
 
-	bus                         bus.Bus
-	dbCfg                       DatabaseConfig
-	engine                      *xorm.Engine
-	log                         log.Logger
-	Dialect                     migrator.Dialect
-	skipEnsureDefaultOrgAndUser bool
-	migrations                  registry.DatabaseMigrator
-	tracer                      tracing.Tracer
+	bus                          bus.Bus
+	dbCfg                        DatabaseConfig
+	engine                       *xorm.Engine
+	log                          log.Logger
+	Dialect                      migrator.Dialect
+	skipEnsureDefaultOrgAndUser  bool
+	migrations                   registry.DatabaseMigrator
+	tracer                       tracing.Tracer
+	recursiveQueriesAreSupported *bool
 }
 
 func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
@@ -84,8 +87,8 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 	return s, nil
 }
 
-func ProvideServiceForTests(migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+func ProvideServiceForTests(cfg *setting.Cfg, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+	return initTestDB(cfg, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
 func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine *xorm.Engine,
@@ -278,7 +281,7 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			protocol = "unix"
 		}
 
-		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
+		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
 			ss.dbCfg.User, ss.dbCfg.Pwd, protocol, ss.dbCfg.Host, ss.dbCfg.Name)
 
 		if ss.dbCfg.SslMode == "true" || ss.dbCfg.SslMode == "skip-verify" {
@@ -476,6 +479,43 @@ func (ss *SQLStore) readConfig() error {
 	return nil
 }
 
+func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
+	if ss.recursiveQueriesAreSupported != nil {
+		return *ss.recursiveQueriesAreSupported, nil
+	}
+	recursiveQueriesAreSupported := func() (bool, error) {
+		var result []int
+		if err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
+			recQry := `WITH RECURSIVE cte (n) AS
+			(
+			SELECT 1
+			UNION ALL
+			SELECT n + 1 FROM cte WHERE n < 2
+			)
+			SELECT * FROM cte;
+		`
+			err := sess.SQL(recQry).Find(&result)
+			return err
+		}); err != nil {
+			var driverErr *mysql.MySQLError
+			if errors.As(err, &driverErr) {
+				if driverErr.Number == mysqlerr.ER_PARSE_ERROR {
+					return false, nil
+				}
+			}
+			return false, err
+		}
+		return true, nil
+	}
+
+	areSupported, err := recursiveQueriesAreSupported()
+	if err != nil {
+		return false, err
+	}
+	ss.recursiveQueriesAreSupported = &areSupported
+	return *ss.recursiveQueriesAreSupported, nil
+}
+
 // ITestDB is an interface of arguments for testing db
 type ITestDB interface {
 	Helper()
@@ -496,7 +536,6 @@ type InitTestDBOpt struct {
 
 var featuresEnabledDuringTests = []string{
 	featuremgmt.FlagDashboardPreviews,
-	featuremgmt.FlagDashboardComments,
 	featuremgmt.FlagPanelTitleSearch,
 	featuremgmt.FlagEntityStore,
 }
@@ -504,7 +543,7 @@ var featuresEnabledDuringTests = []string{
 // InitTestDBWithMigration initializes the test DB given custom migrations.
 func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
-	store, err := initTestDB(migration, opts...)
+	store, err := initTestDB(setting.NewCfg(), migration, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -514,7 +553,7 @@ func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opt
 // InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
-	store, err := initTestDB(&migrations.OSSMigrations{}, opts...)
+	store, err := initTestDB(setting.NewCfg(), &migrations.OSSMigrations{}, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -526,7 +565,8 @@ func InitTestDBWithCfg(t ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cf
 	return store, store.Cfg
 }
 
-func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
+//nolint:gocyclo
+func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
 
@@ -560,10 +600,12 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 			}
 			return false
 		}
+
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
 			return nil, err
 		}
+
 		if _, err := sec.NewKey("type", dbType); err != nil {
 			return nil, err
 		}
@@ -587,6 +629,21 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		if _, present := os.LookupEnv("SKIP_MIGRATIONS"); present {
 			if _, err := sec.NewKey("skip_migrations", "true"); err != nil {
 				return nil, err
+			}
+		}
+
+		if testCfg.Raw.HasSection("database") {
+			testSec, err := testCfg.Raw.GetSection("database")
+			if err == nil {
+				// copy from testCfg to the Cfg keys that do not exist
+				for _, k := range testSec.Keys() {
+					if sec.HasKey(k.Name()) {
+						continue
+					}
+					if _, err := sec.NewKey(k.Name(), k.Value()); err != nil {
+						return nil, err
+					}
+				}
 			}
 		}
 
