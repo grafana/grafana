@@ -87,8 +87,8 @@ Select a color mode.
 
 - **None -** No color applied to the value.
 - **Value -** Applies color to the value and graph area.
-- **Background Gradient -** Applies color to the background, with a slight gradient.
-- **Background Solid -** Applies color to the background, with a solid background color.
+- **Background Gradient -** Applies color to the value, graph area, and background, with a slight background gradient.
+- **Background Solid -** Applies color to the value, graph area, and background, with a solid background color.
 
 ### Graph mode
 
