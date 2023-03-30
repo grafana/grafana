@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -666,7 +665,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 		return response.Error(404, fmt.Sprintf("No versions found for dashboardId %d", dash.ID), err)
 	}
 
-	const cacheKey = "userLogin-"
+	loginMem := make(map[int64]string, len(versions))
 	res := make([]dashver.DashboardVersionMeta, 0, len(versions))
 	for _, version := range versions {
 		msg := version.Message
@@ -684,13 +683,13 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 
 		creator := anonString
 		if version.CreatedBy > 0 {
-			key := fmt.Sprintf("%s%d", cacheKey, version.CreatedBy)
-			if cached, found := hs.CacheService.Get(key); found {
-				creator = cached.(string)
+			login, found := loginMem[version.CreatedBy]
+			if found {
+				creator = login
 			} else {
 				creator = hs.getUserLogin(c.Req.Context(), version.CreatedBy)
 				if creator != anonString {
-					hs.CacheService.Set(key, creator, time.Second*5)
+					loginMem[version.CreatedBy] = creator
 				}
 			}
 		}
