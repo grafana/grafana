@@ -333,7 +333,6 @@ export class PrometheusDatasource
         instantTarget.range = false;
         instantTarget.valueWithRefId = true;
         delete instantTarget.maxDataPoints;
-        instantTarget.requestId += '_instant';
 
         // Create range target
         const rangeTarget: any = cloneDeep(target);
