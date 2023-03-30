@@ -10,16 +10,8 @@ describe('ConfirmModal', () => {
     dashboardsUIDs.add('uid1');
     dashboardsUIDs.add('uid2');
     items.set('dashboard', dashboardsUIDs);
-    const isDeleteModalOpen = true;
     const onDeleteItems = jest.fn();
-    render(
-      <ConfirmDeleteModal
-        onDeleteItems={onDeleteItems}
-        results={items}
-        isOpen={isDeleteModalOpen}
-        onDismiss={() => {}}
-      />
-    );
+    render(<ConfirmDeleteModal onDeleteItems={onDeleteItems} results={items} onDismiss={() => {}} />);
 
     expect(screen.getByRole('heading', { name: 'Delete' })).toBeInTheDocument();
     expect(screen.getByText('Do you want to delete the 2 selected dashboards?')).toBeInTheDocument();

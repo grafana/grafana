@@ -13,11 +13,10 @@ import { OnMoveOrDeleleSelectedItems } from '../../types';
 interface Props {
   onMoveItems: OnMoveOrDeleleSelectedItems;
   results: Map<string, Set<string>>;
-  isOpen: boolean;
   onDismiss: () => void;
 }
 
-export const MoveToFolderModal = ({ results, onMoveItems, isOpen, onDismiss }: Props) => {
+export const MoveToFolderModal = ({ results, onMoveItems, onDismiss }: Props) => {
   const [folder, setFolder] = useState<FolderInfo | null>(null);
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
@@ -49,12 +48,12 @@ export const MoveToFolderModal = ({ results, onMoveItems, isOpen, onDismiss }: P
     }
   };
 
-  return isOpen ? (
+  return (
     <Modal
       className={styles.modal}
       title="Choose Dashboard Folder"
       icon="folder-plus"
-      isOpen={isOpen}
+      isOpen={true}
       onDismiss={onDismiss}
     >
       <>
@@ -63,11 +62,11 @@ export const MoveToFolderModal = ({ results, onMoveItems, isOpen, onDismiss }: P
             Move the {selectedDashboards.length} selected dashboard{selectedDashboards.length === 1 ? '' : 's'} to the
             following folder:
           </p>
-          <FolderPicker onChange={(f) => setFolder(f)} />
+          <FolderPicker allowEmpty={true} enableCreateNew={false} onChange={(f) => setFolder(f)} />
         </div>
 
         <HorizontalGroup justify="center">
-          <Button icon={moving ? 'fa fa-spinner' : undefined} variant="primary" onClick={moveTo}>
+          <Button icon={moving ? 'fa fa-spinner' : undefined} disabled={!folder} variant="primary" onClick={moveTo}>
             Move
           </Button>
           <Button variant="secondary" onClick={onDismiss}>
@@ -76,7 +75,7 @@ export const MoveToFolderModal = ({ results, onMoveItems, isOpen, onDismiss }: P
         </HorizontalGroup>
       </>
     </Modal>
-  ) : null;
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
