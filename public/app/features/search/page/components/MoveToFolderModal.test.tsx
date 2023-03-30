@@ -13,12 +13,6 @@ import { DashboardSearchHit, DashboardSearchItemType } from '../../types';
 
 import { MoveToFolderModal } from './MoveToFolderModal';
 
-// jest.mock('app/core/components/Select/FolderPicker', () => {
-//   return {
-//     FolderPicker: () => null,
-//   };
-// });
-
 function makeSelections(dashboardUIDs: string[] = [], folderUIDs: string[] = []) {
   const dashboards = new Set(dashboardUIDs);
   const folders = new Set(folderUIDs);
