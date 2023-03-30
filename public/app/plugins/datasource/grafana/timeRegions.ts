@@ -4,8 +4,6 @@ import { calculateTimesWithin } from 'app/core/utils/timeRegions';
 import { TimeRegionConfig } from './types';
 
 export function doTimeRegionQuery(config: TimeRegionConfig, range: TimeRange, tz: string): DataFrame | undefined {
-  const regionTimezone = config.timezone ?? tz;
-
   const regions = calculateTimesWithin(config, range); // UTC
   if (!regions.length) {
     return undefined;
@@ -16,14 +14,21 @@ export function doTimeRegionQuery(config: TimeRegionConfig, range: TimeRange, tz
   const colors: string[] = [];
   const lines: boolean[] = [];
 
+  const regionTimezone = config.timezone ?? tz;
+
   // @TODO !!!
   for (const region of regions) {
     let from = region.from;
     let to = region.to;
 
     // find offset
-
-    console.log('from', from);
+    const info = getTimeZoneInfo(regionTimezone, from);
+    if (info) {
+      const offset = info.offsetInMins * 60 * 1000;
+      from += offset;
+      to += offset;
+      console.log('convert', from, offset, info);
+    }
 
     times.push(from);
     timesEnd.push(to);

@@ -78,10 +78,11 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): 
 
   const regions: AbsoluteTimeRange[] = [];
 
-  const fromStart = dateTime(tRange.from);
+  const fromStart = dateTime(tRange.from).utc();
   fromStart.set('hour', 0);
   fromStart.set('minute', 0);
   fromStart.set('second', 0);
+  fromStart.set('millisecond', 0);
   fromStart.add(hRange.from.h, 'hours');
   fromStart.add(hRange.from.m, 'minutes');
   fromStart.add(hRange.from.s, 'seconds');
@@ -95,7 +96,7 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): 
       break;
     }
 
-    const fromEnd = dateTime(fromStart);
+    const fromEnd = dateTime(fromStart).utc();
 
     if (fromEnd.hour) {
       if (hRange.from.h <= hRange.to.h) {
