@@ -40,7 +40,6 @@ export function QueryHeader({
   isQueryRunnable,
   isDatasetSelectorHidden,
 }: QueryHeaderProps) {
-  console.log(query, 'query');
   const { editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
   const [showConfirm, setShowConfirm] = useState(false);
