@@ -29,12 +29,19 @@ func ProvideCachingService() *OSSCachingService {
 }
 
 type CachingService interface {
+	// HandleQueryRequest uses a QueryDataRequest to check the cache for any existing results for that query.
+	// If none are found, it should return a CachedQueryDataResponse with an UpdateCacheFn which can be used to update the results cache after the fact.
+	// This function should populate the response headers (accessible through the context) with the cache status using the X-Cache header.
 	HandleQueryRequest(context.Context, *backend.QueryDataRequest) CachedQueryDataResponse
+	// HandleResourceRequest uses a CallResourceRequest to check the cache for any existing results for that request.
+	// This function should populate the response headers (accessible through the context) with the cache status using the X-Cache header.
 	HandleResourceRequest(context.Context, *backend.CallResourceRequest) *backend.CallResourceResponse
+	// HandleResourceRequest is used to cache resource responses for a resource request.
+	// Because plugins can send multiple responses asyncronously, the implementation should be able to handle multiple calls to this function for one request.
 	CacheResourceResponse(context.Context, *backend.CallResourceRequest, *backend.CallResourceResponse)
 }
 
-// Implementation of interface
+// Implementation of interface - does nothing
 type OSSCachingService struct {
 }
 

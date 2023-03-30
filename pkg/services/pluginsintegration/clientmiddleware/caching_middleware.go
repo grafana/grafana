@@ -15,14 +15,14 @@ import (
 // NewCachingMiddleware creates a new plugins.ClientMiddleware that will
 // attempt to read and write query results to the cache
 func NewCachingMiddleware(cachingService caching.CachingService) plugins.ClientMiddleware {
+	log := log.New("caching_middleware")
+	if err := prometheus.Register(QueryRequestHistogram); err != nil {
+		log.Error("error registering prometheus collector", "error", err)
+	}
+	if err := prometheus.Register(ResourceRequestHistogram); err != nil {
+		log.Error("error registering prometheus collector", "error", err)
+	}
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
-		log := log.New("caching_middleware")
-		if err := prometheus.Register(QueryRequestHistogram); err != nil {
-			log.Error("error registering prometheus collector", "error", err)
-		}
-		if err := prometheus.Register(ResourceRequestHistogram); err != nil {
-			log.Error("error registering prometheus collector", "error", err)
-		}
 		return &CachingMiddleware{
 			next:    next,
 			caching: cachingService,
