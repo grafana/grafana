@@ -40,6 +40,7 @@ export interface AxisProps {
   border?: uPlot.Axis.Border;
   decimals?: DecimalCount;
   distr?: ScaleDistribution;
+  logBase?: number;
 }
 
 export const UPLOT_AXIS_FONT_SIZE = 12;
@@ -124,6 +125,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       border,
       decimals,
       distr = ScaleDistribution.Linear,
+      logBase,
     } = this.props;
 
     const font = `${UPLOT_AXIS_FONT_SIZE}px ${theme.typography.fontFamily}`;
@@ -137,6 +139,30 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
 
     if (decimals === 0 && distr === ScaleDistribution.Linear) {
       filter = (u, splits) => splits.map((v) => (Number.isInteger(v) ? v : null));
+    } else if (distr === ScaleDistribution.Log && logBase === 2) {
+      const ySpacing = 30;
+
+      // simiilar to bars.ts label skipping
+      filter = (u, splits) => {
+        const dim = u.bbox.height;
+
+        let dataLen = splits.length;
+        let lastIdx = dataLen - 1;
+
+        let skipMod = 0;
+
+        let cssDim = dim / uPlot.pxRatio;
+        let maxTicks = Math.abs(Math.floor(cssDim / ySpacing));
+
+        skipMod = dataLen < maxTicks ? 0 : Math.ceil(dataLen / maxTicks);
+
+        let splits2 = splits.map((v, i) => {
+          let shouldSkip = skipMod !== 0 && (ySpacing > 0 ? i : lastIdx - i) % skipMod > 0;
+          return shouldSkip ? null : v;
+        });
+
+        return splits2;
+      };
     }
 
     let config: Axis = {

@@ -315,6 +315,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             grid: { show: customConfig.axisGridShow },
             decimals: field.config.decimals,
             distr: customConfig.scaleDistribution?.type,
+            logBase: customConfig.scaleDistribution?.log,
             incrs,
             ...axisColorOpts,
           },
