@@ -12,7 +12,7 @@ concurrency:
   group: rgm-build-package-${{ github.event.number }}
 jobs:
   build:
-    name: build
+    name: Package and upload a grafana.tar.gz
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Actions
@@ -26,7 +26,7 @@ jobs:
       - name: Build Backend
         uses: ./actions/package/publish
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
         with:
           distros: 'linux/amd64,linux/arm64'
           enterprise: true
