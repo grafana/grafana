@@ -44,14 +44,14 @@ func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
 				}
 			}
 
-			if c.LookupTokenErr != nil {
+			if c.AuthErr != nil {
 				var revokedErr *usertoken.TokenRevokedError
-				if errors.As(c.LookupTokenErr, &revokedErr) {
+				if errors.As(c.AuthErr, &revokedErr) {
 					tokenRevoked(c, revokedErr)
 					return
 				}
 
-				unauthorized(c, c.LookupTokenErr)
+				unauthorized(c, c.AuthErr)
 				return
 			}
 
@@ -115,12 +115,12 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 
 func unauthorized(c *contextmodel.ReqContext, err error) {
 	if c.IsApiRequest() {
-		c.WriteErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), c.LookupTokenErr)
+		c.WriteErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), c.AuthErr)
 		return
 	}
 
 	writeRedirectCookie(c)
-	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
+	if errors.Is(c.AuthErr, authn.ErrTokenNeedsRotation) {
 		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
 		return
 	}

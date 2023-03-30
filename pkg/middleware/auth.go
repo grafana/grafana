@@ -39,13 +39,13 @@ func accessForbidden(c *contextmodel.ReqContext) {
 
 func notAuthorized(c *contextmodel.ReqContext) {
 	if c.IsApiRequest() {
-		c.WriteErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), c.LookupTokenErr)
+		c.WriteErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), c.AuthErr)
 		return
 	}
 
 	writeRedirectCookie(c)
 
-	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
+	if errors.Is(c.AuthErr, authn.ErrTokenNeedsRotation) {
 		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
 		return
 	}
@@ -140,7 +140,7 @@ func Auth(options *AuthOptions) web.Handler {
 
 		if !c.IsSignedIn && options.ReqSignedIn && requireLogin {
 			var revokedErr *auth.TokenRevokedError
-			if errors.As(c.LookupTokenErr, &revokedErr) {
+			if errors.As(c.AuthErr, &revokedErr) {
 				tokenRevoked(c, revokedErr)
 				return
 			}

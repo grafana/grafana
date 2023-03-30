@@ -85,7 +85,7 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 
 func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 	if hs.Features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
-		if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
+		if errors.Is(c.AuthErr, authn.ErrTokenNeedsRotation) {
 			c.Redirect(hs.Cfg.AppSubURL + "/")
 			return
 		}

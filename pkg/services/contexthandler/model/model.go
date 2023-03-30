@@ -31,8 +31,8 @@ type ReqContext struct {
 	RequestNonce          string
 	IsPublicDashboardView bool
 
-	PerfmonTimer   prometheus.Summary
-	LookupTokenErr error
+	PerfmonTimer prometheus.Summary
+	AuthErr      error
 }
 
 // Handle handles and logs error by given status.

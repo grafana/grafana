@@ -143,7 +143,7 @@ func requestContextMiddleware() web.Middleware {
 				c.SkipCache = ctx.SkipCache
 				c.RequestNonce = ctx.RequestNonce
 				c.PerfmonTimer = ctx.PerfmonTimer
-				c.LookupTokenErr = ctx.LookupTokenErr
+				c.AuthErr = ctx.AuthErr
 			}
 
 			next.ServeHTTP(w, r)

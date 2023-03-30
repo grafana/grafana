@@ -145,8 +145,8 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 					reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 				}
 
-				// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
-				reqContext.LookupTokenErr = err
+				// Hack: set AuthErr, so we can check it in auth middlewares and reject the request from there
+				reqContext.AuthErr = err
 			} else {
 				reqContext.UserToken = identity.SessionToken
 				reqContext.SignedInUser = identity.SignedInUser()
@@ -484,14 +484,14 @@ func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContex
 			reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 		}
 
-		reqContext.LookupTokenErr = err
+		reqContext.AuthErr = err
 
 		return false
 	}
 
 	if h.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
 		if token.NeedsRotation(time.Duration(h.Cfg.TokenRotationIntervalMinutes) * time.Minute) {
-			reqContext.LookupTokenErr = authn.ErrTokenNeedsRotation.Errorf("token needs rotation")
+			reqContext.AuthErr = authn.ErrTokenNeedsRotation.Errorf("token needs rotation")
 			return true
 		}
 	}
