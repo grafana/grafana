@@ -183,7 +183,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 				},
 				exp: `{orgID="123",from="state-history",ruleUID="rule-uid"}`,
 			},
-			// TODO this case is flaky - investigate and re-enable
+			// TODO this case is flaky - investigate and re-enable. ref: https://drone.grafana.net/grafana/grafana/108325/3/7
 			//{
 			//	name: "filters instance labels in log line",
 			//	query: models.HistoryQuery{
