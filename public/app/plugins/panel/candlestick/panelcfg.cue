@@ -66,9 +66,7 @@ composableKinds: PanelCfg: {
 							// When enabled, all fields will be sent to the graph
 							includeAllFields?: bool | *false
 						} @cuetsy(kind="interface")
-						PanelFieldConfig: {
-							//TODO Needs schema from Timeseries panel
-						} @cuetsy(kind="interface")
+						PanelFieldConfig: common.GraphFieldConfig & {} @cuetsy(kind="interface")
 					},
 				]
 			},

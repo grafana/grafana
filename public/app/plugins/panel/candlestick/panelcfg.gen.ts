@@ -102,4 +102,4 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   mode: VizDisplayMode.CandlesVolume,
 };
 
-export interface PanelFieldConfig {}
+export interface PanelFieldConfig extends common.GraphFieldConfig {}
