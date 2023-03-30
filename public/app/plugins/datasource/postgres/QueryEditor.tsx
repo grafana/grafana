@@ -9,6 +9,5 @@ import { PostgresDatasource } from './datasource';
 const queryHeaderProps = { isDatasetSelectorHidden: true };
 
 export function QueryEditor(props: QueryEditorProps<PostgresDatasource, SQLQuery, SQLOptions>) {
-  console.log(props, 'props');
   return <SqlQueryEditor {...props} queryHeaderProps={queryHeaderProps} />;
 }
