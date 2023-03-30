@@ -1012,7 +1012,7 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			{Role: &editorRole, Permission: dashboards.PERMISSION_EDIT},
 		}
 		dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
-		guardian.InitLegacyGuardian(cfg, mockSQLStore, dashboardService, teamService)
+		guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 	}
 
 	loggedInUserScenarioWithRole(t, "When user exists and calling GET on", "GET", "/api/dashboards/id/2/versions",
