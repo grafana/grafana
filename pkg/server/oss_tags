@@ -1,1 +1,1 @@
-//go:build oss && !wireinject
+//go:build !wireinject && !enterprise && !pro
