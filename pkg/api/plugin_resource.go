@@ -277,7 +277,3 @@ func (s *callResourceResponseStream) Close() error {
 	s.closed = true
 	return nil
 }
-
-func (s *callResourceResponseStream) Clone() (*callResourceResponseStream, error) {
-	return nil, nil
-}
