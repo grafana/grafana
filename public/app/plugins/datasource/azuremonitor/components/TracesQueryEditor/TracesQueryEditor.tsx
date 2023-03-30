@@ -113,7 +113,11 @@ const TracesQueryEditor = ({
   });
 
   const useTime = (time: TimeRange) => {
-    if (timeRange !== null && (timeRange.raw.from !== time.raw.from || timeRange.raw.to !== time.raw.to)) {
+    if (
+      timeRange !== null &&
+      (timeRange.raw.from !== time.raw.from || timeRange.raw.to !== time.raw.to) &&
+      !query.azureLogAnalytics?.operationId
+    ) {
       setTimeRange({ ...time });
     }
   };
