@@ -174,7 +174,7 @@ function notifyNestedMoveResult(
     } else {
       notifyApp.warning(
         `Partially moved ${objectLower}`,
-        `Moved ${successCount} ${objectLower}, but ${failedCount} had errors`
+        `Failed to move ${failedCount} ${objectLower} to ${destinationName}`
       );
     }
   }
