@@ -101,6 +101,10 @@ function getComponentsFromStats(stats: Partial<Record<AlertInstanceState | 'paus
     statsComponents.push(<Badge color="red" key="errors" text={`${stats.error} errors`} />);
   }
 
+  if (stats.nodata) {
+    statsComponents.push(<Badge color="blue" key="nodata" text={`${stats.nodata} no data`} />);
+  }
+
   if (stats[AlertInstanceState.Pending]) {
     statsComponents.push(
       <Badge color={'orange'} key="pending" text={`${stats[AlertInstanceState.Pending]} pending`} />
