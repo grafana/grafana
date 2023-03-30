@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -164,5 +165,15 @@ func createTestDashAlert() dashAlert {
 func createTestDashAlertCondition() condition {
 	return condition{
 		Condition: "A",
+	}
+}
+
+func TestAddSuffixToName(t *testing.T) {
+	uid := uuid.New().String()
+	for i := 1; i <= DefaultFieldMaxLength; i++ {
+		name := strings.Repeat("a", i)
+		newName := addSuffixToName(name, uid)
+		require.LessOrEqualf(t, len(newName), DefaultFieldMaxLength, "name %s exceeds maximum length", newName)
+		require.Equalf(t, uid, newName[len(newName)-len(uid):], "new name %s does not end with UID %s", newName, uid)
 	}
 }

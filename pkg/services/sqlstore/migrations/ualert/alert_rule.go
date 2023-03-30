@@ -303,11 +303,18 @@ func normalizeRuleName(daName string, uid string) string {
 	// If we have to truncate, we're losing data and so there is higher risk of uniqueness conflicts.
 	// Append the UID to the suffix to forcibly break any collisions.
 	if len(daName) > DefaultFieldMaxLength {
-		trunc := DefaultFieldMaxLength - 1 - len(uid)
-		daName = daName[:trunc] + "_" + uid
+		return addSuffixToName(daName, uid)
 	}
-
 	return daName
+}
+
+func addSuffixToName(name, uid string) string {
+	l := len(name) + len(uid) + 1
+	if l > DefaultFieldMaxLength {
+		trunc := len(name) - (l - DefaultFieldMaxLength)
+		name = name[:trunc]
+	}
+	return name + "_" + uid
 }
 
 func extractChannelIDs(d dashAlert) (channelUids []uidOrID) {
