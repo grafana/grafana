@@ -99,9 +99,9 @@ Alpha features might be changed or removed without prior notice.
 | `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                                                                                                           |
 | `clientTokenRotation`              | Replaces the current in-request token rotation so that the client initiates the rotation                                                                                                            |
 | `prometheusDataplane`              | Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present. |
-| `alertStateHistoryLokiSecondary`   | Enable alert state history to be written to an external loki instance in addition to Grafana annotations.                                                                                           |
-| `alertStateHistoryLokiPrimary`     | Enable usage of a remote Loki instance as the primary source for state history reads.                                                                                                               |
-| `alertStateHistoryLokiOnly`        | Allow Grafana annotations emitted by alerting to be disabled completely when remote Loki is in place.                                                                                               |
+| `alertStateHistoryLokiSecondary`   | Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.                                                                                        |
+| `alertStateHistoryLokiPrimary`     | Enable a remote Loki instance as the primary source for state history reads.                                                                                                                        |
+| `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                                                                                                          |
 
 ## Development feature toggles
 

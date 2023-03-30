@@ -284,14 +284,14 @@ const (
 	FlagPrometheusDataplane = "prometheusDataplane"
 
 	// FlagAlertStateHistoryLokiSecondary
-	// Enable alert state history to be written to an external loki instance in addition to Grafana annotations.
+	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
 	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
 
 	// FlagAlertStateHistoryLokiPrimary
-	// Enable usage of a remote Loki instance as the primary source for state history reads.
+	// Enable a remote Loki instance as the primary source for state history reads.
 	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
 
 	// FlagAlertStateHistoryLokiOnly
-	// Allow Grafana annotations emitted by alerting to be disabled completely when remote Loki is in place.
+	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
 	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
 )
