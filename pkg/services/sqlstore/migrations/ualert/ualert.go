@@ -400,6 +400,8 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 	}
 
+	m.ensureUniqueGroup(rulesPerOrg)
+
 	for orgID := range rulesPerOrg {
 		if err := m.writeSilencesFile(orgID); err != nil {
 			m.mg.Logger.Error("alert migration error: failed to write silence file", "err", err)
@@ -423,6 +425,20 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	}
 
 	return nil
+}
+
+func (m *migration) ensureUniqueGroup(rulesPerOrg map[int64]map[*alertRule][]uidOrID) {
+	// rule group can be normalized and therefore there is a chance that it can be not unique. Also,  rules in a group must have the same evaluation interval.
+	// Therefore, to enforce the rule that each alert rule is migrated to its own group, make sure that all groups are unique
+	for _, rules := range rulesPerOrg {
+		groupNames := make(map[string]struct{}, len(rules))
+		for rule := range rules {
+			if _, ok := groupNames[rule.RuleGroup]; ok {
+				rule.RuleGroup = addSuffixToName(rule.RuleGroup, rule.UID)
+			}
+			groupNames[rule.RuleGroup] = struct{}{}
+		}
+	}
 }
 
 func (m *migration) insertRules(mg *migrator.Migrator, rulesPerOrg map[int64]map[*alertRule][]uidOrID) error {

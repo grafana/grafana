@@ -611,6 +611,20 @@ func TestDashAlertMigration(t *testing.T) {
 			require.Equal(t, expectedFolder.UID, rule.NamespaceUID)
 		}
 	})
+
+	t.Run("when normalized groups intersect make them unique", func(t *testing.T) {
+		defer teardown(t, x)
+		alerts := []*models.Alert{
+			createAlert(t, int64(1), int64(1), int64(1), `alert1 test`, []string{}),
+			createAlert(t, int64(1), int64(1), int64(2), `alert1 test`, []string{}),
+		}
+		setupLegacyAlertsTables(t, x, nil, alerts)
+		runDashAlertMigrationTestRun(t, x)
+
+		rules := getAlertRules(t, x, int64(1))
+		require.Len(t, rules, 2)
+		require.NotEqual(t, rules[0].RuleGroup, rules[1].RuleGroup)
+	})
 }
 
 const (
