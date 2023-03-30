@@ -66,7 +66,7 @@ Regex:
 > **Note:** Available in Grafana v7.2 and higher.
 
 We recommend using `$__rate_interval` in the `rate` and `increase` functions instead of `$__interval` or a fixed interval value.
-Because `$__rate_interval` is always at least four times the value of the Scrape interval, it avoid problems specific to Prometheus.
+Because `$__rate_interval` is always at least four times the value of the Scrape interval, it avoids problems specific to Prometheus.
 
 For example, instead of using:
 
