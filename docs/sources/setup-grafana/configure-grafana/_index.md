@@ -7,7 +7,7 @@ title: Configure Grafana
 weight: 200
 ---
 
-# Configure Grafana 
+# Configure Grafana
 
 Grafana has default and custom configuration files. You can customize your Grafana instance by modifying the custom configuration file or by using environment variables. To see the list of settings for a Grafana instance, refer to [View server settings]({{< relref "../../administration/stats-and-license#view-server-settings" >}}).
 
@@ -1450,7 +1450,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ## [unified_alerting.screenshots]
 
-For more information about screenshots, refer to [Images in notifications](https://grafana.com/docs/grafana/next/alerting/manage-notifications/images-in-notifications).
+For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/manage-notifications/images-in-notifications">}}).
 
 ### capture
 
