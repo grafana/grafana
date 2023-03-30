@@ -114,6 +114,7 @@ const jsonDataChangeHandler =
   (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
     onChange({
       ...value,
+      database: key === 'index' ? '' : value.database,
       jsonData: {
         ...value.jsonData,
         [key]: event.currentTarget.value,
