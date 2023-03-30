@@ -291,12 +291,7 @@ func (e *PublicDashboardStoreImpl) GetMetrics(ctx context.Context) (*Metrics, er
 		TotalPublicDashboards: []*TotalPublicDashboard{},
 	}
 	err := e.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		err := sess.SQL("SELECT COUNT(*) as total_count, is_enabled, share as share_type  FROM dashboard_public GROUP BY  is_enabled, share").Find(&metrics.TotalPublicDashboards)
-		if err != nil {
-			return err
-		}
-
-		return err
+		return sess.SQL("SELECT COUNT(*) as total_count, is_enabled, share as share_type  FROM dashboard_public GROUP BY  is_enabled, share").Find(&metrics.TotalPublicDashboards)
 	})
 	if err != nil {
 		return nil, err

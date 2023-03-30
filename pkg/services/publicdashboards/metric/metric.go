@@ -2,7 +2,8 @@ package metric
 
 import (
 	"context"
-	"fmt"
+	"errors"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/prometheus/client_golang/prometheus"
 	"strconv"
@@ -12,27 +13,41 @@ import (
 type PublicDashboardsMetricServiceImpl struct {
 	store   publicdashboards.Store
 	Metrics *Metrics
+	log     log.Logger
 }
+
+var LogPrefix = "publicdashboards.metric"
 
 func ProvideService(
 	store publicdashboards.Store,
-	prom prometheus.Registerer,
 ) (*PublicDashboardsMetricServiceImpl, error) {
 	s := &PublicDashboardsMetricServiceImpl{
 		store:   store,
 		Metrics: NewMetrics(),
+		log:     log.New(LogPrefix),
 	}
 
-	err := prom.Register(s.Metrics.PublicDashboardsTotal)
-	//TODO: check what could happen here
-	if err != nil {
-		return nil, fmt.Errorf("failed to register metrics: %w", err)
+	if err := s.registerMetrics(); err != nil {
+		return nil, err
 	}
 
 	return s, nil
 }
 
+func (s *PublicDashboardsMetricServiceImpl) registerMetrics() error {
+	err := prometheus.Register(s.Metrics.PublicDashboardsTotal)
+	var alreadyRegisterErr prometheus.AlreadyRegisteredError
+	if errors.As(err, &alreadyRegisterErr) {
+		if alreadyRegisterErr.ExistingCollector == alreadyRegisterErr.NewCollector {
+			err = nil
+		}
+	}
+
+	return err
+}
+
 func (s *PublicDashboardsMetricServiceImpl) Run(ctx context.Context) error {
+	//TODO change this. Every 24hs?
 	ticker := time.Tick(10 * time.Second)
 
 	for {
@@ -40,7 +55,12 @@ func (s *PublicDashboardsMetricServiceImpl) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker:
-			records, _ := s.store.GetMetrics(ctx)
+			records, err := s.store.GetMetrics(ctx)
+			if err != nil {
+				s.log.Debug("error collecting background metrics", "error", err)
+				//TODO check if it finishes the Run
+				return err
+			}
 
 			s.Metrics.PublicDashboardsTotal.Reset()
 			for _, r := range records.TotalPublicDashboards {
