@@ -16,8 +16,6 @@ const (
 )
 
 type CacheQueryResponseFn func(context.Context, *backend.QueryDataResponse)
-type CacheResourceResponseFn func(context.Context, *backend.CallResourceResponse)
-type CacheStatus int
 
 type CachedQueryDataResponse struct {
 	// The cached data response associated with a query, or nil if no cached data is found
