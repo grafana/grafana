@@ -44,11 +44,11 @@ Each collection is returned from a single data source query or expression and re
 
 ### Data source queries
 
-Server-side expressions only support data source queries for backend data sources. The data is generally assumed to be labeled time series data. In the future we intended to add an assertion of the query return type (number or time series) data so expressions can handle errors better.
+Server-side expressions only support data source queries for backend data sources. The data is generally assumed to be labeled time series data. In the future we intend to add an assertion of the query return type (number or time series) data so expressions can handle errors better.
 
 Data source queries, when used with expressions, are executed by the expression engine. When it does this, it restructures data to be either one time series or one number per data frame. So for example if using a data source that returns multiple series on one frame in the table view, you might notice it looks different when executed with expressions.
 
-Currently, the only non-time series format (number) is supported when using data frames are you have a table response that returns a data frame with no time, string columns, and one number column:
+Currently, the only non-time series format (number) is supported when using data frames and you have a table response that returns a data frame with no time, string columns, and one number column:
 
 | Loc | Host | Avg_CPU |
 | --- | ---- | ------- |
@@ -63,7 +63,7 @@ You can use the following operations in expressions: math, reduce, and resample.
 
 #### Math
 
-Math is for free-form math formulas on time series or number data. Math operations take numbers and time series as input and changes them to different numbers and time series.
+Math is for free-form math formulas on time series or number data. Math operations take numbers and time series as input and change them to different numbers and time series.
 
 Data from other queries or expressions are referenced with the RefID prefixed with a dollar sign, for example `$A`. If the variable has spaces in the name, then you can use a brace syntax like `${my variable}`.
 
@@ -101,7 +101,7 @@ The relational and logical operators return 0 for false 1 for true.
 
 ##### Math Functions
 
-While most functions exist in the own expression operations, the math operation does have some functions that similar to math operators or symbols. When functions can take either numbers or series, than the same type as the argument will be returned. When it is a series, the operation of performed for the value of each point in the series.
+While most functions exist in the own expression operations, the math operation does have some functions similar to math operators or symbols. When functions can take either numbers or series, than the same type as the argument will be returned. When it is a series, the operation of performed for the value of each point in the series.
 
 ###### abs
 
