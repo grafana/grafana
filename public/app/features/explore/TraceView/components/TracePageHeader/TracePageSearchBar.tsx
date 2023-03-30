@@ -23,6 +23,7 @@ import { ubJustifyEnd } from '../uberUtilityStyles';
 
 export type TracePageSearchBarProps = {
   search: SearchProps;
+  setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
   searchMatches: Set<string> | undefined;
   focusedSearchMatch: string;
   setFocusedSearchMatch: Dispatch<SetStateAction<string>>;
@@ -30,7 +31,7 @@ export type TracePageSearchBarProps = {
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
-  const { search, searchMatches, focusedSearchMatch, setFocusedSearchMatch, datasourceType } = props;
+  const { search, setSearch, searchMatches, focusedSearchMatch, setFocusedSearchMatch, datasourceType } = props;
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -84,8 +85,6 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     (search.to && search.to !== '') ||
     (search.tags[0].key && search.tags[0].key !== '') ||
     (search.tags[0].value && search.tags[0].value !== '');
-
-  // console.log('render TracePageSearchBar');
 
   return (
     <div className={styles.searchBar}>

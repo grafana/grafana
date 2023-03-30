@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { filterSpans, TraceSpan } from './components';
-import { randomId } from './components/utils/filter-spans';
 
 export interface SearchProps {
   serviceName?: string;
@@ -20,26 +20,29 @@ export interface Tag {
   key?: string;
   operator: string;
   value?: string;
-  hideText?: boolean;
 }
+
+export const randomId = () => uuidv4().slice(0, 12);
+
+export const defaultTagFilter = {
+  id: randomId(),
+  operator: '=',
+};
+
+export const defaultFilters = {
+  spanNameOperator: '=',
+  serviceNameOperator: '=',
+  fromOperator: '>',
+  toOperator: '<',
+  tags: [defaultTagFilter],
+};
 
 /**
  * Controls the state of search input that highlights spans if they match the search string.
  * @param spans
  */
 export function useSearch(spans?: TraceSpan[]) {
-  const [search, setSearch] = useState<SearchProps>({
-    spanNameOperator: '=',
-    serviceNameOperator: '=',
-    fromOperator: '>',
-    toOperator: '<',
-    tags: [
-      {
-        id: randomId(),
-        operator: '=',
-      },
-    ],
-  });
+  const [search, setSearch] = useState<SearchProps>(defaultFilters);
   const searchMatches: Set<string> | undefined = useMemo(() => {
     return search && spans ? filterSpans(search, spans) : undefined;
   }, [search, spans]);

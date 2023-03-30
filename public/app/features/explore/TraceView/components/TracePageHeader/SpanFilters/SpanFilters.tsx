@@ -22,9 +22,8 @@ import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 import { Collapse, HorizontalGroup, InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
 
-import { SearchProps } from '../../../useSearch';
+import { randomId, SearchProps } from '../../../useSearch';
 import { Trace } from '../../types';
-import { randomId } from '../../utils/filter-spans';
 import TracePageSearchBar from '../TracePageSearchBar';
 
 export type SpanFilterProps = {
@@ -152,29 +151,22 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
   }, [search.tags, tagValues]);
 
   const addTag = () => {
-    console.log('add tag');
-    let tags = search.tags;
-    tags.push({
+    const tag = {
       id: randomId(),
       operator: '=',
-    });
-    setSearch({ ...search, tags: tags });
+    };
+    setSearch({ ...search, tags: [...search.tags, tag] });
   };
 
   const removeTag = (id: string) => {
-    console.log('remove tag');
-    let tags = [...search.tags];
-    tags = tags.filter((tag) => {
+    let tags = search.tags.filter((tag) => {
       return tag.id !== id;
     });
     if (tags.length === 0) {
-      const newId = randomId();
-      console.log(newId);
       tags = [
         {
-          id: newId,
+          id: randomId(),
           operator: '=',
-          hideText: true,
         },
       ];
     }
@@ -198,9 +190,7 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
             <Select
               aria-label={'select-service-name'}
               isClearable
-              onChange={(v) => {
-                setSearch({ ...search, serviceName: v?.value || '' });
-              }}
+              onChange={(v) => setSearch({ ...search, serviceName: v?.value || '' })}
               options={serviceNameOptions()}
               placeholder="All service names"
             />
@@ -256,7 +246,7 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Tags" labelWidth={16}>
+        <InlineField label="Tags" labelWidth={16} tooltip="Filter by tags, process tags or log tags in your spans.">
           <div>
             {search.tags.map((tag, i) => (
               <div key={i}>
@@ -268,7 +258,7 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
                       setSearch({
                         ...search,
                         tags: search.tags?.map((x) => {
-                          return x.id === tag.id ? { ...x, key: v?.value || '' } : x;
+                          return x.id === tag.id ? { ...x, key: v?.value || '', value: undefined } : x;
                         }),
                       });
 
@@ -341,6 +331,7 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
 
       <TracePageSearchBar
         search={search}
+        setSearch={setSearch}
         searchMatches={searchMatches}
         focusedSearchMatch={focusedSearchMatch}
         setFocusedSearchMatch={setFocusedSearchMatch}

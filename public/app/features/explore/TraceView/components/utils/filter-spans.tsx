@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { v4 as uuidv4 } from 'uuid';
-
 import { SearchProps, Tag } from '../../useSearch';
 import { TNil, TraceKeyValuePair, TraceSpan } from '../types';
 
+// filter spans where all filters added need to be true for each individual span that is returned
+// i.e. the more filters added -> the more specific that the returned results are
 export default function filterSpans(searchProps: SearchProps, spans: TraceSpan[] | TNil) {
   if (!spans) {
-    return new Set([]);
+    return undefined;
   }
 
   const arraysToMatchAcross = [];
@@ -29,44 +29,49 @@ export default function filterSpans(searchProps: SearchProps, spans: TraceSpan[]
   if (searchProps.spanName) {
     arraysToMatchAcross.push(getSpanNameMatches(spans, searchProps));
   }
-  if (searchProps.tags[0].key || searchProps.tags[0].value) {
-    arraysToMatchAcross.push(getTagMatches(spans, searchProps.tags));
-  }
   if (searchProps.from || searchProps.to) {
     arraysToMatchAcross.push(getDurationMatches(spans, searchProps));
+  }
+  const tagMatches = getTagMatches(spans, searchProps.tags);
+  if (tagMatches) {
+    arraysToMatchAcross.push(tagMatches);
   }
 
   if (arraysToMatchAcross.length > 0) {
     return new Set([...arraysToMatchAcross].reduce((a, b) => a.filter((c) => b.includes(c))));
   }
-  return new Set([]);
+  return undefined;
 }
 
 const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
   // remove empty tags
   tags = tags.filter((tag) => {
-    return tag.key || tag.value;
+    return (tag.key && tag.key !== '') || tag.value;
   });
 
-  return spans
-    .filter((span: TraceSpan) => {
-      // match against every tag filter
-      return tags.every((tag: Tag) => {
-        if (tag.key && tag.value) {
-          const found = span.tags.some((kv) => checkKeyAndValueForMatch(tag, kv));
-          const found2 = span.process.tags.some((kv) => checkKeyAndValueForMatch(tag, kv));
-          const found3 = span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForMatch(tag, kv)));
-          return checkForMatch(tag.operator, found, found2, found3);
-        } else if (tag.key) {
-          const found = span.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key));
-          const found2 = span.process.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key));
-          const found3 = span.logs.some((log) => log.fields.some((kv) => checkKeyForMatch(tag.key!, kv.key)));
-          return checkForMatch(tag.operator, found, found2, found3);
-        }
-        return false;
-      });
-    })
-    .map((span: TraceSpan) => span.spanID);
+  if (tags.length > 0) {
+    return spans
+      .filter((span: TraceSpan) => {
+        // match against every tag filter (AND filter)
+        return tags.every((tag: Tag) => {
+          // tag.key === '' when it is cleared via pressing x icon in select field
+          if (tag.key && tag.value) {
+            const found = span.tags.some((kv) => checkKeyAndValueForMatch(tag, kv));
+            const found2 = span.process.tags.some((kv) => checkKeyAndValueForMatch(tag, kv));
+            const found3 = span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForMatch(tag, kv)));
+            return checkForMatch(tag.operator, found, found2, found3);
+          } else if (tag.key) {
+            const found = span.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key));
+            const found2 = span.process.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key));
+            const found3 = span.logs.some((log) => log.fields.some((kv) => checkKeyForMatch(tag.key!, kv.key)));
+            return checkForMatch(tag.operator, found, found2, found3);
+          }
+          return false;
+        });
+      })
+      .map((span: TraceSpan) => span.spanID);
+  }
+  return undefined;
 };
 
 const checkForMatch = (operator: string, found: boolean, found2: boolean, found3: boolean) => {
@@ -128,17 +133,15 @@ const getDurationMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
 
 const convertTimeFilter = (time: string) => {
   if (time.includes('μs')) {
-    return parseInt(time.split('μs')[0], 10);
+    return parseFloat(time.split('μs')[0]);
   } else if (time.includes('ms')) {
-    return parseInt(time.split('ms')[0], 10) * 1000; // TODO: JOEY: 27.3ms doesn't work
+    return parseFloat(time.split('ms')[0]) * 1000;
   } else if (time.includes('s')) {
-    return parseInt(time.split('s')[0], 10) * 1000 * 1000;
+    return parseFloat(time.split('s')[0]) * 1000 * 1000;
   } else if (time.includes('m')) {
-    return parseInt(time.split('m')[0], 10) * 1000 * 1000 * 60;
+    return parseFloat(time.split('m')[0]) * 1000 * 1000 * 60;
   } else if (time.includes('h')) {
-    return parseInt(time.split('h')[0], 10) * 1000 * 1000 * 60 * 60;
+    return parseFloat(time.split('h')[0]) * 1000 * 1000 * 60 * 60;
   }
   return undefined;
 };
-
-export const randomId = () => uuidv4().slice(0, 12);
