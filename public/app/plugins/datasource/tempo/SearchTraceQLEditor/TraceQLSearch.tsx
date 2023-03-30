@@ -118,7 +118,9 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
             <InlineSearchField
               key={f.id}
               label={filterTitle(f)}
-              tooltip={`Configured in datasource - ${filterScopedTag(f)}`}
+              tooltip={`Filter your search by ${filterScopedTag(
+                f
+              )}. To modify the default filters shown for search visit the Tempo datasource configuration page.`}
             >
               <SearchField
                 filter={findFilter(f.id) || f}
