@@ -54,7 +54,6 @@
     "regenerator-runtime": "0.13.11",
     "rxjs": "7.8.0",
     "tinycolor2": "1.6.0",
-    "trusted-types": "^2.0.0",
     "tslib": "2.5.0",
     "uplot": "1.6.24",
     "xss": "^1.0.14"
@@ -82,7 +81,6 @@
     "@types/sinon": "10.0.13",
     "@types/testing-library__jest-dom": "5.14.5",
     "@types/tinycolor2": "1.4.3",
-    "@types/trusted-types": "^2.0.3",
     "esbuild": "0.16.17",
     "react": "17.0.2",
     "react-dom": "17.0.2",

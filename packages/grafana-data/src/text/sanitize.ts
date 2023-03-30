@@ -1,5 +1,4 @@
 import { sanitizeUrl as braintreeSanitizeUrl } from '@braintree/sanitize-url';
-import { trustedTypes } from 'trusted-types';
 import DOMPurify from 'dompurify';
 import * as xss from 'xss';
 
