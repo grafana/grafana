@@ -462,9 +462,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return labelValues ?? [];
   }
 
-  async getParserAndLabelKeys(
-    selector: string
-  ): Promise<{
+  async getParserAndLabelKeys(selector: string): Promise<{
     extractedLabelKeys: string[];
     hasJSON: boolean;
     hasLogfmt: boolean;
