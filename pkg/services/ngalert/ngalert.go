@@ -453,7 +453,7 @@ func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 		// If we cannot even treat Loki as a secondary, we must use annotations only.
 		if backend == historian.BackendTypeMultiple || backend == historian.BackendTypeLoki {
 			logger.Info("Forcing Annotation backend due to state history feature toggles")
-			cfg.Backend = "annotations"
+			cfg.Backend = historian.BackendTypeAnnotations.String()
 			cfg.MultiPrimary = ""
 			cfg.MultiSecondaries = make([]string, 0)
 		}
@@ -463,15 +463,15 @@ func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 		// If we're using multiple backends, Loki must be the secondary.
 		if backend == historian.BackendTypeMultiple {
 			logger.Info("Coercing Loki to a secondary backend due to state history feature toggles")
-			cfg.MultiPrimary = "annotations"
-			cfg.MultiSecondaries = []string{"loki"}
+			cfg.MultiPrimary = historian.BackendTypeAnnotations.String()
+			cfg.MultiSecondaries = []string{historian.BackendTypeLoki.String()}
 		}
 		// If we're using loki, we are only allowed to use it as a secondary. Dual write to it, plus annotations.
 		if backend == historian.BackendTypeLoki {
 			logger.Info("Coercing Loki to dual writes with a secondary backend due to state history feature toggles")
-			cfg.Backend = "multiple"
-			cfg.MultiPrimary = "annotations"
-			cfg.MultiSecondaries = []string{"loki"}
+			cfg.Backend = historian.BackendTypeMultiple.String()
+			cfg.MultiPrimary = historian.BackendTypeAnnotations.String()
+			cfg.MultiSecondaries = []string{historian.BackendTypeLoki.String()}
 		}
 		return
 	}
@@ -479,9 +479,9 @@ func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 		// If we're not allowed to use Loki only, make it the primary but keep the annotation writes.
 		if backend == historian.BackendTypeLoki {
 			logger.Info("Forcing dual writes to Loki and Annotations due to state history feature toggles")
-			cfg.Backend = "multiple"
-			cfg.MultiPrimary = "loki"
-			cfg.MultiSecondaries = []string{"annotations"}
+			cfg.Backend = historian.BackendTypeMultiple.String()
+			cfg.MultiPrimary = historian.BackendTypeLoki.String()
+			cfg.MultiSecondaries = []string{historian.BackendTypeAnnotations.String()}
 		}
 		return
 	}
