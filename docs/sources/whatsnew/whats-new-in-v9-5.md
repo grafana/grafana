@@ -95,13 +95,13 @@ Search for namespaces or folders, evaluation groups, and alert rule names on the
 
 Navigate to an alert rule directly from a dashboard or a panel to easily dive into the alert rule details.
 
-{{< figure src="/media/docs/alerting/dashboard-alert-rule.png" max-width="750px" caption="Access an alert rule from a dashboard or a panel" >}}
+{{< figure src="/media/docs/alerting/alert-rule-dashboard.png" max-width="750px" caption="Access an alert rule from a dashboard or a panel" >}}
 
 ### Access a dashboard or panel from an alert rule
 
 Navigate from an alert rule straight to a dashboard or a panel associated with the alert rule to visualize your alerting data.
 
-{{< figure src="/media/docs/alerting/alert-rule-dashboard.png" max-width="750px" caption="Access a dashboard or panel from an alert rule" >}}
+{{< figure src="/media/docs/alerting/dashboard-alert-rule.png" max-width="750px" caption="Access a dashboard or panel from an alert rule" >}}
 
 ### Preview queries for recording rules
 
