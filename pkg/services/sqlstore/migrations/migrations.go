@@ -66,6 +66,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddMigration(mg)
 	addQueryHistoryMigrations(mg)
 
+	accesscontrol.AddDisabledMigrator(mg)
 	accesscontrol.AddTeamMembershipMigrations(mg)
 	accesscontrol.AddDashboardPermissionsMigrator(mg)
 	accesscontrol.AddAlertingPermissionsMigrator(mg)
