@@ -44,20 +44,20 @@ func TestSearch_SortedResults(t *testing.T) {
 		},
 	}
 
-	err := svc.SearchHandler(context.Background(), query)
+	hits, err := svc.SearchHandler(context.Background(), query)
 	require.Nil(t, err)
 
 	// Assert results are sorted.
-	assert.Equal(t, "FOLDER", query.Result[0].Title)
-	assert.Equal(t, "AABB", query.Result[1].Title)
-	assert.Equal(t, "BBAA", query.Result[2].Title)
-	assert.Equal(t, "bbAAa", query.Result[3].Title)
-	assert.Equal(t, "CCAA", query.Result[4].Title)
+	assert.Equal(t, "FOLDER", hits[0].Title)
+	assert.Equal(t, "AABB", hits[1].Title)
+	assert.Equal(t, "BBAA", hits[2].Title)
+	assert.Equal(t, "bbAAa", hits[3].Title)
+	assert.Equal(t, "CCAA", hits[4].Title)
 
 	// Assert tags are sorted.
-	assert.Equal(t, "AA", query.Result[3].Tags[0])
-	assert.Equal(t, "BB", query.Result[3].Tags[1])
-	assert.Equal(t, "EE", query.Result[3].Tags[2])
+	assert.Equal(t, "AA", hits[3].Tags[0])
+	assert.Equal(t, "BB", hits[3].Tags[1])
+	assert.Equal(t, "EE", hits[3].Tags[2])
 }
 
 func TestSearch_StarredResults(t *testing.T) {
@@ -84,11 +84,11 @@ func TestSearch_StarredResults(t *testing.T) {
 		SignedInUser: &user.SignedInUser{},
 	}
 
-	err := svc.SearchHandler(context.Background(), query)
+	hits, err := svc.SearchHandler(context.Background(), query)
 	require.Nil(t, err)
 
 	// Assert only starred dashboards are returned
-	assert.Equal(t, 2, query.Result.Len())
-	assert.Equal(t, "A", query.Result[0].Title)
-	assert.Equal(t, "C", query.Result[1].Title)
+	assert.Equal(t, 2, hits.Len())
+	assert.Equal(t, "A", hits[0].Title)
+	assert.Equal(t, "C", hits[1].Title)
 }
