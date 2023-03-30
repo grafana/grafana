@@ -62,22 +62,6 @@ export function QueryHeader({
     onChange(next);
   };
 
-  // const onDatasetChange = (e: SelectableValue) => {
-  //   if (e.value === query.dataset) {
-  //     return;
-  //   }
-
-  //   const next = {
-  //     ...query,
-  //     dataset: e.value,
-  //     table: undefined,
-  //     sql: undefined,
-  //     rawSql: '',
-  //   };
-
-  //   onChange(next);
-  // };
-
   const onTableChange = (e: SelectableValue) => {
     if (e.value === query.table) {
       return;
