@@ -18,10 +18,12 @@ interface Props extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
 }
 
 export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range, queryHeaderProps }: Props) {
+  // console.log('🚀 ~ file: QueryEditor.tsx:21 ~ SqlQueryEditor ~ queryHeaderProps:', queryHeaderProps);
   // console.log('🚀 ~ file: QueryEditor.tsx:21 ~ SqlQueryEditor ~ datasource:', datasource);
   // console.log(datasource.type, 'datasource.type');
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
+  const defaultDatabase = datasource.defaultDatabase;
   // console.log('🚀 ~ file: QueryEditor.tsx:23 ~ SqlQueryEditor ~ db:', db);
   const { loading, error } = useAsync(async () => {
     return () => {
@@ -83,6 +85,7 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
     <>
       <QueryHeader
         db={db}
+        defaultDatabase={defaultDatabase}
         onChange={onQueryHeaderChange}
         onRunQuery={onRunQuery}
         onQueryRowChange={setQueryRowFilter}

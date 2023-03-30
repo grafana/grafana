@@ -9,18 +9,28 @@ import { DB, ResourceSelectorProps } from '../types';
 
 interface TableSelectorProps extends ResourceSelectorProps {
   db: DB;
+  defaultDatabase: string;
   value: string | null;
   query: QueryWithDefaults;
   onChange: (v: SelectableValue) => void;
   forceFetch?: boolean;
 }
 
-export const TableSelector = ({ db, query, value, className, onChange, forceFetch }: TableSelectorProps) => {
+export const TableSelector = ({
+  db,
+  query,
+  value,
+  className,
+  onChange,
+  forceFetch,
+  defaultDatabase,
+}: TableSelectorProps) => {
   const state = useAsync(async () => {
-    if (!query.dataset && !forceFetch) {
-      return [];
-    }
-    const tables = await db.tables(query.dataset);
+    // JEV: what does this do?
+    // if (!query.dataset && !forceFetch) {
+    //   return [];
+    // }
+    const tables = await db.tables(defaultDatabase);
     return tables.map(toOption);
   }, [query.dataset]);
 

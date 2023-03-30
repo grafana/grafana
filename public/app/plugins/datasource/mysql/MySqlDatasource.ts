@@ -14,15 +14,7 @@ export class MySqlDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
-    console.log(
-      '🚀 ~ file: MySqlDatasource.ts:19 ~ MySqlDatasource ~ constructor ~ instanceSettings:',
-      instanceSettings
-    );
     super(instanceSettings);
-  }
-
-  getDefaultDatabase() {
-    return this.instanceSettings.jsonData.database;
   }
 
   getQueryModel() {
@@ -75,7 +67,7 @@ export class MySqlDatasource extends SqlDatasource {
   }
 
   async fetchMeta(identifier?: TableIdentifier) {
-    const defaultDB = this.getDefaultDatabase();
+    const defaultDB = this.instanceSettings.jsonData.database;
     if (!identifier?.schema && defaultDB) {
       const tables = await this.fetchTables(defaultDB);
       return tables.map((t) => ({ name: t, completion: `${defaultDB}.${t}`, kind: CompletionItemKind.Class }));
