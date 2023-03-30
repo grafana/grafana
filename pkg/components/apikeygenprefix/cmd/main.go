@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
+	"github.com/grafana/grafana/pkg/components/apikeygenprefix"
 )
 
 // placeholder key generator

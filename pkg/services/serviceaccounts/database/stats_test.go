@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
+	"github.com/grafana/grafana/pkg/components/apikeygenprefix"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 )

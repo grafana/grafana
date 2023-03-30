@@ -14,7 +14,7 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/components/apikeygen"
-	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
+	"github.com/grafana/grafana/pkg/components/apikeygenprefix"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"

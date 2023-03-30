@@ -66,7 +66,7 @@
 /pkg/bus/ @grafana/backend-platform
 /pkg/cmd/ @grafana/backend-platform
 /pkg/components/apikeygen/ @grafana/grafana-authnz-team
-/pkg/components/apikeygenprefixed/ @grafana/grafana-authnz-team
+/pkg/components/apikeygenprefix/ @grafana/grafana-authnz-team
 /pkg/components/dashdiffs/ @grafana/backend-platform
 /pkg/components/imguploader/ @grafana/backend-platform
 /pkg/components/loki/ @grafana/backend-platform
