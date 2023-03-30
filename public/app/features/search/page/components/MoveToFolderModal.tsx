@@ -62,29 +62,13 @@ export const MoveToFolderModal = ({ results, onMoveItems, onDismiss }: Props) =>
         successCount += moveFoldersResult.successCount;
       }
 
-      let header: string | undefined;
-      let message: string | undefined;
       const destTitle = folder.title ?? 'General';
-      const plural = successCount === 1 ? '' : 's';
-
-      if (selectedDashboards.length && selectedFolders.length) {
-        header = `Item${plural} moved`;
-        message = `Moved ${successCount} of ${totalCount} item${plural} to ${destTitle}`;
-      } else if (selectedDashboards.length) {
-        header = `Dashboard${plural} moved`;
-        message = `Moved ${successCount} of ${totalCount} dashboard${plural} to ${destTitle}`;
-      } else if (selectedFolders.length) {
-        header = `Folder${plural} moved`;
-        message = `Moved ${successCount} of ${totalCount} folder${plural} to ${destTitle}`;
-      }
-
-      if (header && message) {
-        if (totalCount === successCount) {
-          notifyApp.success(header, message);
-        } else {
-          notifyApp.warning(header, message);
-        }
-      }
+      notifyNestedMoveResult(notifyApp, destTitle, {
+        selectedDashboardsCount: selectedDashboards.length,
+        selectedFoldersCount: selectedFolders.length,
+        totalCount,
+        successCount,
+      });
 
       onMoveItems();
       setMoving(false);
@@ -135,14 +119,10 @@ export const MoveToFolderModal = ({ results, onMoveItems, onDismiss }: Props) =>
       <>
         <div className={styles.content}>
           {nestedFoldersEnabled && selectedFolders.length > 0 && (
-            <>
-              <Alert severity="warning" title="Careful!">
-                This may change the permission of the folders and all of it&apos;s children
-              </Alert>
-            </>
+            <Alert severity="warning" title=" Moving this item may change its permissions" />
           )}
 
-          <p>Move {thingsMoving} to the following folder:</p>
+          <p>Move {thingsMoving} to:</p>
 
           <FolderPicker allowEmpty={true} enableCreateNew={false} onChange={handleFolderChange} />
         </div>
@@ -159,6 +139,46 @@ export const MoveToFolderModal = ({ results, onMoveItems, onDismiss }: Props) =>
     </Modal>
   );
 };
+
+interface NotifyCounts {
+  selectedDashboardsCount: number;
+  selectedFoldersCount: number;
+  totalCount: number;
+  successCount: number;
+}
+
+function notifyNestedMoveResult(
+  notifyApp: ReturnType<typeof useAppNotification>,
+  destinationName: string,
+  { selectedDashboardsCount, selectedFoldersCount, totalCount, successCount }: NotifyCounts
+) {
+  let objectMoving: string | undefined;
+  const plural = successCount === 1 ? '' : 's';
+  const failedCount = totalCount - successCount;
+
+  if (selectedDashboardsCount && selectedFoldersCount) {
+    objectMoving = `Item${plural}`;
+  } else if (selectedDashboardsCount) {
+    objectMoving = `Dashboard${plural}`;
+  } else if (selectedFoldersCount) {
+    objectMoving = `Folder${plural}`;
+  }
+
+  if (objectMoving) {
+    const objectLower = objectMoving?.toLocaleLowerCase();
+
+    if (totalCount === successCount) {
+      notifyApp.success(`${objectMoving} moved`, `Moved ${successCount} ${objectLower} to ${destinationName}`);
+    } else if (successCount === 0) {
+      notifyApp.error(`Failed to move ${objectLower}`, `Could not move ${totalCount} ${objectLower} due to an error`);
+    } else {
+      notifyApp.warning(
+        `Partially moved ${objectLower}`,
+        `Moved ${successCount} ${objectLower}, but ${failedCount} had errors`
+      );
+    }
+  }
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

@@ -308,7 +308,7 @@ export function moveFolder(uid: string, toFolder: FolderInfo) {
   const payload = {
     parentUid: toFolder.uid,
   };
-  return getBackendSrv().post(`/api/folders/${uid}/move`, payload);
+  return getBackendSrv().post(`/api/folders/${uid}/move`, payload, { showErrorAlert: false });
 }
 
 export const SLICE_FOLDER_RESULTS_TO = 1000;
