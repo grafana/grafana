@@ -111,7 +111,7 @@ export function PanelChrome({
     containerStyles.border = 'none';
   }
 
-  const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
+  const testid = title ? selectors.components.Panels.Panel.title(title) : 'Panel';
 
   const headerContent = (
     <>
@@ -146,7 +146,7 @@ export function PanelChrome({
   );
 
   return (
-    <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
+    <div className={styles.container} style={containerStyles} data-testid={testid}>
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? <LoadingBar width={width} ariaLabel="Panel loading bar" /> : null}
       </div>
