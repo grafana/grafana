@@ -125,7 +125,6 @@ export interface CombinedRuleNamespace {
   rulesSource: RulesSource;
   name: string;
   groups: CombinedRuleGroup[];
-  totals: AlertGroupTotals;
 }
 
 export interface RuleWithLocation<T = RulerRuleDTO> {

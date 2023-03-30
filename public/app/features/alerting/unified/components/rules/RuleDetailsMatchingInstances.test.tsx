@@ -122,7 +122,7 @@ describe('RuleDetailsMatchingInstances', () => {
 function mockPromNamespace(): CombinedRuleNamespace {
   return {
     rulesSource: mockDataSource(),
-    groups: [{ name: 'Prom rules group', rules: [] }],
+    groups: [{ name: 'Prom rules group', rules: [], totals: {} }],
     name: 'Prometheus-test',
   };
 }

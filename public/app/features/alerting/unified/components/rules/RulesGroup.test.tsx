@@ -62,6 +62,7 @@ describe('Rules group tests', () => {
     const group: CombinedRuleGroup = {
       name: 'TestGroup',
       rules: [mockCombinedRule()],
+      totals: {},
     };
 
     const namespace: CombinedRuleNamespace = {
@@ -89,6 +90,7 @@ describe('Rules group tests', () => {
     const group: CombinedRuleGroup = {
       name: 'TestGroup',
       rules: [mockCombinedRule()],
+      totals: {},
     };
 
     const namespace: CombinedRuleNamespace = {
@@ -147,6 +149,7 @@ describe('Rules group tests', () => {
     const group: CombinedRuleGroup = {
       name: 'TestGroup',
       rules: [mockCombinedRule()],
+      totals: {},
     };
 
     const namespace: CombinedRuleNamespace = {

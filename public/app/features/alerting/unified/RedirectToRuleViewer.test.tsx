@@ -119,6 +119,7 @@ const mockedRules: CombinedRule[] = [
     group: {
       name: 'test',
       rules: [],
+      totals: {},
     },
     promRule: {
       health: 'ok',
@@ -150,6 +151,7 @@ const mockedRules: CombinedRule[] = [
     group: {
       name: 'test',
       rules: [],
+      totals: {},
     },
     promRule: {
       health: 'ok',

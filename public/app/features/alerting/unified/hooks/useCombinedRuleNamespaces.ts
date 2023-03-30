@@ -82,7 +82,6 @@ export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRul
             rulesSource,
             name: namespaceName,
             groups: [],
-            totals: {},
           };
           namespaces[namespaceName] = namespace;
           addRulerGroupsToCombinedNamespace(namespace, groups);
@@ -120,7 +119,6 @@ export function flattenGrafanaManagedRules(namespaces: CombinedRuleNamespace[]) 
     newNamespace.groups.push({
       name: 'default',
       rules: sortRulesByName(namespace.groups.flatMap((group) => group.rules)),
-      // TODO – calculate totals here?
       totals: calculateTotalsFromCombinedRuleGroups(namespace.groups),
     });
 

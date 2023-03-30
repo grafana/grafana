@@ -116,6 +116,7 @@ function getGrafanaNamespace(): CombinedRuleNamespace {
       {
         name: 'default',
         rules: [mockCombinedRule()],
+        totals: {},
       },
     ],
   };
@@ -129,6 +130,7 @@ function getCloudNamespace(): CombinedRuleNamespace {
       {
         name: 'Prom group',
         rules: [mockCombinedRule()],
+        totals: {},
       },
     ],
   };

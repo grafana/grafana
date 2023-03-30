@@ -1,4 +1,4 @@
-import { sum } from 'lodash';
+import { isUndefined, omitBy, sum } from 'lodash';
 import pluralize from 'pluralize';
 import React, { Fragment } from 'react';
 
@@ -12,7 +12,6 @@ interface Props {
 }
 
 const emptyStats = {
-  total: 0,
   recording: 0,
   alerting: 0,
   [PromAlertingRuleState.Pending]: 0,
@@ -24,16 +23,19 @@ const emptyStats = {
 export const RuleStats = ({ namespaces }: Props) => {
   const stats = { ...emptyStats };
 
+  // sum all totals for all namespaces
+  namespaces.forEach(({ groups }) => {
+    groups.forEach((group) => {
+      const groupTotals = omitBy(group.totals, isUndefined);
+      for (let key in groupTotals) {
+        // @ts-ignore
+        stats[key] += groupTotals[key];
+      }
+    });
+  });
+
   const statsComponents = getComponentsFromStats(stats);
   const hasStats = Boolean(statsComponents.length);
-
-  // sum all totals for all namespaces
-  namespaces.forEach(({ totals }) => {
-    for (let key in totals) {
-      // @ts-ignore
-      stats[key] += totals[key];
-    }
-  });
 
   const total = sum(Object.values(stats));
 
