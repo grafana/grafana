@@ -31,6 +31,7 @@ export const RegionsPlugin = ({ regions, config }: RegionsPluginProps) => {
   const fromsRef = useRef<number[]>(getValues('time'));
   const tosRef = useRef<number[]>(getValues('timeEnd'));
   const colorsRef = useRef<string[]>(getValues('color'));
+  const linesRef = useRef<string[]>(getValues('line'));
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
@@ -46,6 +47,16 @@ export const RegionsPlugin = ({ regions, config }: RegionsPluginProps) => {
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
+      const renderLine = (x: number, color: string) => {
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = colorManipulator.alpha(color, 1);
+        ctx.moveTo(x, u.bbox.top);
+        ctx.lineTo(x, u.bbox.top + u.bbox.height);
+        ctx.stroke();
+        ctx.closePath();
+      };
+
       for (let i = 0; i < fromsRef.current.length; i++) {
         let from = fromsRef.current[i];
         let to = tosRef.current[i];
@@ -60,10 +71,12 @@ export const RegionsPlugin = ({ regions, config }: RegionsPluginProps) => {
         ctx.fillStyle = color;
         ctx.fillRect(x, y, w, h);
 
-        // line
-        ctx.strokeStyle = colorManipulator.alpha(color, 1);
-        ctx.lineWidth = 3;
-        ctx.strokeRect(x, y, w, h);
+        if (linesRef.current[i]) {
+          renderLine(x, color);
+
+          const x1 = u.valToPos(to, 'x', true);
+          renderLine(x1, color);
+        }
       }
 
       ctx.restore();

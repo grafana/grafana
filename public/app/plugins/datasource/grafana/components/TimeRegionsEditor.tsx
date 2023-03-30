@@ -106,7 +106,6 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
           <Input
             value={fromTxt}
             onChange={(v) => {
-              console.log('fromTxt:', v.currentTarget.value);
               setFromText(v.currentTarget.value);
             }}
             placeholder="hh:mm"
@@ -142,7 +141,7 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
           label="Line"
           showLabel={true}
           value={value.line}
-          onChange={(ev) => onChange(index, { ...value, line: ev.currentTarget.checked })}
+          onChange={(e) => onChange(index, { ...value, line: e.currentTarget.checked })}
         />
       </InlineField>
       <InlineField

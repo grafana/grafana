@@ -35,7 +35,7 @@ export interface GrafanaQuery extends DataQuery {
 export interface TimeRegionConfig extends CommonTimeRegionConfig {
   name: string;
   color: string;
-  line: boolean;
+  line?: boolean;
 }
 
 export interface GrafanaQueryFile {
