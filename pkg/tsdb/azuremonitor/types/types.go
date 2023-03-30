@@ -54,6 +54,9 @@ type DatasourceInfo struct {
 	DecryptedSecureJSONData map[string]string
 	DatasourceID            int64
 	OrgID                   int64
+
+	DatasourceName string
+	DatasourceUID  string
 }
 
 // AzureMonitorQuery is the query for all the services as they have similar queries
@@ -183,6 +186,7 @@ type LogJSONQuery struct {
 		Query        string   `json:"query"`
 		ResultFormat string   `json:"resultFormat"`
 		Resources    []string `json:"resources"`
+		OperationId  string   `json:"operationId"`
 
 		// Deprecated: Queries should be migrated to use Resource instead
 		Workspace string `json:"workspace"`
