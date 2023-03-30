@@ -63,8 +63,20 @@ In subsequent releases, we’ll be refining and enhancing the user interface for
 
 _Generally available in all editions of Grafana using the emptyDashboardPage [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}). The default value is `true` and you can disable it in config._
 
-Dashboards have been updated so that it’s easier to begin building from an empty dashboard state. The options displayed when you add a new dashboard—adding a visualization, a row, or importing panels—each include brief explanations of what those steps will do, so you can begin building with confidence. 
+Dashboards have been updated so that it’s easier to begin building from an empty dashboard state. The options displayed when you add a new dashboard—adding a visualization, a row, or importing panels—each include brief explanations of what those steps will do, so you can begin building with confidence.
 
 Also, a text **Add** dropdown with these options has replaced the previous icon at the top of the dashboard. This makes it clearer that this element allows you to not just add new panels, but to take all the actions associated with building a new dashboard.
 
 {{< figure src="/media/docs/grafana/screenshot-empty-dashboard-whats-new-9-5.png" max-width="750px" caption="Dashboard without any visualizations added" >}}
+
+## Users and roles
+
+### Organization roles for users logged in through Auth providers
+
+_Available in experimental in all editions of Grafana._
+
+We are slowly rolling out a feature toggle for enforcing syncronization of organization roles for organization roles sync from the authentication provider on user sign-in. The feature will prohibit a user from changing organization roles synced with external auth providers.
+
+If you want to enable this feature, you'll need to enable the `onlyExternalOrgRoleSync` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+
+A reminder that there is a setting to prevent synchronization of organization roles from the authentication provider regardless of their role in the authentication provider, then refer to the `skip_org_role_sync` setting in your Grafana configuration. Refer to [skip org role sync](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#authgrafana_com-skip_org_role_sync) for more information.
