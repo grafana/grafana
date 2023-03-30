@@ -5,10 +5,10 @@ import { dateTime } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
 
 import { LokiDatasource } from './datasource';
-import * as logsTimeSplit from './logsTimeChunking';
-import * as metricTimeSplit from './metricTimeChunking';
+import * as logsTimeSplit from './logsTimeSplitting';
+import * as metricTimeSplit from './metricTimeSplitting';
 import { createLokiDatasource, getMockFrames } from './mocks';
-import { runQueryInChunks } from './queryChunking';
+import { runQueryInChunks } from './querySplitting';
 import { LokiQuery, LokiQueryType } from './types';
 
 describe('runQueryInChunks()', () => {

@@ -13,8 +13,8 @@ import {
 import { LoadingState } from '@grafana/schema';
 
 import { LokiDatasource } from './datasource';
-import { getRangeChunks as getLogsRangeChunks } from './logsTimeChunking';
-import { getRangeChunks as getMetricRangeChunks } from './metricTimeChunking';
+import { getRangePartition as getLogsRangePartition } from './logsTimeSplitting';
+import { getRangePartition as getMetricRangePartition } from './metricTimeSplitting';
 import { isLogsQuery } from './queryUtils';
 import { combineResponses } from './responseUtils';
 import { LokiQuery, LokiQueryType } from './types';
@@ -38,8 +38,8 @@ export function partitionTimeRange(
   const step = Math.max(intervalMs * resolution, safeStep);
 
   const ranges = isLogsQuery
-    ? getLogsRangeChunks(start, end, duration)
-    : getMetricRangeChunks(start, end, step, duration);
+    ? getLogsRangePartition(start, end, duration)
+    : getMetricRangePartition(start, end, step, duration);
 
   return ranges.map(([start, end]) => {
     const from = dateTime(start);
@@ -167,7 +167,7 @@ function getNextRequestPointers(requests: LokiGroupedRequest, requestGroup: numb
   };
 }
 
-export function runQueryInChunks(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
+export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   const queries = request.targets.filter((query) => !query.hide);
   const [instantQueries, normalQueries] = partition(queries, (query) => query.queryType === LokiQueryType.Instant);
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));

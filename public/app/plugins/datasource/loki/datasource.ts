@@ -66,8 +66,8 @@ import {
   findLastPosition,
   getLabelFilterPositions,
 } from './modifyQuery';
-import { runQueryInChunks } from './queryChunking';
 import { getQueryHints } from './queryHints';
+import { runSplitQuery } from './querySplitting';
 import {
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
@@ -285,7 +285,7 @@ export class LokiDatasource
     }
 
     if (config.featureToggles.lokiQuerySplitting && requestSupporsChunking(fixedRequest.targets)) {
-      return runQueryInChunks(this, fixedRequest);
+      return runSplitQuery(this, fixedRequest);
     }
 
     return this.runQuery(fixedRequest);

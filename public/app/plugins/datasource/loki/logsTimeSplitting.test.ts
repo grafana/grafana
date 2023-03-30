@@ -1,4 +1,4 @@
-import { getRangeChunks } from './logsTimeChunking';
+import { getRangeChunks } from './logsTimeSplitting';
 
 describe('logs getRangeChunks', () => {
   it('should split time range into chunks', () => {
