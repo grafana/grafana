@@ -131,7 +131,6 @@ Alert rules that are configured to fire when an evaluation returns no data now o
 - View alert instances for each policy
 - View contact points and which integrations are configured for each policy
 - View inherited properties on nested policies
-  Search for labels and for contact points to see which notifications are going where
 - Search for label matchers and for contact points to see which notifications are going where
 
 {{< figure src="/media/docs/alerting/notification-policies-view.png" max-width="750px" caption="Improved Notification Policies view" >}}
