@@ -2705,6 +2705,10 @@
               "external"
             ],
             "type": "string"
+          },
+          "numExternalAlertmanagers": {
+            "format": "int64",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -2746,6 +2750,10 @@
           "id": {
             "format": "int64",
             "type": "integer"
+          },
+          "lastUsedAt": {
+            "format": "date-time",
+            "type": "string"
           },
           "name": {
             "type": "string"
@@ -3044,6 +3052,9 @@
         },
         "type": "array"
       },
+      "CookieType": {
+        "type": "string"
+      },
       "Correlation": {
         "description": "Correlation is the model for correlations definitions",
         "properties": {
@@ -3093,6 +3104,9 @@
             },
             "type": "object"
           },
+          "transformations": {
+            "$ref": "#/components/schemas/Transformations"
+          },
           "type": {
             "$ref": "#/components/schemas/CorrelationConfigType"
           }
@@ -3121,6 +3135,23 @@
               "expr": "job=app"
             },
             "type": "object"
+          },
+          "transformations": {
+            "description": "Source data transformations",
+            "example": [
+              {
+                "type": "logfmt"
+              },
+              {
+                "expression": "(Superman|Batman)",
+                "type": "regex",
+                "variable": "name"
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Transformation"
+            },
+            "type": "array"
           },
           "type": {
             "$ref": "#/components/schemas/CorrelationConfigType"
@@ -4304,6 +4335,40 @@
         ],
         "type": "object"
       },
+      "EnumFieldConfig": {
+        "description": "Enum field config\nVector values are used as lookup keys into the enum fields",
+        "properties": {
+          "color": {
+            "description": "Color is the color value for a given index (empty is undefined)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": {
+            "description": "Description of the enum state",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "icon": {
+            "description": "Icon supports setting an icon for a given index value",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "text": {
+            "description": "Value is the string display value for a given index",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "ErrorResponseBody": {
         "properties": {
           "error": {
@@ -4508,6 +4573,9 @@
           "thresholds": {
             "$ref": "#/components/schemas/ThresholdsConfig"
           },
+          "type": {
+            "$ref": "#/components/schemas/FieldTypeConfig"
+          },
           "unit": {
             "description": "Numeric Options",
             "type": "string"
@@ -4518,6 +4586,15 @@
           }
         },
         "title": "FieldConfig represents the display properties for a Field.",
+        "type": "object"
+      },
+      "FieldTypeConfig": {
+        "description": "FieldTypeConfig has type specific configs, only one should be active at a time",
+        "properties": {
+          "enum": {
+            "$ref": "#/components/schemas/EnumFieldConfig"
+          }
+        },
         "type": "object"
       },
       "FindTagsResult": {
@@ -4615,7 +4692,7 @@
         "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
         "properties": {
           "Fields": {
-            "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.",
+            "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.\nThere should be no `nil` entries in the Fields slice (making them pointers was a mistake).",
             "items": {
               "$ref": "#/components/schemas/Field"
             },
@@ -4687,6 +4764,9 @@
           },
           "type": {
             "$ref": "#/components/schemas/FrameType"
+          },
+          "typeVersion": {
+            "$ref": "#/components/schemas/FrameTypeVersion"
           }
         },
         "title": "FrameMeta matches:",
@@ -4696,8 +4776,16 @@
         "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
         "type": "string"
       },
+      "FrameTypeVersion": {
+        "items": {
+          "format": "uint64",
+          "type": "integer"
+        },
+        "title": "FrameType is a 2 number version (Major / Minor).",
+        "type": "array"
+      },
       "Frames": {
-        "description": "It is the main data container within a backend.DataResponse.",
+        "description": "It is the main data container within a backend.DataResponse.\nThere should be no `nil` entries in the Frames slice (making them pointers was a mistake).",
         "items": {
           "$ref": "#/components/schemas/Frame"
         },
@@ -5594,7 +5682,7 @@
             "format": "date-time",
             "type": "string"
           },
-          "DashboardId": {
+          "DashboardID": {
             "format": "int64",
             "type": "integer"
           },
@@ -5615,7 +5703,7 @@
             "format": "int64",
             "type": "integer"
           },
-          "Id": {
+          "ID": {
             "format": "int64",
             "type": "integer"
           },
@@ -5629,11 +5717,11 @@
             "format": "date-time",
             "type": "string"
           },
-          "OrgId": {
+          "OrgID": {
             "format": "int64",
             "type": "integer"
           },
-          "PanelId": {
+          "PanelID": {
             "format": "int64",
             "type": "integer"
           },
@@ -5966,6 +6054,15 @@
         },
         "type": "object"
       },
+      "MoveFolderCommand": {
+        "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
+        "properties": {
+          "parentUid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "MultiStatus": {
         "type": "object"
       },
@@ -6283,6 +6380,9 @@
           "isDisabled": {
             "type": "boolean"
           },
+          "isExternallySynced": {
+            "type": "boolean"
+          },
           "lastSeenAt": {
             "format": "date-time",
             "type": "string"
@@ -6477,6 +6577,12 @@
       },
       "PatchPrefsCmd": {
         "properties": {
+          "cookies": {
+            "items": {
+              "$ref": "#/components/schemas/CookieType"
+            },
+            "type": "array"
+          },
           "homeDashboardId": {
             "default": 0,
             "description": "The numerical :id of a favorited dashboard",
@@ -7012,7 +7118,7 @@
             "$ref": "#/components/schemas/QueryHistoryPreference"
           },
           "theme": {
-            "description": "light, dark, empty is default",
+            "description": "Theme light, dark, empty is default",
             "type": "string"
           },
           "timezone": {
@@ -7020,7 +7126,7 @@
             "type": "string"
           },
           "weekStart": {
-            "description": "day of the week (sunday, monday, etc)",
+            "description": "WeekStart day of the week (sunday, monday, etc)",
             "type": "string"
           }
         },
@@ -7426,6 +7532,9 @@
           },
           "thresholds": {
             "$ref": "#/components/schemas/ThresholdsConfig"
+          },
+          "type": {
+            "$ref": "#/components/schemas/FieldTypeConfig"
           },
           "unit": {
             "description": "Numeric Options",
@@ -8167,7 +8276,7 @@
           "basicRole": {
             "type": "string"
           },
-          "orgID": {
+          "orgId": {
             "format": "int64",
             "type": "integer"
           },
@@ -8177,11 +8286,11 @@
           "scope": {
             "type": "string"
           },
-          "teamID": {
+          "teamId": {
             "format": "int64",
             "type": "integer"
           },
-          "userID": {
+          "userId": {
             "format": "int64",
             "type": "integer"
           },
@@ -9221,6 +9330,33 @@
         "format": "int64",
         "type": "integer"
       },
+      "Transformation": {
+        "properties": {
+          "expression": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "mapValue": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "regex",
+              "logfmt"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Transformations": {
+        "items": {
+          "$ref": "#/components/schemas/Transformation"
+        },
+        "type": "array"
+      },
       "TrimDashboardCommand": {
         "properties": {
           "dashboard": {
@@ -9247,6 +9383,7 @@
         "type": "string"
       },
       "URL": {
+        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
         "properties": {
           "ForceQuery": {
             "type": "boolean"
@@ -9282,7 +9419,7 @@
             "$ref": "#/components/schemas/Userinfo"
           }
         },
-        "title": "URL is a custom URL type that allows validation at configuration load time.",
+        "title": "A URL represents a parsed URL (technically, a URI reference).",
         "type": "object"
       },
       "UpdateAlertNotificationCommand": {
@@ -9575,6 +9712,12 @@
       },
       "UpdatePrefsCmd": {
         "properties": {
+          "cookies": {
+            "items": {
+              "$ref": "#/components/schemas/CookieType"
+            },
+            "type": "array"
+          },
           "homeDashboardId": {
             "default": 0,
             "description": "The numerical :id of a favorited dashboard",
@@ -9786,6 +9929,9 @@
             "type": "boolean"
           },
           "isExternal": {
+            "type": "boolean"
+          },
+          "isExternallySynced": {
             "type": "boolean"
           },
           "isGrafanaAdmin": {
@@ -10077,7 +10223,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -10101,6 +10246,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -10205,7 +10351,6 @@
         "type": "object"
       },
       "gettableAlert": {
-        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -10261,6 +10406,7 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -10315,14 +10461,12 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
       "integration": {
-        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -10503,7 +10647,6 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -13345,6 +13488,15 @@
               "default": false,
               "type": "boolean"
             }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -13503,6 +13655,15 @@
             "schema": {
               "default": false,
               "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
             }
           }
         ],
@@ -13808,6 +13969,15 @@
             "schema": {
               "default": false,
               "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
             }
           }
         ],
@@ -16724,7 +16894,6 @@
         ]
       },
       "put": {
-        "description": "If nested folders are enabled then it optionally expects a new parent folder UID that moves the folder and\nincludes it into the response.",
         "operationId": "updateFolder",
         "parameters": [
           {
@@ -16772,6 +16941,53 @@
           }
         },
         "summary": "Update folder.",
+        "tags": [
+          "folders"
+        ]
+      }
+    },
+    "/folders/{folder_uid}/move": {
+      "post": {
+        "operationId": "moveFolder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "folder_uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveFolderCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/folderResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Move folder.",
         "tags": [
           "folders"
         ]
