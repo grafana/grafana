@@ -95,13 +95,19 @@ Search for namespaces or folders, evaluation groups, and alert rule names on the
 
 Navigate to an alert rule directly from a dashboard or a panel to easily dive into the alert rule details.
 
+{{< figure src="/media/docs/alerting/dashboard-alert-rule.png" max-width="750px" caption="Access an alert rule from a dashboard or a panel" >}}
+
 ### Access a dashboard or panel from an alert rule
 
 Navigate from an alert rule straight to a dashboard or a panel associated with the alert rule to visualize your alerting data.
 
+{{< figure src="/media/docs/alerting/alert-rule-dashboard.png" max-width="750px" caption="Access a dashboard or panel from an alert rule" >}}
+
 ### Preview queries for recording rules
 
 Preview queries when creating or editing recording rules, so you can visualize the results of your query before saving your recording rule.
+
+{{< figure src="/media/docs/alerting/preview-queries-recording-rule.png" max-width="750px" caption="Preview queries for recording rules" >}}
 
 ### Updates alert behavior for no data evaluation
 
@@ -116,6 +122,8 @@ Alert rules that are configured to fire when an evaluation returns no data now o
 - View contact points and which integrations are configured for each policy
 - View inherited properties on nested policies
   Search for labels and for contact points to see which notifications are going where
+
+{{< figure src="/media/docs/alerting/notification-policies-view.png" max-width="750px" caption="Improved Notification Policies view" >}}
 
 ### Guidance for configuring your Alertmanager
 
