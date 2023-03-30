@@ -329,7 +329,7 @@ describe('applyFieldOverrides', () => {
     data.fields[1].getLinks!({ valueRowIndex: 0 });
 
     expect(data.fields[1].config.decimals).toEqual(1);
-    expect(replaceVariablesCalls[3].__value.value.text).toEqual('100.0');
+    expect(replaceVariablesCalls[3].__dataContext?.value.rowIndex).toEqual(0);
   });
 
   it('creates a deep clone of field config', () => {

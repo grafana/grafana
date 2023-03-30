@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
@@ -6,7 +6,7 @@ import { setupServer } from 'msw/node';
 import 'whatwg-fetch';
 import { BootData, DataQuery } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { setEchoSrv } from '@grafana/runtime/src';
+import { reportInteraction, setEchoSrv } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -27,6 +27,7 @@ const server = setupServer();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
+  reportInteraction: jest.fn(),
 }));
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
@@ -306,4 +307,49 @@ describe('SharePublic - Already persisted', () => {
     expect(screen.queryByTestId(selectors.EmailSharingConfiguration.EmailSharingList)).not.toBeInTheDocument();
   });
   alertTests();
+});
+
+describe('SharePublic - Report interactions', () => {
+  beforeEach(() => {
+    server.use(getExistentPublicDashboardResponse());
+    server.use(
+      rest.put('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', (req, res, ctx) =>
+        res(
+          ctx.status(200),
+          ctx.json({
+            ...pubdashResponse,
+            dashboardUid: req.params.dashboardUid,
+          })
+        )
+      )
+    );
+  });
+
+  it('reports interaction when time range is clicked', async () => {
+    await renderSharePublicDashboard();
+    await userEvent.click(screen.getByTestId(selectors.EnableTimeRangeSwitch));
+    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_time_selection_clicked', {
+      action: pubdashResponse.timeSelectionEnabled ? 'disable' : 'enable',
+    });
+  });
+  it('reports interaction when show annotations is clicked', async () => {
+    await renderSharePublicDashboard();
+    await userEvent.click(screen.getByTestId(selectors.EnableAnnotationsSwitch));
+    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_annotations_clicked', {
+      action: pubdashResponse.annotationsEnabled ? 'disable' : 'enable',
+    });
+  });
+  it('reports interaction when pause is clicked', async () => {
+    await renderSharePublicDashboard();
+    await userEvent.click(screen.getByTestId(selectors.PauseSwitch));
+    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_enable_clicked', {
+      action: pubdashResponse.isEnabled ? 'disable' : 'enable',
+    });
+  });
 });

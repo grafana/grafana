@@ -1,7 +1,6 @@
 import React from 'react';
-import { valid } from 'semver';
 
-import { DataSourceSettings, SelectableValue, isTruthy } from '@grafana/data';
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { FieldSet, InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
 
 import { ElasticsearchOptions, Interval } from '../types';
@@ -15,24 +14,11 @@ const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'Yearly', value: 'Yearly', example: '[logstash-]YYYY' },
 ];
 
-const esVersions: SelectableValue[] = [
-  { label: '7.10+', value: '7.10.0' },
-  { label: '8.x', value: '8.0.0' },
-];
-
 type Props = {
   value: DataSourceSettings<ElasticsearchOptions>;
   onChange: (value: DataSourceSettings<ElasticsearchOptions>) => void;
 };
 export const ElasticDetails = ({ value, onChange }: Props) => {
-  const currentVersion = esVersions.find((version) => version.value === value.jsonData.esVersion);
-  const customOption =
-    !currentVersion && valid(value.jsonData.esVersion)
-      ? {
-          label: value.jsonData.esVersion,
-          value: value.jsonData.esVersion,
-        }
-      : undefined;
   return (
     <>
       <FieldSet label="Elasticsearch details">
@@ -67,28 +53,6 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             width={24}
             placeholder="@timestamp"
             required
-          />
-        </InlineField>
-
-        <InlineField label="ElasticSearch version" labelWidth={26}>
-          <Select
-            inputId="es_config_version"
-            options={[customOption, ...esVersions].filter(isTruthy)}
-            onChange={(option) => {
-              const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
-                value.jsonData.maxConcurrentShardRequests
-              );
-              onChange({
-                ...value,
-                jsonData: {
-                  ...value.jsonData,
-                  esVersion: option.value!,
-                  maxConcurrentShardRequests,
-                },
-              });
-            }}
-            value={currentVersion || customOption}
-            width={24}
           />
         </InlineField>
 
@@ -207,14 +171,6 @@ const intervalHandler =
       });
     }
   };
-
-function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number | undefined): number {
-  if (maxConcurrentShardRequests === 256) {
-    return 5;
-  }
-
-  return maxConcurrentShardRequests || defaultMaxConcurrentShardRequests();
-}
 
 export function defaultMaxConcurrentShardRequests() {
   return 5;

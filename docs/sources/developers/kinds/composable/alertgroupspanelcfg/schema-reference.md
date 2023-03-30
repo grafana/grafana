@@ -13,16 +13,16 @@ title: AlertGroupsPanelCfg kind
 
 
 
-| Property       | Type                    | Required | Description |
-|----------------|-------------------------|----------|-------------|
-| `PanelOptions` | [object](#paneloptions) | **Yes**  |             |
+| Property       | Type                    | Required | Default | Description |
+|----------------|-------------------------|----------|---------|-------------|
+| `PanelOptions` | [object](#paneloptions) | **Yes**  |         |             |
 
 ### PanelOptions
 
-| Property       | Type    | Required | Description                                                 |
-|----------------|---------|----------|-------------------------------------------------------------|
-| `alertmanager` | string  | **Yes**  | Name of the alertmanager used as a source for alerts        |
-| `expandAll`    | boolean | **Yes**  | Expand all alert groups by default                          |
-| `labels`       | string  | **Yes**  | Comma-separated list of values used to filter alert results |
+| Property       | Type    | Required | Default | Description                                                 |
+|----------------|---------|----------|---------|-------------------------------------------------------------|
+| `alertmanager` | string  | **Yes**  |         | Name of the alertmanager used as a source for alerts        |
+| `expandAll`    | boolean | **Yes**  |         | Expand all alert groups by default                          |
+| `labels`       | string  | **Yes**  |         | Comma-separated list of values used to filter alert results |
 
 

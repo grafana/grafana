@@ -66,7 +66,6 @@ export class BackendSrv implements BackendService {
     contextSrv: contextSrv,
     logout: () => {
       contextSrv.setLoggedOut();
-      window.location.reload();
     },
   };
 
@@ -270,7 +269,12 @@ export class BackendSrv implements BackendService {
                   return of({});
                 }
 
-                return from(this.loginPing()).pipe(
+                let authChecker = () => this.loginPing();
+                if (config.featureToggles.clientTokenRotation) {
+                  authChecker = () => this.rotateToken();
+                }
+
+                return from(authChecker()).pipe(
                   catchError((err) => {
                     if (err.status === 401) {
                       this.dependencies.logout();
@@ -452,6 +456,10 @@ export class BackendSrv implements BackendService {
     return callback().finally(() => {
       this.noBackendCache = false;
     });
+  }
+
+  rotateToken() {
+    return this.request({ url: '/api/user/auth-tokens/rotate', method: 'POST' });
   }
 
   loginPing() {

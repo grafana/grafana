@@ -537,7 +537,7 @@ describe('DashboardLoader', () => {
         label: undefined,
         name: 'query1',
         options: [],
-        query: 'prometheus',
+        pluginId: 'prometheus',
         regex: '/^gdev/',
         skipUrlSync: false,
         text: ['gdev-prometheus', 'gdev-slow-prometheus'],
