@@ -182,6 +182,9 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 }
 
 func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	if q.UID == "" {
+		return []*folder.Folder{}, nil
+	}
 	var folders []*folder.Folder
 
 	recQuery := `

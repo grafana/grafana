@@ -20,7 +20,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'folder':
       return t('nav.create-folder.title', 'Folder');
     case 'import':
-      return t('nav.create-import.title', 'Import');
+      return t('nav.create-import.title', 'Import dashboard');
     case 'alert':
       return t('nav.create-alert.title', 'Create alert rule');
     case 'starred':
@@ -46,7 +46,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'dashboards/folder/new':
       return t('nav.new-folder.title', 'New folder');
     case 'dashboards/import':
-      return t('nav.create-import.title', 'Import');
+      return t('nav.create-import.title', 'Import dashboard');
     case 'scenes':
       return t('nav.scenes.title', 'Scenes');
     case 'explore':

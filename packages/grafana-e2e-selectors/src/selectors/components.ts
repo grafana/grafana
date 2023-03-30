@@ -240,6 +240,9 @@ export const Components = {
     Configuration: {
       button: 'Configuration',
     },
+    Toggle: {
+      button: 'Toggle menu',
+    },
     Reporting: {
       button: 'Reporting',
     },
