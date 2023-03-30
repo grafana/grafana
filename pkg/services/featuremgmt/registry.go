@@ -231,8 +231,9 @@ var (
 		},
 		{
 			Name:        "topnav",
-			Description: "Displays new top nav and page layouts",
-			State:       FeatureStateBeta,
+			Description: "Enables new top navigation and page layouts",
+			State:       FeatureStateStable,
+			Expression:  "true", // enabled by default
 			Owner:       grafanaUserEssentialsSquad,
 		},
 		{
@@ -454,6 +455,12 @@ var (
 			Description: "Disable executing of Elasticsearch Explore queries trough backend",
 			State:       FeatureStateBeta,
 			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:        "prometheusDataplane",
+			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 	}
 )

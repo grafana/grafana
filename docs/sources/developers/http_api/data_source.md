@@ -62,7 +62,6 @@ Content-Type: application/json
      "basicAuth": false,
      "isDefault": false,
      "jsonData": {
-         "esVersion": 5,
          "logLevelField": "",
          "logMessageField": "",
          "maxConcurrentShardRequests": 256,

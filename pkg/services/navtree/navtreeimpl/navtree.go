@@ -401,6 +401,11 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext, hasEdit
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", ShowIconInNavbar: true, IsCreateAction: true,
 			})
+
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text: "Import dashboard", SubTitle: "Import dashboard from file or Grafana.com", Id: "dashboards/import", Icon: "plus",
+				Url: s.cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, ShowIconInNavbar: true, IsCreateAction: true,
+			})
 		}
 	}
 
@@ -409,13 +414,6 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext, hasEdit
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "New folder", SubTitle: "Create a new folder to organize your dashboards", Id: "dashboards/folder/new",
 				Icon: "plus", Url: s.cfg.AppSubURL + "/dashboards/folder/new", HideFromTabs: true, ShowIconInNavbar: true,
-			})
-		}
-
-		if hasAccess(hasEditPermInAnyFolder, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
-			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "dashboards/import", Icon: "plus",
-				Url: s.cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, ShowIconInNavbar: true,
 			})
 		}
 	}
