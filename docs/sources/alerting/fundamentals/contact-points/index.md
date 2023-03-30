@@ -54,6 +54,6 @@ The following table lists the contact point integrations supported by Grafana.
 
 ## Useful links
 
-[Manage contact points](https://docs/grafana/next/alerting/manage-notifications/create-contact-point/)
+[Manage contact points](/docs/grafana/next/alerting/manage-notifications/create-contact-point/)
 
-[Create and edit notification templates](https://docs/grafana/next/alerting/manage-notifications/create-message-template/)
+[Create and edit notification templates](/docs/grafana/next/alerting/manage-notifications/create-message-template/)
