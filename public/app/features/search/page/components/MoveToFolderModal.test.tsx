@@ -60,7 +60,7 @@ describe('MoveToFolderModal', () => {
     await screen.findByText('General');
 
     expect(screen.getByRole('heading', { name: 'Choose Dashboard Folder' })).toBeInTheDocument();
-    expect(screen.getByText('Move 2 dashboards to the following folder:')).toBeInTheDocument();
+    expect(screen.getByText('Move 2 dashboards to:')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Move' })).toBeInTheDocument();
   });
