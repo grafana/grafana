@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/grafana/grafana/pkg/components/apikeygenprefix"
+	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -79,7 +79,7 @@ func (a *authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 }
 
 func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*user.SignedInUser, error) {
-	decoded, err := apikeygenprefix.Decode(token)
+	decoded, err := satokengen.Decode(token)
 	if err != nil {
 		return nil, err
 	}

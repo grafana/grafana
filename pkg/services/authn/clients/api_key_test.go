@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/components/apikeygen"
-	"github.com/grafana/grafana/pkg/components/apikeygenprefix"
+	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -200,7 +200,7 @@ func genApiKey(legacy bool) (string, string) {
 		res, _ := apikeygen.New(1, "test")
 		return res.ClientSecret, res.HashedKey
 	}
-	res, _ := apikeygenprefix.New("test")
+	res, _ := satokengen.New("test")
 	return res.ClientSecret, res.HashedKey
 }
 

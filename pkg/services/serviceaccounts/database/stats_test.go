@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/apikeygenprefix"
+	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 )
@@ -20,7 +20,7 @@ func TestIntegrationStore_UsageStats(t *testing.T) {
 	db.Cfg.SATokenExpirationDayLimit = 4
 
 	keyName := t.Name()
-	key, err := apikeygenprefix.New(keyName)
+	key, err := satokengen.New(keyName)
 	require.NoError(t, err)
 
 	cmd := serviceaccounts.AddServiceAccountTokenCommand{

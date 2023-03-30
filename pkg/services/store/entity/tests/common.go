@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/grafana/grafana/pkg/components/apikeygenprefix"
+	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -30,7 +30,7 @@ func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, 
 		IsServiceAccount: true,
 	})
 
-	keyGen, err := apikeygenprefix.New(saAPI.ServiceID)
+	keyGen, err := satokengen.New(saAPI.ServiceID)
 	require.NoError(t, err)
 
 	_ = saTests.SetupApiKey(t, env.SQLStore, saTests.TestApiKey{

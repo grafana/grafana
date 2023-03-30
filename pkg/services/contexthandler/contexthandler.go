@@ -14,7 +14,7 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/components/apikeygen"
-	"github.com/grafana/grafana/pkg/components/apikeygenprefix"
+	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
@@ -261,7 +261,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *contextmodel.R
 
 func (h *ContextHandler) getPrefixedAPIKey(ctx context.Context, keyString string) (*apikey.APIKey, error) {
 	// prefixed decode key
-	decoded, err := apikeygenprefix.Decode(keyString)
+	decoded, err := satokengen.Decode(keyString)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +323,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqConte
 		apiKey *apikey.APIKey
 		errKey error
 	)
-	if strings.HasPrefix(keyString, apikeygenprefix.GrafanaPrefix) {
+	if strings.HasPrefix(keyString, satokengen.GrafanaPrefix) {
 		apiKey, errKey = h.getPrefixedAPIKey(reqContext.Req.Context(), keyString) // decode prefixed key
 	} else {
 		apiKey, errKey = h.getAPIKey(reqContext.Req.Context(), keyString) // decode legacy api key
