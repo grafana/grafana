@@ -59,18 +59,6 @@ You must also configure settings specific to the Elasticsearch data source.
 Use the index settings to specify a default for the `time field` and your Elasticsearch index's name.
 You can use a time pattern, such as `YYYY.MM.DD`, or a wildcard for the index name.
 
-### Elasticsearch version
-
-Select the version of your Elasticsearch data source from the version selection dropdown.
-Different versions provide different query compositions and functionalities in the [query editor]({{< relref "./query-editor/" >}}).
-Available Elasticsearch versions are `2.x`, `5.x`, `5.6+`, `6.0+`, `7.0+`, `7.7+`, and `7.10+`.
-
-Grafana assumes you're running the lowest possible version for a specified range.
-This ensures that new features or breaking changes in a future Elasticsearch release don't affect your configuration.
-
-For example, if you run Elasticsearch `7.6.1` and select `7.0+`, and a new feature is made available for Elasticsearch `7.5.0` or newer releases, then a `7.5+` option will be available.
-However, your configuration won't be affected until you explicitly select the new `7.5+` option in your settings.
-
 ### Configure Min time interval
 
 The **Min time interval** setting defines a lower limit for the auto group-by time interval.
@@ -181,7 +169,6 @@ datasources:
     jsonData:
       interval: Daily
       timeField: '@timestamp'
-      esVersion: '7.0.0'
       logMessageField: message
       logLevelField: fields.level
       dataLinks:

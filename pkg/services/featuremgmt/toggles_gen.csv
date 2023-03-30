@@ -47,6 +47,7 @@ nestedFolders,alpha,@grafana/backend-platform,true,false,false,false
 accessTokenExpirationCheck,stable,@grafana/grafana-authnz-team,false,false,false,false
 elasticsearchBackendMigration,alpha,@grafana/observability-logs,false,false,false,false
 datasourceOnboarding,alpha,@grafana/dashboards-squad,false,false,false,false
+emptyDashboardPage,alpha,@grafana/dashboards-squad,false,false,false,true
 secureSocksDatasourceProxy,alpha,@grafana/hosted-grafana-team,false,false,false,false
 authnService,alpha,@grafana/grafana-authnz-team,false,false,false,false
 disablePrometheusExemplarSampling,stable,@grafana/observability-metrics,false,false,false,false
@@ -66,3 +67,4 @@ timeSeriesTable,alpha,@grafana/app-o11y,false,false,false,true
 influxdbBackendMigration,alpha,@grafana/observability-metrics,false,false,false,true
 clientTokenRotation,alpha,@grafana/grafana-authnz-team,false,false,false,false
 disableElasticsearchBackendExploreQuery,beta,@grafana/observability-logs,false,false,false,false
+prometheusDataplane,alpha,@grafana/observability-metrics,false,false,false,false

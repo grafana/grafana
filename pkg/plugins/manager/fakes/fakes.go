@@ -358,7 +358,7 @@ func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ str
 }
 
 type FakePluginFiles struct {
-	FS fs.FS
+	OpenFunc func(name string) (fs.File, error)
 
 	base string
 }
@@ -370,7 +370,10 @@ func NewFakePluginFiles(base string) *FakePluginFiles {
 }
 
 func (f *FakePluginFiles) Open(name string) (fs.File, error) {
-	return f.FS.Open(name)
+	if f.OpenFunc != nil {
+		return f.OpenFunc(name)
+	}
+	return nil, nil
 }
 
 func (f *FakePluginFiles) Base() string {
@@ -417,4 +420,15 @@ func (s *FakePluginSource) DefaultSignature(ctx context.Context) (plugins.Signat
 		return s.DefaultSignatureFunc(ctx)
 	}
 	return plugins.Signature{}, false
+}
+
+type FakePluginFileStore struct {
+	FileFunc func(ctx context.Context, pluginID, filename string) (*plugins.File, error)
+}
+
+func (f *FakePluginFileStore) File(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+	if f.FileFunc != nil {
+		return f.FileFunc(ctx, pluginID, filename)
+	}
+	return nil, nil
 }

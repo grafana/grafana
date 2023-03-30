@@ -3,12 +3,14 @@ package pluginsintegration
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
+	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
@@ -60,6 +62,8 @@ var WireSet = wire.NewSet(
 	sources.ProvideService,
 	pluginSettings.ProvideService,
 	wire.Bind(new(pluginsettings.Service), new(*pluginSettings.Service)),
+	filestore.ProvideService,
+	wire.Bind(new(plugins.FileStore), new(*filestore.Service)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -73,26 +77,31 @@ var WireExtensionSet = wire.NewSet(
 	finder.NewLocalFinder,
 )
 
-func ProvideClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
+func ProvideClientDecorator(
+	cfg *setting.Cfg, pCfg *config.Cfg,
 	pluginRegistry registry.Service,
 	oAuthTokenService oauthtoken.OAuthTokenService,
-	cachingService caching.CachingService) (*client.Decorator, error) {
-	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService, cachingService)
+	tracer tracing.Tracer,
+	cachingService caching.CachingService,
+) (*client.Decorator, error) {
+	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService, tracer, cachingService)
 }
 
-func NewClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
-	pluginRegistry registry.Service,
-	oAuthTokenService oauthtoken.OAuthTokenService,
-	cachingService caching.CachingService) (*client.Decorator, error) {
+func NewClientDecorator(
+	cfg *setting.Cfg, pCfg *config.Cfg,
+	pluginRegistry registry.Service, oAuthTokenService oauthtoken.OAuthTokenService,
+	tracer tracing.Tracer, cachingService caching.CachingService,
+) (*client.Decorator, error) {
 	c := client.ProvideService(pluginRegistry, pCfg)
-	middlewares := CreateMiddlewares(cfg, oAuthTokenService, cachingService)
+	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingService)
 
 	return client.NewDecorator(c, middlewares...)
 }
 
-func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, cachingService caching.CachingService) []plugins.ClientMiddleware {
+func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService) []plugins.ClientMiddleware {
 	skipCookiesNames := []string{cfg.LoginCookieName}
 	middlewares := []plugins.ClientMiddleware{
+		clientmiddleware.NewTracingMiddleware(tracer),
 		clientmiddleware.NewTracingHeaderMiddleware(),
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
