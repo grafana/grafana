@@ -71,21 +71,21 @@ You can complete the following tasks on the **Dashboard Folder** page:
 - Rename a folder (available under the **Settings** tab)
 - Assign permissions to folders (which are inherited by the dashboards in the folder)
 
-To navigate to the dashboard folder page, click the cog appears when you hover over a folder in the dashboard search result list or the **Manage dashboards and folders** page.
+To navigate to the dashboard folder page, click the cog that appears when you hover over a folder in the dashboard search result list or the **Manage dashboards and folders** page.
 
 ### Dashboard permissions
 
-You can assign permissions to a folder. Any permissions you assign are inherited by the dashboards in the folder. An Access Control List (ACL) is used where **Organization Role**, **Team** and a **User** can be assigned permissions.
+You can assign permissions to a folder that are inherited by the dashboards in the folder. An Access Control List (ACL) is used where **Organization Role**, **Team** and a **User** can be assigned permissions.
 
 For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../administration/roles-and-permissions/#dashboard-permissions" >}}).
 
 ## Export and import dashboards
 
-You can use the Grafana UI or the [HTTP API]({{< relref "../../developers/http_api/dashboard/#create-update-dashboard" >}}) to export and import dashboards.
+You can use the Grafana UI or the [HTTP API]({{< relref "../../developers/http_api/dashboard/#create-update-dashboard" >}}) to export and import dashboards. Grafana dashboards can also be [managed as code[(https://grafana.com/blog/2022/12/06/a-complete-guide-to-managing-grafana-as-code-tools-tips-and-tricks/), using tools such as Terraform.
 
 ### Export a dashboard
 
-The dashboard export action creates a Grafana JSON file that contains everything you need, including layout, variables, styles, data sources, queries, and so on, so that you can later import the dashboard.
+The dashboard export action creates a Grafana JSON file that contains everything within the dashboard including layout, variables, styles, data sources, queries, etc. which can be used to import the dashboard.
 
 1. Open the dashboard you want to export.
 2. Click the **Share** icon.
@@ -96,7 +96,7 @@ Grafana downloads a JSON file to your local machine.
 
 #### Make a dashboard portable
 
-If you want to export a dashboard for others to use, you can add template variables for things like a metric prefix (use a constant variable) and server name.
+If you want to export a dashboard for others to use, you can add [template variables]({{< relref "../variables" >}}) for things like a metric prefix (use a constant variable) and server name.
 
 A template variable of the type `Constant` will automatically be hidden in the dashboard, and will also be added as a required input when the dashboard is imported.
 
@@ -124,12 +124,12 @@ Find dashboards for common server applications at [Grafana.com/dashboards](https
 
 This section provides information to help you solve common dashboard problems.
 
-### Dashboard is slow
+### Dashboard is slow to render or load
 
 - Are you trying to render dozens (or hundreds or thousands) of time-series on a graph? This can cause the browser to lag. Try using functions like `highestMax` (in Graphite) to reduce the returned series.
 - Sometimes the series names can be very large. This causes larger response sizes. Try using `alias` to reduce the size of the returned series names.
-- Are you querying many time-series or for a long range of time? Both of these conditions can cause Grafana or your data source to pull in a lot of data, which may slow it down.
-- It could be high load on your network infrastructure. If the slowness isn't consistent, this may be the problem.
+- Are you querying many time-series data or requesting a long range of time for the results? Both of these conditions can cause Grafana or your data source to pull in a lot of data, which may slow it down.
+- Network quality and congestion, as well as CPU and memory contention for the Grafana or data sources instances can also result in slowness or inconsistent behavior.
 
 ### Dashboard refresh rate issues
 
@@ -138,7 +138,7 @@ By default, Grafana queries your data source every 30 seconds. Setting a low ref
 We recommend the following:
 
 - Do not enable auto-refreshing on dashboards, panels, or variables unless you need it. Users can refresh their browser manually, or you can set the refresh rate for a time period that makes sense (every ten minutes, every hour, and so on).
-- If it is required, then set the refresh rate to once a minute. Users can always refresh the dashboard manually.
+- If needed, set the refresh rate to a balanced interval such as once a minute. Users can always refresh the dashboard manually.
 - If your dashboard has a longer time period (such as a week), then you really don't need automated refreshing.
 
 #### Handling or rendering null data is wrong or confusing
