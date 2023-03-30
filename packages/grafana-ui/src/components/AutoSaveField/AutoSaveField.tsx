@@ -106,12 +106,7 @@ export function AutoSaveField<T = string>(props: GenericProps<T>) {
         {React.cloneElement(
           children((newValue) => {
             lodashDebounce(newValue);
-          }),
-          {
-            loading: isLoading,
-            invalid: isInvalid,
-            disabled,
-          }
+          })
         )}
       </Field>
       {fieldState.showSuccess && (
