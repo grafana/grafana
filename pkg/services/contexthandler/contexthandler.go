@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/sync/singleflight"
-
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -73,7 +71,6 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 		features:           features,
 		authnService:       authnService,
 		anonSessionService: anonSessionService,
-		singleflight:       new(singleflight.Group),
 	}
 }
 
@@ -95,7 +92,6 @@ type ContextHandler struct {
 	oauthTokenService  oauthtoken.OAuthTokenService
 	features           *featuremgmt.FeatureManager
 	authnService       authn.Service
-	singleflight       *singleflight.Group
 	anonSessionService anonymous.Service
 	// GetTime returns the current time.
 	// Stubbable by tests.
