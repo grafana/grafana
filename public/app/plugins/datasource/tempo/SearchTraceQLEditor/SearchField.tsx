@@ -33,6 +33,7 @@ interface Props {
   tags: string[];
   hideScope?: boolean;
   hideTag?: boolean;
+  hideValue?: boolean;
   allowDelete?: boolean;
 }
 const SearchField = ({
@@ -45,6 +46,7 @@ const SearchField = ({
   setError,
   hideScope,
   hideTag,
+  hideValue,
   allowDelete,
 }: Props) => {
   const styles = useStyles2(getStyles);
@@ -156,25 +158,27 @@ const SearchField = ({
         allowCustomValue={true}
         width={8}
       />
-      <Select
-        className={styles.dropdown}
-        inputId={`${filter.id}-value`}
-        isLoading={isLoadingValues}
-        options={options}
-        value={filter.value}
-        onChange={(val) => {
-          if (Array.isArray(val)) {
-            updateFilter({ ...filter, value: val.map((v) => v.value), valueType: val[0]?.type });
-          } else {
-            updateFilter({ ...filter, value: val?.value, valueType: val?.type });
-          }
-        }}
-        placeholder="Select value"
-        isClearable={false}
-        aria-label={`select ${filter.id} value`}
-        allowCustomValue={true}
-        isMulti
-      />
+      {!hideValue && (
+        <Select
+          className={styles.dropdown}
+          inputId={`${filter.id}-value`}
+          isLoading={isLoadingValues}
+          options={options}
+          value={filter.value}
+          onChange={(val) => {
+            if (Array.isArray(val)) {
+              updateFilter({ ...filter, value: val.map((v) => v.value), valueType: val[0]?.type });
+            } else {
+              updateFilter({ ...filter, value: val?.value, valueType: val?.type });
+            }
+          }}
+          placeholder="Select value"
+          isClearable={false}
+          aria-label={`select ${filter.id} value`}
+          allowCustomValue={true}
+          isMulti
+        />
+      )}
       {allowDelete && (
         <AccessoryButton
           variant={'secondary'}

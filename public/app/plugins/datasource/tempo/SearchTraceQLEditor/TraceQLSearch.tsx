@@ -104,6 +104,12 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
   staticTags.push('duration');
   const filteredTags = [...CompletionProvider.intrinsics, ...tags].filter((t) => !staticTags.includes(t));
 
+  // Dynamic filters are all filters that don't match the ID of a filter in the datasource configuration
+  // The duration tag is a special case since its selector is hard-coded
+  const dynamicFilters = (query.filters || []).filter(
+    (f) => f.tag !== 'duration' && (datasource.search?.filters?.findIndex((sf) => sf.id === f.id) || 0) === -1
+  );
+
   return (
     <>
       <div className={styles.container}>
@@ -134,7 +140,6 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
                 filter={
                   findFilter('min-duration') || {
                     id: 'min-duration',
-                    type: 'static',
                     tag: 'duration',
                     operator: '>',
                     valueType: 'duration',
@@ -147,7 +152,6 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
                 filter={
                   findFilter('max-duration') || {
                     id: 'max-duration',
-                    type: 'static',
                     tag: 'duration',
                     operator: '<',
                     valueType: 'duration',
@@ -160,12 +164,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
           </InlineSearchField>
           <InlineSearchField label={'Tags'}>
             <TagsInput
-              filters={query.filters?.filter(
-                // All dynamic fields plus all "static" fields in the page state that aren't a part of the "static" fields for this datasource.
-                // Useful when switching between datasources that have different static field configurations.
-                (f) =>
-                  f.type === 'dynamic' || (datasource.search?.filters?.findIndex((sf) => sf.tag === f.tag) || 0) === -1
-              )}
+              filters={dynamicFilters}
               datasource={datasource}
               setError={setError}
               updateFilter={updateFilter}

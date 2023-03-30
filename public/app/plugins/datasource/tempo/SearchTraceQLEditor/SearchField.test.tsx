@@ -52,7 +52,7 @@ describe('SearchField', () => {
     const updateFilter = jest.fn((val) => {
       return val;
     });
-    const filter: TraceqlFilter = { id: 'test1', type: 'static', valueType: 'string', tag: 'test-tag' };
+    const filter: TraceqlFilter = { id: 'test1', valueType: 'string', tag: 'test-tag' };
 
     const { container } = renderSearchField(updateFilter, filter, [], true);
 
@@ -65,7 +65,7 @@ describe('SearchField', () => {
     const updateFilter = jest.fn((val) => {
       return val;
     });
-    const filter: TraceqlFilter = { id: 'test1', operator: '=', type: 'static', valueType: 'string', tag: 'test-tag' };
+    const filter: TraceqlFilter = { id: 'test1', operator: '=', valueType: 'string', tag: 'test-tag' };
     const { container } = renderSearchField(updateFilter, filter);
 
     const select = await container.querySelector(`input[aria-label="select test1 operator"]`);
@@ -88,7 +88,6 @@ describe('SearchField', () => {
     const filter: TraceqlFilter = {
       id: 'test1',
       value: 'old',
-      type: 'static',
       valueType: 'string',
       tag: 'test-tag',
     };
@@ -125,7 +124,6 @@ describe('SearchField', () => {
     });
     const filter: TraceqlFilter = {
       id: 'test1',
-      type: 'dynamic',
       valueType: 'string',
     };
     const { container } = renderSearchField(updateFilter, filter, ['tag1', 'tag22', 'tag33']);
@@ -167,7 +165,6 @@ const renderSearchField = (
       filters: [
         {
           id: 'service-name',
-          type: 'static',
           tag: 'service.name',
           operator: '=',
           scope: TraceqlSearchScope.Resource,

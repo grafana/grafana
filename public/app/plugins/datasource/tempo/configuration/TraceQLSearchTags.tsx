@@ -44,9 +44,6 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
 
   const updateFilter = useCallback(
     (s: TraceqlFilter) => {
-      // All configured fields are typed as static
-      s.type = 'static';
-
       let copy = options.jsonData.search?.filters;
       copy ||= [];
       const indexOfFilter = copy.findIndex((f) => f.id === s.id);
@@ -78,12 +75,11 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
         filters: [
           {
             id: 'service-name',
-            type: 'static',
             tag: 'service.name',
             operator: '=',
             scope: TraceqlSearchScope.Resource,
           },
-          { id: 'span-name', type: 'static', tag: 'name', operator: '=', scope: TraceqlSearchScope.Span },
+          { id: 'span-name', tag: 'name', operator: '=', scope: TraceqlSearchScope.Span },
         ],
       });
     }
@@ -100,6 +96,7 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
           setError={() => {}}
           tags={[...CompletionProvider.intrinsics, ...(tags || [])]}
           isTagsLoading={loading}
+          hideValues={true}
         />
       ) : (
         <div>Invalid data source, please create a valid data source and try again</div>

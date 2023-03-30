@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -45,7 +45,6 @@ describe('TraceQLSearch', () => {
       filters: [
         {
           id: 'service-name',
-          type: 'static',
           tag: 'service.name',
           operator: '=',
           scope: TraceqlSearchScope.Resource,
@@ -59,7 +58,7 @@ describe('TraceQLSearch', () => {
     queryType: 'traceqlSearch',
     key: 'Q-595a9bbc-2a25-49a7-9249-a52a0a475d83-0',
     query: '',
-    filters: [{ id: 'min-duration', operator: '>', type: 'static', valueType: 'duration', tag: 'duration' }],
+    filters: [{ id: 'min-duration', operator: '>', valueType: 'duration', tag: 'duration' }],
   };
   const onChange = (q: TempoQuery) => {
     query = q;
@@ -113,29 +112,6 @@ describe('TraceQLSearch', () => {
       expect(nameFilter?.value).toStrictEqual(['customer']);
       expect(nameFilter?.tag).toBe('service.name');
       expect(nameFilter?.scope).toBe(TraceqlSearchScope.Resource);
-    }
-  });
-
-  it('should add new filter when new filter button is clicked and remove filter when remove button is clicked', async () => {
-    render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
-
-    const dynamicFilters = query.filters.filter((f) => f.type === 'dynamic');
-    expect(dynamicFilters.length).toBe(0);
-    const addButton = await screen.findByTitle('Add tag');
-    await user.click(addButton);
-    jest.advanceTimersByTime(1000);
-
-    // We have to rerender here so it picks up the new dynamic field
-    render(<TraceQLSearch datasource={{} as TempoDatasource} query={query} onChange={onChange} />);
-
-    const newDynamicFilters = query.filters.filter((f) => f.type === 'dynamic');
-    expect(newDynamicFilters.length).toBe(1);
-
-    const dynamicRemoveButton = await screen.findByLabelText(`remove tag with ID ${newDynamicFilters[0]?.id}`);
-    await waitFor(() => expect(dynamicRemoveButton).toBeInTheDocument());
-    if (dynamicRemoveButton) {
-      await user.click(dynamicRemoveButton);
-      expect(query.filters.filter((f) => f.type === 'dynamic')).toStrictEqual(dynamicFilters);
     }
   });
 });

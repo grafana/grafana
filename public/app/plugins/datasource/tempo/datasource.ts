@@ -100,12 +100,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         filters: [
           {
             id: 'service-name',
-            type: 'static',
             tag: 'service.name',
             operator: '=',
             scope: TraceqlSearchScope.Resource,
           },
-          { id: 'span-name', type: 'static', tag: 'name', operator: '=', scope: TraceqlSearchScope.Span },
+          { id: 'span-name', tag: 'name', operator: '=', scope: TraceqlSearchScope.Span },
         ],
       };
     }
