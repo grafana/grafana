@@ -112,8 +112,8 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
           </EditorField>
           {config.featureToggles.lokiQuerySplittingConfig && config.featureToggles.lokiQuerySplitting && (
             <EditorField
-              label="Chunk Duration"
-              tooltip="Defines the duration of a single query chunk when query chunking is used."
+              label="Split Duration"
+              tooltip="Defines the duration of a single query when query splitting is enabled."
             >
               <AutoSizeInput
                 minWidth={14}
