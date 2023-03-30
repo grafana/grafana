@@ -23,7 +23,7 @@ describe('preparePlotData2', () => {
   const df = new MutableDataFrame({
     fields: [
       { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
-      { name: 'a', values: [-10, 20, 10] },
+      { name: 'a', values: [-10, -20, 10] },
       { name: 'b', values: [10, 10, 10] },
       { name: 'c', values: [20, 20, 20] },
     ],
@@ -39,7 +39,7 @@ describe('preparePlotData2', () => {
         ],
         [
           -10,
-          20,
+          -20,
           10,
         ],
         [
@@ -61,7 +61,7 @@ describe('preparePlotData2', () => {
       const df = new MutableDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
-          { name: 'a', values: [-10, 20, 10] },
+          { name: 'a', values: [-10, -20, 10] },
           { name: 'b', values: [10, 10, 10] },
           { name: 'c', values: [20, 20, 20], config: { custom: { transform: GraphTransform.NegativeY } } },
         ],
@@ -75,7 +75,7 @@ describe('preparePlotData2', () => {
           ],
           [
             -10,
-            20,
+            -20,
             10,
           ],
           [
@@ -96,7 +96,7 @@ describe('preparePlotData2', () => {
       const df = new MutableDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
-          { name: 'a', values: [-10, 20, 10, 30] },
+          { name: 'a', values: [-10, -20, 10, -30] },
           { name: 'b', values: [10, 10, 10, null] },
           { name: 'c', values: [null, 20, 20, 20], config: { custom: { transform: GraphTransform.NegativeY } } },
           { name: 'd', values: [20, 20, 20, null], config: { custom: { transform: GraphTransform.NegativeY } } },
@@ -117,9 +117,9 @@ describe('preparePlotData2', () => {
           ],
           [
             -10,
-            20,
+            -20,
             10,
-            30,
+            -30,
           ],
           [
             10,
@@ -176,7 +176,7 @@ describe('preparePlotData2', () => {
       const df = new MutableDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
-          { name: 'a', values: [-10, 20, 10], config: { custom: { transform: GraphTransform.Constant } } },
+          { name: 'a', values: [-10, -20, 10], config: { custom: { transform: GraphTransform.Constant } } },
           { name: 'b', values: [10, 10, 10] },
           { name: 'c', values: [20, 20, 20] },
         ],
@@ -214,7 +214,7 @@ describe('preparePlotData2', () => {
           { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
           {
             name: 'a',
-            values: [-10, 20, 10],
+            values: [-10, -20, 10],
             config: { custom: { stacking: { mode: StackingMode.None } } },
           },
           {
@@ -238,7 +238,7 @@ describe('preparePlotData2', () => {
           ],
           [
             -10,
-            20,
+            -20,
             10,
           ],
           [
@@ -261,7 +261,7 @@ describe('preparePlotData2', () => {
           { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
           {
             name: 'a',
-            values: [-10, 20, 10],
+            values: [-10, -20, 10],
             config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
           },
           {
@@ -285,18 +285,18 @@ describe('preparePlotData2', () => {
           ],
           [
             -10,
-            20,
+            -20,
             10,
           ],
           [
-            0,
-            30,
-            20,
+            10,
+            10,
+            10,
           ],
           [
-            20,
-            50,
-            40,
+            30,
+            30,
+            30,
           ],
         ]
       `);
@@ -308,7 +308,7 @@ describe('preparePlotData2', () => {
           { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
           {
             name: 'a',
-            values: [-10, 20, 10],
+            values: [-10, -20, 10],
             config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
           },
           {
@@ -341,23 +341,23 @@ describe('preparePlotData2', () => {
           ],
           [
             -10,
-            20,
+            -20,
             10,
           ],
           [
-            0,
-            30,
-            20,
-          ],
-          [
-            -20,
-            -20,
-            -20,
+            10,
+            10,
+            10,
           ],
           [
             -30,
-            -30,
-            -30,
+            -40,
+            -10,
+          ],
+          [
+            -40,
+            -50,
+            -20,
           ],
         ]
       `);
@@ -369,7 +369,7 @@ describe('preparePlotData2', () => {
           { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
           {
             name: 'a',
-            values: [-10, 20, 10],
+            values: [-10, -20, 10],
             config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
           },
           {
@@ -409,18 +409,18 @@ describe('preparePlotData2', () => {
           ],
           [
             -10,
-            20,
+            -20,
             10,
           ],
           [
-            0,
-            30,
-            20,
+            10,
+            10,
+            10,
           ],
           [
-            20,
-            50,
-            40,
+            30,
+            30,
+            30,
           ],
           [
             1,
@@ -447,7 +447,7 @@ describe('preparePlotData2', () => {
           { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
           {
             name: 'a',
-            values: [-10, 20, 10],
+            values: [-10, -20, 10],
             config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' }, hideFrom: { viz: true } } },
           },
           {
@@ -484,7 +484,7 @@ describe('preparePlotData2', () => {
           ],
           [
             -10,
-            20,
+            -20,
             10,
           ],
           [
@@ -1108,7 +1108,7 @@ describe('auto stacking groups', () => {
         },
         {
           name: 'd',
-          values: [-0, null, 3],
+          values: [-0, null, -3],
           config: { custom: { stacking: { mode: StackingMode.Normal }, transform: GraphTransform.NegativeY } },
         },
       ],
