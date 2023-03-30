@@ -43,6 +43,10 @@ const codeMigration = "code migration"
 // It is defined in pkg/expr/service.go as "DatasourceType"
 const expressionDatasourceUID = "__expr__"
 
+var groupNameReplacer = func() *strings.Replacer {
+	return strings.NewReplacer("\\", "_", "/", "_")
+}
+
 type MigrationError struct {
 	AlertId int64
 	Err     error
@@ -228,8 +232,10 @@ type migration struct {
 	sess *xorm.Session
 	mg   *migrator.Migrator
 
-	seenUIDs uidSet
-	silences map[int64][]*pb.MeshSilence
+	// normalization replacer for group name
+	groupNameReplacer *strings.Replacer
+	seenUIDs          uidSet
+	silences          map[int64][]*pb.MeshSilence
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
@@ -240,6 +246,7 @@ func (m *migration) SQL(dialect migrator.Dialect) string {
 func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	m.sess = sess
 	m.mg = mg
+	m.groupNameReplacer = groupNameReplacer()
 
 	dashAlerts, err := m.slurpDashAlerts()
 	if err != nil {

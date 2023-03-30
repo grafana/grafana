@@ -136,7 +136,7 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
 		Version:         1,
 		NamespaceUID:    folderUID, // Folder already created, comes from env var.
-		RuleGroup:       name,
+		RuleGroup:       m.groupNameReplacer.Replace(name),
 		For:             duration(da.For),
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,

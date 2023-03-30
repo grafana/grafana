@@ -138,6 +138,19 @@ func TestMakeAlertRule(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, ar.IsPaused)
 	})
+
+	t.Run("should normalize group name", func(t *testing.T) {
+		m := newTestMigration(t)
+		da := createTestDashAlert()
+		da.Name = "rule forward/ and back\\"
+		cnd := createTestDashAlertCondition()
+
+		ar, err := m.makeAlertRule(cnd, da, "folder")
+
+		require.NoError(t, err)
+		require.Equal(t, da.Name, ar.Title)
+		require.Equal(t, "rule forward_ and back_", ar.RuleGroup)
+	})
 }
 
 func createTestDashAlert() dashAlert {
