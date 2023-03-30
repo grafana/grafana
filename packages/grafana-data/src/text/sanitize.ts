@@ -1,4 +1,5 @@
 import { sanitizeUrl as braintreeSanitizeUrl } from '@braintree/sanitize-url';
+import { trustedTypes } from 'trusted-types';
 import DOMPurify from 'dompurify';
 import * as xss from 'xss';
 
@@ -48,19 +49,25 @@ export function sanitize(unsanitizedString: string): string {
 }
 
 export function sanitizeTrustedTypes(unsanitizedString: string, conf?: string): TrustedHTML {
+
+  const myPolicy = trustedTypes.createPolicy('foo', {
+    createHTML: val => val,
+  })
+
   switch (conf) {
     case 'svg':
       return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true, USE_PROFILES: { svg: true, svgFilters: true } });
     case 'rss':
       return DOMPurify.sanitize(unsanitizedString, {
-        RETURN_TRUSTED_TYPE: true, 
-        ADD_ATTR: ['xmlns:atom', 'version', 'property', 'content'], 
+        RETURN_TRUSTED_TYPE: true,
+        ADD_ATTR: ['xmlns:atom', 'version', 'property', 'content'],
         ADD_TAGS: ['rss', 'meta', 'channel', 'title', 'link', 'description', 'atom:link', 'item', 'pubDate', 'guid'],
-        ALLOWED_ATTR: ['property'], 
-        PARSER_MEDIA_TYPE: 'application/xhtml+xml'
+        PARSER_MEDIA_TYPE: 'application/xhtml+xml',
       });
+    case 'none':
+      return myPolicy.createHTML(unsanitizedString);
   }
-  return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true, USE_PROFILES: { html: true }});
+  return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true, USE_PROFILES: { html: true } });
 }
 
 /**

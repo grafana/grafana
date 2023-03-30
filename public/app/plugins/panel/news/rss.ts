@@ -1,11 +1,12 @@
-import { textUtil } from '@grafana/data';
-
 import { getProperty } from './feed';
 import { Feed } from './types';
 
+import { textUtil } from '@grafana/data';
+
+
 export function parseRSSFeed(txt: string): Feed {
   const domParser = new DOMParser();
-  const doc = domParser.parseFromString(textUtil.sanitizeTrustedTypes(txt, 'rss') as unknown as string, 'text/xml');
+  const doc = domParser.parseFromString(textUtil.sanitizeTrustedTypes(txt, 'rss') as any as string, 'text/xml');
   const feed: Feed = {
     items: Array.from(doc.querySelectorAll('item')).map((node) => ({
       title: getProperty(node, 'title'),

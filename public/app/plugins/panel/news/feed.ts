@@ -1,7 +1,7 @@
-import { textUtil } from '@grafana/data';
-
 import { parseAtomFeed } from './atom';
 import { parseRSSFeed } from './rss';
+ 
+import { textUtil } from '@grafana/data';
 
 export async function fetchFeedText(url: string) {
   const rsp = await fetch(url);
@@ -11,7 +11,7 @@ export async function fetchFeedText(url: string) {
 
 export function isAtomFeed(txt: string) {
   const domParser = new DOMParser();
-  const doc = domParser.parseFromString(textUtil.sanitizeTrustedTypes(txt, 'rss') as unknown as string, 'text/xml');
+  const doc = domParser.parseFromString(textUtil.sanitizeTrustedTypes(txt, 'none') as unknown as string, 'text/xml');
   return doc.querySelector('feed') !== null;
 }
 

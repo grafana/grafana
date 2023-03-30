@@ -110,16 +110,6 @@ export class GrafanaApp {
 
   async init() {
     try {
-      //@ts-ignore
-      trustedTypes.createPolicy('default', {
-        //@ts-ignore
-        createHTML: (string) => sanitizett(string),
-        //@ts-ignore
-        createScriptURL: (string) => string,
-        //@ts-ignore
-        createScript: (string) => string,
-      });
-      console.log('init');
 
       // Let iframe container know grafana has started loading
       parent.postMessage('GrafanaAppInit', '*');

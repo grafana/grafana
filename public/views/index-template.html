@@ -29,6 +29,21 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="msapplication-TileColor" content="#2b5797" />
     <meta name="msapplication-config" content="public/img/browserconfig.xml" />
+    [[if .TrustedTypes]]
+    <script nonce="[[.Nonce]]" src="/public/views/purify.js"></script>
+
+    <script nonce="[[.Nonce]]">
+              if (window.trustedTypes && trustedTypes.createPolicy) { // check if browser supports Trusted Types
+                trustedTypes.createPolicy('default', { 
+                  createHTML: string => DOMPurify.sanitize(string, {RETURN_TRUSTED_TYPE: true}),
+                  createScript: string => string, 
+                  createScriptURL: string => {if (string.protocol === 'data:') {return '';}return string;},
+                });
+              }
+    
+    </script>
+    [[end]]
+
   </head>
 
   <body class="theme-[[ .Theme ]] [[.AppNameBodyClass]]">
@@ -269,7 +284,6 @@
         }
         document.head.appendChild(cssLink);
       }
-
       window.__grafana_load_failed = function() {
         var preloader = document.getElementsByClassName("preloader");
         if (preloader.length) {
@@ -292,7 +306,6 @@
         window.nonce = '[[.Nonce]]';
       [[end]]
     </script>
-
     [[if .GoogleTagManagerId]]
     <!-- Google Tag Manager -->
     <script nonce="[[.Nonce]]">
@@ -346,10 +359,5 @@
     <script nonce="[[.Nonce]]">
       performance.mark('frontend_boot_js_done_time_seconds');
     </script>
-            [[if .TrustedTypes]]
-            <script nonce="[[.Nonce]]">
-
-            </script>
-            [[end]]
   </body>
 </html>
