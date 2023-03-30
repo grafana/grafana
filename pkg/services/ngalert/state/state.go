@@ -282,6 +282,10 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 		logger.Debug("Execution no data state is Normal", "handler", "resultNormal", "previous_handler", "resultNoData")
 		resultNormal(state, rule, result, logger)
 		state.StateReason = models.NoData.String()
+	default:
+		err := fmt.Errorf("unsupported no data state: %s", rule.NoDataState)
+		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+		state.Annotations["Error"] = err.Error()
 	}
 }
 
