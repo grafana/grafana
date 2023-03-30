@@ -206,7 +206,6 @@ export function QueryHeader({
                 query={query}
                 value={query.table === undefined ? null : query.table}
                 onChange={onTableChange}
-                forceFetch={isDatasetSelectorHidden}
                 applyDefault
               />
             </EditorField>

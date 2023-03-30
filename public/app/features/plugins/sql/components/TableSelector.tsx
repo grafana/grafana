@@ -13,18 +13,9 @@ interface TableSelectorProps extends ResourceSelectorProps {
   value: string | null;
   query: QueryWithDefaults;
   onChange: (v: SelectableValue) => void;
-  forceFetch?: boolean;
 }
 
-export const TableSelector = ({
-  db,
-  query,
-  value,
-  className,
-  onChange,
-  forceFetch,
-  defaultDatabase,
-}: TableSelectorProps) => {
+export const TableSelector = ({ db, query, value, className, onChange, defaultDatabase }: TableSelectorProps) => {
   const state = useAsync(async () => {
     // JEV: what does this do?
     // if (!query.dataset && !forceFetch) {
