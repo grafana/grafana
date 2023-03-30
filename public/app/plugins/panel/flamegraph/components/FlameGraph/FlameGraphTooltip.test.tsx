@@ -1,10 +1,23 @@
-import { ArrayVector, Field, FieldType } from '@grafana/data';
+import { ArrayVector, Field, FieldType, MutableDataFrame } from '@grafana/data';
 
 import { getTooltipData } from './FlameGraphTooltip';
+import { FlameGraphDataContainer } from './dataTransform';
 
-describe('should get tooltip data correctly', () => {
+function setupData(unit?: string) {
+  const flameGraphData = new MutableDataFrame({
+    fields: [
+      { name: 'level', values: [0] },
+      unit ? makeField('value', unit, [8_624_078_250]) : { name: 'value', values: [8_624_078_250] },
+      { name: 'self', values: [978_250] },
+      { name: 'label', values: ['total'] },
+    ],
+  });
+  return new FlameGraphDataContainer(flameGraphData);
+}
+
+describe('FlameGraphTooltip', () => {
   it('for bytes', () => {
-    const tooltipData = getTooltipData(makeField('bytes'), 'total', 8_624_078_250, 978_250, 8_624_078_250);
+    const tooltipData = getTooltipData(setupData('bytes'), { start: 0, itemIndex: 0 }, 8_624_078_250);
     expect(tooltipData).toEqual({
       name: 'total',
       percentSelf: 0.01,
@@ -17,7 +30,7 @@ describe('should get tooltip data correctly', () => {
   });
 
   it('with default unit', () => {
-    const tooltipData = getTooltipData(makeField('none'), 'total', 8_624_078_250, 978_250, 8_624_078_250);
+    const tooltipData = getTooltipData(setupData('none'), { start: 0, itemIndex: 0 }, 8_624_078_250);
     expect(tooltipData).toEqual({
       name: 'total',
       percentSelf: 0.01,
@@ -30,18 +43,7 @@ describe('should get tooltip data correctly', () => {
   });
 
   it('without unit', () => {
-    const tooltipData = getTooltipData(
-      {
-        name: 'test',
-        type: FieldType.number,
-        values: new ArrayVector(),
-        config: {},
-      },
-      'total',
-      8_624_078_250,
-      978_250,
-      8_624_078_250
-    );
+    const tooltipData = getTooltipData(setupData('none'), { start: 0, itemIndex: 0 }, 8_624_078_250);
     expect(tooltipData).toEqual({
       name: 'total',
       percentSelf: 0.01,
@@ -54,7 +56,7 @@ describe('should get tooltip data correctly', () => {
   });
 
   it('for objects', () => {
-    const tooltipData = getTooltipData(makeField('short'), 'total', 8_624_078_250, 978_250, 8_624_078_250);
+    const tooltipData = getTooltipData(setupData('short'), { start: 0, itemIndex: 0 }, 8_624_078_250);
     expect(tooltipData).toEqual({
       name: 'total',
       percentSelf: 0.01,
@@ -67,7 +69,7 @@ describe('should get tooltip data correctly', () => {
   });
 
   it('for nanoseconds', () => {
-    const tooltipData = getTooltipData(makeField('ns'), 'total', 8_624_078_250, 978_250, 8_624_078_250);
+    const tooltipData = getTooltipData(setupData('ns'), { start: 0, itemIndex: 0 }, 8_624_078_250);
     expect(tooltipData).toEqual({
       name: 'total',
       percentSelf: 0.01,
@@ -80,13 +82,13 @@ describe('should get tooltip data correctly', () => {
   });
 });
 
-function makeField(unit: string): Field {
+function makeField(name: string, unit: string, values: number[]): Field {
   return {
-    name: 'test',
+    name,
     type: FieldType.number,
     config: {
       unit,
     },
-    values: new ArrayVector(),
+    values: new ArrayVector(values),
   };
 }

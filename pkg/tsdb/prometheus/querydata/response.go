@@ -28,6 +28,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	r := converter.ReadPrometheusStyleResult(iter, converter.Options{
 		MatrixWideSeries: s.enableWideSeries,
 		VectorWideSeries: s.enableWideSeries,
+		Dataplane:        s.enableDataplane,
 	})
 
 	// Add frame to attach metadata
