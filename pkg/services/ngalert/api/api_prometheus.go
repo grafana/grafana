@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -19,8 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 type PrometheusSrv struct {
@@ -150,7 +150,8 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
 	}
-	if err := srv.store.ListAlertRules(c.Req.Context(), &alertRuleQuery); err != nil {
+	ruleList, err := srv.store.ListAlertRules(c.Req.Context(), &alertRuleQuery)
+	if err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"
 		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
 		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
@@ -161,7 +162,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	}
 
 	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
-	for _, rule := range alertRuleQuery.Result {
+	for _, rule := range ruleList {
 		key := rule.GetGroupKey()
 		rulesInGroup := groupedRules[key]
 		rulesInGroup = append(rulesInGroup, rule)

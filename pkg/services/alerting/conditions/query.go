@@ -7,10 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/components/null"
@@ -18,6 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 )
 
 func init() {
@@ -143,20 +142,21 @@ func calculateInterval(timeRange legacydata.DataTimeRange, model *simplejson.Jso
 func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange legacydata.DataTimeRange,
 	requestHandler legacydata.RequestHandler) (legacydata.DataTimeSeriesSlice, error) {
 	getDsInfo := &datasources.GetDataSourceQuery{
-		Id:    c.Query.DatasourceID,
-		OrgId: context.Rule.OrgID,
+		ID:    c.Query.DatasourceID,
+		OrgID: context.Rule.OrgID,
 	}
 
-	if err := context.GetDataSource(context.Ctx, getDsInfo); err != nil {
+	dataSource, err := context.GetDataSource(context.Ctx, getDsInfo)
+	if err != nil {
 		return nil, fmt.Errorf("could not find datasource: %w", err)
 	}
 
-	err := context.RequestValidator.Validate(getDsInfo.Result.Url, nil)
+	err = context.RequestValidator.Validate(dataSource.URL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("access denied: %w", err)
 	}
 
-	req, err := c.getRequestForAlertRule(getDsInfo.Result, timeRange, context.IsDebug)
+	req, err := c.getRequestForAlertRule(dataSource, timeRange, context.IsDebug)
 	if err != nil {
 		return nil, fmt.Errorf("interval calculation failed: %w", err)
 	}
@@ -183,7 +183,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 				RefID: q.RefID,
 				Model: q.Model,
 				Datasource: simplejson.NewFromAny(map[string]interface{}{
-					"id":   q.DataSource.Id,
+					"id":   q.DataSource.ID,
 					"name": q.DataSource.Name,
 				}),
 				MaxDataPoints: q.MaxDataPoints,
@@ -199,7 +199,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 		})
 	}
 
-	resp, err := requestHandler.HandleRequest(context.Ctx, getDsInfo.Result, req)
+	resp, err := requestHandler.HandleRequest(context.Ctx, dataSource, req)
 	if err != nil {
 		return nil, toCustomError(err)
 	}

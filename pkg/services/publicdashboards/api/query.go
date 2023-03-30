@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -17,11 +17,11 @@ import (
 // GET /api/public/dashboards/:accessToken
 func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
-	if !tokens.IsValidAccessToken(accessToken) {
+	if !validation.IsValidAccessToken(accessToken) {
 		return response.Err(ErrInvalidAccessToken.Errorf("ViewPublicDashboard: invalid access token"))
 	}
 
-	pubdash, dash, err := api.PublicDashboardService.FindPublicDashboardAndDashboardByAccessToken(
+	pubdash, dash, err := api.PublicDashboardService.FindEnabledPublicDashboardAndDashboardByAccessToken(
 		c.Req.Context(),
 		accessToken,
 	)
@@ -43,6 +43,7 @@ func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Respons
 		IsFolder:                   false,
 		FolderId:                   dash.FolderID,
 		PublicDashboardAccessToken: pubdash.AccessToken,
+		PublicDashboardEnabled:     pubdash.IsEnabled,
 	}
 	dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
 
@@ -55,7 +56,7 @@ func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Respons
 // POST /api/public/dashboard/:accessToken/panels/:panelId/query
 func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
-	if !tokens.IsValidAccessToken(accessToken) {
+	if !validation.IsValidAccessToken(accessToken) {
 		return response.Err(ErrInvalidAccessToken.Errorf("QueryPublicDashboard: invalid access token"))
 	}
 
@@ -81,7 +82,7 @@ func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Respon
 // GET /api/public/dashboards/:accessToken/annotations
 func (api *Api) GetAnnotations(c *contextmodel.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
-	if !tokens.IsValidAccessToken(accessToken) {
+	if !validation.IsValidAccessToken(accessToken) {
 		return response.Err(ErrInvalidAccessToken.Errorf("GetAnnotations: invalid access token"))
 	}
 

@@ -7,12 +7,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -22,7 +20,7 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *contextmodel.ReqContext) respons
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if setting.DisableLoginForm {
+	if hs.Cfg.DisableLoginForm {
 		return response.Error(401, "Not allowed to reset password when login form is disabled", nil)
 	}
 
@@ -39,9 +37,9 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *contextmodel.ReqContext) respons
 		return response.Error(http.StatusOK, "Email sent", nil)
 	}
 
-	getAuthQuery := models.GetAuthInfoQuery{UserId: usr.ID}
-	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-		authModule := getAuthQuery.Result.AuthModule
+	getAuthQuery := login.GetAuthInfoQuery{UserId: usr.ID}
+	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
+		authModule := authInfo.AuthModule
 		if authModule == login.LDAPAuthModule || authModule == login.AuthProxyAuthModule {
 			return response.Error(401, "Not allowed to reset password for LDAP or Auth Proxy user", nil)
 		}
@@ -72,7 +70,8 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 		return usr, err
 	}
 
-	if err := hs.NotificationService.ValidateResetPasswordCode(c.Req.Context(), &query, getUserByLogin); err != nil {
+	userResult, err := hs.NotificationService.ValidateResetPasswordCode(c.Req.Context(), &query, getUserByLogin)
+	if err != nil {
 		if errors.Is(err, notifications.ErrInvalidEmailCode) {
 			return response.Error(400, "Invalid or expired reset password code", nil)
 		}
@@ -83,15 +82,14 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 		return response.Error(400, "Passwords do not match", nil)
 	}
 
-	password := models.Password(form.NewPassword)
+	password := user.Password(form.NewPassword)
 	if password.IsWeak() {
 		return response.Error(400, "New password is too short", nil)
 	}
 
 	cmd := user.ChangeUserPasswordCommand{}
-	cmd.UserID = query.Result.ID
-	var err error
-	cmd.NewPassword, err = util.EncodePassword(form.NewPassword, query.Result.Salt)
+	cmd.UserID = userResult.ID
+	cmd.NewPassword, err = util.EncodePassword(form.NewPassword, userResult.Salt)
 	if err != nil {
 		return response.Error(500, "Failed to encode password", err)
 	}

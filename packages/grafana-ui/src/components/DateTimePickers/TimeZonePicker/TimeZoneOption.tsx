@@ -26,7 +26,7 @@ export interface SelectableZone extends SelectableValue<string> {
   searchIndex: string;
 }
 
-export const WideTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props, ref) => {
+export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
   const { children, innerProps, innerRef, data, isSelected, isFocused } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -66,7 +66,7 @@ export const WideTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props, re
   );
 };
 
-export const CompactTimeZoneOption: React.FC<React.PropsWithChildren<Props>> = (props, ref) => {
+export const CompactTimeZoneOption = (props: React.PropsWithChildren<Props>) => {
   const { children, innerProps, innerRef, data, isSelected, isFocused } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);

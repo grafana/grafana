@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -26,6 +27,7 @@ import { fetchAllPromAndRulerRulesAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { getAllRulesSourceNames } from './utils/datasource';
+import { createUrl } from './utils/url';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -40,10 +42,12 @@ const RuleList = withErrorBoundary(
     const location = useLocation();
     const [expandAll, setExpandAll] = useState(false);
 
+    const onFilterCleared = useCallback(() => setExpandAll(false), []);
+
     const [queryParams] = useQueryParams();
     const { filterState, hasActiveFilters } = useRulesFilter();
 
-    const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
+    const { canCreateGrafanaRules, canCreateCloudRules, canReadProvisioning } = useRulesAccess();
 
     const view = VIEWS[queryParams['view'] as keyof typeof VIEWS]
       ? (queryParams['view'] as keyof typeof VIEWS)
@@ -88,7 +92,7 @@ const RuleList = withErrorBoundary(
       // We show separate indicators for Grafana-managed and Cloud rules
       <AlertingPageWrapper pageId="alert-list" isLoading={false}>
         <RuleListErrors />
-        <RulesFilter onFilterCleared={() => setExpandAll(false)} />
+        <RulesFilter onFilterCleared={onFilterCleared} />
         {!hasNoAlertRulesCreatedYet && (
           <>
             <div className={styles.break} />
@@ -106,15 +110,30 @@ const RuleList = withErrorBoundary(
                 )}
                 <RuleStats namespaces={filteredNamespaces} includeTotal />
               </div>
-              {(canCreateGrafanaRules || canCreateCloudRules) && (
-                <LinkButton
-                  href={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
-                  icon="plus"
-                  onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
-                >
-                  New alert rule
-                </LinkButton>
-              )}
+              <Stack direction="row" gap={0.5}>
+                {canReadProvisioning && (
+                  <LinkButton
+                    href={createUrl('/api/v1/provisioning/alert-rules/export', {
+                      download: 'true',
+                      format: 'yaml',
+                    })}
+                    icon="download-alt"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    Export
+                  </LinkButton>
+                )}
+                {(canCreateGrafanaRules || canCreateCloudRules) && (
+                  <LinkButton
+                    href={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
+                    icon="plus"
+                    onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
+                  >
+                    Create alert rule
+                  </LinkButton>
+                )}
+              </Stack>
             </div>
           </>
         )}

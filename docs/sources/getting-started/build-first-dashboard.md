@@ -39,14 +39,15 @@ To sign in to Grafana for the first time:
 
 To create your first dashboard:
 
-1. Click the **New dashboard** item under the **Dashboards** icon in the side menu.
+1. Click **Dashboards** in the left-side menu.
+1. On the Dashboards, click **New** and select **New Dashboard** from dropdown menu.
 1. On the dashboard, click **Add a new panel**.
 1. In the New dashboard/Edit panel view, go to the **Query** tab.
 1. Configure your [query]({{< relref "../panels-visualizations/query-transform-data/#add-a-query" >}}) by selecting `-- Grafana --` from the data source selector.
 
    This generates the Random Walk dashboard.
 
-1. Click the **Save** icon in the top right corner of your screen to save the dashboard.
+1. Click **Save** in the top right corner of your screen to save the dashboard.
 1. Add a descriptive name, and then click **Save**.
 
 Congratulations, you have created your first dashboard and it is displaying results.

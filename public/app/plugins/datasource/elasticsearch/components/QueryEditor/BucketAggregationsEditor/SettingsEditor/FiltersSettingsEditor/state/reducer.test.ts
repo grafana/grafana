@@ -1,6 +1,6 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 
-import { Filter } from '../../../aggregations';
+import { Filter } from '../../../../../../types';
 
 import { addFilter, changeFilter, removeFilter } from './actions';
 import { reducer } from './reducer';

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"path"
 	"path/filepath"
@@ -15,6 +14,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -25,13 +26,23 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+// pluginsCDNFallbackRedirectRequests is a metric counter keeping track of how many
+// requests are received on the plugins CDN backend redirect fallback handler.
+var pluginsCDNFallbackRedirectRequests = promauto.NewCounterVec(prometheus.CounterOpts{
+	Namespace: "grafana",
+	Name:      "plugins_cdn_fallback_redirect_requests_total",
+	Help:      "Number of requests to the plugins CDN backend redirect fallback handler.",
+}, []string{"plugin_id", "plugin_version"})
+
+var ErrUnexpectedFileExtension = errors.New("unexpected file extension")
 
 func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Response {
 	typeFilter := c.Query("type")
@@ -51,7 +62,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	canListNonCorePlugins := reqOrgAdmin(c) || hasAccess(reqOrgAdmin, ac.EvalAny(
 		ac.EvalPermission(datasources.ActionCreate),
-		ac.EvalPermission(plugins.ActionInstall),
+		ac.EvalPermission(pluginaccesscontrol.ActionInstall),
 	))
 
 	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgID)
@@ -81,7 +92,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 		// Should be able to list this installed plugin:
 		//  * anyone that can edit its settings
 		if !pluginDef.IsCorePlugin() && !canListNonCorePlugins && !hasAccess(reqOrgAdmin,
-			ac.EvalPermission(plugins.ActionWrite, plugins.ScopeProvider.GetResourceScope(pluginDef.ID))) {
+			ac.EvalPermission(pluginaccesscontrol.ActionWrite, pluginaccesscontrol.ScopeProvider.GetResourceScope(pluginDef.ID))) {
 			continue
 		}
 
@@ -106,17 +117,13 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			}
 		}
 
-		if (pluginDef.ID == "parca" || pluginDef.ID == "phlare") && !hs.Features.IsEnabled(featuremgmt.FlagFlameGraph) {
-			continue
-		}
-
 		filteredPluginDefinitions = append(filteredPluginDefinitions, pluginDef)
 		filteredPluginIDs[pluginDef.ID] = true
 	}
 
 	// Compute metadata
 	pluginsMetadata := hs.getMultiAccessControlMetadata(c, c.OrgID,
-		plugins.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
+		pluginaccesscontrol.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
 
 	// Prepare DTO
 	result := make(dtos.PluginList, 0)
@@ -171,7 +178,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 	if plugin.IsApp() {
 		hasAccess := ac.HasAccess(hs.AccessControl, c)
 		if !hasAccess(ac.ReqSignedIn,
-			ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
+			ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID))) {
 			return response.Error(http.StatusForbidden, "Access Denied", nil)
 		}
 	}
@@ -253,6 +260,8 @@ func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.R
 		return response.Error(500, "Failed to update plugin setting", err)
 	}
 
+	hs.PluginContextProvider.InvalidateSettingsCache(c.Req.Context(), pluginID)
+
 	return response.Success("Plugin settings updated")
 }
 
@@ -264,17 +273,20 @@ func (hs *HTTPServer) GetPluginMarkdown(c *contextmodel.ReqContext) response.Res
 	if err != nil {
 		var notFound plugins.NotFoundError
 		if errors.As(err, &notFound) {
-			return response.Error(404, notFound.Error(), nil)
+			return response.Error(http.StatusNotFound, notFound.Error(), nil)
 		}
 
-		return response.Error(500, "Could not get markdown file", err)
+		return response.Error(http.StatusInternalServerError, "Could not get markdown file", err)
 	}
 
 	// fallback try readme
 	if len(content) == 0 {
 		content, err = hs.pluginMarkdown(c.Req.Context(), pluginID, "readme")
 		if err != nil {
-			return response.Error(501, "Could not get markdown file", err)
+			if errors.Is(err, plugins.ErrFileNotExist) {
+				return response.Error(http.StatusNotFound, plugins.ErrFileNotExist.Error(), nil)
+			}
+			return response.Error(http.StatusNotImplemented, "Could not get markdown file", err)
 		}
 	}
 
@@ -301,6 +313,13 @@ func (hs *HTTPServer) CollectPluginMetrics(c *contextmodel.ReqContext) response.
 
 // getPluginAssets returns public plugin assets (images, JS, etc.)
 //
+// If the plugin has cdn = false in its config (default), it will always attempt to return the asset
+// from the local filesystem.
+//
+// If the plugin has cdn = true and hs.Cfg.PluginsCDNURLTemplate is empty, it will get the file
+// from the local filesystem. If hs.Cfg.PluginsCDNURLTemplate is not empty,
+// this handler returns a redirect to the plugin asset file on the specified CDN.
+//
 // /public/plugins/:pluginId/*
 func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 	pluginID := web.Params(c.Req)[":pluginId"]
@@ -318,24 +337,25 @@ func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 		return
 	}
 
-	f, err := plugin.File(requestedFile)
+	if hs.pluginsCDNService.PluginSupported(pluginID) {
+		// Send a redirect to the client
+		hs.redirectCDNPluginAsset(c, plugin, requestedFile)
+		return
+	}
+
+	// Send the actual file to the client from local filesystem
+	hs.serveLocalPluginAsset(c, plugin, requestedFile)
+}
+
+// serveLocalPluginAsset returns the content of a plugin asset file from the local filesystem to the http client.
+func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin plugins.PluginDTO, assetPath string) {
+	f, err := hs.pluginFileStore.File(c.Req.Context(), plugin.ID, assetPath)
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
 			c.JsonApiErr(404, "Plugin file not found", nil)
 			return
 		}
 		c.JsonApiErr(500, "Could not open plugin file", err)
-		return
-	}
-	defer func() {
-		if err = f.Close(); err != nil {
-			hs.log.Error("Failed to close plugin file", "err", err)
-		}
-	}()
-
-	fi, err := f.Stat()
-	if err != nil {
-		c.JsonApiErr(500, "Plugin file exists but could not open", err)
 		return
 	}
 
@@ -345,16 +365,28 @@ func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
-	if rs, ok := f.(io.ReadSeeker); ok {
-		http.ServeContent(c.Resp, c.Req, requestedFile, fi.ModTime(), rs)
-	} else {
-		b, err := io.ReadAll(f)
-		if err != nil {
-			c.JsonApiErr(500, "Plugin file exists but could not read", err)
-			return
-		}
-		http.ServeContent(c.Resp, c.Req, requestedFile, fi.ModTime(), bytes.NewReader(b))
+	http.ServeContent(c.Resp, c.Req, assetPath, f.ModTime, bytes.NewReader(f.Content))
+}
+
+// redirectCDNPluginAsset redirects the http request to specified asset path on the configured plugins CDN.
+func (hs *HTTPServer) redirectCDNPluginAsset(c *contextmodel.ReqContext, plugin plugins.PluginDTO, assetPath string) {
+	remoteURL, err := hs.pluginsCDNService.AssetURL(plugin.ID, plugin.Info.Version, assetPath)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to get CDN plugin asset remote URL", err)
+		return
 	}
+	hs.log.Warn(
+		"plugin cdn redirect hit",
+		"pluginID", plugin.ID,
+		"pluginVersion", plugin.Info.Version,
+		"assetPath", assetPath,
+		"remoteURL", remoteURL,
+	)
+	pluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
+		"plugin_id":      plugin.ID,
+		"plugin_version": plugin.Info.Version,
+	}).Inc()
+	http.Redirect(c.Resp, c.Req, remoteURL, http.StatusTemporaryRedirect)
 }
 
 // CheckHealth returns the health of a plugin.
@@ -484,32 +516,34 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	return response.Error(500, "Plugin request failed", err)
 }
 
-func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name string) ([]byte, error) {
-	plugin, exists := hs.pluginStore.Plugin(ctx, pluginId)
-	if !exists {
-		return nil, plugins.NotFoundError{PluginID: pluginId}
+func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name string) ([]byte, error) {
+	file, err := mdFilepath(strings.ToUpper(name))
+	if err != nil {
+		return make([]byte, 0), err
 	}
 
-	md, err := plugin.File(mdFilepath(strings.ToUpper(name)))
+	md, err := hs.pluginFileStore.File(ctx, pluginID, file)
 	if err != nil {
-		md, err = plugin.File(mdFilepath(strings.ToUpper(name)))
+		if errors.Is(err, plugins.ErrPluginNotInstalled) {
+			return make([]byte, 0), plugins.NotFoundError{PluginID: pluginID}
+		}
+
+		md, err = hs.pluginFileStore.File(ctx, pluginID, strings.ToLower(file))
 		if err != nil {
 			return make([]byte, 0), nil
 		}
 	}
-	defer func() {
-		if err = md.Close(); err != nil {
-			hs.log.Error("Failed to close plugin markdown file", "err", err)
-		}
-	}()
-
-	d, err := io.ReadAll(md)
-	if err != nil {
-		return make([]byte, 0), nil
-	}
-	return d, nil
+	return md.Content, nil
 }
 
-func mdFilepath(mdFilename string) string {
-	return filepath.Clean(filepath.Join("/", fmt.Sprintf("%s.md", mdFilename)))
+func mdFilepath(mdFilename string) (string, error) {
+	fileExt := filepath.Ext(mdFilename)
+	switch fileExt {
+	case "md":
+		return util.CleanRelativePath(mdFilename)
+	case "":
+		return util.CleanRelativePath(fmt.Sprintf("%s.md", mdFilename))
+	default:
+		return "", ErrUnexpectedFileExtension
+	}
 }

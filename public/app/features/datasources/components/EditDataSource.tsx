@@ -117,7 +117,7 @@ export function EditDataSourceView({
   const isAlertManagerDatasource = dsi?.type === 'alertmanager';
   const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await onUpdate({ ...dataSource });
 
@@ -140,7 +140,7 @@ export function EditDataSourceView({
   if (pageId) {
     return (
       <DataSourcePluginContextProvider instanceSettings={dsi}>
-        <DataSourcePluginConfigPage pageId={pageId} plugin={plugin} />;
+        <DataSourcePluginConfigPage pageId={pageId} plugin={plugin} />
       </DataSourcePluginContextProvider>
     );
   }

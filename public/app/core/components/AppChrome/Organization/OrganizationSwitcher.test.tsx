@@ -1,11 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { OrgRole } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { getUserOrganizations } from 'app/features/org/state/actions';
-import { configureStore } from 'app/store/configureStore';
 import * as appTypes from 'app/types';
 
 import { OrganizationSwitcher } from './OrganizationSwitcher';
@@ -22,16 +21,22 @@ jest.mock('app/types', () => ({
 }));
 
 const renderWithProvider = ({ initialState }: { initialState?: Partial<appTypes.StoreState> }) => {
-  const store = configureStore(initialState);
-
   render(
-    <Provider store={store}>
+    <TestProvider storeState={initialState}>
       <OrganizationSwitcher />
-    </Provider>
+    </TestProvider>
   );
 };
 
 describe('OrganisationSwitcher', () => {
+  beforeEach(() => {
+    (window.matchMedia as jest.Mock).mockImplementation(() => ({
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      matches: true,
+    }));
+  });
+
   it('should only render if more than one organisations', () => {
     renderWithProvider({
       initialState: {
@@ -78,7 +83,7 @@ describe('OrganisationSwitcher', () => {
     (window.matchMedia as jest.Mock).mockImplementation(() => ({
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
-      matches: () => true,
+      matches: false,
     }));
     renderWithProvider({
       initialState: {

@@ -396,6 +396,25 @@ func TestTimeSeriesFilter(t *testing.T) {
 		})
 	})
 
+	t.Run("field name is filled in for agg statement", func(t *testing.T) {
+		data, err := loadTestFile("./test-data/10-series-response-mql-no-labels.json")
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(data.TimeSeries))
+		assert.Equal(t, 1, len(data.TimeSeriesData))
+
+		res := &backend.DataResponse{}
+		query := &cloudMonitoringTimeSeriesQuery{
+			parameters: &timeSeriesQuery{
+				Query:       "fetch gce_instance::compute.googleapis.com/instance/cpu/utilization | sum",
+				ProjectName: "test",
+				GraphPeriod: "60s",
+			},
+		}
+		err = query.parseResponse(res, data, "")
+		require.NoError(t, err)
+		assert.Equal(t, "value_utilization_sum", res.Frames[0].Fields[1].Name)
+	})
+
 	t.Run("Parse labels", func(t *testing.T) {
 		data, err := loadTestFile("./test-data/5-series-response-meta-data.json")
 		require.NoError(t, err)

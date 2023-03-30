@@ -108,9 +108,11 @@ export const splitOpen = <T extends DataQuery = DataQuery>(options?: SplitOpenOp
     let rightUrlState: ExploreUrlState = leftUrlState;
 
     if (options) {
+      const { query, queries } = options;
+
       rightUrlState = {
         datasource: options.datasourceUid,
-        queries: [options.query],
+        queries: queries ?? (query ? [query] : []),
         range: options.range || leftState.range,
         panelsState: options.panelsState,
       };

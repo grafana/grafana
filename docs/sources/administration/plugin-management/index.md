@@ -29,7 +29,7 @@ Use panel plugins when you want to:
 
 ## Data source plugins
 
-Data source plugins add support for new databases, such as [Google BigQuery](/grafana/plugins/doitintl-bigquery-datasource).
+Data source plugins add support for new databases, such as [Google BigQuery](/grafana/plugins/grafana-bigquery-datasource).
 
 Data source plugins communicate with external sources of data and return the data in a format that Grafana understands. By adding a data source plugin, you can immediately use the data in any of your existing dashboards.
 

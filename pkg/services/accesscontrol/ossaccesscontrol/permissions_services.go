@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
@@ -114,7 +115,7 @@ var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.Act
 
 func ProvideDashboardPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
-	license licensing.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
+	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
@@ -152,7 +153,13 @@ func ProvideDashboardPermissions(
 				if err != nil {
 					return nil, err
 				}
-				return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(queryResult.UID)}, nil
+				parentScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(queryResult.UID)
+
+				nestedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, queryResult.UID, folderService)
+				if err != nil {
+					return nil, err
+				}
+				return append([]string{parentScope}, nestedScopes...), nil
 			}
 			return []string{}, nil
 		},
@@ -195,7 +202,7 @@ var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFol
 
 func ProvideFolderPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
-	license licensing.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
+	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*FolderPermissionsService, error) {
 	options := resourcepermissions.Options{
@@ -213,6 +220,9 @@ func ProvideFolderPermissions(
 			}
 
 			return nil
+		},
+		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
+			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderService)
 		},
 		Assignments: resourcepermissions.Assignments{
 			Users:        true,

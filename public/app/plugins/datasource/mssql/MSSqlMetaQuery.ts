@@ -5,8 +5,7 @@ export function showDatabases() {
 
 export function getSchemaAndName(database?: string) {
   return `SELECT TABLE_SCHEMA + '.' + TABLE_NAME as schemaAndName
-    FROM [${database}].INFORMATION_SCHEMA.TABLES
-    WHERE TABLE_TYPE = 'BASE TABLE'`;
+    FROM [${database}].INFORMATION_SCHEMA.TABLES`;
 }
 
 export function getSchema(database?: string, table?: string) {

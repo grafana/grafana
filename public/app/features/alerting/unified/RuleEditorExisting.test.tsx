@@ -1,8 +1,8 @@
-import { render, waitFor, screen, within } from '@testing-library/react';
+import { render, waitFor, screen, within, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Route, Router } from 'react-router-dom';
+import { Route } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOptionMatch } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
@@ -11,7 +11,6 @@ import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { ADD_NEW_FOLER_OPTION } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { configureStore } from 'app/store/configureStore';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
@@ -64,16 +63,12 @@ const mocks = {
 };
 
 function renderRuleEditor(identifier?: string) {
-  const store = configureStore();
-
   locationService.push(identifier ? `/alerting/${identifier}/edit` : `/alerting/new`);
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <Route path={['/alerting/new', '/alerting/:id/edit']} component={RuleEditor} />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <Route path={['/alerting/new', '/alerting/:id/edit']} component={RuleEditor} />
+    </TestProvider>
   );
 }
 
@@ -190,7 +185,9 @@ describe('RuleEditor grafana managed rules', () => {
     //check that '+ Add new' option is in folders drop down even if we don't have values
     const emptyFolderInput = await ui.inputs.folderContainer.find();
     mocks.searchFolders.mockResolvedValue([] as DashboardSearchHit[]);
-    await renderRuleEditor(uid);
+    await act(async () => {
+      renderRuleEditor(uid);
+    });
     await userEvent.click(within(emptyFolderInput).getByRole('combobox'));
     expect(screen.getByText(ADD_NEW_FOLER_OPTION)).toBeInTheDocument();
 
@@ -210,6 +207,7 @@ describe('RuleEditor grafana managed rules', () => {
               condition: 'B',
               data: getDefaultQueries(),
               exec_err_state: GrafanaAlertStateDecision.Error,
+              is_paused: false,
               no_data_state: 'NoData',
               title: 'my great new rule',
             },

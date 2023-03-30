@@ -10,7 +10,6 @@ import (
 	"github.com/jmespath/go-jmespath"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth"
 	authJWT "github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -23,11 +22,11 @@ import (
 var _ authn.ContextAwareClient = new(JWT)
 
 var (
-	ErrJWTInvalid = errutil.NewBase(errutil.StatusUnauthorized,
+	errJWTInvalid = errutil.NewBase(errutil.StatusUnauthorized,
 		"jwt.invalid", errutil.WithPublicMessage("Failed to verify JWT"))
-	ErrJWTMissingClaim = errutil.NewBase(errutil.StatusUnauthorized,
+	errJWTMissingClaim = errutil.NewBase(errutil.StatusUnauthorized,
 		"jwt.missing_claim", errutil.WithPublicMessage("Missing mandatory claim in JWT"))
-	ErrJWTInvalidRole = errutil.NewBase(errutil.StatusForbidden,
+	errJWTInvalidRole = errutil.NewBase(errutil.StatusForbidden,
 		"jwt.invalid_role", errutil.WithPublicMessage("Invalid Role in claim"))
 )
 
@@ -54,14 +53,14 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 
 	claims, err := s.jwtService.Verify(ctx, jwtToken)
 	if err != nil {
-		s.log.Debug("Failed to verify JWT", "error", err)
-		return nil, ErrJWTInvalid.Errorf("failed to verify JWT: %w", err)
+		s.log.FromContext(ctx).Debug("Failed to verify JWT", "error", err)
+		return nil, errJWTInvalid.Errorf("failed to verify JWT: %w", err)
 	}
 
 	sub, _ := claims["sub"].(string)
 	if sub == "" {
-		s.log.Warn("Got a JWT without the mandatory 'sub' claim", "error", err)
-		return nil, ErrJWTMissingClaim.Errorf("missing mandatory 'sub' claim in JWT")
+		s.log.FromContext(ctx).Warn("Got a JWT without the mandatory 'sub' claim", "error", err)
+		return nil, errJWTMissingClaim.Errorf("missing mandatory 'sub' claim in JWT")
 	}
 
 	id := &authn.Identity{
@@ -69,10 +68,11 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		AuthID:     sub,
 		OrgRoles:   map[int64]org.RoleType{},
 		ClientParams: authn.ClientParams{
-			SyncUser:            true,
-			SyncTeamMembers:     true,
-			AllowSignUp:         s.cfg.JWTAuthAutoSignUp,
-			EnableDisabledUsers: false,
+			SyncUser:        true,
+			FetchSyncedUser: true,
+			SyncPermissions: true,
+			SyncOrgRoles:    !s.cfg.JWTAuthSkipOrgRoleSync,
+			AllowSignUp:     s.cfg.JWTAuthAutoSignUp,
 		}}
 
 	if key := s.cfg.JWTAuthUsernameClaim; key != "" {
@@ -88,41 +88,34 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		id.Name = name
 	}
 
-	var role roletype.RoleType
-	var grafanaAdmin bool
-	if !s.cfg.JWTAuthSkipOrgRoleSync {
-		role, grafanaAdmin = s.extractRoleAndAdmin(claims)
+	orgRoles, isGrafanaAdmin, err := getRoles(s.cfg, func() (org.RoleType, *bool, error) {
+		if s.cfg.JWTAuthSkipOrgRoleSync {
+			return "", nil, nil
+		}
+
+		role, grafanaAdmin := s.extractRoleAndAdmin(claims)
 		if s.cfg.JWTAuthRoleAttributeStrict && !role.IsValid() {
-			s.log.Warn("extracted Role is invalid", "role", role, "auth_id", id.AuthID)
-			return nil, ErrJWTInvalidRole.Errorf("invalid role claim in JWT: %s", role)
+			return "", nil, errJWTInvalidRole.Errorf("invalid role claim in JWT: %s", role)
 		}
 
-		if role.IsValid() {
-			var orgID int64
-			// FIXME (jguer): GetIDForNewUser already has the auto assign information
-			// just needs the org role. Find a meaningful way to pass this default
-			// role to it (that doesn't involve id.OrgRoles[0] = role)
-			if s.cfg.AutoAssignOrg && s.cfg.AutoAssignOrgId > 0 {
-				orgID = int64(s.cfg.AutoAssignOrgId)
-				s.log.Debug("The user has a role assignment and organization membership is auto-assigned",
-					"role", role, "orgId", orgID)
-			} else {
-				orgID = int64(1)
-				s.log.Debug("The user has a role assignment and organization membership is not auto-assigned",
-					"role", role, "orgId", orgID)
-			}
-
-			id.OrgRoles[orgID] = role
-			if s.cfg.JWTAuthAllowAssignGrafanaAdmin {
-				id.IsGrafanaAdmin = &grafanaAdmin
-			}
+		if !s.cfg.JWTAuthAllowAssignGrafanaAdmin {
+			return role, nil, nil
 		}
+
+		return role, &grafanaAdmin, nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
+	id.OrgRoles = orgRoles
+	id.IsGrafanaAdmin = isGrafanaAdmin
+
 	if id.Login == "" && id.Email == "" {
-		s.log.Debug("Failed to get an authentication claim from JWT",
+		s.log.FromContext(ctx).Debug("Failed to get an authentication claim from JWT",
 			"login", id.Login, "email", id.Email)
-		return nil, ErrJWTMissingClaim.Errorf("missing login and email claim in JWT")
+		return nil, errJWTMissingClaim.Errorf("missing login and email claim in JWT")
 	}
 
 	return id, nil

@@ -2,12 +2,9 @@ package folderimpl
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"time"
 
-	"github.com/VividCortex/mysqlerr"
-	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -195,21 +192,24 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 		SELECT * FROM RecQry;
 	`
 
-	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		err := sess.SQL(recQuery, q.UID, q.OrgID).Find(&folders)
-		if err != nil {
-			return folder.ErrDatabaseError.Errorf("failed to get folder parents: %w", err)
-		}
-		return nil
-	}); err != nil {
-		var driverErr *mysql.MySQLError
-		if errors.As(err, &driverErr) {
-			if driverErr.Number == mysqlerr.ER_PARSE_ERROR {
-				ss.log.Debug("recursive CTE subquery is not supported; it fallbacks to the iterative implementation")
-				return ss.getParentsMySQL(ctx, q)
-			}
-		}
+	recursiveQueriesAreSupported, err := ss.db.RecursiveQueriesAreSupported()
+	if err != nil {
 		return nil, err
+	}
+	switch recursiveQueriesAreSupported {
+	case true:
+		if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+			err := sess.SQL(recQuery, q.UID, q.OrgID).Find(&folders)
+			if err != nil {
+				return folder.ErrDatabaseError.Errorf("failed to get folder parents: %w", err)
+			}
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+	default:
+		ss.log.Debug("recursive CTE subquery is not supported; it fallbacks to the iterative implementation")
+		return ss.getParentsMySQL(ctx, q)
 	}
 
 	if len(folders) < 1 {

@@ -12,7 +12,7 @@ import { GraphiteQuery, GraphiteQueryType } from './types';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 

@@ -3,9 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, Icon } from '@grafana/ui';
-
-import { getNavTitle } from '../NavBar/navBarItem-translations';
 
 export interface Props {
   item: NavModelItem;
@@ -36,9 +35,17 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
     icon = <Icon data-testid="section-icon" name={item.icon} />;
   }
 
+  const onItemClicked = () => {
+    reportInteraction('grafana_navigation_item_clicked', {
+      path: item.url ?? item.id,
+      sectionNav: true,
+    });
+  };
+
   return (
     <>
       <a
+        onClick={onItemClicked}
         href={item.url}
         className={linkClass}
         aria-label={selectors.components.Tab.title(item.text)}
@@ -46,7 +53,7 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
         aria-selected={item.active}
       >
         {isSectionRoot && icon}
-        {getNavTitle(item.id) ?? item.text}
+        {item.text}
         {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
       </a>
       {children?.map((child, index) => (
@@ -62,7 +69,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(1, 0, 1, 1.5)};
       display: flex;
       align-items: center;
-      border-radius: ${theme.shape.borderRadius(2)};
+      border-radius: ${theme.shape.radius.default};
       gap: ${theme.spacing(1)};
       height: 100%;
       position: relative;
@@ -77,6 +84,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     activeStyle: css`
       label: activeTabStyle;
       color: ${theme.colors.text.primary};
+      font-weight: ${theme.typography.fontWeightMedium};
       background: ${theme.colors.emphasize(theme.colors.background.canvas, 0.03)};
 
       &::before {
@@ -87,7 +95,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         width: 4px;
         bottom: 2px;
         top: 2px;
-        border-radius: 2px;
+        border-radius: ${theme.shape.radius.default};
         background-image: ${theme.colors.gradients.brandVertical};
       }
     `,
@@ -95,7 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-left: ${theme.spacing(1)};
     `,
     sectionImg: css({
-      height: 18,
+      width: 18,
     }),
     isSectionRoot: css({
       fontSize: theme.typography.h4.fontSize,

@@ -12,12 +12,12 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/ldap.v3"
+	"github.com/go-ldap/ldap/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // IConnection is interface for LDAP connection manipulation
@@ -33,8 +33,8 @@ type IConnection interface {
 
 // IServer is interface for LDAP authorization
 type IServer interface {
-	Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error)
-	Users([]string) ([]*models.ExternalUserInfo, error)
+	Login(*login.LoginUserQuery) (*login.ExternalUserInfo, error)
+	Users([]string) ([]*login.ExternalUserInfo, error)
 	Bind() error
 	UserBind(string, string) error
 	Dial() error
@@ -43,6 +43,7 @@ type IServer interface {
 
 // Server is basic struct of LDAP authorization
 type Server struct {
+	cfg        *setting.Cfg
 	Config     *ServerConfig
 	Connection IConnection
 	log        log.Logger
@@ -83,9 +84,10 @@ var (
 )
 
 // New creates the new LDAP connection
-func New(config *ServerConfig) IServer {
+func New(config *ServerConfig, cfg *setting.Cfg) IServer {
 	return &Server{
 		Config: config,
+		cfg:    cfg,
 		log:    log.New("ldap"),
 	}
 }
@@ -128,6 +130,8 @@ func (server *Server) Dial() error {
 				InsecureSkipVerify: server.Config.SkipVerifySSL,
 				ServerName:         host,
 				RootCAs:            certPool,
+				MinVersion:         server.Config.minTLSVersion,
+				CipherSuites:       server.Config.tlsCiphers,
 			}
 			if len(clientCert.Certificate) > 0 {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
@@ -202,8 +206,8 @@ func (server *Server) Close() {
 //
 // Dial() sets the connection with the server for this Struct. Therefore, we require a
 // call to Dial() before being able to execute this function.
-func (server *Server) Login(query *models.LoginUserQuery) (
-	*models.ExternalUserInfo, error,
+func (server *Server) Login(query *login.LoginUserQuery) (
+	*login.ExternalUserInfo, error,
 ) {
 	var err error
 	var authAndBind bool
@@ -279,7 +283,7 @@ func (server *Server) shouldSingleBind() bool {
 // Dial() sets the connection with the server for this Struct. Therefore, we require a
 // call to Dial() before being able to execute this function.
 func (server *Server) Users(logins []string) (
-	[]*models.ExternalUserInfo,
+	[]*login.ExternalUserInfo,
 	error,
 ) {
 	var users [][]*ldap.Entry
@@ -293,7 +297,7 @@ func (server *Server) Users(logins []string) (
 	}
 
 	if len(users) == 0 {
-		return []*models.ExternalUserInfo{}, nil
+		return []*login.ExternalUserInfo{}, nil
 	}
 
 	serializedUsers, err := server.serializeUsers(users)
@@ -361,10 +365,10 @@ func (server *Server) users(logins []string) (
 // validateGrafanaUser validates user access.
 // If there are no ldap group mappings access is true
 // otherwise a single group must match
-func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
-	if !SkipOrgRoleSync() && len(server.Config.Groups) > 0 &&
+func (server *Server) validateGrafanaUser(user *login.ExternalUserInfo) error {
+	if !server.cfg.LDAPSkipOrgRoleSync && len(server.Config.Groups) > 0 &&
 		(len(user.OrgRoles) == 0 && (user.IsGrafanaAdmin == nil || !*user.IsGrafanaAdmin)) {
-		server.log.Error(
+		server.log.Warn(
 			"User does not belong in any of the specified LDAP groups",
 			"username", user.Login,
 			"groups", user.Groups,
@@ -423,14 +427,14 @@ func (server *Server) getSearchRequest(
 }
 
 // buildGrafanaUser extracts info from UserInfo model to ExternalUserInfo
-func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserInfo, error) {
+func (server *Server) buildGrafanaUser(user *ldap.Entry) (*login.ExternalUserInfo, error) {
 	memberOf, err := server.getMemberOf(user)
 	if err != nil {
 		return nil, err
 	}
 
 	attrs := server.Config.Attr
-	extUser := &models.ExternalUserInfo{
+	extUser := &login.ExternalUserInfo{
 		AuthModule: login.LDAPAuthModule,
 		AuthId:     user.DN,
 		Name: strings.TrimSpace(
@@ -447,7 +451,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 	}
 
 	// Skipping org role sync
-	if SkipOrgRoleSync() {
+	if server.cfg.LDAPSkipOrgRoleSync {
 		server.log.Debug("skipping organization role mapping.")
 		return extUser, nil
 	}
@@ -595,8 +599,8 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 // from LDAP result to ExternalInfo struct
 func (server *Server) serializeUsers(
 	entries [][]*ldap.Entry,
-) ([]*models.ExternalUserInfo, error) {
-	var serialized []*models.ExternalUserInfo
+) ([]*login.ExternalUserInfo, error) {
+	var serialized []*login.ExternalUserInfo
 	var users = map[string]struct{}{}
 
 	for _, dn := range entries {

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 )
 
@@ -33,7 +33,7 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 
 	decls := make([]*PluginDecl, 0)
 	for _, plugin := range plugins {
-		path := filepath.Dir(plugin)
+		path := filepath.ToSlash(filepath.Dir(plugin))
 		base := filepath.Base(path)
 		if skip, ok := psr.skip[base]; ok && skip {
 			continue
@@ -61,7 +61,7 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 				Imports:         pp.CUEImports,
 				PluginMeta:      pp.Properties,
 				PluginPath:      path,
-				KindDecl:        kind.Decl(),
+				KindDecl:        kind.Def(),
 			})
 		}
 	}

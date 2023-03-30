@@ -17,7 +17,7 @@ export function PanelLinks({ panelLinks, onShowPanelLinks }: Props) {
     return (
       <Menu>
         {interpolatedLinks?.map((link, idx) => {
-          return <Menu.Item key={idx} label={link.title} url={link.href} target={link.target} />;
+          return <Menu.Item key={idx} label={link.title} url={link.href} target={link.target} onClick={link.onClick} />;
         })}
       </Menu>
     );
@@ -32,13 +32,13 @@ export function PanelLinks({ panelLinks, onShowPanelLinks }: Props) {
         target={linkModel.target}
         title={linkModel.title}
       >
-        <Icon name="external-link-alt" size="lg" />
+        <Icon name="external-link-alt" size="md" />
       </PanelChrome.TitleItem>
     );
   } else {
     return (
       <Dropdown overlay={getLinksContent}>
-        <ToolbarButton icon="external-link-alt" aria-label="panel links" className={styles.menuTrigger} />
+        <ToolbarButton icon="external-link-alt" iconSize="md" aria-label="panel links" className={styles.menuTrigger} />
       </Dropdown>
     );
   }
@@ -47,6 +47,8 @@ export function PanelLinks({ panelLinks, onShowPanelLinks }: Props) {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     menuTrigger: css({
+      height: '100%',
+      background: 'inherit',
       border: 'none',
       borderRadius: `${theme.shape.borderRadius()}`,
       cursor: 'context-menu',

@@ -4,12 +4,13 @@ import (
 	"context"
 	"sync"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
-	"golang.org/x/sync/errgroup"
 )
 
 type serviceDisabled struct {

@@ -8,8 +8,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -91,7 +91,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				toFolder := createFolderWithACL(t, sc.sqlStore, "Folder", sc.user, testCase.items)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				cmd := PatchLibraryElementCommand{FolderID: toFolder.ID, Version: 1, Kind: int64(models.PanelElement)}
+				cmd := model.PatchLibraryElementCommand{FolderID: toFolder.ID, Version: 1, Kind: int64(model.PanelElement)}
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				sc.reqContext.Req.Body = mockRequestBody(cmd)
 				resp = sc.service.patchHandler(sc.reqContext)
@@ -108,7 +108,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				toFolder := createFolderWithACL(t, sc.sqlStore, "Folder", sc.user, everyonePermissions)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				cmd := PatchLibraryElementCommand{FolderID: toFolder.ID, Version: 1, Kind: int64(models.PanelElement)}
+				cmd := model.PatchLibraryElementCommand{FolderID: toFolder.ID, Version: 1, Kind: int64(model.PanelElement)}
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				sc.reqContext.Req.Body = mockRequestBody(cmd)
 				resp = sc.service.patchHandler(sc.reqContext)
@@ -159,7 +159,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				result := validateAndUnMarshalResponse(t, resp)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				cmd := PatchLibraryElementCommand{FolderID: 0, Version: 1, Kind: int64(models.PanelElement)}
+				cmd := model.PatchLibraryElementCommand{FolderID: 0, Version: 1, Kind: int64(model.PanelElement)}
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				sc.ctx.Req.Body = mockRequestBody(cmd)
 				resp = sc.service.patchHandler(sc.reqContext)
@@ -175,7 +175,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				result := validateAndUnMarshalResponse(t, resp)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				cmd := PatchLibraryElementCommand{FolderID: folder.ID, Version: 1, Kind: int64(models.PanelElement)}
+				cmd := model.PatchLibraryElementCommand{FolderID: folder.ID, Version: 1, Kind: int64(model.PanelElement)}
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				sc.ctx.Req.Body = mockRequestBody(cmd)
 				resp = sc.service.patchHandler(sc.reqContext)
@@ -224,7 +224,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				result := validateAndUnMarshalResponse(t, resp)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				cmd := PatchLibraryElementCommand{FolderID: -100, Version: 1, Kind: int64(models.PanelElement)}
+				cmd := model.PatchLibraryElementCommand{FolderID: -100, Version: 1, Kind: int64(model.PanelElement)}
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				sc.reqContext.Req.Body = mockRequestBody(cmd)
 				resp = sc.service.patchHandler(sc.reqContext)
@@ -252,9 +252,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 					resp := sc.service.createHandler(sc.reqContext)
 					result := validateAndUnMarshalResponse(t, resp)
 					result.Result.Meta.CreatedBy.Name = userInDbName
-					result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+					result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 					result.Result.Meta.UpdatedBy.Name = userInDbName
-					result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
+					result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 					result.Result.Meta.FolderName = folder.Title
 					result.Result.Meta.FolderUID = folder.UID
 					results = append(results, result.Result)
@@ -275,9 +275,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
 				result.Result.Meta.CreatedBy.Name = userInDbName
-				result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+				result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.UpdatedBy.Name = userInDbName
-				result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
+				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.FolderName = "General"
 				result.Result.Meta.FolderUID = ""
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
@@ -315,9 +315,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 					resp := sc.service.createHandler(sc.reqContext)
 					result := validateAndUnMarshalResponse(t, resp)
 					result.Result.Meta.CreatedBy.Name = userInDbName
-					result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+					result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 					result.Result.Meta.UpdatedBy.Name = userInDbName
-					result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
+					result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 					result.Result.Meta.FolderName = folder.Title
 					result.Result.Meta.FolderUID = folder.UID
 					results = append(results, result.Result)
@@ -367,9 +367,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
 				result.Result.Meta.CreatedBy.Name = userInDbName
-				result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+				result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.UpdatedBy.Name = userInDbName
-				result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
+				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.FolderName = "General"
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 

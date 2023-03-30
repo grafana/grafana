@@ -30,7 +30,7 @@ export function PanelHeaderTitleItems(props: Props) {
           [styles.alerting]: alertState === AlertState.Alerting,
         })}
       >
-        <Icon name={alertState === 'alerting' ? 'heart-break' : 'heart'} className="panel-alert-icon" />
+        <Icon name={alertState === 'alerting' ? 'heart-break' : 'heart'} className="panel-alert-icon" size="md" />
       </PanelChrome.TitleItem>
     </Tooltip>
   );
@@ -40,8 +40,7 @@ export function PanelHeaderTitleItems(props: Props) {
       {data.request && data.request.timeInfo && (
         <Tooltip content={<TimePickerTooltip timeRange={data.request?.range} timeZone={data.request?.timezone} />}>
           <PanelChrome.TitleItem className={styles.timeshift}>
-            <Icon name="clock-nine" />
-            {data.request?.timeInfo}
+            <Icon name="clock-nine" size="md" /> {data.request?.timeInfo}
           </PanelChrome.TitleItem>
         </Tooltip>
       )}
@@ -74,6 +73,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     timeshift: css({
       color: theme.colors.text.link,
+      gap: theme.spacing(0.5),
+      whiteSpace: 'nowrap',
 
       '&:hover': {
         color: theme.colors.emphasize(theme.colors.text.link, 0.03),

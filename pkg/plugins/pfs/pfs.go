@@ -15,13 +15,14 @@ import (
 	"cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/parser"
 	"cuelang.org/go/cue/token"
-	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/kindsys"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/load"
 	"github.com/grafana/thema/vmux"
 	"github.com/yalue/merged_fs"
+
+	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 )
 
 // PackageName is the name of the CUE package that Grafana will load when
@@ -57,7 +58,7 @@ func loadGP(ctx *cue.Context) cue.Value {
 func PermittedCUEImports() []string {
 	return []string{
 		"github.com/grafana/thema",
-		"github.com/grafana/grafana/pkg/kindsys",
+		"github.com/grafana/kindsys",
 		"github.com/grafana/grafana/pkg/plugins/pfs",
 		"github.com/grafana/grafana/packages/grafana-schema/src/common",
 	}
@@ -220,7 +221,7 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 			return ParsedPlugin{}, err
 		}
 
-		compo, err := kindsys.BindComposable(rt, kindsys.Decl[kindsys.ComposableProperties]{
+		compo, err := kindsys.BindComposable(rt, kindsys.Def[kindsys.ComposableProperties]{
 			Properties: props,
 			V:          iv,
 		})
@@ -235,7 +236,7 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 }
 
 func ensureCueMod(fsys fs.FS, pdef plugindef.PluginDef) (fs.FS, error) {
-	if modf, err := fs.ReadFile(fsys, filepath.Join("cue.mod", "module.cue")); err != nil {
+	if modf, err := fs.ReadFile(fsys, "cue.mod/module.cue"); err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
 			return nil, err
 		}

@@ -1,7 +1,6 @@
 package httpclientprovider
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	"github.com/grafana/grafana/pkg/infra/proxy"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -21,13 +21,12 @@ var newProviderFunc = sdkhttpclient.NewProvider
 // New creates a new HTTP client provider with pre-configured middlewares.
 func New(cfg *setting.Cfg, validator validations.PluginRequestValidator, tracer tracing.Tracer) *sdkhttpclient.Provider {
 	logger := log.New("httpclient")
-	userAgent := fmt.Sprintf("Grafana/%s", cfg.BuildVersion)
 
 	middlewares := []sdkhttpclient.Middleware{
 		TracingMiddleware(logger, tracer),
 		DataSourceMetricsMiddleware(),
 		sdkhttpclient.ContextualMiddleware(),
-		SetUserAgentMiddleware(userAgent),
+		SetUserAgentMiddleware(cfg.DataProxyUserAgent),
 		sdkhttpclient.BasicAuthenticationMiddleware(),
 		sdkhttpclient.CustomHeadersMiddleware(),
 		ResponseLimitMiddleware(cfg.ResponseLimit),
@@ -57,8 +56,8 @@ func New(cfg *setting.Cfg, validator validations.PluginRequestValidator, tracer 
 			}
 
 			if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) &&
-				cfg.SecureSocksDSProxy.Enabled && secureSocksProxyEnabledOnDS(opts) {
-				err = newSecureSocksProxy(&cfg.SecureSocksDSProxy, transport)
+				cfg.SecureSocksDSProxy.Enabled && proxy.SecureSocksProxyEnabledOnDS(opts) {
+				err = proxy.NewSecureSocksHTTPProxy(&cfg.SecureSocksDSProxy, transport)
 				if err != nil {
 					logger.Error("Failed to enable secure socks proxy", "error", err.Error(), "datasource", datasourceName)
 				}

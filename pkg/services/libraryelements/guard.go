@@ -3,10 +3,10 @@ package libraryelements
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -20,14 +20,14 @@ func isUIDGeneralFolder(folderUID string) bool {
 }
 
 func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) error {
-	kind := models.LibraryElementKind(kindAsInt)
+	kind := model.LibraryElementKind(kindAsInt)
 	switch kind {
-	case models.PanelElement:
+	case model.PanelElement:
 		return nil
-	case models.VariableElement:
+	case model.VariableElement:
 		return nil
 	default:
-		return errLibraryElementUnSupportedElementKind
+		return model.ErrLibraryElementUnSupportedElementKind
 	}
 }
 

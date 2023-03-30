@@ -12,11 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 type DatasourceInfo struct {
@@ -24,8 +22,7 @@ type DatasourceInfo struct {
 	HTTPClient                 *http.Client
 	URL                        string
 	Database                   string
-	ESVersion                  *semver.Version
-	TimeField                  string
+	ConfiguredFields           ConfiguredFields
 	Interval                   string
 	TimeInterval               string
 	MaxConcurrentShardRequests int64
@@ -33,12 +30,17 @@ type DatasourceInfo struct {
 	XPack                      bool
 }
 
+type ConfiguredFields struct {
+	TimeField       string
+	LogMessageField string
+	LogLevelField   string
+}
+
 const loggerName = "tsdb.elasticsearch.client"
 
 // Client represents a client which can interact with elasticsearch api
 type Client interface {
-	GetTimeField() string
-	GetMinInterval(queryInterval string) (time.Duration, error)
+	GetConfiguredFields() ConfiguredFields
 	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
 	MultiSearch() *MultiSearchRequestBuilder
 }
@@ -56,34 +58,29 @@ var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.
 	}
 
 	logger := log.New(loggerName).FromContext(ctx)
-	logger.Debug("Creating new client", "version", ds.ESVersion, "timeField", ds.TimeField, "indices", strings.Join(indices, ", "))
+	logger.Debug("Creating new client", "configuredFields", fmt.Sprintf("%#v", ds.ConfiguredFields), "indices", strings.Join(indices, ", "))
 
 	return &baseClientImpl{
-		logger:    logger,
-		ctx:       ctx,
-		ds:        ds,
-		timeField: ds.TimeField,
-		indices:   indices,
-		timeRange: timeRange,
+		logger:           logger,
+		ctx:              ctx,
+		ds:               ds,
+		configuredFields: ds.ConfiguredFields,
+		indices:          indices,
+		timeRange:        timeRange,
 	}, nil
 }
 
 type baseClientImpl struct {
-	ctx       context.Context
-	ds        *DatasourceInfo
-	timeField string
-	indices   []string
-	timeRange backend.TimeRange
-	logger    log.Logger
+	ctx              context.Context
+	ds               *DatasourceInfo
+	configuredFields ConfiguredFields
+	indices          []string
+	timeRange        backend.TimeRange
+	logger           log.Logger
 }
 
-func (c *baseClientImpl) GetTimeField() string {
-	return c.timeField
-}
-
-func (c *baseClientImpl) GetMinInterval(queryInterval string) (time.Duration, error) {
-	timeInterval := c.ds.TimeInterval
-	return intervalv2.GetIntervalFrom(queryInterval, timeInterval, 0, 5*time.Second)
+func (c *baseClientImpl) GetConfiguredFields() ConfiguredFields {
+	return c.configuredFields
 }
 
 type multiRequest struct {

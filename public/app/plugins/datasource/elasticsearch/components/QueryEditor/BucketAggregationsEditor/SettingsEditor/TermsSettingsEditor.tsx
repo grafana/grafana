@@ -5,17 +5,11 @@ import { SelectableValue } from '@grafana/data';
 import { InlineField, Select, Input } from '@grafana/ui';
 
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
+import { MetricAggregation, Percentiles, ExtendedStatMetaType, ExtendedStats, Terms } from '../../../../types';
 import { describeMetric } from '../../../../utils';
 import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
 import { useQuery } from '../../ElasticsearchQueryContext';
-import {
-  ExtendedStatMetaType,
-  ExtendedStats,
-  isPipelineAggregation,
-  MetricAggregation,
-  Percentiles,
-} from '../../MetricAggregationsEditor/aggregations';
-import { Terms } from '../aggregations';
+import { isPipelineAggregation } from '../../MetricAggregationsEditor/aggregations';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { bucketAggregationConfig, orderByOptions, orderOptions, sizeOptions } from '../utils';
 

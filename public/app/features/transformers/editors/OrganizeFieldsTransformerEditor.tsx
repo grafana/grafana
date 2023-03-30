@@ -17,8 +17,7 @@ import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 
-const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorProps> = (props) => {
-  const { options, input, onChange } = props;
+const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeFieldsTransformerEditorProps) => {
   const { indexByName, excludeByName, renameByName } = options;
 
   const fieldNames = useAllFieldNamesFromDataFrames(input);
@@ -75,7 +74,8 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
   if (input.length > 1) {
     return (
       <FieldValidationMessage>
-        Organize fields only works with a single frame. Consider applying a join transformation first.
+        Organize fields only works with a single frame. Consider applying a join transformation or filtering the input
+        first.
       </FieldValidationMessage>
     );
   }

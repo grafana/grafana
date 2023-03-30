@@ -2,7 +2,7 @@ import { getCenterPointWGS84 } from 'app/features/transformers/spatial/utils';
 
 import { getGazetteer } from './gazetteer';
 
-let backendResults: any = { hello: 'world' };
+let backendResults: Record<string, unknown> = { hello: 'world' };
 
 const geojsonObject = {
   type: 'FeatureCollection',
@@ -44,7 +44,7 @@ const geojsonObject = {
 };
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: jest.fn().mockResolvedValue(backendResults),
   }),

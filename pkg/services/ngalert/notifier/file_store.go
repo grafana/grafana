@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/alerting/alerting"
+	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -63,7 +63,7 @@ func (fileStore *FileStore) FilepathFor(ctx context.Context, filename string) (s
 }
 
 // Persist takes care of persisting the binary representation of internal state to the database as a base64 encoded string.
-func (fileStore *FileStore) Persist(ctx context.Context, filename string, st alerting.State) (int64, error) {
+func (fileStore *FileStore) Persist(ctx context.Context, filename string, st alertingNotify.State) (int64, error) {
 	var size int64
 
 	bytes, err := st.MarshalBinary()

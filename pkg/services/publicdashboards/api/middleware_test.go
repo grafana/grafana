@@ -10,7 +10,7 @@ import (
 
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var validAccessToken, _ = tokens.GenerateAccessToken()
+var validAccessToken, _ = service.GenerateAccessToken()
 
 func TestRequiresExistingAccessToken(t *testing.T) {
 	tests := []struct {

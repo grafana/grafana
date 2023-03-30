@@ -27,6 +27,8 @@ func (cmd Command) removeCommand(c utils.CommandLine) error {
 		}
 
 		return err
+	} else {
+		logRestartNotice()
 	}
 
 	return nil

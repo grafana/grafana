@@ -84,6 +84,14 @@ func (f *ProvisioningApiHandler) handleRouteGetAlertRule(ctx *contextmodel.ReqCo
 	return f.svc.RouteRouteGetAlertRule(ctx, UID)
 }
 
+func (f *ProvisioningApiHandler) handleRouteGetAlertRuleExport(ctx *contextmodel.ReqContext, UID string) response.Response {
+	return f.svc.RouteGetAlertRuleExport(ctx, UID)
+}
+
+func (f *ProvisioningApiHandler) handleRouteGetAlertRulesExport(ctx *contextmodel.ReqContext) response.Response {
+	return f.svc.RouteGetAlertRulesExport(ctx)
+}
+
 func (f *ProvisioningApiHandler) handleRoutePostAlertRule(ctx *contextmodel.ReqContext, ar apimodels.ProvisionedAlertRule) response.Response {
 	return f.svc.RoutePostAlertRule(ctx, ar)
 }
@@ -102,6 +110,10 @@ func (f *ProvisioningApiHandler) handleRouteResetPolicyTree(ctx *contextmodel.Re
 
 func (f *ProvisioningApiHandler) handleRouteGetAlertRuleGroup(ctx *contextmodel.ReqContext, folder, group string) response.Response {
 	return f.svc.RouteGetAlertRuleGroup(ctx, folder, group)
+}
+
+func (f *ProvisioningApiHandler) handleRouteGetAlertRuleGroupExport(ctx *contextmodel.ReqContext, folder, group string) response.Response {
+	return f.svc.RouteGetAlertRuleGroupExport(ctx, folder, group)
 }
 
 func (f *ProvisioningApiHandler) handleRoutePutAlertRuleGroup(ctx *contextmodel.ReqContext, ag apimodels.AlertRuleGroup, folder, group string) response.Response {

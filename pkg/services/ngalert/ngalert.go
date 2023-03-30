@@ -210,7 +210,7 @@ func (ng *AlertNG) init() error {
 		Tracer:               ng.tracer,
 	}
 
-	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store)
+	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log)
 	if err != nil {
 		return err
 	}
@@ -228,7 +228,7 @@ func (ng *AlertNG) init() error {
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
 	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {
-		subscribeToFolderChanges(context.Background(), ng.Log, ng.bus, store, scheduler)
+		subscribeToFolderChanges(ng.Log, ng.bus, store)
 	}
 
 	ng.stateManager = stateManager
@@ -239,7 +239,7 @@ func (ng *AlertNG) init() error {
 	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
 	templateService := provisioning.NewTemplateService(store, store, store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(store, store, store, ng.Log)
-	alertRuleService := provisioning.NewAlertRuleService(store, store, ng.QuotaService, store,
+	alertRuleService := provisioning.NewAlertRuleService(store, store, ng.dashboardService, ng.QuotaService, store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()), ng.Log)
 
@@ -248,7 +248,6 @@ func (ng *AlertNG) init() error {
 		DatasourceCache:      ng.DataSourceCache,
 		DatasourceService:    ng.DataSourceService,
 		RouteRegister:        ng.RouteRegister,
-		Schedule:             ng.schedule,
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
 		TransactionManager:   store,
@@ -268,6 +267,7 @@ func (ng *AlertNG) init() error {
 		EvaluatorFactory:     evalFactory,
 		FeatureManager:       ng.FeatureToggles,
 		AppUrl:               appUrl,
+		Historian:            history,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
@@ -295,25 +295,17 @@ func (ng *AlertNG) init() error {
 	return DeclareFixedRoles(ng.accesscontrolService)
 }
 
-func subscribeToFolderChanges(ctx context.Context, logger log.Logger, bus bus.Bus, dbStore api.RuleStore, scheduler schedule.ScheduleService) {
+func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {
 	// if folder title is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
 	// clean up the current state
 	bus.AddEventListener(func(ctx context.Context, e *events.FolderTitleUpdated) error {
 		// do not block the upstream execution
 		go func(evt *events.FolderTitleUpdated) {
 			logger.Info("Got folder title updated event. updating rules in the folder", "folderUID", evt.UID)
-			updated, err := dbStore.IncreaseVersionForAllRulesInNamespace(ctx, evt.OrgID, evt.UID)
+			_, err := dbStore.IncreaseVersionForAllRulesInNamespace(ctx, evt.OrgID, evt.UID)
 			if err != nil {
 				logger.Error("Failed to update alert rules in the folder after its title was changed", "error", err, "folderUID", evt.UID, "folder", evt.Title)
 				return
-			}
-			if len(updated) > 0 {
-				logger.Info("Rules that belong to the folder have been updated successfully. Clearing their status", "folderUID", evt.UID, "updatedRules", len(updated))
-				for _, key := range updated {
-					scheduler.UpdateAlertRule(key.AlertRuleKey, key.Version, key.IsPaused)
-				}
-			} else {
-				logger.Debug("No alert rules found in the folder. nothing to update", "folderUID", evt.UID, "folder", evt.Title)
 			}
 		}(e)
 		return nil
@@ -346,7 +338,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	return children.Wait()
 }
 
-// IsDisabled returns true if the alerting service is disable for this instance.
+// IsDisabled returns true if the alerting service is disabled for this instance.
 func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
 		return true
@@ -383,35 +375,66 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	return limits, nil
 }
 
-func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore) (state.Historian, error) {
+type Historian interface {
+	api.Historian
+	state.Historian
+}
+
+func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore, met *metrics.Historian, l log.Logger) (Historian, error) {
 	if !cfg.Enabled {
+		met.Info.WithLabelValues("noop").Set(0)
 		return historian.NewNopHistorian(), nil
 	}
 
-	if cfg.Backend == "annotations" {
-		return historian.NewAnnotationBackend(ar, ds, rs), nil
+	backend, err := historian.ParseBackendType(cfg.Backend)
+	if err != nil {
+		return nil, err
 	}
-	if cfg.Backend == "loki" {
-		baseURL, err := url.Parse(cfg.LokiRemoteURL)
+
+	met.Info.WithLabelValues(backend.String()).Set(1)
+	if backend == historian.BackendTypeMultiple {
+		primaryCfg := cfg
+		primaryCfg.Backend = cfg.MultiPrimary
+		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse remote loki URL: %w", err)
+			return nil, fmt.Errorf("multi-backend target \"%s\" was misconfigured: %w", cfg.MultiPrimary, err)
 		}
-		backend := historian.NewRemoteLokiBackend(historian.LokiConfig{
-			Url:               baseURL,
-			BasicAuthUser:     cfg.LokiBasicAuthUsername,
-			BasicAuthPassword: cfg.LokiBasicAuthPassword,
-			TenantID:          cfg.LokiTenantID,
-		})
+
+		var secondaries []historian.Backend
+		for _, b := range cfg.MultiSecondaries {
+			secCfg := cfg
+			secCfg.Backend = b
+			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l)
+			if err != nil {
+				return nil, fmt.Errorf("multi-backend target \"%s\" was miconfigured: %w", b, err)
+			}
+			secondaries = append(secondaries, sec)
+		}
+
+		l.Info("State history is operating in multi-backend mode", "primary", cfg.MultiPrimary, "secondaries", cfg.MultiSecondaries)
+		return historian.NewMultipleBackend(primary, secondaries...), nil
+	}
+	if backend == historian.BackendTypeAnnotations {
+		return historian.NewAnnotationBackend(ar, ds, rs, met), nil
+	}
+	if backend == historian.BackendTypeLoki {
+		lcfg, err := historian.NewLokiConfig(cfg)
+		if err != nil {
+			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
+		}
+		req := historian.NewRequester()
+		backend := historian.NewRemoteLokiBackend(lcfg, req, met)
+
 		testConnCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 		defer cancelFunc()
 		if err := backend.TestConnection(testConnCtx); err != nil {
-			return nil, fmt.Errorf("failed to ping the remote loki historian: %w", err)
+			l.Error("Failed to communicate with configured remote Loki backend, state history may not be persisted", "error", err)
 		}
 		return backend, nil
 	}
-	if cfg.Backend == "sql" {
+	if backend == historian.BackendTypeSQL {
 		return historian.NewSqlBackend(), nil
 	}
 
-	return nil, fmt.Errorf("unrecognized state history backend: %s", cfg.Backend)
+	return nil, fmt.Errorf("unrecognized state history backend: %s", backend)
 }

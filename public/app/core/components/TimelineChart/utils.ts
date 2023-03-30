@@ -60,7 +60,7 @@ interface UPlotConfigOptions {
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
   mergeValues?: boolean;
-  getValueColor: (frameIdx: number, fieldIdx: number, value: any) => string;
+  getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
 }
 
 /**
@@ -113,7 +113,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     return !(mode && field.display && mode.startsWith('continuous-'));
   };
 
-  const getValueColorFn = (seriesIdx: number, value: any) => {
+  const getValueColorFn = (seriesIdx: number, value: unknown) => {
     const field = frame.fields[seriesIdx];
 
     if (
@@ -404,9 +404,9 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
     },
     type: FieldType.string,
     values: new ArrayVector(vals),
-    display: (value: string) => ({
-      text: value,
-      color: textToColor.get(value),
+    display: (value) => ({
+      text: String(value),
+      color: textToColor.get(String(value)),
       numeric: NaN,
     }),
   };
@@ -556,9 +556,10 @@ export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLe
   const items: VizLegendItem[] = [];
   const fieldConfig = fields[0].config;
   const colorMode = fieldConfig.color?.mode ?? FieldColorModeId.Fixed;
+  const thresholds = fieldConfig.thresholds;
 
   // If thresholds are enabled show each step in the legend
-  if (colorMode === FieldColorModeId.Thresholds) {
+  if (colorMode === FieldColorModeId.Thresholds && thresholds?.steps && thresholds.steps.length > 1) {
     return getThresholdItems(fieldConfig, theme);
   }
 

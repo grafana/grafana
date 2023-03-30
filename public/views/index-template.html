@@ -14,9 +14,10 @@
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
     <link rel="mask-icon" href="[[.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
 
+    <!-- If theme is "system", we inject the stylesheets with javascript further down the page -->
     [[ if eq .Theme "light" ]]
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>" />
-    [[ else ]]
+    [[ else if eq .Theme "dark" ]]
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>" />
     [[ end ]]
 
@@ -250,6 +251,26 @@
           dark: '[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>'
         }
       };
+
+      // Set theme to match system only on startup.
+      // Do not react to changes in system theme after startup.
+      if (window.grafanaBootData.user.theme === "system") {
+        document.body.classList.remove("theme-system");
+        var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        var cssLink = document.createElement("link");
+        cssLink.rel = 'stylesheet';
+
+        if (darkQuery.matches) {
+          document.body.classList.add("theme-dark");
+          cssLink.href = window.grafanaBootData.themePaths.dark;
+          window.grafanaBootData.user.lightTheme = false;
+        } else {
+          document.body.classList.add("theme-light");
+          cssLink.href = window.grafanaBootData.themePaths.light;
+          window.grafanaBootData.user.lightTheme = true;
+        }
+        document.head.appendChild(cssLink);
+      }
 
       window.__grafana_load_failed = function() {
         var preloader = document.getElementsByClassName("preloader");

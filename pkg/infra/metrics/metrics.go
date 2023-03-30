@@ -3,10 +3,11 @@ package metrics
 import (
 	"runtime"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	pubdash "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // ExporterName is used as namespace for exposing prometheus metrics
@@ -136,11 +137,14 @@ var (
 	// MStatTotalDashboards is a metric total amount of dashboards
 	MStatTotalDashboards prometheus.Gauge
 
-	// MStatTotalDashboards is a metric total amount of dashboards
+	// MStatTotalFolders is a metric total amount of folders
 	MStatTotalFolders prometheus.Gauge
 
 	// MStatTotalUsers is a metric total amount of users
 	MStatTotalUsers prometheus.Gauge
+
+	// MStatTotalTeams is a metric total amount of teams
+	MStatTotalTeams prometheus.Gauge
 
 	// MStatActiveUsers is a metric number of active users
 	MStatActiveUsers prometheus.Gauge
@@ -444,6 +448,12 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	MStatTotalTeams = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_total_teams",
+		Help:      "total amount of teams",
+		Namespace: ExporterName,
+	})
+
 	MStatActiveUsers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_active_users",
 		Help:      "number of active users",
@@ -660,6 +670,7 @@ func initMetricVars() {
 		MStatTotalDashboards,
 		MStatTotalFolders,
 		MStatTotalUsers,
+		MStatTotalTeams,
 		MStatActiveUsers,
 		MStatTotalOrgs,
 		MStatTotalPlaylists,

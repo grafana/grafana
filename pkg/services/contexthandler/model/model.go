@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
@@ -13,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 type ReqContext struct {
@@ -102,6 +103,8 @@ func (ctx *ReqContext) WriteErrOrFallback(status int, message string, err error)
 
 func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error) {
 	data := make(map[string]interface{})
+	statusResponse := status
+
 	traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
 
 	if err != nil {
@@ -120,6 +123,8 @@ func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error)
 			data["message"] = publicErr.Message
 			data["messageId"] = publicErr.MessageID
 			data["statusCode"] = publicErr.StatusCode
+
+			statusResponse = publicErr.StatusCode
 		} else {
 			if message != "" {
 				logMessage = message
@@ -140,7 +145,7 @@ func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error)
 		data["message"] = message
 	}
 
-	ctx.JSON(status, data)
+	ctx.JSON(statusResponse, data)
 }
 
 func (ctx *ReqContext) HasUserRole(role org.RoleType) bool {

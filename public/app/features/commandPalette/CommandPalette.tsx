@@ -6,7 +6,6 @@ import {
   KBarAnimator,
   KBarPortal,
   KBarPositioner,
-  KBarResults,
   KBarSearch,
   VisualState,
   useRegisterActions,
@@ -16,17 +15,18 @@ import {
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { KBarResults } from './KBarResults';
 import { ResultItem } from './ResultItem';
-import { useDashboardResults } from './actions/dashboardActions';
+import { useSearchResults } from './actions/dashboardActions';
 import useActions from './actions/useActions';
 import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
-export const CommandPalette = () => {
+export function CommandPalette() {
   const styles = useStyles2(getSearchStyles);
 
   const { query, showing, searchQuery } = useKBar((state) => ({
@@ -36,13 +36,14 @@ export const CommandPalette = () => {
 
   const actions = useActions(searchQuery);
   useRegisterActions(actions, [actions]);
-  const { dashboardResults, isFetchingDashboardResults } = useDashboardResults(searchQuery, showing);
+  const { searchResults, isFetchingSearchResults } = useSearchResults(searchQuery, showing);
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
     { isOpen: showing, onClose: () => query.setVisualState(VisualState.animatingOut) },
     ref
   );
+
   const { dialogProps } = useDialog({}, ref);
 
   // Report interaction when opened
@@ -57,14 +58,14 @@ export const CommandPalette = () => {
           <FocusScope contain autoFocus restoreFocus>
             <div {...overlayProps} {...dialogProps}>
               <div className={styles.searchContainer}>
-                {isFetchingDashboardResults ? <Spinner className={styles.spinner} /> : <Icon name="search" size="md" />}
+                {isFetchingSearchResults ? <Spinner className={styles.spinner} /> : <Icon name="search" size="md" />}
                 <KBarSearch
-                  defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search Grafana')}
+                  defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                   className={styles.search}
                 />
               </div>
               <div className={styles.resultsContainer}>
-                <RenderResults dashboardResults={dashboardResults} />
+                <RenderResults searchResults={searchResults} />
               </div>
             </div>
           </FocusScope>
@@ -72,27 +73,46 @@ export const CommandPalette = () => {
       </KBarPositioner>
     </KBarPortal>
   ) : null;
-};
-
-interface RenderResultsProps {
-  dashboardResults: CommandPaletteAction[];
 }
 
-const RenderResults = ({ dashboardResults }: RenderResultsProps) => {
-  const { results, rootActionId } = useMatches();
+interface RenderResultsProps {
+  searchResults: CommandPaletteAction[];
+}
+
+const RenderResults = ({ searchResults }: RenderResultsProps) => {
+  const { results: kbarResults, rootActionId } = useMatches();
   const styles = useStyles2(getSearchStyles);
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
+  const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
   // because dashboard search results aren't registered as actions, we need to manually
   // convert them to ActionImpls before passing them as items to KBarResults
   const dashboardResultItems = useMemo(
-    () => dashboardResults.map((dashboard) => new ActionImpl(dashboard, { store: {} })),
-    [dashboardResults]
+    () =>
+      searchResults
+        .filter((item) => item.id.startsWith('go/dashboard'))
+        .map((dashboard) => new ActionImpl(dashboard, { store: {} })),
+    [searchResults]
+  );
+  const folderResultItems = useMemo(
+    () =>
+      searchResults
+        .filter((item) => item.id.startsWith('go/folder'))
+        .map((folder) => new ActionImpl(folder, { store: {} })),
+    [searchResults]
   );
 
-  const items = useMemo(
-    () => (dashboardResultItems.length > 0 ? [...results, dashboardsSectionTitle, ...dashboardResultItems] : results),
-    [results, dashboardsSectionTitle, dashboardResultItems]
-  );
+  const items = useMemo(() => {
+    const results = [...kbarResults];
+    if (folderResultItems.length > 0) {
+      results.push(foldersSectionTitle);
+      results.push(...folderResultItems);
+    }
+    if (dashboardResultItems.length > 0) {
+      results.push(dashboardsSectionTitle);
+      results.push(...dashboardResultItems);
+    }
+    return results;
+  }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
 
   return (
     <KBarResults
@@ -115,13 +135,11 @@ const RenderResults = ({ dashboardResults }: RenderResultsProps) => {
 };
 
 const getSearchStyles = (theme: GrafanaTheme2) => {
-  const topNavCommandPalette = Boolean(config.featureToggles.topNavCommandPalette);
-
   return {
     positioner: css({
       zIndex: theme.zIndex.portal,
       marginTop: '0px',
-      paddingTop: topNavCommandPalette ? '4px !important' : undefined,
+      paddingTop: '4px !important',
       '&::before': {
         content: '""',
         position: 'fixed',
@@ -138,7 +156,7 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       background: theme.colors.background.primary,
       color: theme.colors.text.primary,
-      borderRadius: theme.shape.borderRadius(2),
+      borderRadius: theme.shape.radius.default,
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,
@@ -166,14 +184,15 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       paddingBottom: theme.spacing(1),
     }),
     sectionHeader: css({
-      padding: theme.spacing(1.5, 2, 1, 2),
+      padding: theme.spacing(1.5, 2, 2, 2),
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.text.primary,
+      color: theme.colors.text.secondary,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       marginTop: theme.spacing(1),
     }),
     sectionHeaderFirst: css({
+      paddingBottom: theme.spacing(1),
       borderTop: 'none',
       marginTop: 0,
     }),

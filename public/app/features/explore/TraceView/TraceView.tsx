@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
-import React, { RefObject, useCallback, useMemo, useState } from 'react';
+import React, { RefObject, useMemo, useState } from 'react';
 
 import {
   DataFrame,
@@ -14,16 +13,9 @@ import {
   PanelData,
   SplitOpen,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { config, getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import {
-  SpanBarOptionsData,
-  Trace,
-  TracePageHeader,
-  TraceTimelineViewer,
-  TTraceTimeline,
-} from '@jaegertracing/jaeger-ui-components';
 import { getTraceToLogsOptions, TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -34,6 +26,15 @@ import { ExploreId } from 'app/types/explore';
 
 import { changePanelState } from '../state/explorePane';
 
+import {
+  SpanBarOptionsData,
+  Trace,
+  TracePageHeader,
+  NewTracePageHeader,
+  TraceTimelineViewer,
+  TTraceTimeline,
+} from './components';
+import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
@@ -96,10 +97,6 @@ export function TraceView(props: Props) {
    * Keeps state of resizable name column width
    */
   const [spanNameColumnWidth, setSpanNameColumnWidth] = useState(0.25);
-  /**
-   * State of the top minimap, slim means it is collapsed.
-   */
-  const [slim, setSlim] = useState(false);
 
   const [focusedSpanId, createFocusSpanLink] = useFocusSpanLink({
     refId: props.dataFrames[0]?.refId,
@@ -137,27 +134,30 @@ export function TraceView(props: Props) {
       }),
     [props.splitOpenFn, traceToLogsOptions, traceToMetricsOptions, props.dataFrames, createFocusSpanLink, traceProp]
   );
-  const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
 
   return (
     <>
-      {props.dataFrames?.length && props.dataFrames[0]?.meta?.preferredVisualisationType === 'trace' && traceProp ? (
+      {props.dataFrames?.length && traceProp ? (
         <>
-          <TracePageHeader
-            canCollapse={false}
-            hideMap={false}
-            hideSummary={false}
-            onSlimViewClicked={onSlimViewClicked}
-            onTraceGraphViewClicked={noop}
-            slimView={slim}
-            trace={traceProp}
-            updateNextViewRangeTime={updateNextViewRangeTime}
-            updateViewRangeTime={updateViewRangeTime}
-            viewRange={viewRange}
-            timeZone={timeZone}
-          />
+          {config.featureToggles.newTraceView ? (
+            <NewTracePageHeader
+              trace={traceProp}
+              updateNextViewRangeTime={updateNextViewRangeTime}
+              updateViewRangeTime={updateViewRangeTime}
+              viewRange={viewRange}
+              timeZone={timeZone}
+            />
+          ) : (
+            <TracePageHeader
+              trace={traceProp}
+              updateNextViewRangeTime={updateNextViewRangeTime}
+              updateViewRangeTime={updateViewRangeTime}
+              viewRange={viewRange}
+              timeZone={timeZone}
+            />
+          )}
           <TraceTimelineViewer
             registerAccessors={noop}
             scrollToFirstVisibleSpan={noop}

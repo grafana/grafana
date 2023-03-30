@@ -9,30 +9,34 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
-	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,9 +60,11 @@ func TestCallResource(t *testing.T) {
 		nil, nil, nil, nil, testdatasource.ProvideService(cfg, featuremgmt.WithFeatures()), nil, nil, nil, nil, nil, nil)
 	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	reg := registry.ProvideService()
+	cdn := pluginscdn.ProvideService(pCfg)
 	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry())
-	ps, err := store.ProvideService(cfg, pCfg, reg, l)
+		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(), fakes.NewFakeRoleRegistry(), cdn, assetpath.ProvideService(cdn))
+	srcs := sources.ProvideService(cfg, pCfg)
+	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)
 
 	pcp := plugincontext.ProvideService(localcache.ProvideService(), ps, &datasources.FakeCacheService{}, &datasources.FakeDataSourceService{}, pluginSettings.ProvideService(db.InitTestDB(t), nil))
@@ -75,7 +81,7 @@ func TestCallResource(t *testing.T) {
 		req := srv.NewPostRequest("/api/plugins/testdata/resources/test", strings.NewReader("{ \"test\": true }"))
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
-				{Action: plugins.ActionAppAccess, Scope: plugins.ScopeProvider.GetResourceAllScope()},
+				{Action: pluginaccesscontrol.ActionAppAccess, Scope: pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
 			}),
 		}})
 		resp, err := srv.SendJSON(req)
@@ -98,7 +104,7 @@ func TestCallResource(t *testing.T) {
 			req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 			return errors.New("something went wrong")
 		}),
-	}, pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{})...)
+	}, pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{}, tracing.InitializeTracerForTest())...)
 	require.NoError(t, err)
 
 	srv = SetupAPITestServer(t, func(hs *HTTPServer) {
@@ -113,7 +119,7 @@ func TestCallResource(t *testing.T) {
 		req := srv.NewGetRequest("/api/plugins/testdata/resources/scenarios")
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
-				{Action: plugins.ActionAppAccess, Scope: plugins.ScopeProvider.GetResourceAllScope()},
+				{Action: pluginaccesscontrol.ActionAppAccess, Scope: pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
 			}),
 		}})
 		resp, err := srv.SendJSON(req)

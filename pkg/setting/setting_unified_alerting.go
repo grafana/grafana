@@ -8,11 +8,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/prometheus/alertmanager/cluster"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -104,11 +103,16 @@ type UnifiedAlertingStateHistorySettings struct {
 	Enabled       bool
 	Backend       string
 	LokiRemoteURL string
+	LokiReadURL   string
+	LokiWriteURL  string
 	LokiTenantID  string
 	// LokiBasicAuthUsername and LokiBasicAuthPassword are used for basic auth
 	// if one of them is set.
 	LokiBasicAuthPassword string
 	LokiBasicAuthUsername string
+	MultiPrimary          string
+	MultiSecondaries      []string
+	ExternalLabels        map[string]string
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -318,13 +322,19 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.ReservedLabels = uaCfgReservedLabels
 
 	stateHistory := iniFile.Section("unified_alerting.state_history")
+	stateHistoryLabels := iniFile.Section("unified_alerting.state_history.external_labels")
 	uaCfgStateHistory := UnifiedAlertingStateHistorySettings{
 		Enabled:               stateHistory.Key("enabled").MustBool(stateHistoryDefaultEnabled),
 		Backend:               stateHistory.Key("backend").MustString("annotations"),
 		LokiRemoteURL:         stateHistory.Key("loki_remote_url").MustString(""),
+		LokiReadURL:           stateHistory.Key("loki_remote_read_url").MustString(""),
+		LokiWriteURL:          stateHistory.Key("loki_remote_write_url").MustString(""),
 		LokiTenantID:          stateHistory.Key("loki_tenant_id").MustString(""),
 		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
 		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
+		MultiPrimary:          stateHistory.Key("primary").MustString(""),
+		MultiSecondaries:      splitTrim(stateHistory.Key("secondaries").MustString(""), ","),
+		ExternalLabels:        stateHistoryLabels.KeysHash(),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
 
@@ -334,4 +344,12 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 func GetAlertmanagerDefaultConfiguration() string {
 	return alertmanagerDefaultConfiguration
+}
+
+func splitTrim(s string, sep string) []string {
+	spl := strings.Split(s, sep)
+	for i := range spl {
+		spl[i] = strings.TrimSpace(spl[i])
+	}
+	return spl
 }

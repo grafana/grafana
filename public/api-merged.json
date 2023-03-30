@@ -22,6 +22,30 @@
   },
   "basePath": "/api",
   "paths": {
+    "/access-control/assignments/search": {
+      "post": {
+        "description": "Returns the result of the search through access-control role assignments.\n\nYou need to have a permission with action `teams.roles:read` on scope `teams:*`\nand a permission with action `users.roles:read` on scope `users:*`.",
+        "tags": [
+          "enterprise"
+        ],
+        "summary": "Debug permissions.",
+        "operationId": "searchResult",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchResultResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/access-control/roles": {
       "get": {
         "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.",
@@ -2496,6 +2520,35 @@
         }
       }
     },
+    "/api/v1/provisioning/alert-rules/export": {
+      "get": {
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Export all alert rules in provisioning file format.",
+        "operationId": "RouteGetAlertRulesExport",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      }
+    },
     "/api/v1/provisioning/alert-rules/{UID}": {
       "get": {
         "tags": [
@@ -2587,6 +2640,47 @@
         "responses": {
           "204": {
             "description": " The alert rule was deleted successfully."
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/alert-rules/{UID}/export": {
+      "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "text/yaml"
+        ],
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Export an alert rule in provisioning file format.",
+        "operationId": "RouteGetAlertRuleExport",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Alert rule UID",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "404": {
+            "description": " Not found."
           }
         }
       }
@@ -2790,6 +2884,52 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
+      "get": {
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "text/yaml"
+        ],
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Export an alert rule group in provisioning file format.",
+        "operationId": "RouteGetAlertRuleGroupExport",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "FolderUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "404": {
+            "description": " Not found."
           }
         }
       }
@@ -10703,6 +10843,18 @@
         }
       }
     },
+    "AdminCreateUserResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "AdminStats": {
       "type": "object",
       "properties": {
@@ -11024,7 +11176,7 @@
       "title": "AlertQuery represents a single query associated with an alert definition.",
       "properties": {
         "datasourceUid": {
-          "description": "Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.",
+          "description": "Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.",
           "type": "string"
         },
         "model": {
@@ -11037,6 +11189,28 @@
         },
         "refId": {
           "description": "RefID is the unique identifier of the query, set by the frontend call.",
+          "type": "string"
+        },
+        "relativeTimeRange": {
+          "$ref": "#/definitions/RelativeTimeRange"
+        }
+      }
+    },
+    "AlertQueryExport": {
+      "type": "object",
+      "title": "AlertQueryExport is the provisioned export of models.AlertQuery.",
+      "properties": {
+        "datasourceUid": {
+          "type": "string"
+        },
+        "model": {
+          "type": "object",
+          "additionalProperties": false
+        },
+        "queryType": {
+          "type": "string"
+        },
+        "refId": {
           "type": "string"
         },
         "relativeTimeRange": {
@@ -11064,6 +11238,68 @@
         }
       }
     },
+    "AlertRuleExport": {
+      "type": "object",
+      "title": "AlertRuleExport is the provisioned file export of models.AlertRule.",
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "condition": {
+          "type": "string"
+        },
+        "dasboardUid": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQueryExport"
+          }
+        },
+        "execErrState": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "Error",
+            "OK"
+          ]
+        },
+        "for": {
+          "$ref": "#/definitions/Duration"
+        },
+        "isPaused": {
+          "type": "boolean"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "noDataState": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ]
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
     "AlertRuleGroup": {
       "type": "object",
       "properties": {
@@ -11082,6 +11318,31 @@
         },
         "title": {
           "type": "string"
+        }
+      }
+    },
+    "AlertRuleGroupExport": {
+      "type": "object",
+      "title": "AlertRuleGroupExport is the provisioned file export of AlertRuleGroupV1.",
+      "properties": {
+        "folder": {
+          "type": "string"
+        },
+        "interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "name": {
+          "type": "string"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertRuleExport"
+          }
         }
       }
     },
@@ -11171,6 +11432,22 @@
         "data": {},
         "message": {
           "type": "string"
+        }
+      }
+    },
+    "AlertingFileExport": {
+      "type": "object",
+      "title": "AlertingFileExport is the full provisioned file export.",
+      "properties": {
+        "apiVersion": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertRuleGroupExport"
+          }
         }
       }
     },
@@ -11742,9 +12019,6 @@
         "dashboard"
       ],
       "properties": {
-        "Result": {
-          "$ref": "#/definitions/DashboardSnapshot"
-        },
         "dashboard": {
           "$ref": "#/definitions/Json"
         },
@@ -12287,64 +12561,6 @@
         }
       }
     },
-    "DashboardSnapshot": {
-      "description": "DashboardSnapshot model",
-      "type": "object",
-      "properties": {
-        "Created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "Dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "DashboardEncrypted": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8"
-          }
-        },
-        "DeleteKey": {
-          "type": "string"
-        },
-        "Expires": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "External": {
-          "type": "boolean"
-        },
-        "ExternalDeleteUrl": {
-          "type": "string"
-        },
-        "ExternalUrl": {
-          "type": "string"
-        },
-        "Id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Key": {
-          "type": "string"
-        },
-        "Name": {
-          "type": "string"
-        },
-        "OrgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "UserId": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "DashboardSnapshotDTO": {
       "description": "DashboardSnapshotDTO without dashboard map",
       "type": "object",
@@ -12787,9 +13003,9 @@
       "format": "int64"
     },
     "Duration": {
-      "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
       "type": "integer",
-      "format": "int64"
+      "format": "int64",
+      "title": "Duration is a type used for marshalling durations."
     },
     "EmailConfig": {
       "type": "object",
@@ -13573,6 +13789,9 @@
         "intervalSeconds": {
           "type": "integer",
           "format": "int64"
+        },
+        "is_paused": {
+          "type": "boolean"
         },
         "namespace_id": {
           "type": "integer",
@@ -14385,7 +14604,7 @@
     },
     "LibraryElementDTOMetaUser": {
       "type": "object",
-      "title": "LibraryElementDTOMetaUser is the meta information for user that creates/changes the library element.",
+      "title": "LibraryElementDTOMetaUser defines model for LibraryElementDTOMetaUser.",
       "properties": {
         "avatarUrl": {
           "type": "string"
@@ -14590,34 +14809,6 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/GettableRuleGroupConfig"
-        }
-      }
-    },
-    "NavLink": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "target": {
-          "type": "string"
-        },
-        "text": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        }
-      }
-    },
-    "NavbarPreference": {
-      "type": "object",
-      "properties": {
-        "savedItems": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/NavLink"
-          }
         }
       }
     },
@@ -15113,9 +15304,6 @@
         "language": {
           "type": "string"
         },
-        "navbar": {
-          "$ref": "#/definitions/NavbarPreference"
-        },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
         },
@@ -15561,6 +15749,9 @@
             "Error"
           ]
         },
+        "is_paused": {
+          "type": "boolean"
+        },
         "no_data_state": {
           "type": "string",
           "enum": [
@@ -15621,32 +15812,31 @@
         }
       }
     },
-    "Prefs": {
+    "Preferences": {
       "type": "object",
+      "title": "Preferences defines model for Preferences.",
       "properties": {
-        "homeDashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
         "homeDashboardUID": {
+          "description": "UID for the home dashboard",
           "type": "string"
         },
         "language": {
+          "description": "Selected language (beta)",
           "type": "string"
-        },
-        "navbar": {
-          "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
+          "description": "light, dark, empty is default",
           "type": "string"
         },
         "timezone": {
+          "description": "The timezone selection\nTODO: this should use the timezone defined in common",
           "type": "string"
         },
         "weekStart": {
+          "description": "day of the week (sunday, monday, etc)",
           "type": "string"
         }
       }
@@ -15702,7 +15892,7 @@
           },
           "example": [
             {
-              "datasourceUid": "-100",
+              "datasourceUid": "__expr__",
               "model": {
                 "conditions": [
                   {
@@ -15764,6 +15954,10 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        },
+        "isPaused": {
+          "type": "boolean",
+          "example": false
         },
         "labels": {
           "type": "object",
@@ -16763,6 +16957,50 @@
           "format": "int64"
         },
         "totalCount": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "SearchResult": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SearchResultItem"
+          }
+        }
+      }
+    },
+    "SearchResultItem": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "basicRole": {
+          "type": "string"
+        },
+        "orgID": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "teamID": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userID": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "version": {
           "type": "integer",
           "format": "int64"
         }
@@ -17824,9 +18062,8 @@
       "type": "string"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -18166,9 +18403,6 @@
         "language": {
           "type": "string"
         },
-        "navbar": {
-          "$ref": "#/definitions/NavbarPreference"
-        },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
         },
@@ -18176,7 +18410,8 @@
           "type": "string",
           "enum": [
             "light",
-            "dark"
+            "dark",
+            "system"
           ]
         },
         "timezone": {
@@ -18295,18 +18530,6 @@
           "type": "string"
         },
         "theme": {
-          "type": "string"
-        }
-      }
-    },
-    "UserIdDTO": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "message": {
           "type": "string"
         }
       }
@@ -18669,6 +18892,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -18852,6 +19076,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -18906,6 +19131,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -19056,7 +19282,6 @@
       }
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -19236,7 +19461,7 @@
     "adminCreateUserResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/UserIdDTO"
+        "$ref": "#/definitions/AdminCreateUserResponse"
       }
     },
     "adminGetSettingsResponse": {
@@ -19891,7 +20116,7 @@
     "getPreferencesResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/Prefs"
+        "$ref": "#/definitions/Preferences"
       }
     },
     "getQueryHistoryDeleteQueryResponse": {
@@ -20360,6 +20585,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/HitList"
+      }
+    },
+    "searchResultResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/SearchResult"
       }
     },
     "searchTeamsResponse": {

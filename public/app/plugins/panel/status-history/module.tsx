@@ -57,6 +57,16 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(StatusHist
         defaultValue: VisibilityMode.Auto,
       })
       .addSliderInput({
+        path: 'rowHeight',
+        name: 'Row height',
+        defaultValue: 0.9,
+        settings: {
+          min: 0,
+          max: 1,
+          step: 0.01,
+        },
+      })
+      .addSliderInput({
         path: 'colWidth',
         name: 'Column width',
         defaultValue: 0.9,

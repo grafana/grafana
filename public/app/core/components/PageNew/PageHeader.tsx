@@ -4,7 +4,6 @@ import React from 'react';
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { getNavSubTitle, getNavTitle } from '../NavBar/navBarItem-translations';
 import { PageInfoItem } from '../Page/types';
 import { PageInfo } from '../PageInfo/PageInfo';
 
@@ -18,10 +17,9 @@ export interface Props {
 
 export function PageHeader({ navItem, renderTitle, actions, info, subTitle }: Props) {
   const styles = useStyles2(getStyles);
-  const sub = subTitle ?? getNavSubTitle(navItem.id) ?? navItem.subTitle;
+  const sub = subTitle ?? navItem.subTitle;
 
-  const title = getNavTitle(navItem.id) ?? navItem.text;
-  const titleElement = renderTitle ? renderTitle(title) : <h1 className={styles.pageTitle}>{title}</h1>;
+  const titleElement = renderTitle ? renderTitle(navItem.text) : <h1 className={styles.pageTitle}>{navItem.text}</h1>;
 
   return (
     <div className={styles.pageHeader}>

@@ -1,7 +1,8 @@
 package kind
 
-name:     "Preferences"
-maturity: "merged"
+name:        "Preferences"
+maturity:    "merged"
+description: "The user or team frontend preferences"
 
 lineage: seqs: [
 	{

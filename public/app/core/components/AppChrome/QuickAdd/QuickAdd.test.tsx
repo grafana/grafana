@@ -1,12 +1,19 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { NavModelItem, NavSection } from '@grafana/data';
-import { configureStore } from 'app/store/configureStore';
+import { reportInteraction } from '@grafana/runtime';
 
 import { QuickAdd } from './QuickAdd';
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
 
 const setup = () => {
   const navBarTree: NavModelItem[] = [
@@ -16,7 +23,7 @@ const setup = () => {
       id: 'section1',
       url: 'section1',
       children: [
-        { text: 'New child 1', id: 'child1', url: 'section1/child1', isCreateAction: true },
+        { text: 'New child 1', id: 'child1', url: '#', isCreateAction: true },
         { text: 'Child2', id: 'child2', url: 'section1/child2' },
       ],
     },
@@ -29,12 +36,10 @@ const setup = () => {
     },
   ];
 
-  const store = configureStore({ navBarTree });
-
   return render(
-    <Provider store={store}>
+    <TestProvider storeState={{ navBarTree }}>
       <QuickAdd />
-    </Provider>
+    </TestProvider>
   );
 };
 
@@ -49,5 +54,16 @@ describe('QuickAdd', () => {
     await userEvent.click(screen.getByRole('button', { name: 'New' }));
     expect(screen.getByRole('link', { name: 'New child 1' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'New child 3' })).toBeInTheDocument();
+  });
+
+  it('reports interaction when a menu item is clicked', async () => {
+    setup();
+    await userEvent.click(screen.getByRole('button', { name: 'New' }));
+    await userEvent.click(screen.getByRole('link', { name: 'New child 1' }));
+
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_menu_item_clicked', {
+      url: '#',
+      from: 'quickadd',
+    });
   });
 });

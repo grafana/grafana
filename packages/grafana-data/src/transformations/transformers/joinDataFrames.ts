@@ -48,11 +48,6 @@ export interface JoinOptions {
   joinBy?: FieldMatcher;
 
   /**
-   * The fields to join on
-   */
-  fields?: { [key: string]: string };
-
-  /**
    * Optionally filter the non-join fields
    */
   keep?: FieldMatcher;
@@ -68,16 +63,8 @@ export interface JoinOptions {
   mode?: JoinMode;
 }
 
-function getJoinMatcher(options: JoinOptions, refId: string | undefined): FieldMatcher {
-  if (options.joinBy) {
-    return options.joinBy;
-  }
-
-  if (!options.fields || !refId) {
-    return pickBestJoinField(options.frames);
-  }
-
-  return fieldMatchers.get(FieldMatcherID.byName).get(options.fields[refId]);
+function getJoinMatcher(options: JoinOptions): FieldMatcher {
+  return options.joinBy ?? pickBestJoinField(options.frames);
 }
 
 /**
@@ -108,7 +95,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     let frame = options.frames[0];
     let frameCopy = frame;
 
-    const joinFieldMatcher = getJoinMatcher(options, frame.refId);
+    const joinFieldMatcher = getJoinMatcher(options);
     let joinIndex = frameCopy.fields.findIndex((f) => joinFieldMatcher(f, frameCopy, options.frames));
 
     if (options.keepOriginIndices) {
@@ -165,10 +152,10 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   const nullModes: JoinNullMode[][] = [];
   const allData: AlignedData[] = [];
   const originalFields: Field[] = [];
+  const joinFieldMatcher = getJoinMatcher(options);
 
   for (let frameIndex = 0; frameIndex < options.frames.length; frameIndex++) {
     const frame = options.frames[frameIndex];
-    const joinFieldMatcher = getJoinMatcher(options, frame.refId);
 
     if (!frame || !frame.fields?.length) {
       continue; // skip the frame

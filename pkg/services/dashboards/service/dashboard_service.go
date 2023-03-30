@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -40,7 +40,8 @@ type DashboardServiceImpl struct {
 	cfg                  *setting.Cfg
 	log                  log.Logger
 	dashboardStore       dashboards.Store
-	folderStore          dashboards.FolderStore
+	folderStore          folder.FolderStore
+	folderService        folder.Service
 	dashAlertExtractor   alerting.DashAlertExtractor
 	features             featuremgmt.FeatureToggles
 	folderPermissions    accesscontrol.FolderPermissionsService
@@ -49,16 +50,13 @@ type DashboardServiceImpl struct {
 }
 
 // This is the uber service that implements a three smaller services
-func ProvideDashboardService(
-	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore dashboards.FolderStore, dashAlertExtractor alerting.DashAlertExtractor,
+func ProvideDashboardServiceImpl(
+	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore, dashAlertExtractor alerting.DashAlertExtractor,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
 	folderSvc folder.Service,
 ) *DashboardServiceImpl {
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(dashboardStore, folderStore, folderSvc))
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashboardStore, folderStore, folderSvc))
-
-	return &DashboardServiceImpl{
+	dashSvc := &DashboardServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("dashboard-service"),
 		dashboardStore:       dashboardStore,
@@ -67,7 +65,14 @@ func ProvideDashboardService(
 		folderPermissions:    folderPermissionsService,
 		dashboardPermissions: dashboardPermissionsService,
 		ac:                   ac,
+		folderStore:          folderStore,
+		folderService:        folderSvc,
 	}
+
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderStore, dashSvc, folderSvc))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, dashSvc, folderSvc))
+
+	return dashSvc
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context, name string) ([]*dashboards.DashboardProvisioning, error) {
@@ -542,36 +547,36 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) error {
+func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (model.HitList, error) {
 	res, err := dr.FindDashboards(ctx, query)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	makeQueryResult(query, res)
+	hits := makeQueryResult(query, res)
 
-	return nil
+	return hits, nil
 }
 
-func getHitType(item dashboards.DashboardSearchProjection) models.HitType {
-	var hitType models.HitType
+func getHitType(item dashboards.DashboardSearchProjection) model.HitType {
+	var hitType model.HitType
 	if item.IsFolder {
-		hitType = models.DashHitFolder
+		hitType = model.DashHitFolder
 	} else {
-		hitType = models.DashHitDB
+		hitType = model.DashHitDB
 	}
 
 	return hitType
 }
 
-func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) {
-	query.Result = make([]*models.Hit, 0)
-	hits := make(map[int64]*models.Hit)
+func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) model.HitList {
+	hitList := make([]*model.Hit, 0)
+	hits := make(map[int64]*model.Hit)
 
 	for _, item := range res {
 		hit, exists := hits[item.ID]
 		if !exists {
-			hit = &models.Hit{
+			hit = &model.Hit{
 				ID:          item.ID,
 				UID:         item.UID,
 				Title:       item.Title,
@@ -593,13 +598,14 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 				hit.SortMetaName = query.Sort.MetaName
 			}
 
-			query.Result = append(query.Result, hit)
+			hitList = append(hitList, hit)
 			hits[item.ID] = hit
 		}
 		if len(item.Term) > 0 {
 			hit.Tags = append(hit.Tags, item.Term)
 		}
 	}
+	return hitList
 }
 
 func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
@@ -628,7 +634,7 @@ func (dr DashboardServiceImpl) CountDashboardsInFolder(ctx context.Context, quer
 		return 0, err
 	}
 
-	folder, err := dr.folderStore.GetFolderByUID(ctx, u.OrgID, query.FolderUID)
+	folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{UID: &query.FolderUID, OrgID: u.OrgID, SignedInUser: u})
 	if err != nil {
 		return 0, err
 	}

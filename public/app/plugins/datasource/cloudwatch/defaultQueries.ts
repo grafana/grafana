@@ -1,4 +1,13 @@
-import { CloudWatchLogsQuery, CloudWatchMetricsQuery, LogGroup, MetricEditorMode, MetricQueryType } from './types';
+import {
+  CloudWatchAnnotationQuery,
+  CloudWatchLogsQuery,
+  CloudWatchMetricsQuery,
+  LogGroup,
+  MetricEditorMode,
+  MetricQueryType,
+  VariableQuery,
+  VariableQueryType,
+} from './types';
 
 export const DEFAULT_METRICS_QUERY: Omit<CloudWatchMetricsQuery, 'refId'> = {
   queryMode: 'Metrics',
@@ -16,6 +25,13 @@ export const DEFAULT_METRICS_QUERY: Omit<CloudWatchMetricsQuery, 'refId'> = {
   matchExact: true,
 };
 
+export const DEFAULT_ANNOTATIONS_QUERY: Omit<CloudWatchAnnotationQuery, 'refId'> = {
+  queryMode: 'Annotations',
+  namespace: '',
+  region: 'default',
+  statistic: 'Average',
+};
+
 export const DEFAULT_LOGS_QUERY_STRING = 'fields @timestamp, @message |\n sort @timestamp desc |\n limit 20';
 
 export const getDefaultLogsQuery = (
@@ -29,3 +45,8 @@ export const getDefaultLogsQuery = (
   logGroupNames: legacyDefaultLogGroups,
   logGroups: defaultLogGroups ?? [],
 });
+
+export const DEFAULT_VARIABLE_QUERY: Partial<VariableQuery> = {
+  queryType: VariableQueryType.Regions,
+  region: 'default',
+};

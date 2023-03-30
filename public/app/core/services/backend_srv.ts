@@ -20,7 +20,6 @@ import { getConfig } from 'app/core/config';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
-import { getGrafanaStorage } from 'app/features/storage/storage';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
 
@@ -65,7 +64,6 @@ export class BackendSrv implements BackendService {
     contextSrv: contextSrv,
     logout: () => {
       contextSrv.setLoggedOut();
-      window.location.reload();
     },
   };
 
@@ -262,7 +260,12 @@ export class BackendSrv implements BackendService {
                   return of({});
                 }
 
-                return from(this.loginPing()).pipe(
+                let authChecker = () => this.loginPing();
+                if (config.featureToggles.clientTokenRotation) {
+                  authChecker = () => this.rotateToken();
+                }
+
+                return from(authChecker()).pipe(
                   catchError((err) => {
                     if (err.status === 401) {
                       this.dependencies.logout();
@@ -304,7 +307,7 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  showErrorAlert<T>(config: BackendSrvRequest, err: FetchError) {
+  showErrorAlert(config: BackendSrvRequest, err: FetchError) {
     if (config.showErrorAlert === false) {
       return;
     }
@@ -317,6 +320,11 @@ export class BackendSrv implements BackendService {
     let description = '';
     let message = err.data.message;
 
+    // Sometimes we have a better error message on err.message
+    if (message === 'Unexpected error' && err.message) {
+      message = err.message;
+    }
+
     if (message.length > 80) {
       description = message;
       message = 'Error';
@@ -324,6 +332,7 @@ export class BackendSrv implements BackendService {
 
     // Validation
     if (err.status === 422) {
+      description = err.data.message;
       message = 'Validation failed';
     }
 
@@ -440,6 +449,10 @@ export class BackendSrv implements BackendService {
     });
   }
 
+  rotateToken() {
+    return this.request({ url: '/api/user/auth-tokens/rotate', method: 'POST' });
+  }
+
   loginPing() {
     return this.request({ url: '/api/login/ping', method: 'GET', retry: 1 });
   }
@@ -450,9 +463,6 @@ export class BackendSrv implements BackendService {
   }
 
   getDashboardByUid(uid: string): Promise<DashboardDTO> {
-    if (uid.indexOf('/') > 0 && config.featureToggles.dashboardsFromStorage) {
-      return getGrafanaStorage().getDashboard(uid);
-    }
     return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
 

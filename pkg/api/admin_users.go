@@ -12,10 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -70,21 +70,21 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 	usr, err := hs.userService.Create(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, org.ErrOrgNotFound) {
-			return response.Error(400, err.Error(), nil)
+			return response.Error(http.StatusBadRequest, err.Error(), nil)
 		}
 
 		if errors.Is(err, user.ErrUserAlreadyExists) {
-			return response.Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
+			return response.Error(http.StatusPreconditionFailed, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
 		}
 
-		return response.Error(500, "failed to create user", err)
+		return response.Error(http.StatusInternalServerError, "failed to create user", err)
 	}
 
 	metrics.MApiAdminUserCreate.Inc()
 
-	result := models.UserIdDTO{
+	result := user.AdminCreateUserResponse{
 		Message: "User created",
-		Id:      usr.ID,
+		ID:      usr.ID,
 	}
 
 	return response.JSON(http.StatusOK, result)
@@ -293,8 +293,8 @@ func (hs *HTTPServer) AdminDisableUser(c *contextmodel.ReqContext) response.Resp
 	}
 
 	// External users shouldn't be disabled from API
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
+	authInfoQuery := &login.GetAuthInfoQuery{UserId: userID}
+	if _, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
 		return response.Error(500, "Could not disable external user", nil)
 	}
 
@@ -336,8 +336,8 @@ func (hs *HTTPServer) AdminEnableUser(c *contextmodel.ReqContext) response.Respo
 	}
 
 	// External users shouldn't be disabled from API
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
+	authInfoQuery := &login.GetAuthInfoQuery{UserId: userID}
+	if _, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
 		return response.Error(500, "Could not enable external user", nil)
 	}
 
@@ -505,7 +505,7 @@ type AdminUpdateUserPermissionsParams struct {
 // swagger:response adminCreateUserResponse
 type AdminCreateUserResponseResponse struct {
 	// in:body
-	Body models.UserIdDTO `json:"body"`
+	Body user.AdminCreateUserResponse `json:"body"`
 }
 
 // swagger:response adminGetUserAuthTokensResponse

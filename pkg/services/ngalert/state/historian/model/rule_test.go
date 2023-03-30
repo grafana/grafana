@@ -3,9 +3,10 @@ package model
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewRuleMeta(t *testing.T) {

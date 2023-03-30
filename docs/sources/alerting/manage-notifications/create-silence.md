@@ -25,25 +25,24 @@ Silences stop notifications from getting created and last for only a specified w
 
 To add a silence, complete the following steps.
 
-1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
-2. On the Alerting page, click **Silences** to open the page listing existing silences.
-3. From Alertmanager drop-down, select an external Alertmanager to create and manage silences for the external data source. Otherwise, keep the default option of Grafana.
-4. Click **New Silence** to open the Create silence page.
-5. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.
-6. Optionally, in **Duration**, specify how long the silence is enforced. This automatically updates the end time in the **Silence start and end** field.
-7. In the **Name** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to.
-8. In **Comment**, add details about the silence.
-9. In **Creator**, enter the name of the silence owner or keep the default owner.
-10. Click **Create**.
+1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. Click **Silences**.
+1. From the **Alertmanager** dropdown, select an external Alertmanager to create and manage silences for the external data source. Otherwise, keep the default option of Grafana.
+1. Click **Create silence** to open the Create silence page.
+1. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.
+1. Optionally, in **Duration**, specify how long the silence is enforced. This automatically updates the end time in the **Silence start and end** field.
+1. In the **Label** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to.
+1. In **Comment**, add details about the silence.
+1. Click **Submit**.
 
 ## Edit silences
 
 To edit a silence, complete the following steps.
 
-1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
-2. Click **Silences** to view the list of existing silences.
-3. Find the silence you want to edit, then click **Edit** (pen icon).
-4. Make the desired changes, then click **Submit** to save your changes.
+1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. Click **Silences** to view the list of existing silences.
+1. Find the silence you want to edit, then click **Edit** (pen icon).
+1. Make the desired changes, then click **Submit** to save your changes.
 
 ## Create a URL to link to a silence form
 
@@ -57,7 +56,7 @@ To link to a new silence page for an external Alertmanager, add a `alertmanager`
 
 To remove a silence, complete the following steps.
 
-1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
+1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
 1. Click **Silences** to view the list of existing silences.
 1. Select the silence you want to end, then click **Unsilence**.
 

@@ -1,11 +1,10 @@
-import { render, act, waitFor } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { setDataSourceSrv } from '@grafana/runtime';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -69,17 +68,11 @@ const renderAlertTabContent = (
   panel: PanelModel,
   initialStore?: ReturnType<typeof configureStore>
 ) => {
-  const store = initialStore ?? configureStore();
-
-  return act(async () => {
-    render(
-      <Provider store={store}>
-        <Router history={locationService.getHistory()}>
-          <PanelAlertTabContent dashboard={dashboard} panel={panel} />
-        </Router>
-      </Provider>
-    );
-  });
+  render(
+    <TestProvider store={initialStore}>
+      <PanelAlertTabContent dashboard={dashboard} panel={panel} />
+    </TestProvider>
+  );
 };
 
 const rules = [
@@ -201,7 +194,7 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('Will take into account panel maxDataPoints', async () => {
-    await renderAlertTabContent(
+    renderAlertTabContent(
       dashboard,
       new PanelModel({
         ...panel,
@@ -230,7 +223,7 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('Will work with default datasource', async () => {
-    await renderAlertTabContent(
+    renderAlertTabContent(
       dashboard,
       new PanelModel({
         ...panel,
@@ -262,7 +255,7 @@ describe('PanelAlertTabContent', () => {
   it('Will take into account datasource minInterval', async () => {
     (getDatasourceSrv() as unknown as MockDataSourceSrv).datasources[dataSources.prometheus.uid].interval = '7m';
 
-    await renderAlertTabContent(
+    renderAlertTabContent(
       dashboard,
       new PanelModel({
         ...panel,
@@ -293,7 +286,7 @@ describe('PanelAlertTabContent', () => {
     mocks.api.fetchRules.mockResolvedValue(rules);
     mocks.api.fetchRulerRules.mockResolvedValue(rulerRules);
 
-    await renderAlertTabContent(dashboard, panel);
+    renderAlertTabContent(dashboard, panel);
 
     const rows = await ui.row.findAll();
     expect(rows).toHaveLength(1);
@@ -336,7 +329,7 @@ describe('PanelAlertTabContent', () => {
     const panelToRuleValuesSpy = jest.spyOn(ruleFormUtils, 'panelToRuleFormValues');
 
     const store = configureStore();
-    await renderAlertTabContent(dashboard, panel, store);
+    renderAlertTabContent(dashboard, panel, store);
 
     store.dispatch(
       toKeyedAction(

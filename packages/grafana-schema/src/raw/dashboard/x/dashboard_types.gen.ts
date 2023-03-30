@@ -239,6 +239,10 @@ export interface Threshold {
    */
   color: string;
   /**
+   * Threshold index, an old property that is not needed an should only appear in older dashboards
+   */
+  index?: number;
+  /**
    * TODO docs
    * TODO are the values here enumerable into a disjunction?
    * Some seem to be listed in typescript comment
@@ -353,11 +357,25 @@ export interface ValueMappingResult {
 
 /**
  * TODO docs
- * FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
  */
-export interface Transformation {
+export interface DataTransformerConfig {
+  /**
+   * Disabled transformations are skipped
+   */
+  disabled?: boolean;
+  /**
+   * Optional frame matcher.  When missing it will be applied to all results
+   */
+  filter?: MatcherConfig;
+  /**
+   * Unique identifier of transformer
+   */
   id: string;
-  options: Record<string, unknown>;
+  /**
+   * Options to be passed to the transformer
+   * Valid options depend on the transformer id
+   */
+  options: unknown;
 }
 
 /**
@@ -404,6 +422,10 @@ export interface Panel {
    * TODO tighter constraint
    */
   interval?: string;
+  /**
+   * Dynamically load the panel
+   */
+  libraryPanel?: LibraryPanelRef;
   /**
    * Panel links.
    * TODO fill this out - seems there are a couple variants?
@@ -466,7 +488,7 @@ export interface Panel {
    * Panel title.
    */
   title?: string;
-  transformations: Array<Transformation>;
+  transformations: Array<DataTransformerConfig>;
   /**
    * Whether to display the panel without a background.
    */
@@ -502,6 +524,11 @@ export interface FieldConfigSource {
 export const defaultFieldConfigSource: Partial<FieldConfigSource> = {
   overrides: [],
 };
+
+export interface LibraryPanelRef {
+  name: string;
+  uid: string;
+}
 
 export interface MatcherConfig {
   id: string;
@@ -650,6 +677,9 @@ export interface Dashboard {
    * The month that the fiscal year starts on.  0 = January, 11 = December
    */
   fiscalYearStartMonth?: number;
+  /**
+   * For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
+   */
   gnetId?: string;
   /**
    * Configuration of dashboard cursor sync behavior.
@@ -665,7 +695,9 @@ export interface Dashboard {
    */
   links?: Array<DashboardLink>;
   /**
-   * TODO docs
+   * When set to true, the dashboard will redraw panels at an interval matching the pixel width.
+   * This will keep data "moving left" regardless of the query refresh rate.  This setting helps
+   * avoid dashboards presenting stale live data
    */
   liveNow?: boolean;
   panels?: Array<(Panel | RowPanel | GraphPanel | HeatmapPanel)>;
@@ -674,9 +706,11 @@ export interface Dashboard {
    */
   refresh?: (string | false);
   /**
-   * Version of the current dashboard data
+   * This property should only be used in dashboards defined by plugins.  It is a quick check
+   * to see if the version has changed since the last time.  Unclear why using the version property
+   * is insufficient.
    */
-  revision: number;
+  revision?: number;
   /**
    * Version of the JSON schema, incremented each time a Grafana update brings
    * changes to said schema.
@@ -777,9 +811,9 @@ export interface Dashboard {
     time_options: Array<string>;
   };
   /**
-   * Timezone of dashboard,
+   * Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
    */
-  timezone?: ('browser' | 'utc' | '');
+  timezone?: string;
   /**
    * Title of dashboard.
    */
@@ -804,7 +838,6 @@ export const defaultDashboard: Partial<Dashboard> = {
   graphTooltip: DashboardCursorSync.Off,
   links: [],
   panels: [],
-  revision: -1,
   schemaVersion: 36,
   style: 'dark',
   tags: [],

@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Menu, Dropdown, useStyles2, useTheme2, ToolbarButton } from '@grafana/ui';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { useSelector } from 'app/types';
@@ -18,13 +19,13 @@ export const QuickAdd = ({}: Props) => {
   const navBarTree = useSelector((state) => state.navBarTree);
   const breakpoint = theme.breakpoints.values.sm;
 
-  const [isSmallScreen, setIsSmallScreen] = useState(window.matchMedia(`(max-width: ${breakpoint}px)`).matches);
+  const [isSmallScreen, setIsSmallScreen] = useState(!window.matchMedia(`(min-width: ${breakpoint}px)`).matches);
   const createActions = useMemo(() => findCreateActions(navBarTree), [navBarTree]);
 
   useMediaQueryChange({
     breakpoint,
     onChange: (e) => {
-      setIsSmallScreen(e.matches);
+      setIsSmallScreen(!e.matches);
     },
   });
 
@@ -32,7 +33,12 @@ export const QuickAdd = ({}: Props) => {
     return (
       <Menu>
         {createActions.map((createAction, index) => (
-          <Menu.Item key={index} url={createAction.url} label={createAction.text} />
+          <Menu.Item
+            key={index}
+            url={createAction.url}
+            label={createAction.text}
+            onClick={() => reportInteraction('grafana_menu_item_clicked', { url: createAction.url, from: 'quickadd' })}
+          />
         ))}
       </Menu>
     );

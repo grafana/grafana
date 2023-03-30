@@ -1,45 +1,48 @@
 import { locationUtil, NavModelItem } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 
 import { CommandPaletteAction } from '../types';
-import { DEFAULT_PRIORITY, PREFERENCES_PRIORITY } from '../values';
-
-// We reuse this, but translations cannot be in module scope (t must be called after i18n has set up,)
-const getPagesSectionTranslation = () => t('command-palette.section.pages', 'Pages');
+import { ACTIONS_PRIORITY, DEFAULT_PRIORITY, PREFERENCES_PRIORITY } from '../values';
 
 // TODO: Clean this once ID is mandatory on nav items
 function idForNavItem(navItem: NavModelItem) {
   return 'navModel.' + navItem.id ?? navItem.url ?? navItem.text ?? navItem.subTitle;
 }
 
-function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): CommandPaletteAction[] {
+function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = []): CommandPaletteAction[] {
   const navActions: CommandPaletteAction[] = [];
 
   for (const navItem of navTree) {
-    const { url, text, isCreateAction, children } = navItem;
+    const { url, target, text, isCreateAction, children } = navItem;
     const hasChildren = Boolean(children?.length);
 
     if (!(url || hasChildren)) {
       continue;
     }
 
-    const section = isCreateAction ? t('command-palette.section.actions', 'Actions') : getPagesSectionTranslation();
+    const section = isCreateAction
+      ? t('command-palette.section.actions', 'Actions')
+      : t('command-palette.section.pages', 'Pages');
 
+    const priority = isCreateAction ? ACTIONS_PRIORITY : DEFAULT_PRIORITY;
+
+    const subtitle = parents.map((parent) => parent.text).join(' > ');
     const action = {
       id: idForNavItem(navItem),
-      name: text, // TODO: translate
+      name: text,
       section: section,
-      perform: url ? () => locationService.push(locationUtil.stripBaseFromUrl(url)) : undefined,
-      parent: parent && idForNavItem(parent),
-      priority: DEFAULT_PRIORITY,
+      url: url && locationUtil.stripBaseFromUrl(url),
+      target,
+      parent: parents.length > 0 && !isCreateAction ? idForNavItem(parents[parents.length - 1]) : undefined,
+      priority: priority,
+      subtitle: isCreateAction ? undefined : subtitle,
     };
 
     navActions.push(action);
 
     if (children?.length) {
-      const childActions = navTreeToActions(children, navItem);
+      const childActions = navTreeToActions(children, [...parents, navItem]);
       navActions.push(...childActions);
     }
   }
@@ -73,17 +76,6 @@ export default (navBarTree: NavModelItem[]): CommandPaletteAction[] => {
       priority: PREFERENCES_PRIORITY,
     },
   ];
-
-  if (!config.featureToggles.topNavCommandPalette) {
-    globalActions.unshift({
-      id: 'go/search',
-      name: t('command-palette.action.search', 'Search'),
-      keywords: 'navigate',
-      perform: () => locationService.push('?search=open'),
-      section: t('command-palette.section.pages', 'Pages'),
-      priority: DEFAULT_PRIORITY,
-    });
-  }
 
   const navBarActions = navTreeToActions(navBarTree);
 

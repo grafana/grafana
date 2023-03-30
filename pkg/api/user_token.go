@@ -6,14 +6,17 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ua-parser/uap-go/uaparser"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/ua-parser/uap-go/uaparser"
 )
 
 // swagger:route GET /user/auth-tokens signed_in_user getUserAuthTokens
@@ -49,6 +52,71 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return hs.revokeUserAuthTokenInternal(c, c.UserID, cmd)
+}
+
+func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) response.Response {
+	if err := hs.rotateToken(c); err != nil {
+		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
+		if errors.Is(err, auth.ErrInvalidSessionToken) {
+			authn.DeleteSessionCookie(c.Resp, hs.Cfg)
+		}
+		return response.Redirect(hs.Cfg.AppSubURL + "/login")
+	}
+
+	return response.Redirect(hs.GetRedirectURL(c))
+}
+
+// swagger:route POST /user/auth-tokens/rotate
+//
+// # Rotate the auth token of the caller
+//
+// Rotate the token of caller, if successful send a new session cookie.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) RotateUserAuthToken(c *contextmodel.ReqContext) response.Response {
+	if err := hs.rotateToken(c); err != nil {
+		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
+		if errors.Is(err, auth.ErrInvalidSessionToken) {
+			authn.DeleteSessionCookie(c.Resp, hs.Cfg)
+			return response.ErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), err)
+		}
+
+		if errors.Is(err, auth.ErrUserTokenNotFound) {
+			return response.ErrOrFallback(http.StatusNotFound, http.StatusText(http.StatusFound), err)
+		}
+
+		return response.ErrOrFallback(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), err)
+	}
+
+	return response.JSON(http.StatusOK, map[string]any{})
+}
+
+func (hs *HTTPServer) rotateToken(c *contextmodel.ReqContext) error {
+	token := c.GetCookie(hs.Cfg.LoginCookieName)
+	ip, err := network.GetIPFromAddress(c.RemoteAddr())
+	if err != nil {
+		hs.log.Debug("Failed to get IP from client address", "addr", c.RemoteAddr())
+	}
+
+	res, err := hs.AuthTokenService.RotateToken(c.Req.Context(), auth.RotateCommand{
+		UnHashedToken: token,
+		IP:            ip,
+		UserAgent:     c.Req.UserAgent(),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if res.UnhashedToken != token {
+		authn.WriteSessionCookie(c.Resp, hs.Cfg, res)
+	}
+
+	return nil
 }
 
 func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, userID int64) response.Response {
@@ -166,7 +234,7 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *contextmodel.ReqContext, us
 		return response.Error(400, "Cannot revoke active user auth token", nil)
 	}
 
-	err = hs.AuthTokenService.RevokeToken(c.Req.Context(), token, false)
+	err = hs.AuthTokenService.RevokeToken(c.Req.Context(), token, true)
 	if err != nil {
 		if errors.Is(err, auth.ErrUserTokenNotFound) {
 			return response.Error(404, "User auth token not found", err)

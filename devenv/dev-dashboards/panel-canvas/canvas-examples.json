@@ -108,7 +108,7 @@
               "fixed": "transparent"
             },
             "image": {
-              "fixed": "https://grafana-plugin-resources.s3.us-west-2.amazonaws.com/ryan/landscape_2x.jpg"
+              "fixed": "https://dl.grafana.com/files/temp/ryan/landscape_2x.jpg"
             },
             "size": "original"
           },

@@ -4,7 +4,7 @@ import { RefreshEvent } from '@grafana/runtime';
 import { PanelChrome } from '@grafana/ui';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { PanelRenderer } from 'app/features/panel/components/PanelRenderer';
-import { PanelOptions } from 'app/plugins/panel/table/models.gen';
+import { PanelOptions } from 'app/plugins/panel/table/panelcfg.gen';
 
 import PanelHeaderCorner from '../../dashgrid/PanelHeader/PanelHeaderCorner';
 import { getTimeSrv } from '../../services/TimeSrv';
@@ -49,11 +49,17 @@ export function PanelEditorTableView({ width, height, panel, dashboard }: Props)
   if (!data) {
     return null;
   }
+
+  const errorMessage = data?.errors
+    ? data.errors.length > 1
+      ? 'Multiple errors found. Click for more details'
+      : data.errors[0].message
+    : data?.error?.message;
   return (
     <PanelChrome width={width} height={height} padding="none">
       {(innerWidth, innerHeight) => (
         <>
-          <PanelHeaderCorner panel={panel} error={data?.error?.message} />
+          <PanelHeaderCorner panel={panel} error={errorMessage} />
           <PanelRenderer
             title="Raw data"
             pluginId="table"

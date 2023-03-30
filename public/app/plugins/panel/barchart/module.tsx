@@ -108,7 +108,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
     },
   })
   .setPanelOptions((builder, context) => {
-    const disp = prepareBarChartDisplayValues(context.data, config.theme2, context.options ?? ({} as any));
+    const disp = prepareBarChartDisplayValues(context.data, config.theme2, context.options ?? ({} as PanelOptions));
     let xaxisPlaceholder = 'First string or time field';
     const viz = 'viz' in disp ? disp.viz[0] : undefined;
     if (viz?.fields?.length) {

@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationProvisioning(t *testing.T) {

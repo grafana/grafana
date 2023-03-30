@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -102,7 +102,7 @@ func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Respon
 func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
-	if !tokens.IsValidShortUID(dashboardUid) {
+	if !validation.IsValidShortUID(dashboardUid) {
 		return response.Err(ErrPublicDashboardIdentifierNotSet.Errorf("GetPublicDashboard: no dashboard Uid for public dashboard specified"))
 	}
 
@@ -123,7 +123,7 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
-	if !tokens.IsValidShortUID(dashboardUid) {
+	if !validation.IsValidShortUID(dashboardUid) {
 		return response.Err(ErrInvalidUid.Errorf("CreatePublicDashboard: invalid Uid %s", dashboardUid))
 	}
 
@@ -155,12 +155,12 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
-	if !tokens.IsValidShortUID(dashboardUid) {
+	if !validation.IsValidShortUID(dashboardUid) {
 		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid dashboard Uid %s", dashboardUid))
 	}
 
 	uid := web.Params(c.Req)[":uid"]
-	if !tokens.IsValidShortUID(uid) {
+	if !validation.IsValidShortUID(uid) {
 		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid Uid %s", uid))
 	}
 
@@ -192,11 +192,11 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 // DELETE /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
 func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
-	if !tokens.IsValidShortUID(uid) {
+	if !validation.IsValidShortUID(uid) {
 		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid Uid %s", uid))
 	}
 
-	err := api.PublicDashboardService.Delete(c.Req.Context(), c.OrgID, uid)
+	err := api.PublicDashboardService.Delete(c.Req.Context(), uid)
 	if err != nil {
 		return response.Err(err)
 	}

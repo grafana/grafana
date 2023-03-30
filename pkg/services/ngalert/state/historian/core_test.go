@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -44,10 +44,14 @@ func TestShouldRecord(t *testing.T) {
 	knownReasons := []string{
 		"",
 		models.StateReasonMissingSeries,
+		models.StateReasonPaused,
+		models.StateReasonUpdated,
+		models.StateReasonRuleDeleted,
 		eval.Error.String(),
 		eval.NoData.String(),
 	}
 
+	// all combinations does not reflect the real transitions that could happen, which is a subset.
 	allCombinations := make([]Transition, 0, len(allStates)*len(allStates)*len(knownReasons)*len(knownReasons))
 	for _, from := range allStates {
 		for _, reasonFrom := range knownReasons {
@@ -60,30 +64,23 @@ func TestShouldRecord(t *testing.T) {
 	}
 
 	negativeTransitions := map[Transition]struct{}{
-		noTransition(eval.Normal, ""):                                {},
-		noTransition(eval.Normal, eval.Error.String()):               {},
-		noTransition(eval.Normal, eval.NoData.String()):              {},
-		noTransition(eval.Normal, models.StateReasonMissingSeries):   {},
-		noTransition(eval.Alerting, ""):                              {},
-		noTransition(eval.Alerting, eval.Error.String()):             {},
-		noTransition(eval.Alerting, eval.NoData.String()):            {},
-		noTransition(eval.Alerting, models.StateReasonMissingSeries): {},
-		noTransition(eval.Pending, ""):                               {},
-		noTransition(eval.Pending, eval.Error.String()):              {},
-		noTransition(eval.Pending, eval.NoData.String()):             {},
-		noTransition(eval.Pending, models.StateReasonMissingSeries):  {},
-		noTransition(eval.NoData, ""):                                {},
-		noTransition(eval.NoData, eval.Error.String()):               {},
-		noTransition(eval.NoData, eval.NoData.String()):              {},
-		noTransition(eval.NoData, models.StateReasonMissingSeries):   {},
-		noTransition(eval.Error, ""):                                 {},
-		noTransition(eval.Error, eval.Error.String()):                {},
-		noTransition(eval.Error, eval.NoData.String()):               {},
-		noTransition(eval.Error, models.StateReasonMissingSeries):    {},
-
 		transition(eval.Normal, "", eval.Normal, models.StateReasonMissingSeries):                   {},
 		transition(eval.Normal, eval.Error.String(), eval.Normal, models.StateReasonMissingSeries):  {},
 		transition(eval.Normal, eval.NoData.String(), eval.Normal, models.StateReasonMissingSeries): {},
+
+		transition(eval.Normal, models.StateReasonPaused, eval.Normal, ""):  {},
+		transition(eval.Normal, models.StateReasonUpdated, eval.Normal, ""): {},
+
+		// these transitions are actually not possible
+		transition(eval.Normal, models.StateReasonRuleDeleted, eval.Normal, models.StateReasonMissingSeries): {},
+		transition(eval.Normal, models.StateReasonPaused, eval.Normal, models.StateReasonMissingSeries):      {},
+		transition(eval.Normal, models.StateReasonUpdated, eval.Normal, models.StateReasonMissingSeries):     {},
+	}
+	// add all transitions from reason X(Y) to X(Y) as negative.
+	for _, s := range allStates {
+		for _, reason := range knownReasons {
+			negativeTransitions[noTransition(s, reason)] = struct{}{}
+		}
 	}
 
 	for _, tc := range allCombinations {

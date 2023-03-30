@@ -132,7 +132,7 @@ export const navIndex: NavIndex = {
       {
         id: 'receivers',
         text: 'Contact points',
-        subTitle: 'Decide how your contacts are notified when an alert fires',
+        subTitle: 'Choose how to notify your  contact points when an alert instance fires',
         icon: 'comment-alt-share',
         url: '/alerting/notifications',
       },
@@ -171,7 +171,7 @@ export const navIndex: NavIndex = {
       },
       {
         id: 'alert',
-        text: 'New alert rule',
+        text: 'Create alert rule',
         subTitle: 'Create an alert rule',
         icon: 'plus',
         url: '/alerting/new',
@@ -198,7 +198,7 @@ export const navIndex: NavIndex = {
   receivers: {
     id: 'receivers',
     text: 'Contact points',
-    subTitle: 'Decide how your contacts are notified when an alert fires',
+    subTitle: 'Choose how to notify your  contact points when an alert instance fires',
     icon: 'comment-alt-share',
     url: '/alerting/notifications',
   },
@@ -231,7 +231,7 @@ export const navIndex: NavIndex = {
   },
   alert: {
     id: 'alert',
-    text: 'New alert rule',
+    text: 'Create alert rule',
     subTitle: 'Create an alert rule',
     icon: 'plus',
     url: '/alerting/new',

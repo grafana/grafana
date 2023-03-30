@@ -2,7 +2,8 @@ package pfs
 
 import (
 	"cuelang.org/go/cue/ast"
-	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/kindsys"
+
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 )
 
@@ -36,13 +37,13 @@ type ParsedPlugin struct {
 // ComposableKinds represents all the possible composable kinds that may be
 // defined in a Grafana plugin.
 //
-// The value of each field, if non-nil, is a standard [kindsys.Decl]
+// The value of each field, if non-nil, is a standard [kindsys.Def]
 // representing a CUE definition of a composable kind that implements the
 // schema interface corresponding to the field's name. (This invariant is
 // only enforced in [ComposableKinds] returned from [ParsePluginFS].)
 //
 // type ComposableKinds struct {
-// 	PanelCfg kindsys.Decl[kindsys.ComposableProperties]
-// 	Queries  kindsys.Decl[kindsys.ComposableProperties]
-// 	DSCfg    kindsys.Decl[kindsys.ComposableProperties]
+// 	PanelCfg kindsys.Def[kindsys.ComposableProperties]
+// 	Queries  kindsys.Def[kindsys.ComposableProperties]
+// 	DSCfg    kindsys.Def[kindsys.ComposableProperties]
 // }

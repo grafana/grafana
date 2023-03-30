@@ -1,10 +1,8 @@
 import { IconName } from '@grafana/ui';
 
-export type CardType = 'tutorial' | 'docs' | 'other';
-
 export interface Card {
   title: string;
-  type: CardType;
+  type: 'docs' | 'other';
   icon: IconName;
   href: string;
   check: () => Promise<boolean>;
@@ -13,8 +11,9 @@ export interface Card {
   learnHref?: string;
 }
 
-export interface TutorialCardType extends Card {
+export interface TutorialCardType extends Omit<Card, 'type'> {
   info?: string;
+  type: 'tutorial';
   // For local storage
   key: string;
 }

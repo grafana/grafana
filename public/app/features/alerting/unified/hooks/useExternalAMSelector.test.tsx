@@ -45,7 +45,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
 
     mockAlertmanagersResponse(server, { data: { activeAlertManagers: [], droppedAlertManagers: [] } });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const { result, waitForNextUpdate } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
@@ -78,7 +78,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       },
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
@@ -111,7 +111,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       },
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
@@ -144,7 +144,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       },
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const { result, waitForNextUpdate } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
@@ -177,7 +177,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       },
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
@@ -210,7 +210,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       state.dataSources.dataSources = [dsSettings];
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), {

@@ -6,14 +6,17 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-jose/go-jose/v3/jwt"
 	"golang.org/x/oauth2"
-	"gopkg.in/square/go-jose.v2/jwt"
+
+	"github.com/grafana/grafana/pkg/models/roletype"
 )
 
 type SocialOkta struct {
 	*SocialBase
-	apiUrl        string
-	allowedGroups []string
+	apiUrl          string
+	allowedGroups   []string
+	skipOrgRoleSync bool
 }
 
 type OktaUserInfoJson struct {
@@ -75,14 +78,20 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 		return nil, errMissingGroupMembership
 	}
 
-	role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, groups, true)
-	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, &InvalidBasicRoleError{idP: "Okta", assignedRole: string(role)}
+	var role roletype.RoleType
+	var isGrafanaAdmin *bool
+	if !s.skipOrgRoleSync {
+		var grafanaAdmin bool
+		role, grafanaAdmin = s.extractRoleAndAdmin(data.rawJSON, groups, true)
+		if s.roleAttributeStrict && !role.IsValid() {
+			return nil, &InvalidBasicRoleError{idP: "Okta", assignedRole: string(role)}
+		}
+		if s.allowAssignGrafanaAdmin {
+			isGrafanaAdmin = &grafanaAdmin
+		}
 	}
-
-	var isGrafanaAdmin *bool = nil
-	if s.allowAssignGrafanaAdmin {
-		isGrafanaAdmin = &grafanaAdmin
+	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+		s.log.Debug("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	return &BasicUserInfo{

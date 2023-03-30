@@ -1,9 +1,26 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 
-import { DataQueryError, GrafanaTheme2, LogRowModel, LogsSortOrder, textUtil } from '@grafana/data';
-import { Alert, Button, ClickOutsideWrapper, CustomScrollbar, IconButton, List, useStyles2 } from '@grafana/ui';
+import {
+  DataQueryError,
+  GrafanaTheme2,
+  LogRowModel,
+  LogsSortOrder,
+  textUtil,
+  DataSourceWithLogsContextSupport,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
+import {
+  Alert,
+  Button,
+  ClickOutsideWrapper,
+  CustomScrollbar,
+  IconButton,
+  List,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { HasMoreContextRows, LogRowContextQueryErrors, LogRowContextRows } from './LogRowContextProvider';
@@ -22,9 +39,14 @@ interface LogRowContextProps {
   logsSortOrder?: LogsSortOrder | null;
   onOutsideClick: (method: string) => void;
   onLoadMoreContext: () => void;
+  runContextQuery?: () => void;
+  getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
 }
 
-const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) => {
+const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean, datasourceUiHeight?: number) => {
+  if (!config.featureToggles.logsContextDatasourceUi || !datasourceUiHeight) {
+    datasourceUiHeight = 0;
+  }
   /**
    * This is workaround for displaying uncropped context when we have unwrapping log messages.
    * We are using margins to correctly position context. Because non-wrapped logs have always 1 line of log
@@ -34,7 +56,8 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
 
   const headerHeight = 40;
   const logsHeight = 220;
-  const contextHeight = headerHeight + logsHeight;
+  const contextHeight = datasourceUiHeight + headerHeight + logsHeight;
+  const bottomContextHeight = headerHeight + logsHeight;
   const width = wrapLogMessage ? '100%' : '75%';
   const afterContext = wrapLogMessage
     ? css`
@@ -55,6 +78,9 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
     width: css`
       width: ${width};
     `,
+    bottomContext: css`
+      height: ${bottomContextHeight}px;
+    `,
     commonStyles: css`
       position: absolute;
       height: ${contextHeight}px;
@@ -63,7 +89,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
       background: ${theme.colors.background.primary};
       box-shadow: 0 0 ${theme.spacing(1.25)} ${theme.v1.palette.black};
       border: 1px solid ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.borderRadius(2)};
+      border-radius: ${theme.shape.radius.default};
       font-family: ${theme.typography.fontFamily};
     `,
     header: css`
@@ -73,8 +99,15 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
       align-items: center;
       background: ${theme.colors.background.canvas};
     `,
+    datasourceUi: css`
+      height: ${datasourceUiHeight}px;
+      padding: ${theme.spacing(0, 1.25)};
+      display: flex;
+      align-items: center;
+      background: ${theme.colors.background.canvas};
+    `,
     top: css`
-      border-radius: 0 0 ${theme.shape.borderRadius(2)} ${theme.shape.borderRadius(2)};
+      border-radius: 0 0 ${theme.shape.radius.default} ${theme.shape.radius.default};
       box-shadow: 0 0 ${theme.spacing(1.25)} ${theme.v1.palette.black};
       clip-path: inset(0px -${theme.spacing(1.25)} -${theme.spacing(1.25)} -${theme.spacing(1.25)});
     `,
@@ -86,7 +119,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
       height: ${headerHeight}px;
       background: ${theme.colors.background.secondary};
       border: 1px solid ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.borderRadius(2)} ${theme.shape.borderRadius(2)} 0 0;
+      border-radius: ${theme.shape.radius.default} ${theme.shape.radius.default} 0 0;
       box-shadow: 0 0 ${theme.spacing(1.25)} ${theme.v1.palette.black};
       clip-path: inset(-${theme.spacing(1.25)} -${theme.spacing(1.25)} 0px -${theme.spacing(1.25)});
       font-family: ${theme.typography.fontFamily};
@@ -132,24 +165,32 @@ interface LogRowContextGroupHeaderProps {
   shouldScrollToBottom?: boolean;
   canLoadMoreRows?: boolean;
   logsSortOrder?: LogsSortOrder | null;
+  getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
+  runContextQuery?: () => void;
+  onHeightChange?: (height: number) => void;
 }
 interface LogRowContextGroupProps extends LogRowContextGroupHeaderProps {
   rows: Array<string | DataQueryError>;
   groupPosition: LogGroupPosition;
   className?: string;
   error?: string;
-  logsSortOrder?: LogsSortOrder | null;
 }
 
-const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeaderProps> = ({
+const LogRowContextGroupHeader = ({
   row,
   rows,
   onLoadMoreContext,
   canLoadMoreRows,
   groupPosition,
   logsSortOrder,
-}) => {
-  const { header, headerButton } = useStyles2(getLogRowContextStyles);
+  getLogRowContextUi,
+  runContextQuery,
+  onHeightChange,
+}: LogRowContextGroupHeaderProps) => {
+  const [height, setHeight] = useState(0);
+  const datasourceUiRef = React.createRef<HTMLDivElement>();
+  const theme = useTheme2();
+  const { datasourceUi, header, headerButton } = getLogRowContextStyles(theme, undefined, height);
 
   // determine the position in time for this LogGroup by taking the ordering of
   // logs and position of the component itself into account.
@@ -162,25 +203,63 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
     logGroupPosition = 'before';
   }
 
+  if (config.featureToggles.logsContextDatasourceUi) {
+    // disabling eslint here, because this condition does not change in runtime
+
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const resizeObserver = useMemo(
+      () =>
+        new ResizeObserver((entries) => {
+          for (let entry of entries) {
+            setHeight(entry.contentRect.height);
+            if (onHeightChange) {
+              onHeightChange(entry.contentRect.height);
+            }
+          }
+        }),
+      [onHeightChange]
+    );
+
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useLayoutEffect(() => {
+      // observe the first child of the ref, which is the datasource controlled component and varies in height
+      // TODO: this is a bit of a hack and we can remove this as soon as we move back from the absolute positioned context
+      const child = datasourceUiRef.current?.children.item(0);
+      if (child) {
+        resizeObserver.observe(child);
+      }
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }, [datasourceUiRef, resizeObserver]);
+  }
+
   return (
-    <div className={header}>
-      <span
-        className={css`
-          opacity: 0.6;
-        `}
-      >
-        Showing {rows.length} lines {logGroupPosition} match.
-      </span>
-      {(rows.length >= 10 || (rows.length > 10 && rows.length % 10 !== 0)) && canLoadMoreRows && (
-        <Button className={headerButton} variant="secondary" size="sm" onClick={onLoadMoreContext}>
-          Load 10 more lines
-        </Button>
+    <>
+      {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
+        <div ref={datasourceUiRef} className={datasourceUi}>
+          {getLogRowContextUi(row, runContextQuery)}
+        </div>
       )}
-    </div>
+      <div className={header}>
+        <span
+          className={css`
+            opacity: 0.6;
+          `}
+        >
+          Showing {rows.length} lines {logGroupPosition} match.
+        </span>
+        {(rows.length >= 10 || (rows.length > 10 && rows.length % 10 !== 0)) && canLoadMoreRows && (
+          <Button className={headerButton} variant="secondary" size="sm" onClick={onLoadMoreContext}>
+            Load 10 more lines
+          </Button>
+        )}
+      </div>
+    </>
   );
 };
 
-export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
+export const LogRowContextGroup = ({
   row,
   rows,
   error,
@@ -190,8 +269,13 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   onLoadMoreContext,
   groupPosition,
   logsSortOrder,
-}) => {
-  const { commonStyles, logs } = useStyles2(getLogRowContextStyles);
+  getLogRowContextUi,
+  runContextQuery,
+  onHeightChange,
+}: LogRowContextGroupProps) => {
+  const [height, setHeight] = useState(0);
+  const theme = useTheme2();
+  const { commonStyles, logs, bottomContext, afterContext } = getLogRowContextStyles(theme, undefined, height);
   const [scrollTop, setScrollTop] = useState(0);
   const [scrollHeight, setScrollHeight] = useState(0);
 
@@ -236,6 +320,13 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
     }
   };
 
+  const changeHeight = (height: number) => {
+    setHeight(height);
+    if (onHeightChange) {
+      onHeightChange(height);
+    }
+  };
+
   const headerProps = {
     row,
     rows,
@@ -243,12 +334,16 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
     canLoadMoreRows,
     groupPosition,
     logsSortOrder,
+    getLogRowContextUi,
+    runContextQuery,
   };
 
   return (
-    <div className={cx(commonStyles, className)}>
+    <div
+      className={cx(commonStyles, className, groupPosition === LogGroupPosition.Bottom ? bottomContext : afterContext)}
+    >
       {/* When displaying "after" context */}
-      {shouldScrollToBottom && !error && <LogRowContextGroupHeader {...headerProps} />}
+      {shouldScrollToBottom && !error && <LogRowContextGroupHeader onHeightChange={changeHeight} {...headerProps} />}
       <div className={logs}>
         <CustomScrollbar autoHide onScroll={updateScroll} scrollTop={scrollTop} autoHeightMin={'210px'}>
           <div ref={listContainerRef}>
@@ -278,16 +373,18 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   );
 };
 
-export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
+export const LogRowContext = ({
   row,
   context,
   errors,
   onOutsideClick,
   onLoadMoreContext,
+  runContextQuery: runContextQuery,
   hasMoreContextRows,
   wrapLogMessage,
   logsSortOrder,
-}) => {
+  getLogRowContextUi,
+}: LogRowContextProps) => {
   useEffect(() => {
     const handleEscKeyDown = (e: KeyboardEvent): void => {
       if (e.key === 'Escape' || e.key === 'Esc') {
@@ -299,12 +396,14 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
       document.removeEventListener('keydown', handleEscKeyDown, false);
     };
   }, [onOutsideClick, row]);
-  const { afterContext, beforeContext, title, top, actions, width } = useStyles2((theme) =>
-    getLogRowContextStyles(theme, wrapLogMessage)
+  const [height, setHeight] = useState(0);
+  const { beforeContext, title, top, actions, width } = useStyles2((theme) =>
+    getLogRowContextStyles(theme, wrapLogMessage, height)
   );
+  const handleOutsideClick = useCallback(() => onOutsideClick('close_outside_click'), [onOutsideClick]);
 
   return (
-    <ClickOutsideWrapper onClick={() => onOutsideClick('close_outside_click')}>
+    <ClickOutsideWrapper onClick={handleOutsideClick}>
       {/* e.stopPropagation is necessary so the log details doesn't open when clicked on log line in context
        * and/or when context log line is being highlighted
        */}
@@ -315,12 +414,15 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             rows={context.after}
             error={errors && errors.after}
             row={row}
-            className={cx(afterContext, top, width)}
+            className={cx(top, width)}
             shouldScrollToBottom
             canLoadMoreRows={hasMoreContextRows ? hasMoreContextRows.after : false}
             onLoadMoreContext={onLoadMoreContext}
             groupPosition={LogGroupPosition.Top}
             logsSortOrder={logsSortOrder}
+            getLogRowContextUi={getLogRowContextUi}
+            runContextQuery={runContextQuery}
+            onHeightChange={setHeight}
           />
         )}
 

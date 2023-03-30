@@ -9,13 +9,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -63,16 +61,17 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		return response.Error(500, "Failed to get user", err)
 	}
 
-	getAuthQuery := models.GetAuthInfoQuery{UserId: userID}
+	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
 	userProfile.AuthLabels = []string{}
-	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-		authLabel := login.GetAuthProviderLabel(getAuthQuery.Result.AuthModule)
+	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
+		authLabel := login.GetAuthProviderLabel(authInfo.AuthModule)
 		userProfile.AuthLabels = append(userProfile.AuthLabels, authLabel)
 		userProfile.IsExternal = true
+		userProfile.IsExternallySynced = login.IsExternallySynced(hs.Cfg, authInfo.AuthModule)
 	}
 
 	userProfile.AccessControl = hs.getAccessControlMetadata(c, c.OrgID, "global.users:id:", strconv.FormatInt(userID, 10))
-	userProfile.AvatarUrl = dtos.GetGravatarUrl(userProfile.Email)
+	userProfile.AvatarURL = dtos.GetGravatarUrl(userProfile.Email)
 
 	return response.JSON(http.StatusOK, userProfile)
 }
@@ -129,11 +128,11 @@ func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Re
 	cmd.Email = strings.TrimSpace(cmd.Email)
 	cmd.Login = strings.TrimSpace(cmd.Login)
 
-	if setting.AuthProxyEnabled {
-		if setting.AuthProxyHeaderProperty == "email" && cmd.Email != c.Email {
+	if hs.Cfg.AuthProxyEnabled {
+		if hs.Cfg.AuthProxyHeaderProperty == "email" && cmd.Email != c.Email {
 			return response.Error(400, "Not allowed to change email when auth proxy is using email property", nil)
 		}
-		if setting.AuthProxyHeaderProperty == "username" && cmd.Login != c.Login {
+		if hs.Cfg.AuthProxyHeaderProperty == "username" && cmd.Login != c.Login {
 			return response.Error(400, "Not allowed to change username when auth proxy is using username property", nil)
 		}
 	}
@@ -224,9 +223,9 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 }
 
 func (hs *HTTPServer) isExternalUser(ctx context.Context, userID int64) (bool, error) {
-	getAuthQuery := models.GetAuthInfoQuery{UserId: userID}
+	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
 	var err error
-	if err = hs.authInfoService.GetAuthInfo(ctx, &getAuthQuery); err == nil {
+	if _, err = hs.authInfoService.GetAuthInfo(ctx, &getAuthQuery); err == nil {
 		return true, nil
 	}
 
@@ -429,34 +428,34 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 
 	userQuery := user.GetUserByIDQuery{ID: c.UserID}
 
-	user, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
+	usr, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
 	if err != nil {
 		return response.Error(500, "Could not read user from database", err)
 	}
 
-	getAuthQuery := models.GetAuthInfoQuery{UserId: user.ID}
-	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-		authModule := getAuthQuery.Result.AuthModule
+	getAuthQuery := login.GetAuthInfoQuery{UserId: usr.ID}
+	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
+		authModule := authInfo.AuthModule
 		if authModule == login.LDAPAuthModule || authModule == login.AuthProxyAuthModule {
 			return response.Error(400, "Not allowed to reset password for LDAP or Auth Proxy user", nil)
 		}
 	}
 
-	passwordHashed, err := util.EncodePassword(cmd.OldPassword, user.Salt)
+	passwordHashed, err := util.EncodePassword(cmd.OldPassword, usr.Salt)
 	if err != nil {
 		return response.Error(500, "Failed to encode password", err)
 	}
-	if passwordHashed != user.Password {
+	if passwordHashed != usr.Password {
 		return response.Error(401, "Invalid old password", nil)
 	}
 
-	password := models.Password(cmd.NewPassword)
+	password := user.Password(cmd.NewPassword)
 	if password.IsWeak() {
 		return response.Error(400, "New password is too short", nil)
 	}
 
 	cmd.UserID = c.UserID
-	cmd.NewPassword, err = util.EncodePassword(cmd.NewPassword, user.Salt)
+	cmd.NewPassword, err = util.EncodePassword(cmd.NewPassword, usr.Salt)
 	if err != nil {
 		return response.Error(500, "Failed to encode password", err)
 	}

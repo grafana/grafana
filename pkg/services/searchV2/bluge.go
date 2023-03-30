@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
@@ -70,6 +71,7 @@ func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDas
 
 	// First index the folders to construct folderIdLookup.
 	folderIdLookup := make(map[int64]string, 50)
+	folderIdLookup[0] = folder.GeneralFolderUID
 	for _, dash := range dashboards {
 		if !dash.isFolder {
 			continue
@@ -83,9 +85,6 @@ func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDas
 			return nil, err
 		}
 		uid := dash.uid
-		if uid == "" {
-			uid = "general"
-		}
 		folderIdLookup[dash.id] = uid
 	}
 
@@ -208,7 +207,7 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
 
-		for _, ref := range dash.summary.References {
+		for _, ref := range panel.References {
 			switch ref.Family {
 			case entity.StandardKindDashboard:
 				if ref.Type != "" {

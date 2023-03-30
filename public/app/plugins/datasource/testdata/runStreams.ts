@@ -67,7 +67,7 @@ export function runSignalStream(
     const frame = StreamingDataFrame.fromDataFrameJSON({ schema }, { maxLength: maxDataPoints });
 
     let value = Math.random() * 100;
-    let timeoutId: any = null;
+    let timeoutId: ReturnType<typeof setTimeout>;
     let lastSent = -1;
 
     const addNextRow = (time: number) => {
@@ -148,11 +148,11 @@ export function runLogsStream(
 
     const { speed } = query;
 
-    let timeoutId: any = null;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     const pushNextEvent = () => {
-      data.fields[0].values.add(Date.now());
-      data.fields[1].values.add(getRandomLine());
+      data.fields[0].values.add(getRandomLine());
+      data.fields[1].values.add(Date.now());
 
       subscriber.next({
         data: [data],
@@ -205,7 +205,7 @@ export function runFetchStream(
             data.addField(field);
           }
         },
-        onRow: (row: any[]) => {
+        onRow: (row) => {
           data.add(row);
         },
       },

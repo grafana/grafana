@@ -2,23 +2,18 @@ import { within } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setAngularLoader, setDataSourceSrv } from '@grafana/runtime';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 
-import { configureStore } from '../../../../store/configureStore';
 import { DashboardModel } from '../../state/DashboardModel';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { AnnotationsSettings } from './AnnotationsSettings';
 
 function setup(dashboard: DashboardModel, editIndex?: number) {
-  const store = configureStore();
   const sectionNav = {
     main: { text: 'Dashboard' },
     node: {
@@ -27,13 +22,9 @@ function setup(dashboard: DashboardModel, editIndex?: number) {
   };
 
   return render(
-    <GrafanaContext.Provider value={getGrafanaContextMock()}>
-      <Provider store={store}>
-        <BrowserRouter>
-          <AnnotationsSettings sectionNav={sectionNav} dashboard={dashboard} editIndex={editIndex} />
-        </BrowserRouter>
-      </Provider>
-    </GrafanaContext.Provider>
+    <TestProvider>
+      <AnnotationsSettings sectionNav={sectionNav} dashboard={dashboard} editIndex={editIndex} />
+    </TestProvider>
   );
 }
 

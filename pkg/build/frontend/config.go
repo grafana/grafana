@@ -1,8 +1,9 @@
 package frontend
 
 import (
-	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/build/config"
 )
 
 const GrafanaDir = "."

@@ -31,7 +31,7 @@ func (l LogLevel) LogFunc(logger LogInterface) func(msg string, ctx ...interface
 		return logger.Info
 	case LevelWarn:
 		return logger.Warn
-	default: // LevelUnknown and LevelError
+	default: // LevelUnknown and LevelError.
 		return logger.Error
 	}
 }

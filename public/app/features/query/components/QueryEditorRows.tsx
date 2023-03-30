@@ -14,7 +14,7 @@ import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
-interface Props {
+export interface Props {
   // The query configuration
   queries: DataQuery[];
   dsSettings: DataSourceInstanceSettings;
@@ -34,7 +34,6 @@ interface Props {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
-  onDatasourceChange?: (dataSource: DataSourceInstanceSettings, query: DataQuery) => void;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -58,10 +57,6 @@ export class QueryEditorRows extends PureComponent<Props> {
 
   onDataSourceChange(dataSource: DataSourceInstanceSettings, index: number) {
     const { queries, onQueriesChange } = this.props;
-
-    if (this.props.onDatasourceChange) {
-      this.props.onDatasourceChange(dataSource, queries[index]);
-    }
 
     onQueriesChange(
       queries.map((item, itemIndex) => {
@@ -156,7 +151,7 @@ export class QueryEditorRows extends PureComponent<Props> {
         <Droppable droppableId="transformations-list" direction="vertical">
           {(provided) => {
             return (
-              <div ref={provided.innerRef} {...provided.droppableProps}>
+              <div data-testid="query-editor-rows" ref={provided.innerRef} {...provided.droppableProps}>
                 {queries.map((query, index) => {
                   const dataSourceSettings = getDataSourceSettings(query, dsSettings);
                   const onChangeDataSourceSettings = dsSettings.meta.mixed

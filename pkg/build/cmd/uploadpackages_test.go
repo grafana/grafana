@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/build/config"
 )
 
 func Test_getVersionFolder(t *testing.T) {

@@ -17,7 +17,7 @@ export interface RulesFilter {
   ruleName?: string;
   ruleState?: PromAlertingRuleState;
   ruleType?: PromRuleType;
-  dataSourceName?: string;
+  dataSourceNames: string[];
   labels: string[];
   ruleHealth?: RuleHealth;
 }
@@ -42,15 +42,15 @@ export enum RuleHealth {
 
 // Define how to map parsed tokens into the filter object
 export function getSearchFilterFromQuery(query: string): RulesFilter {
-  const filter: RulesFilter = { labels: [], freeFormWords: [] };
+  const filter: RulesFilter = { labels: [], freeFormWords: [], dataSourceNames: [] };
 
   const tokenToFilterMap: QueryFilterMapper = {
-    [terms.DataSourceToken]: (value) => (filter.dataSourceName = value),
+    [terms.DataSourceToken]: (value) => filter.dataSourceNames.push(value),
     [terms.NameSpaceToken]: (value) => (filter.namespace = value),
     [terms.GroupToken]: (value) => (filter.groupName = value),
     [terms.RuleToken]: (value) => (filter.ruleName = value),
     [terms.LabelToken]: (value) => filter.labels.push(value),
-    [terms.StateToken]: (value) => (isPromAlertingRuleState(value) ? (filter.ruleState = value) : undefined),
+    [terms.StateToken]: (value) => (filter.ruleState = parseStateToken(value)),
     [terms.TypeToken]: (value) => (isPromRuleType(value) ? (filter.ruleType = value) : undefined),
     [terms.HealthToken]: (value) => (filter.ruleHealth = getRuleHealth(value)),
     [terms.FreeFormExpression]: (value) => filter.freeFormWords.push(value),
@@ -68,8 +68,8 @@ export function applySearchFilterToQuery(query: string, filter: RulesFilter): st
 
   // Convert filter object into an array
   // It allows to pick filters from the array in the same order as they were applied in the original query
-  if (filter.dataSourceName) {
-    filterStateArray.push({ type: terms.DataSourceToken, value: filter.dataSourceName });
+  if (filter.dataSourceNames) {
+    filterStateArray.push(...filter.dataSourceNames.map((t) => ({ type: terms.DataSourceToken, value: t })));
   }
   if (filter.namespace) {
     filterStateArray.push({ type: terms.NameSpaceToken, value: filter.namespace });
@@ -97,4 +97,16 @@ export function applySearchFilterToQuery(query: string, filter: RulesFilter): st
   }
 
   return applyFiltersToQuery(query, filterSupportedTerms, filterStateArray);
+}
+
+function parseStateToken(value: string): PromAlertingRuleState | undefined {
+  if (value === 'normal') {
+    return PromAlertingRuleState.Inactive;
+  }
+
+  if (isPromAlertingRuleState(value)) {
+    return value;
+  }
+
+  return;
 }

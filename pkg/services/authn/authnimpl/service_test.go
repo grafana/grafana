@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -107,7 +108,7 @@ func TestService_Authenticate(t *testing.T) {
 	}
 }
 
-func TestService_Authenticate_OrgID(t *testing.T) {
+func TestService_OrgID(t *testing.T) {
 	type TestCase struct {
 		desc          string
 		req           *authn.Request
@@ -166,6 +167,28 @@ func TestService_Authenticate_OrgID(t *testing.T) {
 			assert.Equal(t, tt.expectedOrgID, calledWith)
 		})
 	}
+}
+
+func TestService_HookClient(t *testing.T) {
+	hookCalled := false
+
+	s := setupTests(t, func(svc *Service) {
+		svc.RegisterClient(&authntest.MockClient{
+			AuthenticateFunc: func(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+				return &authn.Identity{}, nil
+			},
+			TestFunc: func(ctx context.Context, r *authn.Request) bool {
+				return true
+			},
+			HookFunc: func(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+				hookCalled = true
+				return nil
+			},
+		})
+	})
+
+	_, _ = s.Authenticate(context.Background(), &authn.Request{})
+	require.True(t, hookCalled)
 }
 
 func TestService_Login(t *testing.T) {
@@ -243,16 +266,13 @@ func TestService_RedirectURL(t *testing.T) {
 	type testCase struct {
 		desc        string
 		client      string
-		expectedURL string
 		expectedErr error
 	}
 
 	tests := []testCase{
 		{
-			desc:        "should generate url for valid redirect client",
-			client:      "redirect",
-			expectedURL: "https://localhost/redirect",
-			expectedErr: nil,
+			desc:   "should generate url for valid redirect client",
+			client: "redirect",
 		},
 		{
 			desc:        "should return error on non existing client",
@@ -269,13 +289,12 @@ func TestService_RedirectURL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service := setupTests(t, func(svc *Service) {
-				svc.RegisterClient(authntest.FakeRedirectClient{ExpectedName: "redirect", ExpectedURL: tt.expectedURL})
+				svc.RegisterClient(authntest.FakeRedirectClient{ExpectedName: "redirect"})
 				svc.RegisterClient(&authntest.FakeClient{ExpectedName: "non-redirect"})
 			})
 
-			u, err := service.RedirectURL(context.Background(), tt.client, nil)
+			_, err := service.RedirectURL(context.Background(), tt.client, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
-			assert.Equal(t, tt.expectedURL, u)
 		})
 	}
 }
@@ -292,11 +311,14 @@ func setupTests(t *testing.T, opts ...func(svc *Service)) *Service {
 	t.Helper()
 
 	s := &Service{
-		log:         log.NewNopLogger(),
-		cfg:         setting.NewCfg(),
-		clientQueue: newQueue[authn.ContextAwareClient](),
-		clients:     map[string]authn.Client{},
-		tracer:      tracing.InitializeTracerForTest(),
+		log:            log.NewNopLogger(),
+		cfg:            setting.NewCfg(),
+		clients:        map[string]authn.Client{},
+		clientQueue:    newQueue[authn.ContextAwareClient](),
+		tracer:         tracing.InitializeTracerForTest(),
+		metrics:        newMetrics(nil),
+		postAuthHooks:  newQueue[authn.PostAuthHookFn](),
+		postLoginHooks: newQueue[authn.PostLoginHookFn](),
 	}
 
 	for _, o := range opts {

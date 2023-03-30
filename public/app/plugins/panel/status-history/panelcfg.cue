@@ -30,6 +30,8 @@ composableKinds: PanelCfg: {
 							ui.OptionsWithTooltip
 							ui.OptionsWithTimezones
 
+							//Set the height of the rows
+							rowHeight: float32 & >=0 & <=1 | *0.9
 							//Show values on the columns
 							showValue: ui.VisibilityMode | *"auto"
 							//Controls the column width

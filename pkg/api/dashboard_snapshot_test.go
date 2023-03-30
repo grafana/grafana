@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
@@ -81,7 +82,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil, nil).Maybe()
 				hs.DashboardService = dashSvc
 
-				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)
+				guardian.InitLegacyGuardian(setting.NewCfg(), sc.sqlStore, dashSvc, teamSvc)
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 				assert.Equal(t, 403, sc.resp.Code)
@@ -124,6 +125,51 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 		}
 		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 
+		loggedInUserScenarioWithRole(t, "Should not be able to delete a snapshot when fetching guardian fails during calling DELETE on", "DELETE",
+			"/api/snapshots/12345", "/api/snapshots/:key", org.RoleEditor, func(sc *scenarioContext) {
+				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
+					rw.WriteHeader(200)
+				})
+				dashSvc := dashboards.NewFakeDashboardService(t)
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(nil, errutil.Error{PublicMessage: "some error"}).Maybe()
+
+				guardian.InitLegacyGuardian(sc.cfg, sc.sqlStore, dashSvc, teamSvc)
+				d := setUpSnapshotTest(t, 0, ts.URL)
+				hs := buildHttpServer(d, true)
+				hs.DashboardService = dashSvc
+				sc.handlerFunc = hs.DeleteDashboardSnapshot
+				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
+
+				assert.Equal(t, http.StatusInternalServerError, sc.resp.Code)
+			}, sqlmock)
+
+		loggedInUserScenarioWithRole(t, "Should be able to delete a snapshot from a deleted dashboard when calling DELETE on", "DELETE",
+			"/api/snapshots/12345", "/api/snapshots/:key", org.RoleEditor, func(sc *scenarioContext) {
+				var externalRequest *http.Request
+				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
+					rw.WriteHeader(200)
+					externalRequest = req
+				})
+				dashSvc := dashboards.NewFakeDashboardService(t)
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(nil, dashboards.ErrDashboardNotFound).Maybe()
+
+				guardian.InitLegacyGuardian(sc.cfg, sc.sqlStore, dashSvc, teamSvc)
+				d := setUpSnapshotTest(t, 0, ts.URL)
+				hs := buildHttpServer(d, true)
+				hs.DashboardService = dashSvc
+				sc.handlerFunc = hs.DeleteDashboardSnapshot
+				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
+
+				assert.Equal(t, 200, sc.resp.Code)
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				require.NoError(t, err)
+
+				assert.True(t, strings.HasPrefix(respJSON.Get("message").MustString(), "Snapshot deleted"))
+				assert.Equal(t, 1, respJSON.Get("id").MustInt())
+				assert.Equal(t, ts.URL, fmt.Sprintf("http://%s", externalRequest.Host))
+				assert.Equal(t, "/", externalRequest.URL.EscapedPath())
+			}, sqlmock)
+
 		loggedInUserScenarioWithRole(t, "Should be able to delete a snapshot when calling DELETE on", "DELETE",
 			"/api/snapshots/12345", "/api/snapshots/:key", org.RoleEditor, func(sc *scenarioContext) {
 				var externalRequest *http.Request
@@ -139,7 +185,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 					{Role: &editorRole, Permission: dashboards.PERMISSION_EDIT},
 				}
 				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResultACL, nil)
-				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)
+				guardian.InitLegacyGuardian(sc.cfg, sc.sqlStore, dashSvc, teamSvc)
 				d := setUpSnapshotTest(t, 0, ts.URL)
 				hs := buildHttpServer(d, true)
 				hs.DashboardService = dashSvc

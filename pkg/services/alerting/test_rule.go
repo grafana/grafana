@@ -24,7 +24,7 @@ func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID
 	}
 
 	for _, alert := range alerts {
-		if alert.PanelId != panelID {
+		if alert.PanelID != panelID {
 			continue
 		}
 		rule, err := NewRuleFromDBAlert(context.Background(), e.AlertStore, alert, true)

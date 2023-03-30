@@ -18,12 +18,12 @@ export function TopSearchBarCommandPaletteTrigger() {
 
   const breakpoint = theme.breakpoints.values.sm;
 
-  const [isSmallScreen, setIsSmallScreen] = useState(window.matchMedia(`(max-width: ${breakpoint}px)`).matches);
+  const [isSmallScreen, setIsSmallScreen] = useState(!window.matchMedia(`(min-width: ${breakpoint}px)`).matches);
 
   useMediaQueryChange({
     breakpoint,
     onChange: (e) => {
-      setIsSmallScreen(e.matches);
+      setIsSmallScreen(!e.matches);
     },
   });
 
@@ -36,7 +36,7 @@ export function TopSearchBarCommandPaletteTrigger() {
       <ToolbarButton
         iconOnly
         icon="search"
-        aria-label={t('nav.search.placeholder', 'Search Grafana')}
+        aria-label={t('nav.search.placeholderCommandPalette', 'Search or jump to...')}
         onClick={onOpenSearch}
       />
     );
@@ -65,7 +65,7 @@ function PretendTextInput({ onClick }: PretendTextInputProps) {
         </div>
 
         <button className={styles.fakeInput} onClick={onClick}>
-          {t('nav.search.placeholder', 'Search Grafana')}
+          {t('nav.search.placeholderCommandPalette', 'Search or jump to...')}
         </button>
 
         <div className={styles.suffix}>

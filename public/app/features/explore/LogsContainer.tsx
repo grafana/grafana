@@ -5,6 +5,7 @@ import {
   AbsoluteTimeRange,
   Field,
   hasLogsContextSupport,
+  hasLogsContextUiSupport,
   LoadingState,
   LogRowModel,
   RawTimeRange,
@@ -12,6 +13,7 @@ import {
   SplitOpen,
   DataFrame,
   SupplementaryQueryType,
+  DataQueryResponse,
 } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
@@ -48,7 +50,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
-  getLogRowContext = async (row: LogRowModel, options?: any): Promise<any> => {
+  getLogRowContext = async (row: LogRowModel, options?: any): Promise<DataQueryResponse | []> => {
     const { datasourceInstance, logsQueries } = this.props;
 
     if (hasLogsContextSupport(datasourceInstance)) {
@@ -61,6 +63,16 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     }
 
     return [];
+  };
+
+  getLogRowContextUi = (row: LogRowModel, runContextQuery?: () => void): React.ReactNode => {
+    const { datasourceInstance } = this.props;
+
+    if (hasLogsContextUiSupport(datasourceInstance) && datasourceInstance.getLogRowContextUi) {
+      return datasourceInstance.getLogRowContextUi(row, runContextQuery);
+    }
+
+    return <></>;
   };
 
   showContextToggle = (row?: LogRowModel): boolean => {
@@ -159,6 +171,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             scanRange={range.raw}
             showContextToggle={this.showContextToggle}
             getRowContext={this.getLogRowContext}
+            getLogRowContextUi={this.getLogRowContextUi}
             getFieldLinks={this.getFieldLinks}
             addResultsToCache={() => addResultsToCache(exploreId)}
             clearCache={() => clearCache(exploreId)}

@@ -99,6 +99,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: none;
     font-size: inherit;
     padding: 0;
+    user-select: text;
   `,
   itemDisabled: css`
     label: LegendLabelDisabled;

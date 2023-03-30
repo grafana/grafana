@@ -6,11 +6,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -95,12 +95,12 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	return hs.searchHitsWithMetadata(c, searchQuery.Result)
 }
 
-func (hs *HTTPServer) searchHitsWithMetadata(c *contextmodel.ReqContext, hits models.HitList) response.Response {
+func (hs *HTTPServer) searchHitsWithMetadata(c *contextmodel.ReqContext, hits model.HitList) response.Response {
 	folderUIDs := make(map[string]bool)
 	dashboardUIDs := make(map[string]bool)
 
 	for _, hit := range hits {
-		if hit.Type == models.DashHitFolder {
+		if hit.Type == model.DashHitFolder {
 			folderUIDs[hit.UID] = true
 		} else {
 			dashboardUIDs[hit.UID] = true
@@ -113,13 +113,13 @@ func (hs *HTTPServer) searchHitsWithMetadata(c *contextmodel.ReqContext, hits mo
 
 	// search hit with access control metadata attached
 	type hitWithMeta struct {
-		*models.Hit
+		*model.Hit
 		AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
 	}
 	hitsWithMeta := make([]hitWithMeta, 0, len(hits))
 	for _, hit := range hits {
 		var meta accesscontrol.Metadata
-		if hit.Type == models.DashHitFolder {
+		if hit.Type == model.DashHitFolder {
 			meta = folderMeta[hit.UID]
 		} else {
 			meta = accesscontrol.MergeMeta("dashboards", dashboardMeta[hit.UID], folderMeta[hit.FolderUID])
@@ -216,7 +216,7 @@ type SearchParams struct {
 // swagger:response searchResponse
 type SearchResponse struct {
 	// in: body
-	Body models.HitList `json:"body"`
+	Body model.HitList `json:"body"`
 }
 
 // swagger:response listSortOptionsResponse
