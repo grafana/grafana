@@ -41,7 +41,6 @@ export class MySqlDatasource extends SqlDatasource {
 
   async fetchDatasets(): Promise<string[]> {
     const datasets = await this.runSql<string[]>(showDatabases(), { refId: 'datasets' });
-    // console.log('🚀 ~ file: MySqlDatasource.ts:42 ~ MySqlDatasource ~ fetchDatasets ~ datasets:', datasets);
     return datasets.map((t) => quoteIdentifierIfNecessary(t[0]));
   }
 
