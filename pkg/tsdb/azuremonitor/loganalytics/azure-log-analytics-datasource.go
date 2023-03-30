@@ -249,6 +249,26 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		}
 		linkTitle := "View E2E transaction in Application Insights"
 		AddConfigLinks(*frame, tracesUrl, &linkTitle)
+
+		queryJSONModel := dataquery.AzureMonitorQuery{}
+		err = json.Unmarshal(query.JSON, &queryJSONModel)
+		if err != nil {
+			dataResponse.Error = err
+			return dataResponse
+		}
+
+		resultFormat := dataquery.AzureMonitorQueryAzureLogAnalyticsResultFormatTrace
+		queryJSONModel.AzureLogAnalytics.ResultFormat = &resultFormat
+		queryJSONModel.AzureLogAnalytics.Query = &query.Query
+		AddCustomDataLink(*frame, data.DataLink{
+			Title: "Explore Trace: ${__data.fields.traceID}",
+			URL:   "",
+			Internal: &data.InternalDataLink{
+				DatasourceUID:  dsInfo.DatasourceUID,
+				DatasourceName: dsInfo.DatasourceName,
+				Query:          queryJSONModel,
+			},
+		})
 	}
 
 	dataResponse.Frames = data.Frames{frame}
