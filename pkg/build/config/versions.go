@@ -206,7 +206,7 @@ var Versions = VersionMap{
 	},
 	CloudMode: {
 		Variants: []Variant{
-			VariantLinuxAmd64Musl,
+			VariantLinuxAmd64,
 		},
 		PluginSignature: PluginSignature{
 			Sign:      true,
