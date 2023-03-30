@@ -14,15 +14,9 @@ import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 import { CandlestickPanel } from './CandlestickPanel';
 import { CandlestickData, candlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
-import {
-  defaultCandlestickColors,
-  PanelOptions,
-  VizDisplayMode,
-  ColorStrategy,
-  defaultPanelOptions,
-  CandleStyle,
-} from './panelcfg.gen';
+import { defaultCandlestickColors, PanelOptions, VizDisplayMode, ColorStrategy, CandleStyle } from './panelcfg.gen';
 import { CandlestickSuggestionsSupplier } from './suggestions';
+import { defaultPanelOptions } from './types';
 
 const modeOptions = [
   { label: 'Candles', value: VizDisplayMode.Candles },

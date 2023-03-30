@@ -3,7 +3,8 @@ import { config } from '@grafana/runtime';
 import { SuggestionName } from 'app/types/suggestions';
 
 import { prepareCandlestickFields } from './fields';
-import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
+import { PanelOptions } from './panelcfg.gen';
+import { defaultPanelOptions } from './types';
 
 export class CandlestickSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
