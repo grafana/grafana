@@ -19,6 +19,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Icon, Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
+import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -38,7 +39,6 @@ import { findTemplateVarChanges } from '../../variables/utils';
 import { DashNav } from '../components/DashNav';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
-import { DashboardNotFound } from '../components/DashboardLoading/DashboardNotFound';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
@@ -442,7 +442,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           <DashboardPrompt dashboard={dashboard} />
           {initError && <DashboardFailed />}
           {dashboard.meta.dashboardNotFound ? (
-            <DashboardNotFound />
+            <ErrorPage />
           ) : (
             <>
               {showSubMenu && (
