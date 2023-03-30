@@ -43,7 +43,7 @@ Use the following options to refine how your visualization displays its values:
 
 ### Show
 
-Displays a single value per column or series, or shows values for each row.
+Display a single value per column or series, or show values for each row.
 
 #### Calculate
 
