@@ -345,7 +345,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     });
 
     it('should return a query with any template variables replaced', () => {
-      const templateableProps = ['resource', 'workspace', 'query'];
+      const templateableProps = ['resource', 'workspace', 'query', 'operationId'];
       const templateVariables = createTemplateVariables(templateableProps);
       templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
       const query = createMockQuery();
@@ -353,6 +353,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       azureLogAnalytics.query = '$query';
       azureLogAnalytics.workspace = '$workspace';
       azureLogAnalytics.resources = ['$resource'];
+      azureLogAnalytics.operationId = '$operationId';
       query.queryType = AzureQueryType.LogAnalytics;
       query.azureLogAnalytics = {
         ...query.azureLogAnalytics,
@@ -364,6 +365,7 @@ describe('AzureLogAnalyticsDatasource', () => {
         query: templateVariables.get('query')?.templateVariable.current.value,
         workspace: templateVariables.get('workspace')?.templateVariable.current.value,
         resources: [templateVariables.get('resource')?.templateVariable.current.value],
+        operationId: templateVariables.get('operationId')?.templateVariable.current.value,
       });
     });
   });

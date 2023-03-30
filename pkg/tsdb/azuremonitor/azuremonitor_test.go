@@ -189,7 +189,12 @@ func Test_newMux(t *testing.T) {
 			}
 			mux := s.newQueryMux()
 			res, err := mux.QueryData(context.Background(), &backend.QueryDataRequest{
-				PluginContext: backend.PluginContext{},
+				PluginContext: backend.PluginContext{
+					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+						Name: "datasource_name",
+						UID:  "datasource_UID",
+					},
+				},
 				Queries: []backend.DataQuery{
 					{QueryType: tt.queryType},
 				},
