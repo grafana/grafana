@@ -8,13 +8,13 @@ load(
     "download_grabpl_step",
     "enterprise_setup_step",
     "identify_runner_step",
+    "memcached_integration_tests_step",
     "mysql_integration_tests_step",
     "postgres_integration_tests_step",
+    "redis_integration_tests_step",
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "wire_install_step",
-    "redis_integration_tests_step",
-    "memcached_integration_tests_step",
 )
 load(
     "scripts/drone/services/services.star",
