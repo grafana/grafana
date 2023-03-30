@@ -1143,7 +1143,7 @@ def redis_integration_tests_step():
         "commands": [
             "dockerize -wait tcp://redis:6379/0 -timeout 120s",
             "go clean -testcache",
-            "go test -run IntegrationRedis -covermode=atomic -timeout=30m ./pkg/..."
+            "go test -run IntegrationRedis -covermode=atomic -timeout=30m ./pkg/...",
         ],
     }
 
@@ -1158,7 +1158,7 @@ def memcached_integration_tests_step():
         "commands": [
             "dockerize -wait tcp://memcached:11211 -timeout 120s",
             "go clean -testcache",
-            "go test -run IntegrationMemcached -covermode=atomic -timeout=30m ./pkg/..."
+            "go test -run IntegrationMemcached -covermode=atomic -timeout=30m ./pkg/...",
         ],
     }
 
