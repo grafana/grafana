@@ -350,13 +350,14 @@ func (hs *HTTPServer) searchFolders(c *contextmodel.ReqContext) ([]*folder.Folde
 		Page:         c.QueryInt64("page"),
 	}
 
-	if err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery); err != nil {
+	hits, err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
+	if err != nil {
 		return nil, err
 	}
 
 	folders := make([]*folder.Folder, 0)
 
-	for _, hit := range searchQuery.Result {
+	for _, hit := range hits {
 		folders = append(folders, &folder.Folder{
 			ID:    hit.ID,
 			UID:   hit.UID,
