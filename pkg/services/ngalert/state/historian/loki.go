@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"time"
 
@@ -356,8 +357,14 @@ func buildLogQuery(query models.HistoryQuery) (string, error) {
 	logQL := selectorString(selectors)
 
 	labelFilters := ""
-	for k, v := range query.Labels {
-		labelFilters += fmt.Sprintf(" | labels_%s=%q", k, v)
+	labelKeys := make([]string, 0, len(query.Labels))
+	for k := range query.Labels {
+		labelKeys = append(labelKeys, k)
+	}
+	// Ensure that all queries we build are deterministic.
+	sort.Strings(labelKeys)
+	for _, k := range labelKeys {
+		labelFilters += fmt.Sprintf(" | labels_%s=%q", k, query.Labels[k])
 	}
 
 	if labelFilters != "" {
