@@ -51,7 +51,7 @@ const SearchField = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
-  const [scopedTag, setScopedTag] = useState(filterScopedTag(filter));
+  const scopedTag = useMemo(() => filterScopedTag(filter), [filter]);
   // We automatically change the operator to the regex op when users select 2 or more values
   // However, they expect this to be automatically rolled back to the previous operator once
   // there's only one value selected, so we store the previous operator and value
@@ -87,13 +87,6 @@ const SearchField = ({
   useEffect(() => {
     setPrevValue(filter.value);
   }, [filter.value]);
-
-  useEffect(() => {
-    const newScopedTag = filterScopedTag(filter);
-    if (newScopedTag !== scopedTag) {
-      setScopedTag(newScopedTag);
-    }
-  }, [filter, scopedTag]);
 
   const scopeOptions = Object.values(TraceqlSearchScope).map((t) => ({ label: t, value: t }));
 
