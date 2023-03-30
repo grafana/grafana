@@ -191,7 +191,9 @@ Folder that contains [provisioning]({{< relref "../../administration/provisionin
 
 ### http_addr
 
-The IP address to bind to. If empty will bind to all interfaces
+The host for the server to listen on. If your machine has more than one network interface, you can use this setting to expose the Grafana service on only one network interface and not have it available on others, such as the loopback interface. An empty value is equivalent to setting the value to `0.0.0.0`, which means the Grafana service binds to all interfaces.
+
+In environments where network address translation (NAT) is used, ensure you use the network interface address and not a final public address; otherwise, you might see errors such as `bind: cannot assign requested address` in the logs.
 
 ### http_port
 
