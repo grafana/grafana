@@ -8,10 +8,10 @@ import { LokiDatasource } from './datasource';
 import * as logsTimeSplit from './logsTimeSplitting';
 import * as metricTimeSplit from './metricTimeSplitting';
 import { createLokiDatasource, getMockFrames } from './mocks';
-import { runQueryInChunks } from './querySplitting';
+import { runSplitQuery } from './querySplitting';
 import { LokiQuery, LokiQueryType } from './types';
 
-describe('runQueryInChunks()', () => {
+describe('runSplitQuery()', () => {
   let datasource: LokiDatasource;
   const range = {
     from: dateTime('2023-02-08T05:00:00.000Z'),
@@ -31,7 +31,7 @@ describe('runQueryInChunks()', () => {
   });
 
   test('Splits datasource queries', async () => {
-    await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
       // 3 days, 3 chunks, 3 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
     });
@@ -41,7 +41,7 @@ describe('runQueryInChunks()', () => {
     jest
       .spyOn(datasource, 'runQuery')
       .mockReturnValue(of({ state: LoadingState.Error, error: { refId: 'A', message: 'Error' }, data: [] }));
-    await expect(runQueryInChunks(datasource, request)).toEmitValuesWith((values) => {
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
       expect(values).toEqual([{ error: { refId: 'A', message: 'Error' }, data: [], state: LoadingState.Streaming }]);
     });
   });
@@ -55,17 +55,17 @@ describe('runQueryInChunks()', () => {
       range,
     });
     beforeAll(() => {
-      jest.spyOn(logsTimeSplit, 'getRangeChunks').mockReturnValue([]);
-      jest.spyOn(metricTimeSplit, 'getRangeChunks').mockReturnValue([]);
+      jest.spyOn(logsTimeSplit, 'getRangePartition').mockReturnValue([]);
+      jest.spyOn(metricTimeSplit, 'getRangePartition').mockReturnValue([]);
     });
     afterAll(() => {
-      jest.mocked(logsTimeSplit.getRangeChunks).mockRestore();
-      jest.mocked(metricTimeSplit.getRangeChunks).mockRestore();
+      jest.mocked(logsTimeSplit.getRangePartition).mockRestore();
+      jest.mocked(metricTimeSplit.getRangePartition).mockRestore();
     });
     test('Ignores hidden queries', async () => {
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
-        expect(logsTimeSplit.getRangeChunks).toHaveBeenCalled();
-        expect(metricTimeSplit.getRangeChunks).not.toHaveBeenCalled();
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+        expect(logsTimeSplit.getRangePartition).toHaveBeenCalled();
+        expect(metricTimeSplit.getRangePartition).not.toHaveBeenCalled();
       });
     });
   });
@@ -80,14 +80,14 @@ describe('runQueryInChunks()', () => {
       jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [logFrameA], refId: 'A' }));
     });
     test('Stops requesting once maxLines of logs have been received', async () => {
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 2 responses of 2 logs, 2 requests
         expect(datasource.runQuery).toHaveBeenCalledTimes(2);
       });
     });
     test('Performs all the requests if maxLines has not been reached', async () => {
       request.targets[0].maxLines = 9999;
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 3 responses of 2 logs, 3 requests
         expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
@@ -95,7 +95,7 @@ describe('runQueryInChunks()', () => {
     test('Performs all the requests if not a log query', async () => {
       request.targets[0].maxLines = 1;
       request.targets[0].expr = 'count_over_time({a="b"}[1m])';
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 3 responses of 2 logs, 3 requests
         expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
@@ -114,7 +114,7 @@ describe('runQueryInChunks()', () => {
         ],
         range,
       });
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 1x Metric + 1x Log, 6 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(6);
       });
@@ -127,7 +127,7 @@ describe('runQueryInChunks()', () => {
         ],
         range,
       });
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 1x2 Metric, 3 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
@@ -140,7 +140,7 @@ describe('runQueryInChunks()', () => {
         ],
         range,
       });
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 1x2 Logs, 3 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
@@ -153,7 +153,7 @@ describe('runQueryInChunks()', () => {
         ],
         range,
       });
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // Instant queries are omitted from splitting
         expect(datasource.runQuery).toHaveBeenCalledTimes(1);
       });
@@ -170,7 +170,7 @@ describe('runQueryInChunks()', () => {
       jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [], refId: 'B' }));
       jest.spyOn(datasource, 'runQuery').mockReturnValueOnce(of({ data: [logFrameA], refId: 'A' }));
 
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 1x Logs + 3x Metric, 3 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(4);
       });
@@ -184,7 +184,7 @@ describe('runQueryInChunks()', () => {
         ],
         range,
       });
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 3x Logs + 3x Metric + 1x Instant, 7 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(7);
       });
@@ -208,7 +208,7 @@ describe('runQueryInChunks()', () => {
         targets: [{ expr: '{a="b"}', refId: 'A', splitDuration: '30m' }],
         range: range1h,
       });
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(2);
       });
     });
@@ -217,7 +217,7 @@ describe('runQueryInChunks()', () => {
         targets: [{ expr: '{a="b"}', refId: 'A', splitDuration: '1h' }],
         range: range1h,
       });
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(1);
       });
     });
@@ -229,7 +229,7 @@ describe('runQueryInChunks()', () => {
         ],
         range: range1h,
       });
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(1);
       });
     });
@@ -241,7 +241,7 @@ describe('runQueryInChunks()', () => {
         ],
         range: range1h,
       });
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // 2 x 30m + 1 x 1h
         expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
@@ -254,7 +254,7 @@ describe('runQueryInChunks()', () => {
         ],
         range: range1h,
       });
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // 2 x 30m + 1 x 1h
         expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
@@ -278,7 +278,7 @@ describe('runQueryInChunks()', () => {
         ],
         range: range1d,
       });
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // A, B
         expect(datasource.runQuery).toHaveBeenCalledTimes(2);
       });
@@ -291,7 +291,7 @@ describe('runQueryInChunks()', () => {
         ],
         range: range1d,
       });
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // A, B
         expect(datasource.runQuery).toHaveBeenCalledTimes(2);
       });
@@ -307,7 +307,7 @@ describe('runQueryInChunks()', () => {
         ],
         range: range1d,
       });
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // A, B, C, D, E
         expect(datasource.runQuery).toHaveBeenCalledTimes(5);
       });
@@ -323,7 +323,7 @@ describe('runQueryInChunks()', () => {
         ],
         range, // 3 days
       });
-      await expect(runQueryInChunks(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // 3 * A, 3 * B, 3 * C, 3 * D, 1 * E
         expect(datasource.runQuery).toHaveBeenCalledTimes(13);
       });

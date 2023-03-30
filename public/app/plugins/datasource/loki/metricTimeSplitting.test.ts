@@ -1,6 +1,6 @@
 import { getRangePartition } from './metricTimeSplitting';
 
-describe('metric getRangeChunks', () => {
+describe('metric getRangePartition', () => {
   it('should split time range into chunks', () => {
     const start = Date.parse('2022-02-06T14:10:03');
     const end = Date.parse('2022-02-06T14:11:03');
