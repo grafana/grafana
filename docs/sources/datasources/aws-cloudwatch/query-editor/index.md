@@ -222,11 +222,6 @@ When making `stats` queries in [Explore]({{< relref "../../../explore/" >}}), ma
 
 The CloudWatch plugin provides the ability to monitor and troubleshoot applications that span across multiple accounts within a region. Using cross-account observability, you can seamlessly search, visualize and analyze metrics and logs, without having to worry about account boundaries.
 
-> **Note:** This feature is currently behind the `cloudWatchCrossAccountQuerying` feature toggle.
-
-You can enable feature toggles through the configuration file or environment variables. See [feature toggles](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#feature_toggles) in configuration documentation for details.
-
-Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 ### Getting started
 
