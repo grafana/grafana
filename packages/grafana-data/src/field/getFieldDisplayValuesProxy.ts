@@ -1,9 +1,9 @@
 import { toNumber } from 'lodash';
 
-import { DataFrame, DisplayValue, TimeZone } from '../types';
+import { DataFrame, DisplayProcessor, DisplayValue, TimeZone } from '../types';
 import { formattedValueToString } from '../valueFormats';
 
-import { getDisplayProcessor } from './displayProcessor';
+import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 
 /**
  * Creates a proxy object that allows accessing fields on dataFrame through various means and then returns it's
@@ -48,8 +48,15 @@ export function getFieldDisplayValuesProxy(options: {
         }
         // TODO: we could supply the field here for the getDisplayProcessor fallback but we would also need theme which
         //  we do not have access to here
-        const displayProcessor = field.display ?? getDisplayProcessor();
         const raw = field.values.get(options.rowIndex);
+        let displayProcessor: DisplayProcessor = getDisplayProcessor();
+
+        if (typeof raw === 'object') {
+          displayProcessor = getRawDisplayProcessor();
+        } else if (field.display) {
+          displayProcessor = field.display;
+        }
+
         const disp = displayProcessor(raw);
         disp.toString = () => formattedValueToString(disp);
         return disp;

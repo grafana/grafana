@@ -89,6 +89,20 @@ export const getFieldLinksForExplore = (options: {
 
     dataFrame.fields.forEach((f) => {
       if (fieldDisplayValuesProxy && fieldDisplayValuesProxy[f.name]) {
+        const fieldDisplayValue = fieldDisplayValuesProxy[f.name];
+
+        try {
+          const parse = JSON.parse(fieldDisplayValue.text);
+          if (typeof parse === 'object') {
+            const objKeys = Object.keys(parse);
+            objKeys.forEach((key) => {
+              scopedVars[key] = {
+                value: parse[key],
+              };
+            });
+          }
+        } catch {}
+
         scopedVars[f.name] = {
           value: fieldDisplayValuesProxy[f.name],
         };
