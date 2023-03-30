@@ -69,6 +69,16 @@ Also, a text **Add** dropdown with these options has replaced the previous icon 
 
 {{< figure src="/media/docs/grafana/screenshot-empty-dashboard-whats-new-9-5.png" max-width="750px" caption="Dashboard without any visualizations added" >}}
 
+### Dashboard panel redesign
+
+_Generally available in all editions of Grafana._
+
+Dashboard panels contain a lot of information, some of which is difficult to discover or access from the dashboard. With our redesigned panels, we've improved accessibility and made it easier to understand the status of a panel by adding and moving key elements.
+
+We’ve improved the support of panels without a header, made a distinction between details set by you and data-induced information, and then included all essential components in the header of the panel. All of these are laid out from left to right in a row, so there are no overlapping, unusable components.
+
+Grafana’s new panel is available only for React-based panels; no Angular-based panels are redesigned. For example, Angular-based panel will still have the old Graph and Table visualizations.
+
 ## Users and roles
 
 ### Organization roles for users logged in through Auth providers
