@@ -1306,7 +1306,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ## [unified_alerting.screenshots]
 
-For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/images-in-notifications/" >}}).
+For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/manage-notifications/images-in-notifications">}}).
 
 ### capture
 
