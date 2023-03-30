@@ -183,17 +183,18 @@ func TestRemoteLokiBackend(t *testing.T) {
 				},
 				exp: `{orgID="123",from="state-history",ruleUID="rule-uid"}`,
 			},
-			{
-				name: "filters instance labels in log line",
-				query: models.HistoryQuery{
-					OrgID: 123,
-					Labels: map[string]string{
-						"customlabel": "customvalue",
-						"labeltwo":    "labelvaluetwo",
-					},
-				},
-				exp: `{orgID="123",from="state-history"} | json | labels_customlabel="customvalue" | labels_labeltwo="labelvaluetwo"`,
-			},
+			// TODO this case is flaky - investigate and re-enable. ref: https://drone.grafana.net/grafana/grafana/108325/3/7
+			//{
+			//	name: "filters instance labels in log line",
+			//	query: models.HistoryQuery{
+			//		OrgID: 123,
+			//		Labels: map[string]string{
+			//			"customlabel": "customvalue",
+			//			"labeltwo":    "labelvaluetwo",
+			//		},
+			//	},
+			//	exp: `{orgID="123",from="state-history"} | json | labels_customlabel="customvalue" | labels_labeltwo="labelvaluetwo"`,
+			//},
 		}
 
 		for _, tc := range cases {
