@@ -1,13 +1,5 @@
-import { textUtil } from '@grafana/data';
-
 declare let __webpack_public_path__: string;
 declare let __webpack_nonce__: string;
-
-//@ts-ignore
-window.sanitizeTrustedTypes = (s: string): TrustedHTML => {
-  const sanitizedString = textUtil.sanitizeTrustedTypes(s);
-  return sanitizedString;
-};
 
 // Check if we are hosting files on cdn and set webpack public@ path
 if (window.public_cdn_path) {

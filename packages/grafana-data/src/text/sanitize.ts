@@ -48,11 +48,11 @@ export function sanitize(unsanitizedString: string): string {
   }
 }
 
-export function sanitizeTrustedTypes(unsanitizedString: string, conf?: string): TrustedHTML {
+export function sanitizeTrustedTypes(unsanitizedString: string, conf?: string): any {
 
-  const myPolicy = trustedTypes.createPolicy('foo', {
-    createHTML: val => val,
-  })
+   var m = trustedTypes.createPolicy('foo', {
+     createHTML: () => unsanitizedString.toString()
+   })
 
   switch (conf) {
     case 'svg':
@@ -65,7 +65,7 @@ export function sanitizeTrustedTypes(unsanitizedString: string, conf?: string): 
         PARSER_MEDIA_TYPE: 'application/xhtml+xml',
       });
     case 'none':
-      return myPolicy.createHTML(unsanitizedString);
+      return m.createHTML();
   }
   return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true, USE_PROFILES: { html: true } });
 }
