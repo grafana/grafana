@@ -15,6 +15,7 @@ describe('Variables - Interval', () => {
   it('can add a new interval variable', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e().contains(DASHBOARD_NAME).should('be.visible');
 
     // Create a new "Interval" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
