@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,9 +20,21 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 		t.Skip("No redis URL supplied")
 	}
 
-	trimmed := strings.TrimLeft(u, "redis://")
+	addr := u
+	db := 0
+	parsed, err := redis.ParseURL(u)
+	if err == nil {
+		addr = parsed.Addr
+		db = parsed.DB
+	}
 
-	opts := &setting.RemoteCacheOptions{Name: redisCacheType, ConnStr: fmt.Sprintf("addr=%s", trimmed)}
+	b := strings.Builder{}
+	b.WriteString(fmt.Sprintf("addr=%s", addr))
+	if db != 0 {
+		b.WriteString(fmt.Sprintf(",db=%d", db))
+	}
+
+	opts := &setting.RemoteCacheOptions{Name: redisCacheType, ConnStr: b.String()}
 	client := createTestClient(t, opts, nil)
 	runTestsForClient(t, client)
 	runCountTestsForClient(t, opts, nil)

@@ -2,7 +2,6 @@ package managedstream
 
 import (
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/go-redis/redis/v8"
@@ -19,10 +18,17 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 		t.Skip("No redis URL supplied")
 	}
 
-	trimmed := strings.TrimLeft(u, "redis://")
+	addr := u
+	db := 0
+	parsed, err := redis.ParseURL(u)
+	if err == nil {
+		addr = parsed.Addr
+		db = parsed.DB
+	}
 
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: trimmed,
+		Addr: addr,
+		DB:   db,
 	})
 	c := NewRedisFrameCache(redisClient)
 	require.NotNil(t, c)
