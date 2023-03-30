@@ -76,17 +76,13 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
   }
 
   const DATAPLANE_INITIAL_RELEASE = [0, 1];
-  console.log('prometheusDataplane check');
-  console.log('field.name =', field.name);
-  console.log('displayName =', displayName);
   if (
     frame?.meta?.typeVersion &&
     frame?.meta?.typeVersion >= DATAPLANE_INITIAL_RELEASE &&
     field.labels?.__name__ &&
     field.labels?.__name__ === field.name
   ) {
-    console.log('returning TIME_SERIES_VALUE_FIELD_NAME =', TIME_SERIES_VALUE_FIELD_NAME);
-    return TIME_SERIES_VALUE_FIELD_NAME;
+    field.name = TIME_SERIES_VALUE_FIELD_NAME;
   }
 
   let parts: string[] = [];
