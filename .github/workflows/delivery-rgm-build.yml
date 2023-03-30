@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: '^1.20.0'
-      - name: Build Backend
+      - name: Build and publish
         uses: ./actions/package/publish
         env:
           GITHUB_TOKEN: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
@@ -33,4 +33,4 @@ jobs:
           grafana_ref: ${{ github.sha }}
           enterprise_ref: ${{ github.head_ref }} main
           gcp_service_account_key_base64: ${{ secrets.RGM_GCP_KEY_BASE64 }}
-          destination: ${{ secrets.RCM_DESTINATION }}/${{ github.event_name }}
+          destination: ${{ secrets.RGM_DESTINATION }}/${{ github.event_name }}
