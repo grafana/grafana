@@ -16,6 +16,7 @@ describe('alertRuleToQueries', () => {
       group: {
         name: 'Prom up alert',
         rules: [],
+        totals: {},
       },
       namespace: {
         rulesSource: GRAFANA_RULES_SOURCE_NAME,
@@ -44,6 +45,7 @@ describe('alertRuleToQueries', () => {
       group: {
         name: 'test',
         rules: [],
+        totals: {},
       },
       namespace: {
         name: 'prom test alerts',
