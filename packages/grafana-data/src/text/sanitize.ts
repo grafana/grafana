@@ -50,10 +50,6 @@ export function sanitize(unsanitizedString: string): string {
 
 export function sanitizeTrustedTypes(unsanitizedString: string, conf?: string): any {
 
-   var m = trustedTypes.createPolicy('foo', {
-     createHTML: () => unsanitizedString.toString()
-   })
-
   switch (conf) {
     case 'svg':
       return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true, USE_PROFILES: { svg: true, svgFilters: true } });
@@ -64,8 +60,6 @@ export function sanitizeTrustedTypes(unsanitizedString: string, conf?: string): 
         ADD_TAGS: ['rss', 'meta', 'channel', 'title', 'link', 'description', 'atom:link', 'item', 'pubDate', 'guid'],
         PARSER_MEDIA_TYPE: 'application/xhtml+xml',
       });
-    case 'none':
-      return m.createHTML();
   }
   return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true, USE_PROFILES: { html: true } });
 }

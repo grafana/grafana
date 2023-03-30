@@ -4930,7 +4930,7 @@ __metadata:
     "@types/dompurify": ^2
     "@types/history": 4.7.11
     "@types/jest": 29.2.3
-    "@types/jquery": ^3
+    "@types/jquery": 3.5.16
     "@types/lodash": 4.14.191
     "@types/marked": 4.0.8
     "@types/node": 18.14.6
@@ -11529,7 +11529,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jquery@npm:3.5.16, @types/jquery@npm:^3":
+"@types/jquery@npm:3.5.16":
   version: 3.5.16
   resolution: "@types/jquery@npm:3.5.16"
   dependencies:
