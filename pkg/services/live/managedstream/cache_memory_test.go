@@ -44,7 +44,7 @@ func testFrameCache(t *testing.T, c FrameCache) {
 	// Add the same with another orgID and make sure schema updated.
 	updated, err = c.Update(context.Background(), 2, "test", frameJsonCache)
 	require.NoError(t, err)
-	require.False(t, updated)
+	require.True(t, updated)
 
 	// Make sure that the last frame successfully saved in cache.
 	frameJSON, ok, err := c.GetFrame(context.Background(), 1, "test")
