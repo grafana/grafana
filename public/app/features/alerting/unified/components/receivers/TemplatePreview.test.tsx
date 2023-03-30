@@ -123,7 +123,33 @@ describe('TemplatePreview component', () => {
     await userEvent.click(within(button).getByText(/preview/i));
     await waitFor(() => {
       expect(screen.getByTestId('payloadJSON')).toHaveTextContent(
-        'Template: template1 This is the template result bla bla bla Template: template2 This is the template2 result bla bla bla'
+        'Preview for template1: This is the template result bla bla bla Preview for template2: This is the template2 result bla bla bla'
+      );
+    });
+  });
+  it('Should render preview response with some errors, after clicking preview, if payload has correct format after clicking preview button', async () => {
+    const response: TemplatesPreviewResponse = {
+      results: [{ name: 'template1', text: 'This is the template result bla bla bla' }],
+      errors: [{ name: 'template2', error: 'Unexpected "{" in operand' }],
+    };
+    mockPreviewTemplateResponse(server, response);
+    render(
+      <TemplatePreview
+        payload={'{"a":"b"}'}
+        payloadFormatError={null}
+        setPayloadFormatError={mockSetPayloadFormatError}
+      />,
+      { wrapper: getProviderWraper() }
+    );
+    const button = screen.getByRole('button', {
+      name: /preview/i,
+    });
+
+    within(button).getByText(/preview/i);
+    await userEvent.click(within(button).getByText(/preview/i));
+    await waitFor(() => {
+      expect(screen.getByTestId('payloadJSON')).toHaveTextContent(
+        'Preview for template1: This is the template result bla bla bla ERROR in template2: Unexpected "{" in operand'
       );
     });
   });

@@ -13,7 +13,12 @@ import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
-import { TemplatePreviewResult, usePreviewPayloadMutation } from '../../api/templateApi';
+import {
+  TemplatePreviewErrors,
+  TemplatePreviewResult,
+  TemplatesPreviewResponse,
+  usePreviewPayloadMutation,
+} from '../../api/templateApi';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { makeAMLink } from '../../utils/misc';
@@ -261,10 +266,36 @@ function ExpandableSection({ isOpen, toggleOpen, children, title }: ExpandableSe
   );
 }
 
-function getResultsString(results: TemplatePreviewResult[]) {
-  return results.map((result: TemplatePreviewResult) => `Template: ${result.name}\n${result.text}`).join(`\n\n`);
+function getResultsToRender(results: TemplatePreviewResult[]) {
+  return results.map((result: TemplatePreviewResult) => `Preview for ${result.name}:\n${result.text}`).join(`\n\n`);
+}
+function getErrorsToRender(results: TemplatePreviewErrors[]) {
+  return results.map((result: TemplatePreviewErrors) => `ERROR in ${result.name}:\n${result.error}`).join(`\n\n`);
 }
 export const PREVIEW_NOT_AVAILABLE = 'Preview is not available';
+
+function getPreviewTorender(
+  isPreviewError: boolean,
+  payloadFormatError: string | null,
+  data: TemplatesPreviewResponse | undefined
+) {
+  const previewErrorRequest = isPreviewError ? PREVIEW_NOT_AVAILABLE : undefined;
+  const somethingWasWrong: boolean = isPreviewError || Boolean(payloadFormatError);
+  const errorToRender = payloadFormatError || previewErrorRequest;
+
+  const previewResponseResults = data?.results;
+  const previewResponseErrors = data?.errors;
+
+  const previewResultsToRender = previewResponseResults ? getResultsToRender(previewResponseResults) : '';
+  const previewErrorsToRender = previewResponseErrors ? getErrorsToRender(previewResponseErrors) : '';
+
+  if (somethingWasWrong) {
+    return errorToRender;
+  } else {
+    return `${previewResultsToRender}\n\n${previewErrorsToRender}`;
+  }
+}
+
 export function TemplatePreview({
   payload,
   setPayloadFormatError,
@@ -280,14 +311,8 @@ export function TemplatePreview({
 
   const templateContent = watch('content');
   const [trigger, { data, isError: isPreviewError }] = usePreviewPayloadMutation();
-  const previewResults = data?.results;
-  const previewError = isPreviewError ? data?.error ?? PREVIEW_NOT_AVAILABLE : undefined;
 
-  const hasError: boolean = isPreviewError || Boolean(payloadFormatError);
-  const errorToRender = payloadFormatError || previewError;
-  const previewResultsToRender = previewResults ? getResultsString(previewResults) : '';
-
-  const previewToRender = hasError ? errorToRender : previewResultsToRender ?? PREVIEW_NOT_AVAILABLE;
+  const previewToRender = getPreviewTorender(isPreviewError, payloadFormatError, data);
 
   const onPreview = () => {
     try {
