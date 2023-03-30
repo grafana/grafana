@@ -72,13 +72,13 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
   const [toTxt, setToText] = useState<string>(normalizeTimeString(value.to) ?? '');
 
   const validateFrom = () => {
-    const from = normalizeTimeString(value.from);
+    const from = normalizeTimeString(fromTxt);
     onChange(index, { ...value, from });
     setFromText(from ?? '');
   };
 
   const validateTo = () => {
-    const to = normalizeTimeString(value.to);
+    const to = normalizeTimeString(toTxt);
     onChange(index, { ...value, to });
     setFromText(to ?? '');
   };
