@@ -91,6 +91,14 @@ If you want to enable this feature, you'll need to enable the `onlyExternalOrgRo
 
 A reminder that there is a setting to prevent synchronization of organization roles from the authentication provider regardless of their role in the authentication provider, then refer to the `skip_org_role_sync` setting in your Grafana configuration. Refer to [skip org role sync](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#authgrafana_com-skip_org_role_sync) for more information.
 
+## Support bundles
+
+_Generally available in all editions of Grafana._
+
+Support bundles provide a simple way to collect information about your Grafana instance through Grafana's user interface. In a few clicks you can create a support bundle containing data about migrations, plugins, settings and more. This is particularly useful when troubleshooting issues with your Grafana instance.
+
+Learn more about support bundles and how to configure them in our [support bundle documentation]({{< relref "../troubleshooting/support-bundles/" >}}).
+
 ## Alerting
 
 ### Search for alert rules from multiple data sources
