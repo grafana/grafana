@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
-import { Icon, Button, Themeable2, withTheme2 } from '@grafana/ui';
+import { Button, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { LogMessageAnsi } from '../logs/components/LogMessageAnsi';
 import { getLogRowStyles } from '../logs/components/getLogRowStyles';
@@ -168,9 +168,8 @@ class LiveLogs extends PureComponent<Props, State> {
           <Button icon="trash-alt" variant="secondary" onClick={onClear} className={styles.button}>
             Clear logs
           </Button>
-          <Button variant="secondary" onClick={this.props.stopLive} className={styles.button}>
-            <Icon name="square-shape" size="lg" type="mono" />
-            &nbsp; Exit live mode
+          <Button icon="square-shape" variant="secondary" onClick={this.props.stopLive} className={styles.button}>
+            Exit live mode
           </Button>
           {isPaused ||
             (this.rowsToRender().length > 0 && (
