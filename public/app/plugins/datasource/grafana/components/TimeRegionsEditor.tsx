@@ -10,6 +10,7 @@ import {
   IconButton,
   Button,
   InlineSwitch,
+  TimeZonePicker,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import { formatTimeOfDayString, parseTimeOfDay } from 'app/core/utils/timeRegions';
@@ -130,6 +131,14 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
             width={10}
           />
         </HorizontalGroup>
+      </InlineField>
+      <InlineField label="Timezone">
+        <TimeZonePicker
+          value={value.timezone ?? 'browser'}
+          includeInternal={true}
+          onChange={(v) => onChange(index, { ...value, timezone: v })}
+          width={35}
+        />
       </InlineField>
       <InlineField label="Color">
         <ColorValueEditor value={value.color} onChange={(color) => onChange(index, { ...value, color: color! })} />
