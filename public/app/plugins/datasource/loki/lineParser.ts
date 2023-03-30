@@ -21,7 +21,7 @@ export function isLogLinePacked(line: string): boolean {
   let parsed;
   try {
     parsed = JSON.parse(line);
-    return parsed._entry !== undefined;
+    return parsed.hasOwnProperty('_entry');
   } catch (error) {
     return false;
   }
