@@ -99,9 +99,9 @@ func TestIntegrationAlertInstanceBulkWrite(t *testing.T) {
 			q := &models.ListAlertInstancesQuery{
 				RuleOrgID: id,
 			}
-			err = dbstore.ListAlertInstances(ctx, q)
+			alerts, err := dbstore.ListAlertInstances(ctx, q)
 			require.NoError(t, err)
-			require.Equal(t, counts[i], len(q.Result), "Org %v: Expected %v instances but got %v", id, counts[i], len(q.Result))
+			require.Equal(t, counts[i], len(alerts), "Org %v: Expected %v instances but got %v", id, counts[i], len(alerts))
 		}
 		t.Log("Finished database read")
 
@@ -113,9 +113,9 @@ func TestIntegrationAlertInstanceBulkWrite(t *testing.T) {
 			q := &models.ListAlertInstancesQuery{
 				RuleOrgID: id,
 			}
-			err = dbstore.ListAlertInstances(ctx, q)
+			alerts, err := dbstore.ListAlertInstances(ctx, q)
 			require.NoError(t, err)
-			require.Zero(t, len(q.Result), "Org %v: Deleted instances but still had %v", id, len(q.Result))
+			require.Zero(t, len(alerts), "Org %v: Deleted instances but still had %v", id, len(alerts))
 		}
 	}
 }
@@ -171,14 +171,14 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 			RuleOrgID: instance.RuleOrgID,
 			RuleUID:   instance.RuleUID,
 		}
-		err = dbstore.ListAlertInstances(ctx, listCmd)
+		alerts, err := dbstore.ListAlertInstances(ctx, listCmd)
 		require.NoError(t, err)
 
-		require.Len(t, listCmd.Result, 1)
-		require.Equal(t, instance.Labels, listCmd.Result[0].Labels)
-		require.Equal(t, alertRule1.OrgID, listCmd.Result[0].RuleOrgID)
-		require.Equal(t, alertRule1.UID, listCmd.Result[0].RuleUID)
-		require.Equal(t, instance.CurrentReason, listCmd.Result[0].CurrentReason)
+		require.Len(t, alerts, 1)
+		require.Equal(t, instance.Labels, alerts[0].Labels)
+		require.Equal(t, alertRule1.OrgID, alerts[0].RuleOrgID)
+		require.Equal(t, alertRule1.UID, alerts[0].RuleUID)
+		require.Equal(t, instance.CurrentReason, alerts[0].CurrentReason)
 	})
 
 	t.Run("can save and read new alert instance with no labels", func(t *testing.T) {
@@ -201,13 +201,13 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 			RuleUID:   instance.RuleUID,
 		}
 
-		err = dbstore.ListAlertInstances(ctx, listCmd)
+		alerts, err := dbstore.ListAlertInstances(ctx, listCmd)
 		require.NoError(t, err)
 
-		require.Len(t, listCmd.Result, 1)
-		require.Equal(t, alertRule2.OrgID, listCmd.Result[0].RuleOrgID)
-		require.Equal(t, alertRule2.UID, listCmd.Result[0].RuleUID)
-		require.Equal(t, instance.Labels, listCmd.Result[0].Labels)
+		require.Len(t, alerts, 1)
+		require.Equal(t, alertRule2.OrgID, alerts[0].RuleOrgID)
+		require.Equal(t, alertRule2.UID, alerts[0].RuleUID)
+		require.Equal(t, instance.Labels, alerts[0].Labels)
 	})
 
 	t.Run("can save two instances with same org_id, uid and different labels", func(t *testing.T) {
@@ -245,10 +245,10 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 			RuleUID:   instance1.RuleUID,
 		}
 
-		err = dbstore.ListAlertInstances(ctx, listQuery)
+		alerts, err := dbstore.ListAlertInstances(ctx, listQuery)
 		require.NoError(t, err)
 
-		require.Len(t, listQuery.Result, 2)
+		require.Len(t, alerts, 2)
 	})
 
 	t.Run("can list all added instances in org", func(t *testing.T) {
@@ -256,10 +256,10 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 			RuleOrgID: orgID,
 		}
 
-		err := dbstore.ListAlertInstances(ctx, listQuery)
+		alerts, err := dbstore.ListAlertInstances(ctx, listQuery)
 		require.NoError(t, err)
 
-		require.Len(t, listQuery.Result, 4)
+		require.Len(t, alerts, 4)
 	})
 
 	t.Run("should ignore Normal state with no reason if feature flag is enabled", func(t *testing.T) {
@@ -291,10 +291,10 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 			RuleOrgID: orgID,
 		}
 
-		err = dbstore.ListAlertInstances(ctx, listQuery)
+		alerts, err := dbstore.ListAlertInstances(ctx, listQuery)
 		require.NoError(t, err)
 
-		containsHash(t, listQuery.Result, instance1.LabelsHash)
+		containsHash(t, alerts, instance1.LabelsHash)
 
 		f := dbstore.FeatureToggles
 		dbstore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingNoNormalState)
@@ -302,12 +302,12 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 			dbstore.FeatureToggles = f
 		})
 
-		err = dbstore.ListAlertInstances(ctx, listQuery)
+		alerts, err = dbstore.ListAlertInstances(ctx, listQuery)
 		require.NoError(t, err)
 
-		containsHash(t, listQuery.Result, instance2.LabelsHash)
+		containsHash(t, alerts, instance2.LabelsHash)
 
-		for _, instance := range listQuery.Result {
+		for _, instance := range alerts {
 			if instance.CurrentState == models.InstanceStateNormal && instance.CurrentReason == "" {
 				require.Fail(t, "List operation expected to return all states except Normal but the result contains Normal states")
 			}
@@ -347,14 +347,14 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 			RuleUID:   alertRule4.UID,
 		}
 
-		err = dbstore.ListAlertInstances(ctx, listQuery)
+		alerts, err := dbstore.ListAlertInstances(ctx, listQuery)
 		require.NoError(t, err)
 
-		require.Len(t, listQuery.Result, 1)
+		require.Len(t, alerts, 1)
 
-		require.Equal(t, instance2.RuleOrgID, listQuery.Result[0].RuleOrgID)
-		require.Equal(t, instance2.RuleUID, listQuery.Result[0].RuleUID)
-		require.Equal(t, instance2.Labels, listQuery.Result[0].Labels)
-		require.Equal(t, instance2.CurrentState, listQuery.Result[0].CurrentState)
+		require.Equal(t, instance2.RuleOrgID, alerts[0].RuleOrgID)
+		require.Equal(t, instance2.RuleUID, alerts[0].RuleUID)
+		require.Equal(t, instance2.Labels, alerts[0].Labels)
+		require.Equal(t, instance2.CurrentState, alerts[0].CurrentState)
 	})
 }

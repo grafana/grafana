@@ -5,7 +5,10 @@ import path from 'path';
 import glob from 'glob';
 
 export default {
-  'better eslint': () => countEslintErrors().include('**/*.{ts,tsx}'),
+  'better eslint': () =>
+    countEslintErrors()
+      .include('**/*.{ts,tsx}')
+      .exclude(/public\/app\/angular/),
   'no undocumented stories': () => countUndocumentedStories().include('**/*.story.tsx'),
 };
 

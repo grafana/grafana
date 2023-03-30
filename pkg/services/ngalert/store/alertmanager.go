@@ -24,8 +24,8 @@ var (
 
 // GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.
 // It returns ErrNoAlertmanagerConfiguration if no configuration is found.
-func (st *DBstore) GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+func (st *DBstore) GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (result *models.AlertConfiguration, err error) {
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		c := &models.AlertConfiguration{}
 		// The ID is already an auto incremental column, using the ID as an order should guarantee the latest.
 		ok, err := sess.Table("alert_configuration").Where("org_id = ?", query.OrgID).Get(c)
@@ -37,9 +37,10 @@ func (st *DBstore) GetLatestAlertmanagerConfiguration(ctx context.Context, query
 			return ErrNoAlertmanagerConfiguration
 		}
 
-		query.Result = c
+		result = c
 		return nil
 	})
+	return result, err
 }
 
 // GetAllLatestAlertmanagerConfiguration returns the latest configuration of every organization
@@ -162,8 +163,8 @@ func (st *DBstore) MarkConfigurationAsApplied(ctx context.Context, cmd *models.M
 }
 
 // GetAppliedConfigurations returns all configurations that have been marked as applied, ordered newest -> oldest by id.
-func (st *DBstore) GetAppliedConfigurations(ctx context.Context, query *models.GetAppliedConfigurationsQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+func (st *DBstore) GetAppliedConfigurations(ctx context.Context, query *models.GetAppliedConfigurationsQuery) (result []*models.HistoricAlertConfiguration, err error) {
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		cfgs := []*models.HistoricAlertConfiguration{}
 		err := sess.Table("alert_configuration_history").
 			Desc("id").
@@ -174,9 +175,10 @@ func (st *DBstore) GetAppliedConfigurations(ctx context.Context, query *models.G
 			return err
 		}
 
-		query.Result = cfgs
+		result = cfgs
 		return nil
 	})
+	return result, err
 }
 
 func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, limit int) (int64, error) {

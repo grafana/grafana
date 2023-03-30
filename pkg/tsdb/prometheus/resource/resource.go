@@ -30,6 +30,10 @@ func New(
 	}
 	httpMethod, _ := maputil.GetStringOptional(jsonData, "httpMethod")
 
+	if httpMethod == "" {
+		httpMethod = http.MethodPost
+	}
+
 	return &Resource{
 		log:        plog,
 		promClient: client.NewClient(httpClient, httpMethod, settings.URL),

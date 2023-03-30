@@ -133,7 +133,10 @@ describe('logParser', () => {
         },
         title: 'test',
         target: '_self',
-        variables: { path: 'test', msg: 'test msg' },
+        variables: [
+          { variableName: 'path', value: 'test', match: '${path}', found: true },
+          { variableName: 'msg', value: 'test msg', match: '${msg}', found: true },
+        ],
       };
 
       const fieldWithVarLink: FieldDef = {
@@ -150,37 +153,6 @@ describe('logParser', () => {
       expect(fields[0].values[0]).toBe('test');
       expect(fields[0].keys[1]).toBe('msg');
       expect(fields[0].values[1]).toBe('test msg');
-    });
-
-    it('should convert null value to empty string and non string to string', () => {
-      const variableLink: ExploreFieldLinkModel = {
-        href: 'test',
-        onClick: () => {},
-        origin: {
-          config: { links: [] },
-          name: 'Line',
-          type: FieldType.string,
-          values: new ArrayVector(['a', 'b']),
-        },
-        title: 'test',
-        target: '_self',
-        variables: { path: undefined, message: false },
-      };
-
-      const fieldWithVarLink: FieldDef = {
-        fieldIndex: 2,
-        keys: ['Line'],
-        values: ['level=info msg="test msg" status_code=200 url=http://test'],
-        links: [variableLink],
-      };
-
-      const fields = createLogLineLinks([fieldWithVarLink]);
-      expect(fields.length).toBe(1);
-      expect(fields[0].keys.length).toBe(2);
-      expect(fields[0].keys[0]).toBe('path');
-      expect(fields[0].values[0]).toBe('');
-      expect(fields[0].keys[1]).toBe('message');
-      expect(fields[0].values[1]).toBe('false');
     });
 
     it('should return empty array if no variables', () => {
