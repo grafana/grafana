@@ -83,7 +83,7 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
 
 type LokiGroupedRequest = Array<{ request: DataQueryRequest<LokiQuery>; partition: TimeRange[] }>;
 
-export function runGroupedQueriesInChunks(datasource: LokiDatasource, requests: LokiGroupedRequest) {
+export function runSplitGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest) {
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
 
@@ -176,10 +176,10 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
 
   const oneDayMs = 24 * 60 * 60 * 1000;
   const rangePartitionedLogQueries = groupBy(logQueries, (query) =>
-    query.chunkDuration ? durationToMilliseconds(parseDuration(query.chunkDuration)) : oneDayMs
+    query.splitDuration ? durationToMilliseconds(parseDuration(query.splitDuration)) : oneDayMs
   );
   const rangePartitionedMetricQueries = groupBy(metricQueries, (query) =>
-    query.chunkDuration ? durationToMilliseconds(parseDuration(query.chunkDuration)) : oneDayMs
+    query.splitDuration ? durationToMilliseconds(parseDuration(query.splitDuration)) : oneDayMs
   );
 
   const requests: LokiGroupedRequest = [];
@@ -222,5 +222,5 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
     });
   }
 
-  return runGroupedQueriesInChunks(datasource, requests);
+  return runSplitGroupedQueries(datasource, requests);
 }
