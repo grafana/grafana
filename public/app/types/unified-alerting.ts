@@ -46,6 +46,7 @@ export interface AlertingRule extends RuleBase {
   state: PromAlertingRuleState;
   type: PromRuleType.Alerting;
   totals?: AlertInstanceTotals;
+  activeAt?: string; // ISO timestamp
 }
 
 export interface RecordingRule extends RuleBase {

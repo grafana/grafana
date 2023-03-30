@@ -30,7 +30,7 @@ export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => 
       promRule.state !== PromAlertingRuleState.Inactive
     ) {
       // find earliest alert
-      const firstActiveAt = getFirstActiveAt(promRule);
+      const firstActiveAt = promRule.activeAt ? new Date(promRule.activeAt) : getFirstActiveAt(promRule);
 
       // calculate time elapsed from earliest alert
       if (firstActiveAt) {
