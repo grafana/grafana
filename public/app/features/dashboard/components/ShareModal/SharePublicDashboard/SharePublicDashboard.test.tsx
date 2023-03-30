@@ -330,30 +330,45 @@ describe('SharePublic - Report interactions', () => {
     await renderSharePublicDashboard();
     await userEvent.click(screen.getByTestId(selectors.EnableTimeRangeSwitch));
 
-    await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_time_selection_clicked', {
-        action: pubdashResponse.timeSelectionEnabled ? 'disable' : 'enable',
-      });
-    });
+    await waitFor(
+      () => {
+        expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_time_selection_clicked', {
+          action: pubdashResponse.timeSelectionEnabled ? 'disable' : 'enable',
+        });
+      },
+      {
+        timeout: 1000,
+      }
+    );
   });
   it('reports interaction when show annotations is clicked', async () => {
     await renderSharePublicDashboard();
     await userEvent.click(screen.getByTestId(selectors.EnableAnnotationsSwitch));
 
-    await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_annotations_clicked', {
-        action: pubdashResponse.annotationsEnabled ? 'disable' : 'enable',
-      });
-    });
+    await waitFor(
+      () => {
+        expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_annotations_clicked', {
+          action: pubdashResponse.annotationsEnabled ? 'disable' : 'enable',
+        });
+      },
+      {
+        timeout: 1000,
+      }
+    );
   });
   it('reports interaction when pause is clicked', async () => {
     await renderSharePublicDashboard();
     await userEvent.click(screen.getByTestId(selectors.PauseSwitch));
 
-    await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_enable_clicked', {
-        action: pubdashResponse.isEnabled ? 'disable' : 'enable',
-      });
-    });
+    await waitFor(
+      () => {
+        expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_enable_clicked', {
+          action: pubdashResponse.isEnabled ? 'disable' : 'enable',
+        });
+      },
+      {
+        timeout: 1000,
+      }
+    );
   });
 });
