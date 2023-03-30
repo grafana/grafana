@@ -20,7 +20,7 @@ export const DatasetSelector = ({ db, value, onChange, disabled, className, appl
     return datasets.map(toOption);
   }, []);
 
-  useEffect(() => {
+  const useDefaultDataset = useEffect(() => {
     if (!applyDefault) {
       return;
     }
@@ -46,9 +46,10 @@ export const DatasetSelector = ({ db, value, onChange, disabled, className, appl
       value={value}
       options={state.value}
       onChange={onChange}
-      disabled={disabled}
+      disabled={true}
       isLoading={state.loading}
       menuShouldPortal={true}
+      placeholder={'datamaker'}
     />
   );
 };

@@ -25,8 +25,10 @@ import { useMigrateDatabaseField } from 'app/features/plugins/sql/components/con
 
 import { MySQLOptions } from '../types';
 
+// JEV: This is the full page config editor where the database is configured prior to chosing a datasource in the query editor
 export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<MySQLOptions>) => {
   const { options, onOptionsChange } = props;
+  // console.log('🚀 ~ file: ConfigurationEditor.tsx:30 ~ ConfigurationEditor ~ props:', props);
   const jsonData = options.jsonData;
 
   useMigrateDatabaseField(props);
