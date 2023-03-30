@@ -28,7 +28,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
         with:
-          distros: 'linux/amd64,linux/arm64'
+          distros: 'linux/amd64'
           enterprise: true
           grafana_ref: ${{ github.sha }}
           enterprise_ref: ${{ github.head_ref }}
