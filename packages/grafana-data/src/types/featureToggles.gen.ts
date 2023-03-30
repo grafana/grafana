@@ -86,5 +86,5 @@ export interface FeatureToggles {
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
   disableElasticsearchBackendExploreQuery?: boolean;
-  disableAuthenticationConfigUI?: boolean;
+  authenticationConfigUI?: boolean;
 }

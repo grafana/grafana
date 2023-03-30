@@ -279,7 +279,7 @@ const (
 	// Disable executing of Elasticsearch Explore queries trough backend
 	FlagDisableElasticsearchBackendExploreQuery = "disableElasticsearchBackendExploreQuery"
 
-	// FlagDisableAuthenticationConfigUI
-	// Disable authentication configuration UI
-	FlagDisableAuthenticationConfigUI = "disableAuthenticationConfigUI"
+	// FlagAuthenticationConfigUI
+	// Enables authentication configuration UI
+	FlagAuthenticationConfigUI = "authenticationConfigUI"
 )

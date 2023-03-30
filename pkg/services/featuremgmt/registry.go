@@ -455,8 +455,8 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:        "disableAuthenticationConfigUI",
-			Description: "Disable authentication configuration UI",
+			Name:        "authenticationConfigUI",
+			Description: "Enables authentication configuration UI",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAuthnzSquad,
 		},

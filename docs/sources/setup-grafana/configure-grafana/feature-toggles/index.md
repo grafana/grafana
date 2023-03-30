@@ -98,7 +98,7 @@ Alpha features might be changed or removed without prior notice.
 | `timeSeriesTable`                  | Enable time series table transformer & sparkline cell type                                                |
 | `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                 |
 | `clientTokenRotation`              | Replaces the current in-request token rotation so that the client initiates the rotation                  |
-| `disableAuthenticationConfigUI`    | Disable authentication configuration UI                                                                   |
+| `authenticationConfigUI`           | Enables authentication configuration UI                                                                   |
 
 ## Development feature toggles
 
