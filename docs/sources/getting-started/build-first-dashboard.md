@@ -41,7 +41,7 @@ To create your first dashboard:
 
 1. Click **Dashboards** in the left-side menu.
 1. On the Dashboards page, click **New** and select **New Dashboard** from the dropdown menu.
-1. On the dashboard, click **Add visualization**.
+1. On the dashboard, click **+ Add visualization**.
 1. In the New dashboard/Edit panel view, go to the **Query** tab.
 1. Configure your [query]({{< relref "../panels-visualizations/query-transform-data/#add-a-query" >}}) by selecting `-- Grafana --` from the data source selector.
 

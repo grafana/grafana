@@ -42,7 +42,7 @@ Add a Grafana library panel to a dashboard when you want to provide visualizatio
 
 1. Click **Dashboards** in the left-side menu.
 1. Click **New** and select **New Dashboard**.
-1. On the empty dashboard, click **Import panel**.
+1. On the empty dashboard, click **+ Import library panel**.
 
    You will see a list of your library panels.
 

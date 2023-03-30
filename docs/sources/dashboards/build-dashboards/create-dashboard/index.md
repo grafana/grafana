@@ -25,7 +25,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 1. Click **Dashboards** in the left-side menu.
 1. Click **New** and select **New Dashboard**.
-1. On the empty dashboard, click **Add visualization**.
+1. On the empty dashboard, click **+ Add visualization**.
 1. In the first line of the **Query** tab, click the dropdown list and select a data source.
 1. Write or construct a query in the query language of your data source.
 
@@ -72,7 +72,7 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 1. Navigate to the dashboard you want to work on.
 1. At the top of the dashboard, click **Add** and select **Row** in the dropdown.
 
-   If the dashboard is empty, you can just click the **Add row** option in the middle of the dashboard.
+   If the dashboard is empty, you can just click the **+ Add row** button in the middle of the dashboard.
 
 1. Hover over the row title and click the cog icon.
 1. In the **Row Options** dialog box, add a title and select the variable for which you want to add repeating rows.

@@ -217,7 +217,7 @@ Every panel consists of a _query_ and a _visualization_. The query defines _what
 
 1. Click **Dashboard** in the left-side menu.
 1. On the Dashboards page, click **New** and select **New Dashboard** in the dropdown.
-1. Click **Add visualization**.
+1. Click **+ Add visualization**.
 1. In the **Query** tab below the graph, enter the query from earlier and then press Shift + Enter:
 
    ```
