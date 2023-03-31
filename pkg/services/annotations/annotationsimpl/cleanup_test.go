@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -87,11 +88,12 @@ func TestAnnotationCleanUp(t *testing.T) {
 		},
 	}
 
+	cfg := setting.NewCfg()
+	cleaner, err := ProvideCleanupService(fakeSQL, cfg, prometheus.DefaultRegisterer)
+	require.NoError(t, err)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cfg := setting.NewCfg()
 			cfg.AnnotationCleanupJobBatchSize = 1
-			cleaner := ProvideCleanupService(fakeSQL, cfg)
 			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(context.Background(), test.cfg)
 			require.NoError(t, err)
 
