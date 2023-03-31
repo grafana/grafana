@@ -1,4 +1,4 @@
-package apikeygenprefix
+package satokengen
 
 import (
 	"testing"

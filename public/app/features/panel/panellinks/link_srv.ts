@@ -20,7 +20,7 @@ import {
   VariableSuggestionsScope,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { FormatRegistryID } from '@grafana/scenes';
+import { VariableFormatID } from '@grafana/schema';
 import { getConfig } from 'app/core/config';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
@@ -305,7 +305,7 @@ export class LinkSrv implements LinkService {
     };
 
     if (replaceVariables) {
-      info.href = replaceVariables(info.href, undefined, FormatRegistryID.percentEncode);
+      info.href = replaceVariables(info.href, undefined, VariableFormatID.PercentEncode);
       info.title = replaceVariables(link.title);
     }
 
