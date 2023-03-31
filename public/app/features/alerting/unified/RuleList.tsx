@@ -72,17 +72,18 @@ const RuleList = withErrorBoundary(
     );
     const allPromEmpty = promRequests.every(([_, state]) => state.dispatched && state?.result?.length === 0);
 
+    const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
     // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
     const [_, fetchRules] = useAsyncFn(async () => {
       if (!loading) {
-        await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts: LIMIT_ALERTS }));
+        await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
       }
-    }, [loading]);
+    }, [loading, limitAlerts, dispatch]);
 
     // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
     useEffect(() => {
-      dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts: LIMIT_ALERTS }));
-    }, [dispatch]);
+      dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
+    }, [dispatch, limitAlerts]);
     useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
 
     // Show splash only when we loaded all of the data sources and none of them has alerts

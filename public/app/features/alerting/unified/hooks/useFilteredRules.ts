@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { CombinedRuleGroup, CombinedRuleNamespace, Rule } from 'app/types/unified-alerting';
 import { isPromAlertingRuleState, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { applySearchFilterToQuery, getSearchFilterFromQuery, RulesFilter } from '../search/rulesSearchParser';
@@ -13,6 +13,7 @@ import { labelsMatchMatchers, matcherToMatcherField, parseMatcher, parseMatchers
 import { isCloudRulesSource } from '../utils/datasource';
 import { getRuleHealth, isAlertingRule, isGrafanaRulerRule, isPromRuleType } from '../utils/rules';
 
+import { calculateRuleTotals, calculateGroupTotals } from './useCombinedRuleNamespaces';
 import { useURLSearchParams } from './useURLSearchParams';
 
 export function useRulesFilter() {
@@ -74,7 +75,26 @@ export function useRulesFilter() {
 }
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: RulesFilter) => {
-  return useMemo(() => filterRules(namespaces, filterState), [namespaces, filterState]);
+  return useMemo(() => {
+    const filteredRules = filterRules(namespaces, filterState);
+
+    // Totals recalculation is a workaround for the lack of server-side filtering
+    filteredRules.forEach((namespace) => {
+      namespace.groups.forEach((group) => {
+        group.rules.forEach((rule) => {
+          if (isAlertingRule(rule.promRule)) {
+            rule.instanceTotals = calculateRuleTotals(rule.promRule);
+          }
+        });
+
+        group.totals = calculateGroupTotals({
+          rules: group.rules.map((r) => r.promRule).filter((r): r is Rule => !!r),
+        });
+      });
+    });
+
+    return filteredRules;
+  }, [namespaces, filterState]);
 };
 
 // Options details can be found here https://github.com/leeoniya/uFuzzy#options
