@@ -69,7 +69,7 @@ func (m *service) Init(_ context.Context) error {
 	var err error
 
 	// module registration
-	m.RegisterModule(All, nil, Core, HTTPServer, GRPCServer, Plugins)
+	m.RegisterModule(All, nil, Core, HTTPServer, Plugins)
 
 	for mod, targets := range m.dependencyMap {
 		if err := m.ModuleManager.AddDependency(mod, targets...); err != nil {

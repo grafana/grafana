@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var ErrPluginNotFound = errors.New("plugin not found")
+
 type Server struct {
 	*services.BasicService
 
@@ -91,7 +93,7 @@ func (s *Server) AuthFuncOverride(ctx context.Context, _ string) (context.Contex
 func (s *Server) GetPlugin(ctx context.Context, req *pluginProto.GetPluginRequest) (*pluginProto.GetPluginResponse, error) {
 	p, exists := s.pm.Plugin(ctx, req.Id)
 	if !exists {
-		return nil, errors.New("plugin not found")
+		return nil, ErrPluginNotFound
 	}
 
 	return &pluginProto.GetPluginResponse{

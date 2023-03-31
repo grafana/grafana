@@ -97,6 +97,10 @@ func (c *Client) Plugin(ctx context.Context, id string) (plugins.PluginDTO, bool
 		Id: id,
 	})
 	if err != nil {
+		if errors.Is(err, ErrPluginNotFound) {
+			return plugins.PluginDTO{}, false
+		}
+
 		c.log.Error("Error occurred when fetching plugin", "pluginID", id, "err", err)
 		return plugins.PluginDTO{}, false
 	}
