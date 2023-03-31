@@ -62,9 +62,8 @@ export function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery
  * Ident: Identity: the string that is not expected to change
  * Sig: Signature: the string that is expected to change, upon which we wipe the cache fields
  */
-type Milliseconds = number;
 export class QueryCache {
-  private overlapWindowMs: Milliseconds;
+  private overlapWindowMs: number;
   constructor(overlapString?: string) {
     const unverifiedOverlap = overlapString ?? defaultPrometheusQueryOverlapWindow;
     if (isValidDuration(unverifiedOverlap)) {
