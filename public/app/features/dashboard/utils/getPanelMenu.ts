@@ -180,7 +180,15 @@ export function getPanelMenu(
     type: 'submenu',
     text: t('panel.header-menu.inspect', `Inspect`),
     iconClassName: 'info-circle',
-    onClick: (e: React.MouseEvent<any>) => onInspectPanel(),
+    onClick: (e: React.MouseEvent<HTMLElement>) => {
+      const currentTarget = e.currentTarget;
+      const target = e.target as HTMLElement;
+      const closestMenuItem = target.closest('[role="menuitem"]');
+
+      if (target === currentTarget || closestMenuItem === currentTarget) {
+        onInspectPanel();
+      }
+    },
     shortcut: 'i',
     subMenu: inspectMenu,
   });
