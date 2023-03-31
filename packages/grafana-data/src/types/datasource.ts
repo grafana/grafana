@@ -493,11 +493,6 @@ export interface DataQueryError {
 
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   requestId: string; // Used to identify results and optionally cancel the request in backendSrv
-
-  // adds requestId querystring param to fetch URL so it can be correlated in an async PerformanceObserver
-  // used for tracking frontend perf metrics, like response sizes, timings, gzip compression, etc.
-  appendRequestId?: boolean;
-
   interval: string;
   intervalMs: number;
   maxDataPoints?: number;

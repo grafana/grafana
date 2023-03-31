@@ -451,7 +451,6 @@ export class PrometheusDatasource
       let fullOrPartialRequest: DataQueryRequest<PromQuery>;
       let requestInfo: CacheRequestInfo | undefined = undefined;
       if (this.hasIncrementalQuery) {
-        request.appendRequestId = true;
         requestInfo = this.cache.requestInfo(request, this.interpolateString.bind(this));
         fullOrPartialRequest = requestInfo.requests[0];
       } else {
