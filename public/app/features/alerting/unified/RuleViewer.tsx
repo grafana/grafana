@@ -199,7 +199,11 @@ export function RuleViewer({ match }: RuleViewerProps) {
           </div>
         </div>
         <div>
-          <RuleDetailsMatchingInstances rule={rule} pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }} />
+          <RuleDetailsMatchingInstances
+            rule={rule}
+            pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
+            enableFiltering
+          />
         </div>
       </RuleViewerLayoutContent>
       <Collapse

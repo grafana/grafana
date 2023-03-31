@@ -4,7 +4,7 @@ import { useMemo, useRef } from 'react';
 import {
   AlertGroupTotals,
   AlertingRule,
-  AlertInstanceState,
+  AlertInstanceTotalState,
   AlertInstanceTotals,
   CombinedRule,
   CombinedRuleGroup,
@@ -195,15 +195,16 @@ export function calculateRuleTotals(rule: Pick<AlertingRule, 'alerts' | 'totals'
   const result = countBy(rule.alerts, 'state');
 
   if (rule.totals) {
-    return rule.totals;
+    const { normal, ...totals } = rule.totals;
+    return { ...totals, inactive: normal };
   }
 
   return {
-    alerting: result[AlertInstanceState.Alerting],
-    pending: result[AlertInstanceState.Pending],
-    inactive: result[AlertInstanceState.Normal],
-    nodata: result[AlertInstanceState.NoData],
-    error: result[AlertInstanceState.Error] + result['err'], // Prometheus uses "err" instead of "error"
+    alerting: result[AlertInstanceTotalState.Alerting],
+    pending: result[AlertInstanceTotalState.Pending],
+    inactive: result[AlertInstanceTotalState.Normal],
+    nodata: result[AlertInstanceTotalState.NoData],
+    error: result[AlertInstanceTotalState.Error] + result['err'], // Prometheus uses "err" instead of "error"
   };
 }
 

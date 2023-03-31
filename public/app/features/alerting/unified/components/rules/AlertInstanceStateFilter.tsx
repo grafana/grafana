@@ -27,8 +27,8 @@ export const AlertInstanceStateFilter = ({
 
   const getOptionComponent = (state: InstanceStateFilter) => {
     return function InstanceStateCounter() {
-      return itemPerStateStats && itemPerStateStats[state.toLowerCase()] ? (
-        <Tag name={itemPerStateStats[state.toLowerCase()].toFixed(0)} colorIndex={9} className={styles.tag} />
+      return itemPerStateStats && itemPerStateStats[state] ? (
+        <Tag name={itemPerStateStats[state].toFixed(0)} colorIndex={9} className={styles.tag} />
       ) : null;
     };
   };
