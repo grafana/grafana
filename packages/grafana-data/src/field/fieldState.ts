@@ -75,13 +75,8 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
     return displayName ?? TIME_SERIES_TIME_FIELD_NAME;
   }
 
-  const DATAPLANE_INITIAL_RELEASE = [0, 1];
-  if (
-    frame?.meta?.typeVersion &&
-    frame?.meta?.typeVersion >= DATAPLANE_INITIAL_RELEASE &&
-    field.labels?.__name__ &&
-    field.labels?.__name__ === field.name
-  ) {
+  // migration for dataplane with TimeSeriesMulti
+  if (field.labels?.__name__ && field.labels?.__name__ === field.name) {
     field.name = TIME_SERIES_VALUE_FIELD_NAME;
   }
 
