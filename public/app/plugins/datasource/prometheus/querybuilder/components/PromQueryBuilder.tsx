@@ -221,7 +221,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
               size="sm"
               onClick={() => setMetricEncyclopediaModalOpen((prevValue) => !prevValue)}
             >
-              Metric Encyclopedia
+              Metric encyclopedia
             </Button>
             {query.metric && (
               <Tag
