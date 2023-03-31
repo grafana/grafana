@@ -34,7 +34,7 @@ Watch this video to learn more about how to create a Mimir managed alert rule: {
 
 ## Add a Grafana Mimir or Loki managed alerting rule
 
-1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Alert rules**.
 1. Click **+ Create alert rule**. The new alerting rule page opens where the **Grafana managed alerts** option is selected by default.
 1. In Step 1, add the rule name.

@@ -10,11 +10,10 @@ import { OnMoveOrDeleleSelectedItems } from '../../types';
 interface Props {
   onDeleteItems: OnMoveOrDeleleSelectedItems;
   results: Map<string, Set<string>>;
-  isOpen: boolean;
   onDismiss: () => void;
 }
 
-export const ConfirmDeleteModal = ({ results, onDeleteItems, isOpen, onDismiss }: Props) => {
+export const ConfirmDeleteModal = ({ results, onDeleteItems, onDismiss }: Props) => {
   const styles = useStyles2(getStyles);
 
   const dashboards = Array.from(results.get('dashboard') ?? []);
@@ -44,9 +43,9 @@ export const ConfirmDeleteModal = ({ results, onDeleteItems, isOpen, onDismiss }
     });
   };
 
-  return isOpen ? (
+  return (
     <ConfirmModal
-      isOpen={isOpen}
+      isOpen
       title="Delete"
       body={
         <>
@@ -57,7 +56,7 @@ export const ConfirmDeleteModal = ({ results, onDeleteItems, isOpen, onDismiss }
       onConfirm={deleteItems}
       onDismiss={onDismiss}
     />
-  ) : null;
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({

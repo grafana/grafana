@@ -18,14 +18,13 @@ describe('MoveToFolderModal', () => {
     dashboardsUIDs.add('uid1');
     dashboardsUIDs.add('uid2');
     items.set('dashboard', dashboardsUIDs);
-    const isMoveModalOpen = true;
     const mockStore = configureMockStore();
     const store = mockStore({ dashboard: { panels: [] } });
     const onMoveItems = jest.fn();
 
     render(
       <Provider store={store}>
-        <MoveToFolderModal onMoveItems={onMoveItems} results={items} isOpen={isMoveModalOpen} onDismiss={() => {}} />
+        <MoveToFolderModal onMoveItems={onMoveItems} results={items} onDismiss={() => {}} />
       </Provider>
     );
 

@@ -55,18 +55,13 @@ export function ManageActions({ items, folder, onChange, clearSelection }: Props
         </HorizontalGroup>
       </div>
 
-      <ConfirmDeleteModal
-        onDeleteItems={onChange}
-        results={items}
-        isOpen={isDeleteModalOpen}
-        onDismiss={() => setIsDeleteModalOpen(false)}
-      />
-      <MoveToFolderModal
-        onMoveItems={onChange}
-        results={items}
-        isOpen={isMoveModalOpen}
-        onDismiss={() => setIsMoveModalOpen(false)}
-      />
+      {isDeleteModalOpen && (
+        <ConfirmDeleteModal onDeleteItems={onChange} results={items} onDismiss={() => setIsDeleteModalOpen(false)} />
+      )}
+
+      {isMoveModalOpen && (
+        <MoveToFolderModal onMoveItems={onChange} results={items} onDismiss={() => setIsMoveModalOpen(false)} />
+      )}
     </div>
   );
 }

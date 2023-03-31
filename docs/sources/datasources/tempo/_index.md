@@ -23,7 +23,7 @@ Administrators can also [configure the data source via YAML]({{< relref "#provis
 
 Once you've added the data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
 
-You can also [use the Service Graph]({{< relref "#use-the-service-graph" >}}) to view service relationships, [track RED metrics]({{< relref "#open-the-service-graph-view" >}}), [upload a JSON trace file]({{< relref "#upload-a-json-trace-file" >}}), and [link a trace ID from logs]({{< relref "#link-a-trace-id-from-logs" >}}) from a logs data source.
+You can also [use the Service Graph]({{< relref "#use-the-service-graph" >}}) to view service relationships, [track RED metrics]({{< relref "#open-the-service-graph-view" >}}), [upload a JSON trace file]({{< relref "#upload-a-json-trace-file" >}}), [link to a trace ID from logs]({{< relref "#link-to-a-trace-id-from-logs" >}}), and [link to a trace ID from metrics]({{< relref "#link-to-a-trace-id-from-metrics" >}}).
 
 ## Configure the data source
 
@@ -94,16 +94,16 @@ To use a variable you need to wrap it in `${}`. For example `${__span.name}`.
 
 The following table describes the ways in which you can configure your trace to logs settings:
 
-| Setting name              | Description                                                                                                                                                                                                                                                                  |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Data source**           | Defines the target data source. You can select only Loki or Splunk \[logs\] data sources.                                                                                                                                                                                    |
-| **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default: `0`.                                                                              |
-| **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default: `0`.                                                                                                                                                                  |
-| **Tags**                  | Defines the the tags to use in the logs query. Default is `cluster`, `hostname`, `namespace`, `pod`. You can change the tag name for example to remove dots from the name if they are not allowed in the target data source. For example map `http.status` to `http_status`. |
-| **Filter by trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                                                                                                                    |
-| **Filter by span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                                                                                                                     |
-| **Use custom query**      | Toggles use of custom query with interpolation.                                                                                                                                                                                                                              |
-| **Query**                 | Input to write custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                                            |
+| Setting name              | Description                                                                                                                                                                                                                                                             |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data source**           | Defines the target data source. You can select only Loki or Splunk \[logs\] data sources.                                                                                                                                                                               |
+| **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default: `0`.                                                                         |
+| **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default: `0`.                                                                                                                                                             |
+| **Tags**                  | Defines the tags to use in the logs query. Default: `cluster`, `hostname`, `namespace`, `pod`. You can change the tag name for example to remove dots from the name if they are not allowed in the target data source. For example, map `http.status` to `http_status`. |
+| **Filter by trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                                                                                                               |
+| **Filter by span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                                                                                                                |
+| **Use custom query**      | Toggles use of custom query with interpolation.                                                                                                                                                                                                                         |
+| **Query**                 | Input to write custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                                       |
 
 ### Trace to metrics
 
@@ -131,7 +131,7 @@ Each linked query consists of:
 
 ### Service Graph
 
-The **Service Graph** section configures the [Service Graph](/docs/tempo/latest/grafana-agent/service-graphs/) feature.
+The **Service Graph** setting configures the [Service Graph](/docs/tempo/latest/grafana-agent/service-graphs/) feature.
 
 Configure the **Data source** setting to define in which Prometheus instance the Service Graph data is stored.
 
@@ -145,20 +145,32 @@ Once enabled, Grafana displays the node graph above the trace view.
 
 ### Tempo search
 
-The **Search** section configures [Tempo search](/docs/tempo/latest/configuration/#search).
+The **Search** setting configures [Tempo search](/docs/tempo/latest/configuration/#search).
 
 You can configure the **Hide search** setting to hide the search query option in **Explore** if search is not configured in the Tempo instance.
 
 ### Loki search
 
-The **Loki search** section configures the Loki search query type.
+The **Loki search** setting configures the Loki search query type.
 
 Configure the **Data source** setting to define which Loki instance you want to use to search traces.
 You must configure [derived fields]({{< relref "../loki#configure-derived-fields" >}}) in the Loki instance.
 
-### Span bar label
+### TraceID query
 
-The **Span bar label** section helps you display additional information in the span bar row.
+The **TraceID query** setting modifies how TraceID queries are run. The time range can be used when there are performance issues or timeouts since it will narrow down the search to the defined range. This setting is disabled by default.
+
+You can configure this setting as follows:
+
+| Name                  | Description                                                 |
+| --------------------- | ----------------------------------------------------------- |
+| **Enable time range** | Use a time range in the TraceID query. Default: `disabled`. |
+| **Time shift start**  | Time shift for start of search. Default: `30m`.             |
+| **Time shift end**    | Time shift for end of search. Default: `30m`.               |
+
+### Span bar
+
+The **Span bar** setting helps you display additional information in the span bar row.
 
 You can choose one of three options:
 
@@ -171,9 +183,9 @@ You can choose one of three options:
 ### Provision the data source
 
 You can define and configure the Tempo data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning and available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
-#### Provisioning examples
+#### Provisioning example
 
 ```yaml
 apiVersion: 1
@@ -181,34 +193,41 @@ apiVersion: 1
 datasources:
   - name: Tempo
     type: tempo
-    # Access mode - proxy (server in the UI) or direct (browser in the UI).
-    access: proxy
+    uid: EbPG8fYoz
     url: http://localhost:3200
+    access: proxy
+    basicAuth: false
     jsonData:
-      httpMethod: GET
-      tracesToLogs:
+      tracesToLogsV2:
+        # Field with an internal link pointing to a logs data source in Grafana.
+        # datasourceUid value must match the uid value of the logs data source.
         datasourceUid: 'loki'
-        tags: ['job', 'instance', 'pod', 'namespace']
-        mappedTags: [{ key: 'service.name', value: 'service' }]
-        mapTagNamesEnabled: false
         spanStartTimeShift: '1h'
-        spanEndTimeShift: '1h'
+        spanEndTimeShift: '-1h'
+        tags: ['job', 'instance', 'pod', 'namespace']
         filterByTraceID: false
         filterBySpanID: false
+        customQuery: true
+        query: 'method="${__span.tags.method}"'
       tracesToMetrics:
         datasourceUid: 'prom'
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
         tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
         queries:
           - name: 'Sample query'
             query: 'sum(rate(traces_spanmetrics_latency_bucket{$__tags}[5m]))'
       serviceMap:
         datasourceUid: 'prometheus'
-      search:
-        hide: false
       nodeGraph:
         enabled: true
+      search:
+        hide: false
       lokiSearch:
         datasourceUid: 'loki'
+      spanBar:
+        type: 'Tag'
+        tag: 'http.path'
 ```
 
 ## Query the data source
@@ -311,7 +330,7 @@ Each circle's color represents the percentage of requests in each state:
 
 Service graph view displays a table of request rate, error rate, and duration metrics (RED) calculated from your incoming spans. It also includes a node graph view built from your spans.
 
-{{< figure src="/static/img/docs/tempo/apm-table.png" class="docs-image--no-shadow" max-width="500px" caption="Screenshot of the Service Graph view table" >}}
+{{< figure src="/static/img/docs/tempo/apm-table.png" class="docs-image--no-shadow" max-width="500px" caption="Screenshot of the Service Graph view" >}}
 
 For details, refer to the [Service Graph view documentation](/docs/tempo/latest/metrics-generator/service-graph-view/).
 
@@ -331,8 +350,14 @@ To open a query in Prometheus with the span name of that row automatically set i
 
 To open a query in Tempo with the span name of that row automatically set in the query, click a row in the **links** column.
 
-## Link a trace ID from logs
+## Link to a trace ID from logs
 
-You can link to Tempo trace from logs in [Loki](/docs/loki/latest) or Elasticsearch by configuring an internal link.
+You can link to Tempo traces from logs in Loki, Elasticsearch, Splunk, and other logs data sources by configuring an internal link.
 
-To configure this feature, see the [Derived fields]({{< relref "../loki#configure-derived-fields" >}}) section of the [Loki data source docs]({{< relref "../loki/" >}}), or the [Data links]({{< relref "../elasticsearch#data-links" >}}) section of the [Elasticsearch data source docs]({{< relref "../elasticsearch" >}}).
+To configure this feature, see the [Derived fields]({{< relref "../loki#configure-derived-fields" >}}) section of the Loki data source docs or the [Data links]({{< relref "../elasticsearch#data-links" >}}) section of the Elasticsearch or Splunk data source docs.
+
+## Link to a trace ID from metrics
+
+You can link to Tempo traces from metrics in Prometheus data sources by configuring an exemplar.
+
+To configure this feature, see the [introduction to exemplars]({{< relref "docs/grafana/latest/fundamentals/exemplars" >}}) documentation.
