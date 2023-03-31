@@ -68,7 +68,7 @@ export const getModalWrapper = ({
 //
 // @param `object` The object to freeze
 // @param `frozenProps` A set of objects that have already been frozen (used to prevent infinite recursion)
-export function deepFreeze(value: Record<string | symbol, any> | any[], frozenProps = new Map()) {
+export function deepFreeze(value?: object | Record<string | symbol, unknown> | unknown[], frozenProps = new Map()) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) {
     return value;
   }

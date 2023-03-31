@@ -14,14 +14,14 @@ type GetExtensions = ({
   placement,
   registry,
 }: {
-  context?: object;
+  context?: object | Record<string | symbol, unknown>;
   placement: string;
   registry: PluginExtensionRegistry;
 }) => { extensions: PluginExtension[] };
 
 // Returns with a list of plugin extensions for the given placement
 export const getPluginExtensions: GetExtensions = ({ context, placement, registry }) => {
-  const frozenContext = deepFreeze(context ?? {});
+  const frozenContext = context ? deepFreeze(context) : {};
   const registryItems = registry[placement] ?? [];
   // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
   const extensions: PluginExtension[] = [];

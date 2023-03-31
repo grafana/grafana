@@ -1,6 +1,12 @@
 import { PluginExtension } from '@grafana/data';
 
-export type GetPluginExtensions = ({ placement, context }: { placement: string; context?: object }) => {
+export type GetPluginExtensions = ({
+  placement,
+  context,
+}: {
+  placement: string;
+  context?: object | Record<string | symbol, unknown>;
+}) => {
   extensions: PluginExtension[];
 };
 
