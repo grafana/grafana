@@ -256,10 +256,35 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	// cache for folders created for dashboards that have custom permissions
 	folderCache := make(map[string]*dashboard)
 
+	folderHelper := folderHelper{
+		sess: sess,
+		mg:   mg,
+	}
+
+	gf := func(dash dashboard, da dashAlert) (*dashboard, error) {
+		f, ok := folderCache[GENERAL_FOLDER]
+		if !ok {
+			// get or create general folder
+			f, err = folderHelper.getOrCreateGeneralFolder(dash.OrgId)
+			if err != nil {
+				return nil, MigrationError{
+					Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgId, err),
+					AlertId: da.Id,
+				}
+			}
+			folderCache[GENERAL_FOLDER] = f
+		}
+		// No need to assign default permissions to general folder
+		// because they are included to the query result if it's a folder with no permissions
+		// https://github.com/grafana/grafana/blob/076e2ce06a6ecf15804423fcc8dca1b620a321e5/pkg/services/sqlstore/dashboard_acl.go#L109
+		return f, nil
+	}
+
 	// Store of newly created rules to later create routes
 	rulesPerOrg := make(map[int64]map[string]dashAlert)
 
 	for _, da := range dashAlerts {
+		l := mg.Logger.New("ruleID", da.Id, "ruleName", da.Name, "dashboardUID", da.DashboardUID, "orgID", da.OrgId)
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
 		if err != nil {
 			return err
@@ -283,18 +308,13 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			}
 		}
 
-		folderHelper := folderHelper{
-			sess: sess,
-			mg:   mg,
-		}
-
 		var folder *dashboard
 		switch {
 		case dash.HasAcl:
 			folderName := getAlertFolderNameFromDashboard(&dash)
 			f, ok := folderCache[folderName]
 			if !ok {
-				mg.Logger.Info("create a new folder for alerts that belongs to dashboard because it has custom permissions", "org", dash.OrgId, "dashboard_uid", dash.Uid, "folder", folderName)
+				l.Info("create a new folder for alerts that belongs to dashboard because it has custom permissions", "folder", folderName)
 				// create folder and assign the permissions of the dashboard (included default and inherited)
 				f, err = folderHelper.createFolder(dash.OrgId, folderName)
 				if err != nil {
@@ -324,29 +344,20 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			// get folder if exists
 			f, err := folderHelper.getFolder(dash, da)
 			if err != nil {
-				return MigrationError{
-					Err:     err,
-					AlertId: da.Id,
-				}
-			}
-			folder = &f
-		default:
-			f, ok := folderCache[GENERAL_FOLDER]
-			if !ok {
-				// get or create general folder
-				f, err = folderHelper.getOrCreateGeneralFolder(dash.OrgId)
+				// If folder does not exist then the dashboard is an orphan and we migrate the alert to the general folder.
+				l.Warn("Failed to find folder for dashboard. Migrate rule to the default folder", "rule_name", da.Name, "dashboard_uid", da.DashboardUID, "missing_folder_id", dash.FolderId)
+				folder, err = gf(dash, da)
 				if err != nil {
-					return MigrationError{
-						Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgId, err),
-						AlertId: da.Id,
-					}
+					return err
 				}
-				folderCache[GENERAL_FOLDER] = f
+			} else {
+				folder = &f
 			}
-			// No need to assign default permissions to general folder
-			// because they are included to the query result if it's a folder with no permissions
-			// https://github.com/grafana/grafana/blob/076e2ce06a6ecf15804423fcc8dca1b620a321e5/pkg/services/sqlstore/dashboard_acl.go#L109
-			folder = f
+		default:
+			folder, err = gf(dash, da)
+			if err != nil {
+				return err
+			}
 		}
 
 		if folder.Uid == "" {
