@@ -64,15 +64,15 @@ export function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery
  */
 type Milliseconds = number;
 export class QueryCache {
-  private overlapWindow: Milliseconds;
+  private overlapWindowMs: Milliseconds;
   constructor(overlapString?: string) {
     const unverifiedOverlap = overlapString ?? defaultPrometheusQueryOverlapWindow;
     if (isValidDuration(unverifiedOverlap)) {
       const duration = parseDuration(unverifiedOverlap);
-      this.overlapWindow = durationToMilliseconds(duration);
+      this.overlapWindowMs = durationToMilliseconds(duration);
     } else {
       const duration = parseDuration(defaultPrometheusQueryOverlapWindow);
-      this.overlapWindow = durationToMilliseconds(duration);
+      this.overlapWindowMs = durationToMilliseconds(duration);
     }
   }
 
@@ -125,7 +125,7 @@ export class QueryCache {
       // 10m re-query overlap
 
       // clamp to make sure we don't re-query previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
-      let newFromPartial = Math.max(prevTo! - this.overlapWindow, newFrom);
+      let newFromPartial = Math.max(prevTo! - this.overlapWindowMs, newFrom);
 
       // modify to partial query
       request = {
