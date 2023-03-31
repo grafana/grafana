@@ -425,6 +425,43 @@ func TestIntegrationGetAppliedConfigurations(t *testing.T) {
 	})
 }
 
+func TestIntegrationGetHistoricalConfiguration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	sqlStore := db.InitTestDB(t)
+	store := &DBstore{
+		SQLStore: sqlStore,
+		Logger:   log.NewNopLogger(),
+	}
+
+	t.Run("no configurations = error", func(tt *testing.T) {
+		_, err := store.GetHistoricalConfiguration(context.Background(), 10, 10)
+		require.Error(tt, err)
+	})
+
+	t.Run("correct configurations should be returned", func(tt *testing.T) {
+		ctx := context.Background()
+		var org int64 = 1
+		config, _ := setupConfig(t, "test", store)
+		cmd := &models.SaveAlertmanagerConfigurationCmd{
+			AlertmanagerConfiguration: config,
+			ConfigurationVersion:      "v1",
+			Default:                   false,
+			OrgID:                     org,
+			LastApplied:               time.Now().UTC().Unix(),
+		}
+		err := store.SaveAlertmanagerConfiguration(ctx, cmd)
+		require.NoError(tt, err)
+
+		cfg, err := store.GetHistoricalConfiguration(ctx, org, 1)
+		require.NoError(tt, err)
+
+		// Check that the returned configurations are the ones that we're expecting.
+		require.Equal(tt, cfg.AlertConfiguration.AlertmanagerConfiguration, cfg.AlertmanagerConfiguration)
+	})
+}
+
 func setupConfig(t *testing.T, config string, store *DBstore) (string, string) {
 	t.Helper()
 	return setupConfigInOrg(t, config, 1, store)
