@@ -475,7 +475,6 @@ export class PrometheusDatasource
         }),
         tap((response: DataQueryResponse) => {
           trackQuery(response, request, startTime);
-          //@todo track incremental query savings
         })
       );
       // Run queries trough browser/proxy
