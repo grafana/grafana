@@ -20,7 +20,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import UiFindInput from '../common/UIFindInput';
+import UiFindInput from '../common/UiFindInput';
 import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
 
 // eslint-disable-next-line no-duplicate-imports

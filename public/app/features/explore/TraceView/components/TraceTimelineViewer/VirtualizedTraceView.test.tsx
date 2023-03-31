@@ -36,13 +36,15 @@ let props = {
   detailStates: new Map(),
   detailTagsToggle: jest.fn(),
   detailToggle: jest.fn(),
-  searchMatches: null,
+  findMatchesIDs: null,
   registerAccessors: jest.fn(),
   scrollToFirstVisibleSpan: jest.fn(),
   setSpanNameColumnWidth: jest.fn(),
+  setTrace: jest.fn(),
   shouldScrollToFirstUiFindMatch: false,
   spanNameColumnWidth: 0.5,
   trace,
+  uiFind: 'uiFind',
   topOfExploreViewRef,
 } as unknown as VirtualizedTraceViewProps;
 
@@ -110,5 +112,6 @@ describe('<VirtualizedTraceViewImpl>', () => {
     const _trace = { ...trace, traceID };
     props = { ...props, trace: _trace };
     render(<VirtualizedTraceView {...props} />);
+    expect(jest.mocked(props.setTrace).mock.calls).toEqual([[_trace, props.uiFind]]);
   });
 });

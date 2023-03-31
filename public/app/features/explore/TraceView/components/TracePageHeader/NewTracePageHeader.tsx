@@ -32,7 +32,7 @@ import TracePageActions from './Actions/TracePageActions';
 import SpanGraph from './SpanGraph';
 import { timestamp, getStyles } from './TracePageHeader';
 
-export type NewTracePageHeaderProps = {
+export type TracePageHeaderProps = {
   trace: Trace | null;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
@@ -40,7 +40,7 @@ export type NewTracePageHeaderProps = {
   timeZone: TimeZone;
 };
 
-export const NewTracePageHeader = React.memo((props: NewTracePageHeaderProps) => {
+export const NewTracePageHeader = React.memo((props: TracePageHeaderProps) => {
   const { trace, updateNextViewRangeTime, updateViewRangeTime, viewRange, timeZone } = props;
   const styles = { ...useStyles2(getStyles), ...useStyles2(getNewStyles) };
 

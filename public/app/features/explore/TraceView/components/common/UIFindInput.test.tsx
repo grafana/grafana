@@ -15,7 +15,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import UiFindInput from './UIFindInput';
+import UiFindInput from './UiFindInput';
 
 describe('UiFindInput', () => {
   describe('rendering', () => {

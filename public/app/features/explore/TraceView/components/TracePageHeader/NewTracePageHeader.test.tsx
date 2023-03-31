@@ -17,8 +17,7 @@ import React from 'react';
 
 import config from 'app/core/config';
 
-import { NewTracePageHeader } from './NewTracePageHeader';
-import { TracePageHeaderProps } from './TracePageHeader';
+import { NewTracePageHeader, TracePageHeaderProps } from './NewTracePageHeader';
 import { trace } from './TracePageHeader.test';
 
 const setup = (propOverrides?: TracePageHeaderProps) => {

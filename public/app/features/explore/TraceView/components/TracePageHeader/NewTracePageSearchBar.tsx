@@ -19,7 +19,6 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import { SearchProps } from '../../useSearch';
-import { ubJustifyEnd } from '../uberUtilityStyles';
 
 export type NewTracePageSearchBarProps = {
   search: SearchProps;
@@ -92,32 +91,30 @@ export default memo(function NewTracePageSearchBar(props: NewTracePageSearchBarP
 
   return (
     <div className={styles.searchBar}>
-      <span className={ubJustifyEnd} style={{ display: 'flex' }}>
-        <>
-          <Button
-            className={styles.button}
-            variant="secondary"
-            disabled={!buttonEnabled}
-            type="button"
-            fill={'outline'}
-            aria-label="Prev result button"
-            onClick={prevResult}
-          >
-            Prev
-          </Button>
-          <Button
-            className={styles.button}
-            variant="secondary"
-            disabled={!buttonEnabled}
-            type="button"
-            fill={'outline'}
-            aria-label="Next result button"
-            onClick={nextResult}
-          >
-            Next
-          </Button>
-        </>
-      </span>
+      <>
+        <Button
+          className={styles.button}
+          variant="secondary"
+          disabled={!buttonEnabled}
+          type="button"
+          fill={'outline'}
+          aria-label="Prev result button"
+          onClick={prevResult}
+        >
+          Prev
+        </Button>
+        <Button
+          className={styles.button}
+          variant="secondary"
+          disabled={!buttonEnabled}
+          type="button"
+          fill={'outline'}
+          aria-label="Next result button"
+          onClick={nextResult}
+        >
+          Next
+        </Button>
+      </>
     </div>
   );
 });
@@ -125,6 +122,8 @@ export default memo(function NewTracePageSearchBar(props: NewTracePageSearchBarP
 export const getStyles = () => {
   return {
     searchBar: css`
+      display: flex;
+      justify-content: flex-end;
       margin-top: 5px;
     `,
     button: css`

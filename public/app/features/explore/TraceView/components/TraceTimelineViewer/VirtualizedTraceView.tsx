@@ -104,7 +104,7 @@ type TVirtualizedTraceViewOwnProps = {
   detailTagsToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
   setSpanNameColumnWidth: (width: number) => void;
-  setTrace?: (trace: Trace | TNil, uiFind: string | TNil) => void;
+  setTrace: (trace: Trace | TNil, uiFind: string | TNil) => void;
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
@@ -199,8 +199,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   constructor(props: VirtualizedTraceViewProps) {
     super(props);
-    // const { setTrace, trace, uiFind } = props;
-    // setTrace(trace, uiFind);
+    const { setTrace, trace, uiFind } = props;
+    setTrace(trace, uiFind);
   }
 
   componentDidMount() {
@@ -238,6 +238,10 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       focusedSpanId,
       focusedSpanIdForSearch,
     } = this.props;
+
+    if (trace !== nextTrace) {
+      setTrace(nextTrace, uiFind);
+    }
 
     if (this.listView && registerAccessors !== nextRegisterAccessors) {
       nextRegisterAccessors(this.getAccessors());
