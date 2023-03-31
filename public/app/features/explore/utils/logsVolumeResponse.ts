@@ -9,7 +9,7 @@ export function isTimeoutErrorResponse(response: DataQueryResponse | undefined):
     return false;
   }
 
-  const errors = response?.error ? [response?.error] : response?.errors || [];
+  const errors = response.error ? [response.error] : response.errors || [];
 
   return errors.some((error: DataQueryError) => {
     const message = `${error.message || error.data?.message}`?.toLowerCase();
