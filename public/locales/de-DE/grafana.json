@@ -174,7 +174,7 @@
     },
     "alerts-and-incidents": {
       "subtitle": "Warn- und Vorfallmanagement-Apps",
-      "title": "Warnungen & Vorfälle"
+      "title": ""
     },
     "api-keys": {
       "subtitle": "Verwalte und erstelle API-Schlüssel, die für die Interaktion mit HTTP-APIs von Grafana verwendet werden",
