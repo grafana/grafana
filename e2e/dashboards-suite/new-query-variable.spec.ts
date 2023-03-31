@@ -2,6 +2,7 @@ import { e2e } from '@grafana/e2e';
 import { GrafanaBootConfig } from '@grafana/runtime';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
+const DASHBOARD_NAME = 'Templating - Nested Template Variables';
 
 describe('Variables - Query - Add variable', () => {
   it('query variable should be default and default fields should be correct', () => {

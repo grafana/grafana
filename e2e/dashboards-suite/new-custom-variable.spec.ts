@@ -2,6 +2,7 @@ import { e2e } from '@grafana/e2e';
 import { GrafanaBootConfig } from '@grafana/runtime';
 
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
+const DASHBOARD_NAME = 'Test variable output';
 
 function fillInCustomVariable(name: string, label: string, value: string) {
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().within(() => {
