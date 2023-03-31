@@ -122,15 +122,7 @@ class DataSourceWithBackend<
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
-    const {
-      intervalMs,
-      maxDataPoints,
-      queryCachingTTL,
-      range,
-      requestId,
-      appendRequestId,
-      hideFromInspector = false,
-    } = request;
+    const { intervalMs, maxDataPoints, queryCachingTTL, range, requestId, hideFromInspector = false } = request;
     let targets = request.targets;
 
     if (this.filterQuery) {
@@ -206,31 +198,19 @@ class DataSourceWithBackend<
       });
     }
 
-    let queryStrObj: Record<string, string> = {};
-
-    let url = '/api/ds/query';
-
-    if (hasExpr) {
-      queryStrObj.expression = 'true';
-    }
-
-    if (appendRequestId) {
-      queryStrObj.requestId = requestId;
-    }
-
-    let queryStr = new URLSearchParams(queryStrObj).toString();
-
-    if (queryStr.length > 0) {
-      url += '?' + queryStr;
-    }
-
     const headers: Record<string, string> = {};
     headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
 
+    let url = '/api/ds/query?ds_type=' + this.type;
+
     if (hasExpr) {
       headers[PluginRequestHeaders.FromExpression] = 'true';
-      url += '?expression=true';
+      url += '&expression=true';
+    }
+
+    if (requestId) {
+      url += `&requestId=${requestId}`;
     }
 
     if (request.dashboardUID) {
