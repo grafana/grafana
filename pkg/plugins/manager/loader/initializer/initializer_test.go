@@ -226,7 +226,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		JSONData: plugins.JSONData{ID: pluginID},
 	}
 
-	defaultOtelCfg := config.OpentelemetryCfg{
+	defaultOtelCfg := config.OpenTelemetryCfg{
 		Address:     "127.0.0.1:4317",
 		Propagation: "",
 	}
@@ -269,7 +269,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "disabled",
 			cfg: &config.Cfg{
-				Opentelemetry: config.OpentelemetryCfg{},
+				Opentelemetry: config.OpenTelemetryCfg{},
 			},
 			exp: expNoTracing,
 		},
@@ -283,7 +283,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "otlp propagation",
 			cfg: &config.Cfg{
-				Opentelemetry: config.OpentelemetryCfg{
+				Opentelemetry: config.OpenTelemetryCfg{
 					Address:     "127.0.0.1:4317",
 					Propagation: "w3c",
 				},
