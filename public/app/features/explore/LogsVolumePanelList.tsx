@@ -62,7 +62,7 @@ export const LogsVolumePanelList = ({
     return !isLogsVolumeLimited(data) && zoomRatio && zoomRatio < 1;
   });
 
-  const timeoutError = isTimeoutErrorResponse(logsVolumeData) || true;
+  const timeoutError = isTimeoutErrorResponse(logsVolumeData);
 
   if (logsVolumeData?.state === LoadingState.Loading) {
     return <span>Loading...</span>;
