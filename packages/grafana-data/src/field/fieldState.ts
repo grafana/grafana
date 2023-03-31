@@ -77,7 +77,7 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
 
   // migration for dataplane with TimeSeriesMulti
   if (field.labels?.__name__ && field.labels?.__name__ === field.name) {
-    field.name = TIME_SERIES_VALUE_FIELD_NAME;
+    field = { ...field, name: TIME_SERIES_VALUE_FIELD_NAME };
   }
 
   let parts: string[] = [];
