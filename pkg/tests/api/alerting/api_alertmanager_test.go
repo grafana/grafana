@@ -45,7 +45,6 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableLog:             true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
