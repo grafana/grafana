@@ -28,6 +28,9 @@ composableKinds: PanelCfg: {
 						PanelOptions: {
 							legend:  common.VizLegendOptions
 							tooltip: common.VizTooltipOptions
+
+							// Name of the x field to use (defaults to first number)
+							xField?: string
 						} @cuetsy(kind="interface")
 
 						PanelFieldConfig: common.GraphFieldConfig & {} @cuetsy(kind="interface")

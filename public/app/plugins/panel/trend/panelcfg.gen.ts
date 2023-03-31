@@ -18,6 +18,10 @@ export const PanelCfgModelVersion = Object.freeze([0, 0]);
 export interface PanelOptions {
   legend: common.VizLegendOptions;
   tooltip: common.VizTooltipOptions;
+  /**
+   * Name of the x field to use (defaults to first number)
+   */
+  xField?: string;
 }
 
 export interface PanelFieldConfig extends common.GraphFieldConfig {}
