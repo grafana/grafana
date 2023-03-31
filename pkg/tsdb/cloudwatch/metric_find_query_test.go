@@ -106,11 +106,12 @@ func Test_handleGetRegions_regionCache(t *testing.T) {
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		_, err := executor.handleGetRegions(
 			backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}}, nil)
+		require.NoError(t, err)
 
 		_, err = executor.handleGetRegions(
 			backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}}, nil)
+		require.NoError(t, err)
 
-		assert.NoError(t, err)
 		cli.AssertNumberOfCalls(t, "DescribeRegions", 1)
 	})
 }
