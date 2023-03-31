@@ -65,9 +65,10 @@ func (moa *MultiOrgAlertmanager) RevertAlertmanagerConfigurationToHistoricalId(c
 	}
 
 	if err := am.SaveAndApplyConfig(ctx, cfg); err != nil {
-		moa.logger.Error("unable to save and apply alertmanager configuration", "error", err)
+		moa.logger.Error("unable to save and apply historical alertmanager configuration", "error", err, "org", orgId, "id", id)
 		return AlertmanagerConfigRejectedError{err}
 	}
+	moa.logger.Info("applied historical alertmanager configuration", "org", orgId, "id", id)
 
 	return nil
 }

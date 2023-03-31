@@ -236,7 +236,7 @@ func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *cont
 
 	err = srv.mam.RevertAlertmanagerConfigurationToHistoricalId(c.Req.Context(), c.OrgID, confId)
 	if err == nil {
-		return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration reverted"})
+		return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration activated"})
 	}
 	var unknownReceiverError notifier.UnknownReceiverError
 	if errors.As(err, &unknownReceiverError) {
