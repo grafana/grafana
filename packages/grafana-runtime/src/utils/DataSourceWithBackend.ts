@@ -202,8 +202,6 @@ class DataSourceWithBackend<
     headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
 
-    let queryStrObj: Record<string, string> = {};
-
     let url = '/api/ds/query?ds_type=' + this.type;
 
     if (hasExpr) {
