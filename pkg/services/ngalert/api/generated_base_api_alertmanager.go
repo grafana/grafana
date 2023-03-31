@@ -33,6 +33,7 @@ type AlertmanagerApi interface {
 	RouteGetGrafanaAMAlerts(*contextmodel.ReqContext) response.Response
 	RouteGetGrafanaAMStatus(*contextmodel.ReqContext) response.Response
 	RouteGetGrafanaAlertingConfig(*contextmodel.ReqContext) response.Response
+	RouteGetGrafanaAlertingConfigHistory(*contextmodel.ReqContext) response.Response
 	RouteGetGrafanaReceivers(*contextmodel.ReqContext) response.Response
 	RouteGetGrafanaSilence(*contextmodel.ReqContext) response.Response
 	RouteGetGrafanaSilences(*contextmodel.ReqContext) response.Response
@@ -112,6 +113,9 @@ func (f *AlertmanagerApiHandler) RouteGetGrafanaAMStatus(ctx *contextmodel.ReqCo
 }
 func (f *AlertmanagerApiHandler) RouteGetGrafanaAlertingConfig(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaAlertingConfig(ctx)
+}
+func (f *AlertmanagerApiHandler) RouteGetGrafanaAlertingConfigHistory(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetGrafanaAlertingConfigHistory(ctx)
 }
 func (f *AlertmanagerApiHandler) RouteGetGrafanaReceivers(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaReceivers(ctx)
@@ -311,6 +315,16 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 				http.MethodGet,
 				"/api/alertmanager/grafana/config/api/v1/alerts",
 				srv.RouteGetGrafanaAlertingConfig,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/alertmanager/grafana/config/history"),
+			api.authorize(http.MethodGet, "/api/alertmanager/grafana/config/history"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/alertmanager/grafana/config/history",
+				srv.RouteGetGrafanaAlertingConfigHistory,
 				m,
 			),
 		)
