@@ -461,5 +461,11 @@ var (
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:        "pyroscopeFlameGraph",
+			Description: "Changes flame graph to pyroscope one",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityTracesAndProfilingSquad,
+		},
 	}
 )

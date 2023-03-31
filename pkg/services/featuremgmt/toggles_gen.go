@@ -282,4 +282,8 @@ const (
 	// FlagPrometheusDataplane
 	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
 	FlagPrometheusDataplane = "prometheusDataplane"
+
+	// FlagPyroscopeFlameGraph
+	// Changes flame graph to pyroscope one
+	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
 )

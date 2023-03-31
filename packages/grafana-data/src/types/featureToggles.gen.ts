@@ -87,4 +87,5 @@ export interface FeatureToggles {
   clientTokenRotation?: boolean;
   disableElasticsearchBackendExploreQuery?: boolean;
   prometheusDataplane?: boolean;
+  pyroscopeFlameGraph?: boolean;
 }

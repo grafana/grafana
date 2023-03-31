@@ -99,6 +99,7 @@ Alpha features might be changed or removed without prior notice.
 | `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                                                                                                           |
 | `clientTokenRotation`              | Replaces the current in-request token rotation so that the client initiates the rotation                                                                                                            |
 | `prometheusDataplane`              | Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present. |
+| `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                                                                                                                |
 
 ## Development feature toggles
 
