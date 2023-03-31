@@ -49,7 +49,7 @@ For authentication options and configuration details, refer to [AWS authenticati
 To read CloudWatch metrics and EC2 tags, instances, regions, and alarms, you must grant Grafana permissions via IAM.
 You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication]({{< relref "./aws-authentication/" >}}).
 
-**Metrics-only:**
+##### Metrics-only:
 
 ```json
 {
@@ -84,7 +84,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-**Logs-only:**
+##### Logs-only:
 
 ```json
 {
@@ -119,7 +119,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-**Metrics and Logs:**
+##### Metrics and Logs:
 
 ```json
 {
@@ -167,7 +167,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-**Cross-account observability: (see below) **
+##### Cross-account observability: (see below)
 
 ```json
 {
