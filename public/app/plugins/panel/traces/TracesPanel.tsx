@@ -20,6 +20,9 @@ const styles = {
 export const TracesPanel = ({ data }: PanelProps) => {
   const topOfViewRef = createRef<HTMLDivElement>();
   const traceProp = useMemo(() => transformDataFrames(data.series[0]), [data.series]);
+  const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
+  const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
+  const [searchBarSuffix, setSearchBarSuffix] = useState('');
   const dataSource = useAsync(async () => {
     return await getDataSourceSrv().get(data.request?.targets[0].datasource?.uid);
   });
@@ -39,11 +42,14 @@ export const TracesPanel = ({ data }: PanelProps) => {
       <div ref={topOfViewRef}></div>
       {data.series[0]?.meta?.preferredVisualisationType === 'trace' && !config.featureToggles.newTraceView ? (
         <TracePageSearchBar
-          // searchValue={search}
-          // setSearch={setSearch}
-          searchMatches={searchMatches}
-          focusedSearchMatch={focusedSearchMatch}
-          setFocusedSearchMatch={setFocusedSearchMatch}
+          navigable={true}
+          searchValue={search}
+          setSearch={setSearch}
+          spanFindMatches={spanFindMatches}
+          searchBarSuffix={searchBarSuffix}
+          setSearchBarSuffix={setSearchBarSuffix}
+          focusedSpanIdForSearch={focusedSpanIdForSearch}
+          setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
           datasourceType={datasourceType}
         />
       ) : null}
@@ -52,6 +58,9 @@ export const TracesPanel = ({ data }: PanelProps) => {
         dataFrames={data.series}
         scrollElement={scrollElement}
         traceProp={traceProp}
+        spanFindMatches={spanFindMatches}
+        search={search}
+        focusedSpanIdForSearch={focusedSpanIdForSearch}
         queryResponse={data}
         datasource={dataSource.value}
         topOfViewRef={topOfViewRef}

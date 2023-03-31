@@ -17,7 +17,7 @@ import { TNil, TraceKeyValuePair, TraceSpan } from '../types';
 
 // filter spans where all filters added need to be true for each individual span that is returned
 // i.e. the more filters added -> the more specific that the returned results are
-export default function filterSpans(searchProps: SearchProps, spans: TraceSpan[] | TNil) {
+export function filterSpansNewTraceView(searchProps: SearchProps, spans: TraceSpan[] | TNil) {
   if (!spans) {
     return undefined;
   }
@@ -145,3 +145,55 @@ const convertTimeFilter = (time: string) => {
   }
   return undefined;
 };
+
+// legacy code that will be removed when the newTraceView feature flag is removed
+export function filterSpans(textFilter: string, spans: TraceSpan[] | TNil) {
+  if (!spans) {
+    return undefined;
+  }
+
+  // if a span field includes at least one filter in includeFilters, the span is a match
+  const includeFilters: string[] = [];
+
+  // values with keys that include text in any one of the excludeKeys will be ignored
+  const excludeKeys: string[] = [];
+
+  // split textFilter by whitespace, remove empty strings, and extract includeFilters and excludeKeys
+  textFilter
+    .split(/\s+/)
+    .filter(Boolean)
+    .forEach((w) => {
+      if (w[0] === '-') {
+        excludeKeys.push(w.slice(1).toLowerCase());
+      } else {
+        includeFilters.push(w.toLowerCase());
+      }
+    });
+
+  const isTextInFilters = (filters: string[], text: string) =>
+    filters.some((filter) => text.toLowerCase().includes(filter));
+
+  const isTextInKeyValues = (kvs: TraceKeyValuePair[]) =>
+    kvs
+      ? kvs.some((kv) => {
+          // ignore checking key and value for a match if key is in excludeKeys
+          if (isTextInFilters(excludeKeys, kv.key)) {
+            return false;
+          }
+          // match if key or value matches an item in includeFilters
+          return isTextInFilters(includeFilters, kv.key) || isTextInFilters(includeFilters, kv.value.toString());
+        })
+      : false;
+
+  const isSpanAMatch = (span: TraceSpan) =>
+    isTextInFilters(includeFilters, span.operationName) ||
+    isTextInFilters(includeFilters, span.process.serviceName) ||
+    isTextInKeyValues(span.tags) ||
+    (span.logs !== null && span.logs.some((log) => isTextInKeyValues(log.fields))) ||
+    isTextInKeyValues(span.process.tags) ||
+    includeFilters.some((filter) => filter === span.spanID);
+
+  // declare as const because need to disambiguate the type
+  const rv: Set<string> = new Set(spans.filter(isSpanAMatch).map((span: TraceSpan) => span.spanID));
+  return rv;
+}

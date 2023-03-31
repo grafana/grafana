@@ -39,7 +39,7 @@ import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
-import { useSearch } from './useSearch';
+import { useSearchNewTraceView } from './useSearch';
 import { useViewRange } from './useViewRange';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -63,6 +63,9 @@ type Props = {
   exploreId?: ExploreId;
   scrollElement?: Element;
   traceProp: Trace;
+  spanFindMatches?: Set<string>;
+  search: string;
+  focusedSpanIdForSearch: string;
   queryResponse: PanelData;
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef: RefObject<HTMLDivElement>;
@@ -70,7 +73,7 @@ type Props = {
 };
 
 export function TraceView(props: Props) {
-  const { traceProp, datasource, topOfViewRef, topOfViewRefType } = props;
+  const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType } = props;
 
   const {
     detailStates,
@@ -88,8 +91,8 @@ export function TraceView(props: Props) {
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
-  const { search, setSearch, searchMatches } = useSearch(traceProp?.spans);
-  const [focusedSearchMatch, setFocusedSearchMatch] = useState('');
+  const { newTraceViewSearch, setNewTraceViewSearch, spanFilterMatches } = useSearchNewTraceView(traceProp?.spans);
+  const [newTraceViewFocusedSpanIdForSearch, setNewTraceViewFocusedSpanIdForSearch] = useState('');
 
   const styles = useStyles2(getStyles);
 
@@ -148,11 +151,11 @@ export function TraceView(props: Props) {
               updateViewRangeTime={updateViewRangeTime}
               viewRange={viewRange}
               timeZone={timeZone}
-              search={search}
-              setSearch={setSearch}
-              searchMatches={searchMatches}
-              focusedSearchMatch={focusedSearchMatch}
-              setFocusedSearchMatch={setFocusedSearchMatch}
+              search={newTraceViewSearch}
+              setSearch={setNewTraceViewSearch}
+              spanFilterMatches={spanFilterMatches}
+              focusedSpanIdForSearch={newTraceViewFocusedSpanIdForSearch}
+              setFocusedSpanIdForSearch={setNewTraceViewFocusedSpanIdForSearch}
               datasourceType={datasourceType}
             />
           ) : (
@@ -167,7 +170,7 @@ export function TraceView(props: Props) {
           <TraceTimelineViewer
             registerAccessors={noop}
             scrollToFirstVisibleSpan={noop}
-            searchMatches={searchMatches}
+            findMatchesIDs={config.featureToggles.newTraceView ? spanFilterMatches : spanFindMatches}
             trace={traceProp}
             datasourceType={datasourceType}
             spanBarOptions={spanBarOptions?.spanBar}
@@ -195,10 +198,13 @@ export function TraceView(props: Props) {
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
             linksGetter={() => []}
+            uiFind={props.search}
             createSpanLink={createSpanLink}
             scrollElement={props.scrollElement}
             focusedSpanId={focusedSpanId}
-            focusedSearchMatch={focusedSearchMatch!}
+            focusedSpanIdForSearch={
+              config.featureToggles.newTraceView ? newTraceViewFocusedSpanIdForSearch : props.focusedSpanIdForSearch!
+            }
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
             topOfViewRefType={topOfViewRefType}

@@ -42,6 +42,10 @@ import {
   ViewedBoundsFunctionType,
 } from './utils';
 
+type TExtractUiFindFromStateReturn = {
+  uiFind: string | undefined;
+};
+
 const getStyles = stylesFactory((props: TVirtualizedTraceViewOwnProps) => {
   const { topOfViewRefType } = props;
   const position = topOfViewRefType === TopOfViewRefType.Explore ? 'fixed' : 'absolute';
@@ -82,7 +86,7 @@ export enum TopOfViewRefType {
 type TVirtualizedTraceViewOwnProps = {
   currentViewRangeTime: [number, number];
   timeZone: TimeZone;
-  searchMatches: Set<string> | TNil;
+  findMatchesIDs: Set<string> | TNil;
   scrollToFirstVisibleSpan: () => void;
   registerAccessors: (accesors: Accessors) => void;
   trace: Trace;
@@ -100,6 +104,7 @@ type TVirtualizedTraceViewOwnProps = {
   detailTagsToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
   setSpanNameColumnWidth: (width: number) => void;
+  setTrace?: (trace: Trace | TNil, uiFind: string | TNil) => void;
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
@@ -107,14 +112,14 @@ type TVirtualizedTraceViewOwnProps = {
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
   focusedSpanId?: string;
-  focusedSearchMatch: string;
+  focusedSpanIdForSearch: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
   topOfViewRefType?: TopOfViewRefType;
   datasourceType: string;
 };
 
-export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;
+export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
 
 // export for tests
 export const DEFAULT_HEIGHTS = {
@@ -194,6 +199,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   constructor(props: VirtualizedTraceViewProps) {
     super(props);
+    // const { setTrace, trace, uiFind } = props;
+    // setTrace(trace, uiFind);
   }
 
   componentDidMount() {
@@ -219,14 +226,17 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   }
 
   componentDidUpdate(prevProps: Readonly<VirtualizedTraceViewProps>) {
-    const { registerAccessors } = prevProps;
+    const { registerAccessors, trace } = prevProps;
     const {
       shouldScrollToFirstUiFindMatch,
       clearShouldScrollToFirstUiFindMatch,
       scrollToFirstVisibleSpan,
       registerAccessors: nextRegisterAccessors,
+      setTrace,
+      trace: nextTrace,
+      uiFind,
       focusedSpanId,
-      focusedSearchMatch,
+      focusedSpanIdForSearch,
     } = this.props;
 
     if (this.listView && registerAccessors !== nextRegisterAccessors) {
@@ -242,8 +252,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       this.scrollToSpan(focusedSpanId);
     }
 
-    if (focusedSearchMatch !== prevProps.focusedSearchMatch) {
-      this.scrollToSpan(focusedSearchMatch);
+    if (focusedSpanIdForSearch !== prevProps.focusedSpanIdForSearch) {
+      this.scrollToSpan(focusedSpanIdForSearch);
     }
   }
 
@@ -276,7 +286,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     }
     return {
       getViewRange: this.getViewRange,
-      getSearchMatches: this.getSearchMatches,
+      getSearchedSpanIDs: this.getSearchedSpanIDs,
       getCollapsedChildren: this.getCollapsedChildren,
       getViewHeight: lv.getViewHeight,
       getBottomRowIndexVisible: lv.getBottomVisibleIndex,
@@ -289,7 +299,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   getViewRange = () => this.props.currentViewRangeTime;
 
-  getSearchMatches = () => this.props.searchMatches;
+  getSearchedSpanIDs = () => this.props.findMatchesIDs;
 
   getCollapsedChildren = () => this.props.childrenHiddenIDs;
 
@@ -372,7 +382,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       childrenToggle,
       detailStates,
       detailToggle,
-      searchMatches,
+      findMatchesIDs,
       spanNameColumnWidth,
       trace,
       spanBarOptions,
@@ -381,7 +391,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       removeHoverIndentGuideId,
       createSpanLink,
       focusedSpanId,
-      focusedSearchMatch,
+      focusedSpanIdForSearch,
       theme,
       datasourceType,
     } = this.props;
@@ -392,8 +402,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     const color = getColorByKey(serviceName, theme);
     const isCollapsed = childrenHiddenIDs.has(spanID);
     const isDetailExpanded = detailStates.has(spanID);
-    const isMatchingFilter = searchMatches ? searchMatches.has(spanID) : false;
-    const isFocused = spanID === focusedSpanId || spanID === focusedSearchMatch;
+    const isMatchingFilter = findMatchesIDs ? findMatchesIDs.has(spanID) : false;
+    const isFocused = spanID === focusedSpanId || spanID === focusedSpanIdForSearch;
     const showErrorIcon = isErrorSpan(span) || (isCollapsed && spanContainsErredSpan(trace.spans, spanIndex));
 
     // Check for direct child "server" span if the span is a "client" span.

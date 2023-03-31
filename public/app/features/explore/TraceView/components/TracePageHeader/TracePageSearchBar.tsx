@@ -13,30 +13,106 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { memo, Dispatch, SetStateAction, useEffect } from 'react';
+import cx from 'classnames';
+import React, { memo, Dispatch, SetStateAction } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import { SearchProps } from '../../useSearch';
-import { ubJustifyEnd } from '../uberUtilityStyles';
+import UiFindInput from '../common/UIFindInput';
+import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
+
+// eslint-disable-next-line no-duplicate-imports
+
+export const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    TracePageSearchBar: css`
+      label: TracePageSearchBar;
+      float: right;
+      position: absolute;
+      top: 0;
+      right: 0;
+      z-index: ${theme.zIndex.navbarFixed};
+      background: ${theme.colors.background.primary};
+      margin-bottom: -48px;
+      padding: 8px;
+      margin-right: 2px;
+      border-radius: ${theme.shape.borderRadius()};
+      box-shadow: ${theme.shadows.z2};
+    `,
+    TracePageSearchBarBar: css`
+      label: TracePageSearchBarBar;
+      max-width: 20rem;
+      transition: max-width 0.5s;
+      &:focus-within {
+        max-width: 100%;
+      }
+    `,
+    TracePageSearchBarSuffix: css`
+      label: TracePageSearchBarSuffix;
+      opacity: 0.6;
+    `,
+    TracePageSearchBarBtn: css`
+      label: TracePageSearchBarBtn;
+      transition: 0.2s;
+      margin-left: 8px;
+    `,
+    TracePageSearchBarBtnDisabled: css`
+      label: TracePageSearchBarBtnDisabled;
+      opacity: 0.5;
+    `,
+    TracePageSearchBarLocateBtn: css`
+      label: TracePageSearchBarLocateBtn;
+      padding: 1px 8px 4px;
+    `,
+  };
+};
 
 export type TracePageSearchBarProps = {
-  search: SearchProps;
-  setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
-  searchMatches: Set<string> | undefined;
-  focusedSearchMatch: string;
-  setFocusedSearchMatch: Dispatch<SetStateAction<string>>;
+  navigable: boolean;
+  searchValue: string;
+  setSearch: (value: string) => void;
+  searchBarSuffix: string;
+  spanFindMatches: Set<string> | undefined;
+  focusedSpanIdForSearch: string;
+  setSearchBarSuffix: Dispatch<SetStateAction<string>>;
+  setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
   datasourceType: string;
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
-  const { search, searchMatches, focusedSearchMatch, setFocusedSearchMatch, datasourceType } = props;
+  const {
+    navigable,
+    setSearch,
+    searchValue,
+    searchBarSuffix,
+    spanFindMatches,
+    focusedSpanIdForSearch,
+    setSearchBarSuffix,
+    setFocusedSpanIdForSearch,
+    datasourceType,
+  } = props;
   const styles = useStyles2(getStyles);
 
-  useEffect(() => {
-    setFocusedSearchMatch('');
-  }, [search, setFocusedSearchMatch]);
+  const suffix = searchValue ? (
+    <span className={styles.TracePageSearchBarSuffix} aria-label="Search bar suffix">
+      {searchBarSuffix}
+    </span>
+  ) : null;
+
+  const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
+  const uiFindInputInputProps = {
+    className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
+    name: 'search',
+    suffix,
+  };
+
+  const setTraceSearch = (value: string) => {
+    setFocusedSpanIdForSearch('');
+    setSearchBarSuffix('');
+    setSearch(value);
+  };
 
   const nextResult = () => {
     reportInteraction('grafana_traces_trace_view_find_next_prev_clicked', {
@@ -45,17 +121,21 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
       direction: 'next',
     });
 
-    const spanMatches = Array.from(searchMatches!);
-    const prevMatchedIndex = spanMatches.indexOf(focusedSearchMatch) ? spanMatches.indexOf(focusedSearchMatch) : 0;
+    const spanMatches = Array.from(spanFindMatches!);
+    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
+      ? spanMatches.indexOf(focusedSpanIdForSearch)
+      : 0;
 
     // new query || at end, go to start
     if (prevMatchedIndex === -1 || prevMatchedIndex === spanMatches.length - 1) {
-      setFocusedSearchMatch(spanMatches[0]);
+      setFocusedSpanIdForSearch(spanMatches[0]);
+      setSearchBarSuffix(getSearchBarSuffix(1));
       return;
     }
 
     // get next
-    setFocusedSearchMatch(spanMatches[prevMatchedIndex + 1]);
+    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex + 1]);
+    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex + 2));
   };
 
   const prevResult = () => {
@@ -65,67 +145,64 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
       direction: 'prev',
     });
 
-    const spanMatches = Array.from(searchMatches!);
-    const prevMatchedIndex = spanMatches.indexOf(focusedSearchMatch) ? spanMatches.indexOf(focusedSearchMatch) : 0;
+    const spanMatches = Array.from(spanFindMatches!);
+    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
+      ? spanMatches.indexOf(focusedSpanIdForSearch)
+      : 0;
 
     // new query || at start, go to end
     if (prevMatchedIndex === -1 || prevMatchedIndex === 0) {
-      setFocusedSearchMatch(spanMatches[spanMatches.length - 1]);
+      setFocusedSpanIdForSearch(spanMatches[spanMatches.length - 1]);
+      setSearchBarSuffix(getSearchBarSuffix(spanMatches.length));
       return;
     }
 
     // get prev
-    setFocusedSearchMatch(spanMatches[prevMatchedIndex - 1]);
+    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex - 1]);
+    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex));
   };
 
-  const buttonEnabled =
-    (search.serviceName && search.serviceName !== '') ||
-    (search.spanName && search.spanName !== '') ||
-    (search.from && search.from !== '') ||
-    (search.to && search.to !== '') ||
-    (search.tags[0].key && search.tags[0].key !== '') ||
-    (search.tags[0].value && search.tags[0].value !== '');
+  const getSearchBarSuffix = (index: number): string => {
+    if (spanFindMatches?.size && spanFindMatches?.size > 0) {
+      return index + ' of ' + spanFindMatches?.size;
+    }
+    return '';
+  };
 
   return (
-    <div className={styles.searchBar}>
+    <div className={styles.TracePageSearchBar}>
       <span className={ubJustifyEnd} style={{ display: 'flex' }}>
+        <UiFindInput
+          onChange={setTraceSearch}
+          value={searchValue}
+          inputProps={uiFindInputInputProps}
+          allowClear={true}
+        />
         <>
-          <Button
-            className={styles.button}
-            variant="secondary"
-            disabled={!buttonEnabled}
-            type="button"
-            fill={'outline'}
-            aria-label="Prev result button"
-            onClick={prevResult}
-          >
-            Prev
-          </Button>
-          <Button
-            className={styles.button}
-            variant="secondary"
-            disabled={!buttonEnabled}
-            type="button"
-            fill={'outline'}
-            aria-label="Next result button"
-            onClick={nextResult}
-          >
-            Next
-          </Button>
+          {navigable && (
+            <>
+              <Button
+                className={btnClass}
+                variant="secondary"
+                disabled={!searchValue}
+                type="button"
+                icon="arrow-down"
+                aria-label="Next results button"
+                onClick={nextResult}
+              />
+              <Button
+                className={btnClass}
+                variant="secondary"
+                disabled={!searchValue}
+                type="button"
+                icon="arrow-up"
+                aria-label="Prev results button"
+                onClick={prevResult}
+              />
+            </>
+          )}
         </>
       </span>
     </div>
   );
 });
-
-export const getStyles = () => {
-  return {
-    searchBar: css`
-      display: inline;
-    `,
-    button: css`
-      transition: 0.2s;
-      margin-left: 8px;
-    `,
-  };
-};

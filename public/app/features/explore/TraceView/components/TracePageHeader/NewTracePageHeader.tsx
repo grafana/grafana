@@ -43,9 +43,9 @@ export type NewTracePageHeaderProps = {
   timeZone: TimeZone;
   search: SearchProps;
   setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
-  searchMatches: Set<string> | undefined;
-  focusedSearchMatch: string;
-  setFocusedSearchMatch: React.Dispatch<React.SetStateAction<string>>;
+  spanFilterMatches: Set<string> | undefined;
+  focusedSpanIdForSearch: string;
+  setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
   datasourceType: string;
 };
 
@@ -58,9 +58,9 @@ export const NewTracePageHeader = React.memo((props: NewTracePageHeaderProps) =>
     timeZone,
     search,
     setSearch,
-    searchMatches,
-    focusedSearchMatch,
-    setFocusedSearchMatch,
+    spanFilterMatches,
+    focusedSpanIdForSearch,
+    setFocusedSpanIdForSearch,
     datasourceType,
   } = props;
   const styles = { ...useStyles2(getStyles), ...useStyles2(getNewStyles) };
@@ -133,9 +133,9 @@ export const NewTracePageHeader = React.memo((props: NewTracePageHeaderProps) =>
         trace={trace}
         search={search}
         setSearch={setSearch}
-        searchMatches={searchMatches}
-        focusedSearchMatch={focusedSearchMatch}
-        setFocusedSearchMatch={setFocusedSearchMatch}
+        spanFilterMatches={spanFilterMatches}
+        focusedSpanIdForSearch={focusedSpanIdForSearch}
+        setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
         datasourceType={datasourceType}
       />
 

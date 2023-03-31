@@ -31,6 +31,10 @@ import TimelineHeaderRow from './TimelineHeaderRow';
 import VirtualizedTraceView, { TopOfViewRefType } from './VirtualizedTraceView';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
 
+type TExtractUiFindFromStateReturn = {
+  uiFind: string | undefined;
+};
+
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     TraceTimelineViewer: css`
@@ -67,9 +71,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-export type TProps = {
+export type TProps = TExtractUiFindFromStateReturn & {
   registerAccessors: (accessors: Accessors) => void;
-  searchMatches: Set<string> | TNil;
+  findMatchesIDs: Set<string> | TNil;
   scrollToFirstVisibleSpan: () => void;
   traceTimeline: TTraceTimeline;
   trace: Trace;
@@ -104,7 +108,7 @@ export type TProps = {
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
   focusedSpanId?: string;
-  focusedSearchMatch: string;
+  focusedSpanIdForSearch: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
   topOfViewRefType?: TopOfViewRefType;
@@ -183,7 +187,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
       traceTimeline,
       theme,
       topOfViewRef,
-      focusedSearchMatch,
+      focusedSpanIdForSearch,
       ...rest
     } = this.props;
     const { trace } = rest;
@@ -214,7 +218,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
           setSpanNameColumnWidth={setSpanNameColumnWidth}
           currentViewRangeTime={viewRange.time.current}
           topOfViewRef={topOfViewRef}
-          focusedSearchMatch={focusedSearchMatch}
+          focusedSpanIdForSearch={focusedSpanIdForSearch}
           datasourceType={this.props.datasourceType}
         />
       </div>

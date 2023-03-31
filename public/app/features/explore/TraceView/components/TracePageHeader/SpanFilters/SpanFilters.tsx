@@ -24,15 +24,15 @@ import { Collapse, HorizontalGroup, InlineField, InlineFieldRow, Input, Select, 
 
 import { randomId, SearchProps } from '../../../useSearch';
 import { Trace } from '../../types';
-import TracePageSearchBar from '../TracePageSearchBar';
+import NewTracePageSearchBar from '../NewTracePageSearchBar';
 
 export type SpanFilterProps = {
   trace: Trace;
   search: SearchProps;
   setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
-  searchMatches: Set<string> | undefined;
-  focusedSearchMatch: string;
-  setFocusedSearchMatch: React.Dispatch<React.SetStateAction<string>>;
+  spanFilterMatches: Set<string> | undefined;
+  focusedSpanIdForSearch: string;
+  setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
   datasourceType: string;
 };
 
@@ -43,7 +43,15 @@ interface SpanData {
 }
 
 export const SpanFilters = React.memo((props: SpanFilterProps) => {
-  const { trace, search, setSearch, searchMatches, focusedSearchMatch, setFocusedSearchMatch, datasourceType } = props;
+  const {
+    trace,
+    search,
+    setSearch,
+    spanFilterMatches,
+    focusedSpanIdForSearch,
+    setFocusedSpanIdForSearch,
+    datasourceType,
+  } = props;
   const styles = { ...useStyles2(getStyles) };
   const [showSpanFilters, setShowSpanFilters] = useToggle(true);
   const [spanData, setSpanData] = useState<SpanData>({
@@ -330,12 +338,12 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
         </InlineField>
       </InlineFieldRow>
 
-      <TracePageSearchBar
+      <NewTracePageSearchBar
         search={search}
         setSearch={setSearch}
-        searchMatches={searchMatches}
-        focusedSearchMatch={focusedSearchMatch}
-        setFocusedSearchMatch={setFocusedSearchMatch}
+        spanFilterMatches={spanFilterMatches}
+        focusedSpanIdForSearch={focusedSpanIdForSearch}
+        setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
         datasourceType={datasourceType}
       />
     </Collapse>
