@@ -94,7 +94,7 @@ require (
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/client_model v0.3.0
 	github.com/prometheus/common v0.40.0
-	github.com/prometheus/prometheus v1.8.2-0.20211011171444-354d8d2ecfac
+	github.com/prometheus/prometheus v1.8.2-0.20211217191541-41f1a8125e66
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.2.0
 	github.com/stretchr/testify v1.8.2

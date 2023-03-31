@@ -2027,8 +2027,8 @@ github.com/prometheus/procfs v0.9.0/go.mod h1:+pB4zwohETzFnmlpe6yd2lSc+0/46IYZRB
 github.com/prometheus/prometheus v0.0.0-20190818123050-43acd0e2e93f/go.mod h1:rMTlmxGCvukf2KMu3fClMDKLLoJ5hl61MhcJ7xKakf0=
 github.com/prometheus/prometheus v0.0.0-20200609090129-a6600f564e3c/go.mod h1:S5n0C6tSgdnwWshBUceRx5G1OsjLv/EeZ9t3wIfEtsY=
 github.com/prometheus/prometheus v1.8.2-0.20210621150501-ff58416a0b02/go.mod h1:fC6ROpjS/2o+MQTO7X8NSZLhLBSNlDzxaeDMqQm+TUM=
-github.com/prometheus/prometheus v1.8.2-0.20211011171444-354d8d2ecfac h1:emphJoDK6yZ1GxyFbyYa7ByoWkl3dXfOmPvHAy0L0XI=
-github.com/prometheus/prometheus v1.8.2-0.20211011171444-354d8d2ecfac/go.mod h1:wP6L5BiOZ1JZYadRh17u5RujSS19zNSGZfGUi/MZUpM=
+github.com/prometheus/prometheus v1.8.2-0.20211217191541-41f1a8125e66 h1:Y4Cq+kBfu+yc4dbCUn4syvC2/F6rYhg1UoeyudhPq2o=
+github.com/prometheus/prometheus v1.8.2-0.20211217191541-41f1a8125e66/go.mod h1:bBByfKZ/sC+obk4CX3GpJ2Ul+fKZGtXneLYFG8C//nc=
 github.com/prometheus/statsd_exporter v0.20.0/go.mod h1:YL3FWCG8JBBtaUSxAg4Gz2ZYu22bS84XM89ZQXXTWmQ=
 github.com/prometheus/statsd_exporter v0.21.0/go.mod h1:rbT83sZq2V+p73lHhPZfMc3MLCHmSHelCh9hSGYNLTQ=
 github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40TwIPHuXU=
