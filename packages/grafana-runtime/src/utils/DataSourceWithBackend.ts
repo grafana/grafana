@@ -210,7 +210,6 @@ class DataSourceWithBackend<
     }
 
     if (requestId) {
-      queryStrObj.requestId = requestId;
       url += `&requestId=${requestId}`;
     }
 
