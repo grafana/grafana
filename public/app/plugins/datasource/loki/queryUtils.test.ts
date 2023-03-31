@@ -1,6 +1,3 @@
-import { ArrayVector, DataQueryResponse, QueryResultMetaStat } from '@grafana/data';
-
-import { getMockFrames } from './mocks';
 import {
   getHighlighterExpressionsFromQuery,
   getNormalizedLokiQuery,
@@ -11,9 +8,7 @@ import {
   parseToNodeNamesArray,
   getParserFromQuery,
   obfuscate,
-  combineResponses,
-  cloneQueryResponse,
-  requestSupportsPartitioning,
+  requestSupporsChunking,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -299,305 +294,7 @@ describe('getParserFromQuery', () => {
   });
 });
 
-describe('cloneQueryResponse', () => {
-  const { logFrameA } = getMockFrames();
-  const responseA: DataQueryResponse = {
-    data: [logFrameA],
-  };
-  it('clones query responses', () => {
-    const clonedA = cloneQueryResponse(responseA);
-    expect(clonedA).not.toBe(responseA);
-    expect(clonedA).toEqual(clonedA);
-  });
-});
-
-describe('combineResponses', () => {
-  it('combines logs frames', () => {
-    const { logFrameA, logFrameB } = getMockFrames();
-    const responseA: DataQueryResponse = {
-      data: [logFrameA],
-    };
-    const responseB: DataQueryResponse = {
-      data: [logFrameB],
-    };
-    expect(combineResponses(responseA, responseB)).toEqual({
-      data: [
-        {
-          fields: [
-            {
-              config: {},
-              name: 'Time',
-              type: 'time',
-              values: new ArrayVector([1, 2, 3, 4]),
-            },
-            {
-              config: {},
-              name: 'Line',
-              type: 'string',
-              values: new ArrayVector(['line3', 'line4', 'line1', 'line2']),
-            },
-            {
-              config: {},
-              name: 'labels',
-              type: 'other',
-              values: new ArrayVector([
-                {
-                  otherLabel: 'other value',
-                },
-                {
-                  label: 'value',
-                },
-                {
-                  otherLabel: 'other value',
-                },
-              ]),
-            },
-            {
-              config: {},
-              name: 'tsNs',
-              type: 'string',
-              values: new ArrayVector(['1000000', '2000000', '3000000', '4000000']),
-            },
-            {
-              config: {},
-              name: 'id',
-              type: 'string',
-              values: new ArrayVector(['id3', 'id4', 'id1', 'id2']),
-            },
-          ],
-          length: 4,
-          meta: {
-            stats: [
-              {
-                displayName: 'Summary: total bytes processed',
-                unit: 'decbytes',
-                value: 33,
-              },
-            ],
-          },
-          refId: 'A',
-        },
-      ],
-    });
-  });
-
-  it('combines metric frames', () => {
-    const { metricFrameA, metricFrameB } = getMockFrames();
-    const responseA: DataQueryResponse = {
-      data: [metricFrameA],
-    };
-    const responseB: DataQueryResponse = {
-      data: [metricFrameB],
-    };
-    expect(combineResponses(responseA, responseB)).toEqual({
-      data: [
-        {
-          fields: [
-            {
-              config: {},
-              name: 'Time',
-              type: 'time',
-              values: new ArrayVector([1000000, 2000000, 3000000, 4000000]),
-            },
-            {
-              config: {},
-              name: 'Value',
-              type: 'number',
-              values: new ArrayVector([6, 7, 5, 4]),
-            },
-          ],
-          length: 4,
-          meta: {
-            stats: [
-              {
-                displayName: 'Summary: total bytes processed',
-                unit: 'decbytes',
-                value: 33,
-              },
-            ],
-          },
-          refId: 'A',
-        },
-      ],
-    });
-  });
-
-  it('combines and identifies new frames in the response', () => {
-    const { metricFrameA, metricFrameB, metricFrameC } = getMockFrames();
-    const responseA: DataQueryResponse = {
-      data: [metricFrameA],
-    };
-    const responseB: DataQueryResponse = {
-      data: [metricFrameB, metricFrameC],
-    };
-    expect(combineResponses(responseA, responseB)).toEqual({
-      data: [
-        {
-          fields: [
-            {
-              config: {},
-              name: 'Time',
-              type: 'time',
-              values: new ArrayVector([1000000, 2000000, 3000000, 4000000]),
-            },
-            {
-              config: {},
-              name: 'Value',
-              type: 'number',
-              values: new ArrayVector([6, 7, 5, 4]),
-            },
-          ],
-          length: 4,
-          meta: {
-            stats: [
-              {
-                displayName: 'Summary: total bytes processed',
-                unit: 'decbytes',
-                value: 33,
-              },
-            ],
-          },
-          refId: 'A',
-        },
-        metricFrameC,
-      ],
-    });
-  });
-
-  it('combines frames in a new response instance', () => {
-    const { metricFrameA, metricFrameB } = getMockFrames();
-    const responseA: DataQueryResponse = {
-      data: [metricFrameA],
-    };
-    const responseB: DataQueryResponse = {
-      data: [metricFrameB],
-    };
-    expect(combineResponses(null, responseA)).not.toBe(responseA);
-    expect(combineResponses(null, responseB)).not.toBe(responseB);
-  });
-
-  it('combine when first param has errors', () => {
-    const { metricFrameA, metricFrameB } = getMockFrames();
-    const errorA = {
-      message: 'errorA',
-    };
-    const responseA: DataQueryResponse = {
-      data: [metricFrameA],
-      error: errorA,
-      errors: [errorA],
-    };
-    const responseB: DataQueryResponse = {
-      data: [metricFrameB],
-    };
-
-    const combined = combineResponses(responseA, responseB);
-    expect(combined.data[0].length).toBe(4);
-    expect(combined.error?.message).toBe('errorA');
-    expect(combined.errors).toHaveLength(1);
-    expect(combined.errors?.[0]?.message).toBe('errorA');
-  });
-
-  it('combine when second param has errors', () => {
-    const { metricFrameA, metricFrameB } = getMockFrames();
-    const responseA: DataQueryResponse = {
-      data: [metricFrameA],
-    };
-    const errorB = {
-      message: 'errorB',
-    };
-    const responseB: DataQueryResponse = {
-      data: [metricFrameB],
-      error: errorB,
-      errors: [errorB],
-    };
-
-    const combined = combineResponses(responseA, responseB);
-    expect(combined.data[0].length).toBe(4);
-    expect(combined.error?.message).toBe('errorB');
-    expect(combined.errors).toHaveLength(1);
-    expect(combined.errors?.[0]?.message).toBe('errorB');
-  });
-
-  it('combine when both params have errors', () => {
-    const { metricFrameA, metricFrameB } = getMockFrames();
-    const errorA = {
-      message: 'errorA',
-    };
-    const errorB = {
-      message: 'errorB',
-    };
-    const responseA: DataQueryResponse = {
-      data: [metricFrameA],
-      error: errorA,
-      errors: [errorA],
-    };
-    const responseB: DataQueryResponse = {
-      data: [metricFrameB],
-      error: errorB,
-      errors: [errorB],
-    };
-
-    const combined = combineResponses(responseA, responseB);
-    expect(combined.data[0].length).toBe(4);
-    expect(combined.error?.message).toBe('errorA');
-    expect(combined.errors).toHaveLength(2);
-    expect(combined.errors?.[0]?.message).toBe('errorA');
-    expect(combined.errors?.[1]?.message).toBe('errorB');
-  });
-
-  describe('combine stats', () => {
-    const { metricFrameA } = getMockFrames();
-    const makeResponse = (stats?: QueryResultMetaStat[]): DataQueryResponse => ({
-      data: [
-        {
-          ...metricFrameA,
-          meta: {
-            ...metricFrameA.meta,
-            stats,
-          },
-        },
-      ],
-    });
-    it('two values', () => {
-      const responseA = makeResponse([
-        { displayName: 'Ingester: total reached', value: 1 },
-        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 11 },
-      ]);
-      const responseB = makeResponse([
-        { displayName: 'Ingester: total reached', value: 2 },
-        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 22 },
-      ]);
-
-      expect(combineResponses(responseA, responseB).data[0].meta.stats).toStrictEqual([
-        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 33 },
-      ]);
-    });
-
-    it('one value', () => {
-      const responseA = makeResponse([
-        { displayName: 'Ingester: total reached', value: 1 },
-        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 11 },
-      ]);
-      const responseB = makeResponse();
-
-      expect(combineResponses(responseA, responseB).data[0].meta.stats).toStrictEqual([
-        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 11 },
-      ]);
-
-      expect(combineResponses(responseB, responseA).data[0].meta.stats).toStrictEqual([
-        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 11 },
-      ]);
-    });
-
-    it('no value', () => {
-      const responseA = makeResponse();
-      const responseB = makeResponse();
-      expect(combineResponses(responseA, responseB).data[0].meta.stats).toHaveLength(0);
-    });
-  });
-});
-
-describe('requestSupportsPartitioning', () => {
+describe('requestSupporsChunking', () => {
   it('hidden requests are not partitioned', () => {
     const requests: LokiQuery[] = [
       {
@@ -606,7 +303,7 @@ describe('requestSupportsPartitioning', () => {
         hide: true,
       },
     ];
-    expect(requestSupportsPartitioning(requests)).toBe(false);
+    expect(requestSupporsChunking(requests)).toBe(false);
   });
   it('special requests are not partitioned', () => {
     const requests: LokiQuery[] = [
@@ -615,7 +312,7 @@ describe('requestSupportsPartitioning', () => {
         refId: 'do-not-chunk',
       },
     ];
-    expect(requestSupportsPartitioning(requests)).toBe(false);
+    expect(requestSupporsChunking(requests)).toBe(false);
   });
   it('empty requests are not partitioned', () => {
     const requests: LokiQuery[] = [
@@ -624,7 +321,7 @@ describe('requestSupportsPartitioning', () => {
         refId: 'A',
       },
     ];
-    expect(requestSupportsPartitioning(requests)).toBe(false);
+    expect(requestSupporsChunking(requests)).toBe(false);
   });
   it('all other requests are partitioned', () => {
     const requests: LokiQuery[] = [
@@ -637,6 +334,6 @@ describe('requestSupportsPartitioning', () => {
         refId: 'B',
       },
     ];
-    expect(requestSupportsPartitioning(requests)).toBe(true);
+    expect(requestSupporsChunking(requests)).toBe(true);
   });
 });

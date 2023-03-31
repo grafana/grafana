@@ -67,6 +67,9 @@ export const Pages = {
         `data-testid Dashboard template variables Variable Value DropDown option text ${item}`,
     },
     Settings: {
+      Actions: {
+        close: 'data-testid dashboard-settings-close',
+      },
       General: {
         deleteDashBoard: 'Dashboard settings page delete dashboard button',
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
@@ -206,6 +209,8 @@ export const Pages = {
         EmailSharingInput: 'data-testid public dashboard email sharing input',
         EmailSharingInviteButton: 'data-testid public dashboard email sharing invite button',
         EmailSharingList: 'data-testid public dashboard email sharing list',
+        DeleteEmail: 'data-testid public dashboard delete email button',
+        ReshareLink: 'data-testid public dashboard reshare link button',
       },
     },
   },

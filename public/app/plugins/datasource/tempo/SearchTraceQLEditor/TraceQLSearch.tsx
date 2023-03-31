@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
@@ -20,7 +20,7 @@ import DurationInput from './DurationInput';
 import InlineSearchField from './InlineSearchField';
 import SearchField from './SearchField';
 import TagsInput from './TagsInput';
-import { generateQueryFromFilters, replaceAt } from './utils';
+import { filterScopedTag, filterTitle, generateQueryFromFilters, replaceAt } from './utils';
 
 interface Props {
   datasource: TempoDatasource;
@@ -37,18 +37,21 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
   const [isTagsLoading, setIsTagsLoading] = useState(true);
   const [traceQlQuery, setTraceQlQuery] = useState<string>('');
 
-  const updateFilter = (s: TraceqlFilter) => {
-    const copy = { ...query };
-    copy.filters ||= [];
-    const indexOfFilter = copy.filters.findIndex((f) => f.id === s.id);
-    if (indexOfFilter >= 0) {
-      // update in place if the filter already exists, for consistency and to avoid UI bugs
-      copy.filters = replaceAt(copy.filters, indexOfFilter, s);
-    } else {
-      copy.filters.push(s);
-    }
-    onChange(copy);
-  };
+  const updateFilter = useCallback(
+    (s: TraceqlFilter) => {
+      const copy = { ...query };
+      copy.filters ||= [];
+      const indexOfFilter = copy.filters.findIndex((f) => f.id === s.id);
+      if (indexOfFilter >= 0) {
+        // update in place if the filter already exists, for consistency and to avoid UI bugs
+        copy.filters = replaceAt(copy.filters, indexOfFilter, s);
+      } else {
+        copy.filters.push(s);
+      }
+      onChange(copy);
+    },
+    [onChange, query]
+  );
 
   const deleteFilter = (s: TraceqlFilter) => {
     onChange({ ...query, filters: query.filters.filter((f) => f.id !== s.id) });
@@ -58,7 +61,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
     setTraceQlQuery(generateQueryFromFilters(query.filters || []));
   }, [query]);
 
-  const findFilter = (id: string) => query.filters?.find((f) => f.id === id);
+  const findFilter = useCallback((id: string) => query.filters?.find((f) => f.id === id), [query.filters]);
 
   useEffect(() => {
     const fetchTags = async () => {
@@ -72,8 +75,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
           if (!tags.find((t) => t === 'status')) {
             tags.push('status');
           }
-          const tagsWithDot = tags.sort().map((t) => `.${t}`);
-          setTags(tagsWithDot);
+          setTags(tags);
           setIsTagsLoading(false);
         }
       } catch (error) {
@@ -85,44 +87,60 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
     fetchTags();
   }, [datasource]);
 
+  useEffect(() => {
+    // Initialize state with configured static filters that already have a value from the config
+    datasource.search?.filters
+      ?.filter((f) => f.value)
+      .forEach((f) => {
+        if (!findFilter(f.id)) {
+          updateFilter(f);
+        }
+      });
+  }, [datasource.search?.filters, findFilter, updateFilter]);
+
+  // filter out tags that already exist in the static fields
+  const staticTags = datasource.search?.filters?.map((f) => f.tag) || [];
+  staticTags.push('duration');
+  const filteredTags = [...CompletionProvider.intrinsics, ...tags].filter((t) => !staticTags.includes(t));
+
+  // Dynamic filters are all filters that don't match the ID of a filter in the datasource configuration
+  // The duration tag is a special case since its selector is hard-coded
+  const dynamicFilters = (query.filters || []).filter(
+    (f) => f.tag !== 'duration' && (datasource.search?.filters?.findIndex((sf) => sf.id === f.id) || 0) === -1
+  );
+
   return (
     <>
       <div className={styles.container}>
         <div>
-          <InlineSearchField label={'Service Name'}>
-            <SearchField
-              filter={
-                findFilter('service-name') || {
-                  id: 'service-name',
-                  type: 'static',
-                  tag: '.service.name',
-                  operator: '=',
-                }
-              }
-              datasource={datasource}
-              setError={setError}
-              updateFilter={updateFilter}
-              tags={[]}
-              operators={['=', '!=', '=~']}
-            />
-          </InlineSearchField>
-          <InlineSearchField label={'Span Name'}>
-            <SearchField
-              filter={findFilter('span-name') || { id: 'span-name', type: 'static', tag: 'name', operator: '=' }}
-              datasource={datasource}
-              setError={setError}
-              updateFilter={updateFilter}
-              tags={[]}
-              operators={['=', '!=', '=~']}
-            />
-          </InlineSearchField>
-          <InlineSearchField label={'Duration'} tooltip="The span duration, i.e.	end - start time of the span">
+          {datasource.search?.filters?.map((f) => (
+            <InlineSearchField
+              key={f.id}
+              label={filterTitle(f)}
+              tooltip={`Filter your search by ${filterScopedTag(
+                f
+              )}. To modify the default filters shown for search visit the Tempo datasource configuration page.`}
+            >
+              <SearchField
+                filter={findFilter(f.id) || f}
+                datasource={datasource}
+                setError={setError}
+                updateFilter={updateFilter}
+                tags={[]}
+                hideScope={true}
+                hideTag={true}
+              />
+            </InlineSearchField>
+          ))}
+          <InlineSearchField
+            label={'Duration'}
+            tooltip="The span duration, i.e.	end - start time of the span. Accepted units are ns, ms, s, m, h"
+          >
             <HorizontalGroup spacing={'sm'}>
               <DurationInput
                 filter={
                   findFilter('min-duration') || {
                     id: 'min-duration',
-                    type: 'static',
                     tag: 'duration',
                     operator: '>',
                     valueType: 'duration',
@@ -135,7 +153,6 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
                 filter={
                   findFilter('max-duration') || {
                     id: 'max-duration',
-                    type: 'static',
                     tag: 'duration',
                     operator: '<',
                     valueType: 'duration',
@@ -148,12 +165,12 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
           </InlineSearchField>
           <InlineSearchField label={'Tags'}>
             <TagsInput
-              filters={query.filters}
+              filters={dynamicFilters}
               datasource={datasource}
               setError={setError}
               updateFilter={updateFilter}
               deleteFilter={deleteFilter}
-              tags={[...intrinsics, ...tags]}
+              tags={filteredTags}
               isTagsLoading={isTagsLoading}
             />
           </InlineSearchField>

@@ -30,7 +30,7 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
-import { TimeSeriesOptions } from 'app/plugins/panel/timeseries/types';
+import { PanelOptions as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 import { ExploreGraphStyle } from 'app/types';
 
 import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';

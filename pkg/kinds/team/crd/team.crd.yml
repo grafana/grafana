@@ -32,8 +32,8 @@ spec:
                                 type: string
                             created:
                                 description: Created indicates when the team was created.
-                                format: int64
-                                type: integer
+                                format: date-time
+                                type: string
                             email:
                                 description: Email of the team.
                                 type: string
@@ -58,8 +58,8 @@ spec:
                                 type: integer
                             updated:
                                 description: Updated indicates when the team was updated.
-                                format: int64
-                                type: integer
+                                format: date-time
+                                type: string
                         required:
                             - orgId
                             - name

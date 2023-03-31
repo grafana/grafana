@@ -187,28 +187,35 @@ export function getPanelMenu(
 
   const subMenu: PanelMenuItem[] = [];
   const canEdit = dashboard.canEditPanel(panel);
-
-  if (canEdit && !(panel.isViewing || panel.isEditing)) {
-    subMenu.push({
-      text: t('panel.header-menu.duplicate', `Duplicate`),
-      onClick: onDuplicatePanel,
-      shortcut: 'p d',
-    });
-
-    subMenu.push({
-      text: t('panel.header-menu.copy', `Copy`),
-      onClick: onCopyPanel,
-    });
-
-    if (isPanelModelLibraryPanel(panel)) {
+  if (!(panel.isViewing || panel.isEditing)) {
+    if (canEdit) {
       subMenu.push({
-        text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
-        onClick: onUnlinkLibraryPanel,
+        text: t('panel.header-menu.duplicate', `Duplicate`),
+        onClick: onDuplicatePanel,
+        shortcut: 'p d',
       });
-    } else {
+
       subMenu.push({
-        text: t('panel.header-menu.create-library-panel', `Create library panel`),
-        onClick: onAddLibraryPanel,
+        text: t('panel.header-menu.copy', `Copy`),
+        onClick: onCopyPanel,
+      });
+
+      if (isPanelModelLibraryPanel(panel)) {
+        subMenu.push({
+          text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
+          onClick: onUnlinkLibraryPanel,
+        });
+      } else {
+        subMenu.push({
+          text: t('panel.header-menu.create-library-panel', `Create library panel`),
+          onClick: onAddLibraryPanel,
+        });
+      }
+    } else if (contextSrv.isEditor) {
+      // An editor but the dashboard is not editable
+      subMenu.push({
+        text: t('panel.header-menu.copy', `Copy`),
+        onClick: onCopyPanel,
       });
     }
   }

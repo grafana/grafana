@@ -161,7 +161,7 @@ func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetData
 	return s.SQLStore.GetDataSources(ctx, query)
 }
 
-func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error {
+func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
 	return s.SQLStore.GetAllDataSources(ctx, query)
 }
 
