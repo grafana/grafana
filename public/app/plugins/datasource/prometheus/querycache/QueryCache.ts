@@ -68,7 +68,7 @@ export function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery
  * Sig: Signature: the string that is expected to change, upon which we wipe the cache fields
  */
 export class QueryCache {
-  private overlapWindowMs;
+  private overlapWindowMs: number;
   private perfObeserver?: PerformanceObserver;
   private shouldProfile: boolean;
 
