@@ -83,10 +83,10 @@ export interface FeatureToggles {
   traceqlSearch?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
+  prometheusResourceBrowserCache?: boolean;
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
   disableElasticsearchBackendExploreQuery?: boolean;
-  prometheusResourceBrowserCache?: boolean;
   prometheusDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
