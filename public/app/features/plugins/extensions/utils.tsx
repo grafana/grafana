@@ -20,7 +20,7 @@ export function isPluginExtensionLinkConfig(
 }
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
-  return (...args: any[]) => {
+  return (...args: unknown[]) => {
     try {
       return fn(...args);
     } catch (e) {
