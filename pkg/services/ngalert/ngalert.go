@@ -435,9 +435,6 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		}
 		return backend, nil
 	}
-	if backend == historian.BackendTypeSQL {
-		return historian.NewSqlBackend(), nil
-	}
 
 	return nil, fmt.Errorf("unrecognized state history backend: %s", backend)
 }
