@@ -22,6 +22,7 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
+import { calculateFieldDisplayName } from '@grafana/data/src/field/fieldState';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { renderLegendFormat } from './legend';
@@ -71,6 +72,24 @@ export function transformV2(
   request: DataQueryRequest<PromQuery>,
   options: { exemplarTraceIdDestinations?: ExemplarTraceIdDestination[] }
 ) {
+  // migration for dataplane field name issue
+  response.data.forEach((f: DataFrame) => {
+    const refId = f.refId;
+    f.fields.forEach((field) => {
+      const target = request.targets.find((t) => t.refId === refId);
+      if (
+        field.labels?.__name__ &&
+        field.labels?.__name__ === field.name &&
+        // check that the legend is selected as auto
+        target &&
+        target.legendFormat === '__auto'
+      ) {
+        const fieldCopy = { ...field, name: TIME_SERIES_VALUE_FIELD_NAME };
+        field.config.displayNameFromDS = calculateFieldDisplayName(fieldCopy, f, response.data);
+      }
+    });
+  });
+
   const [tableFrames, framesWithoutTable] = partition<DataFrame>(response.data, (df) => isTableResult(df, request));
   const processedTableFrames = transformDFToTable(tableFrames);
 

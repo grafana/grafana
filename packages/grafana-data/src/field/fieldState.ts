@@ -55,7 +55,7 @@ export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?:
 /**
  * Get an appropriate display name. If the 'displayName' field config is set, use that.
  */
-function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
+export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const hasConfigTitle = field.config?.displayName && field.config?.displayName.length;
 
   let displayName = hasConfigTitle ? field.config!.displayName! : field.name;
@@ -73,11 +73,6 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
   // But in case it has a join source we should handle it as normal field
   if (field.type === FieldType.time && !field.labels) {
     return displayName ?? TIME_SERIES_TIME_FIELD_NAME;
-  }
-
-  // migration for dataplane with TimeSeriesMulti
-  if (field.labels?.__name__ && field.labels?.__name__ === field.name) {
-    field = { ...field, name: TIME_SERIES_VALUE_FIELD_NAME };
   }
 
   let parts: string[] = [];
