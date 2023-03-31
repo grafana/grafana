@@ -234,7 +234,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 			}
 			alertsAndIncidentsChildren = append(alertsAndIncidentsChildren, appLink)
 			treeRoot.AddSection(&navtree.NavLink{
-				Text:       "Alerts & incidents",
+				Text:       "Alerts & IRM",
 				Id:         navtree.NavIDAlertsAndIncidents,
 				SubTitle:   "Alerting and incident management apps",
 				Icon:       "bell",
