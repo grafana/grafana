@@ -100,7 +100,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: 100%;
     max-height: 400px;
     background-color: ${theme.colors.background.primary};
-    border: 1px solid ${theme.colors.border.medium};
+    border: 1px solid ${theme.colors.border.weak};
     padding: ${theme.spacing(2)};
     margin: ${theme.spacing(1)} 0;
     box-shadow: ${theme.shadows.z3};
