@@ -121,8 +121,6 @@ export class QueryCache {
       }
     }
 
-    // console.log(`${doPartialQuery ? 'partial' : 'full'} query`);
-
     if (doPartialQuery) {
       // 10m re-query overlap
 
