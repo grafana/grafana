@@ -80,7 +80,7 @@ export class PrometheusDatasource
   type: string;
   editorSrc: string;
   ruleMappings: { [index: string]: string };
-  hasIncrementalQuery?: boolean;
+  hasIncrementalQuery: boolean;
   url: string;
   id: number;
   directUrl: string;
