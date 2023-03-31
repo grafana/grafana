@@ -18,9 +18,9 @@ import (
 
 var errPluginManagerUnavailable = errors.New("plugins unavailable")
 
-func ProvidePluginsModule(cfg *setting.Cfg, moduleManager modules.Manager, grpcServerProvider grpcserver.Provider,
-	coreRegistry *coreplugin.Registry, internalRegistry *registry.InMemory,
-	pluginClient *client.Decorator) (*PluginsModule, error) {
+func ProvidePluginsModule(cfg *setting.Cfg, moduleManager modules.Manager, coreRegistry *coreplugin.Registry,
+	internalRegistry *registry.InMemory, pluginClient *client.Decorator,
+	grpcServerProvider grpcserver.Provider) (*PluginsModule, error) {
 	m := &PluginsModule{
 		cfg:                cfg,
 		coreRegistry:       coreRegistry,
@@ -29,7 +29,7 @@ func ProvidePluginsModule(cfg *setting.Cfg, moduleManager modules.Manager, grpcS
 		grpcServerProvider: grpcServerProvider,
 	}
 
-	moduleManager.RegisterModule(modules.PluginManagerServer, m.initServer)
+	moduleManager.RegisterModule(modules.PluginManagerServer, m.initServer, modules.GRPCServer)
 	moduleManager.RegisterInvisibleModule(modules.PluginManagerClient, m.initClient)
 	moduleManager.RegisterInvisibleModule(modules.PluginManagement, m.initLocalPluginManagement)
 
@@ -54,7 +54,7 @@ type PluginsModule struct {
 }
 
 func (m *PluginsModule) initServer() (services.Service, error) {
-	return newPluginManagerServer(m.cfg, m.coreRegistry, m.internalRegistry, m.pluginClient), nil
+	return newPluginManagerServer(m.cfg, m.coreRegistry, m.internalRegistry, m.pluginClient, m.grpcServerProvider)
 }
 
 func (m *PluginsModule) initClient() (services.Service, error) {
@@ -65,7 +65,10 @@ func (m *PluginsModule) initClient() (services.Service, error) {
 }
 
 func (m *PluginsModule) initLocalPluginManagement() (services.Service, error) {
-	c := NewCore(m.cfg, m.coreRegistry, m.internalRegistry, m.pluginClient)
+	c, err := NewCore(m.cfg, m.coreRegistry, m.internalRegistry, m.pluginClient)
+	if err != nil {
+		return nil, err
+	}
 	m.registerPluginManager(c)
 
 	return c, nil

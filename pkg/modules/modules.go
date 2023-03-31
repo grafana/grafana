@@ -16,6 +16,7 @@ const (
 	All        string = "all"
 	Core       string = "core"
 	HTTPServer string = "http-server"
+	GRPCServer string = "grpc-server"
 
 	Plugins             string = "plugins"
 	PluginManagerServer string = "plugins-server"
@@ -68,7 +69,7 @@ func (m *service) Init(_ context.Context) error {
 	var err error
 
 	// module registration
-	m.RegisterModule(All, nil, Core, HTTPServer, Plugins)
+	m.RegisterModule(All, nil, Core, HTTPServer, GRPCServer, Plugins)
 
 	for mod, targets := range m.dependencyMap {
 		if err := m.ModuleManager.AddDependency(mod, targets...); err != nil {

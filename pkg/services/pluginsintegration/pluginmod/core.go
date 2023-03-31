@@ -46,8 +46,11 @@ type core struct {
 }
 
 func NewCore(cfg *setting.Cfg, coreRegistry *coreplugin.Registry, reg *registry.InMemory,
-	cl *client.Decorator) *core {
-	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
+	cl *client.Decorator) (*core, error) {
+	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
+	if err != nil {
+		return nil, err
+	}
 	cdn := pluginscdn.ProvideService(pCfg)
 	proc := process.NewManager(reg)
 	lic := plicensing.ProvideLicensing(cfg, &licensing.OSSLicensingService{Cfg: cfg})
@@ -68,7 +71,7 @@ func NewCore(cfg *setting.Cfg, coreRegistry *coreplugin.Registry, reg *registry.
 		log: log.New("plugin.manager"),
 	}
 	c.BasicService = services.NewBasicService(c.start, c.run, c.stop)
-	return c
+	return c, nil
 }
 
 func (c *core) start(ctx context.Context) error {

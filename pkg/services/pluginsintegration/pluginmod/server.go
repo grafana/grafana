@@ -3,24 +3,19 @@ package pluginmod
 import (
 	"context"
 	"errors"
-	"fmt"
-	"net"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	pluginProto "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginmod/proto"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -28,24 +23,24 @@ import (
 type Server struct {
 	*services.BasicService
 
-	srv *grpc.Server
 	pm  *core
 	cfg *setting.Cfg
 	log log.Logger
 }
 
-func newPluginManagerServer(cfg *setting.Cfg, coreRegistry *coreplugin.Registry,
-	internalRegistry *registry.InMemory, pluginClient *client.Decorator) *Server {
-	grpcSrv := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
-
-	pluginManager := NewCore(cfg, coreRegistry, internalRegistry, pluginClient)
+func newPluginManagerServer(cfg *setting.Cfg, coreRegistry *coreplugin.Registry, internalRegistry *registry.InMemory,
+	pluginClient *client.Decorator, grpcServerProvider grpcserver.Provider) (*Server, error) {
+	pluginManager, err := NewCore(cfg, coreRegistry, internalRegistry, pluginClient)
+	if err != nil {
+		return nil, err
+	}
 	s := &Server{
 		cfg: cfg,
 		pm:  pluginManager,
-		srv: grpcSrv,
 		log: log.New("plugin.manager.server"),
 	}
 
+	grpcSrv := grpcServerProvider.GetServer()
 	pluginProto.RegisterPluginManagerServer(grpcSrv, s)
 	pluginv2.RegisterDataServer(grpcSrv, s)
 	pluginv2.RegisterDiagnosticsServer(grpcSrv, s)
@@ -54,7 +49,7 @@ func newPluginManagerServer(cfg *setting.Cfg, coreRegistry *coreplugin.Registry,
 
 	s.BasicService = services.NewBasicService(s.start, s.run, s.stop)
 	s.log.Info("Creating server service...")
-	return s
+	return s, nil
 }
 
 func (s *Server) start(ctx context.Context) error {
@@ -66,20 +61,7 @@ func (s *Server) start(ctx context.Context) error {
 func (s *Server) run(ctx context.Context) error {
 	s.log.Info("Running server...")
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.PluginManager.Port))
-	if err != nil {
-		return err
-	}
-
 	runErr := make(chan error, 1)
-	go func() {
-		s.log.Info("GRPC server: starting")
-		err := s.srv.Serve(lis)
-		if err != nil {
-			runErr <- err
-		}
-	}()
-
 	go func() {
 		err := s.pm.run(ctx)
 		if err != nil {
@@ -88,7 +70,7 @@ func (s *Server) run(ctx context.Context) error {
 	}()
 
 	select {
-	case err = <-runErr:
+	case err := <-runErr:
 		return err
 	case <-ctx.Done():
 		return ctx.Err()
@@ -97,9 +79,13 @@ func (s *Server) run(ctx context.Context) error {
 
 func (s *Server) stop(failure error) error {
 	s.log.Info("Stopping server...")
-	s.srv.GracefulStop()
+	//s.srv.GracefulStop()
 	err := s.pm.stop(failure)
 	return err
+}
+
+func (s *Server) AuthFuncOverride(ctx context.Context, _ string) (context.Context, error) {
+	return ctx, nil
 }
 
 func (s *Server) GetPlugin(ctx context.Context, req *pluginProto.GetPluginRequest) (*pluginProto.GetPluginResponse, error) {

@@ -8,6 +8,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
@@ -34,8 +35,6 @@ type Client struct {
 	log log.Logger
 
 	pm pluginProto.PluginManagerClient
-
-	// PluginClient
 	qc pluginv2.DataClient
 	dc pluginv2.DiagnosticsClient
 	sc pluginv2.StreamClient
@@ -55,10 +54,18 @@ func newPluginManagerClient(cfg *setting.Cfg) *Client {
 func (c *Client) start(_ context.Context) error {
 	c.log.Info("Starting client...")
 
-	conn, err := grpc.Dial(
-		fmt.Sprintf(":%d", c.cfg.PluginManager.Port),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+	opts := []grpc.DialOption{grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1024 * 1024 * 16))}
+
+	if c.cfg.GRPCServerTLSConfig == nil {
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	} else {
+		opts = append(opts, grpc.WithTransportCredentials(
+			credentials.NewTLS(c.cfg.GRPCServerTLSConfig)))
+	}
+
+	c.log.Info("Connection to gRPC server", "address", c.cfg.GRPCServerAddress)
+
+	conn, err := grpc.Dial(c.cfg.GRPCServerAddress, opts...)
 	if err != nil {
 		return err
 	}
@@ -68,6 +75,8 @@ func (c *Client) start(_ context.Context) error {
 	c.sc = pluginv2.NewStreamClient(conn)
 	c.rc = pluginv2.NewResourceClient(conn)
 	c.pm = pluginProto.NewPluginManagerClient(conn)
+
+	c.log.Info("Connection status", "status", conn.GetState().String())
 
 	return nil
 }
@@ -88,6 +97,7 @@ func (c *Client) Plugin(ctx context.Context, id string) (plugins.PluginDTO, bool
 		Id: id,
 	})
 	if err != nil {
+		c.log.Error("Error occurred when fetching plugin", "pluginID", id, "err", err)
 		return plugins.PluginDTO{}, false
 	}
 
@@ -103,6 +113,7 @@ func (c *Client) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []plu
 		Types: types,
 	})
 	if err != nil {
+		c.log.Error("Error occurred when fetching plugins", "err", err)
 		return []plugins.PluginDTO{}
 	}
 
