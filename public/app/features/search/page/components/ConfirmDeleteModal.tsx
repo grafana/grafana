@@ -45,7 +45,7 @@ export const ConfirmDeleteModal = ({ results, onDeleteItems, onDismiss }: Props)
 
   return (
     <ConfirmModal
-      isOpen={true}
+      isOpen
       title="Delete"
       body={
         <>
