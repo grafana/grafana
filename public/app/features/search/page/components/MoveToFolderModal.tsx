@@ -111,6 +111,7 @@ export const MoveToFolderModal = ({ results, onMoveItems, onDismiss }: Props) =>
 
   return (
     <Modal
+      isOpen
       className={styles.modal}
       title={nestedFoldersEnabled ? 'Move' : 'Choose Dashboard Folder'}
       icon="folder-plus"

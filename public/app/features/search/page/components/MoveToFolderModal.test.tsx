@@ -51,7 +51,7 @@ describe('MoveToFolderModal', () => {
     );
 
     // Wait for folder picker to finish rendering
-    await screen.findByText('General');
+    await screen.findByText('Choose');
 
     expect(screen.getByRole('heading', { name: 'Choose Dashboard Folder' })).toBeInTheDocument();
     expect(screen.getByText('Move 2 dashboards to:')).toBeInTheDocument();
@@ -84,7 +84,7 @@ describe('MoveToFolderModal', () => {
     );
 
     // Wait for folder picker to finish rendering
-    await screen.findByText('General');
+    await screen.findByText('Choose');
 
     const folderPicker = screen.getByLabelText(selectors.components.FolderPicker.input);
     await selectOptionInTest(folderPicker, 'Folder 3');
@@ -137,7 +137,7 @@ describe('MoveToFolderModal', () => {
       );
 
       // Wait for folder picker to finish rendering
-      await screen.findByText('General');
+      await screen.findByText('Choose');
 
       const folderPicker = screen.getByLabelText(selectors.components.FolderPicker.input);
       await selectOptionInTest(folderPicker, 'Folder 3');
