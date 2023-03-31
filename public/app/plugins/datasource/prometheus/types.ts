@@ -13,7 +13,6 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   utcOffsetSec?: number;
   legendFormat?: string;
   valueWithRefId?: boolean;
-  requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
   hinting?: boolean;
