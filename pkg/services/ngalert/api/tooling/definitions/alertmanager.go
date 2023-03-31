@@ -632,22 +632,6 @@ func (c *GettableUserConfig) MarshalJSON() ([]byte, error) {
 	return json.Marshal(tmp)
 }
 
-func (c GettableHistoricUserConfig) MarshalJSON() ([]byte, error) {
-	type plain struct {
-		TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
-		AlertmanagerConfig GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
-		LastApplied        *strfmt.DateTime          `yaml:"last_applied" json:"last_applied"`
-	}
-
-	tmp := plain{
-		TemplateFiles:      c.TemplateFiles,
-		AlertmanagerConfig: c.AlertmanagerConfig,
-		LastApplied:        c.LastApplied,
-	}
-
-	return json.Marshal(tmp)
-}
-
 // GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers
 func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafanaReceiver {
 	UIDs := make(map[string]*GettableGrafanaReceiver)
