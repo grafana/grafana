@@ -88,7 +88,7 @@ Gradient mode specifies the gradient fill, which is based on the series color. T
 - **None:** No gradient fill. This is the default setting.
 - **Opacity:** An opacity gradient where the opacity of the fill increases as Y-axis values increase.
 - **Hue:** A subtle gradient that is based on the hue of the series color.
-- **Scheme:** A color gradient defined by your [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode]({{< relref "#cheme-gradient-mode"  >}}).
+- **Scheme:** A color gradient defined by your [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}) <-- (This link leads to the top of this page). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode]({{< relref "#cheme-gradient-mode"  >}}).
 
 Gradient appearance is influenced by the **Fill opacity** setting. The following image show, the **Fill opacity** is set to 50.
 
@@ -141,7 +141,7 @@ Choose how null values, which are gaps in the data, appear on the graph. Null va
 
 ### Stack series
 
-_Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [Stacked Area Graphs Are Not Your Friend](https://everydayanalytics.ca/2014/08/stacked-area-graphs-are-not-your-friend.html).
+_Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [Stacked Area Graphs Are Not Your Friend](https://everydayanalytics.ca/2014/08/stacked-area-graphs-are-not-your-friend.html) <---- (This is is unreachable).
 
 ![Stack option](/static/img/docs/time-series-panel/stack-option-v9.png)
 
@@ -226,7 +226,7 @@ Use this option to transform the series values without affecting the values show
 
 ## Color options
 
-By default, the graph uses the standard [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}} option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
+By default, the graph uses the standard [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}} <--- (I believe this link is missing the closing ")". ) option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
 color this way automatically creates an override rule that set's a specific color for a specific series.
 
 ### Classic palette
