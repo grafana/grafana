@@ -46,5 +46,15 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         )}/config/history?limit=${LIMIT_TO_SUCCESSFULLY_APPLIED_AMS}`,
       }),
     }),
+
+    resetAlertManagerConfigToOldVersion: build.mutation<{ message: string }, { id: number }>({
+      //this is only available for the "grafana" alert manager
+      query: (config) => ({
+        url: `/api/alertmanager/${getDatasourceAPIUid(GRAFANA_RULES_SOURCE_NAME)}/config/history/${
+          config.id
+        }/_activate`,
+        method: 'POST',
+      }),
+    }),
   }),
 });

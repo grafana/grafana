@@ -33,11 +33,13 @@ export default function AlertmanagerConfigSelector({
   readOnly,
   loading,
 }: AlertmanagerConfigSelectorProps): JSX.Element {
-  const { useGetValidAlertManagersConfigQuery } = alertmanagerApi;
+  const { useGetValidAlertManagersConfigQuery, useResetAlertManagerConfigToOldVersionMutation } = alertmanagerApi;
 
   const styles = useStyles2(getStyles);
 
   const { currentData: validAmConfigs, isLoading: isFetchingValidAmConfigs } = useGetValidAlertManagersConfigQuery();
+
+  const [resetAlertManagerConfigToOldVersion] = useResetAlertManagerConfigToOldVersionMutation();
 
   const validAmConfigsOptions = useMemo(() => {
     if (!validAmConfigs?.length) {
@@ -52,7 +54,14 @@ export default function AlertmanagerConfigSelector({
     return configs;
   }, [validAmConfigs, onChange]);
 
-  const onResetClick = () => {};
+  const onResetClick = async () => {
+    const id = selectedAmConfig?.value?.id;
+    if (id === undefined) {
+      return;
+    }
+
+    resetAlertManagerConfigToOldVersion({ id });
+  };
 
   return (
     <>
