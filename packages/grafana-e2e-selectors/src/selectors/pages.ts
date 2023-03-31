@@ -67,6 +67,9 @@ export const Pages = {
         `data-testid Dashboard template variables Variable Value DropDown option text ${item}`,
     },
     Settings: {
+      Actions: {
+        close: 'data-testid dashboard-settings-close',
+      },
       General: {
         deleteDashBoard: 'Dashboard settings page delete dashboard button',
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,

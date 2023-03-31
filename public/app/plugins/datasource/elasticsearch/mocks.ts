@@ -41,7 +41,6 @@ export function createElasticDatasource(
     url: '',
     jsonData: {
       timeField: '',
-      esVersion: '',
       timeInterval: '',
       ...jsonData,
     },

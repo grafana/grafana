@@ -1272,6 +1272,8 @@ github.com/grafana/grafana-azure-sdk-go v1.6.0 h1:lxvH/mVY7gKBtJKhZ4B/6tIZFY7Jth
 github.com/grafana/grafana-azure-sdk-go v1.6.0/go.mod h1:X4PdEQIYgHfn0KTa2ZTKvufhNz6jbCEKUQPZIlcyOGw=
 github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58 h1:2ud7NNM7LrGPO4x0NFR8qLq68CqI4SmB7I2yRN2w9oE=
 github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58/go.mod h1:Vo2TKWfDVmNTELBUM+3lkrZvFtBws0qSZdXhQxRdJrE=
+github.com/grafana/grafana-google-sdk-go v0.1.0 h1:LKGY8z2DSxKjYfr2flZsWgTRTZ6HGQbTqewE3JvRaNA=
+github.com/grafana/grafana-google-sdk-go v0.1.0/go.mod h1:Vo2TKWfDVmNTELBUM+3lkrZvFtBws0qSZdXhQxRdJrE=
 github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW39s+c+LetqSCjFj7xxPC5+M=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.153.0 h1:5Z3NU/W32BsElkiqalvh6ow0Mx81GhAk94+GddIuTrQ=
@@ -2381,6 +2383,8 @@ go.opentelemetry.io/contrib v0.21.0/go.mod h1:EH4yDYeNoaTqn/8yCWQmfNB78VHfGX2Jt2
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.21.0/go.mod h1:Vm5u/mtkj1OMhtao0v+BGo2LUoLCgHYXvRmj0jWITlE=
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.37.0 h1:+uFejS4DCfNH6d3xODVIGsdhzgzhh45p9gpbHQMbdZI=
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.37.0/go.mod h1:HSmzQvagH8pS2/xrK7ScWsk0vAMtRTGbMFgInXCi8Tc=
+go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.37.0 h1:H0wsFGpY3uD/zB/5UubZgkgnd378/ogV9BH2itqEFbc=
+go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.37.0/go.mod h1:xXATK4LOREcHuSE4sWsK1VO7FUxa6L58rAORHFTdhAI=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.21.0/go.mod h1:JQAtechjxLEL81EjmbRwxBq/XEzGaHcsPuDHAx54hg4=
 go.opentelemetry.io/contrib/propagators/jaeger v1.6.0 h1:tCc+sWgHVeOMp4zmUxHHTaoA5vQlGO089zfg97d+BvU=
 go.opentelemetry.io/contrib/propagators/jaeger v1.6.0/go.mod h1:cqu1XdBYBXqXHxZLJdK00G9rT5Hda7Fa938I8LVYz/Y=
