@@ -62,14 +62,14 @@ export const LogsVolumePanelList = ({
     return !isLogsVolumeLimited(data) && zoomRatio && zoomRatio < 1;
   });
 
-  const timeoutError = isTimeoutErrorResponse(logsVolumeData);
+  const timeoutError = isTimeoutErrorResponse(logsVolumeData) || true;
 
   if (logsVolumeData?.state === LoadingState.Loading) {
     return <span>Loading...</span>;
   } else if (timeoutError) {
     return (
       <SupplementaryResultError
-        title="The logs volume query is taking too long and has timed out"
+        title="The logs volume query has timed out"
         // Using info to avoid users thinking that the actual query has failed.
         severity="info"
         suggestedAction="Retry"
