@@ -61,7 +61,7 @@ import (
 //     Responses:
 //       200: GettableHistoricUserConfigs
 
-// swagger:route POST /api/alertmanager/grafana/config/history/{id}/_activate alertmanager RoutePostGrafanaAlertingConfigRevert
+// swagger:route POST /api/alertmanager/grafana/config/history/{id}/_activate alertmanager RoutePostGrafanaAlertingConfigHistoryActivate
 //
 // revert Alerting configuration to the historical configuration specified by the given id
 //
@@ -467,7 +467,7 @@ type BodyAlertingConfig struct {
 	Body PostableUserConfig
 }
 
-// swagger:parameters RoutePostGrafanaAlertingConfigRevert
+// swagger:parameters RoutePostGrafanaAlertingConfigHistoryActivate
 type HistoricalConfigId struct {
 	// Id should be the id of the GettableHistoricUserConfig
 	// in:path

@@ -228,7 +228,7 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *contextmodel.ReqContext) response
 	return response.JSON(http.StatusOK, gettableSilences)
 }
 
-func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigRevert(c *contextmodel.ReqContext, id string) response.Response {
+func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *contextmodel.ReqContext, id string) response.Response {
 	confId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "failed to parse config id")

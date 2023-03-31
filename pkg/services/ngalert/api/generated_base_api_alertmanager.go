@@ -42,7 +42,7 @@ type AlertmanagerApi interface {
 	RoutePostAMAlerts(*contextmodel.ReqContext) response.Response
 	RoutePostAlertingConfig(*contextmodel.ReqContext) response.Response
 	RoutePostGrafanaAlertingConfig(*contextmodel.ReqContext) response.Response
-	RoutePostGrafanaAlertingConfigRevert(*contextmodel.ReqContext) response.Response
+	RoutePostGrafanaAlertingConfigHistoryActivate(*contextmodel.ReqContext) response.Response
 	RoutePostTestGrafanaReceivers(*contextmodel.ReqContext) response.Response
 }
 
@@ -168,10 +168,10 @@ func (f *AlertmanagerApiHandler) RoutePostGrafanaAlertingConfig(ctx *contextmode
 	}
 	return f.handleRoutePostGrafanaAlertingConfig(ctx, conf)
 }
-func (f *AlertmanagerApiHandler) RoutePostGrafanaAlertingConfigRevert(ctx *contextmodel.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RoutePostGrafanaAlertingConfigHistoryActivate(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	idParam := web.Params(ctx.Req)[":id"]
-	return f.handleRoutePostGrafanaAlertingConfigRevert(ctx, idParam)
+	return f.handleRoutePostGrafanaAlertingConfigHistoryActivate(ctx, idParam)
 }
 func (f *AlertmanagerApiHandler) RoutePostTestGrafanaReceivers(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Request Body
@@ -420,7 +420,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/grafana/config/history/{id}/_activate",
-				srv.RoutePostGrafanaAlertingConfigRevert,
+				srv.RoutePostGrafanaAlertingConfigHistoryActivate,
 				m,
 			),
 		)
