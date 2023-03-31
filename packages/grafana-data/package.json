@@ -40,6 +40,7 @@
     "@types/d3-interpolate": "^3.0.0",
     "d3-interpolate": "3.0.1",
     "date-fns": "2.29.3",
+    "dompurify": "^2.4.3",
     "eventemitter3": "5.0.0",
     "fast_array_intersect": "1.1.0",
     "history": "4.10.1",
@@ -55,7 +56,7 @@
     "tinycolor2": "1.6.0",
     "tslib": "2.5.0",
     "uplot": "1.6.24",
-    "xss": "1.0.14"
+    "xss": "^1.0.14"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
@@ -67,6 +68,7 @@
     "@testing-library/react": "12.1.4",
     "@testing-library/react-hooks": "8.0.1",
     "@testing-library/user-event": "14.4.3",
+    "@types/dompurify": "^2",
     "@types/history": "4.7.11",
     "@types/jest": "29.2.3",
     "@types/jquery": "3.5.16",

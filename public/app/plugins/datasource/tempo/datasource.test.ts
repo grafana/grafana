@@ -20,6 +20,7 @@ import {
   setDataSourceSrv,
   TemplateSrv,
 } from '@grafana/runtime';
+import { BarGaugeDisplayMode, TableCellDisplayMode } from '@grafana/schema';
 
 import {
   DEFAULT_LIMIT,
@@ -27,7 +28,7 @@ import {
   buildExpr,
   buildLinkExpr,
   getRateAlignedValues,
-  makeApmRequest,
+  makeServiceGraphViewRequest,
   makeTempoLink,
   getFieldConfig,
 } from './datasource';
@@ -436,7 +437,7 @@ describe('Tempo data source', () => {
   });
 });
 
-describe('Tempo apm table', () => {
+describe('Tempo service graph view', () => {
   it('runs service graph queries', async () => {
     const ds = new TempoDatasource({
       ...defaultSettings,
@@ -454,7 +455,7 @@ describe('Tempo apm table', () => {
     expect(response.data).toHaveLength(3);
     expect(response.state).toBe(LoadingState.Done);
 
-    // APM table
+    // Service Graph view
     expect(response.data[0].fields[0].name).toBe('Name');
     expect(response.data[0].fields[0].values.toArray().length).toBe(2);
     expect(response.data[0].fields[0].values.toArray()[0]).toBe('HTTP Client');
@@ -477,7 +478,8 @@ describe('Tempo apm table', () => {
     expect(response.data[0].fields[2].values.toArray()[0]).toBe(12.75164671814457);
     expect(response.data[0].fields[2].values.toArray()[1]).toBe(12.121331111401608);
     expect(response.data[0].fields[2].config.color.mode).toBe('continuous-BlPu');
-    expect(response.data[0].fields[2].config.custom.displayMode).toBe('lcd-gauge');
+    expect(response.data[0].fields[2].config.custom.cellOptions.mode).toBe(BarGaugeDisplayMode.Lcd);
+    expect(response.data[0].fields[2].config.custom.cellOptions.type).toBe(TableCellDisplayMode.Gauge);
     expect(response.data[0].fields[2].config.decimals).toBe(3);
 
     expect(response.data[0].fields[3].name).toBe('Error Rate');
@@ -497,7 +499,8 @@ describe('Tempo apm table', () => {
     expect(response.data[0].fields[4].values[0]).toBe(3.75164671814457);
     expect(response.data[0].fields[4].values[1]).toBe(3.121331111401608);
     expect(response.data[0].fields[4].config.color.mode).toBe('continuous-RdYlGr');
-    expect(response.data[0].fields[4].config.custom.displayMode).toBe('lcd-gauge');
+    expect(response.data[0].fields[4].config.custom.cellOptions.mode).toBe(BarGaugeDisplayMode.Lcd);
+    expect(response.data[0].fields[4].config.custom.cellOptions.type).toBe(TableCellDisplayMode.Gauge);
     expect(response.data[0].fields[4].config.decimals).toBe(3);
 
     expect(response.data[0].fields[5].name).toBe('Duration (p90)');
@@ -696,12 +699,12 @@ describe('Tempo apm table', () => {
     expect(value.toString()).toBe('0,0.6789,0.1234,0,0.4321');
   });
 
-  it('should make apm request correctly', () => {
-    const apmRequest = makeApmRequest([
+  it('should make service graph view request correctly', () => {
+    const request = makeServiceGraphViewRequest([
       'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app"}[$__range])) by (span_name))"',
       'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{status_code="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range])) by (le))',
     ]);
-    expect(apmRequest).toEqual([
+    expect(request).toEqual([
       {
         refId: 'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app"}[$__range])) by (span_name))"',
         expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app"}[$__range])) by (span_name))"',

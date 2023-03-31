@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -60,7 +60,7 @@ export interface Props {
 }
 
 /** @deprecated will be removed in the next major version */
-export const LogLabelStatsRow: FunctionComponent<Props> = ({ active, count, proportion, value }) => {
+export const LogLabelStatsRow = ({ active, count, proportion, value }: Props) => {
   const style = useStyles2(getStyles);
   const percent = `${Math.round(proportion * 100)}%`;
   const barStyle = { width: percent };

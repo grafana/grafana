@@ -17,6 +17,7 @@ package web
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html/template"
 	"net"
 	"net/http"
@@ -108,7 +109,7 @@ func (ctx *Context) HTML(status int, name string, data interface{}) {
 		if errors.Is(err, syscall.EPIPE) { // Client has stopped listening.
 			return
 		}
-		panic("Context.HTML:" + err.Error())
+		panic(fmt.Sprintf("Context.HTML - Error rendering template: %s. You may need to build frontend assets \n %s", name, err.Error()))
 	}
 }
 

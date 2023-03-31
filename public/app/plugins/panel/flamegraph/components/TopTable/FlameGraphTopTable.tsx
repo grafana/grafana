@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useMemo } from 'react';
+import React, { CSSProperties, useCallback, useMemo } from 'react';
 import { SortByFn, useSortBy, useAbsoluteLayout, useTable, CellProps } from 'react-table';
 import { FixedSizeList } from 'react-window';
 
@@ -104,7 +104,7 @@ const FlameGraphTopTable = ({
   const { headerGroups, rows, prepareRow } = useTable(options, useSortBy, useAbsoluteLayout);
 
   const renderRow = React.useCallback(
-    ({ index, style }) => {
+    ({ index, style }: { index: number; style: CSSProperties }) => {
       let row = rows[index];
       prepareRow(row);
 
@@ -180,7 +180,7 @@ const FlameGraphTopTable = ({
   );
 };
 
-const SymbolCell = ({ cell: { value } }: CellProps<TopTableValue, TopTableValue>) => {
+const SymbolCell = ({ cell: { value } }: CellProps<TopTableValue, string>) => {
   return <div>{value}</div>;
 };
 

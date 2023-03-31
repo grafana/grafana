@@ -20,9 +20,12 @@ export function getPluginExtensions<T extends object = {}>(
 
   const extensions = configureFuncs.reduce<PluginExtension[]>((result, configure) => {
     const extension = configure(context);
+
+    // If the configure() function returns `undefined`, the extension is not displayed
     if (extension) {
       result.push(extension);
     }
+
     return result;
   }, []);
 

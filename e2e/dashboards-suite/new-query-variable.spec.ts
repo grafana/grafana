@@ -2,7 +2,6 @@ import { e2e } from '@grafana/e2e';
 import { GrafanaBootConfig } from '@grafana/runtime';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
-const DASHBOARD_NAME = 'Templating - Nested Template Variables';
 
 describe('Variables - Query - Add variable', () => {
   it('query variable should be default and default fields should be correct', () => {
@@ -108,7 +107,7 @@ describe('Variables - Query - Add variable', () => {
       .window()
       .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
         if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.Breadcrumbs.breadcrumb(DASHBOARD_NAME).click();
+          e2e.pages.Dashboard.Settings.Actions.close().click();
         } else {
           e2e.components.BackButton.backArrow().click({ force: true });
         }
@@ -180,7 +179,7 @@ describe('Variables - Query - Add variable', () => {
       .window()
       .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
         if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.Breadcrumbs.breadcrumb(DASHBOARD_NAME).click();
+          e2e.pages.Dashboard.Settings.Actions.close().click();
         } else {
           e2e.components.BackButton.backArrow().click({ force: true });
         }

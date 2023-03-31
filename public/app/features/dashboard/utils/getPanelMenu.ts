@@ -12,7 +12,6 @@ import {
   reportInteraction,
   PluginExtensionPanelContext,
 } from '@grafana/runtime';
-import { LoadingState } from '@grafana/schema';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
@@ -39,7 +38,6 @@ import { getTimeSrv } from '../services/TimeSrv';
 export function getPanelMenu(
   dashboard: DashboardModel,
   panel: PanelModel,
-  loadingState?: LoadingState,
   angularComponent?: AngularComponent | null
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
@@ -120,12 +118,6 @@ export function getPanelMenu(
     reportInteraction('dashboards_panelheader_togglelegend_clicked');
   };
 
-  const onCancelStreaming = (event: React.MouseEvent) => {
-    event.preventDefault();
-    panel.getQueryRunner().cancelQuery();
-    reportInteraction('dashboards_panelheader_cancelstreaming_clicked');
-  };
-
   const menu: PanelMenuItem[] = [];
 
   if (!panel.isEditing) {
@@ -143,17 +135,6 @@ export function getPanelMenu(
       iconClassName: 'edit',
       onClick: onEditPanel,
       shortcut: 'e',
-    });
-  }
-
-  if (
-    dashboard.canEditPanel(panel) &&
-    (loadingState === LoadingState.Streaming || loadingState === LoadingState.Loading)
-  ) {
-    menu.push({
-      text: 'Stop query',
-      iconClassName: 'circle',
-      onClick: onCancelStreaming,
     });
   }
 
@@ -206,28 +187,35 @@ export function getPanelMenu(
 
   const subMenu: PanelMenuItem[] = [];
   const canEdit = dashboard.canEditPanel(panel);
-
-  if (canEdit && !(panel.isViewing || panel.isEditing)) {
-    subMenu.push({
-      text: t('panel.header-menu.duplicate', `Duplicate`),
-      onClick: onDuplicatePanel,
-      shortcut: 'p d',
-    });
-
-    subMenu.push({
-      text: t('panel.header-menu.copy', `Copy`),
-      onClick: onCopyPanel,
-    });
-
-    if (isPanelModelLibraryPanel(panel)) {
+  if (!(panel.isViewing || panel.isEditing)) {
+    if (canEdit) {
       subMenu.push({
-        text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
-        onClick: onUnlinkLibraryPanel,
+        text: t('panel.header-menu.duplicate', `Duplicate`),
+        onClick: onDuplicatePanel,
+        shortcut: 'p d',
       });
-    } else {
+
       subMenu.push({
-        text: t('panel.header-menu.create-library-panel', `Create library panel`),
-        onClick: onAddLibraryPanel,
+        text: t('panel.header-menu.copy', `Copy`),
+        onClick: onCopyPanel,
+      });
+
+      if (isPanelModelLibraryPanel(panel)) {
+        subMenu.push({
+          text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
+          onClick: onUnlinkLibraryPanel,
+        });
+      } else {
+        subMenu.push({
+          text: t('panel.header-menu.create-library-panel', `Create library panel`),
+          onClick: onAddLibraryPanel,
+        });
+      }
+    } else if (contextSrv.isEditor) {
+      // An editor but the dashboard is not editable
+      subMenu.push({
+        text: t('panel.header-menu.copy', `Copy`),
+        onClick: onCopyPanel,
       });
     }
   }
@@ -287,6 +275,40 @@ export function getPanelMenu(
     });
   }
 
+  const { extensions } = getPluginExtensions({
+    placement: PluginExtensionPlacements.DashboardPanelMenu,
+    context: createExtensionContext(panel, dashboard),
+  });
+
+  if (extensions.length > 0) {
+    const extensionsMenu: PanelMenuItem[] = [];
+
+    for (const extension of extensions) {
+      if (isPluginExtensionLink(extension)) {
+        extensionsMenu.push({
+          text: truncateTitle(extension.title, 25),
+          href: extension.path,
+        });
+        continue;
+      }
+
+      if (isPluginExtensionCommand(extension)) {
+        extensionsMenu.push({
+          text: truncateTitle(extension.title, 25),
+          onClick: extension.callHandlerWithContext,
+        });
+        continue;
+      }
+    }
+
+    menu.push({
+      text: 'Extensions',
+      iconClassName: 'plug',
+      type: 'submenu',
+      subMenu: extensionsMenu,
+    });
+  }
+
   if (dashboard.canEditPanel(panel) && !panel.isEditing && !panel.isViewing) {
     menu.push({ type: 'divider', text: '' });
 
@@ -296,29 +318,6 @@ export function getPanelMenu(
       onClick: onRemovePanel,
       shortcut: 'p r',
     });
-  }
-
-  const { extensions } = getPluginExtensions({
-    placement: PluginExtensionPlacements.DashboardPanelMenu,
-    context: createExtensionContext(panel, dashboard),
-  });
-
-  for (const extension of extensions) {
-    if (isPluginExtensionLink(extension)) {
-      subMenu.push({
-        text: truncateTitle(extension.title, 25),
-        href: extension.path,
-      });
-      continue;
-    }
-
-    if (isPluginExtensionCommand(extension)) {
-      subMenu.push({
-        text: truncateTitle(extension.title, 25),
-        onClick: extension.callHandlerWithContext,
-      });
-      continue;
-    }
   }
 
   return menu;

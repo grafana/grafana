@@ -1,5 +1,5 @@
 import pluralize from 'pluralize';
-import React, { FC, Fragment, useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { Stack } from '@grafana/experimental';
@@ -25,7 +25,7 @@ const emptyStats = {
   error: 0,
 } as const;
 
-export const RuleStats: FC<Props> = ({ group, namespaces, includeTotal }) => {
+export const RuleStats = ({ group, namespaces, includeTotal }: Props) => {
   const evaluationInterval = group?.interval;
   const [calculated, setCalculated] = useState(emptyStats);
 

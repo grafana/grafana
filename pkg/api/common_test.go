@@ -320,9 +320,8 @@ type setUpConf struct {
 
 type mockSearchService struct{ ExpectedResult model.HitList }
 
-func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) error {
-	q.Result = mss.ExpectedResult
-	return nil
+func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) (model.HitList, error) {
+	return mss.ExpectedResult, nil
 }
 func (mss *mockSearchService) SortOptions() []model.SortOption { return nil }
 
@@ -340,6 +339,6 @@ func setUp(confs ...setUpConf) *HTTPServer {
 	dashSvc := &dashboards.FakeDashboardService{}
 	qResult := aclMockResp
 	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
-	guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
+	guardian.InitLegacyGuardian(setting.NewCfg(), store, dashSvc, teamSvc)
 	return hs
 }

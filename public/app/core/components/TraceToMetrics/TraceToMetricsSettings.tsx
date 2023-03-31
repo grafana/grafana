@@ -79,29 +79,15 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
       </InlineFieldRow>
 
       <InlineFieldRow>
-        <InlineField tooltip="Tags that will be used in the metrics query" label="Tags" labelWidth={26}>
-          <TagMappingInput
-            values={options.jsonData.tracesToMetrics?.tags ?? []}
-            onChange={(v) =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
-                ...options.jsonData.tracesToMetrics,
-                tags: v,
-              })
-            }
-          />
-        </InlineField>
-      </InlineFieldRow>
-
-      <InlineFieldRow>
         <InlineField
           label="Span start time shift"
           labelWidth={26}
           grow
-          tooltip="Shifts the start time of the span. Default 0 (Time units can be used here, for example: 5s, 1m, 3h)"
+          tooltip="Shifts the start time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)"
         >
           <Input
             type="text"
-            placeholder="-1h"
+            placeholder="0"
             width={40}
             onChange={(v) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
@@ -119,11 +105,11 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
           label="Span end time shift"
           labelWidth={26}
           grow
-          tooltip="Shifts the end time of the span. Default 0 Time units can be used here, for example: 5s, 1m, 3h"
+          tooltip="Shifts the end time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)"
         >
           <Input
             type="text"
-            placeholder="1h"
+            placeholder="0"
             width={40}
             onChange={(v) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
@@ -136,14 +122,29 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
         </InlineField>
       </InlineFieldRow>
 
+      <InlineFieldRow>
+        <InlineField tooltip="Tags that will be used in the metrics query" label="Tags" labelWidth={26}>
+          <TagMappingInput
+            values={options.jsonData.tracesToMetrics?.tags ?? []}
+            onChange={(v) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+                ...options.jsonData.tracesToMetrics,
+                tags: v,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
+
       {options.jsonData.tracesToMetrics?.queries?.map((query, i) => (
         <div key={i} className={styles.queryRow}>
-          <InlineField label="Link Label" labelWidth={10}>
+          <InlineField label="Link Label" labelWidth={26} tooltip="Descriptive label for the linked query">
             <Input
               label="Link Label"
               type="text"
               allowFullScreen
               value={query.name}
+              width={40}
               onChange={(e) => {
                 let newQueries = options.jsonData.tracesToMetrics?.queries.slice() ?? [];
                 newQueries[i].name = e.currentTarget.value;

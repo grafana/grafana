@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -11,7 +11,7 @@ interface Props {
   intervalIndex: number;
 }
 
-export const MuteTimingTimeRange: FC<Props> = ({ intervalIndex }) => {
+export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
   const styles = useStyles2(getStyles);
   const { register, formState } = useFormContext<MuteTimingFields>();
 

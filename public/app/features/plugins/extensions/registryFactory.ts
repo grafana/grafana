@@ -86,13 +86,7 @@ function createCommandRegistryItem(
   const handler = catchErrorsInHandler(handlerWithHelpers);
 
   const extensionFactory = createCommandFactory(pluginId, config, handler);
-
-  const configurable: AppPluginExtensionCommand = {
-    title: config.title,
-    description: config.description,
-  };
-
-  const mapper = mapToConfigure<PluginExtensionCommand, AppPluginExtensionCommand>(extensionFactory, configurable);
+  const mapper = mapToConfigure<PluginExtensionCommand, AppPluginExtensionCommand>(extensionFactory);
   const catchErrorsInConfigure = handleErrorsInConfigure<AppPluginExtensionCommand>(options);
 
   return mapper(catchErrorsInConfigure(configure));
@@ -110,14 +104,7 @@ function createLinkRegistryItem(
   const options = { pluginId: pluginId, title: config.title, logger: console.warn };
 
   const extensionFactory = createLinkFactory(pluginId, config);
-
-  const configurable: AppPluginExtensionLink = {
-    title: config.title,
-    description: config.description,
-    path: config.path,
-  };
-
-  const mapper = mapToConfigure<PluginExtensionLink, AppPluginExtensionLink>(extensionFactory, configurable);
+  const mapper = mapToConfigure<PluginExtensionLink, AppPluginExtensionLink>(extensionFactory);
   const withConfigureErrorHandling = handleErrorsInConfigure<AppPluginExtensionLink>(options);
   const validateLink = createLinkValidator(options);
 
@@ -125,7 +112,7 @@ function createLinkRegistryItem(
 }
 
 function createLinkFactory(pluginId: string, config: AppPluginExtensionLinkConfig) {
-  return (override: Partial<AppPluginExtensionLink>, context?: object): PluginExtensionLink => {
+  return (override: Partial<AppPluginExtensionLink>): PluginExtensionLink => {
     const title = override?.title ?? config.title;
     const description = override?.description ?? config.description;
     const path = override?.path ?? config.path;
@@ -160,16 +147,15 @@ function createCommandFactory(
 }
 
 function mapToConfigure<T extends PluginExtension, C>(
-  commandFactory: (override: Partial<C>, context?: object) => T | undefined,
-  configurable: C
+  extensionFactory: (override: Partial<C>, context?: object) => T | undefined
 ): (configure: ConfigureFunc<C>) => PluginExtensionRegistryItem<T> {
   return (configure) => {
     return function mapToExtension(context?: object): T | undefined {
-      const override = configure(configurable, context);
+      const override = configure(context);
       if (!override) {
         return undefined;
       }
-      return commandFactory(override, context);
+      return extensionFactory(override, context);
     };
   };
 }

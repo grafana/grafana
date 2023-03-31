@@ -1,6 +1,12 @@
 ---
 aliases:
   - troubleshoot-dashboards/
+cascade:
+  labels:
+    products:
+      - cloud
+      - enterprise
+      - oss
 description: Guide to troubleshooting Grafana problems
 keywords:
   - grafana

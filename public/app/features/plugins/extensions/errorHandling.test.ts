@@ -13,11 +13,6 @@ describe('error handling for extensions', () => {
     });
 
     const context = {};
-    const extension: AppPluginExtensionLink = {
-      title: 'Go to page one',
-      description: 'Will navigate the user to page one',
-      path: `/a/${pluginId}/one`,
-    };
 
     it('should return configured link if configure is successful', () => {
       const configureWithErrorHandling = errorHandler(() => {
@@ -26,7 +21,7 @@ describe('error handling for extensions', () => {
         };
       });
 
-      const configured = configureWithErrorHandling(extension, context);
+      const configured = configureWithErrorHandling(context);
 
       expect(configured).toEqual({
         title: 'This is a new title',
@@ -38,7 +33,7 @@ describe('error handling for extensions', () => {
         throw new Error();
       });
 
-      const configured = configureWithErrorHandling(extension, context);
+      const configured = configureWithErrorHandling(context);
 
       expect(configured).toBeUndefined();
     });
@@ -47,7 +42,7 @@ describe('error handling for extensions', () => {
       const promisebased = (async () => {}) as ConfigureFunc<AppPluginExtensionLink>;
       const configureWithErrorHandling = errorHandler(promisebased);
 
-      const configured = configureWithErrorHandling(extension, context);
+      const configured = configureWithErrorHandling(context);
 
       expect(configured).toBeUndefined();
     });
@@ -56,7 +51,7 @@ describe('error handling for extensions', () => {
       const objectbased = {} as ConfigureFunc<AppPluginExtensionLink>;
       const configureWithErrorHandling = errorHandler(objectbased);
 
-      const configured = configureWithErrorHandling(extension, context);
+      const configured = configureWithErrorHandling(context);
 
       expect(configured).toBeUndefined();
     });
@@ -65,7 +60,7 @@ describe('error handling for extensions', () => {
       const returnString = (() => '') as ConfigureFunc<AppPluginExtensionLink>;
       const configureWithErrorHandling = errorHandler(returnString);
 
-      const configured = configureWithErrorHandling(extension, context);
+      const configured = configureWithErrorHandling(context);
 
       expect(configured).toBeUndefined();
     });
@@ -74,7 +69,7 @@ describe('error handling for extensions', () => {
       const returnUndefined = () => undefined;
       const configureWithErrorHandling = errorHandler(returnUndefined);
 
-      const configured = configureWithErrorHandling(extension, context);
+      const configured = configureWithErrorHandling(context);
 
       expect(configured).toBeUndefined();
     });

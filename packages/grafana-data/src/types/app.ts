@@ -74,7 +74,7 @@ export type AppPluginExtensionLinkConfig<C extends object = object> = {
   description: string;
   placement: string;
   path: string;
-  configure?: (extension: AppPluginExtensionLink, context?: C) => Partial<AppPluginExtensionLink> | undefined;
+  configure?: (context?: C) => Partial<AppPluginExtensionLink> | undefined;
 };
 
 export type AppPluginExtensionCommandConfig<C extends object = object> = {
@@ -82,7 +82,7 @@ export type AppPluginExtensionCommandConfig<C extends object = object> = {
   description: string;
   placement: string;
   handler: (context?: C, helpers?: AppPluginExtensionCommandHelpers) => void;
-  configure?: (extension: AppPluginExtensionCommand, context?: C) => Partial<AppPluginExtensionCommand> | undefined;
+  configure?: (context?: C) => Partial<AppPluginExtensionCommand> | undefined;
 };
 
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {

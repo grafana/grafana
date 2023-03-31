@@ -12,14 +12,14 @@ export function handleErrorsInConfigure<T>(options: Options) {
   const { pluginId, title, logger } = options;
 
   return (configure: ConfigureFunc<T>): ConfigureFunc<T> => {
-    return function handleErrors(extension, context) {
+    return function handleErrors(context) {
       try {
         if (!isFunction(configure)) {
           logger(`[Plugins] ${pluginId} provided invalid configuration function for extension '${title}'.`);
           return;
         }
 
-        const result = configure(extension, context);
+        const result = configure(context);
         if (result instanceof Promise) {
           logger(
             `[Plugins] ${pluginId} provided an unsupported async/promise-based configureation function for extension '${title}'.`

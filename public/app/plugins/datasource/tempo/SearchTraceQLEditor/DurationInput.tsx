@@ -12,7 +12,15 @@ interface Props {
   isTagsLoading?: boolean;
   operators: string[];
 }
+
+const validationRegex = /^\d+(?:\.\d)?\d*(?:us|µs|ns|ms|s|m|h)$/;
+
 const DurationInput = ({ filter, operators, updateFilter }: Props) => {
+  let invalid = false;
+  if (typeof filter.value === 'string') {
+    invalid = filter.value ? !validationRegex.test(filter.value.concat('')) : false;
+  }
+
   return (
     <HorizontalGroup spacing={'none'}>
       <Select
@@ -34,6 +42,7 @@ const DurationInput = ({ filter, operators, updateFilter }: Props) => {
         }}
         placeholder="e.g. 100ms, 1.2s"
         aria-label={`select ${filter.id} value`}
+        invalid={invalid}
         width={18}
       />
     </HorizontalGroup>

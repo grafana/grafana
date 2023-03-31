@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,8 +27,8 @@ func TestAddAppLinks(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	permissions := []ac.Permission{
-		{Action: plugins.ActionAppAccess, Scope: "*"},
-		{Action: plugins.ActionInstall, Scope: "*"},
+		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+		{Action: pluginaccesscontrol.ActionInstall, Scope: "*"},
 		{Action: datasources.ActionCreate, Scope: "*"},
 		{Action: datasources.ActionRead, Scope: "*"},
 	}
@@ -240,16 +241,6 @@ func TestAddAppLinks(t *testing.T) {
 		alertsAndIncidentsNode := treeRoot.FindById(navtree.NavIDAlertsAndIncidents)
 		require.Nil(t, alertsAndIncidentsNode)
 
-		// If there is no 'Alerting' node in the navigation (= alerting not enabled) then we don't auto-create the 'Alerts and Incidents' section
-		treeRoot = navtree.NavTreeRoot{}
-		service.navigationAppConfig = map[string]NavigationAppConfig{
-			"test-app1": {SectionID: navtree.NavIDAlertsAndIncidents},
-		}
-		err = service.addAppLinks(&treeRoot, reqCtx)
-		require.NoError(t, err)
-		alertsAndIncidentsNode = treeRoot.FindById(navtree.NavIDAlertsAndIncidents)
-		require.Nil(t, alertsAndIncidentsNode)
-
 		// It should appear and once an app tries to register to it and the `Alerting` nav node is present
 		treeRoot = navtree.NavTreeRoot{}
 		treeRoot.AddSection(&navtree.NavLink{Id: navtree.NavIDAlerting, Text: "Alerting"})
@@ -263,6 +254,30 @@ func TestAddAppLinks(t *testing.T) {
 		require.Len(t, alertsAndIncidentsNode.Children, 2)
 		require.Equal(t, "Alerting", alertsAndIncidentsNode.Children[0].Text)
 		require.Equal(t, "Test app1 name", alertsAndIncidentsNode.Children[1].Text)
+	})
+
+	t.Run("Should add a 'Alerts and Incidents' section if a plugin exists that wants to live there even without an alerting node", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
+		service.navigationAppConfig = map[string]NavigationAppConfig{}
+
+		// Check if the 'Alerts and Incidents' section is not there if no apps try to register to it
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		alertsAndIncidentsNode := treeRoot.FindById(navtree.NavIDAlertsAndIncidents)
+		require.Nil(t, alertsAndIncidentsNode)
+
+		// If there is no 'Alerting' node in the navigation then we still auto-create the 'Alerts and Incidents' section when a plugin wants to live there
+		treeRoot = navtree.NavTreeRoot{}
+		service.navigationAppConfig = map[string]NavigationAppConfig{
+			"test-app1": {SectionID: navtree.NavIDAlertsAndIncidents},
+		}
+		err = service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		alertsAndIncidentsNode = treeRoot.FindById(navtree.NavIDAlertsAndIncidents)
+		require.NotNil(t, alertsAndIncidentsNode)
+		require.Len(t, alertsAndIncidentsNode.Children, 1)
+		require.Equal(t, "Test app1 name", alertsAndIncidentsNode.Children[0].Text)
 	})
 
 	t.Run("Should be able to control app sort order with SortWeight (smaller SortWeight displayed first)", func(t *testing.T) {
@@ -445,7 +460,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	t.Run("Should add both includes when the user is an editor", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
 		user.Permissions = map[int64]map[string][]string{
-			1: {plugins.ActionAppAccess: []string{"*"}},
+			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
 		}
 		user.OrgRole = roletype.RoleEditor
 
@@ -460,7 +475,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	t.Run("Should add one include when the user is a viewer", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
 		user.Permissions = map[int64]map[string][]string{
-			1: {plugins.ActionAppAccess: []string{"*"}},
+			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
 		}
 		user.OrgRole = roletype.RoleViewer
 
@@ -474,7 +489,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	t.Run("Should add both includes when the user is a viewer with catalog read", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
 		user.Permissions = map[int64]map[string][]string{
-			1: {plugins.ActionAppAccess: []string{"*"}, catalogReadAction: []string{}},
+			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}, catalogReadAction: []string{}},
 		}
 		user.OrgRole = roletype.RoleViewer
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
@@ -490,7 +505,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	t.Run("Should add one include when the user is an editor without catalog read", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
 		user.Permissions = map[int64]map[string][]string{
-			1: {plugins.ActionAppAccess: []string{"*"}},
+			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
 		}
 		user.OrgRole = roletype.RoleEditor
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)

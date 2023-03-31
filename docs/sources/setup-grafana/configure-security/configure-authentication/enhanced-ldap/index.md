@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../enterprise/enhanced_ldap/
-  - enhanced_ldap/
+  - ../../../auth/enhanced_ldap/
 description: Grafana Enhanced LDAP Integration Guide
 keywords:
   - grafana
@@ -18,7 +18,7 @@ weight: 900
 
 The enhanced LDAP integration adds additional functionality on top of the [LDAP integration]({{< relref "ldap/" >}}) available in the open source edition of Grafana.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
 
 > To control user access with role-based permissions, refer to [role-based access control]({{< relref "../../../../administration/roles-and-permissions/access-control/" >}}).
 

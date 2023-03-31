@@ -18,6 +18,9 @@ export const fieldIndexComparer = (field: Field, reverse = false): IndexComparer
     case FieldType.boolean:
       return booleanIndexComparer(values, reverse);
     case FieldType.time:
+      if (typeof field.values.get(0) === 'number') {
+        return timestampIndexComparer(values, reverse);
+      }
       return timeIndexComparer(values, reverse);
     default:
       return naturalIndexComparer(reverse);
@@ -74,6 +77,12 @@ const falsyComparer = (a: unknown, b: unknown): number => {
   }
 
   return 0;
+};
+
+const timestampIndexComparer = (values: Vector<number>, reverse: boolean): IndexComparer => {
+  let vals = values.toArray();
+  let mult = reverse ? -1 : 1;
+  return (a: number, b: number): number => mult * (vals[a] - vals[b]);
 };
 
 const timeIndexComparer = (values: Vector<unknown>, reverse: boolean): IndexComparer => {

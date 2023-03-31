@@ -28,7 +28,7 @@ const (
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Service,
 	secretsService secrets.Service) (*RemoteCache, error) {
-	client, err := createClient(cfg.RemoteCacheOptions, sqlStore)
+	client, err := createClient(cfg.RemoteCacheOptions, sqlStore, secretsService)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +119,7 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func createClient(opts *setting.RemoteCacheOptions, sqlstore db.DB) (cache CacheStorage, err error) {
+func createClient(opts *setting.RemoteCacheOptions, sqlstore db.DB, secretsService secrets.Service) (cache CacheStorage, err error) {
 	switch opts.Name {
 	case redisCacheType:
 		cache, err = newRedisStorage(opts)
@@ -138,7 +138,7 @@ func createClient(opts *setting.RemoteCacheOptions, sqlstore db.DB) (cache Cache
 	}
 
 	if opts.Encryption {
-		cache = &encryptedCacheStorage{cache: cache}
+		cache = &encryptedCacheStorage{cache: cache, secretsService: secretsService}
 	}
 	return cache, nil
 }

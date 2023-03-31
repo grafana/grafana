@@ -1,4 +1,4 @@
-﻿import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+﻿import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -17,9 +17,9 @@ describe('Toggletip', () => {
     );
     expect(screen.getByText('Click me!')).toBeInTheDocument();
     const button = screen.getByTestId('myButton');
-    button.click();
+    await userEvent.click(button);
 
-    await waitFor(() => expect(screen.getByTestId('toggletip-content')).toBeInTheDocument());
+    expect(screen.getByTestId('toggletip-content')).toBeInTheDocument();
   });
 
   it('should close toogletip after click on close button', async () => {
@@ -32,17 +32,15 @@ describe('Toggletip', () => {
       </Toggletip>
     );
     const button = screen.getByTestId('myButton');
-    button.click();
+    await userEvent.click(button);
 
-    await waitFor(() => expect(screen.getByTestId('toggletip-content')).toBeInTheDocument());
+    expect(screen.getByTestId('toggletip-content')).toBeInTheDocument();
 
     const closeButton = screen.getByTestId('toggletip-header-close');
     expect(closeButton).toBeInTheDocument();
-    closeButton.click();
+    await userEvent.click(closeButton);
 
-    await waitFor(() => {
-      expect(closeSpy).toHaveBeenCalledTimes(1);
-    });
+    expect(closeSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should close toogletip after press ESC', async () => {
@@ -55,17 +53,13 @@ describe('Toggletip', () => {
       </Toggletip>
     );
     const button = screen.getByTestId('myButton');
-    button.click();
+    await userEvent.click(button);
 
-    await waitFor(() => expect(screen.getByTestId('toggletip-content')).toBeInTheDocument());
+    expect(screen.getByTestId('toggletip-content')).toBeInTheDocument();
 
-    fireEvent.keyDown(global.document, {
-      code: 'Escape',
-      key: 'Escape',
-      keyCode: 27,
-    });
+    await userEvent.keyboard('{escape}');
 
-    await waitFor(() => expect(closeSpy).toHaveBeenCalledTimes(1));
+    expect(closeSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should display the toogletip after press ENTER', async () => {
@@ -83,8 +77,8 @@ describe('Toggletip', () => {
     // open toggletip with enter
     const button = screen.getByTestId('myButton');
     button.focus();
-    userEvent.keyboard('{enter}');
+    await userEvent.keyboard('{enter}');
 
-    await waitFor(() => expect(screen.getByTestId('toggletip-content')).toBeInTheDocument());
+    expect(screen.getByTestId('toggletip-content')).toBeInTheDocument();
   });
 });

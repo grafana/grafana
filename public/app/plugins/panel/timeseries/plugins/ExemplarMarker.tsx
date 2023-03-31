@@ -25,14 +25,14 @@ interface ExemplarMarkerProps {
   exemplarColor?: string;
 }
 
-export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
+export const ExemplarMarker = ({
   timeZone,
   dataFrame,
   dataFrameFieldIndex,
   config,
   getFieldLinks,
   exemplarColor,
-}) => {
+}: ExemplarMarkerProps) => {
   const styles = useStyles2(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
