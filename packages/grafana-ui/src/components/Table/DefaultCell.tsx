@@ -1,4 +1,4 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
 
@@ -42,15 +42,17 @@ export const DefaultCell = (props: TableCellProps) => {
       {hasLinks && (
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
           {(api) => {
-            const content = <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{value}</div>;
             if (api.openMenu) {
               return (
-                <Button className={cx(clearButtonStyle)} onClick={api.openMenu}>
-                  {content}
-                </Button>
+                <button
+                  className={cx(clearButtonStyle, getLinkStyle(tableStyles, cellOptions, api.targetClassName))}
+                  onClick={api.openMenu}
+                >
+                  {value}
+                </button>
               );
             } else {
-              return content;
+              return <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{value}</div>;
             }
           }}
         </DataLinksContextMenu>
