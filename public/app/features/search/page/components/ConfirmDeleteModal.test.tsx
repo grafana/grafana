@@ -38,9 +38,7 @@ describe('ConfirmModal', () => {
         ['folder', new Set(['uid3'])],
       ]);
 
-      render(
-        <ConfirmDeleteModal onDeleteItems={() => {}} results={selectedItems} isOpen={true} onDismiss={() => {}} />
-      );
+      render(<ConfirmDeleteModal onDeleteItems={() => {}} results={selectedItems} onDismiss={() => {}} />);
 
       expect(screen.getByPlaceholderText('Type delete to confirm')).toBeInTheDocument();
     });
