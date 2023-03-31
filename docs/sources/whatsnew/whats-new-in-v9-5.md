@@ -139,4 +139,5 @@ Get additional help while configuring your Alertmanager. If you enter an invalid
 
 `database` field in the provisioning file has been deprecated.
 This information will be stored in `jsonData` with `dbName` field.
+`database` field will be removed in the future to have the consistency across all the data sources.
 For more information and examples please refer to [InfluxDB Provisioning]({{< relref "../datasources/influxdb/#provision-the-data-source" >}})
