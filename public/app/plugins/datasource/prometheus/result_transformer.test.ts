@@ -22,6 +22,11 @@ jest.mock('@grafana/runtime', () => ({
       },
     };
   },
+  config: {
+    featureToggles: {
+      prometheusDataplane: true,
+    },
+  },
 }));
 
 const matrixResponse = {
