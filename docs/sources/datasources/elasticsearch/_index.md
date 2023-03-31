@@ -50,6 +50,8 @@ Set the data source's basic configuration options carefully:
 | **Url**     | Sets the HTTP protocol, IP, and port of your Elasticsearch server.         |
 | **Access**  | Don't modify Access. Use "Server (default)" or the data source won't work. |
 
+There should be a highlighted note section here to ensure the customer knows that "Access" needs to be set to Server (default) of the data source wont work.
+
 You must also configure settings specific to the Elasticsearch data source.
 
 ### Index settings
@@ -125,7 +127,7 @@ For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amaz
 
 > **Note:** Available in Grafana v7.3 and higher.
 
-To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana/#sigv4_auth_enabled" >}}).
+To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana/#sigv4_auth_enabled" >}}).  If you are on Hosted Grafana please reach out to support to have this set.
 
 Once AWS SigV4 is enabled, you can configure it on the Elasticsearch data source configuration page.
 For more information about AWS authentication options, refer to [AWS authentication]({{< relref "../aws-cloudwatch/aws-authentication/" >}}).
