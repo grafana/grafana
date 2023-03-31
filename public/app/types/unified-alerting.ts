@@ -45,7 +45,7 @@ export interface AlertingRule extends RuleBase {
   };
   state: PromAlertingRuleState;
   type: PromRuleType.Alerting;
-  totals?: AlertInstanceTotals;
+  totals?: Partial<Record<Lowercase<GrafanaAlertState>, number>>;
   activeAt?: string; // ISO timestamp
 }
 
@@ -61,7 +61,7 @@ export type Rule = AlertingRule | RecordingRule;
 
 export type BaseRuleGroup = { name: string };
 
-type TotalsWithoutAlerting = Exclude<AlertInstanceState, AlertInstanceState.Alerting>;
+type TotalsWithoutAlerting = Exclude<AlertInstanceTotalState, AlertInstanceTotalState.Alerting>;
 enum FiringTotal {
   Firing = 'firing',
 }
@@ -101,7 +101,7 @@ export interface CombinedRule {
 }
 
 // export type AlertInstanceState = PromAlertingRuleState | 'nodata' | 'error';
-export enum AlertInstanceState {
+export enum AlertInstanceTotalState {
   Alerting = 'alerting',
   Pending = 'pending',
   Normal = 'inactive',
@@ -109,10 +109,10 @@ export enum AlertInstanceState {
   Error = 'error',
 }
 
-export type AlertInstanceTotals = Partial<Record<AlertInstanceState, number>>;
+export type AlertInstanceTotals = Partial<Record<AlertInstanceTotalState, number>>;
 
 // AlertGroupTotals also contain the amount of recording and paused rules
-export type AlertGroupTotals = Partial<Record<AlertInstanceState | 'paused' | 'recording', number>>;
+export type AlertGroupTotals = Partial<Record<AlertInstanceTotalState | 'paused' | 'recording', number>>;
 
 export interface CombinedRuleGroup {
   name: string;

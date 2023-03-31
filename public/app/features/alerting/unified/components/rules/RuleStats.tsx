@@ -6,7 +6,7 @@ import { Stack } from '@grafana/experimental';
 import { Badge } from '@grafana/ui';
 import {
   AlertGroupTotals,
-  AlertInstanceState,
+  AlertInstanceTotalState,
   CombinedRuleGroup,
   CombinedRuleNamespace,
 } from 'app/types/unified-alerting';
@@ -90,11 +90,14 @@ export const RuleGroupStats = ({ group }: RuleGroupStatsProps) => {
     </Stack>
   );
 };
-function getComponentsFromStats(stats: Partial<Record<AlertInstanceState | 'paused' | 'recording', number>>) {
+
+export function getComponentsFromStats(
+  stats: Partial<Record<AlertInstanceTotalState | 'paused' | 'recording', number>>
+) {
   const statsComponents: React.ReactNode[] = [];
 
-  if (stats[AlertInstanceState.Alerting]) {
-    statsComponents.push(<Badge color="red" key="firing" text={`${stats[AlertInstanceState.Alerting]} firing`} />);
+  if (stats[AlertInstanceTotalState.Alerting]) {
+    statsComponents.push(<Badge color="red" key="firing" text={`${stats[AlertInstanceTotalState.Alerting]} firing`} />);
   }
 
   if (stats.error) {
@@ -105,20 +108,26 @@ function getComponentsFromStats(stats: Partial<Record<AlertInstanceState | 'paus
     statsComponents.push(<Badge color="blue" key="nodata" text={`${stats.nodata} no data`} />);
   }
 
-  if (stats[AlertInstanceState.Pending]) {
+  if (stats[AlertInstanceTotalState.Pending]) {
     statsComponents.push(
-      <Badge color={'orange'} key="pending" text={`${stats[AlertInstanceState.Pending]} pending`} />
+      <Badge color={'orange'} key="pending" text={`${stats[AlertInstanceTotalState.Pending]} pending`} />
     );
   }
 
-  if (stats[AlertInstanceState.Normal] && stats.paused) {
+  if (stats[AlertInstanceTotalState.Normal] && stats.paused) {
     statsComponents.push(
-      <Badge color="green" key="paused" text={`${stats[AlertInstanceState.Normal]} normal (${stats.paused} paused)`} />
+      <Badge
+        color="green"
+        key="paused"
+        text={`${stats[AlertInstanceTotalState.Normal]} normal (${stats.paused} paused)`}
+      />
     );
   }
 
-  if (stats[AlertInstanceState.Normal] && !stats.paused) {
-    statsComponents.push(<Badge color="green" key="inactive" text={`${stats[AlertInstanceState.Normal]} normal`} />);
+  if (stats[AlertInstanceTotalState.Normal] && !stats.paused) {
+    statsComponents.push(
+      <Badge color="green" key="inactive" text={`${stats[AlertInstanceTotalState.Normal]} normal`} />
+    );
   }
 
   if (stats.recording) {
