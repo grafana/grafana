@@ -109,7 +109,7 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 
 	for _, j := range cleanupJobs {
 		if ctx.Err() != nil {
-			logger.Error("Cancelled cleanup job", "error", ctx.Err(), "duration", time.Since(start))
+			logger.Error("Cancelled cleanup job", "error", ctx.Err(), "job", j.name, "duration", time.Since(start))
 			return
 		}
 		ctx, span := srv.tracer.Start(ctx, j.name)
@@ -125,6 +125,8 @@ func (srv *CleanUpService) cleanUpOldAnnotations(ctx context.Context) {
 	affected, affectedTags, err := srv.annotationCleaner.Run(ctx, srv.Cfg)
 	if err != nil && !errors.Is(err, context.DeadlineExceeded) {
 		logger.Error("failed to clean up old annotations", "error", err)
+	} else if errors.Is(err, context.DeadlineExceeded) {
+		logger.Debug("cleaning up old annotations has timeout out", "annotations affected", affected, "annotation tags affected", affectedTags)
 	} else {
 		logger.Debug("Deleted excess annotations", "annotations affected", affected, "annotation tags affected", affectedTags)
 	}
