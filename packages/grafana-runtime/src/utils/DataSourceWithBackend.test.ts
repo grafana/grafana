@@ -98,7 +98,7 @@ describe('DataSourceWithBackend', () => {
         "hideFromInspector": false,
         "method": "POST",
         "requestId": undefined,
-        "url": "/api/ds/query?type=dummy",
+        "url": "/api/ds/query?ds_type=dummy",
       }
     `);
   });
@@ -153,7 +153,7 @@ describe('DataSourceWithBackend', () => {
         "hideFromInspector": false,
         "method": "POST",
         "requestId": undefined,
-        "url": "/api/ds/query?type=dummy&expression=true",
+        "url": "/api/ds/query?ds_type=dummy&expression=true",
       }
     `);
   });
@@ -222,7 +222,7 @@ describe('DataSourceWithBackend', () => {
         "hideFromInspector": true,
         "method": "POST",
         "requestId": undefined,
-        "url": "/api/ds/query?type=dummy",
+        "url": "/api/ds/query?ds_type=dummy",
       }
     `);
   });
