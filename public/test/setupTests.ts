@@ -5,11 +5,11 @@ import { initReactI18next } from 'react-i18next';
 
 import { matchers } from './matchers';
 
-expect.extend(matchers);
-
 failOnConsole({
   shouldFailOnLog: true,
 });
+
+expect.extend(matchers);
 
 i18next.use(initReactI18next).init({
   resources: {},
