@@ -25,6 +25,7 @@ Any variable that is referenced or used has a green check mark next to it, while
 
 ![Variables list](/static/img/docs/variables-templates/variable-not-referenced-7-4.png)
 
-In addition, all referenced variables have a dependency icon next to the green check mark. You can click on the icon to view the dependency map. The dependency map can be moved. You can zoom in out with mouse wheel or track pad equivalent.
+In addition, there is an option to show the dependencies between variables. Before 9.2 all referenced variables have a dependency icon next to the green check mark. You can click on the icon to view the dependency map. After 9.2, it is a button under the list of variables. 
+The dependency map can be moved. You can zoom in out with mouse wheel or track pad equivalent.
 
 ![Variables list](/static/img/docs/variables-templates/dependancy-map-7-4.png)
