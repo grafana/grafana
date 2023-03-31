@@ -1,6 +1,6 @@
 import { cloneDeep, find, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
 import { generate, lastValueFrom, Observable, of, throwError } from 'rxjs';
-import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
+import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap, switchMap } from 'rxjs/operators';
 import { SemVer } from 'semver';
 
 import {
@@ -14,7 +14,6 @@ import {
   DataSourceWithSupplementaryQueriesSupport,
   DateTime,
   dateTime,
-  Field,
   getDefaultTimeRange,
   AbstractQuery,
   LogLevel,
@@ -26,6 +25,10 @@ import {
   QueryFixAction,
   CoreApp,
   SupplementaryQueryType,
+  DataQueryError,
+  FieldCache,
+  FieldType,
+  rangeUtil,
 } from '@grafana/data';
 import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv, getDataSourceSrv, config } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
@@ -36,7 +39,7 @@ import { RowContextOptions } from '../../../features/logs/components/LogRowConte
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 
 import { ElasticResponse } from './ElasticResponse';
-import { IndexPattern } from './IndexPattern';
+import { IndexPattern, intervalMap } from './IndexPattern';
 import LanguageProvider from './LanguageProvider';
 import { ElasticQueryBuilder } from './QueryBuilder';
 import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
@@ -49,7 +52,15 @@ import {
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { defaultBucketAgg, hasMetricOfType } from './queryDef';
 import { trackQuery } from './tracking';
-import { Logs, BucketAggregation, DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
+import {
+  Logs,
+  BucketAggregation,
+  DataLinkConfig,
+  ElasticsearchOptions,
+  ElasticsearchQuery,
+  TermsQuery,
+  Interval,
+} from './types';
 import { getScriptValue, isSupportedVersion, unsupportedVersionMessage } from './utils';
 
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
@@ -85,6 +96,7 @@ export class ElasticDatasource
   maxConcurrentShardRequests?: number;
   queryBuilder: ElasticQueryBuilder;
   indexPattern: IndexPattern;
+  intervalPattern?: Interval;
   logMessageField?: string;
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
@@ -110,6 +122,7 @@ export class ElasticDatasource
     this.timeField = settingsData.timeField;
     this.xpack = Boolean(settingsData.xpack);
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
+    this.intervalPattern = settingsData.interval;
     this.interval = settingsData.timeInterval;
     this.maxConcurrentShardRequests = settingsData.maxConcurrentShardRequests;
     this.queryBuilder = new ElasticQueryBuilder({
@@ -420,7 +433,7 @@ export class ElasticDatasource
     );
   }
 
-  getQueryHeader(searchType: any, timeFrom?: DateTime, timeTo?: DateTime): string {
+  getQueryHeader(searchType: any, timeFrom: DateTime, timeTo: DateTime): string {
     const queryHeader: any = {
       search_type: searchType,
       ignore_unavailable: true,
@@ -486,65 +499,23 @@ export class ElasticDatasource
   }
 
   getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
-    const sortField = row.dataFrame.fields.find((f) => f.name === 'sort');
-    const searchAfter = sortField?.values.get(row.rowIndex) || [row.timeEpochMs];
-    const sort = options?.direction === 'FORWARD' ? 'asc' : 'desc';
+    const contextRequest = this.makeLogContextDataRequest(row, options);
 
-    const header =
-      options?.direction === 'FORWARD'
-        ? this.getQueryHeader('query_then_fetch', dateTime(row.timeEpochMs))
-        : this.getQueryHeader('query_then_fetch', undefined, dateTime(row.timeEpochMs));
-
-    const limit = options?.limit ?? 10;
-    const esQuery = JSON.stringify({
-      size: limit,
-      query: {
-        bool: {
-          filter: [
-            {
-              range: {
-                [this.timeField]: {
-                  [options?.direction === 'FORWARD' ? 'gte' : 'lte']: row.timeEpochMs,
-                  format: 'epoch_millis',
-                },
-              },
-            },
-          ],
-        },
-      },
-      sort: [{ [this.timeField]: sort }, { _doc: sort }],
-      search_after: searchAfter,
-    });
-    const payload = [header, esQuery].join('\n') + '\n';
-    const url = this.getMultiSearchUrl();
-    const response = await lastValueFrom(this.post(url, payload));
-    const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [{ type: 'logs', id: '1' }] }];
-    const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
-    const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
-    const dataFrame = _first(logResponse.data);
-    if (!dataFrame) {
-      return { data: [] };
-    }
-    /**
-     * The LogRowContextProvider requires there is a field in the dataFrame.fields
-     * named `ts` for timestamp and `line` for the actual log line to display.
-     * Unfortunatly these fields are hardcoded and are required for the lines to
-     * be properly displayed. This code just copies the fields based on this.timeField
-     * and this.logMessageField and recreates the dataFrame so it works.
-     */
-    const timestampField = dataFrame.fields.find((f: Field) => f.name === this.timeField);
-    const lineField = dataFrame.fields.find((f: Field) => f.name === this.logMessageField);
-    if (timestampField && lineField) {
-      return {
-        data: [
-          {
-            ...dataFrame,
-            fields: [...dataFrame.fields, { ...timestampField, name: 'ts' }, { ...lineField, name: 'line' }],
-          },
-        ],
-      };
-    }
-    return logResponse;
+    return lastValueFrom(
+      this.query(contextRequest).pipe(
+        catchError((err) => {
+          const error: DataQueryError = {
+            message: 'Error during context query. Please check JS console logs.',
+            status: err.status,
+            statusText: err.statusText,
+          };
+          throw error;
+        }),
+        switchMap((res) => {
+          return of(processToLogContextDataFrames(res));
+        })
+      )
+    );
   };
 
   getDataProvider(
@@ -1077,6 +1048,59 @@ export class ElasticDatasource
     this.databaseVersion = freshDatabaseVersion;
     return freshDatabaseVersion;
   }
+
+  private makeLogContextDataRequest = (row: LogRowModel, options?: RowContextOptions) => {
+    const direction = options?.direction || 'BACKWARD';
+    // This is a hack as we are using more settings as documented. At this point, I am not sure how to override the schema
+    // because then other types fail. Or if i should add it to schema?
+    const settings = {
+      limit: options?.limit ? options?.limit.toString() : '10',
+      // Used for sorting of results in the context query
+      sortDirection: direction === 'BACKWARD' ? 'desc' : 'asc',
+      // This is used to get the next log lines before/after the current log line
+      // We use the timestamp of the current log line or value in time field
+      searchAfter: row.dataFrame.fields.find((f) => f.name === 'sort')?.values.get(row.rowIndex) ?? [row.timeEpochMs],
+    };
+
+    const query: ElasticsearchQuery = {
+      refId: `log-context-${row.dataFrame.refId}-${direction}`,
+      metrics: [
+        {
+          type: 'logs',
+          id: '1',
+          settings,
+        },
+      ],
+      query: '',
+    };
+
+    const timeRange = createContextTimeRange(row.timeEpochMs, direction, this.intervalPattern);
+    const range = {
+      from: timeRange.from,
+      to: timeRange.to,
+      raw: timeRange,
+    };
+
+    console.log(direction, range);
+
+    const interval = rangeUtil.calculateInterval(range, 1);
+
+    const contextRequest: DataQueryRequest<ElasticsearchQuery> = {
+      requestId: `context-request-${row.dataFrame.refId}-${options?.direction}`,
+      targets: [query],
+      interval: interval.interval,
+      intervalMs: interval.intervalMs,
+      range,
+      scopedVars: {},
+      timezone: 'UTC',
+      app: CoreApp.Explore,
+      startTime: Date.now(),
+      hideFromInspector: true,
+    };
+
+    console.log(contextRequest);
+    return contextRequest;
+  };
 }
 
 /**
@@ -1130,21 +1154,68 @@ function generateDataLink(linkConfig: DataLinkConfig): DataLink {
   }
 }
 
-function transformHitsBasedOnDirection(response: any, direction: 'asc' | 'desc') {
-  if (direction === 'desc') {
-    return response;
-  }
-  const actualResponse = response.responses[0];
-  return {
-    ...response,
-    responses: [
-      {
-        ...actualResponse,
-        hits: {
-          ...actualResponse.hits,
-          hits: actualResponse.hits.hits.reverse(),
+function processToLogContextDataFrames(result: DataQueryResponse): DataQueryResponse {
+  const frames: DataFrame[] = result.data;
+  const processedFrames = frames.map((frame) => {
+    // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
+    const cache = new FieldCache(frame);
+    const timestampField = cache.getFirstFieldOfType(FieldType.time);
+    const lineField = cache.getFirstFieldOfType(FieldType.string);
+
+    if (timestampField === undefined || lineField === undefined) {
+      // this should never really happen, but i want to keep typescript happy
+      return { ...frame, fields: [] };
+    }
+
+    return {
+      ...frame,
+      fields: [
+        {
+          ...timestampField,
+          name: 'ts',
         },
-      },
-    ],
+        {
+          ...lineField,
+          name: 'line',
+        },
+      ],
+    };
+  }); // rename fields if needed
+
+  return {
+    ...result,
+    data: processedFrames,
   };
+}
+
+function createContextTimeRange(rowTimeEpochMs: number, direction: string, intervalPattern: Interval | undefined) {
+  const offset = 7;
+  // For log context, we want to request data from 7 subsequent/previous indices
+  if (intervalPattern) {
+    const intervalInfo = intervalMap[intervalPattern];
+    if (direction === 'FORWARD') {
+      return {
+        from: dateTime(rowTimeEpochMs).utc(),
+        to: dateTime(rowTimeEpochMs).add(offset, intervalInfo.amount).utc().startOf(intervalInfo.startOf),
+      };
+    } else {
+      return {
+        from: dateTime(rowTimeEpochMs).subtract(offset, intervalInfo.amount).utc().startOf(intervalInfo.startOf),
+        to: dateTime(rowTimeEpochMs).utc(),
+      };
+    }
+    // If we don't have an interval pattern, we can't do this, so we just request data from 7h before/after
+  } else {
+    if (direction === 'FORWARD') {
+      return {
+        from: dateTime(rowTimeEpochMs).utc(),
+        to: dateTime(rowTimeEpochMs).add(offset, 'hours').utc(),
+      };
+    } else {
+      return {
+        from: dateTime(rowTimeEpochMs).subtract(offset, 'hours').utc(),
+        to: dateTime(rowTimeEpochMs).utc(),
+      };
+    }
+  }
 }

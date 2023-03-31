@@ -71,42 +71,4 @@ describe('IndexPattern', () => {
       });
     });
   });
-
-  describe('when getting index list from single date', () => {
-    it('Should return index matching the starting time and subsequent ones', () => {
-      const pattern = new IndexPattern('[asd-]YYYY.MM.DD', 'Daily');
-      const from = dateTime(new Date(1432940523000));
-
-      const expected = [
-        'asd-2015.05.29',
-        'asd-2015.05.30',
-        'asd-2015.05.31',
-        'asd-2015.06.01',
-        'asd-2015.06.02',
-        'asd-2015.06.03',
-        'asd-2015.06.04',
-        'asd-2015.06.05',
-      ];
-
-      expect(pattern.getIndexList(from)).toEqual(expected);
-    });
-
-    it('Should return index matching the starting time and previous ones', () => {
-      const pattern = new IndexPattern('[asd-]YYYY.MM.DD', 'Daily');
-      const to = dateTime(new Date(1432940523000));
-
-      const expected = [
-        'asd-2015.05.22',
-        'asd-2015.05.23',
-        'asd-2015.05.24',
-        'asd-2015.05.25',
-        'asd-2015.05.26',
-        'asd-2015.05.27',
-        'asd-2015.05.28',
-        'asd-2015.05.29',
-      ];
-
-      expect(pattern.getIndexList(undefined, to)).toEqual(expected);
-    });
-  });
 });

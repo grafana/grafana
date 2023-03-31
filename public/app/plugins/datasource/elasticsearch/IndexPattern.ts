@@ -10,7 +10,7 @@ type IntervalMap = Record<
   }
 >;
 
-const intervalMap: IntervalMap = {
+export const intervalMap: IntervalMap = {
   Hourly: { startOf: 'hour', amount: 'hours' },
   Daily: { startOf: 'day', amount: 'days' },
   Weekly: { startOf: 'isoWeek', amount: 'weeks' },
@@ -31,24 +31,14 @@ export class IndexPattern {
     }
   }
 
-  getIndexList(from?: DateTime, to?: DateTime) {
-    // When no `from` or `to` is provided, we request data from 7 subsequent/previous indices
-    // for the provided index pattern.
-    // This is useful when requesting log context where the only time data we have is the log
-    // timestamp.
-    const indexOffset = 7;
+  getIndexList(from: DateTime, to: DateTime) {
     if (!this.interval) {
       return this.pattern;
     }
 
     const intervalInfo = intervalMap[this.interval];
-    const start = dateTime(from || dateTime(to).add(-indexOffset, intervalInfo.amount))
-      .utc()
-      .startOf(intervalInfo.startOf);
-    const endEpoch = dateTime(to || dateTime(from).add(indexOffset, intervalInfo.amount))
-      .utc()
-      .startOf(intervalInfo.startOf)
-      .valueOf();
+    const start = dateTime(from).utc().startOf(intervalInfo.startOf);
+    const endEpoch = dateTime(to).utc().startOf(intervalInfo.startOf).valueOf();
     const indexList = [];
 
     while (start.valueOf() <= endEpoch) {
