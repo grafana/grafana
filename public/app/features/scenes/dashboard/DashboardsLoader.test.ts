@@ -3,6 +3,7 @@ import {
   DataSourceVariable,
   QueryVariable,
   SceneDataTransformer,
+  SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
   SceneQueryRunner,
@@ -169,10 +170,10 @@ describe('DashboardLoader', () => {
       const rowScene = body.state.children[0] as SceneGridRow;
       expect(rowScene).toBeInstanceOf(SceneGridRow);
       expect(rowScene.state.title).toEqual(row.title);
-      expect(rowScene.state.placement?.y).toEqual(row.gridPos!.y);
+      expect(rowScene.state.y).toEqual(row.gridPos!.y);
       expect(rowScene.state.isCollapsed).toEqual(row.collapsed);
       expect(rowScene.state.children).toHaveLength(1);
-      expect(rowScene.state.children[0]).toBeInstanceOf(VizPanel);
+      expect(rowScene.state.children[0]).toBeInstanceOf(SceneGridItem);
     });
 
     it('should create panels within expanded row', () => {
@@ -233,18 +234,18 @@ describe('DashboardLoader', () => {
       expect(body.state.children).toHaveLength(3);
       expect(body).toBeInstanceOf(SceneGridLayout);
       // Panel out of row
-      expect(body.state.children[0]).toBeInstanceOf(VizPanel);
-      const panelOutOfRowVizPanel = body.state.children[0] as VizPanel;
-      expect(panelOutOfRowVizPanel.state.title).toBe(panelOutOfRow.title);
+      expect(body.state.children[0]).toBeInstanceOf(SceneGridItem);
+      const panelOutOfRowVizPanel = body.state.children[0] as SceneGridItem;
+      expect((panelOutOfRowVizPanel.state.body as VizPanel)?.state.title).toBe(panelOutOfRow.title);
       // Row with panel
       expect(body.state.children[1]).toBeInstanceOf(SceneGridRow);
       const rowWithPanelsScene = body.state.children[1] as SceneGridRow;
       expect(rowWithPanelsScene.state.title).toBe(rowWithPanel.title);
       expect(rowWithPanelsScene.state.children).toHaveLength(1);
       // Panel within row
-      expect(rowWithPanelsScene.state.children[0]).toBeInstanceOf(VizPanel);
-      const panelInRowVizPanel = rowWithPanelsScene.state.children[0] as VizPanel;
-      expect(panelInRowVizPanel.state.title).toBe(panelInRow.title);
+      expect(rowWithPanelsScene.state.children[0]).toBeInstanceOf(SceneGridItem);
+      const panelInRowVizPanel = rowWithPanelsScene.state.children[0] as SceneGridItem;
+      expect((panelInRowVizPanel.state.body as VizPanel).state.title).toBe(panelInRow.title);
       // Empty row
       expect(body.state.children[2]).toBeInstanceOf(SceneGridRow);
       const emptyRowScene = body.state.children[2] as SceneGridRow;
@@ -295,22 +296,23 @@ describe('DashboardLoader', () => {
         ],
       };
       const vizPanelSceneObject = createVizPanelFromPanelModel(new PanelModel(panel));
-
-      expect(vizPanelSceneObject.state.title).toBe('test');
-      expect(vizPanelSceneObject.state.pluginId).toBe('test-plugin');
-      expect(vizPanelSceneObject.state.placement).toEqual({ x: 0, y: 0, width: 12, height: 8 });
-      expect(vizPanelSceneObject.state.options).toEqual(panel.options);
-      expect(vizPanelSceneObject.state.fieldConfig).toEqual(panel.fieldConfig);
-      expect(vizPanelSceneObject.state.pluginVersion).toBe('1.0.0');
+      const vizPanelItelf = vizPanelSceneObject.state.body as VizPanel;
+      expect(vizPanelItelf?.state.title).toBe('test');
+      expect(vizPanelItelf?.state.pluginId).toBe('test-plugin');
+      expect(vizPanelSceneObject.state.x).toEqual(0);
+      expect(vizPanelSceneObject.state.y).toEqual(0);
+      expect(vizPanelSceneObject.state.width).toEqual(12);
+      expect(vizPanelSceneObject.state.height).toEqual(8);
+      expect(vizPanelItelf?.state.options).toEqual(panel.options);
+      expect(vizPanelItelf?.state.fieldConfig).toEqual(panel.fieldConfig);
+      expect(vizPanelItelf?.state.pluginVersion).toBe('1.0.0');
       expect(
-        ((vizPanelSceneObject.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.queries
+        ((vizPanelItelf.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.queries
       ).toEqual(panel.targets);
       expect(
-        ((vizPanelSceneObject.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.maxDataPoints
+        ((vizPanelItelf.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.maxDataPoints
       ).toEqual(100);
-      expect((vizPanelSceneObject.state.$data as SceneDataTransformer)?.state.transformations).toEqual(
-        panel.transformations
-      );
+      expect((vizPanelItelf.state.$data as SceneDataTransformer)?.state.transformations).toEqual(panel.transformations);
     });
 
     it('should initalize the VizPanel without title and transparent true', () => {
@@ -323,8 +325,8 @@ describe('DashboardLoader', () => {
 
       const vizPanelSceneObject = createVizPanelFromPanelModel(new PanelModel(panel));
 
-      expect(vizPanelSceneObject.state.displayMode).toEqual('transparent');
-      expect(vizPanelSceneObject.state.hoverHeader).toEqual(true);
+      expect((vizPanelSceneObject.state.body as VizPanel)?.state.displayMode).toEqual('transparent');
+      expect((vizPanelSceneObject.state.body as VizPanel)?.state.hoverHeader).toEqual(true);
     });
   });
 
@@ -586,7 +588,7 @@ describe('DashboardLoader', () => {
         hide: 2,
         label: 'constant',
         name: 'constant',
-        skipUrlSync: false,
+        skipUrlSync: true,
         type: 'constant',
         value: 'test',
       });

@@ -1,4 +1,11 @@
-import { SceneTimePicker, SceneFlexLayout, VizPanel, SceneDataTransformer, SceneTimeRange } from '@grafana/scenes';
+import {
+  SceneTimePicker,
+  SceneFlexLayout,
+  VizPanel,
+  SceneDataTransformer,
+  SceneTimeRange,
+  SceneFlexItem,
+} from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
 
@@ -10,50 +17,59 @@ export function getTransformationsDemo(): DashboardScene {
     body: new SceneFlexLayout({
       direction: 'row',
       children: [
-        new SceneFlexLayout({
-          direction: 'column',
-          children: [
-            new SceneFlexLayout({
-              direction: 'row',
-              children: [
-                new VizPanel({
-                  pluginId: 'timeseries',
-                  title: 'Source data (global query',
+        new SceneFlexItem({
+          body: new SceneFlexLayout({
+            direction: 'column',
+            children: [
+              new SceneFlexItem({
+                body: new SceneFlexLayout({
+                  direction: 'row',
+                  children: [
+                    new SceneFlexItem({
+                      body: new VizPanel({
+                        pluginId: 'timeseries',
+                        title: 'Source data (global query',
+                      }),
+                    }),
+                    new SceneFlexItem({
+                      body: new VizPanel({
+                        pluginId: 'stat',
+                        title: 'Transformed data',
+                        $data: new SceneDataTransformer({
+                          transformations: [
+                            {
+                              id: 'reduce',
+                              options: {
+                                reducers: ['last', 'mean'],
+                              },
+                            },
+                          ],
+                        }),
+                      }),
+                    }),
+                  ],
                 }),
-                new VizPanel({
-                  pluginId: 'stat',
-                  title: 'Transformed data',
+              }),
+              new SceneFlexItem({
+                body: new VizPanel({
                   $data: new SceneDataTransformer({
+                    $data: getQueryRunnerWithRandomWalkQuery(),
                     transformations: [
                       {
                         id: 'reduce',
                         options: {
-                          reducers: ['last', 'mean'],
+                          reducers: ['mean'],
                         },
                       },
                     ],
                   }),
+
+                  pluginId: 'stat',
+                  title: 'Query with predefined transformations',
                 }),
-              ],
-            }),
-
-            new VizPanel({
-              $data: new SceneDataTransformer({
-                $data: getQueryRunnerWithRandomWalkQuery(),
-                transformations: [
-                  {
-                    id: 'reduce',
-                    options: {
-                      reducers: ['mean'],
-                    },
-                  },
-                ],
               }),
-
-              pluginId: 'stat',
-              title: 'Query with predefined transformations',
-            }),
-          ],
+            ],
+          }),
         }),
       ],
     }),
