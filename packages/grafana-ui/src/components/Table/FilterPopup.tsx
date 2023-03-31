@@ -103,7 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 1px solid ${theme.colors.border.medium};
     padding: ${theme.spacing(2)};
     margin: ${theme.spacing(1)} 0;
-    box-shadow: 0px 0px 20px ${theme.v1.palette.black};
+    box-shadow: ${theme.shadows.z3};
     border-radius: ${theme.shape.radius.default};
   `,
   listDivider: css`
