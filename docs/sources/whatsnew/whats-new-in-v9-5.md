@@ -89,7 +89,7 @@ We are slowly rolling out a feature toggle for enforcing synchronization of orga
 
 If you want to enable this feature, you'll need to enable the `onlyExternalOrgRoleSync` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
-A reminder that there is a setting to prevent synchronization of organization roles from the authentication provider. Refer to [skip org role sync](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#authgrafana_com-skip_org_role_sync) for more information.
+You can also prevent the synchronization of organization roles from the authentication provider. For more information, refer to [skip org role sync](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#authgrafana_com-skip_org_role_sync).
 
 ## Support bundles
 
