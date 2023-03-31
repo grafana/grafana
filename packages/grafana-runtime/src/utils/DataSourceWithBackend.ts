@@ -78,6 +78,7 @@ enum PluginRequestHeaders {
   DashboardUID = 'X-Dashboard-Uid', // mainly useful for debuging slow queries
   PanelID = 'X-Panel-Id', // mainly useful for debuging slow queries
   QueryGroupID = 'X-Query-Group-Id', // mainly useful to find related queries with query chunking
+  FromExpression = 'X-Grafana-From-Expr', // used by datasources to identify expression queries
 }
 
 /**
@@ -197,14 +198,16 @@ class DataSourceWithBackend<
       });
     }
 
-    let url = '/api/ds/query';
-    if (hasExpr) {
-      url += '?expression=true';
-    }
-
     const headers: Record<string, string> = {};
     headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
+
+    let url = '/api/ds/query';
+    if (hasExpr) {
+      headers[PluginRequestHeaders.FromExpression] = 'true';
+      url += '?expression=true';
+    }
+
     if (request.dashboardUID) {
       headers[PluginRequestHeaders.DashboardUID] = request.dashboardUID;
     }
