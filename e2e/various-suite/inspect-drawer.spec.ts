@@ -37,7 +37,7 @@ e2e.scenario({
     e2e.flows.openDashboard({ uid: 'wfTJJL5Wz' });
 
     // testing opening inspect drawer directly by clicking on Inspect in header menu
-    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Inspect, PANEL_UNDER_TEST);
+    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Inspect, PANEL_UNDER_TEST, true);
 
     expectDrawerTabsAndContent();
 
@@ -49,7 +49,7 @@ e2e.scenario({
     expectSubMenuScenario('Query');
     expectSubMenuScenario('Panel JSON', 'JSON');
 
-    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
+    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST, true);
 
     e2e.components.QueryTab.queryInspectorButton().should('be.visible').click();
 
