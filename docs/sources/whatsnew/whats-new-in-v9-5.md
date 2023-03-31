@@ -43,20 +43,6 @@ Join the [discussion on GitHub](https://github.com/grafana/grafana/discussions/5
 
 {{< figure src="/media/docs/grafana/navigation-9-4.png" max-width="750px" caption="Grafana new navigation" >}}
 
-## Nested folders
-
-_Available in experimental in all editions of Grafana._
-
-You can now create nested folders in Grafana to help you better organize your dashboards and alerts. This new feature allows you to create, read, update, and delete nested folders, making it easier to sort resources by business units, departments, and teams.
-
-You can also set up permissions using Role-Based Access Control (RBAC). Folder permissions will cascade, being inherited from the parent folder, which simplifies access management.
-
-It's worth noting that the nested folders feature is currently experimental. As such, it's recommended to enable it only on test or development instances, rather than in production environments.
-
-To try out the nested folders feature, you'll need to enable the `nestedFolders` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
-
-In subsequent releases, we’ll be refining and enhancing the user interface for managing dashboards and folders, to provide a more streamlined user experience.
-
 ## Dashboards and visualizations
 
 ### Redesigned empty dashboard state
