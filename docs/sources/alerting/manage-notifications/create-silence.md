@@ -25,7 +25,7 @@ Silences stop notifications from getting created and last for only a specified w
 
 To add a silence, complete the following steps.
 
-1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Silences**.
 1. From the **Alertmanager** dropdown, select an external Alertmanager to create and manage silences for the external data source. Otherwise, keep the default option of Grafana.
 1. Click **Create silence** to open the Create silence page.
@@ -39,7 +39,7 @@ To add a silence, complete the following steps.
 
 To edit a silence, complete the following steps.
 
-1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Silences** to view the list of existing silences.
 1. Find the silence you want to edit, then click **Edit** (pen icon).
 1. Make the desired changes, then click **Submit** to save your changes.
@@ -56,7 +56,7 @@ To link to a new silence page for an external Alertmanager, add a `alertmanager`
 
 To remove a silence, complete the following steps.
 
-1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Silences** to view the list of existing silences.
 1. Select the silence you want to end, then click **Unsilence**.
 

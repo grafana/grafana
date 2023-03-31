@@ -36,7 +36,7 @@ You can configure grouping to be `group_by: [alertname]` (take note that the `en
 
 > **Note:** Before Grafana v8.2, the configuration of the embedded Alertmanager was shared across organizations. Users of Grafana 8.0 and 8.1 are advised to use the new Grafana 8 Alerts only if they have one organization. Otherwise, silences for the Grafana managed alerts will be visible by all organizations.
 
-1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
 1. From the **Choose Alertmanager** dropdown, select an external Alertmanager. By default, the **Grafana Alertmanager** is selected.
 1. In the Root policy section, click **Edit**.
@@ -50,7 +50,7 @@ You can configure grouping to be `group_by: [alertname]` (take note that the `en
 
 ## Add new nested policy
 
-1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
 1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, the **Grafana Alertmanager** is selected.
 1. To add a top level specific policy, go to the Specific routing section and click **+ New specific policy**.
@@ -63,7 +63,7 @@ You can configure grouping to be `group_by: [alertname]` (take note that the `en
 
 ## Add nested policy
 
-1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
 1. Expand the specific policy you want to update.
 1. Click **+ Add nested policy**, then add the details using information in [Add new specific policy](#add-new-specific-policy).
@@ -71,7 +71,7 @@ You can configure grouping to be `group_by: [alertname]` (take note that the `en
 
 ## Edit specific policy
 
-1. In the left-side menu, click **Alerts & incidents**, and then **Alerting**.
+1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
 1. Click **Notification policies**.
 1. Find the policy you want to edit, then click **Edit**.
 1. Make any changes using instructions in [Add new specific policy](#add-new-specific-policy).

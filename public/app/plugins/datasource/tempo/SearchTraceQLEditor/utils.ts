@@ -1,3 +1,5 @@
+import { startCase } from 'lodash';
+
 import { SelectableValue } from '@grafana/data';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
@@ -19,7 +21,7 @@ const valueHelper = (f: TraceqlFilter) => {
   }
   return f.value;
 };
-export const scopeHelper = (f: TraceqlFilter) => {
+const scopeHelper = (f: TraceqlFilter) => {
   // Intrinsic fields don't have a scope
   if (CompletionProvider.intrinsics.find((t) => t === f.tag)) {
     return '';
@@ -27,6 +29,18 @@ export const scopeHelper = (f: TraceqlFilter) => {
   return (
     (f.scope === TraceqlSearchScope.Resource || f.scope === TraceqlSearchScope.Span ? f.scope?.toLowerCase() : '') + '.'
   );
+};
+
+export const filterScopedTag = (f: TraceqlFilter) => {
+  return scopeHelper(f) + f.tag;
+};
+
+export const filterTitle = (f: TraceqlFilter) => {
+  // Special case for the intrinsic "name" since a label called "Name" isn't explicit
+  if (f.tag === 'name') {
+    return 'Span Name';
+  }
+  return startCase(filterScopedTag(f));
 };
 
 export function replaceAt<T>(array: T[], index: number, value: T) {
