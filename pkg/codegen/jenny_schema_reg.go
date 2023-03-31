@@ -6,13 +6,14 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"testing/fstest"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/format"
 	"github.com/grafana/codejen"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
-	"github.com/grafana/thema/load"
 )
 
 // SchemaRegistryJenny generates lineage files into the "next" folder
@@ -33,26 +34,26 @@ func (j *schemaregjenny) JennyName() string {
 
 func (j *schemaregjenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 	name := kind.Props().Common().MachineName
-	oldLin, err := getPublishedLineage(name, j.path)
+	oldKind, err := getPublishedKind(name, j.path)
 	if err != nil {
 		return nil, err
 	}
 
-	newLinBytes, err := lineageToBytes(kind.Lineage())
+	newKindBytes, err := kindToBytes(kind)
 	if err != nil {
 		return nil, err
 	}
 
 	// File is new - no need to compare with old lineage
-	if oldLin != nil && !thema.IsAppendOnly(oldLin, kind.Lineage()) {
+	if oldKind != nil && !thema.IsAppendOnly(oldKind.Lineage(), kind.Lineage()) {
 		return nil, fmt.Errorf("existing schemas in lineage %s cannot be modified", name)
 	}
-
+	
 	path := filepath.Join(j.path, "next", name+".cue")
-	return codejen.NewFile(path, newLinBytes, j), nil
+	return codejen.NewFile(path, newKindBytes, j), nil
 }
 
-func getPublishedLineage(linName string, path string) (thema.Lineage, error) {
+func getPublishedKind(name string, path string) (kindsys.Kind, error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving working directory: %w", err)
@@ -70,12 +71,12 @@ func getPublishedLineage(linName string, path string) (thema.Lineage, error) {
 		return nil, nil
 	}
 
-	bytes, err := os.ReadFile(filepath.Join(path, latestDir, linName+".cue"))
+	bytes, err := os.ReadFile(filepath.Join(path, latestDir, name + ".cue"))
 	if err != nil {
 		return nil, err
 	}
 
-	return load.LineageFromBytes(bytes)
+	return loadKindFromBytes(name, bytes)
 }
 
 func findLatestDir(path string) (string, error) {
@@ -124,14 +125,44 @@ func isLess(v1 []uint64, v2 []uint64) bool {
 	return v1[0] < v2[0] || (v1[0] == v2[0] && isLess(v1[2:], v2[2:]))
 }
 
-func lineageToBytes(lin thema.Lineage) ([]byte, error) {
-	node := lin.Underlying().Syntax(
+func kindToBytes(kind kindsys.Kind) ([]byte, error) {
+	var value cue.Value
+	switch tkind := kind.(type) {
+	case kindsys.Core:
+		value = tkind.Def().V
+	case kindsys.Composable:
+		value = tkind.Def().V
+	case kindsys.Custom:
+		value = tkind.Def().V
+	default:
+		return nil, fmt.Errorf("kind must be core, composable or custom")
+	}
+
+	node := value.Syntax(
 		cue.All(),
 		cue.Raw(),
 		cue.Schema(),
 		cue.Definitions(true),
 		cue.Docs(true),
+		cue.Hidden(true),
 	)
 
 	return format.Node(node)
+}
+
+func loadKindFromBytes(name string, kind []byte) (kindsys.Kind, error) {
+	fs := fstest.MapFS{
+		fmt.Sprintf("%s.cue", name): &fstest.MapFile{
+			Data: kind,
+		},
+	}
+
+	rt := cuectx.GrafanaThemaRuntime()
+
+	def, err := cuectx.LoadCoreKindDef(fmt.Sprintf("%s.cue", name), rt.Context(), fs)
+	if err != nil {
+		return nil, fmt.Errorf("%s is not a valid kind: %w", name, err)
+	}
+
+	return kindsys.BindCore(rt, def)
 }
