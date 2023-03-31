@@ -36,13 +36,7 @@ export function SupplementaryResultError(props: Props) {
         message
       )}
       {suggestedAction && onSuggestedAction && (
-        <Button
-          variant="primary"
-          size="xs"
-          onClick={() => {
-            onSuggestedAction();
-          }}
-        >
+        <Button variant="primary" size="xs" onClick={onSuggestedAction}>
           {suggestedAction}
         </Button>
       )}
