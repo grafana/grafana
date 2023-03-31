@@ -441,5 +441,12 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:         "trustedTypes",
+			Description:  "Enables Trusted Types to make XSS bugs less likely",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaUserEssentialsSquad,
+		},
 	}
 )

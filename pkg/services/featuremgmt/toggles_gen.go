@@ -270,4 +270,8 @@ const (
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
+
+	// FlagTrustedTypes
+	// Enables Trusted Types to make XSS bugs less likely
+	FlagTrustedTypes = "trustedTypes"
 )

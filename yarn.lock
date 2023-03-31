@@ -12344,6 +12344,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/trusted-types@npm:2.0.3":
+  version: 2.0.3
+  resolution: "@types/trusted-types@npm:2.0.3"
+  checksum: 4794804bc4a4a173d589841b6d26cf455ff5dc4f3e704e847de7d65d215f2e7043d8757e4741ce3a823af3f08260a8d04a1a6e9c5ec9b20b7b04586956a6b005
+  languageName: node
+  linkType: hard
+
 "@types/uglify-js@npm:*":
   version: 3.13.1
   resolution: "@types/uglify-js@npm:3.13.1"
@@ -18570,6 +18577,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dompurify@npm:3.0.1":
+  version: 3.0.1
+  resolution: "dompurify@npm:3.0.1"
+  checksum: 19447e6d96415a8ad3a67bc9c76ffe671eb31cf7c1e0a538cbe5037c8b8b03afe144d64cf96c6e0f7fe63b83721a33b5b913394d20a85e96550e42e31f7c086b
+  languageName: node
+  linkType: hard
+
 "dompurify@npm:^2.2.0":
   version: 2.3.8
   resolution: "dompurify@npm:2.3.8"
@@ -22210,6 +22224,7 @@ __metadata:
     "@types/slate-react": 0.22.9
     "@types/testing-library__jest-dom": 5.14.5
     "@types/tinycolor2": 1.4.3
+    "@types/trusted-types": 2.0.3
     "@types/uuid": 9.0.1
     "@types/webpack-env": 1.18.0
     "@types/yargs": 17.0.22
@@ -22256,6 +22271,7 @@ __metadata:
     dangerously-set-html-content: 1.0.9
     date-fns: 2.29.3
     debounce-promise: 3.1.2
+    dompurify: 3.0.1
     emotion: 11.0.0
     esbuild: 0.16.17
     esbuild-loader: 2.21.0

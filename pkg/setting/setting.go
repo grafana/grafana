@@ -225,7 +225,6 @@ type Cfg struct {
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
 	CSPReportOnlyTemplate string
 	AngularSupportEnabled bool
-	TrustedTypes          bool
 	TempDataLifetime      time.Duration
 
 	// Plugins
@@ -1349,7 +1348,6 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
-	cfg.TrustedTypes = security.Key("trusted_types").MustBool(true)
 
 	if cfg.CSPEnabled && cfg.CSPTemplate == "" {
 		return fmt.Errorf("enabling content_security_policy requires a content_security_policy_template configuration")
