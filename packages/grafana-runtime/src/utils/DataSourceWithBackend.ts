@@ -204,7 +204,7 @@ class DataSourceWithBackend<
 
     let queryStrObj: Record<string, string> = {};
 
-    let url = '/api/ds/query';
+    let url = '/api/ds/query?type=' + this.type;
 
     if (hasExpr) {
       headers[PluginRequestHeaders.FromExpression] = 'true';
@@ -218,7 +218,7 @@ class DataSourceWithBackend<
     let queryStr = new URLSearchParams(queryStrObj).toString();
 
     if (queryStr.length > 0) {
-      url += '?' + queryStr;
+      url += '&' + queryStr;
     }
 
     if (request.dashboardUID) {
