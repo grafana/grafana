@@ -57,35 +57,32 @@ func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, p
 		return nil, err
 	}
 	regions := constants.Regions()
-	r, err := client.DescribeRegions(&ec2.DescribeRegionsInput{})
+	ec2Regions, err := client.DescribeRegions(&ec2.DescribeRegionsInput{})
 	if err != nil {
 		// ignore error for backward compatibility
 		logger.Error("Failed to get regions", "error", err)
 	} else {
-		for _, region := range r.Regions {
-			exists := false
-
-			for _, existingRegion := range regions {
-				if existingRegion == *region.RegionName {
-					exists = true
-					break
-				}
-			}
-
-			if !exists {
-				regions = append(regions, *region.RegionName)
-			}
-		}
+		mergeEC2RegionsAndConstantRegions(regions, ec2Regions.Regions)
 	}
-	sort.Strings(regions)
 
 	result := make([]suggestData, 0)
-	for _, region := range regions {
+	for region := range regions {
 		result = append(result, suggestData{Text: region, Value: region, Label: region})
 	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Text < result[j].Text
+	})
 	e.regionCache.Store(profile, result)
 
 	return result, nil
+}
+
+func mergeEC2RegionsAndConstantRegions(regions map[string]struct{}, ec2Regions []*ec2.Region) {
+	for _, region := range ec2Regions {
+		if _, ok := regions[*region.RegionName]; !ok {
+			regions[*region.RegionName] = struct{}{}
+		}
+	}
 }
 
 func (e *cloudWatchExecutor) handleGetEbsVolumeIds(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {

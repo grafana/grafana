@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"encoding/json"
 	"net/url"
+	"sort"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -55,7 +56,7 @@ func TestQuery_Regions(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		expRegions := append(constants.Regions(), regionName)
+		expRegions := buildSortedSliceOfDefaultAndExtraRegions(t, regionName)
 		expFrame := data.NewFrame(
 			"",
 			data.NewField("text", nil, expRegions),
@@ -73,6 +74,18 @@ func TestQuery_Regions(t *testing.T) {
 		}
 		assert.Equal(t, expResponse, resp)
 	})
+}
+
+func buildSortedSliceOfDefaultAndExtraRegions(t *testing.T, regionName string) []string {
+	t.Helper()
+	regions := constants.Regions()
+	regions[regionName] = struct{}{}
+	var expRegions []string
+	for region := range regions {
+		expRegions = append(expRegions, region)
+	}
+	sort.Strings(expRegions)
+	return expRegions
 }
 
 func Test_handleGetRegions_regionCache(t *testing.T) {
