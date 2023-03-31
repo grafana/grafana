@@ -349,7 +349,7 @@ export const PromSettings = (props: Props) => {
               <FormField
                 label="Cache level"
                 labelWidth={14}
-                tooltip="Sets the browser caching level. Setting a value higher then 'low' will result in editor values from a different range then the active query range."
+                tooltip="Sets the browser caching level for editor queries. Higher cache settings are recommended for high cardinality data sources."
                 inputEl={
                   <Select
                     className={`width-25`}

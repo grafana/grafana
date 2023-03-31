@@ -16,7 +16,6 @@ import (
 type Resource struct {
 	promClient *client.Client
 	log        log.Logger
-	cacheLevel string
 }
 
 func New(
@@ -29,12 +28,10 @@ func New(
 		return nil, err
 	}
 	httpMethod, _ := maputil.GetStringOptional(jsonData, "httpMethod")
-	cacheLevel, _ := maputil.GetStringOptional(jsonData, "cacheLevel")
 
 	return &Resource{
 		log:        plog,
 		promClient: client.NewClient(httpClient, httpMethod, settings.URL),
-		cacheLevel: cacheLevel,
 	}, nil
 }
 
