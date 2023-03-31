@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 
 import {
-  InlineField,
-  Select,
-  Input,
-  InlineFieldRow,
-  InlineLabel,
+  Button,
   HorizontalGroup,
   IconButton,
-  Button,
+  InlineField,
+  InlineFieldRow,
+  InlineLabel,
   InlineSwitch,
+  Input,
+  Select,
   TimeZonePicker,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
@@ -17,6 +17,7 @@ import { formatTimeOfDayString, parseTimeOfDay } from 'app/core/utils/timeRegion
 
 import { TimeRegionConfig } from '../types';
 
+const regionsByName = new Map<string, TimeRegionConfig>();
 interface Props {
   value?: TimeRegionConfig[];
   onChange: (value?: TimeRegionConfig[]) => void;
@@ -31,9 +32,24 @@ const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 
 export function TimeRegionsEditor({ value, onChange }: Props) {
   const addTimeRegion = () => {
-    const len = value?.length ?? 0;
-    const r: TimeRegionConfig = { name: `T${len + 1}`, color: 'red', line: false };
+    const r: TimeRegionConfig = { name: getNextRegionName(), color: 'rgba(234, 112, 112, 0.12)', line: false };
     onChange(value ? [...value, r] : [r]);
+    regionsByName.set(r.name, r);
+  };
+
+  const getNextRegionName = () => {
+    const label = 'T';
+    let idx = regionsByName.size + 1;
+    const max = idx + 100;
+
+    while (true && idx < max) {
+      const name = `${label}${idx++}`;
+      if (!regionsByName.has(name)) {
+        return name;
+      }
+    }
+
+    return `${label}${Date.now()}`;
   };
 
   const onChangeItem = (idx: number, v?: TimeRegionConfig) => {
@@ -41,6 +57,7 @@ export function TimeRegionsEditor({ value, onChange }: Props) {
     if (v) {
       clone[idx] = v;
     } else {
+      regionsByName.delete(clone[idx].name);
       clone.splice(idx, 1);
     }
     onChange(clone);

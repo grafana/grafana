@@ -1,4 +1,13 @@
-import { TimeRange, DataFrame, FieldType, ArrayVector, FieldColorModeId, getTimeZoneInfo } from '@grafana/data';
+import {
+  TimeRange,
+  DataFrame,
+  FieldType,
+  ArrayVector,
+  FieldColorModeId,
+  getTimeZoneInfo,
+  DataFrameType,
+  DataTopic,
+} from '@grafana/data';
 import { calculateTimesWithin } from 'app/core/utils/timeRegions';
 
 import { TimeRegionConfig } from './types';
@@ -16,18 +25,15 @@ export function doTimeRegionQuery(config: TimeRegionConfig, range: TimeRange, tz
 
   const regionTimezone = config.timezone ?? tz;
 
-  // @TODO !!!
   for (const region of regions) {
     let from = region.from;
     let to = region.to;
 
-    // find offset
     const info = getTimeZoneInfo(regionTimezone, from);
     if (info) {
       const offset = info.offsetInMins * 60 * 1000;
       from += offset;
       to += offset;
-      console.log('convert', from, offset, info);
     }
 
     times.push(from);
@@ -38,8 +44,8 @@ export function doTimeRegionQuery(config: TimeRegionConfig, range: TimeRange, tz
 
   return {
     meta: {
-      // type: DataFrameType.TimeRanges,
-      // dataTopic: DataTopic.Annotations,
+      type: DataFrameType.TimeRanges,
+      dataTopic: DataTopic.Annotations,
     },
     fields: [
       { name: 'time', type: FieldType.time, values: new ArrayVector(times), config: {} },
