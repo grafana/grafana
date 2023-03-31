@@ -61,6 +61,15 @@ import (
 //     Responses:
 //       200: GettableHistoricUserConfigs
 
+// swagger:route POST /api/alertmanager/grafana/config/history/{id}/_activate alertmanager RoutePostGrafanaAlertingConfigRevert
+//
+// revert Alerting configuration to the historical configuration specified by the given id
+//
+//     Responses:
+//       202: Ack
+//       400: ValidationError
+//       404: NotFound
+
 // swagger:route DELETE /api/alertmanager/grafana/config/api/v1/alerts alertmanager RouteDeleteGrafanaAlertingConfig
 //
 // deletes the Alerting config for a tenant
@@ -456,6 +465,13 @@ type PostableAlerts struct {
 type BodyAlertingConfig struct {
 	// in:body
 	Body PostableUserConfig
+}
+
+// swagger:parameters RoutePostGrafanaAlertingConfigRevert
+type HistoricalConfigId struct {
+	// Id should be the id of the GettableHistoricUserConfig
+	// in:path
+	Id int64 `json:"id"`
 }
 
 // alertmanager routes

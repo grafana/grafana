@@ -189,6 +189,31 @@ func (st *DBstore) GetAppliedConfigurations(ctx context.Context, orgID int64, li
 	return configs, nil
 }
 
+// GetAppliedConfiguration returns a single historical configuration based on provided org and id.
+func (st *DBstore) GetAppliedConfiguration(ctx context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error) {
+	var config *models.HistoricAlertConfiguration
+	if err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		cfg := &models.HistoricAlertConfiguration{}
+		ok, err := sess.Table("alert_configuration_history").
+			Where("id = ? AND org_id = ?", id, orgID).
+			Get(cfg)
+		if err != nil {
+			return err
+		}
+
+		if !ok {
+			return ErrNoAlertmanagerConfiguration
+		}
+
+		config = cfg
+		return nil
+	}); err != nil {
+		return &models.HistoricAlertConfiguration{}, err
+	}
+
+	return config, nil
+}
+
 func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, limit int) (int64, error) {
 	if limit < 1 {
 		return 0, fmt.Errorf("failed to delete old configurations: limit is set to '%d' but needs to be > 0", limit)
@@ -219,11 +244,11 @@ func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, lim
 		}
 
 		res, err := sess.Exec(`
-			DELETE FROM 
+			DELETE FROM
 				alert_configuration_history
 			WHERE
 				org_id = ?
-			AND 
+			AND
 				id < ?
 		`, orgID, threshold)
 		if err != nil {
