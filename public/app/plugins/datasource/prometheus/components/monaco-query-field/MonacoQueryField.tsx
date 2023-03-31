@@ -231,7 +231,7 @@ const MonacoQueryField = (props: Props) => {
           const updateCurrentEditorValue = debounce(() => {
             const editorValue = editor.getValue();
             onChangeRef.current(editorValue);
-          }, lpRef.current.datasource.getDebounceTimeInMilliseconds() ?? 300);
+          }, lpRef.current.datasource.getDebounceTimeInMilliseconds());
 
           editor.getModel()?.onDidChangeContent(() => {
             updateCurrentEditorValue();

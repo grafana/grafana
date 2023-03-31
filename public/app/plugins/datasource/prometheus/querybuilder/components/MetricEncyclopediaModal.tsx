@@ -327,7 +327,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
         setMetrics(metrics);
         setFilteredMetricCount(metrics.length);
         setIsLoading(false);
-      }, datasource.getDebounceTimeInMilliseconds() ?? 350),
+      }, datasource.getDebounceTimeInMilliseconds()),
     [datasource, query.labels]
   );
 
