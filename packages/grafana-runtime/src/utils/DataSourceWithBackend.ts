@@ -207,6 +207,7 @@ class DataSourceWithBackend<
     let url = '/api/ds/query';
 
     if (hasExpr) {
+      headers[PluginRequestHeaders.FromExpression] = 'true';
       queryStrObj.expression = 'true';
     }
 
