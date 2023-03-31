@@ -46,8 +46,7 @@ const setFunctionKind = (suggestion: CompletionItem): CompletionItem => {
 const buildCacheHeaders = (durationInSeconds: number) => {
   return {
     headers: {
-      'Cache-Control': `private, max-age=${durationInSeconds}`,
-      'X-Grafana-Cache': 'y',
+      'X-Grafana-Cache': `private, max-age=${durationInSeconds}`,
     },
   };
 };

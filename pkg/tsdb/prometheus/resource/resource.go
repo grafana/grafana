@@ -46,9 +46,10 @@ func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest
 		return nil, fmt.Errorf("error querying resource: %v", err)
 	}
 
-	if len(req.GetHTTPHeaders().Get("X-Grafana-Cache")) > 0 && len(req.GetHTTPHeaders().Get("Cache-Control")) > 0 {
+	// frontend sets the X-Grafana-Cache with the desired response cache control value
+	if len(req.GetHTTPHeaders().Get("X-Grafana-Cache")) > 0 {
 		resp.Header.Set("X-Grafana-Cache", "y")
-		resp.Header.Set("Cache-Control", req.GetHTTPHeaders().Get("Cache-Control"))
+		resp.Header.Set("Cache-Control", req.GetHTTPHeaders().Get("X-Grafana-Cache"))
 	}
 
 	defer func() {
