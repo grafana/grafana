@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -58,7 +59,8 @@ func (moa *MultiOrgAlertmanager) GetAppliedAlertmanagerConfigurations(ctx contex
 		appliedAt := strfmt.DateTime(time.Unix(config.LastApplied, 0).UTC())
 		gettableConfig, err := moa.gettableUserConfigFromAMConfigString(ctx, org, config.AlertmanagerConfiguration)
 		if err != nil {
-			return []*definitions.GettableHistoricUserConfig{}, err
+			// If there are invalid records, skip them and return the valid ones.
+			continue
 		}
 
 		gettableHistoricConfig := definitions.GettableHistoricUserConfig{
@@ -111,6 +113,7 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 }
 
 func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx context.Context, orgID int64, config string) (definitions.GettableUserConfig, error) {
+	spew.Dump(config)
 	cfg, err := Load([]byte(config))
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to unmarshal alertmanager configuration: %w", err)
