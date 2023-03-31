@@ -542,6 +542,43 @@ func TestDashAlertMigration(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("when folder is missing put alert in General folder", func(t *testing.T) {
+		o := createOrg(t, 1)
+		folder1 := createDashboard(t, 1, o.ID, "folder-1")
+		folder1.IsFolder = true
+		dash1 := createDashboard(t, 3, o.ID, "dash1")
+		dash1.FolderID = folder1.ID
+		dash2 := createDashboard(t, 4, o.ID, "dash2")
+		dash2.FolderID = 22 // missing folder
+
+		a1 := createAlert(t, o.ID, dash1.ID, int64(1), "alert-1", []string{})
+		a2 := createAlert(t, o.ID, dash2.ID, int64(1), "alert-2", []string{})
+
+		_, err := x.Insert(o, folder1, dash1, dash2, a1, a2)
+		require.NoError(t, err)
+
+		runDashAlertMigrationTestRun(t, x)
+
+		rules := getAlertRules(t, x, o.ID)
+		require.Len(t, rules, 2)
+
+		var generalFolder dashboards.Dashboard
+		_, err = x.Table(&dashboards.Dashboard{}).Where("title = ? AND org_id = ?", ualert.GENERAL_FOLDER, o.ID).Get(&generalFolder)
+		require.NoError(t, err)
+
+		require.NotNil(t, generalFolder)
+
+		for _, rule := range rules {
+			var expectedFolder dashboards.Dashboard
+			if rule.Title == a1.Name {
+				expectedFolder = *folder1
+			} else {
+				expectedFolder = generalFolder
+			}
+			require.Equal(t, expectedFolder.UID, rule.NamespaceUID)
+		}
+	})
 }
 
 const (
