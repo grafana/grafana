@@ -540,41 +540,24 @@ interface UpdateAlertManagerConfigActionOptions {
   successMessage?: string; // show toast on success
   redirectPath?: string; // where to redirect on success
   refetch?: boolean; // refetch config on success
-  checkConflictsWithExistingConfig?: boolean; //obtain latest config prior to saving it
 }
 
 export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlertManagerConfigActionOptions, {}>(
   'unifiedalerting/updateAMConfig',
-  (
-    {
-      alertManagerSourceName,
-      oldConfig,
-      newConfig,
-      successMessage,
-      redirectPath,
-      refetch,
-      checkConflictsWithExistingConfig = true,
-    },
-    thunkAPI
-  ): Promise<void> =>
+  ({ alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, refetch }, thunkAPI): Promise<void> =>
     withAppEvents(
       withSerializedError(
         (async () => {
-          if (checkConflictsWithExistingConfig) {
-            // TODO there must be a better way here than to dispatch another fetch as this causes re-rendering :(
-            const latestConfig = await thunkAPI
-              .dispatch(fetchAlertManagerConfigAction(alertManagerSourceName))
-              .unwrap();
+          // TODO there must be a better way here than to dispatch another fetch as this causes re-rendering :(
+          const latestConfig = await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName)).unwrap();
 
-            const isLatestConfigEmpty =
-              isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files);
-            const oldLastConfigsDiffer = JSON.stringify(latestConfig) !== JSON.stringify(oldConfig);
+          const isLatestConfigEmpty = isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files);
+          const oldLastConfigsDiffer = JSON.stringify(latestConfig) !== JSON.stringify(oldConfig);
 
-            if (!isLatestConfigEmpty && oldLastConfigsDiffer) {
-              throw new Error(
-                'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
-              );
-            }
+          if (!isLatestConfigEmpty && oldLastConfigsDiffer) {
+            throw new Error(
+              'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
+            );
           }
           await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
           if (refetch) {

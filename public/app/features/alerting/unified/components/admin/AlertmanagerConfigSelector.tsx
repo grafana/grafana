@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Select, useStyles2 } from '@grafana/ui';
+import { Button, Select, useStyles2 } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -20,11 +20,7 @@ interface AlertmanagerConfigSelectorProps {
   onChange: (selectedOption: ValidAmConfigOption) => void;
   selectedAmConfig?: ValidAmConfigOption;
   defaultValues: FormValues;
-  onSubmit: (
-    values: FormValues,
-    checkConflictsWithExistingConfig: boolean,
-    oldConfig?: AlertManagerCortexConfig
-  ) => void;
+  onSubmit: (values: FormValues, oldConfig?: AlertManagerCortexConfig) => void;
   readOnly: boolean;
   loading: boolean;
 }
@@ -56,6 +52,8 @@ export default function AlertmanagerConfigSelector({
     return configs;
   }, [validAmConfigs, onChange]);
 
+  const onResetClick = () => {};
+
   return (
     <>
       {!isFetchingValidAmConfigs && validAmConfigs && validAmConfigs.length > 0 ? (
@@ -73,17 +71,20 @@ export default function AlertmanagerConfigSelector({
 
           <ConfigEditor
             defaultValues={defaultValues}
-            onSubmit={(values) => onSubmit(values, false, selectedAmConfig?.value)}
+            onSubmit={(values) => onSubmit(values)}
             readOnly={readOnly}
             loading={loading}
             alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
           />
+
+          <Button variant="primary" disabled={loading} onClick={onResetClick}>
+            Reset to selected configuration
+          </Button>
         </>
       ) : null}
     </>
   );
 }
-
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     margin-bottom: ${theme.spacing(4)};

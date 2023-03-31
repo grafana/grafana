@@ -3,7 +3,6 @@ import React, { useEffect, useState, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, useStyles2 } from '@grafana/ui';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
@@ -76,20 +75,15 @@ export default function AlertmanagerConfig(): JSX.Element {
 
   const loading = isDeleting || isLoadingConfig || isSaving;
 
-  const onSubmit = (
-    values: FormValues,
-    checkConflictsWithExistingConfig: boolean,
-    oldConfig?: AlertManagerCortexConfig
-  ) => {
-    if (alertManagerSourceName && oldConfig) {
+  const onSubmit = (values: FormValues) => {
+    if (alertManagerSourceName && config) {
       dispatch(
         updateAlertManagerConfigAction({
           newConfig: JSON.parse(values.configJSON),
-          oldConfig: oldConfig,
+          oldConfig: config,
           alertManagerSourceName,
           successMessage: 'Alertmanager configuration updated.',
           refetch: true,
-          checkConflictsWithExistingConfig,
         })
       );
     }
@@ -116,7 +110,7 @@ export default function AlertmanagerConfig(): JSX.Element {
               onChange={setSelectedAmConfig}
               selectedAmConfig={selectedAmConfig}
               defaultValues={defaultValidValues}
-              readOnly={readOnly}
+              readOnly={true}
               loading={loading}
               onSubmit={onSubmit}
             />
@@ -131,7 +125,7 @@ export default function AlertmanagerConfig(): JSX.Element {
       {alertManagerSourceName && config && (
         <ConfigEditor
           defaultValues={defaultValues}
-          onSubmit={(values) => onSubmit(values, true, config)}
+          onSubmit={(values) => onSubmit(values)}
           readOnly={readOnly}
           loading={loading}
           alertManagerSourceName={alertManagerSourceName}
