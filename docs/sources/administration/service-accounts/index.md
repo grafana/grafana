@@ -136,7 +136,7 @@ To control what and who can do with the service account you can assign permissio
 You can assign on of the following permissions to a specific user or a team:
 
 1. **Edit**: A user or a team with this permission can view, edit, enable and disable a service account, and add or delete service account tokens.
-1. **Admin**: User or a team with this permission will be able to everything from **Edit** permission, as well as manage user and team permissions for a service account.
+1. **Admin**: User or a team with this permission will be able from **Edit** permission, as well as manage user and team permissions for a service account.
 
 ### To update team permissions for a service account
 
