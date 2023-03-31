@@ -37,7 +37,7 @@ function getTrace(): Trace {
 function getAccessors() {
   return {
     getViewRange: jest.fn(() => [0, 1] as [number, number]),
-    getSearchMatches: jest.fn(),
+    getSearchedSpanIDs: jest.fn(),
     getCollapsedChildren: jest.fn(),
     getViewHeight: jest.fn(() => SPAN_HEIGHT * 2),
     getBottomRowIndexVisible: jest.fn(),
@@ -155,7 +155,7 @@ describe('ScrollManager', () => {
     it('skips spans that do not match the text search', () => {
       jest.mocked(accessors.getTopRowIndexVisible).mockReturnValue(trace.spans.length - 1);
       jest.mocked(accessors.getBottomRowIndexVisible).mockReturnValue(0);
-      accessors.getSearchMatches = () => new Set([trace.spans[4].spanID]);
+      accessors.getSearchedSpanIDs = () => new Set([trace.spans[4].spanID]);
       manager._scrollToVisibleSpan(1);
       expect(scrollPastMock).lastCalledWith(4, 1);
       manager._scrollToVisibleSpan(-1);
@@ -166,7 +166,7 @@ describe('ScrollManager', () => {
       const closetFindMatchesSpanID = 4;
       jest.mocked(accessors.getTopRowIndexVisible).mockReturnValue(closetFindMatchesSpanID - 1);
       jest.mocked(accessors.getBottomRowIndexVisible).mockReturnValue(closetFindMatchesSpanID + 1);
-      accessors.getSearchMatches = () => new Set([trace.spans[closetFindMatchesSpanID].spanID]);
+      accessors.getSearchedSpanIDs = () => new Set([trace.spans[closetFindMatchesSpanID].spanID]);
 
       manager._scrollToVisibleSpan(1);
       expect(scrollPastMock).lastCalledWith(trace.spans.length - 1, 1);
@@ -179,7 +179,7 @@ describe('ScrollManager', () => {
       const parentOfLastRowWithHiddenChildrenIndex = trace.spans.length - 2;
       jest.mocked(accessors.getBottomRowIndexVisible).mockReturnValue(0);
       accessors.getCollapsedChildren = () => new Set([trace.spans[parentOfLastRowWithHiddenChildrenIndex].spanID]);
-      accessors.getSearchMatches = () => new Set([trace.spans[0].spanID]);
+      accessors.getSearchedSpanIDs = () => new Set([trace.spans[0].spanID]);
       trace.spans[trace.spans.length - 1].references = getRefs(
         trace.spans[parentOfLastRowWithHiddenChildrenIndex].spanID
       );
