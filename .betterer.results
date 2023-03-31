@@ -2658,7 +2658,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "15"]
+      [0, 0, 0, "Do not use any type assertions.", "15"]
     ],
     "public/app/features/dashboard/utils/panelMerge.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3291,9 +3291,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/search/hooks/useSearchKeyboardSelection.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/search/page/components/MoveToFolderModal.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/search/page/components/columns.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4993,6 +4990,9 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "public/app/plugins/datasource/tempo/configuration/TraceQLSearchSettings.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/tempo/datasource.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
