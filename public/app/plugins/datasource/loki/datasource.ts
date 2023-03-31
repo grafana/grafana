@@ -75,7 +75,7 @@ import {
   getParserFromQuery,
   isLogsQuery,
   isValidQuery,
-  requestSupporsChunking,
+  requestSupportsSplitting,
 } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
@@ -284,7 +284,7 @@ export class LokiDatasource
       return this.runLiveQueryThroughBackend(fixedRequest);
     }
 
-    if (config.featureToggles.lokiQuerySplitting && requestSupporsChunking(fixedRequest.targets)) {
+    if (config.featureToggles.lokiQuerySplitting && requestSupportsSplitting(fixedRequest.targets)) {
       return runSplitQuery(this, fixedRequest);
     }
 

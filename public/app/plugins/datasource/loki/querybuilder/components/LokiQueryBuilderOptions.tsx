@@ -23,7 +23,7 @@ export interface Props {
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
   ({ app, query, onChange, onRunQuery, maxLines, datasource, queryStats }) => {
-    const [chunkRangeValid, setChunkRangeValid] = useState(true);
+    const [splitDurationValid, setsplitDurationValid] = useState(true);
 
     const onQueryTypeChange = (value: LokiQueryType) => {
       onChange({ ...query, queryType: value });
@@ -42,10 +42,10 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     const onChunkRangeChange = (evt: React.FormEvent<HTMLInputElement>) => {
       const value = evt.currentTarget.value;
       if (!isValidDuration(value)) {
-        setChunkRangeValid(false);
+        setsplitDurationValid(false);
         return;
       }
-      setChunkRangeValid(true);
+      setsplitDurationValid(true);
       onChange({ ...query, splitDuration: value });
       onRunQuery();
     };
@@ -121,7 +121,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
                 min={0}
                 defaultValue={query.splitDuration ?? '1d'}
                 onCommitChange={onChunkRangeChange}
-                invalid={!chunkRangeValid}
+                invalid={!splitDurationValid}
               />
             </EditorField>
           )}
