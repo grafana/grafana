@@ -3,6 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ConfirmModal, useStyles2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { deleteFoldersAndDashboards } from 'app/features/manage-dashboards/state/actions';
 
 import { OnMoveOrDeleleSelectedItems } from '../../types';
@@ -43,6 +44,8 @@ export const ConfirmDeleteModal = ({ results, onDeleteItems, onDismiss }: Props)
     });
   };
 
+  const requireDoubleConfirm = config.featureToggles.nestedFolders && folderCount > 0;
+
   return (
     <ConfirmModal
       isOpen
@@ -53,6 +56,7 @@ export const ConfirmDeleteModal = ({ results, onDeleteItems, onDismiss }: Props)
         </>
       }
       confirmText="Delete"
+      confirmationText={requireDoubleConfirm ? 'delete' : undefined}
       onConfirm={deleteItems}
       onDismiss={onDismiss}
     />
