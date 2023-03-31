@@ -8,7 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -30,7 +29,7 @@ func TestQuery_Regions(t *testing.T) {
 
 	var cli fakeEC2Client
 
-	newEC2Client = func(client.ConfigProvider) ec2iface.EC2API {
+	newEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
 		return cli
 	}
 
@@ -83,7 +82,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 
 	var cli fakeEC2Client
 
-	newEC2Client = func(client.ConfigProvider) ec2iface.EC2API {
+	newEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
 		return cli
 	}
 
@@ -144,7 +143,7 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 
 	var cli fakeEC2Client
 
-	newEC2Client = func(client.ConfigProvider) ec2iface.EC2API {
+	newEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
 		return cli
 	}
 

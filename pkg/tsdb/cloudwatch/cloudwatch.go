@@ -13,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -310,7 +309,7 @@ func (e *cloudWatchExecutor) getCWLogsClient(pluginCtx backend.PluginContext, re
 	return logsClient, nil
 }
 
-func (e *cloudWatchExecutor) getEC2Client(pluginCtx backend.PluginContext, region string) (ec2iface.EC2API, error) {
+func (e *cloudWatchExecutor) getEC2Client(pluginCtx backend.PluginContext, region string) (models.EC2APIProvider, error) {
 	sess, err := e.newSession(pluginCtx, region)
 	if err != nil {
 		return nil, err
