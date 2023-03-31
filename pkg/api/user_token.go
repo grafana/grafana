@@ -86,7 +86,7 @@ func (hs *HTTPServer) RotateUserAuthToken(c *contextmodel.ReqContext) response.R
 		}
 
 		if errors.Is(err, auth.ErrUserTokenNotFound) {
-			return response.ErrOrFallback(http.StatusNotFound, http.StatusText(http.StatusFound), err)
+			return response.ErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), err)
 		}
 
 		return response.ErrOrFallback(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), err)
