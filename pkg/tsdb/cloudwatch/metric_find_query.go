@@ -59,7 +59,7 @@ func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, p
 	if err != nil {
 		return nil, err
 	}
-	regions := constants.Regions
+	regions := constants.Regions()
 	r, err := client.DescribeRegions(&ec2.DescribeRegionsInput{})
 	if err != nil {
 		// ignore error for backward compatibility
