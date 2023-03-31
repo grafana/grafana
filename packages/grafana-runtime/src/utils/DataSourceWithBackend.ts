@@ -202,10 +202,22 @@ class DataSourceWithBackend<
     headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
 
+    let queryStrObj: Record<string, string> = {};
+
     let url = '/api/ds/query';
+
     if (hasExpr) {
-      headers[PluginRequestHeaders.FromExpression] = 'true';
-      url += '?expression=true';
+      queryStrObj.expression = 'true';
+    }
+
+    if (requestId) {
+      queryStrObj.requestId = requestId;
+    }
+
+    let queryStr = new URLSearchParams(queryStrObj).toString();
+
+    if (queryStr.length > 0) {
+      url += '?' + queryStr;
     }
 
     if (request.dashboardUID) {
