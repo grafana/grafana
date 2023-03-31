@@ -116,6 +116,8 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 		if cmd.NewParentUID != nil {
 			columnsToUpdate = append(columnsToUpdate, "parent_uid = ?")
 			args = append(args, *cmd.NewParentUID)
+		} else {
+			columnsToUpdate = append(columnsToUpdate, "parent_uid = NULL")
 		}
 
 		if len(columnsToUpdate) == 0 {

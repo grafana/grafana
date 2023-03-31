@@ -285,6 +285,75 @@ func TestIntegrationUpdate(t *testing.T) {
 		assert.Equal(t, existingTitle, updated.Title)
 		assert.Equal(t, existingDesc, updated.Description)
 	})
+
+	t.Run("updating folder parent UID should succeed", func(t *testing.T) {
+		testCases := []struct {
+			desc              string
+			reqNewParentUID   *string
+			expectedParentUID string
+		}{
+			{
+				desc:              "when moving to other folder",
+				reqNewParentUID:   util.Pointer("new"),
+				expectedParentUID: "new",
+			},
+			{
+				desc:              "when moving to root folder (NewParentUID is empty)",
+				reqNewParentUID:   util.Pointer(""),
+				expectedParentUID: "",
+			},
+			{
+				desc:              "when moving to root folder (NewParentUID is nil)",
+				reqNewParentUID:   nil,
+				expectedParentUID: "",
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				// create parent folder
+				parentUID := util.GenerateShortUID()
+				_, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+					Title:       "parent",
+					Description: "parent",
+					OrgID:       orgID,
+					UID:         parentUID,
+				})
+				require.NoError(t, err)
+
+				// create subfolder
+				UID := util.GenerateShortUID()
+				f, err = folderStore.Create(context.Background(), folder.CreateFolderCommand{
+					Title:       "subfolder",
+					Description: "subfolder",
+					OrgID:       orgID,
+					UID:         UID,
+					ParentUID:   parentUID,
+				})
+				require.NoError(t, err)
+
+				existingTitle := f.Title
+				existingDesc := f.Description
+				updated, err := folderStore.Update(context.Background(), folder.UpdateFolderCommand{
+					UID:          f.UID,
+					OrgID:        f.OrgID,
+					NewParentUID: tc.reqNewParentUID,
+				})
+				require.NoError(t, err)
+
+				assert.Equal(t, tc.expectedParentUID, updated.ParentUID)
+
+				updated, err = folderStore.Get(context.Background(), folder.GetFolderQuery{
+					UID:   &updated.UID,
+					OrgID: orgID,
+				})
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedParentUID, updated.ParentUID)
+				assert.Equal(t, existingTitle, updated.Title)
+				assert.Equal(t, existingDesc, updated.Description)
+			})
+		}
+	})
 }
 
 func TestIntegrationGet(t *testing.T) {
@@ -390,7 +459,7 @@ func TestIntegrationGetParents(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("get parents of root folder should should be empty", func(t *testing.T) {
+	t.Run("get parents of root folder should be empty", func(t *testing.T) {
 		parents, err := folderStore.GetParents(context.Background(), folder.GetParentsQuery{})
 		require.NoError(t, err)
 		require.Empty(t, parents)
