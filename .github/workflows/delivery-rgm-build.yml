@@ -34,3 +34,4 @@ jobs:
           enterprise_ref: ${{ github.head_ref }} main
           gcp_service_account_key_base64: ${{ secrets.RGM_GCP_KEY_BASE64 }}
           destination: ${{ secrets.RGM_DESTINATION }}/${{ github.event_name }}
+          build_id: ${{github.run_number}}
