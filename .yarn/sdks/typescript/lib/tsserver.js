@@ -109,6 +109,8 @@ const moduleWrapper = tsserver => {
             str = `zip:${str}`;
           } break;
         }
+      } else {
+        str = str.replace(/^\/?/, process.platform === `win32` ? `` : `/`);
       }
     }
 

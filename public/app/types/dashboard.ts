@@ -91,7 +91,9 @@ export interface DashboardInitError {
 
 export enum KioskMode {
   TV = 'tv',
+  Embedded = 'embedded',
   Full = 'full',
+  Off = 'off',
 }
 
 export type GetMutableDashboardModelFn = () => DashboardModel | null;

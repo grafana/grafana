@@ -1,4 +1,10 @@
-FROM node:16-alpine3.15 as js-builder
+# syntax=docker/dockerfile:1
+
+ARG JS_IMAGE=node:16-alpine3.17
+ARG GO_IMAGE=golang:1.19.7-alpine3.17
+ARG JS_PLATFORM=linux/amd64
+
+FROM --platform=${JS_PLATFORM} ${JS_IMAGE} as js-builder
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -21,7 +27,7 @@ COPY emails emails
 ENV NODE_ENV production
 RUN yarn build
 
-FROM golang:1.19.3 AS go-builder
+FROM ${GO_IMAGE} AS go-builder
 
 WORKDIR /src/grafana
 

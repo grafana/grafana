@@ -7,6 +7,8 @@ export function getKioskMode(queryParams: UrlQueryMap): KioskMode | null {
   switch (queryParams.kiosk) {
     case 'tv':
       return KioskMode.TV;
+    case 'embedded':
+      return KioskMode.Embedded;
     //  legacy support
     case '1':
     case true:
