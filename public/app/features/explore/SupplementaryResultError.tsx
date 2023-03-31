@@ -22,7 +22,7 @@ export function SupplementaryResultError(props: Props) {
 
   return (
     <Alert title={title} severity={severity} onRemove={onRemove}>
-      {showButton && message ? (
+      {showButton ? (
         <Button
           variant="secondary"
           size="xs"
