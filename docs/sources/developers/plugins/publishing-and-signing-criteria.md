@@ -25,7 +25,7 @@ Grafana plugins must adhere to the following criteria when being reviewed for pu
 
 ## Plugin licensing
 
-Plugins must be licensed under one of the following for publishing to the catalog:
+Plugins must be licensed under one of the following AGPL compliant licenses for publishing to the catalog:
 
 - AGPL-3.0
 - Apache-2.0
