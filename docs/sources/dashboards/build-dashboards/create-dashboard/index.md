@@ -53,7 +53,6 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. Enter a name for your dashboard and select a folder, if applicable.
 1. Click **Save**.
 
-
 ## Configure repeating rows
 
 You can configure Grafana to dynamically add panels or rows to a dashboard based on the value of a variable. Variables dynamically change your queries across all rows in a dashboard. For more information about repeating panels, refer to [Configure repeating panels]({{< relref "../../../panels-visualizations/configure-panel-options/#configure-repeating-panels" >}}).
