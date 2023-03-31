@@ -31,7 +31,6 @@ const mockRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQueryR
         legendFormat: '{{le}}',
         range: true,
         refId: 'A',
-        requestId: '2A',
         utcOffsetSec: -21600,
       },
     ],
@@ -437,7 +436,6 @@ describe('QueryCache', function () {
       legendFormat: '{{le}}',
       range: true,
       refId: 'A',
-      requestId: '2A',
       utcOffsetSec: -21600,
     };
 

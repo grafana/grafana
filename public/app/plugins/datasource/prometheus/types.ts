@@ -18,7 +18,6 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   hinting?: boolean;
   interval?: string;
   intervalFactor?: number;
-  requestId?: string;
 }
 
 export interface PromOptions extends DataSourceJsonData {
