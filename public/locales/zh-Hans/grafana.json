@@ -174,7 +174,7 @@
     },
     "alerts-and-incidents": {
       "subtitle": "警报和事件管理应用",
-      "title": "警报和事件"
+      "title": ""
     },
     "api-keys": {
       "subtitle": "管理和创建用于与 Grafana HTTP API 交互的 API 密钥",
