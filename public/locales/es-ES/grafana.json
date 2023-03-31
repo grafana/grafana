@@ -174,7 +174,7 @@
     },
     "alerts-and-incidents": {
       "subtitle": "Aplicaciones de gestión de alertas e incidentes",
-      "title": "Alertas e incidentes"
+      "title": ""
     },
     "api-keys": {
       "subtitle": "Administrar y crear claves de API que se utilizan para interactuar con las API de HTTP de Grafana",
