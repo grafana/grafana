@@ -69,13 +69,21 @@ Grafana’s new panel is available only for React-based panels; no Angular-based
 
 ### Organization roles for users logged in through Auth providers
 
-_Available in experimental in all editions of Grafana._
+_Generally available in all editions of Grafana._
 
-We are slowly rolling out a feature toggle for enforcing syncronization of organization roles for organization roles sync from the authentication provider on user sign-in. The feature will prohibit a user from changing organization roles synced with external auth providers.
+With this release we are re-enforcing organization role syncing behaviour when external authentication providers are used. We are introducing a new feature toggle called `onlyExternalOrgRoleSync`. Once enabled, users signing in to Grafana cannot change organization roles synchronized with an external authentication provider.
 
-If you want to enable this feature, you'll need to enable the `onlyExternalOrgRoleSync` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+If you want to enable this feature, you'll need to enable the `onlyExternalOrgRoleSync` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support. We will also be automatically enabling this feature for Grafana Cloud instances over the upcoming weeks.
 
-A reminder that there is a setting to prevent synchronization of organization roles from the authentication provider regardless of their role in the authentication provider, then refer to the `skip_org_role_sync` setting in your Grafana configuration. Refer to [skip org role sync](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#authgrafana_com-skip_org_role_sync) for more information.
+You can prevent the synchronization of organization roles from the authentication provider. For more information, refer to [skip org role sync]({{< relref "../setup-grafana/configure-grafana/#authgrafana_com-skip_org_role_sync/" >}}).
+
+## Support bundles
+
+_Generally available in all editions of Grafana._
+
+Support bundles provide a simple way to collect information about your Grafana instance through Grafana's user interface. In a few clicks, you can create a support bundle containing data about migrations, plugins, settings, and more. Once you've created a support bundle, you can either examine it yourself, or share it with your colleagues or Grafana engineers to aid the troubleshooting of your Grafana instance.
+
+Learn more about support bundles and how to configure them in our [support bundle documentation]({{< relref "../troubleshooting/support-bundles/" >}}).
 
 ## Alerting
 
