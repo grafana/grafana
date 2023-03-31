@@ -47,7 +47,7 @@ func main() {
 		codegen.YamlCRDJenny(cuectx.GoCoreKindParentPath),
 		codegen.CRDKindRegistryJenny(filepath.Join("pkg", "registry", "corecrd")),
 		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
-		codegen.SchemaRegistryJenny(filepath.Join("pkg", "kindsys", "schemaregistry")),
+		codegen.SchemaRegistryJenny(filepath.Join("pkg", "schemaregistry")),
 	)
 
 	header := codegen.SlashHeaderMapper("kinds/gen.go")
