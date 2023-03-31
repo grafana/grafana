@@ -5,7 +5,7 @@ export function isTimeoutErrorResponse(response: DataQueryResponse | undefined):
   if (!response) {
     return false;
   }
-  if (!response?.error && !response?.errors) {
+  if (!response.error && !response.errors) {
     return false;
   }
 
