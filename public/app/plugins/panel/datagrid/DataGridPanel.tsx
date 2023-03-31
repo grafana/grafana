@@ -1,5 +1,12 @@
 import { css } from '@emotion/css';
-import DataEditor, { GridCell, Item, GridColumn, GridCellKind, EditableGridCell } from '@glideapps/glide-data-grid';
+import DataEditor, {
+  GridCell,
+  Item,
+  GridColumn,
+  GridCellKind,
+  EditableGridCell,
+  GridColumnIcon,
+} from '@glideapps/glide-data-grid';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -22,9 +29,13 @@ import { useTheme2 } from '@grafana/ui';
 import '@glideapps/glide-data-grid/dist/index.css';
 
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { AddColumn } from './components/AddColumn';
 import { PanelOptions } from './models.gen';
+import { isNumeric } from './utils';
+
+const ICON_WIDTH = 30;
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -62,14 +73,20 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, width, heigh
   }, [gridData, data, isSnapshotted]);
 
   const setGridColumns = useCallback(() => {
+    const typeToIconMap: Map<string, GridColumnIcon> = new Map([
+      [FieldType.number, GridColumnIcon.HeaderNumber],
+      [FieldType.string, GridColumnIcon.HeaderTextTemplate],
+      [FieldType.boolean, GridColumnIcon.HeaderBoolean],
+    ]);
+
     setColumns(
-      frame.fields.map((f, i) => {
+      frame.fields.map((f) => {
         const displayName = getFieldDisplayName(f, frame);
-        const width = displayName.length * theme.typography.fontSize;
-        return { title: displayName, width: width };
+        const width = displayName.length * theme.typography.fontSize + ICON_WIDTH;
+        return { title: displayName, width: width, icon: typeToIconMap.get(f.type) };
       })
     );
-  }, [frame, theme]);
+  }, [frame, theme.typography.fontSize]);
 
   useEffect(() => {
     setGridColumns();
@@ -93,12 +110,34 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, width, heigh
       console.log('Updating panel model', gridData);
       const snapshot: DataFrameJSON[] = [dataFrameToJSON(gridData)];
       const dashboard = getDashboardSrv().getCurrent();
-      dashboard?.events.publish({
-        type: DatagridDataChangeEvent.type,
-        payload: {
-          snapshot,
-        },
+
+      //If we are in panel edit mode, we need to publish an event to update the DS and panel model
+      if (dashboard?.panelInEdit?.id === id) {
+        dashboard?.events.publish({
+          type: DatagridDataChangeEvent.type,
+          payload: {
+            snapshot,
+          },
+        });
+
+        return;
+      }
+
+      //Otherwise we can just update the panel model directly
+      const panelModel = dashboard?.getPanelById(id);
+      const query: GrafanaQuery = {
+        refId: 'A',
+        queryType: GrafanaQueryType.Snapshot,
+        snapshot,
+        datasource: grafanaDS,
+      };
+
+      panelModel!.updateQueries({
+        dataSource: grafanaDS,
+        queries: [query],
       });
+
+      panelModel!.refresh();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gridData]);
@@ -116,74 +155,57 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, width, heigh
       throw new Error('OH NO 2');
     }
 
-    //TODO there is an error with number gridcells when opening the overlay and editing. so I ignored and made everything text for now
-
     return {
       kind: GridCellKind.Text,
-      data: value,
+      data: value.toString(),
       allowOverlay: true,
       readonly: false,
       displayData: value.toString(),
     };
-
-    // switch (field.type) {
-    //   case FieldType.number:
-    //     return {
-    //       kind: GridCellKind.Number,
-    //       data: value.toString(),
-    //       allowOverlay: true,
-    //       readonly: false,
-    //       displayData: value.toString(),
-    //     };
-    //   case FieldType.time:
-    //     return {
-    //       kind: GridCellKind.Text,
-    //       data: value,
-    //       allowOverlay: true,
-    //       readonly: false,
-    //       displayData: new Date(value).toTimeString(),
-    //     };
-    //   case FieldType.string:
-    //     return {
-    //       kind: GridCellKind.Text,
-    //       data: value,
-    //       allowOverlay: true,
-    //       readonly: false,
-    //       displayData: value.toString(),
-    //     };
-    //   default:
-    //     //TODO ?????? ^^^^^^
-    //     return {
-    //       kind: GridCellKind.Text,
-    //       data: value,
-    //       allowOverlay: true,
-    //       readonly: false,
-    //       displayData: value.toString(),
-    //     };
-    // }
   };
 
   const onCellEdited = (cell: Item, newValue: EditableGridCell) => {
     const [col, row] = cell;
     const field: Field = frame.fields[col];
 
-    if (!field) {
+    if (!field || !newValue.data) {
       throw new Error('OH NO 3');
     }
 
     const values = field.values.toArray();
-    values[row] = newValue.data;
+
+    //todo maybe come back to this later and look for a better way
+    //Convert field type and value between string and number if needed
+    //If field type is number we check if the new value is numeric. If it isn't we change the field type
+    let val = newValue.data;
+    if (field.type === FieldType.number) {
+      if (!isNumeric(val)) {
+        field.type = FieldType.string;
+      } else {
+        val = Number(val);
+      }
+      //If field type is string we check if the new value is numeric. If it is numeric and all other fields are also numeric we change the field type
+      //If we change the field type we also convert all other values to numbers
+    } else if (field.type === FieldType.string) {
+      if (isNumeric(val) && values.filter((_, index) => index !== row).findIndex((v) => !isNumeric(v)) === -1) {
+        field.type = FieldType.number;
+        val = Number(val);
+
+        if (values.findIndex((v) => typeof v === 'string') !== -1) {
+          values.forEach((v, index) => {
+            if (typeof v === 'string') {
+              values[index] = Number(v);
+            }
+          });
+        }
+      }
+    }
+
+    values[row] = val;
     field.values = new ArrayVector(values);
 
-    if (gridData) {
-      const newFrame = new MutableDataFrame(frame);
-      const values = newFrame.fields[col].values.toArray();
-      values[row] = String(newValue.data) ?? '';
-      newFrame.fields[col].values = new ArrayVector(values);
-
-      setIsSnapshotted(true);
-      setGridData(newFrame);
-    }
+    setIsSnapshotted(true);
+    setGridData(new MutableDataFrame(frame));
   };
 
   const onColumnInputBlur = (columnName: string) => {
@@ -228,7 +250,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, width, heigh
   const onColumnResize = (column: GridColumn, newSize: number, colIndex: number, newSizeWithGrow: number) => {
     setColumns((prevColumns) => {
       const newColumns = [...prevColumns];
-      newColumns[colIndex] = { title: column.title, width: newSize };
+      newColumns[colIndex] = { title: column.title, icon: column.icon, width: newSize };
       return newColumns;
     });
   };
@@ -295,6 +317,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         font-size: 20px;
         background-color: ${theme.colors.background.secondary};
         color: ${theme.colors.text.primary};
+        border-right: 1px solid ${theme.components.panel.borderColor};
         border-bottom: 1px solid ${theme.components.panel.borderColor};
         transition: background-color 200ms;
         cursor: pointer;
