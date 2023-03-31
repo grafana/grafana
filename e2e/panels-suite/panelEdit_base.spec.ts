@@ -1,6 +1,6 @@
 import { e2e } from '@grafana/e2e';
 
-const PANEL_UNDER_TEST = 'Value reducers 1';
+const PANEL_UNDER_TEST = 'Lines 500 data points';
 
 e2e.scenario({
   describeName: 'Panel edit tests',
@@ -10,10 +10,10 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     e2e().intercept('/api/ds/query').as('query');
-    e2e.flows.openDashboard({ uid: 'wfTJJL5Wz' });
+    e2e.flows.openDashboard({ uid: 'TkZXxlNG3' });
     e2e().wait('@query');
 
-    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
+    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST, true);
 
     // New panel editor opens when navigating from Panel menu
     e2e.components.PanelEditor.General.content().should('be.visible');
