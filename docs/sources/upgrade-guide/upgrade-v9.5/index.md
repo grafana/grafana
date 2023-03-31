@@ -16,4 +16,6 @@ weight: 1800
 
 ## Technical notes
 
-There are no additional upgrade steps to complete for this version of Grafana.
+Beginning in v9.5, InfluxDB datasource deprecates the database field in provisioning files.
+`dbName` field under `jsonData` must be used to store the database information.
+For more information and examples please refer to [InfluxDB Provisioning]({{< relref "../datasources/influxdb/#provision-the-data-source" >}})

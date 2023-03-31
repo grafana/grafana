@@ -132,3 +132,11 @@ Alert rules that are configured to fire when an evaluation returns no data now o
 ### Guidance for configuring your Alertmanager
 
 Get additional help while configuring your Alertmanager. If you enter an invalid Alertmanager configuration, an error message displays, and you can choose from a previous working configuration to restart it.
+
+## InfluxDB provisioning change
+
+### Database field deprecation
+
+`database` field in the provisioning file has been deprecated.
+This information will be stored in `jsonData` with `dbName` field.
+For more information and examples please refer to [InfluxDB Provisioning]({{< relref "../datasources/influxdb/#provision-the-data-source" >}})
