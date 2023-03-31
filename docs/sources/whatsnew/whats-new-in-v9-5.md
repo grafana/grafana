@@ -79,7 +79,7 @@ You can prevent the synchronization of organization roles from the authenticatio
 
 ## Removing the button to create API keys from the UI
 
-With this update we are going one step further in deprecating API Keys. Previously, the migration status display may have suggested that the API Key migration would be a significant issue. To address this, we have revised the text on the API keys page and now allow creating new API keys exclusively via our HTTP API. This change is part of our long-term strategy for sunsetting API keys.
+With this update we are going one step further in deprecating API Keys in favour of [service accounts](https://grafana.com/docs/grafana/latest/administration/service-accounts/). We have removed the button to create new API keys through Grafana's user interface, and now only allow creating API keys via our HTTP API. We urge you to migrate your existing API keys to service accounts, and opt for new service accounts instead of new API keys. This change is part of our long-term strategy for sunsetting API keys.
 
 Learn more about the deprecation strategy for API keys and how to manage them in our [Sunsetting API keys](https://github.com/grafana/grafana/issues/53567).
 
