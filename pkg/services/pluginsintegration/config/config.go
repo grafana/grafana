@@ -22,7 +22,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) (*
 		allowedUnsigned = strings.Split(settingProvider.KeyValue("plugins", "allow_loading_unsigned_plugins").Value(), ",")
 	}
 
-	otelCfg, err := newOpenTelemetryCfg(grafanaCfg)
+	tracingCfg, err := newTracingCfg(grafanaCfg)
 	if err != nil {
 		return nil, fmt.Errorf("new opentelemetry cfg: %w", err)
 	}
@@ -37,7 +37,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) (*
 		grafanaCfg.BuildVersion,
 		grafanaCfg.PluginLogBackendRequests,
 		grafanaCfg.PluginsCDNURLTemplate,
-		otelCfg,
+		tracingCfg,
 	), nil
 }
 

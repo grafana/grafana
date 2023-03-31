@@ -8,18 +8,21 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// newOpenTelemetryCfg creates a new OpenTelemetryCfg based on the provided Grafana config.
+// newTracingCfg creates a plugins tracing configuration based on the provided Grafana tracing config.
 // If OpenTelemetry (OTLP) is disabled, a zero-value OpenTelemetryCfg is returned.
-func newOpenTelemetryCfg(grafanaCfg *setting.Cfg) (pCfg.OpenTelemetryCfg, error) {
+func newTracingCfg(grafanaCfg *setting.Cfg) (pCfg.Tracing, error) {
 	ots, err := tracing.ParseSettingsOpentelemetry(grafanaCfg)
 	if err != nil {
-		return pCfg.OpenTelemetryCfg{}, fmt.Errorf("parse settings: %w", err)
+		return pCfg.Tracing{}, fmt.Errorf("parse settings: %w", err)
 	}
 	if !ots.OtelExporterEnabled() {
-		return pCfg.OpenTelemetryCfg{}, nil
+		return pCfg.Tracing{}, nil
 	}
-	return pCfg.OpenTelemetryCfg{
-		Address:     ots.Address,
-		Propagation: ots.Propagation,
+	return pCfg.Tracing{
+		Enabled: true,
+		OpenTelemetry: pCfg.OpenTelemetryCfg{
+			Address:     ots.Address,
+			Propagation: ots.Propagation,
+		},
 	}, nil
 }

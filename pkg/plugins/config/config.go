@@ -30,12 +30,12 @@ type Cfg struct {
 
 	PluginsCDNURLTemplate string
 
-	OpenTelemetry OpenTelemetryCfg
+	Tracing Tracing
 }
 
 func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
 	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, azure *azsettings.AzureSettings, grafanaVersion string,
-	logDatasourceRequests bool, pluginsCDNURLTemplate string, openTelemetryCfg OpenTelemetryCfg) *Cfg {
+	logDatasourceRequests bool, pluginsCDNURLTemplate string, tracing Tracing) *Cfg {
 	return &Cfg{
 		log:                     log.New("plugin.cfg"),
 		PluginsPath:             pluginsPath,
@@ -48,6 +48,6 @@ func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSetti
 		Azure:                   azure,
 		LogDatasourceRequests:   logDatasourceRequests,
 		PluginsCDNURLTemplate:   pluginsCDNURLTemplate,
-		OpenTelemetry:           openTelemetryCfg,
+		Tracing:                 tracing,
 	}
 }

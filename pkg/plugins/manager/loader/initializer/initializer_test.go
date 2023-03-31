@@ -170,7 +170,9 @@ func TestInitializer_envVars(t *testing.T) {
 				}
 				tc.setup(p)
 				i := &Initializer{
-					cfg:             &config.Cfg{},
+					cfg: &config.Cfg{
+						Tracing: config.Tracing{Enabled: true},
+					},
 					log:             log.NewTestLogger(),
 					backendProvider: &fakeBackendProvider{plugin: p},
 				}
@@ -226,9 +228,12 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		JSONData: plugins.JSONData{ID: pluginID},
 	}
 
-	defaultOtelCfg := config.OpenTelemetryCfg{
-		Address:     "127.0.0.1:4317",
-		Propagation: "",
+	defaultTracingCfg := config.Tracing{
+		Enabled: true,
+		OpenTelemetry: config.OpenTelemetryCfg{
+			Address:     "127.0.0.1:4317",
+			Propagation: "",
+		},
 	}
 
 	expDefaultOtlp := func(t *testing.T, envVars []string) {
@@ -269,23 +274,26 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "disabled",
 			cfg: &config.Cfg{
-				Opentelemetry: config.OpenTelemetryCfg{},
+				Tracing: config.Tracing{},
 			},
 			exp: expNoTracing,
 		},
 		{
 			name: "otlp no propagation",
 			cfg: &config.Cfg{
-				Opentelemetry: defaultOtelCfg,
+				Tracing: defaultTracingCfg,
 			},
 			exp: expDefaultOtlp,
 		},
 		{
 			name: "otlp propagation",
 			cfg: &config.Cfg{
-				Opentelemetry: config.OpenTelemetryCfg{
-					Address:     "127.0.0.1:4317",
-					Propagation: "w3c",
+				Tracing: config.Tracing{
+					Enabled: true,
+					OpenTelemetry: config.OpenTelemetryCfg{
+						Address:     "127.0.0.1:4317",
+						Propagation: "w3c",
+					},
 				},
 			},
 			exp: func(t *testing.T, envVars []string) {
@@ -298,7 +306,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "disabled on plugin",
 			cfg: &config.Cfg{
-				Opentelemetry: defaultOtelCfg,
+				Tracing: defaultTracingCfg,
 				PluginSettings: setting.PluginSettings{
 					pluginID: map[string]string{"tracing": "false"},
 				},
@@ -308,7 +316,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "not disabled on plugin with other plugin settings",
 			cfg: &config.Cfg{
-				Opentelemetry: defaultOtelCfg,
+				Tracing: defaultTracingCfg,
 				PluginSettings: map[string]map[string]string{
 					pluginID: {"some_other_option": "true"},
 				},

@@ -1,7 +1,12 @@
 package config
 
-// OpenTelemetryCfg contains the Opentelemetry address and propagation config values.
-// This is used to export the Opentelemetry (OTLP) config without exposing the whole *setting.Cfg.
+type Tracing struct {
+	Enabled       bool
+	OpenTelemetry OpenTelemetryCfg
+}
+
+// OpenTelemetryCfg contains the OpenTlemetry address and propagation config values.
+// This is used to export the OpenTelemetry (OTLP) config without exposing the whole *setting.Cfg.
 type OpenTelemetryCfg struct {
 	Address     string
 	Propagation string
