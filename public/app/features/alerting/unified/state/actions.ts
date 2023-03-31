@@ -163,6 +163,7 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
                 template_files: {},
                 template_file_provenances: result.template_file_provenances,
                 last_applied: result.last_applied,
+                id: result.id,
               }));
             }
             return result;

@@ -35,6 +35,7 @@ export async function fetchAlertManagerConfig(alertManagerSourceName: string): P
       template_file_provenances: result.data.template_file_provenances ?? {},
       alertmanager_config: result.data.alertmanager_config ?? {},
       last_applied: result.data.last_applied,
+      id: result.data.id,
     };
   } catch (e) {
     // if no config has been uploaded to grafana, it returns error instead of latest config

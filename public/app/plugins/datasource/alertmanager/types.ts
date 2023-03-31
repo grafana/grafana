@@ -8,6 +8,7 @@ export type AlertManagerCortexConfig = {
   /** { [name]: provenance } */
   template_file_provenances?: Record<string, string>;
   last_applied?: string;
+  id?: number;
 };
 
 export type TLSConfig = {
