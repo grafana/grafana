@@ -361,6 +361,24 @@ func TestRouteGetAlertingConfigHistory(t *testing.T) {
 			require.NotZero(tt, config.LastApplied)
 		}
 	})
+
+	t.Run("assert 200 when limit is > 100", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		q.Add("limit", "1000")
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RouteGetAlertingConfigHistory(rc)
+		require.Equal(tt, 200, response.Status())
+
+		configs := asGettableHistoricUserConfigs(tt, response)
+		for _, config := range configs {
+			require.NotZero(tt, config.LastApplied)
+		}
+	})
 }
 
 func TestSilenceCreate(t *testing.T) {

@@ -164,6 +164,10 @@ func (st *DBstore) MarkConfigurationAsApplied(ctx context.Context, cmd *models.M
 
 // GetAppliedConfigurations returns all configurations that have been marked as applied, ordered newest -> oldest by id.
 func (st *DBstore) GetAppliedConfigurations(ctx context.Context, orgID int64, limit int) ([]*models.HistoricAlertConfiguration, error) {
+	if limit < 1 || limit > ConfigRecordsLimit {
+		limit = ConfigRecordsLimit
+	}
+
 	var configs []*models.HistoricAlertConfiguration
 	if err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		cfgs := []*models.HistoricAlertConfiguration{}

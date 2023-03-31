@@ -190,7 +190,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		}
 	}
 
-	// When you sync the first time, the alertmanager is created bu:203t is doesn't become ready until you have a configuration applied.
+	// When you sync the first time, the alertmanager is created but is doesn't become ready until you have a configuration applied.
 	{
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)

@@ -16,6 +16,7 @@ type AlertConfiguration struct {
 
 // HistoricAlertConfiguration represents a previously used alerting configuration.
 type HistoricAlertConfiguration struct {
+	ID                 int64 `xorm:"pk autoincr 'id'"`
 	AlertConfiguration `xorm:"extends"`
 
 	// LastApplied a timestamp indicating the most recent time at which the configuration was applied to an Alertmanager, or 0 otherwise.

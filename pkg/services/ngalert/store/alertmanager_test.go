@@ -414,6 +414,14 @@ func TestIntegrationGetAppliedConfigurations(t *testing.T) {
 			}
 			lastID = config.AlertConfiguration.ID
 		}
+
+		// The limit should be considered by the store.
+		// The only record returned should be the latest one (highest id).
+		highestID := configs[0].ID
+		configs, err = store.GetAppliedConfigurations(ctx, org, 1)
+		require.NoError(tt, err)
+		require.Len(tt, configs, 1)
+		require.Equal(tt, configs[0].ID, highestID)
 	})
 }
 
