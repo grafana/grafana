@@ -66,6 +66,7 @@ export const LogsVolumePanelList = ({
     return (
       <SupplementaryResultError
         title="The logs volume query is taking too long and has timed out"
+        // Using info to avoid users thinking that the actual query has failed.
         severity="info"
         suggestedAction="Retry"
         onSuggestedAction={onLoadLogsVolume}
