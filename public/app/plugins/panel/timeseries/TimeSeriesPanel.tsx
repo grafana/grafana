@@ -108,7 +108,7 @@ export const TimeSeriesPanel = ({
             )}
             {regions.length && <RegionsPlugin config={config} regions={regions} />}
             {/* Renders annotation markers*/}
-            {annotations.length && <AnnotationsPlugin annotations={annotations} config={config} timeZone={timeZone} />}
+            {annotations && <AnnotationsPlugin annotations={annotations} config={config} timeZone={timeZone} />}
             {/* Enables annotations creation*/}
             {enableAnnotationCreation ? (
               <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
@@ -150,7 +150,7 @@ export const TimeSeriesPanel = ({
                 defaultItems={[]}
               />
             )}
-            {exemplars.length && (
+            {exemplars && (
               <ExemplarsPlugin
                 visibleSeries={getVisibleLabels(config, frames)}
                 config={config}
