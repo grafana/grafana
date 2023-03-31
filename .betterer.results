@@ -2658,7 +2658,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "15"]
+      [0, 0, 0, "Do not use any type assertions.", "15"]
     ],
     "public/app/features/dashboard/utils/panelMerge.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3291,9 +3291,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/search/hooks/useSearchKeyboardSelection.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/search/page/components/MoveToFolderModal.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/search/page/components/columns.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4994,6 +4991,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
+    "public/app/plugins/datasource/tempo/configuration/TraceQLSearchSettings.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/plugins/datasource/tempo/datasource.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -6230,12 +6230,6 @@ exports[`no undocumented stories`] = {
     "packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
-    "packages/grafana-ui/src/components/ColorPicker/NamedColorsPalette.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
-    ],
-    "packages/grafana-ui/src/components/ColorPicker/SpectrumPalette.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
-    ],
     "packages/grafana-ui/src/components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
@@ -6269,10 +6263,13 @@ exports[`no undocumented stories`] = {
     "packages/grafana-ui/src/components/Segment/SegmentInput.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
-    "packages/grafana-ui/src/components/StatsPicker/StatsPicker.story.tsx:5381": [
+    "packages/grafana-ui/src/components/Slider/RangeSlider.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
-    "packages/grafana-ui/src/components/Tabs/Tabs.story.tsx:5381": [
+    "packages/grafana-ui/src/components/Slider/Slider.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/StatsPicker/StatsPicker.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/ThemeDemos/ThemeDemo.story.tsx:5381": [

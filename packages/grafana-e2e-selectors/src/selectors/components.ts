@@ -241,9 +241,15 @@ export const Components = {
     Configuration: {
       button: 'Configuration',
     },
+    Toggle: {
+      button: 'Toggle menu',
+    },
     Reporting: {
       button: 'Reporting',
     },
+  },
+  NavMenu: {
+    item: 'data-testid Nav menu item',
   },
   NavToolbar: {
     container: 'data-testid Nav toolbar',

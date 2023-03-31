@@ -99,6 +99,10 @@ Alpha features might be changed or removed without prior notice.
 | `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                                                                                                           |
 | `clientTokenRotation`              | Replaces the current in-request token rotation so that the client initiates the rotation                                                                                                            |
 | `prometheusDataplane`              | Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present. |
+| `alertStateHistoryLokiSecondary`   | Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.                                                                                        |
+| `alertStateHistoryLokiPrimary`     | Enable a remote Loki instance as the primary source for state history reads.                                                                                                                        |
+| `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                                                                                                          |
+| `unifiedRequestLog`                | Writes error logs to the request logger                                                                                                                                                             |
 
 ## Development feature toggles
 
