@@ -154,7 +154,7 @@ func (f *fakeConfigStore) GetAppliedConfigurations(_ context.Context, orgID int6
 	return configs, nil
 }
 
-func (f *fakeConfigStore) GetAppliedConfiguration(_ context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error) {
+func (f *fakeConfigStore) GetHistoricalConfiguration(_ context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error) {
 	configsByOrg, ok := f.historicConfigs[orgID]
 	if !ok {
 		return &models.HistoricAlertConfiguration{}, store.ErrNoAlertmanagerConfiguration

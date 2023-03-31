@@ -234,7 +234,7 @@ func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *cont
 		return ErrResp(http.StatusBadRequest, err, "failed to parse config id")
 	}
 
-	err = srv.mam.RevertAlertmanagerConfigurationToHistoricalId(c.Req.Context(), c.OrgID, confId)
+	err = srv.mam.ActivateHistoricalConfiguration(c.Req.Context(), c.OrgID, confId)
 	if err == nil {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration activated"})
 	}

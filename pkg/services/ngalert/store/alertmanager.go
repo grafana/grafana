@@ -189,8 +189,8 @@ func (st *DBstore) GetAppliedConfigurations(ctx context.Context, orgID int64, li
 	return configs, nil
 }
 
-// GetAppliedConfiguration returns a single historical configuration based on provided org and id.
-func (st *DBstore) GetAppliedConfiguration(ctx context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error) {
+// GetHistoricalConfiguration returns a single historical configuration based on provided org and id.
+func (st *DBstore) GetHistoricalConfiguration(ctx context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error) {
 	var config *models.HistoricAlertConfiguration
 	if err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		cfg := &models.HistoricAlertConfiguration{}

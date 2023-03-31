@@ -43,10 +43,10 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 	return moa.gettableUserConfigFromAMConfigString(ctx, org, amConfig.AlertmanagerConfiguration)
 }
 
-// RevertAlertmanagerConfigurationToHistoricalId will set the current alertmanager configuration to a previous value based on the provided
+// ActivateHistoricalConfiguration will set the current alertmanager configuration to a previous value based on the provided
 // alert_configuration_history id.
-func (moa *MultiOrgAlertmanager) RevertAlertmanagerConfigurationToHistoricalId(ctx context.Context, orgId int64, id int64) error {
-	config, err := moa.configStore.GetAppliedConfiguration(ctx, orgId, id)
+func (moa *MultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Context, orgId int64, id int64) error {
+	config, err := moa.configStore.GetHistoricalConfiguration(ctx, orgId, id)
 	if err != nil {
 		return fmt.Errorf("failed to get previously applied configuration: %w", err)
 	}
