@@ -247,6 +247,9 @@ export const Components = {
       button: 'Reporting',
     },
   },
+  NavMenu: {
+    item: 'data-testid Nav menu item',
+  },
   NavToolbar: {
     container: 'data-testid Nav toolbar',
   },

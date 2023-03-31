@@ -25,7 +25,7 @@ export const PanelHeaderMenuItem = (props: Props & PanelMenuItem) => {
       ref={setRef}
       data-testid={selectors.components.Panels.Panel.menuItems(props.text)}
     >
-      <a onClick={props.onClick} href={props.href}>
+      <a onClick={props.onClick} href={props.href} role="menuitem">
         {icon && <Icon name={icon} className={styles.menuIconClassName} />}
         <span className="dropdown-item-text" aria-label={selectors.components.Panels.Panel.headerItems(props.text)}>
           {props.text}
