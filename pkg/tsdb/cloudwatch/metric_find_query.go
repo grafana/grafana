@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -23,8 +22,6 @@ type suggestData struct {
 	Value string `json:"value"`
 	Label string `json:"label,omitempty"`
 }
-
-var regionCache sync.Map
 
 func parseMultiSelectValue(input string) []string {
 	trimmedInput := strings.TrimSpace(input)
@@ -49,7 +46,7 @@ func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, p
 	}
 
 	profile := instance.Settings.Profile
-	if cache, ok := regionCache.Load(profile); ok {
+	if cache, ok := e.regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
 			return cache2, nil
 		}
@@ -86,7 +83,7 @@ func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, p
 	for _, region := range regions {
 		result = append(result, suggestData{Text: region, Value: region, Label: region})
 	}
-	regionCache.Store(profile, result)
+	e.regionCache.Store(profile, result)
 
 	return result, nil
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -71,6 +72,33 @@ func TestQuery_Regions(t *testing.T) {
 			expResponse = append(expResponse, suggestData{Text: region, Value: region, Label: region})
 		}
 		assert.Equal(t, expResponse, resp)
+	})
+}
+
+func Test_handleGetRegions_regionCache(t *testing.T) {
+	origNewEC2Client := newEC2Client
+	t.Cleanup(func() {
+		newEC2Client = origNewEC2Client
+	})
+	cli := mockEC2Client{}
+	newEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
+		return &cli
+	}
+	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return DataSource{Settings: models.CloudWatchSettings{}}, nil
+	})
+
+	t.Run("AWS only called once for multiple calls to handleGetRegions", func(t *testing.T) {
+		cli.On("DescribeRegions", mock.Anything, mock.Anything).Return(&ec2.DescribeRegionsOutput{}, nil)
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		_, err := executor.handleGetRegions(
+			backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}}, nil)
+
+		_, err = executor.handleGetRegions(
+			backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}}, nil)
+
+		assert.NoError(t, err)
+		cli.AssertNumberOfCalls(t, "DescribeRegions", 1)
 	})
 }
 
