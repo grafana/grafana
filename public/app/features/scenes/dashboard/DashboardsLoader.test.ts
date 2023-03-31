@@ -588,7 +588,7 @@ describe('DashboardLoader', () => {
         hide: 2,
         label: 'constant',
         name: 'constant',
-        skipUrlSync: false,
+        skipUrlSync: true,
         type: 'constant',
         value: 'test',
       });
