@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { cx } from '@emotion/css';
 import React, { ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
 
@@ -7,7 +7,7 @@ import { TableCellBackgroundDisplayMode, TableCellOptions } from '@grafana/schem
 
 import { useStyles2 } from '../../themes';
 import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
-import { Button, clearLinkButtonStyles } from '../Button';
+import { clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
