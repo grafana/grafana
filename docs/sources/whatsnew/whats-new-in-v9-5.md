@@ -77,7 +77,7 @@ If you want to enable this feature, you'll need to enable the `onlyExternalOrgRo
 
 You can prevent the synchronization of organization roles from the authentication provider. For more information, refer to [skip org role sync]({{< relref "../setup-grafana/configure-grafana/#authgrafana_com-skip_org_role_sync/" >}}).
 
-## Removal of Creating API keys from the UI
+## Removing the button to create API keys from the UI
 
 With this update we are going one step further in deprecating API Keys. Previously, the migration status display may have suggested that the API Key migration would be a significant issue. To address this, we have revised the text on the API keys page and now allow creating new API keys exclusively via our HTTP API. This change is part of our long-term strategy for sunsetting API keys.
 
