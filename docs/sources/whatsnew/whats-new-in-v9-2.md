@@ -140,8 +140,8 @@ For details on using this functionality, see [GitHub pull request #55313](https:
 
 ## Transformations: INNER JOINs
 
-Transformations allow you to shape raw data from data sources, like metrics series or GitHub issues, into a format that's appropriate for the chosen visualization.
-We have extended the Join transformation to support INNER JOINs in addition to OUTER JOINs. These work similarly to SQL JOINs.
+[Transformations](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/) allow you to shape raw data from data sources, like metrics series or GitHub issues, into a format that's appropriate for the chosen visualization.
+We have extended the [Join transformation](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#join-by-field) to support INNER JOINs in addition to OUTER JOINs. These work similarly to SQL JOINs.
 
 {{< figure src="/static/img/docs/transformations/transform-outer-join-9-2.png" max-width="750px" caption="Query builder groupings for Google Cloud monitoring" >}}
 
