@@ -129,15 +129,17 @@ export const NewTracePageHeader = React.memo((props: NewTracePageHeaderProps) =>
         )}
       </div>
 
-      <SpanFilters
-        trace={trace}
-        search={search}
-        setSearch={setSearch}
-        spanFilterMatches={spanFilterMatches}
-        focusedSpanIdForSearch={focusedSpanIdForSearch}
-        setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
-        datasourceType={datasourceType}
-      />
+      <div className={styles.filters}>
+        <SpanFilters
+          trace={trace}
+          search={search}
+          setSearch={setSearch}
+          spanFilterMatches={spanFilterMatches}
+          focusedSpanIdForSearch={focusedSpanIdForSearch}
+          setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+          datasourceType={datasourceType}
+        />
+      </div>
 
       <SpanGraph
         trace={trace}
@@ -153,8 +155,18 @@ NewTracePageHeader.displayName = 'NewTracePageHeader';
 
 const getNewStyles = (theme: GrafanaTheme2) => {
   return {
+    header: css`
+      label: TracePageHeader;
+      background-color: ${theme.colors.background.primary};
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 0.5em 0.25em 0 0.25em;
+      & > :last-child {
+        border-bottom: 1px solid ${autoColor(theme, '#ccc')};
+      }
+    `,
     titleRow: css`
-      label: TracePageHeaderTitleRow;
       align-items: center;
       display: flex;
       padding: 0 0.5em 0 0.5em;
@@ -169,7 +181,7 @@ const getNewStyles = (theme: GrafanaTheme2) => {
     subtitle: css`
       flex: 1;
       line-height: 1em;
-      margin: -0.5em 0.5em 1em 0.5em;
+      margin: -0.5em 0.5em 0.75em 0.5em;
     `,
     tag: css`
       margin: 0 0.5em 0 0;
@@ -185,16 +197,8 @@ const getNewStyles = (theme: GrafanaTheme2) => {
     divider: css`
       margin: 0 0.75em;
     `,
-    header: css`
-      label: TracePageHeader;
-      background-color: ${theme.colors.background.primary};
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      padding: 0.5em 0.25em 0 0.25em;
-      & > :last-child {
-        border-bottom: 1px solid ${autoColor(theme, '#ccc')};
-      }
+    filters: css`
+      margin: 0 0.5em;
     `,
   };
 };
