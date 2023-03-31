@@ -187,166 +187,168 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
   }
 
   return (
-    <Collapse label="Span Filters" collapsible={true} isOpen={showSpanFilters} onToggle={setShowSpanFilters}>
-      <InlineFieldRow>
-        <InlineField label="Service Name" labelWidth={16}>
-          <HorizontalGroup spacing={'none'}>
-            <Select
-              onChange={(v) => setSearch({ ...search, serviceNameOperator: v?.value || '=' })}
-              options={[toOption('='), toOption('!=')]}
-              value={search.serviceNameOperator}
-            />
-            <Select
-              aria-label={'select-service-name'}
-              isClearable
-              onChange={(v) => setSearch({ ...search, serviceName: v?.value || '' })}
-              options={serviceNameOptions()}
-              placeholder="All service names"
-            />
-          </HorizontalGroup>
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField label="Span Name" labelWidth={16}>
-          <HorizontalGroup spacing={'none'}>
-            <Select
-              onChange={(v) => setSearch({ ...search, spanNameOperator: v?.value || '=' })}
-              options={[toOption('='), toOption('!=')]}
-              value={search.spanNameOperator}
-            />
-            <Select
-              aria-label={'select-span-name'}
-              isClearable
-              onChange={(v) => setSearch({ ...search, spanName: v?.value || '' })}
-              options={spanNameOptions()}
-              placeholder="All span names"
-            />
-          </HorizontalGroup>
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField label="Duration" labelWidth={16}>
-          <HorizontalGroup spacing={'none'}>
-            <Select
-              onChange={(v) => setSearch({ ...search, fromOperator: v?.value || '>' })}
-              options={[toOption('>'), toOption('>=')]}
-              value={search.fromOperator}
-            />
-            <Input
-              // invalid={invalid}
-              onChange={(v) => setSearch({ ...search, from: v.currentTarget.value })}
-              placeholder="e.g. 100ms, 1.2s"
-              value={search.from}
-              width={18}
-            />
-            <Select
-              onChange={(v) => setSearch({ ...search, toOperator: v?.value || '<' })}
-              options={[toOption('<'), toOption('<=')]}
-              value={search.toOperator}
-            />
-            <Input
-              // invalid={invalid}
-              onChange={(v) => setSearch({ ...search, to: v.currentTarget.value })}
-              placeholder="e.g. 100ms, 1.2s"
-              value={search.to}
-              width={18}
-            />
-          </HorizontalGroup>
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField label="Tags" labelWidth={16} tooltip="Filter by tags, process tags or log tags in your spans.">
-          <div>
-            {search.tags.map((tag, i) => (
-              <div key={i}>
-                <HorizontalGroup spacing={'none'} width={'auto'}>
-                  <Select
-                    aria-label={`select tag-${tag.id} key`}
-                    isClearable
-                    onChange={(v) => {
-                      setSearch({
-                        ...search,
-                        tags: search.tags?.map((x) => {
-                          return x.id === tag.id ? { ...x, key: v?.value || '', value: undefined } : x;
-                        }),
-                      });
-
-                      setTimeout(() => {
-                        if (v?.value) {
-                          setTagValues({
-                            ...tagValues,
-                            [tag.id]: tagValueOptions(v.value),
-                          });
-                        } else {
-                          // removed value
-                          const updatedValues = { ...tagValues };
-                          if (updatedValues[tag.id]) {
-                            delete updatedValues[tag.id];
-                          }
-                          setTagValues(updatedValues);
-                        }
-                      }, 20);
-                    }}
-                    options={tagKeyOptions()}
-                    placeholder="Select tag"
-                    value={tag.key}
-                  />
-                  <Select
-                    onChange={(v) => {
-                      setSearch({
-                        ...search,
-                        tags: search.tags?.map((x) => {
-                          return x.id === tag.id ? { ...x, operator: v?.value || '=' } : x;
-                        }),
-                      });
-                    }}
-                    options={[toOption('='), toOption('!=')]}
-                    value={tag.operator}
-                  />
-                  <span className={styles.tagValues}>
+    <div className={styles.container}>
+      <Collapse label="Span Filters" collapsible={true} isOpen={showSpanFilters} onToggle={setShowSpanFilters}>
+        <InlineFieldRow>
+          <InlineField label="Service Name" labelWidth={16}>
+            <HorizontalGroup spacing={'none'}>
+              <Select
+                onChange={(v) => setSearch({ ...search, serviceNameOperator: v?.value || '=' })}
+                options={[toOption('='), toOption('!=')]}
+                value={search.serviceNameOperator}
+              />
+              <Select
+                aria-label={'select-service-name'}
+                isClearable
+                onChange={(v) => setSearch({ ...search, serviceName: v?.value || '' })}
+                options={serviceNameOptions()}
+                placeholder="All service names"
+              />
+            </HorizontalGroup>
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label="Span Name" labelWidth={16}>
+            <HorizontalGroup spacing={'none'}>
+              <Select
+                onChange={(v) => setSearch({ ...search, spanNameOperator: v?.value || '=' })}
+                options={[toOption('='), toOption('!=')]}
+                value={search.spanNameOperator}
+              />
+              <Select
+                aria-label={'select-span-name'}
+                isClearable
+                onChange={(v) => setSearch({ ...search, spanName: v?.value || '' })}
+                options={spanNameOptions()}
+                placeholder="All span names"
+              />
+            </HorizontalGroup>
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label="Duration" labelWidth={16}>
+            <HorizontalGroup spacing={'none'}>
+              <Select
+                onChange={(v) => setSearch({ ...search, fromOperator: v?.value || '>' })}
+                options={[toOption('>'), toOption('>=')]}
+                value={search.fromOperator}
+              />
+              <Input
+                // invalid={invalid}
+                onChange={(v) => setSearch({ ...search, from: v.currentTarget.value })}
+                placeholder="e.g. 100ms, 1.2s"
+                value={search.from}
+                width={18}
+              />
+              <Select
+                onChange={(v) => setSearch({ ...search, toOperator: v?.value || '<' })}
+                options={[toOption('<'), toOption('<=')]}
+                value={search.toOperator}
+              />
+              <Input
+                // invalid={invalid}
+                onChange={(v) => setSearch({ ...search, to: v.currentTarget.value })}
+                placeholder="e.g. 100ms, 1.2s"
+                value={search.to}
+                width={18}
+              />
+            </HorizontalGroup>
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label="Tags" labelWidth={16} tooltip="Filter by tags, process tags or log tags in your spans.">
+            <div>
+              {search.tags.map((tag, i) => (
+                <div key={i}>
+                  <HorizontalGroup spacing={'none'} width={'auto'}>
                     <Select
-                      aria-label={`select tag-${tag.id} value`}
+                      aria-label={`select tag-${tag.id} key`}
                       isClearable
                       onChange={(v) => {
                         setSearch({
                           ...search,
                           tags: search.tags?.map((x) => {
-                            return x.id === tag.id ? { ...x, value: v?.value || '' } : x;
+                            return x.id === tag.id ? { ...x, key: v?.value || '', value: undefined } : x;
+                          }),
+                        });
+
+                        setTimeout(() => {
+                          if (v?.value) {
+                            setTagValues({
+                              ...tagValues,
+                              [tag.id]: tagValueOptions(v.value),
+                            });
+                          } else {
+                            // removed value
+                            const updatedValues = { ...tagValues };
+                            if (updatedValues[tag.id]) {
+                              delete updatedValues[tag.id];
+                            }
+                            setTagValues(updatedValues);
+                          }
+                        }, 20);
+                      }}
+                      options={tagKeyOptions()}
+                      placeholder="Select tag"
+                      value={tag.key}
+                    />
+                    <Select
+                      onChange={(v) => {
+                        setSearch({
+                          ...search,
+                          tags: search.tags?.map((x) => {
+                            return x.id === tag.id ? { ...x, operator: v?.value || '=' } : x;
                           }),
                         });
                       }}
-                      options={tagValues[tag.id] ? tagValues[tag.id] : []}
-                      placeholder="Select value"
-                      value={tag.value}
+                      options={[toOption('='), toOption('!=')]}
+                      value={tag.operator}
                     />
-                  </span>
-                  <AccessoryButton
-                    variant={'secondary'}
-                    icon={'times'}
-                    onClick={() => removeTag(tag.id)}
-                    title={'Remove tag'}
-                  />
-                  <span className={styles.addTag}>
-                    {search?.tags?.length && i === search.tags.length - 1 && (
-                      <AccessoryButton variant={'secondary'} icon={'plus'} onClick={addTag} title={'Add tag'} />
-                    )}
-                  </span>
-                </HorizontalGroup>
-              </div>
-            ))}
-          </div>
-        </InlineField>
-      </InlineFieldRow>
+                    <span className={styles.tagValues}>
+                      <Select
+                        aria-label={`select tag-${tag.id} value`}
+                        isClearable
+                        onChange={(v) => {
+                          setSearch({
+                            ...search,
+                            tags: search.tags?.map((x) => {
+                              return x.id === tag.id ? { ...x, value: v?.value || '' } : x;
+                            }),
+                          });
+                        }}
+                        options={tagValues[tag.id] ? tagValues[tag.id] : []}
+                        placeholder="Select value"
+                        value={tag.value}
+                      />
+                    </span>
+                    <AccessoryButton
+                      variant={'secondary'}
+                      icon={'times'}
+                      onClick={() => removeTag(tag.id)}
+                      title={'Remove tag'}
+                    />
+                    <span className={styles.addTag}>
+                      {search?.tags?.length && i === search.tags.length - 1 && (
+                        <AccessoryButton variant={'secondary'} icon={'plus'} onClick={addTag} title={'Add tag'} />
+                      )}
+                    </span>
+                  </HorizontalGroup>
+                </div>
+              ))}
+            </div>
+          </InlineField>
+        </InlineFieldRow>
 
-      <NewTracePageSearchBar
-        search={search}
-        setSearch={setSearch}
-        spanFilterMatches={spanFilterMatches}
-        focusedSpanIdForSearch={focusedSpanIdForSearch}
-        setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
-        datasourceType={datasourceType}
-      />
-    </Collapse>
+        <NewTracePageSearchBar
+          search={search}
+          setSearch={setSearch}
+          spanFilterMatches={spanFilterMatches}
+          focusedSpanIdForSearch={focusedSpanIdForSearch}
+          setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+          datasourceType={datasourceType}
+        />
+      </Collapse>
+    </div>
   );
 });
 
@@ -354,6 +356,17 @@ SpanFilters.displayName = 'SpanFilters';
 
 const getStyles = () => {
   return {
+    container: css`
+      margin: 0.5em 0 -8px 0;
+      position: sticky;
+      top: -13.5em;
+      z-index: 5;
+
+      & > div {
+        border-left: none;
+        border-right: none;
+      }
+    `,
     addTag: css`
       margin: 0 0 0 10px;
     `,

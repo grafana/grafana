@@ -125,10 +125,9 @@ export default memo(function NewTracePageSearchBar(props: NewTracePageSearchBarP
 export const getStyles = () => {
   return {
     searchBar: css`
-      display: inline;
+      margin-top: 5px;
     `,
     button: css`
-      transition: 0.2s;
       margin-left: 8px;
     `,
   };

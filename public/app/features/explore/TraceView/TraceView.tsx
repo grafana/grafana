@@ -34,6 +34,7 @@ import {
   TraceTimelineViewer,
   TTraceTimeline,
 } from './components';
+import { SpanFilters } from './components/TracePageHeader/SpanFilters/SpanFilters';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
@@ -145,19 +146,24 @@ export function TraceView(props: Props) {
       {props.dataFrames?.length && props.dataFrames[0]?.meta?.preferredVisualisationType === 'trace' && traceProp ? (
         <>
           {config.featureToggles.newTraceView ? (
-            <NewTracePageHeader
-              trace={traceProp}
-              updateNextViewRangeTime={updateNextViewRangeTime}
-              updateViewRangeTime={updateViewRangeTime}
-              viewRange={viewRange}
-              timeZone={timeZone}
-              search={newTraceViewSearch}
-              setSearch={setNewTraceViewSearch}
-              spanFilterMatches={spanFilterMatches}
-              focusedSpanIdForSearch={newTraceViewFocusedSpanIdForSearch}
-              setFocusedSpanIdForSearch={setNewTraceViewFocusedSpanIdForSearch}
-              datasourceType={datasourceType}
-            />
+            <>
+              <NewTracePageHeader
+                trace={traceProp}
+                updateNextViewRangeTime={updateNextViewRangeTime}
+                updateViewRangeTime={updateViewRangeTime}
+                viewRange={viewRange}
+                timeZone={timeZone}
+              />
+              <SpanFilters
+                trace={traceProp}
+                search={newTraceViewSearch}
+                setSearch={setNewTraceViewSearch}
+                spanFilterMatches={spanFilterMatches}
+                focusedSpanIdForSearch={newTraceViewFocusedSpanIdForSearch}
+                setFocusedSpanIdForSearch={setNewTraceViewFocusedSpanIdForSearch}
+                datasourceType={datasourceType}
+              />
+            </>
           ) : (
             <TracePageHeader
               trace={traceProp}

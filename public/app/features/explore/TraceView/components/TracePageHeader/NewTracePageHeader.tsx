@@ -20,8 +20,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { SearchProps } from '../../useSearch';
-import { autoColor } from '../Theme';
 import { ViewRangeTimeUpdate, TUpdateViewRangeTimeFunction, ViewRange } from '../TraceTimelineViewer/types';
 import ExternalLinks from '../common/ExternalLinks';
 import TraceName from '../common/TraceName';
@@ -31,7 +29,6 @@ import { Trace } from '../types';
 import { formatDuration } from '../utils/date';
 
 import TracePageActions from './Actions/TracePageActions';
-import { SpanFilters } from './SpanFilters/SpanFilters';
 import SpanGraph from './SpanGraph';
 import { timestamp, getStyles } from './TracePageHeader';
 
@@ -41,28 +38,10 @@ export type NewTracePageHeaderProps = {
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;
   timeZone: TimeZone;
-  search: SearchProps;
-  setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
-  spanFilterMatches: Set<string> | undefined;
-  focusedSpanIdForSearch: string;
-  setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
-  datasourceType: string;
 };
 
 export const NewTracePageHeader = React.memo((props: NewTracePageHeaderProps) => {
-  const {
-    trace,
-    updateNextViewRangeTime,
-    updateViewRangeTime,
-    viewRange,
-    timeZone,
-    search,
-    setSearch,
-    spanFilterMatches,
-    focusedSpanIdForSearch,
-    setFocusedSpanIdForSearch,
-    datasourceType,
-  } = props;
+  const { trace, updateNextViewRangeTime, updateViewRangeTime, viewRange, timeZone } = props;
   const styles = { ...useStyles2(getStyles), ...useStyles2(getNewStyles) };
 
   const links = React.useMemo(() => {
@@ -129,18 +108,6 @@ export const NewTracePageHeader = React.memo((props: NewTracePageHeaderProps) =>
         )}
       </div>
 
-      <div className={styles.filters}>
-        <SpanFilters
-          trace={trace}
-          search={search}
-          setSearch={setSearch}
-          spanFilterMatches={spanFilterMatches}
-          focusedSpanIdForSearch={focusedSpanIdForSearch}
-          setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
-          datasourceType={datasourceType}
-        />
-      </div>
-
       <SpanGraph
         trace={trace}
         viewRange={viewRange}
@@ -156,15 +123,8 @@ NewTracePageHeader.displayName = 'NewTracePageHeader';
 const getNewStyles = (theme: GrafanaTheme2) => {
   return {
     header: css`
-      label: TracePageHeader;
       background-color: ${theme.colors.background.primary};
-      position: sticky;
-      top: 0;
-      z-index: 5;
       padding: 0.5em 0.25em 0 0.25em;
-      & > :last-child {
-        border-bottom: 1px solid ${autoColor(theme, '#ccc')};
-      }
     `,
     titleRow: css`
       align-items: center;
@@ -172,7 +132,6 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       padding: 0 0.5em 0 0.5em;
     `,
     title: css`
-      label: TracePageHeaderTitle;
       color: inherit;
       flex: 1;
       font-size: 1.7em;
@@ -196,9 +155,6 @@ const getNewStyles = (theme: GrafanaTheme2) => {
     `,
     divider: css`
       margin: 0 0.75em;
-    `,
-    filters: css`
-      margin: 0 0.5em;
     `,
   };
 };
