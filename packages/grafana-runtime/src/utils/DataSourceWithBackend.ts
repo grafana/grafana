@@ -208,17 +208,12 @@ class DataSourceWithBackend<
 
     if (hasExpr) {
       headers[PluginRequestHeaders.FromExpression] = 'true';
-      queryStrObj.expression = 'true';
+      url += '&expression=true';
     }
 
     if (requestId) {
       queryStrObj.requestId = requestId;
-    }
-
-    let queryStr = new URLSearchParams(queryStrObj).toString();
-
-    if (queryStr.length > 0) {
-      url += '&' + queryStr;
+      url += `&requestId=${requestId}`;
     }
 
     if (request.dashboardUID) {
