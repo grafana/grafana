@@ -119,7 +119,7 @@ export function flattenGrafanaManagedRules(namespaces: CombinedRuleNamespace[]) 
     newNamespace.groups.push({
       name: 'default',
       rules: sortRulesByName(namespace.groups.flatMap((group) => group.rules)),
-      totals: calculateTotalsFromCombinedRuleGroups(namespace.groups),
+      totals: calculateAllGroupsTotals(namespace.groups),
     });
 
     return newNamespace;
@@ -150,7 +150,64 @@ function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, gro
   });
 }
 
-function calculateTotalsFromGroup(group: RuleGroup): AlertGroupTotals {
+function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RuleGroup[]): void {
+  const existingGroupsByName = new Map<string, CombinedRuleGroup>();
+  namespace.groups.forEach((group) => existingGroupsByName.set(group.name, group));
+
+  groups.forEach((group) => {
+    let combinedGroup = existingGroupsByName.get(group.name);
+    if (!combinedGroup) {
+      combinedGroup = {
+        name: group.name,
+        rules: [],
+        totals: calculateGroupTotals(group),
+      };
+      namespace.groups.push(combinedGroup);
+      existingGroupsByName.set(group.name, combinedGroup);
+    }
+
+    // combine totals from ruler with totals from prometheus state API
+    combinedGroup.totals = {
+      ...combinedGroup.totals,
+      ...calculateGroupTotals(group),
+    };
+
+    const combinedRulesByName = new Map<string, CombinedRule[]>();
+    combinedGroup!.rules.forEach((r) => {
+      // Prometheus rules do not have to be unique by name
+      const existingRule = combinedRulesByName.get(r.name);
+      existingRule ? existingRule.push(r) : combinedRulesByName.set(r.name, [r]);
+    });
+
+    (group.rules ?? []).forEach((rule) => {
+      const existingRule = getExistingRuleInGroup(rule, combinedRulesByName, namespace.rulesSource);
+      if (existingRule) {
+        existingRule.promRule = rule;
+        existingRule.instanceTotals = isAlertingRule(rule) ? calculateRuleTotals(rule) : {};
+      } else {
+        combinedGroup!.rules.push(promRuleToCombinedRule(rule, namespace, combinedGroup!));
+      }
+    });
+  });
+}
+
+export function calculateRuleTotals(rule: Pick<AlertingRule, 'alerts' | 'totals'>): AlertInstanceTotals {
+  const result = countBy(rule.alerts, 'state');
+
+  if (rule.totals) {
+    return rule.totals;
+  }
+
+  return {
+    alerting: result[AlertInstanceState.Alerting],
+    pending: result[AlertInstanceState.Pending],
+    inactive: result[AlertInstanceState.Normal],
+    nodata: result[AlertInstanceState.NoData],
+    error: result[AlertInstanceState.Error] + result['err'], // Prometheus uses "err" instead of "error"
+  };
+}
+
+export function calculateGroupTotals(group: Pick<RuleGroup, 'rules' | 'totals'>): AlertGroupTotals {
   if (group.totals) {
     const { firing, ...totals } = group.totals;
 
@@ -174,7 +231,7 @@ function calculateTotalsFromGroup(group: RuleGroup): AlertGroupTotals {
   };
 }
 
-function calculateTotalsFromCombinedRuleGroups(groups: CombinedRuleGroup[]): AlertGroupTotals {
+function calculateAllGroupsTotals(groups: CombinedRuleGroup[]): AlertGroupTotals {
   const totals: Record<string, number> = {};
 
   groups.forEach((group) => {
@@ -191,63 +248,6 @@ function calculateTotalsFromCombinedRuleGroups(groups: CombinedRuleGroup[]): Ale
   return totals;
 }
 
-function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RuleGroup[]): void {
-  const existingGroupsByName = new Map<string, CombinedRuleGroup>();
-  namespace.groups.forEach((group) => existingGroupsByName.set(group.name, group));
-
-  groups.forEach((group) => {
-    let combinedGroup = existingGroupsByName.get(group.name);
-    if (!combinedGroup) {
-      combinedGroup = {
-        name: group.name,
-        rules: [],
-        totals: calculateTotalsFromGroup(group),
-      };
-      namespace.groups.push(combinedGroup);
-      existingGroupsByName.set(group.name, combinedGroup);
-    }
-
-    // combine totals from ruler with totals from prometheus state API
-    combinedGroup.totals = {
-      ...combinedGroup.totals,
-      ...calculateTotalsFromGroup(group),
-    };
-
-    const combinedRulesByName = new Map<string, CombinedRule[]>();
-    combinedGroup!.rules.forEach((r) => {
-      // Prometheus rules do not have to be unique by name
-      const existingRule = combinedRulesByName.get(r.name);
-      existingRule ? existingRule.push(r) : combinedRulesByName.set(r.name, [r]);
-    });
-
-    (group.rules ?? []).forEach((rule) => {
-      const existingRule = getExistingRuleInGroup(rule, combinedRulesByName, namespace.rulesSource);
-      if (existingRule) {
-        existingRule.promRule = rule;
-        existingRule.instanceTotals = isAlertingRule(rule) ? calculateTotals(rule) : {};
-      } else {
-        combinedGroup!.rules.push(promRuleToCombinedRule(rule, namespace, combinedGroup!));
-      }
-    });
-  });
-}
-
-function calculateTotals(rule: AlertingRule): AlertInstanceTotals {
-  const result = countBy(rule.alerts, 'state');
-
-  if (rule.totals) {
-    return rule.totals;
-  }
-
-  return {
-    alerting: result[AlertInstanceState.Alerting],
-    pending: result[AlertInstanceState.Pending],
-    inactive: result[AlertInstanceState.Normal],
-    nodata: result[AlertInstanceState.NoData],
-    error: result[AlertInstanceState.Error] + result['err'], // Prometheus uses "err" instead of "error"
-  };
-}
-
 function promRuleToCombinedRule(rule: Rule, namespace: CombinedRuleNamespace, group: CombinedRuleGroup): CombinedRule {
   return {
     name: rule.name,
@@ -257,7 +257,7 @@ function promRuleToCombinedRule(rule: Rule, namespace: CombinedRuleNamespace, gr
     promRule: rule,
     namespace: namespace,
     group,
-    instanceTotals: isAlertingRule(rule) ? calculateTotals(rule) : {},
+    instanceTotals: isAlertingRule(rule) ? calculateRuleTotals(rule) : {},
   };
 }
 
