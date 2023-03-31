@@ -180,9 +180,12 @@ export function getPanelMenu(
     type: 'submenu',
     text: t('panel.header-menu.inspect', `Inspect`),
     iconClassName: 'info-circle',
-    onClick: (e: React.MouseEvent<any>) => {
-      // Only calls function if click is not on a submenu item (i.e Panel JSON)
-      if (e.target === e.currentTarget) {
+    onClick: (e: React.MouseEvent<HTMLElement>) => {
+      const currentTarget = e.currentTarget;
+      const target = e.target as HTMLElement;
+      const closestMenuItem = target.closest('[role="menuitem"]');
+
+      if (target === currentTarget || closestMenuItem === currentTarget) {
         onInspectPanel();
       }
     },
