@@ -107,7 +107,7 @@ export const TooltipView = ({
         <tbody>
           <tr>
             <th>{getFieldDisplayName(xField, frame)}</th>
-            <td>{fmt(frame.fields[0], xField.values.get(rowIndex))}</td>
+            <td>{fmt(xField, xField.values.get(rowIndex))}</td>
           </tr>
           <tr>
             <th>{yValue.name}:</th>
