@@ -877,7 +877,6 @@ func TestFindAnnotations(t *testing.T) {
 		assert.Len(t, items, 1)
 		assert.Equal(t, expected, items[0])
 	})
-
 }
 
 func TestGetMetricRequest(t *testing.T) {
