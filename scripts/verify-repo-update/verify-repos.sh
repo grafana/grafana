@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Usage: ./verify-repos.sh [argument]
+# argument is optional, but can be "beta" or a valid tag (ex: 9.4.7)
 set -o pipefail
 
 _basedir=$(dirname "$0")
@@ -14,59 +16,39 @@ docker_build () {
     --build-arg "REPO_CONFIG=$repo_file" \
     --build-arg "PACKAGE=$package"       \
     --tag "$tag"                         \
+    --no-cache                           \
     .
-#    --no-cache                           \
 
     retval=$(docker run --rm "$tag" cat /usr/share/grafana/VERSION)
 }
 
-# Check args
-BETA_OR_VERSION=$1;
-if [[ "$#" = 1 ]]; then
-  # only 1 parameter passed in, check if beta, if not, assume version tag
-  if [[ $1 == "beta" ]]; then
-    CHECK_BETA=true
-  else
-    VERSION=$1
-  fi
-fi
-
-echo "CHECK_BETA is ${CHECK_BETA}"
-echo "VERSION is ${VERSION}"
+_stable_or_beta="stable"
+_grafana_tag="grafana"
+_grafana_enterprise_tag="grafana-enterprise"
 
 # CHECK_BETA=$1
 if [[ $1 == "beta" ]]; then
-  echo "Verifying beta debian repos"
-  # Testing deb repos
-#  docker_build "Dockerfile.deb" "deb-oss-beta.list" "grafana=9.4.7" "gf-oss-deb-repo-test"
-#  _oss_deb_v="$retval"
-
-#  docker_build "Dockerfile.deb" "deb-ee-beta.list" "grafana-enterprise" "gf-ee-deb-repo-test"
-#  _ee_deb_v="$retval"
-#
-  echo "Verifying beta debian repos"
-#  # Testing rpm repos
-#  docker_build "Dockerfile.rpm" "rpm-oss-beta.list" "grafana" "gf-oss-rpm-repo-test"
-#  _oss_rpm_v="$retval"
-#
-#  docker_build "Dockerfile.rpm" "rpm-ee-beta.list" "grafana-enterprise" "gf-ee-rpm-repo-test"
-#  _ee_rpm_v="$retval"
-#elif [[ $VERSION ]]
-else
-  # Testing deb repos
-  docker_build "Dockerfile.deb" "deb-oss-stable.list" "grafana=9.4.7" "gf-oss-deb-repo-test"
-  _oss_deb_v="$retval"
-
-  docker_build "Dockerfile.deb" "deb-ee-stable.list" "grafana-enterprise" "gf-ee-deb-repo-test"
-  _ee_deb_v="$retval"
-
-  # Testing rpm repos
-  docker_build "Dockerfile.rpm" "rpm-oss-stable.list" "grafana" "gf-oss-rpm-repo-test"
-  _oss_rpm_v="$retval"
-
-  docker_build "Dockerfile.rpm" "rpm-ee-stable.list" "grafana-enterprise" "gf-ee-rpm-repo-test"
-  _ee_rpm_v="$retval"
+  _stable_or_beta="beta"
+elif [[ $1 != "" ]]; then
+  # Assume user is passing in version
+  _version="$1"
+  _grafana_tag="grafana=$_version"
+  _grafana_enterprise_tag="grafana-enterprise=$_version"
 fi
+
+# Testing deb repos
+docker_build "Dockerfile.deb" "deb-oss-$_stable_or_beta.list" "$_grafana_tag" "gf-oss-deb-repo-test"
+_oss_deb_v="$retval"
+
+docker_build "Dockerfile.deb" "deb-ee-$_stable_or_beta.list" "$_grafana_enterprise_tag" "gf-ee-deb-repo-test"
+_ee_deb_v="$retval"
+
+# Testing rpm repos
+docker_build "Dockerfile.rpm" "rpm-oss-$_stable_or_beta.list" "$_grafana_tag" "gf-oss-rpm-repo-test"
+_oss_rpm_v="$retval"
+
+docker_build "Dockerfile.rpm" "rpm-ee-$_stable_or_beta.list" "$_grafana_enterprise_tag" "gf-ee-rpm-repo-test"
+_ee_rpm_v="$retval"
 
 echo Versions:
 echo OSS deb = "${_oss_deb_v}"
