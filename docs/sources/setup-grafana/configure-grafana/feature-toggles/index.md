@@ -102,6 +102,7 @@ Alpha features might be changed or removed without prior notice.
 | `alertStateHistoryLokiSecondary`   | Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.                                                                                        |
 | `alertStateHistoryLokiPrimary`     | Enable a remote Loki instance as the primary source for state history reads.                                                                                                                        |
 | `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                                                                                                          |
+| `unifiedRequestLog`                | Writes error logs to the request logger                                                                                                                                                             |
 
 ## Development feature toggles
 

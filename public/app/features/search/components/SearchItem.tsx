@@ -67,7 +67,7 @@ export const SearchItem = ({ item, isSelected, editable, onToggleChecked, onTagS
   );
 
   return (
-    <li className={styles.cardContainer}>
+    <div className={styles.cardContainer}>
       <SearchCheckbox
         aria-label="Select dashboard"
         editable={editable}
@@ -98,7 +98,7 @@ export const SearchItem = ({ item, isSelected, editable, onToggleChecked, onTagS
           <TagList tags={item.tags ?? []} onClick={tagSelected} getAriaLabel={(tag) => `Filter by tag "${tag}"`} />
         </Card.Tags>
       </Card>
-    </li>
+    </div>
   );
 };
 
@@ -117,7 +117,6 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     cardContainer: css`
       display: flex;
-      list-style: none;
       align-items: center;
       margin-bottom: ${theme.spacing(0.75)};
     `,

@@ -294,4 +294,8 @@ const (
 	// FlagAlertStateHistoryLokiOnly
 	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
 	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
+
+	// FlagUnifiedRequestLog
+	// Writes error logs to the request logger
+	FlagUnifiedRequestLog = "unifiedRequestLog"
 )
