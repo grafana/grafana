@@ -80,7 +80,7 @@ export class PrometheusDatasource
   type: string;
   editorSrc: string;
   ruleMappings: { [index: string]: string };
-  hasIncrementalQuery?: boolean;
+  hasIncrementalQuery: boolean;
   url: string;
   id: number;
   directUrl: string;
@@ -329,7 +329,6 @@ export class PrometheusDatasource
         continue;
       }
 
-      target.requestId = options.panelId + target.refId;
       const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr.includes(m));
 
       // In Explore, we run both (instant and range) queries if both are true (selected) or both are undefined (legacy Explore queries)
@@ -341,7 +340,6 @@ export class PrometheusDatasource
         instantTarget.range = false;
         instantTarget.valueWithRefId = true;
         delete instantTarget.maxDataPoints;
-        instantTarget.requestId += '_instant';
 
         // Create range target
         const rangeTarget: any = cloneDeep(target);
@@ -358,7 +356,6 @@ export class PrometheusDatasource
           ) {
             const exemplarTarget = cloneDeep(target);
             exemplarTarget.instant = false;
-            exemplarTarget.requestId += '_exemplar';
             queries.push(this.createQuery(exemplarTarget, options, start, end));
             activeTargets.push(exemplarTarget);
           }
@@ -386,7 +383,6 @@ export class PrometheusDatasource
             (metricName && !activeTargets.some((activeTarget) => activeTarget.expr.includes(metricName)))
           ) {
             const exemplarTarget = cloneDeep(target);
-            exemplarTarget.requestId += '_exemplar';
             queries.push(this.createQuery(exemplarTarget, options, start, end));
             activeTargets.push(exemplarTarget);
           }
@@ -476,7 +472,6 @@ export class PrometheusDatasource
         }),
         tap((response: DataQueryResponse) => {
           trackQuery(response, request, startTime);
-          //@todo track incremental query savings
         })
       );
       // Run queries trough browser/proxy
@@ -601,7 +596,6 @@ export class PrometheusDatasource
       exemplar: target.exemplar,
       step: 0,
       expr: '',
-      requestId: target.requestId,
       refId: target.refId,
       start: 0,
       end: 0,

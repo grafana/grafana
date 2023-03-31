@@ -421,3 +421,14 @@ func (s *FakePluginSource) DefaultSignature(ctx context.Context) (plugins.Signat
 	}
 	return plugins.Signature{}, false
 }
+
+type FakePluginFileStore struct {
+	FileFunc func(ctx context.Context, pluginID, filename string) (*plugins.File, error)
+}
+
+func (f *FakePluginFileStore) File(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+	if f.FileFunc != nil {
+		return f.FileFunc(ctx, pluginID, filename)
+	}
+	return nil, nil
+}

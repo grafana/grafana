@@ -1,4 +1,4 @@
-package apikeygenprefix
+package satokengen
 
 import "github.com/grafana/grafana/pkg/components/apikeygen"
 

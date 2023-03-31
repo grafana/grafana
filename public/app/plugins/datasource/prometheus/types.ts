@@ -13,12 +13,12 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   utcOffsetSec?: number;
   legendFormat?: string;
   valueWithRefId?: boolean;
-  requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
   hinting?: boolean;
   interval?: string;
   intervalFactor?: number;
+  requestId?: string;
 }
 
 export interface PromOptions extends DataSourceJsonData {
@@ -33,7 +33,7 @@ export interface PromOptions extends DataSourceJsonData {
   prometheusVersion?: string;
   defaultEditor?: QueryEditorMode;
   incrementalQuerying?: boolean;
-  incrementalQueryOverlapWindow?: string; // ms
+  incrementalQueryOverlapWindow?: string;
 }
 
 export type ExemplarTraceIdDestination = {

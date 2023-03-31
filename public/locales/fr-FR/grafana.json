@@ -38,7 +38,7 @@
       "query-tab": "Requête",
       "stats-tab": "Statistiques",
       "subtitle": "{{queryCount}} requêtes avec un délai total de requête de {{formatted}}",
-      "title": "Inspecter : {{panelTitle}}"
+      "title": "Inspecter\u00a0: {{panelTitle}}"
     },
     "inspect-data": {
       "data-options": "Options de données",
@@ -68,7 +68,7 @@
       "panel-json-description": "Le modèle enregistré dans le tableau de bord JSON qui configure comment tout fonctionne.",
       "panel-json-label": "Panneau JSON",
       "select-source": "Sélectionner la source",
-      "unknown": "Objet inconnu : {{show}}"
+      "unknown": "Objet inconnu\u00a0: {{show}}"
     },
     "inspect-meta": {
       "no-inspector": "Pas d'inspecteur de métadonnées"
@@ -100,7 +100,7 @@
     "contact-admin": "Veuillez contacter votre administrateur pour configurer les sources de données.",
     "explanation": "Pour visualiser vos données, vous devrez d’abord les connecter.",
     "new-dashboard": "Nouveau tableau de bord",
-    "preferred": "Connectez votre source de données préférée :",
+    "preferred": "Connectez votre source de données préférée\u00a0:",
     "sampleData": "Ou établissez un nouveau tableau de bord avec des exemples de données",
     "viewAll": "Afficher tout",
     "welcome": "Bienvenue aux tableaux de bord Grafana !"
@@ -127,7 +127,7 @@
   },
   "library-panels": {
     "save": {
-      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque : \"{{errorMsg}}\"",
+      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque\u00a0: \"{{errorMsg}}\"",
       "success": "Panneau de bibliothèque enregistré"
     }
   },
@@ -205,7 +205,7 @@
       "title": "Dossier"
     },
     "create-import": {
-      "title": "Importer"
+      "title": ""
     },
     "dashboards": {
       "subtitle": "Créer et gérer des tableaux de bord pour visualiser vos données",
@@ -483,7 +483,7 @@
       "info-text-1": "Un instantané est un moyen instantané de partager publiquement un tableau de bord interactif. Lors de la création, nous supprimons les données sensibles telles que les requêtes (métrique, modèle et annotation) et les liens du panneau, pour ne laisser que les métriques visibles et les noms de séries intégrés dans votre tableau de bord.",
       "info-text-2": "N'oubliez pas que votre instantané <1>peut être consulté par une personne</1> qui dispose du lien et qui peut accéder à l'URL. Partagez judicieusement.",
       "local-button": "Instantané local",
-      "mistake-message": "Avez-vous commis une erreur ? ",
+      "mistake-message": "Avez-vous commis une erreur\u00a0? ",
       "name": "Nom de l'instantané",
       "timeout": "Délai d’expiration (secondes)",
       "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps.",

@@ -23,12 +23,10 @@ export function amendTable(prevTable: Table, nextTable: Table): Table {
     if (nLen) {
       // append, no overlap
       if (nStart > pEnd) {
-        //	console.log('append, no overlap');
         outTable = prevTable.map((_, i) => prevTable[i].concat(nextTable[i])) as Table;
       }
       // prepend, no overlap
       else if (nEnd < pStart) {
-        //	console.log('prepend, no overlap');
         outTable = nextTable.map((_, i) => nextTable[i].concat(prevTable[i])) as Table;
       }
       // full replace
@@ -40,14 +38,12 @@ export function amendTable(prevTable: Table, nextTable: Table): Table {
       }
       // append, with overlap
       else if (nStart >= pStart) {
-        //	console.log('append, with overlap');
         let idx = closestIdx(nStart, prevTimes);
         idx = prevTimes[idx] < nStart ? idx - 1 : idx;
         outTable = prevTable.map((_, i) => prevTable[i].slice(0, idx).concat(nextTable[i])) as Table;
       }
       // prepend, with overlap
       else if (nEnd >= pStart) {
-        //	console.log('prepend, with overlap');
         let idx = closestIdx(nEnd, prevTimes);
         idx = prevTimes[idx] < nEnd ? idx : idx + 1;
         outTable = nextTable.map((_, i) => nextTable[i].concat(prevTable[i].slice(idx))) as Table;
@@ -89,7 +85,6 @@ export function trimTable(table: Table, fromTime: number, toTime: number): Table
   }
 
   if (fromIdx != null || toIdx != null) {
-    // console.log('trim!', fromIdx ?? 0, toIdx);
     times = times.slice(fromIdx ?? 0, toIdx);
     vals = vals.map(vals2 => vals2.slice(fromIdx ?? 0, toIdx));
   }

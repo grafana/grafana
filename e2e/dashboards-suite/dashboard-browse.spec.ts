@@ -3,7 +3,7 @@ import { e2e } from '@grafana/e2e';
 import testDashboard from '../dashboards/TestDashboard.json';
 
 e2e.scenario({
-  describeName: 'Dashboard search',
+  describeName: 'Dashboard browse',
   itName: 'Basic folder view test',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
@@ -11,7 +11,7 @@ e2e.scenario({
   scenario: () => {
     e2e.flows.importDashboard(testDashboard, 1000, true);
 
-    e2e.pages.Search.FolderView.visit();
+    e2e.pages.Dashboards.visit();
 
     // folder view is collapsed - verify its content does not exist
     e2e.components.Search.folderContent('General').should('not.exist');

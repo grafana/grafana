@@ -201,6 +201,25 @@ describe('SupplementaryQueries utils', function () {
       const testProvider = await setup('no-data-providers', SupplementaryQueryType.LogsSample);
       await expect(testProvider).toBe(undefined);
     });
+    it('Creates single fallback result', async () => {
+      const testProvider = await setup('no-data-providers', SupplementaryQueryType.LogsVolume, [
+        'no-data-providers',
+        'no-data-providers-2',
+      ]);
+
+      await expect(testProvider).toEmitValuesWith((received) => {
+        expect(received).toMatchObject([
+          {
+            data: assertDataFromLogsResults(),
+            state: LoadingState.Done,
+          },
+          {
+            data: [...assertDataFromLogsResults(), ...assertDataFromLogsResults()],
+            state: LoadingState.Done,
+          },
+        ]);
+      });
+    });
   });
 
   describe('Mixed data source', function () {

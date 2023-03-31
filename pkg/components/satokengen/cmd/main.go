@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
+	"github.com/grafana/grafana/pkg/components/satokengen"
 )
 
 // placeholder key generator
@@ -22,7 +22,7 @@ func main() {
 	}
 
 	for i := 0; i < numKeys; i++ {
-		key, err := apikeygenprefix.New("pl")
+		key, err := satokengen.New("pl")
 		if err != nil {
 			fmt.Println("ERROR: generating key failed:", err)
 			return
