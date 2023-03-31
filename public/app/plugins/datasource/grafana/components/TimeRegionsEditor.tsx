@@ -155,6 +155,7 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
           includeInternal={true}
           onChange={(v) => onChange(index, { ...value, timezone: v })}
           width={35}
+          menuShouldPortal={true}
         />
       </InlineField>
       <InlineField label="Color">
