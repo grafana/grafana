@@ -1,6 +1,6 @@
 import { getFieldDisplayName } from '../../field/fieldState';
 import { stringToJsRegex } from '../../text/string';
-import { Field, DataFrame, FieldType } from '../../types/dataFrame';
+import { Field, DataFrame, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
 import { FieldMatcherInfo, FrameMatcherInfo, FieldMatcher } from '../../types/transformations';
 
 import { FieldMatcherID, FrameMatcherID } from './ids';
@@ -46,12 +46,11 @@ const fieldNameMatcher: FieldMatcherInfo<string> = {
     // naming conventions need to get normalized.  However many existing setups
     // exist that would no longer match names if that changes.  This injects
     // fallback logic when when the data frame has not type version specified
-    if (name === 'Value') {
+    if (name === TIME_SERIES_VALUE_FIELD_NAME) {
       fallback = (field: Field, frame: DataFrame) => {
         return (
-          frame.meta?.typeVersion == null &&
           Boolean(field.labels) && // Value was reasonable when the name was set in labels or on the frame
-          field.type === FieldType.number
+          field.labels?.__name__ === field.name
         );
       };
     } else if (name === 'Time' || name === 'time') {
