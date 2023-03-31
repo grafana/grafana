@@ -1,6 +1,10 @@
 import { SelectableValue } from '@grafana/data';
+import { isFetchError } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
+import { createErrorNotification } from '../../../../core/copy/appNotification';
+import { notifyApp } from '../../../../core/reducers/appNotification';
+import { dispatch } from '../../../../store/store';
 import TempoLanguageProvider from '../language_provider';
 
 import { intrinsics, scopes } from './traceql';
@@ -138,7 +142,17 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           type: 'OPERATOR',
         }));
       case 'SPANSET_IN_VALUE':
-        const tagValues = await this.getTagValues(situation.tagName);
+        let tagValues;
+        try {
+          tagValues = await this.getTagValues(situation.tagName);
+        } catch (error) {
+          if (isFetchError(error)) {
+            dispatch(notifyApp(createErrorNotification(error.data.error, new Error(error.data.message))));
+          } else if (error instanceof Error) {
+            dispatch(notifyApp(createErrorNotification('Error', error)));
+          }
+        }
+
         const items: Completion[] = [];
 
         const getInsertionText = (val: SelectableValue<string>): string => {
@@ -148,7 +162,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           return val.type === 'string' ? `"${val.label}"` : val.label!;
         };
 
-        tagValues.forEach((val) => {
+        tagValues?.forEach((val) => {
           if (val?.label) {
             items.push({
               label: val.label,
