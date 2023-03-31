@@ -226,7 +226,7 @@ describe('Language completion provider', () => {
               .valueOf() / 1000
           ).toString(),
         },
-        { headers: { 'Cache-Control': `private, max-age=${timeSnapMinutes * 60}`, 'X-Grafana-Cache': 'y' } }
+        { headers: { 'X-Grafana-Cache': `private, max-age=${timeSnapMinutes * 60}` } }
       );
     });
   });
