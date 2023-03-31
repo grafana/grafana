@@ -90,12 +90,7 @@ export const DashboardActions = ({ folder, canCreateFolders = false, canCreateDa
       </div>
 
       {canMove && isMoveModalOpen && (
-        <MoveToFolderModal
-          onMoveItems={() => {}}
-          results={moveSelection}
-          isOpen={isMoveModalOpen}
-          onDismiss={() => setIsMoveModalOpen(false)}
-        />
+        <MoveToFolderModal onMoveItems={() => {}} results={moveSelection} onDismiss={() => setIsMoveModalOpen(false)} />
       )}
     </>
   );
