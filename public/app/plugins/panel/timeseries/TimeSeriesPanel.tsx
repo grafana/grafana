@@ -106,7 +106,7 @@ export const TimeSeriesPanel = ({
                 timeZone={timeZone}
               />
             )}
-            {regions.length && <RegionsPlugin config={config} regions={regions} />}
+            {regions && <RegionsPlugin config={config} regions={regions} />}
             {/* Renders annotation markers*/}
             {annotations && <AnnotationsPlugin annotations={annotations} config={config} timeZone={timeZone} />}
             {/* Enables annotations creation*/}
