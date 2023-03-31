@@ -187,10 +187,6 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float
 func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger log.Logger) {
 	if state.State == eval.Normal {
 		logger.Debug("Keeping state", "state", state.State)
-		if state.StartsAt.IsZero() {
-			// If this is the first evaluation, ensure StartsAt and EndsAt are correctly set to EvaluatedAt.
-			state.SetNormal(state.StateReason, result.EvaluatedAt, result.EvaluatedAt)
-		}
 	} else {
 		logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Normal)
 		// Normal states have the same start and end timestamps
