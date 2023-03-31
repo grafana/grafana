@@ -23,7 +23,7 @@ Description. Include an overview of the feature and problem it solves, and where
 
 > **Note:** You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).-->
 
-## Nav navigation
+## New navigation
 
 _Generally available in all editions of Grafana._
 
