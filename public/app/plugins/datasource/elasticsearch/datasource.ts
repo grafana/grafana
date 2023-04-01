@@ -1051,26 +1051,21 @@ export class ElasticDatasource
 
   private makeLogContextDataRequest = (row: LogRowModel, options?: RowContextOptions) => {
     const direction = options?.direction || 'BACKWARD';
-    // This is a hack as we are using more settings as documented. At this point, I am not sure how to override the schema
-    // because then other types fail. Or if i should add it to schema?
-    const settings = {
-      limit: options?.limit ? options?.limit.toString() : '10',
-      // Used for sorting of results in the context query
-      sortDirection: direction === 'BACKWARD' ? 'desc' : 'asc',
-      // This is used to get the next log lines before/after the current log line
-      // We use the timestamp of the current log line or value in time field
-      searchAfter: row.dataFrame.fields.find((f) => f.name === 'sort')?.values.get(row.rowIndex) ?? [row.timeEpochMs],
+    const logQuery: Logs = {
+      type: 'logs',
+      id: '1',
+      settings: {
+        limit: options?.limit ? options?.limit.toString() : '10',
+        // Sorting of results in the context query
+        sortDirection: direction === 'BACKWARD' ? 'desc' : 'asc',
+        // Used to get the next log lines before/after the current log line using sort field of selected log line
+        searchAfter: row.dataFrame.fields.find((f) => f.name === 'sort')?.values.get(row.rowIndex) ?? [row.timeEpochMs],
+      },
     };
 
     const query: ElasticsearchQuery = {
       refId: `log-context-${row.dataFrame.refId}-${direction}`,
-      metrics: [
-        {
-          type: 'logs',
-          id: '1',
-          settings,
-        },
-      ],
+      metrics: [logQuery],
       query: '',
     };
 
@@ -1081,12 +1076,10 @@ export class ElasticDatasource
       raw: timeRange,
     };
 
-    console.log(direction, range);
-
     const interval = rangeUtil.calculateInterval(range, 1);
 
     const contextRequest: DataQueryRequest<ElasticsearchQuery> = {
-      requestId: `context-request-${row.dataFrame.refId}-${options?.direction}`,
+      requestId: `log-context-request-${row.dataFrame.refId}-${options?.direction}`,
       targets: [query],
       interval: interval.interval,
       intervalMs: interval.intervalMs,
@@ -1097,8 +1090,6 @@ export class ElasticDatasource
       startTime: Date.now(),
       hideFromInspector: true,
     };
-
-    console.log(contextRequest);
     return contextRequest;
   };
 }
