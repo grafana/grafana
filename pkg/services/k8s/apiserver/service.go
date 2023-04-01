@@ -72,6 +72,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	serverRunOptions := options.NewServerRunOptions()
+	serverRunOptions.Logs.Verbosity = 5
 	serverRunOptions.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
 
 	serverRunOptions.SecureServing.ServerCert.CertKey = serveroptions.CertKey{

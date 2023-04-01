@@ -31,7 +31,7 @@ func (l *logAdapter) Init(_ logr.RuntimeInfo) {
 }
 
 func (l *logAdapter) Enabled(level int) bool {
-	return level <= 1
+	return level <= 5
 }
 
 func (l *logAdapter) Info(level int, msg string, keysAndValues ...interface{}) {
