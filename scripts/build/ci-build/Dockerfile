@@ -37,6 +37,9 @@ WORKDIR /tmp
 RUN apt-get update && \
     apt-get install -yq \
         clang patch libxml2-dev \
+        krb5-user       \
+        libkrb5-dev     \
+        libkrb5-3       \
         build-essential \
         ca-certificates \
         curl            \
@@ -133,7 +136,7 @@ RUN apt-get update && \
         gcc             \
         g++             \
         git             \
-	      jq		          \
+	jq              \
         make            \
         rpm             \
         xz-utils        \
@@ -143,7 +146,14 @@ RUN apt-get update && \
         ruby            \
         ruby-dev        \
         rubygems        \
-        unzip && \
+        unzip           \
+        krb5-user       \
+        libkrb5-dev     \
+        libkrb5-3       \
+        cpio            \
+        rpm2cpio        \
+        unzip           \
+        zstd &&         \
     gem install -N public_suffix -v 4.0.7 && \
     gem install --conservative -N fpm && \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil && \
@@ -183,6 +193,28 @@ RUN cd /tmp && \
     tar xf x86_64-linux-musl-cross.tgz && \
     rm x86_64-linux-musl-cross.tgz
 
+# Add kerberos for x64 musl and arm v7/v8
+RUN cd /tmp && \
+    curl -fLO http://dl-cdn.alpinelinux.org/alpine/v3.17/main/x86_64/krb5-dev-1.20.1-r0.apk && \
+    tar xf krb5-dev-1.20.1-r0.apk && \
+    cp -r usr/include/* /tmp/x86_64-linux-musl-cross/x86_64-linux-musl/include/ && \
+    rm krb5-dev-1.20.1-r0.apk && \
+    rm -rf /tmp/usr && \
+    curl -fLO http://dl-cdn.alpinelinux.org/alpine/v3.17/main/aarch64/krb5-dev-1.20.1-r0.apk && \
+    tar xf krb5-dev-1.20.1-r0.apk && \
+    cp -r usr/include/* /tmp/aarch64-linux-musl-cross/aarch64-linux-musl/include/ && \
+    cp -r usr/include/* /tmp/arm-linux-musleabihf-cross/arm-linux-musleabihf/include/ && \
+    rm krb5-dev-1.20.1-r0.apk && \
+    rm -rf /tmp/usr && \
+    curl -fLO http://raspbian.raspberrypi.org/raspbian/pool/main/h/heimdal/heimdal-multidev_7.7.0+dfsg-2+deb11u3_armhf.deb && \
+    mkdir rpi-armv6 && \
+    cd rpi-armv6 && \
+    ar x ../heimdal-multidev_7.7.0+dfsg-2+deb11u3_armhf.deb && \
+    tar xvf data.tar.xz && \
+    cp -r /tmp/rpi-armv6/usr/include/heimdal/* /opt/rpi-tools/arm-bcm2708/arm-linux-gnueabihf/arm-linux-gnueabihf/include/ && \
+    cd .. && \
+    rm -rf rpi-armv6
+#
 RUN go install github.com/mgechev/revive@v1.0.2 && \
   mv ${GOPATH}/bin/revive /usr/local/bin/ && \
   go install github.com/google/go-jsonnet/cmd/jsonnetfmt@latest && \

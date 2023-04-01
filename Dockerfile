@@ -37,7 +37,7 @@ ARG BINGO="true"
 
 # Install build dependencies
 RUN if grep -i -q alpine /etc/issue; then \
-      apk add --no-cache gcc g++ make; \
+      apk add --no-cache gcc g++ krb5-libs krb5-dev make; \
     fi
 
 WORKDIR /tmp/grafana
@@ -101,11 +101,15 @@ WORKDIR $GF_PATHS_HOME
 # Install dependencies
 RUN if grep -i -q alpine /etc/issue; then \
       apk add --no-cache ca-certificates bash curl tzdata musl-utils && \
+      apk add --no-cache openssl musl-utils libcrypto1.1>1.1.1t-r1 libssl1.1>1.1.1t-r1 && \
+      apk add --no-cache krb5-libs krb5 && \
+      ln -s /usr/lib/libgssapi_krb5.so.2 /usr/lib/libgssapi_krb5.so && \
       apk info -vv | sort; \
     elif grep -i -q ubuntu /etc/issue; then \
       DEBIAN_FRONTEND=noninteractive && \
       apt-get update && \
       apt-get install -y ca-certificates curl tzdata && \
+      apt-get install -y openssl krb5-libs krb5 && \
       apt-get autoremove -y && \
       rm -rf /var/lib/apt/lists/*; \
     else \
