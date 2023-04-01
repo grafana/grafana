@@ -4,9 +4,9 @@ import {
   SceneDataProvider,
   SceneDataState,
   SceneDataTransformer,
+  SceneDeactivationHandler,
   SceneObject,
   SceneObjectBase,
-  SceneQueryRunner,
 } from '@grafana/scenes';
 import { DashboardQuery } from 'app/plugins/datasource/dashboard/types';
 
@@ -18,6 +18,7 @@ export interface ShareQueryDataProviderState extends SceneDataState {
 
 export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProviderState> implements SceneDataProvider {
   private _querySub: Unsubscribable | undefined;
+  private _sourceDataDeactivationHandler?: SceneDeactivationHandler;
 
   public constructor(state: ShareQueryDataProviderState) {
     super(state);
@@ -25,7 +26,17 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
     this.addActivationHandler(() => {
       // TODO handle changes to query model (changed panelId / withTransforms)
       //this.subscribeToState(this._onStateChanged);
+
       this.subscribeToSource();
+
+      return () => {
+        if (this._querySub) {
+          this._querySub.unsubscribe();
+        }
+        if (this._sourceDataDeactivationHandler) {
+          this._sourceDataDeactivationHandler();
+        }
+      };
     });
   }
 
@@ -48,28 +59,29 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
       return;
     }
 
-    const sourceData = source.state.$data;
+    let sourceData = source.state.$data;
     if (!sourceData) {
       console.log('No source data found for shared dashboard query');
       return;
     }
 
-    if (!sourceData?.isActive) {
-      // TODO, not sure the best way to handle this, how to handle deactivation of the source when we activated it?
-      sourceData?.activate();
-    }
-
-    if (sourceData instanceof SceneQueryRunner) {
-      this._querySub = sourceData.subscribeToState((state) => this.setState({ data: state.data }));
-    }
+    // This will activate if sourceData is part of hidden panel
+    // Also make sure the sourceData is not deactivated if hidden later
+    this._sourceDataDeactivationHandler = sourceData.activate();
 
     if (sourceData instanceof SceneDataTransformer) {
-      if (query.withTransforms) {
-        this._querySub = sourceData.subscribeToState((state) => this.setState({ data: state.data }));
-      } else {
-        this._querySub = sourceData.state.$data!.subscribeToState((state) => this.setState({ data: state.data }));
+      if (!query.withTransforms) {
+        if (!sourceData.state.$data) {
+          throw new Error('No source inner query runner found in data transformer');
+        }
+        sourceData = sourceData.state.$data;
       }
     }
+
+    this._querySub = sourceData.subscribeToState((state) => this.setState({ data: state.data }));
+
+    // Copy the initial state
+    this.setState({ data: sourceData.state.data });
   }
 }
 
@@ -78,25 +90,14 @@ export function findObjectInScene(scene: SceneObject, check: (scene: SceneObject
     return scene;
   }
 
-  for (const propValue of Object.values(scene.state)) {
-    if (propValue instanceof SceneObjectBase) {
-      const found = findObjectInScene(propValue, check);
-      if (found) {
-        return found;
-      }
-    }
+  let found: SceneObject | null = null;
 
-    if (Array.isArray(propValue)) {
-      for (const child of propValue) {
-        if (child instanceof SceneObjectBase) {
-          const found = findObjectInScene(child, check);
-          if (found) {
-            return found;
-          }
-        }
-      }
+  scene.forEachChild((child) => {
+    let maybe = findObjectInScene(child, check);
+    if (maybe) {
+      found = maybe;
     }
-  }
+  });
 
-  return null;
+  return found;
 }
