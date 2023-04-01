@@ -328,6 +328,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 
 	// First, let's confirm the default configs are active.
 	cfgs, err := mam.getLatestConfigs(ctx)
+	require.NoError(t, err)
 	require.Equal(t, defaultConfig, cfgs[1].AlertmanagerConfiguration)
 	require.Equal(t, defaultConfig, cfgs[2].AlertmanagerConfiguration)
 	// store id for later use.
@@ -347,6 +348,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 
 	// Verify that the org has the new config.
 	cfgs, err = mam.getLatestConfigs(ctx)
+	require.NoError(t, err)
 	require.Equal(t, newConfig, cfgs[2].AlertmanagerConfiguration)
 
 	// First, let's try to activate a historical alertmanager config that doesn't exist.
@@ -363,6 +365,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 
 	// Verify that the org has the old default config.
 	cfgs, err = mam.getLatestConfigs(ctx)
+	require.NoError(t, err)
 	require.Equal(t, defaultConfig, cfgs[2].AlertmanagerConfiguration)
 }
 
