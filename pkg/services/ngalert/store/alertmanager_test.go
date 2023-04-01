@@ -457,7 +457,7 @@ func TestIntegrationGetHistoricalConfiguration(t *testing.T) {
 		cfg, err := store.GetHistoricalConfiguration(ctx, org, 1)
 		require.NoError(tt, err)
 
-		// Check that the returned configurations are the ones that we're expecting.
+		// Check that the returned configuration is the ones that we're expecting.
 		require.Equal(tt, cfg.AlertConfiguration.AlertmanagerConfiguration, cfg.AlertmanagerConfiguration)
 	})
 }

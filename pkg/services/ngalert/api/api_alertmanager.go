@@ -246,6 +246,9 @@ func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *cont
 	if errors.As(err, &configRejectedError) {
 		return ErrResp(http.StatusBadRequest, configRejectedError, "")
 	}
+	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+		return response.Error(http.StatusNotFound, err.Error(), err)
+	}
 	if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
 		return response.Error(http.StatusNotFound, err.Error(), err)
 	}
