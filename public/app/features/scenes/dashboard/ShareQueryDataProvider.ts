@@ -10,6 +10,8 @@ import {
 } from '@grafana/scenes';
 import { DashboardQuery } from 'app/plugins/datasource/dashboard/types';
 
+import { getVizPanelKeyForPanelId } from './utils';
+
 export interface ShareQueryDataProviderState extends SceneDataState {
   query: DashboardQuery;
 }
@@ -38,7 +40,7 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
       return;
     }
 
-    const keyToFind = `panel-${query.panelId}`;
+    const keyToFind = getVizPanelKeyForPanelId(query.panelId);
     const source = findObjectInScene(this.getRoot(), (scene: SceneObject) => scene.state.key === keyToFind);
 
     if (!source) {

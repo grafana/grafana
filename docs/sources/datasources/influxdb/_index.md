@@ -114,6 +114,10 @@ Configure these options if you select the Flux query language:
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
+> **Note:** `database` [field is deprecated](https://github.com/grafana/grafana/pull/58647).
+> We suggest to use `dbName` field in `jsonData`. Please see the examples below.
+> No need to change existing provisioning settings.
+
 #### Provisioning examples
 
 **InfluxDB 1.x example:**
@@ -125,10 +129,10 @@ datasources:
   - name: InfluxDB_v1
     type: influxdb
     access: proxy
-    database: site
     user: grafana
     url: http://localhost:8086
     jsonData:
+      dbName: site
       httpMode: GET
     secureJsonData:
       password: grafana
@@ -163,9 +167,9 @@ datasources:
     type: influxdb
     access: proxy
     url: http://localhost:8086
-    # This database should be mapped to a bucket
-    database: site
     jsonData:
+      # This database should be mapped to a bucket
+      dbName: site
       httpMode: GET
       httpHeaderName1: 'Authorization'
     secureJsonData:
