@@ -15,7 +15,7 @@ const setup = (rows: LogRowModel[]) =>
       onPause={() => {}}
       onResume={() => {}}
       onClear={() => {}}
-      clearedAt={null}
+      clearedAtIndex={null}
       isPaused={true}
     />
   );
@@ -43,7 +43,7 @@ describe('LiveLogs', () => {
         stopLive={() => {}}
         onPause={() => {}}
         onClear={() => {}}
-        clearedAt={null}
+        clearedAtIndex={null}
         onResume={() => {}}
         isPaused={true}
       />
@@ -64,7 +64,7 @@ describe('LiveLogs', () => {
         onPause={() => {}}
         onResume={() => {}}
         onClear={() => {}}
-        clearedAt={null}
+        clearedAtIndex={null}
         isPaused={false}
       />
     );

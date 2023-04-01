@@ -929,15 +929,6 @@ describe('reducer', () => {
     });
   });
   describe('clear live logs', () => {
-    const RealDate = Date;
-
-    beforeEach(() => {
-      global.Date.now = jest.fn(() => new Date('2019-04-22T10:20:30Z').getTime());
-    });
-
-    afterEach(() => {
-      global.Date = RealDate;
-    });
     it('should clear current log rows', async () => {
       const logRows = makeLogs(10);
 
@@ -958,12 +949,13 @@ describe('reducer', () => {
       await dispatch(clearLogs({ exploreId: ExploreId.left }));
 
       expect(getState().explore[ExploreId.left].logsResult?.rows.length).toBe(0);
-      expect(getState().explore[ExploreId.left].clearedAt).toBe(Date.now());
+      expect(getState().explore[ExploreId.left].clearedAtIndex).toBe(logRows.length - 1);
     });
 
     it('should filter new log rows', async () => {
-      const olgLogRows = makeLogs(10, { timeEpochMs: Date.now() - 1 });
-      const newLogRows = makeLogs(5, { timeEpochMs: Date.now() + 1 });
+      const oldLogRows = makeLogs(10);
+      const newLogRows = makeLogs(5);
+      const allLogRows = [...oldLogRows, ...newLogRows];
 
       const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...defaultInitialState,
@@ -973,13 +965,13 @@ describe('reducer', () => {
             isLive: true,
             logsResult: {
               hasUniqueLabels: false,
-              rows: olgLogRows,
+              rows: oldLogRows,
             },
           },
         },
       } as unknown as Partial<StoreState>);
 
-      expect(getState().explore[ExploreId.left].logsResult?.rows.length).toBe(olgLogRows.length);
+      expect(getState().explore[ExploreId.left].logsResult?.rows.length).toBe(oldLogRows.length);
 
       await dispatch(clearLogs({ exploreId: ExploreId.left }));
       await dispatch(
@@ -993,14 +985,14 @@ describe('reducer', () => {
             flameGraphFrames: [],
             logsResult: {
               hasUniqueLabels: false,
-              rows: [...olgLogRows, ...newLogRows],
+              rows: allLogRows,
             },
           },
         } as unknown as QueryEndedPayload)
       );
 
       expect(getState().explore[ExploreId.left].logsResult?.rows.length).toBe(newLogRows.length);
-      expect(getState().explore[ExploreId.left].clearedAt).toBe(Date.now());
+      expect(getState().explore[ExploreId.left].clearedAtIndex).toBe(oldLogRows.length - 1);
     });
   });
 });

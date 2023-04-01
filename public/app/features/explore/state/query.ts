@@ -53,7 +53,7 @@ import {
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { stateSave } from './main';
 import { updateTime } from './time';
-import { createCacheKey, getResultsFromCache, filterLogRowsByTime } from './utils';
+import { createCacheKey, getResultsFromCache, filterLogRowsByIndex } from './utils';
 
 //
 // Actions and Payloads
@@ -1038,18 +1038,20 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
   }
 
   if (clearLogs.match(action)) {
-    const clearedAt = Date.now();
-
     if (!state.logsResult) {
       return {
         ...state,
-        clearedAt,
+        clearedAtIndex: null,
       };
     }
 
+    const lastItemIndex = state.clearedAtIndex
+      ? state.clearedAtIndex + state.logsResult.rows.length
+      : state.logsResult.rows.length - 1;
+
     return {
       ...state,
-      clearedAt,
+      clearedAtIndex: lastItemIndex,
       logsResult: {
         ...state.logsResult,
         rows: [],
@@ -1138,7 +1140,7 @@ export const processQueryResponse = (
     rawPrometheusResult,
     logsResult:
       state.isLive && logsResult
-        ? { ...logsResult, rows: filterLogRowsByTime(state.clearedAt, logsResult.rows) }
+        ? { ...logsResult, rows: filterLogRowsByIndex(state.clearedAtIndex, logsResult.rows) }
         : logsResult,
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     showLogs: !!logsResult,
@@ -1148,6 +1150,6 @@ export const processQueryResponse = (
     showNodeGraph: !!nodeGraphFrames.length,
     showRawPrometheus: !!rawPrometheusFrames.length,
     showFlameGraph: !!flameGraphFrames.length,
-    clearedAt: state.isLive ? state.clearedAt : null,
+    clearedAtIndex: state.isLive ? state.clearedAtIndex : null,
   };
 };

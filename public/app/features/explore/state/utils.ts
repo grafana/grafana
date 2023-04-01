@@ -59,7 +59,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
-  clearedAt: null,
+  clearedAtIndex: null,
   rawPrometheusResult: null,
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
@@ -161,16 +161,16 @@ export function getResultsFromCache(
   return cacheValue;
 }
 
-export const filterLogRowsByTime = (
-  clearedAt: ExploreItemState['clearedAt'],
+export const filterLogRowsByIndex = (
+  clearedAtIndex: ExploreItemState['clearedAtIndex'],
   logRows?: LogRowModel[]
 ): LogRowModel[] => {
   if (!logRows) {
     return [];
   }
 
-  if (clearedAt) {
-    const filteredRows = logRows.filter((row) => row.timeEpochMs > (clearedAt ?? 0));
+  if (clearedAtIndex) {
+    const filteredRows = logRows.slice(clearedAtIndex + 1);
     return filteredRows;
   }
 

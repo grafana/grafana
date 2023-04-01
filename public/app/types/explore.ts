@@ -176,9 +176,10 @@ export interface ExploreItemState {
   isPaused: boolean;
 
   /**
-   * The last time, in milliseconds, the live tailing view was cleared.
+   * Index of the last item in the list of logs
+   * when the live tailing views gets cleared.
    */
-  clearedAt: number | null;
+  clearedAtIndex: number | null;
 
   querySubscription?: Unsubscribable;
 

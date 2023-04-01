@@ -10,7 +10,7 @@ import { getLogRowStyles } from '../logs/components/getLogRowStyles';
 import { sortLogRows } from '../logs/utils';
 
 import { ElapsedTime } from './ElapsedTime';
-import { filterLogRowsByTime } from './state/utils';
+import { filterLogRowsByIndex } from './state/utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   logsRowsLive: css`
@@ -60,7 +60,7 @@ export interface Props extends Themeable2 {
   onPause: () => void;
   onResume: () => void;
   onClear: () => void;
-  clearedAt: number | null;
+  clearedAtIndex: number | null;
   isPaused: boolean;
 }
 
@@ -80,9 +80,9 @@ class LiveLogs extends PureComponent<Props, State> {
   }
 
   static getDerivedStateFromProps(nextProps: Props, state: State) {
-    if (nextProps.isPaused && nextProps.clearedAt) {
+    if (nextProps.isPaused && nextProps.clearedAtIndex) {
       return {
-        logRowsToRender: filterLogRowsByTime(nextProps.clearedAt, state.logRowsToRender),
+        logRowsToRender: filterLogRowsByIndex(nextProps.clearedAtIndex, state.logRowsToRender),
       };
     }
 
