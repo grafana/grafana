@@ -201,6 +201,6 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   }
 
   constructor() {
-    this.meta = { info: { version: '1.0.0' } } as T;
+    this.meta = {} as T;
   }
 }
