@@ -1152,9 +1152,9 @@ function processToLogContextDataFrames(result: DataQueryResponse): DataQueryResp
     const cache = new FieldCache(frame);
     const timestampField = cache.getFirstFieldOfType(FieldType.time);
     const lineField = cache.getFirstFieldOfType(FieldType.string);
+    const idField = cache.getFieldByName('_id');
 
-    if (timestampField === undefined || lineField === undefined) {
-      // this should never really happen, but i want to keep typescript happy
+    if (!timestampField || !lineField || !idField) {
       return { ...frame, fields: [] };
     }
 
@@ -1169,9 +1169,13 @@ function processToLogContextDataFrames(result: DataQueryResponse): DataQueryResp
           ...lineField,
           name: 'line',
         },
+        {
+          ...idField,
+          name: 'id',
+        },
       ],
     };
-  }); // rename fields if needed
+  });
 
   return {
     ...result,
