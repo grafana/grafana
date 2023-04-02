@@ -134,7 +134,6 @@ describe('Table Migrations', () => {
           "defaults": {
             "custom": {
               "align": "right",
-              "displayMode": undefined,
             },
             "decimals": 2,
             "displayName": "",

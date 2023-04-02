@@ -202,17 +202,23 @@ const migrateDefaults = (prevDefaults: Style) => {
         displayName: prevDefaults.alias,
         custom: {
           align: prevDefaults.align === 'auto' ? null : prevDefaults.align,
-          displayMode: colorModeMap[prevDefaults.colorMode],
         },
       },
       isNil
     );
+
     if (prevDefaults.thresholds.length) {
       const thresholds: ThresholdsConfig = {
         mode: ThresholdsMode.Absolute,
         steps: generateThresholds(prevDefaults.thresholds, prevDefaults.colors),
       };
       defaults.thresholds = thresholds;
+    }
+
+    if (prevDefaults.colorMode) {
+      defaults.custom.cellOptions = {
+        type: colorModeMap[prevDefaults.colorMode],
+      };
     }
   }
   return defaults;
