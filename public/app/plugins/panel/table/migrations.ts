@@ -163,8 +163,10 @@ const migrateTableStyleToOverride = (style: Style) => {
 
   if (style.colorMode) {
     override.properties.push({
-      id: 'custom.displayMode',
-      value: colorModeMap[style.colorMode],
+      id: 'custom.cellOptions',
+      value: {
+        type: colorModeMap[style.colorMode],
+      },
     });
   }
 
