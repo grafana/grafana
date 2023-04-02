@@ -5,7 +5,7 @@ import React, { CSSProperties, useState, ReactNode } from 'react';
 import { useInterval } from 'react-use';
 
 import { LoadingState } from '@grafana/data';
-import { PanelChrome, PanelChromeProps } from '@grafana/ui';
+import { Button, PanelChrome, PanelChromeProps, RadioButtonGroup } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -183,22 +183,45 @@ export const Examples = () => {
               />,
             ],
           })}
-          {renderPanel('Deprecated error indicator, menu', {
-            title: 'Default title',
-            menu,
-            leftItems: [
-              <PanelChrome.ErrorIndicator
-                key="errorIndicator"
-                error="Error text"
-                onClick={action('ErrorIndicator: onClick fired')}
-              />,
-            ],
-          })}
           {renderPanel('Display mode = transparent', {
             title: 'Default title',
             displayMode: 'transparent',
             menu,
-            leftItems: [],
+          })}
+          {renderPanel('With right side buttons no menu', {
+            title: 'Right side buttons',
+            actions: [
+              <Button size="sm" variant="secondary" key="A">
+                Breakdown
+              </Button>,
+            ],
+          })}
+          {renderPanel('With right side remove action', {
+            title: 'Do not remove me!',
+            actions: [<Button size="sm" variant="secondary" key="A" icon="times" />],
+          })}
+          {renderPanel('With radio button', {
+            title: 'I have options!',
+            actions: [
+              <RadioButtonGroup
+                key="radio-button-group"
+                size="sm"
+                value="A"
+                options={[
+                  { label: 'Graph', value: 'A' },
+                  { label: 'Table', value: 'B' },
+                ]}
+              />,
+            ],
+          })}
+          {renderPanel('Action and menu', {
+            title: 'Action and menu',
+            menu,
+            actions: [
+              <Button size="sm" variant="secondary" key="A">
+                Breakdown
+              </Button>,
+            ],
           })}
         </HorizontalGroup>
       </div>
