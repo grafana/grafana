@@ -5,7 +5,7 @@ import React, { CSSProperties, useState, ReactNode } from 'react';
 import { useInterval } from 'react-use';
 
 import { LoadingState } from '@grafana/data';
-import { Button, PanelChrome, PanelChromeProps, RadioButtonGroup } from '@grafana/ui';
+import { Button, Icon, PanelChrome, PanelChromeProps, RadioButtonGroup } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -188,15 +188,15 @@ export const Examples = () => {
             displayMode: 'transparent',
             menu,
           })}
-          {renderPanel('With right side buttons no menu', {
-            title: 'Right side buttons',
+          {renderPanel('Actions with button no menu', {
+            title: 'Actions with button no menu',
             actions: [
               <Button size="sm" variant="secondary" key="A">
                 Breakdown
               </Button>,
             ],
           })}
-          {renderPanel('With right side remove action', {
+          {renderPanel('Action sm button with only icon', {
             title: 'Do not remove me!',
             actions: [<Button size="sm" variant="secondary" key="A" icon="times" />],
           })}
@@ -214,7 +214,16 @@ export const Examples = () => {
               />,
             ],
           })}
-          {renderPanel('Action and menu', {
+          {renderPanel('Panel with action link', {
+            title: 'Panel with link action',
+            actions: [
+              <a className="external-link" key="A" href="/some/page">
+                Error details
+                <Icon name="arrow-right" />
+              </a>,
+            ],
+          })}
+          {renderPanel('Action and menu (should be rare)', {
             title: 'Action and menu',
             menu,
             actions: [

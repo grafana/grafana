@@ -115,7 +115,6 @@ export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaTh
         padding: 1,
         fontSize: theme.typography.size.sm,
         height: theme.components.height.sm,
-        lineHeight: theme.typography.bodySmall.lineHeight,
       };
 
     case 'lg':
