@@ -1,5 +1,5 @@
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
-import { Observable, of } from 'rxjs';
+import { Observable, of, lastValueFrom } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
 import { AppEvents, DataQueryErrorType, EventBusExtended } from '@grafana/data';
@@ -355,6 +355,63 @@ describe('backendSrv', () => {
           jest.advanceTimersByTime(50);
           expect(appEventsMock.emit).not.toHaveBeenCalled();
         });
+      });
+    });
+
+    describe('traceId handling', () => {
+      const opts = { url: '/something', method: 'GET' };
+      it('should handle a success-response without traceId', async () => {
+        const ctx = getTestContext({ status: 200, statusText: 'OK', headers: new Headers() });
+        const res = await lastValueFrom(ctx.backendSrv.fetch(opts));
+        expect(res.traceId).toBeUndefined();
+      });
+
+      it('should handle a success-response with traceId', async () => {
+        const ctx = getTestContext({
+          status: 200,
+          statusText: 'OK',
+          headers: new Headers({
+            'grafana-trace-id': 'traceId1',
+          }),
+        });
+        const res = await lastValueFrom(ctx.backendSrv.fetch(opts));
+        expect(res.traceId).toBe('traceId1');
+      });
+
+      it('should handle an error-response without traceId', () => {
+        const ctx = getTestContext({
+          ok: false,
+          status: 500,
+          statusText: 'INTERNAL SERVER ERROR',
+          headers: new Headers(),
+        });
+        return lastValueFrom(ctx.backendSrv.fetch(opts)).then(
+          (data) => {
+            throw new Error('must not get here');
+          },
+          (error) => {
+            expect(error.traceId).toBeUndefined();
+          }
+        );
+      });
+
+      it('should handle an error-response with traceId', () => {
+        const ctx = getTestContext({
+          ok: false,
+          status: 500,
+          statusText: 'INTERNAL SERVER ERROR',
+          headers: new Headers({
+            'grafana-trace-id': 'traceId1',
+          }),
+        });
+        return lastValueFrom(ctx.backendSrv.fetch(opts)).then(
+          (data) => {
+            throw new Error('must not get here');
+          },
+          (error) => {
+            expect(error.traceId).toBe('traceId1');
+          }
+        );
       });
     });
   });
