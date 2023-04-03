@@ -15,7 +15,7 @@ For a plugin to successfully register links it must:
 
 ## Available extension points within Grafana
 
-An extension point is a location within the Grafana application UI where a plugin can insert links. All extension points within Grafana start with `grafana/`. The following extension point IDs are available:
+An extension point is a location within the Grafana application UI where a plugin can insert links. All extension points within Grafana start with `grafana/`. The following extension point ids are available:
 
 - `grafana/dashboard/panel/menu`: all panel menu dropdowns found in dashboards
 
