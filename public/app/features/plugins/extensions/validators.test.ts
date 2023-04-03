@@ -81,6 +81,7 @@ describe('Plugin Extension Validators', () => {
     it('should throw an error if the placement does not have the right prefix', () => {
       expect(() => {
         assertPlacementIsValid({
+          type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
           path: '...',
@@ -92,6 +93,7 @@ describe('Plugin Extension Validators', () => {
     it('should NOT throw an error if the placement is correct', () => {
       expect(() => {
         assertPlacementIsValid({
+          type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
           path: '...',
@@ -99,6 +101,7 @@ describe('Plugin Extension Validators', () => {
         });
 
         assertPlacementIsValid({
+          type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
           path: '...',
@@ -203,18 +206,20 @@ describe('Plugin Extension Validators', () => {
   describe('isPluginExtensionConfigValid()', () => {
     it('should return TRUE if the plugin extension configuration is valid', () => {
       const pluginId = 'my-super-plugin';
-      // Command
+
       expect(
         isPluginExtensionConfigValid(pluginId, {
+          type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
           placement: 'grafana/some-page/some-placement',
+          onClick: jest.fn(),
         } as PluginExtensionLinkConfig)
       ).toBe(true);
 
-      // Link
       expect(
         isPluginExtensionConfigValid(pluginId, {
+          type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
           placement: 'grafana/some-page/some-placement',
@@ -231,6 +236,7 @@ describe('Plugin Extension Validators', () => {
       // Link (wrong path)
       expect(
         isPluginExtensionConfigValid(pluginId, {
+          type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
           placement: 'grafana/some-page/some-placement',
@@ -238,9 +244,20 @@ describe('Plugin Extension Validators', () => {
         } as PluginExtensionLinkConfig)
       ).toBe(false);
 
+      // Link (no path and no onClick)
+      expect(
+        isPluginExtensionConfigValid(pluginId, {
+          type: PluginExtensionTypes.link,
+          title: 'Title',
+          description: 'Description',
+          placement: 'grafana/some-page/some-placement',
+        } as PluginExtensionLinkConfig)
+      ).toBe(false);
+
       // Link (missing title)
       expect(
         isPluginExtensionConfigValid(pluginId, {
+          type: PluginExtensionTypes.link,
           title: '',
           description: 'Description',
           placement: 'grafana/some-page/some-placement',

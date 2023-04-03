@@ -1,4 +1,4 @@
-import { PluginExtensionLinkConfig } from '@grafana/data';
+import { PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
 
 import { createPluginExtensionRegistry } from './createPluginExtensionRegistry';
 
@@ -10,6 +10,7 @@ describe('createRegistry()', () => {
 
   beforeEach(() => {
     link1 = {
+      type: PluginExtensionTypes.link,
       title: 'Link 1',
       description: 'Link 1 description',
       path: `/a/${pluginId}/declare-incident`,
@@ -17,6 +18,7 @@ describe('createRegistry()', () => {
       configure: jest.fn().mockReturnValue({}),
     };
     link2 = {
+      type: PluginExtensionTypes.link,
       title: 'Link 2',
       description: 'Link 2 description',
       path: `/a/${pluginId}/declare-incident`,

@@ -1,3 +1,5 @@
+import { isPromise } from 'util/types';
+
 import {
   type PluginExtension,
   PluginExtensionTypes,
@@ -6,7 +8,7 @@ import {
 } from '@grafana/data';
 
 import type { PluginExtensionRegistry } from './types';
-import { isPluginExtensionLinkConfig, deepFreeze, logWarning, generateExtensionId } from './utils';
+import { isPluginExtensionLinkConfig, deepFreeze, logWarning, generateExtensionId, getEventHelpers } from './utils';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps } from './validators';
 
 type GetExtensions = ({
@@ -30,7 +32,6 @@ export const getPluginExtensions: GetExtensions = ({ context, placement, registr
     try {
       const extensionConfig = registryItem.config;
 
-      // LINK extension
       if (isPluginExtensionLinkConfig(extensionConfig)) {
         const overrides = getLinkExtensionOverrides(registryItem.pluginId, extensionConfig, frozenContext);
 
@@ -43,6 +44,7 @@ export const getPluginExtensions: GetExtensions = ({ context, placement, registr
           id: generateExtensionId(registryItem.pluginId, extensionConfig),
           type: PluginExtensionTypes.link,
           pluginId: registryItem.pluginId,
+          onClick: getLinkExtensionOnClick(extensionConfig, frozenContext),
 
           // Configurable properties
           title: overrides?.title || extensionConfig.title,
@@ -78,7 +80,7 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
       `The configure() function for "${config.title}" returned a promise, skipping updates.`
     );
 
-    assertLinkPathIsValid(pluginId, path);
+    path && assertLinkPathIsValid(pluginId, path);
     assertStringProps({ title, description }, ['title', 'description']);
 
     if (Object.keys(rest).length > 0) {
@@ -103,4 +105,33 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
     // (This seems to be safest option in case the extension is doing something wrong.)
     return undefined;
   }
+}
+
+function getLinkExtensionOnClick(
+  config: PluginExtensionLinkConfig,
+  context?: object
+): ((event: React.MouseEvent) => void) | undefined {
+  const { onClick } = config;
+
+  if (!onClick) {
+    return;
+  }
+
+  return function onClickExtensionLink(event: React.MouseEvent) {
+    try {
+      const result = onClick(event, getEventHelpers(context));
+
+      if (isPromise(result)) {
+        result.catch((e) => {
+          if (e instanceof Error) {
+            logWarning(e.message);
+          }
+        });
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        logWarning(error.message);
+      }
+    }
+  };
 }

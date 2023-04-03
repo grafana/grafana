@@ -17,7 +17,8 @@ export type PluginExtension = {
 
 export type PluginExtensionLink = PluginExtension & {
   type: PluginExtensionTypes.link;
-  path: string;
+  path?: string;
+  onClick?: (event: React.MouseEvent) => void;
 };
 
 // Objects used for registering extensions (in app plugins)
@@ -40,10 +41,14 @@ export type PluginExtensionConfig<Context extends object = object, ExtraProps ex
 
 export type PluginExtensionLinkConfig<Context extends object = object> = PluginExtensionConfig<
   Context,
-  Pick<PluginExtensionLink, 'path'>
+  Pick<PluginExtensionLink, 'path'> & {
+    type: PluginExtensionTypes.link;
+    onClick?: (event: React.MouseEvent, helpers: PluginExtensionEventHelpers<Context>) => void;
+  }
 >;
 
-export type PluginExtensionEventHelpers = {
+export type PluginExtensionEventHelpers<Context extends object = object> = {
+  context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: {
     // The title of the modal

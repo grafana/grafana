@@ -12,6 +12,7 @@ describe('getPluginExtensions()', () => {
 
   beforeEach(() => {
     link1 = {
+      type: PluginExtensionTypes.link,
       title: 'Link 1',
       description: 'Link 1 description',
       path: `/a/${pluginId}/declare-incident`,
@@ -19,6 +20,7 @@ describe('getPluginExtensions()', () => {
       configure: jest.fn().mockReturnValue({}),
     };
     link2 = {
+      type: PluginExtensionTypes.link,
       title: 'Link 2',
       description: 'Link 2 description',
       path: `/a/${pluginId}/declare-incident`,
@@ -182,5 +184,66 @@ describe('getPluginExtensions()', () => {
 
     expect(extensions).toHaveLength(0);
     expect(global.console.warn).toHaveBeenCalledTimes(0); // As this is intentional, no warning should be logged
+  });
+
+  test('should pass event, context and helper to extension onClick()', () => {
+    link2.path = undefined;
+    link2.onClick = jest.fn().mockImplementation(() => {
+      throw new Error('Something went wrong!');
+    });
+
+    const context = {};
+    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const { extensions } = getPluginExtensions({ registry, placement: placement2 });
+    const [extension] = extensions;
+
+    assertPluginExtensionLink(extension);
+
+    const event = {} as React.MouseEvent;
+    extension.onClick?.(event);
+
+    expect(link2.onClick).toHaveBeenCalledTimes(1);
+    expect(link2.onClick).toHaveBeenCalledWith(
+      event,
+      expect.objectContaining({
+        context,
+        openModal: expect.any(Function),
+      })
+    );
+  });
+
+  test('should catch errors in async/promise-based onClick function and log them as warnings', async () => {
+    link2.path = undefined;
+    link2.onClick = jest.fn().mockRejectedValue(new Error('testing'));
+
+    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const { extensions } = getPluginExtensions({ registry, placement: placement2 });
+    const [extension] = extensions;
+
+    assertPluginExtensionLink(extension);
+
+    await extension.onClick?.({} as React.MouseEvent);
+
+    expect(extensions).toHaveLength(1);
+    expect(link2.onClick).toHaveBeenCalledTimes(1);
+    expect(global.console.warn).toHaveBeenCalledTimes(1);
+  });
+
+  test('should catch errors in the onClick() function and log them as warnings', () => {
+    link2.path = undefined;
+    link2.onClick = jest.fn().mockImplementation(() => {
+      throw new Error('Something went wrong!');
+    });
+
+    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const { extensions } = getPluginExtensions({ registry, placement: placement2 });
+    const [extension] = extensions;
+
+    assertPluginExtensionLink(extension);
+    extension.onClick?.({} as React.MouseEvent);
+
+    expect(link2.onClick).toHaveBeenCalledTimes(1);
+    expect(global.console.warn).toHaveBeenCalledTimes(1);
+    expect(global.console.warn).toHaveBeenCalledWith('[Plugin Extensions] Something went wrong!');
   });
 });

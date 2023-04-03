@@ -4,6 +4,7 @@ import {
   type PluginExtensionLinkConfig,
   type PluginExtensionConfig,
   type PluginExtensionEventHelpers,
+  PluginExtensionTypes,
 } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -16,7 +17,7 @@ export function logWarning(message: string) {
 export function isPluginExtensionLinkConfig(
   extension: PluginExtensionConfig | undefined
 ): extension is PluginExtensionLinkConfig {
-  return typeof extension === 'object' && 'path' in extension;
+  return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.link;
 }
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
@@ -32,12 +33,12 @@ export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
 }
 
 // Event helpers are designed to make it easier to trigger "core actions" from an extension event handler, e.g. opening a modal or showing a notification.
-export function getEventHelpers(): PluginExtensionEventHelpers {
+export function getEventHelpers(context?: Readonly<object>): PluginExtensionEventHelpers {
   const openModal: PluginExtensionEventHelpers['openModal'] = ({ title, body }) => {
     appEvents.publish(new ShowModalReactEvent({ component: getModalWrapper({ title, body }) }));
   };
 
-  return { openModal };
+  return { openModal, context };
 }
 
 export type ModalWrapperProps = {
