@@ -267,6 +267,10 @@ const (
 	// Enable time series table transformer &amp; sparkline cell type
 	FlagTimeSeriesTable = "timeSeriesTable"
 
+	// FlagPrometheusResourceBrowserCache
+	// Displays browser caching options in Prometheus data source configuration
+	FlagPrometheusResourceBrowserCache = "prometheusResourceBrowserCache"
+
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
@@ -282,4 +286,20 @@ const (
 	// FlagPrometheusDataplane
 	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
 	FlagPrometheusDataplane = "prometheusDataplane"
+
+	// FlagAlertStateHistoryLokiSecondary
+	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
+	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
+
+	// FlagAlertStateHistoryLokiPrimary
+	// Enable a remote Loki instance as the primary source for state history reads.
+	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
+
+	// FlagAlertStateHistoryLokiOnly
+	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
+	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
+
+	// FlagUnifiedRequestLog
+	// Writes error logs to the request logger
+	FlagUnifiedRequestLog = "unifiedRequestLog"
 )

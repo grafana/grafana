@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { Button, PageToolbar, ToolbarButtonRow } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
@@ -59,7 +60,14 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
 
   const actions = [
     config.featureToggles.topnav && (
-      <Button variant="secondary" key="close" fill="outline" size={size} onClick={onClose}>
+      <Button
+        data-testid={selectors.pages.Dashboard.Settings.Actions.close}
+        variant="secondary"
+        key="close"
+        fill="outline"
+        size={size}
+        onClick={onClose}
+      >
         Close
       </Button>
     ),

@@ -21,7 +21,6 @@ import alertDef from 'app/features/alerting/state/alertDef';
 import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from 'app/features/alerting/unified/state/actions';
-import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import {
   getAllRulesSourceNames,
@@ -189,22 +188,6 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
       (options.stateFilter.normal && alertingRule.state === PromAlertingRuleState.Inactive)
     );
   });
-
-  if (options.alertInstanceLabelFilter) {
-    const replacedLabelFilter = replaceVariables(options.alertInstanceLabelFilter);
-    const matchers = parseMatchers(replacedLabelFilter);
-
-    // Reduce rules and instances to only those that match
-    filteredRules = filteredRules.reduce<CombinedRuleWithLocation[]>((rules, rule) => {
-      const alertingRule = getAlertingRule(rule);
-      const filteredAlerts = (alertingRule?.alerts ?? []).filter(({ labels }) => labelsMatchMatchers(labels, matchers));
-      if (filteredAlerts.length) {
-        const alertRule: AlertingRule | null = getAlertingRule(rule);
-        alertRule && rules.push({ ...rule, promRule: { ...alertRule, alerts: filteredAlerts } });
-      }
-      return rules;
-    }, []);
-  }
 
   if (options.folder) {
     filteredRules = filteredRules.filter((rule) => {

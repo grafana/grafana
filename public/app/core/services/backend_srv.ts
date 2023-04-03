@@ -450,7 +450,7 @@ export class BackendSrv implements BackendService {
   }
 
   rotateToken() {
-    return this.request({ url: '/api/user/auth-tokens/rotate', method: 'POST' });
+    return this.request({ url: '/api/user/auth-tokens/rotate', method: 'POST', retry: 1 });
   }
 
   loginPing() {
