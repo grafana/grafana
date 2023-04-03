@@ -154,9 +154,9 @@ export class AppChromeService {
 }
 
 /**
- * Checks if text, url and active child url are the same
+ * Checks if text, url and active child url are the same for a nav item and its parents
  **/
-function navItemsAreTheSame(a: NavModelItem | undefined, b: NavModelItem | undefined) {
+function navItemsAreTheSame(a: NavModelItem | undefined, b: NavModelItem | undefined): Boolean {
   if (a === b) {
     return true;
   }
@@ -164,5 +164,10 @@ function navItemsAreTheSame(a: NavModelItem | undefined, b: NavModelItem | undef
   const aActiveChild = a?.children?.find((child) => child.active);
   const bActiveChild = b?.children?.find((child) => child.active);
 
-  return a?.text === b?.text && a?.url === b?.url && aActiveChild?.url === bActiveChild?.url;
+  return (
+    a?.text === b?.text &&
+    a?.url === b?.url &&
+    aActiveChild?.url === bActiveChild?.url &&
+    navItemsAreTheSame(a?.parentItem, b?.parentItem)
+  );
 }

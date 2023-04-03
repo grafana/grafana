@@ -36,4 +36,29 @@ describe('AppChromeService', () => {
     });
     expect(stateChanges).toBe(4);
   });
+
+  it('still updates if pageNav parent text changes so breadcrumbs can update', () => {
+    const chromeService = new AppChromeService();
+    let stateChanges = 0;
+
+    chromeService.state.subscribe(() => stateChanges++);
+    expect(stateChanges).toBe(1);
+
+    chromeService.update({ sectionNav: { text: 'hello' }, pageNav: { text: 'test', url: 'A' } });
+    expect(stateChanges).toBe(2);
+
+    // if parent change we should update
+    chromeService.update({
+      sectionNav: { text: 'hello' },
+      pageNav: { text: 'test', url: 'new/url', parentItem: { text: 'parent' } },
+    });
+    expect(stateChanges).toBe(3);
+
+    // if a higher parent changes we should still update
+    chromeService.update({
+      sectionNav: { text: 'hello' },
+      pageNav: { text: 'test', url: 'new/url', parentItem: { text: 'parent', parentItem: { text: 'grandparent' } } },
+    });
+    expect(stateChanges).toBe(4);
+  });
 });

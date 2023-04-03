@@ -195,26 +195,20 @@ function getSectionNav(
     subTitle: page.subTitle,
   }));
 
-  if (pageNav.parentItem) {
-    pageNav = {
-      ...pageNav,
-      parentItem: {
-        ...pageNav.parentItem,
-        parentItem: sectionNav.node,
-      },
-    };
-  } else {
-    pageNav = {
-      ...pageNav,
-      parentItem: sectionNav.node,
-    };
-  }
+  pageNav = setSectionAsPageParent(pageNav, sectionNav.node);
 
   main.parentItem = pageNav;
 
   return {
     main,
     node: main.children.find((x) => x.active)!,
+  };
+}
+
+function setSectionAsPageParent(pageNav: NavModelItem, section: NavModelItem): NavModelItem {
+  return {
+    ...pageNav,
+    parentItem: pageNav.parentItem ? setSectionAsPageParent(pageNav.parentItem, section) : section,
   };
 }
 

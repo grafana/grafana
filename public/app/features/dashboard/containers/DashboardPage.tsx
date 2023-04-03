@@ -106,6 +106,7 @@ export interface State {
   scrollElement?: HTMLDivElement;
   pageNav?: NavModelItem;
   sectionNav?: NavModel;
+  isGettingFolderInfo: boolean;
 }
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
@@ -176,10 +177,11 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       showLoadingState: false,
       panelNotFound: false,
       editPanelAccessDenied: false,
+      isGettingFolderInfo: false,
     };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.initDashboard();
     this.forceRouteReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter || 0;
   }
@@ -279,9 +281,25 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       locationService.partial({ editPanel: null, viewPanel: null });
     }
 
-    const newState = await updateStatePageNavFromProps(this.props, this.state);
-    if (newState.pageNav !== this.state.pageNav || newState.sectionNav !== this.state.sectionNav) {
-      this.setState(newState);
+    if (config.featureToggles.nestedFolders) {
+      const { folderTitle, folderUid } = dashboard.meta;
+      if (
+        folderTitle &&
+        folderUid &&
+        this.state.pageNav &&
+        this.state.pageNav.parentItem?.text !== folderTitle &&
+        !this.state.isGettingFolderInfo
+      ) {
+        this.setState({ isGettingFolderInfo: true });
+        const { folderNav } = await loadFolderPage(folderUid);
+        this.setState({
+          pageNav: {
+            ...this.state.pageNav,
+            parentItem: folderNav,
+          },
+          isGettingFolderInfo: false,
+        });
+      }
     }
   }
 
@@ -292,6 +310,70 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     }
     liveTimer.setLiveTimeRange(tr);
   };
+
+  static getDerivedStateFromProps(props: Props, state: State) {
+    const { dashboard, queryParams } = props;
+
+    const urlEditPanelId = queryParams.editPanel;
+    const urlViewPanelId = queryParams.viewPanel;
+
+    if (!dashboard) {
+      return state;
+    }
+
+    const updatedState = { ...state };
+
+    // Entering edit mode
+    if (!state.editPanel && urlEditPanelId) {
+      const panel = dashboard.getPanelByUrlId(urlEditPanelId);
+      if (panel) {
+        if (dashboard.canEditPanel(panel)) {
+          updatedState.editPanel = panel;
+          updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+        } else {
+          updatedState.editPanelAccessDenied = true;
+        }
+      } else {
+        updatedState.panelNotFound = true;
+      }
+    }
+    // Leaving edit mode
+    else if (state.editPanel && !urlEditPanelId) {
+      updatedState.editPanel = null;
+      updatedState.updateScrollTop = state.rememberScrollTop;
+    }
+
+    // Entering view mode
+    if (!state.viewPanel && urlViewPanelId) {
+      const panel = dashboard.getPanelByUrlId(urlViewPanelId);
+      if (panel) {
+        // This mutable state feels wrong to have in getDerivedStateFromProps
+        // Should move this state out of dashboard in the future
+        dashboard.initViewPanel(panel);
+        updatedState.viewPanel = panel;
+        updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+        updatedState.updateScrollTop = 0;
+      } else {
+        updatedState.panelNotFound = true;
+      }
+    }
+    // Leaving view mode
+    else if (state.viewPanel && !urlViewPanelId) {
+      // This mutable state feels wrong to have in getDerivedStateFromProps
+      // Should move this state out of dashboard in the future
+      dashboard.exitViewPanel(state.viewPanel);
+      updatedState.viewPanel = null;
+      updatedState.updateScrollTop = state.rememberScrollTop;
+    }
+
+    // if we removed url edit state, clear any panel not found state
+    if (state.panelNotFound || (state.editPanelAccessDenied && !urlEditPanelId)) {
+      updatedState.panelNotFound = false;
+      updatedState.editPanelAccessDenied = false;
+    }
+
+    return updateStatePageNavFromProps(props, updatedState);
+  }
 
   onAddPanel = () => {
     const { dashboard } = this.props;
@@ -370,11 +452,19 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       'page-hidden': Boolean(queryParams.editview || editPanel),
     });
 
+    let nestedPageNav = pageNav;
+    if (editPanel || viewPanel) {
+      nestedPageNav = {
+        text: `${editPanel ? 'Edit' : 'View'} panel`,
+        parentItem: pageNav,
+      };
+    }
+
     return (
       <>
         <Page
           navModel={sectionNav}
-          pageNav={pageNav}
+          pageNav={nestedPageNav}
           layout={PageLayoutType.Canvas}
           toolbar={toolbar}
           className={pageClassName}
@@ -437,7 +527,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             sourcePanel={editPanel}
             tab={this.props.queryParams.tab}
             sectionNav={sectionNav}
-            pageNav={pageNav}
+            pageNav={nestedPageNav}
           />
         )}
         {queryParams.editview && (
@@ -453,69 +543,15 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 }
 
-async function updateStatePageNavFromProps(props: Props, state: State): Promise<State> {
-  const { dashboard, queryParams } = props;
-
-  const urlEditPanelId = queryParams.editPanel;
-  const urlViewPanelId = queryParams.viewPanel;
+function updateStatePageNavFromProps(props: Props, state: State): State {
+  const { dashboard } = props;
 
   if (!dashboard) {
     return state;
   }
 
-  const updatedState = { ...state };
-
-  // Entering edit mode
-  if (!state.editPanel && urlEditPanelId) {
-    const panel = dashboard.getPanelByUrlId(urlEditPanelId);
-    if (panel) {
-      if (dashboard.canEditPanel(panel)) {
-        updatedState.editPanel = panel;
-        updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
-      } else {
-        updatedState.editPanelAccessDenied = true;
-      }
-    } else {
-      updatedState.panelNotFound = true;
-    }
-  }
-  // Leaving edit mode
-  else if (state.editPanel && !urlEditPanelId) {
-    updatedState.editPanel = null;
-    updatedState.updateScrollTop = state.rememberScrollTop;
-  }
-
-  // Entering view mode
-  if (!state.viewPanel && urlViewPanelId) {
-    const panel = dashboard.getPanelByUrlId(urlViewPanelId);
-    if (panel) {
-      // This mutable state feels wrong to have in getDerivedStateFromProps
-      // Should move this state out of dashboard in the future
-      dashboard.initViewPanel(panel);
-      updatedState.viewPanel = panel;
-      updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
-      updatedState.updateScrollTop = 0;
-    } else {
-      updatedState.panelNotFound = true;
-    }
-  }
-  // Leaving view mode
-  else if (state.viewPanel && !urlViewPanelId) {
-    // This mutable state feels wrong to have in getDerivedStateFromProps
-    // Should move this state out of dashboard in the future
-    dashboard.exitViewPanel(state.viewPanel);
-    updatedState.viewPanel = null;
-    updatedState.updateScrollTop = state.rememberScrollTop;
-  }
-
-  // if we removed url edit state, clear any panel not found state
-  if (state.panelNotFound || (state.editPanelAccessDenied && !urlEditPanelId)) {
-    updatedState.panelNotFound = false;
-    updatedState.editPanelAccessDenied = false;
-  }
-
-  let pageNav = updatedState.pageNav;
-  let sectionNav = updatedState.sectionNav;
+  let pageNav = state.pageNav;
+  let sectionNav = state.sectionNav;
 
   if (!pageNav || dashboard.title !== pageNav.text) {
     pageNav = {
@@ -529,10 +565,17 @@ async function updateStatePageNavFromProps(props: Props, state: State): Promise<
   }
 
   // Check if folder changed
-  const { folderTitle, folderUid } = dashboard.meta;
-  if (folderTitle && folderUid && pageNav && pageNav.parentItem?.text !== folderTitle) {
-    const { folderNav } = await loadFolderPage(folderUid);
-    pageNav.parentItem = folderNav;
+  if (!config.featureToggles.nestedFolders) {
+    const { folderTitle, folderUid } = dashboard.meta;
+    if (folderTitle && folderUid && pageNav && pageNav.parentItem?.text !== folderTitle) {
+      pageNav = {
+        ...pageNav,
+        parentItem: {
+          text: folderTitle,
+          url: `/dashboards/f/${dashboard.meta.folderUid}`,
+        },
+      };
+    }
   }
 
   if (props.route.routeName === DashboardRoutes.Path) {
@@ -541,21 +584,16 @@ async function updateStatePageNavFromProps(props: Props, state: State): Promise<
     if (pageNav?.parentItem) {
       pageNav.parentItem = pageNav.parentItem;
     }
-  } else if (!sectionNav) {
+  } else {
     sectionNav = getNavModel(props.navIndex, config.featureToggles.topnav ? 'dashboards/browse' : 'dashboards');
   }
 
-  if (updatedState.editPanel || updatedState.viewPanel) {
-    pageNav = {
-      ...pageNav,
-      text: `${updatedState.editPanel ? 'Edit' : 'View'} panel`,
-      parentItem: pageNav,
-      url: undefined,
-    };
+  if (state.pageNav === pageNav && state.sectionNav === sectionNav) {
+    return state;
   }
 
   return {
-    ...updatedState,
+    ...state,
     pageNav,
     sectionNav,
   };
