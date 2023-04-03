@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	mssql "github.com/denisenkom/go-mssqldb"
+	mssql "github.com/grafana/go-mssqldb"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"

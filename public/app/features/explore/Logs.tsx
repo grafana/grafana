@@ -392,6 +392,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               onLoadLogsVolume={loadLogsVolumeData}
               onHiddenSeriesChanged={this.onToggleLogLevel}
               eventBus={this.logsVolumeEventBus}
+              onClose={() => this.onToggleLogsVolumeCollapse(false)}
             />
           )}
         </Collapse>

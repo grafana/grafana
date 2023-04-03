@@ -1,6 +1,7 @@
 import { dateTime, TimeRange } from '@grafana/data';
 import { setDataSourceSrv, VariableInterpolation } from '@grafana/runtime';
-import { FormatRegistryID, TestVariable } from '@grafana/scenes';
+import { TestVariable } from '@grafana/scenes';
+import { VariableFormatID } from '@grafana/schema';
 
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
 import { initTemplateSrv } from '../../../test/helpers/initTemplateSrv';
@@ -697,9 +698,9 @@ describe('templateSrv', () => {
     });
 
     it(`should not be handled by any registry items except for queryparam`, () => {
-      const registryItems = Object.values(FormatRegistryID);
+      const registryItems = Object.values(VariableFormatID);
       for (const registryItem of registryItems) {
-        if (registryItem === FormatRegistryID.queryParam) {
+        if (registryItem === VariableFormatID.QueryParam) {
           continue;
         }
 
