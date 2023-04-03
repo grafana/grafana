@@ -16,7 +16,9 @@ jest.mock('app/core/services/context_srv', () => ({
 }));
 
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   setPluginExtensionGetter: jest.fn(),
+  getPluginExtensions: jest.fn(),
 }));
 
 describe('getPanelMenu()', () => {
@@ -211,7 +213,7 @@ describe('getPanelMenu()', () => {
         },
       };
 
-      expect(getPluginExtensions).toBeCalledWith(context);
+      expect(getPluginExtensions).toBeCalledWith(expect.objectContaining({ context }));
     });
   });
 
