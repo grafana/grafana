@@ -16,7 +16,7 @@
 // to the end, so if we do it right in milliseconds, it should be OK in
 // nanoseconds too
 
-export function getRangeChunks(
+export function splitTimeRange(
   startTime: number,
   endTime: number,
   idealRangeDuration: number

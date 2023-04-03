@@ -20,7 +20,7 @@ Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
 
 ## Add Grafana managed rule
 
-1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Alert rules**.
 1. Click **+ Create alert rule**. The new alerting rule page opens where the **Grafana managed alerts** option is selected by default.
 1. In Step 1, add the rule name.
@@ -84,11 +84,11 @@ Configure alerting behavior in the absence of data using information in the foll
 | No Data Option | Description                                                                                                                               |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | No Data        | Create a new alert `DatasourceNoData` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
-| Alerting       | Set alert rule state to `Alerting`.                                                                                                       |
+| Alerting       | Set alert rule state to `Alerting`. This option will respect the configured **Evaluate for** pending period.                              |
 | Ok             | Set alert rule state to `Normal`.                                                                                                         |
 
-| Error or timeout option | Description                                                                                                                                       |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Alerting                | Set alert rule state to `Alerting`. From Grafana 8.5, the alert rule waits for the entire duration for which the condition is true before firing. |
-| OK                      | Set alert rule state to `Normal`                                                                                                                  |
-| re                      | Error                                                                                                                                             | Create a new alert `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
+| Error or timeout option | Description                                                                                                                              |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Error                   | Create a new alert `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
+| Alerting                | Set alert rule state to `Alerting`. This option will respect the configured **Evaluate for** pending period.                             |
+| OK                      | Set alert rule state to `Normal`                                                                                                         |
