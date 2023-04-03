@@ -26,8 +26,8 @@ On each dashboard load, this panel queries the dashboard list, always providing 
 
 Use these options to refine your visualization.
 
-- **Time range -** Select this option to propagate the time range of the current dashboard to the links. When the user clicks a link, the linked dashboard opens with the inducated time range already set.
-- **Variable values -** Select this option to include template variables currently used as query parameters in the link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. For more information, see [Dashboard URL variables]({{< relref "../../../dashboards/build-dashboards/create-dashboard-url-variables/" >}}).
+- **Include current time range -** Select this option to propagate the time range of the current dashboard to the dashboard links. When the user clicks a link, the linked dashboard opens with the indicated time range already set.
+- **Include current template variable values -** Select this option to include template variables currently used as query parameters in a link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. Learn more about [Dashboard URL variables]({{< relref "../../../dashboards/build-dashboards/create-dashboard-url-variables/" >}}).
 - **Starred -** Display starred dashboards in alphabetical order.
 - **Recently viewed -** Display recently viewed dashboards in alphabetical order.
 - **Search -** Display dashboards by search query or tags. You must enter at least one value in **Query** or **Tags**. For the **Query** and **Tags** fields. Variable interpolation is supported, for example,`$my_var` or `${my_var}`.
