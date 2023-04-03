@@ -238,7 +238,7 @@ var (
 		},
 		{
 			Name:        "grpcServer",
-			Description: "Run GRPC server",
+			Description: "Run the GRPC server",
 			State:       FeatureStateBeta,
 			Owner:       grafanaAppPlatformSquad,
 		},
