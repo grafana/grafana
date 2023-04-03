@@ -50,7 +50,7 @@ export interface PanelChromeProps {
    * @deprecated use `actions' instead
    **/
   leftItems?: ReactNode[];
-  actions?: ReactNode[];
+  actions?: ReactNode;
   displayMode?: 'default' | 'transparent';
   onCancelQuery?: () => void;
 }
@@ -205,7 +205,7 @@ export function PanelChrome({
   );
 }
 
-const itemsRenderer = (items: ReactNode[], renderer: (items: ReactNode[]) => ReactNode): ReactNode => {
+const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNode[]) => ReactNode): ReactNode => {
   const toRender = React.Children.toArray(items).filter(Boolean);
   return toRender.length > 0 ? renderer(toRender) : null;
 };
@@ -343,7 +343,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     rightActions: css({
       display: 'flex',
-      padding: theme.spacing(0, padding / 2, 0, padding / 2),
+      padding: theme.spacing(0, padding),
+      gap: theme.spacing(1),
     }),
     rightAligned: css({
       label: 'right-aligned-container',

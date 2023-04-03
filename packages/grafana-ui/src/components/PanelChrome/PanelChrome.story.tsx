@@ -190,18 +190,23 @@ export const Examples = () => {
           })}
           {renderPanel('Actions with button no menu', {
             title: 'Actions with button no menu',
+            actions: (
+              <Button size="sm" variant="secondary" key="A">
+                Breakdown
+              </Button>
+            ),
+          })}
+          {renderPanel('Panel with two actions', {
+            title: 'I have two buttons',
             actions: [
               <Button size="sm" variant="secondary" key="A">
                 Breakdown
               </Button>,
+              <Button size="sm" variant="secondary" icon="times" key="B" />,
             ],
           })}
-          {renderPanel('Action sm button with only icon', {
-            title: 'Do not remove me!',
-            actions: [<Button size="sm" variant="secondary" key="A" icon="times" />],
-          })}
           {renderPanel('With radio button', {
-            title: 'I have options!',
+            title: 'I have a radio button',
             actions: [
               <RadioButtonGroup
                 key="radio-button-group"
@@ -216,21 +221,21 @@ export const Examples = () => {
           })}
           {renderPanel('Panel with action link', {
             title: 'Panel with link action',
-            actions: [
-              <a className="external-link" key="A" href="/some/page">
+            actions: (
+              <a className="external-link" href="/some/page">
                 Error details
                 <Icon name="arrow-right" />
-              </a>,
-            ],
+              </a>
+            ),
           })}
           {renderPanel('Action and menu (should be rare)', {
             title: 'Action and menu',
             menu,
-            actions: [
-              <Button size="sm" variant="secondary" key="A">
+            actions: (
+              <Button size="sm" variant="secondary">
                 Breakdown
-              </Button>,
-            ],
+              </Button>
+            ),
           })}
         </HorizontalGroup>
       </div>
