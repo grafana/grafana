@@ -68,7 +68,7 @@ active_sync_enabled = true # enabled by default
 
 Single bind configuration (as in the [Single bind example]({{< relref "ldap/#single-bind-example" >}})) is not supported with active LDAP synchronization because Grafana needs user information to perform LDAP searches.
 
-In order for the synchronisation to work, the `servers.search_filter` and `servers.attributes.username` in the ldap.toml config file must match. By default the `servers.attributes.username` is "cn", so if you use another attirbute as the search filter, you need to update the username attribute as well. 
+For the synchronization to work, the `servers.search_filter` and `servers.attributes.username` in the ldap.toml config file must match. By default, the `servers.attributes.username` is `cn`, so if you use another attribute as the search filter, you must also update the username attribute. 
 For example: 
 ```
 [[servers]]
