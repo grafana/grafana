@@ -45,13 +45,6 @@ export function QueryHeader({
   const [showConfirm, setShowConfirm] = useState(false);
   const toRawSql = db.toRawSql;
 
-  // JEV: reset the query data if user has NO preconfig, but then adds one... do better
-  if (query.dataset !== preconfiguredDataset) {
-    if (!!preconfiguredDataset) {
-      onChange({ ...query, dataset: preconfiguredDataset });
-    }
-  }
-
   const onEditorModeChange = useCallback(
     (newEditorMode: EditorMode) => {
       if (editorMode === EditorMode.Code) {

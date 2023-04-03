@@ -29,6 +29,20 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
     };
   }, [datasource]);
 
+  /* 
+    The behavior of the dataset (database) selector is based on whether the user chose to create a datasource
+    with or without a default database. If the user configured a default database, the dataset (database) selector
+    should be disabled, and defacto assigned the value of the configured default database. If the user chose to
+    NOT assign a default database, then the user should be able to use the <DatasetSelector /> within the panel query editor
+    to chose between multiple databases within the datasource.
+    
+    This checks to see whether 1) there is indeed a default database (preconfiguredDataset), and also 2) whether the user
+    added a default database where there wasn't one before. Both scenarios would require an update the the query state.
+  */
+  if (!!preconfiguredDatabase && query.dataset !== preconfiguredDatabase) {
+    onChange({ ...query, dataset: preconfiguredDatabase });
+  }
+
   const queryWithDefaults = applyQueryDefaults(query);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({
     filter: !!queryWithDefaults.sql?.whereString,

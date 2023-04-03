@@ -17,30 +17,14 @@ export const DatasetSelector = ({ db, dataset, onChange, preconfiguredDataset }:
   const usePreconfiguredDataset = !!preconfiguredDataset.length;
 
   const state = useAsync(async () => {
-    // If database is already configured, no need to fetch other databases.
+    // If default database is already configured, no need to fetch other databases.
     if (usePreconfiguredDataset) {
-      return;
+      return [];
     }
 
     const datasets = await db.datasets();
     return datasets.map(toOption);
   }, []);
-
-  // useEffect(() => {
-  //   // Set default dataset when values are fetched
-  //   if (!dataset) {
-  //     if (state.value && state.value[0]) {
-  //       onChange(state.value[0]);
-  //     }
-  //   } else {
-  //     if (state.value && state.value.find((v) => v.value === dataset) === undefined) {
-  //       // if value is set and newly fetched values does not contain selected value
-  //       if (state.value.length > 0) {
-  //         onChange(state.value[0]);
-  //       }
-  //     }
-  //   }
-  // }, [state.value, dataset, onChange]);
 
   return (
     <Select
