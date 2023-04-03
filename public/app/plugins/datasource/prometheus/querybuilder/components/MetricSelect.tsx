@@ -3,7 +3,7 @@ import debounce from 'debounce-promise';
 import React, { useCallback, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { SelectableValue, toOption, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { AsyncSelect, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
 
@@ -16,6 +16,7 @@ import { PromVisualQuery } from '../types';
 const splitSeparator = ' ';
 
 export interface Props {
+  disabled: boolean;
   query: PromVisualQuery;
   onChange: (query: PromVisualQuery) => void;
   onGetMetrics: () => Promise<SelectableValue[]>;
@@ -25,7 +26,7 @@ export interface Props {
 
 export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
 
-export function MetricSelect({ datasource, query, onChange, onGetMetrics, labelsFilters }: Props) {
+export function MetricSelect({ datasource, query, onChange, onGetMetrics, labelsFilters, disabled }: Props) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
     metrics?: Array<SelectableValue<any>>;
@@ -118,12 +119,12 @@ export function MetricSelect({ datasource, query, onChange, onGetMetrics, labels
 
   return (
     <EditorFieldGroup>
-      <EditorField label="Metric">
+      <EditorField label="Metric" disabled={disabled}>
         <AsyncSelect
           inputId="prometheus-metric-select"
           className={styles.select}
           value={query.metric ? toOption(query.metric) : undefined}
-          placeholder="Select metric"
+          placeholder={disabled ? '(Disabled)' : 'Select metric'}
           allowCustomValue
           formatOptionLabel={formatOptionLabel}
           filterOption={customFilterOption}
