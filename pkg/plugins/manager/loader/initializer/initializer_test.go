@@ -209,13 +209,12 @@ func TestInitializer_envVars(t *testing.T) {
 		}
 
 		envVars := i.envVars(p)
-		assert.Len(t, envVars, 6)
+		assert.Len(t, envVars, 5)
 		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[0])
-		assert.Equal(t, "GF_VERSION=", envVars[1])
-		assert.Equal(t, "GF_EDITION=test", envVars[2])
-		assert.Equal(t, "GF_ENTERPRISE_LICENSE_PATH=/path/to/ent/license", envVars[3])
-		assert.Equal(t, "GF_ENTERPRISE_APP_URL=https://myorg.com/", envVars[4])
-		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[5])
+		assert.Equal(t, "GF_EDITION=test", envVars[1])
+		assert.Equal(t, "GF_ENTERPRISE_LICENSE_PATH=/path/to/ent/license", envVars[2])
+		assert.Equal(t, "GF_ENTERPRISE_APP_URL=https://myorg.com/", envVars[3])
+		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[4])
 	})
 }
 
@@ -258,6 +257,11 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 	expNoTracing := func(t *testing.T, envVars []string) {
 		for _, v := range envVars {
 			assert.False(t, strings.HasPrefix(v, "GF_TRACING"), "should not have tracing env var")
+			assert.False(
+				t,
+				strings.HasPrefix(v, "GF_VERSION"),
+				"GF_VERSION is tracing-only and should not be present when tracing is disabled",
+			)
 		}
 	}
 
@@ -274,26 +278,50 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			exp: expNoTracing,
 		},
 		{
-			name: "otlp no propagation",
+			name: "otlp no propagation plugin enabled",
 			cfg: &config.Cfg{
 				Opentelemetry: defaultOtelCfg,
+				PluginSettings: map[string]map[string]string{
+					pluginID: {"tracing": "true"},
+				},
 			},
 			exp: expDefaultOtlp,
 		},
 		{
-			name: "otlp propagation",
+			name: "otlp no propagation disabled by default",
+			cfg: &config.Cfg{
+				Opentelemetry: defaultOtelCfg,
+			},
+			exp: expNoTracing,
+		},
+		{
+			name: "otlp propagation plugin enabled",
+			cfg: &config.Cfg{
+				Opentelemetry: config.OpentelemetryCfg{
+					Address:     "127.0.0.1:4317",
+					Propagation: "w3c",
+				},
+				PluginSettings: map[string]map[string]string{
+					pluginID: {"tracing": "true"},
+				},
+			},
+			exp: func(t *testing.T, envVars []string) {
+				assert.Len(t, envVars, 4)
+				assert.Equal(t, "GF_PLUGIN_TRACING=true", envVars[0])
+				assert.Equal(t, "GF_VERSION=", envVars[1])
+				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[2])
+				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c", envVars[3])
+			},
+		},
+		{
+			name: "otlp no propagation disabled by default",
 			cfg: &config.Cfg{
 				Opentelemetry: config.OpentelemetryCfg{
 					Address:     "127.0.0.1:4317",
 					Propagation: "w3c",
 				},
 			},
-			exp: func(t *testing.T, envVars []string) {
-				assert.Len(t, envVars, 3)
-				assert.Equal(t, "GF_VERSION=", envVars[0])
-				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[1])
-				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c", envVars[2])
-			},
+			exp: expNoTracing,
 		},
 		{
 			name: "disabled on plugin",
@@ -306,11 +334,21 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			exp: expNoTracing,
 		},
 		{
-			name: "not disabled on plugin with other plugin settings",
+			name: "disabled on plugin with other plugin settings",
 			cfg: &config.Cfg{
 				Opentelemetry: defaultOtelCfg,
 				PluginSettings: map[string]map[string]string{
 					pluginID: {"some_other_option": "true"},
+				},
+			},
+			exp: expNoTracing,
+		},
+		{
+			name: "enabled on plugin with other plugin settings",
+			cfg: &config.Cfg{
+				Opentelemetry: defaultOtelCfg,
+				PluginSettings: map[string]map[string]string{
+					pluginID: {"some_other_option": "true", "tracing": "true"},
 				},
 			},
 			exp: expDefaultOtlp,
