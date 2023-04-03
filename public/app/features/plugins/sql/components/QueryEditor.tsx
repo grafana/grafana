@@ -29,7 +29,7 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
     };
   }, [datasource]);
 
-  const queryWithDefaults = addPreconfiguredDataset(applyQueryDefaults(query));
+  const queryWithDefaults = applyQueryDefaults(query);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({
     filter: !!queryWithDefaults.sql?.whereString,
     group: !!queryWithDefaults.sql?.groupBy?.[0]?.property.name,
@@ -54,10 +54,6 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
     },
     [onRunQuery]
   );
-
-  function addPreconfiguredDataset(query: SQLQuery): SQLQuery {
-    return { ...query, dataset: preconfiguredDatabase };
-  }
 
   const onQueryChange = (q: SQLQuery, process = true) => {
     setQueryToValidate(q);

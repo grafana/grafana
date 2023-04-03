@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useAsync } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
@@ -8,7 +8,7 @@ import { DB, ResourceSelectorProps, toOption } from '../types';
 
 interface DatasetSelectorProps extends ResourceSelectorProps {
   db: DB;
-  dataset: string;
+  dataset: string | null;
   preconfiguredDataset: string;
   onChange: (v: SelectableValue) => void;
 }
@@ -26,21 +26,21 @@ export const DatasetSelector = ({ db, dataset, onChange, preconfiguredDataset }:
     return datasets.map(toOption);
   }, []);
 
-  useEffect(() => {
-    // Set default dataset when values are fetched
-    if (!dataset) {
-      if (state.value && state.value[0]) {
-        onChange(state.value[0]);
-      }
-    } else {
-      if (state.value && state.value.find((v) => v.value === dataset) === undefined) {
-        // if value is set and newly fetched values does not contain selected value
-        if (state.value.length > 0) {
-          onChange(state.value[0]);
-        }
-      }
-    }
-  }, [state.value, dataset, onChange]);
+  // useEffect(() => {
+  //   // Set default dataset when values are fetched
+  //   if (!dataset) {
+  //     if (state.value && state.value[0]) {
+  //       onChange(state.value[0]);
+  //     }
+  //   } else {
+  //     if (state.value && state.value.find((v) => v.value === dataset) === undefined) {
+  //       // if value is set and newly fetched values does not contain selected value
+  //       if (state.value.length > 0) {
+  //         onChange(state.value[0]);
+  //       }
+  //     }
+  //   }
+  // }, [state.value, dataset, onChange]);
 
   return (
     <Select
@@ -51,7 +51,7 @@ export const DatasetSelector = ({ db, dataset, onChange, preconfiguredDataset }:
       disabled={usePreconfiguredDataset || state.loading}
       isLoading={usePreconfiguredDataset ? false : state.loading}
       menuShouldPortal={true}
-      placeholder={usePreconfiguredDataset ? preconfiguredDataset : ''}
+      placeholder={usePreconfiguredDataset ? preconfiguredDataset : 'Select table'}
     />
   );
 };

@@ -41,6 +41,7 @@ export function QueryHeader({
   isDatasetSelectorHidden,
 }: QueryHeaderProps) {
   const { editorMode } = query;
+  // console.log('🚀 ~ file: QueryHeader.tsx:44 ~ query:', query);
   const [_, copyToClipboard] = useCopyToClipboard();
   const [showConfirm, setShowConfirm] = useState(false);
   const toRawSql = db.toRawSql;
@@ -73,6 +74,8 @@ export function QueryHeader({
       sql: undefined,
       rawSql: '',
     };
+
+    // console.log(next, 'next');
 
     onChange(next);
   };
@@ -211,7 +214,7 @@ export function QueryHeader({
               <EditorField label="Dataset" width={25}>
                 <DatasetSelector
                   db={db}
-                  dataset={query.dataset!}
+                  dataset={query.dataset === undefined ? null : query.dataset}
                   preconfiguredDataset={preconfiguredDataset}
                   onChange={onDatasetChange}
                 />

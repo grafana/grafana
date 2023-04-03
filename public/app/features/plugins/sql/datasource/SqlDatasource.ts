@@ -54,7 +54,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       prepareAnnotation: migrateAnnotation,
       QueryEditor: SqlQueryEditor,
     };
-    console.log(instanceSettings, 'instancesetting');
+    // console.log(instanceSettings, 'instancesetting');
   }
 
   abstract getDB(dsID?: number): DB;
