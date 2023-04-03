@@ -25,12 +25,12 @@ func ProvideCleanupService(db db.DB, cfg *setting.Cfg, promRegisterer prometheus
 	s := &CleanupServiceImpl{
 		totalCleanedAnnotations: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "grafana",
-			Name:      "totals_cleaned_annotations",
+			Name:      "cleaned_annotations_total",
 			Help:      "Number of cleaned annotations",
 		}, []string{"type"}),
 		totalCleanedAnnotationsTags: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: "grafana",
-			Name:      "totals_cleaned_annotations_tags",
+			Name:      "cleaned_annotations_tags_total",
 			Help:      "Number of cleaned annotation tags",
 		}),
 		cleanupAnnotationsDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
