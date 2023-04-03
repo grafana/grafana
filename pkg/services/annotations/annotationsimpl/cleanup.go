@@ -37,13 +37,13 @@ func ProvideCleanupService(db db.DB, cfg *setting.Cfg, promRegisterer prometheus
 			Namespace: "grafana",
 			Name:      "cleanup_annotations_duration",
 			Help:      "Annotation cleanup duration",
-			Buckets:   prometheus.ExponentialBuckets(0.00001, 4, 10),
+			Buckets:   prometheus.ExponentialBuckets(0.001, 4, 10),
 		}, []string{"type"}),
 		cleanupAnnotationTagsDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: "grafana",
 			Name:      "cleanup_annotation_tags_duration",
 			Help:      "Annotation tags cleanup duration",
-			Buckets:   prometheus.ExponentialBuckets(0.00001, 4, 10),
+			Buckets:   prometheus.ExponentialBuckets(0.001, 4, 10),
 		}),
 		store: &xormRepositoryImpl{
 			cfg: cfg,
