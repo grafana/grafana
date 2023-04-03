@@ -5,6 +5,12 @@ import {
   defaultCandlestickColors,
   PanelOptions,
   CandlestickColors,
+  CandleStyle,
+  ColorStrategy,
+  VizDisplayMode,
+  CandlestickFieldMap,
+  PanelFieldConfig,
+  PanelCfgModelVersion,
 } from './panelcfg.gen';
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
@@ -17,4 +23,16 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
     placement: 'bottom',
     calcs: [],
   },
+};
+
+export {
+  PanelOptions,
+  CandlestickColors,
+  defaultCandlestickColors,
+  CandleStyle,
+  ColorStrategy,
+  VizDisplayMode,
+  CandlestickFieldMap,
+  PanelFieldConfig,
+  PanelCfgModelVersion,
 };

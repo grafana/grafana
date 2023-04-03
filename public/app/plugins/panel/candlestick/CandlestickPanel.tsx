@@ -21,7 +21,7 @@ import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 
 import { prepareCandlestickFields } from './fields';
-import { PanelOptions, defaultCandlestickColors, VizDisplayMode } from './panelcfg.gen';
+import { PanelOptions, defaultCandlestickColors, VizDisplayMode } from './types';
 import { drawMarkers, FieldIndices } from './utils';
 
 interface CandlestickPanelProps extends PanelProps<PanelOptions> {}
