@@ -7,7 +7,7 @@ import DataEditor, {
   EditableGridCell,
   GridColumnIcon,
 } from '@glideapps/glide-data-grid';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import {
   ArrayVector,
@@ -76,12 +76,12 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     );
   }, [gridData, theme.typography.fontSize]);
 
-  // useEffect(() => {
-  //   if (options.useBlankSnapshot) {
-  //     setIsSnapshotted(true);
-  //     setGridData(EMPTY_DF);
-  //   }
-  // }, [options.useBlankSnapshot, id])
+  useEffect(() => {
+    if (options.useBlankSnapshot) {
+      setIsSnapshotted(true);
+      setGridData(EMPTY_DF);
+    }
+  }, [options.useBlankSnapshot, id]);
 
   useEffect(() => {
     setGridColumns();
@@ -90,12 +90,17 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   useEffect(() => {
     const panelModel = getDashboardSrv().getCurrent()?.getPanelById(id);
 
-    if (panelModel?.datasource !== GRAFANA_DS) {
+    if (panelModel?.datasource?.type !== GRAFANA_DS.type) {
       setIsSnapshotted(false);
+      options.useBlankSnapshot = false;
     }
+  }, [id, options, data]);
 
-    setGridData(data.series[0]);
-  }, [data, id]);
+  useEffect(() => {
+    if (!isSnapshotted) {
+      setGridData(data.series[0]);
+    }
+  }, [data, isSnapshotted]);
 
   useEffect(() => {
     if (isSnapshotted) {
