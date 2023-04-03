@@ -206,7 +206,7 @@ func signRPMPackages(edition config.Edition, cfg config.Config, grafanaDir strin
 			if err != nil {
 				return fmt.Errorf("failed to verify RPM signature: %w", err)
 			}
-	
+
 			if !reOutput.Match(output) {
 				return fmt.Errorf("RPM package %q not verified: %s", p, output)
 			}
