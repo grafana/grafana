@@ -479,5 +479,11 @@ var (
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAlertingSquad,
 		},
+		{
+			Name:        "unifiedRequestLog",
+			Description: "Writes error logs to the request logger",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaBackendPlatformSquad,
+		},
 	}
 )
