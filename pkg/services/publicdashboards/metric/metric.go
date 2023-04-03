@@ -16,15 +16,13 @@ type PublicDashboardsMetricServiceImpl struct {
 	log     log.Logger
 }
 
-var LogPrefix = "publicdashboards.metric"
-
 func ProvideService(
 	store publicdashboards.Store,
 ) (*PublicDashboardsMetricServiceImpl, error) {
 	s := &PublicDashboardsMetricServiceImpl{
 		store:   store,
 		Metrics: NewMetrics(),
-		log:     log.New(LogPrefix),
+		log:     log.New("publicdashboards.metric"),
 	}
 
 	if err := s.registerMetrics(); err != nil {
@@ -47,8 +45,7 @@ func (s *PublicDashboardsMetricServiceImpl) registerMetrics() error {
 }
 
 func (s *PublicDashboardsMetricServiceImpl) Run(ctx context.Context) error {
-	//TODO change this. Every 24hs?
-	ticker := time.Tick(10 * time.Second)
+	ticker := time.Tick(12 * time.Hour)
 
 	for {
 		select {
@@ -57,9 +54,8 @@ func (s *PublicDashboardsMetricServiceImpl) Run(ctx context.Context) error {
 		case <-ticker:
 			records, err := s.store.GetMetrics(ctx)
 			if err != nil {
-				s.log.Debug("error collecting background metrics", "error", err)
-				//TODO check if it finishes the Run
-				return err
+				s.log.Error("error collecting background metrics", "err", err)
+				return nil
 			}
 
 			s.Metrics.PublicDashboardsTotal.Reset()
