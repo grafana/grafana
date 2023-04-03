@@ -34,7 +34,7 @@ Plugins must be licensed under one of the following AGPL compliant licenses for 
 - LGPL-3.0
 - MIT
 
-If contributing a plugin on behalf on an organization, be sure to seek guidance from your legal team.
+If contributing a plugin on behalf of an organization, be sure to seek guidance from your legal team.
 
 ## Commercial
 
