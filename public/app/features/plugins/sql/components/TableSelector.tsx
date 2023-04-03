@@ -9,12 +9,12 @@ import { DB, ResourceSelectorProps } from '../types';
 
 interface TableSelectorProps extends ResourceSelectorProps {
   db: DB;
-  table: string | null;
-  chosenDataset: string;
+  chosenTable: string | null;
+  chosenDataset: string | undefined;
   onChange: (v: SelectableValue) => void;
 }
 
-export const TableSelector = ({ db, chosenDataset, table, className, onChange }: TableSelectorProps) => {
+export const TableSelector = ({ db, chosenDataset, chosenTable, className, onChange }: TableSelectorProps) => {
   const state = useAsync(async () => {
     const tables = await db.tables(chosenDataset);
     return tables.map(toOption);
@@ -25,7 +25,7 @@ export const TableSelector = ({ db, chosenDataset, table, className, onChange }:
       className={className}
       disabled={state.loading}
       aria-label="Table selector"
-      value={table}
+      value={chosenTable}
       options={state.value}
       onChange={onChange}
       isLoading={state.loading}
