@@ -17,6 +17,11 @@ export const DatasetSelector = ({ db, chosenDataset, onChange, preconfiguredData
   const databaseIsPreconfigured = !!preconfiguredDatabase.length;
 
   const state = useAsync(async () => {
+    // Early return if database is already configured; no need to fetch other databases.
+    if (databaseIsPreconfigured) {
+      return;
+    }
+
     const datasets = await db.datasets();
     return datasets.map(toOption);
   }, []);
@@ -43,9 +48,7 @@ export const DatasetSelector = ({ db, chosenDataset, onChange, preconfiguredData
       value={databaseIsPreconfigured ? preconfiguredDatabase : chosenDataset}
       options={state.value}
       onChange={onChange}
-      // JEV: also disable if loading
-      disabled={databaseIsPreconfigured}
-      // JEV: fix this logic
+      disabled={databaseIsPreconfigured || state.loading}
       isLoading={databaseIsPreconfigured ? false : state.loading}
       menuShouldPortal={true}
       placeholder={databaseIsPreconfigured ? preconfiguredDatabase : ''}
