@@ -41,8 +41,8 @@ echo "==    token    =="
 echo "===================="
 
 at=$( cat $current_dir/client_credentials_token.json | jq -r '.access_token' )
-header=$( echo $at | cut -d "." -f 1|basenc --base64url -d 2>/dev/null)
-payload=$( echo $at | cut -d "." -f 2|basenc --base64url -d 2>/dev/null)
+header=$( echo $at | cut -d "." -f 1|base64 -d 2>/dev/null)
+payload=$( echo $at | cut -d "." -f 2|base64 -d 2>/dev/null)
 signature=$( echo $at | cut -d "." -f 3 )
 
 echo "header:"
