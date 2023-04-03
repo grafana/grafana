@@ -104,6 +104,8 @@ export function isPluginExtensionConfigValid(pluginId: string, extension: Plugin
   }
 }
 
-export function isPromise(value: unknown) {
-  return value instanceof Promise || (typeof value === 'object' && value !== null && 'then' in value);
+export function isPromise(value: unknown): value is Promise<unknown> {
+  return (
+    value instanceof Promise || (typeof value === 'object' && value !== null && 'then' in value && 'catch' in value)
+  );
 }

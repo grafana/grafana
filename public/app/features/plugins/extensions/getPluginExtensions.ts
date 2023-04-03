@@ -1,5 +1,3 @@
-import { isPromise } from 'util/types';
-
 import {
   type PluginExtension,
   PluginExtensionTypes,
@@ -9,7 +7,7 @@ import {
 
 import type { PluginExtensionRegistry } from './types';
 import { isPluginExtensionLinkConfig, deepFreeze, logWarning, generateExtensionId, getEventHelpers } from './utils';
-import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps } from './validators';
+import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
 
 type GetExtensions = ({
   context,
