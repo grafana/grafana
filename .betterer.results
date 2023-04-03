@@ -4178,7 +4178,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "26"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "27"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "28"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "29"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "29"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "30"]
     ],
     "public/app/plugins/datasource/elasticsearch/hooks/useStatelessReducer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]

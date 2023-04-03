@@ -29,6 +29,7 @@ import {
   FieldCache,
   FieldType,
   rangeUtil,
+  Field,
 } from '@grafana/data';
 import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv, getDataSourceSrv, config } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
@@ -433,7 +434,7 @@ export class ElasticDatasource
     );
   }
 
-  getQueryHeader(searchType: any, timeFrom: DateTime, timeTo: DateTime): string {
+  getQueryHeader(searchType: any, timeFrom?: DateTime, timeTo?: DateTime): string {
     const queryHeader: any = {
       search_type: searchType,
       ignore_unavailable: true,
@@ -499,23 +500,86 @@ export class ElasticDatasource
   }
 
   getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
-    const contextRequest = this.makeLogContextDataRequest(row, options);
+    const { disableElasticsearchBackendExploreQuery, elasticsearchBackendMigration } = config.featureToggles;
+    if (!disableElasticsearchBackendExploreQuery || elasticsearchBackendMigration) {
+      const contextRequest = this.makeLogContextDataRequest(row, options);
 
-    return lastValueFrom(
-      this.query(contextRequest).pipe(
-        catchError((err) => {
-          const error: DataQueryError = {
-            message: 'Error during context query. Please check JS console logs.',
-            status: err.status,
-            statusText: err.statusText,
-          };
-          throw error;
-        }),
-        switchMap((res) => {
-          return of(processToLogContextDataFrames(res));
-        })
-      )
-    );
+      return lastValueFrom(
+        this.query(contextRequest).pipe(
+          catchError((err) => {
+            const error: DataQueryError = {
+              message: 'Error during context query. Please check JS console logs.',
+              status: err.status,
+              statusText: err.statusText,
+            };
+            throw error;
+          }),
+          switchMap((res) => {
+            return of(processToLogContextDataFrames(res));
+          })
+        )
+      );
+    } else {
+      const sortField = row.dataFrame.fields.find((f) => f.name === 'sort');
+      const searchAfter = sortField?.values.get(row.rowIndex) || [row.timeEpochMs];
+      const sort = options?.direction === 'FORWARD' ? 'asc' : 'desc';
+
+      const header =
+        options?.direction === 'FORWARD'
+          ? this.getQueryHeader('query_then_fetch', dateTime(row.timeEpochMs))
+          : this.getQueryHeader('query_then_fetch', undefined, dateTime(row.timeEpochMs));
+
+      const limit = options?.limit ?? 10;
+      const esQuery = JSON.stringify({
+        size: limit,
+        query: {
+          bool: {
+            filter: [
+              {
+                range: {
+                  [this.timeField]: {
+                    [options?.direction === 'FORWARD' ? 'gte' : 'lte']: row.timeEpochMs,
+                    format: 'epoch_millis',
+                  },
+                },
+              },
+            ],
+          },
+        },
+        sort: [{ [this.timeField]: sort }, { _doc: sort }],
+        search_after: searchAfter,
+      });
+      const payload = [header, esQuery].join('\n') + '\n';
+      const url = this.getMultiSearchUrl();
+      const response = await lastValueFrom(this.post(url, payload));
+      const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [{ type: 'logs', id: '1' }] }];
+      const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
+      const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
+      const dataFrame = _first(logResponse.data);
+      if (!dataFrame) {
+        return { data: [] };
+      }
+      /**
+       * The LogRowContextProvider requires there is a field in the dataFrame.fields
+       * named `ts` for timestamp and `line` for the actual log line to display.
+       * Unfortunatly these fields are hardcoded and are required for the lines to
+       * be properly displayed. This code just copies the fields based on this.timeField
+       * and this.logMessageField and recreates the dataFrame so it works.
+       */
+      const timestampField = dataFrame.fields.find((f: Field) => f.name === this.timeField);
+      const lineField = dataFrame.fields.find((f: Field) => f.name === this.logMessageField);
+      if (timestampField && lineField) {
+        return {
+          data: [
+            {
+              ...dataFrame,
+              fields: [...dataFrame.fields, { ...timestampField, name: 'ts' }, { ...lineField, name: 'line' }],
+            },
+          ],
+        };
+      }
+      return logResponse;
+    }
   };
 
   getDataProvider(
@@ -1143,6 +1207,24 @@ function generateDataLink(linkConfig: DataLinkConfig): DataLink {
       url: linkConfig.url,
     };
   }
+}
+function transformHitsBasedOnDirection(response: any, direction: 'asc' | 'desc') {
+  if (direction === 'desc') {
+    return response;
+  }
+  const actualResponse = response.responses[0];
+  return {
+    ...response,
+    responses: [
+      {
+        ...actualResponse,
+        hits: {
+          ...actualResponse.hits,
+          hits: actualResponse.hits.hits.reverse(),
+        },
+      },
+    ],
+  };
 }
 
 function processToLogContextDataFrames(result: DataQueryResponse): DataQueryResponse {
