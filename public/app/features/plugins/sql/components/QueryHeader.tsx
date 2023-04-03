@@ -14,7 +14,7 @@ import { TableSelector } from './TableSelector';
 
 export interface QueryHeaderProps {
   db: DB;
-  defaultDatabase: string;
+  preconfiguredDatabase: string;
   query: QueryWithDefaults;
   onChange: (query: SQLQuery) => void;
   onRunQuery: () => void;
@@ -31,7 +31,7 @@ const editorModes = [
 
 export function QueryHeader({
   db,
-  defaultDatabase,
+  preconfiguredDatabase,
   query,
   queryRowFilter,
   onChange,
@@ -61,6 +61,22 @@ export function QueryHeader({
     onChange(next);
   };
 
+  const onDatasetChange = (e: SelectableValue) => {
+    if (e.value === query.dataset) {
+      return;
+    }
+
+    const next = {
+      ...query,
+      dataset: e.value,
+      table: undefined,
+      sql: undefined,
+      rawSql: '',
+    };
+
+    onChange(next);
+  };
+
   const onTableChange = (e: SelectableValue) => {
     if (e.value === query.table) {
       return;
@@ -68,7 +84,8 @@ export function QueryHeader({
 
     const next: SQLQuery = {
       ...query,
-      dataset: defaultDatabase,
+      // JEV: change this
+      dataset: preconfiguredDatabase,
       table: e.value,
       sql: undefined,
       rawSql: '',
@@ -194,14 +211,18 @@ export function QueryHeader({
           <EditorRow>
             {isDatasetSelectorHidden ? null : (
               <EditorField label="Dataset" width={25}>
-                <DatasetSelector db={db} defaultDatabase={defaultDatabase} onChange={(_v) => undefined} />
+                <DatasetSelector
+                  db={db}
+                  dataset={query.dataset === undefined ? null : query.dataset}
+                  preconfiguredDatabase={preconfiguredDatabase}
+                  onChange={onDatasetChange}
+                />
               </EditorField>
             )}
 
             <EditorField label="Table" width={25}>
               <TableSelector
                 db={db}
-                defaultDatabase={defaultDatabase}
                 query={query}
                 value={query.table === undefined ? null : query.table}
                 onChange={onTableChange}

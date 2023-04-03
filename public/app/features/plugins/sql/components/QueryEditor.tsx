@@ -20,7 +20,7 @@ interface Props extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
 export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range, queryHeaderProps }: Props) {
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
-  const defaultDatabase = datasource.defaultDatabase;
+  const { preconfiguredDatabase } = datasource;
   const { loading, error } = useAsync(async () => {
     return () => {
       if (datasource.getDB(datasource.id).init !== undefined) {
@@ -81,7 +81,7 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
     <>
       <QueryHeader
         db={db}
-        defaultDatabase={defaultDatabase}
+        preconfiguredDatabase={preconfiguredDatabase}
         onChange={onQueryHeaderChange}
         onRunQuery={onRunQuery}
         onQueryRowChange={setQueryRowFilter}

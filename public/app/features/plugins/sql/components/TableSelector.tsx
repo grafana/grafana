@@ -9,15 +9,14 @@ import { DB, ResourceSelectorProps } from '../types';
 
 interface TableSelectorProps extends ResourceSelectorProps {
   db: DB;
-  defaultDatabase: string;
   value: string | null;
   query: QueryWithDefaults;
   onChange: (v: SelectableValue) => void;
 }
 
-export const TableSelector = ({ db, query, value, className, onChange, defaultDatabase }: TableSelectorProps) => {
+export const TableSelector = ({ db, query, value, className, onChange }: TableSelectorProps) => {
   const state = useAsync(async () => {
-    const tables = await db.tables(defaultDatabase);
+    const tables = await db.tables(query.dataset);
     return tables.map(toOption);
   }, [query.dataset]);
 

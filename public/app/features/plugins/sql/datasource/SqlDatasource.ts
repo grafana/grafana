@@ -36,7 +36,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   name: string;
   interval: string;
   db: DB;
-  defaultDatabase: string;
+  preconfiguredDatabase: string;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<SQLOptions>,
@@ -49,11 +49,12 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
     this.db = this.getDB();
-    this.defaultDatabase = settingsData?.database ?? '';
+    this.preconfiguredDatabase = settingsData?.database ?? '';
     this.annotations = {
       prepareAnnotation: migrateAnnotation,
       QueryEditor: SqlQueryEditor,
     };
+    console.log(instanceSettings, 'instancesetting');
   }
 
   abstract getDB(dsID?: number): DB;
