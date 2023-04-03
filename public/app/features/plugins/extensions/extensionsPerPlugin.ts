@@ -1,12 +1,12 @@
 import { PluginExtensionLinkConfig } from '@grafana/data';
 
-import { MAX_EXTENSIONS_PER_PLUGIN } from './constants';
+import { MAX_EXTENSIONS_PER_POINT } from './constants';
 
 export class ExtensionsPerPlugin {
   private extensionsByExtensionPoint: Record<string, string[]> = {};
 
   allowedToAdd({ extensionPointId, title }: PluginExtensionLinkConfig): boolean {
-    if (this.countByExtensionPoint(extensionPointId) >= MAX_EXTENSIONS_PER_PLUGIN) {
+    if (this.countByExtensionPoint(extensionPointId) >= MAX_EXTENSIONS_PER_POINT) {
       return false;
     }
 

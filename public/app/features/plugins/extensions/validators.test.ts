@@ -77,20 +77,20 @@ describe('Plugin Extension Validators', () => {
     });
   });
 
-  describe('assertPlacementIsValid()', () => {
-    it('should throw an error if the placement does not have the right prefix', () => {
+  describe('assertExtensionPointIdIsValid()', () => {
+    it('should throw an error if the extensionPointId does not have the right prefix', () => {
       expect(() => {
         assertExtensionPointIdIsValid({
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
           path: '...',
-          extensionPointId: 'some-bad-placement',
+          extensionPointId: 'wrong-extension-point-id',
         });
       }).toThrowError();
     });
 
-    it('should NOT throw an error if the placement is correct', () => {
+    it('should NOT throw an error if the extensionPointId is correct', () => {
       expect(() => {
         assertExtensionPointIdIsValid({
           type: PluginExtensionTypes.link,
@@ -250,7 +250,7 @@ describe('Plugin Extension Validators', () => {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
-          placement: 'grafana/some-page/some-placement',
+          extensionPointId: 'grafana/some-page/extension-point-a',
         } as PluginExtensionLinkConfig)
       ).toBe(false);
 

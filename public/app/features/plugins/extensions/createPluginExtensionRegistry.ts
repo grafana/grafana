@@ -1,6 +1,6 @@
 import type { PluginPreloadResult } from '../pluginPreloader';
 
-import { MAX_EXTENSIONS_PER_PLUGIN } from './constants';
+import { MAX_EXTENSIONS_PER_POINT } from './constants';
 import { ExtensionsPerPlugin } from './extensionsPerPlugin';
 import type { PluginExtensionRegistryItem, PluginExtensionRegistry } from './types';
 import { deepFreeze, logWarning } from './utils';
@@ -21,7 +21,7 @@ export function createPluginExtensionRegistry(pluginPreloadResults: PluginPreloa
 
       if (!extensionsPerPlugin.allowedToAdd(extensionConfig)) {
         logWarning(
-          `"${pluginId}" plugin has reached the limit of ${MAX_EXTENSIONS_PER_PLUGIN} for "${extensionPointId}", skip registering extension "${extensionConfig.title}".`
+          `"${pluginId}" plugin has reached the limit of ${MAX_EXTENSIONS_PER_POINT} for "${extensionPointId}", skip registering extension "${extensionConfig.title}".`
         );
         continue;
       }
