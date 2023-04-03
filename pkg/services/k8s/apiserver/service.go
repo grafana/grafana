@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/certgenerator"
 	"github.com/grafana/grafana/pkg/services/k8s/kine"
 	"github.com/grafana/grafana/pkg/setting"
+	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
+	"k8s.io/apiextensions-apiserver/pkg/registry/customresourcedefinition"
 	serveroptions "k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -66,6 +68,9 @@ func (s *service) GetRestConfig() *rest.Config {
 }
 
 func (s *service) start(ctx context.Context) error {
+	customresource.Storage = NewStorage
+	customresourcedefinition.Storage = NewStorage
+
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
 		K8sDataPath: s.dataPath,

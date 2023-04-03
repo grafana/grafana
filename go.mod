@@ -519,7 +519,7 @@ replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421
 
 replace k8s.io/api => k8s.io/api v0.26.2
 
-replace k8s.io/apiextensions-apiserver => github.com/grafana/apiextensions-apiserver v0.0.0-20230401022312-dd80889f8d33
+replace k8s.io/apiextensions-apiserver => github.com/grafana/apiextensions-apiserver v0.0.0-20230403183603-6ace91ed4773
 
 replace k8s.io/apimachinery => k8s.io/apimachinery v0.26.3-rc.0
 
