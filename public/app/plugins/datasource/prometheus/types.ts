@@ -20,6 +20,12 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   intervalFactor?: number;
 }
 
+export enum PrometheusCacheLevel {
+  Low = 'Low',
+  Medium = 'Medium',
+  High = 'High',
+  None = 'None',
+}
 export interface PromOptions extends DataSourceJsonData {
   timeInterval?: string;
   queryTimeout?: string;
@@ -30,6 +36,7 @@ export interface PromOptions extends DataSourceJsonData {
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
   prometheusType?: PromApplication;
   prometheusVersion?: string;
+  cacheLevel?: PrometheusCacheLevel;
   defaultEditor?: QueryEditorMode;
   incrementalQuerying?: boolean;
   incrementalQueryOverlapWindow?: string;

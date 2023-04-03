@@ -98,6 +98,7 @@ datasources:
       prometheusVersion: 2.37.0
       incrementalQuerying: true
       incrementalQueryOverlapWindow: 10m
+      cacheLevel: 'High'
       exemplarTraceIdDestinations:
         # Field with internal link pointing to data source in Grafana.
         # datasourceUid value can be anything, but it should be unique across all defined data source uids.

@@ -145,7 +145,7 @@ func getVersionFolder(cfg uploadConfig, event string) (string, error) {
 		return releaseFolder, nil
 	case config.MainMode, config.DownstreamMode:
 		return mainFolder, nil
-	case config.ReleaseBranchMode:
+	case config.ReleaseBranchMode, config.CloudMode:
 		return releaseBranchFolder, nil
 	default:
 		// Corner case for custom enterprise2 mode
