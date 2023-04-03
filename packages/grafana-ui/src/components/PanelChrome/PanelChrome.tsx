@@ -145,6 +145,9 @@ export function PanelChrome({
           </Tooltip>
         </DelayRender>
       )}
+      <div className={styles.rightAligned}>
+        {actions && <div className={styles.rightActions}>{itemsRenderer(actions, (item) => item)}</div>}
+      </div>
     </>
   );
 
@@ -156,11 +159,10 @@ export function PanelChrome({
 
       {hoverHeader && !isTouchDevice && (
         <>
-          {menu && (
-            <HoverWidget menu={menu} title={title} offset={hoverHeaderOffset} dragClass={dragClass}>
-              {headerContent}
-            </HoverWidget>
-          )}
+          <HoverWidget menu={menu} title={title} offset={hoverHeaderOffset} dragClass={dragClass}>
+            {headerContent}
+          </HoverWidget>
+
           {statusMessage && (
             <div className={styles.errorContainerFloating}>
               <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
@@ -179,22 +181,19 @@ export function PanelChrome({
 
           {headerContent}
 
-          <div className={styles.rightAligned}>
-            {actions && <div className={styles.rightActions}>{itemsRenderer(actions, (item) => item)}</div>}
-            {menu && (
-              <PanelMenu
-                menu={menu}
-                title={title}
-                placement="bottom-end"
-                menuButtonClass={cx(
-                  { [styles.hiddenMenu]: !isTouchDevice },
-                  styles.menuItem,
-                  dragClassCancel,
-                  showOnHoverClass
-                )}
-              />
-            )}
-          </div>
+          {menu && (
+            <PanelMenu
+              menu={menu}
+              title={title}
+              placement="bottom-end"
+              menuButtonClass={cx(
+                { [styles.hiddenMenu]: !isTouchDevice },
+                styles.menuItem,
+                dragClassCancel,
+                showOnHoverClass
+              )}
+            />
+          )}
         </div>
       )}
 

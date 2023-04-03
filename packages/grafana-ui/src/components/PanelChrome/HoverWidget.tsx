@@ -10,7 +10,7 @@ import { PanelMenu } from './PanelMenu';
 
 interface Props {
   children?: React.ReactNode;
-  menu: ReactElement | (() => ReactElement);
+  menu?: ReactElement | (() => ReactElement);
   title?: string;
   offset?: number;
   dragClass?: string;
@@ -51,7 +51,7 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
       </div>
       {!title && <h6 className={cx(styles.untitled, styles.draggable, dragClass)}>Untitled</h6>}
       {children}
-      <div className={styles.square}>
+      {menu && (
         <PanelMenu
           menu={menu}
           title={title}
@@ -59,7 +59,7 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
           menuButtonClass={styles.menuButton}
           onVisibleChange={setMenuOpen}
         />
-      </div>
+      )}
     </div>
   );
 }
@@ -92,7 +92,6 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       width: theme.spacing(4),
       height: '100%',
-      paddingRight: theme.spacing(0.5),
     }),
     draggable: css({
       cursor: 'move',
@@ -109,12 +108,10 @@ function getStyles(theme: GrafanaTheme2) {
         background: theme.colors.secondary.main,
       },
     }),
-    title: css({
-      padding: theme.spacing(0.75),
-    }),
     untitled: css({
       color: theme.colors.text.disabled,
       fontStyle: 'italic',
+      padding: theme.spacing(0, 1),
       marginBottom: 0,
     }),
     draggableIcon: css({

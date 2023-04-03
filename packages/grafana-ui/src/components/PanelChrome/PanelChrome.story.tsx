@@ -40,7 +40,7 @@ function getContentStyle(): CSSProperties {
 function renderPanel(name: string, overrides?: Partial<PanelChromeProps>) {
   const props: PanelChromeProps = {
     width: 400,
-    height: 130,
+    height: 150,
     children: () => undefined,
   };
 
@@ -131,10 +131,6 @@ export const Examples = () => {
           {renderPanel('No title, streaming loadingState', {
             loadingState: LoadingState.Streaming,
           })}
-          {renderPanel('No title, loading loadingState', {
-            loadingState: LoadingState.Loading,
-          })}
-
           {renderPanel('Error status, menu', {
             title: 'Default title',
             menu,
@@ -220,7 +216,7 @@ export const Examples = () => {
             ],
           })}
           {renderPanel('Panel with action link', {
-            title: 'Panel with link action',
+            title: 'Panel with action link',
             actions: (
               <a className="external-link" href="/some/page">
                 Error details
@@ -235,6 +231,59 @@ export const Examples = () => {
               <Button size="sm" variant="secondary">
                 Breakdown
               </Button>
+            ),
+          })}
+        </HorizontalGroup>
+      </div>
+    </DashboardStoryCanvas>
+  );
+};
+
+export const ExamplesHoverHeader = () => {
+  return (
+    <DashboardStoryCanvas>
+      <div>
+        <HorizontalGroup spacing="md" align="flex-start" wrap>
+          {renderPanel('Title items, menu, hover header', {
+            title: 'Default title',
+            description: 'This is a description',
+            menu,
+            hoverHeader: true,
+            titleItems: (
+              <PanelChrome.TitleItem title="Online">
+                <Icon name="heart" />
+              </PanelChrome.TitleItem>
+            ),
+          })}
+          {renderPanel('Multiple title items', {
+            title: 'Default title',
+            menu,
+            hoverHeader: true,
+            titleItems: [
+              <PanelChrome.TitleItem title="Online" key="A">
+                <Icon name="heart" />
+              </PanelChrome.TitleItem>,
+              <PanelChrome.TitleItem title="Link" key="B" onClick={() => {}}>
+                <Icon name="external-link-alt" />
+              </PanelChrome.TitleItem>,
+            ],
+          })}
+          {renderPanel('Hover header, loading loadingState', {
+            loadingState: LoadingState.Loading,
+            hoverHeader: true,
+            title: 'I am a hover header',
+          })}
+          {renderPanel('No title, Hover header', {
+            hoverHeader: true,
+          })}
+          {renderPanel('With action link', {
+            title: 'With link in hover header',
+            hoverHeader: true,
+            actions: (
+              <a className="external-link" href="/some/page">
+                Error details
+                <Icon name="arrow-right" />
+              </a>
             ),
           })}
         </HorizontalGroup>
