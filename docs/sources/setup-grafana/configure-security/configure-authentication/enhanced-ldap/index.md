@@ -80,4 +80,4 @@ search_filter = "(sAMAccountName=%s)"
 username  = "sAMAccountName"
 ```
 
-If the attributes aren't the same, the users' sessions will be terminated after each synchronization. That's because the search will done using the value of the username, and that value doesn't exist for the attribute used in the search filter.
+If the attributes aren't the same, the users' sessions will be terminated after each synchronization. That's because the search will be done using the username's value, and that value doesn't exist for the attribute used in the search filter.
