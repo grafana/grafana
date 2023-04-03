@@ -136,7 +136,7 @@ For details on Azure managed identities, refer to the [Azure documentation](http
 
    This hides the directory ID, application ID, and client secret fields, and the data source uses managed identity to authenticate to Azure Monitor Metrics and Logs, and Azure Resource Graph.
 
-   {{< figure src="/static/img/docs/azure-monitor/managed-identity.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor Metrics screenshot showing Dimensions" >}}
+   {{< figure src="/media/docs/grafana/data-sources/screenshot-managed-identity.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor Metrics screenshot showing Dimensions" >}}
 
 ## Query the data source
 
