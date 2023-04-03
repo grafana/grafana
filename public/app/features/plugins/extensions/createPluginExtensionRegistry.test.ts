@@ -14,7 +14,7 @@ describe('createRegistry()', () => {
       title: 'Link 1',
       description: 'Link 1 description',
       path: `/a/${pluginId}/declare-incident`,
-      placement: placement1,
+      extensionPointId: placement1,
       configure: jest.fn().mockReturnValue({}),
     };
     link2 = {
@@ -22,7 +22,7 @@ describe('createRegistry()', () => {
       title: 'Link 2',
       description: 'Link 2 description',
       path: `/a/${pluginId}/declare-incident`,
-      placement: placement2,
+      extensionPointId: placement2,
       configure: jest.fn().mockImplementation((context) => ({ title: context?.title })),
     };
 

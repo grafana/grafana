@@ -104,7 +104,7 @@ export function deepFreeze(value?: object | Record<string | symbol, unknown> | u
 }
 
 export function generateExtensionId(pluginId: string, extensionConfig: PluginExtensionConfig): string {
-  const str = `${pluginId}${extensionConfig.placement}${extensionConfig.title}`;
+  const str = `${pluginId}${extensionConfig.extensionPointId}${extensionConfig.title}`;
 
   return Array.from(str)
     .reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0)
