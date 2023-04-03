@@ -439,6 +439,13 @@ var (
 			Owner:        appO11ySquad,
 		},
 		{
+			Name:         "prometheusResourceBrowserCache",
+			Description:  "Displays browser caching options in Prometheus data source configuration",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
 			State:        FeatureStateAlpha,
