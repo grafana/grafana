@@ -85,7 +85,7 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
     <>
       <QueryHeader
         db={db}
-        preconfiguredDatabase={preconfiguredDatabase}
+        preconfiguredDataset={preconfiguredDatabase}
         onChange={onQueryHeaderChange}
         onRunQuery={onRunQuery}
         onQueryRowChange={setQueryRowFilter}

@@ -10,15 +10,15 @@ import { DB, ResourceSelectorProps } from '../types';
 interface TableSelectorProps extends ResourceSelectorProps {
   db: DB;
   chosenTable: string | null;
-  chosenDatabase: string | undefined;
+  chosenDataset: string | undefined;
   onChange: (v: SelectableValue) => void;
 }
 
-export const TableSelector = ({ db, chosenDatabase, chosenTable, className, onChange }: TableSelectorProps) => {
+export const TableSelector = ({ db, chosenDataset, chosenTable, className, onChange }: TableSelectorProps) => {
   const state = useAsync(async () => {
-    const tables = await db.tables(chosenDatabase);
+    const tables = await db.tables(chosenDataset);
     return tables.map(toOption);
-  }, [chosenDatabase]);
+  }, [chosenDataset]);
 
   return (
     <Select

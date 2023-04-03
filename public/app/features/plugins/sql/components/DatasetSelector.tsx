@@ -8,17 +8,17 @@ import { DB, ResourceSelectorProps, toOption } from '../types';
 
 interface DatasetSelectorProps extends ResourceSelectorProps {
   db: DB;
-  chosenDatabase: string;
-  preconfiguredDatabase: string;
+  chosenDataset: string;
+  preconfiguredDataset: string;
   onChange: (v: SelectableValue) => void;
 }
 
-export const DatasetSelector = ({ db, chosenDatabase, onChange, preconfiguredDatabase }: DatasetSelectorProps) => {
-  const usePreconfiguredDatabase = !!preconfiguredDatabase.length;
+export const DatasetSelector = ({ db, chosenDataset, onChange, preconfiguredDataset }: DatasetSelectorProps) => {
+  const usePreconfiguredDataset = !!preconfiguredDataset.length;
 
   const state = useAsync(async () => {
     // Early return if database is already configured; no need to fetch other databases.
-    if (usePreconfiguredDatabase) {
+    if (usePreconfiguredDataset) {
       return;
     }
 
@@ -28,30 +28,30 @@ export const DatasetSelector = ({ db, chosenDatabase, onChange, preconfiguredDat
 
   useEffect(() => {
     // Set default dataset when values are fetched
-    if (!chosenDatabase) {
+    if (!chosenDataset) {
       if (state.value && state.value[0]) {
         onChange(state.value[0]);
       }
     } else {
-      if (state.value && state.value.find((v) => v.value === chosenDatabase) === undefined) {
+      if (state.value && state.value.find((v) => v.value === chosenDataset) === undefined) {
         // if value is set and newly fetched values does not contain selected value
         if (state.value.length > 0) {
           onChange(state.value[0]);
         }
       }
     }
-  }, [state.value, chosenDatabase, onChange]);
+  }, [state.value, chosenDataset, onChange]);
 
   return (
     <Select
       aria-label="Dataset selector"
-      value={usePreconfiguredDatabase ? preconfiguredDatabase : chosenDatabase}
+      value={usePreconfiguredDataset ? preconfiguredDataset : chosenDataset}
       options={state.value}
       onChange={onChange}
-      disabled={usePreconfiguredDatabase || state.loading}
-      isLoading={usePreconfiguredDatabase ? false : state.loading}
+      disabled={usePreconfiguredDataset || state.loading}
+      isLoading={usePreconfiguredDataset ? false : state.loading}
       menuShouldPortal={true}
-      placeholder={usePreconfiguredDatabase ? preconfiguredDatabase : ''}
+      placeholder={usePreconfiguredDataset ? preconfiguredDataset : ''}
     />
   );
 };
