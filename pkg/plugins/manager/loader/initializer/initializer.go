@@ -102,9 +102,7 @@ func (i *Initializer) awsEnvVars() []string {
 
 func (i *Initializer) secureSocksProxyEnvVars() []string {
 	var variables []string
-	fmt.Println(i.cfg.ProxySettings)
 	if i.cfg.ProxySettings.Enabled {
-		// TODO: Consider adding a check for empty environment variables here
 		variables = append(variables, proxy.PluginSecureSocksProxyClientCert+"="+i.cfg.ProxySettings.ClientCert)
 		variables = append(variables, proxy.PluginSecureSocksProxyClientKey+"="+i.cfg.ProxySettings.ClientKey)
 		variables = append(variables, proxy.PluginSecureSocksProxyRootCACert+"="+i.cfg.ProxySettings.RootCA)
