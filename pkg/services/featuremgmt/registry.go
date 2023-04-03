@@ -274,8 +274,9 @@ var (
 		{
 			Name:         "newPanelChromeUI",
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
@@ -324,8 +325,9 @@ var (
 		{
 			Name:         "emptyDashboardPage",
 			Description:  "Enable the redesigned user interface of a dashboard page that includes no panels",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaDashboardsSquad,
 		},
 		{

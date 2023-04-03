@@ -90,15 +90,6 @@ To re-order operations manually, drag the operation box by its name and drop it 
 
 In same cases the query editor can detect which operations would be most appropriate for a selected log stream. In such cases it will show a hint next to the `+ Operations` button. Click on the hint to add the operations to your query.
 
-### Raw query
-
-It shows the raw query that will be created and executed by the query editor.
-
-There are two types of LogQL queries:
-
-- Log queries
-- Metric queries
-
 ## Create a log query
 
 Loki log queries return the contents of the log lines.
