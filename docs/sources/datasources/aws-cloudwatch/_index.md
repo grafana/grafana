@@ -167,7 +167,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-##### Cross-account observability: (see below)
+##### Cross-account observability permissions
 
 ```json
 {
