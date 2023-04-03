@@ -153,7 +153,7 @@ func (r *perRequestRenderKeyProvider) get(ctx context.Context, opts AuthOpts) (s
 	return generateAndSetRenderKey(r.cache, ctx, opts, r.keyExpiry)
 }
 
-func (r *perRequestRenderKeyProvider) afterRequest(ctx context.Context, opts AuthOpts, renderKey string) {
+func (r *perRequestRenderKeyProvider) afterRequest(ctx context.Context, _ AuthOpts, renderKey string) {
 	deleteRenderKey(r.cache, r.log, ctx, renderKey)
 }
 
@@ -167,7 +167,7 @@ func (r *longLivedRenderKeyProvider) get(ctx context.Context, opts AuthOpts) (st
 	return r.renderKey, nil
 }
 
-func (r *longLivedRenderKeyProvider) afterRequest(ctx context.Context, opts AuthOpts, renderKey string) {
+func (r *longLivedRenderKeyProvider) afterRequest(_ context.Context, _ AuthOpts, _ string) {
 	// do nothing - renderKey from longLivedRenderKeyProvider is deleted only after session expires
 	// or someone calls session.Dispose()
 }
