@@ -213,7 +213,7 @@ export function QueryHeader({
               <EditorField label="Dataset" width={25}>
                 <DatasetSelector
                   db={db}
-                  dataset={query.dataset === undefined ? null : query.dataset}
+                  value={query.dataset === undefined ? null : query.dataset}
                   preconfiguredDatabase={preconfiguredDatabase}
                   onChange={onDatasetChange}
                 />
