@@ -13,8 +13,8 @@ import {
 import { LoadingState } from '@grafana/schema';
 
 import { LokiDatasource } from './datasource';
-import { getRangePartition as getLogsRangePartition } from './logsTimeSplitting';
-import { getRangePartition as getMetricRangePartition } from './metricTimeSplitting';
+import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
+import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
 import { isLogsQuery } from './queryUtils';
 import { combineResponses } from './responseUtils';
 import { LokiQuery, LokiQueryType } from './types';
@@ -38,8 +38,8 @@ export function partitionTimeRange(
   const step = Math.max(intervalMs * resolution, safeStep);
 
   const ranges = isLogsQuery
-    ? getLogsRangePartition(start, end, duration)
-    : getMetricRangePartition(start, end, step, duration);
+    ? splitLogsTimeRange(start, end, duration)
+    : splitMetricTimeRange(start, end, step, duration);
 
   return ranges.map(([start, end]) => {
     const from = dateTime(start);

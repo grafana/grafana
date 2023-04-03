@@ -55,17 +55,17 @@ describe('runSplitQuery()', () => {
       range,
     });
     beforeAll(() => {
-      jest.spyOn(logsTimeSplit, 'getRangePartition').mockReturnValue([]);
-      jest.spyOn(metricTimeSplit, 'getRangePartition').mockReturnValue([]);
+      jest.spyOn(logsTimeSplit, 'splitTimeRange').mockReturnValue([]);
+      jest.spyOn(metricTimeSplit, 'splitTimeRange').mockReturnValue([]);
     });
     afterAll(() => {
-      jest.mocked(logsTimeSplit.getRangePartition).mockRestore();
-      jest.mocked(metricTimeSplit.getRangePartition).mockRestore();
+      jest.mocked(logsTimeSplit.splitTimeRange).mockRestore();
+      jest.mocked(metricTimeSplit.splitTimeRange).mockRestore();
     });
     test('Ignores hidden queries', async () => {
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        expect(logsTimeSplit.getRangePartition).toHaveBeenCalled();
-        expect(metricTimeSplit.getRangePartition).not.toHaveBeenCalled();
+        expect(logsTimeSplit.splitTimeRange).toHaveBeenCalled();
+        expect(metricTimeSplit.splitTimeRange).not.toHaveBeenCalled();
       });
     });
   });
