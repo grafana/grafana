@@ -41,10 +41,10 @@ export const defaultFilters = {
  * Controls the state of search input that highlights spans if they match the search string.
  * @param spans
  */
-export function useSearchNewTraceView(spans?: TraceSpan[]) {
+export function useSearchNewTraceView(spans: TraceSpan[]) {
   const [newTraceViewSearch, setNewTraceViewSearch] = useState<SearchProps>(defaultFilters);
   const spanFilterMatches: Set<string> | undefined = useMemo(() => {
-    return newTraceViewSearch && spans ? filterSpansNewTraceView(newTraceViewSearch, spans) : undefined;
+    return spans && filterSpansNewTraceView(newTraceViewSearch, spans);
   }, [newTraceViewSearch, spans]);
 
   return { newTraceViewSearch, setNewTraceViewSearch, spanFilterMatches };

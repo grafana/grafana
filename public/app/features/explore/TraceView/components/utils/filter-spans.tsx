@@ -38,44 +38,47 @@ export function filterSpansNewTraceView(searchProps: SearchProps, spans: TraceSp
   }
 
   if (arraysToMatchAcross.length > 0) {
+    // only return spans that are matched in all filters used
     return new Set([...arraysToMatchAcross].reduce((a, b) => a.filter((c) => b.includes(c))));
   }
   return undefined;
 }
 
 const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
-  // remove empty tags
+  // remove empty/default tags
   tags = tags.filter((tag) => {
+    // tag.key === '' when it is cleared via pressing x icon in select field
     return (tag.key && tag.key !== '') || tag.value;
   });
 
   if (tags.length > 0) {
     return spans
       .filter((span: TraceSpan) => {
-        // match against every tag filter (AND filter)
+        // match against every tag filter
         return tags.every((tag: Tag) => {
-          // tag.key === '' when it is cleared via pressing x icon in select field
           if (tag.key && tag.value) {
-            const found = span.tags.some((kv) => checkKeyAndValueForMatch(tag, kv));
-            const found2 = span.process.tags.some((kv) => checkKeyAndValueForMatch(tag, kv));
-            const found3 = span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForMatch(tag, kv)));
-            return checkForMatch(tag.operator, found, found2, found3);
+            if (span.tags.some((kv) => checkKeyAndValueForMatch(tag, kv))) {
+              return getReturnValue(tag.operator, true);
+            } else if (span.process.tags.some((kv) => checkKeyAndValueForMatch(tag, kv))) {
+              return getReturnValue(tag.operator, true);
+            } else if (span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForMatch(tag, kv)))) {
+              return getReturnValue(tag.operator, true);
+            }
           } else if (tag.key) {
-            const found = span.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key));
-            const found2 = span.process.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key));
-            const found3 = span.logs.some((log) => log.fields.some((kv) => checkKeyForMatch(tag.key!, kv.key)));
-            return checkForMatch(tag.operator, found, found2, found3);
+            if (span.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key))) {
+              return getReturnValue(tag.operator, true);
+            } else if (span.process.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key))) {
+              return getReturnValue(tag.operator, true);
+            } else if (span.logs.some((log) => log.fields.some((kv) => checkKeyForMatch(tag.key!, kv.key)))) {
+              return getReturnValue(tag.operator, true);
+            }
           }
-          return false;
+          return getReturnValue(tag.operator, false);
         });
       })
       .map((span: TraceSpan) => span.spanID);
   }
   return undefined;
-};
-
-const checkForMatch = (operator: string, found: boolean, found2: boolean, found3: boolean) => {
-  return operator === '=' ? found || found2 || found3 : !found && !found2 && !found3;
 };
 
 const checkKeyForMatch = (tagKey: string, key: string) => {
@@ -84,6 +87,10 @@ const checkKeyForMatch = (tagKey: string, key: string) => {
 
 const checkKeyAndValueForMatch = (tag: Tag, kv: TraceKeyValuePair) => {
   return tag.key === kv.key.toString() && tag.value === kv.value.toString() ? true : false;
+};
+
+const getReturnValue = (operator: string, found: boolean) => {
+  return operator === '=' ? found : !found;
 };
 
 const getServiceNameMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
@@ -117,21 +124,22 @@ const getDurationMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
     });
   }
   if (to) {
-    if (filteredSpans.length > 0) {
-      filteredSpans = filteredSpans.filter((span: TraceSpan) => {
-        return searchProps.toOperator === '<' ? span.duration < to : span.duration <= to;
-      });
-    } else {
-      filteredSpans = spans.filter((span: TraceSpan) => {
-        return searchProps.toOperator === '<' ? span.duration < to : span.duration <= to;
-      });
-    }
+    const filterForDuration = (span: TraceSpan) =>
+      searchProps.toOperator === '<' ? span.duration < to : span.duration <= to;
+    filteredSpans =
+      filteredSpans.length > 0
+        ? filteredSpans.filter((span: TraceSpan) => {
+            return filterForDuration(span);
+          })
+        : spans.filter((span: TraceSpan) => {
+            return filterForDuration(span);
+          });
   }
 
   return filteredSpans.map((span: TraceSpan) => span.spanID);
 };
 
-const convertTimeFilter = (time: string) => {
+export const convertTimeFilter = (time: string) => {
   if (time.includes('μs')) {
     return parseFloat(time.split('μs')[0]);
   } else if (time.includes('ms')) {

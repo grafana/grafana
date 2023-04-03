@@ -19,6 +19,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import { SearchProps } from '../../useSearch';
+import { convertTimeFilter } from '../utils/filter-spans';
 
 export type NewTracePageSearchBarProps = {
   search: SearchProps;
@@ -84,10 +85,11 @@ export default memo(function NewTracePageSearchBar(props: NewTracePageSearchBarP
   const buttonEnabled =
     (search.serviceName && search.serviceName !== '') ||
     (search.spanName && search.spanName !== '') ||
-    (search.from && search.from !== '') ||
-    (search.to && search.to !== '') ||
-    (search.tags[0].key && search.tags[0].key !== '') ||
-    (search.tags[0].value && search.tags[0].value !== '');
+    convertTimeFilter(search.from || '') ||
+    convertTimeFilter(search.to || '') ||
+    search.tags.some((tag) => {
+      return tag.key;
+    });
 
   return (
     <div className={styles.searchBar}>

@@ -92,7 +92,7 @@ export function TraceView(props: Props) {
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
-  const { newTraceViewSearch, setNewTraceViewSearch, spanFilterMatches } = useSearchNewTraceView(traceProp?.spans);
+  const { newTraceViewSearch, setNewTraceViewSearch, spanFilterMatches } = useSearchNewTraceView(traceProp.spans);
   const [newTraceViewFocusedSpanIdForSearch, setNewTraceViewFocusedSpanIdForSearch] = useState('');
 
   const styles = useStyles2(getStyles);

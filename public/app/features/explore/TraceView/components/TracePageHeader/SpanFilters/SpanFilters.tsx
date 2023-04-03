@@ -20,7 +20,17 @@ import { useToggle } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import { Collapse, HorizontalGroup, InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
+import {
+  Collapse,
+  HorizontalGroup,
+  Icon,
+  InlineField,
+  InlineFieldRow,
+  Input,
+  Select,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 
 import { randomId, SearchProps } from '../../../useSearch';
 import { Trace } from '../../types';
@@ -53,7 +63,7 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
     datasourceType,
   } = props;
   const styles = { ...useStyles2(getStyles) };
-  const [showSpanFilters, setShowSpanFilters] = useToggle(true);
+  const [showSpanFilters, setShowSpanFilters] = useToggle(false);
   const [spanData, setSpanData] = useState<SpanData>({
     serviceNames: [],
     spanNames: [],
@@ -112,32 +122,30 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
     });
   };
 
-  const tagValueOptions = (key: string | undefined) => {
+  const tagValueOptions = (key: string) => {
     let values: string[] = [];
 
-    if (key) {
-      trace.spans.map((span) => {
-        span.tags.map((tag) => {
-          if (tag.key === key) {
-            values.push(tag.value.toString());
-          }
-        });
-        span.process.tags.map((tag) => {
-          if (tag.key === key) {
-            values.push(tag.value.toString());
-          }
-        });
-        if (span.logs !== null) {
-          span.logs.map((log) => {
-            log.fields.map((field) => {
-              if (field.key === key) {
-                values.push(field.value.toString());
-              }
-            });
-          });
+    trace.spans.map((span) => {
+      span.tags.map((tag) => {
+        if (tag.key === key) {
+          values.push(tag.value.toString());
         }
       });
-    }
+      span.process.tags.map((tag) => {
+        if (tag.key === key) {
+          values.push(tag.value.toString());
+        }
+      });
+      if (span.logs !== null) {
+        span.logs.map((log) => {
+          log.fields.map((field) => {
+            if (field.key === key) {
+              values.push(field.value.toString());
+            }
+          });
+        });
+      }
+    });
 
     return uniq(values)
       .sort()
@@ -145,19 +153,6 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
         return toOption(name);
       });
   };
-
-  // keep tagValues in sync with tags that have selected keys
-  // so only tags with keys will show values when select opened
-  useEffect(() => {
-    for (const key of Object.keys(tagValues)) {
-      search.tags.map((tag) => {
-        if (tag.id === key && tag.key === '') {
-          delete tagValues[key];
-          setTagValues(tagValues);
-        }
-      });
-    }
-  }, [search.tags, tagValues]);
 
   const addTag = () => {
     const tag = {
@@ -186,19 +181,32 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
     return null;
   }
 
+  const collapseLabel = (
+    <Tooltip
+      content="Filter your spans below. Each filter added acts as an AND operator i.e. the more filters, the more specific the filtered spans."
+      placement="right"
+    >
+      <span id="collapse-label">
+        Span Filters
+        <Icon size="sm" name="info-circle" />
+      </span>
+    </Tooltip>
+  );
+
   return (
     <div className={styles.container}>
-      <Collapse label="Span Filters" collapsible={true} isOpen={showSpanFilters} onToggle={setShowSpanFilters}>
+      <Collapse label={collapseLabel} collapsible={true} isOpen={showSpanFilters} onToggle={setShowSpanFilters}>
         <InlineFieldRow>
           <InlineField label="Service Name" labelWidth={16}>
-            <HorizontalGroup spacing={'none'}>
+            <HorizontalGroup spacing={'xs'}>
               <Select
-                onChange={(v) => setSearch({ ...search, serviceNameOperator: v?.value || '=' })}
+                aria-label="Select service name operator"
+                onChange={(v) => setSearch({ ...search, serviceNameOperator: v.value! })}
                 options={[toOption('='), toOption('!=')]}
                 value={search.serviceNameOperator}
               />
               <Select
-                aria-label={'select-service-name'}
+                aria-label="Select service name"
                 isClearable
                 onChange={(v) => setSearch({ ...search, serviceName: v?.value || '' })}
                 options={serviceNameOptions()}
@@ -209,14 +217,15 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField label="Span Name" labelWidth={16}>
-            <HorizontalGroup spacing={'none'}>
+            <HorizontalGroup spacing={'xs'}>
               <Select
-                onChange={(v) => setSearch({ ...search, spanNameOperator: v?.value || '=' })}
+                aria-label="Select span name operator"
+                onChange={(v) => setSearch({ ...search, spanNameOperator: v.value! })}
                 options={[toOption('='), toOption('!=')]}
                 value={search.spanNameOperator}
               />
               <Select
-                aria-label={'select-span-name'}
+                aria-label="Select span name"
                 isClearable
                 onChange={(v) => setSearch({ ...search, spanName: v?.value || '' })}
                 options={spanNameOptions()}
@@ -227,29 +236,31 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField label="Duration" labelWidth={16}>
-            <HorizontalGroup spacing={'none'}>
+            <HorizontalGroup spacing={'xs'}>
               <Select
-                onChange={(v) => setSearch({ ...search, fromOperator: v?.value || '>' })}
+                aria-label="Select from operator"
+                onChange={(v) => setSearch({ ...search, fromOperator: v.value! })}
                 options={[toOption('>'), toOption('>=')]}
                 value={search.fromOperator}
               />
               <Input
-                // invalid={invalid}
+                aria-label="Select from value"
                 onChange={(v) => setSearch({ ...search, from: v.currentTarget.value })}
                 placeholder="e.g. 100ms, 1.2s"
-                value={search.from}
+                value={search.from || ''}
                 width={18}
               />
               <Select
-                onChange={(v) => setSearch({ ...search, toOperator: v?.value || '<' })}
+                aria-label="Select to operator"
+                onChange={(v) => setSearch({ ...search, toOperator: v.value! })}
                 options={[toOption('<'), toOption('<=')]}
                 value={search.toOperator}
               />
               <Input
-                // invalid={invalid}
+                aria-label="Select to value"
                 onChange={(v) => setSearch({ ...search, to: v.currentTarget.value })}
                 placeholder="e.g. 100ms, 1.2s"
-                value={search.to}
+                value={search.to || ''}
                 width={18}
               />
             </HorizontalGroup>
@@ -260,10 +271,11 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
             <div>
               {search.tags.map((tag, i) => (
                 <div key={i}>
-                  <HorizontalGroup spacing={'none'} width={'auto'}>
+                  <HorizontalGroup spacing={'xs'} width={'auto'}>
                     <Select
-                      aria-label={`select tag-${tag.id} key`}
+                      aria-label={`Select tag-${tag.id} key`}
                       isClearable
+                      key={tag.key}
                       onChange={(v) => {
                         setSearch({
                           ...search,
@@ -272,32 +284,31 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
                           }),
                         });
 
-                        setTimeout(() => {
-                          if (v?.value) {
-                            setTagValues({
-                              ...tagValues,
-                              [tag.id]: tagValueOptions(v.value),
-                            });
-                          } else {
-                            // removed value
-                            const updatedValues = { ...tagValues };
-                            if (updatedValues[tag.id]) {
-                              delete updatedValues[tag.id];
-                            }
-                            setTagValues(updatedValues);
+                        if (v?.value) {
+                          setTagValues({
+                            ...tagValues,
+                            [tag.id]: tagValueOptions(v.value),
+                          });
+                        } else {
+                          // removed value
+                          const updatedValues = { ...tagValues };
+                          if (updatedValues[tag.id]) {
+                            delete updatedValues[tag.id];
                           }
-                        }, 20);
+                          setTagValues(updatedValues);
+                        }
                       }}
                       options={tagKeyOptions()}
                       placeholder="Select tag"
                       value={tag.key}
                     />
                     <Select
+                      aria-label={`Select tag-${tag.id} operator`}
                       onChange={(v) => {
                         setSearch({
                           ...search,
                           tags: search.tags?.map((x) => {
-                            return x.id === tag.id ? { ...x, operator: v?.value || '=' } : x;
+                            return x.id === tag.id ? { ...x, operator: v.value! } : x;
                           }),
                         });
                       }}
@@ -306,8 +317,9 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
                     />
                     <span className={styles.tagValues}>
                       <Select
-                        aria-label={`select tag-${tag.id} value`}
+                        aria-label={`Select tag-${tag.id} value`}
                         isClearable
+                        key={tag.value}
                         onChange={(v) => {
                           setSearch({
                             ...search,
@@ -322,6 +334,7 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
                       />
                     </span>
                     <AccessoryButton
+                      aria-label={`Remove tag-${tag.id}`}
                       variant={'secondary'}
                       icon={'times'}
                       onClick={() => removeTag(tag.id)}
@@ -329,7 +342,13 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
                     />
                     <span className={styles.addTag}>
                       {search?.tags?.length && i === search.tags.length - 1 && (
-                        <AccessoryButton variant={'secondary'} icon={'plus'} onClick={addTag} title={'Add tag'} />
+                        <AccessoryButton
+                          aria-label="Add tag"
+                          variant={'secondary'}
+                          icon={'plus'}
+                          onClick={addTag}
+                          title={'Add tag'}
+                        />
                       )}
                     </span>
                   </HorizontalGroup>
@@ -365,6 +384,10 @@ const getStyles = () => {
       & > div {
         border-left: none;
         border-right: none;
+      }
+
+      #collapse-label svg {
+        margin: -1px 0 0 10px;
       }
     `,
     addTag: css`
