@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { dateTime, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, HorizontalGroup, Select, useStyles2 } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
@@ -46,10 +46,15 @@ export default function AlertmanagerConfigSelector({
       return [];
     }
 
-    const configs: ValidAmConfigOption[] = validAmConfigs.map((config) => ({
-      label: config.last_applied ? `Config from ${new Date(config.last_applied).toLocaleString()}` : 'Previous config',
-      value: config,
-    }));
+    const configs: ValidAmConfigOption[] = validAmConfigs.map((config) => {
+      const date = new Date(config.last_applied!);
+      return {
+        label: config.last_applied
+          ? `Config from ${date.toLocaleString()} (${dateTime(date).locale('en').fromNow(true)} ago)`
+          : 'Previous config',
+        value: config,
+      };
+    });
     onChange(configs[0]);
     return configs;
   }, [validAmConfigs, onChange]);
