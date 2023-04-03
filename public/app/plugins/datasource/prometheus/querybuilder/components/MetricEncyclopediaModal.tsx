@@ -485,7 +485,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
     <Modal
       data-testid={testIds.metricModal}
       isOpen={isOpen}
-      title="Browse Metrics"
+      title="Browse metrics"
       onDismiss={onClose}
       aria-label="Metric Encyclopedia"
       className={styles.modal}

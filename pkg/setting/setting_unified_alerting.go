@@ -137,7 +137,7 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 	// than disable it. This issue can be found here
 	hasEnabled := section.Key("enabled").Value() != ""
 	if !hasEnabled {
-		// TODO: Remove in Grafana v9
+		// TODO: Remove in Grafana v10
 		if cfg.IsFeatureToggleEnabled("ngalert") {
 			cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
 			// feature flag overrides the legacy alerting setting
