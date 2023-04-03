@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -258,8 +259,20 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		}
 
 		resultFormat := dataquery.AzureMonitorQueryAzureLogAnalyticsResultFormatTrace
+		traceIdVariable := "${__data.fields.traceID}"
 		queryJSONModel.AzureLogAnalytics.ResultFormat = &resultFormat
 		queryJSONModel.AzureLogAnalytics.Query = &query.Query
+
+		if *queryJSONModel.AzureLogAnalytics.OperationId == "" {
+			splits := strings.Split(query.Query, "|")
+			splits = append(splits[:2], splits[1:]...)
+			splits[2] = fmt.Sprintf(" where (operation_Id != '' and operation_Id == '%s') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '%s')", traceIdVariable, traceIdVariable)
+			updatedQuery := strings.Join(splits, "|")
+
+			queryJSONModel.AzureLogAnalytics.Query = &updatedQuery
+			queryJSONModel.AzureLogAnalytics.OperationId = &traceIdVariable
+		}
+
 		AddCustomDataLink(*frame, data.DataLink{
 			Title: "Explore Trace: ${__data.fields.traceID}",
 			URL:   "",
