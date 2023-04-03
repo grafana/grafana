@@ -5,8 +5,8 @@ import { getPluginExtensions } from './getPluginExtensions';
 import { assertPluginExtensionLink } from './validators';
 
 describe('getPluginExtensions()', () => {
-  const placement1 = 'grafana/dashboard/panel/menu';
-  const placement2 = 'plugins/myorg-basic-app/start';
+  const extensionPoint1 = 'grafana/dashboard/panel/menu';
+  const extensionPoint2 = 'plugins/myorg-basic-app/start';
   const pluginId = 'grafana-basic-app';
   let link1: PluginExtensionLinkConfig, link2: PluginExtensionLinkConfig;
 
@@ -16,7 +16,7 @@ describe('getPluginExtensions()', () => {
       title: 'Link 1',
       description: 'Link 1 description',
       path: `/a/${pluginId}/declare-incident`,
-      placement: placement1,
+      extensionPointId: extensionPoint1,
       configure: jest.fn().mockReturnValue({}),
     };
     link2 = {
@@ -24,7 +24,7 @@ describe('getPluginExtensions()', () => {
       title: 'Link 2',
       description: 'Link 2 description',
       path: `/a/${pluginId}/declare-incident`,
-      placement: placement2,
+      extensionPointId: extensionPoint2,
       configure: jest.fn().mockImplementation((context) => ({ title: context?.title })),
     };
 
@@ -33,7 +33,7 @@ describe('getPluginExtensions()', () => {
 
   test('should return the extensions for the given placement', () => {
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link2] }]);
-    const { extensions } = getPluginExtensions({ registry, placement: placement1 });
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint1 });
 
     expect(extensions).toHaveLength(1);
     expect(extensions[0]).toEqual(
@@ -49,7 +49,7 @@ describe('getPluginExtensions()', () => {
 
   test('should return with an empty list if there are no extensions registered for a placement yet', () => {
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link2] }]);
-    const { extensions } = getPluginExtensions({ registry, placement: 'placement-with-no-extensions' });
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: 'placement-with-no-extensions' });
 
     expect(extensions).toEqual([]);
   });
@@ -58,7 +58,7 @@ describe('getPluginExtensions()', () => {
     const context = { title: 'New title from the context!' };
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
 
-    getPluginExtensions({ registry, context, placement: placement2 });
+    getPluginExtensions({ registry, context, extensionPointId: extensionPoint2 });
 
     expect(link2.configure).toHaveBeenCalledTimes(1);
     expect(link2.configure).toHaveBeenCalledWith(context);
@@ -72,7 +72,7 @@ describe('getPluginExtensions()', () => {
     }));
 
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
-    const { extensions } = getPluginExtensions({ registry, placement: placement2 });
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
 
     assertPluginExtensionLink(extension);
@@ -91,7 +91,7 @@ describe('getPluginExtensions()', () => {
     }));
 
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
-    const { extensions } = getPluginExtensions({ registry, placement: placement2 });
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
 
     expect(link2.configure).toHaveBeenCalledTimes(1);
     expect(extensions).toHaveLength(0);
@@ -99,7 +99,7 @@ describe('getPluginExtensions()', () => {
   test('should pass a frozen copy of the context to the configure() function', () => {
     const context = { title: 'New title from the context!' };
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
-    const { extensions } = getPluginExtensions({ registry, context, placement: placement2 });
+    const { extensions } = getPluginExtensions({ registry, context, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
     const frozenContext = (link2.configure as jest.Mock).mock.calls[0][0];
 
@@ -121,7 +121,7 @@ describe('getPluginExtensions()', () => {
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
 
     expect(() => {
-      getPluginExtensions({ registry, placement: placement2 });
+      getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
     }).not.toThrow();
 
     expect(link2.configure).toHaveBeenCalledTimes(1);
@@ -138,8 +138,8 @@ describe('getPluginExtensions()', () => {
     }));
 
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link2] }]);
-    const { extensions: extensionsAtPlacement1 } = getPluginExtensions({ registry, placement: placement1 });
-    const { extensions: extensionsAtPlacement2 } = getPluginExtensions({ registry, placement: placement2 });
+    const { extensions: extensionsAtPlacement1 } = getPluginExtensions({ registry, extensionPointId: extensionPoint1 });
+    const { extensions: extensionsAtPlacement2 } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
 
     expect(extensionsAtPlacement1).toHaveLength(0);
     expect(extensionsAtPlacement2).toHaveLength(0);
@@ -158,7 +158,7 @@ describe('getPluginExtensions()', () => {
     link2.configure = jest.fn().mockImplementation(() => overrides);
 
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
-    const { extensions } = getPluginExtensions({ registry, placement: placement2 });
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
 
     expect(extensions).toHaveLength(0);
     expect(link2.configure).toHaveBeenCalledTimes(1);
@@ -169,7 +169,7 @@ describe('getPluginExtensions()', () => {
     link2.configure = jest.fn().mockImplementation(() => Promise.resolve({}));
 
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
-    const { extensions } = getPluginExtensions({ registry, placement: placement2 });
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
 
     expect(extensions).toHaveLength(0);
     expect(link2.configure).toHaveBeenCalledTimes(1);
@@ -180,7 +180,7 @@ describe('getPluginExtensions()', () => {
     link2.configure = jest.fn().mockImplementation(() => undefined);
 
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
-    const { extensions } = getPluginExtensions({ registry, placement: placement2 });
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
 
     expect(extensions).toHaveLength(0);
     expect(global.console.warn).toHaveBeenCalledTimes(0); // As this is intentional, no warning should be logged
@@ -194,7 +194,7 @@ describe('getPluginExtensions()', () => {
 
     const context = {};
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
-    const { extensions } = getPluginExtensions({ registry, placement: placement2 });
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
 
     assertPluginExtensionLink(extension);
@@ -217,7 +217,7 @@ describe('getPluginExtensions()', () => {
     link2.onClick = jest.fn().mockRejectedValue(new Error('testing'));
 
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
-    const { extensions } = getPluginExtensions({ registry, placement: placement2 });
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
 
     assertPluginExtensionLink(extension);
@@ -236,7 +236,7 @@ describe('getPluginExtensions()', () => {
     });
 
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
-    const { extensions } = getPluginExtensions({ registry, placement: placement2 });
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
 
     assertPluginExtensionLink(extension);

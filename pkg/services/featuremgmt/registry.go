@@ -494,5 +494,11 @@ var (
 			State:       FeatureStateAlpha,
 			Owner:       grafanaBackendPlatformSquad,
 		},
+		{
+			Name:        "renderAuthJWT",
+			Description: "Uses JWT-based auth for rendering instead of relying on remote cache",
+			State:       FeatureStateBeta,
+			Owner:       grafanaAsCodeSquad,
+		},
 	}
 )
