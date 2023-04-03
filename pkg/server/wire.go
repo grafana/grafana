@@ -360,7 +360,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 	authnimpl.ProvideService,
 	supportbundlesimpl.ProvideService,
-	oauthimpl.ProvideService,
 	wire.Bind(new(oauthserver.OAuth2Service), new(*oauthimpl.OAuth2ServiceImpl)),
 	modules.WireSet,
 )

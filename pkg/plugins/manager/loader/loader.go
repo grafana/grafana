@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/storage"
-	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -45,7 +44,7 @@ type Loader struct {
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
 	roleRegistry plugins.RoleRegistry, pluginsCDNService *pluginscdn.Service, assetPath *assetpath.Service,
-	oauthServer oauthserver.OAuth2Service) *Loader {
+	oauthServer plugins.OAuth2Service) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
 		storage.FileSystem(log.NewPrettyLogger("loader.fs"), cfg.PluginsPath), roleRegistry, pluginsCDNService,
 		assetPath, pluginFinder, oauthServer)
@@ -54,7 +53,7 @@ func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugi
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry,
-	pluginsCDNService *pluginscdn.Service, assetPath *assetpath.Service, pluginFinder finder.Finder, oauthServer oauthserver.OAuth2Service) *Loader {
+	pluginsCDNService *pluginscdn.Service, assetPath *assetpath.Service, pluginFinder finder.Finder, oauthServer plugins.OAuth2Service) *Loader {
 	return &Loader{
 		pluginFinder:       pluginFinder,
 		pluginRegistry:     pluginRegistry,

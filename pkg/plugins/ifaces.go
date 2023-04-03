@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/services/oauthserver"
 )
 
 // Store is the publicly accessible storage for plugins.
@@ -124,4 +125,8 @@ type ClientMiddlewareFunc func(next Client) Client
 // CreateClientMiddleware implements the ClientMiddleware interface.
 func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
 	return fn(next)
+}
+
+type OAuth2Service interface {
+	SaveExternalService(ctx context.Context, cmd *oauthserver.ExternalServiceRegistration) (*oauthserver.ClientDTO, error)
 }

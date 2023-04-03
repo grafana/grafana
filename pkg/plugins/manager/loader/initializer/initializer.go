@@ -21,10 +21,10 @@ type Initializer struct {
 	license         plugins.Licensing
 	backendProvider plugins.BackendFactoryProvider
 	log             log.Logger
-	oauthServer     oauthserver.OAuth2Service
+	oauthServer     plugins.OAuth2Service
 }
 
-func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing, oauthServer oauthserver.OAuth2Service) Initializer {
+func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing, oauthServer plugins.OAuth2Service) Initializer {
 	return Initializer{
 		cfg:             cfg,
 		license:         license,
@@ -131,7 +131,7 @@ func (i *Initializer) registerService(pluginID string, oauthAppInfo *oauthserver
 		Key:                    oauthAppInfo.Key,
 	}
 
-	cli, err := i.oauthServer.RegisterExternalService(context.Background(), svc)
+	cli, err := i.oauthServer.SaveExternalService(context.Background(), svc)
 	if err != nil {
 		return nil, err
 	}

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/services/oauthserver/oauthimpl"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
@@ -59,6 +60,8 @@ var WireSet = wire.NewSet(
 	sources.ProvideService,
 	pluginSettings.ProvideService,
 	wire.Bind(new(pluginsettings.Service), new(*pluginSettings.Service)),
+	oauthimpl.ProvideService,
+	wire.Bind(new(plugins.OAuth2Service), new(*oauthimpl.OAuth2ServiceImpl)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
