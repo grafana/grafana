@@ -17,10 +17,6 @@ interface TableSelectorProps extends ResourceSelectorProps {
 
 export const TableSelector = ({ db, query, value, className, onChange, defaultDatabase }: TableSelectorProps) => {
   const state = useAsync(async () => {
-    // JEV: what does this do?
-    // if (!query.dataset && !forceFetch) {
-    //   return [];
-    // }
     const tables = await db.tables(defaultDatabase);
     return tables.map(toOption);
   }, [query.dataset]);
