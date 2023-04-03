@@ -2,12 +2,14 @@ package apiserver
 
 import (
 	"context"
+	"fmt"
 
 	customStorage "k8s.io/apiextensions-apiserver/pkg/storage"
 	"k8s.io/apiextensions-apiserver/pkg/storage/filepath"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
@@ -37,5 +39,9 @@ var NewStorage customStorage.NewStorageFunc = func(
 
 // test to override the storage function from the filepath storage
 func (s *Storage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	user, ok := request.UserFrom(ctx)
+	if ok {
+		fmt.Printf("\n\nK8s storage user: %+v\n\n", user)
+	}
 	return s.Storage.Create(ctx, obj, createValidation, options)
 }
