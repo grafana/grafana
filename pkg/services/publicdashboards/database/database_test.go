@@ -738,7 +738,6 @@ func TestGetMetrics(t *testing.T) {
 		insertPublicDashboard(t, publicdashboardStore, savedDashboard2.UID, savedDashboard2.OrgID, true, PublicShareType)
 		insertPublicDashboard(t, publicdashboardStore, savedDashboard3.UID, savedDashboard3.OrgID, true, EmailShareType)
 		insertPublicDashboard(t, publicdashboardStore, savedDashboard4.UID, savedDashboard4.OrgID, false, EmailShareType)
-
 	}
 
 	t.Run("returns correct list of metrics", func(t *testing.T) {

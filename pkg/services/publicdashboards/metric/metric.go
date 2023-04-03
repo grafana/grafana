@@ -3,11 +3,12 @@ package metric
 import (
 	"context"
 	"errors"
+	"strconv"
+	"time"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/prometheus/client_golang/prometheus"
-	"strconv"
-	"time"
 )
 
 type PublicDashboardsMetricServiceImpl struct {
@@ -45,13 +46,13 @@ func (s *PublicDashboardsMetricServiceImpl) registerMetrics() error {
 }
 
 func (s *PublicDashboardsMetricServiceImpl) Run(ctx context.Context) error {
-	ticker := time.Tick(12 * time.Hour)
+	ticker := time.NewTicker(12 * time.Hour)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-ticker:
+		case <-ticker.C:
 			records, err := s.store.GetMetrics(ctx)
 			if err != nil {
 				s.log.Error("error collecting background metrics", "err", err)
