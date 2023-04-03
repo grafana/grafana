@@ -212,7 +212,7 @@ export function QueryHeader({
                 <DatasetSelector
                   db={db}
                   // JEV: if no preconfig dataset, this will be empty string...
-                  chosenDataset={query.dataset!}
+                  dataset={query.dataset!}
                   preconfiguredDataset={preconfiguredDataset}
                   onChange={onDatasetChange}
                 />
@@ -222,8 +222,8 @@ export function QueryHeader({
             <EditorField label="Table" width={25}>
               <TableSelector
                 db={db}
-                chosenDataset={query.dataset}
-                chosenTable={query.table === undefined ? null : query.table}
+                dataset={query.dataset}
+                table={query.table === undefined ? null : query.table}
                 onChange={onTableChange}
                 applyDefault
               />

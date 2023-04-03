@@ -8,12 +8,12 @@ import { DB, ResourceSelectorProps, toOption } from '../types';
 
 interface DatasetSelectorProps extends ResourceSelectorProps {
   db: DB;
-  chosenDataset: string;
+  dataset: string;
   preconfiguredDataset: string;
   onChange: (v: SelectableValue) => void;
 }
 
-export const DatasetSelector = ({ db, chosenDataset, onChange, preconfiguredDataset }: DatasetSelectorProps) => {
+export const DatasetSelector = ({ db, dataset, onChange, preconfiguredDataset }: DatasetSelectorProps) => {
   const usePreconfiguredDataset = !!preconfiguredDataset.length;
 
   const state = useAsync(async () => {
@@ -28,24 +28,24 @@ export const DatasetSelector = ({ db, chosenDataset, onChange, preconfiguredData
 
   useEffect(() => {
     // Set default dataset when values are fetched
-    if (!chosenDataset) {
+    if (!dataset) {
       if (state.value && state.value[0]) {
         onChange(state.value[0]);
       }
     } else {
-      if (state.value && state.value.find((v) => v.value === chosenDataset) === undefined) {
+      if (state.value && state.value.find((v) => v.value === dataset) === undefined) {
         // if value is set and newly fetched values does not contain selected value
         if (state.value.length > 0) {
           onChange(state.value[0]);
         }
       }
     }
-  }, [state.value, chosenDataset, onChange]);
+  }, [state.value, dataset, onChange]);
 
   return (
     <Select
       aria-label="Dataset selector"
-      value={usePreconfiguredDataset ? preconfiguredDataset : chosenDataset}
+      value={usePreconfiguredDataset ? preconfiguredDataset : dataset}
       options={state.value}
       onChange={onChange}
       disabled={usePreconfiguredDataset || state.loading}
