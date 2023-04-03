@@ -23,8 +23,10 @@ docker_build () {
 }
 
 _stable_or_beta="stable"
-_grafana_tag="grafana"
-_grafana_enterprise_tag="grafana-enterprise"
+_grafana_deb_tag="grafana"
+_grafana_rpm_tag="grafana"
+_grafana_enterprise_deb_tag="grafana-enterprise"
+_grafana_enterprise_rpm_tag="grafana-enterprise"
 
 # CHECK_BETA=$1
 if [[ $1 == "beta" ]]; then
@@ -32,22 +34,24 @@ if [[ $1 == "beta" ]]; then
 elif [[ $1 != "" ]]; then
   # Assume user is passing in version
   _version="$1"
-  _grafana_tag="grafana=$_version"
-  _grafana_enterprise_tag="grafana-enterprise=$_version"
+  _grafana_deb_tag="grafana=$_version"
+  _grafana_rpm_tag="grafana-$_version"
+  _grafana_enterprise_deb_tag="grafana-enterprise=$_version"
+  _grafana_enterprise_rpm_tag="grafana-enterprise-$_version"
 fi
 
 # Testing deb repos
-docker_build "Dockerfile.deb" "deb-oss-$_stable_or_beta.list" "$_grafana_tag" "gf-oss-deb-repo-test"
+docker_build "Dockerfile.deb" "deb-oss-$_stable_or_beta.list" "$_grafana_deb_tag" "gf-oss-deb-repo-test"
 _oss_deb_v="$retval"
 
-docker_build "Dockerfile.deb" "deb-ee-$_stable_or_beta.list" "$_grafana_enterprise_tag" "gf-ee-deb-repo-test"
+docker_build "Dockerfile.deb" "deb-ee-$_stable_or_beta.list" "$_grafana_enterprise_deb_tag" "gf-ee-deb-repo-test"
 _ee_deb_v="$retval"
 
 # Testing rpm repos
-docker_build "Dockerfile.rpm" "rpm-oss-$_stable_or_beta.list" "$_grafana_tag" "gf-oss-rpm-repo-test"
+docker_build "Dockerfile.rpm" "rpm-oss-$_stable_or_beta.list" "$_grafana_rpm_tag" "gf-oss-rpm-repo-test"
 _oss_rpm_v="$retval"
 
-docker_build "Dockerfile.rpm" "rpm-ee-$_stable_or_beta.list" "$_grafana_enterprise_tag" "gf-ee-rpm-repo-test"
+docker_build "Dockerfile.rpm" "rpm-ee-$_stable_or_beta.list" "$_grafana_enterprise_rpm_tag" "gf-ee-rpm-repo-test"
 _ee_rpm_v="$retval"
 
 echo Versions:
