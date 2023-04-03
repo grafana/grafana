@@ -110,7 +110,7 @@ func (cs *CleanupServiceImpl) Run(ctx context.Context, cfg *setting.Cfg) (int64,
 	if totalCleanedAnnotations > 0 {
 		start = time.Now()
 		affected, err = cs.store.CleanOrphanedAnnotationTags(ctx)
-		cs.cleanupAnnotationTagsDuration.Observe(float64(time.Since(start).Seconds()))
+		cs.cleanupAnnotationTagsDuration.Observe(time.Since(start).Seconds())
 		cs.totalCleanedAnnotationsTags.Add(float64(affected))
 	}
 
