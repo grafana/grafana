@@ -48,9 +48,8 @@ func (i *Initializer) Initialize(ctx context.Context, p *plugins.Plugin) error {
 }
 
 func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
-	var hostEnv []string
-	if plugin.Info.Version != "" {
-		hostEnv = append(hostEnv, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
+	hostEnv := []string{
+		fmt.Sprintf("GF_VERSION=%s", i.cfg.BuildVersion),
 	}
 
 	if i.license != nil {
@@ -72,9 +71,11 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 		pluginTracingEnabled = v == "true"
 	}
 	if i.cfg.Opentelemetry.IsEnabled() && pluginTracingEnabled {
+		if plugin.Info.Version != "" {
+			hostEnv = append(hostEnv, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
+		}
 		hostEnv = append(
 			hostEnv,
-			fmt.Sprintf("GF_VERSION=%s", i.cfg.BuildVersion),
 			fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", i.cfg.Opentelemetry.Address),
 			fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", i.cfg.Opentelemetry.Propagation),
 		)
