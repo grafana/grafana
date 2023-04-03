@@ -2259,7 +2259,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2316,7 +2319,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2390,7 +2396,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2453,7 +2462,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2745,7 +2757,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2831,7 +2846,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2940,7 +2958,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -3023,7 +3044,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -3268,7 +3292,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -6519,6 +6546,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: bbc28617dc0c445e5064553d5ffd34fe84ef1b8a762936436507fcd3bf30ab89
+hmac: b501639ae35db5abec37f97cdd39d2a31051ec9800424c72ba0869ca3fe60d0b
 
 ...
