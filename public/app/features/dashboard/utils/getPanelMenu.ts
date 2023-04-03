@@ -291,6 +291,7 @@ export function getPanelMenu(
         extensionsMenu.push({
           text: truncateTitle(extension.title, 25),
           href: extension.path,
+          onClick: extension.onClick,
         });
         continue;
       }

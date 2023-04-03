@@ -4,6 +4,5 @@ export function isPluginExtensionLink(extension: PluginExtension | undefined): e
   if (!extension) {
     return false;
   }
-
-  return extension.type === PluginExtensionTypes.link && 'path' in extension;
+  return extension.type === PluginExtensionTypes.link && ('path' in extension || 'onClick' in extension);
 }
