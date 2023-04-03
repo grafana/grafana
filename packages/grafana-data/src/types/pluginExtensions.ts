@@ -1,21 +1,18 @@
-/**
- * These types are exposed when rendering extension points
- */
+import { RawTimeRange, TimeZone } from './time';
 
-export enum PluginExtensionPlacements {
-  DashboardPanelMenu = 'grafana/dashboard/panel/menu',
-}
+// Plugin Extensions types
+// ---------------------------------------
 
 export enum PluginExtensionTypes {
   link = 'link',
-  command = 'command',
 }
 
 export type PluginExtension = {
+  id: string;
   type: PluginExtensionTypes;
   title: string;
   description: string;
-  key: number;
+  pluginId: string;
 };
 
 export type PluginExtensionLink = PluginExtension & {
@@ -23,48 +20,64 @@ export type PluginExtensionLink = PluginExtension & {
   path: string;
 };
 
-export type PluginExtensionCommand = PluginExtension & {
-  type: PluginExtensionTypes.command;
-  callHandlerWithContext: () => void;
+// Objects used for registering extensions (in app plugins)
+// --------------------------------------------------------
+
+export type PluginExtensionConfig<Context extends object = object, ExtraProps extends object = object> = Pick<
+  PluginExtension,
+  'title' | 'description'
+> &
+  ExtraProps & {
+    // The unique name of the placement
+    // Core Grafana placements are available in the `PluginExtensionPlacements` enum
+    placement: string;
+
+    // (Optional) A function that can be used to configure the extension dynamically based on the placement's context
+    configure?: (
+      context?: Readonly<Context>
+    ) => Partial<{ title: string; description: string } & ExtraProps> | undefined;
+  };
+
+export type PluginExtensionLinkConfig<Context extends object = object> = PluginExtensionConfig<
+  Context,
+  Pick<PluginExtensionLink, 'path'>
+>;
+
+export type PluginExtensionEventHelpers = {
+  // Opens a modal dialog and renders the provided React component inside it
+  openModal: (options: {
+    // The title of the modal
+    title: string;
+    // A React element that will be rendered inside the modal
+    body: React.ElementType<{ onDismiss?: () => void }>;
+  }) => void;
 };
 
-export function isPluginExtensionLink(extension: PluginExtension | undefined): extension is PluginExtensionLink {
-  if (!extension) {
-    return false;
-  }
-  return extension.type === PluginExtensionTypes.link && 'path' in extension;
+// Placements & Contexts
+// --------------------------------------------------------
+
+// Placements available in core Grafana
+export enum PluginExtensionPlacements {
+  DashboardPanelMenu = 'grafana/dashboard/panel/menu',
 }
 
-export function assertPluginExtensionLink(
-  extension: PluginExtension | undefined
-): asserts extension is PluginExtensionLink {
-  if (!isPluginExtensionLink(extension)) {
-    throw new Error(`extension is not a link extension`);
-  }
-}
+export type PluginExtensionPanelContext = {
+  pluginId: string;
+  id: number;
+  title: string;
+  timeRange: RawTimeRange;
+  timeZone: TimeZone;
+  dashboard: Dashboard;
+  targets: Target[];
+};
 
-export function isPluginExtensionCommand(extension: PluginExtension | undefined): extension is PluginExtensionCommand {
-  if (!extension) {
-    return false;
-  }
-  return extension.type === PluginExtensionTypes.command;
-}
+type Dashboard = {
+  uid: string;
+  title: string;
+  tags: string[];
+};
 
-export function assertPluginExtensionCommand(
-  extension: PluginExtension | undefined
-): asserts extension is PluginExtensionCommand {
-  if (!isPluginExtensionCommand(extension)) {
-    throw new Error(`extension is not a command extension`);
-  }
-}
-
-export function extensionLinkConfigIsValid(props: {
-  path?: string;
-  description?: string;
-  title?: string;
-  placement?: string;
-}) {
-  const valuesAreStrings = Object.values(props).every((val) => typeof val === 'string' && val.length);
-  const placementIsValid = props.placement?.startsWith('grafana/') || props.placement?.startsWith('plugins/');
-  return valuesAreStrings && placementIsValid;
-}
+type Target = {
+  pluginId: string;
+  refId: string;
+};

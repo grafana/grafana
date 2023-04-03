@@ -493,7 +493,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 	})
 }
 
-func TestGetAnnotations(t *testing.T) {
+func TestFindAnnotations(t *testing.T) {
 	color := "red"
 	name := "annoName"
 	t.Run("will build anonymous user with correct permissions to get annotations", func(t *testing.T) {
@@ -819,6 +819,63 @@ func TestGetAnnotations(t *testing.T) {
 
 		require.Error(t, err)
 		require.Nil(t, items)
+	})
+
+	t.Run("Test find annotations does not panics when Target in datasource is nil", func(t *testing.T) {
+		dash := dashboards.NewDashboard("test")
+		grafanaAnnotation := DashAnnotation{
+			Datasource: CreateDatasource("grafana", "grafana"),
+			Enable:     true,
+			Name:       &name,
+			IconColor:  &color,
+			Type:       "dashboard",
+			Target:     nil,
+		}
+
+		annos := []DashAnnotation{grafanaAnnotation}
+		dashboard := AddAnnotationsToDashboard(t, dash, annos)
+
+		annotationsRepo := annotations.FakeAnnotationsRepo{}
+		fakeStore := FakePublicDashboardStore{}
+		service := &PublicDashboardServiceImpl{
+			log:             log.New("test.logger"),
+			store:           &fakeStore,
+			AnnotationsRepo: &annotationsRepo,
+		}
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.UID, AnnotationsEnabled: true}
+
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
+		fakeStore.On("FindDashboard", mock.Anything, mock.Anything, mock.AnythingOfType("string")).Return(dashboard, nil)
+
+		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
+			{
+				ID:          1,
+				DashboardID: 1,
+				PanelID:     1,
+				Tags:        []string{"tag1"},
+				TimeEnd:     2,
+				Time:        2,
+				Text:        "this is an annotation",
+			},
+		}, nil).Maybe()
+
+		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+
+		expected := AnnotationEvent{
+			Id:          1,
+			DashboardId: 1,
+			PanelId:     1,
+			Tags:        []string{"tag1"},
+			IsRegion:    false,
+			Text:        "this is an annotation",
+			Color:       color,
+			Time:        2,
+			TimeEnd:     2,
+			Source:      grafanaAnnotation,
+		}
+		require.NoError(t, err)
+		assert.Len(t, items, 1)
+		assert.Equal(t, expected, items[0])
 	})
 }
 

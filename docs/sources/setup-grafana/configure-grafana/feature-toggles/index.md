@@ -30,6 +30,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `topnav`                            | Enables new top navigation and page layouts                                                                                                                                  | Yes                |
 | `cloudWatchCrossAccountQuerying`    | Enables cross-account querying in CloudWatch datasources                                                                                                                     | Yes                |
 | `accessTokenExpirationCheck`        | Enable OAuth access_token expiration check and token refresh using the refresh_token                                                                                         |                    |
+| `emptyDashboardPage`                | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                             | Yes                |
 | `disablePrometheusExemplarSampling` | Disable Prometheus exemplar sampling                                                                                                                                         |                    |
 | `logsSampleInExplore`               | Enables access to the logs sample feature in Explore                                                                                                                         | Yes                |
 
@@ -82,7 +83,6 @@ Alpha features might be changed or removed without prior notice.
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                                                                                                                |
 | `elasticsearchBackendMigration`    | Use Elasticsearch as backend data source                                                                                                                                                            |
 | `datasourceOnboarding`             | Enable data source onboarding page                                                                                                                                                                  |
-| `emptyDashboardPage`               | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                                                    |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                                        |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                                                      |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                                                   |
@@ -102,6 +102,7 @@ Alpha features might be changed or removed without prior notice.
 | `alertStateHistoryLokiSecondary`   | Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.                                                                                        |
 | `alertStateHistoryLokiPrimary`     | Enable a remote Loki instance as the primary source for state history reads.                                                                                                                        |
 | `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                                                                                                          |
+| `unifiedRequestLog`                | Writes error logs to the request logger                                                                                                                                                             |
 
 ## Development feature toggles
 
