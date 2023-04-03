@@ -41,7 +41,6 @@ type SystemStats struct {
 	DailyActiveSessions       int64
 	DataKeys                  int64
 	ActiveDataKeys            int64
-	PublicDashboards          int64
 }
 
 type DataSourceStats struct {
