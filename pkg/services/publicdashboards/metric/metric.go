@@ -19,6 +19,7 @@ type PublicDashboardsMetricServiceImpl struct {
 
 func ProvideService(
 	store publicdashboards.Store,
+	prom prometheus.Registerer,
 ) (*PublicDashboardsMetricServiceImpl, error) {
 	s := &PublicDashboardsMetricServiceImpl{
 		store:   store,
@@ -26,15 +27,15 @@ func ProvideService(
 		log:     log.New("publicdashboards.metric"),
 	}
 
-	if err := s.registerMetrics(); err != nil {
+	if err := s.registerMetrics(prom); err != nil {
 		return nil, err
 	}
 
 	return s, nil
 }
 
-func (s *PublicDashboardsMetricServiceImpl) registerMetrics() error {
-	err := prometheus.Register(s.Metrics.PublicDashboardsTotal)
+func (s *PublicDashboardsMetricServiceImpl) registerMetrics(prom prometheus.Registerer) error {
+	err := prom.Register(s.Metrics.PublicDashboardsTotal)
 	var alreadyRegisterErr prometheus.AlreadyRegisteredError
 	if errors.As(err, &alreadyRegisterErr) {
 		if alreadyRegisterErr.ExistingCollector == alreadyRegisterErr.NewCollector {
