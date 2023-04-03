@@ -267,6 +267,10 @@ const (
 	// Enable time series table transformer &amp; sparkline cell type
 	FlagTimeSeriesTable = "timeSeriesTable"
 
+	// FlagPrometheusResourceBrowserCache
+	// Displays browser caching options in Prometheus data source configuration
+	FlagPrometheusResourceBrowserCache = "prometheusResourceBrowserCache"
+
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
