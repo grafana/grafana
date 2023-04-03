@@ -1,3 +1,3 @@
 export interface PanelOptions {
-  usePanelData: boolean;
+  useBlankSnapshot: boolean;
 }

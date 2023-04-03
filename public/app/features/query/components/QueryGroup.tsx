@@ -101,9 +101,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     if (dashboard) {
       dashboard.events.getStream(DatagridDataChangeEvent).subscribe({
         next: async (event) => {
-          const snapshot: DataFrameJSON[] = event.payload.snapshot;
-          const ds = getDataSourceSrv().getInstanceSettings('-- Grafana --');
-          await this.onChangeDataSource(ds!);
           this.onQueriesChange([
             {
               refId: 'A',
@@ -112,7 +109,7 @@ export class QueryGroup extends PureComponent<Props, State> {
                 uid: 'grafana',
               },
               queryType: GrafanaQueryType.Snapshot,
-              snapshot: snapshot,
+              snapshot: event.payload.snapshot,
             },
           ]);
           this.props.onRunQueries();
