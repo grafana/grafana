@@ -27,7 +27,7 @@ You can also [upload a JSON trace file]({{< relref "#upload-a-json-trace-file" >
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
@@ -38,14 +38,14 @@ You can also [upload a JSON trace file]({{< relref "#upload-a-json-trace-file" >
 
 1. Set the data source's basic configuration options carefully:
 
-| Name           | Description                                                              |
-| -------------- | ------------------------------------------------------------------------ |
-| **Name**       | Sets the name you use to refer to the data source in panels and queries. |
-| **Default**    | Defines whether this data source is pre-selected for new panels.         |
-| **URL**        | Sets the URL of the Jaeger instance, such as `http://localhost:16686`.   |
-| **Basic Auth** | Enables basic authentication for the Jaeger data source.                 |
-| **User**       | Defines the user name for basic authentication.                          |
-| **Password**   | Defines the password for basic authentication.                           |
+   | Name           | Description                                                              |
+   | -------------- | ------------------------------------------------------------------------ |
+   | **Name**       | Sets the name you use to refer to the data source in panels and queries. |
+   | **Default**    | Defines whether this data source is pre-selected for new panels.         |
+   | **URL**        | Sets the URL of the Jaeger instance, such as `http://localhost:16686`.   |
+   | **Basic Auth** | Enables basic authentication for the Jaeger data source.                 |
+   | **User**       | Defines the user name for basic authentication.                          |
+   | **Password**   | Defines the password for basic authentication.                           |
 
 You can also configure settings specific to the Jaeger data source. These options are described in the sections below.
 

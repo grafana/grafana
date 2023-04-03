@@ -33,7 +33,7 @@ Once you've added the Google Cloud Monitoring data source, you can [configure it
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
@@ -44,10 +44,10 @@ Once you've added the Google Cloud Monitoring data source, you can [configure it
 
 1. Set the data source's basic configuration options carefully:
 
-| Name        | Description                                                              |
-| ----------- | ------------------------------------------------------------------------ |
-| **Name**    | Sets the name you use to refer to the data source in panels and queries. |
-| **Default** | Sets whether the data source is pre-selected for new panels.             |
+   | Name        | Description                                                              |
+   | ----------- | ------------------------------------------------------------------------ |
+   | **Name**    | Sets the name you use to refer to the data source in panels and queries. |
+   | **Default** | Sets whether the data source is pre-selected for new panels.             |
 
 ### Configure Google authentication
 

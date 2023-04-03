@@ -35,7 +35,7 @@ This data source supports these versions of Elasticsearch:
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
@@ -46,14 +46,14 @@ This data source supports these versions of Elasticsearch:
 
 1. Set the data source's basic configuration options carefully:
 
-| Name        | Description                                                                |
-| ----------- | -------------------------------------------------------------------------- |
-| **Name**    | Sets the name you use to refer to the data source in panels and queries.   |
-| **Default** | Sets the data source that's pre-selected for new panels.                   |
-| **Url**     | Sets the HTTP protocol, IP, and port of your Elasticsearch server.         |
-| **Access**  | Don't modify Access. Use "Server (default)" or the data source won't work. |
+   | Name        | Description                                                                |
+   | ----------- | -------------------------------------------------------------------------- |
+   | **Name**    | Sets the name you use to refer to the data source in panels and queries.   |
+   | **Default** | Sets the data source that's pre-selected for new panels.                   |
+   | **Url**     | Sets the HTTP protocol, IP, and port of your Elasticsearch server.         |
+   | **Access**  | Don't modify Access. Use "Server (default)" or the data source won't work. |
 
-You must also configure settings specific to the Elasticsearch data source.
+You must also configure settings specific to the Elasticsearch data source. These options are described in the sections below.
 
 ### Index settings
 

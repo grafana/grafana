@@ -24,21 +24,20 @@ Only users with the organization administrator role can add data sources.
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
-1. Click **Connections** in the left-side menu.
-1. Under Your connections, click **Data sources**.
-1. Enter `TestData` in the search bar.
-1. Select **TestData**.
+1.  Click **Connections** in the left-side menu.
+1.  Under Your connections, click **Data sources**.
+1.  Enter `TestData` in the search bar.
+1.  Select **TestData**.
 
-   The **Settings** tab of the data source is displayed.
+    The **Settings** tab of the data source is displayed. The data source doesn't provide any settings beyond the most basic options common to all data sources:
 
-The data source doesn't provide any settings beyond the most basic options common to all data sources:
+        | Name        | Description                                                              |
 
-| Name        | Description                                                              |
-| ----------- | ------------------------------------------------------------------------ |
-| **Name**    | Sets the name you use to refer to the data source in panels and queries. |
-| **Default** | Defines whether this data source is pre-selected for new panels.         |
+    | ----------- | ------------------------------------------------------------------------ |
+    | **Name** | Sets the name you use to refer to the data source in panels and queries. |
+    | **Default** | Defines whether this data source is pre-selected for new panels. |
 
 ## Create mock data
 

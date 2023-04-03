@@ -30,26 +30,27 @@ Once you've added the InfluxDB data source, you can [configure it]({{< relref "#
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
-1. Click **Connections** in the left-side menu.
-1. Under Your connections, click **Data sources**.
-1. Enter `InfluxDB` in the search bar.
-1. Select **InfluxDB**.
+1.  Click **Connections** in the left-side menu.
+1.  Under Your connections, click **Data sources**.
+1.  Enter `InfluxDB` in the search bar.
+1.  Select **InfluxDB**.
 
-   The **Settings** tab of the data source is displayed.
+    The **Settings** tab of the data source is displayed.
 
-1. Set the data source's basic configuration options carefully:
+1.  Set the data source's basic configuration options carefully:
 
-| Name                  | Description                                                                                                                                                                                                  |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Name**              | Sets the name you use to refer to the data source in panels and queries. We recommend something like `InfluxDB-InfluxQL`.                                                                                    |
-| **Default**           | Sets whether the data source is pre-selected for new panels.                                                                                                                                                 |
-| **URL**               | The HTTP protocol, IP address, and port of your InfluxDB API. InfluxDB's default API port is 8086.                                                                                                           |
-| **Min time interval** | _(Optional)_ Refer to [Min time interval]({{< relref "#configure-min-time-interval" >}}).                                                                                                                    |
-| **Max series**        | _(Optional)_ Limits the number of series and tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have many small time series and not all are shown. Defaults to 1,000. |
+        | Name                  | Description                                                                                                                                                                                                  |
 
-You can also configure settings specific to the InfluxDB data source:
+    | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+    | **Name** | Sets the name you use to refer to the data source in panels and queries. We recommend something like `InfluxDB-InfluxQL`. |
+    | **Default** | Sets whether the data source is pre-selected for new panels. |
+    | **URL** | The HTTP protocol, IP address, and port of your InfluxDB API. InfluxDB's default API port is 8086. |
+    | **Min time interval** | _(Optional)_ Refer to [Min time interval]({{< relref "#configure-min-time-interval" >}}). |
+    | **Max series** | _(Optional)_ Limits the number of series and tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have many small time series and not all are shown. Defaults to 1,000. |
+
+You can also configure settings specific to the InfluxDB data source. These options are described in the sections below.
 
 ### Min time interval
 

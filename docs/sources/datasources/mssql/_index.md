@@ -30,7 +30,7 @@ Once you've added the Microsoft SQL Server data source, you can [configure it]({
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
@@ -41,21 +41,21 @@ Once you've added the Microsoft SQL Server data source, you can [configure it]({
 
 1. Set the data source's basic configuration options carefully:
 
-| Name               | Description                                                                                                                                                                                                                                     |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**           | Sets the name you use to refer to the data source in panels and queries.                                                                                                                                                                        |
-| **Default**        | Sets the data source that's pre-selected for new panels.                                                                                                                                                                                        |
-| **Host**           | Sets the IP address/hostname and optional port of your MS SQL instance. Default port is 0, the driver default. You can specify multiple connection properties, such as `ApplicationIntent`, by separating each property with a semicolon (`;`). |
-| **Database**       | Sets the name of your MS SQL database.                                                                                                                                                                                                          |
-| **Authentication** | Sets the authentication mode, either using SQL Server Authentication or Windows Authentication (single sign-on for Windows users).                                                                                                              |
-| **User**           | Defines the database user's username.                                                                                                                                                                                                           |
-| **Password**       | Defines the database user's password.                                                                                                                                                                                                           |
-| **Encrypt**        | Determines whether to negotiate a secure SSL TCP/IP connection with the server, or to which extent. Default is `false`.                                                                                                                         |
-| **Max open**       | Sets the maximum number of open connections to the database. Default is `unlimited`.                                                                                                                                                            |
-| **Max idle**       | Sets the maximum number of connections in the idle connection pool. Default is `2`.                                                                                                                                                             |
-| **Max lifetime**   | Sets the maximum number of seconds that the data source can reuse a connection. Default is `14400` (4 hours).                                                                                                                                   |
+   | Name               | Description                                                                                                                                                                                                                                     |
+   | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | **Name**           | Sets the name you use to refer to the data source in panels and queries.                                                                                                                                                                        |
+   | **Default**        | Sets the data source that's pre-selected for new panels.                                                                                                                                                                                        |
+   | **Host**           | Sets the IP address/hostname and optional port of your MS SQL instance. Default port is 0, the driver default. You can specify multiple connection properties, such as `ApplicationIntent`, by separating each property with a semicolon (`;`). |
+   | **Database**       | Sets the name of your MS SQL database.                                                                                                                                                                                                          |
+   | **Authentication** | Sets the authentication mode, either using SQL Server Authentication or Windows Authentication (single sign-on for Windows users).                                                                                                              |
+   | **User**           | Defines the database user's username.                                                                                                                                                                                                           |
+   | **Password**       | Defines the database user's password.                                                                                                                                                                                                           |
+   | **Encrypt**        | Determines whether to negotiate a secure SSL TCP/IP connection with the server, or to which extent. Default is `false`.                                                                                                                         |
+   | **Max open**       | Sets the maximum number of open connections to the database. Default is `unlimited`.                                                                                                                                                            |
+   | **Max idle**       | Sets the maximum number of connections in the idle connection pool. Default is `2`.                                                                                                                                                             |
+   | **Max lifetime**   | Sets the maximum number of seconds that the data source can reuse a connection. Default is `14400` (4 hours).                                                                                                                                   |
 
-You can also configure settings specific to the Microsoft SQL Server data source:
+You can also configure settings specific to the Microsoft SQL Server data source. These options are described in the sections below.
 
 ### Min time interval
 

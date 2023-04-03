@@ -26,7 +26,7 @@ Once you've added the Loki data source, you can [configure it]({{< relref "#conf
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
@@ -37,13 +37,13 @@ Once you've added the Loki data source, you can [configure it]({{< relref "#conf
 
 1. Set the data source's basic configuration options carefully:
 
-| Name                | Description                                                                                                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**            | Sets the name you use to refer to the data source in panels and queries.                                                                                            |
-| **Default**         | Sets the data source that's pre-selected for new panels.                                                                                                            |
-| **URL**             | Sets the HTTP protocol, IP, and port of your Loki instance, such as `http://localhost:3100`.                                                                        |
-| **Allowed cookies** | Defines which cookies are forwarded to the data source. Grafana Proxy deletes all other cookies.                                                                    |
-| **Maximum lines**   | Sets the upper limit for the number of log lines returned by Loki. Defaults to 1,000. Lower this limit if your browser is sluggish when displaying logs in Explore. |
+   | Name                | Description                                                                                                                                                         |
+   | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | **Name**            | Sets the name you use to refer to the data source in panels and queries.                                                                                            |
+   | **Default**         | Sets the data source that's pre-selected for new panels.                                                                                                            |
+   | **URL**             | Sets the HTTP protocol, IP, and port of your Loki instance, such as `http://localhost:3100`.                                                                        |
+   | **Allowed cookies** | Defines which cookies are forwarded to the data source. Grafana Proxy deletes all other cookies.                                                                    |
+   | **Maximum lines**   | Sets the upper limit for the number of log lines returned by Loki. Defaults to 1,000. Lower this limit if your browser is sluggish when displaying logs in Explore. |
 
 > **Note:** To troubleshoot configuration and other issues, check the log file located at `/var/log/grafana/grafana.log` on Unix systems, or in `<grafana_install_dir>/data/log` on other platforms and manual installations.
 

@@ -24,26 +24,27 @@ Administrators can also [configure the data source via YAML]({{< relref "#provis
 
 ## OpenTSDB settings
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
-1. Click **Connections** in the left-side menu.
-1. Under Your connections, click **Data sources**.
-1. Enter `OpenTSDB` in the search bar.
-1. Select **OpenTSDB**.
+1.  Click **Connections** in the left-side menu.
+1.  Under Your connections, click **Data sources**.
+1.  Enter `OpenTSDB` in the search bar.
+1.  Select **OpenTSDB**.
 
-   The **Settings** tab of the data source is displayed.
+    The **Settings** tab of the data source is displayed.
 
-1. Set the data source's basic configuration options carefully:
+1.  Set the data source's basic configuration options carefully:
 
-| Name                | Description                                                                             |
-| ------------------- | --------------------------------------------------------------------------------------- |
-| **Name**            | The data source name. This is how you refer to the data source in panels and queries.   |
-| **Default**         | Default data source means that it will be pre-selected for new panels.                  |
-| **URL**             | The HTTP protocol, IP, and port of your OpenTSDB server (default port is usually 4242)  |
-| **Allowed cookies** | List the names of cookies to forward to the data source.                                |
-| **Version**         | Version = opentsdb version, either <=2.1 or 2.2                                         |
-| **Resolution**      | Metrics from opentsdb may have datapoints with either second or millisecond resolution. |
-| **Lookup limit**    | Default is 1000.                                                                        |
+        | Name                | Description                                                                             |
+
+    | ------------------- | --------------------------------------------------------------------------------------- |
+    | **Name** | The data source name. This is how you refer to the data source in panels and queries. |
+    | **Default** | Default data source means that it will be pre-selected for new panels. |
+    | **URL** | The HTTP protocol, IP, and port of your OpenTSDB server (default port is usually 4242) |
+    | **Allowed cookies** | List the names of cookies to forward to the data source. |
+    | **Version** | Version = opentsdb version, either <=2.1 or 2.2 |
+    | **Resolution** | Metrics from opentsdb may have datapoints with either second or millisecond resolution. |
+    | **Lookup limit** | Default is 1000. |
 
 ### Provision the data source
 
