@@ -359,7 +359,9 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 }
 
 func TestFolderMoveAPIEndpoint(t *testing.T) {
-	folderService := &foldertest.FakeService{}
+	folderService := &foldertest.FakeService{
+		ExpectedFolder: &folder.Folder{},
+	}
 	setUpRBACGuardian(t)
 
 	type testCase struct {
@@ -376,6 +378,14 @@ func TestFolderMoveAPIEndpoint(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
 				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("newParentUid")},
+			},
+		},
+		{
+			description:  "can move folder to the root folder with specific permissions",
+			newParentUid: "",
+			expectedCode: http.StatusOK,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
 			},
 		},
 		{

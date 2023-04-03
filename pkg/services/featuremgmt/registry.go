@@ -231,8 +231,9 @@ var (
 		},
 		{
 			Name:        "topnav",
-			Description: "Displays new top nav and page layouts",
-			State:       FeatureStateBeta,
+			Description: "Enables new top navigation and page layouts",
+			State:       FeatureStateStable,
+			Expression:  "true", // enabled by default
 			Owner:       grafanaUserEssentialsSquad,
 		},
 		{
@@ -273,8 +274,9 @@ var (
 		{
 			Name:         "newPanelChromeUI",
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
@@ -319,6 +321,14 @@ var (
 			Description: "Enable data source onboarding page",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaDashboardsSquad,
+		},
+		{
+			Name:         "emptyDashboardPage",
+			Description:  "Enable the redesigned user interface of a dashboard page that includes no panels",
+			State:        FeatureStateStable,
+			FrontendOnly: true,
+			Expression:   "true", // enabled by default
+			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:        "secureSocksDatasourceProxy",
@@ -446,6 +456,36 @@ var (
 			Description: "Disable executing of Elasticsearch Explore queries trough backend",
 			State:       FeatureStateBeta,
 			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:        "prometheusDataplane",
+			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "alertStateHistoryLokiSecondary",
+			Description: "Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertStateHistoryLokiPrimary",
+			Description: "Enable a remote Loki instance as the primary source for state history reads.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertStateHistoryLokiOnly",
+			Description: "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "unifiedRequestLog",
+			Description: "Writes error logs to the request logger",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaBackendPlatformSquad,
 		},
 	}
 )

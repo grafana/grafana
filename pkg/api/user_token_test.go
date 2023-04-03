@@ -171,10 +171,10 @@ func TestHTTPServer_RotateUserAuthToken(t *testing.T) {
 			expectedStatus:       http.StatusUnauthorized,
 		},
 		{
-			desc:           "Should return 404 and when token s not found",
+			desc:           "Should return 401 and when token not found",
 			cookie:         &http.Cookie{Name: "grafana_session", Value: "123", Path: "/"},
 			rotatedErr:     auth.ErrUserTokenNotFound,
-			expectedStatus: http.StatusNotFound,
+			expectedStatus: http.StatusUnauthorized,
 		},
 		{
 			desc:           "Should return 200 and but not set new cookie if token was not rotated",

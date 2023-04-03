@@ -29,6 +29,7 @@ import (
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	"github.com/grafana/grafana/pkg/modules"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/registry/corekind"
@@ -360,6 +361,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 	authnimpl.ProvideService,
 	supportbundlesimpl.ProvideService,
+	loggermw.Provide,
 	modules.WireSet,
 )
 
