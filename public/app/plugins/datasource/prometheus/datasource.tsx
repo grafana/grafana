@@ -77,7 +77,6 @@ export class PrometheusDatasource
   implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery>
 {
   type: string;
-  editorSrc: string;
   ruleMappings: { [index: string]: string };
   url: string;
   id: number;
@@ -111,7 +110,6 @@ export class PrometheusDatasource
     this.type = 'prometheus';
     this.subType = PromApplication.Prometheus;
     this.rulerEnabled = false;
-    this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
     this.id = instanceSettings.id;
     this.url = instanceSettings.url!;
     this.access = instanceSettings.access;
