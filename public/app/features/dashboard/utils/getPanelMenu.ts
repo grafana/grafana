@@ -283,7 +283,7 @@ export function getPanelMenu(
     context: createExtensionContext(panel, dashboard),
   });
 
-  if (extensions.length > 0) {
+  if (extensions.length > 0 && !panel.isEditing) {
     const extensionsMenu: PanelMenuItem[] = [];
 
     for (const extension of extensions) {
