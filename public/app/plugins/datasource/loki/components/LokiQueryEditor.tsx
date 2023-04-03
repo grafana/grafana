@@ -21,7 +21,7 @@ import { buildVisualQueryFromString } from '../querybuilder/parsing';
 import { changeEditorMode, getQueryWithDefaults } from '../querybuilder/state';
 import { LokiQuery, QueryStats } from '../types';
 
-import ChunkProgressDisplay from './ChunkProgressDisplay';
+import SplittingProgressDisplay from './SplittingProgressDisplay';
 import { getStats, shouldUpdateStats } from './stats';
 import { LokiQueryEditorProps } from './types';
 
@@ -202,7 +202,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           maxLines={datasource.maxLines}
           queryStats={queryStats}
         />
-        <ChunkProgressDisplay exploreId={exploreId} />
+        <SplittingProgressDisplay exploreId={exploreId} />
       </EditorRows>
     </>
   );
