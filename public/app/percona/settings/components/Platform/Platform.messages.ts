@@ -7,7 +7,7 @@ export const Messages = {
   whyConnect: 'Why connect?',
   connectionReason: `
       Connecting to Percona Platform will boost PMM's monitoring capabilities and give you access to advanced
-      Advisor checks and templates, private DBaaS, K8s operators, knowledge base articles and more.
+      Advisors and templates, private DBaaS, K8s operators, knowledge base articles and more.
   `,
   noPerconaAccount: "Don't have a Percona account?",
   createAnAccount: 'Create an account now to check all the Percona Platform advantages.',

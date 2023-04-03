@@ -82,7 +82,7 @@ export const getProductTourSteps = (
               <p>
                 {Messages.advisors.findOutMore}
                 <a
-                  href="https://docs.percona.com/percona-platform/checks.html"
+                  href="https://docs.percona.com/percona-platform/advisors.html"
                   target="_blank"
                   rel="noreferrer noopener"
                 >
