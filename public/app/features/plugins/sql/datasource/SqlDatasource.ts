@@ -49,7 +49,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
     this.db = this.getDB();
-    this.defaultDatabase = settingsData.database;
+    this.defaultDatabase = settingsData?.database ?? '';
     this.annotations = {
       prepareAnnotation: migrateAnnotation,
       QueryEditor: SqlQueryEditor,
