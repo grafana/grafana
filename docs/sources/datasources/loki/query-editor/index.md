@@ -90,10 +90,6 @@ To re-order operations manually, drag the operation box by its name and drop it 
 
 In same cases the query editor can detect which operations would be most appropriate for a selected log stream. In such cases it will show a hint next to the `+ Operations` button. Click on the hint to add the operations to your query.
 
-### Explain query
-
-This section is only shown if the `Explain query` switch from the query editor top toolbar is set to `on`. It shows a step by step explanation of all query parts and the operations.
-
 ### Raw query
 
 It shows the raw query that will be created and executed by the query editor.
@@ -189,7 +185,7 @@ In addition to the **Run query** button and mode switcher, Builder mode provides
 | **Label browser**         | Used to navigate through your labels and values, and also build queries.                  |
 | **Explain query**         | Displays a step-by-step explanation of all query components and operations.               |
 
-## Label browser
+### Label browser
 
 You can use the Loki label browser to navigate through your labels and values, and build queries.
 
@@ -204,6 +200,10 @@ You can use the Loki label browser to navigate through your labels and values, a
    You can also validate the selector.
 
 {{< figure src="/static/img/docs/v75/loki_label_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
+
+### Explain query
+
+This section is only shown if the `Explain query` switch from the query editor top toolbar is set to `on`. It shows a step by step explanation of all query parts and the operations.
 
 ## Configure query settings
 
