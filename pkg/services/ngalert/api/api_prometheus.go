@@ -248,7 +248,8 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 				valString = formatValues(alertState)
 			}
 			totals[strings.ToLower(alertState.State.String())] += 1
-			if alertState.Error != nil {
+			// Do not add error twice when execution error state is Error
+			if alertState.Error != nil && rule.ExecErrState != ngmodels.ErrorErrState {
 				totals["error"] += 1
 			}
 			alert := apimodels.Alert{

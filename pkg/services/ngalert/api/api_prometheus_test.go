@@ -3,7 +3,9 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"math/rand"
 	"net/http"
 	"testing"
@@ -250,6 +252,21 @@ func withAlertingState() forEachState {
 			Values:          map[string]*float64{"B": &value},
 			Condition:       "B",
 		})
+		return s
+	}
+}
+
+func withAlertingErrorState() forEachState {
+	return func(s *state.State) *state.State {
+		s.SetAlerting("", timeNow(), timeNow().Add(5*time.Minute))
+		s.Error = errors.New("this is an error")
+		return s
+	}
+}
+
+func withErrorState() forEachState {
+	return func(s *state.State) *state.State {
+		s.SetError(errors.New("this is an error"), timeNow(), timeNow().Add(5*time.Minute))
 		return s
 	}
 }
@@ -530,6 +547,63 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			}
 			assert.Emptyf(t, rules, "not all expected rules were returned")
 		})
+	})
+
+	t.Run("test totals are expected", func(t *testing.T) {
+		fakeStore, fakeAIM, _, api := setupAPI(t)
+		// Create rules in the same Rule Group to keep assertions simple
+		rules := ngmodels.GenerateAlertRules(3, ngmodels.AlertRuleGen(withOrgID(orgID), withGroup("Rule-Group-1"), withNamespace(&folder.Folder{
+			Title: "Folder-1",
+		})))
+		// Need to sort these so we add alerts to the rules as ordered in the response
+		ngmodels.AlertRulesBy(ngmodels.AlertRulesByIndex).Sort(rules)
+		// The last two rules will have errors, however the first will be alerting
+		// while the second one will have a DatasourceError alert.
+		rules[1].ExecErrState = ngmodels.AlertingErrState
+		rules[2].ExecErrState = ngmodels.ErrorErrState
+		fakeStore.PutRule(context.Background(), rules...)
+
+		// create a normal and alerting state for the first rule
+		fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1)
+		fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1, withAlertingState())
+		// create an error state for the last two rules
+		fakeAIM.GenerateAlertInstances(orgID, rules[1].UID, 1, withAlertingErrorState())
+		fakeAIM.GenerateAlertInstances(orgID, rules[2].UID, 1, withErrorState())
+
+		r, err := http.NewRequest("GET", "/api/v1/rules", nil)
+		require.NoError(t, err)
+		c := &contextmodel.ReqContext{
+			Context: &web.Context{Req: r},
+			SignedInUser: &user.SignedInUser{
+				OrgID:   orgID,
+				OrgRole: org.RoleViewer,
+			},
+		}
+		resp := api.RouteGetRuleStatuses(c)
+		require.Equal(t, http.StatusOK, resp.Status())
+		var res apimodels.RuleResponse
+		require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+		// Even though there are just 3 rules, the totals should show two firing rules,
+		// one inactive rules and two errors
+		require.Equal(t, map[string]int64{"firing": 2, "inactive": 1, "error": 2}, res.Data.Totals)
+		// There should be 1 Rule Group that contains all rules
+		require.Len(t, res.Data.RuleGroups, 1)
+		rg := res.Data.RuleGroups[0]
+		require.Len(t, rg.Rules, 3)
+
+		// The first rule should have an alerting and normal alert
+		r1 := rg.Rules[0]
+		require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, r1.Totals)
+		require.Len(t, r1.Alerts, 2)
+		// The second rule should have an alerting alert
+		r2 := rg.Rules[1]
+		require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, r2.Totals)
+		require.Len(t, r2.Alerts, 1)
+		// The last rule should have an error alert
+		r3 := rg.Rules[2]
+		require.Equal(t, map[string]int64{"error": 1}, r3.Totals)
+		require.Len(t, r3.Alerts, 1)
 	})
 
 	t.Run("test with limit on Rule Groups", func(t *testing.T) {
