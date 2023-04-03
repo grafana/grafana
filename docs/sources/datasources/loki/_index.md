@@ -35,7 +35,7 @@ To configure basic settings for the data source, complete the following steps:
 
    The **Settings** tab of the data source is displayed.
 
-1. Set the data source's basic configuration options carefully:
+1. Set the data source's basic configuration options:
 
    | Name                | Description                                                                                                                                                         |
    | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

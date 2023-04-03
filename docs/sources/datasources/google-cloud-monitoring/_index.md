@@ -38,11 +38,11 @@ To configure basic settings for the data source, complete the following steps:
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
 1. Enter `Google Cloud Monitoring` in the search bar.
-1. Select **Google Cloud Monitoring**.
+1. Click **Google Cloud Monitoring**.
 
    The **Settings** tab of the data source is displayed.
 
-1. Set the data source's basic configuration options carefully:
+1. Set the data source's basic configuration options:
 
    | Name        | Description                                                              |
    | ----------- | ------------------------------------------------------------------------ |

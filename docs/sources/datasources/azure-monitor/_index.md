@@ -43,7 +43,7 @@ The Azure Monitor data source supports visualizing data from three Azure service
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
 1. Enter `Azure Monitor` in the search bar.
-1. Select **Azure Monitor**.
+1. Click **Azure Monitor**.
 
    The **Settings** tab of the data source is displayed.
 
