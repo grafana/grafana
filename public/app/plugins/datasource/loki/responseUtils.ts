@@ -216,3 +216,14 @@ function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
     })),
   };
 }
+
+export function addResponseMetadata(response: DataQueryResponse, metadata: Record<string, unknown>) {
+  response.data.forEach((frame: DataFrame) => {
+    frame.meta = {
+      ...frame.meta,
+      custom: metadata,
+    };
+  });
+
+  return response;
+}
