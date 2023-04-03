@@ -1,4 +1,4 @@
-import React, { FormEvent, useMemo } from 'react';
+import React, { FormEvent, useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
@@ -62,6 +62,12 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       ...v,
       hideAliasField: hideAlias.includes(v.id),
     }));
+  }, []);
+
+  // run the query once on mount using default selection
+  useEffect(() => {
+    onUpdate(query);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onUpdate = (query: TestData) => {
