@@ -50,8 +50,5 @@ export function useMigrateDatabaseField<T extends SQLOptions, S = {}>({
         },
       });
     }
-
-    // const ret = onOptionsChange({...options});
-    // console.log(ret);
   }, [onOptionsChange, options]);
 }
