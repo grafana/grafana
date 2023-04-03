@@ -15,7 +15,8 @@ const buildTracesQuery = (operationId: string): string => {
     | extend serviceName = iff(isempty(name), column_ifexists("problemId", ""), name)
     | extend tags = bag_pack_columns(${tags})
     | project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name
-    | project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags`;
+		| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType
+    | order by startTime asc`;
 };
 
 export function setKustoQuery(query: AzureMonitorQuery, operationId?: string): AzureMonitorQuery {

@@ -18,6 +18,7 @@ export default function createMockQuery(overrides?: Partial<AzureMonitorQuery>):
       resultFormat: ResultFormat.Table,
       workspace: 'e3fe4fde-ad5e-4d60-9974-e2f3562ffdf2',
       resources: ['test-resource'],
+      operationId: 'operationId',
       ...overrides?.azureLogAnalytics,
     },
 

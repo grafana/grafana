@@ -215,19 +215,11 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 	}
 
 	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) && query.ResultFormat == string(dataquery.ResultFormatTrace) {
-		if frame.Meta == nil {
-			frame.Meta = &data.FrameMeta{
-				PreferredVisualization: "trace",
-			}
-		} else {
-			frame.Meta.PreferredVisualization = "trace"
-		}
+		frame.Meta.PreferredVisualization = "trace"
 	}
 
-	queryUrl, err := getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl)
-	if err != nil {
-		dataResponse.Error = err
-		return dataResponse
+	if query.ResultFormat == string(dataquery.ResultFormatTable) {
+		frame.Meta.PreferredVisualization = "table"
 	}
 
 	if query.ResultFormat == types.TimeSeries {
@@ -242,7 +234,42 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		}
 	}
 
-	AddConfigLinks(*frame, queryUrl)
+	queryUrl, err := getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl)
+	if err != nil {
+		dataResponse.Error = err
+		return dataResponse
+	}
+	AddConfigLinks(*frame, queryUrl, nil)
+
+	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
+		tracesUrl, err := getTracesQueryUrl(query.Resources, azurePortalBaseUrl)
+		if err != nil {
+			dataResponse.Error = err
+			return dataResponse
+		}
+		linkTitle := "View E2E transaction in Application Insights"
+		AddConfigLinks(*frame, tracesUrl, &linkTitle)
+
+		queryJSONModel := dataquery.AzureMonitorQuery{}
+		err = json.Unmarshal(query.JSON, &queryJSONModel)
+		if err != nil {
+			dataResponse.Error = err
+			return dataResponse
+		}
+
+		resultFormat := dataquery.AzureMonitorQueryAzureLogAnalyticsResultFormatTrace
+		queryJSONModel.AzureLogAnalytics.ResultFormat = &resultFormat
+		queryJSONModel.AzureLogAnalytics.Query = &query.Query
+		AddCustomDataLink(*frame, data.DataLink{
+			Title: "Explore Trace: ${__data.fields.traceID}",
+			URL:   "",
+			Internal: &data.InternalDataLink{
+				DatasourceUID:  dsInfo.DatasourceUID,
+				DatasourceName: dsInfo.DatasourceName,
+				Query:          queryJSONModel,
+			},
+		})
+	}
 
 	dataResponse.Frames = data.Frames{frame}
 	return dataResponse
@@ -317,6 +344,33 @@ func getQueryUrl(query string, resources []string, azurePortalUrl string) (strin
 	}
 	portalUrl += url.QueryEscape(string(resourcesMarshalled))
 	portalUrl += "/query/" + url.PathEscape(encodedQuery) + "/isQueryBase64Compressed/true/timespanInIsoFormat/P1D"
+	return portalUrl, nil
+}
+
+func getTracesQueryUrl(resources []string, azurePortalUrl string) (string, error) {
+	portalUrl := azurePortalUrl
+	portalUrl += "/#view/AppInsightsExtension/DetailsV2Blade/ComponentId~/"
+	resource := struct {
+		ResourceId string `json:"ResourceId"`
+	}{
+		resources[0],
+	}
+	resourceMarshalled, err := json.Marshal(resource)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal application insights resource: %s", err)
+	}
+
+	portalUrl += url.PathEscape(string(resourceMarshalled))
+	portalUrl += "/DataModel~/"
+
+	// We're making use of data link variables to select the necessary fields in the frontend
+	eventId := "%22eventId%22%3A%22${__data.fields.itemId}%22%2C"
+	timestamp := "%22timestamp%22%3A%22${__data.fields.startTime}%22%2C"
+	eventTable := "%22eventTable%22%3A%22${__data.fields.itemType}%22"
+	traceObject := fmt.Sprintf("%%7B%s%s%s%%7D", eventId, timestamp, eventTable)
+
+	portalUrl += traceObject
+
 	return portalUrl, nil
 }
 

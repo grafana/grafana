@@ -177,6 +177,9 @@ func (s *Service) getDataSourceFromPluginReq(req *backend.QueryDataRequest) (typ
 		return types.DatasourceInfo{}, fmt.Errorf("unable to convert datasource from service instance")
 	}
 	dsInfo.OrgID = req.PluginContext.OrgID
+
+	dsInfo.DatasourceName = req.PluginContext.DataSourceInstanceSettings.Name
+	dsInfo.DatasourceUID = req.PluginContext.DataSourceInstanceSettings.UID
 	return dsInfo, nil
 }
 

@@ -134,7 +134,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
         resultFormat: item.resultFormat,
         query,
         resources,
-
+        operationId: templateSrv.replace(target.azureLogAnalytics?.operationId, scopedVars),
         // Workspace was removed in Grafana 8, but remains for backwards compat
         workspace,
       },
