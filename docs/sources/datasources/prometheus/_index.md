@@ -96,6 +96,7 @@ datasources:
       manageAlerts: true
       prometheusType: Prometheus
       prometheusVersion: 2.37.0
+      cacheLevel: 'High'
       exemplarTraceIdDestinations:
         # Field with internal link pointing to data source in Grafana.
         # datasourceUid value can be anything, but it should be unique across all defined data source uids.
