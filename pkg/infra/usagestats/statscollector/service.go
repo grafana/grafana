@@ -157,7 +157,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	m["stats.api_keys.count"] = statsResult.APIKeys
 	m["stats.data_keys.count"] = statsResult.DataKeys
 	m["stats.active_data_keys.count"] = statsResult.ActiveDataKeys
-	m["stats.public_dashboards.count"] = statsQuery.Result.PublicDashboards
+	m["stats.public_dashboards.count"] = statsResult.PublicDashboards
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
