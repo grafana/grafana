@@ -66,7 +66,7 @@ export function toDataQueryResponse(
 ): DataQueryResponse {
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
 
-  const traceId = (res as FetchResponse | FetchError).traceId;
+  const traceId = 'traceId' in res ? res.traceId : undefined;
 
   if (traceId != null) {
     rsp.traceIds = [traceId];
