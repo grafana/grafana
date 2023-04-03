@@ -77,10 +77,6 @@ export function isStringPropValid(prop: unknown) {
   return typeof prop === 'string' && prop.length > 0;
 }
 
-export function isPromise(value: unknown) {
-  return value instanceof Promise || (typeof value === 'object' && value !== null && 'then' in value);
-}
-
 export function isPluginExtensionConfigValid(pluginId: string, extension: PluginExtensionLinkConfig): boolean {
   try {
     assertStringProps(extension, ['title', 'description', 'placement']);
@@ -88,7 +84,14 @@ export function isPluginExtensionConfigValid(pluginId: string, extension: Plugin
     assertConfigureIsValid(extension);
 
     if (isPluginExtensionLinkConfig(extension)) {
-      assertLinkPathIsValid(pluginId, extension.path);
+      if (!extension.path && !extension.onClick) {
+        logWarning(`Invalid extension "${extension.title}". Either "path" or "onClick" is required.`);
+        return false;
+      }
+
+      if (extension.path) {
+        assertLinkPathIsValid(pluginId, extension.path);
+      }
     }
 
     return true;
@@ -99,4 +102,10 @@ export function isPluginExtensionConfigValid(pluginId: string, extension: Plugin
 
     return false;
   }
+}
+
+export function isPromise(value: unknown): value is Promise<unknown> {
+  return (
+    value instanceof Promise || (typeof value === 'object' && value !== null && 'then' in value && 'catch' in value)
+  );
 }
