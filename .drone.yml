@@ -2372,12 +2372,6 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
-- name: postgres
-  temp:
-    medium: memory
-- name: mysql
-  temp:
-    medium: memory
 ---
 clone:
   retries: 3
@@ -2512,130 +2506,10 @@ volumes:
 ---
 clone:
   retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: release-oss-integration-tests
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services:
-- environment:
-    PGDATA: /var/lib/postgresql/data/pgdata
-    POSTGRES_DB: grafanatest
-    POSTGRES_PASSWORD: grafanatest
-    POSTGRES_USER: grafanatest
-  image: postgres:12.3-alpine
-  name: postgres
-  volumes:
-  - name: postgres
-    path: /var/lib/postgresql/data/pgdata
-- environment:
-    MYSQL_DATABASE: grafana_tests
-    MYSQL_PASSWORD: password
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_USER: grafana
-  image: mysql:5.7.39
-  name: mysql
-  volumes:
-  - name: mysql
-    path: /var/lib/mysql
-steps:
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
-  name: identify-runner
-- commands:
-  - '# It is required that code generated from Thema/CUE be committed and in sync
-    with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
-  image: grafana/build-container:1.7.2
-  name: verify-gen-cue
-- commands:
-  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-jsonnet
-  depends_on: []
-  image: grafana/build-container:1.7.2
-  name: verify-gen-jsonnet
-- commands:
-  - make gen-go
-  depends_on:
-  - verify-gen-cue
-  image: grafana/build-container:1.7.2
-  name: wire-install
-- commands:
-  - apt-get update
-  - apt-get install -yq postgresql-client
-  - dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
-  depends_on:
-  - wire-install
-  environment:
-    GRAFANA_TEST_DB: postgres
-    PGPASSWORD: grafanatest
-    POSTGRES_HOST: postgres
-  image: grafana/build-container:1.7.2
-  name: postgres-integration-tests
-- commands:
-  - apt-get update
-  - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
-  depends_on:
-  - wire-install
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
-  image: grafana/build-container:1.7.2
-  name: mysql-integration-tests
-trigger:
-  event:
-    exclude:
-    - promote
-  ref:
-  - refs/tags/v*
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
-- name: postgres
-  temp:
-    medium: memory
-- name: mysql
-  temp:
-    medium: memory
----
-clone:
-  retries: 3
 depends_on:
 - release-oss-build-e2e-publish
 - release-oss-test-frontend
 - release-oss-test-backend
-- release-oss-integration-tests
 environment:
   EDITION: oss
 image_pull_secrets:
@@ -2983,12 +2857,6 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
-- name: postgres
-  temp:
-    medium: memory
-- name: mysql
-  temp:
-    medium: memory
 ---
 clone:
   disable: true
@@ -3185,185 +3053,10 @@ volumes:
 ---
 clone:
   disable: true
-depends_on: []
-environment:
-  EDITION: enterprise
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: release-enterprise-integration-tests
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services:
-- environment:
-    PGDATA: /var/lib/postgresql/data/pgdata
-    POSTGRES_DB: grafanatest
-    POSTGRES_PASSWORD: grafanatest
-    POSTGRES_USER: grafanatest
-  image: postgres:12.3-alpine
-  name: postgres
-  volumes:
-  - name: postgres
-    path: /var/lib/postgresql/data/pgdata
-- environment:
-    MYSQL_DATABASE: grafana_tests
-    MYSQL_PASSWORD: password
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_USER: grafana
-  image: mysql:5.7.39
-  name: mysql
-  volumes:
-  - name: mysql
-    path: /var/lib/mysql
-- environment: {}
-  image: redis:6.2.1-alpine
-  name: redis
-- environment: {}
-  image: memcached:1.6.9-alpine
-  name: memcached
-steps:
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
-  name: identify-runner
-- commands:
-  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-  - cd grafana-enterprise
-  - git checkout ${DRONE_TAG}
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/build-container:1.7.2
-  name: clone-enterprise
-- commands:
-  - mv bin/grabpl /tmp/
-  - rmdir bin
-  - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
-    ${DRONE_TAG}
-  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
-  - mkdir bin
-  - mv /tmp/grabpl bin/
-  depends_on:
-  - clone-enterprise
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/build-container:1.7.2
-  name: init-enterprise
-- commands:
-  - '# It is required that code generated from Thema/CUE be committed and in sync
-    with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-cue
-  depends_on:
-  - init-enterprise
-  image: grafana/build-container:1.7.2
-  name: verify-gen-cue
-- commands:
-  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-jsonnet
-  depends_on:
-  - init-enterprise
-  image: grafana/build-container:1.7.2
-  name: verify-gen-jsonnet
-- commands:
-  - make gen-go
-  depends_on:
-  - verify-gen-cue
-  image: grafana/build-container:1.7.2
-  name: wire-install
-- commands:
-  - apt-get update
-  - apt-get install -yq postgresql-client
-  - dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
-  depends_on:
-  - wire-install
-  environment:
-    GRAFANA_TEST_DB: postgres
-    PGPASSWORD: grafanatest
-    POSTGRES_HOST: postgres
-  image: grafana/build-container:1.7.2
-  name: postgres-integration-tests
-- commands:
-  - apt-get update
-  - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
-  depends_on:
-  - wire-install
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
-  image: grafana/build-container:1.7.2
-  name: mysql-integration-tests
-- commands:
-  - dockerize -wait tcp://redis:6379/0 -timeout 120s
-  - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
-  depends_on:
-  - wire-install
-  environment:
-    REDIS_URL: redis://redis:6379/0
-  image: grafana/build-container:1.7.2
-  name: redis-integration-tests
-- commands:
-  - dockerize -wait tcp://memcached:11211 -timeout 120s
-  - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
-  depends_on:
-  - wire-install
-  environment:
-    MEMCACHED_HOSTS: memcached:11211
-  image: grafana/build-container:1.7.2
-  name: memcached-integration-tests
-trigger:
-  event:
-    exclude:
-    - promote
-  ref:
-  - refs/tags/v*
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
-- name: postgres
-  temp:
-    medium: memory
-- name: mysql
-  temp:
-    medium: memory
----
-clone:
-  disable: true
 depends_on:
 - release-enterprise-build-e2e-publish
 - release-enterprise-test-frontend
 - release-enterprise-test-backend
-- release-enterprise-integration-tests
 environment:
   EDITION: enterprise
 image_pull_secrets:
@@ -5317,7 +5010,6 @@ depends_on:
 - release-branch-oss-build-e2e-publish
 - release-branch-oss-test-frontend
 - release-branch-oss-test-backend
-- release-branch-oss-integration-tests
 environment:
   EDITION: oss
 image_pull_secrets:
@@ -6029,7 +5721,6 @@ depends_on:
 - release-branch-enterprise-build-e2e-publish
 - release-branch-enterprise-test-frontend
 - release-branch-enterprise-test-backend
-- release-branch-enterprise-integration-tests
 environment:
   EDITION: enterprise
 image_pull_secrets:
@@ -6350,6 +6041,295 @@ volumes:
 ---
 clone:
   retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: integration-tests-oss
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services:
+- environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
+    POSTGRES_DB: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+    POSTGRES_USER: grafanatest
+  image: postgres:12.3-alpine
+  name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:5.7.39
+  name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
+steps:
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.17.1
+  name: identify-runner
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.7.2
+  name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.7.2
+  name: verify-gen-jsonnet
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.7.2
+  name: wire-install
+- commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=5m {}'
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.7.2
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=5m {}'
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.7.2
+  name: mysql-integration-tests
+trigger:
+  event:
+  - promote
+  target: integration-tests
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
+---
+clone:
+  disable: true
+depends_on: []
+environment:
+  EDITION: enterprise
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: integration-tests-enterprise
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services:
+- environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
+    POSTGRES_DB: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+    POSTGRES_USER: grafanatest
+  image: postgres:12.3-alpine
+  name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:5.7.39
+  name: mysql
+  volumes:
+  - name: mysql
+    path: /var/lib/mysql
+- environment: {}
+  image: redis:6.2.1-alpine
+  name: redis
+- environment: {}
+  image: memcached:1.6.9-alpine
+  name: memcached
+steps:
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.17.1
+  name: identify-runner
+- commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout ${DRONE_TAG}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.7.2
+  name: clone-enterprise
+- commands:
+  - mv bin/grabpl /tmp/
+  - rmdir bin
+  - mv grafana-enterprise /tmp/
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
+    ${DRONE_TAG}
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
+  - mkdir bin
+  - mv /tmp/grabpl bin/
+  depends_on:
+  - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.7.2
+  name: init-enterprise
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.7.2
+  name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.7.2
+  name: verify-gen-jsonnet
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.7.2
+  name: wire-install
+- commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=5m {}'
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.7.2
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=5m {}'
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.7.2
+  name: mysql-integration-tests
+- commands:
+  - dockerize -wait tcp://redis:6379/0 -timeout 120s
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=5m {}'
+  depends_on:
+  - wire-install
+  environment:
+    REDIS_URL: redis://redis:6379/0
+  image: grafana/build-container:1.7.2
+  name: redis-integration-tests
+- commands:
+  - dockerize -wait tcp://memcached:11211 -timeout 120s
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=5m {}'
+  depends_on:
+  - wire-install
+  environment:
+    MEMCACHED_HOSTS: memcached:11211
+  image: grafana/build-container:1.7.2
+  name: memcached-integration-tests
+trigger:
+  event:
+  - promote
+  target: integration-tests
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql
+  temp:
+    medium: memory
+---
+clone:
+  retries: 3
 kind: pipeline
 name: scan-grafana/grafana:latest-image
 platform:
@@ -6634,6 +6614,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: e4c52ad4cc14e3508033bcd338487e334304565a072967171bde149ba6c9d8a7
+hmac: f4ea70427c5175e11a5f97cae6364d02e1bdb1f6a431325cc9ef083dee4c7751
 
 ...
