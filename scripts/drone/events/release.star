@@ -65,12 +65,19 @@ load("scripts/drone/vault.star", "from_secret", "prerelease_bucket")
 
 ver_mode = "release"
 release_trigger = {
-    "event": {"exclude": ["promote"]},
-    "ref": {"include": [
-        "refs/tags/v*",
-    ], "exclude": [
-        "refs/tags/*-cloud*",
-    ]}
+    "event": {
+        "exclude": [
+            "promote",
+        ],
+    },
+    "ref": {
+        "include": [
+            "refs/tags/v*",
+        ],
+        "exclude": [
+            "refs/tags/*-cloud*",
+        ],
+    },
 }
 
 def store_npm_packages_step():
