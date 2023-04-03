@@ -17,7 +17,7 @@ export const DatasetSelector = ({ db, dataset, onChange, preconfiguredDataset }:
   const usePreconfiguredDataset = !!preconfiguredDataset.length;
 
   const state = useAsync(async () => {
-    // Early return if database is already configured; no need to fetch other databases.
+    // If database is already configured, no need to fetch other databases.
     if (usePreconfiguredDataset) {
       return;
     }

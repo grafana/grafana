@@ -211,7 +211,6 @@ export function QueryHeader({
               <EditorField label="Dataset" width={25}>
                 <DatasetSelector
                   db={db}
-                  // JEV: if no preconfig dataset, this will be empty string...
                   dataset={query.dataset!}
                   preconfiguredDataset={preconfiguredDataset}
                   onChange={onDatasetChange}
