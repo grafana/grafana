@@ -51,9 +51,6 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", i.cfg.BuildVersion),
 	}
-	if plugin.Info.Version != "" {
-		hostEnv = append(hostEnv, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
-	}
 
 	if i.license != nil {
 		hostEnv = append(
@@ -69,11 +66,14 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(i.cfg.Azure)...)
 
 	// Tracing
-	pluginTracingEnabled := true
+	var pluginTracingEnabled bool
 	if v, exists := i.cfg.PluginSettings[plugin.ID]["tracing"]; exists {
-		pluginTracingEnabled = v != "false"
+		pluginTracingEnabled = v == "true"
 	}
 	if i.cfg.Opentelemetry.IsEnabled() && pluginTracingEnabled {
+		if plugin.Info.Version != "" {
+			hostEnv = append(hostEnv, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
+		}
 		hostEnv = append(
 			hostEnv,
 			fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", i.cfg.Opentelemetry.Address),

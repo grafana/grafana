@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Dropdown, Button, useTheme2, Icon } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
 
@@ -27,6 +28,7 @@ export const AddPanelButton = ({ dashboard }: Props) => {
         size="lg"
         fill="outline"
         className={cx(styles.button, styles.buttonIcon, styles.buttonText)}
+        data-testid={selectors.components.PageToolbar.itemButton('Add panel button')}
       >
         Add
         <Icon name={isMenuOpen ? 'angle-up' : 'angle-down'} size="lg" />
