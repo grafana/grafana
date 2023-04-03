@@ -149,3 +149,14 @@ For more information and examples please refer to [InfluxDB Provisioning]({{< re
 ## Prometheus browser cache
 
 New feature toggle `prometheusResourceBrowserCache` provides the ability to cache Prometheus editor API calls in the Prometheus data source configuration.
+
+## Prometheus metric ecyclopedia
+
+New feature toggle `prometheusMetricEncyclopedia` replaces the metric select dropdown in the Prometheus query builder component with the paginated and searchable metric encyclopedia. These are the features of the metric encyclopedia:
+
+- Search metrics with a fuzzy search by name or name, type, and description
+- Filter metrics by Prometheus types (guage, counter, histogram, summary)
+- Displays metrics in a paginated list and choose a number of results per page
+- Explore list alphabetically
+- Each metric is displayed with the metric name, type and description
+- Expert feature: Search metric names by regex using the backend only
