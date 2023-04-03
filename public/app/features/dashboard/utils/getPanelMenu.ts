@@ -1,5 +1,3 @@
-import { cloneDeep } from 'lodash';
-
 import { PanelMenuItem, PluginExtensionPlacements, type PluginExtensionPanelContext } from '@grafana/data';
 import {
   isPluginExtensionLink,
@@ -334,13 +332,13 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
     id: panel.id,
     pluginId: panel.type,
     title: panel.title,
-    timeRange: cloneDeep(dashboard.time),
+    timeRange: dashboard.time,
     timeZone: dashboard.timezone,
     dashboard: {
       uid: dashboard.uid,
       title: dashboard.title,
       tags: Array.from<string>(dashboard.tags),
     },
-    targets: panel.targets.map((t) => cloneDeep(t)),
+    targets: panel.targets,
   };
 }

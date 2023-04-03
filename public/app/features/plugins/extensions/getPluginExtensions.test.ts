@@ -246,4 +246,43 @@ describe('getPluginExtensions()', () => {
     expect(global.console.warn).toHaveBeenCalledTimes(1);
     expect(global.console.warn).toHaveBeenCalledWith('[Plugin Extensions] Something went wrong!');
   });
+
+  test('should pass a frozen copy of the context to the onClick() function', () => {
+    const context = { title: 'New title from the context!' };
+
+    link2.path = undefined;
+    link2.onClick = jest.fn();
+
+    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const { extensions } = getPluginExtensions({ registry, context, placement: placement2 });
+    const [extension] = extensions;
+
+    assertPluginExtensionLink(extension);
+    extension.onClick?.({} as React.MouseEvent);
+
+    const helpers = (link2.onClick as jest.Mock).mock.calls[0][1];
+
+    expect(link2.configure).toHaveBeenCalledTimes(1);
+    expect(Object.isFrozen(helpers.context)).toBe(true);
+    expect(() => {
+      helpers.context.title = 'New title';
+    }).toThrow();
+  });
+
+  test('should should not freeze the original context', () => {
+    const context = {
+      title: 'New title from the context!',
+      nested: { title: 'title' },
+      array: ['a'],
+    };
+
+    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    getPluginExtensions({ registry, context, placement: placement2 });
+
+    expect(() => {
+      context.title = 'Updating the title';
+      context.nested.title = 'new title';
+      context.array.push('b');
+    }).not.toThrow();
+  });
 });
