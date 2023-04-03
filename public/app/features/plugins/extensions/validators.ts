@@ -1,5 +1,3 @@
-import { isPromise } from 'util/types';
-
 import type { PluginExtension, PluginExtensionLink, PluginExtensionLinkConfig } from '@grafana/data';
 import { isPluginExtensionLink } from '@grafana/runtime';
 
@@ -104,4 +102,8 @@ export function isPluginExtensionConfigValid(pluginId: string, extension: Plugin
 
     return false;
   }
+}
+
+export function isPromise(value: unknown) {
+  return value instanceof Promise || (typeof value === 'object' && value !== null && 'then' in value);
 }
