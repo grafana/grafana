@@ -237,11 +237,10 @@ var (
 			Owner:       grafanaUserEssentialsSquad,
 		},
 		{
-			Name:            "grpcServer",
-			Description:     "Run GRPC server",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			Owner:           grafanaAppPlatformSquad,
+			Name:        "grpcServer",
+			Description: "Run GRPC server",
+			State:       FeatureStateBeta,
+			Owner:       grafanaAppPlatformSquad,
 		},
 		{
 			Name:            "entityStore",
