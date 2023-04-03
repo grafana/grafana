@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import { getTimeZone } from '@grafana/data';
 import {
   Button,
   HorizontalGroup,
@@ -15,6 +14,7 @@ import {
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import { formatTimeOfDayString, parseTimeOfDay } from 'app/core/utils/timeRegions';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { TimeRegionConfig } from '../types';
 
@@ -32,12 +32,13 @@ const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 });
 
 export function TimeRegionsEditor({ value, onChange }: Props) {
+  const defaultTimezone = useMemo(() => getDashboardSrv().dashboard?.getTimezone(), []);
   const addTimeRegion = () => {
     const r: TimeRegionConfig = {
       name: getNextRegionName(),
       color: 'rgba(234, 112, 112, 0.12)',
       line: false,
-      timezone: getTimeZone(),
+      timezone: defaultTimezone,
     };
     onChange(value ? [...value, r] : [r]);
     regionsByName.set(r.name, r);
