@@ -254,7 +254,7 @@ describe('getPluginExtensions()', () => {
     link2.onClick = jest.fn();
 
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
-    const { extensions } = getPluginExtensions({ registry, context, placement: placement2 });
+    const { extensions } = getPluginExtensions({ registry, context, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
 
     assertPluginExtensionLink(extension);
@@ -277,7 +277,7 @@ describe('getPluginExtensions()', () => {
     };
 
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
-    getPluginExtensions({ registry, context, placement: placement2 });
+    getPluginExtensions({ registry, context, extensionPointId: extensionPoint2 });
 
     expect(() => {
       context.title = 'Updating the title';
