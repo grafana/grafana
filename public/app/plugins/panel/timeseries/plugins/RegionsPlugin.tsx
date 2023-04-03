@@ -66,6 +66,8 @@ export const RegionsPlugin = ({ regions, config }: RegionsPluginProps) => {
         let w = u.valToPos(to, 'x', true) - x;
         let h = u.bbox.height;
 
+        w = w === 0 ? 1 : w;
+
         const color = theme.visualization.getColorByName(colorsRef.current[i]);
 
         ctx.fillStyle = color;
