@@ -36,6 +36,7 @@ import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
+import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
   failedMetric,
   histogramMetric,
@@ -66,6 +67,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   };
   search?: {
     hide?: boolean;
+    filters?: TraceqlFilter[];
   };
   nodeGraph?: NodeGraphOptions;
   lokiSearch?: {
@@ -92,6 +94,20 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.lokiSearch = instanceSettings.jsonData.lokiSearch;
     this.traceQuery = instanceSettings.jsonData.traceQuery;
     this.languageProvider = new TempoLanguageProvider(this);
+    if (!this.search?.filters) {
+      this.search = {
+        ...this.search,
+        filters: [
+          {
+            id: 'service-name',
+            tag: 'service.name',
+            operator: '=',
+            scope: TraceqlSearchScope.Resource,
+          },
+          { id: 'span-name', tag: 'name', operator: '=', scope: TraceqlSearchScope.Span },
+        ],
+      };
+    }
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {

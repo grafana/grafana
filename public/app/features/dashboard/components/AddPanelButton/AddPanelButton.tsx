@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Dropdown, Button, useTheme2, Icon } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 import { AddPanelMenu } from './AddPanelMenu';
@@ -24,11 +24,11 @@ export const AddPanelButton = ({ dashboard }: Props) => {
       onVisibleChange={setIsMenuOpen}
     >
       <Button
-        tooltip={t('dashboard.toolbar.add-panel', 'Add panel')}
         icon="panel-add"
         size="lg"
         fill="outline"
         className={cx(styles.button, styles.buttonIcon, styles.buttonText)}
+        data-testid={selectors.components.PageToolbar.itemButton('Add panel button')}
       >
         Add
         <Icon name={isMenuOpen ? 'angle-up' : 'angle-down'} size="lg" />

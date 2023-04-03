@@ -114,7 +114,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'apps':
       return t('nav.apps.title', 'Apps');
     case 'alerts-and-incidents':
-      return t('nav.alerts-and-incidents.title', 'Alerts & incidents');
+      return t('nav.alerts-and-incidents.title', 'Alerts & IRM');
     case 'help':
       return t('nav.help.title', 'Help');
     case 'profile/settings':
