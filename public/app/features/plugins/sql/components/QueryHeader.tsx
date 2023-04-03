@@ -41,10 +41,16 @@ export function QueryHeader({
   isDatasetSelectorHidden,
 }: QueryHeaderProps) {
   const { editorMode } = query;
-  // console.log('🚀 ~ file: QueryHeader.tsx:44 ~ query:', query);
   const [_, copyToClipboard] = useCopyToClipboard();
   const [showConfirm, setShowConfirm] = useState(false);
   const toRawSql = db.toRawSql;
+
+  // JEV: reset the query data if user has NO preconfig, but then adds one... do better
+  if (query.dataset !== preconfiguredDataset) {
+    if (!!preconfiguredDataset) {
+      onChange({ ...query, dataset: preconfiguredDataset });
+    }
+  }
 
   const onEditorModeChange = useCallback(
     (newEditorMode: EditorMode) => {
@@ -74,8 +80,6 @@ export function QueryHeader({
       sql: undefined,
       rawSql: '',
     };
-
-    // console.log(next, 'next');
 
     onChange(next);
   };
