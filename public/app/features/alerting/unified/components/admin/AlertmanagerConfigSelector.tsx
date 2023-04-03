@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Select, useStyles2 } from '@grafana/ui';
+import { Button, HorizontalGroup, Select, useStyles2 } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -69,14 +69,21 @@ export default function AlertmanagerConfigSelector({
         <>
           <div>Select a previous working configuration until you fix this error:</div>
 
-          <Select
-            className={styles.container}
-            options={validAmConfigsOptions}
-            value={selectedAmConfig}
-            onChange={(value: SelectableValue) => {
-              onChange(value);
-            }}
-          />
+          <div className={styles.container}>
+            <HorizontalGroup align="flex-start" spacing="md">
+              <Select
+                options={validAmConfigsOptions}
+                value={selectedAmConfig}
+                onChange={(value: SelectableValue) => {
+                  onChange(value);
+                }}
+              />
+
+              <Button variant="primary" disabled={loading} onClick={onResetClick}>
+                Reset to selected configuration
+              </Button>
+            </HorizontalGroup>
+          </div>
 
           <ConfigEditor
             defaultValues={defaultValues}
@@ -85,10 +92,6 @@ export default function AlertmanagerConfigSelector({
             loading={loading}
             alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
           />
-
-          <Button variant="primary" disabled={loading} onClick={onResetClick}>
-            Reset to selected configuration
-          </Button>
         </>
       ) : null}
     </>
@@ -96,6 +99,7 @@ export default function AlertmanagerConfigSelector({
 }
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
-    margin-bottom: ${theme.spacing(4)};
+    margin-top: ${theme.spacing(2)};
+    margin-bottom: ${theme.spacing(2)};
   `,
 });
