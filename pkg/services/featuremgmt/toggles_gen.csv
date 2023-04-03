@@ -73,3 +73,4 @@ alertStateHistoryLokiSecondary,alpha,@grafana/alerting-squad,false,false,false,f
 alertStateHistoryLokiPrimary,alpha,@grafana/alerting-squad,false,false,false,false
 alertStateHistoryLokiOnly,alpha,@grafana/alerting-squad,false,false,false,false
 unifiedRequestLog,alpha,@grafana/backend-platform,false,false,false,false
+renderAuthJWT,beta,@grafana/grafana-as-code,false,false,false,false
