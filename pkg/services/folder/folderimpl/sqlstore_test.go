@@ -200,6 +200,7 @@ func TestIntegrationUpdate(t *testing.T) {
 		OrgID:       orgID,
 		UID:         util.GenerateShortUID(),
 	})
+	require.NoError(t, err)
 
 	// create subfolder
 	f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
