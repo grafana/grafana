@@ -46,7 +46,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     this.name = instanceSettings.name;
     this.responseParser = new ResponseParser();
     this.id = instanceSettings.id;
-    // JEV: do we need this logical OR? According to the typing, there will always be instance settings...
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
     this.db = this.getDB();
