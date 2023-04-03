@@ -56,7 +56,7 @@ In the above example, we created a component that renders `<LinkButton />` or `<
 
 ## How to insert links into another plugin
 
-Create links from other plugins in the same way you would [extend the Grafana application UI]({{< relref "./extend-the-grafana-ui-with-links-and-commands" >}}) with a link. Rather than specify a `grafana/...` placement, specify the plugin placement `plugin/<pluginId>/<placementId>` instead. Given the placement example above, use a plugin link such as the following.
+Create links from other plugins in the same way you would [extend the Grafana application UI]({{< relref "./extend-the-grafana-ui-with-links" >}}) with a link. Rather than specify a `grafana/...` placement, specify the plugin placement `plugin/<pluginId>/<placementId>` instead. Given the placement example above, use a plugin link such as the following.
 
 ### Link example
 
