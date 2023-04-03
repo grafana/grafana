@@ -249,6 +249,7 @@ export const ExamplesHoverHeader = () => {
             description: 'This is a description',
             menu,
             hoverHeader: true,
+            dragClass: 'draggable',
             titleItems: (
               <PanelChrome.TitleItem title="Online">
                 <Icon name="heart" />
@@ -259,6 +260,7 @@ export const ExamplesHoverHeader = () => {
             title: 'Default title',
             menu,
             hoverHeader: true,
+            dragClass: 'draggable',
             titleItems: [
               <PanelChrome.TitleItem title="Online" key="A">
                 <Icon name="heart" />
@@ -272,8 +274,14 @@ export const ExamplesHoverHeader = () => {
             loadingState: LoadingState.Loading,
             hoverHeader: true,
             title: 'I am a hover header',
+            dragClass: 'draggable',
           })}
           {renderPanel('No title, Hover header', {
+            hoverHeader: true,
+            dragClass: 'draggable',
+          })}
+          {renderPanel('Should not have drag icon', {
+            title: 'No drag icon',
             hoverHeader: true,
           })}
           {renderPanel('With action link', {

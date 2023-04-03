@@ -41,14 +41,16 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
       style={{ top: `${offset}px` }}
       data-testid="hover-header-container"
     >
-      <div
-        className={cx(styles.square, styles.draggable, dragClass)}
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUp}
-        ref={draggableRef}
-      >
-        <Icon name="expand-arrows" className={styles.draggableIcon} />
-      </div>
+      {dragClass && (
+        <div
+          className={cx(styles.square, styles.draggable, dragClass)}
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+          ref={draggableRef}
+        >
+          <Icon name="expand-arrows" className={styles.draggableIcon} />
+        </div>
+      )}
       {!title && <h6 className={cx(styles.untitled, styles.draggable, dragClass)}>Untitled</h6>}
       {children}
       {menu && (
