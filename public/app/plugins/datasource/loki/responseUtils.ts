@@ -221,7 +221,9 @@ export function addResponseMetadata(response: DataQueryResponse, metadata: Recor
   response.data.forEach((frame: DataFrame) => {
     frame.meta = {
       ...frame.meta,
-      custom: metadata,
+      custom: {
+        ...metadata,
+      },
     };
   });
 

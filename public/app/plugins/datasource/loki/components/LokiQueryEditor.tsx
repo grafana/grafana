@@ -202,7 +202,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           maxLines={datasource.maxLines}
           queryStats={queryStats}
         />
-        <SplittingProgressDisplay exploreId={exploreId} />
+        <SplittingProgressDisplay exploreId={exploreId} refId={query?.refId} />
       </EditorRows>
     </>
   );
