@@ -11,18 +11,18 @@ import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise
 
 type GetExtensions = ({
   context,
-  placement,
+  extensionPointId,
   registry,
 }: {
   context?: object | Record<string | symbol, unknown>;
-  placement: string;
+  extensionPointId: string;
   registry: PluginExtensionRegistry;
 }) => { extensions: PluginExtension[] };
 
-// Returns with a list of plugin extensions for the given placement
-export const getPluginExtensions: GetExtensions = ({ context, placement, registry }) => {
+// Returns with a list of plugin extensions for the given extension point
+export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, registry }) => {
   const frozenContext = context ? deepFreeze(context) : {};
-  const registryItems = registry[placement] ?? [];
+  const registryItems = registry[extensionPointId] ?? [];
   // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
   const extensions: PluginExtension[] = [];
 

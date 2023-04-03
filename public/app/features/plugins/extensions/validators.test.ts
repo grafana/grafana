@@ -3,7 +3,7 @@ import { PluginExtension, PluginExtensionLinkConfig, PluginExtensionTypes } from
 import {
   assertConfigureIsValid,
   assertLinkPathIsValid,
-  assertPlacementIsValid,
+  assertExtensionPointIdIsValid,
   assertPluginExtensionLink,
   assertStringProps,
   isPluginExtensionConfigValid,
@@ -43,7 +43,7 @@ describe('Plugin Extension Validators', () => {
           path: `/a/${pluginId}/overview`,
           title: 'My Plugin',
           description: 'My Plugin Description',
-          placement: '...',
+          extensionPointId: '...',
         };
 
         assertLinkPathIsValid(pluginId, extension.path);
@@ -56,7 +56,7 @@ describe('Plugin Extension Validators', () => {
           path: `/a/myorg-b-app/overview`,
           title: 'My Plugin',
           description: 'My Plugin Description',
-          placement: '...',
+          extensionPointId: '...',
         };
 
         assertLinkPathIsValid('another-plugin-app', extension.path);
@@ -69,7 +69,7 @@ describe('Plugin Extension Validators', () => {
           path: `/some-bad-path`,
           title: 'My Plugin',
           description: 'My Plugin Description',
-          placement: '...',
+          extensionPointId: '...',
         };
 
         assertLinkPathIsValid('myorg-b-app', extension.path);
@@ -80,32 +80,32 @@ describe('Plugin Extension Validators', () => {
   describe('assertPlacementIsValid()', () => {
     it('should throw an error if the placement does not have the right prefix', () => {
       expect(() => {
-        assertPlacementIsValid({
+        assertExtensionPointIdIsValid({
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
           path: '...',
-          placement: 'some-bad-placement',
+          extensionPointId: 'some-bad-placement',
         });
       }).toThrowError();
     });
 
     it('should NOT throw an error if the placement is correct', () => {
       expect(() => {
-        assertPlacementIsValid({
+        assertExtensionPointIdIsValid({
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
           path: '...',
-          placement: 'grafana/some-page/some-placement',
+          extensionPointId: 'grafana/some-page/some-placement',
         });
 
-        assertPlacementIsValid({
+        assertExtensionPointIdIsValid({
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
           path: '...',
-          placement: 'plugins/my-super-plugin/some-page/some-placement',
+          extensionPointId: 'plugins/my-super-plugin/some-page/some-placement',
         });
       }).not.toThrowError();
     });
@@ -117,7 +117,7 @@ describe('Plugin Extension Validators', () => {
         assertConfigureIsValid({
           title: 'Title',
           description: 'Description',
-          placement: 'grafana/some-page/some-placement',
+          extensionPointId: 'grafana/some-page/some-placement',
         } as PluginExtensionLinkConfig);
       }).not.toThrowError();
     });
@@ -127,7 +127,7 @@ describe('Plugin Extension Validators', () => {
         assertConfigureIsValid({
           title: 'Title',
           description: 'Description',
-          placement: 'grafana/some-page/some-placement',
+          extensionPointId: 'grafana/some-page/some-placement',
           configure: () => {},
         } as PluginExtensionLinkConfig);
       }).not.toThrowError();
@@ -140,7 +140,7 @@ describe('Plugin Extension Validators', () => {
           {
             title: 'Title',
             description: 'Description',
-            placement: 'grafana/some-page/some-placement',
+            extensionPointId: 'grafana/some-page/some-placement',
             handler: () => {},
             configure: '() => {}',
           } as PluginExtensionLinkConfig
@@ -155,7 +155,7 @@ describe('Plugin Extension Validators', () => {
         assertStringProps(
           {
             description: 'Description',
-            placement: 'grafana/some-page/some-placement',
+            extensionPointId: 'grafana/some-page/some-placement',
           },
           ['title', 'description', 'placement']
         );
@@ -168,7 +168,7 @@ describe('Plugin Extension Validators', () => {
           {
             title: '',
             description: 'Description',
-            placement: 'grafana/some-page/some-placement',
+            extensionPointId: 'grafana/some-page/some-placement',
           },
           ['title', 'description', 'placement']
         );
@@ -181,7 +181,7 @@ describe('Plugin Extension Validators', () => {
           {
             title: 'Title',
             description: 'Description',
-            placement: 'grafana/some-page/some-placement',
+            extensionPointId: 'grafana/some-page/some-placement',
           },
           ['title', 'description', 'placement']
         );
@@ -194,7 +194,7 @@ describe('Plugin Extension Validators', () => {
           {
             title: 'Title',
             description: 'Description',
-            placement: 'grafana/some-page/some-placement',
+            extensionPointId: 'grafana/some-page/some-placement',
             dontCare: '',
           },
           ['title', 'description', 'placement']
@@ -212,8 +212,8 @@ describe('Plugin Extension Validators', () => {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
-          placement: 'grafana/some-page/some-placement',
           onClick: jest.fn(),
+          extensionPointId: 'grafana/some-page/some-placement',
         } as PluginExtensionLinkConfig)
       ).toBe(true);
 
@@ -222,7 +222,7 @@ describe('Plugin Extension Validators', () => {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
-          placement: 'grafana/some-page/some-placement',
+          extensionPointId: 'grafana/some-page/some-placement',
           path: `/a/${pluginId}/page`,
         } as PluginExtensionLinkConfig)
       ).toBe(true);
@@ -239,7 +239,7 @@ describe('Plugin Extension Validators', () => {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
-          placement: 'grafana/some-page/some-placement',
+          extensionPointId: 'grafana/some-page/some-placement',
           path: '/administration/users',
         } as PluginExtensionLinkConfig)
       ).toBe(false);
@@ -260,7 +260,7 @@ describe('Plugin Extension Validators', () => {
           type: PluginExtensionTypes.link,
           title: '',
           description: 'Description',
-          placement: 'grafana/some-page/some-placement',
+          extensionPointId: 'grafana/some-page/some-placement',
           path: `/a/${pluginId}/page`,
         } as PluginExtensionLinkConfig)
       ).toBe(false);
