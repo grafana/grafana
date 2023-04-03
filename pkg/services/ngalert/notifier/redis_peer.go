@@ -284,6 +284,7 @@ func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 		nPeers = n
 		totalPolls++
 	}
+	p.requestFullState()
 	close(p.readyc)
 }
 
@@ -371,19 +372,21 @@ func (p *redisPeer) fullStateSyncReceive() {
 			level.Warn(p.logger).Log("msg", "merge remote state", "err", err)
 			return
 		}
-		p.mtx.RLock()
-		defer p.mtx.RUnlock()
-		for _, part := range fs.Parts {
-			s, ok := p.states[part.Key]
-			if !ok {
-				level.Warn(p.logger).Log("received", "unknown state key", "len", len(data.Payload), "key", part.Key)
-				continue
+		func() {
+			p.mtx.RLock()
+			defer p.mtx.RUnlock()
+			for _, part := range fs.Parts {
+				s, ok := p.states[part.Key]
+				if !ok {
+					level.Warn(p.logger).Log("received", "unknown state key", "len", len(data.Payload), "key", part.Key)
+					continue
+				}
+				if err := s.Merge(part.Data); err != nil {
+					level.Warn(p.logger).Log("msg", "merge remote state", "err", err, "key", part.Key)
+					return
+				}
 			}
-			if err := s.Merge(part.Data); err != nil {
-				level.Warn(p.logger).Log("msg", "merge remote state", "err", err, "key", part.Key)
-				return
-			}
-		}
+		}()
 	}
 }
 
@@ -428,6 +431,10 @@ type RedisChannel struct {
 }
 
 func (c *RedisChannel) Broadcast(b []byte) {
+	b, err := proto.Marshal(&clusterpb.Part{Key: c.channel, Data: b})
+	if err != nil {
+		return
+	}
 	c.p.messagesSent.WithLabelValues(c.msgType).Inc()
 	c.p.messagesSentSize.WithLabelValues(c.msgType).Add(float64(len(b)))
 	_ = c.p.redis.Publish(context.Background(), c.channel, string(b))
