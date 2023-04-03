@@ -27,6 +27,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `cloudWatchDynamicLabels`           | Use dynamic labels instead of alias patterns in CloudWatch datasource                                                                                                        | Yes                |
 | `dataConnectionsConsole`            | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins. | Yes                |
 | `internationalization`              | Enables internationalization                                                                                                                                                 | Yes                |
+| `topnav`                            | Enables new top navigation and page layouts                                                                                                                                  | Yes                |
 | `cloudWatchCrossAccountQuerying`    | Enables cross-account querying in CloudWatch datasources                                                                                                                     | Yes                |
 | `accessTokenExpirationCheck`        | Enable OAuth access_token expiration check and token refresh using the refresh_token                                                                                         |                    |
 | `disablePrometheusExemplarSampling` | Disable Prometheus exemplar sampling                                                                                                                                         |                    |
@@ -44,7 +45,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `validateDashboardsOnSave`                | Validate dashboard JSON POSTed to api/dashboards/db                                                                                                                                          |
 | `autoMigrateOldPanels`                    | Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)                                                                                                           |
 | `disableAngular`                          | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
-| `topnav`                                  | Displays new top nav and page layouts                                                                                                                                                        |
 | `accessControlOnCall`                     | Access control primitives for OnCall                                                                                                                                                         |
 | `alertingNoNormalState`                   | Stop maintaining state of alerts that are not firing                                                                                                                                         |
 | `disableElasticsearchBackendExploreQuery` | Disable executing of Elasticsearch Explore queries trough backend                                                                                                                            |
@@ -99,6 +99,10 @@ Alpha features might be changed or removed without prior notice.
 | `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                                                                                                           |
 | `clientTokenRotation`              | Replaces the current in-request token rotation so that the client initiates the rotation                                                                                                            |
 | `prometheusDataplane`              | Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present. |
+| `alertStateHistoryLokiSecondary`   | Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.                                                                                        |
+| `alertStateHistoryLokiPrimary`     | Enable a remote Loki instance as the primary source for state history reads.                                                                                                                        |
+| `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                                                                                                          |
+| `unifiedRequestLog`                | Writes error logs to the request logger                                                                                                                                                             |
 
 ## Development feature toggles
 

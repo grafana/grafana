@@ -87,4 +87,8 @@ export interface FeatureToggles {
   clientTokenRotation?: boolean;
   disableElasticsearchBackendExploreQuery?: boolean;
   prometheusDataplane?: boolean;
+  alertStateHistoryLokiSecondary?: boolean;
+  alertStateHistoryLokiPrimary?: boolean;
+  alertStateHistoryLokiOnly?: boolean;
+  unifiedRequestLog?: boolean;
 }

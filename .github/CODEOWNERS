@@ -66,7 +66,7 @@
 /pkg/bus/ @grafana/backend-platform
 /pkg/cmd/ @grafana/backend-platform
 /pkg/components/apikeygen/ @grafana/grafana-authnz-team
-/pkg/components/apikeygenprefixed/ @grafana/grafana-authnz-team
+/pkg/components/satokengen/ @grafana/grafana-authnz-team
 /pkg/components/dashdiffs/ @grafana/backend-platform
 /pkg/components/imguploader/ @grafana/backend-platform
 /pkg/components/loki/ @grafana/backend-platform
@@ -230,7 +230,7 @@
 /scripts/build/ @grafana/grafana-delivery
 
 # OSS Plugin Partnerships backend code
-/pkg/tsdb/cloudwatch/ @grafana/aws-plugins
+/pkg/tsdb/cloudwatch/ @grafana/aws-datasources
 /pkg/tsdb/azuremonitor/ @grafana/partner-plugins
 /pkg/tsdb/cloudmonitoring/ @grafana/partner-plugins
 
@@ -489,7 +489,7 @@ lerna.json @grafana/frontend-ops
 
 # Core datasources
 /public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
-/public/app/plugins/datasource/cloudwatch/ @grafana/aws-plugins
+/public/app/plugins/datasource/cloudwatch/ @grafana/aws-datasources
 /public/app/plugins/datasource/elasticsearch/ @grafana/observability-logs
 /public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/testdata/ @grafana/plugins-platform-frontend
@@ -572,7 +572,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/backport.yml @grafana/grafana-delivery
 /.github/workflows/bump-version.yml @grafana/grafana-delivery
 /.github/workflows/close-milestone.yml @grafana/grafana-delivery
-/.github/workflows/cloud-data-sources-code-coverage.yml @grafana/partner-plugins @grafana/aws-plugins
+/.github/workflows/cloud-data-sources-code-coverage.yml @grafana/partner-plugins @grafana/aws-datasources
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
