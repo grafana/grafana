@@ -76,6 +76,7 @@ func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
 }
 
 type UserInfoJson struct {
+	Sub         string              `json:"sub"`
 	Name        string              `json:"name"`
 	DisplayName string              `json:"display_name"`
 	Login       string              `json:"login"`
@@ -107,6 +108,10 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	userInfo := &BasicUserInfo{}
 	for _, data := range toCheck {
 		s.log.Debug("Processing external user info", "source", data.source, "data", data)
+
+		if userInfo.Id == "" {
+			userInfo.Id = data.Sub
+		}
 
 		if userInfo.Name == "" {
 			userInfo.Name = s.extractUserName(data)
