@@ -14,8 +14,8 @@ import { TableSelector } from './TableSelector';
 
 export interface QueryHeaderProps {
   db: DB;
-  preconfiguredDatabase: string;
   query: QueryWithDefaults;
+  preconfiguredDatabase: string;
   onChange: (query: SQLQuery) => void;
   onRunQuery: () => void;
   onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
@@ -31,8 +31,8 @@ const editorModes = [
 
 export function QueryHeader({
   db,
-  preconfiguredDatabase,
   query,
+  preconfiguredDatabase,
   queryRowFilter,
   onChange,
   onRunQuery,
@@ -84,8 +84,6 @@ export function QueryHeader({
 
     const next: SQLQuery = {
       ...query,
-      // JEV: change this
-      dataset: preconfiguredDatabase,
       table: e.value,
       sql: undefined,
       rawSql: '',
@@ -213,7 +211,8 @@ export function QueryHeader({
               <EditorField label="Dataset" width={25}>
                 <DatasetSelector
                   db={db}
-                  chosenDataset={query.dataset === undefined ? null : query.dataset}
+                  // JEV: if no preconfig dataset, this will be empty string...
+                  chosenDatabase={query.dataset!}
                   preconfiguredDatabase={preconfiguredDatabase}
                   onChange={onDatasetChange}
                 />
@@ -223,7 +222,7 @@ export function QueryHeader({
             <EditorField label="Table" width={25}>
               <TableSelector
                 db={db}
-                chosenDataset={query.dataset}
+                chosenDatabase={query.dataset}
                 chosenTable={query.table === undefined ? null : query.table}
                 onChange={onTableChange}
                 applyDefault
