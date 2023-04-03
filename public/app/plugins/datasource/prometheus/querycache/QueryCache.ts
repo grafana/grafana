@@ -255,4 +255,3 @@ export class QueryCache {
     return respFrames;
   }
 }
-// Trigger drone
