@@ -30,6 +30,7 @@ import {
   FieldType,
   rangeUtil,
   Field,
+  sortDataFrame,
 } from '@grafana/data';
 import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv, getDataSourceSrv, config } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
@@ -1228,7 +1229,7 @@ function transformHitsBasedOnDirection(response: any, direction: 'asc' | 'desc')
 }
 
 function processToLogContextDataFrames(result: DataQueryResponse): DataQueryResponse {
-  const frames: DataFrame[] = result.data;
+  const frames = result.data.map((frame) => sortDataFrame(frame, 0, true));
   const processedFrames = frames.map((frame) => {
     // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
     const cache = new FieldCache(frame);
