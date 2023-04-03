@@ -7,7 +7,6 @@ import (
 
 	dashboards "github.com/grafana/grafana/pkg/services/dashboards"
 	mock "github.com/stretchr/testify/mock"
-
 	models "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 )
 
