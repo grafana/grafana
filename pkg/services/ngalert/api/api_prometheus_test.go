@@ -606,6 +606,62 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		require.Len(t, r3.Alerts, 1)
 	})
 
+	t.Run("test time of first firing alert", func(t *testing.T) {
+		fakeStore, fakeAIM, _, api := setupAPI(t)
+		// Create rules in the same Rule Group to keep assertions simple
+		rules := ngmodels.GenerateAlertRules(1, ngmodels.AlertRuleGen(withOrgID(orgID)))
+		fakeStore.PutRule(context.Background(), rules...)
+
+		getRuleResponse := func() apimodels.RuleResponse {
+			r, err := http.NewRequest("GET", "/api/v1/rules", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+			return res
+		}
+
+		// no alerts so timestamp should be nil
+		res := getRuleResponse()
+		require.Len(t, res.Data.RuleGroups, 1)
+		rg := res.Data.RuleGroups[0]
+		require.Len(t, rg.Rules, 1)
+		require.Nil(t, rg.Rules[0].ActiveAt)
+
+		// create a normal alert, the timestamp should still be nil
+		fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1)
+		res = getRuleResponse()
+		require.Len(t, res.Data.RuleGroups, 1)
+		rg = res.Data.RuleGroups[0]
+		require.Len(t, rg.Rules, 1)
+		require.Nil(t, rg.Rules[0].ActiveAt)
+
+		// create a firing alert, the timestamp should be non-nil
+		fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1, withAlertingState())
+		res = getRuleResponse()
+		require.Len(t, res.Data.RuleGroups, 1)
+		rg = res.Data.RuleGroups[0]
+		require.Len(t, rg.Rules, 1)
+		require.NotNil(t, rg.Rules[0].ActiveAt)
+
+		lastActiveAt := rg.Rules[0].ActiveAt
+		// create a second firing alert, the timestamp of first firing alert should be the same
+		fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1, withAlertingState())
+		res = getRuleResponse()
+		require.Len(t, res.Data.RuleGroups, 1)
+		rg = res.Data.RuleGroups[0]
+		require.Len(t, rg.Rules, 1)
+		require.Equal(t, lastActiveAt, rg.Rules[0].ActiveAt)
+	})
+
 	t.Run("test with limit on Rule Groups", func(t *testing.T) {
 		fakeStore, _, _, api := setupAPI(t)
 
