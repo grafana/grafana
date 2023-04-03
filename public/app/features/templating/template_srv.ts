@@ -15,7 +15,8 @@ import {
   TemplateSrv as BaseTemplateSrv,
   VariableInterpolation,
 } from '@grafana/runtime';
-import { sceneGraph, FormatRegistryID, VariableCustomFormatterFn } from '@grafana/scenes';
+import { sceneGraph, VariableCustomFormatterFn } from '@grafana/scenes';
+import { VariableFormatID } from '@grafana/schema';
 
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
@@ -293,7 +294,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       return match;
     }
 
-    if (format === FormatRegistryID.queryParam || isAdHoc(variable)) {
+    if (format === VariableFormatID.QueryParam || isAdHoc(variable)) {
       const value = variableAdapters.get(variable.type).getValueForUrl(variable);
       const text = isAdHoc(variable) ? variable.id : variable.current.text;
 
@@ -312,7 +313,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       value = this.getAllValue(variable);
       text = ALL_VARIABLE_TEXT;
       // skip formatting of custom all values unless format set to text or percentencode
-      if (variable.allValue && format !== FormatRegistryID.text && format !== FormatRegistryID.percentEncode) {
+      if (variable.allValue && format !== VariableFormatID.Text && format !== VariableFormatID.PercentEncode) {
         return this.replace(value);
       }
     }

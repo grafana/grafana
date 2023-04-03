@@ -144,7 +144,7 @@ const (
 	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
-	// Displays new top nav and page layouts
+	// Enables new top navigation and page layouts
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer
@@ -278,4 +278,24 @@ const (
 	// FlagDisableElasticsearchBackendExploreQuery
 	// Disable executing of Elasticsearch Explore queries trough backend
 	FlagDisableElasticsearchBackendExploreQuery = "disableElasticsearchBackendExploreQuery"
+
+	// FlagPrometheusDataplane
+	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
+	FlagPrometheusDataplane = "prometheusDataplane"
+
+	// FlagAlertStateHistoryLokiSecondary
+	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
+	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
+
+	// FlagAlertStateHistoryLokiPrimary
+	// Enable a remote Loki instance as the primary source for state history reads.
+	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
+
+	// FlagAlertStateHistoryLokiOnly
+	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
+	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
+
+	// FlagUnifiedRequestLog
+	// Writes error logs to the request logger
+	FlagUnifiedRequestLog = "unifiedRequestLog"
 )

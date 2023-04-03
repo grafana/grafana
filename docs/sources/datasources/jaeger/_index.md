@@ -15,8 +15,7 @@ weight: 800
 
 # Jaeger data source
 
-Grafana ships with built-in support for Jaeger, which provides open source, end-to-end distributed tracing.
-This topic explains configuration and queries specific to the Jaeger data source.
+Grafana ships with built-in support for Jaeger, which provides open source, end-to-end distributed tracing. This topic explains configuration and queries specific to the Jaeger data source.
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management" >}}).
 Only users with the organization administrator role can add data sources.
@@ -24,7 +23,7 @@ Administrators can also [configure the data source via YAML]({{< relref "#provis
 
 Once you've added the data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so your Grafana instance's users can create queries in the [query editor]({{< relref "#query-the-data-source" >}}) when the users [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
 
-You can also [upload a JSON trace file]({{< relref "#upload-a-json-trace-file" >}}), and [link a trace ID from logs]({{< relref "#link-a-trace-id-from-logs" >}}) in Loki.
+You can also [upload a JSON trace file]({{< relref "#upload-a-json-trace-file" >}}), [link to a trace ID from logs]({{< relref "#link-to-a-trace-id-from-logs" >}}), and [link to a trace ID from metrics]({{< relref "#link-to-a-trace-id-from-metrics" >}}).
 
 ## Configure the data source
 
@@ -95,23 +94,23 @@ To use a variable you need to wrap it in `${}`. For example: `${__span.name}`.
 
 The following table describes the ways in which you can configure your trace to logs settings:
 
-| Setting name              | Description                                                                                                                                                                                                                                                                  |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Data source**           | Defines the target data source. You can select only Loki or Splunk \[logs\] data sources.                                                                                                                                                                                    |
-| **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default: `0`.                                                                              |
-| **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default: `0`.                                                                                                                                                                  |
-| **Tags**                  | Defines the the tags to use in the logs query. Default is `cluster`, `hostname`, `namespace`, `pod`. You can change the tag name for example to remove dots from the name if they are not allowed in the target data source. For example map `http.status` to `http_status`. |
-| **Filter by trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                                                                                                                    |
-| **Filter by span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                                                                                                                     |
-| **Use custom query**      | Toggles use of custom query with interpolation.                                                                                                                                                                                                                              |
-| **Query**                 | Input to write custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                                            |
+| Setting name              | Description                                                                                                                                                                                                                                                             |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data source**           | Defines the target data source. You can select only Loki or Splunk \[logs\] data sources.                                                                                                                                                                               |
+| **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default: `0`.                                                                         |
+| **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default: `0`.                                                                                                                                                             |
+| **Tags**                  | Defines the tags to use in the logs query. Default: `cluster`, `hostname`, `namespace`, `pod`. You can change the tag name for example to remove dots from the name if they are not allowed in the target data source. For example, map `http.status` to `http_status`. |
+| **Filter by trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                                                                                                               |
+| **Filter by span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                                                                                                                |
+| **Use custom query**      | Toggles use of custom query with interpolation.                                                                                                                                                                                                                         |
+| **Query**                 | Input to write custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                                       |
 
 ### Trace to metrics
 
 > **Note:** This feature is behind the `traceToMetrics` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
 > If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
 
-The **Trace to metrics** section configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Jaeger.
+The **Trace to metrics** setting configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Jaeger.
 
 To configure trace to metrics:
 
@@ -136,9 +135,9 @@ The **Node Graph** setting enables the [Node Graph visualization]({{< relref "..
 
 Once enabled, Grafana displays the Node Graph above the trace view.
 
-### Span bar label
+### Span bar
 
-The **Span bar label** section helps you display additional information in the span bar row.
+The **Span bar** setting helps you display additional information in the span bar row.
 
 You can choose one of three options:
 
@@ -151,11 +150,9 @@ You can choose one of three options:
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning#data-sources" >}}).
+For more information about provisioning and available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning#data-sources" >}}).
 
-#### Provisioning examples
-
-**Using basic auth and the trace-to-logs field:**
+#### Provisioning example
 
 ```yaml
 apiVersion: 1
@@ -163,31 +160,37 @@ apiVersion: 1
 datasources:
   - name: Jaeger
     type: jaeger
-    uid: jaeger-spectra
+    uid: EbPG8fYoz
+    url: http://localhost:16686
     access: proxy
-    url: http://localhost:16686/
     basicAuth: true
     basicAuthUser: my_user
-    editable: true
+    readOnly: false
     isDefault: false
     jsonData:
-      tracesToLogs:
-        # Field with internal link pointing to a logs data source in Grafana.
-        # datasourceUid value must match the datasourceUid value of the logs data source.
+      tracesToLogsV2:
+        # Field with an internal link pointing to a logs data source in Grafana.
+        # datasourceUid value must match the uid value of the logs data source.
         datasourceUid: 'loki'
-        tags: ['job', 'instance', 'pod', 'namespace']
-        mappedTags: [{ key: 'service.name', value: 'service' }]
-        mapTagNamesEnabled: false
         spanStartTimeShift: '1h'
-        spanEndTimeShift: '1h'
+        spanEndTimeShift: '-1h'
+        tags: ['job', 'instance', 'pod', 'namespace']
         filterByTraceID: false
         filterBySpanID: false
+        customQuery: true
+        query: 'method="${__span.tags.method}"'
       tracesToMetrics:
         datasourceUid: 'prom'
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
         tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
         queries:
           - name: 'Sample query'
             query: 'sum(rate(traces_spanmetrics_latency_bucket{$__tags}[5m]))'
+      nodeGraph:
+        enabled: true
+      spanBar:
+        type: 'None'
     secureJsonData:
       basicAuthPassword: my_password
 ```
@@ -283,8 +286,14 @@ If the file has multiple traces, Grafana visualizes its first trace.
 }
 ```
 
-## Link a trace ID from logs
+## Link to a trace ID from logs
 
-You can link to a Jaeger trace from logs in [Loki](/docs/loki/latest/) by configuring a derived field with an internal link.
+You can link to Jaeger traces from logs in Loki, Elasticsearch, Splunk, and other logs data sources by configuring an internal link.
 
-For details, refer to [Derived fields]({{< relref "../loki/#configure-derived-fields" >}}) section of the [Loki data source]({{< relref "../loki/" >}}) documentation.
+To configure this feature, see the [Derived fields]({{< relref "../loki#configure-derived-fields" >}}) section of the Loki data source docs or the [Data links]({{< relref "../elasticsearch#data-links" >}}) section of the Elasticsearch or Splunk data source docs.
+
+## Link to a trace ID from metrics
+
+You can link to Jaeger traces from metrics in Prometheus data sources by configuring an exemplar.
+
+To configure this feature, see the [introduction to exemplars]({{< relref "docs/grafana/latest/fundamentals/exemplars" >}}) documentation.
