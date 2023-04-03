@@ -127,7 +127,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
-	xorm.io/builder v0.3.6
+	xorm.io/builder v0.3.6 // indirect
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
@@ -400,7 +400,7 @@ require (
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
-replace github.com/crewjam/saml => github.com/grafana/saml v0.4.13-0.20230203140620-5f476db5c00a
+replace github.com/crewjam/saml => github.com/grafana/saml v0.4.13-0.20230331080031-67cbfa09c7b6
 
 // Thema's thema CLI requires cobra, which eventually works its way down to go-hclog@v1.0.0.
 // Upgrading affects backend plugins: https://github.com/grafana/grafana/pull/47653#discussion_r850508593

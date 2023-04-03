@@ -1284,8 +1284,8 @@ github.com/grafana/phlare/api v0.1.3 h1:mYTaE9mLsAW/uzPXlW/PQSLsZ4ojBFA+oAMfR/PD
 github.com/grafana/phlare/api v0.1.3/go.mod h1:29vcLwFDmZBDce2jwFIMtzvof7fzPadT8VMKw9ks7FU=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20230308154952-78fedf89728b h1:VQOGGGJ2lKcVPANyzIESKYhSeA0QIvUQwfA3CbrkDfA=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20230308154952-78fedf89728b/go.mod h1:MnBfDPXJqXmmfPwQlCLvVUdqfnvrAw+hSPtDeaaFwj4=
-github.com/grafana/saml v0.4.13-0.20230203140620-5f476db5c00a h1:aWSTt/pTOI4uGY9DhBMG1l0GOnGjIYtaqxzYR3/q82o=
-github.com/grafana/saml v0.4.13-0.20230203140620-5f476db5c00a/go.mod h1:igEejV+fihTIlHXYP8zOec3V5A8y3lws5bQBFsTm4gA=
+github.com/grafana/saml v0.4.13-0.20230331080031-67cbfa09c7b6 h1:oHn/OOUkECNX06DPHksS7R3UY5Qdye04b/sBj2/OJ5E=
+github.com/grafana/saml v0.4.13-0.20230331080031-67cbfa09c7b6/go.mod h1:igEejV+fihTIlHXYP8zOec3V5A8y3lws5bQBFsTm4gA=
 github.com/grafana/sqlds/v2 v2.3.10 h1:HWKhE0vR6LoEiE+Is8CSZOgaB//D1yqb2ntkass9Fd4=
 github.com/grafana/sqlds/v2 v2.3.10/go.mod h1:c6ibxnxRVGxV/0YkEgvy7QpQH/lyifFyV7K/14xvdIs=
 github.com/grafana/thema v0.0.0-20230302221249-6952e4a999b7 h1:XOxaBjhozlleshff3mKNdp55ul74nXJEX3wz8ckjTpc=
