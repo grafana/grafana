@@ -3,10 +3,12 @@ import { useEffect } from 'react';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { logDebug } from '@grafana/runtime';
 
+import { SQLConnectionDefaults } from '../../constants';
 import { SQLOptions } from '../../types';
 
 /**
- * Moves the database field from the options object to jsonData.database and empties the database field.
+ * 1. Moves the database field from the options object to jsonData.database and empties the database field.
+ * 2. If max open connections, max idle connections, and auto idle are all undefined set these to default values.
  */
 export function useMigrateDatabaseField<T extends SQLOptions, S = {}>({
   onOptionsChange,
@@ -24,19 +26,26 @@ export function useMigrateDatabaseField<T extends SQLOptions, S = {}>({
       });
     }
 
+    // Set default values for max open connections, max idle connection,
+    // and auto idle if they're all undefined
     if (
       jsonData.maxOpenConns === undefined &&
       jsonData.maxIdleConns === undefined &&
       jsonData.maxIdleConnsAuto === undefined
     ) {
-      // logDebug(`Setting default max open connections to ${} and setting max idle connection to ${}`);
+      // It's expected that the default will be greater than 4
+      const maxOpenConns = SQLConnectionDefaults.MAX_CONNS;
+      const maxIdleConns = Math.ceil(maxOpenConns / 2);
 
+      logDebug(
+        `Setting default max open connections to ${maxOpenConns} and setting max idle connection to ${maxIdleConns}`
+      );
       onOptionsChange({
         ...options,
         jsonData: {
           ...jsonData,
-          maxOpenConns: 100,
-          maxIdleConns: 50,
+          maxOpenConns: maxOpenConns,
+          maxIdleConns: maxIdleConns,
           maxIdleConnsAuto: true,
         },
       });
