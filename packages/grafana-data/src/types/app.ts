@@ -3,7 +3,7 @@ import { ComponentType } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
-import { PluginExtensionLinkConfig, PluginExtensionTypes } from './pluginExtensions';
+import { type PluginExtensionLinkConfig, PluginExtensionTypes } from './pluginExtensions';
 
 /**
  * @public
