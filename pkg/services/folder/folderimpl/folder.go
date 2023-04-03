@@ -543,14 +543,14 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		}
 	}
 
-	var newParentUID *string
+	newParentUID := ""
 	if cmd.NewParentUID != "" {
-		newParentUID = &cmd.NewParentUID
+		newParentUID = cmd.NewParentUID
 	}
 	return s.store.Update(ctx, folder.UpdateFolderCommand{
 		UID:          cmd.UID,
 		OrgID:        cmd.OrgID,
-		NewParentUID: newParentUID,
+		NewParentUID: &newParentUID,
 		SignedInUser: cmd.SignedInUser,
 	})
 }
