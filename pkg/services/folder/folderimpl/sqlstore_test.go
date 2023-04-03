@@ -193,13 +193,23 @@ func TestIntegrationUpdate(t *testing.T) {
 
 	orgID := CreateOrg(t, db)
 
-	// create folder
-	f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+	// create parent folder
+	parent, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 		Title:       folderTitle,
 		Description: folderDsc,
 		OrgID:       orgID,
 		UID:         util.GenerateShortUID(),
 	})
+
+	// create subfolder
+	f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+		Title:       folderTitle,
+		Description: folderDsc,
+		OrgID:       orgID,
+		UID:         util.GenerateShortUID(),
+		ParentUID:   parent.ParentUID,
+	})
+
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := folderStore.Delete(context.Background(), f.UID, orgID)
@@ -259,6 +269,8 @@ func TestIntegrationUpdate(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, newTitle, updated.Title)
 		assert.Equal(t, newDesc, updated.Description)
+		// parent should not change
+		assert.Equal(t, parent.UID, updated.ParentUID)
 
 		f = updated
 	})
