@@ -27,9 +27,6 @@ type Cfg struct {
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
 
-	// Proxy Settings
-	ProxySettings setting.SecureSocksDSProxySettings
-
 	BuildVersion string // TODO Remove
 
 	LogDatasourceRequests bool
@@ -73,7 +70,6 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) (*Cfg, er
 		AWSAllowedAuthProviders: allowedAuth,
 		AWSAssumeRoleEnabled:    aws.KeyValue("assume_role_enabled").MustBool(grafanaCfg.AWSAssumeRoleEnabled),
 		Azure:                   grafanaCfg.Azure,
-		ProxySettings:           grafanaCfg.SecureSocksDSProxy,
 		LogDatasourceRequests:   grafanaCfg.PluginLogBackendRequests,
 		PluginsCDNURLTemplate:   grafanaCfg.PluginsCDNURLTemplate,
 		Opentelemetry:           otelCfg,

@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -65,7 +63,6 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 	}
 
 	hostEnv = append(hostEnv, i.awsEnvVars()...)
-	hostEnv = append(hostEnv, i.secureSocksProxyEnvVars()...)
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(i.cfg.Azure)...)
 
 	// Tracing
@@ -95,20 +92,6 @@ func (i *Initializer) awsEnvVars() []string {
 	}
 	if len(i.cfg.AWSAllowedAuthProviders) > 0 {
 		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(i.cfg.AWSAllowedAuthProviders, ","))
-	}
-
-	return variables
-}
-
-func (i *Initializer) secureSocksProxyEnvVars() []string {
-	var variables []string
-	if i.cfg.ProxySettings.Enabled {
-		variables = append(variables, proxy.PluginSecureSocksProxyClientCert+"="+i.cfg.ProxySettings.ClientCert)
-		variables = append(variables, proxy.PluginSecureSocksProxyClientKey+"="+i.cfg.ProxySettings.ClientKey)
-		variables = append(variables, proxy.PluginSecureSocksProxyRootCACert+"="+i.cfg.ProxySettings.RootCA)
-		variables = append(variables, proxy.PluginSecureSocksProxyProxyAddress+"="+i.cfg.ProxySettings.ProxyAddress)
-		variables = append(variables, proxy.PluginSecureSocksProxyServerName+"="+i.cfg.ProxySettings.ServerName)
-		variables = append(variables, proxy.PluginSecureSocksProxyEnabled+"="+strconv.FormatBool(i.cfg.ProxySettings.Enabled))
 	}
 
 	return variables
