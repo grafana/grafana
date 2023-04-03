@@ -286,11 +286,11 @@ func (d *PublicDashboardStoreImpl) FindByDashboardFolder(ctx context.Context, da
 	return pubdashes, nil
 }
 
-func (e *PublicDashboardStoreImpl) GetMetrics(ctx context.Context) (*Metrics, error) {
+func (d *PublicDashboardStoreImpl) GetMetrics(ctx context.Context) (*Metrics, error) {
 	metrics := &Metrics{
 		TotalPublicDashboards: []*TotalPublicDashboard{},
 	}
-	err := e.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL("SELECT COUNT(*) as total_count, is_enabled, share as share_type  FROM dashboard_public GROUP BY  is_enabled, share").Find(&metrics.TotalPublicDashboards)
 	})
 	if err != nil {
