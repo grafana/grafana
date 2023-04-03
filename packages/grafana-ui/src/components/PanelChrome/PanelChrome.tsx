@@ -47,13 +47,10 @@ export interface PanelChromeProps {
    */
   statusMessageOnClick?: (e: React.SyntheticEvent) => void;
   /**
-   * @deprecated in favor of props
-   * statusMessage for error messages
-   * and loadingState for loading and streaming data
-   * which will serve the same purpose
-   * of showing/interacting with the panel's state
-   */
+   * @deprecated use `actions' instead
+   **/
   leftItems?: ReactNode[];
+  actions?: ReactNode;
   displayMode?: 'default' | 'transparent';
   onCancelQuery?: () => void;
 }
@@ -84,6 +81,7 @@ export function PanelChrome({
   statusMessage,
   statusMessageOnClick,
   leftItems,
+  actions,
   onCancelQuery,
 }: PanelChromeProps) {
   const theme = useTheme2();
@@ -111,7 +109,12 @@ export function PanelChrome({
     containerStyles.border = 'none';
   }
 
-  const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
+  /** Old property name now maps to actions */
+  if (leftItems) {
+    actions = leftItems;
+  }
+
+  const testid = title ? selectors.components.Panels.Panel.title(title) : 'Panel';
 
   const headerContent = (
     <>
@@ -142,22 +145,24 @@ export function PanelChrome({
           </Tooltip>
         </DelayRender>
       )}
+      <div className={styles.rightAligned}>
+        {actions && <div className={styles.rightActions}>{itemsRenderer(actions, (item) => item)}</div>}
+      </div>
     </>
   );
 
   return (
-    <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
+    <div className={styles.container} style={containerStyles} data-testid={testid}>
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? <LoadingBar width={width} ariaLabel="Panel loading bar" /> : null}
       </div>
 
       {hoverHeader && !isTouchDevice && (
         <>
-          {menu && (
-            <HoverWidget menu={menu} title={title} offset={hoverHeaderOffset} dragClass={dragClass}>
-              {headerContent}
-            </HoverWidget>
-          )}
+          <HoverWidget menu={menu} title={title} offset={hoverHeaderOffset} dragClass={dragClass}>
+            {headerContent}
+          </HoverWidget>
+
           {statusMessage && (
             <div className={styles.errorContainerFloating}>
               <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
@@ -176,23 +181,19 @@ export function PanelChrome({
 
           {headerContent}
 
-          <div className={styles.rightAligned}>
-            {menu && (
-              <PanelMenu
-                menu={menu}
-                title={title}
-                placement="bottom-end"
-                menuButtonClass={cx(
-                  { [styles.hiddenMenu]: !isTouchDevice },
-                  styles.menuItem,
-                  dragClassCancel,
-                  showOnHoverClass
-                )}
-              />
-            )}
-
-            {leftItems && <div className={styles.leftItems}>{itemsRenderer(leftItems, (item) => item)}</div>}
-          </div>
+          {menu && (
+            <PanelMenu
+              menu={menu}
+              title={title}
+              placement="bottom-end"
+              menuButtonClass={cx(
+                { [styles.hiddenMenu]: !isTouchDevice },
+                styles.menuItem,
+                dragClassCancel,
+                showOnHoverClass
+              )}
+            />
+          )}
         </div>
       )}
 
@@ -203,7 +204,7 @@ export function PanelChrome({
   );
 }
 
-const itemsRenderer = (items: ReactNode[], renderer: (items: ReactNode[]) => ReactNode): ReactNode => {
+const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNode[]) => ReactNode): ReactNode => {
   const toRender = React.Children.toArray(items).filter(Boolean);
   return toRender.length > 0 ? renderer(toRender) : null;
 };
@@ -339,9 +340,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: 0,
       zIndex: theme.zIndex.tooltip,
     }),
-    leftItems: css({
+    rightActions: css({
       display: 'flex',
-      paddingRight: theme.spacing(padding),
+      padding: theme.spacing(0, padding),
+      gap: theme.spacing(1),
     }),
     rightAligned: css({
       label: 'right-aligned-container',

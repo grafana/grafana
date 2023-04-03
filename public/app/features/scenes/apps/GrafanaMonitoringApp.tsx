@@ -9,6 +9,7 @@ import {
   SceneRouteMatch,
   EmbeddedScene,
   SceneAppPageLike,
+  SceneFlexItem,
 } from '@grafana/scenes';
 import { usePageNav } from 'app/core/components/Page/usePageNav';
 import { PluginPageContext, PluginPageContextType } from 'app/features/plugins/components/PluginPageContext';
@@ -131,8 +132,10 @@ export function getSecondLevelDrilldown(
       return new EmbeddedScene({
         body: new SceneFlexLayout({
           children: [
-            new SceneCanvasText({
-              text: 'Drilldown: ' + secondLevel,
+            new SceneFlexItem({
+              body: new SceneCanvasText({
+                text: 'Drilldown: ' + secondLevel,
+              }),
             }),
           ],
         }),
