@@ -26,11 +26,6 @@ type RectData = {
 /**
  * Compute the pixel coordinates for each bar in a level. We need full level of bars so that we can collapse small bars
  * into bigger rects.
- * @param level
- * @param levelIndex
- * @param totalTicks
- * @param rangeMin
- * @param pixelsPerTick
  */
 export function getRectDimensionsForLevel(
   level: ItemWithStart[],
@@ -38,7 +33,8 @@ export function getRectDimensionsForLevel(
   totalTicks: number,
   rangeMin: number,
   pixelsPerTick: number,
-  processor: DisplayProcessor
+  processor: DisplayProcessor,
+  getLabelValue: (value: number | string) => string
 ): RectData[] {
   const coordinatesLevel = [];
   for (let barIndex = 0; barIndex < level.length; barIndex += 1) {
@@ -70,7 +66,7 @@ export function getRectDimensionsForLevel(
       y: levelIndex * PIXELS_PER_LEVEL,
       collapsed,
       ticks: curBarTicks,
-      label: item.label,
+      label: getLabelValue(item.label),
       unitLabel: unit,
     });
   }

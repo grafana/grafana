@@ -6,13 +6,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func TestStore_RegisterAndGetClient(t *testing.T) {
-	s := &Store{db: sqlstore.InitTestDB(t)}
+	s := &store{db: db.InitTestDB(t)}
 	tests := []struct {
 		name    string
 		client  oauthserver.Client
@@ -21,9 +21,8 @@ func TestStore_RegisterAndGetClient(t *testing.T) {
 		{
 			name: "register without impersonate permissions and get",
 			client: oauthserver.Client{
-				ID:                  1,
 				ExternalServiceName: "The Worst App Ever",
-				ClientID:            "AnNonRandomClientID",
+				ClientID:            "ANonRandomClientID",
 				Secret:              "ICouldKeepSecrets",
 				GrantTypes:          "clients_credentials",
 				PublicPem: []byte(`------BEGIN FAKE PUBLIC KEY-----
@@ -59,7 +58,6 @@ dCBBIFJlZ3VsYXIgQmFzZTY0IEVuY29kZWQgU3RyaW5nLi4uCg==
 		{
 			name: "register and get",
 			client: oauthserver.Client{
-				ID:                  2,
 				ExternalServiceName: "The Best App Ever",
 				ClientID:            "AnAlmostRandomClientID",
 				Secret:              "ICannotKeepSecrets",
@@ -89,17 +87,101 @@ dCBBIFJlZ3VsYXIgQmFzZTY0IEVuY29kZWQgU3RyaW5nLi4uCg==
 			}
 			require.NoError(t, err)
 
-			stored, err := s.GetExternalService(ctx, tt.client.ClientID)
-			require.NoError(t, err)
-			require.NotNil(t, stored)
-
 			// Compare results
-			perms := tt.client.ImpersonatePermissions
-			storedPerms := stored.ImpersonatePermissions
-			tt.client.ImpersonatePermissions = nil
-			stored.ImpersonatePermissions = nil
-			require.EqualValues(t, tt.client, *stored)
-			require.ElementsMatch(t, perms, storedPerms)
+			compareClientToStored(t, s, &tt.client)
 		})
 	}
+}
+
+func TestStore_SaveExternalService(t *testing.T) {
+	client1 := oauthserver.Client{
+		ExternalServiceName:    "my-external-service",
+		ClientID:               "ClientID",
+		Secret:                 "Secret",
+		GrantTypes:             "client_credentials",
+		PublicPem:              []byte("test"),
+		ServiceAccountID:       2,
+		ImpersonatePermissions: []accesscontrol.Permission{},
+		RedirectURI:            "/whereto",
+	}
+	client1WithPerm := client1
+	client1WithPerm.ImpersonatePermissions = []accesscontrol.Permission{
+		{Action: "dashboards:read", Scope: "folders:*"},
+		{Action: "dashboards:read", Scope: "dashboards:*"},
+	}
+	client1WithNewSecrets := client1
+	client1WithNewSecrets.ClientID = "NewClientID"
+	client1WithNewSecrets.Secret = "NewSecret"
+	client1WithNewSecrets.PublicPem = []byte("newtest")
+
+	tests := []struct {
+		name    string
+		runs    []oauthserver.Client
+		wantErr bool
+	}{
+		{
+			name:    "error no name",
+			runs:    []oauthserver.Client{{}},
+			wantErr: true,
+		},
+		{
+			name:    "simple register",
+			runs:    []oauthserver.Client{client1},
+			wantErr: false,
+		},
+		{
+			name:    "no update",
+			runs:    []oauthserver.Client{client1, client1},
+			wantErr: false,
+		},
+		{
+			name:    "add permissions",
+			runs:    []oauthserver.Client{client1, client1WithPerm},
+			wantErr: false,
+		},
+		{
+			name:    "remove permissions",
+			runs:    []oauthserver.Client{client1WithPerm, client1},
+			wantErr: false,
+		},
+		{
+			name:    "update id and secrets",
+			runs:    []oauthserver.Client{client1, client1WithNewSecrets},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &store{db: db.InitTestDB(t)}
+			for i := range tt.runs {
+				err := s.SaveExternalService(context.Background(), &tt.runs[i])
+				if tt.wantErr {
+					require.Error(t, err)
+					return
+				}
+				require.NoError(t, err)
+
+				compareClientToStored(t, s, &tt.runs[i])
+			}
+		})
+	}
+}
+
+func compareClientToStored(t *testing.T, s *store, wanted *oauthserver.Client) {
+	ctx := context.Background()
+	stored, err := s.GetExternalService(ctx, wanted.ClientID)
+	require.NoError(t, err)
+	require.NotNil(t, stored)
+
+	// Reset ID so we can compare
+	require.NotZero(t, stored.ID)
+	stored.ID = 0
+
+	// Compare permissions separately
+	wantedPerms := wanted.ImpersonatePermissions
+	storedPerms := stored.ImpersonatePermissions
+	wanted.ImpersonatePermissions = nil
+	stored.ImpersonatePermissions = nil
+	require.EqualValues(t, *wanted, *stored)
+	require.ElementsMatch(t, wantedPerms, storedPerms)
 }

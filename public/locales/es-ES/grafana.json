@@ -9,8 +9,7 @@
     "action": {
       "change-theme": "",
       "dark-theme": "",
-      "light-theme": "",
-      "search": ""
+      "light-theme": ""
     },
     "search-box": {
       "placeholder": ""
@@ -32,7 +31,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "Acciones",
       "data-tab": "Datos",
       "error-tab": "Error",
       "json-tab": "JSON",
@@ -85,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "Añadir panel",
-      "comments-show": "Mostrar comentarios del panel de control",
       "mark-favorite": "Marcar como favorito",
       "open-original": "Abrir el panel de control original",
       "playlist-next": "Ir al siguiente panel de control",
@@ -244,18 +241,6 @@
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
       "title": "Paneles de la librería"
     },
-    "live": {
-      "title": "Transmisión de eventos"
-    },
-    "live-cloud": {
-      "title": "Nube"
-    },
-    "live-pipeline": {
-      "title": "Cartera"
-    },
-    "live-status": {
-      "title": "Estado"
-    },
     "manage-dashboards": {
       "title": "Navegar"
     },
@@ -305,7 +290,6 @@
       "title": "Escenas"
     },
     "search": {
-      "placeholder": "Buscar Grafana",
       "placeholderCommandPalette": ""
     },
     "search-dashboards": {
@@ -427,6 +411,11 @@
     "folder-view": {
       "go-to-folder": "",
       "select-folder": ""
+    },
+    "result-kind": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
     },
     "results-table": {
       "datasource-header": "",

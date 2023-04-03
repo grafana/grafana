@@ -149,10 +149,13 @@ func TestCollectingUsageStats(t *testing.T) {
 		BuildVersion:         "5.0.0",
 		AnonymousEnabled:     true,
 		BasicAuthEnabled:     true,
-		LDAPEnabled:          true,
+		LDAPAuthEnabled:      true,
 		AuthProxyEnabled:     true,
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",
+		RemoteCacheOptions: &setting.RemoteCacheOptions{
+			Name: "database",
+		},
 	}, sqlStore, statsService,
 		withDatasources(mockDatasourceService{datasources: expectedDataSources}))
 
@@ -211,7 +214,7 @@ func TestElasticStats(t *testing.T) {
 		BuildVersion:         "5.0.0",
 		AnonymousEnabled:     true,
 		BasicAuthEnabled:     true,
-		LDAPEnabled:          true,
+		LDAPAuthEnabled:      true,
 		AuthProxyEnabled:     true,
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",

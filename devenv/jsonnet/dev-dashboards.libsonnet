@@ -373,6 +373,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('migrations', import '../dev-dashboards/migrations/migrations.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('mssql_fakedata', import '../dev-dashboards/datasource-mssql/mssql_fakedata.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {

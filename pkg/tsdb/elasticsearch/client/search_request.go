@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	highlightPreTagsString  = "@HIGHLIGHT@"
-	highlightPostTagsString = "@/HIGHLIGHT@"
-	highlightFragmentSize   = 2147483647
+	HighlightPreTagsString  = "@HIGHLIGHT@"
+	HighlightPostTagsString = "@/HIGHLIGHT@"
+	HighlightFragmentSize   = 2147483647
 )
 
 // SearchRequestBuilder represents a builder which can build a search request
@@ -103,9 +103,9 @@ func (b *SearchRequestBuilder) AddHighlight() *SearchRequestBuilder {
 		"fields": map[string]interface{}{
 			"*": map[string]interface{}{},
 		},
-		"pre_tags":      []string{highlightPreTagsString},
-		"post_tags":     []string{highlightPostTagsString},
-		"fragment_size": highlightFragmentSize,
+		"pre_tags":      []string{HighlightPreTagsString},
+		"post_tags":     []string{HighlightPostTagsString},
+		"fragment_size": HighlightFragmentSize,
 	}
 	return b
 }

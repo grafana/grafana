@@ -1,11 +1,12 @@
 package oauthserver
 
 import (
-	"crypto/rsa"
+	"context"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/ory/fosite"
@@ -16,14 +17,20 @@ import (
 )
 
 // ParsePublicKeyPem parses the public key from the PEM encoded public key.
-func ParsePublicKeyPem(publicPem []byte) (*rsa.PublicKey, error) {
+func ParsePublicKeyPem(publicPem []byte) (interface{}, error) {
 	block, _ := pem.Decode(publicPem)
 	if block == nil {
 		return nil, errors.New("could not decode PEM block")
 	}
 
-	// TODO: use x509.ParsePKIXPublicKey instead?
-	return x509.ParsePKCS1PublicKey(block.Bytes)
+	switch block.Type {
+	case "PUBLIC KEY":
+		return x509.ParsePKIXPublicKey(block.Bytes)
+	case "RSA PUBLIC KEY":
+		return x509.ParsePKCS1PublicKey(block.Bytes)
+	default:
+		return nil, fmt.Errorf("unknown key type %q", block.Type)
+	}
 }
 
 type KeyResult struct {
@@ -59,16 +66,21 @@ type Client struct {
 }
 
 func (c *Client) ToDTO() *ClientDTO {
-	return &ClientDTO{
+	c2 := ClientDTO{
 		ExternalServiceName: c.ExternalServiceName,
 		ID:                  c.ClientID,
 		Secret:              c.Secret,
 		GrantTypes:          c.GrantTypes,
 		RedirectURI:         c.RedirectURI,
-		KeyResult: &KeyResult{
-			PublicPem: string(c.PublicPem),
-		},
 	}
+	if len(c.PublicPem) > 0 {
+		c2.KeyResult = &KeyResult{PublicPem: string(c.PublicPem)}
+	}
+	return &c2
+}
+
+func (c *Client) LogID() string {
+	return "{externalServiceName: " + c.ExternalServiceName + ", clientID: " + c.ClientID + "}"
 }
 
 // GetID returns the client ID.
@@ -103,40 +115,77 @@ func (c *Client) GetResponseTypes() fosite.Arguments {
 	return fosite.Arguments{"code"}
 }
 
+func (c *Client) GetOpenIDScope() fosite.Arguments {
+	return fosite.Arguments([]string{"openid"})
+}
+
+func (c *Client) GetOrgScopes() fosite.Arguments {
+	ret := []string{}
+	for _, orgID := range c.OrgIDs {
+		if orgID == ac.GlobalOrgID {
+			ret = append(ret, allOrgsOAuthScope)
+		} else {
+			ret = append(ret, fmt.Sprintf("org.%v", orgID))
+		}
+	}
+	return fosite.Arguments(ret)
+}
+
 // GetScopes returns the scopes this client is allowed to request.
 func (c *Client) GetScopes() fosite.Arguments {
 	// TODO cache scopes in client
-	ret := []string{"openid"}
+	ret := c.GetOpenIDScope()
+
+	ret = append(ret, c.GetOrgScopes()...)
 
 	// Org Scope
-	orgScopes := map[string]bool{}
-	for _, orgID := range c.OrgIDs {
-		if orgID == ac.GlobalOrgID {
-			orgScopes[allOrgsOAuthScope] = true
-		} else {
-			orgScopes[fmt.Sprintf("org.%v", orgID)] = true
+	if c.SignedInUser != nil && c.SignedInUser.Permissions != nil {
+		if permissions, permOk := c.SignedInUser.Permissions[TmpOrgID]; permOk {
+			if _, ok := permissions[ac.ActionUsersImpersonate]; ok {
+				ret = append(ret, "impersonate")
+			}
+			if _, ok := permissions[ac.ActionUsersRead]; ok {
+				ret = append(ret, "profile", "email")
+			}
+			if _, ok := permissions[ac.ActionUsersPermissionsRead]; ok {
+				ret = append(ret, "permissions")
+			}
+			if _, ok := permissions[ac.ActionTeamsRead]; ok {
+				ret = append(ret, "teams")
+			}
 		}
-	}
-	for k := range orgScopes {
-		ret = append(ret, k)
 	}
 
-	permissionBasedScopes := map[string]bool{}
-	for i := range c.SelfPermissions {
-		switch c.SelfPermissions[i].Action {
-		case "users:impersonate":
-			permissionBasedScopes["impersonate"] = true
-		case "users:read":
-			permissionBasedScopes["profile"] = true
-			permissionBasedScopes["email"] = true
-		case "users.permissions:read":
-			permissionBasedScopes["permissions"] = true
-		case "teams:read":
-			permissionBasedScopes["teams"] = true
+	return fosite.Arguments(ret)
+}
+
+// GetScopes returns the scopes this client is allowed to request on a specific user.
+func (c *Client) GetScopesOnUser(ctx context.Context, accessControl ac.AccessControl, userID int64) fosite.Arguments {
+	ret := []string{}
+	id := strconv.FormatInt(userID, 10)
+	userScope := ac.Scope("users", "id", id)
+	globalUserScope := ac.Scope("global.users", "id", id)
+
+	hasAccess := func(action string, scope *string) bool {
+		ev := ac.EvalPermission(action)
+		if scope != nil {
+			ev = ac.EvalPermission(action, *scope)
 		}
+		hasAccess, errAccess := accessControl.Evaluate(ctx, c.SignedInUser, ev)
+		return errAccess == nil && hasAccess
 	}
-	for k := range permissionBasedScopes {
-		ret = append(ret, k)
+
+	if hasAccess(ac.ActionUsersImpersonate, &userScope) {
+		ret = append(ret, "impersonate")
+	}
+	if hasAccess(ac.ActionUsersRead, &globalUserScope) {
+		ret = append(ret, "profile", "email")
+	}
+	if hasAccess(ac.ActionUsersPermissionsRead, &userScope) {
+		ret = append(ret, "permissions")
+	}
+	if hasAccess(ac.ActionTeamsRead, nil) {
+		ret = append(ret, "teams")
 	}
 
 	return fosite.Arguments(ret)

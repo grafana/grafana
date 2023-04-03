@@ -323,7 +323,9 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
 1. In **Section 4**, you can add some sample text to your summary message. [Read more about message templating here](/docs/grafana/latest/alerting/unified-alerting/message-templating/).
 1. Click **Save and exit** at the top of the page.
 1. In Grafana's sidebar, hover the cursor over the **Alerting** (bell) icon and then click **Notification policies**.
-1. Under **Root policy**, press **Edit** and change the **Default contact point** to **RequestBin**. As a system grows, admins can use the **Notification policies** setting to organize and match alert rules to specific contact points.
+1. Under **Default policy**, select **...** &rsaquo; **Edit** and change the **Default contact point** to **RequestBin**.
+   As a system grows, admins can use the **Notification policies** setting to organize and match alert rules to
+   specific contact points.
 
 ### Trigger a Grafana Managed Alert
 

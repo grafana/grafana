@@ -19,13 +19,13 @@ interface StatusHistoryTooltipProps {
   timeZone: TimeZone;
 }
 
-export const StatusHistoryTooltip: React.FC<StatusHistoryTooltipProps> = ({
+export const StatusHistoryTooltip = ({
   data,
   alignedData,
   seriesIdx,
   datapointIdx,
   timeZone,
-}) => {
+}: StatusHistoryTooltipProps) => {
   const theme = useTheme2();
 
   if (!data || datapointIdx == null) {

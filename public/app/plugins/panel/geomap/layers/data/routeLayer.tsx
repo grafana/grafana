@@ -10,10 +10,7 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
 } from '@grafana/data';
 
-import {
-  MapLayerOptions,
-  FrameGeometrySourceMode,
-} from '@grafana/schema';
+import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
 
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
@@ -31,10 +28,10 @@ import VectorSource from 'ol/source/Vector';
 import { Fill, Stroke, Style, Circle } from 'ol/style';
 import Feature from 'ol/Feature';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { LineString, SimpleGeometry } from 'ol/geom';
+import { LineString, Point, SimpleGeometry } from 'ol/geom';
 import FlowLine from 'ol-ext/style/FlowLine';
 import tinycolor from 'tinycolor2';
-import { getStyleDimension } from '../../utils/utils';
+import { getStyleDimension, isSegmentVisible } from '../../utils/utils';
 
 // Configuration options for Circle overlays
 export interface RouteConfig {
@@ -114,9 +111,13 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
         if (geom instanceof SimpleGeometry) {
           const coordinates = geom.getCoordinates();
           if (coordinates) {
+            let startIndex = 0; // Index start for segment optimization
+            const pixelTolerance = 2; // For segment to be visible, it must be > 2 pixels (due to round ends)
             for (let i = 0; i < coordinates.length - 1; i++) {
+              const segmentStartCoords = coordinates[startIndex];
+              const segmentEndCoords = coordinates[i + 1];
               const color1 = tinycolor(
-                theme.visualization.getColorByName((dims.color && dims.color.get(i)) ?? style.base.color)
+                theme.visualization.getColorByName((dims.color && dims.color.get(startIndex)) ?? style.base.color)
               )
                 .setAlpha(opacity)
                 .toString();
@@ -126,7 +127,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                 .setAlpha(opacity)
                 .toString();
 
-              const arrowSize1 = (dims.size && dims.size.get(i)) ?? style.base.size;
+              const arrowSize1 = (dims.size && dims.size.get(startIndex)) ?? style.base.size;
               const arrowSize2 = (dims.size && dims.size.get(i + 1)) ?? style.base.size;
 
               const flowStyle = new FlowLine({
@@ -134,7 +135,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                 lineCap: config.arrow == 0 ? 'round' : 'square',
                 color: color1,
                 color2: color2,
-                width: (dims.size && dims.size.get(i)) ?? style.base.size,
+                width: (dims.size && dims.size.get(startIndex)) ?? style.base.size,
                 width2: (dims.size && dims.size.get(i + 1)) ?? style.base.size,
               });
               if (config.arrow) {
@@ -147,9 +148,33 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                   flowStyle.setArrowSize((arrowSize1 ?? 0) * 1.5);
                 }
               }
-              const LS = new LineString([coordinates[i], coordinates[i + 1]]);
-              flowStyle.setGeometry(LS);
-              styles.push(flowStyle);
+              // Only render segment if change in pixel coordinates is significant enough
+              if (isSegmentVisible(map, pixelTolerance, segmentStartCoords, segmentEndCoords)) {
+                const LS = new LineString([segmentStartCoords, segmentEndCoords]);
+                flowStyle.setGeometry(LS);
+                styles.push(flowStyle);
+                startIndex = i + 1; // Because a segment was created, move onto the next one
+              }
+            }
+            // If no segments created, render a single point
+            if (styles.length === 0) {
+              const P = new Point(coordinates[0]);
+              const radius = ((dims.size && dims.size.get(0)) ?? style.base.size ?? 10) / 2;
+              const color = tinycolor(
+                theme.visualization.getColorByName((dims.color && dims.color.get(0)) ?? style.base.color)
+              )
+                .setAlpha(opacity)
+                .toString();
+              const ZoomOutCircle = new Style({
+                image: new Circle({
+                  radius: radius,
+                  fill: new Fill({
+                    color: color,
+                  }),
+                }),
+              });
+              ZoomOutCircle.setGeometry(P);
+              styles.push(ZoomOutCircle);
             }
           }
           return styles;

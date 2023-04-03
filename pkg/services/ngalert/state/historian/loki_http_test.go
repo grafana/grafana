@@ -3,6 +3,9 @@ package historian
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"testing"
 	"time"
@@ -11,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"github.com/weaveworks/common/http/client"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -73,10 +77,49 @@ func TestLokiConfig(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("captures external labels", func(t *testing.T) {
+		set := setting.UnifiedAlertingStateHistorySettings{
+			LokiRemoteURL:  "http://url.com",
+			ExternalLabels: map[string]string{"a": "b"},
+		}
+
+		res, err := NewLokiConfig(set)
+
+		require.NoError(t, err)
+		require.Contains(t, res.ExternalLabels, "a")
+	})
+}
+
+func TestLokiHTTPClient(t *testing.T) {
+	t.Run("push formats expected data", func(t *testing.T) {
+		req := NewFakeRequester()
+		client := createTestLokiClient(req)
+		now := time.Now().UTC()
+		data := []stream{
+			{
+				Stream: map[string]string{},
+				Values: []sample{
+					{
+						T: now,
+						V: "some line",
+					},
+				},
+			},
+		}
+
+		err := client.push(context.Background(), data)
+
+		require.NoError(t, err)
+		require.Contains(t, "/loki/api/v1/push", req.lastRequest.URL.Path)
+		sent := reqBody(t, req.lastRequest)
+		exp := fmt.Sprintf(`{"streams": [{"stream": {}, "values": [["%d", "some line"]]}]}`, now.UnixNano())
+		require.JSONEq(t, exp, sent)
+	})
 }
 
 // This function can be used for local testing, just remove the skip call.
-func TestLokiHTTPClient(t *testing.T) {
+func TestLokiHTTPClient_Manual(t *testing.T) {
 	t.Skip()
 
 	t.Run("smoke test pinging Loki", func(t *testing.T) {
@@ -86,6 +129,7 @@ func TestLokiHTTPClient(t *testing.T) {
 		client := newLokiClient(LokiConfig{
 			ReadPathURL:  url,
 			WritePathURL: url,
+			Encoder:      JsonEncoder{},
 		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry()), log.NewNopLogger())
 
 		// Unauthorized request should fail against Grafana Cloud.
@@ -113,6 +157,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			WritePathURL:      url,
 			BasicAuthUser:     "<your_username>",
 			BasicAuthPassword: "<your_password>",
+			Encoder:           JsonEncoder{},
 		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry()), log.NewNopLogger())
 
 		// When running on prem, you might need to set the tenant id,
@@ -221,4 +266,26 @@ func TestStream(t *testing.T) {
 			string(jsn),
 		)
 	})
+}
+
+func createTestLokiClient(req client.Requester) *httpLokiClient {
+	url, _ := url.Parse("http://some.url")
+	cfg := LokiConfig{
+		WritePathURL: url,
+		ReadPathURL:  url,
+		Encoder:      JsonEncoder{},
+	}
+	met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+	return newLokiClient(cfg, req, met, log.NewNopLogger())
+}
+
+func reqBody(t *testing.T, req *http.Request) string {
+	t.Helper()
+
+	defer func() {
+		_ = req.Body.Close()
+	}()
+	byt, err := io.ReadAll(req.Body)
+	require.NoError(t, err)
+	return string(byt)
 }

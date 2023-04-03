@@ -2,7 +2,6 @@ package clients
 
 import (
 	"context"
-	"crypto/rsa"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -48,7 +47,7 @@ type ExtendedJWT struct {
 	log          log.Logger
 	userService  user.Service
 	oauthService oauthserver.OAuth2Service
-	publicKey    *rsa.PublicKey
+	publicKey    interface{}
 }
 
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -82,7 +81,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 	signedInUser.Permissions[targetOrgID] = s.parseEntitlements(claims["entitlements"].(map[string]interface{}))
 
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissionsFromDB: false}), nil
+	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: false}), nil
 }
 
 func (s *ExtendedJWT) parseOrgIDFromScopes(scopes interface{}) (int64, error) {

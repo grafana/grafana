@@ -316,6 +316,7 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.MStatTotalDashboards.Set(float64(statsQuery.Result.Dashboards))
 	metrics.MStatTotalFolders.Set(float64(statsQuery.Result.Folders))
 	metrics.MStatTotalUsers.Set(float64(statsQuery.Result.Users))
+	metrics.MStatTotalTeams.Set(float64(statsQuery.Result.Teams))
 	metrics.MStatActiveUsers.Set(float64(statsQuery.Result.ActiveUsers))
 	metrics.MStatTotalPlaylists.Set(float64(statsQuery.Result.Playlists))
 	metrics.MStatTotalOrgs.Set(float64(statsQuery.Result.Orgs))

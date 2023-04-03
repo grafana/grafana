@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FunctionComponent, useState } from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
@@ -14,7 +14,7 @@ export interface Props {
   keyPlaceholder?: string;
 }
 
-export const MultiFilterItem: FunctionComponent<Props> = ({ filter, onChange, onDelete, keyPlaceholder }) => {
+export const MultiFilterItem = ({ filter, onChange, onDelete, keyPlaceholder }: Props) => {
   const [localKey, setLocalKey] = useState(filter.key || '');
   const [localValue, setLocalValue] = useState(filter.value?.join(', ') || '');
   const theme = useTheme2();

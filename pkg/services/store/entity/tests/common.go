@@ -28,7 +28,6 @@ func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, 
 		Role:             string(org.RoleAdmin),
 		Login:            "grpc-server-sa",
 		IsServiceAccount: true,
-		OrgID:            1,
 	})
 
 	keyGen, err := apikeygenprefix.New(saAPI.ServiceID)

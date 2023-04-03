@@ -33,7 +33,7 @@ func (m *TracingHeaderMiddleware) applyHeaders(ctx context.Context, req backend.
 		return
 	}
 
-	var headersList = []string{query.HeaderPanelID, query.HeaderDashboardUID, query.HeaderDatasourceUID, `X-Grafana-Org-Id`}
+	var headersList = []string{query.HeaderQueryGroupID, query.HeaderPanelID, query.HeaderDashboardUID, query.HeaderDatasourceUID, `X-Grafana-Org-Id`}
 
 	for _, headerName := range headersList {
 		gotVal := reqCtx.Req.Header.Get(headerName)

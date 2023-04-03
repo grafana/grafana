@@ -19,7 +19,7 @@ const ERROR_OPTIONS = [
   },
 ];
 
-const FrontendErrorQueryEditor: React.FC<EditorProps> = ({ query, onChange }) => {
+const FrontendErrorQueryEditor = ({ query, onChange }: EditorProps) => {
   return (
     <InlineFieldRow>
       <InlineField labelWidth={14} label="Error type">

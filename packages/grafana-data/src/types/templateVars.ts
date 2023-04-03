@@ -22,6 +22,10 @@ export type TypedVariableModel =
   | OrgVariableModel
   | DashboardVariableModel;
 
+type VarValue = string | number | boolean | undefined;
+
+export type VariableMap = Record<string, VarValue>;
+
 export enum VariableRefresh {
   never, // removed from the UI
   onDashboardLoad,

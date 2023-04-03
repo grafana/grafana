@@ -123,7 +123,7 @@ describe('Variables - Query - Add variable', () => {
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
           .should('be.visible')
           .within(() => {
-            e2e().get('.variable-option').should('have.length', 1);
+            e2e.components.Variables.variableOption().should('have.length', 1);
           });
 
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C').should('be.visible');
@@ -195,7 +195,7 @@ describe('Variables - Query - Add variable', () => {
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
           .should('be.visible')
           .within(() => {
-            e2e().get('.variable-option').should('have.length', 2);
+            e2e.components.Variables.variableOption().should('have.length', 2);
           });
 
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');

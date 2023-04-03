@@ -2,6 +2,8 @@ package oauthimpl
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -31,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -41,7 +44,7 @@ const (
 type OAuth2ServiceImpl struct {
 	cache         *localcache.CacheService
 	memstore      *storage.MemoryStore
-	sqlstore      *oauthstore.Store
+	sqlstore      oauthserver.Store
 	oauthProvider fosite.OAuth2Provider
 	logger        log.Logger
 	accessControl ac.AccessControl
@@ -117,22 +120,28 @@ func newProvider(config *fosite.Config, storage interface{}, key interface{}) fo
 }
 
 // GetServerPublicKey returns the public key of the server
-func (s *OAuth2ServiceImpl) GetServerPublicKey() *rsa.PublicKey {
+func (s *OAuth2ServiceImpl) GetServerPublicKey() interface{} {
 	return s.publicKey
 }
 
+// RandString generates a a cryptographically secure random string of n bytes
 func (s *OAuth2ServiceImpl) RandString(n int) (string, error) {
 	res := make([]byte, n)
 	_, err := rand.Read(res)
 	if err != nil {
 		return "", err
 	}
-	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(res), nil
+	return base64.RawURLEncoding.EncodeToString(res), nil
 }
 
 // TODO it would be great to create the service account in the same DB session as the client
 func (s *OAuth2ServiceImpl) RegisterExternalService(ctx context.Context,
 	registration *oauthserver.ExternalServiceRegistration) (*oauthserver.ClientDTO, error) {
+	if registration == nil {
+		s.logger.Warn("RegisterExternalService called without registration")
+		return nil, nil
+	}
+
 	client := oauthserver.Client{
 		ExternalServiceName:    registration.ExternalServiceName,
 		ImpersonatePermissions: registration.ImpersonatePermissions,
@@ -141,41 +150,32 @@ func (s *OAuth2ServiceImpl) RegisterExternalService(ctx context.Context,
 		client.RedirectURI = *registration.RedirectURI
 	}
 
-	// res.Domain = "http://localhost" // TODO: Make this configurable
-
-	id, err := s.RandString(20)
-	if err != nil {
-		s.logger.Error("Error gen id", "client", client, "error", err)
-		return nil, err
+	var errGenCred error
+	client.ClientID, client.Secret, errGenCred = s.genCredentials()
+	if errGenCred != nil {
+		s.logger.Error("Error generating credentials", "client", client, "error", errGenCred)
+		return nil, errGenCred
 	}
-	client.ClientID = id
-	secret, err := s.RandString(40)
-	if err != nil {
-		s.logger.Error("Error gen secret", "client", client, "error", err)
-		return nil, err
-	}
-	client.Secret = secret
 
 	// Assign permissions to a service account that will be associated to the App
-	if len(registration.Permissions) > 0 {
-		s.logger.Debug("Generate service account")
-		id, err := s.createServiceAccount(ctx, registration)
-		if err != nil {
-			return nil, err
-		}
-		client.ServiceAccountID = id
+	id, err := s.createServiceAccount(ctx, registration.ExternalServiceName, registration.Permissions)
+	if err != nil {
+		return nil, err
 	}
+	client.ServiceAccountID = id
 
-	client.GrantTypes = strings.Join(s.computeGrantTypes(registration), ",")
+	client.GrantTypes = strings.Join(s.computeGrantTypes(registration.Permissions, registration.ImpersonatePermissions), ",")
 
 	// Handle RSA key options
 	s.logger.Debug("Handle key options")
-	keys, err := s.handleKeyOptions(ctx, registration)
+	keys, err := s.handleKeyOptions(ctx, registration.Key)
 	if err != nil {
 		s.logger.Error("Error handling key options", "client", client, "error", err)
 		return nil, err
 	}
-	client.PublicPem = []byte(keys.PublicPem)
+	if keys != nil {
+		client.PublicPem = []byte(keys.PublicPem)
+	}
 
 	s.logger.Info("Registering app", "client", client)
 	err = s.sqlstore.RegisterExternalService(ctx, &client)
@@ -187,23 +187,47 @@ func (s *OAuth2ServiceImpl) RegisterExternalService(ctx context.Context,
 	return dto, nil
 }
 
-func (s *OAuth2ServiceImpl) computeGrantTypes(registration *oauthserver.ExternalServiceRegistration) []string {
+func (s *OAuth2ServiceImpl) genCredentials() (string, string, error) {
+	id, err := s.RandString(20)
+	if err != nil {
+		return "", "", err
+	}
+	// client_secret must be at least 32 bytes long
+	secret, err := s.RandString(32)
+	if err != nil {
+		return "", "", err
+	}
+	return id, secret, err
+}
+
+func (s *OAuth2ServiceImpl) computeGrantTypes(selfPermissions []ac.Permission, impersonatePermissions []ac.Permission) []string {
 	grantTypes := []string{}
 
 	// If the app has permissions, it can use the client credentials grant type
-	if len(registration.Permissions) > 0 {
+	if len(selfPermissions) > 0 {
 		grantTypes = append(grantTypes, string(fosite.GrantTypeClientCredentials))
 	}
 
 	// If the app has impersonate permissions, it can use the JWT bearer grant type
-	if len(registration.ImpersonatePermissions) > 0 {
+	// TODO should we also check if the app has users:impersonate permissions?
+	if len(impersonatePermissions) > 0 {
 		grantTypes = append(grantTypes, string(fosite.GrantTypeJWTBearer))
 	}
 
 	return grantTypes
 }
 
-func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (int64, error) {
+// createServiceAccount creates a service account with the given permissions
+// and returns the ID of the service account
+// When no permission is given, the account isn't created and -1 is returned
+// TODO we should use a single transaction for the whole service account creation process
+func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName string, permissions []ac.Permission) (int64, error) {
+	if len(permissions) == 0 {
+		// No permissions, no service account
+		s.logger.Debug("No permissions, no service account", "external service name", extSvcName)
+		return oauthserver.NoServiceAccountID, nil
+	}
+
 	newRole := func(r roletype.RoleType) *roletype.RoleType {
 		return &r
 	}
@@ -211,53 +235,88 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, registrati
 		return &b
 	}
 
-	slug := slugify.Slugify(registration.ExternalServiceName)
+	slug := slugify.Slugify(extSvcName)
 
 	// TODO: Can we use ServiceAccounts in global orgs in the future? As apps are available accross all orgs.
 	// FIXME currently using orgID 1
+	s.logger.Debug("Generate service account", "external service name", extSvcName, "orgID", oauthserver.TmpOrgID, "name", slug)
 	sa, err := s.saService.CreateServiceAccount(ctx, oauthserver.TmpOrgID, &serviceaccounts.CreateServiceAccountForm{
 		Name:       slug,
 		Role:       newRole(roletype.RoleViewer), // TODO: Use empty role
 		IsDisabled: newBool(false),
 	})
 	if err != nil {
-		return -1, err
+		return oauthserver.NoServiceAccountID, err
 	}
 
+	s.logger.Debug("Create tailored role for service account", "external service name", extSvcName, "name", slug, "service_account_id", sa.Id, "permissions", permissions)
 	if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
 		OrgID:             ac.GlobalOrgID,
 		Global:            true,
 		ExternalServiceID: slug,
 		ServiceAccountID:  sa.Id,
-		Permissions:       registration.Permissions,
+		Permissions:       permissions,
 	}); err != nil {
-		return -1, err
+		return oauthserver.NoServiceAccountID, err
 	}
 
 	return sa.Id, nil
 }
 
-func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (*oauthserver.KeyResult, error) {
-	if registration.Key == nil {
+func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oauthserver.KeyOption) (*oauthserver.KeyResult, error) {
+	if keyOption == nil {
 		return nil, nil
 	}
 
-	if registration.Key.Generate {
-		RSAKey, err := rsa.GenerateKey(rand.Reader, 2048)
-		if err != nil {
-			return nil, err
-		}
-		return &oauthserver.KeyResult{
-			PrivatePem: string(pem.EncodeToMemory(&pem.Block{
+	keyType := "ecdsa"
+	var publicPem, privatePem string
+
+	if keyOption.Generate {
+		switch keyType {
+		case "ecdsa":
+			privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+			if err != nil {
+				return nil, err
+			}
+			publicDer, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+			if err != nil {
+				return nil, err
+			}
+
+			privateDer, err := x509.MarshalPKCS8PrivateKey(privateKey)
+			if err != nil {
+				return nil, err
+			}
+
+			publicPem = string(pem.EncodeToMemory(&pem.Block{
+				Type:  "PUBLIC KEY",
+				Bytes: publicDer,
+			}))
+			privatePem = string(pem.EncodeToMemory(&pem.Block{
+				Type:  "PRIVATE KEY",
+				Bytes: privateDer,
+			}))
+		case "rsa":
+			privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+			if err != nil {
+				return nil, err
+			}
+			publicPem = string(pem.EncodeToMemory(&pem.Block{
+				Type:  "PUBLIC KEY",
+				Bytes: x509.MarshalPKCS1PublicKey(&privateKey.PublicKey),
+			}))
+			privatePem = string(pem.EncodeToMemory(&pem.Block{
 				Type:  "RSA PRIVATE KEY",
-				Bytes: x509.MarshalPKCS1PrivateKey(RSAKey),
-			})),
-			PublicPem: string(pem.EncodeToMemory(&pem.Block{
-				Type:  "RSA PUBLIC KEY",
-				Bytes: x509.MarshalPKCS1PublicKey(&RSAKey.PublicKey),
-			})),
-			Generated: true,
+				Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+			}))
+		}
+
+		return &oauthserver.KeyResult{
+			PrivatePem: privatePem,
+			PublicPem:  publicPem,
+			Generated:  true,
 		}, nil
+
 	}
 
 	// TODO allow specifying a URL to get the public key
@@ -267,9 +326,9 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, registration *
 	// 	}, nil
 	// }
 
-	if registration.Key.PublicPEM != "" {
+	if keyOption.PublicPEM != "" {
 		return &oauthserver.KeyResult{
-			PublicPem: registration.Key.PublicPEM,
+			PublicPem: keyOption.PublicPEM,
 		}, nil
 	}
 
@@ -281,6 +340,7 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 	if ok {
 		app, ok := entry.(oauthserver.Client)
 		if ok {
+			s.logger.Debug("GetExternalService: cache hit", "client id", id)
 			return &app, nil
 		}
 	}
@@ -290,9 +350,12 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 		return nil, err
 	}
 
+	// TODO Handle case where the external service does not have a service account
 	// Retrieve self permissions and generate a signed in user
+	s.logger.Debug("GetExternalService: fetch permissions", "client id", id)
 	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, app.ServiceAccountID)
 	if err != nil {
+		s.logger.Error("GetExternalService: error fetching service account", "client id", id, "error", err)
 		return nil, err
 	}
 
@@ -306,6 +369,7 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 	}
 	app.SelfPermissions, err = s.acService.GetUserPermissions(ctx, app.SignedInUser, ac.Options{})
 	if err != nil {
+		s.logger.Error("GetExternalService: error fetching permissions", "client id", id, "error", err)
 		return nil, err
 	}
 	app.SignedInUser.Permissions[oauthserver.TmpOrgID] = ac.GroupScopesByAction(app.SelfPermissions)
@@ -318,43 +382,131 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 	return app, nil
 }
 
+// TODO it would be great to create the service account in the same DB session as the client
+func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (*oauthserver.ClientDTO, error) {
+	if registration == nil {
+		s.logger.Warn("RegisterExternalService called without registration")
+		return nil, nil
+	}
+	s.logger.Info("Registering external service", "external service name", registration.ExternalServiceName)
+
+	// Check if the client already exists in store
+	client, errFetchExtSvc := s.sqlstore.GetExternalServiceByName(ctx, registration.ExternalServiceName)
+	if errFetchExtSvc != nil {
+		if srcError, ok := errFetchExtSvc.(errutil.Error); ok {
+			if srcError.MessageID != oauthserver.ErrClientNotFoundMessageID {
+				s.logger.Error("Error fetching service", "external service", registration.ExternalServiceName, "error", errFetchExtSvc)
+				return nil, errFetchExtSvc
+			}
+		}
+	}
+	// Otherwise, create a new client
+	if client == nil {
+		s.logger.Debug("External service does not yet exist", "external service name", registration.ExternalServiceName)
+		client = &oauthserver.Client{
+			ExternalServiceName: registration.ExternalServiceName,
+			ServiceAccountID:    oauthserver.NoServiceAccountID,
+		}
+	}
+
+	client.ImpersonatePermissions = registration.ImpersonatePermissions
+
+	if registration.RedirectURI != nil {
+		client.RedirectURI = *registration.RedirectURI
+	}
+
+	var errGenCred error
+	client.ClientID, client.Secret, errGenCred = s.genCredentials()
+	if errGenCred != nil {
+		s.logger.Error("Error generating credentials", "client", client.LogID(), "error", errGenCred)
+		return nil, errGenCred
+	}
+
+	s.logger.Debug("Handle service account save")
+	saID, errSaveServiceAccount := s.saveServiceAccount(ctx, client.ExternalServiceName, client.ServiceAccountID, registration.Permissions)
+	if errSaveServiceAccount != nil {
+		return nil, errSaveServiceAccount
+	}
+	client.ServiceAccountID = saID
+
+	client.GrantTypes = strings.Join(s.computeGrantTypes(registration.Permissions, registration.ImpersonatePermissions), ",")
+
+	// Handle RSA key options
+	s.logger.Debug("Handle key options")
+	keys, err := s.handleKeyOptions(ctx, registration.Key)
+	if err != nil {
+		s.logger.Error("Error handling key options", "client", client.LogID(), "error", err)
+		return nil, err
+	}
+	if keys != nil {
+		client.PublicPem = []byte(keys.PublicPem)
+	}
+
+	err = s.sqlstore.SaveExternalService(ctx, client)
+	if err != nil {
+		s.logger.Error("Error saving external service", "client", client.LogID(), "error", err)
+		return nil, err
+	}
+	dto := client.ToDTO()
+	dto.KeyResult = keys
+	s.logger.Debug("Registered app", "client", client.LogID())
+	return dto, nil
+}
+
+func (s *OAuth2ServiceImpl) saveServiceAccount(ctx context.Context, extSvcName string, saID int64, selfPermissions []ac.Permission) (int64, error) {
+	if saID == oauthserver.NoServiceAccountID {
+		// Create a service account
+		s.logger.Debug("Create service account", "external service name", extSvcName)
+		return s.createServiceAccount(ctx, extSvcName, selfPermissions)
+	}
+
+	// check if the service account exists
+	s.logger.Debug("Update service account", "external service name", extSvcName)
+	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, saID)
+	if err != nil {
+		s.logger.Error("Error retrieving service account", "external service name", extSvcName, "error", err)
+		return oauthserver.NoServiceAccountID, err
+	}
+
+	// update the service account's permissions
+	if len(selfPermissions) > 0 {
+		s.logger.Debug("Update role permissions", "external service name", extSvcName, "saID", saID)
+		if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
+			OrgID:             ac.GlobalOrgID,
+			Global:            true,
+			ExternalServiceID: extSvcName,
+			ServiceAccountID:  sa.Id,
+			Permissions:       selfPermissions,
+		}); err != nil {
+			return oauthserver.NoServiceAccountID, err
+		}
+		return saID, nil
+	}
+
+	// remove the service account
+	s.logger.Debug("Delete service account", "external service name", extSvcName, "saID", saID)
+	// TODO check that it's also deleting the role and its assignment
+	if err := s.saService.DeleteServiceAccount(ctx, oauthserver.TmpOrgID, sa.Id); err != nil {
+		return oauthserver.NoServiceAccountID, err
+	}
+	return saID, nil
+}
+
 // TODO cache scopes
 // ComputeClientScopesOnTarget computes the scopes that a client has on a specific user (targetLogin) only searching in the subset of scopes provided
-func (s *OAuth2ServiceImpl) computeClientScopesOnUser(ctx context.Context, client *oauthserver.Client, userID int64) ([]string, error) {
+func (s *OAuth2ServiceImpl) computeClientScopesOnUser(ctx context.Context, client *oauthserver.Client, userID int64) (fosite.Arguments, error) {
 	// TODO I used userID here as we used it for the ext jwt service, but it would be better to use login as app shouldn't know the user id
 	// TODO Inefficient again as we fetch the user to populate the id_token again later
-	targetUser, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
+	// Check user existence
+	_, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
 	if err != nil {
 		return nil, err
 	}
 
-	res := []string{}
-	for _, scope := range client.GetScopes() {
-		hasAccess := false
-		var errAccess error
-		if strings.HasPrefix(scope, "org.") {
-			hasAccess = true
-		}
-		switch string(scope) {
-		case "openid":
-			hasAccess = true
-		case "email", "profile":
-			hasAccess, errAccess = s.accessControl.Evaluate(ctx, client.SignedInUser, ac.EvalPermission(
-				"users:read", fmt.Sprintf("global.users:id:%v", targetUser.ID)))
-		case "permissions":
-			hasAccess, errAccess = s.accessControl.Evaluate(ctx, client.SignedInUser, ac.EvalPermission(
-				"users.permissions:read", fmt.Sprintf("users:id:%v", targetUser.ID)))
-		case "teams":
-			// We don't need to check whether the service account has access to the specific teams of the target user
-			// because the filtering will be done by the Team service based on the service account permissions
-			hasAccess, errAccess = s.accessControl.Evaluate(ctx, client.SignedInUser, ac.EvalPermission("teams:read"))
-		}
-		if errAccess != nil {
-			return nil, errAccess
-		}
-		if hasAccess {
-			res = append(res, string(scope))
-		}
-	}
-	return res, nil
+	// Compute the scopes on the target user
+	scopes := client.GetOpenIDScope()
+	scopes = append(scopes, client.GetOrgScopes()...)
+	scopes = append(scopes, client.GetScopesOnUser(ctx, s.accessControl, userID)...)
+
+	return scopes, nil
 }

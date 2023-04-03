@@ -3,11 +3,13 @@ package httpclientprovider
 import (
 	"fmt"
 	"net/http"
+	"net/http/httptrace"
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -24,6 +26,7 @@ func TracingMiddleware(logger log.Logger, tracer tracing.Tracer) httpclient.Midd
 			ctx, span := tracer.Start(req.Context(), "HTTP Outgoing Request", trace.WithSpanKind(trace.SpanKindClient))
 			defer span.End()
 
+			ctx = httptrace.WithClientTrace(ctx, otelhttptrace.NewClientTrace(ctx, otelhttptrace.WithoutSubSpans(), otelhttptrace.WithoutHeaders()))
 			req = req.WithContext(ctx)
 			for k, v := range opts.Labels {
 				span.SetAttributes(k, v, attribute.Key(k).String(v))

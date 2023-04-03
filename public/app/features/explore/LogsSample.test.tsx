@@ -81,9 +81,9 @@ describe('LogsSamplePanel', () => {
     render(
       <LogsSamplePanel {...createProps({ queryResponse: { data: [sampleDataFrame], state: LoadingState.Done } })} />
     );
-    expect(screen.getByText('2022-02-22 04:28:11')).toBeInTheDocument();
+    expect(screen.getByText('2022-02-22 04:28:11.352')).toBeInTheDocument();
     expect(screen.getByText('line1')).toBeInTheDocument();
-    expect(screen.getByText('2022-02-22 09:42:50')).toBeInTheDocument();
+    expect(screen.getByText('2022-02-22 09:42:50.991')).toBeInTheDocument();
     expect(screen.getByText('line2')).toBeInTheDocument();
   });
 

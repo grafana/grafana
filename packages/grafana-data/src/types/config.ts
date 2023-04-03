@@ -96,6 +96,16 @@ export type OAuth =
  */
 export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: IconName }>>;
 
+/**
+ * Information needed for analytics providers
+ *
+ * @internal
+ */
+export interface AnalyticsSettings {
+  identifier: string;
+  intercomIdentifier?: string;
+}
+
 /** Current user info included in bootData
  *
  * @internal
@@ -119,6 +129,7 @@ export interface CurrentUserDTO {
   locale: string;
   language: string;
   permissions?: Record<string, boolean>;
+  analytics: AnalyticsSettings;
 
   /** @deprecated Use theme instead */
   lightTheme: boolean;
@@ -189,6 +200,7 @@ export interface GrafanaConfig {
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
+  anonymousEnabled: boolean;
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;

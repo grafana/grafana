@@ -65,7 +65,7 @@ type FakeHistorian struct {
 	StateTransitions []StateTransition
 }
 
-func (f *FakeHistorian) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []StateTransition) <-chan error {
+func (f *FakeHistorian) Record(ctx context.Context, rule history_model.RuleMeta, states []StateTransition) <-chan error {
 	f.StateTransitions = append(f.StateTransitions, states...)
 	errCh := make(chan error)
 	close(errCh)

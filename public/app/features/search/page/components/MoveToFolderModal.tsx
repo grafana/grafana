@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, HorizontalGroup, Modal, useStyles2 } from '@grafana/ui';
@@ -17,7 +17,7 @@ interface Props {
   onDismiss: () => void;
 }
 
-export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onDismiss }) => {
+export const MoveToFolderModal = ({ results, onMoveItems, isOpen, onDismiss }: Props) => {
   const [folder, setFolder] = useState<FolderInfo | null>(null);
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();

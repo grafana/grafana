@@ -9,8 +9,7 @@
     "action": {
       "change-theme": "",
       "dark-theme": "",
-      "light-theme": "",
-      "search": ""
+      "light-theme": ""
     },
     "search-box": {
       "placeholder": ""
@@ -32,7 +31,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "Aktionen",
       "data-tab": "Daten",
       "error-tab": "Fehler",
       "json-tab": "JSON",
@@ -85,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "Panel hinzufügen",
-      "comments-show": "Dashboard-Kommentare anzeigen",
       "mark-favorite": "Als Favorit markieren",
       "open-original": "Original-Dashboard öffnen",
       "playlist-next": "Zum nächsten Dashboard",
@@ -244,18 +241,6 @@
       "subtitle": "Wiederverwendbare Panels, die zu mehreren Dashboards hinzugefügt werden können",
       "title": "Bibliotheks-Panels"
     },
-    "live": {
-      "title": "Event-Streaming"
-    },
-    "live-cloud": {
-      "title": "Cloud"
-    },
-    "live-pipeline": {
-      "title": "In Vorbereitung"
-    },
-    "live-status": {
-      "title": "Status"
-    },
     "manage-dashboards": {
       "title": "Durchsuchen"
     },
@@ -305,7 +290,6 @@
       "title": "Szenen"
     },
     "search": {
-      "placeholder": "Grafana durchsuchen",
       "placeholderCommandPalette": ""
     },
     "search-dashboards": {
@@ -427,6 +411,11 @@
     "folder-view": {
       "go-to-folder": "",
       "select-folder": ""
+    },
+    "result-kind": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
     },
     "results-table": {
       "datasource-header": "",

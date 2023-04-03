@@ -12,12 +12,12 @@ type VersionHistoryHeaderProps = {
   isNewLatest?: boolean;
 };
 
-export const VersionHistoryHeader: React.FC<VersionHistoryHeaderProps> = ({
+export const VersionHistoryHeader = ({
   onClick = noop,
   baseVersion = 0,
   newVersion = 0,
   isNewLatest = false,
-}) => {
+}: VersionHistoryHeaderProps) => {
   const styles = useStyles2(getStyles);
 
   return (

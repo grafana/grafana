@@ -58,7 +58,7 @@ func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.Data
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
-	query := newTimeSeriesQuery(client, queries)
+	query := newElasticsearchDataQuery(client, queries)
 	return query.execute()
 }
 

@@ -70,13 +70,13 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator validations
 		RequestValidator:   requestValidator,
 		DataService:        dataService,
 		usageStatsService:  usageStatsService,
+		validator:          validator,
 		tracer:             tracer,
 		AlertStore:         store,
 		dashAlertExtractor: dashAlertExtractor,
 		dashboardService:   dashboardService,
 		datasourceService:  dsService,
 		annotationsRepo:    annotationsRepo,
-		validator:          validator,
 	}
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()

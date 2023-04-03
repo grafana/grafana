@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { identity } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -30,7 +30,7 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
-import { TimeSeriesOptions } from 'app/plugins/panel/timeseries/types';
+import { PanelOptions as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 import { ExploreGraphStyle } from 'app/types';
 
 import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
@@ -159,7 +159,7 @@ export function ExploreGraph({
   return (
     <PanelContextProvider value={panelContext}>
       {data.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
-        <div className={cx([style.timeSeriesDisclaimer])}>
+        <div className={style.timeSeriesDisclaimer}>
           <Icon className={style.disclaimerIcon} name="exclamation-triangle" />
           Showing only {MAX_NUMBER_OF_TIME_SERIES} time series.
           <Button
@@ -191,9 +191,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: time-series-disclaimer;
     margin: ${theme.spacing(1)} auto;
     padding: 10px 0;
-    border-radius: ${theme.spacing(2)};
     text-align: center;
-    background-color: ${theme.colors.background.primary};
   `,
   disclaimerIcon: css`
     label: disclaimer-icon;

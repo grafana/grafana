@@ -1,37 +1,43 @@
 package historian
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"math"
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 )
 
-func TestAnnotationHistorian_Integration(t *testing.T) {
+func TestAnnotationHistorian(t *testing.T) {
 	t.Run("alert annotations are queryable", func(t *testing.T) {
 		anns := createTestAnnotationBackendSut(t)
 		items := []annotations.Item{createAnnotation()}
-		require.NoError(t, anns.recordAnnotationsSync(context.Background(), nil, items, log.NewNopLogger()))
+		require.NoError(t, anns.recordAnnotations(context.Background(), nil, items, 1, log.NewNopLogger()))
 
 		q := models.HistoryQuery{
 			RuleUID: "my-rule",
 			OrgID:   1,
 		}
-		frame, err := anns.QueryStates(context.Background(), q)
+		frame, err := anns.Query(context.Background(), q)
 
 		require.NoError(t, err)
 		require.NotNil(t, frame)
@@ -40,16 +46,85 @@ func TestAnnotationHistorian_Integration(t *testing.T) {
 			require.Equal(t, frame.Fields[i].Len(), 1)
 		}
 	})
+
+	t.Run("writing state transitions as annotations succeeds", func(t *testing.T) {
+		anns := createTestAnnotationBackendSut(t)
+		rule := createTestRule()
+		states := singleFromNormal(&state.State{
+			State:  eval.Alerting,
+			Labels: data.Labels{"a": "b"},
+		})
+
+		err := <-anns.Record(context.Background(), rule, states)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("emits expected write metrics", func(t *testing.T) {
+		reg := prometheus.NewRegistry()
+		met := metrics.NewHistorianMetrics(reg)
+		anns := createTestAnnotationBackendSutWithMetrics(t, met)
+		errAnns := createFailingAnnotationSut(t, met)
+		rule := createTestRule()
+		states := singleFromNormal(&state.State{
+			State:  eval.Alerting,
+			Labels: data.Labels{"a": "b"},
+		})
+
+		<-anns.Record(context.Background(), rule, states)
+		<-errAnns.Record(context.Background(), rule, states)
+
+		exp := bytes.NewBufferString(`
+# HELP grafana_alerting_state_history_transitions_failed_total The total number of state transitions that failed to be written - they are not retried.
+# TYPE grafana_alerting_state_history_transitions_failed_total counter
+grafana_alerting_state_history_transitions_failed_total{org="1"} 1
+# HELP grafana_alerting_state_history_transitions_total The total number of state transitions processed.
+# TYPE grafana_alerting_state_history_transitions_total counter
+grafana_alerting_state_history_transitions_total{org="1"} 2
+# HELP grafana_alerting_state_history_writes_failed_total The total number of failed writes of state history batches.
+# TYPE grafana_alerting_state_history_writes_failed_total counter
+grafana_alerting_state_history_writes_failed_total{org="1"} 1
+# HELP grafana_alerting_state_history_writes_total The total number of state history batches that were attempted to be written.
+# TYPE grafana_alerting_state_history_writes_total counter
+grafana_alerting_state_history_writes_total{org="1"} 2
+`)
+		err := testutil.GatherAndCompare(reg, exp,
+			"grafana_alerting_state_history_transitions_total",
+			"grafana_alerting_state_history_transitions_failed_total",
+			"grafana_alerting_state_history_writes_total",
+			"grafana_alerting_state_history_writes_failed_total",
+		)
+		require.NoError(t, err)
+
+		require.NoError(t, err)
+	})
 }
 
 func createTestAnnotationBackendSut(t *testing.T) *AnnotationBackend {
+	return createTestAnnotationBackendSutWithMetrics(t, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
+}
+
+func createTestAnnotationBackendSutWithMetrics(t *testing.T, met *metrics.Historian) *AnnotationBackend {
 	t.Helper()
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 	rules := fakes.NewRuleStore(t)
 	rules.Rules[1] = []*models.AlertRule{
 		models.AlertRuleGen(withOrgID(1), withUID("my-rule"))(),
 	}
-	return NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{}, rules)
+	dbs := &dashboards.FakeDashboardService{}
+	dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
+	return NewAnnotationBackend(fakeAnnoRepo, dbs, rules, met)
+}
+
+func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *AnnotationBackend {
+	fakeAnnoRepo := &failingAnnotationRepo{}
+	rules := fakes.NewRuleStore(t)
+	rules.Rules[1] = []*models.AlertRule{
+		models.AlertRuleGen(withOrgID(1), withUID("my-rule"))(),
+	}
+	dbs := &dashboards.FakeDashboardService{}
+	dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
+	return NewAnnotationBackend(fakeAnnoRepo, dbs, rules, met)
 }
 
 func createAnnotation() annotations.Item {

@@ -261,7 +261,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     height: 100%;
     background: ${theme.colors.background.secondary};
     padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
-    border-radius: ${theme.shape.borderRadius(2)};
+    border-radius: ${theme.shape.borderRadius()};
     margin-bottom: ${theme.spacing(0.5)};
 
     gap: ${theme.spacing(2)};

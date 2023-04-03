@@ -90,7 +90,7 @@ export class DashboardModel implements TimeModel {
   snapshot: any;
   schemaVersion: number;
   version: number;
-  revision: number;
+  revision?: number; // Only used for dashboards managed by plugins
   links: DashboardLink[];
   gnetId: any;
   panels: PanelModel[];
@@ -131,7 +131,7 @@ export class DashboardModel implements TimeModel {
     this.id = data.id || null;
     // UID is not there for newly created dashboards
     this.uid = data.uid || null;
-    this.revision = data.revision || 1;
+    this.revision = data.revision ?? undefined;
     this.title = data.title ?? 'No Title';
     this.description = data.description;
     this.tags = data.tags ?? [];

@@ -222,7 +222,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 	}
 
 	ruleMeta := history_model.NewRuleMeta(rule, st.log)
-	errCh := st.historian.RecordStatesAsync(ctx, ruleMeta, transitions)
+	errCh := st.historian.Record(ctx, ruleMeta, transitions)
 	go func() {
 		err := <-errCh
 		if err != nil {
@@ -250,7 +250,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 
 	allChanges := append(states, staleStates...)
 	if st.historian != nil {
-		st.historian.RecordStatesAsync(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
+		st.historian.Record(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
 	}
 	return allChanges
 }

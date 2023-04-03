@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
@@ -9,7 +9,7 @@ interface Prom {
   rule: Rule;
 }
 
-export const RuleHealth: FC<Prom> = ({ rule }) => {
+export const RuleHealth = ({ rule }: Prom) => {
   const style = useStyles2(getStyle);
 
   if (rule.health === 'err' || rule.health === 'error') {
