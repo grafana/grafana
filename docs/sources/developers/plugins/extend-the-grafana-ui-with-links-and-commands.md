@@ -1,9 +1,9 @@
 ---
-title: Extend the Grafana UI with links and commands
-description: Learn how to add links and commands to the Grafana user interface from an App plugin
+title: Extend the Grafana UI with links
+description: Learn how to add links to the Grafana user interface from an App plugin
 ---
 
-# Extend the Grafana UI with links and commands
+# Extend the Grafana UI with links
 
 Use the Plugin extensions API with your Grafana App plugins to add links to the Grafana UI. Doing so allows you to direct users to your plugins pages from various "placements" within the Grafana application.
 
@@ -15,7 +15,7 @@ For a plugin to successfully register links it must:
 
 ## Available placements within Grafana
 
-A placement is a location within the Grafana application UI where a plugin can insert links or commands. All placements within Grafana start with `grafana/`. The following placements are available:
+A placement is a location within the Grafana application UI where a plugin can insert links. All placements within Grafana start with `grafana/`. The following placements are available:
 
 - `grafana/dashboard/panel/menu`: all panel menu dropdowns found in dashboards
 
@@ -75,24 +75,26 @@ The above example demonstrates how to return a different link `path` based on wh
 
 _Note: The context passed to the `configure` function is bound by the `placement` the link is inserted into. Different placements contain different contexts._
 
-## Add a command extension within Grafana
+## Add an onClick event handler to a link
 
-Link extensions provide the means to direct users to a plugin page via href links within the Grafana UI. Commands, on the other hand, perform dynamic actions when clicked.
+Link extensions provide the means to direct users to a plugin page via href links within the Grafana UI. They can also trigger onClick events to perform dynamic actions when clicked.
 
-Here's how you can add a command link to the dashboard panel menus in Grafana via your plugin:
+Here's how you can add an onClick handler to a link in the dashboard panel menus of Grafana via your plugin:
 
-1. Define the command extension in the plugin's `module.ts` file.
-1. Create a new instance of the `AppPlugin` class, and this time use the `configureExtensionCommand` method. This method takes a `context` object that contains information about the panel where the menu was clicked, and a `helpers` object to help perform various actions.
+1. Define the link extension in the plugin's `module.ts` file.
+2. Create a new instance of the `AppPlugin` class, again using the `configureExtensionLink` method. This method takes a `context` object that contains information about the panel where the menu was clicked, and a `helpers` object to help perform various actions.
 
 In the following example, we open a modal.
 
 ```typescript
-new AppPlugin().configureExtensionCommand({
-  title: 'Title of the command"',
-  description: 'Some basic description...',
+new AppPlugin().configureExtensionLink({
+  title: 'Go to basic app',
+  description: 'Will send the user to the basic app',
   placement: 'grafana/dashboard/panel/menu',
-  handler: (context: PanelContext, helpers: any): void => {
-    helpers.openModal({
+  path: '/a/myorg-basic-app/one',
+  onClick: (event, { context, openModal }) => {
+    event.preventDefault();
+    openModal({
       title: 'My plugin modal',
       body: ({ onDismiss }) => <SampleModal onDismiss={onDismiss} pluginId={context?.pluginId} />,
     });
