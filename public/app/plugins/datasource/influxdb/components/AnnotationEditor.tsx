@@ -9,7 +9,7 @@ import InfluxDatasource from './../datasource';
 
 export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, InfluxQuery, InfluxOptions>) => {
   const { query, onChange } = props;
-  const [eventQuery, setEventQuery] = useState<string>(query.query ?? '');
+  const [eventQuery, setEventQuery] = useState<string>(query.expr ?? '');
 
   const [textColumn, setTextColumn] = useState<string>(query.textColumn ?? '');
   const [tagsColumn, setTagsColumn] = useState<string>(query.tagsColumn ?? '');
@@ -30,7 +30,7 @@ export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, Influ
         <Input
           value={eventQuery}
           onChange={(e) => setEventQuery(e.currentTarget.value ?? '')}
-          onBlur={() => updateValue('query', eventQuery)}
+          onBlur={() => updateValue('expr', eventQuery)}
           placeholder="select text from events where $timeFilter limit 1000"
         />
       </div>

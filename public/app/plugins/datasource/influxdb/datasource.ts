@@ -1,16 +1,16 @@
-import { cloneDeep, extend, groupBy, has, isString, map as _map, omit, pick, reduce } from 'lodash';
-import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import {cloneDeep, extend, groupBy, has, isString, map as _map, omit, pick, reduce} from 'lodash';
+import {lastValueFrom, merge, Observable, of, throwError} from 'rxjs';
+import {catchError, map} from 'rxjs/operators';
 
 import {
   AnnotationEvent,
   ArrayVector,
-  DataFrame,
+  DataFrame, DataQuery,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
-  dateMath,
+  dateMath, Field,
   FieldType,
   MetricFindValue,
   QueryResultMeta,
@@ -28,18 +28,21 @@ import {
   getBackendSrv,
 } from '@grafana/runtime';
 import config from 'app/core/config';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import {getTemplateSrv, TemplateSrv} from 'app/features/templating/template_srv';
 
-import { AnnotationEditor } from './components/AnnotationEditor';
-import { FluxQueryEditor } from './components/FluxQueryEditor';
-import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
+import {CacheRequestInfo, QueryCache} from "../prometheus/querycache/QueryCache";
+import {PromQuery} from "../prometheus/types";
+
+import {AnnotationEditor} from './components/AnnotationEditor';
+import {FluxQueryEditor} from './components/FluxQueryEditor';
+import {BROWSER_MODE_DISABLED_MESSAGE} from './constants';
 import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';
-import { prepareAnnotation } from './migrations';
-import { buildRawQuery } from './queryUtils';
-import { InfluxQueryBuilder } from './query_builder';
+import {prepareAnnotation} from './migrations';
+import {buildRawQuery} from './queryUtils';
+import {InfluxQueryBuilder} from './query_builder';
 import ResponseParser from './response_parser';
-import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
+import {InfluxOptions, InfluxQuery, InfluxVersion} from './types';
 
 // we detect the field type based on the value-array
 function getFieldType(values: unknown[]): FieldType {
@@ -127,6 +130,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   httpMode: string;
   isFlux: boolean;
   isProxyAccess: boolean;
+  cache: QueryCache;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
@@ -152,6 +156,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.responseParser = new ResponseParser();
     this.isFlux = settingsData.version === InfluxVersion.Flux;
     this.isProxyAccess = instanceSettings.access === 'proxy';
+    this.cache = new QueryCache(
+      getTargSig as (targExpr: string, request: DataQueryRequest, target: DataQuery) => string,
+      getFieldIdent,
+      '10m'
+    );
 
     if (this.isFlux) {
       // When flux, use an annotation processor rather than the `annotationQuery` lifecycle
@@ -174,7 +183,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // for not-flux queries we call `this.classicQuery`, and that
     // handles the is-hidden situation.
     // for the flux-case, we do the filtering here
-    const filteredRequest = {
+    const filteredRequest: DataQueryRequest<InfluxQuery> = {
       ...request,
       targets: request.targets.filter((t) => t.hide !== true),
     };
@@ -183,8 +192,14 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return super.query(filteredRequest);
     }
 
+    let fullOrPartialRequest: DataQueryRequest<InfluxQuery>;
+    let requestInfo: CacheRequestInfo | undefined = undefined;
+
     if (this.isMigrationToggleOnAndIsAccessProxy()) {
-      return super.query(filteredRequest).pipe(
+      requestInfo = this.cache.requestInfo(filteredRequest, (queryString) => queryString);
+      fullOrPartialRequest = requestInfo.requests[0];
+
+      return super.query(fullOrPartialRequest).pipe(
         map((res) => {
           if (res.error) {
             throw {
@@ -193,9 +208,14 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
             };
           }
 
+          const amendedResponse = {
+            ...res,
+            data: this.cache.procFrames(request, requestInfo, res.data),
+          };
+
           const seriesList: any[] = [];
 
-          const groupedFrames = groupBy(res.data, (x) => x.refId);
+          const groupedFrames = groupBy(amendedResponse.data, (x) => x.refId);
           if (Object.keys(groupedFrames).length > 0) {
             filteredRequest.targets.forEach((target) => {
               const filteredFrames = groupedFrames[target.refId] ?? [];
@@ -229,7 +249,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   getQueryDisplayText(query: InfluxQuery) {
     if (this.isFlux) {
-      return query.query;
+      return query.expr;
     }
     return new InfluxQueryModel(query).render(false);
   }
@@ -239,7 +259,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
    */
   filterQuery(query: InfluxQuery): boolean {
     if (this.isFlux) {
-      return !!query.query;
+      return !!query.expr;
     }
     return true;
   }
@@ -251,7 +271,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     if (this.isFlux) {
       return {
         ...query,
-        query: this.templateSrv.replace(query.query ?? '', rest), // The raw query text
+        query: this.templateSrv.replace(query.expr ?? '', rest), // The raw query text
       };
     }
 
@@ -389,7 +409,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     // InfluxQL puts a query string on the annotation
-    if (!annotation.query) {
+    if (!annotation.expr) {
       return Promise.reject({
         message: 'Query missing in annotation definition',
       });
@@ -400,7 +420,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
         datasource: this.getRef(),
-        query: this.templateSrv.replace(annotation.query, undefined, 'regex'),
+        expr: this.templateSrv.replace(annotation.expr, undefined, 'regex'),
         rawQuery: true,
       };
 
@@ -427,7 +447,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     const timeFilter = this.getTimeFilter({ rangeRaw: options.range.raw, timezone: options.timezone });
-    let query = annotation.query.replace('$timeFilter', timeFilter);
+    let query = annotation.expr.replace('$timeFilter', timeFilter);
     query = this.templateSrv.replace(query, undefined, 'regex');
 
     return lastValueFrom(this._seriesQuery(query, options)).then((data: any) => {
@@ -459,7 +479,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         return {
           ...query,
           datasource: this.getRef(),
-          query: this.templateSrv.replace(query.query ?? '', scopedVars, 'regex'), // The raw query text
+          expr: this.templateSrv.replace(query.expr ?? '', scopedVars, 'regex'), // The raw query text
         };
       }
 
@@ -509,7 +529,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return {
       ...expandedQuery,
       adhocFilters: this.templateSrv.getAdhocFilters(this.name) ?? [],
-      query: this.templateSrv.replace(query.query ?? '', rest, 'regex'), // The raw query text
+      query: this.templateSrv.replace(query.expr ?? '', rest, 'regex'), // The raw query text
       alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
       limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, 'regex'),
       measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars, 'regex'),
@@ -523,7 +543,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     if (this.isFlux || this.isMigrationToggleOnAndIsAccessProxy()) {
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
-        query,
+        expr: query,
         rawQuery: true,
       };
       return lastValueFrom(
@@ -727,4 +747,22 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   isMigrationToggleOnAndIsAccessProxy() {
     return config.featureToggles.influxdbBackendMigration && this.access === 'proxy';
   }
+}
+
+
+/**
+ * Get field identity
+ * This is the string used to uniquely identify a field within a "target"
+ * @param field
+ */
+const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
+
+/**
+ * Get target signature
+ * @param targExpr
+ * @param request
+ * @param targ
+ */
+function getTargSig(targExpr: string, request: DataQueryRequest<InfluxQuery>, targ: InfluxQuery) {
+  return `${targExpr}|${request.interval}|${JSON.stringify(request.rangeRaw ?? '')}`;
 }

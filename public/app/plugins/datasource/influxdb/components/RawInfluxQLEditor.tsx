@@ -18,7 +18,7 @@ type Props = {
 // "resultFormat" changes are applied immediately
 // "query" and "alias" changes only happen on onblur
 export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.Element => {
-  const [currentQuery, setCurrentQuery] = useShadowedState(query.query);
+  const [currentQuery, setCurrentQuery] = useShadowedState(query.expr);
   const [currentAlias, setCurrentAlias] = useShadowedState(query.alias);
   const aliasElementId = useUniqueId();
   const selectElementId = useUniqueId();
@@ -28,7 +28,7 @@ export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.E
   const applyDelayedChangesAndRunQuery = () => {
     onChange({
       ...query,
-      query: currentQuery,
+      expr: currentQuery,
       alias: currentAlias,
       resultFormat,
     });

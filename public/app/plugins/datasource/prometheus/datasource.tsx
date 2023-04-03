@@ -10,7 +10,7 @@ import {
   AnnotationEvent,
   AnnotationQueryRequest,
   CoreApp,
-  DataFrame,
+  DataFrame, DataQuery,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
@@ -18,6 +18,7 @@ import {
   DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
   dateTime,
+  Field,
   LoadingState,
   QueryFixAction,
   rangeUtil,
@@ -144,6 +145,8 @@ export class PrometheusDatasource
     this.exemplarsAvailable = true;
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
     this.cache = new QueryCache(
+      getTargSig as (targExpr: string, request: DataQueryRequest, target: DataQuery) => string,
+      getFieldIdent,
       instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow
     );
 
@@ -1302,6 +1305,24 @@ export class PrometheusDatasource
     return getClientCacheDurationInMinutes(this.cacheLevel);
   }
 }
+
+/**
+ * Get field identity
+ * This is the string used to uniquely identify a field within a "target"
+ * @param field
+ */
+const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
+
+/**
+ * Get target signature
+ * @param targExpr
+ * @param request
+ * @param targ
+ */
+function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ: PromQuery) {
+  return `${targExpr}|${targ.interval ?? request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.exemplar}`;
+}
+
 
 /**
  * Align query range to step.

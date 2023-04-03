@@ -220,7 +220,7 @@ function getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery):
   if (
     target.rawQuery &&
     selectedParams.length === 0 &&
-    rawQuerySelectedFieldsInDataframe(target.query, dfs) &&
+    rawQuerySelectedFieldsInDataframe(target.expr, dfs) &&
     dfs[0].refId !== 'metricFindQuery'
   ) {
     dfs.map((df) => {

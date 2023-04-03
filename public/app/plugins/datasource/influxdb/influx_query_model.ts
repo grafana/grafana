@@ -214,9 +214,9 @@ export default class InfluxQueryModel {
 
     if (target.rawQuery) {
       if (interpolate) {
-        return this.templateSrv.replace(target.query, this.scopedVars, this.interpolateQueryStr);
+        return this.templateSrv.replace(target.expr, this.scopedVars, this.interpolateQueryStr);
       } else {
-        return target.query;
+        return target.expr;
       }
     }
 

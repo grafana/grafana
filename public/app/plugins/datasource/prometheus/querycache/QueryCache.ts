@@ -1,6 +1,6 @@
 import {
   ArrayVector,
-  DataFrame,
+  DataFrame, DataQuery,
   DataQueryRequest,
   dateTime,
   durationToMilliseconds,
@@ -10,6 +10,7 @@ import {
 } from '@grafana/data/src';
 import { amendTable, Table, trimTable } from 'app/features/live/data/amendTimeSeries';
 
+import {InfluxQuery} from "../../influxdb/types";
 import { PromQuery } from '../types';
 
 // dashboardUID + panelId + refId
@@ -34,7 +35,7 @@ interface TargetCache {
 }
 
 export interface CacheRequestInfo {
-  requests: Array<DataQueryRequest<PromQuery>>;
+  requests: Array<DataQueryRequest<PromQuery | InfluxQuery>>;
   targSigs: Map<TargetIdent, TargetSig>;
   shouldCache: boolean;
 }
@@ -64,7 +65,9 @@ export function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery
  */
 export class QueryCache {
   private overlapWindowMs: number;
-  constructor(overlapString?: string) {
+  getTargSig;
+  getFieldIdent;
+  constructor(getTargetSignature: (targExpr: string, request: DataQueryRequest, target: DataQuery) => string, getFieldIdentity: (field: Field) => string, overlapString?: string) {
     const unverifiedOverlap = overlapString ?? defaultPrometheusQueryOverlapWindow;
     if (isValidDuration(unverifiedOverlap)) {
       const duration = parseDuration(unverifiedOverlap);
@@ -73,12 +76,14 @@ export class QueryCache {
       const duration = parseDuration(defaultPrometheusQueryOverlapWindow);
       this.overlapWindowMs = durationToMilliseconds(duration);
     }
+    this.getTargSig = getTargetSignature;
+    this.getFieldIdent = getFieldIdentity
   }
 
   cache = new Map<TargetIdent, TargetCache>();
 
   // can be used to change full range request to partial, split into multiple requests
-  requestInfo(request: DataQueryRequest<PromQuery>, interpolateString: StringInterpolator): CacheRequestInfo {
+  requestInfo(request: DataQueryRequest<PromQuery | InfluxQuery>, interpolateString: StringInterpolator): CacheRequestInfo {
     // TODO: align from/to to interval to increase probability of hitting backend cache
 
     const newFrom = request.range.from.valueOf();
@@ -95,8 +100,8 @@ export class QueryCache {
     const reqTargSigs = new Map<TargetIdent, TargetSig>();
     request.targets.forEach((targ) => {
       let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
-      let targExpr = interpolateString(targ.expr);
-      let targSig = getTargSig(targExpr, request, targ); // ${request.maxDataPoints} ?
+      let targExpr = interpolateString(targ?.expr);
+      let targSig = this.getTargSig(targExpr, request, targ); // ${request.maxDataPoints} ?
 
       reqTargSigs.set(targIdent, targSig);
     });

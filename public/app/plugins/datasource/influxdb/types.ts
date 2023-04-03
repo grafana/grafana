@@ -61,7 +61,7 @@ export interface InfluxQuery extends DataQuery {
   // supports it for now.
   fill?: string;
   rawQuery?: boolean;
-  query?: string;
+  expr: string;
   alias?: string;
   // for migrated InfluxQL annotations
   queryType?: string;

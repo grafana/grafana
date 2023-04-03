@@ -9,7 +9,7 @@ import { RawInfluxQLEditor } from './RawInfluxQLEditor';
 
 const query: InfluxQuery = {
   refId: 'A',
-  query: 'test query 1',
+  expr: 'test query 1',
   resultFormat: 'table',
   alias: 'alias42',
 };
@@ -33,7 +33,7 @@ describe('RawInfluxQLEditor', () => {
   });
 
   it('should handle no-alias, no-query, no-resultFormat', () => {
-    const emptyQuery = { refId: 'B' };
+    const emptyQuery = { refId: 'B', expr: '' };
     render(<RawInfluxQLEditor onRunQuery={() => null} onChange={() => null} query={emptyQuery} />);
 
     const queryTextarea = screen.getByLabelText('query');

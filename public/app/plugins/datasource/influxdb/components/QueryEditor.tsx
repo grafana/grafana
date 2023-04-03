@@ -35,7 +35,7 @@ export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range, da
       <QueryEditorModeSwitcher
         isRaw={query.rawQuery ?? false}
         onChange={(value) => {
-          onChange({ ...query, query: buildRawQuery(query), rawQuery: value });
+          onChange({ ...query, expr: buildRawQuery(query), rawQuery: value });
           onRunQuery();
         }}
       />

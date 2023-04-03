@@ -97,14 +97,14 @@ v1.tagValues(
 
 class UnthemedFluxQueryEditor extends PureComponent<Props> {
   onFluxQueryChange = (query: string) => {
-    this.props.onChange({ ...this.props.query, query });
+    this.props.onChange({ ...this.props.query, expr: query });
     this.props.onRunQuery();
   };
 
   onSampleChange = (val: SelectableValue<string>) => {
     this.props.onChange({
       ...this.props.query,
-      query: val.value!,
+      expr: val.value!,
     });
 
     // Angular HACK: Since the target does not actually change!
@@ -182,7 +182,7 @@ class UnthemedFluxQueryEditor extends PureComponent<Props> {
           height={'100%'}
           containerStyles={styles.editorContainerStyles}
           language="sql"
-          value={query.query || ''}
+          value={query.expr || ''}
           onBlur={this.onFluxQueryChange}
           onSave={this.onFluxQueryChange}
           showMiniMap={false}

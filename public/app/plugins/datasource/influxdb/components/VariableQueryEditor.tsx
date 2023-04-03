@@ -25,10 +25,10 @@ export default class VariableQueryEditor extends PureComponent<Props> {
           datasource={datasource}
           query={{
             refId: 'A',
-            query,
+            expr: query,
           }}
           onRunQuery={this.onRefresh}
-          onChange={(v) => onChange(v.query)}
+          onChange={(v) => onChange(v.expr)}
         />
       );
     }

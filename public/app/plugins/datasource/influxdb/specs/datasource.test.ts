@@ -235,6 +235,7 @@ describe('InfluxDataSource', () => {
     const ds = new InfluxDatasource(instanceSettings, templateSrv);
 
     const influxQuery = {
+      expr: '',
       refId: 'x',
       alias: '$interpolationVar',
       measurement: '$interpolationVar',
@@ -285,14 +286,14 @@ describe('InfluxDataSource', () => {
         ds.isFlux = true;
         const fluxQuery = {
           refId: 'x',
-          query: '$interpolationVar,$interpolationVar2',
+          expr: '$interpolationVar,$interpolationVar2',
         };
         const queries = ds.interpolateVariablesInQueries([fluxQuery], {
           interpolationVar: { text: text, value: text },
           interpolationVar2: { text: text2, value: text2 },
         });
         expect(templateSrv.replace).toBeCalledTimes(1);
-        expect(queries[0].query).toBe(textWithFormatRegex);
+        expect(queries[0].expr).toBe(textWithFormatRegex);
       });
 
       it('should interpolate all variables with InfluxQL mode', () => {
@@ -310,7 +311,7 @@ describe('InfluxDataSource', () => {
         ds.isFlux = true;
         const fluxQuery = {
           refId: 'x',
-          query: '$interpolationVar',
+          expr: '$interpolationVar',
         };
         const query = ds.applyTemplateVariables(fluxQuery, {
           interpolationVar: {
