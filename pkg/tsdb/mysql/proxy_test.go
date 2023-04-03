@@ -6,15 +6,15 @@ import (
 	"testing"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/grafana/grafana/pkg/infra/proxy/proxyutil"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng/utils"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMySQLProxyDialer(t *testing.T) {
-	settings := proxyutil.SetupTestSecureSocksProxySettings(t)
+	settings := utils.SetupTestSecureSocksProxySettings(t)
 
 	protocol := "tcp"
-	network, err := registerProxyDialerContext(settings, protocol, "1")
+	network, err := registerProxyDialerContext(protocol, "1", "1")
 	require.NoError(t, err)
 	driver := mysql.MySQLDriver{}
 	dbURL := "localhost:5432"
@@ -28,7 +28,7 @@ func TestMySQLProxyDialer(t *testing.T) {
 	})
 
 	t.Run("Multiple networks can be created", func(t *testing.T) {
-		network, err := registerProxyDialerContext(settings, protocol, "2")
+		network, err := registerProxyDialerContext(protocol, "2", "2")
 		require.NoError(t, err)
 		cnnstr2 := fmt.Sprintf("test:test@%s(%s)/db",
 			network,

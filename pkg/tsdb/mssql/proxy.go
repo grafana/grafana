@@ -7,8 +7,7 @@ import (
 	"errors"
 
 	mssql "github.com/grafana/go-mssqldb"
-	iproxy "github.com/grafana/grafana/pkg/infra/proxy"
-	"github.com/grafana/grafana/pkg/setting"
+	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/net/proxy"
@@ -17,7 +16,7 @@ import (
 
 // createMSSQLProxyDriver creates and registers a new sql driver that uses a mssql connector and updates the dialer to
 // route connections through the secure socks proxy
-func createMSSQLProxyDriver(settings *setting.SecureSocksDSProxySettings, cnnstr string) (string, error) {
+func createMSSQLProxyDriver(cnnstr, dsUID string) (string, error) {
 	sqleng.XormDriverMu.Lock()
 	defer sqleng.XormDriverMu.Unlock()
 
@@ -35,7 +34,7 @@ func createMSSQLProxyDriver(settings *setting.SecureSocksDSProxySettings, cnnstr
 			return "", err
 		}
 
-		driver, err := newMSSQLProxyDriver(settings, connector)
+		driver, err := newMSSQLProxyDriver(connector, dsUID)
 		if err != nil {
 			return "", err
 		}
@@ -57,8 +56,8 @@ var _ core.Driver = (*mssqlProxyDriver)(nil)
 
 // newMSSQLProxyDriver updates the dialer for a mssql connector with a dialer that proxys connections through the secure socks proxy
 // and returns a new mssql driver to register
-func newMSSQLProxyDriver(cfg *setting.SecureSocksDSProxySettings, connector *mssql.Connector) (*mssqlProxyDriver, error) {
-	dialer, err := iproxy.NewSecureSocksProxyContextDialer(cfg)
+func newMSSQLProxyDriver(connector *mssql.Connector, dsUID string) (*mssqlProxyDriver, error) {
+	dialer, err := sdkproxy.NewSecureSocksProxyContextDialer(dsUID)
 	if err != nil {
 		return nil, err
 	}

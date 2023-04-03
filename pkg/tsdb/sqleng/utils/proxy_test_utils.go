@@ -1,4 +1,4 @@
-package proxyutil
+package utils
 
 import (
 	"crypto/rand"
@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TODO: change this to use env variables
 func SetupTestSecureSocksProxySettings(t *testing.T) *setting.SecureSocksDSProxySettings {
 	proxyAddress := "localhost:3000"
 	serverName := "localhost"

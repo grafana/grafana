@@ -97,7 +97,7 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 		driverName := "postgres"
 		// register a proxy driver if the secure socks proxy is enabled
 		if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
-			driverName, err = createPostgresProxyDriver(&cfg.SecureSocksDSProxy, cnnstr)
+			driverName, err = createPostgresProxyDriver(cnnstr, dsInfo.UID)
 			if err != nil {
 				return "", nil
 			}

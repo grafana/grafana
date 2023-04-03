@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/proxy/proxyutil"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng/utils"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 	"xorm.io/core"
@@ -13,20 +13,21 @@ import (
 
 func TestPostgresProxyDriver(t *testing.T) {
 	dialect := "postgres"
-	settings := proxyutil.SetupTestSecureSocksProxySettings(t)
+	settings := utils.SetupTestSecureSocksProxySettings(t)
 	dbURL := "localhost:5432"
+	dsUID := "1"
 	cnnstr := fmt.Sprintf("postgres://auser:password@%s/db?sslmode=disable", dbURL)
-	driverName, err := createPostgresProxyDriver(settings, cnnstr)
+	driverName, err := createPostgresProxyDriver(cnnstr, dsUID)
 	require.NoError(t, err)
 
 	t.Run("Driver should not be registered more than once", func(t *testing.T) {
-		testDriver, err := createPostgresProxyDriver(settings, cnnstr)
+		testDriver, err := createPostgresProxyDriver(cnnstr, dsUID)
 		require.NoError(t, err)
 		require.Equal(t, driverName, testDriver)
 	})
 
 	t.Run("A new driver should be created for a new connection string", func(t *testing.T) {
-		testDriver, err := createPostgresProxyDriver(settings, "server=localhost;user id=sa;password=yourStrong(!)Password;database=db2")
+		testDriver, err := createPostgresProxyDriver("server=localhost;user id=sa;password=yourStrong(!)Password;database=db2", dsUID)
 		require.NoError(t, err)
 		require.NotEqual(t, driverName, testDriver)
 	})
@@ -45,7 +46,7 @@ func TestPostgresProxyDriver(t *testing.T) {
 	t.Run("Connector should use dialer context that routes through the socks proxy to db", func(t *testing.T) {
 		connector, err := pq.NewConnector(cnnstr)
 		require.NoError(t, err)
-		driver, err := newPostgresProxyDriver(settings, connector)
+		driver, err := newPostgresProxyDriver(connector, dsUID)
 		require.NoError(t, err)
 
 		conn, err := driver.OpenConnector(cnnstr)
@@ -58,7 +59,7 @@ func TestPostgresProxyDriver(t *testing.T) {
 	t.Run("Connector should use dialer context that routes through the socks proxy to db", func(t *testing.T) {
 		connector, err := pq.NewConnector(cnnstr)
 		require.NoError(t, err)
-		driver, err := newPostgresProxyDriver(settings, connector)
+		driver, err := newPostgresProxyDriver(connector, dsUID)
 		require.NoError(t, err)
 
 		conn, err := driver.OpenConnector(cnnstr)

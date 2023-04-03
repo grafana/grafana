@@ -7,8 +7,7 @@ import (
 	"net"
 	"time"
 
-	iproxy "github.com/grafana/grafana/pkg/infra/proxy"
-	"github.com/grafana/grafana/pkg/setting"
+	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/lib/pq"
@@ -18,7 +17,7 @@ import (
 
 // createPostgresProxyDriver creates and registers a new sql driver that uses a postgres connector and updates the dialer to
 // route connections through the secure socks proxy
-func createPostgresProxyDriver(settings *setting.SecureSocksDSProxySettings, cnnstr string) (string, error) {
+func createPostgresProxyDriver(cnnstr, dsUID string) (string, error) {
 	sqleng.XormDriverMu.Lock()
 	defer sqleng.XormDriverMu.Unlock()
 
@@ -36,7 +35,7 @@ func createPostgresProxyDriver(settings *setting.SecureSocksDSProxySettings, cnn
 			return "", err
 		}
 
-		driver, err := newPostgresProxyDriver(settings, connector)
+		driver, err := newPostgresProxyDriver(connector, dsUID)
 		if err != nil {
 			return "", err
 		}
@@ -58,8 +57,8 @@ var _ core.Driver = (*postgresProxyDriver)(nil)
 
 // newPostgresProxyDriver updates the dialer for a postgres connector with a dialer that proxys connections through the secure socks proxy
 // and returns a new postgres driver to register
-func newPostgresProxyDriver(cfg *setting.SecureSocksDSProxySettings, connector *pq.Connector) (*postgresProxyDriver, error) {
-	dialer, err := iproxy.NewSecureSocksProxyContextDialer(cfg)
+func newPostgresProxyDriver(connector *pq.Connector, dsUID string) (*postgresProxyDriver, error) {
+	dialer, err := sdkproxy.NewSecureSocksProxyContextDialer(dsUID)
 	if err != nil {
 		return nil, err
 	}
