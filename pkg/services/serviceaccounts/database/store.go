@@ -160,7 +160,7 @@ func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *db.Session, orgId,
 		return err
 	}
 	if !has {
-		return serviceaccounts.ErrServiceAccountNotFound
+		return serviceaccounts.ErrServiceAccountNotFound.Errorf("service account with id %d not found", serviceAccountId)
 	}
 	for _, sql := range ServiceAccountDeletions(s.sqlStore.GetDialect()) {
 		_, err := sess.Exec(sql, user.ID)
@@ -211,7 +211,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 		if ok, err := sess.Get(serviceAccount); err != nil {
 			return err
 		} else if !ok {
-			return serviceaccounts.ErrServiceAccountNotFound
+			return serviceaccounts.ErrServiceAccountNotFound.Errorf("service account with id %d not found", serviceAccountId)
 		}
 
 		return nil
@@ -248,7 +248,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Co
 		if ok, err := sess.Get(serviceAccount); err != nil {
 			return err
 		} else if !ok {
-			return serviceaccounts.ErrServiceAccountNotFound
+			return serviceaccounts.ErrServiceAccountNotFound.Errorf("service account with name %s not found", name)
 		}
 
 		return nil
@@ -362,13 +362,6 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 	}
 
 	return searchResult, nil
-}
-
-func (s *ServiceAccountsStoreImpl) HideApiKeysTab(ctx context.Context, orgId int64) error {
-	if err := s.kvStore.Set(ctx, orgId, "serviceaccounts", "hideApiKeys", "1"); err != nil {
-		s.log.Error("Failed to hide API keys tab", err)
-	}
-	return nil
 }
 
 func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context, orgId int64) error {

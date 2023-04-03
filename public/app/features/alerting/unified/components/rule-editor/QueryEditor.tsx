@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -18,7 +18,7 @@ interface Props {
   onSetCondition: (refId: string) => void;
 }
 
-export const QueryEditor: FC<Props> = ({
+export const QueryEditor = ({
   queries,
   expressions,
   panelData,
@@ -27,7 +27,7 @@ export const QueryEditor: FC<Props> = ({
   onDuplicateQuery,
   condition,
   onSetCondition,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   return (

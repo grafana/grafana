@@ -1,4 +1,4 @@
-import { AdHocVariableFilter, InternalTimeZones } from '@grafana/data';
+import { InternalTimeZones } from '@grafana/data';
 
 import {
   isMetricAggregationWithField,
@@ -154,54 +154,7 @@ export class ElasticQueryBuilder {
     return query;
   }
 
-  addAdhocFilters(query: any, adhocFilters: any) {
-    if (!adhocFilters) {
-      return;
-    }
-
-    let i, filter, condition: any, queryCondition: any;
-
-    for (i = 0; i < adhocFilters.length; i++) {
-      filter = adhocFilters[i];
-      condition = {};
-      condition[filter.key] = filter.value;
-      queryCondition = {};
-      queryCondition[filter.key] = { query: filter.value };
-
-      switch (filter.operator) {
-        case '=':
-          if (!query.query.bool.must) {
-            query.query.bool.must = [];
-          }
-          query.query.bool.must.push({ match_phrase: queryCondition });
-          break;
-        case '!=':
-          if (!query.query.bool.must_not) {
-            query.query.bool.must_not = [];
-          }
-          query.query.bool.must_not.push({ match_phrase: queryCondition });
-          break;
-        case '<':
-          condition[filter.key] = { lt: filter.value };
-          query.query.bool.filter.push({ range: condition });
-          break;
-        case '>':
-          condition[filter.key] = { gt: filter.value };
-          query.query.bool.filter.push({ range: condition });
-          break;
-        case '=~':
-          query.query.bool.filter.push({ regexp: condition });
-          break;
-        case '!~':
-          query.query.bool.filter.push({
-            bool: { must_not: { regexp: condition } },
-          });
-          break;
-      }
-    }
-  }
-
-  build(target: ElasticsearchQuery, adhocFilters?: AdHocVariableFilter[]) {
+  build(target: ElasticsearchQuery) {
     // make sure query has defaults;
     target.metrics = target.metrics || [defaultMetricAgg()];
     target.bucketAggs = target.bucketAggs || [defaultBucketAgg()];
@@ -229,8 +182,6 @@ export class ElasticQueryBuilder {
         },
       ];
     }
-
-    this.addAdhocFilters(query, adhocFilters);
 
     // If target doesn't have bucketAggs and type is not raw_document, it is invalid query.
     if (target.bucketAggs.length === 0) {
@@ -483,7 +434,7 @@ export class ElasticQueryBuilder {
     return query;
   }
 
-  getLogsQuery(target: ElasticsearchQuery, limit: number, adhocFilters?: AdHocVariableFilter[]) {
+  getLogsQuery(target: ElasticsearchQuery, limit: number) {
     let query: any = {
       size: 0,
       query: {
@@ -492,8 +443,6 @@ export class ElasticQueryBuilder {
         },
       },
     };
-
-    this.addAdhocFilters(query, adhocFilters);
 
     if (target.query) {
       query.query.bool.filter.push({

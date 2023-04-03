@@ -47,10 +47,7 @@ async function sleep(duration) {
   });
 }
 
-async function lokiSendLogLine(timestampMs, line, tags) {
-  // we keep nanosecond-timestamp in a string because
-  // as a number it would be too large
-  const timestampNs = `${timestampMs}000000`;
+async function lokiSendLogLine(timestampNs, line, tags) {
   const data = {
     streams: [
       {
@@ -136,6 +133,24 @@ function calculateDelays(pointsCount) {
   return delays;
 }
 
+function getRandomNanosecPart() {
+  // we want to have cases with milliseconds-only, with microsec and nanosec.
+  const mode = Math.random();
+
+  if (mode < 0.333) {
+    // only milisec precision
+    return '000000';
+  }
+
+  if (mode < 0.666) {
+    // microsec precision
+    return Math.trunc(Math.random()*1000).toString().padStart(3, '0') + '000'
+  }
+
+  // nanosec precision
+  return Math.trunc(Math.random()*1000000).toString().padStart(6, '0')
+}
+
 
 async function main() {
   const delays = calculateDelays(DAYS * POINTS_PER_DAY);
@@ -144,9 +159,10 @@ async function main() {
   for(let i =0; i < delays.length; i++ ) { // i cannot do a forEach because of the `await` inside
     const delay = delays[i];
     timestampMs += Math.trunc(delay * timeRange);
+    const timestampNs = `${timestampMs}${getRandomNanosecPart()}`;
     const item = getRandomLogItem(i + 1)
-    await lokiSendLogLine(timestampMs, JSON.stringify(item), {place:'moon', source: 'data', instance: 'server\\1', job: '"grafana/data"'});
-    await lokiSendLogLine(timestampMs, logFmtLine(item), {place:'luna', source: 'data', instance: 'server\\2', job: '"grafana/data"'});
+    await lokiSendLogLine(timestampNs, JSON.stringify(item), {place:'moon', source: 'data', instance: 'server\\1', job: '"grafana/data"'});
+    await lokiSendLogLine(timestampNs, logFmtLine(item), {place:'luna', source: 'data', instance: 'server\\2', job: '"grafana/data"'});
   };
 }
 

@@ -22,7 +22,10 @@ const meta: ComponentMeta<typeof Checkbox> = {
 
 export const Basic: ComponentStory<typeof Checkbox> = (args) => {
   const [checked, setChecked] = useState(false);
-  const onChange = useCallback((e) => setChecked(e.currentTarget.checked), [setChecked]);
+  const onChange = useCallback(
+    (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
+    [setChecked]
+  );
   return (
     <div>
       <Checkbox value={checked} onChange={onChange} {...args} />

@@ -21,7 +21,6 @@ import alertDef from 'app/features/alerting/state/alertDef';
 import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from 'app/features/alerting/unified/state/actions';
-import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import {
   getAllRulesSourceNames,
@@ -190,22 +189,6 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     );
   });
 
-  if (options.alertInstanceLabelFilter) {
-    const replacedLabelFilter = replaceVariables(options.alertInstanceLabelFilter);
-    const matchers = parseMatchers(replacedLabelFilter);
-
-    // Reduce rules and instances to only those that match
-    filteredRules = filteredRules.reduce<CombinedRuleWithLocation[]>((rules, rule) => {
-      const alertingRule = getAlertingRule(rule);
-      const filteredAlerts = (alertingRule?.alerts ?? []).filter(({ labels }) => labelsMatchMatchers(labels, matchers));
-      if (filteredAlerts.length) {
-        const alertRule: AlertingRule | null = getAlertingRule(rule);
-        alertRule && rules.push({ ...rule, promRule: { ...alertRule, alerts: filteredAlerts } });
-      }
-      return rules;
-    }, []);
-  }
-
   if (options.folder) {
     filteredRules = filteredRules.filter((rule) => {
       return rule.namespaceName === options.folder.title;
@@ -261,7 +244,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     height: 100%;
     background: ${theme.colors.background.secondary};
     padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
-    border-radius: ${theme.shape.borderRadius(2)};
+    border-radius: ${theme.shape.borderRadius()};
     margin-bottom: ${theme.spacing(0.5)};
 
     gap: ${theme.spacing(2)};

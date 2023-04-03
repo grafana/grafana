@@ -58,4 +58,7 @@ func addLibraryElementsMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("increase max description length to 2048", migrator.NewTableCharsetMigration("library_element", []*migrator.Column{
 		{Name: "description", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false},
 	}))
+
+	mg.AddMigration("alter library_element model to mediumtext", migrator.NewRawSQLMigration("").
+		Mysql("ALTER TABLE library_element MODIFY model MEDIUMTEXT NOT NULL;"))
 }

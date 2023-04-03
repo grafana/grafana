@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Provider } from 'react-redux';
 
 import { reportInteraction } from '@grafana/runtime';
@@ -20,7 +20,7 @@ interface DispatchProps {}
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-export const UnProvidedVariablesDependenciesButton: FC<Props> = ({ variables }) => {
+export const UnProvidedVariablesDependenciesButton = ({ variables }: Props) => {
   const nodes = useMemo(() => createDependencyNodes(variables), [variables]);
   const edges = useMemo(() => createDependencyEdges(variables), [variables]);
 
@@ -53,7 +53,7 @@ export const UnProvidedVariablesDependenciesButton: FC<Props> = ({ variables }) 
   );
 };
 
-export const VariablesDependenciesButton: FC<Props> = (props) => (
+export const VariablesDependenciesButton = (props: Props) => (
   <Provider store={store}>
     <UnProvidedVariablesDependenciesButton {...props} />
   </Provider>

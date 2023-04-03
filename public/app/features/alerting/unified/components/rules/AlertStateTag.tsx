@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { AlertState } from '@grafana/data';
 import { GrafanaAlertState, GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -11,7 +11,7 @@ interface Props {
   isPaused?: boolean;
 }
 
-export const AlertStateTag: FC<Props> = ({ state, isPaused = false, size = 'md' }) => (
+export const AlertStateTag = ({ state, isPaused = false, size = 'md' }: Props) => (
   <StateTag state={alertStateToState(state)} size={size}>
     {alertStateToReadable(state)} {isPaused ? ' (Paused)' : ''}
   </StateTag>

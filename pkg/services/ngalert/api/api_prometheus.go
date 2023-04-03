@@ -115,12 +115,16 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		return ErrResp(http.StatusBadRequest, errors.New("panel_id must be set with dashboard_uid"), "")
 	}
 
+	limitGroups := c.QueryInt64WithDefault("limit", -1)
+	limitRulesPerGroup := c.QueryInt64WithDefault("limit_rules", -1)
+	limitAlertsPerRule := c.QueryInt64WithDefault("limit_alerts", -1)
+
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
 		},
 		Data: apimodels.RuleDiscovery{
-			RuleGroups: []*apimodels.RuleGroup{},
+			RuleGroups: []apimodels.RuleGroup{},
 		},
 	}
 
@@ -150,7 +154,8 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
 	}
-	if err := srv.store.ListAlertRules(c.Req.Context(), &alertRuleQuery); err != nil {
+	ruleList, err := srv.store.ListAlertRules(c.Req.Context(), &alertRuleQuery)
+	if err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"
 		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
 		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
@@ -160,14 +165,22 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqViewer, evaluator)
 	}
 
+	// Group rules together by Namespace and Rule Group. Rules are also grouped by Org ID,
+	// but in this API all rules belong to the same organization.
 	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
-	for _, rule := range alertRuleQuery.Result {
-		key := rule.GetGroupKey()
-		rulesInGroup := groupedRules[key]
-		rulesInGroup = append(rulesInGroup, rule)
-		groupedRules[key] = rulesInGroup
+	for _, rule := range ruleList {
+		groupKey := rule.GetGroupKey()
+		ruleGroup := groupedRules[groupKey]
+		ruleGroup = append(ruleGroup, rule)
+		groupedRules[groupKey] = ruleGroup
+	}
+	// Sort the rules in each rule group by index. We do this at the end instead of
+	// after each append to avoid having to sort each group multiple times.
+	for _, groupRules := range groupedRules {
+		ngmodels.AlertRulesBy(ngmodels.AlertRulesByIndex).Sort(groupRules)
 	}
 
+	rulesTotals := make(map[string]int64, len(groupedRules))
 	for groupKey, rules := range groupedRules {
 		folder := namespaceMap[groupKey.NamespaceUID]
 		if folder == nil {
@@ -177,16 +190,37 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		if !authorizeAccessToRuleGroup(rules, hasAccess) {
 			continue
 		}
-		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, srv.toRuleGroup(groupKey.RuleGroup, folder, rules, labelOptions))
+		ruleGroup, totals := srv.toRuleGroup(groupKey, folder, rules, limitAlertsPerRule, labelOptions)
+		if limitRulesPerGroup > -1 && int64(len(rules)) > limitRulesPerGroup {
+			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
+		}
+		ruleGroup.Totals = totals
+		for k, v := range totals {
+			rulesTotals[k] += v
+		}
+		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
 	}
+
+	ruleResponse.Data.Totals = rulesTotals
+
+	// Sort Rule Groups before checking limits
+	apimodels.RuleGroupsBy(apimodels.RuleGroupsByFileAndName).Sort(ruleResponse.Data.RuleGroups)
+	if limitGroups > -1 && int64(len(ruleResponse.Data.RuleGroups)) >= limitGroups {
+		ruleResponse.Data.RuleGroups = ruleResponse.Data.RuleGroups[0:limitGroups]
+	}
+
 	return response.JSON(http.StatusOK, ruleResponse)
 }
 
-func (srv PrometheusSrv) toRuleGroup(groupName string, folder *folder.Folder, rules []*ngmodels.AlertRule, labelOptions []ngmodels.LabelOption) *apimodels.RuleGroup {
+func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder *folder.Folder, rules []*ngmodels.AlertRule, limitAlerts int64, labelOptions []ngmodels.LabelOption) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
-		Name: groupName,
-		File: folder.Title, // file is what Prometheus uses for provisioning, we replace it with namespace.
+		Name: groupKey.RuleGroup,
+		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
+		File: folder.Title,
 	}
+
+	rulesTotals := make(map[string]int64, len(rules))
+
 	ngmodels.RulesGroup(rules).SortByGroupIndex()
 	for _, rule := range rules {
 		alertingRule := apimodels.AlertingRule{
@@ -205,14 +239,19 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *folder.Folder, ru
 			LastEvaluation: time.Time{},
 		}
 
-		for _, alertState := range srv.manager.GetStatesForRuleUID(rule.OrgID, rule.UID) {
+		states := srv.manager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+		totals := make(map[string]int64)
+		for _, alertState := range states {
 			activeAt := alertState.StartsAt
 			valString := ""
 			if alertState.State == eval.Alerting || alertState.State == eval.Pending {
 				valString = formatValues(alertState)
 			}
-
-			alert := &apimodels.Alert{
+			totals[strings.ToLower(alertState.State.String())] += 1
+			if alertState.Error != nil {
+				totals["error"] += 1
+			}
+			alert := apimodels.Alert{
 				Labels:      alertState.GetLabels(labelOptions...),
 				Annotations: alertState.Annotations,
 
@@ -236,6 +275,9 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *folder.Folder, ru
 					alertingRule.State = "pending"
 				}
 			case eval.Alerting:
+				if alertingRule.ActiveAt == nil || alertingRule.ActiveAt.After(activeAt) {
+					alertingRule.ActiveAt = &activeAt
+				}
 				alertingRule.State = "firing"
 			case eval.Error:
 				newRule.Health = "error"
@@ -251,14 +293,30 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *folder.Folder, ru
 			alertingRule.Alerts = append(alertingRule.Alerts, alert)
 		}
 
+		if alertingRule.State != "" {
+			rulesTotals[alertingRule.State] += 1
+		}
+
+		if newRule.Health == "error" || newRule.Health == "nodata" {
+			rulesTotals[newRule.Health] += 1
+		}
+
+		apimodels.AlertsBy(apimodels.AlertsByImportance).Sort(alertingRule.Alerts)
+
+		if limitAlerts > -1 && int64(len(alertingRule.Alerts)) > limitAlerts {
+			alertingRule.Alerts = alertingRule.Alerts[0:limitAlerts]
+		}
+
 		alertingRule.Rule = newRule
+		alertingRule.Totals = totals
 		newGroup.Rules = append(newGroup.Rules, alertingRule)
 		newGroup.Interval = float64(rule.IntervalSeconds)
 		// TODO yuri. Change that when scheduler will process alerts in groups
 		newGroup.EvaluationTime = newRule.EvaluationTime
 		newGroup.LastEvaluation = newRule.LastEvaluation
 	}
-	return newGroup
+
+	return newGroup, rulesTotals
 }
 
 // ruleToQuery attempts to extract the datasource queries from the alert query model.

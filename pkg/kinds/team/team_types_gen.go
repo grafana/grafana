@@ -10,6 +10,10 @@
 
 package team
 
+import (
+	"time"
+)
+
 // Defines values for Permission.
 const (
 	PermissionN0 Permission = 0
@@ -30,7 +34,7 @@ type Team struct {
 	AvatarUrl *string `json:"avatarUrl,omitempty"`
 
 	// Created indicates when the team was created.
-	Created int64 `json:"created"`
+	Created time.Time `json:"created"`
 
 	// Email of the team.
 	Email *string `json:"email,omitempty"`
@@ -46,5 +50,5 @@ type Team struct {
 	Permission Permission `json:"permission"`
 
 	// Updated indicates when the team was updated.
-	Updated int64 `json:"updated"`
+	Updated time.Time `json:"updated"`
 }

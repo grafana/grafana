@@ -24,7 +24,9 @@ interface ResourceFieldProps<T> extends AzureQueryEditorFieldProps {
   selectionNotice?: (selectedRows: ResourceRowGroup) => string;
 }
 
-const ResourceField: React.FC<ResourceFieldProps<string | AzureMonitorResource>> = ({
+type Props = ResourceFieldProps<string | AzureMonitorResource>;
+
+const ResourceField = ({
   query,
   datasource,
   onQueryChange,
@@ -36,7 +38,7 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMonitorResource>>
   disableRow,
   renderAdvanced,
   selectionNotice,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
 

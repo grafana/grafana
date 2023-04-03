@@ -1,5 +1,6 @@
 import pluralize from 'pluralize';
-import React, { FC, Fragment, useMemo } from 'react';
+import React, { Fragment, useState } from 'react';
+import { useDebounce } from 'react-use';
 
 import { Stack } from '@grafana/experimental';
 import { Badge } from '@grafana/ui';
@@ -24,41 +25,50 @@ const emptyStats = {
   error: 0,
 } as const;
 
-export const RuleStats: FC<Props> = ({ group, namespaces, includeTotal }) => {
+export const RuleStats = ({ group, namespaces, includeTotal }: Props) => {
   const evaluationInterval = group?.interval;
+  const [calculated, setCalculated] = useState(emptyStats);
 
-  const calculated = useMemo(() => {
-    const stats = { ...emptyStats };
+  // Performance optimization allowing reducing number of stats calculation
+  // The problem occurs when we load many data sources.
+  // Then redux store gets updated multiple times in a pretty short period, triggering calculating stats many times.
+  // debounce allows to skip calculations which results would be abandoned in milliseconds
+  useDebounce(
+    () => {
+      const stats = { ...emptyStats };
 
-    const calcRule = (rule: CombinedRule) => {
-      if (rule.promRule && isAlertingRule(rule.promRule)) {
-        if (isGrafanaRulerRulePaused(rule)) {
-          stats.paused += 1;
+      const calcRule = (rule: CombinedRule) => {
+        if (rule.promRule && isAlertingRule(rule.promRule)) {
+          if (isGrafanaRulerRulePaused(rule)) {
+            stats.paused += 1;
+          }
+          stats[rule.promRule.state] += 1;
         }
-        stats[rule.promRule.state] += 1;
-      }
-      if (ruleHasError(rule)) {
-        stats.error += 1;
-      }
-      if (
-        (rule.promRule && isRecordingRule(rule.promRule)) ||
-        (rule.rulerRule && isRecordingRulerRule(rule.rulerRule))
-      ) {
-        stats.recording += 1;
-      }
-      stats.total += 1;
-    };
+        if (ruleHasError(rule)) {
+          stats.error += 1;
+        }
+        if (
+          (rule.promRule && isRecordingRule(rule.promRule)) ||
+          (rule.rulerRule && isRecordingRulerRule(rule.rulerRule))
+        ) {
+          stats.recording += 1;
+        }
+        stats.total += 1;
+      };
 
-    if (group) {
-      group.rules.forEach(calcRule);
-    }
+      if (group) {
+        group.rules.forEach(calcRule);
+      }
 
-    if (namespaces) {
-      namespaces.forEach((namespace) => namespace.groups.forEach((group) => group.rules.forEach(calcRule)));
-    }
+      if (namespaces) {
+        namespaces.forEach((namespace) => namespace.groups.forEach((group) => group.rules.forEach(calcRule)));
+      }
 
-    return stats;
-  }, [group, namespaces]);
+      setCalculated(stats);
+    },
+    400,
+    [group, namespaces]
+  );
 
   const statsComponents: React.ReactNode[] = [];
 

@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	errMissingGroupMembership = Error{"user not a member of one of the required groups"}
+	errMissingGroupMembership = &Error{"user not a member of one of the required groups"}
 )
 
 type httpGetResponse struct {

@@ -9,19 +9,10 @@ import { contextSrv } from 'app/core/core';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { AccessControlAction, ApiKey, StoreState } from 'app/types';
 
-import { APIKeysMigratedCard } from './APIKeysMigratedCard';
 import { ApiKeysActionBar } from './ApiKeysActionBar';
-import { ApiKeysController } from './ApiKeysController';
 import { ApiKeysTable } from './ApiKeysTable';
 import { MigrateToServiceAccountsCard } from './MigrateToServiceAccountsCard';
-import {
-  deleteApiKey,
-  migrateApiKey,
-  migrateAll,
-  loadApiKeys,
-  toggleIncludeExpired,
-  hideApiKeys,
-} from './state/actions';
+import { deleteApiKey, migrateApiKey, migrateAll, loadApiKeys, toggleIncludeExpired } from './state/actions';
 import { setSearchQuery } from './state/reducers';
 import { getApiKeys, getApiKeysCount, getIncludeExpired, getIncludeExpiredDisabled } from './state/selectors';
 
@@ -51,7 +42,6 @@ const mapDispatchToProps = {
   migrateAll,
   setSearchQuery,
   toggleIncludeExpired,
-  hideApiKeys,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -97,9 +87,9 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
     this.props.toggleIncludeExpired();
   };
 
-  onHideApiKeys = async () => {
+  onMigrateApiKeys = async () => {
     try {
-      await this.props.hideApiKeys();
+      this.onMigrateAll();
       let serviceAccountsUrl = '/org/serviceaccounts';
       locationService.push(serviceAccountsUrl);
       window.location.reload();
@@ -128,42 +118,33 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       );
     }
 
+    const showTable = apiKeysCount > 0;
     return (
       <Page {...defaultPageProps}>
         <Page.Contents isLoading={false}>
-          <ApiKeysController>
-            {({}) => {
-              const showTable = apiKeysCount > 0;
-              return (
-                <>
-                  {apiKeysCount !== 0 && <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />}
-                  {apiKeysCount === 0 && (
-                    <APIKeysMigratedCard onHideApiKeys={this.onHideApiKeys} apikeys={apiKeysCount} />
-                  )}
-                  {showTable ? (
-                    <ApiKeysActionBar
-                      searchQuery={searchQuery}
-                      disabled={!canCreate}
-                      onSearchChange={this.onSearchQueryChange}
-                    />
-                  ) : null}
-                  {showTable ? (
-                    <VerticalGroup>
-                      <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
-                        <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
-                      </InlineField>
-                      <ApiKeysTable
-                        apiKeys={apiKeys}
-                        timeZone={timeZone}
-                        onMigrate={this.onMigrateApiKey}
-                        onDelete={this.onDeleteApiKey}
-                      />
-                    </VerticalGroup>
-                  ) : null}
-                </>
-              );
-            }}
-          </ApiKeysController>
+          <>
+            <MigrateToServiceAccountsCard onMigrate={this.onMigrateApiKeys} apikeysCount={apiKeysCount} />
+            {showTable ? (
+              <ApiKeysActionBar
+                searchQuery={searchQuery}
+                disabled={!canCreate}
+                onSearchChange={this.onSearchQueryChange}
+              />
+            ) : null}
+            {showTable ? (
+              <VerticalGroup>
+                <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
+                  <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
+                </InlineField>
+                <ApiKeysTable
+                  apiKeys={apiKeys}
+                  timeZone={timeZone}
+                  onMigrate={this.onMigrateApiKey}
+                  onDelete={this.onDeleteApiKey}
+                />
+              </VerticalGroup>
+            ) : null}
+          </>
         </Page.Contents>
       </Page>
     );

@@ -243,7 +243,7 @@ export function createQueryText(query: DataQuery, dsApi?: DataSourceApi) {
 }
 
 export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortOrder) {
-  let mappedQueriesToHeadings: any = {};
+  let mappedQueriesToHeadings: Record<string, RichHistoryQuery[]> = {};
 
   query.forEach((q) => {
     let heading = createQueryHeading(q, sortOrder);

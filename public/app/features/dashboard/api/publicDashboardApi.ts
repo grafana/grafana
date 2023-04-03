@@ -101,28 +101,20 @@ export const publicDashboardApi = createApi({
       },
       invalidatesTags: (result, error, { payload }) => [{ type: 'PublicDashboard', id: payload.dashboardUid }],
     }),
-    addEmailSharing: builder.mutation<void, { recipient: string; dashboardUid: string; uid: string }>({
-      query: ({ recipient, uid }) => ({
-        url: `/public-dashboards/${uid}/share/recipients`,
-        method: 'POST',
-        data: { recipient },
+    addRecipient: builder.mutation<void, { recipient: string; dashboardUid: string; uid: string }>({
+      query: () => ({
+        url: '',
       }),
-      async onQueryStarted(_, { dispatch, queryFulfilled }) {
-        await queryFulfilled;
-        dispatch(notifyApp(createSuccessNotification('Invite sent!')));
-      },
-      invalidatesTags: (result, error, { dashboardUid }) => [{ type: 'PublicDashboard', id: dashboardUid }],
     }),
-    deleteEmailSharing: builder.mutation<void, { recipientUid: string; dashboardUid: string; uid: string }>({
-      query: ({ uid, recipientUid }) => ({
-        url: `/public-dashboards/${uid}/share/recipients/${recipientUid}`,
-        method: 'DELETE',
+    deleteRecipient: builder.mutation<void, { recipientUid: string; dashboardUid: string; uid: string }>({
+      query: () => ({
+        url: '',
       }),
-      async onQueryStarted(_, { dispatch, queryFulfilled }) {
-        await queryFulfilled;
-        dispatch(notifyApp(createSuccessNotification('User revoked')));
-      },
-      invalidatesTags: (result, error, { dashboardUid }) => [{ type: 'PublicDashboard', id: dashboardUid }],
+    }),
+    reshareAccessToRecipient: builder.mutation<void, { recipientUid: string; uid: string }>({
+      query: () => ({
+        url: '',
+      }),
     }),
     listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
       query: () => ({
@@ -158,6 +150,7 @@ export const {
   useUpdatePublicDashboardMutation,
   useDeletePublicDashboardMutation,
   useListPublicDashboardsQuery,
-  useAddEmailSharingMutation,
-  useDeleteEmailSharingMutation,
+  useAddRecipientMutation,
+  useDeleteRecipientMutation,
+  useReshareAccessToRecipientMutation,
 } = publicDashboardApi;

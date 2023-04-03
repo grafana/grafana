@@ -1,8 +1,7 @@
-import * as DOMPurify from 'dompurify';
 import { Fill, RegularShape, Stroke, Circle, Style, Icon, Text } from 'ol/style';
 import tinycolor from 'tinycolor2';
 
-import { Registry, RegistryItem } from '@grafana/data';
+import { Registry, RegistryItem, textUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 
@@ -248,7 +247,7 @@ async function prepareSVG(url: string, size?: number): Promise<string> {
       return res.text();
     })
     .then((text) => {
-      text = DOMPurify.sanitize(text, { USE_PROFILES: { svg: true, svgFilters: true } });
+      text = textUtil.sanitizeSVGContent(text);
 
       const parser = new DOMParser();
       const doc = parser.parseFromString(text, 'image/svg+xml');
