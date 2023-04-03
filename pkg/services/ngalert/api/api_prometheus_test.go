@@ -708,7 +708,6 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			// Firing alerts should have precedence over normal alerts
 			require.Equal(t, "Alerting", rule.Alerts[0].State)
 		})
-
 	})
 }
 
