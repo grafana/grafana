@@ -1,15 +1,33 @@
+import { PluginExtensionLinkConfig } from '@grafana/data';
+
+import { MAX_EXTENSIONS_PER_PLACEMENT_PER_PLUGIN } from './constants';
+
 export class PlacementsPerPlugin {
-  private counter: Record<string, number> = {};
-  private limit = 2;
+  private extensionsByPlacement: Record<string, string[]> = {};
 
-  allowedToAdd(placement: string): boolean {
-    const count = this.counter[placement] ?? 0;
-
-    if (count >= this.limit) {
+  allowedToAdd({ placement, title }: PluginExtensionLinkConfig): boolean {
+    if (this.countByPlacement(placement) >= MAX_EXTENSIONS_PER_PLACEMENT_PER_PLUGIN) {
       return false;
     }
 
-    this.counter[placement] = count + 1;
+    this.addExtensionToPlacement(placement, title);
+
     return true;
+  }
+
+  addExtensionToPlacement(placement: string, extensionTitle: string) {
+    if (!this.extensionsByPlacement[placement]) {
+      this.extensionsByPlacement[placement] = [];
+    }
+
+    this.extensionsByPlacement[placement].push(extensionTitle);
+  }
+
+  countByPlacement(placement: string) {
+    return this.extensionsByPlacement[placement]?.length ?? 0;
+  }
+
+  getExtensionTitlesByPlacement(placement: string) {
+    return this.extensionsByPlacement[placement];
   }
 }
