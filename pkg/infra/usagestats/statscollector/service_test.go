@@ -334,6 +334,7 @@ func mockSystemStats(statsService *statstest.FakeService) {
 		APIKeys:                   2,
 		DataKeys:                  11,
 		ActiveDataKeys:            3,
+		PublicDashboards:          5,
 	}
 }
 

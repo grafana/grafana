@@ -157,6 +157,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	m["stats.api_keys.count"] = statsResult.APIKeys
 	m["stats.data_keys.count"] = statsResult.DataKeys
 	m["stats.active_data_keys.count"] = statsResult.ActiveDataKeys
+	m["stats.public_dashboards.count"] = statsQuery.Result.PublicDashboards
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
@@ -310,6 +311,8 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "true"}).Set(float64(statsResult.ActiveDataKeys))
 	inactiveDataKeys := statsResult.DataKeys - statsResult.ActiveDataKeys
 	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "false"}).Set(float64(inactiveDataKeys))
+
+	metrics.MStatTotalPublicDashboards.Set(float64(statsResult.PublicDashboards))
 
 	dsResult, err := s.statsService.GetDataSourceStats(ctx, &stats.GetDataSourceStatsQuery{})
 	if err != nil {
