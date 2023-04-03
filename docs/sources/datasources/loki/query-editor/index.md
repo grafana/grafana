@@ -54,44 +54,9 @@ Code mode's autocompletion feature works automatically while typing.
 The query editor can autocomplete static functions, aggregations, and keywords, and also dynamic items like labels.
 The autocompletion dropdown includes documentation for the suggested items where available.
 
-### Label browser
-
-You can use the Loki label browser to navigate through your labels and values, and build queries.
-
-**To navigate Loki and build a query:**
-
-1. Choose labels to locate.
-1. Search for the values of your selected labels.
-
-   The search field supports fuzzy search, and the label browser also supports faceting to list only possible label combinations.
-
-1. Choose a query type between [**logs query**]({{< relref "#create-a-log-query" >}}) and [**rate metrics query**]({{< relref "#create-a-metric-query" >}}).
-   You can also validate the selector.
-
-{{< figure src="/static/img/docs/v75/loki_label_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
-
-### Configure query settings
-
-| Name           | Description                                                                                                                                                                                                                                                                    |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Type**       | Selects the query type to run. The `instant` type queries against a single point in time. We use the "To" time from the time range. The `range` type queries over the selected range of time.                                                                                  |
-| **Line limit** | Defines the upper limit for the number of log lines returned by a query. The default is Loki's configured maximum lines limit.                                                                                                                                                 |
-| **Legend**     | _(Available only in a dashboard)_ Controls the time series name, using a name or pattern. For example, `{{hostname}}` is replaced with the label value for the label `hostname`.                                                                                               |
-| **Resolution** | Sets the step parameter of Loki metrics range queries. With a resolution of `1/1`, each pixel corresponds to one data point. `1/2` retrieves one data point for every other pixel, `1/10` retrieves one data point per 10 pixels, and so on. Lower resolutions perform better. |
-
 ## Builder mode
 
 Use Builder mode to visually construct queries, without needing to manually enter LogQL.
-
-### Review toolbar features
-
-In addition to the **Run query** button and mode switcher, Builder mode provides additional elements:
-
-| Name                      | Description                                                                               |
-| ------------------------- | ----------------------------------------------------------------------------------------- |
-| **Kick start your query** | A list of useful operation patterns you can use to add multiple operations to your query. |
-| **Label browser**         | Used to navigate through your labels and values, and also build queries.                  |
-| **Explain query**         | Displays a step-by-step explanation of all query components and operations.               |
 
 ### Use the Labels selector
 
@@ -213,6 +178,41 @@ In your `server` section, add the following configuration:
 You can use LogQL to wrap a log query with functions that create metrics from your logs.
 
 For more information about metric queries, refer to the [Loki metric queries documentation](/docs/loki/latest/logql/metric_queries/).
+
+## Review toolbar features
+
+In addition to the **Run query** button and mode switcher, Builder mode provides additional elements:
+
+| Name                      | Description                                                                               |
+| ------------------------- | ----------------------------------------------------------------------------------------- |
+| **Kick start your query** | A list of useful operation patterns you can use to add multiple operations to your query. |
+| **Label browser**         | Used to navigate through your labels and values, and also build queries.                  |
+| **Explain query**         | Displays a step-by-step explanation of all query components and operations.               |
+
+## Label browser
+
+You can use the Loki label browser to navigate through your labels and values, and build queries.
+
+**To navigate Loki and build a query:**
+
+1. Choose labels to locate.
+1. Search for the values of your selected labels.
+
+   The search field supports fuzzy search, and the label browser also supports faceting to list only possible label combinations.
+
+1. Choose a query type between [**logs query**]({{< relref "#create-a-log-query" >}}) and [**rate metrics query**]({{< relref "#create-a-metric-query" >}}).
+   You can also validate the selector.
+
+{{< figure src="/static/img/docs/v75/loki_label_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
+
+## Configure query settings
+
+| Name           | Description                                                                                                                                                                                                                                                                    |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Type**       | Selects the query type to run. The `instant` type queries against a single point in time. We use the "To" time from the time range. The `range` type queries over the selected range of time.                                                                                  |
+| **Line limit** | Defines the upper limit for the number of log lines returned by a query. The default is Loki's configured maximum lines limit.                                                                                                                                                 |
+| **Legend**     | _(Available only in a dashboard)_ Controls the time series name, using a name or pattern. For example, `{{hostname}}` is replaced with the label value for the label `hostname`.                                                                                               |
+| **Resolution** | Sets the step parameter of Loki metrics range queries. With a resolution of `1/1`, each pixel corresponds to one data point. `1/2` retrieves one data point for every other pixel, `1/10` retrieves one data point per 10 pixels, and so on. Lower resolutions perform better. |
 
 ## Apply annotations
 
