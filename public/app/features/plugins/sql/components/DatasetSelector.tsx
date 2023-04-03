@@ -8,12 +8,12 @@ import { DB, ResourceSelectorProps, toOption } from '../types';
 
 interface DatasetSelectorProps extends ResourceSelectorProps {
   db: DB;
-  value: string | null;
+  chosenDataset: string | null;
   preconfiguredDatabase: string;
   onChange: (v: SelectableValue) => void;
 }
 
-export const DatasetSelector = ({ db, value, onChange, disabled, preconfiguredDatabase }: DatasetSelectorProps) => {
+export const DatasetSelector = ({ db, chosenDataset, onChange, preconfiguredDatabase }: DatasetSelectorProps) => {
   const databaseIsPreconfigured = !!preconfiguredDatabase.length;
 
   const state = useAsync(async () => {
@@ -23,31 +23,32 @@ export const DatasetSelector = ({ db, value, onChange, disabled, preconfiguredDa
 
   useEffect(() => {
     // Set default dataset when values are fetched
-    if (!value) {
+    if (!chosenDataset) {
       if (state.value && state.value[0]) {
         onChange(state.value[0]);
       }
     } else {
-      if (state.value && state.value.find((v) => v.value === value) === undefined) {
+      if (state.value && state.value.find((v) => v.value === chosenDataset) === undefined) {
         // if value is set and newly fetched values does not contain selected value
         if (state.value.length > 0) {
           onChange(state.value[0]);
         }
       }
     }
-  }, [state.value, value, onChange]);
+  }, [state.value, chosenDataset, onChange]);
 
   return (
     <Select
       aria-label="Dataset selector"
-      value={value}
+      value={databaseIsPreconfigured ? preconfiguredDatabase : chosenDataset}
       options={state.value}
       onChange={onChange}
-      disabled={disabled}
+      // JEV: also disable if loading
+      disabled={databaseIsPreconfigured}
       // JEV: fix this logic
-      isLoading={!databaseIsPreconfigured || state.loading}
+      isLoading={databaseIsPreconfigured ? false : state.loading}
       menuShouldPortal={true}
-      // placeholder={databaseIsPreconfigured ? preconfiguredDatabase : }
+      placeholder={databaseIsPreconfigured ? preconfiguredDatabase : ''}
     />
   );
 };
