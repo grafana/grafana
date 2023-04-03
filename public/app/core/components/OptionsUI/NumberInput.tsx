@@ -11,8 +11,8 @@ interface Props {
   min?: number;
   max?: number;
   step?: number;
-  disabled?: boolean;
   width?: number;
+  fieldDisabled?: boolean;
 }
 
 interface State {
@@ -109,7 +109,7 @@ export class NumberInput extends PureComponent<Props, State> {
         onBlur={this.updateValue}
         onKeyPress={this.onKeyPress}
         placeholder={this.props.placeholder}
-        disabled={this.props.disabled}
+        disabled={this.props.fieldDisabled}
         width={this.props.width}
       />
     );

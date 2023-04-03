@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import { FieldSet, InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
+import { SQLConnectionDefaults } from '../../constants';
 import { SQLConnectionLimits } from '../../types';
 
 interface Props<T> {
@@ -14,8 +15,10 @@ interface Props<T> {
 
 export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>) => {
   const { onJsonDataChanged, onPropertyChanged, labelWidth, jsonData } = props;
-  const [autoIdle] = useState(false);
+  const autoIdle = jsonData.maxIdleConnsAuto !== undefined ? jsonData.maxIdleConnsAuto : false;
 
+  // For the case of idle connections and connection lifetime
+  // use a shared function to update respective properties
   const onJSONDataNumberChanged = (property: keyof SQLConnectionLimits) => {
     return (number?: number) => {
       if (onPropertyChanged) {
@@ -24,23 +27,56 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
     };
   };
 
+  // Calculate the number of idle connections
+  // automatically based on maximum connection
+  // number
+  const getAutoIdleConns = (number: number) => {
+    return number >= SQLConnectionDefaults.AUTO_IDLE_THRESHOLD
+      ? Math.ceil(number / 2)
+      : SQLConnectionDefaults.AUTO_IDLE_MIN;
+  };
+
+  // When the maximum number of connections is changed
+  // see if we have the automatic idle option enabled
   const onMaxConnectionsChanged = (number?: number) => {
-    console.log(onJsonDataChanged);
     if (onJsonDataChanged && autoIdle && number) {
       onJsonDataChanged({
         maxOpenConns: number,
-        maxIdleConns: number >= 4 ? number / 2 : 2,
+        maxIdleConns: getAutoIdleConns(number),
       });
-      // onPropertyChanged('maxOpenConns', number);
-      // onPropertyChanged('maxIdleConns', );
+    } else {
+      onPropertyChanged('maxOpenConns', number);
     }
   };
 
-  // const onConnectionIdleAutoChanged = (property: any) => {
-  //   setAutoIdle(!autoIdle);
-  // }
+  // Update auto idle setting when control is toggled
+  // and set minimum idle connections if automatic
+  // is selected
+  const onConnectionIdleAutoChanged = () => {
+    let idleConns = undefined;
+    let maxConns = undefined;
 
-  console.log(jsonData);
+    // If the maximum number of open connections is undefined
+    // and we're setting auto idle then set the default amount
+    // otherwise take the numeric amount and get the value from that
+    if (!autoIdle) {
+      if (jsonData.maxOpenConns !== undefined) {
+        maxConns = jsonData.maxOpenConns;
+        idleConns = getAutoIdleConns(jsonData.maxOpenConns);
+      } else {
+        maxConns = SQLConnectionDefaults.MAX_CONNS;
+        idleConns = getAutoIdleConns(SQLConnectionDefaults.MAX_CONNS);
+      }
+    }
+
+    if (onJsonDataChanged) {
+      onJsonDataChanged({
+        maxIdleConnsAuto: !autoIdle,
+        maxIdleConns: idleConns,
+        maxOpenConns: maxConns,
+      });
+    }
+  };
 
   return (
     <FieldSet label="Connection limits">
@@ -71,11 +107,11 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
           label="Max idle"
         >
           <NumberInput
-            disabled={true}
             placeholder="2"
             value={jsonData.maxIdleConns}
             onChange={onJSONDataNumberChanged('maxIdleConns')}
             width={8}
+            fieldDisabled={autoIdle}
           />
         </InlineField>
         <InlineField
@@ -84,14 +120,12 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
           tooltip={
             <span>
               If enabled, automatically set the number of <i>Maximum idle connections</i> to half of the{' '}
-              <i>Max open connections</i>.
+              <i>Max open connections</i>. If the number of maximum open connections is not set it will be set to the
+              default ({SQLConnectionDefaults.MAX_CONNS}).
             </span>
           }
         >
-          <InlineSwitch
-            value={autoIdle}
-            // onChange={onConnectionIdleAutoChanged}
-          />
+          <InlineSwitch value={autoIdle} onChange={onConnectionIdleAutoChanged} />
         </InlineField>
       </InlineFieldRow>
       <InlineField

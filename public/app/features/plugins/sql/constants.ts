@@ -15,3 +15,13 @@ export const MACRO_NAMES = [
   '$__unixEpochGroup',
   '$__unixEpochGroupAlias',
 ];
+
+/**
+ * Constants for SQL connection
+ * parameters and automatic settings
+ */
+export const SQLConnectionDefaults = {
+  AUTO_IDLE_MIN: 2,
+  AUTO_IDLE_THRESHOLD: 4,
+  MAX_CONNS: 100,
+};
