@@ -42,7 +42,7 @@ Shows condensed view or the trace timeline. Drag your mouse over the minimap to 
 
 ### Span Filters
 
-![Screenshot of span filtering](https://grafana.com/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
+![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
 
 Allows you to filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
 
