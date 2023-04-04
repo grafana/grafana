@@ -103,7 +103,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   open,
   logsSortOrder,
   getLogRowContextUi,
-  onClose: close,
+  onClose,
   getRowContext,
   timeZone,
 }) => {
@@ -185,7 +185,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   };
 
   return (
-    <Modal isOpen={open} title="Log context" contentClassName={flexColumn} className={modal} onDismiss={close}>
+    <Modal isOpen={open} title="Log context" contentClassName={flexColumn} className={modal} onDismiss={onClose}>
       {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
         <div className={datasourceUi}>{getLogRowContextUi(row, fetchResults)}</div>
       )}
