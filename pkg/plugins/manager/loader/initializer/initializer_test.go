@@ -2,10 +2,12 @@ package initializer
 
 import (
 	"context"
-	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -15,9 +17,6 @@ import (
 )
 
 func TestInitializer_Initialize(t *testing.T) {
-	absCurPath, err := filepath.Abs(".")
-	assert.NoError(t, err)
-
 	t.Run("core backend datasource", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
@@ -31,8 +30,7 @@ func TestInitializer_Initialize(t *testing.T) {
 				},
 				Backend: true,
 			},
-			PluginDir: absCurPath,
-			Class:     plugins.Core,
+			Class: plugins.Core,
 		}
 
 		i := &Initializer{
@@ -61,8 +59,7 @@ func TestInitializer_Initialize(t *testing.T) {
 				},
 				Backend: true,
 			},
-			PluginDir: absCurPath,
-			Class:     plugins.External,
+			Class: plugins.External,
 		}
 
 		i := &Initializer{
@@ -91,8 +88,7 @@ func TestInitializer_Initialize(t *testing.T) {
 				},
 				Backend: true,
 			},
-			PluginDir: absCurPath,
-			Class:     plugins.External,
+			Class: plugins.External,
 		}
 
 		i := &Initializer{
@@ -136,6 +132,53 @@ func TestInitializer_Initialize(t *testing.T) {
 }
 
 func TestInitializer_envVars(t *testing.T) {
+	t.Run("version", func(t *testing.T) {
+		for _, tc := range []struct {
+			name  string
+			setup func(p *plugins.Plugin)
+			exp   func(t *testing.T, i *Initializer, p *plugins.Plugin)
+		}{
+			{
+				name: "not provided",
+				setup: func(p *plugins.Plugin) {
+					p.Info = plugins.Info{}
+				},
+				exp: func(t *testing.T, i *Initializer, p *plugins.Plugin) {
+					for _, k := range i.envVars(p) {
+						if strings.HasPrefix("GF_PLUGIN_VERSION=", k) {
+							require.Fail(t, "found unexpected env var GF_PLUGIN_VERSION")
+						}
+					}
+				},
+			},
+			{
+				name: "provided",
+				setup: func(p *plugins.Plugin) {
+					p.Info = plugins.Info{Version: "0.1"}
+				},
+				exp: func(t *testing.T, i *Initializer, p *plugins.Plugin) {
+					require.Contains(t, i.envVars(p), "GF_PLUGIN_VERSION=0.1")
+				},
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				p := &plugins.Plugin{
+					JSONData: plugins.JSONData{
+						ID:   "test",
+						Info: plugins.Info{Version: "0.1"},
+					},
+				}
+				tc.setup(p)
+				i := &Initializer{
+					cfg:             &config.Cfg{},
+					log:             log.NewTestLogger(),
+					backendProvider: &fakeBackendProvider{plugin: p},
+				}
+				tc.exp(t, i, p)
+			})
+		}
+	})
+
 	t.Run("backend datasource with license", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
@@ -147,6 +190,7 @@ func TestInitializer_envVars(t *testing.T) {
 			LicenseEdition: "test",
 			TokenRaw:       "token",
 			LicensePath:    "/path/to/ent/license",
+			LicenseAppURL:  "https://myorg.com/",
 		}
 
 		i := &Initializer{
@@ -165,13 +209,122 @@ func TestInitializer_envVars(t *testing.T) {
 		}
 
 		envVars := i.envVars(p)
-		assert.Len(t, envVars, 5)
+		assert.Len(t, envVars, 6)
 		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[0])
 		assert.Equal(t, "GF_VERSION=", envVars[1])
 		assert.Equal(t, "GF_EDITION=test", envVars[2])
 		assert.Equal(t, "GF_ENTERPRISE_LICENSE_PATH=/path/to/ent/license", envVars[3])
-		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[4])
+		assert.Equal(t, "GF_ENTERPRISE_APP_URL=https://myorg.com/", envVars[4])
+		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[5])
 	})
+}
+
+func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
+	const pluginID = "plugin_id"
+
+	p := &plugins.Plugin{
+		JSONData: plugins.JSONData{ID: pluginID},
+	}
+
+	defaultOtelCfg := config.OpentelemetryCfg{
+		Address:     "127.0.0.1:4317",
+		Propagation: "",
+	}
+
+	expDefaultOtlp := func(t *testing.T, envVars []string) {
+		found := map[string]bool{
+			"address":     false,
+			"version":     false,
+			"propagation": false,
+		}
+		setFound := func(v string) {
+			require.False(t, found[v], "duplicate env var found")
+			found[v] = true
+		}
+		for _, v := range envVars {
+			switch v {
+			case "GF_VERSION=":
+				setFound("version")
+			case "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317":
+				setFound("address")
+			case "GF_INSTANCE_OTLP_PROPAGATION=":
+				setFound("propagation")
+			}
+		}
+		for k, f := range found {
+			require.Truef(t, f, "%q env var not found", k)
+		}
+	}
+	expNoTracing := func(t *testing.T, envVars []string) {
+		for _, v := range envVars {
+			assert.False(t, strings.HasPrefix(v, "GF_TRACING"), "should not have tracing env var")
+		}
+	}
+
+	for _, tc := range []struct {
+		name string
+		cfg  *config.Cfg
+		exp  func(t *testing.T, envVars []string)
+	}{
+		{
+			name: "disabled",
+			cfg: &config.Cfg{
+				Opentelemetry: config.OpentelemetryCfg{},
+			},
+			exp: expNoTracing,
+		},
+		{
+			name: "otlp no propagation",
+			cfg: &config.Cfg{
+				Opentelemetry: defaultOtelCfg,
+			},
+			exp: expDefaultOtlp,
+		},
+		{
+			name: "otlp propagation",
+			cfg: &config.Cfg{
+				Opentelemetry: config.OpentelemetryCfg{
+					Address:     "127.0.0.1:4317",
+					Propagation: "w3c",
+				},
+			},
+			exp: func(t *testing.T, envVars []string) {
+				assert.Len(t, envVars, 3)
+				assert.Equal(t, "GF_VERSION=", envVars[0])
+				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[1])
+				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c", envVars[2])
+			},
+		},
+		{
+			name: "disabled on plugin",
+			cfg: &config.Cfg{
+				Opentelemetry: defaultOtelCfg,
+				PluginSettings: setting.PluginSettings{
+					pluginID: map[string]string{"tracing": "false"},
+				},
+			},
+			exp: expNoTracing,
+		},
+		{
+			name: "not disabled on plugin with other plugin settings",
+			cfg: &config.Cfg{
+				Opentelemetry: defaultOtelCfg,
+				PluginSettings: map[string]map[string]string{
+					pluginID: {"some_other_option": "true"},
+				},
+			},
+			exp: expDefaultOtlp,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			i := &Initializer{
+				cfg: tc.cfg,
+				log: log.NewTestLogger(),
+			}
+			envVars := i.envVars(p)
+			tc.exp(t, envVars)
+		})
+	}
 }
 
 func TestInitializer_getAWSEnvironmentVariables(t *testing.T) {

@@ -30,7 +30,7 @@ type Store interface {
 	DeleteDataSource(context.Context, *datasources.DeleteDataSourceCommand) error
 	AddDataSource(context.Context, *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
 	UpdateDataSource(context.Context, *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
-	GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error
+	GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error)
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
 }
@@ -93,11 +93,12 @@ func (ss *SqlStore) GetDataSources(ctx context.Context, query *datasources.GetDa
 	})
 }
 
-func (ss *SqlStore) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error {
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		query.Result = make([]*datasources.DataSource, 0)
-		return sess.Asc("name").Find(&query.Result)
+func (ss *SqlStore) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		res = make([]*datasources.DataSource, 0)
+		return sess.Asc("name").Find(&res)
 	})
+	return res, err
 }
 
 // GetDataSourcesByType returns all datasources for a given type or an error if the specified type is an empty string

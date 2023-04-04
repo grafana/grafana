@@ -702,7 +702,6 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 	deletes := []string{
 		"DELETE FROM dashboard_tag WHERE dashboard_id = ? ",
 		"DELETE FROM star WHERE dashboard_id = ? ",
-		"DELETE FROM dashboard_public WHERE dashboard_uid = (SELECT uid FROM dashboard WHERE id = ?)",
 		"DELETE FROM dashboard WHERE id = ?",
 		"DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?",
 		"DELETE FROM dashboard_version WHERE dashboard_id = ?",
@@ -751,7 +750,6 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 				"DELETE FROM annotation WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
 				"DELETE FROM dashboard_provisioning WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
 				"DELETE FROM dashboard_acl WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
-				"DELETE FROM dashboard_public WHERE dashboard_uid IN (SELECT uid FROM dashboard WHERE org_id = ? AND folder_id = ?)",
 			}
 			for _, sql := range childrenDeletes {
 				_, err := sess.Exec(sql, dashboard.OrgID, dashboard.ID)
@@ -849,12 +847,22 @@ func (d *dashboardStore) deleteAlertDefinition(dashboardId int64, sess *db.Sessi
 func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
 	var queryResult *dashboards.Dashboard
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		if query.ID == 0 && len(query.Slug) == 0 && len(query.UID) == 0 {
+		if query.ID == 0 && len(query.UID) == 0 && (query.Title == nil || query.FolderID == nil) {
 			return dashboards.ErrDashboardIdentifierNotSet
 		}
 
-		dashboard := dashboards.Dashboard{Slug: query.Slug, OrgID: query.OrgID, ID: query.ID, UID: query.UID}
-		has, err := sess.Get(&dashboard)
+		dashboard := dashboards.Dashboard{OrgID: query.OrgID, ID: query.ID, UID: query.UID}
+		mustCols := []string{}
+		if query.Title != nil {
+			dashboard.Title = *query.Title
+			mustCols = append(mustCols, "title")
+		}
+		if query.FolderID != nil {
+			dashboard.FolderID = *query.FolderID
+			mustCols = append(mustCols, "folder_id")
+		}
+
+		has, err := sess.MustCols(mustCols...).Get(&dashboard)
 
 		if err != nil {
 			return err
@@ -952,10 +960,6 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		filters = append(filters, searchstore.DashboardFilter{UIDs: query.DashboardUIDs})
 	} else if len(query.DashboardIds) > 0 {
 		filters = append(filters, searchstore.DashboardIDFilter{IDs: query.DashboardIds})
-	}
-
-	if query.IsStarred {
-		filters = append(filters, searchstore.StarredFilter{UserId: query.SignedInUser.UserID})
 	}
 
 	if len(query.Title) > 0 {

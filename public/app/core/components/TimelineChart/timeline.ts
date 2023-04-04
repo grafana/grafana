@@ -47,10 +47,10 @@ export interface TimelineCoreOptions {
   showValue: VisibilityMode;
   mergeValues?: boolean;
   isDiscrete: (seriesIdx: number) => boolean;
-  getValueColor: (seriesIdx: number, value: any) => string;
+  getValueColor: (seriesIdx: number, value: unknown) => string;
   label: (seriesIdx: number) => string;
   getTimeRange: () => TimeRange;
-  formatValue?: (seriesIdx: number, value: any) => string;
+  formatValue?: (seriesIdx: number, value: unknown) => string;
   getFieldConfig: (seriesIdx: number) => StateTimeLineFieldConfig | StatusHistoryFieldConfig;
   onHover: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
   onLeave: () => void;
@@ -137,7 +137,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     strokeWidth: number,
     seriesIdx: number,
     valueIdx: number,
-    value: any,
+    value: number | null,
     discrete: boolean
   ) {
     // do not render super small boxes
@@ -497,6 +497,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   const yMids: number[] = Array(numSeries).fill(0);
   const ySplits: number[] = Array(numSeries).fill(0);
+  const yRange: uPlot.Range.MinMax = [0, 1];
 
   return {
     cursor,
@@ -542,7 +543,8 @@ export function getConfig(opts: TimelineCoreOptions) {
         }
       }
 
-      return [min, max] as uPlot.Range.MinMax;
+      const result: uPlot.Range.MinMax = [min, max];
+      return result;
     },
 
     ySplits: (u: uPlot) => {
@@ -556,7 +558,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     },
 
     yValues: (u: uPlot, splits: number[]) => splits.map((v, i) => label(i + 1)),
-    yRange: [0, 1] as uPlot.Range.MinMax,
+    yRange,
 
     // pathbuilders
     drawPaths,

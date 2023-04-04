@@ -103,12 +103,13 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 		ruleCmd := ngModels.ListAlertRulesQuery{
 			OrgID: orgId,
 		}
-		if err := rulesReader.ListAlertRules(ctx, &ruleCmd); err != nil {
+		alertRules, err := rulesReader.ListAlertRules(ctx, &ruleCmd)
+		if err != nil {
 			st.log.Error("Unable to fetch previous state", "error", err)
 		}
 
-		ruleByUID := make(map[string]*ngModels.AlertRule, len(ruleCmd.Result))
-		for _, rule := range ruleCmd.Result {
+		ruleByUID := make(map[string]*ngModels.AlertRule, len(alertRules))
+		for _, rule := range alertRules {
 			ruleByUID[rule.UID] = rule
 		}
 
@@ -119,11 +120,12 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 		cmd := ngModels.ListAlertInstancesQuery{
 			RuleOrgID: orgId,
 		}
-		if err := st.instanceStore.ListAlertInstances(ctx, &cmd); err != nil {
+		alertInstances, err := st.instanceStore.ListAlertInstances(ctx, &cmd)
+		if err != nil {
 			st.log.Error("Unable to fetch previous state", "error", err)
 		}
 
-		for _, entry := range cmd.Result {
+		for _, entry := range alertInstances {
 			ruleForEntry, ok := ruleByUID[entry.RuleUID]
 			if !ok {
 				// TODO Should we delete the orphaned state from the db?
@@ -222,7 +224,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 	}
 
 	ruleMeta := history_model.NewRuleMeta(rule, st.log)
-	errCh := st.historian.RecordStatesAsync(ctx, ruleMeta, transitions)
+	errCh := st.historian.Record(ctx, ruleMeta, transitions)
 	go func() {
 		err := <-errCh
 		if err != nil {
@@ -250,7 +252,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 
 	allChanges := append(states, staleStates...)
 	if st.historian != nil {
-		st.historian.RecordStatesAsync(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
+		st.historian.Record(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
 	}
 	return allChanges
 }

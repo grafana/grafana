@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/kindsys"
 )
 
 // LatestMajorsOrXJenny returns a jenny that repeats the input for the latest in each major version,
@@ -56,7 +56,13 @@ func (j *lmox) Generate(kind kindsys.Kind) (codejen.Files, error) {
 	}
 
 	var fl codejen.Files
+	major := -1
 	for sch := kind.Lineage().First(); sch != nil; sch = sch.Successor() {
+		if int(sch.Version()[0]) == major {
+			continue
+		}
+		major = int(sch.Version()[0])
+
 		sfg.Schema = sch.LatestInMajor()
 		files, err := do(sfg, fmt.Sprintf("v%v", sch.Version()[0]))
 		if err != nil {

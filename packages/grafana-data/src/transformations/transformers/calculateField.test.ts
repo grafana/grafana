@@ -222,6 +222,22 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
+  it('can add index field', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.Index,
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0][0];
+      expect(data.fields.length).toEqual(1);
+      expect(data.fields[0].values.toArray()).toEqual([0, 1]);
+    });
+  });
+
   it('uses template variable substituion', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
@@ -257,7 +273,7 @@ describe('calculateField transformer w/ timeseries', () => {
         };
         for (const key of Object.keys(variables)) {
           if (target === `$${key}`) {
-            return variables[key].value + '';
+            return variables[key]!.value + '';
           }
         }
         return target;

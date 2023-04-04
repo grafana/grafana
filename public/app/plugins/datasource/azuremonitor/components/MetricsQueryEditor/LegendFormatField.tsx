@@ -7,7 +7,7 @@ import { Field } from '../Field';
 
 import { setLegendAlias } from './setQueryValue';
 
-const LegendFormatField: React.FC<AzureQueryEditorFieldProps> = ({ onQueryChange, query }) => {
+const LegendFormatField = ({ onQueryChange, query }: AzureQueryEditorFieldProps) => {
   const [value, setValue] = useState<string>(query.azureMonitor?.alias ?? '');
 
   // As calling onQueryChange initiates a the datasource refresh, we only want to call it once

@@ -81,3 +81,8 @@ export interface GrafanaSearcher {
   /** Gets the default sort used for the Folder view */
   getFolderViewSort: () => string;
 }
+
+export interface NestedFolderDTO {
+  uid: string;
+  title: string;
+}

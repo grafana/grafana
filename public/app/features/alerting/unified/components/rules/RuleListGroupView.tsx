@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
 import { logInfo } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types';
@@ -16,7 +16,7 @@ interface Props {
   expandAll: boolean;
 }
 
-export const RuleListGroupView: FC<Props> = ({ namespaces, expandAll }) => {
+export const RuleListGroupView = ({ namespaces, expandAll }: Props) => {
   const [grafanaNamespaces, cloudNamespaces] = useMemo(() => {
     const sorted = namespaces
       .map((namespace) => ({

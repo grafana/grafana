@@ -30,10 +30,11 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
 const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue'];
 
 export class TimelineChart extends React.Component<TimelineProps> {
+  declare context: React.ContextType<typeof PanelContextRoot>;
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
 
-  getValueColor = (frameIdx: number, fieldIdx: number, value: any) => {
+  getValueColor = (frameIdx: number, fieldIdx: number, value: unknown) => {
     const field = this.props.frames[frameIdx].fields[fieldIdx];
 
     if (field.display) {

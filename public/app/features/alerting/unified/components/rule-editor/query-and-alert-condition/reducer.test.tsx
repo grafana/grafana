@@ -1,15 +1,9 @@
-import { DataSourceApi, getDefaultRelativeTimeRange, PluginMeta, RelativeTimeRange } from '@grafana/data';
+import { getDefaultRelativeTimeRange, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime/src/services/__mocks__/dataSourceSrv';
-import {
-  dataSource as expressionDatasource,
-  ExpressionDatasourceUID,
-} from 'app/features/expressions/ExpressionDatasource';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionQuery, ExpressionQueryType, ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
-
-import { mockDataSource } from '../../../mocks';
-import * as dataSource from '../../../utils/datasource';
 
 import {
   addNewDataQuery,
@@ -51,12 +45,6 @@ const expressionQuery: AlertQuery = {
   refId: 'B',
   queryType: '',
 };
-
-const defaultDataSource = mockDataSource();
-const dataSourceMocked = jest.spyOn(dataSource, 'getDefaultOrFirstCompatibleDataSource');
-beforeAll(() => {
-  return dataSourceMocked.mockReturnValue(defaultDataSource);
-});
 
 describe('Query and expressions reducer', () => {
   it('should return initial state', () => {
@@ -105,23 +93,7 @@ describe('Query and expressions reducer', () => {
       queries: [alertQuery],
     };
 
-    const newDataSource: DataSourceApi = {
-      meta: { alerting: true } as unknown as PluginMeta,
-      name: 'some name',
-      uid: 'some uid',
-    } as unknown as DataSourceApi;
-
-    const defaultQuery: AlertQuery = {
-      refId: 'A',
-      queryType: '',
-      datasourceUid: '',
-      model: { refId: 'A', expression: 'THIS IS THE DEFAULT EXPRESSION' },
-      relativeTimeRange: getDefaultRelativeTimeRange(),
-    };
-    const newState = queriesAndExpressionsReducer(
-      initialState,
-      addNewDataQuery({ ds: newDataSource, defaultQuery: defaultQuery })
-    );
+    const newState = queriesAndExpressionsReducer(initialState, addNewDataQuery());
     expect(newState.queries).toHaveLength(2);
     expect(newState).toMatchSnapshot();
   });

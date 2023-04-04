@@ -9,6 +9,7 @@ import {
   CustomVariable,
   DataSourceVariable,
   QueryVariable,
+  SceneFlexItem,
 } from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
@@ -24,7 +25,7 @@ export function getQueryVariableDemo(): DashboardScene {
         }),
         new DataSourceVariable({
           name: 'datasource',
-          query: 'prometheus',
+          pluginId: 'prometheus',
         }),
         new QueryVariable({
           name: 'instance (using datasource variable)',
@@ -49,15 +50,13 @@ export function getQueryVariableDemo(): DashboardScene {
     body: new SceneFlexLayout({
       direction: 'row',
       children: [
-        new SceneFlexLayout({
-          children: [
-            new SceneCanvasText({
-              placement: { width: '40%' },
-              text: 'metric: ${metric}',
-              fontSize: 20,
-              align: 'center',
-            }),
-          ],
+        new SceneFlexItem({
+          width: '40%',
+          body: new SceneCanvasText({
+            text: 'metric: ${metric}',
+            fontSize: 20,
+            align: 'center',
+          }),
         }),
       ],
     }),

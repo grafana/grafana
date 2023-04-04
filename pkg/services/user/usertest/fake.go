@@ -34,10 +34,6 @@ func (f *FakeUserService) Create(ctx context.Context, cmd *user.CreateUserComman
 	return f.ExpectedUser, f.ExpectedError
 }
 
-func (f *FakeUserService) CreateUserForTests(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-	return f.ExpectedUser, f.ExpectedError
-}
-
 func (f *FakeUserService) CreateServiceAccount(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
 }

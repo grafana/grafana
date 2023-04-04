@@ -1,17 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import {
-  ArrayVector,
-  DataFrame,
-  DataQueryRequest,
-  FieldColorModeId,
-  FieldType,
-  LoadingState,
-  PanelData,
-  getDefaultTimeRange,
-  toDataFrame,
-} from '@grafana/data';
-import { GraphDrawStyle, StackingMode } from '@grafana/schema';
+import { DataFrame, FieldType, LoadingState, PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
 import TableModel from 'app/core/TableModel';
 import { ExplorePanelData } from 'app/types';
 
@@ -314,112 +303,6 @@ describe('decorateWithTableResult', () => {
 });
 
 describe('decorateWithLogsResult', () => {
-  it('should correctly transform logs dataFrames', () => {
-    const { logs } = getTestContext();
-    const request = { timezone: 'utc', intervalMs: 60000 } as unknown as DataQueryRequest;
-    const panelData = createExplorePanelData({ logsFrames: [logs], request });
-    expect(decorateWithLogsResult()(panelData).logsResult).toEqual({
-      hasUniqueLabels: false,
-      meta: [],
-      rows: [
-        {
-          rowIndex: 0,
-          dataFrame: logs,
-          entry: 'this is a message',
-          entryFieldIndex: 3,
-          hasAnsi: false,
-          hasUnescapedContent: false,
-          labels: {},
-          logLevel: 'unknown',
-          raw: 'this is a message',
-          searchWords: [],
-          timeEpochMs: 100,
-          timeEpochNs: '100000002',
-          timeFromNow: 'fromNow() jest mocked',
-          timeLocal: 'format() jest mocked',
-          timeUtc: 'format() jest mocked',
-          uid: '0',
-          uniqueLabels: {},
-        },
-        {
-          rowIndex: 2,
-          dataFrame: logs,
-          entry: 'third',
-          entryFieldIndex: 3,
-          hasAnsi: false,
-          hasUnescapedContent: false,
-          labels: {},
-          logLevel: 'unknown',
-          raw: 'third',
-          searchWords: [],
-          timeEpochMs: 100,
-          timeEpochNs: '100000001',
-          timeFromNow: 'fromNow() jest mocked',
-          timeLocal: 'format() jest mocked',
-          timeUtc: 'format() jest mocked',
-          uid: '2',
-          uniqueLabels: {},
-        },
-        {
-          rowIndex: 1,
-          dataFrame: logs,
-          entry: 'second message',
-          entryFieldIndex: 3,
-          hasAnsi: false,
-          hasUnescapedContent: false,
-          labels: {},
-          logLevel: 'unknown',
-          raw: 'second message',
-          searchWords: [],
-          timeEpochMs: 100,
-          timeEpochNs: '100000000',
-          timeFromNow: 'fromNow() jest mocked',
-          timeLocal: 'format() jest mocked',
-          timeUtc: 'format() jest mocked',
-          uid: '1',
-          uniqueLabels: {},
-        },
-      ],
-      series: [
-        {
-          name: 'unknown',
-          length: 1,
-          fields: [
-            { name: 'Time', type: 'time', values: new ArrayVector([0]), config: {} },
-            {
-              name: 'Value',
-              type: 'number',
-              labels: undefined,
-              values: new ArrayVector([3]),
-              config: {
-                color: {
-                  fixedColor: '#8e8e8e',
-                  mode: FieldColorModeId.Fixed,
-                },
-                min: 0,
-                decimals: 0,
-                unit: undefined,
-                custom: {
-                  drawStyle: GraphDrawStyle.Bars,
-                  barAlignment: 0,
-                  barMaxWidth: 5,
-                  barWidthFactor: 0.9,
-                  lineColor: '#8e8e8e',
-                  fillColor: '#8e8e8e',
-                  pointColor: '#8e8e8e',
-                  lineWidth: 0,
-                  fillOpacity: 100,
-                  stacking: { mode: StackingMode.Normal, group: 'A' },
-                },
-              },
-            },
-          ],
-        },
-      ],
-      visibleRange: undefined,
-    });
-  });
-
   it('returns null if passed empty array', () => {
     const panelData = createExplorePanelData({ logsFrames: [] });
     expect(decorateWithLogsResult()(panelData).logsResult).toBeNull();
