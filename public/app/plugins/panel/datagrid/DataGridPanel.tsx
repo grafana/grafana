@@ -50,6 +50,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   const [columns, setColumns] = useState<GridColumn[]>([]);
   const [isSnapshotted, setIsSnapshotted] = useState<boolean>(false);
   const [contextMenuData, setContextMenuData] = useState<DatagridContextMenuData>({ isContextMenuOpen: false });
+  const [toggleSearch, setToggleSearch] = useState<boolean>(false);
 
   const theme = useTheme2();
   const gridTheme = {
@@ -288,6 +289,10 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         height={'100%'}
         theme={gridTheme}
         onCellEdited={onCellEdited}
+        getCellsForSelection={true}
+        showSearch={toggleSearch}
+        onSearchClose={() => setToggleSearch(false)}
+        onPaste={true}
         onHeaderClicked={() => {
           console.log('header clicked');
         }}
@@ -325,6 +330,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
           data={gridData}
           saveData={setGridData}
           closeContextMenu={closeContextMenu}
+          setToggleSearch={setToggleSearch}
         />
       )}
     </>

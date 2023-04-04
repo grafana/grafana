@@ -14,9 +14,19 @@ interface Props {
   data: DataFrame;
   saveData: (data: DataFrame) => void;
   closeContextMenu: () => void;
+  setToggleSearch: (toggleSearch: boolean) => void;
 }
 
-export const DatagridContextMenu = ({ x, y, column, row, data, saveData, closeContextMenu }: Props) => {
+export const DatagridContextMenu = ({
+  x,
+  y,
+  column,
+  row,
+  data,
+  saveData,
+  closeContextMenu,
+  setToggleSearch,
+}: Props) => {
   const renderItems = () => (
     <>
       <MenuItem
@@ -34,7 +44,6 @@ export const DatagridContextMenu = ({ x, y, column, row, data, saveData, closeCo
             length: data.length - 1,
           });
         }}
-        // shortcut="Delete" // TODO: add keyboard shortcuts
       />
       <MenuItem
         label="Delete column"
@@ -46,6 +55,7 @@ export const DatagridContextMenu = ({ x, y, column, row, data, saveData, closeCo
         }}
       />
       <MenuDivider />
+      {/* TODO: decide if we keep this or not. Delete Keypress covers this and selection delete scenario so I feel this is not needed 
       <MenuItem
         label="Clear cell"
         onClick={() => {
@@ -58,7 +68,8 @@ export const DatagridContextMenu = ({ x, y, column, row, data, saveData, closeCo
             ...data,
           });
         }}
-      />
+        shortcut="Delete"
+      /> */}
       <MenuItem
         label="Clear row"
         onClick={() => {
@@ -92,6 +103,7 @@ export const DatagridContextMenu = ({ x, y, column, row, data, saveData, closeCo
           saveData(EMPTY_DF);
         }}
       />
+      <MenuItem label="Search..." onClick={() => setToggleSearch(true)} />
     </>
   );
 
