@@ -574,17 +574,17 @@ function getNestedFoldersRoutes(): RouteDescriptor[] {
   return [
     {
       path: '/nested-dashboards',
-      component: SafeDynamicImport(() => import('app/features/browse-dashboards/components/NestedDashboardListPage')),
+      component: SafeDynamicImport(() => import('app/features/browse-dashboards/BrowseDashboardsPage')),
     },
 
     {
       path: '/nested-dashboards/f/:uid',
-      component: SafeDynamicImport(() => import('app/features/browse-dashboards/components/NestedDashboardListPage')),
+      component: SafeDynamicImport(() => import('app/features/browse-dashboards/BrowseDashboardsPage')),
     },
 
     {
       path: '/nested-dashboards/f/:uid/:slug',
-      component: SafeDynamicImport(() => import('app/features/browse-dashboards/components/NestedDashboardListPage')),
+      component: SafeDynamicImport(() => import('app/features/browse-dashboards/BrowseDashboardsPage')),
     },
   ];
 }
