@@ -10,7 +10,7 @@ export function createPluginExtensionRegistry(pluginPreloadResults: PluginPreloa
   const registry: PluginExtensionRegistry = {};
   const extensionsPerPlugin = new ExtensionsPerPlugin();
 
-  for (const { pluginId, extensionConfigs, error } of pluginPreloadResults) {
+  for (const { pluginId, pluginName, extensionConfigs, error } of pluginPreloadResults) {
     if (error) {
       logWarning(`"${pluginId}" plugin failed to load, skip registering its extensions.`);
       continue;
@@ -35,6 +35,7 @@ export function createPluginExtensionRegistry(pluginPreloadResults: PluginPreloa
 
         // Additional meta information about the extension
         pluginId,
+        pluginName,
       };
 
       if (!Array.isArray(registry[extensionPointId])) {

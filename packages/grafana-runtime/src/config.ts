@@ -26,6 +26,7 @@ export interface AzureSettings {
 
 export type AppPluginConfig = {
   id: string;
+  name: string;
   path: string;
   version: string;
   preload: boolean;

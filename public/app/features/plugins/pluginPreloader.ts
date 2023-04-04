@@ -5,6 +5,7 @@ import * as pluginLoader from './plugin_loader';
 
 export type PluginPreloadResult = {
   pluginId: string;
+  pluginName: string;
   error?: unknown;
   extensionConfigs: PluginExtensionLinkConfig[];
 };
@@ -15,13 +16,13 @@ export async function preloadPlugins(apps: Record<string, AppPluginConfig> = {})
 }
 
 async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
-  const { path, version, id: pluginId } = config;
+  const { path, version, id: pluginId, name: pluginName } = config;
   try {
     const { plugin } = await pluginLoader.importPluginModule(path, version);
     const { extensionConfigs = [] } = plugin;
-    return { pluginId, extensionConfigs };
+    return { pluginId, pluginName, extensionConfigs };
   } catch (error) {
     console.error(`[Plugins] Failed to preload plugin: ${path} (version: ${version})`, error);
-    return { pluginId, extensionConfigs: [], error };
+    return { pluginId, pluginName, extensionConfigs: [], error };
   }
 }

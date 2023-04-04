@@ -42,6 +42,7 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
           id: generateExtensionId(registryItem.pluginId, extensionConfig),
           type: PluginExtensionTypes.link,
           pluginId: registryItem.pluginId,
+          pluginName: registryItem.pluginName,
           onClick: getLinkExtensionOnClick(extensionConfig, frozenContext),
 
           // Configurable properties

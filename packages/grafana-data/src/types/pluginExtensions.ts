@@ -15,6 +15,7 @@ export type PluginExtension = {
   title: string;
   description: string;
   pluginId: string;
+  pluginName: string;
 };
 
 export type PluginExtensionLink = PluginExtension & {
