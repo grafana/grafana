@@ -25,8 +25,6 @@ type TimestampMs = number;
 
 type SupportedQueryTypes = PromQuery | InfluxQuery;
 
-export type StringInterpolator<T extends SupportedQueryTypes> = (query: T, request: DataQueryRequest<T>) => string;
-
 // string matching requirements defined in durationutil.ts
 export const defaultPrometheusQueryOverlapWindow = '10m';
 

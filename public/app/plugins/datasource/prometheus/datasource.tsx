@@ -169,12 +169,12 @@ export class PrometheusDatasource
   /**
    * Get target signature for query caching
    * @param request
-   * @param targ
+   * @param query
    */
-  getPrometheusTargetSignature(request: DataQueryRequest<PromQuery>, targ: PromQuery) {
-    const targExpr = this.interpolateString(targ.expr);
-    return `${targExpr}|${targ.interval ?? request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${
-      targ.exemplar
+  getPrometheusTargetSignature(request: DataQueryRequest<PromQuery>, query: PromQuery) {
+    const targExpr = this.interpolateString(query.expr);
+    return `${targExpr}|${query.interval ?? request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${
+      query.exemplar
     }`;
   }
 
