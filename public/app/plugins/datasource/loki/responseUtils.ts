@@ -12,6 +12,8 @@ import {
 
 import { isBytesString } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
+import { isLogsQuery } from './queryUtils';
+import { LokiQuery } from './types';
 
 export function dataFrameHasLokiError(frame: DataFrame): boolean {
   const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values.toArray() ?? [];
@@ -217,12 +219,26 @@ function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
   };
 }
 
-export function addResponseMetadata(response: DataQueryResponse, metadata: Record<string, unknown>) {
+export function addProgressMetadata(
+  response: DataQueryResponse,
+  targets: LokiQuery[],
+  requestNumber: number,
+  totalRequests: number
+) {
   response.data.forEach((frame: DataFrame) => {
+    const target = targets.find((target) => target.refId === frame.refId);
+    if (!target) {
+      return;
+    }
+
+    const adjustedRequestNumber =
+      isLogsQuery(target.expr) && target.maxLines === frame.length ? totalRequests : requestNumber;
+
     frame.meta = {
       ...frame.meta,
       custom: {
-        ...metadata,
+        requestNumber: adjustedRequestNumber,
+        totalRequests,
       },
     };
   });

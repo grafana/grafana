@@ -16,7 +16,7 @@ import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
 import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
 import { isLogsQuery } from './queryUtils';
-import { addResponseMetadata, combineResponses } from './responseUtils';
+import { addProgressMetadata, combineResponses } from './responseUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
 export function partitionTimeRange(
@@ -125,10 +125,12 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
       .subscribe({
         next: (partialResponse) => {
           mergedResponse = combineResponses(mergedResponse, partialResponse);
-          mergedResponse = addResponseMetadata(mergedResponse, {
-            requestNumber: totalRequests - requestN + 1,
-            totalRequests,
-          });
+          mergedResponse = addProgressMetadata(
+            mergedResponse,
+            requests[requestGroup].request.targets,
+            totalRequests - requestN + 1,
+            totalRequests
+          );
           if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
             shouldStop = true;
           }
