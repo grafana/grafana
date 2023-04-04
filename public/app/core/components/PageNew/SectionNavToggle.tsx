@@ -61,7 +61,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       opacity: 0,
       margin: 0,
       position: 'absolute',
-      right: theme.spacing(1),
+      right: 0,
       left: 'initial',
     },
   }),
