@@ -6,7 +6,6 @@ import {
   AbstractLabelOperator,
   AbstractQuery,
   DataQuery,
-  DataQueryRequest,
   dateMath,
   DateTime,
   incrRoundDn,
@@ -15,7 +14,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
-import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem, PromQuery } from './types';
+import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
@@ -397,16 +396,6 @@ export function getRangeSnapInterval(
   const end = endTimeQuantizedSeconds.toString();
 
   return { start, end };
-}
-
-/**
- * Get target signature for query caching
- * @param targExpr
- * @param request
- * @param targ
- */
-export function getPrometheusTargetSignature(targExpr: string, request: DataQueryRequest<PromQuery>, targ: PromQuery) {
-  return `${targExpr}|${targ.interval ?? request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.exemplar}`;
 }
 
 export function getClientCacheDurationInMinutes(cacheLevel: PrometheusCacheLevel) {

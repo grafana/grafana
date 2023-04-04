@@ -30,6 +30,8 @@ import {
 import config from 'app/core/config';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import { CacheRequestInfo, QueryCache } from '../prometheus/querycache/QueryCache';
+
 import { AnnotationEditor } from './components/AnnotationEditor';
 import { FluxQueryEditor } from './components/FluxQueryEditor';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
@@ -127,6 +129,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   httpMode: string;
   isFlux: boolean;
   isProxyAccess: boolean;
+  cache: QueryCache<InfluxQuery>;
+  hasIncrementalQuery: boolean;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
@@ -152,6 +156,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.responseParser = new ResponseParser();
     this.isFlux = settingsData.version === InfluxVersion.Flux;
     this.isProxyAccess = instanceSettings.access === 'proxy';
+    this.hasIncrementalQuery = true; // @todo
+
+    this.cache = new QueryCache<InfluxQuery>(
+      this.getInfluxTargetSignature.bind(this),
+      '10m' //@todo
+    );
 
     if (this.isFlux) {
       // When flux, use an annotation processor rather than the `annotationQuery` lifecycle
@@ -164,6 +174,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         prepareAnnotation,
       };
     }
+  }
+
+  getInfluxTargetSignature(request: DataQueryRequest<InfluxQuery>, targ: InfluxQuery) {
+    const target = this.applyTemplateVariables(targ, request.scopedVars);
+    return `${request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${target.query}|${JSON.stringify(
+      target.select
+    )}`;
   }
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
@@ -184,7 +201,17 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     if (this.isMigrationToggleOnAndIsAccessProxy()) {
-      return super.query(filteredRequest).pipe(
+      let fullOrPartialRequest: DataQueryRequest<InfluxQuery>;
+      let requestInfo: CacheRequestInfo<InfluxQuery> | undefined = undefined;
+
+      if (this.hasIncrementalQuery) {
+        requestInfo = this.cache.requestInfo(filteredRequest);
+        fullOrPartialRequest = requestInfo.requests[0];
+      } else {
+        fullOrPartialRequest = request;
+      }
+
+      return super.query(fullOrPartialRequest).pipe(
         map((res) => {
           if (res.error) {
             throw {
@@ -193,9 +220,14 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
             };
           }
 
+          const amendedResponse = {
+            ...res,
+            data: this.cache.procFrames(request, requestInfo, res.data),
+          };
+
           const seriesList: any[] = [];
 
-          const groupedFrames = groupBy(res.data, (x) => x.refId);
+          const groupedFrames = groupBy(amendedResponse.data, (x) => x.refId);
           if (Object.keys(groupedFrames).length > 0) {
             filteredRequest.targets.forEach((target) => {
               const filteredFrames = groupedFrames[target.refId] ?? [];

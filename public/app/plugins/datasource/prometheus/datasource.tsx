@@ -49,7 +49,6 @@ import PrometheusLanguageProvider from './language_provider';
 import {
   expandRecordingRules,
   getClientCacheDurationInMinutes,
-  getPrometheusTargetSignature,
   getPrometheusTime,
   getRangeSnapInterval,
 } from './language_utils';
@@ -145,7 +144,7 @@ export class PrometheusDatasource
     this.exemplarsAvailable = true;
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
     this.cache = new QueryCache(
-      getPrometheusTargetSignature,
+      this.getPrometheusTargetSignature.bind(this),
       instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow
     );
 
@@ -165,6 +164,18 @@ export class PrometheusDatasource
 
   getQueryDisplayText(query: PromQuery) {
     return query.expr;
+  }
+
+  /**
+   * Get target signature for query caching
+   * @param request
+   * @param targ
+   */
+  getPrometheusTargetSignature(request: DataQueryRequest<PromQuery>, targ: PromQuery) {
+    const targExpr = this.interpolateString(targ.expr);
+    return `${targExpr}|${targ.interval ?? request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${
+      targ.exemplar
+    }`;
   }
 
   hasLabelsMatchAPISupport(): boolean {
@@ -463,7 +474,7 @@ export class PrometheusDatasource
       let fullOrPartialRequest: DataQueryRequest<PromQuery>;
       let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
       if (this.hasIncrementalQuery) {
-        requestInfo = this.cache.requestInfo(request, this.intepolateStringHelper);
+        requestInfo = this.cache.requestInfo(request);
         fullOrPartialRequest = requestInfo.requests[0];
       } else {
         fullOrPartialRequest = request;

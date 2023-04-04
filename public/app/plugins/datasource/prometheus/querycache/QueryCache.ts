@@ -25,7 +25,7 @@ type TimestampMs = number;
 
 type SupportedQueryTypes = PromQuery | InfluxQuery;
 
-export type StringInterpolator<T extends SupportedQueryTypes> = (query: T, request?: DataQueryRequest<T>) => string;
+export type StringInterpolator<T extends SupportedQueryTypes> = (query: T, request: DataQueryRequest<T>) => string;
 
 // string matching requirements defined in durationutil.ts
 export const defaultPrometheusQueryOverlapWindow = '10m';
@@ -57,11 +57,8 @@ export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JS
  */
 export class QueryCache<T extends SupportedQueryTypes> {
   private overlapWindowMs: number;
-  private getTargetSignature: (expression: string, request: DataQueryRequest<T>, target: T) => string;
-  constructor(
-    getTargetSignature: (expression: string, request: DataQueryRequest<T>, target: T) => string,
-    overlapString: string
-  ) {
+  private getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
+  constructor(getTargetSignature: (request: DataQueryRequest<T>, target: T) => string, overlapString: string) {
     const unverifiedOverlap = overlapString;
     if (isValidDuration(unverifiedOverlap)) {
       const duration = parseDuration(unverifiedOverlap);
@@ -76,7 +73,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
   cache = new Map<TargetIdent, TargetCache>();
 
   // can be used to change full range request to partial, split into multiple requests
-  requestInfo(request: DataQueryRequest<T>, interpolateString: StringInterpolator<T>): CacheRequestInfo<T> {
+  requestInfo(request: DataQueryRequest<T>): CacheRequestInfo<T> {
     // TODO: align from/to to interval to increase probability of hitting backend cache
 
     const newFrom = request.range.from.valueOf();
@@ -93,8 +90,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
     const reqTargSigs = new Map<TargetIdent, TargetSig>();
     request.targets.forEach((targ) => {
       let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
-      let targExpr = interpolateString(targ, request);
-      let targSig = this.getTargetSignature(targExpr, request, targ); // ${request.maxDataPoints} ?
+      let targSig = this.getTargetSignature(request, targ); // ${request.maxDataPoints} ?
 
       reqTargSigs.set(targIdent, targSig);
     });
