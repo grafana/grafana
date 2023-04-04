@@ -50,17 +50,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         margin-bottom: 0;
       }
     `,
-    contextGroup: css`
-      margin-bottom: 0;
-
-      & > button {
-        cursor: default;
-        text-align: left;
-      }
-    `,
-    contextGroupReverse: css`
-      flex-direction: column-reverse;
-    `,
     datasourceUi: css`
       padding-bottom: ${theme.spacing(1.25)};
       display: flex;
