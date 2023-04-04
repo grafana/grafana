@@ -141,7 +141,7 @@ func NewSeries(refID string, labels data.Labels, size int) Series {
 	}
 
 	return Series{
-		Frame: data.NewFrame("", fields...),
+		Frame: frame,
 	}
 }
 

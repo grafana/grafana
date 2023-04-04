@@ -15,8 +15,7 @@ import (
 func shouldUseDataplane(frames data.Frames) (k data.FrameTypeKind, b bool, e error) {
 	k = data.KindUnknown
 	if len(frames) == 0 {
-		// No frames is valid by contract, but we will return before this in that case
-		return
+		return data.KindUnknown, true, nil
 	}
 
 	firstFrame := frames[0]
@@ -38,10 +37,9 @@ func shouldUseDataplane(frames data.Frames) (k data.FrameTypeKind, b bool, e err
 
 	k, err := reader.CanReadBasedOnMeta(frames)
 	if err != nil {
-		if errors.Is(err, &sdata.VersionWarning{}) {
-			// TODO log
-			// We proceed even with version warnings
-			return k, true, nil
+		var vw *sdata.VersionWarning
+		if errors.As(err, &vw) {
+			return k, true, err
 		}
 		return k, false, err
 	}
@@ -50,6 +48,8 @@ func shouldUseDataplane(frames data.Frames) (k data.FrameTypeKind, b bool, e err
 
 func handleDataplaneFrames(k data.FrameTypeKind, frames data.Frames) (mathexp.Results, error) {
 	switch k {
+	case data.KindUnknown:
+		return mathexp.Results{Values: mathexp.Values{mathexp.NoData{}.New()}}, nil
 	case data.KindTimeSeries:
 		return handleDataplaneTS(frames)
 	case data.KindNumeric:

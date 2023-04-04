@@ -1262,6 +1262,8 @@ github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cuetsy v0.1.6 h1:61QGIDy1rVABU3OkoarOn0+qPdGopIJr34PyWVmGDfs=
 github.com/grafana/cuetsy v0.1.6/go.mod h1:4KWkUOslwvRTpEv7wdQG0jDFTuJmU+0L9x0h4kWxa2A=
+github.com/grafana/dataplane/examples v0.0.0-20230322121339-5fb4468146dd h1:w7pLYpu9nJLUiam5Zw0VjC0QwHVCYBswdioc/cLr858=
+github.com/grafana/dataplane/examples v0.0.0-20230322121339-5fb4468146dd/go.mod h1:h5YwY8s407/17XF5/dS8XrUtsTVV2RnuW8+m1Mp46mg=
 github.com/grafana/dataplane/sdata v0.0.4 h1:GumUrUHsdCkGTjXbzy5uBmjLYavUYHPZ18ad6U9Whuc=
 github.com/grafana/dataplane/sdata v0.0.4/go.mod h1:Jvs5ddpGmn6vcxT7tCTWAZ1mgi4sbcdFt9utQx5uMAU=
 github.com/grafana/dskit v0.0.0-20230202092222-880a7f8141cc h1:lQFgXpsZNDdi0whUROW15r/akzLIdXAn6xr5vqlZucI=
