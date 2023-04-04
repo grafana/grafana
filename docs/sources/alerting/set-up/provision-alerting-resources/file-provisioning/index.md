@@ -31,6 +31,7 @@ Create or delete alert rules in your Grafana instance(s).
 1. Create alert rules in Grafana.
 1. Use the [Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/alerting_provisioning/#route-get-alert-rule-export) export endpoints to download a provisioning file for your alert rules.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
+   Example: <grafana_install_dir>/provisioning/alerting
 
    Example configuration files can be found below.
 
