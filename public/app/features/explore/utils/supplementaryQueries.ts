@@ -95,6 +95,8 @@ const createFallbackLogVolumeProvider = (
               absoluteRange: exploreData.logsResult?.visibleRange!,
               datasourceName,
               sourceQuery: queryTargets.find((query) => query.refId === refId)!,
+              // If log volume is based on returned log lines, zooming in may return different
+              // results, so we don't want to reuse the data
               reuseWhenZoomingIn: false,
             };
 

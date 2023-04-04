@@ -8,14 +8,13 @@ import {
   DataQueryResponse,
   EventBus,
   GrafanaTheme2,
-  isLogsVolumeLimited,
   LoadingState,
   SplitOpen,
   TimeZone,
 } from '@grafana/data';
 import { Button, InlineField, useStyles2 } from '@grafana/ui';
 
-import { mergeLogsVolumeDataFrames, getLogsVolumeMaximum } from '../logs/utils';
+import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeDimensions } from '../logs/utils';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
 import { SupplementaryResultError } from './SupplementaryResultError';
@@ -46,14 +45,20 @@ export const LogsVolumePanelList = ({
   timeZone,
   onClose,
 }: Props) => {
-  const { logVolumes, maximum: allLogsVolumeMaximum } = useMemo(() => {
+  const {
+    logVolumes,
+    maximum: allLogsVolumeMaximum,
+    widestRange,
+  } = useMemo(() => {
     const data = logsVolumeData?.data || [];
     const grouped = groupBy(data, 'meta.custom.datasourceName');
     const logVolumes = mapValues(grouped, (value) => {
       return mergeLogsVolumeDataFrames(value);
     });
+    const dimensions = getLogsVolumeDimensions(data);
     return {
-      maximum: getLogsVolumeMaximum(data),
+      maximum: dimensions.maximumValue,
+      widestRange: dimensions.widestRange,
       logVolumes,
     };
   }, [logsVolumeData]);
@@ -68,6 +73,11 @@ export const LogsVolumePanelList = ({
   });
 
   const timeoutError = isTimeoutErrorResponse(logsVolumeData);
+
+  const visibleRange = {
+    from: Math.max(absoluteRange.from, widestRange.from),
+    to: Math.min(absoluteRange.to, widestRange.to),
+  };
 
   if (logsVolumeData?.state === LoadingState.Loading) {
     return <span>Loading...</span>;
@@ -92,7 +102,7 @@ export const LogsVolumePanelList = ({
         return (
           <LogsVolumePanel
             key={index}
-            absoluteRange={absoluteRange}
+            absoluteRange={visibleRange}
             allLogsVolumeMaximum={allLogsVolumeMaximum}
             width={width}
             logsVolumeData={logsVolumeData}

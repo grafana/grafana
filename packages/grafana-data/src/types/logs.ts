@@ -201,9 +201,9 @@ export enum LogsVolumeType {
 export type LogsVolumeCustomMetaData = {
   absoluteRange: AbsoluteTimeRange;
   /**
-   * Set it to true if the data can be reused when selected time range is narrowed down.
-   * Data is reused only if the query didn't change as well.
-   * If that happens the same data will be passed to the visualization.
+   * Set it to true if the data provided in logs volume should be reused when
+   * the selected time range is narrowed down (the user zooms in). This allows
+   * caching log volume results to limit requesting the data.
    * @see canReuseSupplementaryQueryData
    */
   reuseWhenZoomingIn: boolean;

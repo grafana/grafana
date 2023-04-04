@@ -164,10 +164,18 @@ export function logRowsToReadableJson(logs: LogRowModel[]) {
   });
 }
 
-export const getLogsVolumeMaximum = (dataFrames: DataFrame[]) => {
+export const getLogsVolumeDimensions = (dataFrames: DataFrame[]) => {
   let maximumValue = -Infinity;
+  let widestRange = { from: Infinity, to: -Infinity };
 
   dataFrames.forEach((dataFrame: DataFrame) => {
+    const meta = dataFrame.meta?.custom || {};
+    if (meta.absoluteRange?.from && meta.absoluteRange?.to) {
+      widestRange = {
+        from: Math.min(widestRange.from, meta.absoluteRange.from),
+        to: Math.max(widestRange.to, meta.absoluteRange.to),
+      };
+    }
     const fieldCache = new FieldCache(dataFrame);
     const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
     if (valueField) {
@@ -175,7 +183,10 @@ export const getLogsVolumeMaximum = (dataFrames: DataFrame[]) => {
     }
   });
 
-  return maximumValue;
+  return {
+    maximumValue,
+    widestRange,
+  };
 };
 
 export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] => {
@@ -241,13 +252,6 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] 
   });
 
   return results;
-};
-
-export const getLogsVolumeAbsoluteRange = (
-  dataFrames: DataFrame[],
-  defaultRange: AbsoluteTimeRange
-): AbsoluteTimeRange => {
-  return dataFrames[0].meta?.custom?.absoluteRange || defaultRange;
 };
 
 export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: string } | null => {
