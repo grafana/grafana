@@ -228,7 +228,9 @@ describe('getPanelMenu()', () => {
         targets: [
           {
             refId: 'A',
-            pluginId: 'testdata',
+            datasource: {
+              type: 'testdata',
+            },
           },
         ],
         dashboard: {

@@ -237,11 +237,10 @@ var (
 			Owner:       grafanaUserEssentialsSquad,
 		},
 		{
-			Name:            "grpcServer",
-			Description:     "Run GRPC server",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			Owner:           grafanaAppPlatformSquad,
+			Name:        "grpcServer",
+			Description: "Run the GRPC server",
+			State:       FeatureStateBeta,
+			Owner:       grafanaAppPlatformSquad,
 		},
 		{
 			Name:            "entityStore",
@@ -493,6 +492,12 @@ var (
 			Description: "Writes error logs to the request logger",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaBackendPlatformSquad,
+		},
+		{
+			Name:        "renderAuthJWT",
+			Description: "Uses JWT-based auth for rendering instead of relying on remote cache",
+			State:       FeatureStateBeta,
+			Owner:       grafanaAsCodeSquad,
 		},
 	}
 )

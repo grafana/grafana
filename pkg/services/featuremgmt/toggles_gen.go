@@ -148,7 +148,7 @@ const (
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer
-	// Run GRPC server
+	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
 
 	// FlagEntityStore
@@ -302,4 +302,8 @@ const (
 	// FlagUnifiedRequestLog
 	// Writes error logs to the request logger
 	FlagUnifiedRequestLog = "unifiedRequestLog"
+
+	// FlagRenderAuthJWT
+	// Uses JWT-based auth for rendering instead of relying on remote cache
+	FlagRenderAuthJWT = "renderAuthJWT"
 )

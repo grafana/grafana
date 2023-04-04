@@ -92,4 +92,5 @@ export interface FeatureToggles {
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
+  renderAuthJWT?: boolean;
 }
