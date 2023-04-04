@@ -39,6 +39,7 @@ export const FIXED_UNIT = '__fixed';
 export type PropDiffFn<T extends any = any> = (prev: T, next: T) => boolean;
 
 export interface GraphNGProps extends Themeable2 {
+  xField?: string;
   frames: DataFrame[];
   structureRev?: number; // a number that will change when the frames[] structure changes
   width: number;

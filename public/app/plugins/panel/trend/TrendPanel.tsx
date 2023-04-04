@@ -1,15 +1,8 @@
 import React, { useMemo } from 'react';
 
-import { PanelProps } from '@grafana/data';
+import { FieldType, PanelProps } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import {
-  KeyboardPlugin,
-  TimeSeries,
-  TooltipDisplayMode,
-  TooltipPlugin,
-  usePanelContext,
-  ZoomPlugin,
-} from '@grafana/ui';
+import { KeyboardPlugin, TimeSeries, TooltipDisplayMode, TooltipPlugin, usePanelContext } from '@grafana/ui';
 import { findField } from 'app/features/dimensions';
 
 import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
@@ -25,7 +18,6 @@ export const TrendPanel = ({
   height,
   options,
   fieldConfig,
-  onChangeTimeRange,
   replaceVariables,
   id,
 }: PanelProps<PanelOptions>) => {
@@ -39,18 +31,34 @@ export const TrendPanel = ({
       };
     }
 
-    const frames = prepareGraphableFields(data.series, config.theme2);
-    if (frames && options.xField?.length) {
-      const f = findField(frames[0], options.xField);
+    let xFieldName = options.xField;
+
+    if (xFieldName) {
+      const f = findField(data.series[0], xFieldName);
+
       if (!f) {
         return {
-          warning: 'Unable to find field: ' + options.xField,
-          frames,
+          warning: 'Unable to find field: ' + xFieldName,
+          frames: data.series,
         };
       }
-      // TODO? do we need to make sure it is first?
+    } else {
+      // first number field
+      const f = data.series[0].fields.find((f) => f.type === FieldType.number);
+
+      if (!f) {
+        return {
+          warning: 'No numeric fields found for X axis',
+          frames: data.series,
+        };
+      }
+
+      xFieldName = f.name;
     }
-    return { frames };
+
+    const frames = prepareGraphableFields(data.series, xFieldName, config.theme2);
+
+    return { frames, xFieldName };
   }, [data, options.xField]);
 
   if (info.warning || !info.frames) {
@@ -67,6 +75,7 @@ export const TrendPanel = ({
 
   return (
     <TimeSeries // Name change!
+      xField={info.xFieldName}
       frames={info.frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
@@ -86,7 +95,6 @@ export const TrendPanel = ({
         return (
           <>
             <KeyboardPlugin config={config} />
-            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <TooltipPlugin
                 frames={info.frames!}
