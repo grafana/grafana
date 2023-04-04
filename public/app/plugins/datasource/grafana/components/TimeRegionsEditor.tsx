@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import moment, { Moment } from 'moment/moment';
+import React, { useMemo } from 'react';
 
 import {
   Button,
@@ -13,10 +14,11 @@ import {
   TimeZonePicker,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
-import { formatTimeOfDayString, parseTimeOfDay } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { TimeRegionConfig } from '../types';
+
+import { TimePickerInput } from './TimePickerInput';
 
 const regionsByName = new Map<string, TimeRegionConfig>();
 interface Props {
@@ -36,7 +38,7 @@ export function TimeRegionsEditor({ value, onChange }: Props) {
   const addTimeRegion = () => {
     const r: TimeRegionConfig = {
       name: getNextRegionName(),
-      color: 'rgba(234, 112, 112, 0.12)',
+      color: 'rgba(235, 113, 113, 0.40)',
       line: false,
       timezone: defaultTimezone,
     };
@@ -61,12 +63,14 @@ export function TimeRegionsEditor({ value, onChange }: Props) {
 
   const onChangeItem = (idx: number, v?: TimeRegionConfig) => {
     let clone = value!.slice(0);
+
     if (v) {
       clone[idx] = v;
     } else {
       regionsByName.delete(clone[idx].name);
       clone.splice(idx, 1);
     }
+
     onChange(clone);
   };
 
@@ -86,26 +90,21 @@ interface SingleRegion {
   onChange: (index: number, value?: TimeRegionConfig) => void;
 }
 
-function normalizeTimeString(v?: string): string | undefined {
-  const parsed = parseTimeOfDay(v);
-  const out = formatTimeOfDayString(parsed);
-  return out?.length ? out : undefined;
-}
-
 function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
-  const [fromTxt, setFromText] = useState<string>(normalizeTimeString(value.from) ?? '');
-  const [toTxt, setToText] = useState<string>(normalizeTimeString(value.to) ?? '');
+  const getTime = (time: string | undefined): Moment | undefined => {
+    if (!time) {
+      return undefined;
+    }
 
-  const validateFrom = () => {
-    const from = normalizeTimeString(fromTxt);
-    onChange(index, { ...value, from });
-    setFromText(from ?? '');
-  };
+    const date = moment();
 
-  const validateTo = () => {
-    const to = normalizeTimeString(toTxt);
-    onChange(index, { ...value, to });
-    setFromText(to ?? '');
+    if (time) {
+      const match = time.split(':');
+      date.set('hour', parseInt(match[0], 10));
+      date.set('minute', parseInt(match[1], 10));
+    }
+
+    return date;
   };
 
   return (
@@ -128,12 +127,12 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
             onChange={(v) => onChange(index, { ...value, fromDayOfWeek: v ? v.value : undefined })}
             width={20}
           />
-          <Input
-            value={fromTxt}
-            onChange={(v) => setFromText(v.currentTarget.value)}
-            placeholder="hh:mm"
-            onBlur={validateFrom}
-            width={10}
+          <TimePickerInput
+            value={getTime(value.from)}
+            onChange={(v) => onChange(index, { ...value, from: v ? v.format('HH:mm') : undefined })}
+            allowEmpty={true}
+            placeholder="HH:mm"
+            width={100}
           />
         </HorizontalGroup>
       </InlineField>
@@ -147,12 +146,12 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
             onChange={(v) => onChange(index, { ...value, toDayOfWeek: v ? v.value : undefined })}
             width={20}
           />
-          <Input
-            value={toTxt}
-            onChange={(v) => setToText(v.currentTarget.value)}
-            placeholder="hh:mm"
-            onBlur={validateTo}
-            width={10}
+          <TimePickerInput
+            value={getTime(value.to)}
+            onChange={(v) => onChange(index, { ...value, to: v ? v.format('HH:mm') : undefined })}
+            allowEmpty={true}
+            placeholder="HH:mm"
+            width={100}
           />
         </HorizontalGroup>
       </InlineField>
