@@ -62,9 +62,9 @@ func TestCallResource(t *testing.T) {
 	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	require.NoError(t, err)
 	reg := registry.ProvideService()
-	cdn := pluginscdn.ProvideService(pCfg)
 	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(), fakes.NewFakeRoleRegistry(), cdn, assetpath.ProvideService(cdn))
+		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(), fakes.NewFakeRoleRegistry(),
+		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)))
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)

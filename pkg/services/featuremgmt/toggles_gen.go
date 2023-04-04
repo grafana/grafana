@@ -148,7 +148,7 @@ const (
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer
-	// Run GRPC server
+	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
 
 	// FlagEntityStore
@@ -267,6 +267,10 @@ const (
 	// Enable time series table transformer &amp; sparkline cell type
 	FlagTimeSeriesTable = "timeSeriesTable"
 
+	// FlagPrometheusResourceBrowserCache
+	// Displays browser caching options in Prometheus data source configuration
+	FlagPrometheusResourceBrowserCache = "prometheusResourceBrowserCache"
+
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
@@ -294,4 +298,12 @@ const (
 	// FlagAlertStateHistoryLokiOnly
 	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
 	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
+
+	// FlagUnifiedRequestLog
+	// Writes error logs to the request logger
+	FlagUnifiedRequestLog = "unifiedRequestLog"
+
+	// FlagRenderAuthJWT
+	// Uses JWT-based auth for rendering instead of relying on remote cache
+	FlagRenderAuthJWT = "renderAuthJWT"
 )

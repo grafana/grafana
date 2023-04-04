@@ -4,6 +4,7 @@ import {
   SceneTimePicker,
   SceneFlexLayout,
   SceneTimeRange,
+  SceneRefreshPicker,
   SceneFlexItem,
 } from '@grafana/scenes';
 
@@ -64,6 +65,6 @@ export function getSceneWithRows(): DashboardScene {
     }),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
-    actions: [new SceneTimePicker({})],
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
   });
 }

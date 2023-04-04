@@ -133,6 +133,16 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) re
 	return response.JSON(http.StatusOK, config)
 }
 
+func (srv AlertmanagerSrv) RouteGetAlertingConfigHistory(c *contextmodel.ReqContext) response.Response {
+	limit := c.QueryInt("limit")
+	configs, err := srv.mam.GetAppliedAlertmanagerConfigurations(c.Req.Context(), c.OrgID, limit)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, err.Error())
+	}
+
+	return response.JSON(http.StatusOK, configs)
+}
+
 func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *contextmodel.ReqContext) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {

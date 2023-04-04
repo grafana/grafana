@@ -14,7 +14,7 @@ func TestNewTracingCfg(t *testing.T) {
 
 		tracingCfg, err := newTracingCfg(cfg)
 		require.NoError(t, err)
-		assert.False(t, tracingCfg.Enabled, "otel should be disabled")
+		assert.False(t, tracingCfg.IsEnabled(), "tracing should be disabled")
 		assert.Empty(t, tracingCfg.OpenTelemetry.Address)
 		assert.Empty(t, tracingCfg.OpenTelemetry.Propagation)
 	})
@@ -41,7 +41,7 @@ func TestNewTracingCfg(t *testing.T) {
 
 				tracingCfg, err := newTracingCfg(cfg)
 				require.NoError(t, err)
-				assert.True(t, tracingCfg.Enabled, "otel should be enabled")
+				assert.True(t, tracingCfg.IsEnabled(), "tracing should be enabled")
 				assert.Equal(t, address, tracingCfg.OpenTelemetry.Address)
 				assert.Equal(t, tc.propagation, tracingCfg.OpenTelemetry.Propagation)
 			})
