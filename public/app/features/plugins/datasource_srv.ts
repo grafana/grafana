@@ -74,7 +74,7 @@ export class DatasourceSrv implements DataSourceService {
       return expressionInstanceSettings;
     }
 
-    if (nameOrUid === 'default' || nameOrUid === null || nameOrUid === undefined) {
+    if (nameOrUid === 'default' || nameOrUid == null) {
       return this.settingsMapByUid[this.defaultName] ?? this.settingsMapByName[this.defaultName];
     }
 
