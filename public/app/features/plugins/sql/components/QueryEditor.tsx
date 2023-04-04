@@ -20,8 +20,11 @@ interface Props extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
 
 export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range, queryHeaderProps }: Props) {
   const [hasDatabaseConfigIssue, setHasDatabaseConfigIssue] = useState<boolean>(false);
+  const [hasNoPostgresDefaultDatabaseConfig, setHasNoPostgresDefaultDatabaseConfig] = useState<boolean>(false);
+
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
+
   const { preconfiguredDatabase } = datasource;
   const { loading, error } = useAsync(async () => {
     return () => {
@@ -32,20 +35,25 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
   }, [datasource]);
 
   /* 
-    The behavior of the dataset (database) selector is based on whether the user chose to create a datasource
-    with or without a default database. If the user configured a default database, the dataset (database) selector
-    should be disabled, and defacto assigned the value of the configured default database. If the user chose to
-    NOT assign a default database, then the user should be able to use the <DatasetSelector /> within the panel query editor
-    to chose between multiple databases within the datasource.
-    
-    This checks to see whether 1) there is indeed a default database (preconfiguredDataset), and also 2) whether the user
-    added a default database where there wasn't one before. Both scenarios would require an update the the query state.
-  */
+    The behavior of the dataset (database) selector - for MsSql and MySql datasources - is based on whether the user chose 
+    to create a datasource with or without a default database. If the user configured a default database, the dataset (database)
+    selector should be disabled, and defacto assigned the value of the configured default database. If the user chose to
+    NOT assign/configure a default database, then the user should be able to use the <DatasetSelector /> within the panel query editor
+    to chose between multiple databases available to the datasource.
+*/
+
   useEffect(() => {
+    // This checks to see whether there is indeed a default database (preconfiguredDataset), and if so, if that default database
+    // is different than they currently-chosen one. Both scenarios would require an update the the query state.
     if (!!preconfiguredDatabase && query.dataset !== preconfiguredDatabase) {
       setHasDatabaseConfigIssue(true);
     }
-  }, [preconfiguredDatabase, query, onChange]);
+
+    // This tests if the Postgres datacource was configured with a default database or not.
+    if (queryHeaderProps?.isDatasetSelectorHidden) {
+      setHasNoPostgresDefaultDatabaseConfig(true);
+    }
+  }, [preconfiguredDatabase, query, onChange, queryHeaderProps]);
 
   const queryWithDefaults = applyQueryDefaults(query);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({
@@ -73,11 +81,6 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
     [onRunQuery]
   );
 
-  const onRecognitionOfDatabaseChange = () => {
-    setHasDatabaseConfigIssue(false);
-    onChange({ ...query, dataset: preconfiguredDatabase });
-  };
-
   const onQueryChange = (q: SQLQuery, process = true) => {
     setQueryToValidate(q);
     onChange(q);
@@ -104,14 +107,31 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
     <>
       {hasDatabaseConfigIssue && (
         <Alert
+          id="database_update"
           severity="warning"
           title="Default datasource configuration"
           elevated={true}
-          onRemove={() => onRecognitionOfDatabaseChange()}
+          onRemove={() => {
+            // Remove the warning, and reset state with the new database.
+            setHasDatabaseConfigIssue(false);
+            onChange({ ...query, dataset: preconfiguredDatabase });
+          }}
           buttonContent="FINISHED"
         >
           Your default database configuration has been changed or updated. Make note of the query you have built before
           clicking FINISHED. Clicking FINISHED will update your query parameters with the new database data.
+        </Alert>
+      )}
+      {hasNoPostgresDefaultDatabaseConfig && (
+        <Alert
+          id="no_postgres_database"
+          severity="warning"
+          title="Default datasource configuration"
+          elevated={true}
+          onRemove={() => setHasNoPostgresDefaultDatabaseConfig(false)}
+        >
+          You do not currenlty have a database configured for this datasource. Please configure a default database
+          first.
         </Alert>
       )}
       <QueryHeader
