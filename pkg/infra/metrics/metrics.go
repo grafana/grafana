@@ -122,6 +122,9 @@ var (
 	// MRenderingSummary is a metric summary for image rendering request duration
 	MRenderingSummary *prometheus.SummaryVec
 
+	// MRenderingUserLookupSummary is a metric summary for image rendering user lookup duration
+	MRenderingUserLookupSummary *prometheus.SummaryVec
+
 	// MAccessPermissionsSummary is a metric summary for loading permissions request duration when evaluating access
 	MAccessPermissionsSummary prometheus.Histogram
 
@@ -390,6 +393,16 @@ func init() {
 			Namespace:  ExporterName,
 		},
 		[]string{"status", "type"},
+	)
+
+	MRenderingUserLookupSummary = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       "rendering_user_lookup_duration_milliseconds",
+			Help:       "summary of rendering user lookup duration",
+			Objectives: objectiveMap,
+			Namespace:  ExporterName,
+		},
+		[]string{"success", "from"},
 	)
 
 	MRenderingQueue = prometheus.NewGauge(prometheus.GaugeOpts{
@@ -663,6 +676,7 @@ func initMetricVars() {
 		LDAPUsersSyncExecutionTime,
 		MRenderingRequestTotal,
 		MRenderingSummary,
+		MRenderingUserLookupSummary,
 		MRenderingQueue,
 		MAccessPermissionsSummary,
 		MAccessEvaluationsSummary,

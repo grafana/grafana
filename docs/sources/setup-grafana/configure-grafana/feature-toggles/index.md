@@ -29,7 +29,9 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `internationalization`              | Enables internationalization                                                                                                                                                 | Yes                |
 | `topnav`                            | Enables new top navigation and page layouts                                                                                                                                  | Yes                |
 | `cloudWatchCrossAccountQuerying`    | Enables cross-account querying in CloudWatch datasources                                                                                                                     | Yes                |
+| `newPanelChromeUI`                  | Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu                                                                                          | Yes                |
 | `accessTokenExpirationCheck`        | Enable OAuth access_token expiration check and token refresh using the refresh_token                                                                                         |                    |
+| `emptyDashboardPage`                | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                             | Yes                |
 | `disablePrometheusExemplarSampling` | Disable Prometheus exemplar sampling                                                                                                                                         |                    |
 | `logsSampleInExplore`               | Enables access to the logs sample feature in Explore                                                                                                                         | Yes                |
 
@@ -49,6 +51,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `accessControlOnCall`                     | Access control primitives for OnCall                                                                                                                                                         |
 | `alertingNoNormalState`                   | Stop maintaining state of alerts that are not firing                                                                                                                                         |
 | `disableElasticsearchBackendExploreQuery` | Disable executing of Elasticsearch Explore queries trough backend                                                                                                                            |
+| `renderAuthJWT`                           | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                         |
 
 ## Alpha feature toggles
 
@@ -78,12 +81,10 @@ Alpha features might be changed or removed without prior notice.
 | `logRequestsInstrumentedAsUnknown` | Logs the path for requests that are instrumented as unknown                                                                                                                                         |
 | `redshiftAsyncQueryDataSupport`    | Enable async query data support for Redshift                                                                                                                                                        |
 | `athenaAsyncQueryDataSupport`      | Enable async query data support for Athena                                                                                                                                                          |
-| `newPanelChromeUI`                 | Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu                                                                                                                 |
 | `showDashboardValidationWarnings`  | Show warnings when dashboards do not validate against the schema                                                                                                                                    |
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                                                                                                                |
 | `elasticsearchBackendMigration`    | Use Elasticsearch as backend data source                                                                                                                                                            |
 | `datasourceOnboarding`             | Enable data source onboarding page                                                                                                                                                                  |
-| `emptyDashboardPage`               | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                                                    |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                                        |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                                                      |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                                                   |
@@ -97,6 +98,7 @@ Alpha features might be changed or removed without prior notice.
 | `traceqlSearch`                    | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries                                                                                           |
 | `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component                                                                                                |
 | `timeSeriesTable`                  | Enable time series table transformer & sparkline cell type                                                                                                                                          |
+| `prometheusResourceBrowserCache`   | Displays browser caching options in Prometheus data source configuration                                                                                                                            |
 | `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                                                                                                           |
 | `clientTokenRotation`              | Replaces the current in-request token rotation so that the client initiates the rotation                                                                                                            |
 | `prometheusDataplane`              | Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present. |

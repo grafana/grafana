@@ -301,7 +301,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     return this.awsRequest(this.dsQueryEndpoint, requestParams, {
       'X-Cache-Skip': 'true',
     }).pipe(
-      map((response) => resultsToDataFrames({ data: response })),
+      map((response) => resultsToDataFrames(response)),
       catchError((err: FetchError) => {
         if (config.featureToggles.datasourceQueryMultiStatus && err.status === 207) {
           throw err;
