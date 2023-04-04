@@ -10,6 +10,7 @@ import {
 } from '@grafana/data/src';
 import { amendTable, Table, trimTable } from 'app/features/live/data/amendTimeSeries';
 
+import { InfluxQuery } from '../../influxdb/types';
 import { PromQuery } from '../types';
 
 // dashboardUID + panelId + refId
@@ -22,7 +23,9 @@ type TargetSig = string;
 
 type TimestampMs = number;
 
-type StringInterpolator = (expr: string) => string;
+type SupportedQueryTypes = PromQuery | InfluxQuery;
+
+type StringInterpolator = (query: SupportedQueryTypes, request?: DataQueryRequest<SupportedQueryTypes>) => string;
 
 // string matching requirements defined in durationutil.ts
 export const defaultPrometheusQueryOverlapWindow = '10m';
@@ -34,7 +37,7 @@ interface TargetCache {
 }
 
 export interface CacheRequestInfo {
-  requests: Array<DataQueryRequest<PromQuery>>;
+  requests: Array<DataQueryRequest<SupportedQueryTypes>>;
   targSigs: Map<TargetIdent, TargetSig>;
   shouldCache: boolean;
 }
@@ -47,16 +50,6 @@ export interface CacheRequestInfo {
 export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
 
 /**
- * Get target signature
- * @param targExpr
- * @param request
- * @param targ
- */
-export function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ: PromQuery) {
-  return `${targExpr}|${targ.interval ?? request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.exemplar}`;
-}
-
-/**
  * NOMENCLATURE
  * Target: The request target (DataQueryRequest), i.e. a specific query reference within a panel
  * Ident: Identity: the string that is not expected to change
@@ -64,8 +57,20 @@ export function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery
  */
 export class QueryCache {
   private overlapWindowMs: number;
-  constructor(overlapString?: string) {
-    const unverifiedOverlap = overlapString ?? defaultPrometheusQueryOverlapWindow;
+  private getTargetSignature: (
+    expression: string,
+    request: DataQueryRequest<SupportedQueryTypes>,
+    target: SupportedQueryTypes
+  ) => string;
+  constructor(
+    getTargetSignature: (
+      expression: string,
+      request: DataQueryRequest<SupportedQueryTypes>,
+      target: SupportedQueryTypes
+    ) => string,
+    overlapString: string
+  ) {
+    const unverifiedOverlap = overlapString;
     if (isValidDuration(unverifiedOverlap)) {
       const duration = parseDuration(unverifiedOverlap);
       this.overlapWindowMs = durationToMilliseconds(duration);
@@ -73,12 +78,13 @@ export class QueryCache {
       const duration = parseDuration(defaultPrometheusQueryOverlapWindow);
       this.overlapWindowMs = durationToMilliseconds(duration);
     }
+    this.getTargetSignature = getTargetSignature;
   }
 
   cache = new Map<TargetIdent, TargetCache>();
 
   // can be used to change full range request to partial, split into multiple requests
-  requestInfo(request: DataQueryRequest<PromQuery>, interpolateString: StringInterpolator): CacheRequestInfo {
+  requestInfo(request: DataQueryRequest<SupportedQueryTypes>, interpolateString: StringInterpolator): CacheRequestInfo {
     // TODO: align from/to to interval to increase probability of hitting backend cache
 
     const newFrom = request.range.from.valueOf();
@@ -95,8 +101,8 @@ export class QueryCache {
     const reqTargSigs = new Map<TargetIdent, TargetSig>();
     request.targets.forEach((targ) => {
       let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
-      let targExpr = interpolateString(targ.expr);
-      let targSig = getTargSig(targExpr, request, targ); // ${request.maxDataPoints} ?
+      let targExpr = interpolateString(targ, request);
+      let targSig = this.getTargetSignature(targExpr, request, targ); // ${request.maxDataPoints} ?
 
       reqTargSigs.set(targIdent, targSig);
     });
@@ -150,7 +156,7 @@ export class QueryCache {
 
   // should amend existing cache with new frames and return full response
   procFrames(
-    request: DataQueryRequest<PromQuery>,
+    request: DataQueryRequest<SupportedQueryTypes>,
     requestInfo: CacheRequestInfo | undefined,
     respFrames: DataFrame[]
   ): DataFrame[] {

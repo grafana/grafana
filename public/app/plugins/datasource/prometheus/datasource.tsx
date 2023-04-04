@@ -11,6 +11,7 @@ import {
   AnnotationQueryRequest,
   CoreApp,
   DataFrame,
+  DataQuery,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
@@ -42,6 +43,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
 import config from '../../../core/config';
+import { InfluxQuery } from '../influxdb/types';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
@@ -49,6 +51,7 @@ import PrometheusLanguageProvider from './language_provider';
 import {
   expandRecordingRules,
   getClientCacheDurationInMinutes,
+  getPrometheusTargetSignature,
   getPrometheusTime,
   getRangeSnapInterval,
 } from './language_utils';
@@ -144,6 +147,7 @@ export class PrometheusDatasource
     this.exemplarsAvailable = true;
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
     this.cache = new QueryCache(
+      getPrometheusTargetSignature,
       instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow
     );
 
@@ -452,13 +456,23 @@ export class PrometheusDatasource
     return processedTargets;
   }
 
+  intepolateStringHelper = (query: PromQuery): string => {
+    return this.interpolateString(query.expr);
+  };
+
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
       let fullOrPartialRequest: DataQueryRequest<PromQuery>;
       let requestInfo: CacheRequestInfo | undefined = undefined;
       if (this.hasIncrementalQuery) {
-        requestInfo = this.cache.requestInfo(request, this.interpolateString.bind(this));
-        fullOrPartialRequest = requestInfo.requests[0];
+        // As long as PromQuery and InfluxQuery are incompatible types we'll need to assert
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        requestInfo = this.cache.requestInfo(
+          request,
+          this.intepolateStringHelper as (query: PromQuery | InfluxQuery) => string
+        );
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        fullOrPartialRequest = requestInfo.requests[0] as DataQueryRequest<PromQuery>;
       } else {
         fullOrPartialRequest = request;
       }
