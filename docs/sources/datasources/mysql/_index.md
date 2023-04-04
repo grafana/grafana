@@ -50,6 +50,12 @@ Administrators can also [configure the data source via YAML]({{< relref "#provis
 | `Max idle`         | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                             |
 | `Max lifetime`     | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_wait_timeout) in MySQL (Grafana v5.4+).                                                                                                                                                                                               |
 
+### Kerberos Authentication
+
+It is also possible to use kerberos authentication when running MySQL Enterprise, and will require additional setup for Grafana.
+
+For details, see the [configuring MySQL with Kerberos documentation]({{< relref "./kerberos/" >}}).
+
 ### Min time interval
 
 The **Min time interval** setting defines a lower limit for the [`$__interval`]({{< relref "../../dashboards/variables/add-template-variables#__interval" >}}) and [`$__interval_ms`]({{< relref "../../dashboards/variables/add-template-variables#__interval_ms" >}}) variables.
