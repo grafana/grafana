@@ -322,5 +322,157 @@
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/78"
     }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/candlestick",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/canvas",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/barchart",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/bargauge",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/72"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/gauge",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/72"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/geomap",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/graph",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/heatmap",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/histogram",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/icon",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/piechart",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/72"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/stat",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/72"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/state-timeline",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/status-history",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/timeseries",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/xychart",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/oss-dataviz",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/oss-bi",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/72"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/table",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/72"
+    }
   }
 ]
