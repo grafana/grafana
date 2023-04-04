@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/data",
-  "version": "9.5.0-pre",
+  "version": "9.5.0",
   "description": "Grafana Data Library",
   "keywords": [
     "typescript"
@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@braintree/sanitize-url": "6.0.2",
-    "@grafana/schema": "9.5.0-pre",
+    "@grafana/schema": "9.5.0",
     "@types/d3-interpolate": "^3.0.0",
     "d3-interpolate": "3.0.1",
     "date-fns": "2.29.3",
