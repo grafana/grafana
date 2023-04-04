@@ -31,6 +31,8 @@ const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
   };
 });
 
+days.unshift({ label: 'Everyday', value: undefined! });
+
 export function TimeRegionsEditor({ value, onChange }: Props) {
   const defaultTimezone = useMemo(() => getDashboardSrv().dashboard?.getTimezone(), []);
   const addTimeRegion = () => {
