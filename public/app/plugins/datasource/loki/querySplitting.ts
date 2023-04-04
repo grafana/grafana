@@ -16,7 +16,7 @@ import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
 import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
 import { isLogsQuery } from './queryUtils';
-import { addProgressMetadata, combineResponses } from './responseUtils';
+import { addProgressMetadata, cleanUpProgressMetadata, combineResponses } from './responseUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
 export function partitionTimeRange(
@@ -97,6 +97,7 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
 
     const done = () => {
       mergedResponse.state = LoadingState.Done;
+      cleanUpProgressMetadata(mergedResponse);
       subscriber.next(mergedResponse);
       subscriber.complete();
     };

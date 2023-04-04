@@ -5,8 +5,8 @@ import { StoreState, ExploreItemState, ExploreId } from 'app/types';
 
 type Props = { refId?: string } & ConnectedProps<typeof connector>;
 
-export function SplittingProgressDisplay({ queryResponse, refId }: Props) {
-  if (!refId) {
+export function SplittingProgressDisplay({ queryResponse, refId, loading }: Props) {
+  if (!refId || !loading) {
     return null;
   }
   const dataFrame = (queryResponse?.series || []).find((frame) => frame.refId === refId);
@@ -27,10 +27,11 @@ export function SplittingProgressDisplay({ queryResponse, refId }: Props) {
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId]!;
-  const { queryResponse } = item;
+  const { queryResponse, loading } = item;
 
   return {
     queryResponse,
+    loading,
   };
 }
 

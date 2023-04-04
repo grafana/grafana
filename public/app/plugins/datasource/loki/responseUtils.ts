@@ -245,3 +245,13 @@ export function addProgressMetadata(
 
   return response;
 }
+
+export function cleanUpProgressMetadata(response: DataQueryResponse) {
+  response.data.forEach((frame: DataFrame) => {
+    frame.meta = {
+      ...frame.meta,
+      custom: undefined,
+    };
+  });
+  return response;
+}
