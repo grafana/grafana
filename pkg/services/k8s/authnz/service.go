@@ -19,7 +19,10 @@ import (
 	authzV1 "k8s.io/api/authorization/v1"
 )
 
-const GrafanaAdminK8sUser = "gl-admin"
+const (
+	GrafanaAdminK8sUser = "gl-admin"
+	ApiServerUser       = "system:apiserver" // Constant provided for writing customer RBAC rules that may want to skip authorization for apiserver
+)
 
 type K8sAuthnzAPI struct {
 	accessControl accesscontrol.AccessControl
@@ -97,6 +100,8 @@ func (api *K8sAuthnzAPI) authenticate(c *contextmodel.ReqContext) response.Respo
 		extra := make(map[string]authnV1.ExtraValue)
 		extra["token-name"] = []string{c.SignedInUser.Name}
 		extra["org-role"] = []string{string(c.SignedInUser.OrgRole)}
+		extra["org-id"] = []string{strconv.FormatInt(c.SignedInUser.OrgID, 10)}
+		extra["user-id"] = []string{strconv.FormatInt(c.SignedInUser.UserID, 10)}
 		return sendV1Response(authnV1.UserInfo{
 			// SignedInUser.Name could be anything, since it's just the token name
 			// as entered by the user. We normalize it for subsequent use in the authorization flow.
