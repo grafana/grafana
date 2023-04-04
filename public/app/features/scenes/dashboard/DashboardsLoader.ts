@@ -19,6 +19,7 @@ import {
   DataSourceVariable,
   QueryVariable,
   ConstantVariable,
+  SceneRefreshPicker,
   SceneDataTransformer,
   SceneGridItem,
 } from '@grafana/scenes';
@@ -178,7 +179,13 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       children: createSceneObjectsForPanels(oldModel.panels),
     }),
     $timeRange: new SceneTimeRange(oldModel.time),
-    actions: [new SceneTimePicker({})],
+    actions: [
+      new SceneTimePicker({}),
+      new SceneRefreshPicker({
+        refresh: oldModel.refresh,
+        intervals: oldModel.timepicker.refresh_intervals,
+      }),
+    ],
     $variables: variables,
     ...(variables && {
       controls: [new VariableValueSelectors({})],
