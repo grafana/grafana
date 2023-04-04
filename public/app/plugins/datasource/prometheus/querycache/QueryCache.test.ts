@@ -2,11 +2,16 @@ import moment from 'moment';
 
 import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@grafana/data/src';
 
+import { getPrometheusTargetSignature } from '../language_utils';
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
 
-import { getTargSig, QueryCache } from './QueryCache';
+import { QueryCache } from './QueryCache';
 import { IncrementalStorageDataFrameScenarios } from './QueryCacheTestData';
+
+const interpolateStringTest = (query: PromQuery) => {
+  return query.expr;
+};
 
 const mockRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQueryRequest<PromQuery> => {
   // Histogram
@@ -50,12 +55,12 @@ const mockRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQueryR
 
 describe('QueryCache', function () {
   it('instantiates', () => {
-    const storage = new QueryCache();
+    const storage = new QueryCache(() => '', '10m');
     expect(storage).toBeInstanceOf(QueryCache);
   });
 
   it('will not modify or crash with empty response', () => {
-    const storage = new QueryCache();
+    const storage = new QueryCache(() => '', '10m');
     const firstFrames: DataFrame[] = [];
     const secondFrames: DataFrame[] = [];
 
@@ -161,7 +166,7 @@ describe('QueryCache', function () {
       IncrementalStorageDataFrameScenarios.histogram.getSeriesWithGapAtStart(),
     ];
     scenarios.forEach((scenario, index) => {
-      const storage = new QueryCache();
+      const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m');
       const firstFrames = scenario.first.dataFrames as unknown as DataFrame[];
       const secondFrames = scenario.second.dataFrames as unknown as DataFrame[];
 
@@ -210,7 +215,7 @@ describe('QueryCache', function () {
       });
 
       // But the signature can, and we should clean up any non-matching signatures
-      const targetSignature = getTargSig(request.targets[0].expr, request, request.targets[0]);
+      const targetSignature = getPrometheusTargetSignature(request.targets[0].expr, request, request.targets[0]);
 
       targetSignatures.set(targetIdentity, targetSignature);
 
@@ -274,9 +279,6 @@ describe('QueryCache', function () {
         });
       });
 
-      const interpolateString = (s: string) => {
-        return s;
-      };
       const secondRequestModified = {
         ...secondRequest,
         range: {
@@ -284,7 +286,7 @@ describe('QueryCache', function () {
           to: dateTime(secondRequest.range.to.valueOf() + 30000),
         },
       };
-      const cacheRequest = storage.requestInfo(secondRequestModified, interpolateString);
+      const cacheRequest = storage.requestInfo(secondRequestModified, interpolateStringTest);
       expect(cacheRequest.requests[0].targets).toEqual(secondRequestModified.targets);
       expect(cacheRequest.requests[0].range.to).toEqual(secondRequestModified.range.to);
       expect(cacheRequest.requests[0].range.raw).toEqual(secondRequestModified.range.raw);
@@ -296,7 +298,7 @@ describe('QueryCache', function () {
   });
 
   it('Will evict old dataframes, and use stored data when user shortens query window', () => {
-    const storage = new QueryCache();
+    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m');
 
     // Initial request with all data for time range
     const firstFrames = IncrementalStorageDataFrameScenarios.histogram.evictionRequests.first
@@ -443,7 +445,7 @@ describe('QueryCache', function () {
       interval: requestInterval,
       targets: [target],
     });
-    const targSig = getTargSig('__EXPR__', request, target);
+    const targSig = getPrometheusTargetSignature('__EXPR__', request, target);
     expect(targSig).toContain(targetInterval);
     expect(targSig.includes(requestInterval)).toBeFalsy();
   });
@@ -457,33 +459,24 @@ describe('QueryCache', function () {
       },
       rangeRaw: { from: '2023-01-30T19:33:01.332Z', to: '2023-01-30T20:33:01.332Z' },
     });
-    const storage = new QueryCache();
-    const interpolateString = (s: string) => {
-      return s;
-    };
-    const cacheRequest = storage.requestInfo(request, interpolateString);
+    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m');
+    const cacheRequest = storage.requestInfo(request, interpolateStringTest);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(false);
   });
 
   it('mark request as shouldCache', () => {
     const request = mockRequest();
-    const storage = new QueryCache();
-    const interpolateString = (s: string) => {
-      return s;
-    };
-    const cacheRequest = storage.requestInfo(request, interpolateString);
+    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m');
+    const cacheRequest = storage.requestInfo(request, interpolateStringTest);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(true);
   });
 
   it('Should modify request', () => {
     const request = mockRequest();
-    const storage = new QueryCache();
-    const interpolateString = (s: string) => {
-      return s;
-    };
-    const cacheRequest = storage.requestInfo(request, interpolateString);
+    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m');
+    const cacheRequest = storage.requestInfo(request, interpolateStringTest);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(true);
   });

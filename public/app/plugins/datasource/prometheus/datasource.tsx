@@ -11,7 +11,6 @@ import {
   AnnotationQueryRequest,
   CoreApp,
   DataFrame,
-  DataQuery,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
@@ -110,7 +109,7 @@ export class PrometheusDatasource
   subType: PromApplication;
   rulerEnabled: boolean;
   cacheLevel: PrometheusCacheLevel;
-  cache: QueryCache;
+  cache: QueryCache<PromQuery>;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -463,16 +462,10 @@ export class PrometheusDatasource
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
       let fullOrPartialRequest: DataQueryRequest<PromQuery>;
-      let requestInfo: CacheRequestInfo | undefined = undefined;
+      let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
       if (this.hasIncrementalQuery) {
-        // As long as PromQuery and InfluxQuery are incompatible types we'll need to assert
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        requestInfo = this.cache.requestInfo(
-          request,
-          this.intepolateStringHelper as (query: PromQuery | InfluxQuery) => string
-        );
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        fullOrPartialRequest = requestInfo.requests[0] as DataQueryRequest<PromQuery>;
+        requestInfo = this.cache.requestInfo(request, this.intepolateStringHelper);
+        fullOrPartialRequest = requestInfo.requests[0];
       } else {
         fullOrPartialRequest = request;
       }

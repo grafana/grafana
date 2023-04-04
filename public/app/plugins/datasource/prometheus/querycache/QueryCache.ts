@@ -25,7 +25,7 @@ type TimestampMs = number;
 
 type SupportedQueryTypes = PromQuery | InfluxQuery;
 
-type StringInterpolator = (query: SupportedQueryTypes, request?: DataQueryRequest<SupportedQueryTypes>) => string;
+export type StringInterpolator<T extends SupportedQueryTypes> = (query: T, request?: DataQueryRequest<T>) => string;
 
 // string matching requirements defined in durationutil.ts
 export const defaultPrometheusQueryOverlapWindow = '10m';
@@ -36,8 +36,8 @@ interface TargetCache {
   frames: DataFrame[];
 }
 
-export interface CacheRequestInfo {
-  requests: Array<DataQueryRequest<SupportedQueryTypes>>;
+export interface CacheRequestInfo<T extends SupportedQueryTypes> {
+  requests: Array<DataQueryRequest<T>>;
   targSigs: Map<TargetIdent, TargetSig>;
   shouldCache: boolean;
 }
@@ -55,19 +55,11 @@ export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JS
  * Ident: Identity: the string that is not expected to change
  * Sig: Signature: the string that is expected to change, upon which we wipe the cache fields
  */
-export class QueryCache {
+export class QueryCache<T extends SupportedQueryTypes> {
   private overlapWindowMs: number;
-  private getTargetSignature: (
-    expression: string,
-    request: DataQueryRequest<SupportedQueryTypes>,
-    target: SupportedQueryTypes
-  ) => string;
+  private getTargetSignature: (expression: string, request: DataQueryRequest<T>, target: T) => string;
   constructor(
-    getTargetSignature: (
-      expression: string,
-      request: DataQueryRequest<SupportedQueryTypes>,
-      target: SupportedQueryTypes
-    ) => string,
+    getTargetSignature: (expression: string, request: DataQueryRequest<T>, target: T) => string,
     overlapString: string
   ) {
     const unverifiedOverlap = overlapString;
@@ -84,7 +76,7 @@ export class QueryCache {
   cache = new Map<TargetIdent, TargetCache>();
 
   // can be used to change full range request to partial, split into multiple requests
-  requestInfo(request: DataQueryRequest<SupportedQueryTypes>, interpolateString: StringInterpolator): CacheRequestInfo {
+  requestInfo(request: DataQueryRequest<T>, interpolateString: StringInterpolator<T>): CacheRequestInfo<T> {
     // TODO: align from/to to interval to increase probability of hitting backend cache
 
     const newFrom = request.range.from.valueOf();
@@ -156,8 +148,8 @@ export class QueryCache {
 
   // should amend existing cache with new frames and return full response
   procFrames(
-    request: DataQueryRequest<SupportedQueryTypes>,
-    requestInfo: CacheRequestInfo | undefined,
+    request: DataQueryRequest<T>,
+    requestInfo: CacheRequestInfo<T> | undefined,
     respFrames: DataFrame[]
   ): DataFrame[] {
     if (requestInfo?.shouldCache) {
