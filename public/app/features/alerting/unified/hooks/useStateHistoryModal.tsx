@@ -1,11 +1,23 @@
-import React, { useMemo, useState } from 'react';
+import React, { lazy, Suspense, useMemo, useState } from 'react';
 
+import { config } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 
-import { StateHistory } from '../components/rules/StateHistory';
+const AnnotationsStateHistory = lazy(() => import('../components/rules/StateHistory'));
+const LokiStateHistory = lazy(() => import('../components/rules/LokiStateHistory'));
+
+enum StateHistoryImplementation {
+  Loki,
+  Annotations,
+}
 
 function useStateHistoryModal(alertId: string) {
   const [showModal, setShowModal] = useState<boolean>(false);
+
+  const implementation =
+    config.unifiedAlerting.alertStateHistoryBackend === 'loki'
+      ? StateHistoryImplementation.Loki
+      : StateHistoryImplementation.Annotations;
 
   const StateHistoryModal = useMemo(
     () => (
@@ -16,10 +28,13 @@ function useStateHistoryModal(alertId: string) {
         closeOnEscape={true}
         title="State history"
       >
-        <StateHistory alertId={alertId} />
+        <Suspense fallback={'Loading...'}>
+          {implementation === StateHistoryImplementation.Loki && <LokiStateHistory ruleUID={alertId} />}
+          {implementation === StateHistoryImplementation.Annotations && <AnnotationsStateHistory alertId={alertId} />}
+        </Suspense>
       </Modal>
     ),
-    [alertId, showModal]
+    [alertId, showModal, implementation]
   );
 
   return {
