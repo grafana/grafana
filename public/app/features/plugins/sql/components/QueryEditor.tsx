@@ -9,15 +9,13 @@ import { applyQueryDefaults } from '../defaults';
 import { SQLQuery, QueryRowFilter, SQLOptions } from '../types';
 import { haveColumns } from '../utils/sql.utils';
 
-import { QueryHeader, QueryHeaderProps } from './QueryHeader';
+import { QueryHeader } from './QueryHeader';
 import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
-interface Props extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
-  queryHeaderProps?: Pick<QueryHeaderProps, 'isDatasetSelectorHidden'>;
-}
+interface Props extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {}
 
-export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range, queryHeaderProps }: Props) {
+export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range }: Props) {
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
   const { preconfiguredDatabase } = datasource;
@@ -102,7 +100,6 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
         queryRowFilter={queryRowFilter}
         query={queryWithDefaults}
         isQueryRunnable={isQueryRunnable}
-        {...queryHeaderProps}
       />
 
       <Space v={0.5} />

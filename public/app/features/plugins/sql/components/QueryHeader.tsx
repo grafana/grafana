@@ -21,7 +21,6 @@ export interface QueryHeaderProps {
   onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
   queryRowFilter: QueryRowFilter;
   isQueryRunnable: boolean;
-  isDatasetSelectorHidden?: boolean;
 }
 
 const editorModes = [
@@ -38,7 +37,6 @@ export function QueryHeader({
   onRunQuery,
   onQueryRowChange,
   isQueryRunnable,
-  isDatasetSelectorHidden,
 }: QueryHeaderProps) {
   const { editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -207,17 +205,14 @@ export function QueryHeader({
         <>
           <Space v={0.5} />
           <EditorRow>
-            {isDatasetSelectorHidden ? null : (
-              <EditorField label="Dataset" width={25}>
-                <DatasetSelector
-                  db={db}
-                  dataset={query.dataset === undefined ? null : query.dataset}
-                  preconfiguredDataset={preconfiguredDataset}
-                  onChange={onDatasetChange}
-                />
-              </EditorField>
-            )}
-
+            <EditorField label="Dataset" width={25}>
+              <DatasetSelector
+                db={db}
+                dataset={query.dataset === undefined ? null : query.dataset}
+                preconfiguredDataset={preconfiguredDataset}
+                onChange={onDatasetChange}
+              />
+            </EditorField>
             <EditorField label="Table" width={25}>
               <TableSelector
                 db={db}
