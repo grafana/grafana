@@ -129,15 +129,6 @@ In same cases the query editor can detect which operations would be most appropr
 
 This section is only shown if the `Explain query` switch from the query editor top toolbar is set to `on`. It shows a step by step explanation of all query parts and the operations.
 
-### Raw query
-
-It shows the raw query that will be created and executed by the query editor.
-
-There are two types of LogQL queries:
-
-- Log queries
-- Metric queries
-
 ## Create a log query
 
 Loki log queries return the contents of the log lines.

@@ -2,7 +2,6 @@ package statscollector
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -74,7 +73,6 @@ func ProvideService(
 		s.collectConcurrentUsers,
 		s.collectDatasourceStats,
 		s.collectDatasourceAccess,
-		s.collectElasticStats,
 		s.collectAlertNotifierStats,
 		s.collectPrometheusFlavors,
 		s.collectAdditionalMetrics,
@@ -110,56 +108,56 @@ func (s *Service) Run(ctx context.Context) error {
 func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 
-	statsQuery := stats.GetSystemStatsQuery{}
-	if err := s.statsService.GetSystemStats(ctx, &statsQuery); err != nil {
+	statsResult, err := s.statsService.GetSystemStats(ctx, &stats.GetSystemStatsQuery{})
+	if err != nil {
 		s.log.Error("Failed to get system stats", "error", err)
 		return nil, err
 	}
 
-	m["stats.dashboards.count"] = statsQuery.Result.Dashboards
-	m["stats.users.count"] = statsQuery.Result.Users
-	m["stats.admins.count"] = statsQuery.Result.Admins
-	m["stats.editors.count"] = statsQuery.Result.Editors
-	m["stats.viewers.count"] = statsQuery.Result.Viewers
-	m["stats.orgs.count"] = statsQuery.Result.Orgs
-	m["stats.playlist.count"] = statsQuery.Result.Playlists
+	m["stats.dashboards.count"] = statsResult.Dashboards
+	m["stats.users.count"] = statsResult.Users
+	m["stats.admins.count"] = statsResult.Admins
+	m["stats.editors.count"] = statsResult.Editors
+	m["stats.viewers.count"] = statsResult.Viewers
+	m["stats.orgs.count"] = statsResult.Orgs
+	m["stats.playlist.count"] = statsResult.Playlists
 	m["stats.plugins.apps.count"] = s.appCount(ctx)
 	m["stats.plugins.panels.count"] = s.panelCount(ctx)
 	m["stats.plugins.datasources.count"] = s.dataSourceCount(ctx)
-	m["stats.alerts.count"] = statsQuery.Result.Alerts
-	m["stats.active_users.count"] = statsQuery.Result.ActiveUsers
-	m["stats.active_admins.count"] = statsQuery.Result.ActiveAdmins
-	m["stats.active_editors.count"] = statsQuery.Result.ActiveEditors
-	m["stats.active_viewers.count"] = statsQuery.Result.ActiveViewers
-	m["stats.active_sessions.count"] = statsQuery.Result.ActiveSessions
-	m["stats.monthly_active_users.count"] = statsQuery.Result.MonthlyActiveUsers
-	m["stats.daily_active_users.count"] = statsQuery.Result.DailyActiveUsers
-	m["stats.daily_active_admins.count"] = statsQuery.Result.DailyActiveAdmins
-	m["stats.daily_active_editors.count"] = statsQuery.Result.DailyActiveEditors
-	m["stats.daily_active_viewers.count"] = statsQuery.Result.DailyActiveViewers
-	m["stats.daily_active_sessions.count"] = statsQuery.Result.DailyActiveSessions
-	m["stats.datasources.count"] = statsQuery.Result.Datasources
-	m["stats.stars.count"] = statsQuery.Result.Stars
-	m["stats.folders.count"] = statsQuery.Result.Folders
-	m["stats.dashboard_permissions.count"] = statsQuery.Result.DashboardPermissions
-	m["stats.folder_permissions.count"] = statsQuery.Result.FolderPermissions
-	m["stats.provisioned_dashboards.count"] = statsQuery.Result.ProvisionedDashboards
-	m["stats.snapshots.count"] = statsQuery.Result.Snapshots
-	m["stats.teams.count"] = statsQuery.Result.Teams
-	m["stats.total_auth_token.count"] = statsQuery.Result.AuthTokens
-	m["stats.dashboard_versions.count"] = statsQuery.Result.DashboardVersions
-	m["stats.annotations.count"] = statsQuery.Result.Annotations
-	m["stats.alert_rules.count"] = statsQuery.Result.AlertRules
-	m["stats.library_panels.count"] = statsQuery.Result.LibraryPanels
-	m["stats.library_variables.count"] = statsQuery.Result.LibraryVariables
-	m["stats.dashboards_viewers_can_edit.count"] = statsQuery.Result.DashboardsViewersCanEdit
-	m["stats.dashboards_viewers_can_admin.count"] = statsQuery.Result.DashboardsViewersCanAdmin
-	m["stats.folders_viewers_can_edit.count"] = statsQuery.Result.FoldersViewersCanEdit
-	m["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
-	m["stats.api_keys.count"] = statsQuery.Result.APIKeys
-	m["stats.data_keys.count"] = statsQuery.Result.DataKeys
-	m["stats.active_data_keys.count"] = statsQuery.Result.ActiveDataKeys
-	m["stats.public_dashboards.count"] = statsQuery.Result.PublicDashboards
+	m["stats.alerts.count"] = statsResult.Alerts
+	m["stats.active_users.count"] = statsResult.ActiveUsers
+	m["stats.active_admins.count"] = statsResult.ActiveAdmins
+	m["stats.active_editors.count"] = statsResult.ActiveEditors
+	m["stats.active_viewers.count"] = statsResult.ActiveViewers
+	m["stats.active_sessions.count"] = statsResult.ActiveSessions
+	m["stats.monthly_active_users.count"] = statsResult.MonthlyActiveUsers
+	m["stats.daily_active_users.count"] = statsResult.DailyActiveUsers
+	m["stats.daily_active_admins.count"] = statsResult.DailyActiveAdmins
+	m["stats.daily_active_editors.count"] = statsResult.DailyActiveEditors
+	m["stats.daily_active_viewers.count"] = statsResult.DailyActiveViewers
+	m["stats.daily_active_sessions.count"] = statsResult.DailyActiveSessions
+	m["stats.datasources.count"] = statsResult.Datasources
+	m["stats.stars.count"] = statsResult.Stars
+	m["stats.folders.count"] = statsResult.Folders
+	m["stats.dashboard_permissions.count"] = statsResult.DashboardPermissions
+	m["stats.folder_permissions.count"] = statsResult.FolderPermissions
+	m["stats.provisioned_dashboards.count"] = statsResult.ProvisionedDashboards
+	m["stats.snapshots.count"] = statsResult.Snapshots
+	m["stats.teams.count"] = statsResult.Teams
+	m["stats.total_auth_token.count"] = statsResult.AuthTokens
+	m["stats.dashboard_versions.count"] = statsResult.DashboardVersions
+	m["stats.annotations.count"] = statsResult.Annotations
+	m["stats.alert_rules.count"] = statsResult.AlertRules
+	m["stats.library_panels.count"] = statsResult.LibraryPanels
+	m["stats.library_variables.count"] = statsResult.LibraryVariables
+	m["stats.dashboards_viewers_can_edit.count"] = statsResult.DashboardsViewersCanEdit
+	m["stats.dashboards_viewers_can_admin.count"] = statsResult.DashboardsViewersCanAdmin
+	m["stats.folders_viewers_can_edit.count"] = statsResult.FoldersViewersCanEdit
+	m["stats.folders_viewers_can_admin.count"] = statsResult.FoldersViewersCanAdmin
+	m["stats.api_keys.count"] = statsResult.APIKeys
+	m["stats.data_keys.count"] = statsResult.DataKeys
+	m["stats.active_data_keys.count"] = statsResult.ActiveDataKeys
+	m["stats.public_dashboards.count"] = statsResult.PublicDashboards
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
@@ -170,8 +168,8 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	m["stats.edition.oss.count"] = ossEditionCount
 	m["stats.edition.enterprise.count"] = enterpriseEditionCount
 
-	userCount := statsQuery.Result.Users
-	avgAuthTokensPerUser := statsQuery.Result.AuthTokens
+	userCount := statsResult.Users
+	avgAuthTokensPerUser := statsResult.AuthTokens
 	if userCount != 0 {
 		avgAuthTokensPerUser /= userCount
 	}
@@ -204,13 +202,13 @@ func (s *Service) collectAdditionalMetrics(ctx context.Context) (map[string]inte
 func (s *Service) collectAlertNotifierStats(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 	// get stats about alert notifier usage
-	anStats := stats.GetAlertNotifierUsageStatsQuery{}
-	if err := s.statsService.GetAlertNotifiersUsageStats(ctx, &anStats); err != nil {
+	anResult, err := s.statsService.GetAlertNotifiersUsageStats(ctx, &stats.GetAlertNotifierUsageStatsQuery{})
+	if err != nil {
 		s.log.Error("Failed to get alert notification stats", "error", err)
 		return nil, err
 	}
 
-	for _, stats := range anStats.Result {
+	for _, stats := range anResult {
 		m["stats.alert_notifiers."+stats.Type+".count"] = stats.Count
 	}
 	return m, nil
@@ -218,8 +216,8 @@ func (s *Service) collectAlertNotifierStats(ctx context.Context) (map[string]int
 
 func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
-	dsStats := stats.GetDataSourceStatsQuery{}
-	if err := s.statsService.GetDataSourceStats(ctx, &dsStats); err != nil {
+	dsResult, err := s.statsService.GetDataSourceStats(ctx, &stats.GetDataSourceStatsQuery{})
+	if err != nil {
 		s.log.Error("Failed to get datasource stats", "error", err)
 		return nil, err
 	}
@@ -228,7 +226,7 @@ func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interf
 	// but ignore any custom data sources
 	// as sending that name could be sensitive information
 	dsOtherCount := 0
-	for _, dsStat := range dsStats.Result {
+	for _, dsStat := range dsResult {
 		if s.validator.ShouldBeReported(ctx, dsStat.Type) {
 			m["stats.ds."+dsStat.Type+".count"] = dsStat.Count
 		} else {
@@ -240,34 +238,12 @@ func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interf
 	return m, nil
 }
 
-func (s *Service) collectElasticStats(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
-	esDataSourcesQuery := datasources.GetDataSourcesByTypeQuery{Type: datasources.DS_ES}
-	dataSources, err := s.datasources.GetDataSourcesByType(ctx, &esDataSourcesQuery)
-	if err != nil {
-		s.log.Error("Failed to get elasticsearch json data", "error", err)
-		return nil, err
-	}
-	for _, data := range dataSources {
-		esVersion, err := data.JsonData.Get("esVersion").String()
-		if err != nil {
-			continue
-		}
-		statName := fmt.Sprintf("stats.ds.elasticsearch.v%s.count", strings.ReplaceAll(esVersion, ".", "_"))
-
-		count, _ := m[statName].(int64)
-
-		m[statName] = count + 1
-	}
-	return m, nil
-}
-
 func (s *Service) collectDatasourceAccess(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 
 	// fetch datasource access stats
-	dsAccessStats := stats.GetDataSourceAccessStatsQuery{}
-	if err := s.statsService.GetDataSourceAccessStats(ctx, &dsAccessStats); err != nil {
+	dsAccessResult, err := s.statsService.GetDataSourceAccessStats(ctx, &stats.GetDataSourceAccessStatsQuery{})
+	if err != nil {
 		s.log.Error("Failed to get datasource access stats", "error", err)
 		return nil, err
 	}
@@ -276,7 +252,7 @@ func (s *Service) collectDatasourceAccess(ctx context.Context) (map[string]inter
 	// but ignore any custom data sources
 	// as sending that name could be sensitive information
 	dsAccessOtherCount := make(map[string]int64)
-	for _, dsAccessStat := range dsAccessStats.Result {
+	for _, dsAccessStat := range dsAccessResult {
 		if dsAccessStat.Access == "" {
 			continue
 		}
@@ -302,49 +278,49 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 		return false
 	}
 
-	statsQuery := stats.GetSystemStatsQuery{}
-	if err := s.statsService.GetSystemStats(ctx, &statsQuery); err != nil {
+	statsResult, err := s.statsService.GetSystemStats(ctx, &stats.GetSystemStatsQuery{})
+	if err != nil {
 		s.log.Error("Failed to get system stats", "error", err)
 		return false
 	}
 
-	if statsQuery.Result == nil {
+	if statsResult == nil {
 		s.log.Error("Cannot retrieve system stats")
 		return false
 	}
 
-	metrics.MStatTotalDashboards.Set(float64(statsQuery.Result.Dashboards))
-	metrics.MStatTotalFolders.Set(float64(statsQuery.Result.Folders))
-	metrics.MStatTotalUsers.Set(float64(statsQuery.Result.Users))
-	metrics.MStatTotalTeams.Set(float64(statsQuery.Result.Teams))
-	metrics.MStatActiveUsers.Set(float64(statsQuery.Result.ActiveUsers))
-	metrics.MStatTotalPlaylists.Set(float64(statsQuery.Result.Playlists))
-	metrics.MStatTotalOrgs.Set(float64(statsQuery.Result.Orgs))
-	metrics.StatsTotalViewers.Set(float64(statsQuery.Result.Viewers))
-	metrics.StatsTotalActiveViewers.Set(float64(statsQuery.Result.ActiveViewers))
-	metrics.StatsTotalEditors.Set(float64(statsQuery.Result.Editors))
-	metrics.StatsTotalActiveEditors.Set(float64(statsQuery.Result.ActiveEditors))
-	metrics.StatsTotalAdmins.Set(float64(statsQuery.Result.Admins))
-	metrics.StatsTotalActiveAdmins.Set(float64(statsQuery.Result.ActiveAdmins))
-	metrics.StatsTotalDashboardVersions.Set(float64(statsQuery.Result.DashboardVersions))
-	metrics.StatsTotalAnnotations.Set(float64(statsQuery.Result.Annotations))
-	metrics.StatsTotalAlertRules.Set(float64(statsQuery.Result.AlertRules))
-	metrics.StatsTotalLibraryPanels.Set(float64(statsQuery.Result.LibraryPanels))
-	metrics.StatsTotalLibraryVariables.Set(float64(statsQuery.Result.LibraryVariables))
+	metrics.MStatTotalDashboards.Set(float64(statsResult.Dashboards))
+	metrics.MStatTotalFolders.Set(float64(statsResult.Folders))
+	metrics.MStatTotalUsers.Set(float64(statsResult.Users))
+	metrics.MStatTotalTeams.Set(float64(statsResult.Teams))
+	metrics.MStatActiveUsers.Set(float64(statsResult.ActiveUsers))
+	metrics.MStatTotalPlaylists.Set(float64(statsResult.Playlists))
+	metrics.MStatTotalOrgs.Set(float64(statsResult.Orgs))
+	metrics.StatsTotalViewers.Set(float64(statsResult.Viewers))
+	metrics.StatsTotalActiveViewers.Set(float64(statsResult.ActiveViewers))
+	metrics.StatsTotalEditors.Set(float64(statsResult.Editors))
+	metrics.StatsTotalActiveEditors.Set(float64(statsResult.ActiveEditors))
+	metrics.StatsTotalAdmins.Set(float64(statsResult.Admins))
+	metrics.StatsTotalActiveAdmins.Set(float64(statsResult.ActiveAdmins))
+	metrics.StatsTotalDashboardVersions.Set(float64(statsResult.DashboardVersions))
+	metrics.StatsTotalAnnotations.Set(float64(statsResult.Annotations))
+	metrics.StatsTotalAlertRules.Set(float64(statsResult.AlertRules))
+	metrics.StatsTotalLibraryPanels.Set(float64(statsResult.LibraryPanels))
+	metrics.StatsTotalLibraryVariables.Set(float64(statsResult.LibraryVariables))
 
-	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "true"}).Set(float64(statsQuery.Result.ActiveDataKeys))
-	inactiveDataKeys := statsQuery.Result.DataKeys - statsQuery.Result.ActiveDataKeys
+	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "true"}).Set(float64(statsResult.ActiveDataKeys))
+	inactiveDataKeys := statsResult.DataKeys - statsResult.ActiveDataKeys
 	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "false"}).Set(float64(inactiveDataKeys))
 
-	metrics.MStatTotalPublicDashboards.Set(float64(statsQuery.Result.PublicDashboards))
+	metrics.MStatTotalPublicDashboards.Set(float64(statsResult.PublicDashboards))
 
-	dsStats := stats.GetDataSourceStatsQuery{}
-	if err := s.statsService.GetDataSourceStats(ctx, &dsStats); err != nil {
+	dsResult, err := s.statsService.GetDataSourceStats(ctx, &stats.GetDataSourceStatsQuery{})
+	if err != nil {
 		s.log.Error("Failed to get datasource stats", "error", err)
 		return true
 	}
 
-	for _, dsStat := range dsStats.Result {
+	for _, dsStat := range dsResult {
 		metrics.StatsTotalDataSources.WithLabelValues(dsStat.Type).Set(float64(dsStat.Count))
 	}
 	return true
