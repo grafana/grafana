@@ -901,7 +901,7 @@ steps:
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - go clean -testcache
-  - go test -run IntegrationRedis -covermode=atomic -timeout=5m ./pkg/...
+  - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
   depends_on:
   - wire-install
   environment:
@@ -911,7 +911,7 @@ steps:
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - go clean -testcache
-  - go test -run IntegrationMemcached -covermode=atomic -timeout=5m ./pkg/...
+  - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
   depends_on:
   - wire-install
   environment:
@@ -1905,7 +1905,7 @@ steps:
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - go clean -testcache
-  - go test -run IntegrationRedis -covermode=atomic -timeout=5m ./pkg/...
+  - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
   depends_on:
   - wire-install
   environment:
@@ -1915,7 +1915,7 @@ steps:
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - go clean -testcache
-  - go test -run IntegrationMemcached -covermode=atomic -timeout=5m ./pkg/...
+  - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
   depends_on:
   - wire-install
   environment:
@@ -3378,7 +3378,7 @@ steps:
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - go clean -testcache
-  - go test -run IntegrationRedis -covermode=atomic -timeout=5m ./pkg/...
+  - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
   depends_on:
   - wire-install
   environment:
@@ -3388,7 +3388,7 @@ steps:
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - go clean -testcache
-  - go test -run IntegrationMemcached -covermode=atomic -timeout=5m ./pkg/...
+  - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
   depends_on:
   - wire-install
   environment:
@@ -6051,7 +6051,7 @@ steps:
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - go clean -testcache
-  - go test -run IntegrationRedis -covermode=atomic -timeout=5m ./pkg/...
+  - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
   depends_on:
   - wire-install
   environment:
@@ -6061,7 +6061,7 @@ steps:
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - go clean -testcache
-  - go test -run IntegrationMemcached -covermode=atomic -timeout=5m ./pkg/...
+  - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
   depends_on:
   - wire-install
   environment:
@@ -6694,6 +6694,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 90078512e4a14f9454a27154e9b6a564e7e984caa86d1efb485ca29b5b145cd2
+hmac: a7a58a49a2e03b413e18e50e945b2e724d9e9741ebe1a50cc1f7d1ee9ae56883
 
 ...
