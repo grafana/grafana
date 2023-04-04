@@ -1,0 +1,18 @@
+{
+  "type": "panel",
+  "name": "PMM Advisors",
+  "id": "pmm-check-panel",
+  "skipDataQuery": true,
+  "info": {
+    "description": "A panel to visualize results from advisors.",
+    "author": {
+      "name": "Percona",
+      "url": "https://percona.com"
+    },
+    "keywords": ["percona", "plugin", "security"],
+    "logos": {
+      "small": "img/pmm-logo.svg",
+      "large": "img/pmm-logo.svg"
+    }
+  }
+}

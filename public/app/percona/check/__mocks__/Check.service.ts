@@ -1,4 +1,4 @@
-import { ServiceFailedCheck } from 'app/percona/check/types';
+import { FailedCheckSummary, ServiceFailedCheck } from 'app/percona/check/types';
 import { PaginatedFomattedResponse, Severity } from 'app/percona/shared/core';
 
 /**
@@ -42,5 +42,23 @@ export const CheckService = {
         },
       ],
     };
+  },
+  async getAllFailedChecks(): Promise<FailedCheckSummary[]> {
+    return [
+      {
+        serviceName: 'Service One',
+        serviceId: 's1',
+        counts: {
+          emergency: 0,
+          alert: 0,
+          critical: 0,
+          error: 0,
+          warning: 0,
+          notice: 0,
+          info: 0,
+          debug: 0,
+        },
+      },
+    ];
   },
 };

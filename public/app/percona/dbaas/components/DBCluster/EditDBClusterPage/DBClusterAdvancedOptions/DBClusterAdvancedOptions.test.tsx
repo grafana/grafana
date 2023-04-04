@@ -207,6 +207,7 @@ describe('DBClusterAdvancedOptions::', () => {
     await waitFor(() =>
       render(
         <Form
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
           onSubmit={jest.fn() as (values: Record<string, any>) => Promise<void>}
           mutators={{ ...arrayMutators }}
           render={({ form, handleSubmit, valid, pristine, ...props }) => (
