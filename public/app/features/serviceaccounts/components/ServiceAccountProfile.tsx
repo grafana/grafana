@@ -16,14 +16,13 @@ import { ServiceAccountRoleRow } from './ServiceAccountRoleRow';
 interface Props {
   serviceAccount: ServiceAccountDTO;
   timeZone: TimeZone;
-  roleOptions: Role[];
   onChange: (serviceAccount: ServiceAccountDTO) => void;
 }
 
-export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, onChange }: Props): JSX.Element {
+export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
-  const [roles, setRoles] = React.useState<Role[]>(roleOptions);
+  const [roles, setRoles] = React.useState<Role[]>([]);
 
   const onRoleChange = (role: OrgRole) => {
     onChange({ ...serviceAccount, role: role });
@@ -33,9 +32,6 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, o
     onChange({ ...serviceAccount, name: newValue });
   };
   React.useEffect(() => {
-    if (roleOptions.length > 0) {
-      return;
-    }
     if (contextSrv.licensedAccessControlEnabled()) {
       if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
         fetchRoleOptions(serviceAccount.orgId)
@@ -48,7 +44,7 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, o
           });
       }
     }
-  }, [roleOptions, serviceAccount.orgId]);
+  }, [serviceAccount.orgId]);
 
   return (
     <div className={styles.section}>
