@@ -61,7 +61,8 @@ type FrontendSettingsReportingDTO struct {
 }
 
 type FrontendSettingsUnifiedAlertingDTO struct {
-	MinInterval string `json:"minInterval"`
+	MinInterval              string `json:"minInterval"`
+	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
 }
 
 type DashboardPreviewsSystemRequirements struct {
