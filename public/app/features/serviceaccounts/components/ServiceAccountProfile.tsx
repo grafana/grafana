@@ -30,6 +30,7 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
   };
   // TODO: this is a temporary solution to fetch roles for service accounts
   // until we make use of the state from the serviceaccountspage
+  // and pass it down to the serviceaccountprofile
   React.useEffect(() => {
     if (contextSrv.licensedAccessControlEnabled()) {
       if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
