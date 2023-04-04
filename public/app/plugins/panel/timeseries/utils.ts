@@ -31,9 +31,15 @@ export function prepareGraphableFields(
   }
 
   // Sanity check
+  let numXField: Field | undefined;
   if (numericX) {
-    if (series.length > 1 || series[0].fields[0].type !== FieldType.number) {
-      throw 'invalid series for numeric X';
+    if (series.length > 1) {
+      throw 'numeric X only supports a single frame';
+    }
+    // Perhaps we can/should support any ordinal rather than an error here
+    numXField = series[0].fields[0];
+    if (numXField.type !== FieldType.number) {
+      throw 'numeric X is expecting first field to be numeric';
     }
   }
 
@@ -48,8 +54,6 @@ export function prepareGraphableFields(
     }
   }
 
-  let numXField: Field | undefined;
-
   let copy: Field;
 
   const frames: DataFrame[] = [];
@@ -60,7 +64,7 @@ export function prepareGraphableFields(
     let hasTimeField = false;
     let hasValueField = false;
 
-    let nulledFrame = numericX
+    let nulledFrame = numXField
       ? frame
       : applyNullInsertThreshold({
           frame,
@@ -137,7 +141,7 @@ export function prepareGraphableFields(
       }
     }
 
-    if ((numXField || hasTimeField) && hasValueField) {
+    if ((numericX || hasTimeField) && hasValueField) {
       frames.push({
         ...frame,
         length: nulledFrame.length,
@@ -156,7 +160,6 @@ export function prepareGraphableFields(
 
 const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2, skipField?: Field) => {
   let seriesIndex = 0;
-
   frames.forEach((frame) => {
     frame.fields.forEach((field) => {
       // TODO: also add FieldType.enum type here after https://github.com/grafana/grafana/pull/60491

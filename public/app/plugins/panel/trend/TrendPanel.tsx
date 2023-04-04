@@ -35,7 +35,6 @@ export const TrendPanel = ({
     let xField: Field | undefined = undefined;
     if (options.xField) {
       xField = findField(frames[0], options.xField);
-
       if (!xField) {
         return {
           warning: 'Unable to find field: ' + options.xField,
@@ -45,7 +44,6 @@ export const TrendPanel = ({
     } else {
       // first number field
       xField = frames[0].fields.find((f) => f.type === FieldType.number);
-
       if (!xField) {
         return {
           warning: 'No numeric fields found for X axis',
@@ -59,7 +57,7 @@ export const TrendPanel = ({
       frames = [{ ...frames[0], fields: [xField, ...frames[0].fields.filter((f) => f !== xField)] }];
     }
 
-    return { frame: prepareGraphableFields(data.series, config.theme2, undefined, true) };
+    return { frames: prepareGraphableFields(frames, config.theme2, undefined, true) };
   }, [data, options.xField]);
 
   if (info.warning || !info.frames) {
