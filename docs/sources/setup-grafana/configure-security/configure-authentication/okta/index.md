@@ -18,23 +18,38 @@ Before you can sign a user in, you need to create an Okta application from the O
 
 1. Log in to the [Okta portal](https://login.okta.com/).
 
-1. Go to Admin and then select **Developer Console**.
+2. Go to **Admin** and then select **Developer Console**.
 
-1. Select **Applications**, then **Add Application**.
+3. Select **Applications** -> **Applications**, then **Create App Integration**.
 
-1. Pick **Web** as the platform.
+4. Select the **Sign-in method** - “OIDC - OpenID Connect”
 
-1. Enter a name for your application (or leave the default value).
+5. Select the **Application type** - “Web Application” and then select Next.
 
-1. Add the **Base URI** of your application, such as https://grafana.example.com.
+6. Configure the **Web App Integration Options**:
+  * **App integration name** - Name of your application
+  * **Logo** (Optional)
+  * **Grant type** - “Authorization Code”
+  * **Sign-in redirect URIs**
+    * if cloud: `https://<org>.grafana.net/login/okta`
+    * if self hosted: `https://<base grafana url>/login/okta`
+  * **Sign-out redirect URIs** (Optional)
+    * if cloud: `https://<org>.grafana.net/login/okta`
+    * if self hosted: `https://<base grafana url>/login/okta`
+  * **Base URIs** (Optional)
+    * if cloud: `https://<org>.grafana.net`
+    * if self hosted: `https://<base grafana url>`
+  * **Controlled access** - Select whether to assign the app integration to everyone in your org, only selected group(s), or skip assignment until after app creation.
 
-1. Enter values for the **Login redirect URI**. Use **Base URI** and append it with `/login/okta`, for example: https://grafana.example.com/login/okta.
+7. Click **Done** to finish creating the Okta application.
 
-1. Click **Done** to finish creating the Okta application.
+## Enable Okta OAuth in Grafana Instance
 
-## Enable Okta OAuth in Grafana
+### Grafana Self-Hosted
 
-1. Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana/#config-file-locations" >}}):
+> **Note:** If you are hosting your own Grafana instance ensure it is accessed over HTTPS. Okta requires secure communcation for exchanging authentication infomraiton between the browser and the idenitity provider.
+
+1. Add the following to the [Grafana configuration file]({{< relref "../administration/configuration.md#config-file-locations" >}}):
 
 ```ini
 [auth.okta]
@@ -42,16 +57,30 @@ name = Okta
 icon = okta
 enabled = true
 allow_sign_up = true
-client_id = some_id
-client_secret = some_secret
+client_id = Copy and paste Client ID from Okta Application created in previous steps
+client_secret = Copy and paste Client Secret from Okta Application created in previous steps
 scopes = openid profile email groups
 auth_url = https://<tenant-id>.okta.com/oauth2/v1/authorize
 token_url = https://<tenant-id>.okta.com/oauth2/v1/token
 api_url = https://<tenant-id>.okta.com/oauth2/v1/userinfo
-allowed_domains =
-allowed_groups =
-role_attribute_path =
+allowed_domains = Optional
+allowed_groups = Optional
+role_attribute_path = Optional
 ```
+
+### Grafana Cloud
+1. From your org Control Panel on grafana.com, under **Security** select **Advanced Auth**
+2. Select the **Okta** icon
+3. Fill in the Configuration options:
+- **Client ID**: Copy and paste Client ID from Okta Application created in previous steps
+- **Client Secret**:  Copy and paste Client Secret from Okta Application created in previous steps
+- **Auth URL**: https://<tenant-id>.okta.com/oauth2/v1/authorize
+- **Token URL**: https://<tenant-id>.okta.com/oauth2/v1/token
+- **API URL**: https://<tenant-id>.okta.com/oauth2/v1/userinfo
+- **Allowed Groups**: Optional
+- **Allowed Domains**: Optional
+
+> **Note:** At this point you should now be able to login via Okta`
 
 ### Configure refresh token
 
