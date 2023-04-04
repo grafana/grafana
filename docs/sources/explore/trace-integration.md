@@ -40,6 +40,19 @@ This section explains the elements of the Trace View.
 
 Shows condensed view or the trace timeline. Drag your mouse over the minimap to zoom into smaller time range. Zooming will also update the main timeline, so it is easy to see shorter spans. Hovering over the minimap, when zoomed, will show Reset Selection button which resets the zoom.
 
+### Span Filters
+
+![Screenshot of span filtering](https://grafana.com/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
+
+Allows you to filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
+
+You can add one or more filters from the following:
+
+- Service name,
+- Span name,
+- Duration,
+- Tags (which include tags, process tags, and log fields).
+
 ### Timeline
 
 {{< figure src="/static/img/docs/v70/explore-trace-view-timeline.png" class="docs-image--no-shadow" max-width= "900px"  caption="Screenshot of the trace view timeline" >}}

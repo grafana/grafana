@@ -182,7 +182,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
 
   const collapseLabel = (
     <Tooltip
-      content="Filter your spans below. Each filter added acts as an AND operator i.e. the more filters, the more specific the filtered spans."
+      content="Filter your spans below. The more filters, the more specific the filtered spans."
       placement="right"
     >
       <span id="collapse-label">
