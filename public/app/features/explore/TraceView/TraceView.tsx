@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { RefObject, useMemo, useState } from 'react';
+import { useToggle } from 'react-use';
 
 import {
   DataFrame,
@@ -95,6 +96,7 @@ export function TraceView(props: Props) {
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
   const { newTraceViewSearch, setNewTraceViewSearch, spanFilterMatches } = useSearchNewTraceView(traceProp?.spans);
   const [newTraceViewFocusedSpanIdForSearch, setNewTraceViewFocusedSpanIdForSearch] = useState('');
+  const [showSpanFilters, setShowSpanFilters] = useToggle(false);
 
   const styles = useStyles2(getStyles);
 
@@ -157,6 +159,8 @@ export function TraceView(props: Props) {
               />
               <SpanFilters
                 trace={traceProp}
+                showSpanFilters={showSpanFilters}
+                setShowSpanFilters={setShowSpanFilters}
                 search={newTraceViewSearch}
                 setSearch={setNewTraceViewSearch}
                 spanFilterMatches={spanFilterMatches}

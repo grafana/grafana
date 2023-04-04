@@ -15,7 +15,6 @@
 import { css } from '@emotion/css';
 import { uniq } from 'lodash';
 import React, { useState, memo } from 'react';
-import { useToggle } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
@@ -38,6 +37,8 @@ import NewTracePageSearchBar from '../NewTracePageSearchBar';
 export type SpanFilterProps = {
   trace: Trace;
   search: SearchProps;
+  showSpanFilters: boolean;
+  setShowSpanFilters: (isOpen: boolean) => void;
   setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
   spanFilterMatches: Set<string> | undefined;
   focusedSpanIdForSearch: string;
@@ -48,6 +49,8 @@ export type SpanFilterProps = {
 export const SpanFilters = memo((props: SpanFilterProps) => {
   const {
     trace,
+    showSpanFilters,
+    setShowSpanFilters,
     search,
     setSearch,
     spanFilterMatches,
@@ -56,7 +59,6 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     datasourceType,
   } = props;
   const styles = { ...useStyles2(getStyles) };
-  const [showSpanFilters, setShowSpanFilters] = useToggle(false);
   const [serviceNames, setServiceNames] = useState<Array<SelectableValue<string>>>();
   const [spanNames, setSpanNames] = useState<Array<SelectableValue<string>>>();
   const [tagKeys, setTagKeys] = useState<Array<SelectableValue<string>>>();
@@ -272,7 +274,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 <div key={i}>
                   <HorizontalGroup spacing={'xs'} width={'auto'}>
                     <Select
-                      aria-label={`Select tag-${tag.id} key`}
+                      aria-label={`Select tag key`}
                       isClearable
                       key={tag.key}
                       onChange={(v) => {
@@ -306,7 +308,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                       value={tag.key}
                     />
                     <Select
-                      aria-label={`Select tag-${tag.id} operator`}
+                      aria-label={`Select tag operator`}
                       onChange={(v) => {
                         setSearch({
                           ...search,
@@ -320,7 +322,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                     />
                     <span className={styles.tagValues}>
                       <Select
-                        aria-label={`Select tag-${tag.id} value`}
+                        aria-label={`Select tag value`}
                         isClearable
                         key={tag.value}
                         onChange={(v) => {
@@ -337,7 +339,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                       />
                     </span>
                     <AccessoryButton
-                      aria-label={`Remove tag-${tag.id}`}
+                      aria-label={`Remove tag`}
                       variant={'secondary'}
                       icon={'times'}
                       onClick={() => removeTag(tag.id)}
