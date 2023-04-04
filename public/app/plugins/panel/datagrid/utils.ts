@@ -1,3 +1,5 @@
+import { GridCell, GridCellKind } from '@glideapps/glide-data-grid';
+
 import { DataFrame, DataFrameJSON, dataFrameToJSON, DatagridDataChangeEvent } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
@@ -11,6 +13,14 @@ export const EMPTY_DF = {
 export const GRAFANA_DS = {
   type: 'grafana',
   uid: 'grafana',
+};
+
+export const EMPTY_CELL: GridCell = {
+  kind: GridCellKind.Text,
+  data: '',
+  allowOverlay: true,
+  readonly: false,
+  displayData: '',
 };
 
 export const publishSnapshot = (data: DataFrame, panelID: number): void => {

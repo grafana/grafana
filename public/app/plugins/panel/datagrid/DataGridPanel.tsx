@@ -6,6 +6,7 @@ import DataEditor, {
   GridCellKind,
   EditableGridCell,
   GridColumnIcon,
+  GridSelection,
 } from '@glideapps/glide-data-grid';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -28,10 +29,19 @@ import '@glideapps/glide-data-grid/dist/index.css';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { AddColumn } from './components/AddColumn';
+import { DatagridContextMenu } from './components/DatagridContextMenu';
 import { PanelOptions } from './panelcfg.gen';
-import { EMPTY_DF, GRAFANA_DS, publishSnapshot } from './utils';
+import { EMPTY_CELL, GRAFANA_DS, publishSnapshot } from './utils';
 
 const ICON_WIDTH = 30;
+
+interface DatagridContextMenuData {
+  x?: number;
+  y?: number;
+  column?: number;
+  row?: number;
+  isContextMenuOpen: boolean;
+}
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -39,6 +49,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   const [gridData, setGridData] = useState<DataFrame>(data.series[options.selectedSeries ?? 0]);
   const [columns, setColumns] = useState<GridColumn[]>([]);
   const [isSnapshotted, setIsSnapshotted] = useState<boolean>(false);
+  const [contextMenuData, setContextMenuData] = useState<DatagridContextMenuData>({ isContextMenuOpen: false });
 
   const theme = useTheme2();
   const gridTheme = {
@@ -85,6 +96,8 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
 
     if (panelModel?.datasource?.type !== GRAFANA_DS.type) {
       setIsSnapshotted(false);
+    } else {
+      setIsSnapshotted(true);
     }
   }, [id, options, data]);
 
@@ -104,13 +117,13 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     const field: Field = gridData.fields[col];
 
     if (!field) {
-      throw new Error('OH NO');
+      return EMPTY_CELL;
     }
 
     const value = field.values.get(row);
 
     if (value === undefined || value === null) {
-      throw new Error('OH NO 2');
+      return EMPTY_CELL;
     }
 
     switch (field.type) {
@@ -144,7 +157,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     const field: Field = gridData.fields[col];
 
     if (!field || !newValue.data) {
-      throw new Error('OH NO 3');
+      return;
     }
 
     const values = field.values.toArray();
@@ -221,6 +234,36 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     });
   };
 
+  const closeContextMenu = () => {
+    setContextMenuData({ isContextMenuOpen: false });
+  };
+
+  const onDeletePressed = (selection: GridSelection) => {
+    if (!selection.current || !selection.current.range) {
+      return false;
+    }
+
+    const colFrom: number = selection.current.range.x;
+    const rowFrom: number = selection.current.range.y;
+    const colTo: number = selection.current.range.x + selection.current.range.width - 1;
+
+    for (let i = colFrom; i <= colTo; i++) {
+      const field = gridData.fields[i];
+
+      const valuesArray = field.values.toArray();
+      valuesArray.splice(
+        rowFrom,
+        selection.current.range.height,
+        ...new Array(selection.current.range.height).fill(null)
+      );
+      field.values = new ArrayVector(valuesArray);
+    }
+
+    setGridData(new MutableDataFrame(gridData));
+
+    return true;
+  };
+
   if (!document.getElementById('portal')) {
     const portal = document.createElement('div');
     portal.id = 'portal';
@@ -249,10 +292,18 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
           console.log('header clicked');
         }}
         onRowAppended={addNewRow}
+        onDelete={onDeletePressed}
         rowMarkers={'clickable-number'}
         onColumnResize={onColumnResize}
-        onCellContextMenu={(cell) => {
-          console.log(cell);
+        onCellContextMenu={(cell, event) => {
+          event.preventDefault();
+          setContextMenuData({
+            x: event.bounds.x + event.localEventX,
+            y: event.bounds.y + event.localEventY,
+            column: cell[0],
+            row: cell[1],
+            isContextMenuOpen: true,
+          });
         }}
         trailingRowOptions={{
           sticky: false,
@@ -265,6 +316,17 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
           sticky: false,
         }}
       />
+      {contextMenuData.isContextMenuOpen && (
+        <DatagridContextMenu
+          x={contextMenuData.x!}
+          y={contextMenuData.y!}
+          column={contextMenuData.column!}
+          row={contextMenuData.row!}
+          data={gridData}
+          saveData={setGridData}
+          closeContextMenu={closeContextMenu}
+        />
+      )}
     </>
   );
 };
