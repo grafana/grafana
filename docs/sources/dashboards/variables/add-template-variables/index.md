@@ -281,7 +281,7 @@ This variable is the `$__interval` variable in milliseconds, not a time interval
 
 This variable is only available in the Singlestat panel and can be used in the prefix or suffix fields on the Options tab. The variable will be replaced with the series name or alias.
 
-> **Note:** Singestat panel is no longer available from Grafana 8.0 
+> **Note:** The Singlestat panel is no longer available from Grafana 8.0. 
 
 ### $\_\_org
 
