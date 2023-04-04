@@ -73,11 +73,11 @@ The query editor groups operations into related sections, and you can type while
 The query editor displays a query's operations as boxes in the operations section.
 Each operation's header displays its name, and additional action buttons appear when you hover your cursor over the header:
 
-| Button | Action                                                            |
-| ------ | ----------------------------------------------------------------- |
-| `v`    | Replaces the operation with different operation of the same type. |
-| `info` | Opens the operation's description tooltip.                        |
-| `x`    | Removes the operation.                                            |
+| Button                                                                                                                  | Action                                                            |
+| ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| {{< figure src="/static/img/docs/v95/loki_operation_replace.png" class="docs-image--no-shadow" max-width="30px" >}}     | Replaces the operation with different operation of the same type. |
+| {{< figure src="/static/img/docs/v95/loki_operation_description.png" class="docs-image--no-shadow" max-width="30px" >}} | Opens the operation's description tooltip.                        |
+| {{< figure src="/static/img/docs/v95/loki_operation_remove.png" class="docs-image--no-shadow" max-width="30px" >}}      | Removes the operation.                                            |
 
 Some operations have additional parameters under the operation header.
 For details about each operation, use the `info` button to view the operation's description, or refer to the [Loki documentation](/docs/loki/latest/operations/).
