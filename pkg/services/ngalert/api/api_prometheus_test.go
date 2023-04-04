@@ -946,7 +946,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Len(t, rg.Rules[1].Alerts, 1)
 		})
 
-		t.Run("then with filters for both firing and error alerts", func(t *testing.T) {
+		t.Run("then with filters for both inactive and firing alerts", func(t *testing.T) {
 			r, err := http.NewRequest("GET", "/api/v1/rules?state=inactive&state=firing", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
