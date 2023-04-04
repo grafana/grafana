@@ -40,7 +40,7 @@ def integration_test_services():
         [
             {
                 "name": "redis",
-                "image": "redis:6.2.1-alpine",
+                "image": "bitnami/redis:6.2-debian-10",
                 "environment": {},
             },
             {
