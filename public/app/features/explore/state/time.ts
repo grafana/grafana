@@ -12,7 +12,7 @@ import { ExploreId } from 'app/types/explore';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { TimeModel } from '../../dashboard/state/TimeModel';
 
-import { syncTimesAction, stateSave } from './main';
+import { syncTimesAction } from './main';
 import { runQueries } from './query';
 
 //
@@ -126,7 +126,7 @@ export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
 
     const isTimeSynced = getState().explore.syncedTimes;
     dispatch(syncTimesAction({ syncedTimes: !isTimeSynced }));
-    dispatch(stateSave());
+    // dispatch(stateSave());
   };
 }
 
@@ -146,7 +146,7 @@ export function makeAbsoluteTime(): ThunkResult<void> {
       dispatch(updateTime({ exploreId: exploreId as ExploreId, absoluteRange }));
     });
 
-    dispatch(stateSave());
+    // dispatch(stateSave());
   };
 }
 

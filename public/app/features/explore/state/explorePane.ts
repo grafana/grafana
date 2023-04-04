@@ -27,7 +27,7 @@ import { ExploreId, ExploreItemState } from 'app/types/explore';
 
 import { datasourceReducer } from './datasource';
 import { historyReducer } from './history';
-import { richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction, stateSave } from './main';
+import { richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction } from './main';
 import { queryReducer, runQueries, setQueriesAction } from './query';
 import { timeReducer, updateTime } from './time';
 import {
@@ -81,7 +81,6 @@ export function changePanelState(
         },
       })
     );
-    dispatch(stateSave());
   };
 }
 

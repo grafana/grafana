@@ -51,7 +51,6 @@ import {
 } from '../utils/supplementaryQueries';
 
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
-import { stateSave } from './main';
 import { updateTime } from './time';
 import { createCacheKey, getResultsFromCache } from './utils';
 
@@ -265,7 +264,7 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
         dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
       }
     }
-    dispatch(stateSave());
+    // dispatch(stateSave());
   };
 }
 
@@ -493,7 +492,7 @@ export const runQueries = (
       handleHistory(dispatch, getState().explore, exploreItemState.history, datasourceInstance, queries, exploreId);
     }
 
-    dispatch(stateSave({ replace: options?.replaceUrl }));
+    // dispatch(stateSave({ replace: options?.replaceUrl }));
 
     const cachedValue = getResultsFromCache(cache, absoluteRange);
 
@@ -507,7 +506,7 @@ export const runQueries = (
 
       newQuerySubscription = newQuerySource.subscribe((data) => {
         if (!data.error) {
-          dispatch(stateSave());
+          // dispatch(stateSave());
         }
 
         dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
@@ -516,7 +515,7 @@ export const runQueries = (
       // If we don't have results saved in cache, run new queries
     } else {
       if (!hasNonEmptyQuery(queries)) {
-        dispatch(stateSave({ replace: options?.replaceUrl })); // Remember to save to state and update location
+        // dispatch(stateSave({ replace: options?.replaceUrl })); // Remember to save to state and update location
         return;
       }
 

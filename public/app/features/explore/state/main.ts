@@ -1,7 +1,7 @@
 import { createAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
-import { ExploreUrlState, serializeStateToUrlParam, SplitOpenOptions, UrlQueryMap } from '@grafana/data';
+import { ExploreUrlState, serializeStateToUrlParam, SplitOpenOptions } from '@grafana/data';
 import { DataSourceSrv, locationService } from '@grafana/runtime';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -85,15 +85,14 @@ export const stateSave = (options?: { replace?: boolean }): ThunkResult<void> =>
       urlStates.right = null;
     }
 
-    lastSavedUrl.right = urlStates.right;
-    lastSavedUrl.left = urlStates.left;
-
-    locationService.partial({ ...urlStates }, options?.replace);
+    if (
+      locationService.getSearch().get('right') !== urlStates.right ||
+      locationService.getSearch().get('left') !== urlStates.left
+    ) {
+      locationService.partial({ ...urlStates }, options?.replace);
+    }
   };
 };
-
-// Store the url we saved last se we are not trying to update local state based on that.
-export const lastSavedUrl: UrlQueryMap = {};
 
 /**
  * Opens a new right split pane by navigating to appropriate URL. It either copies existing state of the left pane
@@ -131,7 +130,7 @@ export const splitOpen = createAsyncThunk(
 export function splitClose(itemId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     dispatch(splitCloseAction({ itemId }));
-    dispatch(stateSave());
+    // dispatch(stateSave());
   };
 }
 

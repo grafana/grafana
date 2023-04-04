@@ -1,4 +1,4 @@
-import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
+import { configureStore as reduxConfigureStore, createListenerMiddleware } from '@reduxjs/toolkit';
 
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { StoreState } from 'app/types/store';
@@ -16,11 +16,14 @@ export function addRootReducer(reducers: any) {
   addReducer(reducers);
 }
 
+const listenerMiddleware = createListenerMiddleware();
+
 export function configureStore(initialState?: Partial<StoreState>) {
   const store = reduxConfigureStore({
     reducer: createRootReducer(),
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
+        listenerMiddleware.middleware,
         alertingApi.middleware,
         publicDashboardApi.middleware
       ),

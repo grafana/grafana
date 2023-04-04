@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { addListener } from '@reduxjs/toolkit';
 import { inRange } from 'lodash';
 import React, { useEffect, useRef, useState } from 'react';
 import { useWindowSize } from 'react-use';
@@ -19,7 +20,7 @@ import { useCorrelations } from '../correlations/useCorrelations';
 
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { lastSavedUrl, saveCorrelationsAction, resetExploreAction, splitSizeUpdateAction } from './state/main';
+import { saveCorrelationsAction, resetExploreAction, splitSizeUpdateAction, stateSave } from './state/main';
 
 const styles = {
   pageScrollbarWrapper: css`
@@ -78,9 +79,6 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   }, [get.value, get.error, dispatch, warning]);
 
   useEffect(() => {
-    lastSavedUrl.left = undefined;
-    lastSavedUrl.right = undefined;
-
     // timeSrv (which is used internally) on init reads `from` and `to` param from the URL and updates itself
     // using those value regardless of what is passed to the init method.
     // The updated value is then used by Explore to get the range for each pane.
@@ -101,6 +99,26 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dispatch is stable, doesn't need to be in the deps array
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = dispatch(
+      addListener({
+        predicate: (action) => action.type.startsWith('explore'),
+        effect: async (action, { dispatch, cancelActiveListeners, delay }) => {
+          cancelActiveListeners();
+          await delay(200);
+
+          // TODO: here we centralize the logic for persisting back Explore's state to the URL.
+          // TODO: skip if last action was cleanup (or we are outside of explore)
+          console.log('Saving state ', action);
+
+          dispatch(stateSave());
+        },
+      })
+    );
+
+    return unsubscribe;
+  }, [dispatch]);
 
   const updateSplitSize = (size: number) => {
     const evenSplitWidth = windowWidth / 2;

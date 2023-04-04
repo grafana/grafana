@@ -5,7 +5,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { EventBusExtended, EventBusSrv, GrafanaTheme2, EventBus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import store from 'app/core/store';
@@ -27,7 +27,7 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 
 import Explore from './Explore';
 import { initializeExplore, refreshExplore } from './state/explorePane';
-import { lastSavedUrl, stateSave } from './state/main';
+import { stateSave } from './state/main';
 import { importQueries } from './state/query';
 import { loadAndInitDatasource } from './state/utils';
 
@@ -147,7 +147,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
     const { exploreId, urlQuery } = this.props;
 
     // Update state from url only if it changed and only if the change wasn't initialised by redux to prevent any loops
-    if (urlQuery !== prevUrlQuery && urlQuery !== lastSavedUrl[exploreId]) {
+    if (urlQuery !== prevUrlQuery && urlQuery !== locationService.getSearch().get(exploreId)) {
       this.props.refreshExplore(exploreId, urlQuery);
     }
   };
