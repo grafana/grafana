@@ -2,7 +2,6 @@ package statscollector
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -74,7 +73,6 @@ func ProvideService(
 		s.collectConcurrentUsers,
 		s.collectDatasourceStats,
 		s.collectDatasourceAccess,
-		s.collectElasticStats,
 		s.collectAlertNotifierStats,
 		s.collectPrometheusFlavors,
 		s.collectAdditionalMetrics,
@@ -237,28 +235,6 @@ func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interf
 	}
 	m["stats.ds.other.count"] = dsOtherCount
 
-	return m, nil
-}
-
-func (s *Service) collectElasticStats(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
-	esDataSourcesQuery := datasources.GetDataSourcesByTypeQuery{Type: datasources.DS_ES}
-	dataSources, err := s.datasources.GetDataSourcesByType(ctx, &esDataSourcesQuery)
-	if err != nil {
-		s.log.Error("Failed to get elasticsearch json data", "error", err)
-		return nil, err
-	}
-	for _, data := range dataSources {
-		esVersion, err := data.JsonData.Get("esVersion").String()
-		if err != nil {
-			continue
-		}
-		statName := fmt.Sprintf("stats.ds.elasticsearch.v%s.count", strings.ReplaceAll(esVersion, ".", "_"))
-
-		count, _ := m[statName].(int64)
-
-		m[statName] = count + 1
-	}
 	return m, nil
 }
 

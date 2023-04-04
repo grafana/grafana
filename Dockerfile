@@ -37,7 +37,7 @@ ARG BINGO="true"
 
 # Install build dependencies
 RUN if grep -i -q alpine /etc/issue; then \
-      apk add --no-cache gcc g++ krb5-libs krb5-dev make; \
+      apk add --no-cache gcc g++ make git krb5-libs krb5-dev; \
     fi
 
 WORKDIR /tmp/grafana
@@ -62,6 +62,7 @@ COPY pkg pkg
 COPY scripts scripts
 COPY conf conf
 COPY .github .github
+COPY .git .git
 
 RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
