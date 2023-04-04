@@ -271,6 +271,15 @@ func withErrorState() forEachState {
 	}
 }
 
+func withLabels(labels data.Labels) forEachState {
+	return func(s *state.State) *state.State {
+		for k, v := range labels {
+			s.Labels[k] = v
+		}
+		return s
+	}
+}
+
 func TestRouteGetRuleStatuses(t *testing.T) {
 	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
 	orgID := int64(1)
@@ -982,6 +991,125 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Equal(t, map[string]int64{"error": 1}, rg.Rules[2].Totals)
 			// The error alert has been removed as the filters are inactive and firing
 			require.Len(t, rg.Rules[2].Alerts, 0)
+		})
+	})
+
+	t.Run("test with matchers on labels", func(t *testing.T) {
+		fakeStore, fakeAIM, _, api := setupAPI(t)
+		// create two rules in the same Rule Group to keep assertions simple
+		rules := ngmodels.GenerateAlertRules(1, ngmodels.AlertRuleGen(withOrgID(orgID), withGroup("Rule-Group-1"), withNamespace(&folder.Folder{
+			Title: "Folder-1",
+		})))
+		fakeStore.PutRule(context.Background(), rules...)
+
+		// create a normal and alerting state for each rule
+		fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1,
+			withLabels(data.Labels{"test": "value1"}))
+		fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1,
+			withLabels(data.Labels{"test": "value2"}), withAlertingState())
+
+		t.Run("invalid matchers returns 400 Bad Request", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?matchers=unknown", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusBadRequest, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+			require.Equal(t, "bad matcher format: unknown", res.Error)
+		})
+
+		t.Run("first without matchers", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 1)
+			require.Len(t, rg.Rules[0].Alerts, 2)
+		})
+
+		t.Run("then with single matcher", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?matchers=test=value1", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// There should be just the alert with the label test=value1
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 1)
+			require.Len(t, rg.Rules[0].Alerts, 1)
+		})
+
+		t.Run("then with regex matchers", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?matchers~=test=value[0-9]+", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// There should be just the alert with the label test=value1
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 1)
+			require.Len(t, rg.Rules[0].Alerts, 2)
+		})
+
+		t.Run("then with multiple matchers", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?matchers=alertname=test_title_0,test=value1", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// There should be just the alert with the label test=value1
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 1)
+			require.Len(t, rg.Rules[0].Alerts, 1)
 		})
 	})
 }
