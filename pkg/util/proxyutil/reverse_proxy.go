@@ -108,6 +108,12 @@ func errorHandler(logger glog.Logger) func(http.ResponseWriter, *http.Request, e
 			return
 		}
 
+		// The remaining erros comes from the downstream system and
+		// and not grafana itself.
+		if ctx := contexthandler.FromContext(r.Context()); ctx != nil {
+			ctx.ErrorSource = "downstream"
+		}
+
 		// nolint:errorlint
 		if timeoutErr, ok := err.(timeoutError); ok && timeoutErr.Timeout() {
 			ctxLogger.Error("Proxy request timed out", "err", err)
