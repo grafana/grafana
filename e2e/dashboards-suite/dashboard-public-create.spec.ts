@@ -8,7 +8,12 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     // Opening a dashboard without template variables
-    e2e().intercept('POST', '/api/ds/query?ds_type=*').as('query');
+    e2e()
+      .intercept({
+        method: 'POST',
+        pathname: '/api/ds/query',
+      })
+      .as('query');
     e2e.flows.openDashboard({ uid: 'ZqZnVvFZz' });
     e2e().wait('@query');
 
@@ -65,7 +70,12 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     // Opening a dashboard without template variables
-    e2e().intercept('POST', '/api/ds/query?ds_type=*').as('query');
+    e2e()
+      .intercept({
+        method: 'POST',
+        pathname: '/api/ds/query',
+      })
+      .as('query');
     e2e.flows.openDashboard({ uid: 'ZqZnVvFZz' });
     e2e().wait('@query');
 
@@ -109,7 +119,12 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     // Opening a dashboard without template variables
-    e2e().intercept('/api/ds/query?ds_type=*').as('query');
+    e2e()
+      .intercept({
+        method: 'POST',
+        pathname: '/api/ds/query',
+      })
+      .as('query');
     e2e.flows.openDashboard({ uid: 'ZqZnVvFZz' });
     e2e().wait('@query');
 
