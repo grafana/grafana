@@ -98,6 +98,8 @@ interface State {
   isFlipping: boolean;
   displayedFields: string[];
   forceEscape: boolean;
+  contextOpen: boolean;
+  contextRow?: LogRowModel;
 }
 
 // We need to override css overflow of divs in Collapse element to enable sticky Logs navigation
@@ -135,6 +137,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
     isFlipping: false,
     displayedFields: [],
     forceEscape: false,
+    contextOpen: false,
+    contextRow: undefined,
   };
 
   constructor(props: Props) {
@@ -296,6 +300,27 @@ class UnthemedLogs extends PureComponent<Props, State> {
     });
   };
 
+  onCloseContext = () => {
+    this.setState({
+      contextOpen: false,
+      contextRow: undefined,
+    });
+  };
+
+  onOpenContext = (row: LogRowModel, onClose: () => void) => {
+    this.setState({
+      contextOpen: true,
+      contextRow: row,
+    });
+    this.onCloseContext = () => {
+      this.setState({
+        contextOpen: false,
+        contextRow: undefined,
+      });
+      onClose();
+    };
+  };
+
   checkUnescapedContent = memoizeOne((logRows: LogRowModel[]) => {
     return !!logRows.some((r) => r.hasUnescapedContent);
   });
@@ -366,6 +391,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
       isFlipping,
       displayedFields,
       forceEscape,
+      contextOpen,
+      contextRow,
     } = this.state;
 
     const styles = getStyles(theme, wrapLogMessage);
@@ -380,6 +407,17 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
+        {contextRow && (
+          <LogRowContextModal
+            open={contextOpen}
+            row={contextRow}
+            onClose={this.onCloseContext}
+            getRowContext={getRowContext ?? (() => Promise.resolve({}))}
+            getLogRowContextUi={getLogRowContextUi}
+            logsSortOrder={logsSortOrder}
+            timeZone={timeZone}
+          />
+        )}
         <Collapse label="Logs volume" collapsible isOpen={logsVolumeEnabled} onToggle={this.onToggleLogsVolumeCollapse}>
           {logsVolumeEnabled && (
             <LogsVolumePanelList
@@ -509,6 +547,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 app={CoreApp.Explore}
                 scrollElement={scrollElement}
                 onLogRowHover={this.onLogRowHover}
+                onOpenContext={this.onOpenContext}
               />
               {!loading && !hasData && !scanning && (
                 <div className={styles.noData}>

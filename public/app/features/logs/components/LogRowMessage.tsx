@@ -14,26 +14,21 @@ import { IconButton, Tooltip } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowStyles } from './getLogRowStyles';
-import { LogRowContext } from './log-context/LogRowContext';
-import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './log-context/LogRowContextProvider';
 
 export const MAX_CHARACTERS = 100000;
 
 interface Props {
   row: LogRowModel;
-  hasMoreContextRows?: HasMoreContextRows;
   contextIsOpen: boolean;
   wrapLogMessage: boolean;
   prettifyLogMessage: boolean;
-  errors?: LogRowContextQueryErrors;
-  context?: LogRowContextRows;
   showRowMenu?: boolean;
   app?: CoreApp;
   scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
   getRows: () => LogRowModel[];
-  onToggleContext: (method: string) => void;
+  onToggleContext: (row: LogRowModel, method: string) => void;
   updateLimit?: () => void;
   runContextQuery?: () => void;
   logsSortOrder?: LogsSortOrder | null;
@@ -80,14 +75,10 @@ const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): s
 export class LogRowMessage extends PureComponent<Props> {
   logRowRef: React.RefObject<HTMLTableCellElement> = React.createRef();
 
-  onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
-    e.stopPropagation();
-    this.props.onToggleContext('open');
-  };
-
   onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
     const { scrollElement } = this.props;
-    this.onContextToggle(e);
+    e.stopPropagation();
+    this.props.onToggleContext(this.props.row, 'open');
     if (scrollElement && this.logRowRef.current) {
       scrollElement.scroll({
         behavior: 'smooth',
@@ -97,23 +88,7 @@ export class LogRowMessage extends PureComponent<Props> {
   };
 
   render() {
-    const {
-      row,
-      errors,
-      hasMoreContextRows,
-      updateLimit,
-      runContextQuery,
-      context,
-      contextIsOpen,
-      showRowMenu,
-      wrapLogMessage,
-      prettifyLogMessage,
-      onToggleContext,
-      logsSortOrder,
-      showContextToggle,
-      getLogRowContextUi,
-      styles,
-    } = this.props;
+    const { row, showRowMenu, wrapLogMessage, prettifyLogMessage, showContextToggle, styles } = this.props;
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
@@ -124,36 +99,14 @@ export class LogRowMessage extends PureComponent<Props> {
           // When context is open, the position has to be NOT relative. // Setting the postion as inline-style to
           // overwrite the more sepecific style definition from `styles.logsRowMessage`.
         }
-        <td
-          ref={this.logRowRef}
-          style={contextIsOpen ? { position: 'unset' } : undefined}
-          className={styles.logsRowMessage}
-        >
+        <td ref={this.logRowRef} className={styles.logsRowMessage}>
           <div
             className={cx(
               { [styles.positionRelative]: wrapLogMessage },
               { [styles.horizontalScroll]: !wrapLogMessage }
             )}
           >
-            {contextIsOpen && context && (
-              <LogRowContext
-                row={row}
-                getLogRowContextUi={getLogRowContextUi}
-                runContextQuery={runContextQuery}
-                context={context}
-                errors={errors}
-                wrapLogMessage={wrapLogMessage}
-                hasMoreContextRows={hasMoreContextRows}
-                onOutsideClick={onToggleContext}
-                logsSortOrder={logsSortOrder}
-                onLoadMoreContext={() => {
-                  if (updateLimit) {
-                    updateLimit();
-                  }
-                }}
-              />
-            )}
-            <button className={cx(styles.logLine, styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
+            <button className={cx(styles.logLine, styles.positionRelative)}>
               {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, styles.logsRowMatchHighLight)}
             </button>
           </div>

@@ -24,12 +24,6 @@ import { LogLabels } from './LogLabels';
 import { LogRowMessage } from './LogRowMessage';
 import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
 import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
-import {
-  LogRowContextRows,
-  LogRowContextQueryErrors,
-  HasMoreContextRows,
-  LogRowContextProvider,
-} from './log-context/LogRowContextProvider';
 
 interface Props extends Themeable2 {
   row: LogRowModel;
@@ -57,7 +51,7 @@ interface Props extends Themeable2 {
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
-  toggleContextIsOpen?: () => void;
+  onOpenContext: (row: LogRowModel, onClose: () => void) => void;
   styles: LogRowStyles;
 }
 
@@ -79,19 +73,10 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     showDetails: false,
   };
 
-  toggleContext = (method: string) => {
-    const { datasourceType, uid: logRowUid } = this.props.row;
-    reportInteraction('grafana_explore_logs_log_context_clicked', {
-      datasourceType,
-      logRowUid,
-      type: method,
-    });
-
-    this.props.toggleContextIsOpen?.();
-    this.setState((state) => {
-      return {
-        showContext: !state.showContext,
-      };
+  onOpenContext = (row: LogRowModel) => {
+    this.setState({ showContext: true });
+    this.props.onOpenContext(row, () => {
+      this.setState({ showContext: false });
     });
   };
 
@@ -134,9 +119,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   renderLogRow(
-    context?: LogRowContextRows,
-    errors?: LogRowContextQueryErrors,
-    hasMoreContextRows?: HasMoreContextRows,
     updateLimit?: () => void,
     logsSortOrder?: LogsSortOrder | null,
     getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'],
@@ -220,18 +202,15 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             <LogRowMessage
               row={processedRow}
               getRows={getRows}
-              errors={errors}
-              hasMoreContextRows={hasMoreContextRows}
               getLogRowContextUi={getLogRowContextUi}
               runContextQuery={runContextQuery}
               updateLimit={updateLimit}
-              context={context}
               contextIsOpen={showContext}
               showContextToggle={showContextToggle}
               showRowMenu={showRowMenu}
               wrapLogMessage={wrapLogMessage}
               prettifyLogMessage={prettifyLogMessage}
-              onToggleContext={this.toggleContext}
+              onToggleContext={this.onOpenContext}
               app={app}
               scrollElement={scrollElement}
               logsSortOrder={logsSortOrder}
@@ -262,33 +241,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   }
 
   render() {
-    const { showContext } = this.state;
-    const { logsSortOrder, row, getRowContext, getLogRowContextUi } = this.props;
-
-    if (showContext) {
-      return (
-        <>
-          <LogRowContextProvider row={row} getRowContext={getRowContext} logsSortOrder={logsSortOrder}>
-            {({ result, errors, hasMoreContextRows, updateLimit, runContextQuery, logsSortOrder }) => {
-              return (
-                <>
-                  {this.renderLogRow(
-                    result,
-                    errors,
-                    hasMoreContextRows,
-                    updateLimit,
-                    logsSortOrder,
-                    getLogRowContextUi,
-                    runContextQuery
-                  )}
-                </>
-              );
-            }}
-          </LogRowContextProvider>
-        </>
-      );
-    }
-
     return this.renderLogRow();
   }
 }
