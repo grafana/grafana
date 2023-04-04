@@ -9,16 +9,19 @@ import { applyQueryDefaults } from '../defaults';
 import { SQLQuery, QueryRowFilter, SQLOptions } from '../types';
 import { haveColumns } from '../utils/sql.utils';
 
-import { QueryHeader } from './QueryHeader';
+import { QueryHeader, QueryHeaderProps } from './QueryHeader';
 import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
-interface Props extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {}
+interface Props extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
+  queryHeaderProps?: Pick<QueryHeaderProps, 'isDatasetSelectorHidden'>;
+}
 
-export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range }: Props) {
+export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range, queryHeaderProps }: Props) {
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
   const { preconfiguredDatabase } = datasource;
+  console.log('🚀 ~ file: QueryEditor.tsx:22 ~ SqlQueryEditor ~ preconfiguredDatabase:', preconfiguredDatabase);
   const { loading, error } = useAsync(async () => {
     return () => {
       if (datasource.getDB(datasource.id).init !== undefined) {
@@ -37,9 +40,10 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range 
     This checks to see whether 1) there is indeed a default database (preconfiguredDataset), and also 2) whether the user
     added a default database where there wasn't one before. Both scenarios would require an update the the query state.
   */
-  if (!!preconfiguredDatabase && query.dataset !== preconfiguredDatabase) {
-    onChange({ ...query, dataset: preconfiguredDatabase });
-  }
+  // if (!!preconfiguredDatabase && query.dataset !== preconfiguredDatabase) {
+  //   // Throw error instead?
+  //   onChange({ ...query, dataset: preconfiguredDatabase });
+  // }
 
   const queryWithDefaults = applyQueryDefaults(query);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({
@@ -100,6 +104,7 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range 
         queryRowFilter={queryRowFilter}
         query={queryWithDefaults}
         isQueryRunnable={isQueryRunnable}
+        {...queryHeaderProps}
       />
 
       <Space v={0.5} />

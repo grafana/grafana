@@ -23,6 +23,7 @@ export const DatasetSelector = ({ db, dataset, onChange, preconfiguredDataset }:
     }
 
     const datasets = await db.datasets();
+    console.log('🚀 ~ file: DatasetSelector.tsx:26 ~ state ~ datasets:', datasets);
     return datasets.map(toOption);
   }, []);
 

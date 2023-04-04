@@ -21,6 +21,7 @@ export interface QueryHeaderProps {
   onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
   queryRowFilter: QueryRowFilter;
   isQueryRunnable: boolean;
+  isDatasetSelectorHidden?: boolean;
 }
 
 const editorModes = [
