@@ -28,6 +28,8 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
   const onNameChange = (newValue: string) => {
     onChange({ ...serviceAccount, name: newValue });
   };
+  // TODO: this is a temporary solution to fetch roles for service accounts
+  // until we make use of the state from the serviceaccountspage
   React.useEffect(() => {
     if (contextSrv.licensedAccessControlEnabled()) {
       if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
