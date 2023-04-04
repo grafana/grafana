@@ -107,9 +107,12 @@ log message you're interested in.
 
 ### Tail live logs
 
-Loki supports live tailing of logs in real-time in [Explore]({{< relref "../../../explore#loki-specific-features" >}}).
+Loki supports live tailing of logs in real-time in [Explore]({{< relref "../../../explore" >}}).
 
 Live tailing relies on two Websocket connections: one between the browser and Grafana server, and another between the Grafana server and Loki server.
+
+To get started select the **Live** button in the top right corner of the Explore view.
+{{< figure src="/static/img/docs/v95/loki_tailing.png" class="docs-image--no-shadow" max-width="80px" >}}
 
 #### Proxying examples
 
