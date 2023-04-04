@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"errors"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -40,7 +41,14 @@ func (f LocalFS) Open(name string) (fs.File, error) {
 		if kv.f != nil {
 			return kv.f, nil
 		}
-		return os.Open(kv.path)
+		file, err := os.Open(kv.path)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				return nil, ErrFileNotExist
+			}
+			return nil, ErrPluginFileRead
+		}
+		return file, nil
 	}
 	return nil, ErrFileNotExist
 }
@@ -70,14 +78,24 @@ type LocalFile struct {
 }
 
 func (p *LocalFile) Stat() (fs.FileInfo, error) {
-	return os.Stat(p.path)
+	fi, err := os.Stat(p.path)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, ErrFileNotExist
+		}
+		return nil, ErrPluginFileRead
+	}
+	return fi, nil
 }
 
 func (p *LocalFile) Read(bytes []byte) (int, error) {
 	var err error
 	p.f, err = os.Open(p.path)
 	if err != nil {
-		return 0, err
+		if errors.Is(err, fs.ErrNotExist) {
+			return 0, ErrFileNotExist
+		}
+		return 0, ErrPluginFileRead
 	}
 	return p.f.Read(bytes)
 }

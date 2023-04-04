@@ -221,10 +221,10 @@
   },
   {
     "type": "label",
-    "name": "team/grafana-partners",
+    "name": "team/operator-experience",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/87"
+      "url": "https://github.com/orgs/grafana/projects/336"
     }
   },
   {

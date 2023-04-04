@@ -66,6 +66,25 @@ describe('DashboardModel', () => {
     });
   });
 
+  describe('when initalized with duplicate panel ids', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = createDashboardModelFixture({
+        panels: [
+          createPanelJSONFixture({ id: 6 }),
+          createPanelJSONFixture({ id: 2 }),
+          createPanelJSONFixture({}), // undefined
+          createPanelJSONFixture({ id: 2 }),
+        ],
+      });
+    });
+
+    it('should ensure unique panel ids', () => {
+      expect(model.panels.map((p) => p.id)).toEqual([6, 2, 7, 8]);
+    });
+  });
+
   describe('getSaveModelClone', () => {
     it('should sort keys', () => {
       const model = createDashboardModelFixture();
@@ -644,8 +663,8 @@ describe('DashboardModel', () => {
       model.processRepeats();
       expect(model.panels.filter((x) => x.type === 'row')).toHaveLength(2);
       expect(model.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
-      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
-      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc?.value).toBe('dc1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
       const saveModel = model.getSaveModelClone();
       expect(saveModel.panels.length).toBe(2);
@@ -697,15 +716,15 @@ describe('DashboardModel', () => {
       model.processRepeats();
       expect(model.panels.filter((x) => x.type === 'row')).toHaveLength(2);
       expect(model.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
-      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
-      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc?.value).toBe('dc1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
       model.snapshot = { timestamp: new Date() };
       const saveModel = model.getSaveModelClone();
       expect(saveModel.panels.filter((x) => x.type === 'row')).toHaveLength(2);
       expect(saveModel.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
-      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
-      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.dc?.value).toBe('dc1');
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
       model.collapseRows();
       const savedModelWithCollapsedRows = model.getSaveModelClone();

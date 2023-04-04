@@ -22,6 +22,7 @@ packages = ["io/ioutil"]
 "gopkg.in/yaml.v2" = "Grafana packages are not allowed to depend on gopkg.in/yaml.v2 as gopkg.in/yaml.v3 is now available"
 "github.com/pkg/errors" = "Deprecated: Go 1.13 supports the functionality provided by pkg/errors in the standard library."
 "github.com/xorcare/pointer" = "Use pkg/util.Pointer instead, which is a generic one-liner alternative"
+"github.com/gofrs/uuid" = "Use github.com/google/uuid instead, which we already depend on."
 
 [linters-settings.gocritic]
 enabled-checks = ["ruleguard"]

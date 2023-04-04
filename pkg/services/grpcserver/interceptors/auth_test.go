@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 
-	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
+	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -151,7 +151,7 @@ func (f *fakeUserService) GetSignedInUserWithCacheCtx(ctx context.Context, query
 
 func setupContext() (context.Context, error) {
 	ctx := context.Background()
-	key, err := apikeygenprefix.New("sa")
+	key, err := satokengen.New("sa")
 	if err != nil {
 		return ctx, err
 	}

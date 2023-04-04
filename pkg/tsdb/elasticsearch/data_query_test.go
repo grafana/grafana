@@ -561,7 +561,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 						"id": "3",
 						"type": "histogram",
 						"field": "bytes",
-						"settings": { "interval": 10, "min_doc_count": 2, "missing": 5 }
+						"settings": { "interval": "10", "min_doc_count": 2, "missing": 5 }
 					}
 				],
 				"metrics": [{"type": "count", "id": "1" }]
@@ -587,7 +587,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 						"id": "3",
 						"type": "histogram",
 						"field": "bytes",
-						"settings": { "interval": 10, "min_doc_count": 2 }
+						"settings": { "interval": "10", "min_doc_count": 2 }
 					}
 				],
 				"metrics": [{"type": "count", "id": "1" }]
@@ -1710,10 +1710,6 @@ func newFakeClient() *fakeClient {
 
 func (c *fakeClient) GetConfiguredFields() es.ConfiguredFields {
 	return c.configuredFields
-}
-
-func (c *fakeClient) GetMinInterval(queryInterval string) (time.Duration, error) {
-	return 15 * time.Second, nil
 }
 
 func (c *fakeClient) ExecuteMultisearch(r *es.MultiSearchRequest) (*es.MultiSearchResponse, error) {

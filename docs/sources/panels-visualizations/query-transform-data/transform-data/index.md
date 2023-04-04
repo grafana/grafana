@@ -47,7 +47,8 @@ The order in which Grafana applies transformations directly impacts the results.
 The following steps guide you in adding a transformation to data. This documentation does not include steps for each type of transformation. For a complete list of transformations, refer to [Transformation functions]({{< relref "#transformation-functions" >}}).
 
 1. Navigate to the panel where you want to add one or more transformations.
-1. Click the panel title and then click **Edit**.
+1. Hover over any part of the panel to display the actions menu on the top right corner.
+1. Click the menu and select **Edit**.
 1. Click the **Transform** tab.
 1. Click a transformation.
    A transformation row appears where you configure the transformation options. For more information about how to configure a transformation, refer to [Transformation functions]({{< relref "#transformation-functions" >}}).
@@ -89,6 +90,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
 - **Mode -** Select a mode:
   - **Reduce row -** Apply selected calculation on each row of selected fields independently.
   - **Binary option -** Apply basic math operation(sum, multiply, etc) on values in a single row from two selected fields.
+  - **Index -** Will insert a field with the row index.
 - **Field name -** Select the names of fields you want to use in the calculation for the new field.
 - **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types]({{< relref "../../calculation-types" >}}).
 - **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.

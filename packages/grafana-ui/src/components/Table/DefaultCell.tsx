@@ -7,7 +7,7 @@ import { TableCellBackgroundDisplayMode, TableCellOptions } from '@grafana/schem
 
 import { useStyles2 } from '../../themes';
 import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
-import { Button, clearLinkButtonStyles } from '../Button';
+import { clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
@@ -42,15 +42,17 @@ export const DefaultCell = (props: TableCellProps) => {
       {hasLinks && (
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
           {(api) => {
-            const content = <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{value}</div>;
             if (api.openMenu) {
               return (
-                <Button className={cx(clearButtonStyle)} onClick={api.openMenu}>
-                  {content}
-                </Button>
+                <button
+                  className={cx(clearButtonStyle, getLinkStyle(tableStyles, cellOptions, api.targetClassName))}
+                  onClick={api.openMenu}
+                >
+                  {value}
+                </button>
               );
             } else {
-              return content;
+              return <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{value}</div>;
             }
           }}
         </DataLinksContextMenu>
@@ -77,10 +79,12 @@ function getCellStyle(
   if (cellOptions.type === TableCellDisplayMode.ColorText) {
     textColor = displayValue.color;
   } else if (cellOptions.type === TableCellDisplayMode.ColorBackground) {
-    if (cellOptions.mode === TableCellBackgroundDisplayMode.Basic) {
+    const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
+
+    if (mode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
-    } else if (cellOptions.mode === TableCellBackgroundDisplayMode.Gradient) {
+    } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
       const bgColor2 = tinycolor(displayValue.color)
         .darken(10 * darkeningFactor)
         .spin(5);
