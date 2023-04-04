@@ -121,7 +121,7 @@ export function prepareCandlestickFields(
   const data: CandlestickData = { aligned, frame: aligned, names: {} };
 
   // Apply same filter as everythign else in timeseries
-  const timeSeriesFrames = prepareGraphableFields([aligned], undefined, theme, timeRange);
+  const timeSeriesFrames = prepareGraphableFields([aligned], theme, timeRange);
   if (!timeSeriesFrames) {
     return null;
   }

@@ -15,19 +15,26 @@ import { convertFieldType } from '@grafana/data/src/transformations/transformers
 import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
-import { findField } from 'app/features/dimensions';
 
 /**
  * Returns null if there are no graphable fields
  */
 export function prepareGraphableFields(
   series: DataFrame[],
-  xField: string | undefined,
   theme: GrafanaTheme2,
-  timeRange?: TimeRange
+  timeRange?: TimeRange,
+  // numeric X requires a single frame where the first field is numeric
+  numericX?: boolean
 ): DataFrame[] | null {
   if (!series?.length) {
     return null;
+  }
+
+  // Sanity check
+  if (numericX) {
+    if (series.length > 1 || series[0].fields[0].type !== FieldType.number) {
+      throw 'invalid series for numeric X';
+    }
   }
 
   // some datasources simply tag the field as time, but don't convert to milli epochs
@@ -43,15 +50,6 @@ export function prepareGraphableFields(
 
   let numXField: Field | undefined;
 
-  if (xField) {
-    numXField = findField(series[0], xField);
-
-    // move field to pos 0 (mutates once)
-    if (numXField && series[0].fields[0] !== numXField) {
-      series[0].fields = [numXField, ...series[0].fields.filter((f) => f !== numXField)];
-    }
-  }
-
   let copy: Field;
 
   const frames: DataFrame[] = [];
@@ -62,7 +60,7 @@ export function prepareGraphableFields(
     let hasTimeField = false;
     let hasValueField = false;
 
-    let nulledFrame = xField
+    let nulledFrame = numericX
       ? frame
       : applyNullInsertThreshold({
           frame,
@@ -149,22 +147,20 @@ export function prepareGraphableFields(
   }
 
   if (frames.length) {
-    setClassicPaletteIdxs(frames, xField, theme);
+    setClassicPaletteIdxs(frames, theme, numericX ? frames[0].fields[0] : undefined);
     return frames;
   }
 
   return null;
 }
 
-const setClassicPaletteIdxs = (frames: DataFrame[], numXFieldName: string | undefined, theme: GrafanaTheme2) => {
+const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2, skipField?: Field) => {
   let seriesIndex = 0;
-
-  let numXField = findField(frames[0], numXFieldName);
 
   frames.forEach((frame) => {
     frame.fields.forEach((field) => {
       // TODO: also add FieldType.enum type here after https://github.com/grafana/grafana/pull/60491
-      if (field !== numXField && (field.type === FieldType.number || field.type === FieldType.boolean)) {
+      if (field !== skipField && (field.type === FieldType.number || field.type === FieldType.boolean)) {
         field.state = {
           ...field.state,
           seriesIndex: seriesIndex++, // TODO: skip this for fields with custom renderers (e.g. Candlestick)?

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { FieldType, PanelProps } from '@grafana/data';
+import { FieldType, PanelProps, Field } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { KeyboardPlugin, TimeSeries, TooltipDisplayMode, TooltipPlugin, usePanelContext } from '@grafana/ui';
 import { findField } from 'app/features/dimensions';
@@ -31,34 +31,35 @@ export const TrendPanel = ({
       };
     }
 
-    let xFieldName = options.xField;
+    let frames = data.series;
+    let xField: Field | undefined = undefined;
+    if (options.xField) {
+      xField = findField(frames[0], options.xField);
 
-    if (xFieldName) {
-      const f = findField(data.series[0], xFieldName);
-
-      if (!f) {
+      if (!xField) {
         return {
-          warning: 'Unable to find field: ' + xFieldName,
+          warning: 'Unable to find field: ' + options.xField,
           frames: data.series,
         };
       }
     } else {
       // first number field
-      const f = data.series[0].fields.find((f) => f.type === FieldType.number);
+      xField = frames[0].fields.find((f) => f.type === FieldType.number);
 
-      if (!f) {
+      if (!xField) {
         return {
           warning: 'No numeric fields found for X axis',
-          frames: data.series,
+          frames,
         };
       }
-
-      xFieldName = f.name;
     }
 
-    const frames = prepareGraphableFields(data.series, xFieldName, config.theme2);
+    // Make sure the numeric x field is first in the frame
+    if (xField !== frames[0].fields[0]) {
+      frames = [{ ...frames[0], fields: [xField, ...frames[0].fields.filter((f) => f !== xField)] }];
+    }
 
-    return { frames, xFieldName };
+    return { frame: prepareGraphableFields(data.series, config.theme2, undefined, true) };
   }, [data, options.xField]);
 
   if (info.warning || !info.frames) {
@@ -75,7 +76,6 @@ export const TrendPanel = ({
 
   return (
     <TimeSeries // Name change!
-      xField={info.xFieldName}
       frames={info.frames}
       structureRev={data.structureRev}
       timeRange={timeRange}

@@ -37,10 +37,7 @@ export const TimeSeriesPanel = ({
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
 
-  const frames = useMemo(
-    () => prepareGraphableFields(data.series, undefined, config.theme2, timeRange),
-    [data, timeRange]
-  );
+  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
   if (!frames) {
