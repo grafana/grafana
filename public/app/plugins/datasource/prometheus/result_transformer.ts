@@ -650,13 +650,13 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
   return seriesList;
 }
 
-function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
+export function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
   let le1, le2;
 
   try {
     // fail if not integer. might happen with bad queries
-    le1 = parseSampleValue(s1.name ?? '');
-    le2 = parseSampleValue(s2.name ?? '');
+    le1 = parseSampleValue(s1.name ?? s1.fields[1].name);
+    le2 = parseSampleValue(s2.name ?? s2.fields[1].name);
   } catch (err) {
     console.error(err);
     return 0;

@@ -175,6 +175,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       font-weight: ${theme.typography.fontWeightMedium};
       &:hover {
         text-decoration: underline;
+        color: ${theme.colors.text.link};
       }
     `,
     cellLinkForColoredCell: css`
@@ -207,21 +208,12 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         margin-bottom: 0;
       }
     `,
-    paginationItem: css`
-      flex: 20%;
-    `,
-    paginationCenterItem: css`
-      flex: 100%;
-      display: flex;
-      justify-content: center;
-    `,
     paginationSummary: css`
       color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
       display: flex;
       justify-content: flex-end;
-      flex: 20%;
-      padding-right: ${theme.spacing(1)};
+      padding: ${theme.spacing(0, 1, 0, 2)};
     `,
 
     tableContentWrapper: (totalColumnsWidth: number) => {

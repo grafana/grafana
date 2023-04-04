@@ -182,6 +182,26 @@ const getDataSourceOptions = (input: { pluginId: string; pluginName: string }, i
   }
 };
 
+export async function moveFolders(folderUIDs: string[], toFolder: FolderInfo) {
+  const result = {
+    totalCount: folderUIDs.length,
+    successCount: 0,
+  };
+
+  for (const folderUID of folderUIDs) {
+    try {
+      const newFolderDTO = await moveFolder(folderUID, toFolder);
+      if (newFolderDTO !== null) {
+        result.successCount += 1;
+      }
+    } catch (err) {
+      console.error('Failed to move a folder', err);
+    }
+  }
+
+  return result;
+}
+
 export function moveDashboards(dashboardUids: string[], toFolder: FolderInfo) {
   const tasks = [];
 
@@ -284,6 +304,13 @@ export function createFolder(payload: any) {
   return getBackendSrv().post('/api/folders', payload);
 }
 
+export function moveFolder(uid: string, toFolder: FolderInfo) {
+  const payload = {
+    parentUid: toFolder.uid,
+  };
+  return getBackendSrv().post(`/api/folders/${uid}/move`, payload, { showErrorAlert: false });
+}
+
 export const SLICE_FOLDER_RESULTS_TO = 1000;
 
 export function searchFolders(
@@ -311,7 +338,7 @@ export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
   return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
 }
 
-function executeInOrder(tasks: any[]) {
+function executeInOrder(tasks: any[]): Promise<unknown> {
   return tasks.reduce((acc, task) => {
     return Promise.resolve(acc).then(task);
   }, []);

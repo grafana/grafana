@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
@@ -99,7 +100,12 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		httpClient, err := httpClientProvider.New()
+		opts, err := settings.HTTPClientOptions()
+		if err != nil {
+			return nil, err
+		}
+
+		httpClient, err := httpClientProvider.New(opts)
 		if err != nil {
 			return nil, fmt.Errorf("error creating http client: %w", err)
 		}
@@ -155,7 +161,7 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 		to the query, but rather an ID is first returned. Following this, a client is expected to send requests along
 		with the ID until the status of the query is complete, receiving (possibly partial) results each time. For
 		queries made via dashboards and Explore, the logic of making these repeated queries is handled on the
-		frontend, but because alerts are executed on the backend the logic needs to be reimplemented here.
+		frontend, but because alerts and expressions are executed on the backend the logic needs to be reimplemented here.
 	*/
 	q := req.Queries[0]
 	var model DataQueryJson
@@ -163,11 +169,12 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	if err != nil {
 		return nil, err
 	}
-	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	isLogAlertQuery := fromAlert && model.QueryMode == logsQueryMode
 
-	if isLogAlertQuery {
-		return e.executeLogAlertQuery(ctx, req)
+	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
+	fromExpression := req.GetHTTPHeader(query.HeaderFromExpression) != ""
+	isSyncLogQuery := (fromAlert || fromExpression) && model.QueryMode == logsQueryMode
+	if isSyncLogQuery {
+		return executeSyncLogQuery(ctx, e, req)
 	}
 
 	var result *backend.QueryDataResponse
@@ -245,9 +252,9 @@ func (e *cloudWatchExecutor) newSession(pluginCtx backend.PluginContext, region 
 		region = instance.Settings.Region
 	}
 
-	return e.sessions.GetSession(awsds.SessionConfig{
+	sess, err := e.sessions.GetSession(awsds.SessionConfig{
 		// https://github.com/grafana/grafana/issues/46365
-		// HTTPClient: dsInfo.HTTPClient,
+		// HTTPClient: instance.HTTPClient,
 		Settings: awsds.AWSDatasourceSettings{
 			Profile:       instance.Settings.Profile,
 			Region:        region,
@@ -261,6 +268,17 @@ func (e *cloudWatchExecutor) newSession(pluginCtx backend.PluginContext, region 
 		},
 		UserAgentName: aws.String("Cloudwatch"),
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	// work around until https://github.com/grafana/grafana/issues/39089 is implemented
+	if e.cfg.SecureSocksDSProxy.Enabled && e.features.IsEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && instance.Settings.SecureSocksProxyEnabled {
+		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
+		sess.Config.HTTPClient.Transport = instance.HTTPClient.Transport
+	}
+
+	return sess, nil
 }
 
 func (e *cloudWatchExecutor) getInstance(pluginCtx backend.PluginContext) (*DataSource, error) {

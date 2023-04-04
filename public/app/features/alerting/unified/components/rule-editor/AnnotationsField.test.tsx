@@ -1,4 +1,4 @@
-import { findByText, findByTitle, render } from '@testing-library/react';
+import { findByRole, findByText, findByTitle, getByTestId, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
@@ -107,8 +107,8 @@ describe('AnnotationsField', function () {
           title: 'My dashboard',
           uid: 'dash-test-uid',
           panels: [
-            { id: 1, title: 'First panel' },
-            { id: 2, title: 'Second panel' },
+            { id: 1, title: 'First panel', type: 'timeseries' },
+            { id: 2, title: 'Second panel', type: 'timeseries' },
           ],
         })
       );
@@ -137,8 +137,8 @@ describe('AnnotationsField', function () {
           title: 'My dashboard',
           uid: 'dash-test-uid',
           panels: [
-            { id: 1, title: 'First panel' },
-            { id: 2, title: 'Second panel' },
+            { id: 1, title: 'First panel', type: 'graph' },
+            { id: 2, title: 'Second panel', type: 'graph' },
           ],
         })
       );
@@ -186,8 +186,8 @@ describe('AnnotationsField', function () {
           title: 'My dashboard',
           uid: 'dash-test-uid',
           panels: [
-            { id: 1, title: 'First panel' },
-            { id: 2, title: 'Second panel' },
+            { id: 1, title: 'First panel', type: 'timeseries' },
+            { id: 2, title: 'Second panel', type: 'timeseries' },
           ],
         })
       );
@@ -195,7 +195,7 @@ describe('AnnotationsField', function () {
         mockDashboardDto({
           title: 'My other dashboard',
           uid: 'dash-other-uid',
-          panels: [{ id: 3, title: 'Third panel' }],
+          panels: [{ id: 3, title: 'Third panel', type: 'timeseries' }],
         })
       );
 
@@ -216,10 +216,12 @@ describe('AnnotationsField', function () {
       expect(annotationValueElements[0]).toHaveTextContent('dash-test-uid');
       expect(annotationValueElements[1]).toHaveTextContent('1');
 
+      const { confirmButton, dialog } = ui.dashboardPicker;
+
       await user.click(ui.setDashboardButton.get());
-      await user.click(await findByTitle(ui.dashboardPicker.dialog.get(), 'My other dashboard'));
-      await user.click(await findByText(ui.dashboardPicker.dialog.get(), 'Third panel'));
-      await user.click(ui.dashboardPicker.confirmButton.get());
+      await user.click(await findByRole(dialog.get(), 'button', { name: /My other dashboard/ }));
+      await user.click(await findByRole(dialog.get(), 'button', { name: /Third panel/ }));
+      await user.click(confirmButton.get());
 
       expect(ui.dashboardPicker.dialog.query()).not.toBeInTheDocument();
 
@@ -234,6 +236,36 @@ describe('AnnotationsField', function () {
 
       expect(annotationKeyElements[1]).toHaveTextContent('Panel ID');
       expect(annotationValueElements[1]).toHaveTextContent('3');
+    });
+
+    it('should render warning icon for panels of type other than graph and timeseries', async function () {
+      mockSearchApiResponse(server, [
+        mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
+      ]);
+
+      mockGetDashboardResponse(
+        mockDashboardDto({
+          title: 'My dashboard',
+          uid: 'dash-test-uid',
+          panels: [
+            { id: 1, title: 'First panel', type: 'bar' },
+            { id: 2, title: 'Second panel', type: 'graph' },
+          ],
+        })
+      );
+
+      const user = userEvent.setup();
+
+      render(<FormWrapper formValues={{ annotations: [] }} />);
+
+      const { dialog } = ui.dashboardPicker;
+
+      await user.click(ui.setDashboardButton.get());
+      await user.click(await findByTitle(dialog.get(), 'My dashboard'));
+
+      const warnedPanel = await findByRole(dialog.get(), 'button', { name: /First panel/ });
+
+      expect(getByTestId(warnedPanel, 'warning-icon')).toBeInTheDocument();
     });
   });
 });
@@ -255,6 +287,7 @@ function mockDashboardSearchItem(searchItem: Partial<DashboardSearchItem>) {
     uri: '',
     items: [],
     tags: [],
+    slug: '',
     isStarred: false,
     ...searchItem,
   };
