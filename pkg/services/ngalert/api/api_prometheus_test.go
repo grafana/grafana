@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"math/rand"
 	"net/http"
 	"testing"
@@ -20,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -837,6 +837,152 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Len(t, rule.Alerts, 1)
 			// Firing alerts should have precedence over normal alerts
 			require.Equal(t, "Alerting", rule.Alerts[0].State)
+		})
+	})
+
+	t.Run("test with filters on state", func(t *testing.T) {
+		fakeStore, fakeAIM, _, api := setupAPI(t)
+		// create two rules in the same Rule Group to keep assertions simple
+		rules := ngmodels.GenerateAlertRules(3, ngmodels.AlertRuleGen(withOrgID(orgID), withGroup("Rule-Group-1"), withNamespace(&folder.Folder{
+			Title: "Folder-1",
+		})))
+		// Need to sort these so we add alerts to the rules as ordered in the response
+		ngmodels.AlertRulesBy(ngmodels.AlertRulesByIndex).Sort(rules)
+		// The last two rules will have errors, however the first will be alerting
+		// while the second one will have a DatasourceError alert.
+		rules[1].ExecErrState = ngmodels.AlertingErrState
+		rules[2].ExecErrState = ngmodels.ErrorErrState
+		fakeStore.PutRule(context.Background(), rules...)
+
+		// create a normal and alerting state for the first rule
+		fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1)
+		fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1, withAlertingState())
+		// create an error state for the last two rules
+		fakeAIM.GenerateAlertInstances(orgID, rules[1].UID, 1, withAlertingErrorState())
+		fakeAIM.GenerateAlertInstances(orgID, rules[2].UID, 1, withErrorState())
+
+		t.Run("invalid state returns 400 Bad Request", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?state=unknown", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusBadRequest, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+			require.Equal(t, "unknown state 'unknown'", res.Error)
+		})
+
+		t.Run("first without filters", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// There should be 2 firing rules, 1 inactive rule, and 2 with errors
+			require.Equal(t, map[string]int64{"firing": 2, "inactive": 1, "error": 2}, res.Data.Totals)
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 3)
+
+			// The first two rules should be firing and the last should be inactive
+			require.Equal(t, "firing", rg.Rules[0].State)
+			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].Totals)
+			require.Len(t, rg.Rules[0].Alerts, 2)
+			require.Equal(t, "firing", rg.Rules[1].State)
+			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].Totals)
+			require.Len(t, rg.Rules[1].Alerts, 1)
+			require.Equal(t, "inactive", rg.Rules[2].State)
+			require.Equal(t, map[string]int64{"error": 1}, rg.Rules[2].Totals)
+			require.Len(t, rg.Rules[2].Alerts, 1)
+		})
+
+		t.Run("then with filter for firing alerts", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?state=firing", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// The totals should be the same
+			require.Equal(t, map[string]int64{"firing": 2, "inactive": 1, "error": 2}, res.Data.Totals)
+
+			// The inactive rules should be filtered out of the result
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 2)
+
+			// Both firing rules should be returned with their totals unchanged
+			require.Equal(t, "firing", rg.Rules[0].State)
+			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].Totals)
+			// The first rule should have just 1 firing alert as the inactive alert
+			// has been removed by the filter for firing alerts
+			require.Len(t, rg.Rules[0].Alerts, 1)
+
+			require.Equal(t, "firing", rg.Rules[1].State)
+			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].Totals)
+			require.Len(t, rg.Rules[1].Alerts, 1)
+		})
+
+		t.Run("then with filters for both firing and error alerts", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?state=inactive&state=firing", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// The totals should be the same
+			require.Equal(t, map[string]int64{"firing": 2, "inactive": 1, "error": 2}, res.Data.Totals)
+
+			// The number of rules returned should also be the same
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 3)
+
+			// The first two rules should be firing and the last should be inactive
+			require.Equal(t, "firing", rg.Rules[0].State)
+			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].Totals)
+			require.Len(t, rg.Rules[0].Alerts, 2)
+			//
+			require.Equal(t, "firing", rg.Rules[1].State)
+			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].Totals)
+			require.Len(t, rg.Rules[1].Alerts, 1)
+			//
+			// The last rule should have 1 alert as the filter includes errors too
+			require.Equal(t, "inactive", rg.Rules[2].State)
+			require.Equal(t, map[string]int64{"error": 1}, rg.Rules[2].Totals)
+			// The error alert has been removed as the filters are inactive and firing
+			require.Len(t, rg.Rules[2].Alerts, 0)
 		})
 	})
 }

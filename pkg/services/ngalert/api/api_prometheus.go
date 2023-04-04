@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/util"
 	"net/http"
 	"sort"
 	"strconv"
@@ -105,6 +106,28 @@ func getPanelIDFromRequest(r *http.Request) (int64, error) {
 	return 0, nil
 }
 
+func getStatesFromRequest(r *http.Request) ([]eval.State, error) {
+	var states []eval.State
+	for _, s := range r.URL.Query()["state"] {
+		s = strings.ToLower(s)
+		switch s {
+		case "normal", "inactive":
+			states = append(states, eval.Normal)
+		case "alerting", "firing":
+			states = append(states, eval.Alerting)
+		case "pending":
+			states = append(states, eval.Pending)
+		case "nodata":
+			states = append(states, eval.NoData)
+		case "error":
+			states = append(states, eval.Error)
+		default:
+			return states, fmt.Errorf("unknown state '%s'", s)
+		}
+	}
+	return states, nil
+}
+
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
 	dashboardUID := c.Query("dashboard_uid")
 	panelID, err := getPanelIDFromRequest(c.Req)
@@ -118,6 +141,14 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	limitGroups := c.QueryInt64WithDefault("limit", -1)
 	limitRulesPerGroup := c.QueryInt64WithDefault("limit_rules", -1)
 	limitAlertsPerRule := c.QueryInt64WithDefault("limit_alerts", -1)
+	withStates, err := getStatesFromRequest(c.Req)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
+	withStatesFast := make(map[eval.State]struct{})
+	for _, state := range withStates {
+		withStatesFast[state] = struct{}{}
+	}
 
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
@@ -190,14 +221,39 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		if !authorizeAccessToRuleGroup(rules, hasAccess) {
 			continue
 		}
-		ruleGroup, totals := srv.toRuleGroup(groupKey, folder, rules, limitAlertsPerRule, labelOptions)
-		if limitRulesPerGroup > -1 && int64(len(rules)) > limitRulesPerGroup {
-			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
-		}
+		ruleGroup, totals := srv.toRuleGroup(groupKey, folder, rules, limitAlertsPerRule, withStatesFast, labelOptions)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
 		}
+
+		if len(withStates) > 0 {
+			// Filtering is weird but firing, pending, and normal filters also need to be
+			// applied to the rule. Others such as nodata and error should have no effect.
+			filteredRules := make([]apimodels.AlertingRule, 0, len(ruleGroup.Rules))
+			for _, rule := range ruleGroup.Rules {
+				var state *eval.State
+				switch rule.State {
+				case "normal", "inactive":
+					state = util.Pointer(eval.Normal)
+				case "alerting", "firing":
+					state = util.Pointer(eval.Alerting)
+				case "pending":
+					state = util.Pointer(eval.Pending)
+				}
+				if state != nil {
+					if _, ok := withStatesFast[*state]; ok {
+						filteredRules = append(filteredRules, rule)
+					}
+				}
+			}
+			ruleGroup.Rules = filteredRules
+		}
+
+		if limitRulesPerGroup > -1 && int64(len(rules)) > limitRulesPerGroup {
+			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
+		}
+
 		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
 	}
 
@@ -212,7 +268,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	return response.JSON(http.StatusOK, ruleResponse)
 }
 
-func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder *folder.Folder, rules []*ngmodels.AlertRule, limitAlerts int64, labelOptions []ngmodels.LabelOption) (*apimodels.RuleGroup, map[string]int64) {
+func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder *folder.Folder, rules []*ngmodels.AlertRule, limitAlerts int64, withStates map[eval.State]struct{}, labelOptions []ngmodels.LabelOption) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
@@ -289,6 +345,12 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 			if alertState.Error != nil {
 				newRule.LastError = alertState.Error.Error()
 				newRule.Health = "error"
+			}
+
+			if len(withStates) > 0 {
+				if _, ok := withStates[alertState.State]; !ok {
+					continue
+				}
 			}
 
 			alertingRule.Alerts = append(alertingRule.Alerts, alert)
