@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
@@ -192,7 +193,7 @@ func Test_CheckHealth(t *testing.T) {
 		}, resp)
 	})
 }
-func Test_executeLogAlertQuery(t *testing.T) {
+func Test_executeSyncLogQuery(t *testing.T) {
 	origNewCWClient := NewCWClient
 	t.Cleanup(func() {
 		NewCWClient = origNewCWClient
@@ -253,6 +254,70 @@ func Test_executeLogAlertQuery(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, []string{"instance manager's region"}, sess.calledRegions)
+	})
+
+	t.Run("with header", func(t *testing.T) {
+		testcases := []struct {
+			name    string
+			headers map[string]string
+			called  bool
+		}{
+			{
+				"alert header",
+				map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+				true,
+			},
+			{
+				"expression header",
+				map[string]string{fmt.Sprintf("http_%s", query.HeaderFromExpression): "some value"},
+				true,
+			},
+			{
+				"no header",
+				map[string]string{},
+				false,
+			},
+		}
+		origExecuteSyncLogQuery := executeSyncLogQuery
+		var syncCalled bool
+		executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+			syncCalled = true
+			return nil, nil
+		}
+
+		for _, tc := range testcases {
+			t.Run(tc.name, func(t *testing.T) {
+				syncCalled = false
+				cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
+				im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+					return DataSource{Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}}, nil
+				})
+				sess := fakeSessionCache{}
+
+				executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
+				_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+					Headers:       tc.headers,
+					PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+					Queries: []backend.DataQuery{
+						{
+							TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+							JSON: json.RawMessage(`{
+								"queryMode":    "Logs",
+								"type":        "logAction",
+								"subtype":     "StartQuery",
+								"region":      "default",
+								"queryString": "fields @message"
+							}`),
+						},
+					},
+				})
+
+				assert.NoError(t, err)
+				assert.Equal(t, tc.called, syncCalled)
+			})
+		}
+
+		executeSyncLogQuery = origExecuteSyncLogQuery
 	})
 }
 

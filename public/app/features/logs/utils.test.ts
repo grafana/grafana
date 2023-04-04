@@ -8,6 +8,7 @@ import {
   LogsModel,
   LogsSortOrder,
   MutableDataFrame,
+  DataFrame,
 } from '@grafana/data';
 
 import {
@@ -18,6 +19,7 @@ import {
   getLogLevelFromKey,
   getLogsVolumeMaximum,
   logRowsToReadableJson,
+  mergeLogsVolumeDataFrames,
   sortLogsResult,
 } from './utils';
 
@@ -270,6 +272,101 @@ describe('logRowsToReadableJson', () => {
     const result = logRowsToReadableJson([testRow2]);
 
     expect(result).toEqual([{ line: 'test entry', timestamp: '123456789', fields: { foo: 'bar', foo2: 'bar2' } }]);
+  });
+});
+
+describe('mergeLogsVolumeDataFrames', () => {
+  function mockLogVolume(level: string, timestamps: number[], values: number[]): DataFrame {
+    const frame = new MutableDataFrame();
+    frame.addField({ name: 'Time', type: FieldType.time, values: timestamps });
+    frame.addField({ name: 'Value', type: FieldType.number, values, config: { displayNameFromDS: level } });
+    return frame;
+  }
+
+  it('merges log volumes', () => {
+    // timestamps: 1 2 3 4 5 6
+
+    // info 1:     1 - 1 - - -
+    // info 2:     2 3 - - - -
+    // total:      3 3 1 - - -
+    const infoVolume1 = mockLogVolume('info', [1, 3], [1, 1]);
+    const infoVolume2 = mockLogVolume('info', [1, 2], [2, 3]);
+
+    // debug 1:    - 2 3 - - -
+    // debug 2:    1 - - - 0 -
+    // total:      1 2 3 - 0 -
+    const debugVolume1 = mockLogVolume('debug', [2, 3], [2, 3]);
+    const debugVolume2 = mockLogVolume('debug', [1, 5], [1, 0]);
+
+    // error 1:    - - - - - 1
+    // error 2:    1 - - - - 1
+    // total:      1 - - - - 2
+    const errorVolume1 = mockLogVolume('error', [1, 6], [1, 1]);
+    const errorVolume2 = mockLogVolume('error', [1], [1]);
+
+    const merged = mergeLogsVolumeDataFrames([
+      infoVolume1,
+      infoVolume2,
+      debugVolume1,
+      debugVolume2,
+      errorVolume1,
+      errorVolume2,
+    ]);
+
+    expect(merged).toHaveLength(3);
+    expect(merged).toMatchObject([
+      {
+        fields: [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: new ArrayVector([1, 2, 3]),
+          },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: new ArrayVector([3, 3, 1]),
+            config: {
+              displayNameFromDS: 'info',
+            },
+          },
+        ],
+      },
+      {
+        fields: [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: new ArrayVector([1, 2, 3, 5]),
+          },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: new ArrayVector([1, 2, 3, 0]),
+            config: {
+              displayNameFromDS: 'debug',
+            },
+          },
+        ],
+      },
+      {
+        fields: [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: new ArrayVector([1, 6]),
+          },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: new ArrayVector([2, 1]),
+            config: {
+              displayNameFromDS: 'error',
+            },
+          },
+        ],
+      },
+    ]);
   });
 });
 

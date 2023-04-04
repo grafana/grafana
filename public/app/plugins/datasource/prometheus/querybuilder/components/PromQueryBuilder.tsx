@@ -221,7 +221,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
               size="sm"
               onClick={() => setMetricEncyclopediaModalOpen((prevValue) => !prevValue)}
             >
-              Metric Encyclopedia
+              Metric encyclopedia
             </Button>
             {query.metric && (
               <Tag
@@ -255,6 +255,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           />
         )}
         <LabelFilters
+          debounceDuration={datasource.getDebounceTimeInMilliseconds()}
           getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
           labelsFilters={query.labels}
           // eslint-ignore

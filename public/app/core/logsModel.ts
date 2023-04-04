@@ -785,7 +785,7 @@ export function queryLogsSample<TQuery extends DataQuery, TOptions extends DataS
 }
 
 function getIntervalInfo(scopedVars: ScopedVars, timespanMs: number): { interval: string; intervalMs?: number } {
-  if (scopedVars.__interval) {
+  if (scopedVars.__interval_ms) {
     let intervalMs: number = scopedVars.__interval_ms.value;
     let interval = '';
     // below 5 seconds we force the resolution to be per 1ms as interval in scopedVars is not less than 10ms

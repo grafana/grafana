@@ -42,6 +42,10 @@ export const updateExpressionType = createAction<{ refId: string; type: Expressi
 export const updateExpressionTimeRange = createAction('updateExpressionTimeRange');
 export const updateMaxDataPoints = createAction<{ refId: string; maxDataPoints: number }>('updateMaxDataPoints');
 
+export const setRecordingRulesQueries = createAction<{ recordingRuleQueries: AlertQuery[]; expression: string }>(
+  'setRecordingRulesQueries'
+);
+
 export const queriesAndExpressionsReducer = createReducer(initialState, (builder) => {
   // data queries actions
   builder
@@ -68,6 +72,15 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     .addCase(setDataQueries, (state, { payload }) => {
       const expressionQueries = state.queries.filter((query) => isExpressionQuery(query.model));
       state.queries = [...payload, ...expressionQueries];
+    })
+    .addCase(setRecordingRulesQueries, (state, { payload }) => {
+      const query = payload.recordingRuleQueries[0];
+      const recordingRuleQuery = {
+        ...query,
+        ...{ expr: payload.expression, model: { expr: payload.expression, refId: query.model.refId } },
+      };
+
+      state.queries = [recordingRuleQuery];
     })
     .addCase(updateMaxDataPoints, (state, action) => {
       state.queries = state.queries.map((query) => {

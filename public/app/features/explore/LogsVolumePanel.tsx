@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { identity } from 'lodash';
 import React from 'react';
 
 import {
@@ -43,13 +44,15 @@ export function LogsVolumePanel(props: Props) {
   const logsVolumeData = props.logsVolumeData;
 
   const logsVolumeInfo = getLogsVolumeDataSourceInfo(logsVolumeData?.data);
-  let extraInfo = logsVolumeInfo ? `${logsVolumeInfo.refId} (${logsVolumeInfo.name})` : '';
+  let extraInfo = logsVolumeInfo ? `${logsVolumeInfo.name}` : '';
 
   if (isLogsVolumeLimited(logsVolumeData.data)) {
     extraInfo = [
       extraInfo,
       'This datasource does not support full-range histograms. The graph below is based on the logs seen in the response.',
-    ].join('. ');
+    ]
+      .filter(identity)
+      .join('. ');
   }
 
   let LogsVolumePanelContent;
