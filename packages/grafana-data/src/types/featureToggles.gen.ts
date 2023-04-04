@@ -30,7 +30,6 @@ export interface FeatureToggles {
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
   lokiLive?: boolean;
-  lokiDataframeApi?: boolean;
   featureHighlights?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;

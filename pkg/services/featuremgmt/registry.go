@@ -85,12 +85,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:        "lokiDataframeApi",
-			Description: "Use experimental loki api for WebSocket streaming (early prototype)",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "featureHighlights",
 			Description: "Highlight Grafana Enterprise features",
 			State:       FeatureStateStable,
