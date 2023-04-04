@@ -20,6 +20,12 @@ var (
 )
 
 func (rp *ResponseParser) Parse(buf io.ReadCloser, queries []Query) *backend.QueryDataResponse {
+	return rp.parse(buf, queries)
+}
+
+// parse is the same as Parse, but without the io.ReadCloser (we don't need to
+// close the buffer)
+func (*ResponseParser) parse(buf io.Reader, queries []Query) *backend.QueryDataResponse {
 	resp := backend.NewQueryDataResponse()
 
 	response, jsonErr := parseJSON(buf)
@@ -45,7 +51,7 @@ func (rp *ResponseParser) Parse(buf io.ReadCloser, queries []Query) *backend.Que
 	return resp
 }
 
-func parseJSON(buf io.ReadCloser) (Response, error) {
+func parseJSON(buf io.Reader) (Response, error) {
 	var response Response
 
 	dec := json.NewDecoder(buf)
@@ -57,7 +63,17 @@ func parseJSON(buf io.ReadCloser) (Response, error) {
 }
 
 func transformRows(rows []Row, query Query) data.Frames {
-	frames := data.Frames{}
+	// pre-allocate frames - this can save many allocations
+	cols := 0
+	for _, row := range rows {
+		cols += len(row.Columns)
+	}
+	frames := make([]*data.Frame, 0, len(rows)+cols)
+
+	// frameName is pre-allocated so we can reuse it, saving memory.
+	// It's sized for a reasonably-large name, but will grow if needed.
+	frameName := make([]byte, 0, 128)
+
 	for _, row := range rows {
 		var hasTimeCol = false
 
@@ -95,7 +111,6 @@ func transformRows(rows []Row, query Query) data.Frames {
 				var stringArray []*string
 				var boolArray []*bool
 				valType := typeof(row.Values, colIndex)
-				name := formatFrameName(row, column, query)
 
 				for _, valuePair := range row.Values {
 					timestamp, timestampErr := parseTimestamp(valuePair[0])
@@ -127,6 +142,8 @@ func transformRows(rows []Row, query Query) data.Frames {
 						}
 					}
 				}
+
+				name := string(formatFrameName(row, column, query, frameName[:]))
 
 				timeField := data.NewField("time", nil, timeArray)
 				if valType == "string" {
@@ -162,9 +179,9 @@ func newDataFrame(name string, queryString string, timeField *data.Field, valueF
 	return frame
 }
 
-func formatFrameName(row Row, column string, query Query) string {
+func formatFrameName(row Row, column string, query Query, frameName []byte) []byte {
 	if query.Alias == "" {
-		return buildFrameNameFromQuery(row, column)
+		return buildFrameNameFromQuery(row, column, frameName)
 	}
 	nameSegment := strings.Split(row.Name, ".")
 
@@ -199,21 +216,32 @@ func formatFrameName(row Row, column string, query Query) string {
 		return in
 	})
 
-	return string(result)
+	return result
 }
 
-func buildFrameNameFromQuery(row Row, column string) string {
-	tags := make([]string, 0, len(row.Tags))
-	for k, v := range row.Tags {
-		tags = append(tags, fmt.Sprintf("%s: %s", k, v))
+func buildFrameNameFromQuery(row Row, column string, frameName []byte) []byte {
+	frameName = append(frameName, row.Name...)
+	frameName = append(frameName, '.')
+	frameName = append(frameName, column...)
+
+	if len(row.Tags) > 0 {
+		frameName = append(frameName, ' ', '{', ' ')
+		first := true
+		for k, v := range row.Tags {
+			if !first {
+				frameName = append(frameName, ' ')
+			} else {
+				first = false
+			}
+			frameName = append(frameName, k...)
+			frameName = append(frameName, ':', ' ')
+			frameName = append(frameName, v...)
+		}
+
+		frameName = append(frameName, ' ', '}')
 	}
 
-	tagText := ""
-	if len(tags) > 0 {
-		tagText = fmt.Sprintf(" { %s }", strings.Join(tags, " "))
-	}
-
-	return fmt.Sprintf("%s.%s%s", row.Name, column, tagText)
+	return frameName
 }
 
 func parseTimestamp(value interface{}) (time.Time, error) {

@@ -1,17 +1,18 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { CoreApp, createTheme, DataFrame, Field, FieldType, getDisplayProcessor } from '@grafana/data';
+import { CoreApp, DisplayValue } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { SampleUnit, SelectedView, TableData, TopTableData } from '../types';
+import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
+import { SelectedView, TableData, TopTableData } from '../types';
 
 import FlameGraphTopTable from './FlameGraphTopTable';
 
 type Props = {
-  data: DataFrame;
+  data: FlameGraphDataContainer;
   app: CoreApp;
   totalLevels: number;
   selectedView: SelectedView;
@@ -36,61 +37,24 @@ const FlameGraphTopTableContainer = ({
   setRangeMax,
 }: Props) => {
   const styles = useStyles2(() => getStyles(selectedView, app));
-  const [topTable, setTopTable] = useState<TopTableData[]>();
-  const valueField =
-    data.fields.find((f) => f.name === 'value') ?? data.fields.find((f) => f.type === FieldType.number);
-  const selfField = data.fields.find((f) => f.name === 'self') ?? data.fields.find((f) => f.type === FieldType.number);
 
-  const sortLevelsIntoTable = useCallback(() => {
-    let label, self, value;
+  const topTable = useMemo(() => {
+    // Group the data by label
+    // TODO: should be by filename + funcName + linenumber?
     let table: { [key: string]: TableData } = {};
-
-    if (data.fields.length > 3) {
-      const valueValues = data.fields[1].values;
-      const selfValues = data.fields[2].values;
-      const labelValues = data.fields[3].values;
-
-      for (let i = 0; i < valueValues.length; i++) {
-        value = valueValues.get(i);
-        self = selfValues.get(i);
-        label = labelValues.get(i);
-        table[label] = table[label] || {};
-        table[label].self = table[label].self ? table[label].self + self : self;
-        table[label].total = table[label].total ? table[label].total + value : value;
-      }
+    for (let i = 0; i < data.data.length; i++) {
+      const value = data.getValue(i);
+      const self = data.getSelf(i);
+      const label = data.getLabel(i);
+      table[label] = table[label] || {};
+      table[label].self = table[label].self ? table[label].self + self : self;
+      table[label].total = table[label].total ? table[label].total + value : value;
     }
-
-    return table;
-  }, [data.fields]);
-
-  const getTopTableData = (field: Field, value: number) => {
-    const processor = getDisplayProcessor({ field, theme: createTheme() /* theme does not matter for us here */ });
-    const displayValue = processor(value);
-    let unitValue = displayValue.text + displayValue.suffix;
-
-    switch (field.config.unit) {
-      case SampleUnit.Bytes:
-        break;
-      case SampleUnit.Nanoseconds:
-        break;
-      default:
-        if (!displayValue.suffix) {
-          // Makes sure we don't show 123undefined or something like that if suffix isn't defined
-          unitValue = displayValue.text;
-        }
-        break;
-    }
-
-    return unitValue;
-  };
-
-  useEffect(() => {
-    const table = sortLevelsIntoTable();
 
     let topTable: TopTableData[] = [];
     for (let key in table) {
-      const selfUnit = getTopTableData(selfField!, table[key].self);
-      const valueUnit = getTopTableData(valueField!, table[key].total);
+      const selfUnit = handleUnits(data.valueDisplayProcessor(table[key].self), data.getUnitTitle());
+      const valueUnit = handleUnits(data.valueDisplayProcessor(table[key].total), data.getUnitTitle());
 
       topTable.push({
         symbol: key,
@@ -99,8 +63,8 @@ const FlameGraphTopTableContainer = ({
       });
     }
 
-    setTopTable(topTable);
-  }, [data.fields, selfField, sortLevelsIntoTable, valueField]);
+    return topTable;
+  }, [data]);
 
   return (
     <>
@@ -126,6 +90,17 @@ const FlameGraphTopTableContainer = ({
     </>
   );
 };
+
+function handleUnits(displayValue: DisplayValue, unit: string) {
+  let unitValue = displayValue.text + displayValue.suffix;
+  if (unit === 'Count') {
+    if (!displayValue.suffix) {
+      // Makes sure we don't show 123undefined or something like that if suffix isn't defined
+      unitValue = displayValue.text;
+    }
+  }
+  return unitValue;
+}
 
 const getStyles = (selectedView: SelectedView, app: CoreApp) => {
   const marginRight = '20px';

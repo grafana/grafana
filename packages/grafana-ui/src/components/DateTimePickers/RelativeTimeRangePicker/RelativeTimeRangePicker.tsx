@@ -268,7 +268,7 @@ const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme
       z-index: ${theme.zIndex.modal};
       width: 500px;
       top: 100%;
-      border-radius: 2px;
+      border-radius: ${theme.shape.radius.default};
       border: 1px solid ${theme.colors.border.weak};
       left: 0;
       white-space: normal;

@@ -40,7 +40,7 @@ func TestCachedBasedOnConfig(t *testing.T) {
 }
 
 func TestInvalidCacheTypeReturnsError(t *testing.T) {
-	_, err := createClient(&setting.RemoteCacheOptions{Name: "invalid"}, nil)
+	_, err := createClient(&setting.RemoteCacheOptions{Name: "invalid"}, nil, nil)
 	assert.Equal(t, err, ErrInvalidCacheType)
 }
 

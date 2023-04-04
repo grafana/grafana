@@ -39,7 +39,7 @@
   "dependencies": {
     "@grafana/data": "9.5.0-pre",
     "@grafana/e2e-selectors": "9.5.0-pre",
-    "@grafana/faro-web-sdk": "1.0.0",
+    "@grafana/faro-web-sdk": "1.0.2",
     "@grafana/ui": "9.5.0-pre",
     "@sentry/browser": "6.19.7",
     "history": "4.10.1",

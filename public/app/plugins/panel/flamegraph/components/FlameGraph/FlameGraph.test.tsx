@@ -2,12 +2,12 @@ import { fireEvent, screen } from '@testing-library/dom';
 import { render } from '@testing-library/react';
 import React, { useState } from 'react';
 
-import { CoreApp, DataFrameView, MutableDataFrame } from '@grafana/data';
+import { CoreApp, MutableDataFrame } from '@grafana/data';
 
 import { SelectedView } from '../types';
 
 import FlameGraph from './FlameGraph';
-import { Item, nestedSetToLevels } from './dataTransform';
+import { FlameGraphDataContainer, nestedSetToLevels } from './dataTransform';
 import { data } from './testData/dataNestedSet';
 
 import 'jest-canvas-mock';
@@ -29,12 +29,12 @@ describe('FlameGraph', () => {
     const [selectedView, _] = useState(SelectedView.Both);
 
     const flameGraphData = new MutableDataFrame(data);
-    const dataView = new DataFrameView<Item>(flameGraphData);
-    const levels = nestedSetToLevels(dataView);
+    const container = new FlameGraphDataContainer(flameGraphData);
+    const levels = nestedSetToLevels(container);
 
     return (
       <FlameGraph
-        data={flameGraphData}
+        data={container}
         app={CoreApp.Explore}
         levels={levels}
         topLevelIndex={topLevelIndex}

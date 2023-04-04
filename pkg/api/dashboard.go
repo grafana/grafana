@@ -227,12 +227,6 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	// make sure db version is in sync with json model version
 	dash.Data.Set("version", dash.Version)
 
-	if hs.QueryLibraryService != nil && !hs.QueryLibraryService.IsDisabled() {
-		if err := hs.QueryLibraryService.UpdateDashboardQueries(c.Req.Context(), c.SignedInUser, dash); err != nil {
-			return response.Error(500, "Error while loading saved queries", err)
-		}
-	}
-
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
 		Meta:      meta,
@@ -666,25 +660,52 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 		Start:        c.QueryInt("start"),
 	}
 
-	res, err := hs.dashboardVersionService.List(c.Req.Context(), &query)
+	versions, err := hs.dashboardVersionService.List(c.Req.Context(), &query)
 	if err != nil {
 		return response.Error(404, fmt.Sprintf("No versions found for dashboardId %d", dash.ID), err)
 	}
 
-	for _, version := range res {
+	loginMem := make(map[int64]string, len(versions))
+	res := make([]dashver.DashboardVersionMeta, 0, len(versions))
+	for _, version := range versions {
+		msg := version.Message
 		if version.RestoredFrom == version.Version {
-			version.Message = "Initial save (created by migration)"
-			continue
+			msg = "Initial save (created by migration)"
 		}
 
 		if version.RestoredFrom > 0 {
-			version.Message = fmt.Sprintf("Restored from version %d", version.RestoredFrom)
-			continue
+			msg = fmt.Sprintf("Restored from version %d", version.RestoredFrom)
 		}
 
 		if version.ParentVersion == 0 {
-			version.Message = "Initial save"
+			msg = "Initial save"
 		}
+
+		creator := anonString
+		if version.CreatedBy > 0 {
+			login, found := loginMem[version.CreatedBy]
+			if found {
+				creator = login
+			} else {
+				creator = hs.getUserLogin(c.Req.Context(), version.CreatedBy)
+				if creator != anonString {
+					loginMem[version.CreatedBy] = creator
+				}
+			}
+		}
+
+		res = append(res, dashver.DashboardVersionMeta{
+			ID:            version.ID,
+			DashboardID:   version.DashboardID,
+			DashboardUID:  dash.UID,
+			Data:          version.Data,
+			ParentVersion: version.ParentVersion,
+			RestoredFrom:  version.RestoredFrom,
+			Version:       version.Version,
+			Created:       version.Created,
+			Message:       msg,
+			CreatedBy:     creator,
+		})
 	}
 
 	return response.JSON(http.StatusOK, res)
@@ -1273,7 +1294,7 @@ type GetHomeDashboardResponseBody struct {
 // swagger:response dashboardVersionsResponse
 type DashboardVersionsResponse struct {
 	// in: body
-	Body []*dashver.DashboardVersionDTO `json:"body"`
+	Body []dashver.DashboardVersionMeta `json:"body"`
 }
 
 // swagger:response dashboardVersionResponse

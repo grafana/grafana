@@ -1,4 +1,4 @@
-import { VariableOption, UserProps, OrgProps, DashboardProps } from '@grafana/data';
+import { VariableOption, UserProps, OrgProps, DashboardProps, ScopedVars } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 /**
@@ -9,14 +9,17 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
  * multi-valued variable + non-variable item. ['$multiValuedVariable', 'log-group'] => ['value1', 'value2', 'log-group']
  * @param templateSrv - The template service
  * @param strings - The array of strings to interpolate. May contain variables and non-variables.
+ * @pararm scopedVars - The scoped variables to use when interpolating the variables.
  * @param key - Allows you to specify whether the variable MetricFindValue.text or MetricFindValue.value should be used when interpolating the variable. Optional, defaults to 'value'.
  **/
 export const interpolateStringArrayUsingSingleOrMultiValuedVariable = (
   templateSrv: TemplateSrv,
   strings: string[],
+  scopedVars: ScopedVars,
   key?: 'value' | 'text'
 ) => {
   key = key ?? 'value';
+  const format = key === 'value' ? 'pipe' : 'text';
   let result: string[] = [];
   for (const string of strings) {
     const variableName = templateSrv.getVariableName(string);
@@ -25,9 +28,10 @@ export const interpolateStringArrayUsingSingleOrMultiValuedVariable = (
     if (valueVar && 'current' in valueVar && isVariableOption(valueVar.current)) {
       const rawValue = valueVar.current[key];
       if (Array.isArray(rawValue)) {
-        result = [...result, ...rawValue];
+        const separator = format === 'text' ? ' + ' : '|';
+        result.push(...templateSrv.replace(string, scopedVars, format).split(separator));
       } else if (typeof rawValue === 'string') {
-        result.push(rawValue);
+        result.push(templateSrv.replace(string, scopedVars, format));
       }
     } else {
       // if it's not a variable, just add the raw value

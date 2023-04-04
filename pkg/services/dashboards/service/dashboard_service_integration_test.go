@@ -836,7 +836,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			accesscontrolmock.New(),
 			foldertest.NewFakeService(),
 		)
-		guardian.InitLegacyGuardian(sqlStore, service, &teamtest.FakeService{})
+		guardian.InitLegacyGuardian(cfg, sqlStore, service, &teamtest.FakeService{})
 
 		savedFolder := saveTestFolder(t, "Saved folder", testOrgID, sqlStore)
 		savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.ID, sqlStore)

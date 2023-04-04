@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import React, { FC } from 'react';
+import React from 'react';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { ReplaySubject } from 'rxjs';
@@ -12,7 +12,6 @@ import {
   LoadingState,
   PanelData,
   PanelPlugin,
-  PanelProps,
   TimeRange,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -235,4 +234,4 @@ describe('PanelEditorTableView', () => {
   });
 });
 
-const TestPanelComponent: FC<PanelProps> = () => <div>Plugin Panel to Render</div>;
+const TestPanelComponent = () => <div>Plugin Panel to Render</div>;

@@ -51,12 +51,12 @@ func ProvideAnonymousSessionService(remoteCache remotecache.CacheStorage, usageS
 		localCache:  localcache.New(29*time.Minute, 15*time.Minute),
 	}
 
-	usageStats.RegisterMetricsFunc(a.UsageStatFn)
+	usageStats.RegisterMetricsFunc(a.usageStatFn)
 
 	return a
 }
 
-func (a *AnonSessionService) UsageStatFn(ctx context.Context) (map[string]interface{}, error) {
+func (a *AnonSessionService) usageStatFn(ctx context.Context) (map[string]interface{}, error) {
 	sessionCount, err := a.remoteCache.Count(ctx, anonCachePrefix)
 	if err != nil {
 		return nil, nil

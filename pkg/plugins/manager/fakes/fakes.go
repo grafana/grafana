@@ -37,13 +37,13 @@ func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID string) error
 }
 
 type FakeLoader struct {
-	LoadFunc   func(_ context.Context, _ plugins.Class, paths []string) ([]*plugins.Plugin, error)
+	LoadFunc   func(_ context.Context, _ plugins.PluginSource) ([]*plugins.Plugin, error)
 	UnloadFunc func(_ context.Context, _ string) error
 }
 
-func (l *FakeLoader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
+func (l *FakeLoader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 	if l.LoadFunc != nil {
-		return l.LoadFunc(ctx, class, paths)
+		return l.LoadFunc(ctx, src)
 	}
 	return nil, nil
 }
@@ -358,7 +358,7 @@ func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ str
 }
 
 type FakePluginFiles struct {
-	FS fs.FS
+	OpenFunc func(name string) (fs.File, error)
 
 	base string
 }
@@ -370,7 +370,10 @@ func NewFakePluginFiles(base string) *FakePluginFiles {
 }
 
 func (f *FakePluginFiles) Open(name string) (fs.File, error) {
-	return f.FS.Open(name)
+	if f.OpenFunc != nil {
+		return f.OpenFunc(name)
+	}
+	return nil, nil
 }
 
 func (f *FakePluginFiles) Base() string {
@@ -381,13 +384,51 @@ func (f *FakePluginFiles) Files() []string {
 	return []string{}
 }
 
-type FakeSources struct {
+type FakeSourceRegistry struct {
 	ListFunc func(_ context.Context) []plugins.PluginSource
 }
 
-func (s *FakeSources) List(ctx context.Context) []plugins.PluginSource {
+func (s *FakeSourceRegistry) List(ctx context.Context) []plugins.PluginSource {
 	if s.ListFunc != nil {
 		return s.ListFunc(ctx)
 	}
 	return []plugins.PluginSource{}
+}
+
+type FakePluginSource struct {
+	PluginClassFunc      func(ctx context.Context) plugins.Class
+	PluginURIsFunc       func(ctx context.Context) []string
+	DefaultSignatureFunc func(ctx context.Context) (plugins.Signature, bool)
+}
+
+func (s *FakePluginSource) PluginClass(ctx context.Context) plugins.Class {
+	if s.PluginClassFunc != nil {
+		return s.PluginClassFunc(ctx)
+	}
+	return ""
+}
+
+func (s *FakePluginSource) PluginURIs(ctx context.Context) []string {
+	if s.PluginURIsFunc != nil {
+		return s.PluginURIsFunc(ctx)
+	}
+	return []string{}
+}
+
+func (s *FakePluginSource) DefaultSignature(ctx context.Context) (plugins.Signature, bool) {
+	if s.DefaultSignatureFunc != nil {
+		return s.DefaultSignatureFunc(ctx)
+	}
+	return plugins.Signature{}, false
+}
+
+type FakePluginFileStore struct {
+	FileFunc func(ctx context.Context, pluginID, filename string) (*plugins.File, error)
+}
+
+func (f *FakePluginFileStore) File(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+	if f.FileFunc != nil {
+		return f.FileFunc(ctx, pluginID, filename)
+	}
+	return nil, nil
 }

@@ -1,9 +1,10 @@
 package corecrd
 
 import (
-	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
-	"github.com/grafana/grafana/pkg/registry/corekind"
+	"github.com/grafana/kindsys/k8ssys"
 	"github.com/grafana/thema"
+
+	"github.com/grafana/grafana/pkg/registry/corekind"
 )
 
 // New constructs a new [Registry].

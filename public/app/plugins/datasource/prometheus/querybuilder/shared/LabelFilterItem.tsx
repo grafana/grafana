@@ -5,6 +5,7 @@ import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { InlineField, Select } from '@grafana/ui';
+import { lokiOperators } from 'app/plugins/datasource/loki/querybuilder/types';
 
 import { isConflictingSelector } from './operationUtils';
 import { QueryBuilderLabelFilter } from './types';
@@ -160,8 +161,8 @@ export function LabelFilterItem({
 }
 
 const operators = [
-  { label: '=~', value: '=~', isMultiValue: true },
-  { label: '=', value: '=', isMultiValue: false },
-  { label: '!=', value: '!=', isMultiValue: false },
-  { label: '!~', value: '!~', isMultiValue: true },
+  lokiOperators.equals,
+  lokiOperators.doesNotEqual,
+  lokiOperators.matchesRegex,
+  lokiOperators.doesNotMatchRegex,
 ];

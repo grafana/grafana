@@ -109,8 +109,8 @@ export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): F
   }
 }
 
-// matches ISO 8601, e.g. 2021-11-11T19:45:00.000Z (float portion optional)
-const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
+// matches common ISO 8601 (see tests)
+const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3,})?(?:Z|[-+]\d{2}:?\d{2})$/;
 
 /**
  * @internal

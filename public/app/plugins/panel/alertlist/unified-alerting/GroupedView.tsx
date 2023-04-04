@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 import { AlertLabel } from 'app/features/alerting/unified/components/AlertLabel';
@@ -11,12 +11,12 @@ import { getStyles } from '../UnifiedAlertList';
 import { GroupedRules, UnifiedAlertListOptions } from '../types';
 import { filterAlerts } from '../util';
 
-type GroupedModeProps = {
+type Props = {
   rules: CombinedRuleWithLocation[];
   options: UnifiedAlertListOptions;
 };
 
-const GroupedModeView: FC<GroupedModeProps> = ({ rules, options }) => {
+const GroupedModeView = ({ rules, options }: Props) => {
   const styles = useStyles2(getStyles);
 
   const groupBy = options.groupBy;
