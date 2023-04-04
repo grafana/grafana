@@ -24,10 +24,10 @@ export function LokiSearchSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Loki Search</h3>
+      <h3 className="page-heading">Loki search</h3>
 
       <div className={styles.infoText}>
-        Select a Loki datasource to search for traces. Derived fields must be configured in the Loki data source.
+        Select a Loki data source to search for traces. Derived fields must be configured in the Loki data source.
       </div>
 
       <InlineFieldRow className={styles.row}>
@@ -71,7 +71,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding-bottom: ${theme.spacing(2)};
     color: ${theme.colors.text.secondary};
   `,
-
   row: css`
     label: row;
     align-items: baseline;

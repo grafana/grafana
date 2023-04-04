@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, FormEvent } from 'react';
+import React, { FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -36,6 +36,7 @@ interface Props {
   getSortOptions: () => Promise<SelectableValue[]>;
   sortPlaceholder?: string;
   onDatasourceChange: (ds?: string) => void;
+  onPanelTypeChange: (pt?: string) => void;
   includePanels: boolean;
   onSetIncludePanels: (v: boolean) => void;
   state: SearchState;
@@ -59,7 +60,7 @@ export function getValidQueryLayout(q: SearchState): SearchLayout {
   return layout;
 }
 
-export const ActionRow: FC<Props> = ({
+export const ActionRow = ({
   onLayoutChange,
   onSortChange,
   onStarredFilterChange = () => {},
@@ -68,16 +69,17 @@ export const ActionRow: FC<Props> = ({
   getSortOptions,
   sortPlaceholder,
   onDatasourceChange,
+  onPanelTypeChange,
   onSetIncludePanels,
   state,
   showStarredFilter,
   hideLayout,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
   const layout = getValidQueryLayout(state);
 
   // Disabled folder layout option when query is present
-  const disabledOptions = state.query ? [SearchLayout.Folders] : [];
+  const disabledOptions = state.query || state.datasource || state.panel_type ? [SearchLayout.Folders] : [];
 
   return (
     <div className={styles.actionRow}>
@@ -107,6 +109,11 @@ export const ActionRow: FC<Props> = ({
             <Trans i18nKey="search.actions.remove-datasource-filter">
               Datasource: {{ datasource: state.datasource }}
             </Trans>
+          </Button>
+        )}
+        {state.panel_type && (
+          <Button icon="times" variant="secondary" onClick={() => onPanelTypeChange(undefined)}>
+            Panel: {state.panel_type}
           </Button>
         )}
       </HorizontalGroup>

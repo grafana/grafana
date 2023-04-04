@@ -32,17 +32,11 @@ import { formatDuration } from '../utils/date';
 
 import SpanGraph from './SpanGraph';
 
-const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
+    theme,
     TracePageHeader: css`
       label: TracePageHeader;
-      & > :first-child {
-        border-bottom: 1px solid ${autoColor(theme, '#e8e8e8')};
-      }
-      & > :nth-child(2) {
-        background-color: ${autoColor(theme, '#eee')};
-        border-bottom: 1px solid ${autoColor(theme, '#e4e4e4')};
-      }
       & > :last-child {
         border-bottom: 1px solid ${autoColor(theme, '#ccc')};
       }
@@ -75,12 +69,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: 1;
       font-size: 1.7em;
       line-height: 1em;
-      margin: 0 0 0 0.5em;
+      margin: 0 0 0 0.3em;
       padding-bottom: 0.5em;
     `,
     TracePageHeaderOverviewItems: css`
       label: TracePageHeaderOverviewItems;
-      border-bottom: 1px solid #e4e4e4;
+      background-color: ${autoColor(theme, '#eee')};
+      border-bottom: 1px solid ${autoColor(theme, '#e4e4e4')};
       padding: 0.25rem 0.5rem !important;
     `,
     TracePageHeaderOverviewItemValueDetail: cx(
@@ -105,6 +100,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: TracePageHeaderTraceId;
       white-space: nowrap;
     `,
+    titleBorderBottom: css`
+      border-bottom: 1px solid ${autoColor(theme, '#e8e8e8')};
+    `,
   };
 };
 
@@ -116,23 +114,25 @@ export type TracePageHeaderEmbedProps = {
   timeZone: TimeZone;
 };
 
+export const timestamp = (trace: Trace, timeZone: TimeZone, styles: ReturnType<typeof getStyles>) => {
+  // Convert date from micro to milli seconds
+  const dateStr = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
+  const match = dateStr.match(/^(.+)(:\d\d\.\d+)$/);
+  return match ? (
+    <span className={styles.TracePageHeaderOverviewItemValue}>
+      {match[1]}
+      <span className={styles.TracePageHeaderOverviewItemValueDetail}>{match[2]}</span>
+    </span>
+  ) : (
+    dateStr
+  );
+};
+
 export const HEADER_ITEMS = [
   {
     key: 'timestamp',
     label: 'Trace Start:',
-    renderer(trace: Trace, timeZone: TimeZone, styles: ReturnType<typeof getStyles>) {
-      // Convert date from micro to milli seconds
-      const dateStr = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
-      const match = dateStr.match(/^(.+)(:\d\d\.\d+)$/);
-      return match ? (
-        <span className={styles.TracePageHeaderOverviewItemValue}>
-          {match[1]}
-          <span className={styles.TracePageHeaderOverviewItemValueDetail}>{match[2]}</span>
-        </span>
-      ) : (
-        dateStr
-      );
-    },
+    renderer: timestamp,
   },
   {
     key: 'duration',
@@ -185,7 +185,7 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
 
   return (
     <header className={styles.TracePageHeader}>
-      <div className={styles.TracePageHeaderTitleRow}>
+      <div className={cx(styles.TracePageHeaderTitleRow, styles.titleBorderBottom)}>
         {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
         {title}
       </div>

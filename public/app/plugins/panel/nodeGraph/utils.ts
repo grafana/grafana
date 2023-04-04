@@ -45,6 +45,7 @@ export type NodeFields = {
   arc: Field[];
   details: Field[];
   color?: Field;
+  icon?: Field;
 };
 
 export function getNodeFields(nodes: DataFrame): NodeFields {
@@ -62,6 +63,7 @@ export function getNodeFields(nodes: DataFrame): NodeFields {
     arc: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.arc),
     details: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.detail),
     color: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.color),
+    icon: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.icon),
   };
 }
 
@@ -287,17 +289,18 @@ function makeSimpleNodeDatum(name: string, index: number): NodeDatumFromEdge {
   };
 }
 
-function makeNodeDatum(id: string, nodeFields: NodeFields, index: number) {
+function makeNodeDatum(id: string, nodeFields: NodeFields, index: number): NodeDatum {
   return {
     id: id,
     title: nodeFields.title?.values.get(index) || '',
-    subTitle: nodeFields.subTitle ? nodeFields.subTitle.values.get(index) : '',
+    subTitle: nodeFields.subTitle?.values.get(index) || '',
     dataFrameRowIndex: index,
     incoming: 0,
     mainStat: nodeFields.mainStat,
     secondaryStat: nodeFields.secondaryStat,
     arcSections: nodeFields.arc,
     color: nodeFields.color,
+    icon: nodeFields.icon?.values.get(index) || '',
   };
 }
 
@@ -337,6 +340,7 @@ function makeNode(index: number) {
     mainstat: 0.1,
     secondarystat: 2,
     color: 0.5,
+    icon: 'database',
   };
 }
 
@@ -372,11 +376,14 @@ function nodesFrame() {
       type: FieldType.number,
       config: { color: { fixedColor: 'red' } },
     },
-
     [NodeGraphDataFrameFieldNames.color]: {
       values: new ArrayVector(),
       type: FieldType.number,
       config: { color: { mode: 'continuous-GrYlRd' } },
+    },
+    [NodeGraphDataFrameFieldNames.icon]: {
+      values: new ArrayVector(),
+      type: FieldType.string,
     },
   };
 

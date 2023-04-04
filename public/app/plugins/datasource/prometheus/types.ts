@@ -1,30 +1,31 @@
-import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
+import { DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 
 import { PromApplication } from '../../../types/unified-alerting-dto';
 
+import { Prometheus as GenPromQuery } from './dataquery.gen';
 import { QueryEditorMode } from './querybuilder/shared/types';
 
-export interface PromQuery extends DataQuery {
-  expr: string;
-  format?: string;
-  instant?: boolean;
-  range?: boolean;
-  exemplar?: boolean;
-  hinting?: boolean;
-  interval?: string;
-  intervalFactor?: number;
-  // Timezone offset to align start & end time on backend
+export interface PromQuery extends GenPromQuery, DataQuery {
+  /**
+   * Timezone offset to align start & end time on backend
+   */
   utcOffsetSec?: number;
   legendFormat?: string;
   valueWithRefId?: boolean;
-  requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
-  /** Code, Builder or Explain */
-  editorMode?: QueryEditorMode;
-  query?: string;
+  hinting?: boolean;
+  interval?: string;
+  intervalFactor?: number;
 }
 
+export enum PrometheusCacheLevel {
+  Low = 'Low',
+  Medium = 'Medium',
+  High = 'High',
+  None = 'None',
+}
 export interface PromOptions extends DataSourceJsonData {
   timeInterval?: string;
   queryTimeout?: string;
@@ -35,6 +36,7 @@ export interface PromOptions extends DataSourceJsonData {
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
   prometheusType?: PromApplication;
   prometheusVersion?: string;
+  cacheLevel?: PrometheusCacheLevel;
   defaultEditor?: QueryEditorMode;
 }
 

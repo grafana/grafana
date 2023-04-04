@@ -22,7 +22,6 @@ import {
   DateTime,
   FieldCache,
   FieldType,
-  getDefaultTimeRange,
   Labels,
   LoadingState,
   LogLevel,
@@ -68,7 +67,7 @@ import {
   getLabelFilterPositions,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
-import { runPartitionedQuery } from './querySplitting';
+import { runSplitQuery } from './querySplitting';
 import {
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
@@ -76,9 +75,9 @@ import {
   getParserFromQuery,
   isLogsQuery,
   isValidQuery,
-  requestSupportsPartitioning,
+  requestSupportsSplitting,
 } from './queryUtils';
-import { sortDataFrameByTime } from './sortDataFrame';
+import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
 import {
@@ -137,6 +136,7 @@ export class LokiDatasource
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
+  onContextClose: (() => void) | undefined;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -256,7 +256,7 @@ export class LokiDatasource
       .map(getNormalizedLokiQuery) // "fix" the `.queryType` prop
       .map((q) => ({ ...q, maxLines: q.maxLines ?? this.maxLines }));
 
-    const fixedRequest: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] } = {
+    const fixedRequest: DataQueryRequest<LokiQuery> = {
       ...request,
       targets: queries,
     };
@@ -284,8 +284,8 @@ export class LokiDatasource
       return this.runLiveQueryThroughBackend(fixedRequest);
     }
 
-    if (config.featureToggles.lokiQuerySplitting && requestSupportsPartitioning(fixedRequest.targets)) {
-      return runPartitionedQuery(this, fixedRequest);
+    if (config.featureToggles.lokiQuerySplitting && requestSupportsSplitting(fixedRequest.targets)) {
+      return runSplitQuery(this, fixedRequest);
     }
 
     return this.runQuery(fixedRequest);
@@ -423,9 +423,9 @@ export class LokiDatasource
     return res.data ?? (res || []);
   }
 
-  async getQueryStats(query: LokiQuery): Promise<QueryStats> {
+  async getQueryStats(query: string): Promise<QueryStats> {
     const { start, end } = this.getTimeRangeParams();
-    const labelMatchers = getStreamSelectorsFromQuery(query.expr);
+    const labelMatchers = getStreamSelectorsFromQuery(query);
 
     let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
 
@@ -547,11 +547,11 @@ export class LokiDatasource
       expr: query.expr,
       queryType: LokiQueryType.Range,
       refId: REF_ID_DATA_SAMPLES,
+      // For samples we limit the request to 10 lines, so queries are small and fast
       maxLines: 10,
     };
 
-    // For samples, we use defaultTimeRange (now-6h/now) and limit od 10 lines so queries are small and fast
-    const timeRange = getDefaultTimeRange();
+    const timeRange = this.getTimeRange();
     const request = makeRequest(lokiLogsQuery, timeRange, CoreApp.Unknown, REF_ID_DATA_SAMPLES, true);
     return await lastValueFrom(this.query(request).pipe(switchMap((res) => of(res.data))));
   }
@@ -602,6 +602,10 @@ export class LokiDatasource
       }
       case 'ADD_JSON_PARSER': {
         expression = addParserToQuery(expression, 'json');
+        break;
+      }
+      case 'ADD_UNPACK_PARSER': {
+        expression = addParserToQuery(expression, 'unpack');
         break;
       }
       case 'ADD_NO_PIPELINE_ERROR': {
@@ -686,7 +690,7 @@ export class LokiDatasource
     const processResults = (result: DataQueryResponse): DataQueryResponse => {
       const frames: DataFrame[] = result.data;
       const processedFrames = frames
-        .map((frame) => sortDataFrameByTime(frame, 'DESCENDING'))
+        .map((frame) => sortDataFrameByTime(frame, SortDirection.Descending))
         .map((frame) => processDataFrame(frame)); // rename fields if needed
 
       return {
@@ -789,53 +793,60 @@ export class LokiDatasource
   }
 
   getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
-    return LokiContextUi({
-      row,
-      languageProvider: this.languageProvider,
-      onClose: () => {
-        this.prepareContextExpr = this.prepareContextExprWithoutParsedLabels;
-      },
-      updateFilter: (contextFilters: ContextFilter[]) => {
-        this.prepareContextExpr = async (row: LogRowModel, origQuery?: DataQuery) => {
-          await this.languageProvider.start();
-          const labels = this.languageProvider.getLabelKeys();
+    const updateFilter = (contextFilters: ContextFilter[]) => {
+      this.prepareContextExpr = async (row: LogRowModel, origQuery?: DataQuery) => {
+        await this.languageProvider.start();
+        const labels = this.languageProvider.getLabelKeys();
 
-          let expr = contextFilters
-            .map((filter) => {
-              const label = filter.value;
-              if (filter && !filter.fromParser && filter.enabled && labels.includes(label)) {
-                // escape backslashes in label as users can't escape them by themselves
-                return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
-              }
-              return '';
-            })
-            // Filter empty strings
-            .filter((label) => !!label)
-            .join(',');
-
-          expr = `{${expr}}`;
-
-          const parserContextFilters = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
-          if (parserContextFilters.length) {
-            // we should also filter for labels from parsers, let's find the right parser
-            if (origQuery) {
-              const parser = getParserFromQuery((origQuery as LokiQuery).expr);
-              if (parser) {
-                expr = addParserToQuery(expr, parser);
-              }
+        let expr = contextFilters
+          .map((filter) => {
+            const label = filter.value;
+            if (filter && !filter.fromParser && filter.enabled && labels.includes(label)) {
+              // escape backslashes in label as users can't escape them by themselves
+              return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
             }
-            for (const filter of parserContextFilters) {
-              if (filter.enabled) {
-                expr = addLabelToQuery(expr, filter.label, '=', row.labels[filter.label]);
-              }
+            return '';
+          })
+          // Filter empty strings
+          .filter((label) => !!label)
+          .join(',');
+
+        expr = `{${expr}}`;
+
+        const parserContextFilters = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
+        if (parserContextFilters.length) {
+          // we should also filter for labels from parsers, let's find the right parser
+          if (origQuery) {
+            const parser = getParserFromQuery((origQuery as LokiQuery).expr);
+            if (parser) {
+              expr = addParserToQuery(expr, parser);
             }
           }
-          return expr;
-        };
-        if (runContextQuery) {
-          runContextQuery();
+          for (const filter of parserContextFilters) {
+            if (filter.enabled) {
+              expr = addLabelToQuery(expr, filter.label, '=', row.labels[filter.label]);
+            }
+          }
         }
-      },
+        return expr;
+      };
+      if (runContextQuery) {
+        runContextQuery();
+      }
+    };
+
+    // we need to cache this function so that it doesn't get recreated on every render
+    this.onContextClose =
+      this.onContextClose ??
+      (() => {
+        this.prepareContextExpr = this.prepareContextExprWithoutParsedLabels;
+      });
+
+    return LokiContextUi({
+      row,
+      updateFilter,
+      languageProvider: this.languageProvider,
+      onClose: this.onContextClose,
     });
   }
 

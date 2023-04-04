@@ -57,6 +57,11 @@ export interface PanelData {
   timings?: DataQueryTimings;
 
   /** Any query errors */
+  errors?: DataQueryError[];
+  /**
+   * Single error for legacy reasons
+   * @deprecated use errors instead -- will be removed in Grafana 10+
+   */
   error?: DataQueryError;
 
   /** Contains the range from the request or a shifted time range if a request uses relative time */

@@ -37,6 +37,19 @@ export function createExploreLink(dataSourceName: string, query: string) {
   });
 }
 
+export function createContactPointLink(contactPoint: string, alertManagerSourceName = ''): string {
+  return createUrl(`/alerting/notifications/receivers/${encodeURIComponent(contactPoint)}/edit`, {
+    alertmanager: alertManagerSourceName,
+  });
+}
+
+export function createMuteTimingLink(muteTimingName: string, alertManagerSourceName = ''): string {
+  return createUrl('/alerting/routes/mute-timing/edit', {
+    muteName: muteTimingName,
+    alertmanager: alertManagerSourceName,
+  });
+}
+
 export function arrayToRecord(items: Array<{ key: string; value: string }>): Record<string, string> {
   return items.reduce<Record<string, string>>((rec, { key, value }) => {
     rec[key] = value;

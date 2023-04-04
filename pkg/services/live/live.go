@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -31,10 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -51,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/services/live/survey"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -74,9 +72,9 @@ type CoreGrafanaScope struct {
 }
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
-	pluginStore plugins.Store, cacheService *localcache.CacheService,
+	pluginStore plugins.Store, pluginClient plugins.Client, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore db.DB, secretsService secrets.Service,
-	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles,
+	usageStatsService usagestats.Service, queryDataService query.Service, toggles featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService, annotationsRepo annotations.Repository,
 	orgService org.Service) (*GrafanaLive, error) {
 	g := &GrafanaLive{
@@ -85,6 +83,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		PluginContextProvider: plugCtxProvider,
 		RouteRegister:         routeRegister,
 		pluginStore:           pluginStore,
+		pluginClient:          pluginClient,
 		CacheService:          cacheService,
 		DataSourceCache:       dataSourceCache,
 		SQLStore:              sqlStore,
@@ -182,53 +181,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	}
 
 	g.ManagedStreamRunner = managedStreamRunner
-	if g.Features.IsEnabled(featuremgmt.FlagLivePipeline) {
-		var builder pipeline.RuleBuilder
-		if os.Getenv("GF_LIVE_DEV_BUILDER") != "" {
-			builder = &pipeline.DevRuleBuilder{
-				Node:                 node,
-				ManagedStream:        g.ManagedStreamRunner,
-				FrameStorage:         pipeline.NewFrameStorage(),
-				ChannelHandlerGetter: g,
-			}
-		} else {
-			storage := &pipeline.FileStorage{
-				DataPath:       cfg.DataPath,
-				SecretsService: g.SecretsService,
-			}
-			g.pipelineStorage = storage
-			builder = &pipeline.StorageRuleBuilder{
-				Node:                 node,
-				ManagedStream:        g.ManagedStreamRunner,
-				FrameStorage:         pipeline.NewFrameStorage(),
-				Storage:              storage,
-				ChannelHandlerGetter: g,
-				SecretsService:       g.SecretsService,
-			}
-		}
-		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
-
-		// Pre-build/validate channel rules for all organizations on start.
-		// This can be unreasonable to have in production scenario with many
-		// organizations.
-		orgQuery := &org.SearchOrgsQuery{}
-
-		result, err := orgService.Search(context.Background(), orgQuery)
-		if err != nil {
-			return nil, fmt.Errorf("can't get org list: %w", err)
-		}
-		for _, org := range result {
-			_, _, err := channelRuleGetter.Get(org.ID, "")
-			if err != nil {
-				return nil, fmt.Errorf("error building channel rules for org %d: %w", org.ID, err)
-			}
-		}
-
-		g.Pipeline, err = pipeline.New(channelRuleGetter)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	g.contextGetter = liveplugin.NewContextGetter(g.PluginContextProvider, g.DataSourceCache)
 	pipelinedChannelLocalPublisher := liveplugin.NewChannelLocalPublisher(node, g.Pipeline)
@@ -246,7 +198,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
-	g.GrafanaScope.Features["comment"] = features.NewCommentHandler(commentmodel.NewPermissionChecker(g.SQLStore, g.Features, accessControl, dashboardService, annotationsRepo))
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
@@ -408,7 +359,8 @@ type GrafanaLive struct {
 	SQLStore              db.DB
 	SecretsService        secrets.Service
 	pluginStore           plugins.Store
-	queryDataService      *query.Service
+	pluginClient          plugins.Client
+	queryDataService      query.Service
 	orgService            org.Service
 
 	node         *centrifuge.Node
@@ -460,7 +412,7 @@ func (g *GrafanaLive) getStreamPlugin(ctx context.Context, pluginID string) (bac
 		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}
 	if plugin.SupportsStreaming() {
-		return plugin, nil
+		return g.pluginClient, nil
 	}
 	return nil, fmt.Errorf("%s plugin does not implement StreamHandler: %#v", pluginID, plugin)
 }
@@ -613,7 +565,7 @@ func (g *GrafanaLive) handleOnRPC(client *centrifuge.Client, e centrifuge.RPCEve
 		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(http.StatusForbidden), Message: http.StatusText(http.StatusForbidden)}
 		}
-		var gfErr *errutil.Error
+		var gfErr errutil.Error
 		if errors.As(err, &gfErr) && gfErr.Reason.Status() == errutil.StatusBadRequest {
 			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: http.StatusText(http.StatusBadRequest)}
 		}

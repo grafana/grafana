@@ -7,6 +7,7 @@ import (
 
 	"cuelang.org/go/cue/ast"
 	tsast "github.com/grafana/cuetsy/ts/ast"
+
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
@@ -16,7 +17,7 @@ import (
 var importMap = map[string]string{
 	"github.com/grafana/thema": "",
 
-	"github.com/grafana/grafana/pkg/kindsys":                        "",
+	"github.com/grafana/kindsys":                                    "",
 	"github.com/grafana/grafana/pkg/plugins/pfs":                    "",
 	"github.com/grafana/grafana/packages/grafana-schema/src/common": "@grafana/schema",
 }

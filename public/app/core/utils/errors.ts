@@ -1,10 +1,12 @@
 import { isFetchError } from '@grafana/runtime';
 
 export function getMessageFromError(err: unknown): string {
+  if (typeof err === 'string') {
+    return err;
+  }
+
   if (err) {
-    if (typeof err === 'string') {
-      return err;
-    } else if (err instanceof Error) {
+    if (err instanceof Error) {
       return err.message;
     } else if (isFetchError(err)) {
       if (err.data && err.data.message) {
@@ -14,5 +16,6 @@ export function getMessageFromError(err: unknown): string {
       }
     }
   }
+
   return JSON.stringify(err);
 }

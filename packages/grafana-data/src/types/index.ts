@@ -38,6 +38,7 @@ export * from './geometry';
 export { isUnsignedPluginSignature } from './pluginSignature';
 export type {
   CurrentUserDTO,
+  AnalyticsSettings,
   BootData,
   OAuth,
   OAuthSettings,
@@ -51,3 +52,13 @@ export * from './alerts';
 export * from './slider';
 export * from './accesscontrol';
 export * from './icon';
+export {
+  PluginExtensionTypes,
+  PluginExtensionPoints,
+  type PluginExtension,
+  type PluginExtensionLink,
+  type PluginExtensionConfig,
+  type PluginExtensionLinkConfig,
+  type PluginExtensionEventHelpers,
+  type PluginExtensionPanelContext,
+} from './pluginExtensions';

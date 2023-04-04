@@ -1,16 +1,12 @@
 package remotecache
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
 	"errors"
 	"time"
 
-	"github.com/go-kit/log"
-
 	"github.com/grafana/grafana/pkg/infra/db"
-	glog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -30,24 +26,34 @@ const (
 	ServiceName = "RemoteCache"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, secretsService secrets.Service) (*RemoteCache, error) {
-	var codec codec
-	if cfg.RemoteCacheOptions.Encryption {
-		codec = &encryptionCodec{secretsService}
-	} else {
-		codec = &gobCodec{}
-	}
-	client, err := createClient(cfg.RemoteCacheOptions, sqlStore, codec)
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Service,
+	secretsService secrets.Service) (*RemoteCache, error) {
+	client, err := createClient(cfg.RemoteCacheOptions, sqlStore, secretsService)
 	if err != nil {
 		return nil, err
 	}
 	s := &RemoteCache{
 		SQLStore: sqlStore,
 		Cfg:      cfg,
-		log:      glog.New("cache.remote"),
 		client:   client,
 	}
+
+	usageStats.RegisterMetricsFunc(s.getUsageStats)
+
 	return s, nil
+}
+
+func (ds *RemoteCache) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
+	stats := map[string]interface{}{}
+	stats["stats.remote_cache."+ds.Cfg.RemoteCacheOptions.Name+".count"] = 1
+	encryptVal := 0
+	if ds.Cfg.RemoteCacheOptions.Encryption {
+		encryptVal = 1
+	}
+
+	stats["stats.remote_cache.encrypt_enabled.count"] = encryptVal
+
+	return stats, nil
 }
 
 // CacheStorage allows the caller to set, get and delete items in the cache.
@@ -55,51 +61,35 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, secretsService secrets.Ser
 // so any struct added to the cache needs to be registered with `remotecache.Register`
 // ex `remotecache.Register(CacheableStruct{})`
 type CacheStorage interface {
-	// Get reads object from Cache
-	Get(ctx context.Context, key string) (interface{}, error)
+	// Get gets the cache value as an byte array
+	Get(ctx context.Context, key string) ([]byte, error)
 
-	// Set sets an object into the cache. if `expire` is set to zero it will default to 24h
-	Set(ctx context.Context, key string, value interface{}, expire time.Duration) error
-
-	// GetByteArray gets the cache value as an byte array
-	GetByteArray(ctx context.Context, key string) ([]byte, error)
-
-	// SetByteArray saves the value as an byte array. if `expire` is set to zero it will default to 24h
-	SetByteArray(ctx context.Context, key string, value []byte, expire time.Duration) error
+	// Set saves the value as an byte array. if `expire` is set to zero it will default to 24h
+	Set(ctx context.Context, key string, value []byte, expire time.Duration) error
 
 	// Delete object from cache
 	Delete(ctx context.Context, key string) error
 
 	// Count returns the number of items in the cache.
 	// Optionaly a prefix can be provided to only count items with that prefix
+	// DO NOT USE. Not available for memcached.
 	Count(ctx context.Context, prefix string) (int64, error)
 }
 
 // RemoteCache allows Grafana to cache data outside its own process
 type RemoteCache struct {
-	log      log.Logger
 	client   CacheStorage
 	SQLStore db.DB
 	Cfg      *setting.Cfg
 }
 
-// Get reads object from Cache
-func (ds *RemoteCache) Get(ctx context.Context, key string) (interface{}, error) {
+// Get returns the cached value as an byte array
+func (ds *RemoteCache) Get(ctx context.Context, key string) ([]byte, error) {
 	return ds.client.Get(ctx, key)
 }
 
-// GetByteArray returns the cached value as an byte array
-func (ds *RemoteCache) GetByteArray(ctx context.Context, key string) ([]byte, error) {
-	return ds.client.GetByteArray(ctx, key)
-}
-
-// SetByteArray stored the byte array in the cache
-func (ds *RemoteCache) SetByteArray(ctx context.Context, key string, value []byte, expire time.Duration) error {
-	return ds.client.SetByteArray(ctx, key, value, expire)
-}
-
-// Set sets an object into the cache. if `expire` is set to zero it will default to 24h
-func (ds *RemoteCache) Set(ctx context.Context, key string, value interface{}, expire time.Duration) error {
+// Set stored the byte array in the cache
+func (ds *RemoteCache) Set(ctx context.Context, key string, value []byte, expire time.Duration) error {
 	if expire == 0 {
 		expire = defaultMaxCacheExpiration
 	}
@@ -129,14 +119,14 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func createClient(opts *setting.RemoteCacheOptions, sqlstore db.DB, codec codec) (cache CacheStorage, err error) {
+func createClient(opts *setting.RemoteCacheOptions, sqlstore db.DB, secretsService secrets.Service) (cache CacheStorage, err error) {
 	switch opts.Name {
 	case redisCacheType:
-		cache, err = newRedisStorage(opts, codec)
+		cache, err = newRedisStorage(opts)
 	case memcachedCacheType:
-		cache = newMemcachedStorage(opts, codec)
+		cache = newMemcachedStorage(opts)
 	case databaseCacheType:
-		cache = newDatabaseCache(sqlstore, codec)
+		cache = newDatabaseCache(sqlstore)
 	default:
 		return nil, ErrInvalidCacheType
 	}
@@ -146,61 +136,45 @@ func createClient(opts *setting.RemoteCacheOptions, sqlstore db.DB, codec codec)
 	if opts.Prefix != "" {
 		cache = &prefixCacheStorage{cache: cache, prefix: opts.Prefix}
 	}
+
+	if opts.Encryption {
+		cache = &encryptedCacheStorage{cache: cache, secretsService: secretsService}
+	}
 	return cache, nil
 }
 
-// Register records a type, identified by a value for that type, under its
-// internal type name. That name will identify the concrete type of a value
-// sent or received as an interface variable. Only types that will be
-// transferred as implementations of interface values need to be registered.
-// Expecting to be used only during initialization, it panics if the mapping
-// between types and names is not a bijection.
-func Register(value interface{}) {
-	gob.Register(value)
+type encryptedCacheStorage struct {
+	cache          CacheStorage
+	secretsService encryptionService
 }
 
-type cachedItem struct {
-	Val interface{}
+type encryptionService interface {
+	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
+	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
 }
 
-type codec interface {
-	Encode(context.Context, *cachedItem) ([]byte, error)
-	Decode(context.Context, []byte, *cachedItem) error
-}
-
-type gobCodec struct{}
-
-func (c *gobCodec) Encode(_ context.Context, item *cachedItem) ([]byte, error) {
-	buf := bytes.NewBuffer(nil)
-	err := gob.NewEncoder(buf).Encode(item)
-	return buf.Bytes(), err
-}
-
-func (c *gobCodec) Decode(_ context.Context, data []byte, out *cachedItem) error {
-	buf := bytes.NewBuffer(data)
-	return gob.NewDecoder(buf).Decode(&out)
-}
-
-type encryptionCodec struct {
-	secretsService secrets.Service
-}
-
-func (c *encryptionCodec) Encode(ctx context.Context, item *cachedItem) ([]byte, error) {
-	buf := bytes.NewBuffer(nil)
-	err := gob.NewEncoder(buf).Encode(item)
+func (pcs *encryptedCacheStorage) Get(ctx context.Context, key string) ([]byte, error) {
+	data, err := pcs.cache.Get(ctx, key)
 	if err != nil {
 		return nil, err
 	}
-	return c.secretsService.Encrypt(ctx, buf.Bytes(), secrets.WithoutScope())
-}
 
-func (c *encryptionCodec) Decode(ctx context.Context, data []byte, out *cachedItem) error {
-	decrypted, err := c.secretsService.Decrypt(ctx, data)
+	return pcs.secretsService.Decrypt(ctx, data)
+}
+func (pcs *encryptedCacheStorage) Set(ctx context.Context, key string, value []byte, expire time.Duration) error {
+	encrypted, err := pcs.secretsService.Encrypt(ctx, value, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
-	buf := bytes.NewBuffer(decrypted)
-	return gob.NewDecoder(buf).Decode(&out)
+
+	return pcs.cache.Set(ctx, key, encrypted, expire)
+}
+func (pcs *encryptedCacheStorage) Delete(ctx context.Context, key string) error {
+	return pcs.cache.Delete(ctx, key)
+}
+
+func (pcs *encryptedCacheStorage) Count(ctx context.Context, prefix string) (int64, error) {
+	return pcs.cache.Count(ctx, prefix)
 }
 
 type prefixCacheStorage struct {
@@ -208,22 +182,16 @@ type prefixCacheStorage struct {
 	prefix string
 }
 
-func (pcs *prefixCacheStorage) Get(ctx context.Context, key string) (interface{}, error) {
+func (pcs *prefixCacheStorage) Get(ctx context.Context, key string) ([]byte, error) {
 	return pcs.cache.Get(ctx, pcs.prefix+key)
 }
-func (pcs *prefixCacheStorage) GetByteArray(ctx context.Context, key string) ([]byte, error) {
-	return pcs.cache.GetByteArray(ctx, pcs.prefix+key)
-}
-func (pcs *prefixCacheStorage) Set(ctx context.Context, key string, value interface{}, expire time.Duration) error {
+func (pcs *prefixCacheStorage) Set(ctx context.Context, key string, value []byte, expire time.Duration) error {
 	return pcs.cache.Set(ctx, pcs.prefix+key, value, expire)
-}
-func (pcs *prefixCacheStorage) SetByteArray(ctx context.Context, key string, value []byte, expire time.Duration) error {
-	return pcs.cache.SetByteArray(ctx, pcs.prefix+key, value, expire)
 }
 func (pcs *prefixCacheStorage) Delete(ctx context.Context, key string) error {
 	return pcs.cache.Delete(ctx, pcs.prefix+key)
 }
 
 func (pcs *prefixCacheStorage) Count(ctx context.Context, prefix string) (int64, error) {
-	return pcs.cache.Count(ctx, pcs.prefix)
+	return pcs.cache.Count(ctx, pcs.prefix+prefix)
 }

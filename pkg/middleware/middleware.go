@@ -37,7 +37,8 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 
 			_, _, resourceURLMatch := t.Match(c.Req.URL.Path)
 			resourceCachable := resourceURLMatch && allowCacheControl(c.Resp)
-			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") && !resourceCachable {
+			if !strings.HasPrefix(c.Req.URL.Path, "/public/plugins/") &&
+				!strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") && !resourceCachable {
 				addNoCacheHeaders(c.Resp)
 			}
 
@@ -109,10 +110,11 @@ func allowCacheControl(rw web.ResponseWriter) bool {
 	foundPrivate := false
 	foundPublic := false
 	for _, val := range ccHeaderValues {
-		if val == "private" {
+		strings.Contains(val, "private")
+		if strings.Contains(val, "private") {
 			foundPrivate = true
 		}
-		if val == "public" {
+		if strings.Contains(val, "public") {
 			foundPublic = true
 		}
 	}

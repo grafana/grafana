@@ -5,6 +5,11 @@ import { PanelModel } from '../../../state';
 
 import { supportedDatasources } from './SupportedPubdashDatasources';
 
+export enum PublicDashboardShareType {
+  PUBLIC = 'public',
+  EMAIL = 'email',
+}
+
 export interface PublicDashboardSettings {
   annotationsEnabled: boolean;
   isEnabled: boolean;
@@ -16,6 +21,8 @@ export interface PublicDashboard extends PublicDashboardSettings {
   uid: string;
   dashboardUid: string;
   timeSettings?: object;
+  share: PublicDashboardShareType;
+  recipients?: Array<{ uid: string; recipient: string }>;
 }
 
 // Instance methods
@@ -56,3 +63,5 @@ export const getUnsupportedDashboardDatasources = (panels: PanelModel[]): string
 export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard): string => {
   return `${getConfig().appUrl}public-dashboards/${publicDashboard.accessToken}`;
 };
+
+export const validEmailRegex = /^[A-Z\d._%+-]+@[A-Z\d.-]+\.[A-Z]{2,}$/i;

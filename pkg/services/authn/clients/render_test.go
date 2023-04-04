@@ -38,10 +38,11 @@ func TestRender_Authenticate(t *testing.T) {
 				},
 			},
 			expectedIdentity: &authn.Identity{
-				ID:         "user:0",
-				OrgID:      1,
-				OrgRoles:   map[int64]org.RoleType{1: org.RoleViewer},
-				AuthModule: login.RenderModule,
+				ID:           "user:0",
+				OrgID:        1,
+				OrgRoles:     map[int64]org.RoleType{1: org.RoleViewer},
+				AuthModule:   login.RenderModule,
+				ClientParams: authn.ClientParams{SyncPermissions: true},
 			},
 			expectedRenderUsr: &rendering.RenderUser{
 				OrgID:   1,
@@ -64,6 +65,7 @@ func TestRender_Authenticate(t *testing.T) {
 				OrgRoles:       map[int64]org.RoleType{1: org.RoleAdmin},
 				IsGrafanaAdmin: boolPtr(false),
 				AuthModule:     login.RenderModule,
+				ClientParams:   authn.ClientParams{SyncPermissions: true},
 			},
 			expectedRenderUsr: &rendering.RenderUser{
 				OrgID:  1,

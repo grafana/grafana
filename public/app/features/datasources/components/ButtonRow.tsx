@@ -10,7 +10,7 @@ export interface Props {
   canSave: boolean;
   canDelete: boolean;
   onDelete: () => void;
-  onSubmit: (event: any) => void;
+  onSubmit: (event: React.MouseEvent<HTMLButtonElement>) => void;
   onTest: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
 }
 

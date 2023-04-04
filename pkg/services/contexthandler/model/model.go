@@ -27,6 +27,7 @@ type ReqContext struct {
 	AllowAnonymous bool
 	SkipCache      bool
 	Logger         log.Logger
+	Error          error
 	// RequestNonce is a cryptographic request identifier for use with Content Security Policy.
 	RequestNonce          string
 	IsPublicDashboardView bool
@@ -103,6 +104,8 @@ func (ctx *ReqContext) WriteErrOrFallback(status int, message string, err error)
 
 func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error) {
 	data := make(map[string]interface{})
+	statusResponse := status
+
 	traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
 
 	if err != nil {
@@ -121,6 +124,8 @@ func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error)
 			data["message"] = publicErr.Message
 			data["messageId"] = publicErr.MessageID
 			data["statusCode"] = publicErr.StatusCode
+
+			statusResponse = publicErr.StatusCode
 		} else {
 			if message != "" {
 				logMessage = message
@@ -134,14 +139,18 @@ func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error)
 			}
 		}
 
-		logger(logMessage, "error", err, "remote_addr", ctx.RemoteAddr(), "traceID", traceID)
+		if errutil.HasUnifiedLogging(ctx.Req.Context()) {
+			ctx.Error = err
+		} else {
+			logger(logMessage, "error", err, "remote_addr", ctx.RemoteAddr(), "traceID", traceID)
+		}
 	}
 
 	if _, ok := data["message"]; !ok && message != "" {
 		data["message"] = message
 	}
 
-	ctx.JSON(status, data)
+	ctx.JSON(statusResponse, data)
 }
 
 func (ctx *ReqContext) HasUserRole(role org.RoleType) bool {

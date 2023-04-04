@@ -146,11 +146,11 @@ export const RulesForGroupTable = ({ rulesWithoutRecordingRules }: { rulesWithou
         renderCell: ({ data: { forDuration } }) => {
           return <>{forDuration}</>;
         },
-        size: 0.2,
+        size: 0.5,
       },
       {
         id: 'numberEvaluations',
-        label: '#Evaluations',
+        label: '#Eval',
         renderCell: ({ data: { evaluationsToFire: numberEvaluations } }) => {
           if (unknownCurrentInterval) {
             return <ForBadge message="#Evaluations not available." />;
@@ -167,7 +167,7 @@ export const RulesForGroupTable = ({ rulesWithoutRecordingRules }: { rulesWithou
             }
           }
         },
-        size: 0.6,
+        size: 0.4,
       },
     ];
   }, [currentInterval, unknownCurrentInterval]);
@@ -397,7 +397,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               <>
                 <div>List of rules that belong to this group</div>
                 <div className={styles.evalRequiredLabel}>
-                  #Evaluations column represents the number of evaluations needed before alert starts firing.
+                  #Eval column represents the number of evaluations needed before alert starts firing.
                 </div>
                 <RulesForGroupTable rulesWithoutRecordingRules={rulesWithoutRecordingRules} />
               </>

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/ldap.v3"
+	"github.com/go-ldap/ldap/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -130,6 +130,8 @@ func (server *Server) Dial() error {
 				InsecureSkipVerify: server.Config.SkipVerifySSL,
 				ServerName:         host,
 				RootCAs:            certPool,
+				MinVersion:         server.Config.minTLSVersion,
+				CipherSuites:       server.Config.tlsCiphers,
 			}
 			if len(clientCert.Certificate) > 0 {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
@@ -454,6 +456,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*login.ExternalUserInf
 		return extUser, nil
 	}
 
+	isGrafanaAdmin := false
 	for _, group := range server.Config.Groups {
 		// only use the first match for each org
 		if extUser.OrgRoles[group.OrgId] != "" {
@@ -465,11 +468,12 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*login.ExternalUserInf
 				extUser.OrgRoles[group.OrgId] = group.OrgRole
 			}
 
-			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
-				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
+			if !isGrafanaAdmin && (group.IsGrafanaAdmin != nil && *group.IsGrafanaAdmin) {
+				isGrafanaAdmin = true
 			}
 		}
 	}
+	extUser.IsGrafanaAdmin = &isGrafanaAdmin
 
 	// If there are group org mappings configured, but no matching mappings,
 	// the user will not be able to login and will be disabled

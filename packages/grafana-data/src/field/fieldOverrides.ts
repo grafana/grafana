@@ -2,14 +2,16 @@ import { isNumber, set, unset, get, cloneDeep } from 'lodash';
 import { useMemo, useRef } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 
+import { VariableFormatID } from '@grafana/schema';
+
 import { compareArrayValues, compareDataFrameStructures, guessFieldTypeForField } from '../dataframe';
-import { getTimeField } from '../dataframe/processDataFrame';
 import { PanelPlugin } from '../panel/PanelPlugin';
 import { GrafanaTheme2 } from '../themes';
 import { asHexString } from '../themes/colorManipulator';
 import { fieldMatchers, reduceField, ReducerID } from '../transformations';
 import {
   ApplyFieldOverrideOptions,
+  DataContextScopedVar,
   DataFrame,
   DataLink,
   DecimalCount,
@@ -32,9 +34,8 @@ import {
   ValueLinkConfig,
 } from '../types';
 import { FieldMatcher } from '../types/transformations';
-import { DataLinkBuiltInVars, locationUtil } from '../utils';
+import { locationUtil } from '../utils';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
-import { formattedValueToString } from '../valueFormats';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
@@ -368,28 +369,20 @@ export const getLinksSupplier =
     if (!field.config.links || field.config.links.length === 0) {
       return [];
     }
-    const timeRangeUrl = locationUtil.getTimeRangeUrlParams();
-    const { timeField } = getTimeField(frame);
 
     return field.config.links.map((link: DataLink) => {
-      const variablesQuery = locationUtil.getVariablesUrlParams();
       let dataFrameVars = {};
-      let valueVars = {};
+      let dataContext: DataContextScopedVar = { value: { frame, field } };
 
       // We are not displaying reduction result
       if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
+        dataContext.value.rowIndex = config.valueRowIndex;
+
         const fieldsProxy = getFieldDisplayValuesProxy({
           frame,
           rowIndex: config.valueRowIndex,
           timeZone: timeZone,
         });
-
-        valueVars = {
-          raw: field.values.get(config.valueRowIndex),
-          numeric: fieldsProxy[field.name].numeric,
-          text: fieldsProxy[field.name].text,
-          time: timeField ? timeField.values.get(config.valueRowIndex) : undefined,
-        };
 
         dataFrameVars = {
           __data: {
@@ -402,30 +395,13 @@ export const getLinksSupplier =
           },
         };
       } else {
-        if (config.calculatedValue) {
-          valueVars = {
-            raw: config.calculatedValue.numeric,
-            numeric: config.calculatedValue.numeric,
-            text: formattedValueToString(config.calculatedValue),
-          };
-        }
+        dataContext.value.calculatedValue = config.calculatedValue;
       }
 
-      const variables = {
+      const variables: ScopedVars = {
         ...fieldScopedVars,
-        __value: {
-          text: 'Value',
-          value: valueVars,
-        },
         ...dataFrameVars,
-        [DataLinkBuiltInVars.keepTime]: {
-          text: timeRangeUrl,
-          value: timeRangeUrl,
-        },
-        [DataLinkBuiltInVars.includeVars]: {
-          text: variablesQuery,
-          value: variablesQuery,
-        },
+        __dataContext: dataContext,
       };
 
       if (link.onClick) {
@@ -451,11 +427,10 @@ export const getLinksSupplier =
           internalLink: link.internal,
           scopedVars: variables,
           field,
-          range: {} as any,
+          range: link.internal.range ?? ({} as any),
           replaceVariables,
         });
       }
-
       let href = link.onBuildUrl
         ? link.onBuildUrl({
             origin: field,
@@ -464,8 +439,8 @@ export const getLinksSupplier =
         : link.url;
 
       if (href) {
-        locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-        href = replaceVariables(href, variables);
+        href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
+        href = replaceVariables(href, variables, VariableFormatID.PercentEncode);
         href = locationUtil.processUrl(href);
       }
 

@@ -117,6 +117,25 @@ export const getNextLayerName = (panel: GeomapPanel) => {
   return `Layer ${Date.now()}`;
 };
 
+export function isSegmentVisible(
+  map: OpenLayersMap,
+  pixelTolerance: number,
+  segmentStartCoords: number[],
+  segmentEndCoords: number[]
+): boolean {
+  // For a segment, calculate x and y pixel lengths
+  //TODO: let's try to find a less intensive check
+  const pixelStart = map.getPixelFromCoordinate(segmentStartCoords);
+  const pixelEnd = map.getPixelFromCoordinate(segmentEndCoords);
+  const deltaX = Math.abs(pixelStart[0] - pixelEnd[0]);
+  const deltaY = Math.abs(pixelStart[1] - pixelEnd[1]);
+  // If greater than pixel tolerance in either direction, segment is visible
+  if (deltaX > pixelTolerance || deltaY > pixelTolerance) {
+    return true;
+  }
+  return false;
+}
+
 export const isUrl = (url: string) => {
   try {
     const newUrl = new URL(url);

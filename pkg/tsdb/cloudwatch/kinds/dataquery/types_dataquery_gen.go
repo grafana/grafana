@@ -54,7 +54,6 @@ const (
 // Defines values for CloudWatchMetricsQuerySqlFromPropertyType.
 const (
 	CloudWatchMetricsQuerySqlFromPropertyTypeString CloudWatchMetricsQuerySqlFromPropertyType = "string"
-	CloudWatchMetricsQuerySqlFromPropertyTypeTest   CloudWatchMetricsQuerySqlFromPropertyType = "test"
 )
 
 // Defines values for CloudWatchMetricsQuerySqlGroupByType.
@@ -114,6 +113,16 @@ const (
 	QueryEditorArrayExpressionTypeOr  QueryEditorArrayExpressionType = "or"
 )
 
+// Defines values for QueryEditorExpressionParametersType.
+const (
+	QueryEditorExpressionParametersTypeFunctionParameter QueryEditorExpressionParametersType = "functionParameter"
+)
+
+// Defines values for QueryEditorExpressionPropertyType.
+const (
+	QueryEditorExpressionPropertyTypeString QueryEditorExpressionPropertyType = "string"
+)
+
 // Defines values for QueryEditorExpressionType.
 const (
 	QueryEditorExpressionTypeAnd               QueryEditorExpressionType = "and"
@@ -143,7 +152,6 @@ const (
 // Defines values for QueryEditorGroupByExpressionPropertyType.
 const (
 	QueryEditorGroupByExpressionPropertyTypeString QueryEditorGroupByExpressionPropertyType = "string"
-	QueryEditorGroupByExpressionPropertyTypeTest   QueryEditorGroupByExpressionPropertyType = "test"
 )
 
 // Defines values for QueryEditorGroupByExpressionType.
@@ -154,7 +162,6 @@ const (
 // Defines values for QueryEditorOperatorExpressionPropertyType.
 const (
 	QueryEditorOperatorExpressionPropertyTypeString QueryEditorOperatorExpressionPropertyType = "string"
-	QueryEditorOperatorExpressionPropertyTypeTest   QueryEditorOperatorExpressionPropertyType = "test"
 )
 
 // Defines values for QueryEditorOperatorExpressionType.
@@ -165,13 +172,11 @@ const (
 // Defines values for QueryEditorPropertyType.
 const (
 	QueryEditorPropertyTypeString QueryEditorPropertyType = "string"
-	QueryEditorPropertyTypeTest   QueryEditorPropertyType = "test"
 )
 
 // Defines values for QueryEditorPropertyExpressionPropertyType.
 const (
 	QueryEditorPropertyExpressionPropertyTypeString QueryEditorPropertyExpressionPropertyType = "string"
-	QueryEditorPropertyExpressionPropertyTypeTest   QueryEditorPropertyExpressionPropertyType = "test"
 )
 
 // Defines values for QueryEditorPropertyExpressionType.
@@ -187,7 +192,6 @@ const (
 // Defines values for SQLExpressionFromPropertyType.
 const (
 	SQLExpressionFromPropertyTypeString SQLExpressionFromPropertyType = "string"
-	SQLExpressionFromPropertyTypeTest   SQLExpressionFromPropertyType = "test"
 )
 
 // Defines values for SQLExpressionGroupByType.
@@ -224,18 +228,38 @@ const (
 
 // CloudWatchAnnotationQuery defines model for CloudWatchAnnotationQuery.
 type CloudWatchAnnotationQuery struct {
-	AccountId       *string                            `json:"accountId,omitempty"`
-	ActionPrefix    *string                            `json:"actionPrefix,omitempty"`
-	AlarmNamePrefix *string                            `json:"alarmNamePrefix,omitempty"`
-	Dimensions      map[string]interface{}             `json:"dimensions,omitempty"`
-	MatchExact      *bool                              `json:"matchExact,omitempty"`
-	MetricName      *string                            `json:"metricName,omitempty"`
-	Namespace       string                             `json:"namespace"`
-	Period          *string                            `json:"period,omitempty"`
-	PrefixMatching  *bool                              `json:"prefixMatching,omitempty"`
-	QueryMode       CloudWatchAnnotationQueryQueryMode `json:"queryMode"`
-	Region          string                             `json:"region"`
-	Statistic       *string                            `json:"statistic,omitempty"`
+	AccountId       *string `json:"accountId,omitempty"`
+	ActionPrefix    *string `json:"actionPrefix,omitempty"`
+	AlarmNamePrefix *string `json:"alarmNamePrefix,omitempty"`
+
+	// For mixed data sources the selected datasource is on the query level.
+	// For non mixed scenarios this is undefined.
+	// TODO find a better way to do this ^ that's friendly to schema
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	Datasource *interface{}           `json:"datasource,omitempty"`
+	Dimensions map[string]interface{} `json:"dimensions,omitempty"`
+
+	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	Hide           *bool                              `json:"hide,omitempty"`
+	MatchExact     *bool                              `json:"matchExact,omitempty"`
+	MetricName     *string                            `json:"metricName,omitempty"`
+	Namespace      string                             `json:"namespace"`
+	Period         *string                            `json:"period,omitempty"`
+	PrefixMatching *bool                              `json:"prefixMatching,omitempty"`
+	QueryMode      CloudWatchAnnotationQueryQueryMode `json:"queryMode"`
+
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
+	RefId     string  `json:"refId"`
+	Region    string  `json:"region"`
+	Statistic *string `json:"statistic,omitempty"`
 
 	// @deprecated use statistic
 	Statistics []string `json:"statistics,omitempty"`
@@ -257,11 +281,10 @@ type CloudWatchLogsQuery struct {
 	Expression *string      `json:"expression,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
 	Hide *bool  `json:"hide,omitempty"`
 	Id   string `json:"id"`
-
-	// Unique, guid like, string used in explore mode
-	Key *string `json:"key,omitempty"`
 
 	// LogGroupNames deprecated, use logGroups instead
 	LogGroupNames []string `json:"logGroupNames,omitempty"`
@@ -277,7 +300,9 @@ type CloudWatchLogsQuery struct {
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
 
-	// A - Z
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId       string   `json:"refId"`
 	Region      string   `json:"region"`
 	StatsGroups []string `json:"statsGroups,omitempty"`
@@ -288,12 +313,23 @@ type CloudWatchLogsQueryQueryMode string
 
 // CloudWatchMetricsQuery defines model for CloudWatchMetricsQuery.
 type CloudWatchMetricsQuery struct {
-	AccountId  *string                `json:"accountId,omitempty"`
-	Alias      *string                `json:"alias,omitempty"`
+	AccountId *string `json:"accountId,omitempty"`
+	Alias     *string `json:"alias,omitempty"`
+
+	// For mixed data sources the selected datasource is on the query level.
+	// For non mixed scenarios this is undefined.
+	// TODO find a better way to do this ^ that's friendly to schema
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	Datasource *interface{}           `json:"datasource,omitempty"`
 	Dimensions map[string]interface{} `json:"dimensions,omitempty"`
 
 	// Math expression query
 	Expression *string `json:"expression,omitempty"`
+
+	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	Hide *bool `json:"hide,omitempty"`
 
 	// Id common props
 	Id               string                                  `json:"id"`
@@ -305,14 +341,23 @@ type CloudWatchMetricsQuery struct {
 	Namespace        string                                  `json:"namespace"`
 	Period           *string                                 `json:"period,omitempty"`
 	QueryMode        *CloudWatchMetricsQueryQueryMode        `json:"queryMode,omitempty"`
-	Region           string                                  `json:"region"`
-	Sql              *struct {
-		From    *CloudWatchMetricsQuery_Sql_From `json:"from,omitempty"`
+
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
+	RefId  string `json:"refId"`
+	Region string `json:"region"`
+	Sql    *struct {
+		From    *CloudWatchMetricsQuerySqlFrom `json:"from,omitempty"`
 		GroupBy *struct {
-			// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+			// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 			Expressions interface{} `json:"expressions"`
 
-			// TODO this doesn't work
+			// TODO this doesn't work; temporarily extended in veneer
 			Type CloudWatchMetricsQuerySqlGroupByType `json:"type"`
 		} `json:"groupBy,omitempty"`
 		Limit   *int64 `json:"limit,omitempty"`
@@ -334,10 +379,10 @@ type CloudWatchMetricsQuery struct {
 			Type CloudWatchMetricsQuerySqlSelectType `json:"type"`
 		} `json:"select,omitempty"`
 		Where *struct {
-			// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+			// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 			Expressions interface{} `json:"expressions"`
 
-			// TODO this doesn't work
+			// TODO this doesn't work; temporarily extended in veneer
 			Type CloudWatchMetricsQuerySqlWhereType `json:"type"`
 		} `json:"where,omitempty"`
 	} `json:"sql,omitempty"`
@@ -363,8 +408,8 @@ type CloudWatchMetricsQuerySqlFromParametersType string
 // CloudWatchMetricsQuerySqlFromPropertyType defines model for CloudWatchMetricsQuery.Sql.From.Property.Type.
 type CloudWatchMetricsQuerySqlFromPropertyType string
 
-// CloudWatchMetricsQuery_Sql_From defines model for CloudWatchMetricsQuery.Sql.From.
-type CloudWatchMetricsQuery_Sql_From struct {
+// CloudWatchMetricsQuerySqlFrom defines model for CloudWatchMetricsQuery.Sql.From.
+type CloudWatchMetricsQuerySqlFrom struct {
 	Name       *string `json:"name,omitempty"`
 	Parameters []struct {
 		Name *string                                     `json:"name,omitempty"`
@@ -378,7 +423,7 @@ type CloudWatchMetricsQuery_Sql_From struct {
 	union json.RawMessage
 }
 
-// TODO this doesn't work
+// TODO this doesn't work; temporarily extended in veneer
 type CloudWatchMetricsQuerySqlGroupByType string
 
 // CloudWatchMetricsQuerySqlOrderByParametersType defines model for CloudWatchMetricsQuery.Sql.OrderBy.Parameters.Type.
@@ -393,7 +438,7 @@ type CloudWatchMetricsQuerySqlSelectParametersType string
 // CloudWatchMetricsQuerySqlSelectType defines model for CloudWatchMetricsQuery.Sql.Select.Type.
 type CloudWatchMetricsQuerySqlSelectType string
 
-// TODO this doesn't work
+// TODO this doesn't work; temporarily extended in veneer
 type CloudWatchMetricsQuerySqlWhereType string
 
 // CloudWatchQueryMode defines model for CloudWatchQueryMode.
@@ -433,15 +478,42 @@ type MetricStat struct {
 
 // QueryEditorArrayExpression defines model for QueryEditorArrayExpression.
 type QueryEditorArrayExpression struct {
-	// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+	// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 	Expressions interface{} `json:"expressions"`
 
-	// TODO this doesn't work
+	// TODO this doesn't work; temporarily extended in veneer
 	Type QueryEditorArrayExpressionType `json:"type"`
 }
 
-// TODO this doesn't work
+// TODO this doesn't work; temporarily extended in veneer
 type QueryEditorArrayExpressionType string
+
+// QueryEditorArrayExpression is added in veneer
+type QueryEditorExpression struct {
+	Name *string `json:"name,omitempty"`
+
+	// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
+	Operator *struct {
+		Name  *string      `json:"name,omitempty"`
+		Value *interface{} `json:"value,omitempty"`
+	} `json:"operator,omitempty"`
+	Parameters []struct {
+		Name *string                             `json:"name,omitempty"`
+		Type QueryEditorExpressionParametersType `json:"type"`
+	} `json:"parameters,omitempty"`
+	Property *struct {
+		Name *string                           `json:"name,omitempty"`
+		Type QueryEditorExpressionPropertyType `json:"type"`
+	} `json:"property,omitempty"`
+	Type  *interface{} `json:"type,omitempty"`
+	union json.RawMessage
+}
+
+// QueryEditorExpressionParametersType defines model for QueryEditorExpression.Parameters.Type.
+type QueryEditorExpressionParametersType string
+
+// QueryEditorExpressionPropertyType defines model for QueryEditorExpression.Property.Type.
+type QueryEditorExpressionPropertyType string
 
 // QueryEditorExpressionType defines model for QueryEditorExpressionType.
 type QueryEditorExpressionType string
@@ -486,7 +558,7 @@ type QueryEditorGroupByExpressionPropertyType string
 // QueryEditorGroupByExpressionType defines model for QueryEditorGroupByExpression.Type.
 type QueryEditorGroupByExpressionType string
 
-// TODO <T extends QueryEditorOperatorValueType>, extend in veneer
+// TS type is QueryEditorOperator<T extends QueryEditorOperatorValueType>, extended in veneer
 type QueryEditorOperator struct {
 	Name  *string      `json:"name,omitempty"`
 	Value *interface{} `json:"value,omitempty"`
@@ -494,7 +566,7 @@ type QueryEditorOperator struct {
 
 // QueryEditorOperatorExpression defines model for QueryEditorOperatorExpression.
 type QueryEditorOperatorExpression struct {
-	// TODO QueryEditorOperator<QueryEditorOperatorValueType>, extend in veneer
+	// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
 	Operator struct {
 		Name  *string      `json:"name,omitempty"`
 		Value *interface{} `json:"value,omitempty"`
@@ -538,12 +610,12 @@ type QueryEditorPropertyExpressionType string
 
 // SQLExpression defines model for SQLExpression.
 type SQLExpression struct {
-	From    *SQLExpression_From `json:"from,omitempty"`
+	From    *SQLExpressionFrom `json:"from,omitempty"`
 	GroupBy *struct {
-		// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+		// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 		Expressions interface{} `json:"expressions"`
 
-		// TODO this doesn't work
+		// TODO this doesn't work; temporarily extended in veneer
 		Type SQLExpressionGroupByType `json:"type"`
 	} `json:"groupBy,omitempty"`
 	Limit   *int64 `json:"limit,omitempty"`
@@ -565,10 +637,10 @@ type SQLExpression struct {
 		Type SQLExpressionSelectType `json:"type"`
 	} `json:"select,omitempty"`
 	Where *struct {
-		// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+		// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 		Expressions interface{} `json:"expressions"`
 
-		// TODO this doesn't work
+		// TODO this doesn't work; temporarily extended in veneer
 		Type SQLExpressionWhereType `json:"type"`
 	} `json:"where,omitempty"`
 }
@@ -579,8 +651,8 @@ type SQLExpressionFromParametersType string
 // SQLExpressionFromPropertyType defines model for SQLExpression.From.Property.Type.
 type SQLExpressionFromPropertyType string
 
-// SQLExpression_From defines model for SQLExpression.From.
-type SQLExpression_From struct {
+// SQLExpressionFrom defines model for SQLExpression.From.
+type SQLExpressionFrom struct {
 	Name       *string `json:"name,omitempty"`
 	Parameters []struct {
 		Name *string                         `json:"name,omitempty"`
@@ -594,7 +666,7 @@ type SQLExpression_From struct {
 	union json.RawMessage
 }
 
-// TODO this doesn't work
+// TODO this doesn't work; temporarily extended in veneer
 type SQLExpressionGroupByType string
 
 // SQLExpressionOrderByParametersType defines model for SQLExpression.OrderBy.Parameters.Type.
@@ -609,5 +681,5 @@ type SQLExpressionSelectParametersType string
 // SQLExpressionSelectType defines model for SQLExpression.Select.Type.
 type SQLExpressionSelectType string
 
-// TODO this doesn't work
+// TODO this doesn't work; temporarily extended in veneer
 type SQLExpressionWhereType string

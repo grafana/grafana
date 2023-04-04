@@ -66,24 +66,14 @@ exports[`Query and expressions reducer should add query 1`] = `
       "refId": "A",
     },
     {
-      "datasourceUid": "some uid",
+      "datasourceUid": "c8eceabb-0275-4108-8f03-8f74faf4bf6d",
       "model": {
         "datasource": {
-          "type": undefined,
-          "uid": "some uid",
+          "type": "prometheus",
+          "uid": "c8eceabb-0275-4108-8f03-8f74faf4bf6d",
         },
-        "datasourceUid": "",
         "hide": false,
-        "model": {
-          "expression": "THIS IS THE DEFAULT EXPRESSION",
-          "refId": "A",
-        },
-        "queryType": "",
         "refId": "B",
-        "relativeTimeRange": {
-          "from": 600,
-          "to": 0,
-        },
       },
       "queryType": "",
       "refId": "B",

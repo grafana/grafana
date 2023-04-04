@@ -37,16 +37,18 @@
 /docs/sources/                            @Eve832
 /docs/sources/administration/             @Eve832 @GrafanaWriter
 /docs/sources/alerting/                   @brendamuir
+/docs/sources/dashboards/                 @imatwawana
 /docs/sources/datasources/                @Eve832 @GrafanaWriter
 /docs/sources/explore/                    @Eve832 @GrafanaWriter
 /docs/sources/fundamentals                @chri2547
 /docs/sources/getting-started/            @chri2547
 /docs/sources/introduction/               @chri2547
 /docs/sources/old-alerting/               @brendamuir
+/docs/sources/panels-visualizations/      @imatwawana
 /docs/sources/release-notes/              @Eve832 @GrafanaWriter
 /docs/sources/setup-grafana/              @chri2547
-/docs/sources/upgrade-guide/              @chri2547
-/docs/sources/whatsnew/                   @chri2547
+/docs/sources/upgrade-guide/              @chri2547 @imatwawana
+/docs/sources/whatsnew/                   @chri2547 @imatwawana
 /docs/sources/developers/plugins/         @Eve832 @josmperez @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/backend/ @Eve832 @grafana/plugins-platform-backend
 
@@ -64,7 +66,7 @@
 /pkg/bus/ @grafana/backend-platform
 /pkg/cmd/ @grafana/backend-platform
 /pkg/components/apikeygen/ @grafana/grafana-authnz-team
-/pkg/components/apikeygenprefixed/ @grafana/grafana-authnz-team
+/pkg/components/satokengen/ @grafana/grafana-authnz-team
 /pkg/components/dashdiffs/ @grafana/backend-platform
 /pkg/components/imguploader/ @grafana/backend-platform
 /pkg/components/loki/ @grafana/backend-platform
@@ -81,6 +83,7 @@
 /pkg/infra/metrics/ @grafana/backend-platform
 /pkg/infra/network/ @grafana/backend-platform
 /pkg/infra/process/ @grafana/backend-platform
+/pkg/infra/proxy/ @grafana/hosted-grafana-team
 /pkg/infra/remotecache/ @grafana/backend-platform
 /pkg/infra/serverlock/ @grafana/backend-platform
 /pkg/infra/slugify/ @grafana/backend-platform
@@ -93,7 +96,6 @@
 /pkg/services/annotations/ @grafana/backend-platform
 /pkg/services/apikey/ @grafana/backend-platform
 /pkg/services/cleanup/ @grafana/backend-platform
-/pkg/services/comments/ @grafana/backend-platform
 /pkg/services/contexthandler/ @grafana/backend-platform
 /pkg/services/correlations/ @grafana/backend-platform
 /pkg/services/dashboardimport/ @grafana/backend-platform
@@ -111,7 +113,6 @@
 /pkg/services/org/ @grafana/backend-platform
 /pkg/services/playlist/ @grafana/backend-platform
 /pkg/services/plugindashboards/ @grafana/backend-platform
-/pkg/services/pluginsettings/ @grafana/backend-platform
 /pkg/services/preference/ @grafana/backend-platform
 /pkg/services/provisioning/ @grafana/backend-platform
 /pkg/services/publicdashboards/ @grafana/dashboards-squad
@@ -135,6 +136,7 @@
 /pkg/services/validations/ @grafana/backend-platform
 /pkg/setting/ @grafana/backend-platform
 /pkg/tests/ @grafana/backend-platform
+/pkg/tests/api/correlations/ @grafana/explore-squad
 /pkg/tsdb/grafanads/ @grafana/backend-platform
 /pkg/tsdb/intervalv2/ @grafana/backend-platform
 /pkg/tsdb/legacydata/ @grafana/backend-platform
@@ -156,9 +158,6 @@
 # Logs code, developers environment
 /devenv/docker/blocks/loki* @grafana/observability-logs
 /devenv/docker/blocks/elastic* @grafana/observability-logs
-
-# Performance tests
-/devenv/docker/loadtest-ts/ @grafana/multitenancy-squad
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
 /devenv/bulk_alerting_dashboards/ @grafana/alerting-squad-backend
@@ -221,17 +220,17 @@
 
 
 # Continuous Integration
-.drone.yml @grafana/grafana-release-eng
-.drone.star @grafana/grafana-release-eng
-/scripts/drone/ @grafana/grafana-release-eng
-/pkg/build/ @grafana/grafana-release-eng
-/.dockerignore @grafana/grafana-release-eng
-/Dockerfile @grafana/grafana-release-eng
-/Makefile @grafana/grafana-release-eng
-/scripts/build/ @grafana/grafana-release-eng
+.drone.yml @grafana/grafana-delivery
+.drone.star @grafana/grafana-delivery
+/scripts/drone/ @grafana/grafana-delivery
+/pkg/build/ @grafana/grafana-delivery
+/.dockerignore @grafana/grafana-delivery
+/Dockerfile @grafana/grafana-delivery
+/Makefile @grafana/grafana-delivery
+/scripts/build/ @grafana/grafana-delivery
 
 # OSS Plugin Partnerships backend code
-/pkg/tsdb/cloudwatch/ @grafana/aws-plugins
+/pkg/tsdb/cloudwatch/ @grafana/aws-datasources
 /pkg/tsdb/azuremonitor/ @grafana/partner-plugins
 /pkg/tsdb/cloudmonitoring/ @grafana/partner-plugins
 
@@ -254,14 +253,14 @@
 /pkg/services/sqlstore/migrations/ @grafana/backend-platform @grafana/hosted-grafana-team
 *_mig.go @grafana/backend-platform @grafana/hosted-grafana-team
 
-# Grafana multitenancy
-/pkg/services/live/ @grafana/multitenancy-squad
-/pkg/services/searchV2/ @grafana/multitenancy-squad
-/pkg/services/store/ @grafana/multitenancy-squad
-/pkg/services/querylibrary/ @grafana/multitenancy-squad
-/pkg/services/export/ @grafana/multitenancy-squad
-/pkg/infra/filestorage/ @grafana/multitenancy-squad
-/pkg/util/converter/ @grafana/multitenancy-squad
+# Grafana app platform
+/pkg/services/live/ @grafana/grafana-app-platform-squad
+/pkg/services/searchV2/ @grafana/grafana-app-platform-squad
+/pkg/services/store/ @grafana/grafana-app-platform-squad
+/pkg/infra/filestorage/ @grafana/grafana-app-platform-squad
+/pkg/util/converter/ @grafana/grafana-app-platform-squad
+/pkg/modules/ @grafana/grafana-app-platform-squad
+/pkg/kindsysreport/ @grafana/grafana-app-platform-squad
 
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-squad-backend
@@ -271,8 +270,8 @@
 /public/app/features/alerting/ @grafana/alerting-squad-frontend
 
 # Library Services
-/pkg/services/libraryelements/ @grafana/user-essentials
-/pkg/services/librarypanels/ @grafana/user-essentials
+/pkg/services/libraryelements/ @grafana/grafana-frontend-platform
+/pkg/services/librarypanels/ @grafana/grafana-frontend-platform
 
 # Plugins
 /pkg/api/pluginproxy/ @grafana/plugins-platform-backend
@@ -283,25 +282,27 @@
 /pkg/services/pluginsintegration/ @grafana/plugins-platform-backend
 /pkg/plugins/pfs/ @grafana/plugins-platform-backend @grafana/grafana-as-code
 /pkg/tsdb/testdatasource/ @grafana/plugins-platform-backend
+/pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
 
 # Dashboard previews / crawler (behind feature flag)
-/pkg/services/thumbs/ @grafana/multitenancy-squad
+/pkg/services/thumbs/ @grafana/grafana-app-platform-squad
 
 # Backend code docs
 /contribute/backend/ @grafana/backend-platform
 
 
-/crowdin.yml @grafana/user-essentials
-/public/locales/ @grafana/user-essentials
-/public/app/core/internationalization/ @grafana/user-essentials
-/e2e/ @grafana/user-essentials
+/crowdin.yml @grafana/grafana-frontend-platform
+/public/locales/ @grafana/grafana-frontend-platform
+/public/app/core/internationalization/ @grafana/grafana-frontend-platform
+/e2e/ @grafana/grafana-frontend-platform
 /e2e/cloud-plugins-suite/ @grafana/partner-plugins
-/packages/ @grafana/user-essentials @grafana/plugins-platform-frontend @grafana/dataviz-squad
-/packages/grafana-e2e-selectors/ @grafana/user-essentials
-/packages/grafana-e2e/ @grafana/user-essentials
+/packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend @grafana/dataviz-squad
+/packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
+/packages/grafana-e2e/ @grafana/grafana-frontend-platform
 /packages/grafana-toolkit/ @grafana/plugins-platform-frontend
 /packages/grafana-ui/.storybook/ @grafana/plugins-platform-frontend
-/packages/grafana-ui/src/components/DateTimePickers/ @grafana/user-essentials
+/packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
+/packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Logs/ @grafana/observability-logs
 /packages/grafana-ui/src/components/Table/ @grafana/grafana-bi-squad
@@ -326,7 +327,7 @@ tsconfig.json @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
 /.yarnrc.yml @grafana/frontend-ops
 /yarn.lock @grafana/frontend-ops
-/.linguirc @grafana/user-essentials
+/.linguirc @grafana/grafana-frontend-platform
 /babel.config.json @grafana/frontend-ops
 lerna.json @grafana/frontend-ops
 /.prettierrc.js @grafana/frontend-ops
@@ -340,46 +341,45 @@ lerna.json @grafana/frontend-ops
 
 
 # public folder
-/public/app/core/ @grafana/user-essentials
-/public/app/core/components/TimePicker/ @grafana/user-essentials
+/public/app/core/ @grafana/grafana-frontend-platform
+/public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
 /public/app/core/components/Layers/ @grafana/dataviz-squad
-/public/app/features/all.ts @grafana/user-essentials
+/public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/grafana-authnz-team
-/public/app/features/annotations/ @grafana/user-essentials
-/public/app/features/api-keys/ @grafana/user-essentials
+/public/app/features/annotations/ @grafana/grafana-frontend-platform
+/public/app/features/api-keys/ @grafana/grafana-frontend-platform
 /public/app/features/canvas/ @grafana/dataviz-squad
-/public/app/features/commandPalette/ @grafana/user-essentials
-/public/app/features/comments/ @grafana/dataviz-squad
+/public/app/features/commandPalette/ @grafana/grafana-frontend-platform
 /public/app/features/connections/ @grafana/plugins-platform-frontend
 /public/app/features/correlations/ @grafana/explore-squad
 /public/app/features/dashboard/ @grafana/dashboards-squad
-/public/app/features/datasources/ @grafana/user-essentials
+/public/app/features/datasources/ @grafana/plugins-platform-frontend
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/grafana-bi-squad
+/public/app/features/datasource-drawer/ @grafana/grafana-bi-squad
 /public/app/features/explore/ @grafana/explore-squad
 /public/app/features/expressions/ @grafana/observability-metrics
-/public/app/features/folders/ @grafana/user-essentials
-/public/app/features/inspector/ @grafana/user-essentials
-/public/app/features/invites/ @grafana/user-essentials
+/public/app/features/folders/ @grafana/grafana-frontend-platform
+/public/app/features/inspector/ @grafana/grafana-frontend-platform
+/public/app/features/invites/ @grafana/grafana-frontend-platform
 /public/app/features/geo/ @grafana/dataviz-squad
-/public/app/features/library-panels/ @grafana/user-essentials
+/public/app/features/library-panels/ @grafana/grafana-frontend-platform
 /public/app/features/logs/ @grafana/observability-logs
-/public/app/features/live/ @grafana/multitenancy-squad
+/public/app/features/live/ @grafana/grafana-app-platform-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
-/public/app/features/notifications/ @grafana/user-essentials
-/public/app/features/org/ @grafana/user-essentials
-/public/app/features/panel/ @grafana/user-essentials
+/public/app/features/notifications/ @grafana/grafana-frontend-platform
+/public/app/features/org/ @grafana/grafana-frontend-platform
+/public/app/features/panel/ @grafana/grafana-frontend-platform
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
-/public/app/features/profile/ @grafana/user-essentials
+/public/app/features/profile/ @grafana/grafana-frontend-platform
 /public/app/features/runtime/ @ryantxu
 /public/app/features/query/ @grafana/dashboards-squad
-/public/app/features/query-library/ @grafana/dataviz-squad
-/public/app/features/sandbox/ @grafana/user-essentials
+/public/app/features/sandbox/ @grafana/grafana-frontend-platform
 /public/app/features/scenes/ @grafana/dashboards-squad
-/public/app/features/search/ @grafana/user-essentials
+/public/app/features/search/ @grafana/grafana-frontend-platform
 /public/app/features/serviceaccounts/ @grafana/grafana-authnz-team
-/public/app/features/storage/ @grafana/multitenancy-squad
+/public/app/features/storage/ @grafana/grafana-app-platform-squad
 /public/app/features/teams/ @grafana/grafana-authnz-team
 /public/app/features/templating/ @grafana/dashboards-squad
 /public/app/features/transformers/ @grafana/dataviz-squad
@@ -387,13 +387,13 @@ lerna.json @grafana/frontend-ops
 /public/app/features/variables/ @grafana/dashboards-squad
 /public/app/plugins/panel/alertGroups/ @grafana/alerting-squad-frontend
 /public/app/plugins/panel/alertlist/ @grafana/alerting-squad-frontend
-/public/app/plugins/panel/annolist/ @grafana/user-essentials
+/public/app/plugins/panel/annolist/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/barchart/ @grafana/dataviz-squad
-/public/app/plugins/panel/bargauge/ @grafana/dataviz-squad
-/public/app/plugins/panel/dashlist/ @grafana/user-essentials
+/public/app/plugins/panel/bargauge/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/dashlist/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/debug/ @ryantxu
-/public/app/plugins/panel/gauge/ @grafana/dataviz-squad
-/public/app/plugins/panel/gettingstarted/ @grafana/user-essentials
+/public/app/plugins/panel/gauge/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/gettingstarted/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/graph/ @grafana/dataviz-squad
 /public/app/plugins/panel/heatmap/ @grafana/dataviz-squad
 /public/app/plugins/panel/histogram/ @grafana/dataviz-squad
@@ -401,7 +401,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/nodeGraph/ @grafana/observability-traces-and-profiling
 /public/app/plugins/panel/traces/ @grafana/observability-traces-and-profiling
 /public/app/plugins/panel/flamegraph/ @grafana/observability-traces-and-profiling
-/public/app/plugins/panel/piechart/ @grafana/dataviz-squad
+/public/app/plugins/panel/piechart/ @grafana/grafana-bi-squad
 /public/app/plugins/panel/state-timeline/ @grafana/dataviz-squad
 /public/app/plugins/panel/status-history/ @grafana/dataviz-squad
 /public/app/plugins/panel/table/ @grafana/grafana-bi-squad
@@ -411,29 +411,29 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/canvas/ @grafana/dataviz-squad
 /public/app/plugins/panel/candlestick/ @grafana/dataviz-squad
 /public/app/plugins/panel/icon/ @grafana/dataviz-squad
-/public/app/plugins/panel/live/ @grafana/multitenancy-squad
-/public/app/plugins/panel/news/ @grafana/user-essentials
-/public/app/plugins/panel/stat/ @grafana/dataviz-squad
-/public/app/plugins/panel/text/ @grafana/user-essentials
-/public/app/plugins/panel/welcome/ @grafana/user-essentials
+/public/app/plugins/panel/live/ @grafana/grafana-app-platform-squad
+/public/app/plugins/panel/news/ @grafana/grafana-frontend-platform
+/public/app/plugins/panel/stat/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/text/ @grafana/grafana-frontend-platform
+/public/app/plugins/panel/welcome/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/xychart/ @grafana/dataviz-squad
 /public/app/plugins/sdk.ts @grafana/plugins-platform-frontend
-/public/app/polyfills/old-mediaquerylist.ts @grafana/user-essentials
-/public/app/routes/ @grafana/user-essentials
-/public/app/store/ @grafana/user-essentials
-/public/app/types/ @grafana/user-essentials
+/public/app/polyfills/old-mediaquerylist.ts @grafana/grafana-frontend-platform
+/public/app/routes/ @grafana/grafana-frontend-platform
+/public/app/store/ @grafana/grafana-frontend-platform
+/public/app/types/ @grafana/grafana-frontend-platform
 /public/dashboards/ @grafana/dashboards-squad
 /public/fonts/ @grafana/alerting-squad-frontend
-/public/emails/ @grafana/user-essentials
+/public/emails/ @grafana/grafana-frontend-platform
 /public/gazetteer/ @ryantxu
-/public/img/ @grafana/user-essentials
-/public/lib/ @grafana/user-essentials
+/public/img/ @grafana/grafana-frontend-platform
+/public/lib/ @grafana/grafana-frontend-platform
 /public/maps/ @ryantxu
 /public/robots.txt @grafana/frontend-ops
-/public/sass/ @grafana/user-essentials
-/public/test/ @grafana/user-essentials
-/public/testdata/ @grafana/user-essentials
-/public/views/ @grafana/user-essentials
+/public/sass/ @grafana/grafana-frontend-platform
+/public/test/ @grafana/grafana-frontend-platform
+/public/testdata/ @grafana/grafana-frontend-platform
+/public/views/ @grafana/grafana-frontend-platform
 
 /public/app/features/explore/Logs.tsx @grafana/observability-logs
 /public/app/features/explore/LogsContainer.tsx @grafana/observability-logs
@@ -447,37 +447,37 @@ lerna.json @grafana/frontend-ops
 /public/app/dev.ts @grafana/frontend-ops
 /public/app/index.ts @grafana/frontend-ops
 /public/app/AppWrapper.tsx @grafana/frontend-ops
-/public/app/partials/ @grafana/user-essentials
+/public/app/partials/ @grafana/grafana-frontend-platform
 
 
 
 
 /scripts/benchmark-access-control.sh @grafana/grafana-authnz-team
 /scripts/check-breaking-changes.sh @grafana/plugins-platform-frontend
-/scripts/ci-* @grafana/grafana-release-eng
-/scripts/circle-* @grafana/grafana-release-eng
-/scripts/ci-frontend-metrics.sh @grafana/user-essentials @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
-/scripts/cli/ @grafana/user-essentials
+/scripts/ci-* @grafana/grafana-delivery
+/scripts/circle-* @grafana/grafana-delivery
+/scripts/ci-frontend-metrics.sh @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
+/scripts/cli/ @grafana/grafana-frontend-platform
 /scripts/clean-git-or-error.sh @grafana/grafana-as-code
-/scripts/grafana-server/ @grafana/user-essentials
-/scripts/helpers/ @grafana/grafana-release-eng
+/scripts/grafana-server/ @grafana/grafana-frontend-platform
+/scripts/helpers/ @grafana/grafana-delivery
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist
-/scripts/openapi3/ @grafana/grafana-partnerships-team
+/scripts/openapi3/ @grafana/grafana-operator-experience-squad
 /scripts/prepare-packagejson.js @grafana/frontend-ops
 /scripts/protobuf-check.sh @grafana/plugins-platform-backend
 /scripts/stripnulls.sh @grafana/grafana-as-code
-/scripts/tag_release.sh @grafana/grafana-release-eng
-/scripts/trigger_docker_build.sh @grafana/grafana-release-eng
-/scripts/trigger_grafana_packer.sh @grafana/grafana-release-eng
-/scripts/trigger_windows_build.sh @grafana/grafana-release-eng
-/scripts/validate-devenv-dashboards.sh @grafana/grafana-release-eng
-/scripts/verify-repo-update/ @grafana/grafana-release-eng
+/scripts/tag_release.sh @grafana/grafana-delivery
+/scripts/trigger_docker_build.sh @grafana/grafana-delivery
+/scripts/trigger_grafana_packer.sh @grafana/grafana-delivery
+/scripts/trigger_windows_build.sh @grafana/grafana-delivery
+/scripts/validate-devenv-dashboards.sh @grafana/grafana-delivery
+/scripts/verify-repo-update/ @grafana/grafana-delivery
 
 /scripts/webpack/ @grafana/frontend-ops
-/scripts/generate-a11y-report.sh @grafana/user-essentials
-.pa11yci.conf.js @grafana/user-essentials
-.pa11yci-pr.conf.js @grafana/user-essentials
+/scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
+.pa11yci.conf.js @grafana/grafana-frontend-platform
+.pa11yci-pr.conf.js @grafana/grafana-frontend-platform
 .betterer.results @joshhunt
 .betterer.ts @joshhunt
 
@@ -489,9 +489,9 @@ lerna.json @grafana/frontend-ops
 
 # Core datasources
 /public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
-/public/app/plugins/datasource/cloudwatch/ @grafana/aws-plugins
+/public/app/plugins/datasource/cloudwatch/ @grafana/aws-datasources
 /public/app/plugins/datasource/elasticsearch/ @grafana/observability-logs
-/public/app/plugins/datasource/grafana/ @grafana/user-essentials
+/public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/testdata/ @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/azuremonitor/ @grafana/partner-plugins
 /public/app/plugins/datasource/graphite/ @grafana/observability-metrics
@@ -537,9 +537,9 @@ lerna.json @grafana/frontend-ops
 /public/app/features/support-bundles/ @grafana/grafana-authnz-team
 /pkg/services/supportbundles/ @grafana/grafana-authnz-team
 
-# Grafana Partnerships Team
-/pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team
-/pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-partnerships-team
+# Grafana Operator Experience Team
+/pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-operator-experience-squad
+/pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-operator-experience-squad
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
@@ -551,8 +551,6 @@ embed.go @grafana/grafana-as-code
 /pkg/cuectx/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/codegen/ @grafana/grafana-as-code
-/pkg/kindsys/ @grafana/grafana-as-code
-/pkg/kindsys/kindcat_custom.cue @grafana/cloud-app-platform-squad
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
 /pkg/registry/corekind/ @grafana/grafana-as-code
 /public/app/plugins/*gen.go @grafana/grafana-as-code
@@ -571,10 +569,10 @@ embed.go @grafana/grafana-as-code
 /.github/pr-commands.json @marefr
 /.github/renovate.json5 @grafana/frontend-ops
 /.github/teams.yml @armandgrillet
-/.github/workflows/backport.yml @grafana/grafana-release-eng
-/.github/workflows/bump-version.yml @grafana/grafana-release-eng
-/.github/workflows/close-milestone.yml @grafana/grafana-release-eng
-/.github/workflows/cloud-data-sources-code-coverage.yml @grafana/partner-plugins @grafana/aws-plugins
+/.github/workflows/backport.yml @grafana/grafana-delivery
+/.github/workflows/bump-version.yml @grafana/grafana-delivery
+/.github/workflows/close-milestone.yml @grafana/grafana-delivery
+/.github/workflows/cloud-data-sources-code-coverage.yml @grafana/partner-plugins @grafana/aws-datasources
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
@@ -595,12 +593,12 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-commands.yml @marefr
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-grafana
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-grafana
-/.github/workflows/remove-milestone.yml @grafana/user-essentials
+/.github/workflows/remove-milestone.yml @grafana/grafana-frontend-platform
 /.github/workflows/sbom-report.yml @grafana/security-team
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
 /.github/workflows/scripts/pr-get-job-link.js @grafana/plugins-platform-frontend
-/.github/workflows/stale.yml @grafana/user-essentials
-/.github/workflows/update-changelog.yml @grafana/grafana-release-eng
+/.github/workflows/stale.yml @grafana/grafana-frontend-platform
+/.github/workflows/update-changelog.yml @grafana/grafana-delivery
 /.github/workflows/snyk.yml @grafana/security-team
 
 

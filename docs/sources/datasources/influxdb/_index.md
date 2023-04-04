@@ -30,23 +30,27 @@ Once you've added the InfluxDB data source, you can [configure it]({{< relref "#
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
-1. Hover the cursor over the **Configuration** (gear) icon.
-1. Select **Data Sources**.
-1. Select the InfluxDB data source.
+1.  Click **Connections** in the left-side menu.
+1.  Under Your connections, click **Data sources**.
+1.  Enter `InfluxDB` in the search bar.
+1.  Select **InfluxDB**.
 
-Set the data source's basic configuration options carefully:
+    The **Settings** tab of the data source is displayed.
 
-| Name                  | Description                                                                                                                                                                                                  |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Name**              | Sets the name you use to refer to the data source in panels and queries. We recommend something like `InfluxDB-InfluxQL`.                                                                                    |
-| **Default**           | Sets whether the data source is pre-selected for new panels.                                                                                                                                                 |
-| **URL**               | The HTTP protocol, IP address, and port of your InfluxDB API. InfluxDB's default API port is 8086.                                                                                                           |
-| **Min time interval** | _(Optional)_ Refer to [Min time interval]({{< relref "#configure-min-time-interval" >}}).                                                                                                                    |
-| **Max series**        | _(Optional)_ Limits the number of series and tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have many small time series and not all are shown. Defaults to 1,000. |
+1.  Set the data source's basic configuration options carefully:
 
-You can also configure settings specific to the InfluxDB data source:
+        | Name                  | Description                                                                                                                                                                                                  |
+
+    | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+    | **Name** | Sets the name you use to refer to the data source in panels and queries. We recommend something like `InfluxDB-InfluxQL`. |
+    | **Default** | Sets whether the data source is pre-selected for new panels. |
+    | **URL** | The HTTP protocol, IP address, and port of your InfluxDB API. InfluxDB's default API port is 8086. |
+    | **Min time interval** | _(Optional)_ Refer to [Min time interval]({{< relref "#configure-min-time-interval" >}}). |
+    | **Max series** | _(Optional)_ Limits the number of series and tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have many small time series and not all are shown. Defaults to 1,000. |
+
+You can also configure settings specific to the InfluxDB data source. These options are described in the sections below.
 
 ### Min time interval
 
@@ -114,6 +118,10 @@ Configure these options if you select the Flux query language:
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
+> **Note:** `database` [field is deprecated](https://github.com/grafana/grafana/pull/58647).
+> We suggest to use `dbName` field in `jsonData`. Please see the examples below.
+> No need to change existing provisioning settings.
+
 #### Provisioning examples
 
 **InfluxDB 1.x example:**
@@ -125,10 +133,10 @@ datasources:
   - name: InfluxDB_v1
     type: influxdb
     access: proxy
-    database: site
     user: grafana
     url: http://localhost:8086
     jsonData:
+      dbName: site
       httpMode: GET
     secureJsonData:
       password: grafana
@@ -163,9 +171,9 @@ datasources:
     type: influxdb
     access: proxy
     url: http://localhost:8086
-    # This database should be mapped to a bucket
-    database: site
     jsonData:
+      # This database should be mapped to a bucket
+      dbName: site
       httpMode: GET
       httpHeaderName1: 'Authorization'
     secureJsonData:
