@@ -16,6 +16,7 @@ import { Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/utils/logs';
+import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 
 import { LogRows } from '../LogRows';
 
@@ -138,7 +139,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         getRowContext(row, {
           // The start time is inclusive so we will get the one row we are using as context entry
           limit: limit + 1,
-          direction: 'FORWARD',
+          direction: LokiQueryDirection.Forward,
         }),
       ]);
 
