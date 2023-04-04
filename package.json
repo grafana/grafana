@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
-  "version": "9.5.0-pre",
+  "version": "10.0.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
     "build": "yarn i18n:compile && NODE_ENV=production webpack --progress --config scripts/webpack/webpack.prod.js",
@@ -266,7 +266,7 @@
     "@grafana/lezer-logql": "0.1.2",
     "@grafana/monaco-logql": "^0.0.7",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "^0.2.0",
+    "@grafana/scenes": "^0.3.0",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@kusto/monaco-kusto": "5.3.6",
