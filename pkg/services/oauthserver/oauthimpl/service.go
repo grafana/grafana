@@ -302,7 +302,7 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 				return nil, err
 			}
 			publicPem = string(pem.EncodeToMemory(&pem.Block{
-				Type:  "PUBLIC KEY",
+				Type:  "RSA PUBLIC KEY",
 				Bytes: x509.MarshalPKCS1PublicKey(&privateKey.PublicKey),
 			}))
 			privatePem = string(pem.EncodeToMemory(&pem.Block{

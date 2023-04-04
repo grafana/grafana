@@ -170,7 +170,7 @@ func (s *store) GetExternalServicePublicKey(ctx context.Context, id string) (*jo
 
 	return &jose.JSONWebKey{
 		KeyID:     "1",
-		Algorithm: "RS256",
+		Algorithm: "ES256",
 		Key:       key,
 	}, nil
 }

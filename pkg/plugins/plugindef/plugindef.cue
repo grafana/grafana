@@ -406,6 +406,26 @@ seqs: [
 					// Parameters for the JWT token authentication request.
 					params: [string]: string
 				}
+
+				// Oauth App Service Registration
+				// TODO: Update /docs/sources/developers/plugins/plugin.schema.json when ready
+				oauthServiceRegistration: #ExternalServiceRegistration
+
+				#ExternalServiceRegistration: {
+					permissions: [...#AccessControlPermission]
+					impersonatePermissions: [...#AccessControlPermission]
+					key: #ExternalServiceRegistrationKeyOption
+				}
+
+				#AccessControlPermission: {
+					action: string
+					scope: string
+				}
+
+				#ExternalServiceRegistrationKeyOption: {
+					publicPEM: string
+					generate: bool
+				}
 			},
 		]
 	},

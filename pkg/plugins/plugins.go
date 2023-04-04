@@ -158,8 +158,6 @@ type JSONData struct {
 	Executable string `json:"executable,omitempty"`
 
 	// Oauth App Service Registration
-	// TODO: If this were to live here, it requires to be added to the plugin.json schema
-	// and the CUE definition. This is not done yet.
 	OauthServiceRegistration *oauthserver.ExternalServiceRegistration `json:"oauthServiceRegistration,omitempty"`
 }
 

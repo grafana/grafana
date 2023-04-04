@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
@@ -118,50 +117,12 @@ func (ps pluginSettings) asEnvVar(prefix string, hostEnv []string) []string {
 	return env
 }
 
-func (i *Initializer) registerService(pluginID string, oauthAppInfo *oauthserver.ExternalServiceRegistration) (*oauthserver.ClientDTO, error) {
-	// Note: This generates a new app every time the plugin is loaded
-	u := uuid.New().String()
-	name := fmt.Sprintf("Test App - %s", u)
-
-	svc := &oauthserver.ExternalServiceRegistration{
-		ExternalServiceName:    name,
-		Permissions:            oauthAppInfo.Permissions,
-		ImpersonatePermissions: oauthAppInfo.ImpersonatePermissions,
-		RedirectURI:            oauthAppInfo.RedirectURI,
-		Key:                    oauthAppInfo.Key,
-	}
-
-	cli, err := i.oauthServer.SaveExternalService(context.Background(), svc)
-	if err != nil {
-		return nil, err
-	}
-
-	return cli, nil
-}
-
 func (i *Initializer) getPluginSettings(pluginID string, cfg *config.Cfg) (pluginSettings, error) {
 	ps := pluginSettings{}
 	for k, v := range cfg.PluginSettings[pluginID] {
 		if k == "path" || strings.ToLower(k) == "id" {
 			continue
 		}
-		// Note: This has been disabled in favor of using the plugin.json file
-		// if k == "oauth_service_registration" {
-		// 	oauthAppInfo := &oauthserver.ExternalServiceRegistration{}
-		// 	err := json.Unmarshal([]byte(v), oauthAppInfo)
-		// 	if err != nil {
-		// 		return nil, err
-		// 	}
-
-		// 	cli, err := i.registerService(pluginID, oauthAppInfo)
-		// 	if err != nil {
-		// 		return nil, err
-		// 	}
-		// 	ps["app_client_id"] = cli.ID
-		// 	ps["app_client_secret"] = cli.Secret
-		// 	ps["app_private_key"] = cli.KeyResult.PrivatePem
-		// 	continue
-		// }
 		ps[k] = v
 	}
 
@@ -169,21 +130,19 @@ func (i *Initializer) getPluginSettings(pluginID string, cfg *config.Cfg) (plugi
 }
 
 func (i *Initializer) oauth2OnBehalfOfVars(pluginID string, oauthAppInfo *oauthserver.ExternalServiceRegistration) ([]string, error) {
-	var variables []string
-
-	// FIXME: Is the pluginID the correct redirect_uri?
-	// At the moment a wrong redirect_uri still works
-	redirect_uri := i.cfg.AppURL + "/a/" + pluginID + "/"
-	oauthAppInfo.RedirectURI = &redirect_uri
-
-	cli, err := i.registerService(pluginID, oauthAppInfo)
+	cli, err := i.oauthServer.SaveExternalService(context.Background(), &oauthserver.ExternalServiceRegistration{
+		ExternalServiceName:    pluginID,
+		Permissions:            oauthAppInfo.Permissions,
+		ImpersonatePermissions: oauthAppInfo.ImpersonatePermissions,
+		Key:                    oauthAppInfo.Key,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	variables = append(variables, fmt.Sprintf("GF_PLUGIN_APP_CLIENT_ID=%s", cli.ID))
-	variables = append(variables, fmt.Sprintf("GF_PLUGIN_APP_CLIENT_SECRET=%s", cli.Secret))
-	variables = append(variables, fmt.Sprintf("GF_PLUGIN_APP_PRIVATE_KEY=%s", cli.KeyResult.PrivatePem))
-
-	return variables, nil
+	return []string{
+		fmt.Sprintf("GF_PLUGIN_APP_CLIENT_ID=%s", cli.ID),
+		fmt.Sprintf("GF_PLUGIN_APP_CLIENT_SECRET=%s", cli.Secret),
+		fmt.Sprintf("GF_PLUGIN_APP_PRIVATE_KEY=%s", cli.KeyResult.PrivatePem),
+	}, nil
 }

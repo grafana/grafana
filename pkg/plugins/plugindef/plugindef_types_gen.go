@@ -72,6 +72,12 @@ const (
 	ReleaseStateStable     ReleaseState = "stable"
 )
 
+// AccessControlPermission defines model for AccessControlPermission.
+type AccessControlPermission struct {
+	Action string `json:"action"`
+	Scope  string `json:"scope"`
+}
+
 // BasicRole is a Grafana basic role, which can be 'Viewer', 'Editor', 'Admin' or 'Grafana Admin'.
 // With RBAC, the Admin basic role inherits its default permissions from the Editor basic role which
 // in turn inherits them from the Viewer basic role.
@@ -121,6 +127,19 @@ type Dependency struct {
 
 // DependencyType defines model for Dependency.Type.
 type DependencyType string
+
+// ExternalServiceRegistration defines model for ExternalServiceRegistration.
+type ExternalServiceRegistration struct {
+	ImpersonatePermissions []AccessControlPermission            `json:"impersonatePermissions"`
+	Key                    ExternalServiceRegistrationKeyOption `json:"key"`
+	Permissions            []AccessControlPermission            `json:"permissions"`
+}
+
+// ExternalServiceRegistrationKeyOption defines model for ExternalServiceRegistrationKeyOption.
+type ExternalServiceRegistrationKeyOption struct {
+	Generate  bool   `json:"generate"`
+	PublicPEM string `json:"publicPEM"`
+}
 
 // Header describes an HTTP header that is forwarded with a proxied request for
 // a plugin route.
@@ -315,7 +334,8 @@ type PluginDef struct {
 
 	// Human-readable name of the plugin that is shown to the user in
 	// the UI.
-	Name string `json:"name"`
+	Name                     string                      `json:"name"`
+	OauthServiceRegistration ExternalServiceRegistration `json:"oauthServiceRegistration"`
 
 	// [internal only] The PascalCase name for the plugin. Used for creating machine-friendly
 	// identifiers, typically in code generation.
