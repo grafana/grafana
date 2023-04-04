@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,6 +33,7 @@ func TestService(t *testing.T) {
 		cfg:               cfg,
 		dataService:       me,
 		dataSourceService: &datafakes.FakeDataSourceService{},
+		features:          &featuremgmt.FeatureManager{},
 	}
 
 	queries := []Query{

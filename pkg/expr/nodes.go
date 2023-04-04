@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 )
 
@@ -260,20 +261,22 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		return mathexp.Results{}, QueryError{RefID: dn.refID, Err: response.Error}
 	}
 
-	k, use, err := shouldUseDataplane(response.Frames)
-	if use {
-		if err != nil {
-			var vw *sdata.VersionWarning
-			if errors.As(err, &vw) {
-				logger.Warn("attempting to read mismatched version dataplane data", "error", err)
+	if !s.features.IsEnabled(featuremgmt.FlagDisableSSEDataplane) {
+		k, use, err := shouldUseDataplane(response.Frames)
+		if use {
+			if err != nil {
+				var vw *sdata.VersionWarning
+				if errors.As(err, &vw) {
+					logger.Warn("attempting to read mismatched version dataplane data", "error", err)
+				}
 			}
+			logger.Debug("handling SSE data source query through dataplane", "query", dn.refID)
+			return handleDataplaneFrames(k, response.Frames)
 		}
-		logger.Debug("handling SSE data source query through dataplane", "query", dn.refID)
-		return handleDataplaneFrames(k, response.Frames)
-	}
-	if err != nil {
-		// TODO remove as more confidence is gained in dataplane data handling
-		logger.Warn("dataplane data detected but falling back to old processing due to error", "error", err)
+		if err != nil {
+			// TODO remove as more confidence is gained in dataplane data handling
+			logger.Warn("dataplane data detected but falling back to old processing due to error", "error", err)
+		}
 	}
 
 	dataSource := dn.datasource.Type

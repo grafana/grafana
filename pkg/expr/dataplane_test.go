@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
@@ -48,6 +49,7 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 		cfg:               cfg,
 		dataService:       me,
 		dataSourceService: &datafakes.FakeDataSourceService{},
+		features:          &featuremgmt.FeatureManager{},
 	}
 	queries := []Query{{
 		RefID: "A",

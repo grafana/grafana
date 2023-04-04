@@ -479,5 +479,11 @@ var (
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAlertingSquad,
 		},
+		{
+			Name:        "disableSSEDataplane",
+			Description: "Disables dataplane specific processing in server side expressions.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityMetricsSquad,
+		},
 	}
 )

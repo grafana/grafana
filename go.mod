@@ -307,7 +307,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.0 // indirect
 	github.com/gophercloud/gophercloud v1.0.0 // indirect
-	github.com/grafana/dataplane/examples v0.0.0-20230322121339-5fb4468146dd // indirect
+	github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad // indirect
 	github.com/grafana/sqlds/v2 v2.3.10 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.1 // indirect
@@ -424,5 +424,3 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
-
-replace github.com/grafana/dataplane/examples => /home/kbrandt/go/github.com/grafana/dataplane/examples

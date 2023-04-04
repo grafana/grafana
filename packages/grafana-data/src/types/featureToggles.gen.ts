@@ -90,4 +90,5 @@ export interface FeatureToggles {
   alertStateHistoryLokiSecondary?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
+  disableSSEDataplane?: boolean;
 }
