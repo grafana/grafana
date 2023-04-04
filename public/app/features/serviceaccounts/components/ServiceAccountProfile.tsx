@@ -5,10 +5,7 @@ import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data'
 import { useStyles2 } from '@grafana/ui';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
-import { dispatch } from 'app/store/store';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
-
-import { acOptionsLoaded } from '../state/reducers';
 
 import { ServiceAccountProfileRow } from './ServiceAccountProfileRow';
 import { ServiceAccountRoleRow } from './ServiceAccountRoleRow';
@@ -37,7 +34,6 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
         fetchRoleOptions(serviceAccount.orgId)
           .then((roles) => {
             setRoles(roles);
-            dispatch(acOptionsLoaded(roles));
           })
           .catch((err) => {
             console.log('fetchRoleOptions error: ', err);
