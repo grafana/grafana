@@ -91,15 +91,15 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       e2e.components.Panels.Panel.headerItems('Edit').click();
     } else {
       try {
-        e2e.components.PageToolbar.item('Add panel').should('be.visible');
-        e2e.components.PageToolbar.item('Add panel').click();
+        e2e.components.PageToolbar.itemButton('Add panel button').should('be.visible');
+        e2e.components.PageToolbar.itemButton('Add panel button').click();
       } catch (e) {
         // Depending on the screen size, the "Add panel" button might be hidden
         e2e.components.PageToolbar.item('Show more items').click();
-        e2e.components.PageToolbar.item('Add panel').last().click();
+        e2e.components.PageToolbar.item('Add panel button').last().click();
       }
-      e2e.pages.AddDashboard.addNewPanel().should('be.visible');
-      e2e.pages.AddDashboard.addNewPanel().click();
+      e2e.pages.AddDashboard.itemButton('Add new visualization menu item').should('be.visible');
+      e2e.pages.AddDashboard.itemButton('Add new visualization menu item').click();
     }
 
     if (timeRange) {
