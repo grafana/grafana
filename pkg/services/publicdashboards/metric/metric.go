@@ -47,23 +47,28 @@ func (s *PublicDashboardsMetricServiceImpl) registerMetrics(prom prometheus.Regi
 }
 
 func (s *PublicDashboardsMetricServiceImpl) Run(ctx context.Context) error {
-	ticker := time.NewTicker(12 * time.Hour)
+	s.recordMetrics(ctx)
 
+	ticker := time.NewTicker(12 * time.Hour)
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			records, err := s.store.GetMetrics(ctx)
-			if err != nil {
-				s.log.Error("error collecting background metrics", "err", err)
-				return nil
-			}
-
-			s.Metrics.PublicDashboardsTotal.Reset()
-			for _, r := range records.TotalPublicDashboards {
-				s.Metrics.PublicDashboardsTotal.WithLabelValues(strconv.FormatBool(r.IsEnabled), r.ShareType).Set(r.TotalCount)
-			}
+			s.recordMetrics(ctx)
 		}
+	}
+}
+
+func (s *PublicDashboardsMetricServiceImpl) recordMetrics(ctx context.Context) {
+	records, err := s.store.GetMetrics(ctx)
+	if err != nil {
+		s.log.Error("error collecting background metrics", "err", err)
+		return
+	}
+
+	s.Metrics.PublicDashboardsTotal.Reset()
+	for _, r := range records.TotalPublicDashboards {
+		s.Metrics.PublicDashboardsTotal.WithLabelValues(strconv.FormatBool(r.IsEnabled), r.ShareType).Set(r.TotalCount)
 	}
 }
