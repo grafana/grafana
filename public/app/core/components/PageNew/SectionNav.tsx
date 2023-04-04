@@ -102,7 +102,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       minWidth: '250px',
 
       [theme.breakpoints.up('md')]: {
-        padding: theme.spacing(3, 2, 2, 2),
+        padding: theme.spacing(4.5, 1, 2, 2),
       },
     }),
   };

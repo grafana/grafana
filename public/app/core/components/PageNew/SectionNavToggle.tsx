@@ -45,8 +45,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
       alignSelf: 'flex-start',
       position: 'relative',
       left: 0,
-      margin: theme.spacing(0, 1, 0, 1),
-      top: theme.spacing(3.5),
+      margin: theme.spacing(0, 0, 0, 1),
+      top: theme.spacing(2),
       transform: 'none',
     },
 
