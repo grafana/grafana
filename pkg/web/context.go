@@ -188,14 +188,6 @@ func (ctx *Context) QueryInt64(name string) int64 {
 	return n
 }
 
-func (ctx *Context) QueryInt64WithDefault(name string, d int64) int64 {
-	n, err := strconv.ParseInt(ctx.Query(name), 10, 64)
-	if err != nil {
-		return d
-	}
-	return n
-}
-
 // GetCookie returns given cookie value from request header.
 func (ctx *Context) GetCookie(name string) string {
 	cookie, err := ctx.Req.Cookie(name)

@@ -34,12 +34,12 @@ logRequestsInstrumentedAsUnknown,alpha,@grafana/hosted-grafana-team,false,false,
 dataConnectionsConsole,stable,@grafana/plugins-platform-backend,false,false,false,false
 internationalization,stable,@grafana/user-essentials,false,false,false,false
 topnav,stable,@grafana/user-essentials,false,false,false,false
-grpcServer,alpha,@grafana/grafana-app-platform-squad,true,false,false,false
+grpcServer,beta,@grafana/grafana-app-platform-squad,false,false,false,false
 entityStore,alpha,@grafana/grafana-app-platform-squad,true,false,false,false
 cloudWatchCrossAccountQuerying,stable,@grafana/aws-plugins,false,false,false,false
 redshiftAsyncQueryDataSupport,alpha,@grafana/aws-plugins,false,false,false,true
 athenaAsyncQueryDataSupport,alpha,@grafana/aws-plugins,false,false,false,true
-newPanelChromeUI,alpha,@grafana/dashboards-squad,false,false,false,true
+newPanelChromeUI,stable,@grafana/dashboards-squad,false,false,false,true
 showDashboardValidationWarnings,alpha,@grafana/dashboards-squad,false,false,false,false
 mysqlAnsiQuotes,alpha,@grafana/backend-platform,false,false,false,false
 accessControlOnCall,beta,@grafana/grafana-authnz-team,false,false,false,false
@@ -64,6 +64,7 @@ drawerDataSourcePicker,alpha,@grafana/grafana-bi-squad,false,false,false,true
 traceqlSearch,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
 prometheusMetricEncyclopedia,alpha,@grafana/observability-metrics,false,false,false,true
 timeSeriesTable,alpha,@grafana/app-o11y,false,false,false,true
+prometheusResourceBrowserCache,alpha,@grafana/observability-metrics,false,false,false,true
 influxdbBackendMigration,alpha,@grafana/observability-metrics,false,false,false,true
 clientTokenRotation,alpha,@grafana/grafana-authnz-team,false,false,false,false
 disableElasticsearchBackendExploreQuery,beta,@grafana/observability-logs,false,false,false,false
@@ -72,3 +73,4 @@ alertStateHistoryLokiSecondary,alpha,@grafana/alerting-squad,false,false,false,f
 alertStateHistoryLokiPrimary,alpha,@grafana/alerting-squad,false,false,false,false
 alertStateHistoryLokiOnly,alpha,@grafana/alerting-squad,false,false,false,false
 unifiedRequestLog,alpha,@grafana/backend-platform,false,false,false,false
+renderAuthJWT,beta,@grafana/grafana-as-code,false,false,false,false
