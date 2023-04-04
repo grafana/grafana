@@ -10,7 +10,6 @@ e2e.scenario({
     // Opening a dashboard without template variables
     e2e()
       .intercept({
-        method: 'POST',
         pathname: '/api/ds/query',
       })
       .as('query');
