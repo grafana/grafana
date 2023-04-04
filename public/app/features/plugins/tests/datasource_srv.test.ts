@@ -6,7 +6,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
 
 // Datasource variable $datasource with current value 'BBB'
 const templateSrv: any = {
@@ -370,30 +370,30 @@ describe('datasource_srv', () => {
 
   describe('getNameOrUid', () => {
     it('should return expression uid __expr__', () => {
-      expect(dataSourceSrv.getNameOrUid('__expr__')).toBe(ExpressionDatasourceRef.uid);
-      expect(dataSourceSrv.getNameOrUid('-100')).toBe(ExpressionDatasourceRef.uid);
-      expect(dataSourceSrv.getNameOrUid('Expression')).toBe(ExpressionDatasourceRef.uid);
-      expect(dataSourceSrv.getNameOrUid({ type: '__expr__' })).toBe(ExpressionDatasourceRef.uid);
-      expect(dataSourceSrv.getNameOrUid({ type: '-100' })).toBe(ExpressionDatasourceRef.uid);
+      expect(getNameOrUid('__expr__')).toBe(ExpressionDatasourceRef.uid);
+      expect(getNameOrUid('-100')).toBe(ExpressionDatasourceRef.uid);
+      expect(getNameOrUid('Expression')).toBe(ExpressionDatasourceRef.uid);
+      expect(getNameOrUid({ type: '__expr__' })).toBe(ExpressionDatasourceRef.uid);
+      expect(getNameOrUid({ type: '-100' })).toBe(ExpressionDatasourceRef.uid);
     });
 
     it('should return ref if it is string', () => {
       const value = 'mixed-datasource';
-      const nameOrUid = dataSourceSrv.getNameOrUid(value);
+      const nameOrUid = getNameOrUid(value);
       expect(nameOrUid).not.toBeUndefined();
       expect(nameOrUid).toBe(value);
     });
 
     it('should return the uid if the ref is not string', () => {
       const value = { type: 'mixed', uid: 'theUID' };
-      const nameOrUid = dataSourceSrv.getNameOrUid(value);
+      const nameOrUid = getNameOrUid(value);
       expect(nameOrUid).not.toBeUndefined();
       expect(nameOrUid).toBe(value.uid);
     });
 
     it('should return undefined if the ref has no uid', () => {
       const value = { type: 'mixed' };
-      const nameOrUid = dataSourceSrv.getNameOrUid(value);
+      const nameOrUid = getNameOrUid(value);
       expect(nameOrUid).toBeUndefined();
     });
   });

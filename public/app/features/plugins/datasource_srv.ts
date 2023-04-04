@@ -65,7 +65,7 @@ export class DatasourceSrv implements DataSourceService {
     ref: string | null | undefined | DataSourceRef,
     scopedVars?: ScopedVars
   ): DataSourceInstanceSettings | undefined {
-    let nameOrUid = this.getNameOrUid(ref);
+    let nameOrUid = getNameOrUid(ref);
 
     // Expressions has a new UID as __expr__ See: https://github.com/grafana/grafana/pull/62510/
     // But we still have dashboards/panels with old expression UID (-100)
@@ -109,7 +109,7 @@ export class DatasourceSrv implements DataSourceService {
   }
 
   get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
-    let nameOrUid = this.getNameOrUid(ref);
+    let nameOrUid = getNameOrUid(ref);
     if (!nameOrUid) {
       return this.get(this.defaultName);
     }
@@ -303,15 +303,6 @@ export class DatasourceSrv implements DataSourceService {
     return sorted;
   }
 
-  getNameOrUid(ref?: string | DataSourceRef | null): string | undefined {
-    if (isExpressionReference(ref)) {
-      return ExpressionDatasourceRef.uid;
-    }
-
-    const isString = typeof ref === 'string';
-    return isString ? (ref as string) : ((ref as any)?.uid as string | undefined);
-  }
-
   /**
    * @deprecated use getList
    * */
@@ -351,6 +342,15 @@ export class DatasourceSrv implements DataSourceService {
     config.defaultDatasource = settings.defaultDatasource;
     this.init(settings.datasources, settings.defaultDatasource);
   }
+}
+
+export function getNameOrUid(ref?: string | DataSourceRef | null): string | undefined {
+  if (isExpressionReference(ref)) {
+    return ExpressionDatasourceRef.uid;
+  }
+
+  const isString = typeof ref === 'string';
+  return isString ? (ref as string) : ((ref as any)?.uid as string | undefined);
 }
 
 export function variableInterpolation(value: any[]) {
