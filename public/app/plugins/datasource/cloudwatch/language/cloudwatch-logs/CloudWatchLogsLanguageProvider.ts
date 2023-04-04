@@ -2,11 +2,12 @@ import Prism, { Grammar } from 'prismjs';
 import { lastValueFrom } from 'rxjs';
 
 import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data';
+import { BackendDataSourceResponse, FetchResponse } from '@grafana/runtime';
 import { CompletionItemGroup, SearchFunctionType, Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudWatchDatasource } from '../../datasource';
-import { CloudWatchQuery, LogGroup, TSDBResponse } from '../../types';
+import { CloudWatchQuery, LogGroup } from '../../types';
 import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from '../../utils/templateVariableUtils';
 
 import syntax, {
@@ -49,7 +50,7 @@ export class CloudWatchLogsLanguageProvider extends LanguageProvider {
     return syntax;
   }
 
-  request = (url: string, params?: any): Promise<TSDBResponse> => {
+  request = (url: string, params?: any): Promise<FetchResponse<BackendDataSourceResponse>> => {
     return lastValueFrom(this.datasource.logsQueryRunner.awsRequest(url, params));
   };
 

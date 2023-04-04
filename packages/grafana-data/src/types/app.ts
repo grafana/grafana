@@ -3,7 +3,7 @@ import { ComponentType } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
-import type { PluginExtensionLinkConfig } from './pluginExtensions';
+import { type PluginExtensionLinkConfig, PluginExtensionTypes } from './pluginExtensions';
 
 /**
  * @public
@@ -97,8 +97,11 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this._extensionConfigs;
   }
 
-  configureExtensionLink<Context extends object>(extension: PluginExtensionLinkConfig<Context>) {
-    this._extensionConfigs.push(extension as PluginExtensionLinkConfig);
+  configureExtensionLink<Context extends object>(extension: Omit<PluginExtensionLinkConfig<Context>, 'type'>) {
+    this._extensionConfigs.push({
+      ...extension,
+      type: PluginExtensionTypes.link,
+    } as PluginExtensionLinkConfig);
 
     return this;
   }

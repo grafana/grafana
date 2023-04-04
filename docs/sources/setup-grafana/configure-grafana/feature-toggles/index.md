@@ -47,9 +47,11 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `validateDashboardsOnSave`                | Validate dashboard JSON POSTed to api/dashboards/db                                                                                                                                          |
 | `autoMigrateOldPanels`                    | Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)                                                                                                           |
 | `disableAngular`                          | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
+| `grpcServer`                              | Run the GRPC server                                                                                                                                                                          |
 | `accessControlOnCall`                     | Access control primitives for OnCall                                                                                                                                                         |
 | `alertingNoNormalState`                   | Stop maintaining state of alerts that are not firing                                                                                                                                         |
 | `disableElasticsearchBackendExploreQuery` | Disable executing of Elasticsearch Explore queries trough backend                                                                                                                            |
+| `renderAuthJWT`                           | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                         |
 
 ## Alpha feature toggles
 
@@ -96,6 +98,7 @@ Alpha features might be changed or removed without prior notice.
 | `traceqlSearch`                    | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries                                                                                           |
 | `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component                                                                                                |
 | `timeSeriesTable`                  | Enable time series table transformer & sparkline cell type                                                                                                                                          |
+| `prometheusResourceBrowserCache`   | Displays browser caching options in Prometheus data source configuration                                                                                                                            |
 | `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                                                                                                           |
 | `clientTokenRotation`              | Replaces the current in-request token rotation so that the client initiates the rotation                                                                                                            |
 | `prometheusDataplane`              | Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present. |
@@ -111,6 +114,5 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | Feature toggle name | Description                                         |
 | ------------------- | --------------------------------------------------- |
 | `k8s`               | Explore native k8s integrations                     |
-| `grpcServer`        | Run GRPC server                                     |
 | `entityStore`       | SQL-based entity store (requires storage flag also) |
 | `nestedFolders`     | Enable folder nesting                               |
