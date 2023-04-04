@@ -35,8 +35,8 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
   }, [datasource]);
 
   useEffect(() => {
-    // This checks to see whether there is indeed a default database (preconfiguredDataset), and if so, if that default database
-    // is different than they currently-chosen one. Both scenarios would require an update the the query state.
+    // This checks to see whether there is indeed a default database (preconfiguredDataset), and if so,
+    // if that default database is different than they currently-chosen one. Both scenarios require a possible alert.
     if (!!preconfiguredDatabase && query.dataset !== preconfiguredDatabase) {
       setHasDatabaseConfigIssue(true);
     }
