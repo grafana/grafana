@@ -5,13 +5,13 @@ import {
   SceneFlexLayout,
   sceneGraph,
   SceneObjectBase,
-  SceneObjectStatePlain,
+  SceneObjectState,
 } from '@grafana/scenes';
 
 import { ShareQueryDataProvider } from './ShareQueryDataProvider';
 import { activateFullSceneTree, getVizPanelKeyForPanelId } from './utils';
 
-export class SceneDummyPanel extends SceneObjectBase<SceneObjectStatePlain> {}
+export class SceneDummyPanel extends SceneObjectBase<SceneObjectState> {}
 
 describe('ShareQueryDataProvider', () => {
   it('Should find and subscribe to another VizPanels data provider', () => {

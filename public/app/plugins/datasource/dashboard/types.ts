@@ -11,6 +11,7 @@ export interface DashboardQuery extends DataQuery {
 
 export type ResultInfo = {
   img: string; // The Datasource
+  name: string;
   refId: string;
   query: string; // As text
   data: DataFrame[];

@@ -27,7 +27,7 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
       // TODO handle changes to query model (changed panelId / withTransforms)
       //this.subscribeToState(this._onStateChanged);
 
-      this.subscribeToSource();
+      this._subscribeToSource();
 
       return () => {
         if (this._querySub) {
@@ -40,7 +40,7 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
     });
   }
 
-  public subscribeToSource() {
+  private _subscribeToSource() {
     const { query } = this.state;
 
     if (this._querySub) {

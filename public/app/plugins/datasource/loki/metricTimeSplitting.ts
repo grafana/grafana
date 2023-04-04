@@ -19,7 +19,7 @@ function expandTimeRange(startTime: number, endTime: number, step: number): [num
   return [newStartTime, newEndTime];
 }
 
-export function getRangeChunks(
+export function splitTimeRange(
   startTime: number,
   endTime: number,
   step: number,
