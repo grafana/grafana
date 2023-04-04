@@ -31,6 +31,8 @@ To install Grafana using a YUM repository, complete the following steps:
    ```bash
    sudo zypper addrepo https://rpm.grafana.com grafana
 
+   ```
+
 1. To install Grafana OSS, run the following command:
 
    ```bash
@@ -78,81 +80,6 @@ Complete the following steps to install Grafana using the standalone binaries:
 1. Depending on which system you are running, click the **Linux** or **ARM** tab on the download page.
 1. Copy and paste the code from the installation page into your command line and run.
 
-## 2. Start the server
-
-The following sections provide instructions for starting the `grafana-server` process as the `grafana` user created during the package installation.
-
-If you installed using the YUM repository or as an RPM package, then you can start the server using `systemd` or `init.d`. If you installed a binary `.tar.gz` file, then you need to execute the binary.
-
-### Start the Grafana server with systemd
-
-Complete the following steps to start the Grafana server with systemd and verify that it is running:
-
-1. To start the service, run the following commands:
-
-   ```bash
-   sudo systemctl daemon-reload
-   sudo systemctl start grafana-server
-   sudo systemctl status grafana-server
-   ```
-
-1. To verify that the service is running, run the following command:
-
-   ```
-   sudo systemctl status grafana-server
-   ```
-
-1. To configure the Grafana server to start at boot, run the following command:
-
-   ```bash
-   sudo systemctl enable grafana-server.service
-   ```
-
-#### Serving Grafana on a port < 1024
-
-{{< docs/shared "systemd/bind-net-capabilities.md" >}}
-
-#### Serving Grafana behind a proxy
-
-When serving Grafana behind a proxy, you need to configure the `http_proxy` and `https_proxy` environment variables.
-
-### Start the server with init.d
-
-Complete the following steps to start the Grafana service and verify that it is running:
-
-1. To start the Grafana server, run the following commands:
-
-   ```bash
-   sudo service grafana-server start
-   sudo service grafana-server status
-   ```
-
-1. To verify that the service is running, run the following command:
-
-   ```
-   sudo service grafana-server status
-   ```
-
-1. To configure the Grafana server to start at boot, run the following command:
-
-   ```bash
-   sudo update-rc.d grafana-server defaults
-   ```
-
-### Start the server using the binary
-
-The `grafana-server` binary .tar.gz needs the working directory to be the root install directory where the binary and the `public` folder are located.
-
-To start the Grafana server, run the following command:
-
-```bash
-./bin/grafana-server
-```
-
 ## Next steps
 
-Refer to the [Getting Started]({{< relref "../../../getting-started/build-first-dashboard/" >}}) guide for information about logging in, setting up data sources, and so on.
-
-## Configure Grafana
-
-Refer to the [Configuration]({{< relref "../../configure-grafana/" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to [Start the Grafana server]({{< relref "../../../getting-started/build-first-dashboard/" >}}).
