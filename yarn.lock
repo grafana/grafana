@@ -6280,6 +6280,8 @@ __metadata:
     react-dom: ">=16.14.0"
     true-myth: ^5.1.2
   checksum: e63580683f5d2333202415b827ebe78986294d1fe49de978b62400e5cd070afd1f48d071ff7e5c22bc1ace6c52e9767e85650b34444c6ad0c9ecb23788d83ffd
+  languageName: node
+  linkType: hard
 
 "@pyroscope/models@npm:^0.4.7":
   version: 0.4.7
