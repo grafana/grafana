@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/prometheus/alertmanager/pkg/labels"
-	"github.com/prometheus/common/model"
 	"net/http"
 	"sort"
 	"strconv"
@@ -24,6 +22,8 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/common/model"
 )
 
 type PrometheusSrv struct {
@@ -133,6 +133,7 @@ func getStatesFromRequest(r *http.Request) ([]eval.State, error) {
 			states = append(states, eval.Pending)
 		case "nodata":
 			states = append(states, eval.NoData)
+		// nolint:goconst
 		case "error":
 			states = append(states, eval.Error)
 		default:
