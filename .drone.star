@@ -14,6 +14,7 @@ load(
     "artifacts_page_pipeline",
     "enterprise2_pipelines",
     "enterprise_pipelines",
+    "integration_test_pipelines",
     "oss_pipelines",
     "publish_artifacts_pipelines",
     "publish_npm_pipelines",
@@ -52,6 +53,7 @@ def main(_ctx):
         publish_packages_pipeline() +
         artifacts_page_pipeline() +
         version_branch_pipelines() +
+        integration_test_pipelines() +
         cronjobs() +
         secrets()
     )

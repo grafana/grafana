@@ -17,8 +17,6 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
-  dateMath,
-  DateTime,
   dateTime,
   LoadingState,
   QueryFixAction,
@@ -43,10 +41,17 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
+import config from '../../../core/config';
+
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import PrometheusLanguageProvider from './language_provider';
-import { expandRecordingRules } from './language_utils';
+import {
+  expandRecordingRules,
+  getClientCacheDurationInMinutes,
+  getPrometheusTime,
+  getRangeSnapInterval,
+} from './language_utils';
 import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
@@ -58,6 +63,7 @@ import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
   PromDataSuccessResponse,
+  PrometheusCacheLevel,
   PromExemplarData,
   PromMatrixData,
   PromOptions,
@@ -78,7 +84,6 @@ export class PrometheusDatasource
   implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery>
 {
   type: string;
-  editorSrc: string;
   ruleMappings: { [index: string]: string };
   hasIncrementalQuery: boolean;
   url: string;
@@ -101,6 +106,7 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   subType: PromApplication;
   rulerEnabled: boolean;
+  cacheLevel: PrometheusCacheLevel;
   cache: QueryCache;
 
   constructor(
@@ -114,7 +120,6 @@ export class PrometheusDatasource
     this.type = 'prometheus';
     this.subType = PromApplication.Prometheus;
     this.rulerEnabled = false;
-    this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
     this.id = instanceSettings.id;
     this.url = instanceSettings.url!;
     this.access = instanceSettings.access;
@@ -137,6 +142,7 @@ export class PrometheusDatasource
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
+    this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
     this.cache = new QueryCache(
       instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow
     );
@@ -475,8 +481,8 @@ export class PrometheusDatasource
       );
       // Run queries trough browser/proxy
     } else {
-      const start = this.getPrometheusTime(request.range.from, false);
-      const end = this.getPrometheusTime(request.range.to, true);
+      const start = getPrometheusTime(request.range.from, false);
+      const end = getPrometheusTime(request.range.to, true);
       const { queries, activeTargets } = this.prepareTargets(request, start, end);
 
       // No valid targets, return the empty result to save a round trip.
@@ -818,8 +824,8 @@ export class PrometheusDatasource
           method: 'POST',
           headers: this.getRequestHeaders(),
           data: {
-            from: (this.getPrometheusTime(options.range.from, false) * 1000).toString(),
-            to: (this.getPrometheusTime(options.range.to, true) * 1000).toString(),
+            from: (getPrometheusTime(options.range.from, false) * 1000).toString(),
+            to: (getPrometheusTime(options.range.to, true) * 1000).toString(),
             queries: [this.applyTemplateVariables(queryModel, {})],
           },
           requestId: `prom-query-${annotation.name}`,
@@ -1188,19 +1194,32 @@ export class PrometheusDatasource
     return { ...query, expr: expression };
   }
 
-  getPrometheusTime(date: string | DateTime, roundUp: boolean) {
-    if (typeof date === 'string') {
-      date = dateMath.parse(date, roundUp)!;
+  /**
+   * Returns the adjusted "snapped" interval parameters
+   */
+  getAdjustedInterval(): { start: string; end: string } {
+    if (!config.featureToggles.prometheusResourceBrowserCache) {
+      return this.getTimeRangeParams();
     }
-
-    return Math.ceil(date.valueOf() / 1000);
+    const range = this.timeSrv.timeRange();
+    return getRangeSnapInterval(this.cacheLevel, range);
   }
+
+  /**
+   * This will return a time range that always includes the users current time range,
+   * and then a little extra padding to round up/down to the nearest nth minute,
+   * defined by the result of the getCacheDurationInMinutes.
+   *
+   * For longer cache durations, and shorter query durations, the window we're calculating might be much bigger then the user's current window,
+   * resulting in us returning labels/values that might not be applicable for the given window, this is a necessary trade off if we want to cache larger durations
+   *
+   */
 
   getTimeRangeParams(): { start: string; end: string } {
     const range = this.timeSrv.timeRange();
     return {
-      start: this.getPrometheusTime(range.from, false).toString(),
-      end: this.getPrometheusTime(range.to, true).toString(),
+      start: getPrometheusTime(range.from, false).toString(),
+      end: getPrometheusTime(range.to, true).toString(),
     };
   }
 
@@ -1255,6 +1274,32 @@ export class PrometheusDatasource
 
   interpolateString(string: string) {
     return this.templateSrv.replace(string, undefined, this.interpolateQueryExpr);
+  }
+
+  getDebounceTimeInMilliseconds(): number {
+    switch (this.cacheLevel) {
+      case PrometheusCacheLevel.Medium:
+        return 600;
+      case PrometheusCacheLevel.High:
+        return 1200;
+      default:
+        return 350;
+    }
+  }
+
+  getDaysToCacheMetadata(): number {
+    switch (this.cacheLevel) {
+      case PrometheusCacheLevel.Medium:
+        return 7;
+      case PrometheusCacheLevel.High:
+        return 30;
+      default:
+        return 1;
+    }
+  }
+
+  getCacheDurationInMinutes(): number {
+    return getClientCacheDurationInMinutes(this.cacheLevel);
   }
 }
 

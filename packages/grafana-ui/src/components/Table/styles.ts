@@ -175,6 +175,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       font-weight: ${theme.typography.fontWeightMedium};
       &:hover {
         text-decoration: underline;
+        color: ${theme.colors.text.link};
       }
     `,
     cellLinkForColoredCell: css`
