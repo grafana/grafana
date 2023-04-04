@@ -19,8 +19,6 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { TimeRegionConfig } from '../types';
 
 import { TimePickerInput } from './TimePickerInput';
-
-const regionsByName = new Map<string, TimeRegionConfig>();
 interface Props {
   value?: TimeRegionConfig[];
   onChange: (value?: TimeRegionConfig[]) => void;
@@ -43,17 +41,16 @@ export function TimeRegionsEditor({ value, onChange }: Props) {
       timezone: defaultTimezone,
     };
     onChange(value ? [...value, r] : [r]);
-    regionsByName.set(r.name, r);
   };
 
   const getNextRegionName = () => {
     const label = 'T';
-    let idx = regionsByName.size + 1;
+    let idx = value?.length ? value?.length + 1 : 0;
     const max = idx + 100;
 
     while (true && idx < max) {
       const name = `${label}${idx++}`;
-      if (!regionsByName.has(name)) {
+      if (!value?.some((val) => val.name === name)) {
         return name;
       }
     }
@@ -67,7 +64,6 @@ export function TimeRegionsEditor({ value, onChange }: Props) {
     if (v) {
       clone[idx] = v;
     } else {
-      regionsByName.delete(clone[idx].name);
       clone.splice(idx, 1);
     }
 
