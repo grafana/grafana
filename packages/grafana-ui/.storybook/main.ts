@@ -1,11 +1,9 @@
 import path from 'path';
-import type { StorybookConfig } from '@storybook/react/types';
+import type { StorybookConfig } from '@storybook/react-webpack5';
 // avoid importing from @grafana/data to prevent node error: ERR_REQUIRE_ESM
 import { availableIconsIndex, IconName } from '../../grafana-data/src/types/icon';
 import { getIconSubDir } from '../src/components/Icon/utils';
-
 const stories = ['../src/**/*.story.@(tsx|mdx)'];
-
 if (process.env.NODE_ENV !== 'production') {
   stories.push('../src/**/*.story.internal.@(tsx|mdx)');
 }
@@ -21,7 +19,6 @@ const iconPaths = Object.keys(availableIconsIndex)
       to: `/public/img/icons/${subDir}/${iconName}.svg`,
     };
   });
-
 const mainConfig: StorybookConfig = {
   stories,
   addons: [
@@ -64,29 +61,43 @@ const mainConfig: StorybookConfig = {
         optimizationLevel: 3,
       },
     },
+    '@storybook/addon-mdx-gfm',
   ],
-  core: {
-    builder: {
-      name: 'webpack5',
-      options: {
+  core: {},
+  docs: {
+    autodocs: true,
+  },
+  framework: {
+    name: '@storybook/react-webpack5',
+    options: {
+      fastRefresh: true,
+      builder: {
         fsCache: true,
       },
     },
   },
-  features: {
-    previewMdx2: true,
-  },
-  framework: '@storybook/react',
   logLevel: 'debug',
-  reactOptions: {
-    fastRefresh: true,
-  },
   staticDirs: [
-    { from: '../../../public/fonts', to: '/public/fonts' },
-    { from: '../../../public/img/grafana_text_logo-dark.svg', to: '/public/img/grafana_text_logo-dark.svg' },
-    { from: '../../../public/img/grafana_text_logo-light.svg', to: '/public/img/grafana_text_logo-light.svg' },
-    { from: '../../../public/img/fav32.png', to: '/public/img/fav32.png' },
-    { from: '../../../public/lib', to: '/public/lib' },
+    {
+      from: '../../../public/fonts',
+      to: '/public/fonts',
+    },
+    {
+      from: '../../../public/img/grafana_text_logo-dark.svg',
+      to: '/public/img/grafana_text_logo-dark.svg',
+    },
+    {
+      from: '../../../public/img/grafana_text_logo-light.svg',
+      to: '/public/img/grafana_text_logo-light.svg',
+    },
+    {
+      from: '../../../public/img/fav32.png',
+      to: '/public/img/fav32.png',
+    },
+    {
+      from: '../../../public/lib',
+      to: '/public/lib',
+    },
     ...iconPaths,
   ],
   typescript: {
@@ -115,9 +126,7 @@ const mainConfig: StorybookConfig = {
       test: /(unicons|mono|custom)[\\/].*\.svg$/,
       type: 'asset/source',
     });
-
     return config;
   },
 };
-
 module.exports = mainConfig;
