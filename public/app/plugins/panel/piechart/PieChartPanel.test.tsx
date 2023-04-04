@@ -14,7 +14,7 @@ import {
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { PieChartPanel } from './PieChartPanel';
-import { PanelOptions, PieChartType, PieChartLegendValues } from './models.gen';
+import { PanelOptions, PieChartType, PieChartLegendValues } from './panelcfg.gen';
 
 type PieChartPanelProps = ComponentProps<typeof PieChartPanel>;
 

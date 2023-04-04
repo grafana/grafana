@@ -1,7 +1,5 @@
 package common
 
-// TODO break this up into individual files. Current limitation on this is codegen logic, imports, dependencies
-
 // TODO docs
 AxisPlacement:      "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(kind="enum")
 
@@ -180,7 +178,7 @@ OptionsWithTextFormatting: {
 } @cuetsy(kind="interface")
 
 // TODO docs
-BigValueColorMode: "value" | "background" | "none" @cuetsy(kind="enum")
+BigValueColorMode: "value" | "background" | "background_solid" | "none" @cuetsy(kind="enum", memberNames="Value|Background|BackgroundSolid|None")
 
 // TODO docs
 BigValueGraphMode: "none" | "line" | "area" @cuetsy(kind="enum")
@@ -194,6 +192,9 @@ BigValueTextMode: "auto" | "value" | "value_and_name" | "name" | "none" @cuetsy(
 // TODO -- should not be table specific!
 // TODO docs
 FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
+
+// Controls the value alignment in the TimelineChart component
+TimelineValueAlignment: "center" | "left" | "right" @cuetsy(kind="type")
 
 // TODO docs
 VizTextDisplayOptions: {
@@ -241,10 +242,18 @@ VizLegendOptions: {
 // for the bar gauge component of Grafana UI
 BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(kind="enum")
 
+// Allows for the table cell gauge display type to set the gauge mode.
+BarGaugeValueMode: "color" | "text" | "hidden" @cuetsy(kind="enum")
+
 // TODO docs
 VizTooltipOptions: {
 	mode: TooltipDisplayMode
 	sort: SortOrder
 } @cuetsy(kind="interface")
 
+Labels: {
+	[string]: string
+} @cuetsy(kind="interface")
 
+// Compare two values
+ComparisonOperation: "eq" | "neq" | "lt" | "lte" | "gt" | "gte" @cuetsy(kind="enum",memberNames="EQ|NEQ|LT|LTE|GT|GTE")

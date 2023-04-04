@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -44,12 +43,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 // separate function to allow testing the whole transformation and query flow
 func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo) (*backend.QueryDataResponse, error) {
-	// Support for version after their end-of-life (currently <7.10.0) was removed
-	lastSupportedVersion, _ := semver.NewVersion("7.10.0")
-	if dsInfo.ESVersion.LessThan(lastSupportedVersion) {
-		return &backend.QueryDataResponse{}, fmt.Errorf("support for elasticsearch versions after their end-of-life (currently versions < 7.10) was removed")
-	}
-
 	if len(queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
@@ -58,7 +51,7 @@ func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.Data
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
-	query := newTimeSeriesQuery(client, queries)
+	query := newElasticsearchDataQuery(client, queries)
 	return query.execute()
 }
 
@@ -74,20 +67,17 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, fmt.Errorf("error getting http options: %w", err)
 		}
 
-		httpCli, err := httpClientProvider.New(httpCliOpts)
-		if err != nil {
-			return nil, err
-		}
-
 		// Set SigV4 service namespace
 		if httpCliOpts.SigV4 != nil {
 			httpCliOpts.SigV4.Service = "es"
 		}
 
-		version, err := coerceVersion(jsonData["esVersion"])
+		httpCli, err := httpClientProvider.New(httpCliOpts)
 		if err != nil {
-			return nil, fmt.Errorf("elasticsearch version is required, err=%v", err)
+			return nil, err
 		}
+
+		// we used to have a field named `esVersion`, please do not use this name in the future.
 
 		timeField, ok := jsonData["timeField"].(string)
 		if !ok {
@@ -96,6 +86,16 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 		if timeField == "" {
 			return nil, errors.New("elasticsearch time field name is required")
+		}
+
+		logLevelField, ok := jsonData["logLevelField"].(string)
+		if !ok {
+			logLevelField = ""
+		}
+
+		logMessageField, ok := jsonData["logMessageField"].(string)
+		if !ok {
+			logMessageField = ""
 		}
 
 		interval, ok := jsonData["interval"].(string)
@@ -132,14 +132,19 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			xpack = false
 		}
 
+		configuredFields := es.ConfiguredFields{
+			TimeField:       timeField,
+			LogLevelField:   logLevelField,
+			LogMessageField: logMessageField,
+		}
+
 		model := es.DatasourceInfo{
 			ID:                         settings.ID,
 			URL:                        settings.URL,
 			HTTPClient:                 httpCli,
 			Database:                   settings.Database,
 			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
-			ESVersion:                  version,
-			TimeField:                  timeField,
+			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
 			TimeInterval:               timeInterval,
 			IncludeFrozen:              includeFrozen,
@@ -158,33 +163,4 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*es.DatasourceInfo
 	instance := i.(es.DatasourceInfo)
 
 	return &instance, nil
-}
-
-func coerceVersion(v interface{}) (*semver.Version, error) {
-	versionString, ok := v.(string)
-	if ok {
-		return semver.NewVersion(versionString)
-	}
-
-	versionNumber, ok := v.(float64)
-	if !ok {
-		return nil, fmt.Errorf("elasticsearch version %v, cannot be cast to int", v)
-	}
-
-	// Legacy version numbers (before Grafana 8)
-	// valid values were 2,5,56,60,70
-	switch int64(versionNumber) {
-	case 2:
-		return semver.NewVersion("2.0.0")
-	case 5:
-		return semver.NewVersion("5.0.0")
-	case 56:
-		return semver.NewVersion("5.6.0")
-	case 60:
-		return semver.NewVersion("6.0.0")
-	case 70:
-		return semver.NewVersion("7.0.0")
-	default:
-		return nil, fmt.Errorf("elasticsearch version=%d is not supported", int64(versionNumber))
-	}
 }

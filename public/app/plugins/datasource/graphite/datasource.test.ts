@@ -12,7 +12,7 @@ import { GraphiteQuery, GraphiteQueryType } from './types';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -624,24 +624,35 @@ describe('graphiteDatasource', () => {
       fetchMock.mockImplementation((options: any) => {
         requestOptions = options;
         return of(
-          createFetchResponse({
-            results: ['apps.backend.backend_01', 'apps.backend.backend_02', 'apps.country.IE', 'apps.country.SE'],
-          })
+          createFetchResponse([
+            {
+              target: 'apps.backend.backend_01',
+              datapoints: [
+                [10, 1],
+                [12, 1],
+              ],
+            },
+            {
+              target: 'apps.backend.backend_02',
+              datapoints: [
+                [10, 1],
+                [12, 1],
+              ],
+            },
+          ])
         );
       });
 
       const fq: GraphiteQuery = {
         queryType: GraphiteQueryType.MetricName,
-        target: 'query',
+        target: 'apps.backend.*',
         refId: 'A',
         datasource: ctx.ds,
       };
       const data = await ctx.ds.metricFindQuery(fq);
-      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/expand');
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/render');
       expect(data[0].text).toBe('apps.backend.backend_01');
       expect(data[1].text).toBe('apps.backend.backend_02');
-      expect(data[2].text).toBe('apps.country.IE');
-      expect(data[3].text).toBe('apps.country.SE');
     });
   });
 

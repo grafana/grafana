@@ -5,8 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/build/droneutil"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/build/droneutil"
 )
 
 func GenerateMetadata(c *cli.Context) (Metadata, error) {
@@ -83,7 +84,7 @@ func GenerateMetadata(c *cli.Context) (Metadata, error) {
 		CurrentCommit:  currentCommit,
 	}
 
-	fmt.Printf("building Grafana version: %s, release mode: %+v", metadata.GrafanaVersion, metadata.ReleaseMode)
+	fmt.Printf("building Grafana version: %s, release mode: %+v\n", metadata.GrafanaVersion, metadata.ReleaseMode)
 
 	return metadata, nil
 }

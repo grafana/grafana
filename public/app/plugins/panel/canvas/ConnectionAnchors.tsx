@@ -7,10 +7,16 @@ import { ConnectionCoordinates } from 'app/features/canvas';
 
 type Props = {
   setRef: (anchorElement: HTMLDivElement) => void;
-  handleMouseLeave: (event: React.MouseEvent<Element, MouseEvent> | React.FocusEvent<HTMLDivElement, Element>) => void;
+  handleMouseLeave: (
+    event: React.MouseEvent<Element, MouseEvent> | React.FocusEvent<HTMLDivElement, Element>
+  ) => boolean;
 };
 
 export const CONNECTION_ANCHOR_DIV_ID = 'connectionControl';
+export const CONNECTION_ANCHOR_ALT = 'connection anchor';
+export const CONNECTION_ANCHOR_HIGHLIGHT_OFFSET = 8;
+
+const ANCHOR_PADDING = 3;
 
 export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
   const highlightEllipseRef = useRef<HTMLDivElement>(null);
@@ -27,8 +33,8 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
 
     if (highlightEllipseRef.current && event.target.style) {
       highlightEllipseRef.current.style.display = 'block';
-      highlightEllipseRef.current.style.top = `calc(${event.target.style.top} - ${halfSizeHighlightEllipse}px)`;
-      highlightEllipseRef.current.style.left = `calc(${event.target.style.left} - ${halfSizeHighlightEllipse}px)`;
+      highlightEllipseRef.current.style.top = `calc(${event.target.style.top} - ${halfSizeHighlightEllipse}px + ${ANCHOR_PADDING}px)`;
+      highlightEllipseRef.current.style.left = `calc(${event.target.style.left} - ${halfSizeHighlightEllipse}px + ${ANCHOR_PADDING}px)`;
     }
   };
 
@@ -38,7 +44,15 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
     }
   };
 
-  const connectionAnchorAlt = 'connection anchor';
+  const handleMouseLeaveAnchors = (
+    event: React.MouseEvent<Element, MouseEvent> | React.FocusEvent<HTMLDivElement, Element>
+  ) => {
+    const didHideAnchors = handleMouseLeave(event);
+
+    if (didHideAnchors) {
+      onMouseLeaveHighlightElement();
+    }
+  };
 
   // Unit is percentage from the middle of the element
   // 0, 0 middle; -1, -1 bottom left; 1, 1 top right
@@ -67,15 +81,15 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
 
       // Convert anchor coords to relative percentage
       const style = {
-        top: `calc(${-anchor.y * 50 + 50}% - ${halfSize}px)`,
-        left: `calc(${anchor.x * 50 + 50}% - ${halfSize}px)`,
+        top: `calc(${-anchor.y * 50 + 50}% - ${halfSize}px - ${ANCHOR_PADDING}px)`,
+        left: `calc(${anchor.x * 50 + 50}% - ${halfSize}px - ${ANCHOR_PADDING}px)`,
       };
 
       return (
         <img
           id={id}
           key={id}
-          alt={connectionAnchorAlt}
+          alt={CONNECTION_ANCHOR_ALT}
           className={styles.anchor}
           style={style}
           src={anchorImage}
@@ -87,7 +101,7 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
 
   return (
     <div className={styles.root} ref={setRef}>
-      <div className={styles.mouseoutDiv} onMouseOut={handleMouseLeave} onBlur={handleMouseLeave} />
+      <div className={styles.mouseoutDiv} onMouseOut={handleMouseLeaveAnchors} onBlur={handleMouseLeaveAnchors} />
       <div
         id={CONNECTION_ANCHOR_DIV_ID}
         ref={highlightEllipseRef}
@@ -111,10 +125,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: calc(100% + 60px);
   `,
   anchor: css`
+    padding: ${ANCHOR_PADDING}px;
     position: absolute;
     cursor: cursor;
-    width: 5px;
-    height: 5px;
+    width: calc(5px + 2 * ${ANCHOR_PADDING}px);
+    height: calc(5px + 2 * ${ANCHOR_PADDING}px);
     z-index: 100;
     pointer-events: auto !important;
   `,

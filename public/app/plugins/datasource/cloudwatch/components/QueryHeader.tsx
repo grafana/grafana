@@ -6,7 +6,8 @@ import { config } from '@grafana/runtime';
 import { Badge, Button } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../datasource';
-import { isCloudWatchMetricsQuery } from '../guards';
+import { DEFAULT_LOGS_QUERY_STRING } from '../defaultQueries';
+import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from '../guards';
 import { useIsMonitoringAccount, useRegions } from '../hooks';
 import { CloudWatchJsonData, CloudWatchQuery, CloudWatchQueryMode, MetricQueryType } from '../types';
 
@@ -21,7 +22,7 @@ const apiModes: Array<SelectableValue<CloudWatchQueryMode>> = [
   { label: 'CloudWatch Logs', value: 'Logs' },
 ];
 
-const QueryHeader: React.FC<Props> = ({
+const QueryHeader = ({
   query,
   onChange,
   datasource,
@@ -30,16 +31,23 @@ const QueryHeader: React.FC<Props> = ({
   dataIsStale,
   data,
   onRunQuery,
-}) => {
+}: Props) => {
   const { queryMode, region } = query;
   const isMonitoringAccount = useIsMonitoringAccount(datasource.resources, query.region);
   const [regions, regionIsLoading] = useRegions(datasource);
+  const emptyLogsExpression = isCloudWatchLogsQuery(query) ? !query.expression : false;
 
   const onQueryModeChange = ({ value }: SelectableValue<CloudWatchQueryMode>) => {
     if (value && value !== queryMode) {
+      // reset expression to a default string when the query mode changes
+      let expression = '';
+      if (value === 'Logs') {
+        expression = DEFAULT_LOGS_QUERY_STRING;
+      }
       onChange({
         ...datasource.getDefaultQuery(CoreApp.Unknown),
         ...query,
+        expression,
         queryMode: value,
       });
     }
@@ -100,7 +108,7 @@ const QueryHeader: React.FC<Props> = ({
           size="sm"
           onClick={onRunQuery}
           icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
-          disabled={data?.state === LoadingState.Loading}
+          disabled={data?.state === LoadingState.Loading || emptyLogsExpression}
         >
           Run queries
         </Button>

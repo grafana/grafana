@@ -22,20 +22,20 @@ Details on how to set up the files and which fields are required for each object
 
 **Note:**
 
-Provisioning takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/admin/#reload-provisioning-configurations).
+Provisioning takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API](https://grafana.com/docs/grafana/latest/developers/http_api/admin/#reload-provisioning-configurations).
 
 ### Provision alert rules
 
 Create or delete alert rules in your Grafana instance(s).
 
-1. Create an alert rule in Grafana.
-1. Use the [Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/alerting_provisioning/#route-get-alert-rule) to extract the alert rule.
+1. Create alert rules in Grafana.
+1. Use the [Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/alerting_provisioning/#route-get-alert-rule-export) export endpoints to download a provisioning file for your alert rules.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
 
 1. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
-1. Delete the alert rule in Grafana.
+1. Delete the alert rules in Grafana that will be provisioned.
 
    **Note:**
 
@@ -69,7 +69,7 @@ groups:
         #                  evaluation - should be obtained trough the API
         data:
           - refId: A
-            datasourceUid: '-100'
+            datasourceUid: '__expr__'
             model:
               conditions:
                 - evaluator:
@@ -86,7 +86,7 @@ groups:
                   type: query
               datasource:
                 type: __expr__
-                uid: '-100'
+                uid: '__expr__'
               expression: 1==0
               intervalMs: 1000
               maxDataPoints: 43200
@@ -313,7 +313,7 @@ settings:
 ```yaml
 type: pagerduty
 settings:
-  # <string, required>
+  # <string, required> the 32-character Events API key https://support.pagerduty.com/docs/api-access-keys#events-api-keys
   integrationKey: XXX
   # <string> options: critical, error, warning, info
   severity: critical

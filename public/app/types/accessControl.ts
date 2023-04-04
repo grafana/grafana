@@ -85,6 +85,11 @@ export enum AccessControlAction {
   FoldersPermissionsRead = 'folders.permissions:read',
   FoldersPermissionsWrite = 'folders.permissions:write',
 
+  // Support bundle actions
+  ActionSupportBundlesCreate = 'support.bundles:create',
+  ActionSupportBundlesRead = 'support.bundles:read',
+  ActionSupportBundlesDelete = 'support.bundles:delete',
+
   // Alerting rules
   AlertingRuleCreate = 'alert.rules:create',
   AlertingRuleRead = 'alert.rules:read',
@@ -111,6 +116,10 @@ export enum AccessControlAction {
   // External alerting notifications actions.
   AlertingNotificationsExternalWrite = 'alert.notifications.external:write',
   AlertingNotificationsExternalRead = 'alert.notifications.external:read',
+
+  // Alerting provisioning actions
+  AlertingProvisioningRead = 'alert.provisioning:read',
+  AlertingProvisioningWrite = 'alert.provisioning:write',
 
   ActionAPIKeysRead = 'apikeys:read',
   ActionAPIKeysCreate = 'apikeys:create',

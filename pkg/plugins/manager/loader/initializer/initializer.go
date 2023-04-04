@@ -9,9 +9,9 @@ import (
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type Initializer struct {
@@ -57,13 +57,32 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 			hostEnv,
 			fmt.Sprintf("GF_EDITION=%s", i.license.Edition()),
 			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", i.license.Path()),
+			fmt.Sprintf("GF_ENTERPRISE_APP_URL=%s", i.license.AppURL()),
 		)
 		hostEnv = append(hostEnv, i.license.Environment()...)
 	}
 
 	hostEnv = append(hostEnv, i.awsEnvVars()...)
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(i.cfg.Azure)...)
-	return getPluginSettings(plugin.ID, i.cfg).asEnvVar("GF_PLUGIN", hostEnv)
+
+	// Tracing
+	var pluginTracingEnabled bool
+	if v, exists := i.cfg.PluginSettings[plugin.ID]["tracing"]; exists {
+		pluginTracingEnabled = v == "true"
+	}
+	if i.cfg.Opentelemetry.IsEnabled() && pluginTracingEnabled {
+		if plugin.Info.Version != "" {
+			hostEnv = append(hostEnv, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
+		}
+		hostEnv = append(
+			hostEnv,
+			fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", i.cfg.Opentelemetry.Address),
+			fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", i.cfg.Opentelemetry.Propagation),
+		)
+	}
+
+	ev := getPluginSettings(plugin.ID, i.cfg).asEnvVar("GF_PLUGIN", hostEnv)
+	return ev
 }
 
 func (i *Initializer) awsEnvVars() []string {

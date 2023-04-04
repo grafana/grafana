@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, ConfirmModal, LinkButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useDispatch } from 'app/types';
@@ -18,6 +18,7 @@ import * as ruleId from '../../utils/rule-id';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { createUrl } from '../../utils/url';
 
+import { CloneRuleButton } from './CloneRuleButton';
 export const matchesWidth = (width: number) => window.matchMedia(`(max-width: ${width}px)`).matches;
 
 interface Props {
@@ -25,14 +26,13 @@ interface Props {
   rulesSource: RulesSource;
 }
 
-export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
+export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
   const dispatch = useDispatch();
   const location = useLocation();
   const notifyApp = useAppNotification();
   const style = useStyles2(getStyles);
   const { namespace, group, rulerRule } = rule;
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
-  const [provRuleCloneUrl, setProvRuleCloneUrl] = useState<string | undefined>(undefined);
 
   const rulesSourceName = getRulesSourceName(rulesSource);
 
@@ -128,21 +128,9 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
       );
     }
 
-    const cloneUrl = createUrl('/alerting/new', { copyFrom: ruleId.stringifyIdentifier(identifier) });
-    // For provisioned rules an additional confirmation step is required
-    // Users have to be aware that the cloned rule will NOT be marked as provisioned
     buttons.push(
-      <Tooltip placement="top" content="Duplicate">
-        <LinkButton
-          title="Duplicate"
-          className={style.button}
-          size="sm"
-          key="clone"
-          variant="secondary"
-          icon="copy"
-          href={isProvisioned ? undefined : cloneUrl}
-          onClick={isProvisioned ? () => setProvRuleCloneUrl(cloneUrl) : undefined}
-        />
+      <Tooltip placement="top" content="Copy">
+        <CloneRuleButton ruleIdentifier={identifier} isProvisioned={isProvisioned} className={style.button} />
       </Tooltip>
     );
   }
@@ -183,24 +171,6 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
             onDismiss={() => setRuleToDelete(undefined)}
           />
         )}
-        <ConfirmModal
-          isOpen={!!provRuleCloneUrl}
-          title="Clone provisioned rule"
-          body={
-            <div>
-              <p>
-                The new rule will <span className={style.bold}>NOT</span> be marked as a provisioned rule.
-              </p>
-              <p>
-                You will need to set a new alert group for the cloned rule because the original one has been provisioned
-                and cannot be used for rules created in the UI.
-              </p>
-            </div>
-          }
-          confirmText="Clone"
-          onConfirm={() => provRuleCloneUrl && locationService.push(provRuleCloneUrl)}
-          onDismiss={() => setProvRuleCloneUrl(undefined)}
-        />
       </>
     );
   }
@@ -215,8 +185,5 @@ function inViewMode(pathname: string): boolean {
 export const getStyles = (theme: GrafanaTheme2) => ({
   button: css`
     padding: 0 ${theme.spacing(2)};
-  `,
-  bold: css`
-    font-weight: ${theme.typography.fontWeightBold};
   `,
 });

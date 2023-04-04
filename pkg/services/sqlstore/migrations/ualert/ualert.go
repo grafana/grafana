@@ -12,13 +12,13 @@ import (
 	"strings"
 	"time"
 
+	alertingLogging "github.com/grafana/alerting/logging"
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers"
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
 
-	"github.com/grafana/alerting/alerting/notifier/channels"
-
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -42,6 +42,9 @@ var rmMigTitle = "remove unified alerting data"
 
 const clearMigrationEntryTitle = "clear migration entry %q"
 const codeMigration = "code migration"
+
+// It is defined in pkg/expr/service.go as "DatasourceType"
+const expressionDatasourceUID = "__expr__"
 
 type MigrationError struct {
 	AlertId int64
@@ -264,10 +267,35 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	// cache for the general folders
 	generalFolderCache := make(map[int64]*dashboard)
 
+	folderHelper := folderHelper{
+		sess: sess,
+		mg:   mg,
+	}
+
+	gf := func(dash dashboard, da dashAlert) (*dashboard, error) {
+		f, ok := generalFolderCache[dash.OrgId]
+		if !ok {
+			// get or create general folder
+			f, err = folderHelper.getOrCreateGeneralFolder(dash.OrgId)
+			if err != nil {
+				return nil, MigrationError{
+					Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgId, err),
+					AlertId: da.Id,
+				}
+			}
+			generalFolderCache[dash.OrgId] = f
+		}
+		// No need to assign default permissions to general folder
+		// because they are included to the query result if it's a folder with no permissions
+		// https://github.com/grafana/grafana/blob/076e2ce06a6ecf15804423fcc8dca1b620a321e5/pkg/services/sqlstore/dashboard_acl.go#L109
+		return f, nil
+	}
+
 	// Per org map of newly created rules to which notification channels it should send to.
 	rulesPerOrg := make(map[int64]map[*alertRule][]uidOrID)
 
 	for _, da := range dashAlerts {
+		l := mg.Logger.New("ruleID", da.Id, "ruleName", da.Name, "dashboardUID", da.DashboardUID, "orgID", da.OrgId)
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
 		if err != nil {
 			return err
@@ -291,18 +319,13 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			}
 		}
 
-		folderHelper := folderHelper{
-			sess: sess,
-			mg:   mg,
-		}
-
 		var folder *dashboard
 		switch {
 		case dash.HasACL:
 			folderName := getAlertFolderNameFromDashboard(&dash)
 			f, ok := folderCache[folderName]
 			if !ok {
-				mg.Logger.Info("create a new folder for alerts that belongs to dashboard because it has custom permissions", "org", dash.OrgId, "dashboard_uid", dash.Uid, "folder", folderName)
+				l.Info("create a new folder for alerts that belongs to dashboard because it has custom permissions", "folder", folderName)
 				// create folder and assign the permissions of the dashboard (included default and inherited)
 				f, err = folderHelper.createFolder(dash.OrgId, folderName)
 				if err != nil {
@@ -332,29 +355,20 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			// get folder if exists
 			f, err := folderHelper.getFolder(dash, da)
 			if err != nil {
-				return MigrationError{
-					Err:     err,
-					AlertId: da.Id,
-				}
-			}
-			folder = &f
-		default:
-			f, ok := generalFolderCache[dash.OrgId]
-			if !ok {
-				// get or create general folder
-				f, err = folderHelper.getOrCreateGeneralFolder(dash.OrgId)
+				// If folder does not exist then the dashboard is an orphan and we migrate the alert to the general folder.
+				l.Warn("Failed to find folder for dashboard. Migrate rule to the default folder", "rule_name", da.Name, "dashboard_uid", da.DashboardUID, "missing_folder_id", dash.FolderId)
+				folder, err = gf(dash, da)
 				if err != nil {
-					return MigrationError{
-						Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgId, err),
-						AlertId: da.Id,
-					}
+					return err
 				}
-				generalFolderCache[dash.OrgId] = f
+			} else {
+				folder = &f
 			}
-			// No need to assign default permissions to general folder
-			// because they are included to the query result if it's a folder with no permissions
-			// https://github.com/grafana/grafana/blob/076e2ce06a6ecf15804423fcc8dca1b620a321e5/pkg/services/sqlstore/dashboard_acl.go#L109
-			folder = f
+		default:
+			folder, err = gf(dash, da)
+			if err != nil {
+				return err
+			}
 		}
 
 		if folder.Uid == "" {
@@ -479,7 +493,7 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				return err
 			}
 			var (
-				cfg = &channels.NotificationChannelConfig{
+				cfg = &receivers.NotificationChannelConfig{
 					UID:                   gr.UID,
 					OrgID:                 orgID,
 					Name:                  gr.Name,
@@ -503,12 +517,12 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				}
 				return fallback
 			}
-			receiverFactory, exists := channels_config.Factory(gr.Type)
+			receiverFactory, exists := alertingNotify.Factory(gr.Type)
 			if !exists {
 				return fmt.Errorf("notifier %s is not supported", gr.Type)
 			}
-			factoryConfig, err := channels.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil, func(ctx ...interface{}) channels.Logger {
-				return &channels.FakeLogger{}
+			factoryConfig, err := receivers.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil, func(ctx ...interface{}) alertingLogging.Logger {
+				return &alertingLogging.FakeLogger{}
 			}, setting.BuildVersion)
 			if err != nil {
 				return err
@@ -926,81 +940,4 @@ func (s *uidSet) generateUid() (string, error) {
 	}
 
 	return "", errors.New("failed to generate UID")
-}
-
-func ExtractAlertmanagerConfigurationHistoryMigration(mg *migrator.Migrator) {
-	if !mg.Cfg.UnifiedAlerting.IsEnabled() {
-		return
-	}
-	// Since it's not always consistent as to what state the org ID indexes are in, just drop them all and rebuild from scratch.
-	// This is not expensive since this table is guaranteed to have a small number of rows.
-	mg.AddMigration("drop non-unique orgID index on alert_configuration", migrator.NewDropIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Cols: []string{"org_id"}}))
-	mg.AddMigration("drop unique orgID index on alert_configuration if exists", migrator.NewDropIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Type: migrator.UniqueIndex, Cols: []string{"org_id"}}))
-	mg.AddMigration("extract alertmanager configuration history to separate table", &extractAlertmanagerConfigurationHistory{})
-	mg.AddMigration("add unique index on orgID to alert_configuration", migrator.NewAddIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Type: migrator.UniqueIndex, Cols: []string{"org_id"}}))
-}
-
-type extractAlertmanagerConfigurationHistory struct {
-	migrator.MigrationBase
-}
-
-// extractAMConfigHistoryConfigModel is the model of an alertmanager configuration row, at the time that the extractAlertmanagerConfigurationHistory migration was run.
-// This is not to be used outside of the extractAlertmanagerConfigurationHistory migration.
-type extractAMConfigHistoryConfigModel struct {
-	ID                        int64 `xorm:"pk autoincr 'id'"`
-	AlertmanagerConfiguration string
-	ConfigurationHash         string
-	ConfigurationVersion      string
-	CreatedAt                 int64 `xorm:"created"`
-	Default                   bool
-	OrgID                     int64 `xorm:"org_id"`
-}
-
-func (c extractAlertmanagerConfigurationHistory) SQL(migrator.Dialect) string {
-	return codeMigration
-}
-
-func (c extractAlertmanagerConfigurationHistory) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
-	var orgs []int64
-	if err := sess.Table("alert_configuration").Distinct("org_id").Find(&orgs); err != nil {
-		return fmt.Errorf("failed to retrieve the organizations with alerting configurations: %w", err)
-	}
-
-	// Clear out the history table, just in case. It should already be empty.
-	if _, err := sess.Exec("DELETE FROM alert_configuration_history"); err != nil {
-		return fmt.Errorf("failed to clear the config history table: %w", err)
-	}
-
-	for _, orgID := range orgs {
-		var activeConfigID int64
-		has, err := sess.SQL(`SELECT MAX(id) FROM alert_configuration WHERE org_id = ?`, orgID).Get(&activeConfigID)
-		if err != nil {
-			return fmt.Errorf("failed to query active config ID for org %d: %w", orgID, err)
-		}
-		if !has {
-			return fmt.Errorf("we previously found a config for org, but later it was unexpectedly missing: %d", orgID)
-		}
-
-		history := make([]extractAMConfigHistoryConfigModel, 0)
-		err = sess.Table("alert_configuration").Where("org_id = ? AND id < ?", orgID, activeConfigID).Find(&history)
-		if err != nil {
-			return fmt.Errorf("failed to query for non-active configs for org %d: %w", orgID, err)
-		}
-
-		// Set the IDs back to the default, so XORM will ignore the field and auto-assign them.
-		for i := range history {
-			history[i].ID = 0
-		}
-
-		_, err = sess.Table("alert_configuration_history").InsertMulti(history)
-		if err != nil {
-			return fmt.Errorf("failed to insert historical configs for org: %d: %w", orgID, err)
-		}
-
-		_, err = sess.Exec("DELETE FROM alert_configuration WHERE org_id = ? AND id < ?", orgID, activeConfigID)
-		if err != nil {
-			return fmt.Errorf("failed to evict old configurations for org after moving to history table: %d: %w", orgID, err)
-		}
-	}
-	return nil
 }

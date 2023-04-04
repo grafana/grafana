@@ -6,9 +6,9 @@ import { CursorView } from './CursorView';
 import { EventBusLoggerPanel } from './EventBusLogger';
 import { RenderInfoViewer } from './RenderInfoViewer';
 import { StateView } from './StateView';
-import { DebugPanelOptions, DebugMode } from './types';
+import { PanelOptions, DebugMode } from './panelcfg.gen';
 
-type Props = PanelProps<DebugPanelOptions>;
+type Props = PanelProps<PanelOptions>;
 
 export class DebugPanel extends Component<Props> {
   render() {

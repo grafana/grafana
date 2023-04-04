@@ -1,6 +1,8 @@
 import { screen, render } from '@testing-library/react';
 import React from 'react';
 
+import { LoadingState } from '@grafana/data';
+
 import { PanelChrome, PanelChromeProps } from './PanelChrome';
 
 const setup = (propOverrides?: Partial<PanelChromeProps>) => {
@@ -35,16 +37,33 @@ it('renders an empty panel with padding', () => {
   expect(screen.getByText("Panel's Content").parentElement).not.toHaveStyle({ padding: '0px' });
 });
 
-it('renders panel with a header if prop title', () => {
+// Check for backwards compatibility
+it('renders panel header if prop title', () => {
   setup({ title: 'Test Panel Header' });
 
   expect(screen.getByTestId('header-container')).toBeInTheDocument();
 });
 
-it('renders panel with a header with title in place if prop title', () => {
+// Check for backwards compatibility
+it('renders panel with title in place if prop title', () => {
   setup({ title: 'Test Panel Header' });
 
   expect(screen.getByText('Test Panel Header')).toBeInTheDocument();
+});
+
+// Check for backwards compatibility
+it('renders panel with a header if prop leftItems', () => {
+  setup({
+    leftItems: [<div key="left-item-test"> This should be a self-contained node </div>],
+  });
+
+  expect(screen.getByTestId('header-container')).toBeInTheDocument();
+});
+
+it('renders panel with a hovering header if prop hoverHeader is true', () => {
+  setup({ title: 'Test Panel Header', hoverHeader: true });
+
+  expect(screen.queryByTestId('header-container')).not.toBeInTheDocument();
 });
 
 it('renders panel with a header if prop titleItems', () => {
@@ -63,17 +82,6 @@ it('renders panel with a header with icons in place if prop titleItems', () => {
   expect(screen.getByTestId('title-items-container')).toBeInTheDocument();
 });
 
-it.skip('renders panel with a fixed header if prop hoverHeader is false', () => {
-  // setup({ title: 'Test Panel Header', hoverHeader: false });
-  // expect(screen.getByTestId('header-container')).toBeInTheDocument();
-});
-
-it('renders panel with a header if prop menu', () => {
-  setup({ menu: <div> Menu </div> });
-
-  expect(screen.getByTestId('header-container')).toBeInTheDocument();
-});
-
 it('renders panel with a show-on-hover menu icon if prop menu', () => {
   setup({ menu: <div> Menu </div> });
 
@@ -81,8 +89,38 @@ it('renders panel with a show-on-hover menu icon if prop menu', () => {
   expect(screen.getByTestId('panel-menu-button')).not.toBeVisible();
 });
 
-it.skip('renders states in the panel header if any given', () => {});
+it('renders error status in the panel header if any given', () => {
+  setup({ statusMessage: 'Error test' });
 
-it.skip('renders leftItems in the panel header if any given when no states prop is given', () => {});
+  expect(screen.getByLabelText('Panel status')).toBeInTheDocument();
+});
 
-it.skip('renders states in the panel header if both leftItems and states are given', () => {});
+it('does not render error status in the panel header if loadingState is error, but no statusMessage', () => {
+  setup({ loadingState: LoadingState.Error, statusMessage: '' });
+
+  expect(screen.queryByTestId('panel-status')).not.toBeInTheDocument();
+});
+
+it('renders loading indicator in the panel header if loadingState is loading', () => {
+  setup({ loadingState: LoadingState.Loading });
+
+  expect(screen.getByLabelText('Panel loading bar')).toBeInTheDocument();
+});
+
+it('renders loading indicator in the panel header if loadingState is loading regardless of not having a header', () => {
+  setup({ loadingState: LoadingState.Loading, hoverHeader: true });
+
+  expect(screen.getByLabelText('Panel loading bar')).toBeInTheDocument();
+});
+
+it('renders loading indicator in the panel header if loadingState is loading regardless of having a header', () => {
+  setup({ loadingState: LoadingState.Loading, hoverHeader: false });
+
+  expect(screen.getByLabelText('Panel loading bar')).toBeInTheDocument();
+});
+
+it('renders streaming indicator in the panel header if loadingState is streaming', () => {
+  setup({ loadingState: LoadingState.Streaming });
+
+  expect(screen.getByTestId('panel-streaming')).toBeInTheDocument();
+});

@@ -4,7 +4,11 @@ import (
 	"context"
 	"testing"
 
-	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -14,9 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, *user.SignedInUser) {
@@ -27,10 +28,9 @@ func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, 
 		Role:             string(org.RoleAdmin),
 		Login:            "grpc-server-sa",
 		IsServiceAccount: true,
-		OrgID:            1,
 	})
 
-	keyGen, err := apikeygenprefix.New(saAPI.ServiceID)
+	keyGen, err := satokengen.New(saAPI.ServiceID)
 	require.NoError(t, err)
 
 	_ = saTests.SetupApiKey(t, env.SQLStore, saTests.TestApiKey{

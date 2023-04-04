@@ -27,6 +27,7 @@ export const createDefaultInitialState = () => {
           getSupportedSupplementaryQueryTypes: jest
             .fn()
             .mockImplementation(() => [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample]),
+          getSupplementaryQuery: jest.fn(),
           meta: {
             id: 'something',
           },

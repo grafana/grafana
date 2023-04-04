@@ -190,7 +190,7 @@ describe('Table utils', () => {
           type: FieldType.number,
           getLinks: () => [],
           state: null,
-          display: (value: any) => ({
+          display: () => ({
             numeric: 1,
             percent: 0.01,
             color: '',
@@ -213,7 +213,7 @@ describe('Table utils', () => {
           values: new ArrayVector([1, 2, 2, 1, 3, 5, 6]),
           name: 'value',
           type: FieldType.number,
-          display: jest.fn((value: any) => ({
+          display: jest.fn().mockImplementation((value) => ({
             numeric: 1,
             percent: 0.01,
             color: '',
@@ -221,7 +221,7 @@ describe('Table utils', () => {
             text: `${value}.0`,
           })),
         };
-        const rows: any[] = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }, { index: 4 }];
+        const rows = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }, { index: 4 }];
 
         const result = calculateUniqueFieldValues(rows, field);
 
@@ -242,7 +242,7 @@ describe('Table utils', () => {
           name: 'value',
           type: FieldType.number,
         };
-        const rows: any[] = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }, { index: 4 }];
+        const rows = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }, { index: 4 }];
 
         const result = calculateUniqueFieldValues(rows, field);
 
@@ -261,7 +261,7 @@ describe('Table utils', () => {
             name: 'value',
             type: FieldType.number,
           };
-          const rows: any[] = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }, { index: 4 }];
+          const rows = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }, { index: 4 }];
 
           const result = calculateUniqueFieldValues(rows, field);
 
@@ -278,7 +278,12 @@ describe('Table utils', () => {
   describe('rowToFieldValue', () => {
     describe('happy paths', () => {
       describe('field without field display', () => {
-        const field: any = { values: new ArrayVector(['a', 'b', 'c']) };
+        const field: Field = {
+          name: 'value',
+          type: FieldType.string,
+          config: {},
+          values: new ArrayVector(['a', 'b', 'c']),
+        };
         const row = { index: 1 };
 
         const result = rowToFieldValue(row, field);
@@ -292,7 +297,7 @@ describe('Table utils', () => {
           values: new ArrayVector([1, 2, 2, 1, 3, 5, 6]),
           name: 'value',
           type: FieldType.number,
-          display: jest.fn((value: any) => ({
+          display: jest.fn().mockImplementation((value) => ({
             numeric: 1,
             percent: 0.01,
             color: '',
@@ -318,7 +323,12 @@ describe('Table utils', () => {
         expect(result).toEqual('');
       });
       describe('row is missing', () => {
-        const field: any = { values: new ArrayVector(['a', 'b', 'c']) };
+        const field = {
+          name: 'value',
+          type: FieldType.string,
+          config: {},
+          values: new ArrayVector(['a', 'b', 'c']),
+        };
         const row = undefined;
 
         const result = rowToFieldValue(row, field);
@@ -476,8 +486,8 @@ describe('Table utils', () => {
 
     it.skip('should have good performance', () => {
       const ITERATIONS = 100000;
-      const a: any = { values: Array(ITERATIONS) };
-      const b: any = { values: Array(ITERATIONS) };
+      const a = { values: Array(ITERATIONS) } as unknown as Row;
+      const b = { values: Array(ITERATIONS) } as unknown as Row;
       for (let i = 0; i < ITERATIONS; i++) {
         a.values[i] = Math.random() * Date.now();
         b.values[i] = Math.random() * Date.now();

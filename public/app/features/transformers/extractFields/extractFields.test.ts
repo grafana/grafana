@@ -19,10 +19,10 @@ describe('Fields from JSON', () => {
     const frames = extractFieldsTransformer.transformer(cfg, ctx)([data]);
     expect(frames.length).toEqual(1);
     expect(
-      frames[0].fields.reduce((acc, v) => {
+      frames[0].fields.reduce<Record<string, FieldType>>((acc, v) => {
         acc[v.name] = v.type;
         return acc;
-      }, {} as any)
+      }, {})
     ).toMatchInlineSnapshot(`
       {
         "a": "string",

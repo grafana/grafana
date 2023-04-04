@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
@@ -299,8 +298,12 @@ func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, serv
 		return 0, ErrFolderNameMissing
 	}
 
-	cmd := &dashboards.GetDashboardQuery{Slug: slugify.Slugify(folderName), OrgID: cfg.OrgID}
-	err := fr.dashboardStore.GetDashboard(ctx, cmd)
+	cmd := &dashboards.GetDashboardQuery{
+		Title:    &folderName,
+		FolderID: util.Pointer(int64(0)),
+		OrgID:    cfg.OrgID,
+	}
+	result, err := fr.dashboardStore.GetDashboard(ctx, cmd)
 
 	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return 0, err
@@ -326,11 +329,11 @@ func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, serv
 		return dbDash.ID, nil
 	}
 
-	if !cmd.Result.IsFolder {
+	if !result.IsFolder {
 		return 0, fmt.Errorf("got invalid response. expected folder, found dashboard")
 	}
 
-	return cmd.Result.ID, nil
+	return result.ID, nil
 }
 
 func resolveSymlink(fileinfo os.FileInfo, path string) (os.FileInfo, error) {

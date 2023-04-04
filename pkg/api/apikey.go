@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -26,34 +26,36 @@ import (
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetAPIKeys(c *models.ReqContext) response.Response {
-	query := apikey.GetApiKeysQuery{OrgId: c.OrgID, User: c.SignedInUser, IncludeExpired: c.QueryBool("includeExpired")}
+func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
+	query := apikey.GetApiKeysQuery{OrgID: c.OrgID, User: c.SignedInUser, IncludeExpired: c.QueryBool("includeExpired")}
 
-	if err := hs.apiKeyService.GetAPIKeys(c.Req.Context(), &query); err != nil {
+	keys, err := hs.apiKeyService.GetAPIKeys(c.Req.Context(), &query)
+	if err != nil {
 		return response.Error(500, "Failed to list api keys", err)
 	}
 
 	ids := map[string]bool{}
-	result := make([]*dtos.ApiKeyDTO, len(query.Result))
-	for i, t := range query.Result {
-		ids[strconv.FormatInt(t.Id, 10)] = true
+	result := make([]*dtos.ApiKeyDTO, len(keys))
+	for i, t := range keys {
+		ids[strconv.FormatInt(t.ID, 10)] = true
 		var expiration *time.Time = nil
 		if t.Expires != nil {
 			v := time.Unix(*t.Expires, 0)
 			expiration = &v
 		}
 		result[i] = &dtos.ApiKeyDTO{
-			Id:         t.Id,
+			ID:         t.ID,
 			Name:       t.Name,
 			Role:       t.Role,
 			Expiration: expiration,
+			LastUsedAt: t.LastUsedAt,
 		}
 	}
 
 	metadata := hs.getMultiAccessControlMetadata(c, c.OrgID, "apikeys:id", ids)
 	if len(metadata) > 0 {
 		for _, key := range result {
-			key.AccessControl = metadata[strconv.FormatInt(key.Id, 10)]
+			key.AccessControl = metadata[strconv.FormatInt(key.ID, 10)]
 		}
 	}
 
@@ -70,13 +72,13 @@ func (hs *HTTPServer) GetAPIKeys(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteAPIKey(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	cmd := &apikey.DeleteCommand{Id: id, OrgId: c.OrgID}
+	cmd := &apikey.DeleteCommand{ID: id, OrgID: c.OrgID}
 	err = hs.apiKeyService.DeleteApiKey(c.Req.Context(), cmd)
 	if err != nil {
 		var status int
@@ -104,7 +106,7 @@ func (hs *HTTPServer) DeleteAPIKey(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 409: conflictError
 // 500: internalServerError
-func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AddAPIKey(c *contextmodel.ReqContext) response.Response {
 	cmd := apikey.AddCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -125,15 +127,16 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 		}
 	}
 
-	cmd.OrgId = c.OrgID
+	cmd.OrgID = c.OrgID
 
-	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
+	newKeyInfo, err := apikeygen.New(cmd.OrgID, cmd.Name)
 	if err != nil {
 		return response.Error(500, "Generating API key failed", err)
 	}
 
 	cmd.Key = newKeyInfo.HashedKey
-	if err := hs.apiKeyService.AddAPIKey(c.Req.Context(), &cmd); err != nil {
+	key, err := hs.apiKeyService.AddAPIKey(c.Req.Context(), &cmd)
+	if err != nil {
 		if errors.Is(err, apikey.ErrInvalidExpiration) {
 			return response.Error(400, err.Error(), nil)
 		}
@@ -144,8 +147,8 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 	}
 
 	result := &dtos.NewApiKeyResult{
-		ID:   cmd.Result.Id,
-		Name: cmd.Result.Name,
+		ID:   key.ID,
+		Name: key.Name,
 		Key:  newKeyInfo.ClientSecret,
 	}
 

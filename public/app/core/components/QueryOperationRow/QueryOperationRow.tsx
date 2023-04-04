@@ -90,7 +90,6 @@ export function QueryOperationRow({
     },
   };
 
-  const titleElement = title && ReactUtils.renderOrCallToRender(title, renderPropArgs);
   const actionsElement = actions && ReactUtils.renderOrCallToRender(actions, renderPropArgs);
   const headerElementRendered = headerElement && ReactUtils.renderOrCallToRender(headerElement, renderPropArgs);
 
@@ -112,7 +111,7 @@ export function QueryOperationRow({
                     isContentVisible={isContentVisible}
                     onRowToggle={onRowToggle}
                     reportDragMousePosition={reportDragMousePosition}
-                    titleElement={titleElement}
+                    title={title}
                   />
                 </div>
                 {isContentVisible && <div className={styles.content}>{children}</div>}
@@ -135,7 +134,7 @@ export function QueryOperationRow({
         isContentVisible={isContentVisible}
         onRowToggle={onRowToggle}
         reportDragMousePosition={reportDragMousePosition}
-        titleElement={titleElement}
+        title={title}
       />
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </div>

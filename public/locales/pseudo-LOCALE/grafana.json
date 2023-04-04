@@ -9,15 +9,15 @@
     "action": {
       "change-theme": "Cĥäŉģę ŧĥęmę...",
       "dark-theme": "Đäřĸ",
-      "light-theme": "Ŀįģĥŧ",
-      "search": "Ŝęäřčĥ"
+      "light-theme": "Ŀįģĥŧ"
     },
     "search-box": {
-      "placeholder": "Ŝęäřčĥ Ğřäƒäŉä"
+      "placeholder": "Ŝęäřčĥ őř ĵūmp ŧő..."
     },
     "section": {
       "actions": "Åčŧįőŉş",
       "dashboard-search-results": "Đäşĥþőäřđş",
+      "folder-search-results": "Főľđęřş",
       "pages": "Päģęş",
       "preferences": "Přęƒęřęŉčęş",
       "recent-dashboards": "Ŗęčęŉŧ đäşĥþőäřđş"
@@ -31,7 +31,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "Åčŧįőŉş",
       "data-tab": "Đäŧä",
       "error-tab": "Ēřřőř",
       "json-tab": "ĴŜØŃ",
@@ -84,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "Åđđ päŉęľ",
-      "comments-show": "Ŝĥőŵ đäşĥþőäřđ čőmmęŉŧş",
       "mark-favorite": "Mäřĸ äş ƒävőřįŧę",
       "open-original": "Øpęŉ őřįģįŉäľ đäşĥþőäřđ",
       "playlist-next": "Ğő ŧő ŉęχŧ đäşĥþőäřđ",
@@ -109,6 +107,13 @@
   },
   "folder-picker": {
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
+  },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "Fäįľęđ ŧő ľőäđ őpŧįőŉş",
+      "loading": "Ŀőäđįŉģ őpŧįőŉş...",
+      "no-options": "Ńő őpŧįőŉş ƒőūŉđ"
+    }
   },
   "library-panel": {
     "add-modal": {
@@ -160,7 +165,7 @@
       "title": "Åľęřŧ řūľęş"
     },
     "alerting-receivers": {
-      "subtitle": "Đęčįđę ĥőŵ yőūř čőŉŧäčŧş äřę ŉőŧįƒįęđ ŵĥęŉ äŉ äľęřŧ ƒįřęş",
+      "subtitle": "Cĥőőşę ĥőŵ ŧő ŉőŧįƒy yőūř čőŉŧäčŧ pőįŉŧş ŵĥęŉ äŉ äľęřŧ įŉşŧäŉčę ƒįřęş",
       "title": "Cőŉŧäčŧ pőįŉŧş"
     },
     "alerting-silences": {
@@ -169,7 +174,7 @@
     },
     "alerts-and-incidents": {
       "subtitle": "Åľęřŧįŉģ äŉđ įŉčįđęŉŧ mäŉäģęmęŉŧ äppş",
-      "title": "Åľęřŧş & įŉčįđęŉŧş"
+      "title": "Åľęřŧş & ĨŖM"
     },
     "api-keys": {
       "subtitle": "Mäŉäģę äŉđ čřęäŧę ÅPĨ ĸęyş ŧĥäŧ äřę ūşęđ ŧő įŉŧęřäčŧ ŵįŧĥ Ğřäƒäŉä ĦŦŦP ÅPĨş",
@@ -191,7 +196,7 @@
       "title": "Cřęäŧę"
     },
     "create-alert": {
-      "title": "Ńęŵ äľęřŧ řūľę"
+      "title": "Cřęäŧę äľęřŧ řūľę"
     },
     "create-dashboard": {
       "title": "Đäşĥþőäřđ"
@@ -200,7 +205,7 @@
       "title": "Főľđęř"
     },
     "create-import": {
-      "title": "Ĩmpőřŧ"
+      "title": "Ĩmpőřŧ đäşĥþőäřđ"
     },
     "dashboards": {
       "subtitle": "Cřęäŧę äŉđ mäŉäģę đäşĥþőäřđş ŧő vįşūäľįžę yőūř đäŧä",
@@ -229,7 +234,6 @@
     "help/documentation": "Đőčūmęŉŧäŧįőŉ",
     "help/keyboard-shortcuts": "Ķęyþőäřđ şĥőřŧčūŧş",
     "help/support": "Ŝūppőřŧ",
-    "help/support-bundle": "Ŝūppőřŧ ßūŉđľęş",
     "home": {
       "title": "Ħőmę"
     },
@@ -237,20 +241,11 @@
       "subtitle": "Ŗęūşäþľę päŉęľş ŧĥäŧ čäŉ þę äđđęđ ŧő mūľŧįpľę đäşĥþőäřđş",
       "title": "Ŀįþřäřy päŉęľş"
     },
-    "live": {
-      "title": "Ēvęŉŧ şŧřęämįŉģ"
-    },
-    "live-cloud": {
-      "title": "Cľőūđ"
-    },
-    "live-pipeline": {
-      "title": "Pįpęľįŉę"
-    },
-    "live-status": {
-      "title": "Ŝŧäŧūş"
-    },
     "manage-dashboards": {
       "title": "ßřőŵşę"
+    },
+    "manage-folder": {
+      "subtitle": "Mäŉäģę ƒőľđęř đäşĥþőäřđş äŉđ pęřmįşşįőŉş"
     },
     "monitoring": {
       "subtitle": "Mőŉįŧőřįŉģ äŉđ įŉƒřäşŧřūčŧūřę äppş",
@@ -285,14 +280,17 @@
       "title": "Cĥäŉģę päşşŵőřđ"
     },
     "profile/settings": {
-      "title": "Přęƒęřęŉčęş"
+      "title": "Přőƒįľę"
     },
     "profile/switch-org": "Ŝŵįŧčĥ őřģäŉįžäŧįőŉ",
+    "public": {
+      "title": "Pūþľįč đäşĥþőäřđş"
+    },
     "scenes": {
       "title": "Ŝčęŉęş"
     },
     "search": {
-      "placeholder": "Ŝęäřčĥ Ğřäƒäŉä"
+      "placeholderCommandPalette": "Ŝęäřčĥ őř ĵūmp ŧő..."
     },
     "search-dashboards": {
       "title": "Ŝęäřčĥ đäşĥþőäřđş"
@@ -342,6 +340,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Přęşş ĒŜC ŧő ęχįŧ ĸįőşĸ mőđę"
+    },
+    "toolbar": {
+      "enable-kiosk": "Ēŉäþľę ĸįőşĸ mőđę",
+      "toggle-menu": "Ŧőģģľę męŉū",
+      "toggle-search-bar": "Ŧőģģľę ŧőp şęäřčĥ þäř"
     }
   },
   "news": {
@@ -390,11 +393,42 @@
     }
   },
   "search": {
+    "actions": {
+      "include-panels": "Ĩŉčľūđę päŉęľş",
+      "remove-datasource-filter": "Đäŧäşőūřčę: {{datasource}}",
+      "sort-placeholder": "Ŝőřŧ",
+      "starred": "Ŝŧäřřęđ",
+      "view-as-folders": "Vįęŵ þy ƒőľđęřş",
+      "view-as-grid": "Ğřįđ vįęŵ",
+      "view-as-list": "Vįęŵ äş ľįşŧ"
+    },
     "dashboard-actions": {
       "import": "Ĩmpőřŧ",
       "new": "Ńęŵ",
       "new-dashboard": "Ńęŵ Đäşĥþőäřđ",
       "new-folder": "Ńęŵ Főľđęř"
+    },
+    "folder-view": {
+      "go-to-folder": "Ğő ŧő ƒőľđęř",
+      "select-folder": "Ŝęľęčŧ ƒőľđęř"
+    },
+    "result-kind": {
+      "dashboard": "Đäşĥþőäřđ",
+      "folder": "Főľđęř",
+      "panel": "Päŉęľ"
+    },
+    "results-table": {
+      "datasource-header": "Đäŧä şőūřčę",
+      "location-header": "Ŀőčäŧįőŉ",
+      "name-header": "Ńämę",
+      "tags-header": "Ŧäģş",
+      "type-dashboard": "Đäşĥþőäřđ",
+      "type-folder": "Főľđęř",
+      "type-header": "Ŧypę"
+    },
+    "search-input": {
+      "include-panels-placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş äŉđ päŉęľş",
+      "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş"
     }
   },
   "share-modal": {
@@ -489,9 +523,15 @@
     "theme": {
       "dark-label": "Đäřĸ",
       "default-label": "Đęƒäūľŧ",
-      "light-label": "Ŀįģĥŧ"
+      "light-label": "Ŀįģĥŧ",
+      "system-label": "Ŝyşŧęm"
     },
     "title": "Přęƒęřęŉčęş"
+  },
+  "tag-filter": {
+    "loading": "Ŀőäđįŉģ...",
+    "no-tags": "Ńő ŧäģş ƒőūŉđ",
+    "placeholder": "Fįľŧęř þy ŧäģ"
   },
   "time-picker": {
     "absolute": {
@@ -555,8 +595,7 @@
       "name-error": "Ńämę įş řęqūįřęđ",
       "name-label": "Ńämę",
       "username-label": "Ůşęřŉämę"
-    },
-    "title": "Přőƒįľę"
+    }
   },
   "user-session": {
     "browser-column": "ßřőŵşęř & ØŜ",
@@ -569,12 +608,20 @@
     "loading": "Ŀőäđįŉģ şęşşįőŉş..."
   },
   "variable": {
+    "adhoc": {
+      "placeholder": "Ŝęľęčŧ väľūę"
+    },
+    "dropdown": {
+      "placeholder": "Ēŉŧęř väřįäþľę väľūę"
+    },
     "picker": {
-      "input": "Ēŉŧęř väřįäþľę väľūę",
       "link-all": "Åľľ",
       "option-all": "Åľľ",
       "option-selected-values": "Ŝęľęčŧęđ",
       "option-tooltip": "Cľęäř şęľęčŧįőŉş"
+    },
+    "textbox": {
+      "placeholder": "Ēŉŧęř väřįäþľę väľūę"
     }
   }
 }

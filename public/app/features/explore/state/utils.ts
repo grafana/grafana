@@ -3,7 +3,6 @@ import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
 import {
   AbsoluteTimeRange,
   DataSourceApi,
-  DataSourceRef,
   EventBusExtended,
   ExploreUrlState,
   getDefaultTimeRange,
@@ -11,6 +10,7 @@ import {
   LoadingState,
   PanelData,
 } from '@grafana/data';
+import { DataSourceRef } from '@grafana/schema';
 import { ExplorePanelData } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 

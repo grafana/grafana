@@ -3,9 +3,10 @@ package packaging_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/packaging"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestPackageRegexp(t *testing.T) {

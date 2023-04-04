@@ -1,6 +1,8 @@
 package social
 
 import (
+	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -9,15 +11,15 @@ import (
 	"os"
 	"strings"
 
-	"context"
-
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -34,38 +36,46 @@ type SocialService struct {
 }
 
 type OAuthInfo struct {
-	ClientId, ClientSecret  string
-	Scopes                  []string
-	AuthUrl, TokenUrl       string
-	Enabled                 bool
-	EmailAttributeName      string
-	EmailAttributePath      string
-	RoleAttributePath       string
-	RoleAttributeStrict     bool
-	GroupsAttributePath     string
-	TeamIdsAttributePath    string
-	AllowedDomains          []string
-	AllowAssignGrafanaAdmin bool
-	HostedDomain            string
-	ApiUrl                  string
-	TeamsUrl                string
-	AllowSignup             bool
-	Name                    string
-	Icon                    string
-	TlsClientCert           string
-	TlsClientKey            string
-	TlsClientCa             string
-	TlsSkipVerify           bool
-	UsePKCE                 bool
-	AutoLogin               bool
+	ApiUrl                  string   `toml:"api_url"`
+	AuthUrl                 string   `toml:"auth_url"`
+	ClientId                string   `toml:"client_id"`
+	ClientSecret            string   `toml:"-"`
+	EmailAttributeName      string   `toml:"email_attribute_name"`
+	EmailAttributePath      string   `toml:"email_attribute_path"`
+	GroupsAttributePath     string   `toml:"groups_attribute_path"`
+	HostedDomain            string   `toml:"hosted_domain"`
+	Icon                    string   `toml:"icon"`
+	Name                    string   `toml:"name"`
+	RoleAttributePath       string   `toml:"role_attribute_path"`
+	TeamIdsAttributePath    string   `toml:"team_ids_attribute_path"`
+	TeamsUrl                string   `toml:"teams_url"`
+	TlsClientCa             string   `toml:"tls_client_ca"`
+	TlsClientCert           string   `toml:"tls_client_cert"`
+	TlsClientKey            string   `toml:"tls_client_key"`
+	TokenUrl                string   `toml:"token_url"`
+	AllowedDomains          []string `toml:"allowed_domains"`
+	Scopes                  []string `toml:"scopes"`
+	AllowAssignGrafanaAdmin bool     `toml:"allow_assign_grafana_admin"`
+	AllowSignup             bool     `toml:"allow_signup"`
+	AutoLogin               bool     `toml:"auto_login"`
+	Enabled                 bool     `toml:"enabled"`
+	RoleAttributeStrict     bool     `toml:"role_attribute_strict"`
+	TlsSkipVerify           bool     `toml:"tls_skip_verify"`
+	UsePKCE                 bool     `toml:"use_pkce"`
 }
 
-func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialService {
-	ss := SocialService{
+func ProvideService(cfg *setting.Cfg,
+	features *featuremgmt.FeatureManager,
+	usageStats usagestats.Service,
+	bundleRegistry supportbundles.Service,
+) *SocialService {
+	ss := &SocialService{
 		cfg:           cfg,
 		oAuthProvider: make(map[string]*OAuthInfo),
 		socialMap:     make(map[string]SocialConnector),
 	}
+
+	usageStats.RegisterMetricsFunc(ss.getUsageStats)
 
 	for _, name := range allOauthes {
 		sec := cfg.Raw.Section("auth." + name)
@@ -146,15 +156,17 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager) *Soc
 				apiUrl:               info.ApiUrl,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				skipOrgRoleSync:      cfg.GitHubSkipOrgRoleSync,
 			}
 		}
 
 		// GitLab.
 		if name == "gitlab" {
 			ss.socialMap["gitlab"] = &SocialGitlab{
-				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				apiUrl:        info.ApiUrl,
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				apiUrl:          info.ApiUrl,
+				allowedGroups:   util.SplitString(sec.Key("allowed_groups").String()),
+				skipOrgRoleSync: cfg.GitLabSkipOrgRoleSync,
 			}
 		}
 
@@ -180,9 +192,10 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager) *Soc
 		// Okta
 		if name == "okta" {
 			ss.socialMap["okta"] = &SocialOkta{
-				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				apiUrl:        info.ApiUrl,
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				apiUrl:          info.ApiUrl,
+				allowedGroups:   util.SplitString(sec.Key("allowed_groups").String()),
+				skipOrgRoleSync: cfg.OktaSkipOrgRoleSync,
 			}
 		}
 
@@ -225,7 +238,10 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager) *Soc
 			}
 		}
 	}
-	return &ss
+
+	ss.registerSupportBundleCollectors(bundleRegistry)
+
+	return ss
 }
 
 type BasicUserInfo struct {
@@ -252,6 +268,7 @@ type SocialConnector interface {
 	Exchange(ctx context.Context, code string, authOptions ...oauth2.AuthCodeOption) (*oauth2.Token, error)
 	Client(ctx context.Context, t *oauth2.Token) *http.Client
 	TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource
+	SupportBundleContent(*bytes.Buffer) error
 }
 
 type SocialBase struct {
@@ -322,6 +339,27 @@ type groupStruct struct {
 	Groups []string `json:"groups"`
 }
 
+func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
+	bf.WriteString("## Client configuration\n\n")
+	bf.WriteString("```ini\n")
+	bf.WriteString(fmt.Sprintf("allow_assign_grafana_admin = %v\n", s.allowAssignGrafanaAdmin))
+	bf.WriteString(fmt.Sprintf("allow_sign_up = %v\n", s.allowSignup))
+	bf.WriteString(fmt.Sprintf("allowed_domains = %v\n", s.allowedDomains))
+	bf.WriteString(fmt.Sprintf("auto_assign_org_role = %v\n", s.autoAssignOrgRole))
+	bf.WriteString(fmt.Sprintf("role_attribute_path = %v\n", s.roleAttributePath))
+	bf.WriteString(fmt.Sprintf("role_attribute_strict = %v\n", s.roleAttributeStrict))
+	bf.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", s.skipOrgRoleSync))
+	bf.WriteString(fmt.Sprintf("client_id = %v\n", s.Config.ClientID))
+	bf.WriteString(fmt.Sprintf("client_secret = %v ; issue if empty\n", strings.Repeat("*", len(s.Config.ClientSecret))))
+	bf.WriteString(fmt.Sprintf("auth_url = %v\n", s.Config.Endpoint.AuthURL))
+	bf.WriteString(fmt.Sprintf("token_url = %v\n", s.Config.Endpoint.TokenURL))
+	bf.WriteString(fmt.Sprintf("auth_style = %v\n", s.Config.Endpoint.AuthStyle))
+	bf.WriteString(fmt.Sprintf("redirect_url = %v\n", s.Config.RedirectURL))
+	bf.WriteString(fmt.Sprintf("scopes = %v\n", s.Config.Scopes))
+	bf.WriteString("```\n\n")
+	return nil
+}
+
 func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy bool) (org.RoleType, bool) {
 	if s.roleAttributePath == "" {
 		return s.defaultRole(legacy), false
@@ -358,7 +396,7 @@ func (s *SocialBase) defaultRole(legacy bool) org.RoleType {
 	if legacy && !s.skipOrgRoleSync {
 		s.log.Warn("No valid role found. Skipping role sync. " +
 			"In Grafana 10, this will result in the user being assigned the default role and overriding manual assignment. " +
-			"If role sync is not desired, set oauth_skip_org_role_update_sync to true")
+			"If role sync is not desired, set skip_org_role_sync for your provider to true")
 	}
 
 	return ""
@@ -455,4 +493,24 @@ func (ss *SocialService) GetOAuthInfoProvider(name string) *OAuthInfo {
 
 func (ss *SocialService) GetOAuthInfoProviders() map[string]*OAuthInfo {
 	return ss.oAuthProvider
+}
+
+func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
+
+	authTypes := map[string]bool{}
+	for provider, enabled := range ss.GetOAuthProviders() {
+		authTypes["oauth_"+provider] = enabled
+	}
+
+	for authType, enabled := range authTypes {
+		enabledValue := 0
+		if enabled {
+			enabledValue = 1
+		}
+
+		m["stats.auth_enabled."+authType+".count"] = enabledValue
+	}
+
+	return m, nil
 }

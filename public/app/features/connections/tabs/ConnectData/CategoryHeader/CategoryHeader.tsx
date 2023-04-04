@@ -16,7 +16,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-export const CategoryHeader: React.FC<{ iconName: IconName; label: string }> = ({ iconName, label }) => {
+type Props = { iconName: IconName; label: string };
+
+export const CategoryHeader = ({ iconName, label }: Props) => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.categoryHeader}>

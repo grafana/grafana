@@ -7,17 +7,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
@@ -128,19 +128,13 @@ func TestCollectingUsageStats(t *testing.T) {
 	statsService := statstest.NewFakeService()
 	expectedDataSources := []*datasources.DataSource{
 		{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": "2.0.0",
-			}),
+			JsonData: simplejson.NewFromAny(map[string]interface{}{}),
 		},
 		{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": "2.0.0",
-			}),
+			JsonData: simplejson.NewFromAny(map[string]interface{}{}),
 		},
 		{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": "70.1.1",
-			}),
+			JsonData: simplejson.NewFromAny(map[string]interface{}{}),
 		},
 	}
 
@@ -149,10 +143,13 @@ func TestCollectingUsageStats(t *testing.T) {
 		BuildVersion:         "5.0.0",
 		AnonymousEnabled:     true,
 		BasicAuthEnabled:     true,
-		LDAPEnabled:          true,
+		LDAPAuthEnabled:      true,
 		AuthProxyEnabled:     true,
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",
+		RemoteCacheOptions: &setting.RemoteCacheOptions{
+			Name: "database",
+		},
 	}, sqlStore, statsService,
 		withDatasources(mockDatasourceService{datasources: expectedDataSources}))
 
@@ -161,17 +158,6 @@ func TestCollectingUsageStats(t *testing.T) {
 	mockSystemStats(statsService)
 
 	createConcurrentTokens(t, sqlStore)
-
-	s.social = &mockSocial{
-		OAuthProviders: map[string]bool{
-			"github":        true,
-			"gitlab":        true,
-			"azuread":       true,
-			"google":        true,
-			"generic_oauth": true,
-			"grafana_com":   true,
-		},
-	}
 
 	metrics, err := s.collectSystemStats(context.Background())
 	require.NoError(t, err)
@@ -185,17 +171,6 @@ func TestCollectingUsageStats(t *testing.T) {
 	assert.EqualValues(t, 19, metrics["stats.library_panels.count"])
 	assert.EqualValues(t, 20, metrics["stats.library_variables.count"])
 
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.anonymous.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.basic_auth.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.ldap.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.auth_proxy.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_github.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_gitlab.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_google.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_azuread.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_generic_oauth.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_grafana_com.count"])
-
 	assert.EqualValues(t, 1, metrics["stats.packaging.deb.count"])
 	assert.EqualValues(t, 1, metrics["stats.distributor.hosted-grafana.count"])
 
@@ -206,46 +181,6 @@ func TestCollectingUsageStats(t *testing.T) {
 	assert.InDelta(t, int64(65), metrics["stats.uptime"], 6)
 }
 
-func TestElasticStats(t *testing.T) {
-	sqlStore := dbtest.NewFakeDB()
-	statsService := statstest.NewFakeService()
-
-	expectedDataSources := []*datasources.DataSource{
-		{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": "2.0.0",
-			}),
-		},
-		{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": "2.0.0",
-			}),
-		},
-		{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": "70.1.1",
-			}),
-		},
-	}
-
-	s := createService(t, &setting.Cfg{
-		ReportingEnabled:     true,
-		BuildVersion:         "5.0.0",
-		AnonymousEnabled:     true,
-		BasicAuthEnabled:     true,
-		LDAPEnabled:          true,
-		AuthProxyEnabled:     true,
-		Packaging:            "deb",
-		ReportingDistributor: "hosted-grafana",
-	}, sqlStore, statsService,
-		withDatasources(mockDatasourceService{datasources: expectedDataSources}))
-
-	metrics, err := s.collectElasticStats(context.Background())
-	require.NoError(t, err)
-
-	assert.EqualValues(t, 2, metrics["stats.ds."+datasources.DS_ES+".v2_0_0.count"])
-	assert.EqualValues(t, 1, metrics["stats.ds."+datasources.DS_ES+".v70_1_1.count"])
-}
 func TestDatasourceStats(t *testing.T) {
 	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
@@ -269,24 +204,6 @@ func TestDatasourceStats(t *testing.T) {
 		{
 			Type:  "unknown_ds2",
 			Count: 12,
-		},
-	}
-
-	_ = []*datasources.DataSource{
-		{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": 2,
-			}),
-		},
-		{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": 2,
-			}),
-		},
-		{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": 70,
-			}),
 		},
 	}
 
@@ -456,6 +373,7 @@ func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService sta
 
 	return ProvideService(
 		&usagestats.UsageStatsMock{},
+		&validator.FakeUsageStatsValidator{},
 		statsService,
 		cfg,
 		store,
@@ -483,9 +401,8 @@ type mockDatasourceService struct {
 	datasources []*datasources.DataSource
 }
 
-func (s mockDatasourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
-	query.Result = s.datasources
-	return nil
+func (s mockDatasourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
+	return s.datasources, nil
 }
 
 func (s mockDatasourceService) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {

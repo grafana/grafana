@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import React, { useState } from 'react';
 
-import { CoreApp, DataFrameView, MutableDataFrame } from '@grafana/data';
+import { CoreApp, MutableDataFrame } from '@grafana/data';
 
-import { Item, nestedSetToLevels } from '../FlameGraph/dataTransform';
+import { FlameGraphDataContainer, nestedSetToLevels } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
 import { SelectedView } from '../types';
 
@@ -15,18 +15,19 @@ describe('FlameGraphTopTableContainer', () => {
     const [selectedView, _] = useState(SelectedView.Both);
 
     const flameGraphData = new MutableDataFrame(data);
-    const dataView = new DataFrameView<Item>(flameGraphData);
-    const levels = nestedSetToLevels(dataView);
+    const container = new FlameGraphDataContainer(flameGraphData);
+    const levels = nestedSetToLevels(container);
 
     return (
       <FlameGraphTopTableContainer
-        data={flameGraphData}
+        data={container}
         app={CoreApp.Explore}
         totalLevels={levels.length}
         selectedView={selectedView}
         search={search}
         setSearch={setSearch}
         setTopLevelIndex={jest.fn()}
+        setSelectedBarIndex={jest.fn()}
         setRangeMin={jest.fn()}
         setRangeMax={jest.fn()}
       />

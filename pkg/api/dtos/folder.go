@@ -31,5 +31,5 @@ type FolderSearchHit struct {
 	Uid           string                 `json:"uid"`
 	Title         string                 `json:"title"`
 	AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
-	ParentUID     string                 `json:"parent_uid,omitempty"`
+	ParentUID     string                 `json:"parentUid,omitempty"`
 }

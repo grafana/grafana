@@ -7,17 +7,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards int) {
@@ -25,7 +25,7 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards in
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		usr := &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: {}}}
-		filter := permissions.NewAccessControlDashboardPermissionFilter(usr, models.PERMISSION_VIEW, "")
+		filter := permissions.NewAccessControlDashboardPermissionFilter(usr, dashboards.PERMISSION_VIEW, "")
 		var result int
 		err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			q, params := filter.Where()

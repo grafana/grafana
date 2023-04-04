@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -53,7 +54,9 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUser
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
-		"Subject": subjectTemplateFunc,
+		"Subject":                 subjectTemplateFunc,
+		"HiddenSubject":           hiddenSubjectTemplateFunc,
+		"__dangerouslyInjectHTML": __dangerouslyInjectHTML,
 	})
 	mailTemplates.Funcs(sprig.FuncMap())
 
@@ -143,9 +146,44 @@ func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *SendWeb
 	})
 }
 
-func subjectTemplateFunc(obj map[string]interface{}, value string) string {
+// hiddenSubjectTemplateFunc sets the subject template (value) on the map represented by `.Subject.` (obj) so that it can be compiled and executed later.
+// It returns a blank string, so there will be no resulting value left in place of the template.
+func hiddenSubjectTemplateFunc(obj map[string]interface{}, value string) string {
 	obj["value"] = value
 	return ""
+}
+
+// subjectTemplateFunc does the same thing has hiddenSubjectTemplateFunc, but in addition it executes and returns the subject template using the data represented in `.TemplateData` (data)
+// This results in the template being replaced by the subject string.
+func subjectTemplateFunc(obj map[string]interface{}, data map[string]interface{}, value string) string {
+	obj["value"] = value
+
+	titleTmpl, err := template.New("title").Parse(value)
+	if err != nil {
+		return ""
+	}
+
+	var buf bytes.Buffer
+	err = titleTmpl.ExecuteTemplate(&buf, "title", data)
+	if err != nil {
+		return ""
+	}
+
+	subj := buf.String()
+	// Since we have already executed the template, save it to subject data so we don't have to do it again later on
+	obj["executed_template"] = subj
+	return subj
+}
+
+// __dangerouslyInjectHTML allows marking areas of am email template as HTML safe, this will _not_ sanitize the string and will allow HTML snippets to be rendered verbatim.
+// Use with absolute care as this _could_ allow for XSS attacks when used in an insecure context.
+//
+// It's safe to ignore gosec warning G203 when calling this function in an HTML template because we assume anyone who has write access
+// to the email templates folder is an administrator.
+//
+// nolint:gosec
+func __dangerouslyInjectHTML(s string) template.HTML {
+	return template.HTML(s)
 }
 
 func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, cmd *SendEmailCommandSync) error {
@@ -197,27 +235,26 @@ func (ns *NotificationService) SendResetPasswordEmail(ctx context.Context, cmd *
 
 type GetUserByLoginFunc = func(c context.Context, login string) (*user.User, error)
 
-func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, query *ValidateResetPasswordCodeQuery, userByLogin GetUserByLoginFunc) error {
+func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, query *ValidateResetPasswordCodeQuery, userByLogin GetUserByLoginFunc) (*user.User, error) {
 	login := getLoginForEmailCode(query.Code)
 	if login == "" {
-		return ErrInvalidEmailCode
+		return nil, ErrInvalidEmailCode
 	}
 
 	user, err := userByLogin(ctx, login)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	validEmailCode, err := validateUserEmailCode(ns.Cfg, user, query.Code)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !validEmailCode {
-		return ErrInvalidEmailCode
+		return nil, ErrInvalidEmailCode
 	}
 
-	query.Result = user
-	return nil
+	return user, nil
 }
 
 func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *events.SignUpStarted) error {

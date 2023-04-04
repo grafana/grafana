@@ -3,14 +3,30 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { getNavSubTitle, getNavTitle } from '../components/NavBar/navBarItem-translations';
+
 export const initialState: NavModelItem[] = config.bootData?.navTree ?? [];
+
+function translateNav(navTree: NavModelItem[]): NavModelItem[] {
+  return navTree.map((navItem) => {
+    const children = navItem.children && translateNav(navItem.children);
+
+    return {
+      ...navItem,
+      children: children,
+      text: getNavTitle(navItem.id) ?? navItem.text,
+      subTitle: getNavSubTitle(navItem.id) ?? navItem.subTitle,
+      emptyMessage: getNavTitle(navItem.emptyMessageId),
+    };
+  });
+}
 
 // this matches the prefix set in the backend navtree
 export const ID_PREFIX = 'starred/';
 
 const navTreeSlice = createSlice({
   name: 'navBarTree',
-  initialState,
+  initialState: () => translateNav(config.bootData?.navTree ?? []),
   reducers: {
     setStarred: (state, action: PayloadAction<{ id: string; title: string; url: string; isStarred: boolean }>) => {
       const starredItems = state.find((navItem) => navItem.id === 'starred');
@@ -47,8 +63,15 @@ const navTreeSlice = createSlice({
         }
       }
     },
+    removePluginFromNavTree: (state, action: PayloadAction<{ pluginID: string }>) => {
+      const navID = 'plugin-page-' + action.payload.pluginID;
+      const pluginItemIndex = state.findIndex((navItem) => navItem.id === navID);
+      if (pluginItemIndex > -1) {
+        state.splice(pluginItemIndex, 1);
+      }
+    },
   },
 });
 
-export const { setStarred, updateDashboardName } = navTreeSlice.actions;
+export const { setStarred, removePluginFromNavTree, updateDashboardName } = navTreeSlice.actions;
 export const navTreeReducer = navTreeSlice.reducer;

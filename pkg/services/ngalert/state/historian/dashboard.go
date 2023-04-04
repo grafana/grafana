@@ -7,10 +7,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/patrickmn/go-cache"
 	"golang.org/x/sync/singleflight"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 const (
@@ -54,16 +55,16 @@ func (r *dashboardResolver) getID(ctx context.Context, orgID int64, uid string) 
 			UID:   uid,
 			OrgID: orgID,
 		}
-		err := r.dashboards.GetDashboard(ctx, query)
+		queryResult, err := r.dashboards.GetDashboard(ctx, query)
 		// We also cache lookups where we don't find anything.
 		if err != nil && errors.Is(err, dashboards.ErrDashboardNotFound) {
 			result = err
 		} else if err != nil {
 			return 0, err
-		} else if query.Result == nil {
+		} else if queryResult == nil {
 			result = dashboards.ErrDashboardNotFound
 		} else {
-			result = query.Result.ID
+			result = queryResult.ID
 		}
 
 		// By setting the cache inside the singleflighted routine, we avoid any accidental re-queries that could get initiated after the query completes.

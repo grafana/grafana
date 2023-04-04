@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -30,7 +29,7 @@ type DashboardGuardian interface {
 	CanAdmin() (bool, error)
 	CanDelete() (bool, error)
 	CanCreate(folderID int64, isFolder bool) (bool, error)
-	CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error)
+	CheckPermissionBeforeUpdate(permission dashboards.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error)
 
 	// GetACL returns ACL.
 	GetACL() ([]*dashboards.DashboardACLInfoDTO, error)
@@ -43,6 +42,7 @@ type DashboardGuardian interface {
 }
 
 type dashboardGuardianImpl struct {
+	cfg              *setting.Cfg
 	user             *user.SignedInUser
 	dashId           int64
 	orgId            int64
@@ -74,14 +74,14 @@ var NewByDashboard = func(ctx context.Context, dash *dashboards.Dashboard, orgId
 }
 
 // newDashboardGuardian creates a dashboard guardian by the provided dashId.
-func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
+func newDashboardGuardian(ctx context.Context, cfg *setting.Cfg, dashId int64, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
 	if dashId != 0 {
 		q := &dashboards.GetDashboardQuery{
 			ID:    dashId,
 			OrgID: orgId,
 		}
 
-		if err := dashSvc.GetDashboard(ctx, q); err != nil {
+		if _, err := dashSvc.GetDashboard(ctx, q); err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
 				return nil, ErrGuardianDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
 			}
@@ -90,6 +90,7 @@ func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *
 	}
 
 	return &dashboardGuardianImpl{
+		cfg:              cfg,
 		user:             user,
 		dashId:           dashId,
 		orgId:            orgId,
@@ -102,7 +103,7 @@ func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *
 }
 
 // newDashboardGuardianByUID creates a dashboard guardian by the provided dashUID.
-func newDashboardGuardianByUID(ctx context.Context, dashUID string, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
+func newDashboardGuardianByUID(ctx context.Context, cfg *setting.Cfg, dashUID string, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
 	dashID := int64(0)
 	if dashUID != "" {
 		q := &dashboards.GetDashboardQuery{
@@ -110,16 +111,18 @@ func newDashboardGuardianByUID(ctx context.Context, dashUID string, orgId int64,
 			OrgID: orgId,
 		}
 
-		if err := dashSvc.GetDashboard(ctx, q); err != nil {
+		qResult, err := dashSvc.GetDashboard(ctx, q)
+		if err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
 				return nil, ErrGuardianDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
 			}
 			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
 		}
-		dashID = q.Result.ID
+		dashID = qResult.ID
 	}
 
 	return &dashboardGuardianImpl{
+		cfg:              cfg,
 		user:             user,
 		dashId:           dashID,
 		orgId:            orgId,
@@ -134,8 +137,9 @@ func newDashboardGuardianByUID(ctx context.Context, dashUID string, orgId int64,
 // newDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboard.
 // This constructor should be preferred over the other two if the dashboard in available
 // since it avoids querying the database for fetching the dashboard.
-func newDashboardGuardianByDashboard(ctx context.Context, dash *dashboards.Dashboard, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
+func newDashboardGuardianByDashboard(ctx context.Context, cfg *setting.Cfg, dash *dashboards.Dashboard, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
 	return &dashboardGuardianImpl{
+		cfg:              cfg,
 		user:             user,
 		dashId:           dash.ID,
 		orgId:            orgId,
@@ -148,23 +152,23 @@ func newDashboardGuardianByDashboard(ctx context.Context, dash *dashboards.Dashb
 }
 
 func (g *dashboardGuardianImpl) CanSave() (bool, error) {
-	return g.HasPermission(models.PERMISSION_EDIT)
+	return g.HasPermission(dashboards.PERMISSION_EDIT)
 }
 
 func (g *dashboardGuardianImpl) CanEdit() (bool, error) {
-	if setting.ViewersCanEdit {
-		return g.HasPermission(models.PERMISSION_VIEW)
+	if g.cfg.ViewersCanEdit {
+		return g.HasPermission(dashboards.PERMISSION_VIEW)
 	}
 
-	return g.HasPermission(models.PERMISSION_EDIT)
+	return g.HasPermission(dashboards.PERMISSION_EDIT)
 }
 
 func (g *dashboardGuardianImpl) CanView() (bool, error) {
-	return g.HasPermission(models.PERMISSION_VIEW)
+	return g.HasPermission(dashboards.PERMISSION_VIEW)
 }
 
 func (g *dashboardGuardianImpl) CanAdmin() (bool, error) {
-	return g.HasPermission(models.PERMISSION_ADMIN)
+	return g.HasPermission(dashboards.PERMISSION_ADMIN)
 }
 
 func (g *dashboardGuardianImpl) CanDelete() (bool, error) {
@@ -177,7 +181,7 @@ func (g *dashboardGuardianImpl) CanCreate(_ int64, _ bool) (bool, error) {
 	return g.CanSave()
 }
 
-func (g *dashboardGuardianImpl) HasPermission(permission models.PermissionType) (bool, error) {
+func (g *dashboardGuardianImpl) HasPermission(permission dashboards.PermissionType) (bool, error) {
 	if g.user.OrgRole == org.RoleAdmin {
 		return g.logHasPermissionResult(permission, true, nil)
 	}
@@ -191,7 +195,7 @@ func (g *dashboardGuardianImpl) HasPermission(permission models.PermissionType) 
 	return g.logHasPermissionResult(permission, result, err)
 }
 
-func (g *dashboardGuardianImpl) logHasPermissionResult(permission models.PermissionType, hasPermission bool, err error) (bool, error) {
+func (g *dashboardGuardianImpl) logHasPermissionResult(permission dashboards.PermissionType, hasPermission bool, err error) (bool, error) {
 	if err != nil {
 		return hasPermission, err
 	}
@@ -205,7 +209,7 @@ func (g *dashboardGuardianImpl) logHasPermissionResult(permission models.Permiss
 	return hasPermission, err
 }
 
-func (g *dashboardGuardianImpl) checkACL(permission models.PermissionType, acl []*dashboards.DashboardACLInfoDTO) (bool, error) {
+func (g *dashboardGuardianImpl) checkACL(permission dashboards.PermissionType, acl []*dashboards.DashboardACLInfoDTO) (bool, error) {
 	orgRole := g.user.OrgRole
 	teamACLItems := []*dashboards.DashboardACLInfoDTO{}
 
@@ -253,10 +257,10 @@ func (g *dashboardGuardianImpl) checkACL(permission models.PermissionType, acl [
 	return false, nil
 }
 
-func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error) {
+func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission dashboards.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error) {
 	acl := []*dashboards.DashboardACLInfoDTO{}
 	adminRole := org.RoleAdmin
-	everyoneWithAdminRole := &dashboards.DashboardACLInfoDTO{DashboardID: g.dashId, UserID: 0, TeamID: 0, Role: &adminRole, Permission: models.PERMISSION_ADMIN}
+	everyoneWithAdminRole := &dashboards.DashboardACLInfoDTO{DashboardID: g.dashId, UserID: 0, TeamID: 0, Role: &adminRole, Permission: dashboards.PERMISSION_ADMIN}
 
 	// validate that duplicate permissions don't exists
 	for _, p := range updatePermissions {
@@ -306,10 +310,11 @@ func (g *dashboardGuardianImpl) GetACL() ([]*dashboards.DashboardACLInfoDTO, err
 	}
 
 	query := dashboards.GetDashboardACLInfoListQuery{DashboardID: g.dashId, OrgID: g.orgId}
-	if err := g.dashboardService.GetDashboardACLInfoList(g.ctx, &query); err != nil {
+	queryResult, err := g.dashboardService.GetDashboardACLInfoList(g.ctx, &query)
+	if err != nil {
 		return nil, err
 	}
-	g.acl = query.Result
+	g.acl = queryResult
 	return g.acl, nil
 }
 
@@ -434,11 +439,11 @@ func (g *FakeDashboardGuardian) CanCreate(_ int64, _ bool) (bool, error) {
 	return g.CanSaveValue, nil
 }
 
-func (g *FakeDashboardGuardian) HasPermission(permission models.PermissionType) (bool, error) {
+func (g *FakeDashboardGuardian) HasPermission(permission dashboards.PermissionType) (bool, error) {
 	return g.HasPermissionValue, nil
 }
 
-func (g *FakeDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error) {
+func (g *FakeDashboardGuardian) CheckPermissionBeforeUpdate(permission dashboards.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error) {
 	return g.CheckPermissionBeforeUpdateValue, g.CheckPermissionBeforeUpdateError
 }
 

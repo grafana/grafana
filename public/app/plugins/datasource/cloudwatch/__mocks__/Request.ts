@@ -24,7 +24,7 @@ export const LogsRequestMock: DataQueryRequest<CloudWatchLogsQuery> = {
   requestId: '',
   interval: '',
   intervalMs: 0,
-  scopedVars: {},
+  scopedVars: { __interval: { value: '20s' } },
   timezone: '',
   app: '',
   startTime: 0,

@@ -7,15 +7,16 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web/webtest"
-	"github.com/stretchr/testify/require"
 )
 
 func TestImportDashboardAPI(t *testing.T) {
@@ -166,10 +167,10 @@ func (s *serviceMock) ImportDashboard(ctx context.Context, req *dashboardimport.
 	return nil, nil
 }
 
-func quotaReached(c *models.ReqContext, target quota.TargetSrv) (bool, error) {
+func quotaReached(c *contextmodel.ReqContext, target quota.TargetSrv) (bool, error) {
 	return true, nil
 }
 
-func quotaNotReached(c *models.ReqContext, target quota.TargetSrv) (bool, error) {
+func quotaNotReached(c *contextmodel.ReqContext, target quota.TargetSrv) (bool, error) {
 	return false, nil
 }

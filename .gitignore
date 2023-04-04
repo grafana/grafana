@@ -79,6 +79,8 @@ public/css/*.min.css
 /devenv/docker-compose.override.yaml
 /devenv/.env
 /devenv/docker/blocks/tempo/tempo-data/
+/devenv/docker/ha-test-unified-alerting/logs/webhook/dumps/
+/devenv/docker/ha-test-unified-alerting/logs/webhook/webhook-listener.log
 
 conf/custom.ini
 /conf/provisioning/**/custom.yaml
@@ -94,6 +96,8 @@ profile.cov
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
 /pkg/extensions/*
+/pkg/build/cmd/artifactspage.go
+/pkg/build/cmd/artifactspage.tmpl.html
 /pkg/server/wireexts_enterprise.go
 /pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
 !/pkg/extensions/main.go
@@ -157,6 +161,8 @@ compilation-stats.json
 /e2e/benchmarks/**/results/*
 /e2e/benchmarks/**/results
 /e2e/build_results.zip
+/e2e/extensions
+/e2e/extensions-suite
 
 # grafana server
 /scripts/grafana-server/server.log
@@ -178,6 +184,9 @@ compilation-stats.json
 public/locales/_build/
 public/locales/*/*.js
 public/locales/*/grafana_old.json
+
+# Auto-generated swagger intermediate file
+public/api-spec.json
 
 deployment_tools_config.json
 

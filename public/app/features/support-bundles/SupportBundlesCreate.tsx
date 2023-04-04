@@ -66,23 +66,25 @@ export const SupportBundlesCreateUnconnected = ({
             {({ register, errors }) => {
               return (
                 <>
-                  {collectors.map((component) => {
-                    return (
-                      <Field key={component.uid}>
-                        <Checkbox
-                          {...register(component.uid)}
-                          label={component.displayName}
-                          id={component.uid}
-                          description={component.description}
-                          defaultChecked={component.default}
-                          disabled={component.includedByDefault}
-                        />
-                      </Field>
-                    );
-                  })}
+                  {[...collectors]
+                    .sort((a, b) => a.displayName.localeCompare(b.displayName))
+                    .map((component) => {
+                      return (
+                        <Field key={component.uid}>
+                          <Checkbox
+                            {...register(component.uid)}
+                            label={component.displayName}
+                            id={component.uid}
+                            description={component.description}
+                            defaultChecked={component.default}
+                            disabled={component.includedByDefault}
+                          />
+                        </Field>
+                      );
+                    })}
                   <HorizontalGroup>
                     <Button type="submit">Create</Button>
-                    <LinkButton href="/admin/support-bundles" variant="secondary">
+                    <LinkButton href="/support-bundles" variant="secondary">
                       Cancel
                     </LinkButton>
                   </HorizontalGroup>

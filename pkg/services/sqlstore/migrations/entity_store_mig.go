@@ -86,7 +86,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"tenant_id", "uid"}, Type: migrator.UniqueIndex},
-			{Cols: []string{"tenant_id", "slug_path"}, Type: migrator.UniqueIndex},
+			//	{Cols: []string{"tenant_id", "slug_path"}, Type: migrator.UniqueIndex},
 		},
 	})
 
@@ -112,9 +112,9 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 			{Name: "parent_grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: true},
 
 			// Address (defined in the body, not resolved, may be invalid and change)
-			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "family", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "type", Type: migrator.DB_NVarchar, Length: 255, Nullable: true},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true},
+			{Name: "id", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true},
 
 			// Runtime calcs (will depend on the system state)
 			{Name: "resolved_ok", Type: migrator.DB_Bool, Nullable: false},
@@ -124,7 +124,8 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"grn"}, Type: migrator.IndexType},
-			{Cols: []string{"kind"}, Type: migrator.IndexType},
+			{Cols: []string{"family"}, Type: migrator.IndexType},
+			{Cols: []string{"type"}, Type: migrator.IndexType},
 			{Cols: []string{"resolved_to"}, Type: migrator.IndexType},
 			{Cols: []string{"parent_grn"}, Type: migrator.IndexType},
 		},
@@ -207,7 +208,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
 	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v04)" // change this when we want to wipe and reset the object tables
+	suffix := " (v22)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("EntityStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'EntityStore init%';
 	`)))

@@ -3,7 +3,7 @@ aliases:
   - ../../data-sources/aws-cloudwatch/query-editor/
   - ../cloudwatch/
   - ./
-description: Guide for using the AWS CloudWatch data source's query editor
+description: Guide for using the Amazon CloudWatch data source's query editor
 keywords:
   - grafana
   - aws
@@ -11,11 +11,11 @@ keywords:
   - guide
   - queries
 menuTitle: Query editor
-title: AWS CloudWatch query editor
+title: Amazon CloudWatch query editor
 weight: 300
 ---
 
-# AWS CloudWatch query editor
+# Amazon CloudWatch query editor
 
 This topic explains querying specific to the CloudWatch data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
@@ -217,15 +217,6 @@ You can also write queries returning time series data by using the [`stats` comm
 When making `stats` queries in [Explore]({{< relref "../../../explore/" >}}), make sure you are in Metrics Explore mode.
 
 {{< figure src="/static/img/docs/v70/explore-mode-switcher.png" max-width="500px" class="docs-image--right" caption="Explore mode switcher" >}}
-
-## Cross-account observability
-
-The CloudWatch plugin provides the ability to monitor and troubleshoot applications that span across multiple accounts within a region. Using cross-account observability, you can seamlessly search, visualize and analyze metrics and logs, without having to worry about account boundaries.
-
-> **Note:** This feature is currently behind the `cloudWatchCrossAccountQuerying` feature toggle.
-
-> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../../../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
-> Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 ### Getting started
 

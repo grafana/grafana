@@ -12,9 +12,11 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util/converter"
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/util/converter"
 )
 
 type LokiAPI struct {
@@ -25,6 +27,7 @@ type LokiAPI struct {
 
 type RawLokiResponse struct {
 	Body     []byte
+	Status   int
 	Encoding string
 }
 
@@ -85,21 +88,45 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 		return nil, err
 	}
 
-	if query.VolumeQuery {
-		req.Header.Set("X-Query-Tags", "Source=logvolhist")
+	if query.SupportingQueryType != SupportingQueryNone {
+		value := getSupportingQueryHeaderValue(req, query.SupportingQueryType)
+		if value != "" {
+			req.Header.Set("X-Query-Tags", "Source="+value)
+		}
 	}
 
 	return req, nil
+}
+
+type lokiResponseError struct {
+	Message string `json:"message"`
+	TraceID string `json:"traceID,omitempty"`
 }
 
 type lokiError struct {
 	Message string
 }
 
+func makeLokiError(bytes []byte) error {
+	var data lokiError
+	err := json.Unmarshal(bytes, &data)
+	if err != nil {
+		// we were unable to convert the bytes to JSON, we return the whole text
+		return fmt.Errorf("%v", string(bytes))
+	}
+
+	if data.Message == "" {
+		// we got no usable error message, we return the whole text
+		return fmt.Errorf("%v", string(bytes))
+	}
+
+	return fmt.Errorf("%v", data.Message)
+}
+
 // we know there is an error,
 // based on the http-response-body
 // we have to make an informative error-object
-func makeLokiError(body io.ReadCloser) error {
+func readLokiError(body io.ReadCloser) error {
 	var buf bytes.Buffer
 	_, err := buf.ReadFrom(body)
 	if err != nil {
@@ -118,21 +145,7 @@ func makeLokiError(body io.ReadCloser) error {
 	// - we take the value of the field "message"
 	// - if any of these steps fail, or if "message" is empty, we return the whole text
 
-	var data lokiError
-	err = json.Unmarshal(bytes, &data)
-	if err != nil {
-		// we were unable to convert the bytes to JSON, we return the whole text
-		return fmt.Errorf("%v", string(bytes))
-	}
-
-	errorMessage := data.Message
-
-	if errorMessage == "" {
-		// we got no usable error message, we return the whole text
-		return fmt.Errorf("%v", string(bytes))
-	}
-
-	return fmt.Errorf("%v", errorMessage)
+	return makeLokiError(bytes)
 }
 
 func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames, error) {
@@ -153,7 +166,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames
 	}()
 
 	if resp.StatusCode/100 != 2 {
-		return nil, makeLokiError(resp.Body)
+		return nil, readLokiError(resp.Body)
 	}
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
@@ -207,8 +220,9 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 		}
 	}()
 
-	if resp.StatusCode/100 != 2 {
-		return RawLokiResponse{}, makeLokiError(resp.Body)
+	// server errors are handled by the plugin-proxy to hide the error message
+	if resp.StatusCode/100 == 5 {
+		return RawLokiResponse{}, readLokiError(resp.Body)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -216,10 +230,39 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 		return RawLokiResponse{}, err
 	}
 
-	encodedBytes := RawLokiResponse{
+	// client errors are passed as a json struct to the client
+	if resp.StatusCode/100 != 2 {
+		lokiResponseErr := lokiResponseError{Message: makeLokiError(body).Error()}
+		traceID := tracing.TraceIDFromContext(ctx, false)
+		if traceID != "" {
+			lokiResponseErr.TraceID = traceID
+		}
+		body, err = json.Marshal(lokiResponseErr)
+		if err != nil {
+			return RawLokiResponse{}, err
+		}
+	}
+
+	rawLokiResponse := RawLokiResponse{
 		Body:     body,
+		Status:   resp.StatusCode,
 		Encoding: resp.Header.Get("Content-Encoding"),
 	}
 
-	return encodedBytes, nil
+	return rawLokiResponse, nil
+}
+
+func getSupportingQueryHeaderValue(req *http.Request, supportingQueryType SupportingQueryType) string {
+	value := ""
+	switch supportingQueryType {
+	case SupportingQueryLogsVolume:
+		value = "logvolhist"
+	case SupportingQueryLogsSample:
+		value = "logsample"
+	case SupportingQueryDataSample:
+		value = "datasample"
+	default: //ignore
+	}
+
+	return value
 }

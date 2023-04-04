@@ -14,7 +14,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -500,7 +500,7 @@ func TestAMConfigMigration(t *testing.T) {
 	}
 }
 
-// TestDashAlertMigration tests the execution of the main DashAlertMigration specifically for migrations of alerts.
+// TestDashAlertMigration tests the execution of the main DashAlertMigration specifically for migrations of models.
 func TestDashAlertMigration(t *testing.T) {
 	// Run initial migration to have a working DB.
 	x := setupTestDB(t)
@@ -573,6 +573,43 @@ func TestDashAlertMigration(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("when folder is missing put alert in General folder", func(t *testing.T) {
+		o := createOrg(t, 1)
+		folder1 := createDashboard(t, 1, o.ID, "folder-1")
+		folder1.IsFolder = true
+		dash1 := createDashboard(t, 3, o.ID, "dash1")
+		dash1.FolderID = folder1.ID
+		dash2 := createDashboard(t, 4, o.ID, "dash2")
+		dash2.FolderID = 22 // missing folder
+
+		a1 := createAlert(t, o.ID, dash1.ID, int64(1), "alert-1", []string{})
+		a2 := createAlert(t, o.ID, dash2.ID, int64(1), "alert-2", []string{})
+
+		_, err := x.Insert(o, folder1, dash1, dash2, a1, a2)
+		require.NoError(t, err)
+
+		runDashAlertMigrationTestRun(t, x)
+
+		rules := getAlertRules(t, x, o.ID)
+		require.Len(t, rules, 2)
+
+		var generalFolder dashboards.Dashboard
+		_, err = x.Table(&dashboards.Dashboard{}).Where("title = ? AND org_id = ?", ualert.GENERAL_FOLDER, o.ID).Get(&generalFolder)
+		require.NoError(t, err)
+
+		require.NotNil(t, generalFolder)
+
+		for _, rule := range rules {
+			var expectedFolder dashboards.Dashboard
+			if rule.Title == a1.Name {
+				expectedFolder = *folder1
+			} else {
+				expectedFolder = generalFolder
+			}
+			require.Equal(t, expectedFolder.UID, rule.NamespaceUID)
+		}
+	})
 }
 
 const (
@@ -619,8 +656,8 @@ func createAlertNotificationWithReminder(t *testing.T, orgId int64, uid string, 
 	}
 
 	return &models.AlertNotification{
-		OrgId:                 orgId,
-		Uid:                   uid,
+		OrgID:                 orgId,
+		UID:                   uid,
 		Name:                  uid, // Same as uid to make testing easier.
 		Type:                  channelType,
 		DisableResolveMessage: false,
@@ -656,9 +693,9 @@ func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, n
 	}
 
 	return &models.Alert{
-		OrgId:        orgId,
-		DashboardId:  dashboardId,
-		PanelId:      panelsId,
+		OrgID:        orgId,
+		DashboardID:  dashboardId,
+		PanelID:      panelsId,
 		Name:         name,
 		Message:      "message",
 		Frequency:    int64(60),
@@ -688,9 +725,9 @@ func createDashboard(t *testing.T, id int64, orgId int64, uid string) *dashboard
 func createDatasource(t *testing.T, id int64, orgId int64, uid string) *datasources.DataSource {
 	t.Helper()
 	return &datasources.DataSource{
-		Id:      id,
-		OrgId:   orgId,
-		Uid:     uid,
+		ID:      id,
+		OrgID:   orgId,
+		UID:     uid,
 		Created: now,
 		Updated: now,
 		Name:    uid, // Not tested, needed to satisfy contraint.

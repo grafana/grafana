@@ -23,12 +23,16 @@ export const NotificationsStep = () => {
   return (
     <RuleEditorSection
       stepNo={type === RuleFormType.cloudRecording ? 4 : 5}
-      title="Notifications"
-      description="Grafana handles the notifications for alerts by assigning labels to alerts. These labels connect alerts to contact points and silence alert instances that have matching labels."
+      title={type === RuleFormType.cloudRecording ? 'Labels' : 'Notifications'}
+      description={
+        type === RuleFormType.cloudRecording
+          ? 'Add labels to help you better manage your recording rules'
+          : 'Grafana handles the notifications for alerts by assigning labels to alerts. These labels connect alerts to contact points and silence alert instances that have matching labels.'
+      }
     >
       <div className={styles.contentWrapper}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {!hasLabelsDefined && (
+          {!hasLabelsDefined && type !== RuleFormType.cloudRecording && (
             <Card className={styles.card}>
               <Card.Heading>Root route – default for all alerts</Card.Heading>
               <Card.Description>

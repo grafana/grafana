@@ -3,14 +3,17 @@ package instrumentation
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	plog "github.com/grafana/grafana/pkg/plugins/log"
 )
 
 var (
@@ -18,34 +21,42 @@ var (
 		Namespace: "grafana",
 		Name:      "plugin_request_total",
 		Help:      "The total amount of plugin requests",
-	}, []string{"plugin_id", "endpoint", "status"})
+	}, []string{"plugin_id", "endpoint", "status", "target"})
 
 	pluginRequestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_duration_milliseconds",
 		Help:      "Plugin request duration",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
-	}, []string{"plugin_id", "endpoint"})
+	}, []string{"plugin_id", "endpoint", "target"})
 )
 
-var logger log.Logger = log.New("plugin.instrumentation")
+const (
+	statusOK        = "ok"
+	statusError     = "error"
+	statusCancelled = "cancelled"
+)
+
+var logger = plog.New("plugin.instrumentation")
 
 // instrumentPluginRequest instruments success rate and latency of `fn`
-func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *backend.PluginContext, endpoint string, fn func() error) error {
-	status := "ok"
+func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.PluginContext, endpoint string, fn func() error) error {
+	status := statusOK
 
 	start := time.Now()
-
 	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
 	err := fn()
 	if err != nil {
-		status = "error"
+		status = statusError
+		if errors.Is(err, context.Canceled) {
+			status = statusCancelled
+		}
 	}
 
 	elapsed := time.Since(start)
-	pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint).Observe(float64(elapsed / time.Millisecond))
-	pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status).Inc()
+	pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, string(cfg.Target)).Observe(float64(elapsed / time.Millisecond))
+	pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status, string(cfg.Target)).Inc()
 
 	if cfg.LogDatasourceRequests {
 		logParams := []interface{}{
@@ -71,28 +82,37 @@ func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *ba
 			logParams = append(logParams, "dsUID", pluginCtx.DataSourceInstanceSettings.UID)
 		}
 
+		if status == statusError {
+			logParams = append(logParams, "error", err)
+		}
+
 		logger.Info("Plugin Request Completed", logParams...)
 	}
 
 	return err
 }
 
+type Cfg struct {
+	LogDatasourceRequests bool
+	Target                backendplugin.Target
+}
+
 // InstrumentCollectMetrics instruments collectMetrics.
-func InstrumentCollectMetrics(ctx context.Context, req *backend.PluginContext, cfg *config.Cfg, fn func() error) error {
+func InstrumentCollectMetrics(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
 	return instrumentPluginRequest(ctx, cfg, req, "collectMetrics", fn)
 }
 
 // InstrumentCheckHealthRequest instruments checkHealth.
-func InstrumentCheckHealthRequest(ctx context.Context, req *backend.PluginContext, cfg *config.Cfg, fn func() error) error {
+func InstrumentCheckHealthRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
 	return instrumentPluginRequest(ctx, cfg, req, "checkHealth", fn)
 }
 
 // InstrumentCallResourceRequest instruments callResource.
-func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginContext, cfg *config.Cfg, fn func() error) error {
+func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
 	return instrumentPluginRequest(ctx, cfg, req, "callResource", fn)
 }
 
 // InstrumentQueryDataRequest instruments success rate and latency of query data requests.
-func InstrumentQueryDataRequest(ctx context.Context, req *backend.PluginContext, cfg *config.Cfg, fn func() error) error {
+func InstrumentQueryDataRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
 	return instrumentPluginRequest(ctx, cfg, req, "queryData", fn)
 }

@@ -19,11 +19,12 @@ func (hs *HTTPServer) populateDashboardsByID(ctx context.Context, dashboardByIDs
 
 	if len(dashboardByIDs) > 0 {
 		dashboardQuery := dashboards.GetDashboardsQuery{DashboardIDs: dashboardByIDs}
-		if err := hs.DashboardService.GetDashboards(ctx, &dashboardQuery); err != nil {
+		dashboardQueryResult, err := hs.DashboardService.GetDashboards(ctx, &dashboardQuery)
+		if err != nil {
 			return result, err
 		}
 
-		for _, item := range dashboardQuery.Result {
+		for _, item := range dashboardQueryResult {
 			result = append(result, dtos.PlaylistDashboard{
 				Id:    item.ID,
 				Slug:  item.Slug,
@@ -51,8 +52,9 @@ func (hs *HTTPServer) populateDashboardsByTag(ctx context.Context, orgID int64, 
 			OrgId:        orgID,
 		}
 
-		if err := hs.SearchService.SearchHandler(ctx, &searchQuery); err == nil {
-			for _, item := range searchQuery.Result {
+		hits, err := hs.SearchService.SearchHandler(ctx, &searchQuery)
+		if err == nil {
+			for _, item := range hits {
 				result = append(result, dtos.PlaylistDashboard{
 					Id:    item.ID,
 					Slug:  item.Slug,
@@ -77,7 +79,7 @@ func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, s
 		return result, err
 	}
 
-	playlistItems := *dto.Items
+	playlistItems := dto.Items
 
 	dashboardByIDs := make([]int64, 0)
 	dashboardByTag := make([]string, 0)

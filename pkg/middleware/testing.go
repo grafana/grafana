@@ -11,12 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -27,7 +27,7 @@ import (
 type scenarioContext struct {
 	t                    *testing.T
 	m                    *web.Mux
-	context              *models.ReqContext
+	context              *contextmodel.ReqContext
 	resp                 *httptest.ResponseRecorder
 	apiKey               string
 	authHeader           string
@@ -80,7 +80,7 @@ func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
 	req, err := http.NewRequest(method, url, nil)
 	require.NoError(sc.t, err)
 
-	reqCtx := &models.ReqContext{
+	reqCtx := &contextmodel.ReqContext{
 		Context: web.FromContext(req.Context()),
 	}
 	sc.req = req.WithContext(ctxkey.Set(req.Context(), reqCtx))
@@ -102,7 +102,7 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 	req.URL.RawQuery = q.Encode()
 	require.NoError(sc.t, err)
 
-	reqCtx := &models.ReqContext{
+	reqCtx := &contextmodel.ReqContext{
 		Context: web.FromContext(req.Context()),
 	}
 	sc.req = req.WithContext(ctxkey.Set(req.Context(), reqCtx))
@@ -135,6 +135,7 @@ func (sc *scenarioContext) exec() {
 			Value: sc.tokenSessionCookie,
 		})
 	}
+
 	sc.m.ServeHTTP(sc.resp, sc.req)
 
 	if sc.resp.Header().Get("Content-Type") == "application/json; charset=UTF-8" {
@@ -147,4 +148,4 @@ func (sc *scenarioContext) exec() {
 }
 
 type scenarioFunc func(t *testing.T, c *scenarioContext)
-type handlerFunc func(c *models.ReqContext)
+type handlerFunc func(c *contextmodel.ReqContext)

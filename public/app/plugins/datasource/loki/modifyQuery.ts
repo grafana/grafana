@@ -22,7 +22,7 @@ import { unescapeLabelValue } from './languageUtils';
 import { LokiQueryModeller } from './querybuilder/LokiQueryModeller';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 
-type Position = { from: number; to: number };
+export type Position = { from: number; to: number };
 /**
  * Adds label filter to existing query. Useful for query modification for example for ad hoc filters.
  *
@@ -139,7 +139,7 @@ export function removeCommentsFromQuery(query: string): string {
  * selector.
  * @param query
  */
-function getStreamSelectorPositions(query: string): Position[] {
+export function getStreamSelectorPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({

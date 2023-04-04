@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
 // swagger:route POST /admin/provisioning/dashboards/reload admin_provisioning adminProvisioningReloadDashboards
@@ -23,7 +23,7 @@ import (
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AdminProvisioningReloadDashboards(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminProvisioningReloadDashboards(c *contextmodel.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionDashboards(c.Req.Context())
 	if err != nil && !errors.Is(err, context.Canceled) {
 		return response.Error(500, "", err)
@@ -46,7 +46,7 @@ func (hs *HTTPServer) AdminProvisioningReloadDashboards(c *models.ReqContext) re
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AdminProvisioningReloadDatasources(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminProvisioningReloadDatasources(c *contextmodel.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionDatasources(c.Req.Context())
 	if err != nil {
 		return response.Error(500, "", err)
@@ -69,7 +69,7 @@ func (hs *HTTPServer) AdminProvisioningReloadDatasources(c *models.ReqContext) r
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AdminProvisioningReloadPlugins(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminProvisioningReloadPlugins(c *contextmodel.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionPlugins(c.Req.Context())
 	if err != nil {
 		return response.Error(500, "Failed to reload plugins config", err)
@@ -92,7 +92,7 @@ func (hs *HTTPServer) AdminProvisioningReloadPlugins(c *models.ReqContext) respo
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AdminProvisioningReloadNotifications(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminProvisioningReloadNotifications(c *contextmodel.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionNotifications(c.Req.Context())
 	if err != nil {
 		return response.Error(500, "", err)
@@ -100,7 +100,7 @@ func (hs *HTTPServer) AdminProvisioningReloadNotifications(c *models.ReqContext)
 	return response.Success("Notifications config reloaded")
 }
 
-func (hs *HTTPServer) AdminProvisioningReloadAlerting(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminProvisioningReloadAlerting(c *contextmodel.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionAlerting(c.Req.Context())
 	if err != nil {
 		return response.Error(500, "", err)

@@ -16,7 +16,6 @@ export * from './store';
 export * from './ldap';
 export * from './appEvent';
 export * from './query';
-export * from './preferences';
 export * from './accessControl';
 export * from './supportBundles';
 

@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -29,29 +28,29 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 		t.Run("user ACL", func(t *testing.T) {
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{User: true, Permission: models.PERMISSION_VIEW},
-				Search{UserFromACL: true, RequiredPermission: models.PERMISSION_VIEW},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldFind,
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{User: true, Permission: models.PERMISSION_VIEW},
-				Search{UserFromACL: true, RequiredPermission: models.PERMISSION_EDIT},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{User: true, Permission: models.PERMISSION_EDIT},
-				Search{UserFromACL: true, RequiredPermission: models.PERMISSION_EDIT},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_EDIT},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldFind,
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{User: true, Permission: models.PERMISSION_VIEW},
-				Search{RequiredPermission: models.PERMISSION_VIEW},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldNotFind,
 			)
 		})
@@ -59,29 +58,29 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 		t.Run("role ACL", func(t *testing.T) {
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Role: org.RoleViewer, Permission: models.PERMISSION_VIEW},
-				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: models.PERMISSION_VIEW},
+				&DashboardPermission{Role: org.RoleViewer, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldFind,
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Role: org.RoleViewer, Permission: models.PERMISSION_VIEW},
-				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: models.PERMISSION_EDIT},
+				&DashboardPermission{Role: org.RoleViewer, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Role: org.RoleEditor, Permission: models.PERMISSION_VIEW},
-				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: models.PERMISSION_VIEW},
+				&DashboardPermission{Role: org.RoleEditor, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldNotFind,
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Role: org.RoleEditor, Permission: models.PERMISSION_VIEW},
-				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: models.PERMISSION_VIEW},
+				&DashboardPermission{Role: org.RoleEditor, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldNotFind,
 			)
 		})
@@ -89,29 +88,29 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 		t.Run("team ACL", func(t *testing.T) {
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Team: true, Permission: models.PERMISSION_VIEW},
-				Search{UserFromACL: true, RequiredPermission: models.PERMISSION_VIEW},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldFind,
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Team: true, Permission: models.PERMISSION_VIEW},
-				Search{UserFromACL: true, RequiredPermission: models.PERMISSION_EDIT},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Team: true, Permission: models.PERMISSION_EDIT},
-				Search{UserFromACL: true, RequiredPermission: models.PERMISSION_EDIT},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_EDIT},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldFind,
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Team: true, Permission: models.PERMISSION_EDIT},
-				Search{UserFromACL: false, RequiredPermission: models.PERMISSION_EDIT},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_EDIT},
+				Search{UserFromACL: false, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
 			)
 		})
@@ -120,28 +119,28 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 			test(t,
 				DashboardProps{},
 				nil,
-				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: models.PERMISSION_VIEW},
+				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldNotFind,
 			)
 
 			test(t,
 				DashboardProps{OrgId: -1},
 				nil,
-				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: models.PERMISSION_VIEW},
+				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldFind,
 			)
 
 			test(t,
 				DashboardProps{OrgId: -1},
 				nil,
-				Search{OrgId: -1, UsersOrgRole: org.RoleEditor, RequiredPermission: models.PERMISSION_EDIT},
+				Search{OrgId: -1, UsersOrgRole: org.RoleEditor, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldFind,
 			)
 
 			test(t,
 				DashboardProps{OrgId: -1},
 				nil,
-				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: models.PERMISSION_EDIT},
+				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
 			)
 		})
@@ -159,13 +158,13 @@ type DashboardPermission struct {
 	User       bool
 	Team       bool
 	Role       org.RoleType
-	Permission models.PermissionType
+	Permission dashboards.PermissionType
 }
 
 type Search struct {
 	UsersOrgRole       org.RoleType
 	UserFromACL        bool
-	RequiredPermission models.PermissionType
+	RequiredPermission dashboards.PermissionType
 	OrgId              int64
 }
 
@@ -218,7 +217,8 @@ func createDummyUser(t *testing.T, sqlStore DB) *user.User {
 	err := sqlStore.WithDbSession(context.Background(), func(sess *Session) error {
 		sess.UseBool("is_admin")
 		var err error
-		id, err = sess.Insert(usr)
+		_, err = sess.Insert(usr)
+		id = usr.ID
 		return err
 	})
 	require.NoError(t, err)
@@ -401,11 +401,11 @@ func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID i
 			item.Created = time.Now()
 			item.Updated = time.Now()
 			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-				return models.ErrDashboardACLInfoMissing
+				return dashboards.ErrDashboardACLInfoMissing
 			}
 
 			if item.DashboardID == 0 {
-				return models.ErrDashboardPermissionDashboardEmpty
+				return dashboards.ErrDashboardPermissionDashboardEmpty
 			}
 
 			sess.Nullable("user_id", "team_id")

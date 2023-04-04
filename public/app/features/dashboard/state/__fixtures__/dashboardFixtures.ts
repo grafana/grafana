@@ -22,12 +22,12 @@ export function createDashboardModelFixture(
     editable: true,
     graphTooltip: defaultDashboardCursorSync,
     schemaVersion: 1,
-    revision: 1,
     style: 'dark',
+    timezone: '',
     ...dashboardInput,
   };
 
-  return new DashboardModel(dashboardJson, meta, getVariablesFromState);
+  return new DashboardModel(dashboardJson, meta, { getVariablesFromState });
 }
 
 export function createPanelJSONFixture(panelInput: Partial<Panel | GraphPanel | RowPanel> = {}): Panel {

@@ -2,6 +2,10 @@
 //  
 //  Frame[0] {
 //      "type": "search-results",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "count": 1
 //      }
@@ -13,7 +17,7 @@
 //  | Labels:        | Labels:        | Labels:        | Labels:          | Labels:        | Labels:                  | Labels:                 | Labels:        |
 //  | Type: []string | Type: []string | Type: []string | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []json.RawMessage | Type: []string |
 //  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
-//  | dashboard      | 1              | heat-torkel    |                  | /pfix/d/1/     | null                     | []                      |                |
+//  | dashboard      | 1              | heat-torkel    |                  | /pfix/d/1/     | null                     | []                      | general        |
 //  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
 //  
 //  
@@ -26,6 +30,10 @@
         "name": "Query results",
         "meta": {
           "type": "search-results",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "count": 1
           }
@@ -122,7 +130,7 @@
             []
           ],
           [
-            ""
+            "general"
           ]
         ]
       }

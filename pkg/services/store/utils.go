@@ -3,7 +3,7 @@ package store
 import (
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -32,7 +32,7 @@ func splitFirstSegment(path string) (string, string) {
 	return path, ""
 }
 
-func getPathAndScope(c *models.ReqContext) (string, string) {
+func getPathAndScope(c *contextmodel.ReqContext) (string, string) {
 	params := web.Params(c.Req)
 	path := params["*"]
 	if path == "" {

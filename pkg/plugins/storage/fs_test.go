@@ -157,7 +157,7 @@ func TestExtractFiles(t *testing.T) {
 		// File in zip has permission 644
 		fileInfo, err = os.Stat(pluginsDir + "/grafana-simple-json-datasource/simple-plugin_windows_amd64.exe")
 		require.NoError(t, err)
-		require.Equal(t, "-rw-r--r--", fileInfo.Mode().String())
+		require.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 
 		// File in zip has permission 755
 		fileInfo, err = os.Stat(pluginsDir + "/grafana-simple-json-datasource/non-plugin-binary")

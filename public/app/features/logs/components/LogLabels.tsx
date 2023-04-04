@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -11,7 +11,7 @@ interface Props {
   labels: Labels;
 }
 
-export const LogLabels: FunctionComponent<Props> = ({ labels }) => {
+export const LogLabels = ({ labels }: Props) => {
   const styles = useStyles2(getStyles);
   const displayLabels = Object.keys(labels).filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label));
 

@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -78,14 +79,17 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 
-	dashboardService := dashboardservice.ProvideDashboardService(
-		cfg, dashboardStore, dashboardStore, nil,
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+
+	dashboardService := dashboardservice.ProvideDashboardServiceImpl(
+		cfg, dashboardStore, folderStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
+		foldertest.NewFakeService(),
 	)
 
 	tracer := tracing.InitializeTracerForTest()
 	bus := bus.ProvideBus(tracer)
-	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, dashboardStore, nil, features, folderPermissions, nil)
+	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, nil, features)
 
 	ng, err := ngalert.ProvideService(
 		cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, quotatest.New(false, nil),
@@ -137,7 +141,7 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 			Data: []models.AlertQuery{
 				{
 					Model: json.RawMessage(`{
-										"datasourceUid": "-100",
+										"datasourceUid": "__expr__",
 										"type":"math",
 										"expression":"2 + 2 > 1"
 									}`),
@@ -164,11 +168,11 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 		NamespaceUIDs: []string{folderUID},
 		RuleGroup:     ruleGroup,
 	}
-	err = dbstore.ListAlertRules(ctx, &q)
+	ruleList, err := dbstore.ListAlertRules(ctx, &q)
 	require.NoError(t, err)
-	require.NotEmpty(t, q.Result)
+	require.NotEmpty(t, ruleList)
 
-	rule := q.Result[0]
+	rule := ruleList[0]
 	t.Logf("alert definition: %v with title: %q interval: %d folder: %s created", rule.GetKey(), rule.Title, rule.IntervalSeconds, folderUID)
 	return rule
 }

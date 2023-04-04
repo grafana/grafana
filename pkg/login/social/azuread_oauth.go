@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/go-jose/go-jose/v3/jwt"
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/org"
-
-	"golang.org/x/oauth2"
-	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 type SocialAzureAD struct {
@@ -261,4 +261,14 @@ func groupsGraphAPIURL(claims azureClaims, token *oauth2.Token) (string, error) 
 		logger.Debug(fmt.Sprintf("handcrafted endpoint to fetch groups: %s", endpoint))
 	}
 	return endpoint, nil
+}
+
+func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
+	bf.WriteString("## AzureAD specific configuration\n\n")
+	bf.WriteString("```ini\n")
+	bf.WriteString(fmt.Sprintf("allowed_groups = %v\n", s.allowedGroups))
+	bf.WriteString(fmt.Sprintf("forceUseGraphAPI = %v\n", s.forceUseGraphAPI))
+	bf.WriteString("```\n\n")
+
+	return s.SocialBase.SupportBundleContent(bf)
 }

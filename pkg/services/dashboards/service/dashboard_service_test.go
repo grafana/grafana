@@ -7,16 +7,17 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestDashboardService(t *testing.T) {
@@ -24,13 +25,13 @@ func TestDashboardService(t *testing.T) {
 		fakeStore := dashboards.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
 
-		folderStore := dashboards.NewFakeFolderStore(t)
+		folderSvc := foldertest.NewFakeService()
 
 		service := &DashboardServiceImpl{
 			cfg:                setting.NewCfg(),
 			log:                log.New("test.logger"),
 			dashboardStore:     &fakeStore,
-			folderStore:        folderStore,
+			folderService:      folderSvc,
 			dashAlertExtractor: &dummyDashAlertExtractor{},
 		}
 
@@ -119,7 +120,7 @@ func TestDashboardService(t *testing.T) {
 				if origAlertingEnabledSet {
 					origAlertingEnabledVal = *setting.AlertingEnabled
 				}
-				setting.AlertingEnabled = pointer.Bool(true)
+				setting.AlertingEnabled = util.Pointer(true)
 				t.Cleanup(func() {
 					if !origAlertingEnabledSet {
 						setting.AlertingEnabled = nil
@@ -229,13 +230,11 @@ func TestDashboardService(t *testing.T) {
 		})
 
 		t.Run("Count dashboards in folder", func(t *testing.T) {
-			folderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 			fakeStore.On("CountDashboardsInFolder", mock.Anything, mock.AnythingOfType("*dashboards.CountDashboardsInFolderRequest")).Return(int64(3), nil)
-
+			folderSvc.ExpectedFolder = &folder.Folder{ID: 1}
 			// set up a ctx with signed in user
-			ctx := context.Background()
 			usr := &user.SignedInUser{UserID: 1}
-			ctx = appcontext.WithUser(ctx, usr)
+			ctx := appcontext.WithUser(context.Background(), usr)
 
 			count, err := service.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderQuery{FolderUID: "i am a folder"})
 			require.NoError(t, err)
@@ -260,22 +259,22 @@ func TestDashboardService(t *testing.T) {
 
 	t.Run("When org user is deleted", func(t *testing.T) {
 		fakeStore := dashboards.FakeDashboardStore{}
-		fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil)
+		fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil, nil)
 		t.Run("Should remove dependent permissions for deleted org user", func(t *testing.T) {
-			permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: 1, Result: nil}
+			permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: 1}
 
-			err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
+			permQueryResult, err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
 			require.NoError(t, err)
 
-			require.Equal(t, len(permQuery.Result), 0)
+			require.Equal(t, len(permQueryResult), 0)
 		})
 
 		t.Run("Should not remove dashboard permissions for same user in another org", func(t *testing.T) {
 			fakeStore := dashboards.FakeDashboardStore{}
-			fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil)
+			fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil, nil)
 			permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 2, OrgID: 3}
 
-			err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
+			_, err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
 			require.NoError(t, err)
 		})
 	})

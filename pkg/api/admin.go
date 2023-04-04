@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -25,7 +25,7 @@ import (
 // 200: adminGetSettingsResponse
 // 401: unauthorisedError
 // 403: forbiddenError
-func (hs *HTTPServer) AdminGetSettings(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminGetSettings(c *contextmodel.ReqContext) response.Response {
 	settings, err := hs.getAuthorizedSettings(c.Req.Context(), c.SignedInUser, hs.SettingsProvider.Current())
 	if err != nil {
 		return response.Error(http.StatusForbidden, "Failed to authorize settings", err)
@@ -45,14 +45,13 @@ func (hs *HTTPServer) AdminGetSettings(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AdminGetStats(c *models.ReqContext) response.Response {
-	statsQuery := stats.GetAdminStatsQuery{}
-
-	if err := hs.statsService.GetAdminStats(c.Req.Context(), &statsQuery); err != nil {
+func (hs *HTTPServer) AdminGetStats(c *contextmodel.ReqContext) response.Response {
+	adminStats, err := hs.statsService.GetAdminStats(c.Req.Context(), &stats.GetAdminStatsQuery{})
+	if err != nil {
 		return response.Error(500, "Failed to get admin stats from database", err)
 	}
 
-	return response.JSON(http.StatusOK, statsQuery.Result)
+	return response.JSON(http.StatusOK, adminStats)
 }
 
 func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *user.SignedInUser, bag setting.SettingsBag) (setting.SettingsBag, error) {

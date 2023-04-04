@@ -7,13 +7,14 @@ import (
 	"testing"
 	"time"
 
-	grafana_models "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
+
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestCalculateChanges(t *testing.T) {
@@ -23,7 +24,11 @@ func TestCalculateChanges(t *testing.T) {
 		fakeStore := fakes.NewRuleStore(t)
 
 		groupKey := models.GenerateGroupKey(orgId)
-		submitted := models.GenerateAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withOrgID(orgId), simulateSubmitted, withoutUID))
+		rules := models.GenerateAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withOrgID(orgId), simulateSubmitted, withoutUID))
+		submitted := make([]*models.AlertRuleWithOptionals, 0, len(rules))
+		for _, rule := range rules {
+			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule})
+		}
 
 		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, submitted)
 		require.NoError(t, err)
@@ -50,7 +55,7 @@ func TestCalculateChanges(t *testing.T) {
 		fakeStore := fakes.NewRuleStore(t)
 		fakeStore.PutRule(context.Background(), inDatabase...)
 
-		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, make([]*models.AlertRule, 0))
+		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, make([]*models.AlertRuleWithOptionals, 0))
 		require.NoError(t, err)
 
 		require.Equal(t, groupKey, changes.GroupKey)
@@ -69,7 +74,11 @@ func TestCalculateChanges(t *testing.T) {
 	t.Run("should detect alerts that needs to be updated", func(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgId)
 		inDatabaseMap, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withGroupKey(groupKey)))
-		submittedMap, submitted := models.GenerateUniqueAlertRules(len(inDatabase), models.AlertRuleGen(simulateSubmitted, withGroupKey(groupKey), withUIDs(inDatabaseMap)))
+		submittedMap, rules := models.GenerateUniqueAlertRules(len(inDatabase), models.AlertRuleGen(simulateSubmitted, withGroupKey(groupKey), withUIDs(inDatabaseMap)))
+		submitted := make([]*models.AlertRuleWithOptionals, 0, len(rules))
+		for _, rule := range rules {
+			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule})
+		}
 
 		fakeStore := fakes.NewRuleStore(t)
 		fakeStore.PutRule(context.Background(), inDatabase...)
@@ -97,7 +106,7 @@ func TestCalculateChanges(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgId)
 		_, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withGroupKey(groupKey)))
 
-		submitted := make([]*models.AlertRule, 0, len(inDatabase))
+		submitted := make([]*models.AlertRuleWithOptionals, 0, len(inDatabase))
 		for _, rule := range inDatabase {
 			r := models.CopyRule(rule)
 
@@ -106,7 +115,7 @@ func TestCalculateChanges(t *testing.T) {
 			r.Version = int64(rand.Int31())
 			r.Updated = r.Updated.Add(1 * time.Minute)
 
-			submitted = append(submitted, r)
+			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *r})
 		}
 
 		fakeStore := fakes.NewRuleStore(t)
@@ -170,14 +179,14 @@ func TestCalculateChanges(t *testing.T) {
 				expected := models.AlertRuleGen(simulateSubmitted, testCase.mutator)()
 				expected.UID = dbRule.UID
 				submitted := *expected
-				changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{&submitted})
+				changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: submitted}})
 				require.NoError(t, err)
 				require.Len(t, changes.Update, 1)
 				ch := changes.Update[0]
 				require.Equal(t, ch.Existing, dbRule)
-				fixed := *expected
+				fixed := models.AlertRuleWithOptionals{AlertRule: *expected}
 				models.PatchPartialAlertRule(dbRule, &fixed)
-				require.Equal(t, fixed, *ch.New)
+				require.Equal(t, fixed.AlertRule, *ch.New)
 			})
 		}
 	})
@@ -194,11 +203,15 @@ func TestCalculateChanges(t *testing.T) {
 
 		groupKey := models.AlertRuleGroupKey{
 			OrgID:        orgId,
-			NamespaceUID: namespace.Uid,
+			NamespaceUID: namespace.UID,
 			RuleGroup:    groupName,
 		}
 
-		submittedMap, submitted := models.GenerateUniqueAlertRules(rand.Intn(len(inDatabase)-5)+5, models.AlertRuleGen(simulateSubmitted, withGroupKey(groupKey), withUIDs(inDatabaseMap)))
+		submittedMap, rules := models.GenerateUniqueAlertRules(rand.Intn(len(inDatabase)-5)+5, models.AlertRuleGen(simulateSubmitted, withGroupKey(groupKey), withUIDs(inDatabaseMap)))
+		submitted := make([]*models.AlertRuleWithOptionals, 0, len(rules))
+		for _, rule := range rules {
+			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule})
+		}
 
 		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, submitted)
 		require.NoError(t, err)
@@ -227,7 +240,7 @@ func TestCalculateChanges(t *testing.T) {
 		submitted := models.AlertRuleGen(withOrgID(orgId), simulateSubmitted)()
 		require.NotEqual(t, "", submitted.UID)
 
-		_, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{submitted})
+		_, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: *submitted}})
 		require.Error(t, err)
 	})
 
@@ -245,7 +258,7 @@ func TestCalculateChanges(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgId)
 		submitted := models.AlertRuleGen(withOrgID(orgId), simulateSubmitted, withoutUID)()
 
-		_, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{submitted})
+		_, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: *submitted}})
 		require.ErrorIs(t, err, expectedErr)
 	})
 
@@ -263,7 +276,7 @@ func TestCalculateChanges(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgId)
 		submitted := models.AlertRuleGen(withOrgID(orgId), simulateSubmitted)()
 
-		_, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{submitted})
+		_, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: *submitted}})
 		require.ErrorIs(t, err, expectedErr)
 	})
 }
@@ -328,7 +341,7 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 		group2 := models.GenerateGroupKey(orgID)
 		rules2 := models.GenerateAlertRules(4, models.AlertRuleGen(withGroupKey(group2), models.WithSequentialGroupIndex()))
 
-		movedIndex := rand.Intn(len(rules2) - 1)
+		movedIndex := rand.Intn(len(rules2))
 		movedRule := rules2[movedIndex]
 		copyRule := models.CopyRule(movedRule)
 		copyRule.RuleGroup = group.RuleGroup
@@ -442,12 +455,12 @@ func withUIDs(uids map[string]*models.AlertRule) func(rule *models.AlertRule) {
 	}
 }
 
-func randFolder() *grafana_models.Folder {
-	return &grafana_models.Folder{
-		Id:        rand.Int63(),
-		Uid:       util.GenerateShortUID(),
+func randFolder() *folder.Folder {
+	return &folder.Folder{
+		ID:        rand.Int63(),
+		UID:       util.GenerateShortUID(),
 		Title:     "TEST-FOLDER-" + util.GenerateShortUID(),
-		Url:       "",
+		URL:       "",
 		Version:   0,
 		Created:   time.Time{},
 		Updated:   time.Time{},

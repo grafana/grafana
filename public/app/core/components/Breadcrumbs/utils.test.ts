@@ -144,5 +144,22 @@ describe('breadcrumb utils', () => {
         { text: 'My page', href: '/my-page' },
       ]);
     });
+
+    it('Should add breadcrumbs for child pages that have not set parentItem', () => {
+      const pageNav: NavModelItem = {
+        text: 'My page',
+        url: '/my-page',
+        children: [
+          { text: 'A', url: '/a', active: true },
+          { text: 'B', url: '/b' },
+        ],
+      };
+
+      expect(buildBreadcrumbs(mockHomeNav, pageNav, mockHomeNav)).toEqual([
+        { text: 'Home', href: '/home' },
+        { text: 'My page', href: '/my-page' },
+        { text: 'A', href: '/a' },
+      ]);
+    });
   });
 });

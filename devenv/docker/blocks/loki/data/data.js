@@ -47,10 +47,7 @@ async function sleep(duration) {
   });
 }
 
-async function lokiSendLogLine(timestampMs, line, tags) {
-  // we keep nanosecond-timestamp in a string because
-  // as a number it would be too large
-  const timestampNs = `${timestampMs}000000`;
+async function lokiSendLogLine(timestampNs, line, tags) {
   const data = {
     streams: [
       {
@@ -96,7 +93,7 @@ function escapeLogFmtKey(key) {
 
 function escapeLogFmtValue(value) {
   if (logFmtProblemRe.test(value)) {
-    throw new Error(`invalid logfmt-value: ${key}`)
+    throw new Error(`invalid logfmt-value: ${value}`)
   }
 
   // we must handle the space-character because we have values with spaces :-(
@@ -113,21 +110,60 @@ function logFmtLine(item) {
   return parts.join(' ');
 }
 
-const SLEEP_ANGLE_STEP = Math.PI / 200;
-let sleepAngle = 0;
-function getNextSineWaveSleepDuration() {
-  sleepAngle += SLEEP_ANGLE_STEP;
-  return Math.trunc(1000 * Math.abs(Math.sin(sleepAngle)));
+const DAYS = 7;
+const POINTS_PER_DAY = 1000;
+
+// it's important to have good "delays" between
+// log-line-timestamps, because the "density" of log-lines
+// is what gives the loki metric queries shape.
+function calculateDelays(pointsCount) {
+  const delays = [];
+  for(let i=0;i<pointsCount; i+=1) {
+    const delay = Math.random();
+    delays.push(delay);
+  }
+  // now, i want to normalize the delays-array, so that the sum of
+  // all it's items adds up to `1`.
+  const allDelays = delays.reduce((acc, current) => acc + current, 0);
+
+  for(let i=0;i<delays.length; i++) {
+    delays[i] = delays[i] / allDelays
+  }
+
+  return delays;
 }
 
-async function main() {
-  for (let step = 0; step < 300; step++) {
-    await sleep(getNextSineWaveSleepDuration());
-    const timestampMs = new Date().getTime();
-    const item = getRandomLogItem(step + 1)
-    lokiSendLogLine(timestampMs, JSON.stringify(item), {place:'moon', source: 'data', instance: 'server\\1', job: '"grafana/data"'});
-    lokiSendLogLine(timestampMs, logFmtLine(item), {place:'luna', source: 'data', instance: 'server\\2', job: '"grafana/data"'});
+function getRandomNanosecPart() {
+  // we want to have cases with milliseconds-only, with microsec and nanosec.
+  const mode = Math.random();
+
+  if (mode < 0.333) {
+    // only milisec precision
+    return '000000';
   }
+
+  if (mode < 0.666) {
+    // microsec precision
+    return Math.trunc(Math.random()*1000).toString().padStart(3, '0') + '000'
+  }
+
+  // nanosec precision
+  return Math.trunc(Math.random()*1000000).toString().padStart(6, '0')
+}
+
+
+async function main() {
+  const delays = calculateDelays(DAYS * POINTS_PER_DAY);
+  const timeRange = DAYS * 24 * 60 * 60 * 1000;
+  let timestampMs = new Date().getTime() - timeRange;
+  for(let i =0; i < delays.length; i++ ) { // i cannot do a forEach because of the `await` inside
+    const delay = delays[i];
+    timestampMs += Math.trunc(delay * timeRange);
+    const timestampNs = `${timestampMs}${getRandomNanosecPart()}`;
+    const item = getRandomLogItem(i + 1)
+    await lokiSendLogLine(timestampNs, JSON.stringify(item), {place:'moon', source: 'data', instance: 'server\\1', job: '"grafana/data"'});
+    await lokiSendLogLine(timestampNs, logFmtLine(item), {place:'luna', source: 'data', instance: 'server\\2', job: '"grafana/data"'});
+  };
 }
 
 // when running in docker, we catch the needed stop-signal, to shutdown fast

@@ -6,38 +6,41 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"golang.org/x/sync/errgroup"
 )
 
 const (
-	HeaderPluginID      = "X-Plugin-Id"      // can be used for routing
-	HeaderDatasourceUID = "X-Datasource-Uid" // can be used for routing/ load balancing
-	HeaderDashboardUID  = "X-Dashboard-Uid"  // mainly useful for debuging slow queries
-	HeaderPanelID       = "X-Panel-Id"       // mainly useful for debuging slow queries
+	HeaderPluginID       = "X-Plugin-Id"         // can be used for routing
+	HeaderDatasourceUID  = "X-Datasource-Uid"    // can be used for routing/ load balancing
+	HeaderDashboardUID   = "X-Dashboard-Uid"     // mainly useful for debuging slow queries
+	HeaderPanelID        = "X-Panel-Id"          // mainly useful for debuging slow queries
+	HeaderQueryGroupID   = "X-Query-Group-Id"    // mainly useful for finding related queries with query chunking
+	HeaderFromExpression = "X-Grafana-From-Expr" // used by datasources to identify expression queries
 )
 
 func ProvideService(
 	cfg *setting.Cfg,
 	dataSourceCache datasources.CacheService,
 	expressionService *expr.Service,
-	pluginRequestValidator models.PluginRequestValidator,
+	pluginRequestValidator validations.PluginRequestValidator,
 	dataSourceService datasources.DataSourceService,
 	pluginClient plugins.Client,
-) *Service {
-	g := &Service{
+) *ServiceImpl {
+	g := &ServiceImpl{
 		cfg:                    cfg,
 		dataSourceCache:        dataSourceCache,
 		expressionService:      expressionService,
@@ -50,24 +53,33 @@ func ProvideService(
 	return g
 }
 
-type Service struct {
+//go:generate mockery --name Service --structname FakeQueryService --inpackage --filename query_service_mock.go
+type Service interface {
+	Run(ctx context.Context) error
+	QueryData(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
+}
+
+// Gives us compile time error if the service does not adhere to the contract of the interface
+var _ Service = (*ServiceImpl)(nil)
+
+type ServiceImpl struct {
 	cfg                    *setting.Cfg
 	dataSourceCache        datasources.CacheService
 	expressionService      *expr.Service
-	pluginRequestValidator models.PluginRequestValidator
+	pluginRequestValidator validations.PluginRequestValidator
 	dataSourceService      datasources.DataSourceService
 	pluginClient           plugins.Client
 	log                    log.Logger
 }
 
-// Run Service.
-func (s *Service) Run(ctx context.Context) error {
+// Run ServiceImpl.
+func (s *ServiceImpl) Run(ctx context.Context) error {
 	<-ctx.Done()
 	return ctx.Err()
 }
 
 // QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
-func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 	// Parse the request into parsed queries grouped by datasource uid
 	parsedReq, err := s.parseMetricRequest(ctx, user, skipCache, reqDTO)
 	if err != nil {
@@ -87,7 +99,7 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 }
 
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
-func (s *Service) executeConcurrentQueries(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, queriesbyDs map[string][]parsedQuery) (*backend.QueryDataResponse, error) {
+func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, queriesbyDs map[string][]parsedQuery) (*backend.QueryDataResponse, error) {
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(8) // arbitrary limit to prevent too many concurrent requests
 	rchan := make(chan backend.Responses, len(queriesbyDs))
@@ -157,7 +169,7 @@ func buildErrorResponses(err error, queries []*simplejson.Json) backend.Response
 }
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
-func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
+func (s *ServiceImpl) handleExpressions(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	exprReq := expr.Request{
 		Queries: []expr.Query{},
 	}
@@ -198,17 +210,17 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 }
 
 // handleQuerySingleDatasource handles one or more queries to a single datasource
-func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
+func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	queries := parsedReq.getFlattenedQueries()
 	ds := queries[0].datasource
-	if err := s.pluginRequestValidator.Validate(ds.Url, nil); err != nil {
+	if err := s.pluginRequestValidator.Validate(ds.URL, nil); err != nil {
 		return nil, datasources.ErrDataSourceAccessDenied
 	}
 
 	// ensure that each query passed to this function has the same datasource
 	for _, pq := range queries {
-		if ds.Uid != pq.datasource.Uid {
-			return nil, fmt.Errorf("all queries must have the same datasource - found %s and %s", ds.Uid, pq.datasource.Uid)
+		if ds.UID != pq.datasource.UID {
+			return nil, fmt.Errorf("all queries must have the same datasource - found %s and %s", ds.UID, pq.datasource.UID)
 		}
 	}
 
@@ -219,7 +231,7 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			OrgID:                      ds.OrgId,
+			OrgID:                      ds.OrgID,
 			PluginID:                   ds.Type,
 			User:                       adapters.BackendUserFromSignedInUser(user),
 			DataSourceInstanceSettings: instanceSettings,
@@ -236,7 +248,7 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 }
 
 // parseRequest parses a request into parsed queries grouped by datasource uid
-func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
+func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
 		return nil, ErrNoQueriesFound
 	}
@@ -259,15 +271,15 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 			return nil, ErrInvalidDatasourceID
 		}
 
-		datasourcesByUid[ds.Uid] = ds
-		if expr.IsDataSource(ds.Uid) {
+		datasourcesByUid[ds.UID] = ds
+		if expr.IsDataSource(ds.UID) {
 			req.hasExpression = true
 		} else {
 			req.dsTypes[ds.Type] = true
 		}
 
-		if _, ok := req.parsedQueries[ds.Uid]; !ok {
-			req.parsedQueries[ds.Uid] = []parsedQuery{}
+		if _, ok := req.parsedQueries[ds.UID]; !ok {
+			req.parsedQueries[ds.UID] = []parsedQuery{}
 		}
 
 		s.log.Debug("Processing metrics query", "query", query)
@@ -277,7 +289,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 			return nil, err
 		}
 
-		req.parsedQueries[ds.Uid] = append(req.parsedQueries[ds.Uid], parsedQuery{
+		req.parsedQueries[ds.UID] = append(req.parsedQueries[ds.UID], parsedQuery{
 			datasource: ds,
 			query: backend.DataQuery{
 				TimeRange: backend.TimeRange{
@@ -294,11 +306,10 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 		})
 	}
 
-	_ = req.validateRequest(ctx)
-	return req, nil // TODO req.validateRequest()
+	return req, req.validateRequest(ctx)
 }
 
-func (s *Service) getDataSourceFromQuery(ctx context.Context, user *user.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {
+func (s *ServiceImpl) getDataSourceFromQuery(ctx context.Context, user *user.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {
 	var err error
 	uid := query.Get("datasource").Get("uid").MustString()
 
@@ -321,6 +332,14 @@ func (s *Service) getDataSourceFromQuery(ctx context.Context, user *user.SignedI
 		return grafanads.DataSourceModel(user.OrgID), nil
 	}
 
+	if uid != "" {
+		ds, err = s.dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipCache)
+		if err != nil {
+			return nil, err
+		}
+		return ds, nil
+	}
+
 	// use datasourceId if it exists
 	id := query.Get("datasourceId").MustInt64(0)
 	if id > 0 {
@@ -331,18 +350,10 @@ func (s *Service) getDataSourceFromQuery(ctx context.Context, user *user.SignedI
 		return ds, nil
 	}
 
-	if uid != "" {
-		ds, err = s.dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipCache)
-		if err != nil {
-			return nil, err
-		}
-		return ds, nil
-	}
-
 	return nil, ErrInvalidDatasourceID
 }
 
-func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
+func (s *ServiceImpl) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
 	return func(ds *datasources.DataSource) (map[string]string, error) {
 		return s.dataSourceService.DecryptedValues(ctx, ds)
 	}

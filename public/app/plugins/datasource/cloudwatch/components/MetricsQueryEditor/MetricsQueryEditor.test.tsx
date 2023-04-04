@@ -1,10 +1,11 @@
-import { render, screen, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import * as ui from '@grafana/ui';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CustomVariableModel, initialVariableModelState } from '../../../../../features/variables/types';
@@ -44,7 +45,7 @@ const setup = () => {
   };
   templateSrv.init([variable]);
 
-  const datasource = new CloudWatchDatasource(instanceSettings, templateSrv as any, {} as any);
+  const datasource = new CloudWatchDatasource(instanceSettings, templateSrv, {} as TimeSrv);
   datasource.metricFindQuery = async () => [{ value: 'test', label: 'test', text: 'test' }];
   datasource.resources.getNamespaces = jest.fn().mockResolvedValue([]);
   datasource.resources.getMetrics = jest.fn().mockResolvedValue([]);
@@ -88,7 +89,7 @@ describe('QueryEditor', () => {
       expect(await screen.findByText('Match exact')).toBeInTheDocument();
     });
 
-    it('shoud display wildcard option in dimension value dropdown', async () => {
+    it('should display wildcard option in dimension value dropdown', async () => {
       const props = setup();
       if (props.query.queryMode !== 'Metrics') {
         fail(`expected props.query.queryMode to be 'Metrics', got '${props.query.queryMode}' instead`);
@@ -111,44 +112,40 @@ describe('QueryEditor', () => {
   });
 
   describe('when dynamic labels feature toggle is enabled', () => {
-    it('shoud render label field', async () => {
-      await act(async () => {
-        const props = setup();
-        const originalValue = config.featureToggles.cloudWatchDynamicLabels;
-        config.featureToggles.cloudWatchDynamicLabels = true;
+    it('should render label field', async () => {
+      const props = setup();
+      const originalValue = config.featureToggles.cloudWatchDynamicLabels;
+      config.featureToggles.cloudWatchDynamicLabels = true;
 
-        render(
-          <MetricsQueryEditor
-            {...props}
-            query={{ ...props.query, refId: 'A', alias: 'Period: {{period}} InstanceId: {{InstanceId}}' }}
-          />
-        );
+      render(
+        <MetricsQueryEditor
+          {...props}
+          query={{ ...props.query, refId: 'A', alias: 'Period: {{period}} InstanceId: {{InstanceId}}' }}
+        />
+      );
 
-        expect(screen.getByText('Label')).toBeInTheDocument();
-        expect(screen.queryByText('Alias')).toBeNull();
-        expect(screen.getByText("Period: ${PROP('Period')} InstanceId: ${PROP('Dim.InstanceId')}"));
+      expect(await screen.findByText('Label')).toBeInTheDocument();
+      expect(screen.queryByText('Alias')).toBeNull();
+      expect(screen.getByText("Period: ${PROP('Period')} InstanceId: ${PROP('Dim.InstanceId')}"));
 
-        config.featureToggles.cloudWatchDynamicLabels = originalValue;
-      });
+      config.featureToggles.cloudWatchDynamicLabels = originalValue;
     });
   });
 
   describe('when dynamic labels feature toggle is disabled', () => {
-    it('shoud render alias field', async () => {
-      await act(async () => {
-        const props = setup();
-        const originalValue = config.featureToggles.cloudWatchDynamicLabels;
-        config.featureToggles.cloudWatchDynamicLabels = false;
+    it('should render alias field', async () => {
+      const props = setup();
+      const originalValue = config.featureToggles.cloudWatchDynamicLabels;
+      config.featureToggles.cloudWatchDynamicLabels = false;
 
-        const expected = 'Period: {{period}} InstanceId: {{InstanceId}}';
-        render(<MetricsQueryEditor {...props} query={{ ...props.query, refId: 'A', alias: expected }} />);
+      const expected = 'Period: {{period}} InstanceId: {{InstanceId}}';
+      render(<MetricsQueryEditor {...props} query={{ ...props.query, refId: 'A', alias: expected }} />);
 
-        expect(await screen.getByText('Alias')).toBeInTheDocument();
-        expect(screen.queryByText('Label')).toBeNull();
-        expect(screen.getByLabelText('Alias - optional')).toHaveValue(expected);
+      expect(await screen.findByText('Alias')).toBeInTheDocument();
+      expect(screen.queryByText('Label')).toBeNull();
+      expect(screen.getByLabelText('Alias - optional')).toHaveValue(expected);
 
-        config.featureToggles.cloudWatchDynamicLabels = originalValue;
-      });
+      config.featureToggles.cloudWatchDynamicLabels = originalValue;
     });
   });
 });

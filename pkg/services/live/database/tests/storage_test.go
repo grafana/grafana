@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/live/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/live/model"
 )
 
 func TestIntegrationLiveMessage(t *testing.T) {

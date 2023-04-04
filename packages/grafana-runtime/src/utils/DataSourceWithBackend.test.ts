@@ -2,16 +2,21 @@ import { of } from 'rxjs';
 import { BackendSrv, BackendSrvRequest, FetchResponse } from 'src/services';
 
 import {
-  DataSourceJsonData,
   DataQuery,
-  DataSourceInstanceSettings,
   DataQueryRequest,
   DataQueryResponseData,
-  MutableDataFrame,
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
   DataSourceRef,
+  MutableDataFrame,
 } from '@grafana/data';
 
-import { DataSourceWithBackend, standardStreamOptionsProvider, toStreamingDataResponse } from './DataSourceWithBackend';
+import {
+  DataSourceWithBackend,
+  isExpressionReference,
+  standardStreamOptionsProvider,
+  toStreamingDataResponse,
+} from './DataSourceWithBackend';
 
 class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> {
   constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
@@ -49,6 +54,7 @@ describe('DataSourceWithBackend', () => {
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
       dashboardUID: 'dashA',
       panelId: 123,
+      queryGroupId: 'abc',
     } as DataQueryRequest);
 
     const args = mock.calls[0][0];
@@ -66,6 +72,7 @@ describe('DataSourceWithBackend', () => {
               "datasourceId": 1234,
               "intervalMs": 5000,
               "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
               "refId": "A",
             },
             {
@@ -76,6 +83,7 @@ describe('DataSourceWithBackend', () => {
               "datasourceId": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
               "refId": "B",
             },
           ],
@@ -85,11 +93,67 @@ describe('DataSourceWithBackend', () => {
           "X-Datasource-Uid": "abc, <mockuid>",
           "X-Panel-Id": "123",
           "X-Plugin-Id": "dummy, sample",
+          "X-Query-Group-Id": "abc",
         },
         "hideFromInspector": false,
         "method": "POST",
         "requestId": undefined,
         "url": "/api/ds/query",
+      }
+    `);
+  });
+
+  test('correctly creates expression queries', () => {
+    const { mock, ds } = createMockDatasource();
+    ds.query({
+      maxDataPoints: 10,
+      intervalMs: 5000,
+      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: '__expr__' } }],
+      dashboardUID: 'dashA',
+      panelId: 123,
+      queryGroupId: 'abc',
+    } as DataQueryRequest);
+
+    const args = mock.calls[0][0];
+
+    expect(mock.calls.length).toBe(1);
+    expect(args).toMatchInlineSnapshot(`
+      {
+        "data": {
+          "queries": [
+            {
+              "datasource": {
+                "type": "dummy",
+                "uid": "abc",
+              },
+              "datasourceId": 1234,
+              "intervalMs": 5000,
+              "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
+              "refId": "A",
+            },
+            {
+              "datasource": {
+                "name": "Expression",
+                "type": "__expr__",
+                "uid": "__expr__",
+              },
+              "refId": "B",
+            },
+          ],
+        },
+        "headers": {
+          "X-Dashboard-Uid": "dashA",
+          "X-Datasource-Uid": "abc",
+          "X-Grafana-From-Expr": "true",
+          "X-Panel-Id": "123",
+          "X-Plugin-Id": "dummy",
+          "X-Query-Group-Id": "abc",
+        },
+        "hideFromInspector": false,
+        "method": "POST",
+        "requestId": undefined,
+        "url": "/api/ds/query?expression=true",
       }
     `);
   });
@@ -133,6 +197,7 @@ describe('DataSourceWithBackend', () => {
               "datasourceId": 1234,
               "intervalMs": 5000,
               "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
               "refId": "A",
             },
             {
@@ -143,6 +208,7 @@ describe('DataSourceWithBackend', () => {
               "datasourceId": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
               "refId": "B",
             },
           ],
@@ -181,6 +247,67 @@ describe('DataSourceWithBackend', () => {
     rsp.data = [frame];
     obs = toStreamingDataResponse(rsp, request, standardStreamOptionsProvider);
     expect(obs).toBeDefined();
+  });
+
+  test('check that getResource uses the data source UID', () => {
+    const { mock, ds } = createMockDatasource();
+    ds.getResource('foo');
+
+    const args = mock.calls[0][0];
+
+    expect(mock.calls.length).toBe(1);
+    expect(args).toMatchObject({
+      headers: {
+        'X-Datasource-Uid': 'abc',
+        'X-Plugin-Id': 'dummy',
+      },
+      method: 'GET',
+      url: '/api/datasources/uid/abc/resources/foo',
+    });
+  });
+
+  test('check that postResource uses the data source UID', () => {
+    const { mock, ds } = createMockDatasource();
+    ds.postResource('foo');
+
+    const args = mock.calls[0][0];
+
+    expect(mock.calls.length).toBe(1);
+    expect(args).toMatchObject({
+      headers: {
+        'X-Datasource-Uid': 'abc',
+        'X-Plugin-Id': 'dummy',
+      },
+      method: 'POST',
+      url: '/api/datasources/uid/abc/resources/foo',
+    });
+  });
+
+  test('check that callHealthCheck uses the data source UID', () => {
+    const { mock, ds } = createMockDatasource();
+    ds.callHealthCheck();
+
+    const args = mock.calls[0][0];
+
+    expect(mock.calls.length).toBe(1);
+    expect(args).toMatchObject({
+      headers: {
+        'X-Datasource-Uid': 'abc',
+        'X-Plugin-Id': 'dummy',
+      },
+      method: 'GET',
+      url: '/api/datasources/uid/abc/health',
+    });
+  });
+
+  describe('isExpressionReference', () => {
+    test('check all possible expression references', () => {
+      expect(isExpressionReference('__expr__')).toBeTruthy(); // New UID
+      expect(isExpressionReference('-100')).toBeTruthy(); // Legacy UID
+      expect(isExpressionReference('Expression')).toBeTruthy(); // Name
+      expect(isExpressionReference({ type: '__expr__' })).toBeTruthy();
+      expect(isExpressionReference({ type: '-100' })).toBeTruthy();
+    });
   });
 });
 

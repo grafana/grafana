@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -448,7 +447,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				origin.Source, origin.Key, origin.Time,
 			)
 		}
-		if err == nil && models.StandardKindFolder == r.GRN.Kind {
+		if err == nil && entity.StandardKindFolder == r.GRN.Kind {
 			err = updateFolderTree(ctx, tx, grn.TenantId)
 		}
 		if err == nil {
@@ -476,15 +475,19 @@ func (s *sqlEntityServer) fillCreationInfo(ctx context.Context, tx *session.Sess
 	}
 
 	rows, err := tx.Query(ctx, "SELECT created_at,created_by FROM entity WHERE grn=?", grn)
-	if err == nil {
-		if rows.Next() {
-			err = rows.Scan(&createdAt, &createdBy)
-		}
-		if err == nil {
-			err = rows.Close()
-		}
+	if err != nil {
+		return err
 	}
-	return err
+
+	if rows.Next() {
+		err = rows.Scan(&createdAt, &createdBy)
+	}
+
+	errClose := rows.Close()
+	if err != nil {
+		return err
+	}
+	return errClose
 }
 
 func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, grn string) (*entity.EntityVersionInfo, error) {
@@ -500,10 +503,13 @@ func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.Sessi
 	if rows.Next() {
 		err = rows.Scan(&current.ETag, &current.Version, &current.UpdatedAt, &current.Size)
 	}
-	if err == nil {
-		err = rows.Close()
+
+	errClose := rows.Close()
+	if err != nil {
+		return nil, err
 	}
-	return current, err
+
+	return current, errClose
 }
 
 func (s *sqlEntityServer) writeSearchInfo(
@@ -534,10 +540,10 @@ func (s *sqlEntityServer) writeSearchInfo(
 			return err
 		}
 		_, err = tx.Exec(ctx, `INSERT INTO entity_ref (`+
-			"grn, parent_grn, kind, type, uid, "+
+			"grn, parent_grn, family, type, id, "+
 			"resolved_ok, resolved_to, resolved_warning, resolved_time) "+
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			grn, parent_grn, ref.Kind, ref.Type, ref.UID,
+			grn, parent_grn, ref.Family, ref.Type, ref.Identifier,
 			resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,
 		)
 		if err != nil {
@@ -668,7 +674,7 @@ func doDelete(ctx context.Context, tx *session.SessionTx, grn *entity.GRN) (bool
 		return false, err
 	}
 
-	if grn.Kind == models.StandardKindFolder {
+	if grn.Kind == entity.StandardKindFolder {
 		err = updateFolderTree(ctx, tx, grn.TenantId)
 	}
 	return rows > 0, err
@@ -748,7 +754,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		fields:   fields,
 		from:     "entity", // the table
 		args:     []interface{}{},
-		limit:    int(r.Limit),
+		limit:    r.Limit,
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
 	entityQuery.addWhere("tenant_id", user.OrgID)
@@ -778,11 +784,6 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	}
 
 	query, args := entityQuery.toQuery()
-
-	fmt.Printf("\n\n-------------\n")
-	fmt.Printf("%s\n", query)
-	fmt.Printf("%v\n", args)
-	fmt.Printf("\n-------------\n\n")
 
 	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
@@ -819,7 +820,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		}
 
 		// found one more than requested
-		if len(rsp.Results) >= entityQuery.limit {
+		if int64(len(rsp.Results)) >= entityQuery.limit {
 			// TODO? should this encode start+offset?
 			rsp.NextPageToken = oid
 			break

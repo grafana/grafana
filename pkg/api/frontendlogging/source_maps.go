@@ -9,9 +9,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/getsentry/sentry-go"
 	sourcemap "github.com/go-sourcemap/sourcemap"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )

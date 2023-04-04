@@ -1300,3 +1300,20 @@ func Test_ParseMetricDataQueries_ApplyMacros(t *testing.T) {
 		assert.Equal(t, "SEARCH('{AWS/EC2,InstanceId}', 'Average', $__period_auto)", actual[0].Expression)
 	})
 }
+
+func TestGetEndpoint(t *testing.T) {
+	testcases := []struct {
+		region           string
+		expectedEndpoint string
+	}{
+		{"us-east-1", "us-east-1.console.aws.amazon.com"},
+		{"us-gov-east-1", "us-gov-east-1.console.amazonaws-us-gov.com"},
+		{"cn-northwest-1", "cn-northwest-1.console.amazonaws.cn"},
+	}
+	for _, ts := range testcases {
+		t.Run(fmt.Sprintf("should create correct endpoint for %s", ts), func(t *testing.T) {
+			actual := getEndpoint(ts.region)
+			assert.Equal(t, ts.expectedEndpoint, actual)
+		})
+	}
+}

@@ -7,29 +7,33 @@ import { CommandPaletteAction } from '../types';
 import { getRecentDashboardActions } from './dashboardActions';
 import getStaticActions from './staticActions';
 
-export default function useActions() {
-  const [staticActions, setStaticActions] = useState<CommandPaletteAction[]>([]);
+export default function useActions(searchQuery: string) {
+  const [navTreeActions, setNavTreeActions] = useState<CommandPaletteAction[]>([]);
+  const [recentDashboardActions, setRecentDashboardActions] = useState<CommandPaletteAction[]>([]);
 
   const { navBarTree } = useSelector((state) => {
     return {
       navBarTree: state.navBarTree,
     };
   });
-
   // Load standard static actions
   useEffect(() => {
     const staticActionsResp = getStaticActions(navBarTree);
-    setStaticActions(staticActionsResp);
+    setNavTreeActions(staticActionsResp);
   }, [navBarTree]);
 
   // Load recent dashboards - we don't want them to reload when the nav tree changes
   useEffect(() => {
-    getRecentDashboardActions()
-      .then((recentDashboardActions) => setStaticActions((v) => [...v, ...recentDashboardActions]))
-      .catch((err) => {
-        console.error('Error loading recent dashboard actions', err);
-      });
-  }, []);
+    if (!searchQuery) {
+      getRecentDashboardActions()
+        .then((recentDashboardActions) => setRecentDashboardActions(recentDashboardActions))
+        .catch((err) => {
+          console.error('Error loading recent dashboard actions', err);
+        });
+    } else {
+      setRecentDashboardActions([]);
+    }
+  }, [searchQuery]);
 
-  return staticActions;
+  return [...recentDashboardActions, ...navTreeActions];
 }

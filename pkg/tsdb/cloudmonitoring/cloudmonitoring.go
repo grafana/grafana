@@ -131,7 +131,7 @@ type Service struct {
 	resourceHandler backend.CallResourceHandler
 
 	// mocked in tests
-	gceDefaultProjectGetter func(ctx context.Context) (string, error)
+	gceDefaultProjectGetter func(ctx context.Context, scope string) (string, error)
 }
 
 type datasourceInfo struct {
@@ -143,8 +143,7 @@ type datasourceInfo struct {
 	clientEmail        string
 	tokenUri           string
 	services           map[string]datasourceService
-
-	decryptedSecureJSONData map[string]string
+	privateKey         string
 }
 
 type datasourceJSONData struct {
@@ -172,15 +171,19 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		dsInfo := &datasourceInfo{
-			id:                      settings.ID,
-			updated:                 settings.Updated,
-			url:                     settings.URL,
-			authenticationType:      jsonData.AuthenticationType,
-			defaultProject:          jsonData.DefaultProject,
-			clientEmail:             jsonData.ClientEmail,
-			tokenUri:                jsonData.TokenURI,
-			decryptedSecureJSONData: settings.DecryptedSecureJSONData,
-			services:                map[string]datasourceService{},
+			id:                 settings.ID,
+			updated:            settings.Updated,
+			url:                settings.URL,
+			authenticationType: jsonData.AuthenticationType,
+			defaultProject:     jsonData.DefaultProject,
+			clientEmail:        jsonData.ClientEmail,
+			tokenUri:           jsonData.TokenURI,
+			services:           map[string]datasourceService{},
+		}
+
+		dsInfo.privateKey, err = utils.GetPrivateKey(&settings)
+		if err != nil {
+			return nil, err
 		}
 
 		opts, err := settings.HTTPClientOptions()
@@ -380,7 +383,7 @@ func queryModel(query backend.DataQuery) (grafanaQuery, error) {
 }
 
 func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataRequest) ([]cloudMonitoringQueryExecutor, error) {
-	var cloudMonitoringQueryExecutors []cloudMonitoringQueryExecutor
+	cloudMonitoringQueryExecutors := make([]cloudMonitoringQueryExecutor, 0, len(req.Queries))
 	startTime := req.Queries[0].TimeRange.From
 	endTime := req.Queries[0].TimeRange.To
 	durationSeconds := int(endTime.Sub(startTime).Seconds())
@@ -412,6 +415,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 				parameters: q.TimeSeriesQuery,
 				IntervalMS: query.Interval.Milliseconds(),
 				timeRange:  req.Queries[0].TimeRange,
+				logger:     logger,
 			}
 		case sloQueryType:
 			cmslo := &cloudMonitoringSLO{
@@ -480,7 +484,11 @@ func calculateAlignmentPeriod(alignmentPeriod string, intervalMs int64, duration
 func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string,
 	additionalLabels map[string]string, query cloudMonitoringQueryExecutor) string {
 	if query.getAliasBy() == "" {
-		return defaultMetricName
+		if defaultMetricName != "" {
+			return defaultMetricName
+		}
+
+		return metricType
 	}
 
 	result := legendKeyFormat.ReplaceAllFunc([]byte(query.getAliasBy()), func(in []byte) []byte {
@@ -543,7 +551,7 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 
 	switch {
 	case bucketOptions.LinearBuckets != nil:
-		bucketBound = strconv.FormatInt(bucketOptions.LinearBuckets.Offset+(bucketOptions.LinearBuckets.Width*int64(n-1)), 10)
+		bucketBound = strconv.FormatFloat(bucketOptions.LinearBuckets.Offset+(bucketOptions.LinearBuckets.Width*float64(n-1)), 'f', 2, 64)
 	case bucketOptions.ExponentialBuckets != nil:
 		bucketBound = strconv.FormatInt(int64(bucketOptions.ExponentialBuckets.Scale*math.Pow(bucketOptions.ExponentialBuckets.GrowthFactor, float64(n-1))), 10)
 	case bucketOptions.ExplicitBuckets != nil:
@@ -566,7 +574,7 @@ func (s *Service) ensureProject(ctx context.Context, dsInfo datasourceInfo, proj
 
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
 	if dsInfo.authenticationType == gceAuthentication {
-		return s.gceDefaultProjectGetter(ctx)
+		return s.gceDefaultProjectGetter(ctx, cloudMonitorScope)
 	}
 	return dsInfo.defaultProject, nil
 }

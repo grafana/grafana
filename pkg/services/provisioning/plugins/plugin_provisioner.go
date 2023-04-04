@@ -5,10 +5,9 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
 
 // Provision scans a directory for provisioning config files
@@ -51,7 +50,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 			PluginID: app.PluginID,
 		})
 		if err != nil {
-			if !errors.Is(err, models.ErrPluginSettingNotFound) {
+			if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
 				return err
 			}
 		} else {

@@ -67,12 +67,13 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *user.SignedInU
 	// make sure can view this dashboard
 	if len(parts) == 2 && parts[0] == "uid" {
 		query := dashboards.GetDashboardQuery{UID: parts[1], OrgID: user.OrgID}
-		if err := h.DashboardService.GetDashboard(ctx, &query); err != nil {
+		queryResult, err := h.DashboardService.GetDashboard(ctx, &query)
+		if err != nil {
 			logger.Error("Error getting dashboard", "query", query, "error", err)
 			return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
 		}
 
-		dash := query.Result
+		dash := queryResult
 		guard, err := guardian.NewByDashboard(ctx, dash, user.OrgID, user)
 		if err != nil {
 			return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, err
@@ -117,12 +118,13 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *user.SignedInUse
 			return model.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("ignore???")
 		}
 		query := dashboards.GetDashboardQuery{UID: parts[1], OrgID: user.OrgID}
-		if err := h.DashboardService.GetDashboard(ctx, &query); err != nil {
+		queryResult, err := h.DashboardService.GetDashboard(ctx, &query)
+		if err != nil {
 			logger.Error("Unknown dashboard", "query", query)
 			return model.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 		}
 
-		guard, err := guardian.NewByDashboard(ctx, query.Result, user.OrgID, user)
+		guard, err := guardian.NewByDashboard(ctx, queryResult, user.OrgID, user)
 		if err != nil {
 			logger.Error("Failed to create guardian", "err", err)
 			return model.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")

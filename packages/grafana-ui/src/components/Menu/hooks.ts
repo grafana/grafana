@@ -17,7 +17,7 @@ export interface UseMenuFocusProps {
 }
 
 /** @internal */
-export type UseMenuFocusReturn = [(event: React.KeyboardEvent) => void, () => void];
+export type UseMenuFocusReturn = [(event: React.KeyboardEvent) => void];
 
 /** @internal */
 export const useMenuFocus = ({
@@ -50,12 +50,6 @@ export const useMenuFocus = ({
   }, [localRef, focusedItem]);
 
   useEffectOnce(() => {
-    const firstMenuItem = localRef?.current?.querySelector<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
-      '[data-role="menuitem"]:not([data-disabled])'
-    );
-    if (firstMenuItem) {
-      firstMenuItem.tabIndex = 0;
-    }
     onOpen?.(setFocusedItem);
   });
 
@@ -98,11 +92,10 @@ export const useMenuFocus = ({
         menuItems?.[focusedItem]?.click();
         break;
       case 'Escape':
-        event.preventDefault();
-        event.stopPropagation();
         onClose?.();
         break;
       case 'Tab':
+        event.preventDefault();
         onClose?.();
         break;
       default:
@@ -113,11 +106,5 @@ export const useMenuFocus = ({
     onKeyDown?.(event);
   };
 
-  const handleFocus = () => {
-    if (focusedItem === UNFOCUSED) {
-      setFocusedItem(0);
-    }
-  };
-
-  return [handleKeys, handleFocus];
+  return [handleKeys];
 };

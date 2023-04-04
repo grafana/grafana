@@ -1,11 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { useLocation } from 'react-use';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceJsonData, PluginMeta } from '@grafana/data';
-import { configureStore } from 'app/store/configureStore';
+import { locationService } from '@grafana/runtime';
 
 import { CombinedRule, Rule } from '../../../types/unified-alerting';
 import { PromRuleType } from '../../../types/unified-alerting-dto';
@@ -24,16 +23,15 @@ jest.mock('react-router-dom', () => ({
 
 jest.mock('react-use');
 
-const store = configureStore();
 const renderRedirectToRuleViewer = (pathname: string) => {
   jest.mocked(useLocation).mockReturnValue({ pathname, trigger: '' });
 
+  locationService.push(pathname);
+
   return render(
-    <Provider store={store}>
-      <MemoryRouter initialEntries={[pathname]}>
-        <RedirectToRuleViewer />
-      </MemoryRouter>
-    </Provider>
+    <TestProvider>
+      <RedirectToRuleViewer />
+    </TestProvider>
   );
 };
 

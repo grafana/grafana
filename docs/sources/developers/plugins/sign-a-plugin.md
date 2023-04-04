@@ -12,9 +12,7 @@ Before you can sign your plugin, you need to decide whether you want to sign it 
 
 If you want to make your plugin publicly available outside of your organization, you need to sign your plugin under a _community_ or _commercial_ [signature level](#plugin-signature-levels). Public plugins are available from [grafana.com/plugins](https://grafana.com/plugins) and can be installed by anyone.
 
-For more information on how to install a public plugin, refer to [Install Grafana plugins]({{< relref "../../administration/plugin-management#install-a-plugin" >}}).
-
-If you intend to only use the plugin within your organization, you can to sign it under a _private_ [signature level](#plugin-signature-levels).
+If you intend to only use the plugin within your organization, you can sign it under a _private_ [signature level](#plugin-signature-levels).
 
 ## Generate an API key
 
@@ -32,13 +30,13 @@ To verify ownership of your plugin, you need to generate an API key that you'll 
 
 Public plugins need to be reviewed by the Grafana team before you can sign them.
 
-1. Submit your plugin for [review]({{< relref "package-a-plugin/#publishing-your-plugin-for-the-first-time" >}})
+1. Submit your plugin for [review]({{< relref "publish-a-plugin/#publishing-your-plugin-for-the-first-time" >}})
 2. When your plugin is approved, you're granted a plugin signature level. **Without a plugin signature level, you won't be able to sign your plugin**.
 3. In your plugin directory, sign the plugin with the API key you just created. Grafana Sign Plugin creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
 
    ```bash
    export GRAFANA_API_KEY=<YOUR_API_KEY>
-   npx @grafana/sign-plugin
+   npx @grafana/sign-plugin@latest
    ```
 
 ## Sign a private plugin
@@ -49,7 +47,7 @@ Public plugins need to be reviewed by the Grafana team before you can sign them.
 
    ```bash
    export GRAFANA_API_KEY=<YOUR_API_KEY>
-   npx @grafana/sign-plugin --rootUrls https://example.com/grafana
+   npx @grafana/sign-plugin@latest --rootUrls https://example.com/grafana
    ```
 
 ## Plugin signature levels

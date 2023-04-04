@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -8,12 +9,16 @@ import (
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -22,21 +27,28 @@ import (
 // Get all folders.
 //
 // Returns all folders that the authenticated user has permission to view.
-// If nested folders are enabled, it expects an additional query parameter with the parent folder UID.
+// If nested folders are enabled, it expects an additional query parameter with the parent folder UID
+// and returns the immediate subfolders.
 //
 // Responses:
 // 200: getFoldersResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
-	folders, err := hs.folderService.GetChildren(c.Req.Context(), &folder.GetChildrenQuery{
-		OrgID:        c.OrgID,
-		Limit:        c.QueryInt64("limit"),
-		Page:         c.QueryInt64("page"),
-		UID:          c.Query("parent_uid"),
-		SignedInUser: c.SignedInUser,
-	})
+func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
+	var folders []*folder.Folder
+	var err error
+	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		folders, err = hs.folderService.GetChildren(c.Req.Context(), &folder.GetChildrenQuery{
+			OrgID:        c.OrgID,
+			Limit:        c.QueryInt64("limit"),
+			Page:         c.QueryInt64("page"),
+			UID:          c.Query("parentUid"),
+			SignedInUser: c.SignedInUser,
+		})
+	} else {
+		folders, err = hs.searchFolders(c)
+	}
 
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
@@ -74,7 +86,7 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetFolderByUID(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid, SignedInUser: c.SignedInUser})
 	if err != nil {
@@ -101,7 +113,7 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetFolderByID(c *contextmodel.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -131,7 +143,7 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 409: conflictError
 // 500: internalServerError
-func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response {
 	cmd := folder.CreateFolderCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -142,6 +154,10 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	folder, err := hs.folderService.Create(c.Req.Context(), &cmd)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
+	}
+
+	if err := hs.setDefaultFolderPermissions(c.Req.Context(), cmd.OrgID, cmd.SignedInUser, folder); err != nil {
+		hs.log.Error("Could not set the default folder permissions", "folder", folder.Title, "user", cmd.SignedInUser, "error", err)
 	}
 
 	// Clear permission cache for the user who's created the folder, so that new permissions are fetched for their next call
@@ -159,26 +175,63 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
 
-func (hs *HTTPServer) MoveFolder(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user *user.SignedInUser, folder *folder.Folder) error {
+	isNested := folder.ParentUID != ""
+	var permissionErr error
+	if !accesscontrol.IsDisabled(hs.Cfg) {
+		var permissions []accesscontrol.SetResourcePermissionCommand
+		if user.IsRealUser() && !user.IsAnonymous {
+			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+				UserID: user.UserID, Permission: dashboards.PERMISSION_ADMIN.String(),
+			})
+		}
+
+		if !isNested || !hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+				{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+			}...)
+		}
+
+		_, permissionErr = hs.folderPermissionsService.SetPermissions(ctx, orgID, folder.UID, permissions...)
+		return permissionErr
+	} else if hs.Cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
+		return hs.folderService.MakeUserAdmin(ctx, orgID, user.UserID, folder.ID, !isNested)
+	}
+	return nil
+}
+
+// swagger:route POST /folders/{folder_uid}/move folders moveFolder
+//
+// Move folder.
+//
+// Responses:
+// 200: folderResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		cmd := models.MoveFolderCommand{}
+		cmd := folder.MoveFolderCommand{}
 		if err := web.Bind(c.Req, &cmd); err != nil {
 			return response.Error(http.StatusBadRequest, "bad request data", err)
 		}
-		var theFolder *folder.Folder
 		var err error
-		if cmd.ParentUID != nil {
-			moveCommand := folder.MoveFolderCommand{
-				UID:          web.Params(c.Req)[":uid"],
-				NewParentUID: *cmd.ParentUID,
-				OrgID:        c.OrgID,
-			}
-			theFolder, err = hs.folderService.Move(c.Req.Context(), &moveCommand)
-			if err != nil {
-				return response.Error(http.StatusInternalServerError, "update folder uid failed", err)
-			}
+
+		cmd.OrgID = c.OrgID
+		cmd.UID = web.Params(c.Req)[":uid"]
+		cmd.SignedInUser = c.SignedInUser
+		theFolder, err := hs.folderService.Move(c.Req.Context(), &cmd)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "move folder failed", err)
 		}
-		return response.JSON(http.StatusOK, theFolder)
+
+		g, err := guardian.NewByUID(c.Req.Context(), cmd.UID, c.OrgID, c.SignedInUser)
+		if err != nil {
+			return response.Err(err)
+		}
+		return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, theFolder))
 	}
 	result := map[string]string{}
 	result["message"] = "To use this service, you need to activate nested folder feature."
@@ -189,9 +242,6 @@ func (hs *HTTPServer) MoveFolder(c *models.ReqContext) response.Response {
 //
 // Update folder.
 //
-// If nested folders are enabled then it optionally expects a new parent folder UID that moves the folder and
-// includes it into the response.
-//
 // Responses:
 // 200: folderResponse
 // 400: badRequestError
@@ -200,7 +250,7 @@ func (hs *HTTPServer) MoveFolder(c *models.ReqContext) response.Response {
 // 404: notFoundError
 // 409: conflictError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateFolder(c *contextmodel.ReqContext) response.Response {
 	cmd := folder.UpdateFolderCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -235,10 +285,10 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
+func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
 	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
-		if errors.Is(err, libraryelements.ErrFolderHasConnectedLibraryElements) {
+		if errors.Is(err, model.ErrFolderHasConnectedLibraryElements) {
 			return response.Error(403, "Folder could not be deleted because it contains library elements in use", err)
 		}
 		return apierrors.ToFolderErrorResponse(err)
@@ -253,7 +303,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	return response.JSON(http.StatusOK, "")
 }
 
-func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *folder.Folder) dtos.Folder {
+func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.DashboardGuardian, folder *folder.Folder) dtos.Folder {
 	canEdit, _ := g.CanEdit()
 	canSave, _ := g.CanSave()
 	canAdmin, _ := g.CanAdmin()
@@ -272,7 +322,7 @@ func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardG
 		Id:            folder.ID,
 		Uid:           folder.UID,
 		Title:         folder.Title,
-		Url:           folder.Url,
+		Url:           folder.URL,
 		HasACL:        folder.HasACL,
 		CanSave:       canSave,
 		CanEdit:       canEdit,
@@ -286,6 +336,36 @@ func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardG
 		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.UID),
 		ParentUID:     folder.ParentUID,
 	}
+}
+
+func (hs *HTTPServer) searchFolders(c *contextmodel.ReqContext) ([]*folder.Folder, error) {
+	searchQuery := search.Query{
+		SignedInUser: c.SignedInUser,
+		DashboardIds: make([]int64, 0),
+		FolderIds:    make([]int64, 0),
+		Limit:        c.QueryInt64("limit"),
+		OrgId:        c.OrgID,
+		Type:         "dash-folder",
+		Permission:   dashboards.PERMISSION_VIEW,
+		Page:         c.QueryInt64("page"),
+	}
+
+	hits, err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	folders := make([]*folder.Folder, 0)
+
+	for _, hit := range hits {
+		folders = append(folders, &folder.Folder{
+			ID:    hit.ID,
+			UID:   hit.UID,
+			Title: hit.Title,
+		})
+	}
+
+	return folders, nil
 }
 
 // swagger:parameters getFolders
@@ -303,7 +383,7 @@ type GetFoldersParams struct {
 	// The parent folder UID
 	// in:query
 	// required:false
-	ParentUID string `json:"parent_uid"`
+	ParentUID string `json:"parentUid"`
 }
 
 // swagger:parameters getFolderByUID
@@ -339,6 +419,16 @@ type CreateFolderParams struct {
 	// in:body
 	// required:true
 	Body folder.CreateFolderCommand `json:"body"`
+}
+
+// swagger:parameters moveFolder
+type MoveFolderParams struct {
+	// in:path
+	// required:true
+	FolderUID string `json:"folder_uid"`
+	// in:body
+	// required:true
+	Body folder.MoveFolderCommand `json:"body"`
 }
 
 // swagger:parameters deleteFolder

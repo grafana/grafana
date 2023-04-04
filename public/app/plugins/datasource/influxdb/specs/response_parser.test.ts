@@ -2,8 +2,9 @@ import { size } from 'lodash';
 import { of } from 'rxjs';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
-import { FieldType, MutableDataFrame } from '@grafana/data';
+import { AnnotationEvent, DataQueryRequest, FieldType, MutableDataFrame } from '@grafana/data';
 import { FetchResponse } from '@grafana/runtime';
+import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import InfluxDatasource from '../datasource';
@@ -14,7 +15,7 @@ import ResponseParser, { getSelectedParams } from '../response_parser';
 const templateSrv = new TemplateSrvStub();
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -313,14 +314,14 @@ describe('influxdb response parser', () => {
       tagsColumn: 'host,path',
     };
 
-    const queryOptions: any = {
+    const queryOptions = {
       targets: [annotation],
       range: {
         from: '2018-01-01T00:00:00Z',
         to: '2018-01-02T00:00:00Z',
       },
-    };
-    let response: any;
+    } as unknown as DataQueryRequest;
+    let response: AnnotationEvent[];
 
     beforeEach(async () => {
       fetchMock.mockImplementation(() => {
@@ -425,6 +426,7 @@ describe('influxdb response parser', () => {
 
       ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
       ctx.ds.access = 'proxy';
+      config.featureToggles.influxdbBackendMigration = true;
       response = await ctx.ds.annotationEvents(queryOptions, annotation);
     });
 
@@ -433,13 +435,13 @@ describe('influxdb response parser', () => {
       expect(response[0].time).toBe(1645208701000);
       expect(response[0].title).toBe('Station softwareupdated[447]: Adding client 1');
       expect(response[0].text).toBe('text 1');
-      expect(response[0].tags[0]).toBe('cbfa07e0e3bb 1');
-      expect(response[0].tags[1]).toBe('/var/log/host/install.log 1');
+      expect(response[0].tags?.[0]).toBe('cbfa07e0e3bb 1');
+      expect(response[0].tags?.[1]).toBe('/var/log/host/install.log 1');
       expect(response[1].time).toBe(1645208702000);
       expect(response[1].title).toBe('Station softwareupdated[447]: Adding client 2');
       expect(response[1].text).toBe('text 2');
-      expect(response[1].tags[0]).toBe('cbfa07e0e3bb 2');
-      expect(response[1].tags[1]).toBe('/var/log/host/install.log 2');
+      expect(response[1].tags?.[0]).toBe('cbfa07e0e3bb 2');
+      expect(response[1].tags?.[1]).toBe('/var/log/host/install.log 2');
     });
   });
 });

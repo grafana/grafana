@@ -26,7 +26,7 @@ const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dash
   return result;
 };
 
-export const useDashboardSave = (dashboard: DashboardModel) => {
+export const useDashboardSave = (dashboard: DashboardModel, isCopy = false) => {
   const [state, onDashboardSave] = useAsyncFn(
     async (clone: any, options: SaveDashboardOptions, dashboard: DashboardModel) =>
       await saveDashboard(clone, options, dashboard),
@@ -46,10 +46,17 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
       // important that these happen before location redirect below
       appEvents.publish(new DashboardSavedEvent());
       notifyApp.success('Dashboard saved');
-      reportInteraction(`grafana_dashboard_${dashboard.id ? 'saved' : 'created'}`, {
-        name: dashboard.title,
-        url: state.value.url,
-      });
+      if (isCopy) {
+        reportInteraction('grafana_dashboard_copied', {
+          name: dashboard.title,
+          url: state.value.url,
+        });
+      } else {
+        reportInteraction(`grafana_dashboard_${dashboard.id ? 'saved' : 'created'}`, {
+          name: dashboard.title,
+          url: state.value.url,
+        });
+      }
 
       const currentPath = locationService.getLocation().pathname;
       const newUrl = locationUtil.stripBaseFromUrl(state.value.url);
@@ -67,7 +74,7 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
         );
       }
     }
-  }, [dashboard, state, notifyApp, dispatch]);
+  }, [dashboard, isCopy, state, notifyApp, dispatch]);
 
   return { state, onDashboardSave };
 };

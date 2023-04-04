@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"xorm.io/xorm"
 )
 
 // Service is an envelope encryption service in charge of encrypting/decrypting secrets.
@@ -36,7 +34,6 @@ type Store interface {
 	GetCurrentDataKey(ctx context.Context, label string) (*DataKey, error)
 	GetAllDataKeys(ctx context.Context) ([]*DataKey, error)
 	CreateDataKey(ctx context.Context, dataKey *DataKey) error
-	CreateDataKeyWithDBSession(ctx context.Context, dataKey *DataKey, sess *xorm.Session) error
 	DisableDataKeys(ctx context.Context) error
 	DeleteDataKey(ctx context.Context, id string) error
 	ReEncryptDataKeys(ctx context.Context, providers map[ProviderID]Provider, currProvider ProviderID) error

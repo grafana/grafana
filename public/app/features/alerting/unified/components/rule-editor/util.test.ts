@@ -25,7 +25,7 @@ describe('rule-editor', () => {
 
   const classicCondition = {
     refId: 'B',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     queryType: '',
     model: {
       refId: 'B',
@@ -55,7 +55,7 @@ describe('rule-editor', () => {
 
   const mathExpression = {
     refId: 'B',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     queryType: '',
     model: {
       refId: 'B',
@@ -68,7 +68,7 @@ describe('rule-editor', () => {
 
   const reduceExpression = {
     refId: 'B',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     queryType: '',
     model: {
       refId: 'B',
@@ -82,7 +82,7 @@ describe('rule-editor', () => {
 
   const resampleExpression = {
     refId: 'A',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     model: {
       refId: 'A',
       type: 'resample',
@@ -101,14 +101,14 @@ describe('rule-editor', () => {
 
   const thresholdExpression = {
     refId: 'C',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     model: {
       refId: 'C',
       type: 'threshold',
       expression: 'B',
       datasource: {
         type: '__expr__',
-        uid: '-100',
+        uid: '__expr__',
       },
       conditions: [
         {
@@ -253,7 +253,7 @@ describe('getThresholdsForQueries', () => {
 
     const classicCondition = {
       refId: 'B',
-      datasourceUid: '-100',
+      datasourceUid: '__expr__',
       queryType: '',
       model: {
         refId: 'B',
@@ -319,7 +319,7 @@ function createThresholdExample(thresholdType: string): AlertQuery[] {
 
   const reduceExpression = {
     refId: 'B',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     queryType: '',
     model: {
       refId: 'B',
@@ -333,7 +333,7 @@ function createThresholdExample(thresholdType: string): AlertQuery[] {
 
   const thresholdExpression = {
     refId: 'C',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     queryType: '',
     model: {
       refId: 'C',

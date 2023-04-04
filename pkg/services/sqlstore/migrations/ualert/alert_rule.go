@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/expr"
-	legacymodels "github.com/grafana/grafana/pkg/models"
+	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 )
@@ -37,6 +36,7 @@ type alertRule struct {
 	Updated         time.Time
 	Annotations     map[string]string
 	Labels          map[string]string
+	IsPaused        bool
 }
 
 type alertRuleVersion struct {
@@ -61,6 +61,7 @@ type alertRuleVersion struct {
 	For         duration
 	Annotations map[string]string
 	Labels      map[string]string
+	IsPaused    bool
 }
 
 func (a *alertRule) makeVersion() *alertRuleVersion {
@@ -84,6 +85,7 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 		For:             a.For,
 		Annotations:     a.Annotations,
 		Labels:          map[string]string{},
+		IsPaused:        a.IsPaused,
 	}
 }
 
@@ -120,6 +122,11 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 
 	name := normalizeRuleName(da.Name, uid)
 
+	isPaused := false
+	if da.State == "paused" {
+		isPaused = true
+	}
+
 	ar := &alertRule{
 		OrgID:           da.OrgId,
 		Title:           name, // TODO: Make sure all names are unique, make new name on constraint insert error.
@@ -135,6 +142,7 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		Annotations:     annotations,
 		Labels:          lbls,
 		RuleGroupIndex:  1,
+		IsPaused:        isPaused,
 	}
 
 	ar.NoDataState, err = transNoData(da.ParsedSettings.NoDataState)
@@ -171,7 +179,7 @@ func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 	result := make([]alertQuery, 0, len(data))
 	for _, d := range data {
 		// queries that are expression are not relevant, skip them.
-		if d.DatasourceUID == expr.OldDatasourceUID {
+		if d.DatasourceUID == expressionDatasourceUID {
 			result = append(result, d)
 			continue
 		}

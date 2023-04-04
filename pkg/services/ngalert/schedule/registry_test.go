@@ -27,7 +27,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			resultCh := make(chan bool)
 			go func() {
-				resultCh <- r.update(ruleVersion(rand.Int63()))
+				resultCh <- r.update(ruleVersionAndPauseStatus{ruleVersion(rand.Int63()), false})
 			}()
 			select {
 			case <-r.updateCh:
@@ -45,19 +45,19 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				wg.Done()
-				r.update(version1)
+				r.update(ruleVersionAndPauseStatus{version1, false})
 				wg.Done()
 			}()
 			wg.Wait()
 			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
 			go func() {
 				wg.Done()
-				r.update(version2)
+				r.update(ruleVersionAndPauseStatus{version2, false})
 			}()
 			wg.Wait() // at this point tick 1 has already been dropped
 			select {
 			case version := <-r.updateCh:
-				require.Equal(t, version2, version)
+				require.Equal(t, ruleVersionAndPauseStatus{version2, false}, version)
 			case <-time.After(5 * time.Second):
 				t.Fatal("No message was received on eval channel")
 			}
@@ -71,19 +71,19 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				wg.Done()
-				r.update(version2)
+				r.update(ruleVersionAndPauseStatus{version2, false})
 				wg.Done()
 			}()
 			wg.Wait()
 			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
 			go func() {
 				wg.Done()
-				r.update(version1)
+				r.update(ruleVersionAndPauseStatus{version1, false})
 			}()
 			wg.Wait() // at this point tick 1 has already been dropped
 			select {
 			case version := <-r.updateCh:
-				require.Equal(t, version2, version)
+				require.Equal(t, ruleVersionAndPauseStatus{version2, false}, version)
 			case <-time.After(5 * time.Second):
 				t.Fatal("No message was received on eval channel")
 			}
@@ -185,7 +185,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			r.stop(errRuleDeleted)
 			require.ErrorIs(t, r.ctx.Err(), errRuleDeleted)
-			require.False(t, r.update(ruleVersion(rand.Int63())))
+			require.False(t, r.update(ruleVersionAndPauseStatus{ruleVersion(rand.Int63()), false}))
 		})
 		t.Run("eval should do nothing", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
@@ -237,7 +237,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 					}
 					switch rand.Intn(max) + 1 {
 					case 1:
-						r.update(ruleVersion(rand.Int63()))
+						r.update(ruleVersionAndPauseStatus{ruleVersion(rand.Int63()), false})
 					case 2:
 						r.eval(&evaluation{
 							scheduledAt: time.Now(),
@@ -317,4 +317,54 @@ func TestSchedulableAlertRulesRegistry(t *testing.T) {
 	deleted, ok = r.del(models.AlertRuleKey{OrgID: 1, UID: "baz"})
 	assert.False(t, ok)
 	assert.Nil(t, deleted)
+}
+
+func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
+	_, initialRules := models.GenerateUniqueAlertRules(100, models.AlertRuleGen())
+	init := make(map[models.AlertRuleKey]*models.AlertRule, len(initialRules))
+	for _, rule := range initialRules {
+		init[rule.GetKey()] = rule
+	}
+	r := alertRulesRegistry{rules: init}
+	t.Run("should return empty diff if exactly the same rules", func(t *testing.T) {
+		newRules := make([]*models.AlertRule, 0, len(initialRules))
+		for _, rule := range initialRules {
+			newRules = append(newRules, models.CopyRule(rule))
+		}
+		diff := r.set(newRules, map[string]string{})
+		require.Truef(t, diff.IsEmpty(), "Diff is not empty. Probably we check something else than key + version")
+	})
+	t.Run("should return empty diff if version does not change", func(t *testing.T) {
+		newRules := make([]*models.AlertRule, 0, len(initialRules))
+		// generate random and then override rule key + version
+		_, randomNew := models.GenerateUniqueAlertRules(len(initialRules), models.AlertRuleGen())
+		for i := 0; i < len(initialRules); i++ {
+			rule := randomNew[i]
+			oldRule := initialRules[i]
+			rule.UID = oldRule.UID
+			rule.OrgID = oldRule.OrgID
+			rule.Version = oldRule.Version
+			newRules = append(newRules, rule)
+		}
+
+		diff := r.set(newRules, map[string]string{})
+		require.Truef(t, diff.IsEmpty(), "Diff is not empty. Probably we check something else than key + version")
+	})
+	t.Run("should return key in diff if version changes", func(t *testing.T) {
+		newRules := make([]*models.AlertRule, 0, len(initialRules))
+		expectedUpdated := map[models.AlertRuleKey]struct{}{}
+		for i, rule := range initialRules {
+			cp := models.CopyRule(rule)
+			if i%2 == 0 {
+				cp.Version++
+				expectedUpdated[cp.GetKey()] = struct{}{}
+			}
+			newRules = append(newRules, cp)
+		}
+		require.NotEmptyf(t, expectedUpdated, "Input parameters have changed. Nothing to assert")
+
+		diff := r.set(newRules, map[string]string{})
+		require.Falsef(t, diff.IsEmpty(), "Diff is empty but should not be")
+		require.Equal(t, expectedUpdated, diff.updated)
+	})
 }

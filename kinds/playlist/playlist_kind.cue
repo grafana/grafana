@@ -1,12 +1,14 @@
 package kind
 
-name: "Playlist"
-maturity: "merged"
+name:        "Playlist"
+maturity:    "merged"
+description: "A playlist is a series of dashboards that is automatically rotated in the browser, on a configurable interval."
 
 lineage: seqs: [
 	{
 		schemas: [
-			{//0.0
+			//0.0
+			{
 				// Unique playlist identifier. Generated on creation, either by the
 				// creator of the playlist of by the application.
 				uid: string
@@ -39,9 +41,9 @@ lineage: seqs: [
 					value: string
 
 					// Title is an unused property -- it will be removed in the future
-    				title?: string
+					title?: string
 				} @cuetsy(kind="interface")
-			}
+			},
 		]
-	}
+	},
 ]

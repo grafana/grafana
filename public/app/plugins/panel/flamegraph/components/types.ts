@@ -1,11 +1,13 @@
-export type TooltipData = {
-  name: string;
-  percentTitle: string;
+export type ContextMenuData = {
+  e: MouseEvent;
+  levelIndex: number;
+  barIndex: number;
+};
+
+export type Metadata = {
   percentValue: number;
-  percentSelf: number;
   unitTitle: string;
   unitValue: string;
-  unitSelf: string;
   samples: string;
 };
 

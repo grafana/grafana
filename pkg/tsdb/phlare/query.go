@@ -13,26 +13,24 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
+	"github.com/grafana/grafana/pkg/tsdb/phlare/kinds/dataquery"
 	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
+	"github.com/xlab/treeprint"
 )
 
 type queryModel struct {
 	WithStreaming bool
-	ProfileTypeID string   `json:"profileTypeId"`
-	LabelSelector string   `json:"labelSelector"`
-	GroupBy       []string `json:"groupBy"`
+	dataquery.PhlareDataQuery
 }
 
 type dsJsonModel struct {
 	MinStep string `json:"minStep"`
 }
 
-// These constants need to match the ones in the frontend.
-const queryTypeProfile = "profile"
-
 const (
-	queryTypeMetrics = "metrics"
-	queryTypeBoth    = "both"
+	queryTypeProfile = string(dataquery.PhlareQueryTypeProfile)
+	queryTypeMetrics = string(dataquery.PhlareQueryTypeMetrics)
+	queryTypeBoth    = string(dataquery.PhlareQueryTypeBoth)
 )
 
 // query processes single Phlare query transforming the response to data.Frame packaged in DataResponse
@@ -63,7 +61,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 			}
 		}
 		req := connect.NewRequest(&querierv1.SelectSeriesRequest{
-			ProfileTypeID: qm.ProfileTypeID,
+			ProfileTypeID: qm.ProfileTypeId,
 			LabelSelector: qm.LabelSelector,
 			Start:         query.TimeRange.From.UnixMilli(),
 			End:           query.TimeRange.To.UnixMilli(),
@@ -79,19 +77,19 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 			return response
 		}
 		// add the frames to the response.
-		response.Frames = append(response.Frames, seriesToDataFrames(seriesResp, qm.ProfileTypeID)...)
+		response.Frames = append(response.Frames, seriesToDataFrames(seriesResp, qm.ProfileTypeId)...)
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
 		req := makeRequest(qm, query)
 		logger.Debug("Sending SelectMergeStacktracesRequest", "request", req, "queryModel", qm)
-		resp, err := d.client.SelectMergeStacktraces(ctx, makeRequest(qm, query))
+		resp, err := d.client.SelectMergeStacktraces(ctx, req)
 		if err != nil {
 			logger.Error("Querying SelectMergeStacktraces()", "err", err)
 			response.Error = err
 			return response
 		}
-		frame := responseToDataFrames(resp, qm.ProfileTypeID)
+		frame := responseToDataFrames(resp.Msg, qm.ProfileTypeId)
 		response.Frames = append(response.Frames, frame)
 
 		// If query called with streaming on then return a channel
@@ -113,7 +111,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querierv1.SelectMergeStacktracesRequest] {
 	return &connect.Request[querierv1.SelectMergeStacktracesRequest]{
 		Msg: &querierv1.SelectMergeStacktracesRequest{
-			ProfileTypeID: qm.ProfileTypeID,
+			ProfileTypeID: qm.ProfileTypeId,
 			LabelSelector: qm.LabelSelector,
 			Start:         query.TimeRange.From.UnixMilli(),
 			End:           query.TimeRange.To.UnixMilli(),
@@ -124,8 +122,8 @@ func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querie
 // responseToDataFrames turns Phlare response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
-func responseToDataFrames(resp *connect.Response[querierv1.SelectMergeStacktracesResponse], profileTypeID string) *data.Frame {
-	tree := levelsToTree(resp.Msg.Flamegraph.Levels, resp.Msg.Flamegraph.Names)
+func responseToDataFrames(resp *querierv1.SelectMergeStacktracesResponse, profileTypeID string) *data.Frame {
+	tree := levelsToTree(resp.Flamegraph.Levels, resp.Flamegraph.Names)
 	return treeToNestedSetDataFrame(tree, profileTypeID)
 }
 
@@ -234,13 +232,51 @@ func levelsToTree(levels []*querierv1.Level, names []string) *ProfileTree {
 	return tree
 }
 
+type Function struct {
+	FunctionName string
+	FileName     string // optional
+	Line         int64  // optional
+}
+
+func (f Function) String() string {
+	return fmt.Sprintf("%s:%s:%d", f.FileName, f.FunctionName, f.Line)
+}
+
+func (pt *ProfileTree) String() string {
+	type branch struct {
+		nodes []*ProfileTree
+		treeprint.Tree
+	}
+	tree := treeprint.New()
+	for _, n := range []*ProfileTree{pt} {
+		b := tree.AddBranch(fmt.Sprintf("%s: level %d self %d total %d", n.Name, n.Level, n.Self, n.Value))
+		remaining := append([]*branch{}, &branch{nodes: n.Nodes, Tree: b})
+		for len(remaining) > 0 {
+			current := remaining[0]
+			remaining = remaining[1:]
+			for _, n := range current.nodes {
+				if len(n.Nodes) > 0 {
+					remaining = append(remaining,
+						&branch{
+							nodes: n.Nodes, Tree: current.Tree.AddBranch(fmt.Sprintf("%s: level %d self %d total %d", n.Name, n.Level, n.Self, n.Value)),
+						},
+					)
+				} else {
+					current.Tree.AddNode(fmt.Sprintf("%s: level %d self %d total %d", n.Name, n.Level, n.Self, n.Value))
+				}
+			}
+		}
+	}
+	return tree.String()
+}
+
 type CustomMeta struct {
 	ProfileTypeID string
 }
 
 // treeToNestedSetDataFrame walks the tree depth first and adds items into the dataframe. This is a nested set format
-// where by ordering the items in depth first order and knowing the level/depth of each item we can recreate the
-// parent - child relationship without explicitly needing parent/child column and we can later just iterate over the
+// where ordering the items in depth first order and knowing the level/depth of each item we can recreate the
+// parent - child relationship without explicitly needing parent/child column, and we can later just iterate over the
 // dataFrame to again basically walking depth first over the tree/profile.
 func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Frame {
 	frame := data.NewFrame("response")
@@ -254,16 +290,62 @@ func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Fra
 	parts := strings.Split(profileTypeID, ":")
 	valueField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
 	selfField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
-	labelField := data.NewField("label", nil, []string{})
-	frame.Fields = data.Fields{levelField, valueField, selfField, labelField}
+	frame.Fields = data.Fields{levelField, valueField, selfField}
 
-	walkTree(tree, func(tree *ProfileTree) {
-		levelField.Append(int64(tree.Level))
-		valueField.Append(tree.Value)
-		selfField.Append(tree.Self)
-		labelField.Append(tree.Name)
-	})
+	labelField := NewEnumField("label", nil)
+
+	// Tree can be nil if profile was empty, we can still send empty frame in that case
+	if tree != nil {
+		walkTree(tree, func(tree *ProfileTree) {
+			levelField.Append(int64(tree.Level))
+			valueField.Append(tree.Value)
+			selfField.Append(tree.Self)
+			labelField.Append(tree.Name)
+		})
+	}
+
+	frame.Fields = append(frame.Fields, labelField.GetField())
 	return frame
+}
+
+type EnumField struct {
+	field     *data.Field
+	valuesMap map[string]int64
+	counter   int64
+}
+
+func NewEnumField(name string, labels data.Labels) *EnumField {
+	return &EnumField{
+		field:     data.NewField(name, labels, []int64{}),
+		valuesMap: make(map[string]int64),
+	}
+}
+
+func (e *EnumField) Append(value string) {
+	if valueIndex, ok := e.valuesMap[value]; ok {
+		e.field.Append(valueIndex)
+	} else {
+		e.valuesMap[value] = e.counter
+		e.field.Append(e.counter)
+		e.counter++
+	}
+}
+
+func (e *EnumField) GetField() *data.Field {
+	s := make([]string, len(e.valuesMap))
+	for k, v := range e.valuesMap {
+		s[v] = k
+	}
+
+	e.field.SetConfig(&data.FieldConfig{
+		TypeConfig: &data.FieldTypeConfig{
+			Enum: &data.EnumFieldConfig{
+				Text: s,
+			},
+		},
+	})
+
+	return e.field
 }
 
 func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
@@ -285,14 +367,14 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 }
 
 func seriesToDataFrames(seriesResp *connect.Response[querierv1.SelectSeriesResponse], profileTypeID string) []*data.Frame {
-	var frames []*data.Frame
+	frames := make([]*data.Frame, 0, len(seriesResp.Msg.Series))
 
 	for _, series := range seriesResp.Msg.Series {
 		// We create separate data frames as the series may not have the same length
 		frame := data.NewFrame("series")
 		frame.Meta = &data.FrameMeta{PreferredVisualization: "graph"}
 
-		fields := data.Fields{}
+		fields := make(data.Fields, 0, 2)
 		timeField := data.NewField("time", nil, []time.Time{})
 		fields = append(fields, timeField)
 

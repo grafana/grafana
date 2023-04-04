@@ -2,11 +2,11 @@
 aliases:
   - metrics/
   - unified-alerting/fundamentals/
-title: Explore Alerting
+title: Introduction to Alerting
 weight: 105
 ---
 
-# Explore Alerting
+# Introduction to Alerting
 
 Whether you’re starting or expanding your implementation of Grafana Alerting, learn more about the key concepts and available features that help you create, manage, and take action on your alerts and improve your team’s ability to resolve issues quickly.
 

@@ -76,24 +76,6 @@ func col2NewCols(columns ...string) []string {
 	return newColumns
 }
 
-// Incr provides a query string like "count = count + 1"
-func (session *Session) Incr(column string, arg ...interface{}) *Session {
-	session.statement.Incr(column, arg...)
-	return session
-}
-
-// Decr provides a query string like "count = count - 1"
-func (session *Session) Decr(column string, arg ...interface{}) *Session {
-	session.statement.Decr(column, arg...)
-	return session
-}
-
-// SetExpr provides a query string like "column = {expression}"
-func (session *Session) SetExpr(column string, expression interface{}) *Session {
-	session.statement.SetExpr(column, expression)
-	return session
-}
-
 // Select provides some columns to special
 func (session *Session) Select(str string) *Session {
 	session.statement.Select(str)
@@ -136,21 +118,8 @@ func (session *Session) Distinct(columns ...string) *Session {
 	return session
 }
 
-// Omit Only not use the parameters as select or update columns
-func (session *Session) Omit(columns ...string) *Session {
-	session.statement.Omit(columns...)
-	return session
-}
-
 // Nullable Set null when column is zero-value and nullable for update
 func (session *Session) Nullable(columns ...string) *Session {
 	session.statement.Nullable(columns...)
-	return session
-}
-
-// NoAutoTime means do not automatically give created field and updated field
-// the current time on the current session temporarily
-func (session *Session) NoAutoTime() *Session {
-	session.statement.UseAutoTime = false
 	return session
 }

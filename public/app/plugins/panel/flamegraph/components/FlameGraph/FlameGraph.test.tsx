@@ -1,14 +1,15 @@
-import { screen } from '@testing-library/dom';
+import { fireEvent, screen } from '@testing-library/dom';
 import { render } from '@testing-library/react';
 import React, { useState } from 'react';
 
-import { CoreApp, DataFrameView, MutableDataFrame } from '@grafana/data';
+import { CoreApp, MutableDataFrame } from '@grafana/data';
 
 import { SelectedView } from '../types';
 
 import FlameGraph from './FlameGraph';
-import { Item, nestedSetToLevels } from './dataTransform';
+import { FlameGraphDataContainer, nestedSetToLevels } from './dataTransform';
 import { data } from './testData/dataNestedSet';
+
 import 'jest-canvas-mock';
 
 jest.mock('react-use', () => ({
@@ -21,25 +22,28 @@ jest.mock('react-use', () => ({
 describe('FlameGraph', () => {
   const FlameGraphWithProps = () => {
     const [topLevelIndex, setTopLevelIndex] = useState(0);
+    const [selectedBarIndex, setSelectedBarIndex] = useState(0);
     const [rangeMin, setRangeMin] = useState(0);
     const [rangeMax, setRangeMax] = useState(1);
     const [search] = useState('');
     const [selectedView, _] = useState(SelectedView.Both);
 
     const flameGraphData = new MutableDataFrame(data);
-    const dataView = new DataFrameView<Item>(flameGraphData);
-    const levels = nestedSetToLevels(dataView);
+    const container = new FlameGraphDataContainer(flameGraphData);
+    const levels = nestedSetToLevels(container);
 
     return (
       <FlameGraph
-        data={flameGraphData}
+        data={container}
         app={CoreApp.Explore}
         levels={levels}
         topLevelIndex={topLevelIndex}
+        selectedBarIndex={selectedBarIndex}
         rangeMin={rangeMin}
         rangeMax={rangeMax}
         search={search}
         setTopLevelIndex={setTopLevelIndex}
+        setSelectedBarIndex={setSelectedBarIndex}
         setRangeMin={setRangeMin}
         setRangeMax={setRangeMax}
         selectedView={selectedView}
@@ -58,5 +62,24 @@ describe('FlameGraph', () => {
     const ctx = canvas!.getContext('2d');
     const calls = ctx!.__getDrawCalls();
     expect(calls).toMatchSnapshot();
+  });
+
+  it('should render metadata', async () => {
+    render(<FlameGraphWithProps />);
+    expect(screen.getByText('16.5 Bil (100%) of 16,460,000,000 total samples (Count)')).toBeDefined();
+  });
+
+  it('should render context menu', async () => {
+    const event = new MouseEvent('click');
+    Object.defineProperty(event, 'offsetX', { get: () => 10 });
+    Object.defineProperty(event, 'offsetY', { get: () => 10 });
+    Object.defineProperty(HTMLCanvasElement.prototype, 'clientWidth', { configurable: true, value: 500 });
+
+    const screen = render(<FlameGraphWithProps />);
+    const canvas = screen.getByTestId('flameGraph') as HTMLCanvasElement;
+    expect(canvas).toBeInTheDocument();
+    expect(screen.queryByTestId('contextMenu')).not.toBeInTheDocument();
+    fireEvent(canvas, event);
+    expect(screen.getByTestId('contextMenu')).toBeInTheDocument();
   });
 });

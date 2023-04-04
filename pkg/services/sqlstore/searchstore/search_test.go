@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
@@ -122,7 +121,7 @@ func TestBuilder_Permissions(t *testing.T) {
 	store := setupTestEnvironment(t)
 	createDashboards(t, store, 0, 1, user.OrgID)
 
-	level := models.PERMISSION_EDIT
+	level := dashboards.PERMISSION_EDIT
 
 	builder := &searchstore.Builder{
 		Filters: []interface{}{

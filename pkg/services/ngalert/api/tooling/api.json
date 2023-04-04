@@ -7,26 +7,6 @@
   "Ack": {
    "type": "object"
   },
-  "AddCommand": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "role": {
-     "enum": [
-      "Viewer",
-      "Editor",
-      "Admin"
-     ],
-     "type": "string"
-    },
-    "secondsToLive": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
-  },
   "Alert": {
    "properties": {
     "activeAt": {
@@ -119,7 +99,7 @@
   "AlertQuery": {
    "properties": {
     "datasourceUid": {
-     "description": "Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.",
+     "description": "Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.",
      "type": "string"
     },
     "model": {
@@ -141,6 +121,28 @@
    "title": "AlertQuery represents a single query associated with an alert definition.",
    "type": "object"
   },
+  "AlertQueryExport": {
+   "properties": {
+    "datasourceUid": {
+     "type": "string"
+    },
+    "model": {
+     "additionalProperties": {},
+     "type": "object"
+    },
+    "queryType": {
+     "type": "string"
+    },
+    "refId": {
+     "type": "string"
+    },
+    "relativeTimeRange": {
+     "$ref": "#/definitions/RelativeTimeRange"
+    }
+   },
+   "title": "AlertQueryExport is the provisioned export of models.AlertQuery.",
+   "type": "object"
+  },
   "AlertResponse": {
    "properties": {
     "data": {
@@ -159,6 +161,68 @@
    "required": [
     "status"
    ],
+   "type": "object"
+  },
+  "AlertRuleExport": {
+   "properties": {
+    "annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "condition": {
+     "type": "string"
+    },
+    "dasboardUid": {
+     "type": "string"
+    },
+    "data": {
+     "items": {
+      "$ref": "#/definitions/AlertQueryExport"
+     },
+     "type": "array"
+    },
+    "execErrState": {
+     "enum": [
+      "OK",
+      "Alerting",
+      "Error"
+     ],
+     "type": "string"
+    },
+    "for": {
+     "$ref": "#/definitions/Duration"
+    },
+    "isPaused": {
+     "type": "boolean"
+    },
+    "labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "noDataState": {
+     "enum": [
+      "Alerting",
+      "NoData",
+      "OK"
+     ],
+     "type": "string"
+    },
+    "panelId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "title": {
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
+    }
+   },
+   "title": "AlertRuleExport is the provisioned file export of models.AlertRule.",
    "type": "object"
   },
   "AlertRuleGroup": {
@@ -182,6 +246,31 @@
    },
    "type": "object"
   },
+  "AlertRuleGroupExport": {
+   "properties": {
+    "folder": {
+     "type": "string"
+    },
+    "interval": {
+     "$ref": "#/definitions/Duration"
+    },
+    "name": {
+     "type": "string"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "rules": {
+     "items": {
+      "$ref": "#/definitions/AlertRuleExport"
+     },
+     "type": "array"
+    }
+   },
+   "title": "AlertRuleGroupExport is the provisioned file export of AlertRuleGroupV1.",
+   "type": "object"
+  },
   "AlertRuleGroupMetadata": {
    "properties": {
     "interval": {
@@ -191,8 +280,21 @@
    },
    "type": "object"
   },
-  "AlertStateType": {
-   "type": "string"
+  "AlertingFileExport": {
+   "properties": {
+    "apiVersion": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "groups": {
+     "items": {
+      "$ref": "#/definitions/AlertRuleGroupExport"
+     },
+     "type": "array"
+    }
+   },
+   "title": "AlertingFileExport is the full provisioned file export.",
+   "type": "object"
   },
   "AlertingRule": {
    "description": "adapted from cortex",
@@ -261,6 +363,10 @@
       "external"
      ],
      "type": "string"
+    },
+    "numExternalAlertmanagers": {
+     "format": "int64",
+     "type": "integer"
     }
    },
    "type": "object"
@@ -422,6 +528,9 @@
   "DataLink": {
    "description": "DataLink define what",
    "properties": {
+    "internal": {
+     "$ref": "#/definitions/InternalDataLink"
+    },
     "targetBlank": {
      "type": "boolean"
     },
@@ -452,8 +561,30 @@
    "type": "object"
   },
   "DataTopic": {
+   "description": "nolint:revive",
    "title": "DataTopic is used to identify which topic the frame should be assigned to.",
    "type": "string"
+  },
+  "DiscordConfig": {
+   "properties": {
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "message": {
+     "type": "string"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "title": {
+     "type": "string"
+    },
+    "webhook_url": {
+     "$ref": "#/definitions/SecretURL"
+    }
+   },
+   "title": "DiscordConfig configures notifications via Discord.",
+   "type": "object"
   },
   "DiscoveryBase": {
    "properties": {
@@ -587,6 +718,40 @@
    ],
    "type": "object"
   },
+  "EnumFieldConfig": {
+   "description": "Enum field config\nVector values are used as lookup keys into the enum fields",
+   "properties": {
+    "color": {
+     "description": "Color is the color value for a given index (empty is undefined)",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "description": {
+     "description": "Description of the enum state",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "icon": {
+     "description": "Icon supports setting an icon for a given index value",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "text": {
+     "description": "Value is the string display value for a given index",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
    "type": "string"
@@ -626,6 +791,9 @@
    "type": "object"
   },
   "EvalQueriesResponse": {},
+  "ExplorePanelsState": {
+   "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
+  },
   "ExtendedReceiver": {
    "properties": {
     "email_configs": {
@@ -742,6 +910,9 @@
     "thresholds": {
      "$ref": "#/definitions/ThresholdsConfig"
     },
+    "type": {
+     "$ref": "#/definitions/FieldTypeConfig"
+    },
     "unit": {
      "description": "Numeric Options",
      "type": "string"
@@ -754,11 +925,20 @@
    "title": "FieldConfig represents the display properties for a Field.",
    "type": "object"
   },
+  "FieldTypeConfig": {
+   "description": "FieldTypeConfig has type specific configs, only one should be active at a time",
+   "properties": {
+    "enum": {
+     "$ref": "#/definitions/EnumFieldConfig"
+    }
+   },
+   "type": "object"
+  },
   "Frame": {
    "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
    "properties": {
     "Fields": {
-     "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.",
+     "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.\nThere should be no `nil` entries in the Fields slice (making them pointers was a mistake).",
      "items": {
       "$ref": "#/definitions/Field"
      },
@@ -830,6 +1010,9 @@
     },
     "type": {
      "$ref": "#/definitions/FrameType"
+    },
+    "typeVersion": {
+     "$ref": "#/definitions/FrameTypeVersion"
     }
    },
    "title": "FrameMeta matches:",
@@ -839,8 +1022,16 @@
    "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
    "type": "string"
   },
+  "FrameTypeVersion": {
+   "items": {
+    "format": "uint64",
+    "type": "integer"
+   },
+   "title": "FrameType is a 2 number version (Major / Minor).",
+   "type": "array"
+  },
   "Frames": {
-   "description": "It is the main data container within a backend.DataResponse.",
+   "description": "It is the main data container within a backend.DataResponse.\nThere should be no `nil` entries in the Frames slice (making them pointers was a mistake).",
    "items": {
     "$ref": "#/definitions/Frame"
    },
@@ -902,6 +1093,12 @@
   },
   "GettableApiReceiver": {
    "properties": {
+    "discord_configs": {
+     "items": {
+      "$ref": "#/definitions/DiscordConfig"
+     },
+     "type": "array"
+    },
     "email_configs": {
      "items": {
       "$ref": "#/definitions/EmailConfig"
@@ -957,6 +1154,12 @@
     "victorops_configs": {
      "items": {
       "$ref": "#/definitions/VictorOpsConfig"
+     },
+     "type": "array"
+    },
+    "webex_configs": {
+     "items": {
+      "$ref": "#/definitions/WebexConfig"
      },
      "type": "array"
     },
@@ -1025,7 +1228,7 @@
      "type": "object"
     },
     "settings": {
-     "$ref": "#/definitions/Json"
+     "$ref": "#/definitions/RawMessage"
     },
     "type": {
      "type": "string"
@@ -1074,6 +1277,9 @@
      "format": "int64",
      "type": "integer"
     },
+    "is_paused": {
+     "type": "boolean"
+    },
     "namespace_id": {
      "format": "int64",
      "type": "integer"
@@ -1112,6 +1318,34 @@
     "version": {
      "format": "int64",
      "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "GettableHistoricUserConfig": {
+   "properties": {
+    "alertmanager_config": {
+     "$ref": "#/definitions/GettableApiAlertingConfig"
+    },
+    "id": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "last_applied": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "template_file_provenances": {
+     "additionalProperties": {
+      "$ref": "#/definitions/Provenance"
+     },
+     "type": "object"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
     }
    },
    "type": "object"
@@ -1257,7 +1491,13 @@
     "victorops_api_key": {
      "$ref": "#/definitions/Secret"
     },
+    "victorops_api_key_file": {
+     "type": "string"
+    },
     "victorops_api_url": {
+     "$ref": "#/definitions/URL"
+    },
+    "webex_api_url": {
      "$ref": "#/definitions/URL"
     },
     "wechat_api_corp_id": {
@@ -1298,6 +1538,9 @@
     "oauth2": {
      "$ref": "#/definitions/OAuth2"
     },
+    "proxy_connect_header": {
+     "$ref": "#/definitions/Header"
+    },
     "proxy_url": {
      "$ref": "#/definitions/URL"
     },
@@ -1306,6 +1549,15 @@
     }
    },
    "title": "HTTPClientConfig configures an HTTP client.",
+   "type": "object"
+  },
+  "Header": {
+   "additionalProperties": {
+    "items": {
+     "$ref": "#/definitions/Secret"
+    },
+    "type": "array"
+   },
    "type": "object"
   },
   "HostPort": {
@@ -1360,6 +1612,31 @@
    "title": "InspectType is a type for the Inspect property of a Notice.",
    "type": "integer"
   },
+  "InternalDataLink": {
+   "description": "InternalDataLink definition to allow Explore links to be constructed in the backend",
+   "properties": {
+    "datasourceName": {
+     "type": "string"
+    },
+    "datasourceUid": {
+     "type": "string"
+    },
+    "panelsState": {
+     "$ref": "#/definitions/ExplorePanelsState"
+    },
+    "query": {},
+    "timeRange": {
+     "$ref": "#/definitions/TimeRange"
+    },
+    "transformations": {
+     "items": {
+      "$ref": "#/definitions/LinkTransformationConfig"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "Json": {
    "type": "object"
   },
@@ -1401,78 +1678,19 @@
    },
    "type": "array"
   },
-  "LegacyAlert": {
+  "LinkTransformationConfig": {
    "properties": {
-    "Created": {
-     "format": "date-time",
+    "expression": {
      "type": "string"
     },
-    "DashboardId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "EvalData": {
-     "$ref": "#/definitions/Json"
-    },
-    "ExecutionError": {
+    "field": {
      "type": "string"
     },
-    "For": {
-     "$ref": "#/definitions/Duration"
-    },
-    "Frequency": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "Handler": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "Id": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "Message": {
+    "mapValue": {
      "type": "string"
     },
-    "Name": {
-     "type": "string"
-    },
-    "NewStateDate": {
-     "format": "date-time",
-     "type": "string"
-    },
-    "OrgId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "PanelId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "Settings": {
-     "$ref": "#/definitions/Json"
-    },
-    "Severity": {
-     "type": "string"
-    },
-    "Silenced": {
-     "type": "boolean"
-    },
-    "State": {
-     "$ref": "#/definitions/AlertStateType"
-    },
-    "StateChanges": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "Updated": {
-     "format": "date-time",
-     "type": "string"
-    },
-    "Version": {
-     "format": "int64",
-     "type": "integer"
+    "type": {
+     "$ref": "#/definitions/SupportedTransformationTypes"
     }
    },
    "type": "object"
@@ -1772,13 +1990,22 @@
     "routing_key": {
      "$ref": "#/definitions/Secret"
     },
+    "routing_key_file": {
+     "type": "string"
+    },
     "send_resolved": {
      "type": "boolean"
     },
     "service_key": {
      "$ref": "#/definitions/Secret"
     },
+    "service_key_file": {
+     "type": "string"
+    },
     "severity": {
+     "type": "string"
+    },
+    "source": {
      "type": "string"
     },
     "url": {
@@ -1870,6 +2097,12 @@
   },
   "PostableApiReceiver": {
    "properties": {
+    "discord_configs": {
+     "items": {
+      "$ref": "#/definitions/DiscordConfig"
+     },
+     "type": "array"
+    },
     "email_configs": {
      "items": {
       "$ref": "#/definitions/EmailConfig"
@@ -1925,6 +2158,12 @@
     "victorops_configs": {
      "items": {
       "$ref": "#/definitions/VictorOpsConfig"
+     },
+     "type": "array"
+    },
+    "webex_configs": {
+     "items": {
+      "$ref": "#/definitions/WebexConfig"
      },
      "type": "array"
     },
@@ -1990,7 +2229,7 @@
      "type": "object"
     },
     "settings": {
-     "$ref": "#/definitions/Json"
+     "$ref": "#/definitions/RawMessage"
     },
     "type": {
      "type": "string"
@@ -2030,6 +2269,9 @@
       "Error"
      ],
      "type": "string"
+    },
+    "is_paused": {
+     "type": "boolean"
     },
     "no_data_state": {
      "enum": [
@@ -2113,7 +2355,7 @@
     "data": {
      "example": [
       {
-       "datasourceUid": "-100",
+       "datasourceUid": "__expr__",
        "model": {
         "conditions": [
          {
@@ -2163,9 +2405,9 @@
     },
     "execErrState": {
      "enum": [
+      "OK",
       "Alerting",
-      "Error",
-      "OK"
+      "Error"
      ],
      "type": "string"
     },
@@ -2179,6 +2421,10 @@
     "id": {
      "format": "int64",
      "type": "integer"
+    },
+    "isPaused": {
+     "example": false,
+     "type": "boolean"
     },
     "labels": {
      "additionalProperties": {
@@ -2276,6 +2522,9 @@
     "token": {
      "$ref": "#/definitions/Secret"
     },
+    "token_file": {
+     "type": "string"
+    },
     "url": {
      "type": "string"
     },
@@ -2284,6 +2533,9 @@
     },
     "user_key": {
      "$ref": "#/definitions/Secret"
+    },
+    "user_key_file": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -2353,6 +2605,9 @@
     "thresholds": {
      "$ref": "#/definitions/ThresholdsConfig"
     },
+    "type": {
+     "$ref": "#/definitions/FieldTypeConfig"
+    },
     "unit": {
      "description": "Numeric Options",
      "type": "string"
@@ -2369,8 +2624,17 @@
    "title": "QueryStat is used for storing arbitrary statistics metadata related to a query and its result, e.g. total request time, data processing time.",
    "type": "object"
   },
+  "RawMessage": {
+   "type": "object"
+  },
   "Receiver": {
    "properties": {
+    "discord_configs": {
+     "items": {
+      "$ref": "#/definitions/DiscordConfig"
+     },
+     "type": "array"
+    },
     "email_configs": {
      "items": {
       "$ref": "#/definitions/EmailConfig"
@@ -2420,6 +2684,12 @@
     "victorops_configs": {
      "items": {
       "$ref": "#/definitions/VictorOpsConfig"
+     },
+     "type": "array"
+    },
+    "webex_configs": {
+     "items": {
+      "$ref": "#/definitions/WebexConfig"
      },
      "type": "array"
     },
@@ -2906,6 +3176,9 @@
   "Success": {
    "$ref": "#/definitions/ResponseDetails"
   },
+  "SupportedTransformationTypes": {
+   "type": "string"
+  },
   "TLSConfig": {
    "properties": {
     "ca_file": {
@@ -2923,6 +3196,9 @@
     "key_file": {
      "description": "The client key file for the targets.",
      "type": "string"
+    },
+    "max_version": {
+     "$ref": "#/definitions/TLSVersion"
     },
     "min_version": {
      "$ref": "#/definitions/TLSVersion"
@@ -3142,18 +3418,17 @@
    "type": "object"
   },
   "TimeRange": {
-   "description": "For example, 4:00PM to End of the day would Begin at 1020 and End at 1440.",
+   "description": "Redefining this to avoid an import cycle",
    "properties": {
-    "EndMinute": {
-     "format": "int64",
-     "type": "integer"
+    "from": {
+     "format": "date-time",
+     "type": "string"
     },
-    "StartMinute": {
-     "format": "int64",
-     "type": "integer"
+    "to": {
+     "format": "date-time",
+     "type": "string"
     }
    },
-   "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
    "type": "object"
   },
   "URL": {
@@ -3231,7 +3506,7 @@
      "$ref": "#/definitions/Secret"
     },
     "api_key_file": {
-     "$ref": "#/definitions/Secret"
+     "type": "string"
     },
     "api_url": {
      "$ref": "#/definitions/URL"
@@ -3270,6 +3545,27 @@
   "VisType": {
    "title": "VisType is used to indicate how the data should be visualized in explore.",
    "type": "string"
+  },
+  "WebexConfig": {
+   "properties": {
+    "api_url": {
+     "$ref": "#/definitions/URL"
+    },
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "message": {
+     "type": "string"
+    },
+    "room_id": {
+     "type": "string"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    }
+   },
+   "title": "WebexConfig configures notifications via Webex.",
+   "type": "object"
   },
   "WebhookConfig": {
    "properties": {
@@ -3348,7 +3644,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3476,7 +3771,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3532,6 +3826,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -3735,6 +4030,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3947,6 +4243,42 @@
     ]
    }
   },
+  "/api/v1/provisioning/alert-rules/export": {
+   "get": {
+    "operationId": "RouteGetAlertRulesExport",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "summary": "Export all alert rules in provisioning file format.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
   "/api/v1/provisioning/alert-rules/{UID}": {
    "delete": {
     "operationId": "RouteDeleteAlertRule",
@@ -4037,6 +4369,54 @@
      }
     },
     "summary": "Update an existing alert rule.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/alert-rules/{UID}/export": {
+   "get": {
+    "operationId": "RouteGetAlertRuleExport",
+    "parameters": [
+     {
+      "description": "Alert rule UID",
+      "in": "path",
+      "name": "UID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "text/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "summary": "Export an alert rule in provisioning file format.",
     "tags": [
      "provisioning"
     ]
@@ -4240,6 +4620,59 @@
      }
     },
     "summary": "Update the interval of a rule group.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
+   "get": {
+    "operationId": "RouteGetAlertRuleGroupExport",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "FolderUID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "text/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "summary": "Export an alert rule group in provisioning file format.",
     "tags": [
      "provisioning"
     ]
@@ -4569,6 +5002,15 @@
   "application/json"
  ],
  "responses": {
+  "GettableHistoricUserConfigs": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/GettableHistoricUserConfig"
+    },
+    "type": "array"
+   }
+  },
   "receiversResponse": {
    "description": "",
    "schema": {

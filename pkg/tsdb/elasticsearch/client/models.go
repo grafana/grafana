@@ -236,6 +236,11 @@ type TermsAggregation struct {
 	Missing     *string                `json:"missing,omitempty"`
 }
 
+// NestedAggregation represents a nested aggregation
+type NestedAggregation struct {
+	Path string `json:"path"`
+}
+
 // ExtendedBounds represents extended bounds
 type ExtendedBounds struct {
 	Min int64 `json:"min"`

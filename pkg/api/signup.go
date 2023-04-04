@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -19,15 +19,15 @@ import (
 )
 
 // GET /api/user/signup/options
-func GetSignUpOptions(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetSignUpOptions(c *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{
 		"verifyEmailEnabled": setting.VerifyEmailEnabled,
-		"autoAssignOrg":      setting.AutoAssignOrg,
+		"autoAssignOrg":      hs.Cfg.AutoAssignOrg,
 	})
 }
 
 // POST /api/user/signup
-func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SignUp(c *contextmodel.ReqContext) response.Response {
 	form := dtos.SignUpForm{}
 	var err error
 	if err = web.Bind(c.Req, &form); err != nil {
@@ -75,7 +75,7 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{"status": "SignUpCreated"})
 }
 
-func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SignUpStep2(c *contextmodel.ReqContext) response.Response {
 	form := dtos.SignUpStep2Form{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

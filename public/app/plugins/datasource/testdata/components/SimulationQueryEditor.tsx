@@ -5,7 +5,7 @@ import { DataFrameJSON, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Label, Select } from '@grafana/ui';
 
 import { EditorProps } from '../QueryEditor';
-import { SimulationQuery } from '../types';
+import { SimulationQuery } from '../dataquery.gen';
 
 import { SimulationSchemaForm } from './SimulationSchemaForm';
 
@@ -31,7 +31,7 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
 
   // This only changes once
   const info = useAsync(async () => {
-    const v = (await ds.getResource('sims')) as SimInfo[];
+    const v = await ds.getResource<SimInfo[]>('sims');
     return {
       sims: v,
       options: v.map((s) => ({ label: s.name, value: s.type, description: s.description })),

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 
 import { PanelMenuItem, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,7 +9,7 @@ interface Props {
   children?: React.ReactNode;
 }
 
-export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = (props) => {
+export const PanelHeaderMenuItem = (props: Props & PanelMenuItem) => {
   const [ref, setRef] = useState<HTMLLIElement | null>(null);
   const isSubMenu = props.type === 'submenu';
   const isDivider = props.type === 'divider';
@@ -20,10 +20,13 @@ export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = (props) => {
   return isDivider ? (
     <li className="divider" />
   ) : (
-    <li className={isSubMenu ? `dropdown-submenu ${getDropdownLocationCssClass(ref)}` : undefined} ref={setRef}>
-      <a onClick={props.onClick} href={props.href}>
+    <li
+      className={isSubMenu ? `dropdown-submenu ${getDropdownLocationCssClass(ref)}` : undefined}
+      ref={setRef}
+      data-testid={selectors.components.Panels.Panel.menuItems(props.text)}
+    >
+      <a onClick={props.onClick} href={props.href} role="menuitem">
         {icon && <Icon name={icon} className={styles.menuIconClassName} />}
-
         <span className="dropdown-item-text" aria-label={selectors.components.Panels.Panel.headerItems(props.text)}>
           {props.text}
           {isSubMenu && <Icon name="angle-right" className={styles.shortcutIconClassName} />}

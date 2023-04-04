@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -14,8 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestQueryInterval(t *testing.T) {
@@ -151,7 +151,7 @@ func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejso
 			Store:            store,
 			DatasourceService: &fd.FakeDataSourceService{
 				DataSources: []*datasources.DataSource{
-					{Id: 1, Type: datasources.DS_GRAPHITE, JsonData: dataSourceJsonData},
+					{ID: 1, Type: datasources.DS_GRAPHITE, JsonData: dataSourceJsonData},
 				},
 			},
 		}

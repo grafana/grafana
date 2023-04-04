@@ -10,8 +10,7 @@ import {
   LinkModel,
 } from '@grafana/data';
 import { MenuItem, SeriesTableRow, useTheme2 } from '@grafana/ui';
-
-import { findNextStateIndex, fmtDuration } from './utils';
+import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
 interface StateTimelineTooltipProps {
   data: DataFrame[];
@@ -22,14 +21,14 @@ interface StateTimelineTooltipProps {
   onAnnotationAdd?: () => void;
 }
 
-export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
+export const StateTimelineTooltip = ({
   data,
   alignedData,
   seriesIdx,
   datapointIdx,
   timeZone,
   onAnnotationAdd,
-}) => {
+}: StateTimelineTooltipProps) => {
   const theme = useTheme2();
 
   if (!data || datapointIdx == null) {

@@ -1,10 +1,9 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataSourceJsonData } from '@grafana/data';
 
-export interface Query extends DataQuery {
-  labelSelector: string;
-  profileTypeId: string;
-  queryType: 'metrics' | 'profile' | 'both';
-  groupBy: string[];
+import { Phlare as PhlareBase, PhlareQueryType } from './dataquery.gen';
+
+export interface Query extends PhlareBase {
+  queryType: PhlareQueryType;
 }
 
 export interface ProfileTypeMessage {
@@ -17,12 +16,6 @@ export interface ProfileTypeMessage {
 }
 
 export type SeriesMessage = Array<{ labels: Array<{ name: string; value: string }> }>;
-
-export const defaultQuery: Partial<Query> = {
-  labelSelector: '{}',
-  queryType: 'both',
-  groupBy: [],
-};
 
 /**
  * These are options configured for each DataSource instance.

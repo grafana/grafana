@@ -261,8 +261,8 @@ describe('Reducer Transformer', () => {
     expect(frames[0].length).toEqual(1);
     expect(frames[1].length).toEqual(1);
 
-    const view0 = new DataFrameView<any>(frames[0]);
-    const view1 = new DataFrameView<any>(frames[1]);
+    const view0 = new DataFrameView(frames[0]);
+    const view1 = new DataFrameView(frames[1]);
     expect({ ...view0.get(0) }).toMatchInlineSnapshot(`
       {
         "temperature": 6,

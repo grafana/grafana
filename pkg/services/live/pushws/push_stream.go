@@ -3,13 +3,13 @@ package pushws
 import (
 	"net/http"
 
+	"github.com/gorilla/websocket"
+	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
+
 	"github.com/grafana/grafana/pkg/services/live/convert"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
-
-	"github.com/gorilla/websocket"
-	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
 // Handler handles WebSocket client connections that push data to Live.

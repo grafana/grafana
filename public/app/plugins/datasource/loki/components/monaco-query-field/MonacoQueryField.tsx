@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { debounce } from 'lodash';
 import React, { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
@@ -6,7 +7,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
-import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
+import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
+
+import { isValidQuery } from '../../queryUtils';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
@@ -70,17 +73,32 @@ function ensureLogQL(monaco: Monaco) {
   }
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
   return {
     container: css`
       border-radius: ${theme.shape.borderRadius()};
       border: 1px solid ${theme.components.input.borderColor};
       width: 100%;
     `,
+    placeholder: css`
+      ::after {
+        content: '${placeholder}';
+        font-family: ${theme.typography.fontFamilyMonospace};
+        opacity: 0.3;
+      }
+    `,
   };
 };
 
-const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasource }: Props) => {
+const MonacoQueryField = ({
+  history,
+  onBlur,
+  onRunQuery,
+  initialValue,
+  datasource,
+  placeholder,
+  onQueryType,
+}: Props) => {
   const id = uuidv4();
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
@@ -94,7 +112,7 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
   const autocompleteCleanupCallback = useRef<(() => void) | null>(null);
 
   const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, placeholder);
 
   useEffect(() => {
     // when we unmount, we unregister the autocomplete-function, if it was registered
@@ -102,6 +120,42 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
       autocompleteCleanupCallback.current?.();
     };
   }, []);
+
+  const setPlaceholder = (monaco: Monaco, editor: MonacoEditor) => {
+    const placeholderDecorators = [
+      {
+        range: new monaco.Range(1, 1, 1, 1),
+        options: {
+          className: styles.placeholder,
+          isWholeLine: true,
+        },
+      },
+    ];
+
+    let decorators: string[] = [];
+
+    const checkDecorators: () => void = () => {
+      const model = editor.getModel();
+
+      if (!model) {
+        return;
+      }
+
+      const newDecorators = model.getValueLength() === 0 ? placeholderDecorators : [];
+      decorators = model.deltaDecorations(decorators, newDecorators);
+    };
+
+    checkDecorators();
+    editor.onDidChangeModelContent(checkDecorators);
+  };
+
+  const onTypeDebounced = debounce(async (query: string) => {
+    if (!onQueryType || (isValidQuery(query) === false && query !== '')) {
+      return;
+    }
+
+    onQueryType(query);
+  }, 1000);
 
   return (
     <div
@@ -146,6 +200,8 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
               severity: monaco.MarkerSeverity.Error,
               ...boundary,
             }));
+
+            onTypeDebounced(query);
             monaco.editor.setModelMarkers(model, 'owner', markers);
           });
           const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef);
@@ -206,6 +262,8 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
               editor.trigger('', 'editor.action.triggerSuggest', {});
             }
           });
+
+          setPlaceholder(monaco, editor);
         }}
       />
     </div>

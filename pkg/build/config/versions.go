@@ -120,6 +120,7 @@ var Versions = VersionMap{
 				Alpine,
 				Ubuntu,
 			},
+			PrereleaseBucket: "grafana-prerelease/artifacts/docker",
 		},
 		Buckets: Buckets{
 			Artifacts:            "grafana-downloads",
@@ -191,6 +192,33 @@ var Versions = VersionMap{
 			Distribution: []Distribution{
 				Alpine,
 				Ubuntu,
+			},
+			PrereleaseBucket: "grafana-prerelease/artifacts/docker",
+		},
+		Buckets: Buckets{
+			Artifacts:            "grafana-prerelease/artifacts/downloads",
+			ArtifactsEnterprise2: "grafana-prerelease/artifacts/downloads-enterprise2",
+			CDNAssets:            "grafana-prerelease",
+			CDNAssetsDir:         "artifacts/static-assets",
+			Storybook:            "grafana-prerelease",
+			StorybookSrcDir:      "artifacts/storybook",
+		},
+	},
+	CloudMode: {
+		Variants: []Variant{
+			VariantLinuxAmd64Musl,
+		},
+		PluginSignature: PluginSignature{
+			Sign:      true,
+			AdminSign: true,
+		},
+		Docker: Docker{
+			ShouldSave: true,
+			Architectures: []Architecture{
+				ArchAMD64,
+			},
+			Distribution: []Distribution{
+				Alpine,
 			},
 			PrereleaseBucket: "grafana-prerelease/artifacts/docker",
 		},

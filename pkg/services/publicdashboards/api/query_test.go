@@ -83,7 +83,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).
+			service.On("FindEnabledPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).
 				Return(&PublicDashboard{Uid: "pubdashuid"}, test.DashboardResult, test.Err).Maybe()
 
 			cfg := setting.NewCfg()
@@ -267,13 +267,13 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	cacheService := datasourcesService.ProvideCacheService(localcache.ProvideService(), db)
 	qds := buildQueryDataService(t, cacheService, nil, db)
 	dsStore := datasourcesService.CreateStore(db, log.New("publicdashboards.test"))
-	_ = dsStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-		Uid:      "ds1",
-		OrgId:    1,
+	_, _ = dsStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		UID:      "ds1",
+		OrgID:    1,
 		Name:     "laban",
 		Type:     datasources.DS_MYSQL,
 		Access:   datasources.DS_ACCESS_DIRECT,
-		Url:      "http://test",
+		URL:      "http://test",
 		Database: "site",
 		ReadOnly: true,
 	})
@@ -324,8 +324,9 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	store := publicdashboardsStore.ProvideStore(db)
 	cfg := setting.NewCfg()
 	ac := acmock.New()
+	ws := &publicdashboards.FakePublicDashboardServiceWrapper{}
 	cfg.RBACEnabled = false
-	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac)
+	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws)
 	pubdash, err := service.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 

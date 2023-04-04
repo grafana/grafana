@@ -18,13 +18,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -37,13 +37,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -56,13 +56,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -75,13 +75,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -94,26 +94,26 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     }
   ],
   "references": [
     {
-      "kind": "ds",
-      "UID": "gdev-testdata"
+      "family": "ds",
+      "ID": "gdev-testdata"
     },
     {
-      "kind": "plugin",
+      "family": "plugin",
       "type": "panel",
-      "UID": "graph"
+      "ID": "graph"
     }
   ]
 }

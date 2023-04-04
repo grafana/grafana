@@ -15,14 +15,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	loginService "github.com/grafana/grafana/pkg/services/login"
+	loginservice "github.com/grafana/grafana/pkg/services/login"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -80,7 +83,14 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 	}
 }
 
-func (hs *HTTPServer) LoginView(c *models.ReqContext) {
+func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
+	if hs.Features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+		if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
+			c.Redirect(hs.Cfg.AppSubURL + "/")
+			return
+		}
+	}
+
 	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
 		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
@@ -100,7 +110,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		// and the view should return immediately before attempting
 		// to login again via OAuth and enter to a redirect loop
 		cookies.DeleteCookie(c.Resp, loginErrorCookieName, hs.CookieOptionsFromCfg)
-		viewData.Settings["loginError"] = loginError
+		viewData.Settings.LoginError = loginError
 		c.HTML(http.StatusOK, getViewIndex(), viewData)
 		return
 	}
@@ -120,26 +130,14 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 			}
 		}
 
-		if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
-			if err := hs.ValidateRedirectTo(redirectTo); err != nil {
-				// the user is already logged so instead of rendering the login page with error
-				// it should be redirected to the home page.
-				c.Logger.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
-				redirectTo = hs.Cfg.AppSubURL + "/"
-			}
-			cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
-			c.Redirect(redirectTo)
-			return
-		}
-
-		c.Redirect(hs.Cfg.AppSubURL + "/")
+		c.Redirect(hs.GetRedirectURL(c))
 		return
 	}
 
 	c.HTML(http.StatusOK, getViewIndex(), viewData)
 }
 
-func (hs *HTTPServer) tryAutoLogin(c *models.ReqContext) bool {
+func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 	samlAutoLogin := hs.samlAutoLoginEnabled()
 	oauthInfos := hs.SocialService.GetOAuthInfoProviders()
 
@@ -150,9 +148,10 @@ func (hs *HTTPServer) tryAutoLogin(c *models.ReqContext) bool {
 		}
 	}
 	// If no auto_login option configured for specific OAuth, use legacy option
-	if setting.OAuthAutoLogin && autoLoginProvidersLen == 0 {
+	if hs.Cfg.OAuthAutoLogin && autoLoginProvidersLen == 0 {
 		autoLoginProvidersLen = len(oauthInfos)
 	}
+
 	if samlAutoLogin {
 		autoLoginProvidersLen++
 	}
@@ -161,13 +160,14 @@ func (hs *HTTPServer) tryAutoLogin(c *models.ReqContext) bool {
 		c.Logger.Warn("Skipping auto login because multiple auth providers are configured with auto_login option")
 		return false
 	}
-	if autoLoginProvidersLen == 0 && setting.OAuthAutoLogin {
+
+	if hs.Cfg.OAuthAutoLogin && autoLoginProvidersLen == 0 {
 		c.Logger.Warn("Skipping auto login because no auth providers are configured")
 		return false
 	}
 
 	for providerName, provider := range oauthInfos {
-		if provider.AutoLogin || setting.OAuthAutoLogin {
+		if provider.AutoLogin || hs.Cfg.OAuthAutoLogin {
 			redirectUrl := hs.Cfg.AppSubURL + "/login/" + providerName
 			c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
 			c.Redirect(redirectUrl, 307)
@@ -185,15 +185,15 @@ func (hs *HTTPServer) tryAutoLogin(c *models.ReqContext) bool {
 	return false
 }
 
-func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) LoginAPIPing(c *contextmodel.ReqContext) response.Response {
 	if c.IsSignedIn || c.IsAnonymous {
-		return response.JSON(http.StatusOK, "Logged in")
+		return response.JSON(http.StatusOK, util.DynMap{"message": "Logged in"})
 	}
 
 	return response.Error(401, "Unauthorized", nil)
 }
 
-func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 	if hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
 		identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: c.Req, Resp: c.Resp})
 		if err != nil {
@@ -204,22 +204,8 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 			return response.Err(err)
 		}
 
-		cookies.WriteSessionCookie(c, hs.Cfg, identity.SessionToken.UnhashedToken, hs.Cfg.LoginMaxLifetime)
-		result := map[string]interface{}{
-			"message": "Logged in",
-		}
-
-		if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
-			if err := hs.ValidateRedirectTo(redirectTo); err == nil {
-				result["redirectUrl"] = redirectTo
-			} else {
-				c.Logger.Info("Ignored invalid redirect_to cookie value.", "url", redirectTo)
-			}
-			cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
-		}
-
 		metrics.MApiLoginPost.Inc()
-		return response.JSON(http.StatusOK, result)
+		return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo)
 	}
 
 	cmd := dtos.LoginCommand{}
@@ -235,7 +221,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		if err == nil && resp.ErrMessage() != "" {
 			err = errors.New(resp.ErrMessage())
 		}
-		hs.HooksService.RunLoginHook(&models.LoginInfo{
+		hs.HooksService.RunLoginHook(&loginservice.LoginInfo{
 			AuthModule:    authModule,
 			User:          usr,
 			LoginUsername: cmd.User,
@@ -244,12 +230,12 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		}, c)
 	}()
 
-	if setting.DisableLoginForm {
+	if hs.Cfg.DisableLoginForm {
 		resp = response.Error(http.StatusUnauthorized, "Login is disabled", nil)
 		return resp
 	}
 
-	authQuery := &models.LoginUserQuery{
+	authQuery := &loginservice.LoginUserQuery{
 		ReqContext: c,
 		Username:   cmd.User,
 		Password:   cmd.Password,
@@ -295,25 +281,15 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		return resp
 	}
 
-	result := map[string]interface{}{
-		"message": "Logged in",
-	}
-
-	if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
-		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
-			result["redirectUrl"] = redirectTo
-		} else {
-			c.Logger.Info("Ignored invalid redirect_to cookie value.", "url", redirectTo)
-		}
-		cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
-	}
-
 	metrics.MApiLoginPost.Inc()
-	resp = response.JSON(http.StatusOK, result)
+	resp = response.JSON(http.StatusOK, map[string]any{
+		"message":     "Logged in",
+		"redirectUrl": hs.GetRedirectURL(c),
+	})
 	return resp
 }
 
-func (hs *HTTPServer) loginUserWithUser(user *user.User, c *models.ReqContext) error {
+func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqContext) error {
 	if user == nil {
 		return errors.New("could not login user")
 	}
@@ -326,7 +302,7 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *models.ReqContext) e
 	}
 
 	hs.log.Debug("Got IP address from client address", "addr", addr, "ip", ip)
-	ctx := context.WithValue(c.Req.Context(), models.RequestURIKey{}, c.Req.RequestURI)
+	ctx := context.WithValue(c.Req.Context(), loginservice.RequestURIKey{}, c.Req.RequestURI)
 	userToken, err := hs.AuthTokenService.CreateToken(ctx, user, ip, c.Req.UserAgent())
 	if err != nil {
 		return fmt.Errorf("%v: %w", "failed to create auth token", err)
@@ -334,16 +310,16 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *models.ReqContext) e
 	c.UserToken = userToken
 
 	hs.log.Info("Successful Login", "User", user.Email)
-	cookies.WriteSessionCookie(c, hs.Cfg, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetime)
+	authn.WriteSessionCookie(c.Resp, hs.Cfg, userToken)
 	return nil
 }
 
-func (hs *HTTPServer) Logout(c *models.ReqContext) {
+func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 	// If SAML is enabled and this is a SAML user use saml logout
 	if hs.samlSingleLogoutEnabled() {
-		getAuthQuery := models.GetAuthInfoQuery{UserId: c.UserID}
-		if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-			if getAuthQuery.Result.AuthModule == loginService.SAMLAuthModule {
+		getAuthQuery := loginservice.GetAuthInfoQuery{UserId: c.UserID}
+		if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
+			if authInfo.AuthModule == loginservice.SAMLAuthModule {
 				c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
 				return
 			}
@@ -362,7 +338,7 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 		hs.log.Error("failed to revoke auth token", "error", err)
 	}
 
-	cookies.WriteSessionCookie(c, hs.Cfg, "", -1)
+	authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 
 	if setting.SignoutRedirectUrl != "" {
 		c.Redirect(setting.SignoutRedirectUrl)
@@ -372,7 +348,7 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 	}
 }
 
-func (hs *HTTPServer) tryGetEncryptedCookie(ctx *models.ReqContext, cookieName string) (string, bool) {
+func (hs *HTTPServer) tryGetEncryptedCookie(ctx *contextmodel.ReqContext, cookieName string) (string, bool) {
 	cookie := ctx.GetCookie(cookieName)
 	if cookie == "" {
 		return "", false
@@ -387,7 +363,7 @@ func (hs *HTTPServer) tryGetEncryptedCookie(ctx *models.ReqContext, cookieName s
 	return string(decryptedError), err == nil
 }
 
-func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName string, value string, maxAge int) error {
+func (hs *HTTPServer) trySetEncryptedCookie(ctx *contextmodel.ReqContext, cookieName string, value string, maxAge int) error {
 	encryptedError, err := hs.SecretsService.Encrypt(ctx.Req.Context(), []byte(value), secrets.WithoutScope())
 	if err != nil {
 		return err
@@ -398,22 +374,35 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName s
 	return nil
 }
 
-func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...interface{}) {
-	ctx.Logger.Warn(err.Error(), v...)
-	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
-		hs.log.Error("Failed to set encrypted cookie", "err", err)
-	}
-
-	ctx.Redirect(hs.Cfg.AppSubURL + "/login")
+func (hs *HTTPServer) redirectWithError(c *contextmodel.ReqContext, err error, v ...interface{}) {
+	c.Logger.Warn(err.Error(), v...)
+	c.Redirect(hs.redirectURLWithErrorCookie(c, err))
 }
 
-func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
-	ctx.Logger.Error(err.Error(), v...)
-	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
-		hs.log.Error("Failed to set encrypted cookie", "err", err)
+func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
+	c.Logger.Error(err.Error(), v...)
+	location := hs.redirectURLWithErrorCookie(c, err)
+	return response.Redirect(location)
+}
+
+func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err error) string {
+	setCookie := true
+	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookiePreferences) {
+		prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserID, OrgID: c.OrgID, Teams: c.Teams}
+		prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
+		if err != nil {
+			c.Redirect(hs.Cfg.AppSubURL + "/login")
+		}
+		setCookie = prefs.Cookies("functional")
 	}
 
-	return response.Redirect(hs.Cfg.AppSubURL + "/login")
+	if setCookie {
+		if err := hs.trySetEncryptedCookie(c, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
+			hs.log.Error("Failed to set encrypted cookie", "err", err)
+		}
+	}
+
+	return hs.Cfg.AppSubURL + "/login"
 }
 
 func (hs *HTTPServer) samlEnabled() bool {
@@ -436,6 +425,11 @@ func getLoginExternalError(err error) string {
 	var createTokenErr *auth.CreateTokenErr
 	if errors.As(err, &createTokenErr) {
 		return createTokenErr.ExternalErr
+	}
+
+	gfErr := &errutil.Error{}
+	if errors.As(err, gfErr) {
+		return gfErr.Public().Message
 	}
 
 	return err.Error()

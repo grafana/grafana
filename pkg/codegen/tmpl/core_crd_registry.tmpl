@@ -1,0 +1,66 @@
+package {{ .PackageName }}
+
+import (
+	"encoding/json"
+	"fmt"
+
+	{{range .Kinds }}
+	{{ .Props.MachineName }} "{{ $.KindPackagePrefix }}/{{ .Props.MachineName }}/crd"{{end}}
+	"github.com/grafana/kindsys"
+	"github.com/grafana/kindsys/k8ssys"
+	"github.com/grafana/grafana/pkg/registry/corekind"
+	"gopkg.in/yaml.v3"
+)
+
+// Registry is a list of all of Grafana's core structured kinds, wrapped in a
+// standard [k8ssys.CRD] interface that makes them usable for interactions
+// with certain Kubernetes controller and apimachinery libraries.
+//
+// There are two access methods: individually via literal named methods, or as
+// a slice returned from All() method.
+//
+// Prefer the individual named methods for use cases where the particular kind(s)
+// that are needed are known to the caller. Prefer All() when performing operations
+// generically across all kinds.
+type Registry struct {
+	all [{{ len .Kinds }}]k8ssys.Kind
+}
+
+{{range $i, $k := .Kinds }}
+// {{ .Props.Name }} returns the [k8ssys.Kind] instance for the {{ .Props.Name }} kind.
+func (r *Registry) {{ .Props.Name }}() k8ssys.Kind {
+	return r.all[{{ $i }}]
+}
+{{end}}
+
+func doNewRegistry(breg *corekind.Base) *Registry {
+	var err error
+	var b []byte
+	var kk k8ssys.Kind
+	reg := &Registry{}
+
+{{range $i, $k := .Kinds }}
+  kk = k8ssys.Kind{
+    GrafanaKind: breg.{{ $k.Props.Name }}(),
+    Object: &{{ $k.Props.MachineName }}.{{ $k.Props.Name }}{},
+    ObjectList: &{{ $k.Props.MachineName }}.{{ $k.Props.Name }}List{},
+  }
+  // TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
+  map{{ $i }} := make(map[string]any)
+  err = yaml.Unmarshal({{ $k.Props.MachineName }}.CRDYaml, map{{ $i }})
+  if err != nil {
+    panic(fmt.Sprintf("generated CRD YAML for {{ $k.Props.Name }} failed to unmarshal: %s", err))
+  }
+  b, err = json.Marshal(map{{ $i }})
+  if err != nil {
+    panic(fmt.Sprintf("could not re-marshal CRD JSON for {{ $k.Props.Name }}: %s", err))
+  }
+  err = json.Unmarshal(b, &kk.Schema)
+  if err != nil {
+    panic(fmt.Sprintf("could not unmarshal CRD JSON for {{ $k.Props.Name }}: %s", err))
+  }
+  reg.all[{{ $i }}] = kk
+{{end}}
+
+	return reg
+}

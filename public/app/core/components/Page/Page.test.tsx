@@ -1,10 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { configureStore } from 'app/store/configureStore';
 
 import { Page } from './Page';
 import { PageProps } from './types';
@@ -30,14 +29,12 @@ const setup = (props: Partial<PageProps>) => {
     },
   ];
 
-  const store = configureStore();
-
   return render(
-    <Provider store={store}>
+    <TestProvider>
       <Page {...props}>
         <div data-testid="page-children">Children</div>
       </Page>
-    </Provider>
+    </TestProvider>
   );
 };
 

@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { AsyncMultiSelect, InlineField, SegmentAsync, Select } from '@grafana/ui';
 
 import { useFields } from '../../../../hooks/useFields';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
+import { TopMetrics } from '../../../../types';
 import { orderOptions } from '../../BucketAggregationsEditor/utils';
-import { TopMetrics } from '../aggregations';
 import { changeMetricSetting } from '../state/actions';
 
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
 
 const toMultiSelectValue = (value: string): SelectableValue<string> => ({ value, label: value });
 
-export const TopMetricsSettingsEditor: FunctionComponent<Props> = ({ metric }) => {
+export const TopMetricsSettingsEditor = ({ metric }: Props) => {
   const dispatch = useDispatch();
   const getOrderByOptions = useFields(['number', 'date']);
   const getMetricsOptions = useFields(metric.type);

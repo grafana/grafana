@@ -3,9 +3,10 @@ package tracing
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestSplitCustomAttribs(t *testing.T) {
@@ -61,7 +62,7 @@ func TestOptentelemetry_ParseSettingsOpentelemetry(t *testing.T) {
 	otlpsect := cfg.Raw.Section("tracing.opentelemetry.otlp")
 
 	assert.NoError(t, otel.parseSettingsOpentelemetry())
-	assert.Equal(t, noopExporter, otel.enabled)
+	assert.Equal(t, noopExporter, otel.Enabled)
 
 	otelsect.Key("custom_attributes")
 	assert.NoError(t, otel.parseSettingsOpentelemetry())
@@ -77,12 +78,12 @@ func TestOptentelemetry_ParseSettingsOpentelemetry(t *testing.T) {
 
 	jaegersect.Key("address").SetValue("somehost:6831")
 	assert.NoError(t, otel.parseSettingsOpentelemetry())
-	assert.Equal(t, "somehost:6831", otel.address)
-	assert.Equal(t, jaegerExporter, otel.enabled)
+	assert.Equal(t, "somehost:6831", otel.Address)
+	assert.Equal(t, jaegerExporter, otel.Enabled)
 
 	jaegersect.Key("address").SetValue("")
 	otlpsect.Key("address").SetValue("somehost:4317")
 	assert.NoError(t, otel.parseSettingsOpentelemetry())
-	assert.Equal(t, "somehost:4317", otel.address)
-	assert.Equal(t, otlpExporter, otel.enabled)
+	assert.Equal(t, "somehost:4317", otel.Address)
+	assert.Equal(t, otlpExporter, otel.Enabled)
 }

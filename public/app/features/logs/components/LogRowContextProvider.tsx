@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import {
@@ -34,6 +34,7 @@ export interface HasMoreContextRows {
 interface ResultType {
   data: string[][];
   errors: string[];
+  doNotCheckForMore?: boolean;
 }
 
 interface LogRowContextProviderProps {
@@ -45,6 +46,7 @@ interface LogRowContextProviderProps {
     errors: LogRowContextQueryErrors;
     hasMoreContextRows: HasMoreContextRows;
     updateLimit: () => void;
+    runContextQuery: () => void;
     limit: number;
     logsSortOrder?: LogsSortOrder | null;
   }) => JSX.Element;
@@ -55,7 +57,7 @@ export const getRowContexts = async (
   row: LogRowModel,
   limit: number,
   logsSortOrder?: LogsSortOrder | null
-) => {
+): Promise<ResultType> => {
   const promises = [
     getRowContext(row, {
       limit,
@@ -135,12 +137,7 @@ export const getRowContexts = async (
   };
 };
 
-export const LogRowContextProvider: React.FunctionComponent<LogRowContextProviderProps> = ({
-  getRowContext,
-  row,
-  children,
-  logsSortOrder,
-}) => {
+export const LogRowContextProvider = ({ getRowContext, row, children, logsSortOrder }: LogRowContextProviderProps) => {
   // React Hook that creates a number state value called limit to component state and a setter function called setLimit
   // The initial value for limit is 10
   // Used for the number of rows to retrieve from backend from a specific point in time
@@ -159,6 +156,8 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
     after: true,
   });
 
+  const [results, setResults] = useState<ResultType>();
+
   // React Hook that resolves two promises every time the limit prop changes
   // First promise fetches limit number of rows backwards in time from a specific point in time
   // Second promise fetches limit number of rows forwards in time from a specific point in time
@@ -166,61 +165,86 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
     return await getRowContexts(getRowContext, row, limit, logsSortOrder); // Moved it to a separate function for debugging purposes
   }, [limit]);
 
+  useEffect(() => {
+    setResults(value);
+  }, [value]);
+
   // React Hook that performs a side effect every time the value (from useAsync hook) prop changes
   // The side effect changes the result state with the response from the useAsync hook
   // The side effect changes the hasMoreContextRows state if there are more context rows before or after the current result
   useEffect(() => {
-    if (value) {
+    if (results) {
       setResult((currentResult) => {
-        let hasMoreLogsBefore = true,
-          hasMoreLogsAfter = true;
+        if (!results.doNotCheckForMore) {
+          let hasMoreLogsBefore = true,
+            hasMoreLogsAfter = true;
 
-        const currentResultBefore = currentResult?.data[0];
-        const currentResultAfter = currentResult?.data[1];
-        const valueBefore = value.data[0];
-        const valueAfter = value.data[1];
+          const currentResultBefore = currentResult?.data[0];
+          const currentResultAfter = currentResult?.data[1];
+          const valueBefore = results.data[0];
+          const valueAfter = results.data[1];
 
-        // checks if there are more log rows in a given direction
-        // if after fetching additional rows the length of result is the same,
-        // we can assume there are no logs in that direction within a given time range
-        if (currentResult && (!valueBefore || currentResultBefore.length === valueBefore.length)) {
-          hasMoreLogsBefore = false;
+          // checks if there are more log rows in a given direction
+          // if after fetching additional rows the length of result is the same,
+          // we can assume there are no logs in that direction within a given time range
+          if (currentResult && (!valueBefore || currentResultBefore.length === valueBefore.length)) {
+            hasMoreLogsBefore = false;
+          }
+
+          if (currentResult && (!valueAfter || currentResultAfter.length === valueAfter.length)) {
+            hasMoreLogsAfter = false;
+          }
+
+          setHasMoreContextRows({
+            before: hasMoreLogsBefore,
+            after: hasMoreLogsAfter,
+          });
         }
 
-        if (currentResult && (!valueAfter || currentResultAfter.length === valueAfter.length)) {
-          hasMoreLogsAfter = false;
-        }
-
-        setHasMoreContextRows({
-          before: hasMoreLogsBefore,
-          after: hasMoreLogsAfter,
-        });
-
-        return value;
+        return results;
       });
     }
-  }, [value]);
+  }, [results]);
 
-  return children({
-    result: {
+  const updateLimit = useCallback(() => {
+    setLimit(limit + 10);
+
+    const { datasourceType, uid: logRowUid } = row;
+    reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
+      datasourceType,
+      logRowUid,
+      newLimit: limit + 10,
+    });
+  }, [limit, row]);
+
+  const runContextQuery = useCallback(async () => {
+    const results = await getRowContexts(getRowContext, row, limit, logsSortOrder);
+    results.doNotCheckForMore = true;
+    setResults(results);
+  }, [getRowContext, limit, logsSortOrder, row]);
+
+  const resultData = useMemo(
+    () => ({
       before: result ? result.data[0] : [],
       after: result ? result.data[1] : [],
-    },
-    errors: {
+    }),
+    [result]
+  );
+
+  const errorsData = useMemo(
+    () => ({
       before: result ? result.errors[0] : undefined,
       after: result ? result.errors[1] : undefined,
-    },
-    hasMoreContextRows,
-    updateLimit: () => {
-      setLimit(limit + 10);
+    }),
+    [result]
+  );
 
-      const { datasourceType, uid: logRowUid } = row;
-      reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
-        datasourceType,
-        logRowUid,
-        newLimit: limit + 10,
-      });
-    },
+  return children({
+    result: resultData,
+    errors: errorsData,
+    hasMoreContextRows,
+    updateLimit,
+    runContextQuery,
     limit,
     logsSortOrder,
   });

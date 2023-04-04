@@ -26,7 +26,7 @@ export default function Home() {
               </li>
               <li>If the condition is breached, an alert instance fires</li>
               <li>Firing instances are routed to notification policies based on matching labels</li>
-              <li>Notifications are sent out to the contact points specified in the notification policy policy</li>
+              <li>Notifications are sent out to the contact points specified in the notification policy</li>
             </ul>
           </div>
           <SVG
@@ -55,10 +55,6 @@ export default function Home() {
             </ul>
             <div>
               <ArrowLink href="https://grafana.com/docs/grafana/latest/alerting/" title="Read more in the Docs" />
-              <ArrowLink
-                href="https://university.grafana.com//lms/index.php?r=coursepath/deeplink&id_path=42&hash=caa235c6321f80e03df017ae9ec6eed5c79da9ec"
-                title="Enroll in the Grafana University Alerting course"
-              />
             </div>
           </Stack>
         </ContentBox>
@@ -144,7 +140,7 @@ function WelcomeHeader({ className }: { className?: string }) {
     <ContentBox className={cx(styles.ctaContainer, className)}>
       <WelcomeCTABox
         title="Alert rules"
-        description="Define the condition that must be me before an alert rule fires"
+        description="Define the condition that must be met before an alert rule fires"
         href="/alerting/list"
         hrefText="Manage alert rules"
       />
@@ -254,8 +250,7 @@ const getContentBoxStyles = (theme: GrafanaTheme2) => ({
   box: css`
     padding: ${theme.spacing(2)};
     background-color: ${theme.colors.background.secondary};
-    border-radius: 3px;
-    outline: 1px solid ${theme.colors.border.strong};
+    border-radius: ${theme.shape.borderRadius()};
   `,
 });
 

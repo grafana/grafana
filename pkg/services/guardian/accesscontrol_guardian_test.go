@@ -17,8 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -106,13 +108,14 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, testDashSvc(t))
+			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, testDashSvc(t))
 			can, err := guardian.CanSave()
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, can)
 		})
 	}
 }
+
 func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 	tests := []accessControlGuardianTestCase{
 		{
@@ -197,12 +200,11 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, testDashSvc(t))
+			cfg := setting.NewCfg()
+			cfg.ViewersCanEdit = tt.viewersCanEdit
+			dashSvc := testDashSvc(t)
+			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, cfg, dashSvc)
 
-			if tt.viewersCanEdit {
-				setting.ViewersCanEdit = true
-				defer func() { setting.ViewersCanEdit = false }()
-			}
 			can, err := guardian.CanEdit()
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, can)
@@ -281,7 +283,7 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, testDashSvc(t))
+			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, testDashSvc(t))
 
 			can, err := guardian.CanView()
 			require.NoError(t, err)
@@ -385,7 +387,7 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, testDashSvc(t))
+			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, testDashSvc(t))
 
 			can, err := guardian.CanAdmin()
 			require.NoError(t, err)
@@ -465,7 +467,7 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, testDashSvc(t))
+			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, testDashSvc(t))
 
 			can, err := guardian.CanDelete()
 			require.NoError(t, err)
@@ -529,7 +531,7 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian, _ := setupAccessControlGuardianTest(t, "0", tt.permissions, nil)
+			guardian, _ := setupAccessControlGuardianTest(t, "0", tt.permissions, nil, nil)
 
 			can, err := guardian.CanCreate(tt.folderID, tt.isFolder)
 			require.NoError(t, err)
@@ -561,7 +563,7 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian, _ := setupAccessControlGuardianTest(t, "1", nil, testDashSvc(t))
+			guardian, _ := setupAccessControlGuardianTest(t, "1", nil, nil, testDashSvc(t))
 
 			mocked := accesscontrolmock.NewMockedPermissionsService()
 			guardian.dashboardPermissionsService = mocked
@@ -583,7 +585,10 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 	}
 }
 
-func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []accesscontrol.Permission, dashboardSvc dashboards.DashboardService) (*AccessControlDashboardGuardian, *dashboards.Dashboard) {
+func setupAccessControlGuardianTest(t *testing.T, uid string,
+	permissions []accesscontrol.Permission,
+	cfg *setting.Cfg,
+	dashboardSvc dashboards.DashboardService) (*AccessControlDashboardGuardian, *dashboards.Dashboard) {
 	t.Helper()
 	store := db.InitTestDB(t)
 
@@ -600,46 +605,49 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 		OrgID:     1,
 	})
 	require.NoError(t, err)
-	ac := accesscontrolmock.New().WithPermissions(permissions)
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashStore, dashStore))
-	license := licensingtest.NewFakeLicensing()
-	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
-	teamSvc := teamimpl.ProvideService(store, store.Cfg)
-	userSvc, err := userimpl.ProvideService(store, nil, store.Cfg, nil, nil, quotatest.New(false, nil))
-	require.NoError(t, err)
-
-	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, ac, teamSvc, userSvc)
-	require.NoError(t, err)
-	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, ac, teamSvc, userSvc)
-	require.NoError(t, err)
 	if dashboardSvc == nil {
 		fakeDashboardService := dashboards.NewFakeDashboardService(t)
+		qResult := &dashboards.Dashboard{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*dashboards.GetDashboardQuery)
-			q.Result = &dashboards.Dashboard{
+			qResult = &dashboards.Dashboard{
 				ID:    q.ID,
 				UID:   q.UID,
 				OrgID: q.OrgID,
 			}
-		}).Return(nil)
+		}).Return(qResult, nil)
 		dashboardSvc = fakeDashboardService
 	}
 
-	g, err := NewAccessControlDashboardGuardian(context.Background(), dash.ID, &user.SignedInUser{OrgID: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc)
+	ac := accesscontrolmock.New().WithPermissions(permissions)
+	// TODO replace with actual folder store implementation after resolving import cycles
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(foldertest.NewFakeFolderStore(t), dashboardSvc, foldertest.NewFakeService()))
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+	teamSvc := teamimpl.ProvideService(store, store.Cfg)
+	userSvc, err := userimpl.ProvideService(store, nil, store.Cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
+
+	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
+		cfg, routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, foldertest.NewFakeService(), ac, teamSvc, userSvc)
+	require.NoError(t, err)
+	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
+		cfg, routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, foldertest.NewFakeService(), ac, teamSvc, userSvc)
+	require.NoError(t, err)
+
+	g, err := NewAccessControlDashboardGuardian(context.Background(), cfg, dash.ID, &user.SignedInUser{OrgID: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc)
+	require.NoError(t, err)
+	g.dashboard = dash
 	return g, dash
 }
 
 func testDashSvc(t *testing.T) dashboards.DashboardService {
 	dashSvc := dashboards.NewFakeDashboardService(t)
+	d := &dashboards.Dashboard{}
 	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*dashboards.GetDashboardQuery)
 		d := dashboards.NewDashboard("mocked")
 		d.ID = 1
 		d.UID = "1"
-		q.Result = d
-	}).Return(nil)
+	}).Return(d, nil)
 	return dashSvc
 }

@@ -7,7 +7,6 @@ package xorm
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"hash/crc32"
 	"reflect"
@@ -144,12 +143,6 @@ func (session *Session) Alias(alias string) *Session {
 	return session
 }
 
-// NoCascade indicate that no cascade load child object
-func (session *Session) NoCascade() *Session {
-	session.statement.UseCascade = false
-	return session
-}
-
 // ForUpdate Set Read/Write locking for UPDATE
 func (session *Session) ForUpdate() *Session {
 	session.statement.IsForUpdate = true
@@ -196,14 +189,6 @@ func (session *Session) StoreEngine(storeEngine string) *Session {
 // Charset is only avialble mysql dialect currently
 func (session *Session) Charset(charset string) *Session {
 	session.statement.Charset = charset
-	return session
-}
-
-// Cascade indicates if loading sub Struct
-func (session *Session) Cascade(trueOrFalse ...bool) *Session {
-	if len(trueOrFalse) >= 1 {
-		session.statement.UseCascade = trueOrFalse[0]
-	}
 	return session
 }
 
@@ -650,37 +635,6 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 							return nil, err
 						}
 						fieldValue.Set(x.Elem())
-					}
-				}
-			} else if session.statement.UseCascade {
-				table, err := session.engine.autoMapType(*fieldValue)
-				if err != nil {
-					return nil, err
-				}
-
-				hasAssigned = true
-				if len(table.PrimaryKeys) != 1 {
-					return nil, errors.New("unsupported non or composited primary key cascade")
-				}
-				var pk = make(core.PK, len(table.PrimaryKeys))
-				pk[0], err = asKind(vv, rawValueType)
-				if err != nil {
-					return nil, err
-				}
-
-				if !isPKZero(pk) {
-					// !nashtsai! TODO for hasOne relationship, it's preferred to use join query for eager fetch
-					// however, also need to consider adding a 'lazy' attribute to xorm tag which allow hasOne
-					// property to be fetched lazily
-					structInter := reflect.New(fieldValue.Type())
-					has, err := session.ID(pk).NoCascade().get(structInter.Interface())
-					if err != nil {
-						return nil, err
-					}
-					if has {
-						fieldValue.Set(structInter.Elem())
-					} else {
-						return nil, errors.New("cascade obj is not exist")
 					}
 				}
 			}

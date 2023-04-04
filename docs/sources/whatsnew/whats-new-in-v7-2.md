@@ -117,8 +117,6 @@ The [Toggle parsed fields]({{< relref "../explore/#toggle-detected-fields" >}}) 
 
 Alert notification channels now store sensitive settings and secrets, such as API tokens and passwords, encrypted in the database.
 
-Please read the [upgrade notes]({{< relref "../setup-grafana/upgrade-grafana/#ensure-encryption-of-existing-alert-notification-channel-secrets" >}}) for more information and how to migrate.
-
 ## Grafana Enterprise features
 
 These features are included in the Grafana Enterprise edition software.
@@ -144,10 +142,6 @@ You can now configure organization-wide report settings, such as report branding
 {{< figure src="/static/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" caption="Reports settings" >}}
 
 For more information, refer to [Report settings]({{< relref "../dashboards/share-dashboards-panels/#report-settings" >}}).
-
-## Upgrading
-
-See [upgrade notes]({{< relref "../setup-grafana/upgrade-grafana/" >}}).
 
 ## Changelog
 

@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
@@ -18,9 +18,13 @@ import (
 
 type TestClient struct {
 	plugins.Client
-	QueryDataFunc    backend.QueryDataHandlerFunc
-	CallResourceFunc backend.CallResourceHandlerFunc
-	CheckHealthFunc  backend.CheckHealthHandlerFunc
+	QueryDataFunc       backend.QueryDataHandlerFunc
+	CallResourceFunc    backend.CallResourceHandlerFunc
+	CheckHealthFunc     backend.CheckHealthHandlerFunc
+	CollectMetricsFunc  backend.CollectMetricsHandlerFunc
+	SubscribeStreamFunc func(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error)
+	PublishStreamFunc   func(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error)
+	RunStreamFunc       func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error
 }
 
 func (c *TestClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -45,6 +49,37 @@ func (c *TestClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 	}
 
 	return nil, nil
+}
+
+func (c *TestClient) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+	if c.CollectMetricsFunc != nil {
+		return c.CollectMetricsFunc(ctx, req)
+	}
+
+	return nil, nil
+}
+
+func (c *TestClient) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	if c.PublishStreamFunc != nil {
+		return c.PublishStreamFunc(ctx, req)
+	}
+
+	return nil, nil
+}
+
+func (c *TestClient) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	if c.SubscribeStreamFunc != nil {
+		return c.SubscribeStreamFunc(ctx, req)
+	}
+
+	return nil, nil
+}
+
+func (c *TestClient) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	if c.RunStreamFunc != nil {
+		return c.RunStreamFunc(ctx, req, sender)
+	}
+	return nil
 }
 
 type MiddlewareScenarioContext struct {
@@ -125,18 +160,24 @@ func (m *TestMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRe
 var _ plugins.Client = &TestClient{}
 
 type ClientDecoratorTest struct {
-	T               *testing.T
-	Context         context.Context
-	TestClient      *TestClient
-	Middlewares     []plugins.ClientMiddleware
-	Decorator       *client.Decorator
-	ReqContext      *models.ReqContext
-	QueryDataReq    *backend.QueryDataRequest
-	QueryDataCtx    context.Context
-	CallResourceReq *backend.CallResourceRequest
-	CallResourceCtx context.Context
-	CheckHealthReq  *backend.CheckHealthRequest
-	CheckHealthCtx  context.Context
+	T                  *testing.T
+	Context            context.Context
+	TestClient         *TestClient
+	Middlewares        []plugins.ClientMiddleware
+	Decorator          *client.Decorator
+	ReqContext         *contextmodel.ReqContext
+	QueryDataReq       *backend.QueryDataRequest
+	QueryDataCtx       context.Context
+	CallResourceReq    *backend.CallResourceRequest
+	CallResourceCtx    context.Context
+	CheckHealthReq     *backend.CheckHealthRequest
+	CheckHealthCtx     context.Context
+	CollectMetricsReq  *backend.CollectMetricsRequest
+	CollectMetricsCtx  context.Context
+	SubscribeStreamReq *backend.SubscribeStreamRequest
+	SubscribeStreamCtx context.Context
+	PublishStreamReq   *backend.PublishStreamRequest
+	PublishStreamCtx   context.Context
 }
 
 type ClientDecoratorTestOption func(*ClientDecoratorTest)
@@ -162,6 +203,21 @@ func NewClientDecoratorTest(t *testing.T, opts ...ClientDecoratorTestOption) *Cl
 			cdt.CheckHealthCtx = ctx
 			return nil, nil
 		},
+		CollectMetricsFunc: func(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+			cdt.CollectMetricsReq = req
+			cdt.CollectMetricsCtx = ctx
+			return nil, nil
+		},
+		SubscribeStreamFunc: func(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+			cdt.SubscribeStreamReq = req
+			cdt.SubscribeStreamCtx = ctx
+			return nil, nil
+		},
+		PublishStreamFunc: func(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+			cdt.PublishStreamReq = req
+			cdt.PublishStreamCtx = ctx
+			return nil, nil
+		},
 	}
 	require.NotNil(t, cdt)
 
@@ -181,7 +237,7 @@ func NewClientDecoratorTest(t *testing.T, opts ...ClientDecoratorTestOption) *Cl
 func WithReqContext(req *http.Request, user *user.SignedInUser) ClientDecoratorTestOption {
 	return ClientDecoratorTestOption(func(cdt *ClientDecoratorTest) {
 		if cdt.ReqContext == nil {
-			cdt.ReqContext = &models.ReqContext{
+			cdt.ReqContext = &contextmodel.ReqContext{
 				Context:      &web.Context{},
 				SignedInUser: user,
 			}

@@ -18,4 +18,6 @@ type Config struct {
 
 	BackoffConfig backoff.Config
 	Timeout       time.Duration
+
+	TenantID string
 }

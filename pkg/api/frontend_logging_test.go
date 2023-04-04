@@ -12,15 +12,15 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type SourceMapReadRecord struct {
@@ -89,7 +89,7 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 
 		loggingHandler := NewFrontendLogMessageHandler(sourceMapStore)
 
-		handler := routing.Wrap(func(c *models.ReqContext) response.Response {
+		handler := routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			sc.context = c
 			c.Req.Body = mockRequestBody(event)
 			c.Req.Header.Add("Content-Type", "application/json")
@@ -162,7 +162,7 @@ func logGrafanaJavascriptAgentEventScenario(t *testing.T, desc string, event fro
 
 		loggingHandler := GrafanaJavascriptAgentLogMessageHandler(sourceMapStore)
 
-		handler := routing.Wrap(func(c *models.ReqContext) response.Response {
+		handler := routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			sc.context = c
 			c.Req.Body = mockRequestBody(event)
 			c.Req.Header.Add("Content-Type", "application/json")

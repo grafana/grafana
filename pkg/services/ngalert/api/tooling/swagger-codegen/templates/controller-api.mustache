@@ -11,14 +11,15 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
 type {{classname}} interface { {{#operation}}
-	{{nickname}}(*models.ReqContext) response.Response{{/operation}}
+	{{nickname}}(*contextmodel.ReqContext) response.Response{{/operation}}
 }
 
 {{#operations}}{{#operation}}
-func (f *{{classname}}Handler) {{nickname}}(ctx *models.ReqContext) response.Response { {{#hasPathParams}}
+func (f *{{classname}}Handler) {{nickname}}(ctx *contextmodel.ReqContext) response.Response { {{#hasPathParams}}
 	// Parse Path Parameters{{/hasPathParams}}{{#pathParams}}
 	{{paramName}}Param := web.Params(ctx.Req)[":{{baseName}}"]{{/pathParams}}
 	{{#bodyParams}}

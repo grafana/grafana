@@ -27,22 +27,11 @@ export function addPanelShareTab(tab: ShareModalTabModel) {
   customPanelTabs.push(tab);
 }
 
-function getInitialState(props: Props): State {
-  const { tabs, activeTab } = getTabs(props);
-
-  return {
-    tabs,
-    activeTab,
-  };
-}
-
-function getTabs(props: Props) {
-  const { panel, activeTab } = props;
-
+function getTabs(panel?: PanelModel, activeTab?: string) {
   const linkLabel = t('share-modal.tab-title.link', 'Link');
   const tabs: ShareModalTabModel[] = [{ label: linkLabel, value: 'link', component: ShareLink }];
 
-  if (contextSrv.isSignedIn) {
+  if (contextSrv.isSignedIn && config.snapshotEnabled) {
     const snapshotLabel = t('share-modal.tab-title.snapshot', 'Snapshot');
     tabs.push({ label: snapshotLabel, value: 'snapshot', component: ShareSnapshot });
   }
@@ -87,6 +76,15 @@ interface State {
   activeTab: string;
 }
 
+function getInitialState(props: Props): State {
+  const { tabs, activeTab } = getTabs(props.panel, props.activeTab);
+
+  return {
+    tabs,
+    activeTab,
+  };
+}
+
 export class ShareModal extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -97,13 +95,9 @@ export class ShareModal extends React.Component<Props, State> {
     reportInteraction('grafana_dashboards_share_modal_viewed');
   }
 
-  onSelectTab = (t: any) => {
-    this.setState({ activeTab: t.value });
+  onSelectTab: React.ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (t) => {
+    this.setState((prevState) => ({ ...prevState, activeTab: t.value }));
   };
-
-  getTabs() {
-    return getTabs(this.props).tabs;
-  }
 
   getActiveTab() {
     const { tabs, activeTab } = this.state;
@@ -114,12 +108,13 @@ export class ShareModal extends React.Component<Props, State> {
     const { panel } = this.props;
     const { activeTab } = this.state;
     const title = panel ? t('share-modal.panel.title', 'Share Panel') : t('share-modal.dashboard.title', 'Share');
+    const tabs = getTabs(this.props.panel, this.state.activeTab).tabs;
 
     return (
       <ModalTabsHeader
         title={title}
         icon="share-alt"
-        tabs={this.getTabs()}
+        tabs={tabs}
         activeTab={activeTab}
         onChangeTab={this.onSelectTab}
       />

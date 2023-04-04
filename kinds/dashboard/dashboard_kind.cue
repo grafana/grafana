@@ -1,14 +1,21 @@
 package kind
 
-import "strings"
+import (
+	"strings"
+	t "time"
+)
 
-name:     "Dashboard"
-maturity: "experimental"
+name:        "Dashboard"
+maturity:    "experimental"
+description: "A Grafana dashboard."
+
+crd: dummySchema: true
 
 lineage: seqs: [
 	{
 		schemas: [
-			{// 0.0
+			// 0.0
+			{
 				@grafana(TSVeneer="type")
 
 				// Unique numeric identifier for the dashboard.
@@ -20,20 +27,22 @@ lineage: seqs: [
 				title?: string
 				// Description of dashboard.
 				description?: string
-
-				// Version of the current dashboard data
-				revision: int64 | *-1 @grafanamaturity(NeedsExpertReview)
-
+				// This property should only be used in dashboards defined by plugins.  It is a quick check
+				// to see if the version has changed since the last time.  Unclear why using the version property
+				// is insufficient.
+				revision?: int64 @grafanamaturity(NeedsExpertReview)
+				// For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
 				gnetId?: string @grafanamaturity(NeedsExpertReview)
 				// Tags associated with dashboard.
 				tags?: [...string] @grafanamaturity(NeedsExpertReview)
 				// Theme of dashboard.
 				style: "light" | *"dark" @grafanamaturity(NeedsExpertReview)
-				// Timezone of dashboard,
-				timezone?: *"browser" | "utc" | "" @grafanamaturity(NeedsExpertReview)
+				// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
+				timezone?: string | *"browser"
 				// Whether a dashboard is editable or not.
-				editable:     bool | *true
-				graphTooltip: #DashboardCursorSync @grafanamaturity(NeedsExpertReview)
+				editable: bool | *true
+				// Configuration of dashboard cursor sync behavior.
+				graphTooltip: #DashboardCursorSync
 				// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
 				time?: {
 					from: string | *"now-6h"
@@ -54,15 +63,17 @@ lineage: seqs: [
 					// TODO docs
 					time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
 				} @grafanamaturity(NeedsExpertReview)
-				// TODO docs
-				fiscalYearStartMonth?: uint8 & <13 @grafanamaturity(NeedsExpertReview)
-				// TODO docs
+				// The month that the fiscal year starts on.  0 = January, 11 = December
+				fiscalYearStartMonth?: uint8 & <12 | *0
+				// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
+				// This will keep data "moving left" regardless of the query refresh rate.  This setting helps
+				// avoid dashboards presenting stale live data
 				liveNow?: bool @grafanamaturity(NeedsExpertReview)
 				// TODO docs
 				weekStart?: string @grafanamaturity(NeedsExpertReview)
 
-				// TODO docs
-				refresh?: string | false @grafanamaturity(NeedsExpertReview)
+				// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
+				refresh?: string | false
 				// Version of the JSON schema, incremented each time a Grafana update brings
 				// changes to said schema.
 				// TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion
@@ -212,6 +223,8 @@ lineage: seqs: [
 					value?: number @grafanamaturity(NeedsExpertReview)
 					// TODO docs
 					color: string @grafanamaturity(NeedsExpertReview)
+					// Threshold index, an old property that is not needed an should only appear in older dashboards
+					index?: int32 @grafanamaturity(NeedsExpertReview)
 					// TODO docs
 					// TODO are the values here enumerable into a disjunction?
 					// Some seem to be listed in typescript comment
@@ -281,16 +294,24 @@ lineage: seqs: [
 				} @cuetsy(kind="interface")
 
 				// TODO docs
-				// FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
-				#Transformation: {
+				#DataTransformerConfig: {
+					@grafana(TSVeneer="type")
+
+					// Unique identifier of transformer
 					id: string
-					options: {...}
+					// Disabled transformations are skipped
+					disabled?: bool
+					// Optional frame matcher.  When missing it will be applied to all results
+					filter?: #MatcherConfig
+					// Options to be passed to the transformer
+					// Valid options depend on the transformer id
+					options: _
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 				// 0 for no shared crosshair or tooltip (default).
 				// 1 for shared crosshair.
 				// 2 for shared crosshair AND shared tooltip.
-				#DashboardCursorSync: *0 | 1 | 2 @cuetsy(kind="enum",memberNames="Off|Crosshair|Tooltip") @grafanamaturity(NeedsExpertReview)
+				#DashboardCursorSync: *0 | 1 | 2 @cuetsy(kind="enum",memberNames="Off|Crosshair|Tooltip")
 
 				// Schema for panel targets is specified by datasource
 				// plugins. We use a placeholder definition, which the Go
@@ -304,7 +325,7 @@ lineage: seqs: [
 				// TODO docs
 				#Snapshot: {
 					// TODO docs
-					created: string @grafanamaturity(NeedsExpertReview)
+					created: string & t.Time
 					// TODO docs
 					expires: string @grafanamaturity(NeedsExpertReview)
 					// TODO docs
@@ -320,7 +341,7 @@ lineage: seqs: [
 					// TODO docs
 					orgId: uint32 @grafanamaturity(NeedsExpertReview)
 					// TODO docs
-					updated: string @grafanamaturity(NeedsExpertReview)
+					updated: string & t.Time
 					// TODO docs
 					url?: string @grafanamaturity(NeedsExpertReview)
 					// TODO docs
@@ -381,7 +402,7 @@ lineage: seqs: [
 					// TODO docs
 					timeRegions?: [...] @grafanamaturity(NeedsExpertReview)
 
-					transformations: [...#Transformation] @grafanamaturity(NeedsExpertReview)
+					transformations: [...#DataTransformerConfig] @grafanamaturity(NeedsExpertReview)
 
 					// TODO docs
 					// TODO tighter constraint
@@ -394,6 +415,9 @@ lineage: seqs: [
 					// TODO docs
 					// TODO tighter constraint
 					timeShift?: string @grafanamaturity(NeedsExpertReview)
+
+					// Dynamically load the panel
+					libraryPanel?: #LibraryPanelRef
 
 					// options is specified by the PanelOptions field in panel
 					// plugin schemas.
@@ -410,10 +434,15 @@ lineage: seqs: [
 					}] @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
+				#LibraryPanelRef: {
+					name: string
+					uid:  string
+				} @cuetsy(kind="interface")
+
 				#MatcherConfig: {
 					id:       string | *"" @grafanamaturity(NeedsExpertReview)
 					options?: _            @grafanamaturity(NeedsExpertReview)
-				} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				#DynamicConfigValue: {
 					id:     string | *"" @grafanamaturity(NeedsExpertReview)
@@ -506,6 +535,7 @@ lineage: seqs: [
 					}
 					...
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+
 				#HeatmapPanel: {
 					type: "heatmap" @grafanamaturity(NeedsExpertReview)
 					...

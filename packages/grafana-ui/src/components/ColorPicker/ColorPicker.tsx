@@ -30,7 +30,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
   popover: React.ComponentType<React.PropsWithChildren<T>>,
   displayName = 'ColorPicker'
 ) => {
-  return class ColorPicker extends Component<T & { children?: ColorPickerTriggerRenderer }, any> {
+  return class ColorPicker extends Component<T & { children?: ColorPickerTriggerRenderer }> {
     static displayName = displayName;
     pickerTriggerRef = createRef<any>();
 

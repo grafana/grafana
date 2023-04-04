@@ -92,22 +92,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     this.registerInteractionCommandId = id;
   }
 
-  private overrideTagName(tagName: string): string {
-    switch (tagName) {
-      case 'status':
-        return 'status.code';
-      default:
-        return tagName;
-    }
-  }
-
   private async getTagValues(tagName: string): Promise<Array<SelectableValue<string>>> {
     let tagValues: Array<SelectableValue<string>>;
 
     if (this.cachedValues.hasOwnProperty(tagName)) {
       tagValues = this.cachedValues[tagName];
     } else {
-      tagValues = await this.languageProvider.getOptions(tagName);
+      tagValues = await this.languageProvider.getOptionsV2(tagName);
       this.cachedValues[tagName] = tagValues;
     }
     return tagValues;
@@ -148,16 +139,14 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           type: 'OPERATOR',
         }));
       case 'SPANSET_IN_VALUE':
-        const tagName = this.overrideTagName(situation.tagName);
-        const tagsNoQuotesAroundValue: string[] = ['status'];
-        const tagValues = await this.getTagValues(tagName);
+        const tagValues = await this.getTagValues(situation.tagName);
         const items: Completion[] = [];
 
         const getInsertionText = (val: SelectableValue<string>): string => {
           if (situation.betweenQuotes) {
             return val.label!;
           }
-          return tagsNoQuotesAroundValue.includes(situation.tagName) ? val.label! : `"${val.label}"`;
+          return val.type === 'string' ? `"${val.label}"` : val.label!;
         };
 
         tagValues.forEach((val) => {
@@ -275,18 +264,11 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         };
       }
 
-      // remove the scopes from the word to get accurate autocompletes
-      // Ex: 'span.host.name' won't resolve to any autocomplete values, but removing 'span.' results in 'host.name' which can have autocomplete values
-      const noScopeWord = CompletionProvider.scopes.reduce(
-        (result, word) => result.replace(`${word}.`, ''),
-        nameMatched?.groups?.word || ''
-      );
-
       // We already have an operator and know that the set isn't complete so let's autocomplete the possible values for the tag name
       // { .http.method = |
       return {
         type: 'SPANSET_IN_VALUE',
-        tagName: noScopeWord,
+        tagName: nameFull,
         betweenQuotes: !!matched.groups?.open_quote,
       };
     }
