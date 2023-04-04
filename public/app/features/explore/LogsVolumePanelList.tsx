@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { groupBy } from 'lodash';
+import { groupBy, mapValues } from 'lodash';
 import React, { useMemo } from 'react';
 
 import {
@@ -15,8 +15,11 @@ import {
 } from '@grafana/data';
 import { Button, InlineField, useStyles2 } from '@grafana/ui';
 
+import { mergeLogsVolumeDataFrames } from '../logs/utils';
+
 import { LogsVolumePanel } from './LogsVolumePanel';
 import { SupplementaryResultError } from './SupplementaryResultError';
+import { isTimeoutErrorResponse } from './utils/logsVolumeResponse';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
@@ -28,6 +31,7 @@ type Props = {
   onLoadLogsVolume: () => void;
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
+  onClose?(): void;
 };
 
 export const LogsVolumePanelList = ({
@@ -40,11 +44,14 @@ export const LogsVolumePanelList = ({
   eventBus,
   splitOpen,
   timeZone,
+  onClose,
 }: Props) => {
-  const logVolumes = useMemo(
-    () => groupBy(logsVolumeData?.data || [], 'meta.custom.sourceQuery.refId'),
-    [logsVolumeData]
-  );
+  const logVolumes: Record<string, DataFrame[]> = useMemo(() => {
+    const grouped = groupBy(logsVolumeData?.data || [], 'meta.custom.datasourceName');
+    return mapValues(grouped, (value) => {
+      return mergeLogsVolumeDataFrames(value);
+    });
+  }, [logsVolumeData]);
 
   const styles = useStyles2(getStyles);
 
@@ -55,10 +62,22 @@ export const LogsVolumePanelList = ({
     return !isLogsVolumeLimited(data) && zoomRatio && zoomRatio < 1;
   });
 
+  const timeoutError = isTimeoutErrorResponse(logsVolumeData);
+
   if (logsVolumeData?.state === LoadingState.Loading) {
     return <span>Loading...</span>;
-  }
-  if (logsVolumeData?.error !== undefined) {
+  } else if (timeoutError) {
+    return (
+      <SupplementaryResultError
+        title="The logs volume query is taking too long and has timed out"
+        // Using info to avoid users thinking that the actual query has failed.
+        severity="info"
+        suggestedAction="Retry"
+        onSuggestedAction={onLoadLogsVolume}
+        onRemove={onClose}
+      />
+    );
+  } else if (logsVolumeData?.error !== undefined) {
     return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
   }
   return (

@@ -5,7 +5,17 @@ import React, { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataQuery, GrafanaTheme2, PanelData, SelectableValue, DataTopic } from '@grafana/data';
-import { Field, Select, useStyles2, VerticalGroup, Spinner, Switch, RadioButtonGroup, Icon } from '@grafana/ui';
+import {
+  Card,
+  Field,
+  Select,
+  useStyles2,
+  VerticalGroup,
+  HorizontalGroup,
+  Spinner,
+  Switch,
+  RadioButtonGroup,
+} from '@grafana/ui';
 import config from 'app/core/config';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -52,6 +62,7 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
         return {
           refId: query.refId,
           query: fmt(query),
+          name: ds.name,
           img: ds.meta.info.logos.small,
           data: queryData.series,
           error: queryData.error,
@@ -106,6 +117,7 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
   );
 
   const dashboard = getDashboardSrv().getCurrent();
+  const showTransforms = Boolean(query.withTransforms || panel?.transformations?.length);
   const panels: Array<SelectableValue<number>> = useMemo(
     () =>
       dashboard?.panels
@@ -141,9 +153,6 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
   }
 
   const selected = panels.find((panel) => panel.value === query.panelId);
-  // Same as current URL, but different panelId
-  const editURL = `d/${dashboard.uid}/${dashboard.title}?&editPanel=${query.panelId}`;
-  const showTransforms = Boolean(query.withTransforms || panel?.transformations?.length);
 
   return (
     <>
@@ -158,65 +167,54 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
         />
       </Field>
 
+      <HorizontalGroup height="auto" wrap={true} align="flex-start">
+        <Field
+          label="Data Source"
+          description="Use data or annotations from the panel"
+          className={styles.horizontalField}
+        >
+          <RadioButtonGroup options={topics} value={query.topic === DataTopic.Annotations} onChange={onTopicChanged} />
+        </Field>
+
+        {showTransforms && (
+          <Field label="Transform" description="Apply panel transformations from the source panel">
+            <Switch value={Boolean(query.withTransforms)} onChange={onTransformToggle} />
+          </Field>
+        )}
+      </HorizontalGroup>
+
       {loadingResults ? (
         <Spinner />
       ) : (
         <>
           {results && Boolean(results.length) && (
-            <Field label="Queries">
+            <Field label="Available queries from panel">
               <VerticalGroup spacing="sm">
                 {results.map((target, i) => (
-                  <div className={styles.queryEditorRowHeader} key={`DashboardQueryRow-${i}`}>
-                    <div>
-                      <img src={target.img} alt="" width={16} />
-                      <span className={styles.refId}>{target.refId}:</span>
-                    </div>
-                    <div>
-                      <a href={editURL}>
-                        {target.query}
-                        &nbsp;
-                        <Icon name="external-link-alt" />
-                      </a>
-                    </div>
-                  </div>
+                  <Card key={`DashboardQueryRow-${i}`}>
+                    <Card.Heading>{target.refId}</Card.Heading>
+                    <Card.Figure>
+                      <img src={target.img} alt={target.name} title={target.name} width={40} />
+                    </Card.Figure>
+                    <Card.Meta>{target.query}</Card.Meta>
+                  </Card>
                 ))}
               </VerticalGroup>
             </Field>
           )}
         </>
       )}
-
-      {showTransforms && (
-        <Field label="Transform" description="Apply panel transformations from the source panel">
-          <Switch value={Boolean(query.withTransforms)} onChange={onTransformToggle} />
-        </Field>
-      )}
-
-      <Field label="Data">
-        <RadioButtonGroup options={topics} value={query.topic === DataTopic.Annotations} onChange={onTopicChanged} />
-      </Field>
     </>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    results: css({
-      padding: theme.spacing(2),
+    horizontalField: css({
+      marginRight: theme.spacing(2),
     }),
     noQueriesText: css({
       padding: theme.spacing(1.25),
     }),
-    refId: css({
-      padding: theme.spacing(1.25),
-    }),
-    queryEditorRowHeader: css`
-      label: queryEditorRowHeader;
-      display: flex;
-      padding: 4px 8px;
-      flex-flow: row wrap;
-      background: ${theme.colors.background.secondary};
-      align-items: center;
-    `,
   };
 }
