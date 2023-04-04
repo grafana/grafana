@@ -25,7 +25,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
         <InlineField label="Index name" labelWidth={26}>
           <Input
             id="es_config_indexName"
-            value={value.jsonData.index || value.database || ''}
+            value={value.jsonData.index ?? value.database || ''}
             onChange={jsonDataChangeHandler('index', value, onChange)}
             width={24}
             placeholder="es-index-name"
