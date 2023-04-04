@@ -35,22 +35,25 @@ This data source supports these versions of Elasticsearch:
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
-1. Hover the cursor over the **Configuration** (gear) icon.
-1. Select **Data Sources**.
-1. Select the Elasticsearch data source.
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `Elasticsearch` in the search bar.
+1. Click **Elasticsearch**.
 
-Set the data source's basic configuration options carefully:
+   The **Settings** tab of the data source is displayed.
 
-| Name        | Description                                                                |
-| ----------- | -------------------------------------------------------------------------- |
-| **Name**    | Sets the name you use to refer to the data source in panels and queries.   |
-| **Default** | Sets the data source that's pre-selected for new panels.                   |
-| **Url**     | Sets the HTTP protocol, IP, and port of your Elasticsearch server.         |
-| **Access**  | Don't modify Access. Use "Server (default)" or the data source won't work. |
+1. Set the data source's basic configuration options:
 
-You must also configure settings specific to the Elasticsearch data source.
+   | Name        | Description                                                                |
+   | ----------- | -------------------------------------------------------------------------- |
+   | **Name**    | Sets the name you use to refer to the data source in panels and queries.   |
+   | **Default** | Sets the data source that's pre-selected for new panels.                   |
+   | **Url**     | Sets the HTTP protocol, IP, and port of your Elasticsearch server.         |
+   | **Access**  | Don't modify Access. Use `Server (default)` or the data source won't work. |
+
+You must also configure settings specific to the Elasticsearch data source. These options are described in the sections below.
 
 ### Index settings
 

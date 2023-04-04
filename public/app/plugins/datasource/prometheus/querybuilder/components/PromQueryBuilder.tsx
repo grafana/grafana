@@ -255,6 +255,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           />
         )}
         <LabelFilters
+          debounceDuration={datasource.getDebounceTimeInMilliseconds()}
           getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
           labelsFilters={query.labels}
           // eslint-ignore
