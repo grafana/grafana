@@ -967,6 +967,13 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
   }
 
   if (queryStreamUpdatedAction.match(action)) {
+    const isFirstStreaming =
+      action.payload.response.state === LoadingState.Streaming && state.queryResponse.state === LoadingState.Loading;
+
+    if (isFirstStreaming) {
+      return processQueryResponse({ ...state, clearedAtIndex: null }, action);
+    }
+
     return processQueryResponse(state, action);
   }
 
