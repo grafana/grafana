@@ -26,42 +26,21 @@ If you install from the YUM repository, then Grafana is automatically updated ev
 
 To install Grafana using a YUM repository, complete the following steps:
 
-1. Add a file to your YUM repository using the method of your choice.
-
-   The following example uses `nano` to add a file to the YUM repo.
+1. Use zypper to add the grafana repo.
 
    ```bash
-   sudo nano /etc/yum.repos.d/grafana.repo
-   ```
-
-   ```bash
-   [grafana]
-   name=grafana
-   baseurl=https://rpm.grafana.com
-   repo_gpgcheck=1
-   enabled=1
-   gpgcheck=1
-   gpgkey=https://rpm.grafana.com/gpg.key
-   sslverify=1
-   sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-   ```
-
-1. To prevent beta versions from being installed, add the following exclude line to your `.repo` file.
-
-   ```bash
-   exclude=*beta*
-   ```
+   sudo zypper addrepo https://rpm.grafana.com grafana
 
 1. To install Grafana OSS, run the following command:
 
    ```bash
-   sudo yum install grafana
+   sudo zypper install grafana
    ```
 
 1. To install Grafana Enterprise, run the following command:
 
    ```bash
-   sudo yum install grafana-enterprise
+   sudo zypper install grafana-enterprise
    ```
 
 ## Install the Grafana RPM package manually

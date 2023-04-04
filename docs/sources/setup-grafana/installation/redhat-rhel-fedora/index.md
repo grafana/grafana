@@ -80,9 +80,7 @@ If you install Grafana manually using YUM or RPM, then you must manually update 
 1. Copy and paste the RPM package URL and the local RPM package information from the installation page into the pattern shown below, then run the commands.
 
    ```bash
-   sudo yum install initscripts urw-fonts wget
-   wget <rpm package url>
-   sudo rpm -Uvh <local rpm package>
+   sudo yum install -y <rpm package url>
    ```
 
 ## Install Grafana as a standalone binary
