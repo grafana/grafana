@@ -798,7 +798,7 @@ services:
   - name: mysql
     path: /var/lib/mysql
 - environment: {}
-  image: bitnami/redis:6.2-debian-10
+  image: redis:6.2.11-alpine
   name: redis
 - environment: {}
   image: memcached:1.6.9-alpine
@@ -1824,7 +1824,7 @@ services:
   - name: mysql
     path: /var/lib/mysql
 - environment: {}
-  image: bitnami/redis:6.2-debian-10
+  image: redis:6.2.11-alpine
   name: redis
 - environment: {}
   image: memcached:1.6.9-alpine
@@ -5009,7 +5009,7 @@ services:
   - name: mysql
     path: /var/lib/mysql
 - environment: {}
-  image: bitnami/redis:6.2-debian-10
+  image: redis:6.2.11-alpine
   name: redis
 - environment: {}
   image: memcached:1.6.9-alpine
@@ -5695,7 +5695,7 @@ services:
   - name: mysql
     path: /var/lib/mysql
 - environment: {}
-  image: bitnami/redis:6.2-debian-10
+  image: redis:6.2.11-alpine
   name: redis
 - environment: {}
   image: memcached:1.6.9-alpine
@@ -6189,7 +6189,7 @@ services:
   - name: mysql
     path: /var/lib/mysql
 - environment: {}
-  image: bitnami/redis:6.2-debian-10
+  image: redis:6.2.11-alpine
   name: redis
 - environment: {}
   image: memcached:1.6.9-alpine
@@ -6332,7 +6332,7 @@ services:
   - name: mysql
     path: /var/lib/mysql
 - environment: {}
-  image: bitnami/redis:6.2-debian-10
+  image: redis:6.2.11-alpine
   name: redis
 - environment: {}
   image: memcached:1.6.9-alpine
@@ -6753,6 +6753,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 25c7e92572450b3e395d66c2ba96fe029b800b85140cc50dfde849b94a416b49
+hmac: 54bded4dc7c3ffbbf3859a4f8f6364f59f3b6e0696152a0b835211eca7119e50
 
 ...

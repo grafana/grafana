@@ -36,7 +36,7 @@ def integration_test_services():
         },
         {
             "name": "redis",
-            "image": "bitnami/redis:6.2-debian-10",
+            "image": "redis:6.2.11-alpine",
             "environment": {},
         },
         {
