@@ -6280,6 +6280,13 @@ __metadata:
     react-dom: ">=16.14.0"
     true-myth: ^5.1.2
   checksum: e63580683f5d2333202415b827ebe78986294d1fe49de978b62400e5cd070afd1f48d071ff7e5c22bc1ace6c52e9767e85650b34444c6ad0c9ecb23788d83ffd
+
+"@pyroscope/models@npm:^0.4.7":
+  version: 0.4.7
+  resolution: "@pyroscope/models@npm:0.4.7"
+  peerDependencies:
+    zod: ^3.11.6
+  checksum: 85f9b639c8c449b8ab2d17781db384b12a753e93d4b69ac90d16447e0d990ebc9a8e4170a25342702ac876e2df04ede0b9198fabface4f7a5e754e3c2ee1402f
   languageName: node
   linkType: hard
 
@@ -20139,6 +20146,7 @@ __metadata:
     "@popperjs/core": 2.11.6
     "@prometheus-io/lezer-promql": ^0.37.0-rc.1
     "@pyroscope/flamegraph": ^0.35.5
+    "@pyroscope/models": ^0.4.7
     "@react-aria/button": 3.6.1
     "@react-aria/dialog": 3.3.1
     "@react-aria/focus": 3.8.0

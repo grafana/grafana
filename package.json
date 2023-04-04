@@ -280,6 +280,7 @@
     "@popperjs/core": "2.11.6",
     "@prometheus-io/lezer-promql": "^0.37.0-rc.1",
     "@pyroscope/flamegraph": "^0.35.5",
+    "@pyroscope/models": "^0.4.7",
     "@react-aria/button": "3.6.1",
     "@react-aria/dialog": "3.3.1",
     "@react-aria/focus": "3.8.0",

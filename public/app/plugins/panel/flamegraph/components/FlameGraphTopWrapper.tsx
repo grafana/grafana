@@ -1,8 +1,9 @@
 import { FlamegraphRenderer } from '@pyroscope/flamegraph';
+import { Profile } from '@pyroscope/models';
 import React from 'react';
 import '@pyroscope/flamegraph/dist/index.css';
 
-import { CoreApp, DataFrame } from '@grafana/data';
+import { CoreApp, DataFrame, DataFrameView } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import FlameGraphContainer from './FlameGraphContainer';
@@ -15,89 +16,110 @@ type Props = {
   // use panels with user adjustable heights in dashboards etc.
   flameGraphHeight?: number;
 };
-const SimpleTree = {
-  version: 1,
-  flamebearer: {
-    names: [
-      'total',
-      'runtime.mcall',
-      'runtime.park_m',
-      'runtime.schedule',
-      'runtime.resetspinning',
-      'runtime.wakep',
-      'runtime.startm',
-      'runtime.notewakeup',
-      'runtime.semawakeup',
-      'runtime.pthread_cond_signal',
-      'runtime.findrunnable',
-      'runtime.netpoll',
-      'runtime.kevent',
-      'runtime.main',
-      'main.main',
-      'github.com/pyroscope-io/client/pyroscope.TagWrapper',
-      'runtime/pprof.Do',
-      'github.com/pyroscope-io/client/pyroscope.TagWrapper.func1',
-      'main.main.func1',
-      'main.slowFunction',
-      'main.slowFunction.func1',
-      'main.work',
-      'runtime.asyncPreempt',
-      'main.fastFunction',
-      'main.fastFunction.func1',
-    ],
-    levels: [
-      [0, 609, 0, 0],
-      [0, 606, 0, 13, 0, 3, 0, 1],
-      [0, 606, 0, 14, 0, 3, 0, 2],
-      [0, 606, 0, 15, 0, 3, 0, 3],
-      [0, 606, 0, 16, 0, 1, 0, 10, 0, 2, 0, 4],
-      [0, 606, 0, 17, 0, 1, 0, 11, 0, 2, 0, 5],
-      [0, 606, 0, 18, 0, 1, 1, 12, 0, 2, 0, 6],
-      [0, 100, 0, 23, 0, 506, 0, 19, 1, 2, 0, 7],
-      [0, 100, 0, 15, 0, 506, 0, 16, 1, 2, 0, 8],
-      [0, 100, 0, 16, 0, 506, 0, 20, 1, 2, 2, 9],
-      [0, 100, 0, 17, 0, 506, 493, 21],
-      [0, 100, 0, 24, 493, 13, 13, 22],
-      [0, 100, 97, 21],
-      [97, 3, 3, 22],
-    ],
-    numTicks: 609,
-    maxSelf: 493,
-  },
-  metadata: {
-    appName: 'simple.golang.app.cpu',
-    name: 'simple.golang.app.cpu 2022-09-06T12:16:31Z',
-    startTime: 1662466591,
-    endTime: 1662470191,
-    query: 'simple.golang.app.cpu{}',
-    maxNodes: 1024,
-    format: 'single' as const,
-    sampleRate: 100,
-    spyName: 'gospy' as const,
-    units: 'samples' as const,
-  },
-  timeline: {
-    startTime: 1662466590,
-    samples: [
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 610, 0,
-    ],
-    durationDelta: 10,
-  },
-};
 
 export const FlameGraphTopWrapper = (props: Props) => {
   if (config.featureToggles.pyroscopeFlameGraph) {
-    return <FlamegraphRenderer profile={SimpleTree} onlyDisplay="flamegraph" showToolbar={false} />;
+    const profile = props.data ? dataFrameToFlameBearer(props.data) : undefined;
+    return <FlamegraphRenderer profile={profile} />;
   }
 
   return <FlameGraphContainer data={props.data} app={props.app} />;
 };
+
+type Row = {
+  level: number;
+  label: string;
+  value: number;
+  self: number;
+};
+
+/**
+ * Converts a nested set format from a DataFrame to a Flamebearer format needed by the pyroscope flamegraph.
+ * @param data
+ */
+function dataFrameToFlameBearer(data: DataFrame) {
+  const profile: Profile = {
+    version: 1,
+    flamebearer: {
+      names: [],
+      levels: [],
+      numTicks: 0,
+      maxSelf: 0,
+    },
+    metadata: {
+      format: 'single' as const,
+      sampleRate: 100,
+      spyName: 'gospy' as const,
+      units: 'samples' as const,
+    },
+  };
+  const view = new DataFrameView<Row>(data);
+  const labelField = data.fields.find((f) => f.name === 'label');
+
+  if (labelField?.config?.type?.enum?.text) {
+    profile.flamebearer.names = labelField.config.type.enum.text;
+  }
+
+  const labelMap: Record<string, number> = {};
+
+  // Handle both cases where label is a string or a number pointing to enum config text array.
+  const getLabel = (label: string | number) => {
+    if (typeof label === 'number') {
+      return label;
+    } else {
+      if (labelMap[label] === undefined) {
+        labelMap[label] = profile.flamebearer.names.length;
+        profile.flamebearer.names.push(label);
+      }
+
+      return labelMap[label];
+    }
+  };
+
+  // Absolute offset where we are currently at.
+  let offset = 0;
+
+  for (let i = 0; i < data.length; i++) {
+    // view.get() changes the underlying object, so we have to call this first get the value and then call get() for
+    // current row.
+    const prevLevel = i > 0 ? view.get(i - 1).level : undefined;
+    const row = view.get(i);
+    const currentLevel = row.level;
+    const level = profile.flamebearer.levels[currentLevel];
+
+    // First row is the root and always the total number of ticks.
+    if (i === 0) {
+      profile.flamebearer.numTicks = row.value;
+    }
+    profile.flamebearer.maxSelf = Math.max(profile.flamebearer.maxSelf, row.self);
+
+    if (prevLevel && prevLevel >= currentLevel) {
+      // we are going back to the previous level and adding sibling we have to figure out new offset
+      offset = levelWidth(level);
+    }
+
+    if (!level) {
+      // Starting a new level. Offset is what ever current absolute offset is as there are no siblings yet.
+      profile.flamebearer.levels[row.level] = [offset, row.value, row.self, getLabel(row.label)];
+    } else {
+      // We actually need offset relative to sibling while offset variable contains absolute offset.
+      const width = levelWidth(level);
+      level.push(offset - width, row.value, row.self, getLabel(row.label));
+    }
+  }
+  return profile;
+}
+
+/**
+ * Get a width of a level. As offsets are relative to siblings we need to sum all the offsets and values in a level.
+ * @param level
+ */
+function levelWidth(level: number[]) {
+  let length = 0;
+  for (let i = 0; i < level.length; i += 4) {
+    const start = level[i];
+    const value = level[i + 1];
+    length += start + value;
+  }
+  return length;
+}
