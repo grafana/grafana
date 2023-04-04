@@ -65,23 +65,16 @@ export class DatasourceSrv implements DataSourceService {
     ref: string | null | undefined | DataSourceRef,
     scopedVars?: ScopedVars
   ): DataSourceInstanceSettings | undefined {
-    const isstring = typeof ref === 'string';
-    let nameOrUid = isstring ? (ref as string) : ((ref as any)?.uid as string | undefined);
+    let nameOrUid = this.getNameOrUid(ref);
 
     // Expressions has a new UID as __expr__ See: https://github.com/grafana/grafana/pull/62510/
     // But we still have dashboards/panels with old expression UID (-100)
     // To support both UIDs until we migrate them all to new one, this check is necessary
     if (isExpressionReference(nameOrUid)) {
-      return expressionDatasource.instanceSettings;
+      return expressionInstanceSettings;
     }
 
     if (nameOrUid === 'default' || nameOrUid === null || nameOrUid === undefined) {
-      if (!isstring && ref) {
-        const type = (ref as any)?.type as string;
-        if (type) {
-          console.log('FIND Default instance for datasource type?', ref);
-        }
-      }
       return this.settingsMapByUid[this.defaultName] ?? this.settingsMapByName[this.defaultName];
     }
 
@@ -116,9 +109,13 @@ export class DatasourceSrv implements DataSourceService {
   }
 
   get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
-    let nameOrUid = typeof ref === 'string' ? (ref as string) : ((ref as any)?.uid as string | undefined);
+    let nameOrUid = this.getNameOrUid(ref);
     if (!nameOrUid) {
       return this.get(this.defaultName);
+    }
+
+    if (isExpressionReference(ref)) {
+      return Promise.resolve(this.datasources[ExpressionDatasourceUID]);
     }
 
     // Check if nameOrUid matches a uid and then get the name
@@ -304,6 +301,15 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     return sorted;
+  }
+
+  getNameOrUid(ref?: string | DataSourceRef | null): string | undefined {
+    if (isExpressionReference(ref)) {
+      return ExpressionDatasourceRef.uid;
+    }
+
+    const isString = typeof ref === 'string';
+    return isString ? (ref as string) : ((ref as any)?.uid as string | undefined);
   }
 
   /**

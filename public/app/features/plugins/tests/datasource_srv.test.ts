@@ -367,4 +367,34 @@ describe('datasource_srv', () => {
       expect(initMock).toHaveBeenCalledWith(dataSourceInit, 'aaa');
     });
   });
+
+  describe('getNameOrUid', () => {
+    it('should return expression uid __expr__', () => {
+      expect(dataSourceSrv.getNameOrUid('__expr__')).toBe(ExpressionDatasourceRef.uid);
+      expect(dataSourceSrv.getNameOrUid('-100')).toBe(ExpressionDatasourceRef.uid);
+      expect(dataSourceSrv.getNameOrUid('Expression')).toBe(ExpressionDatasourceRef.uid);
+      expect(dataSourceSrv.getNameOrUid({ type: '__expr__' })).toBe(ExpressionDatasourceRef.uid);
+      expect(dataSourceSrv.getNameOrUid({ type: '-100' })).toBe(ExpressionDatasourceRef.uid);
+    });
+
+    it('should return ref if it is string', () => {
+      const value = 'mixed-datasource';
+      const nameOrUid = dataSourceSrv.getNameOrUid(value);
+      expect(nameOrUid).not.toBeUndefined();
+      expect(nameOrUid).toBe(value);
+    });
+
+    it('should return the uid if the ref is not string', () => {
+      const value = { type: 'mixed', uid: 'theUID' };
+      const nameOrUid = dataSourceSrv.getNameOrUid(value);
+      expect(nameOrUid).not.toBeUndefined();
+      expect(nameOrUid).toBe(value.uid);
+    });
+
+    it('should return undefined if the ref has no uid', () => {
+      const value = { type: 'mixed' };
+      const nameOrUid = dataSourceSrv.getNameOrUid(value);
+      expect(nameOrUid).toBeUndefined();
+    });
+  });
 });
