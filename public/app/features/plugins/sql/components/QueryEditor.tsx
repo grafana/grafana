@@ -15,7 +15,7 @@ import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
 interface Props extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
-  queryHeaderProps?: Pick<QueryHeaderProps, 'isDatasetSelectorHidden'>;
+  queryHeaderProps?: Pick<QueryHeaderProps, 'disableDatasetSelector'>;
 }
 
 export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range, queryHeaderProps }: Props) {
@@ -34,14 +34,6 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
     };
   }, [datasource]);
 
-  /* 
-    The behavior of the dataset (database) selector - for MsSql and MySql datasources - is based on whether the user chose 
-    to create a datasource with or without a default database. If the user configured a default database, the dataset (database)
-    selector should be disabled, and defacto assigned the value of the configured default database. If the user chose to
-    NOT assign/configure a default database, then the user should be able to use the <DatasetSelector /> within the panel query editor
-    to chose between multiple databases available to the datasource.
-*/
-
   useEffect(() => {
     // This checks to see whether there is indeed a default database (preconfiguredDataset), and if so, if that default database
     // is different than they currently-chosen one. Both scenarios would require an update the the query state.
@@ -50,7 +42,7 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
     }
 
     // This tests if the Postgres datacource was configured with a default database or not.
-    if (queryHeaderProps?.isDatasetSelectorHidden) {
+    if (queryHeaderProps?.disableDatasetSelector) {
       setHasNoPostgresDefaultDatabaseConfig(true);
     }
   }, [preconfiguredDatabase, query, onChange, queryHeaderProps]);
