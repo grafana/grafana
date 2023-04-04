@@ -216,6 +216,10 @@ const exampleCategory = css`
   margin-top: 5px;
 `;
 
+const link = css`
+  text-decoration: underline;
+`;
+
 export default class LogsCheatSheet extends PureComponent<
   QueryEditorHelpProps<CloudWatchQuery>,
   { userExamples: string[] }
@@ -280,6 +284,18 @@ export default class LogsCheatSheet extends PureComponent<
             ))}
           </div>
         ))}
+        <div>
+          If you are seeing masked data, you may have CloudWatch logs data protection enabled.{' '}
+          <a
+            className={cx(link)}
+            href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/#cloudwatch-logs-data-protection"
+            target="_blank"
+            rel="noreferrer"
+          >
+            See documentation for details
+          </a>
+          .
+        </div>
       </div>
     );
   }
