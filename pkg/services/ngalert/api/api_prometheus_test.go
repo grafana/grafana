@@ -973,11 +973,10 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Equal(t, "firing", rg.Rules[0].State)
 			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].Totals)
 			require.Len(t, rg.Rules[0].Alerts, 2)
-			//
 			require.Equal(t, "firing", rg.Rules[1].State)
 			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].Totals)
 			require.Len(t, rg.Rules[1].Alerts, 1)
-			//
+
 			// The last rule should have 1 alert as the filter includes errors too
 			require.Equal(t, "inactive", rg.Rules[2].State)
 			require.Equal(t, map[string]int64{"error": 1}, rg.Rules[2].Totals)
