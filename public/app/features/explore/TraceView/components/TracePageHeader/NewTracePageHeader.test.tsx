@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { getAllByText, getByText, render } from '@testing-library/react';
+import { getByText, render } from '@testing-library/react';
 import React from 'react';
 
 import config from 'app/core/config';
@@ -42,13 +42,13 @@ describe('NewTracePageHeader test', () => {
     const method = getByText(header!, 'POST');
     const status = getByText(header!, '200');
     const url = getByText(header!, '/v2/gamma/792edh2w897y2huehd2h89');
-    const duration = getAllByText(header!, '2.36s');
+    const duration = getByText(header!, '2.36s');
     const timestampPart1 = getByText(header!, '2023-02-05 08:50');
     const timestampPart2 = getByText(header!, ':56.289');
     expect(method).toBeInTheDocument();
     expect(status).toBeInTheDocument();
     expect(url).toBeInTheDocument();
-    expect(duration.length).toBe(2);
+    expect(duration).toBeInTheDocument();
     expect(timestampPart1).toBeInTheDocument();
     expect(timestampPart2).toBeInTheDocument();
   });

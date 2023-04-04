@@ -22,6 +22,7 @@ import TracePageSearchBar, { getStyles, TracePageSearchBarProps } from './TraceP
 const defaultProps = {
   forwardedRef: React.createRef(),
   navigable: true,
+  searchBarSuffix: 'suffix',
   searchValue: 'value',
 };
 
