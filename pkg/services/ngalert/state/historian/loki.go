@@ -2,6 +2,7 @@ package historian
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -255,6 +256,8 @@ func statesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			continue
 		}
 
+		sanitizedLabels := removePrivateLabels(state.Labels)
+		instFingerprint, _ := json.Marshal(sanitizedLabels)
 		entry := lokiEntry{
 			SchemaVersion:  1,
 			Previous:       state.PreviousFormatted(),
@@ -263,7 +266,8 @@ func statesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			Condition:      rule.Condition,
 			DashboardUID:   rule.DashboardUID,
 			PanelID:        rule.PanelID,
-			InstanceLabels: removePrivateLabels(state.Labels),
+			InstanceID:     fmt.Sprintf("%x", md5.Sum(instFingerprint)),
+			InstanceLabels: sanitizedLabels,
 		}
 		if state.State.State == eval.Error {
 			entry.Error = state.Error.Error()
@@ -306,6 +310,7 @@ type lokiEntry struct {
 	Condition     string           `json:"condition"`
 	DashboardUID  string           `json:"dashboardUID"`
 	PanelID       int64            `json:"panelID"`
+	InstanceID    string           `json:"instanceID"`
 	// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.
 	// These should not be conflated with labels associated with log streams.
 	InstanceLabels map[string]string `json:"labels"`
