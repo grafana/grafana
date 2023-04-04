@@ -87,6 +87,7 @@ type TVirtualizedTraceViewOwnProps = {
   currentViewRangeTime: [number, number];
   timeZone: TimeZone;
   findMatchesIDs: Set<string> | TNil;
+  showMatchesOnly: boolean;
   scrollToFirstVisibleSpan: () => void;
   registerAccessors: (accesors: Accessors) => void;
   trace: Trace;
@@ -387,6 +388,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       detailStates,
       detailToggle,
       findMatchesIDs,
+      showMatchesOnly,
       spanNameColumnWidth,
       trace,
       spanBarOptions,
@@ -449,6 +451,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           isChildrenExpanded={!isCollapsed}
           isDetailExpanded={isDetailExpanded}
           isMatchingFilter={isMatchingFilter}
+          showMatchesOnly={showMatchesOnly}
           isFocused={isFocused}
           numTicks={NUM_TICKS}
           onDetailToggled={detailToggle}

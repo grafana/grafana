@@ -74,6 +74,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
 export type TProps = TExtractUiFindFromStateReturn & {
   registerAccessors: (accessors: Accessors) => void;
   findMatchesIDs: Set<string> | TNil;
+  showMatchesOnly: boolean;
   scrollToFirstVisibleSpan: () => void;
   traceTimeline: TTraceTimeline;
   trace: Trace;

@@ -14,11 +14,11 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { memo, Dispatch, SetStateAction } from 'react';
+import React, { memo, Dispatch, SetStateAction, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Field, useStyles2, Switch } from '@grafana/ui';
 
 import UiFindInput from '../common/UiFindInput';
 import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
@@ -66,6 +66,13 @@ export const getStyles = (theme: GrafanaTheme2) => {
       label: TracePageSearchBarLocateBtn;
       padding: 1px 8px 4px;
     `,
+    TracePageSearchBarMatchesOnlySwitch: css`
+      display: flex;
+      flex-grow: 1;
+      flex-shrink: 0;
+      flex-direction: row;
+      margin-left: 8px;
+    `,
   };
 };
 
@@ -73,6 +80,8 @@ export type TracePageSearchBarProps = {
   navigable: boolean;
   searchValue: string;
   setSearch: (value: string) => void;
+  showMatchesOnly: Boolean;
+  setMatchesOnly: (value: boolean) => void; // TODO(wperron): use the proper types for an event listener
   searchBarSuffix: string;
   spanFindMatches: Set<string> | undefined;
   focusedSpanIdForSearch: string;
@@ -86,6 +95,8 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     navigable,
     setSearch,
     searchValue,
+    setMatchesOnly,
+    showMatchesOnly,
     searchBarSuffix,
     spanFindMatches,
     focusedSpanIdForSearch,
@@ -94,6 +105,8 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     datasourceType,
   } = props;
   const styles = useStyles2(getStyles);
+
+  console.log(styles);
 
   const suffix = searchValue ? (
     <span className={styles.TracePageSearchBarSuffix} aria-label="Search bar suffix">
@@ -112,6 +125,9 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     setFocusedSpanIdForSearch('');
     setSearchBarSuffix('');
     setSearch(value);
+    if (!value) {
+      setMatchesOnly(false);
+    }
   };
 
   const nextResult = () => {
@@ -171,7 +187,13 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
 
   return (
     <div className={styles.TracePageSearchBar}>
-      <span className={ubJustifyEnd} style={{ display: 'flex' }}>
+      <span
+        className={ubJustifyEnd}
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+        }}
+      >
         <UiFindInput
           onChange={setTraceSearch}
           value={searchValue}
@@ -179,6 +201,14 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
           allowClear={true}
         />
         <>
+          <Field label="matches only" className={styles.TracePageSearchBarMatchesOnlySwitch}>
+            <Switch
+              id="show-matches-only"
+              value={!!showMatchesOnly}
+              onChange={(value: React.ChangeEvent<HTMLInputElement>) => setMatchesOnly(value.currentTarget.checked)}
+              disabled={!searchValue}
+            />
+          </Field>
           {navigable && (
             <>
               <Button

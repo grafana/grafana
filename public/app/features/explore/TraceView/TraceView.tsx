@@ -63,6 +63,7 @@ type Props = {
   scrollElement?: Element;
   traceProp: Trace;
   spanFindMatches?: Set<string>;
+  showMatchesOnly: boolean;
   search: string;
   focusedSpanIdForSearch: string;
   queryResponse: PanelData;
@@ -72,7 +73,7 @@ type Props = {
 };
 
 export function TraceView(props: Props) {
-  const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType } = props;
+  const { spanFindMatches, showMatchesOnly, traceProp, datasource, topOfViewRef, topOfViewRefType } = props;
 
   const {
     detailStates,
@@ -162,6 +163,7 @@ export function TraceView(props: Props) {
             registerAccessors={noop}
             scrollToFirstVisibleSpan={noop}
             findMatchesIDs={spanFindMatches}
+            showMatchesOnly={showMatchesOnly}
             trace={traceProp}
             datasourceType={datasourceType}
             spanBarOptions={spanBarOptions?.spanBar}

@@ -44,6 +44,7 @@ export function TraceViewContainer(props: Props) {
   const { dataFrames, splitOpenFn, exploreId, scrollElement, topOfViewRef, queryResponse } = props;
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
+  const [showMatchesOnly, setMatchesOnly] = useState(false);
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
   const [searchBarSuffix, setSearchBarSuffix] = useState('');
   const datasource = useSelector(
@@ -62,6 +63,8 @@ export function TraceViewContainer(props: Props) {
           navigable={true}
           searchValue={search}
           setSearch={setSearch}
+          showMatchesOnly={showMatchesOnly}
+          setMatchesOnly={setMatchesOnly}
           spanFindMatches={spanFindMatches}
           searchBarSuffix={searchBarSuffix}
           setSearchBarSuffix={setSearchBarSuffix}
@@ -77,6 +80,7 @@ export function TraceViewContainer(props: Props) {
         scrollElement={scrollElement}
         traceProp={traceProp}
         spanFindMatches={spanFindMatches}
+        showMatchesOnly={showMatchesOnly}
         search={search}
         focusedSpanIdForSearch={focusedSpanIdForSearch}
         queryResponse={queryResponse}

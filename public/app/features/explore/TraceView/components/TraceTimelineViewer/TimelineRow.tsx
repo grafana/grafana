@@ -33,6 +33,7 @@ const getStyles = () => {
 type TTimelineRowProps = {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 };
 
 interface TimelineRowCellProps extends React.HTMLAttributes<HTMLDivElement> {

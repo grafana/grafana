@@ -21,6 +21,7 @@ export const TracesPanel = ({ data }: PanelProps) => {
   const topOfViewRef = createRef<HTMLDivElement>();
   const traceProp = useMemo(() => transformDataFrames(data.series[0]), [data.series]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
+  const [showMatchesOnly, setMatchesOnly] = useState(false);
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
   const [searchBarSuffix, setSearchBarSuffix] = useState('');
   const dataSource = useAsync(async () => {
@@ -45,6 +46,8 @@ export const TracesPanel = ({ data }: PanelProps) => {
           navigable={true}
           searchValue={search}
           setSearch={setSearch}
+          showMatchesOnly={showMatchesOnly}
+          setMatchesOnly={setMatchesOnly}
           spanFindMatches={spanFindMatches}
           searchBarSuffix={searchBarSuffix}
           setSearchBarSuffix={setSearchBarSuffix}
@@ -60,6 +63,7 @@ export const TracesPanel = ({ data }: PanelProps) => {
         traceProp={traceProp}
         spanFindMatches={spanFindMatches}
         search={search}
+        showMatchesOnly={showMatchesOnly}
         focusedSpanIdForSearch={focusedSpanIdForSearch}
         queryResponse={data}
         datasource={dataSource.value}

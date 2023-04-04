@@ -296,6 +296,7 @@ export type SpanBarRowProps = {
   isChildrenExpanded: boolean;
   isDetailExpanded: boolean;
   isMatchingFilter: boolean;
+  showMatchesOnly: boolean;
   isFocused: boolean;
   onDetailToggled: (spanID: string) => void;
   onChildrenToggled: (spanID: string) => void;
@@ -360,6 +361,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       isChildrenExpanded,
       isDetailExpanded,
       isMatchingFilter,
+      showMatchesOnly,
       isFocused,
       numTicks,
       rpc,
@@ -411,6 +413,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
 
     return (
       <TimelineRow
+        style={showMatchesOnly && !isMatchingFilter ? { display: 'none' } : {}}
         className={cx(
           styles.row,
           {
