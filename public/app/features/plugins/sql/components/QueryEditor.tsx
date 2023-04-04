@@ -3,6 +3,7 @@ import { useAsync } from 'react-use';
 
 import { QueryEditorProps } from '@grafana/data';
 import { EditorMode, Space } from '@grafana/experimental';
+import { Alert } from '@grafana/ui';
 
 import { SqlDatasource } from '../datasource/SqlDatasource';
 import { applyQueryDefaults } from '../defaults';
@@ -18,10 +19,10 @@ interface Props extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
 }
 
 export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range, queryHeaderProps }: Props) {
+  const [hasDatabaseConfigIssue, setHasDatabaseConfigIssue] = useState<boolean>(false);
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
   const { preconfiguredDatabase } = datasource;
-  console.log('🚀 ~ file: QueryEditor.tsx:22 ~ SqlQueryEditor ~ preconfiguredDatabase:', preconfiguredDatabase);
   const { loading, error } = useAsync(async () => {
     return () => {
       if (datasource.getDB(datasource.id).init !== undefined) {
@@ -40,10 +41,11 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
     This checks to see whether 1) there is indeed a default database (preconfiguredDataset), and also 2) whether the user
     added a default database where there wasn't one before. Both scenarios would require an update the the query state.
   */
-  // if (!!preconfiguredDatabase && query.dataset !== preconfiguredDatabase) {
-  //   // Throw error instead?
-  //   onChange({ ...query, dataset: preconfiguredDatabase });
-  // }
+  useEffect(() => {
+    if (!!preconfiguredDatabase && query.dataset !== preconfiguredDatabase) {
+      setHasDatabaseConfigIssue(true);
+    }
+  }, [preconfiguredDatabase, query, onChange]);
 
   const queryWithDefaults = applyQueryDefaults(query);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({
@@ -71,6 +73,11 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
     [onRunQuery]
   );
 
+  const onRecognitionOfDatabaseChange = () => {
+    setHasDatabaseConfigIssue(false);
+    onChange({ ...query, dataset: preconfiguredDatabase });
+  };
+
   const onQueryChange = (q: SQLQuery, process = true) => {
     setQueryToValidate(q);
     onChange(q);
@@ -95,6 +102,18 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
 
   return (
     <>
+      {hasDatabaseConfigIssue && (
+        <Alert
+          severity="warning"
+          title="Default datasource configuration"
+          elevated={true}
+          onRemove={() => onRecognitionOfDatabaseChange()}
+          buttonContent="FINISHED"
+        >
+          Your default database configuration has been changed or updated. Make note of the query you have built before
+          clicking FINISHED. Clicking FINISHED will update your query parameters with the new database data.
+        </Alert>
+      )}
       <QueryHeader
         db={db}
         preconfiguredDataset={preconfiguredDatabase}

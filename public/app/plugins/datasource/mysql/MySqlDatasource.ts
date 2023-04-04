@@ -90,6 +90,7 @@ export class MySqlDatasource extends SqlDatasource {
     if (this.db !== undefined) {
       return this.db;
     }
+
     return {
       datasets: () => this.fetchDatasets(),
       tables: (dataset?: string) => this.fetchTables(dataset),
