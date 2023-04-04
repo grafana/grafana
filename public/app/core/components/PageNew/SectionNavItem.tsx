@@ -69,7 +69,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(1, 0, 1, 1.5)};
       display: flex;
       align-items: center;
-      border-radius: ${theme.shape.borderRadius(2)};
+      border-radius: ${theme.shape.radius.default};
       gap: ${theme.spacing(1)};
       height: 100%;
       position: relative;
@@ -95,7 +95,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         width: 4px;
         bottom: 2px;
         top: 2px;
-        border-radius: 2px;
+        border-radius: ${theme.shape.radius.default};
         background-image: ${theme.colors.gradients.brandVertical};
       }
     `,
@@ -116,8 +116,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.h5.fontSize,
       marginTop: theme.spacing(2),
       fontWeight: theme.typography.fontWeightMedium,
-      // To make room for section toggle button when section is active
-      marginRight: theme.spacing(4),
     }),
     noRootMargin: css({
       marginBottom: 0,

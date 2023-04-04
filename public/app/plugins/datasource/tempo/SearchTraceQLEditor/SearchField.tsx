@@ -1,19 +1,27 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { css } from '@emotion/css';
+import { uniq } from 'lodash';
+import React, { useState, useEffect, useMemo } from 'react';
+import useAsync from 'react-use/lib/useAsync';
 
-import { SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 import { FetchError, isFetchError } from '@grafana/runtime';
-import { Select, HorizontalGroup } from '@grafana/ui';
+import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
-import { TraceqlFilter } from '../dataquery.gen';
+import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
-import { operators as allOperators } from '../traceql/traceql';
+import { operators as allOperators, stringOperators, numberOperators } from '../traceql/traceql';
 
-import { operatorSelectableValue } from './utils';
+import { filterScopedTag, operatorSelectableValue } from './utils';
+
+const getStyles = () => ({
+  dropdown: css`
+    box-shadow: none;
+  `,
+});
 
 interface Props {
   filter: TraceqlFilter;
@@ -23,7 +31,10 @@ interface Props {
   setError: (error: FetchError) => void;
   isTagsLoading?: boolean;
   tags: string[];
-  operators?: string[];
+  hideScope?: boolean;
+  hideTag?: boolean;
+  hideValue?: boolean;
+  allowDelete?: boolean;
 }
 const SearchField = ({
   filter,
@@ -33,16 +44,35 @@ const SearchField = ({
   isTagsLoading,
   tags,
   setError,
-  operators,
+  hideScope,
+  hideTag,
+  hideValue,
+  allowDelete,
 }: Props) => {
+  const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
-  const [isLoadingValues, setIsLoadingValues] = useState(false);
-  const [options, setOptions] = useState<Array<SelectableValue<string>>>([]);
+  const scopedTag = useMemo(() => filterScopedTag(filter), [filter]);
   // We automatically change the operator to the regex op when users select 2 or more values
   // However, they expect this to be automatically rolled back to the previous operator once
   // there's only one value selected, so we store the previous operator and value
   const [prevOperator, setPrevOperator] = useState(filter.operator);
   const [prevValue, setPrevValue] = useState(filter.value);
+
+  const updateOptions = async () => {
+    try {
+      return await languageProvider.getOptionsV2(scopedTag);
+    } catch (error) {
+      // Display message if Tempo is connected but search 404's
+      if (isFetchError(error) && error?.status === 404) {
+        setError(error);
+      } else if (error instanceof Error) {
+        dispatch(notifyApp(createErrorNotification('Error', error)));
+      }
+    }
+    return [];
+  };
+
+  const { loading: isLoadingValues, value: options } = useAsync(updateOptions, [scopedTag, languageProvider, setError]);
 
   useEffect(() => {
     if (Array.isArray(filter.value) && filter.value.length > 1 && filter.operator !== '=~') {
@@ -58,53 +88,46 @@ const SearchField = ({
     setPrevValue(filter.value);
   }, [filter.value]);
 
-  const loadOptions = useCallback(
-    async (name: string) => {
-      setIsLoadingValues(true);
+  const scopeOptions = Object.values(TraceqlSearchScope).map((t) => ({ label: t, value: t }));
 
-      try {
-        const options = await languageProvider.getOptionsV2(name);
-        return options;
-      } catch (error) {
-        if (isFetchError(error) && error?.status === 404) {
-          setError(error);
-        } else if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
-        }
-        return [];
-      } finally {
-        setIsLoadingValues(false);
-      }
-    },
-    [setError, languageProvider]
-  );
-
-  useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        if (filter.tag) {
-          setOptions(await loadOptions(filter.tag));
-        }
-      } catch (error) {
-        // Display message if Tempo is connected but search 404's
-        if (isFetchError(error) && error?.status === 404) {
-          setError(error);
-        } else if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
-        }
-      }
-    };
-    fetchOptions();
-  }, [languageProvider, loadOptions, setError, filter.tag]);
+  // If all values have type string or int/float use a focused list of operators instead of all operators
+  const optionsOfFirstType = options?.filter((o) => o.type === options[0]?.type);
+  const uniqueOptionType = options?.length === optionsOfFirstType?.length ? options?.[0]?.type : undefined;
+  let operatorList = allOperators;
+  switch (uniqueOptionType) {
+    case 'string':
+      operatorList = stringOperators;
+      break;
+    case 'int':
+    case 'float':
+      operatorList = numberOperators;
+  }
 
   return (
-    <HorizontalGroup spacing={'none'}>
-      {filter.type === 'dynamic' && (
+    <HorizontalGroup spacing={'none'} width={'auto'}>
+      {!hideScope && (
         <Select
+          className={styles.dropdown}
+          inputId={`${filter.id}-scope`}
+          options={scopeOptions}
+          value={filter.scope}
+          onChange={(v) => {
+            updateFilter({ ...filter, scope: v?.value });
+          }}
+          placeholder="Select scope"
+          aria-label={`select ${filter.id} scope`}
+        />
+      )}
+      {!hideTag && (
+        <Select
+          className={styles.dropdown}
           inputId={`${filter.id}-tag`}
           isLoading={isTagsLoading}
-          options={tags.map((t) => ({ label: t, value: t }))}
-          onOpenMenu={() => tags}
+          // Add the current tag to the list if it doesn't exist in the tags prop, otherwise the field will be empty even though the state has a value
+          options={(filter.tag !== undefined ? uniq([filter.tag, ...tags]) : tags).map((t) => ({
+            label: t,
+            value: t,
+          }))}
           value={filter.tag}
           onChange={(v) => {
             updateFilter({ ...filter, tag: v?.value });
@@ -116,8 +139,9 @@ const SearchField = ({
         />
       )}
       <Select
+        className={styles.dropdown}
         inputId={`${filter.id}-operator`}
-        options={(operators || allOperators).map(operatorSelectableValue)}
+        options={operatorList.map(operatorSelectableValue)}
         value={filter.operator}
         onChange={(v) => {
           updateFilter({ ...filter, operator: v?.value });
@@ -127,30 +151,28 @@ const SearchField = ({
         allowCustomValue={true}
         width={8}
       />
-      <Select
-        inputId={`${filter.id}-value`}
-        isLoading={isLoadingValues}
-        options={options}
-        onOpenMenu={() => {
-          if (filter.tag) {
-            loadOptions(filter.tag);
-          }
-        }}
-        value={filter.value}
-        onChange={(val) => {
-          if (Array.isArray(val)) {
-            updateFilter({ ...filter, value: val.map((v) => v.value), valueType: val[0]?.type });
-          } else {
-            updateFilter({ ...filter, value: val?.value, valueType: val?.type });
-          }
-        }}
-        placeholder="Select value"
-        isClearable={false}
-        aria-label={`select ${filter.id} value`}
-        allowCustomValue={true}
-        isMulti
-      />
-      {filter.type === 'dynamic' && (
+      {!hideValue && (
+        <Select
+          className={styles.dropdown}
+          inputId={`${filter.id}-value`}
+          isLoading={isLoadingValues}
+          options={options}
+          value={filter.value}
+          onChange={(val) => {
+            if (Array.isArray(val)) {
+              updateFilter({ ...filter, value: val.map((v) => v.value), valueType: val[0]?.type });
+            } else {
+              updateFilter({ ...filter, value: val?.value, valueType: val?.type });
+            }
+          }}
+          placeholder="Select value"
+          isClearable={false}
+          aria-label={`select ${filter.id} value`}
+          allowCustomValue={true}
+          isMulti
+        />
+      )}
+      {allowDelete && (
         <AccessoryButton
           variant={'secondary'}
           icon={'times'}

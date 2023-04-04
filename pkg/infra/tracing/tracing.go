@@ -100,25 +100,35 @@ func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 }
 
 func parseSettings(cfg *setting.Cfg) (*Opentracing, *Opentelemetry, error) {
+	ts, err := parseSettingsOpentracing(cfg)
+	if err != nil {
+		return ts, nil, err
+	}
+	ots, err := ParseSettingsOpentelemetry(cfg)
+	return ts, ots, err
+}
+
+func parseSettingsOpentracing(cfg *setting.Cfg) (*Opentracing, error) {
 	ts := &Opentracing{
 		Cfg: cfg,
 		log: log.New("tracing"),
 	}
-	err := ts.parseSettings()
-	if err != nil {
-		return ts, nil, err
+	if err := ts.parseSettings(); err != nil {
+		return ts, err
 	}
 	if ts.enabled {
 		cfg.Logger.Warn("[Deprecated] the configuration setting 'tracing.jaeger' is deprecated, please use 'tracing.opentelemetry.jaeger' instead")
-		return ts, nil, nil
 	}
+	return ts, nil
+}
 
+func ParseSettingsOpentelemetry(cfg *setting.Cfg) (*Opentelemetry, error) {
 	ots := &Opentelemetry{
 		Cfg: cfg,
 		log: log.New("tracing"),
 	}
-	err = ots.parseSettingsOpentelemetry()
-	return ts, ots, err
+	err := ots.parseSettingsOpentelemetry()
+	return ots, err
 }
 
 type traceKey struct{}

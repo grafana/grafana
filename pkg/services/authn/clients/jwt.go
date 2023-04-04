@@ -59,7 +59,6 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 
 	sub, _ := claims["sub"].(string)
 	if sub == "" {
-		s.log.FromContext(ctx).Warn("Got a JWT without the mandatory 'sub' claim", "error", err)
 		return nil, errJWTMissingClaim.Errorf("missing mandatory 'sub' claim in JWT")
 	}
 

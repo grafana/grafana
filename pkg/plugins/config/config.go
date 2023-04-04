@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
@@ -31,13 +32,15 @@ type Cfg struct {
 	LogDatasourceRequests bool
 
 	PluginsCDNURLTemplate string
+
+	Opentelemetry OpentelemetryCfg
 }
 
-func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
+func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) (*Cfg, error) {
 	return NewCfg(settingProvider, grafanaCfg)
 }
 
-func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
+func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) (*Cfg, error) {
 	logger := log.New("plugin.cfg")
 
 	aws := settingProvider.Section("aws")
@@ -53,6 +56,10 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 		allowedUnsigned = strings.Split(settingProvider.KeyValue("plugins", "allow_loading_unsigned_plugins").Value(), ",")
 	}
 
+	otelCfg, err := NewOpentelemetryCfg(grafanaCfg)
+	if err != nil {
+		return nil, fmt.Errorf("new opentelemetry cfg: %w", err)
+	}
 	return &Cfg{
 		log:                     logger,
 		PluginsPath:             grafanaCfg.PluginsPath,
@@ -65,7 +72,8 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 		Azure:                   grafanaCfg.Azure,
 		LogDatasourceRequests:   grafanaCfg.PluginLogBackendRequests,
 		PluginsCDNURLTemplate:   grafanaCfg.PluginsCDNURLTemplate,
-	}
+		Opentelemetry:           otelCfg,
+	}, nil
 }
 
 func extractPluginSettings(settingProvider setting.Provider) setting.PluginSettings {

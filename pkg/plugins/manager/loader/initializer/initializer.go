@@ -64,7 +64,25 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 
 	hostEnv = append(hostEnv, i.awsEnvVars()...)
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(i.cfg.Azure)...)
-	return getPluginSettings(plugin.ID, i.cfg).asEnvVar("GF_PLUGIN", hostEnv)
+
+	// Tracing
+	var pluginTracingEnabled bool
+	if v, exists := i.cfg.PluginSettings[plugin.ID]["tracing"]; exists {
+		pluginTracingEnabled = v == "true"
+	}
+	if i.cfg.Opentelemetry.IsEnabled() && pluginTracingEnabled {
+		if plugin.Info.Version != "" {
+			hostEnv = append(hostEnv, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
+		}
+		hostEnv = append(
+			hostEnv,
+			fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", i.cfg.Opentelemetry.Address),
+			fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", i.cfg.Opentelemetry.Propagation),
+		)
+	}
+
+	ev := getPluginSettings(plugin.ID, i.cfg).asEnvVar("GF_PLUGIN", hostEnv)
+	return ev
 }
 
 func (i *Initializer) awsEnvVars() []string {

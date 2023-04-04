@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	mssql "github.com/denisenkom/go-mssqldb"
+	mssql "github.com/grafana/go-mssqldb"
 	"github.com/grafana/grafana/pkg/infra/proxy/proxyutil"
 	"github.com/stretchr/testify/require"
 	"xorm.io/core"

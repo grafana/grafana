@@ -1,7 +1,6 @@
 import React from 'react';
-import { valid } from 'semver';
 
-import { DataSourceSettings, SelectableValue, isTruthy } from '@grafana/data';
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { FieldSet, InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
 
 import { ElasticsearchOptions, Interval } from '../types';
@@ -15,24 +14,11 @@ const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'Yearly', value: 'Yearly', example: '[logstash-]YYYY' },
 ];
 
-const esVersions: SelectableValue[] = [
-  { label: '7.10+', value: '7.10.0' },
-  { label: '8.x', value: '8.0.0' },
-];
-
 type Props = {
   value: DataSourceSettings<ElasticsearchOptions>;
   onChange: (value: DataSourceSettings<ElasticsearchOptions>) => void;
 };
 export const ElasticDetails = ({ value, onChange }: Props) => {
-  const currentVersion = esVersions.find((version) => version.value === value.jsonData.esVersion);
-  const customOption =
-    !currentVersion && valid(value.jsonData.esVersion)
-      ? {
-          label: value.jsonData.esVersion,
-          value: value.jsonData.esVersion,
-        }
-      : undefined;
   return (
     <>
       <FieldSet label="Elasticsearch details">
@@ -70,28 +56,6 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
           />
         </InlineField>
 
-        <InlineField label="ElasticSearch version" labelWidth={26}>
-          <Select
-            inputId="es_config_version"
-            options={[customOption, ...esVersions].filter(isTruthy)}
-            onChange={(option) => {
-              const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
-                value.jsonData.maxConcurrentShardRequests
-              );
-              onChange({
-                ...value,
-                jsonData: {
-                  ...value.jsonData,
-                  esVersion: option.value!,
-                  maxConcurrentShardRequests,
-                },
-              });
-            }}
-            value={currentVersion || customOption}
-            width={24}
-          />
-        </InlineField>
-
         <InlineField label="Max concurrent Shard Requests" labelWidth={26}>
           <Input
             id="es_config_shardRequests"
@@ -122,13 +86,23 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
           />
         </InlineField>
 
-        <InlineField label="Include Frozen Indices" labelWidth={26}>
+        <InlineField label="X-Pack enabled" labelWidth={26}>
           <InlineSwitch
-            id="es_config_frozenIndices"
-            value={(value.jsonData.xpack ?? false) && (value.jsonData.includeFrozen ?? false)}
-            onChange={(event) => includeFrozenIndicesOnChange(event.currentTarget.checked, value, onChange)}
+            id="es_config_xpackEnabled"
+            value={value.jsonData.xpack || false}
+            onChange={jsonDataSwitchChangeHandler('xpack', value, onChange)}
           />
         </InlineField>
+
+        {value.jsonData.xpack && (
+          <InlineField label="Include Frozen Indices" labelWidth={26}>
+            <InlineSwitch
+              id="es_config_frozenIndices"
+              value={value.jsonData.includeFrozen ?? false}
+              onChange={jsonDataSwitchChangeHandler('includeFrozen', value, onChange)}
+            />
+          </InlineField>
+        )}
       </FieldSet>
     </>
   );
@@ -157,20 +131,17 @@ const jsonDataChangeHandler =
     });
   };
 
-const includeFrozenIndicesOnChange = (newValue: boolean, formValue: Props['value'], onChange: Props['onChange']) => {
-  const newJsonData = { ...formValue.jsonData };
-  if (newValue) {
-    newJsonData.xpack = true;
-    newJsonData.includeFrozen = true;
-  } else {
-    delete newJsonData.xpack;
-    delete newJsonData.includeFrozen;
-  }
-  onChange({
-    ...formValue,
-    jsonData: newJsonData,
-  });
-};
+const jsonDataSwitchChangeHandler =
+  (key: keyof ElasticsearchOptions, value: Props['value'], onChange: Props['onChange']) =>
+  (event: React.SyntheticEvent<HTMLInputElement>) => {
+    onChange({
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        [key]: event.currentTarget.checked,
+      },
+    });
+  };
 
 const intervalHandler =
   (value: Props['value'], onChange: Props['onChange']) => (option: SelectableValue<Interval | 'none'>) => {
@@ -207,14 +178,6 @@ const intervalHandler =
       });
     }
   };
-
-function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number | undefined): number {
-  if (maxConcurrentShardRequests === 256) {
-    return 5;
-  }
-
-  return maxConcurrentShardRequests || defaultMaxConcurrentShardRequests();
-}
 
 export function defaultMaxConcurrentShardRequests() {
   return 5;
