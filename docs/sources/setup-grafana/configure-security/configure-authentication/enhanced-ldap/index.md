@@ -20,7 +20,6 @@ The enhanced LDAP integration adds additional functionality on top of the [LDAP 
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud). If you are a Grafana Cloud customer, please [open a support ticket in the Cloud Portal](https://github.com/profile/org#support) to request this feature.
 
-
 > To control user access with role-based permissions, refer to [role-based access control]({{< relref "../../../../administration/roles-and-permissions/access-control/" >}}).
 
 ## LDAP group synchronization for teams
