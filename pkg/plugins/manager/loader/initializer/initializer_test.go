@@ -305,6 +305,27 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			},
 		},
 		{
+			name: "otlp enabled composite propagation",
+			cfg: &config.Cfg{
+				Opentelemetry: config.OpentelemetryCfg{
+					Address:     "127.0.0.1:4317",
+					Propagation: "w3c,jaeger",
+				},
+				PluginSettings: map[string]map[string]string{
+					pluginID: {"tracing": "true"},
+				},
+			},
+			plugin: defaultPlugin,
+			exp: func(t *testing.T, envVars []string) {
+				assert.Len(t, envVars, 5)
+				assert.Equal(t, "GF_PLUGIN_TRACING=true", envVars[0])
+				assert.Equal(t, "GF_VERSION=", envVars[1])
+				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[2])
+				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[3])
+				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c,jaeger", envVars[4])
+			},
+		},
+		{
 			name: "otlp no propagation disabled by default",
 			cfg: &config.Cfg{
 				Opentelemetry: config.OpentelemetryCfg{
