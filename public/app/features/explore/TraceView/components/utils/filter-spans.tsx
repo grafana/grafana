@@ -69,7 +69,10 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
               return getReturnValue(tag.operator, true);
             } else if (span.process.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key))) {
               return getReturnValue(tag.operator, true);
-            } else if (span.logs.some((log) => log.fields.some((kv) => checkKeyForMatch(tag.key!, kv.key)))) {
+            } else if (
+              span.logs &&
+              span.logs.some((log) => log.fields.some((kv) => checkKeyForMatch(tag.key!, kv.key)))
+            ) {
               return getReturnValue(tag.operator, true);
             }
           }
