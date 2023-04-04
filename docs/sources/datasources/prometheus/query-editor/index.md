@@ -46,8 +46,6 @@ For options and functions common to all query editors, refer to [Query and trans
 
 You can configure Prometheus-specific options in the query editor by setting several options regardless of its mode.
 
-{{< figure src="/static/img/docs/prometheus/options-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Options" >}}
-
 ### Legend
 
 The **Legend** setting defines the time series's name. You can use a predefined or custom format.
@@ -154,8 +152,6 @@ In addition to the **Run query** button and mode switcher, Builder mode includes
 
 ### Metric and labels
 
-{{< figure src="/static/img/docs/prometheus/metric-select-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Metric and labels" >}}
-
 Select a specific metric name from the dropdown list.
 The data source requests the list of available metrics from the Prometheus server based on the selected time rage.
 You can also enter text into the selector when the dropdown is open to search and filter the list.
@@ -165,8 +161,6 @@ When a metric is selected, the data source requests available labels and their v
 Use the `+` button to add a label, and the `x` button to remove a label.
 
 ### Operations
-
-{{< figure src="/static/img/docs/prometheus/operations-9-1.png" max-width="500px" class="docs-image--no-shadow" caption="Operations" >}}
 
 Select the `+ Operations` button to add operations to your query.
 The query editor groups operations into related sections, and you can type while the operations dropdown is open to search and filter the list.
@@ -188,8 +182,6 @@ If adding an operation would result in nonsensical query, the query editor adds 
 To re-order operations manually, drag the operation box by its name and drop it into the desired place.
 
 #### Hints
-
-{{< figure src="/static/img/docs/prometheus/hint-8-5.png" max-width="500px" class="docs-image--no-shadow" caption="Hint" >}}
 
 The query editor can detect which operations are most appropriate for some selected metrics.
 If it does, it displays a hint next to the `+ Operations` button.
