@@ -20,11 +20,7 @@ import { SETTINGS_KEYS } from 'app/features/explore/utils/logs';
 import { LogRows } from '../LogRows';
 
 import { LoadMoreOptions, LogContextButtons } from './LogContextButtons';
-
-export interface RowContextOptions {
-  direction?: 'BACKWARD' | 'FORWARD';
-  limit?: number;
-}
+import { RowContextOptions } from './types';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
