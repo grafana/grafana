@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
@@ -33,7 +33,7 @@ export const LogContextButtons = (props: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <ButtonGroup className={cx(styles.logSamplesButton)}>
+    <ButtonGroup className={styles.logSamplesButton}>
       <ToolbarButton variant="canvas" onClick={onAddClick} icon="plus" narrow />
       <ToolbarButton variant="canvas" onClick={onRemoveClick} icon="minus" narrow />
       <ButtonSelect variant="canvas" value={option} options={LoadMoreOptions} onChange={onChangeOption} />
