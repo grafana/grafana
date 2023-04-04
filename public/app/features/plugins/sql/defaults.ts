@@ -11,8 +11,6 @@ export function applyQueryDefaults(q?: SQLQuery): SQLQuery {
     editorMode = EditorMode.Code;
   }
 
-  // console.log(q, 'q');
-
   const result: SQLQuery = {
     ...q,
     refId: q?.refId || 'A',
