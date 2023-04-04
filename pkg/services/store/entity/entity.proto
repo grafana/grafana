@@ -5,14 +5,17 @@ option go_package = "./;entity";
 
 message GRN {
   // the tenant/org id
+  // In k8s land, this will be namespace
   int64 tenant_id = 1;
 
   // Identify the entity kind.  This kind will be used to apply a schema to the body and
   // will trigger additional indexing behavior.
+  // In k8s land, this is actuall GVK
   string kind = 3;
 
   // Unique ID
   // 40 characters or less, no slashes or other special characters
+  // In k8s land, this should be name
   string UID = 4;
 }
 
@@ -21,50 +24,59 @@ message Entity {
   // Entity identifier
   GRN GRN = 1;
 
-  // The version will change when the entity is saved. It is not necessarily sortable
-  string version = 2;
+  // Globally unique ID set by the system.  This can not be set explicitly
+  string guid = 2;
+
+  // The resourceVersion -- it will change whenever anythign on the object is saved
+  uint64 version = 3;
 
   // Time in epoch milliseconds that the entity was created
-  int64 created_at = 3;
+  int64 created_at = 4;
 
   // Time in epoch milliseconds that the entity was updated
-  int64 updated_at = 4;
+  int64 updated_at = 5;
 
   // Who created the entity
-  string created_by = 5;
+  string created_by = 6;
 
   // Who updated the entity
-  string updated_by = 6;
+  string updated_by = 7;
 
   // The folder UID (not stored in the body)
-  string folder = 7;
+  string folder = 8;
 
   // MD5 digest of the body
-  string ETag = 8;
+  string ETag = 9;
 
   // Content Length
-  int64 size = 9;
+  int64 size = 10;
 
   // Raw bytes of the storage entity.  The kind will determine what is a valid payload
-  bytes body = 10;
+  bytes body = 11;
+
+  // k8s style status (ignored for now)
+  bytes status = 12;
 
   // Entity summary as JSON
-  bytes summary_json = 11;
+  bytes summary_json = 13;
 
   // Access information (attached to the single instance)
-  repeated EntityAccess access = 12;
+  repeated EntityAccess access = 14;
 
   // External location info
-  EntityOriginInfo origin = 13;
+  EntityOriginInfo origin = 15;
 }
 
 // Manage access control
 message EntityAccess {
-  // Who
+  // Who (team or user)
   string role = 1;
 
-  // What
-  string action = 2;
+  // What kind of things (ie, dashboard or dashboard.permissions)
+  string subject = 2;
+
+  // What you can do (read/write/etc)
+  string verb = 3;
 }
 
 // This stores additional metadata for items entities that were synced from external systmes
@@ -123,14 +135,17 @@ message ReadEntityRequest {
   // Entity identifier
   GRN GRN = 1;
 
-  // Fetch an explicit version
-  string version = 2;
+  // Fetch an explicit version (0 is latest)
+  uint64 version = 2;
 
   // Include the full body bytes
   bool with_body = 3;
 
+  // Include the status bytes (ignored for now)
+  bool with_status = 4;
+
   // Include derived summary metadata
-  bool with_summary = 4;
+  bool with_summary = 5;
 }
 
 //------------------------------------------------------

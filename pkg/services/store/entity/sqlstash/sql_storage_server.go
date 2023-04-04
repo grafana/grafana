@@ -136,7 +136,7 @@ func (s *sqlEntityServer) validateGRN(ctx context.Context, grn *entity.GRN) (*en
 }
 
 func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest) (*entity.Entity, error) {
-	if r.Version != "" {
+	if r.Version > 0 {
 		return s.readFromHistory(ctx, r)
 	}
 	grn, err := s.validateGRN(ctx, r.GRN)
@@ -241,7 +241,7 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 
 		where := "grn=?"
 		args = append(args, grn.ToGRNString())
-		if r.Version != "" {
+		if r.Version > 0 {
 			return nil, fmt.Errorf("version not supported for batch read (yet?)")
 		}
 		constraints = append(constraints, where)

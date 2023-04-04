@@ -20,13 +20,13 @@ func TestRawEncoders(t *testing.T) {
 			UID:  "a",
 			Kind: "b",
 		},
-		Version: "c",
+		Version: 123,
 		ETag:    "d",
 		Body:    body,
 		Folder:  "f0",
 		Access: []*EntityAccess{
-			{Role: "viewer", Action: "read"},
-			{Role: "aaa", Action: "read"},
+			{Role: "viewer", Subject: "dashboards", Verb: "read"},
+			{Role: "viewer", Subject: "playlist", Verb: "write"},
 		},
 	}
 
@@ -35,23 +35,25 @@ func TestRawEncoders(t *testing.T) {
 		  "kind": "b",
 		  "UID": "a"
 		},
-		"version": "c",
-		"body": {
-		  "field": 1.23,
-		  "hello": "world"
-		},
-		"etag": "d",
+		"version": 123,
 		"folder": "f0",
 		"access": [
 		  {
 			"role": "viewer",
-			"action": "read"
+			"subject": "dashboards",
+			"verb": "read"
 		  },
 		  {
-			"role": "aaa",
-			"action": "read"
+			"role": "viewer",
+			"subject": "playlist",
+			"verb": "write"
 		  }
-		]
+		],
+		"body": {
+		  "field": 1.23,
+		  "hello": "world"
+		},
+		"etag": "d"
 	  }`
 
 	b, err := json.MarshalIndent(raw, "", "  ")

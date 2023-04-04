@@ -54,10 +54,16 @@ func (codec *rawEntityCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 	stream.WriteObjectField("GRN")
 	stream.WriteVal(obj.GRN)
 
-	if obj.Version != "" {
+	if obj.Guid != "" {
+		stream.WriteMore()
+		stream.WriteObjectField("guid")
+		stream.WriteString(obj.Guid)
+	}
+
+	if obj.Version > 0 {
 		stream.WriteMore()
 		stream.WriteObjectField("version")
-		stream.WriteString(obj.Version)
+		stream.WriteUint64(obj.Version)
 	}
 	if obj.CreatedAt > 0 {
 		stream.WriteMore()
@@ -96,8 +102,11 @@ func (codec *rawEntityCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 			stream.WriteObjectField("role")
 			stream.WriteString(v.Role)
 			stream.WriteMore()
-			stream.WriteObjectField("action")
-			stream.WriteString(v.Action)
+			stream.WriteObjectField("subject")
+			stream.WriteString(v.Subject)
+			stream.WriteMore()
+			stream.WriteObjectField("verb")
+			stream.WriteString(v.Verb)
 			stream.WriteObjectEnd()
 		}
 		stream.WriteArrayEnd()
@@ -148,6 +157,8 @@ func readEntity(iter *jsoniter.Iterator, raw *Entity) {
 		case "GRN":
 			raw.GRN = &GRN{}
 			iter.ReadVal(raw.GRN)
+		case "guid":
+			raw.Guid = iter.ReadString()
 		case "updatedAt":
 			raw.UpdatedAt = iter.ReadInt64()
 		case "updatedBy":
@@ -161,7 +172,7 @@ func readEntity(iter *jsoniter.Iterator, raw *Entity) {
 		case "etag":
 			raw.ETag = iter.ReadString()
 		case "version":
-			raw.Version = iter.ReadString()
+			raw.Version = iter.ReadUint64()
 		case "folder":
 			raw.Folder = iter.ReadString()
 		case "origin":
@@ -174,8 +185,10 @@ func readEntity(iter *jsoniter.Iterator, raw *Entity) {
 					switch l2Field {
 					case "role":
 						a.Role = iter.ReadString()
-					case "action":
-						a.Action = iter.ReadString()
+					case "subject":
+						a.Subject = iter.ReadString()
+					case "verb":
+						a.Verb = iter.ReadString()
 					}
 				}
 				raw.Access = append(raw.Access, a)

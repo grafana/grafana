@@ -82,9 +82,9 @@ func (s *httpEntityStore) doGetEntity(c *contextmodel.ReqContext) response.Respo
 	}
 	rsp, err := s.store.Read(c.Req.Context(), &entity.ReadEntityRequest{
 		GRN:         grn,
-		Version:     params["version"],           // ?version = XYZ
-		WithBody:    params["body"] != "false",   // default to true
-		WithSummary: params["summary"] == "true", // default to false
+		Version:     parseVersion(params["version"]), // ?version = 123
+		WithBody:    params["body"] != "false",       // default to true
+		WithSummary: params["summary"] == "true",     // default to false
 	})
 	if err != nil {
 		return response.Error(500, "error fetching entity", err)
@@ -117,7 +117,7 @@ func (s *httpEntityStore) doGetRawEntity(c *contextmodel.ReqContext) response.Re
 	}
 	rsp, err := s.store.Read(c.Req.Context(), &entity.ReadEntityRequest{
 		GRN:         grn,
-		Version:     params["version"], // ?version = XYZ
+		Version:     parseVersion(params["version"]), // ?version = 123
 		WithBody:    true,
 		WithSummary: false,
 	})
@@ -353,4 +353,12 @@ func getMultipartFormValue(req *http.Request, key string) string {
 		return ""
 	}
 	return v[0]
+}
+
+func parseVersion(v string) uint64 {
+	if v != "" {
+		u, _ := strconv.ParseUint(v, 0, 64)
+		return u
+	}
+	return 0
 }
