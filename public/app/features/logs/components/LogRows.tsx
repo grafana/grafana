@@ -18,8 +18,8 @@ import { sortLogRows } from '../utils';
 
 //Components
 import { LogRow } from './LogRow';
-import { RowContextOptions } from './LogRowContextProvider';
 import { getLogRowStyles } from './getLogRowStyles';
+import { RowContextOptions } from './log-context/types';
 
 export const PREVIEW_LIMIT = 100;
 
