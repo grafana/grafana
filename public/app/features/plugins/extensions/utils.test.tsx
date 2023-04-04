@@ -1,4 +1,4 @@
-import { PluginExtensionLinkConfig } from '@grafana/data';
+import { PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
 
 import { deepFreeze, isPluginExtensionLinkConfig, handleErrorsInFn } from './utils';
 
@@ -185,6 +185,7 @@ describe('Plugin Extensions / Utils', () => {
     test('should return TRUE if the object is a command extension config', () => {
       expect(
         isPluginExtensionLinkConfig({
+          type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
           path: '...',
@@ -196,6 +197,7 @@ describe('Plugin Extensions / Utils', () => {
         isPluginExtensionLinkConfig({
           title: 'Title',
           description: 'Description',
+          path: '...',
         } as PluginExtensionLinkConfig)
       ).toBe(false);
     });

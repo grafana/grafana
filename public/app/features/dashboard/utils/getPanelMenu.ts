@@ -1,4 +1,4 @@
-import { PanelMenuItem, PluginExtensionPlacements, type PluginExtensionPanelContext } from '@grafana/data';
+import { PanelMenuItem, PluginExtensionPoints, type PluginExtensionPanelContext } from '@grafana/data';
 import {
   isPluginExtensionLink,
   AngularComponent,
@@ -279,11 +279,11 @@ export function getPanelMenu(
   }
 
   const { extensions } = getPluginExtensions({
-    placement: PluginExtensionPlacements.DashboardPanelMenu,
+    extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
     context: createExtensionContext(panel, dashboard),
   });
 
-  if (extensions.length > 0) {
+  if (extensions.length > 0 && !panel.isEditing) {
     const extensionsMenu: PanelMenuItem[] = [];
 
     for (const extension of extensions) {
@@ -291,6 +291,7 @@ export function getPanelMenu(
         extensionsMenu.push({
           text: truncateTitle(extension.title, 25),
           href: extension.path,
+          onClick: extension.onClick,
         });
         continue;
       }
@@ -331,16 +332,13 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
     id: panel.id,
     pluginId: panel.type,
     title: panel.title,
-    timeRange: Object.assign({}, dashboard.time),
+    timeRange: dashboard.time,
     timeZone: dashboard.timezone,
     dashboard: {
       uid: dashboard.uid,
       title: dashboard.title,
       tags: Array.from<string>(dashboard.tags),
     },
-    targets: panel.targets.map((t) => ({
-      refId: t.refId,
-      pluginId: t.datasource?.type ?? 'unknown',
-    })),
+    targets: panel.targets,
   };
 }
