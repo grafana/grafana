@@ -33,11 +33,11 @@ export const DatasetSelector = ({
   const usePreconfiguredDataset = !!preconfiguredDataset.length;
   // This condition is true if either 1) the sql datasource has a preconfigured default database,
   // OR if 2) the datasource is Postgres, in which case this component should be disabled by default.
-  const hasPreconfig = usePreconfiguredDataset || disableDatasetSelector;
+  const hasPreconfigCondition = usePreconfiguredDataset || disableDatasetSelector;
 
   const state = useAsync(async () => {
     // If default database is already configured in MySql or MsSql, OR is unconfigured in Postgres, no need to fetch other databases.
-    if (hasPreconfig) {
+    if (hasPreconfigCondition) {
       return [];
     }
 
@@ -59,8 +59,8 @@ export const DatasetSelector = ({
       value={usePreconfiguredDataset ? preconfiguredDataset : dataset}
       options={state.value}
       onChange={onChange}
-      disabled={hasPreconfig || state.loading}
-      isLoading={hasPreconfig ? false : state.loading}
+      disabled={hasPreconfigCondition || state.loading}
+      isLoading={hasPreconfigCondition ? false : state.loading}
       menuShouldPortal={true}
       placeholder={determinePlaceholder()}
     />
