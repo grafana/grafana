@@ -194,6 +194,8 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     integration_test_steps = [
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
+        redis_integration_tests_step(),
+        memcached_integration_tests_step(),
     ]
 
     windows_pipeline = pipeline(
@@ -338,6 +340,8 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     integration_test_steps = [
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
+        redis_integration_tests_step(),
+        memcached_integration_tests_step(),
     ]
 
     windows_pipeline = pipeline(
@@ -391,11 +395,7 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
                     [
                         wire_install_step(),
                     ] +
-                    integration_test_steps +
-                    [
-                        redis_integration_tests_step(),
-                        memcached_integration_tests_step(),
-                    ],
+                    integration_test_steps,
             environment = environment,
             volumes = volumes,
         ),
