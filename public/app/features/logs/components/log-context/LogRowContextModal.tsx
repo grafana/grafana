@@ -89,13 +89,13 @@ export enum LogGroupPosition {
 
 interface LogRowContextModalProps {
   row: LogRowModel;
+  open: boolean;
+  timeZone: string;
+  onClose: () => void;
+  getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   logsSortOrder?: LogsSortOrder | null;
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
-  open: boolean;
-  onClose: () => void;
-  getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
-  timeZone: string;
 }
 
 export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps> = ({
