@@ -1,4 +1,12 @@
-import { VizPanel, NestedScene, SceneTimePicker, SceneFlexLayout, SceneTimeRange } from '@grafana/scenes';
+import {
+  VizPanel,
+  NestedScene,
+  SceneTimePicker,
+  SceneFlexLayout,
+  SceneTimeRange,
+  SceneRefreshPicker,
+  SceneFlexItem,
+} from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
 
@@ -13,35 +21,42 @@ export function getSceneWithRows(): DashboardScene {
         new NestedScene({
           title: 'Overview',
           canCollapse: true,
-          // size: { ySizing: 'content', xSizing: 'fill' },
           body: new SceneFlexLayout({
             direction: 'row',
             children: [
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Fill height',
+              new SceneFlexItem({
+                body: new VizPanel({
+                  pluginId: 'timeseries',
+                  title: 'Fill height',
+                }),
               }),
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Fill height',
+
+              new SceneFlexItem({
+                body: new VizPanel({
+                  pluginId: 'timeseries',
+                  title: 'Fill height',
+                }),
               }),
             ],
           }),
         }),
         new NestedScene({
           title: 'More server details',
-          // size: { ySizing: 'content', xSizing: 'fill' },
           canCollapse: true,
           body: new SceneFlexLayout({
             direction: 'row',
             children: [
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Fill height',
+              new SceneFlexItem({
+                body: new VizPanel({
+                  pluginId: 'timeseries',
+                  title: 'Fill height',
+                }),
               }),
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Fill height',
+              new SceneFlexItem({
+                body: new VizPanel({
+                  pluginId: 'timeseries',
+                  title: 'Fill height',
+                }),
               }),
             ],
           }),
@@ -50,6 +65,6 @@ export function getSceneWithRows(): DashboardScene {
     }),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
-    actions: [new SceneTimePicker({})],
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
   });
 }

@@ -95,7 +95,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 			Enabled:          true,
 			Backend:          "multiple",
 			MultiPrimary:     "annotations",
-			MultiSecondaries: []string{"sql", "invalid-backend"},
+			MultiSecondaries: []string{"annotations", "invalid-backend"},
 		}
 
 		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger)
