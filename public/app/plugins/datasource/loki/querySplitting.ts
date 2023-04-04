@@ -126,7 +126,8 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
         next: (partialResponse) => {
           mergedResponse = combineResponses(mergedResponse, partialResponse);
           mergedResponse = addResponseMetadata(mergedResponse, {
-            progress: (totalRequests - requestN) / totalRequests,
+            requestNumber: totalRequests - requestN + 1,
+            totalRequests,
           });
           if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
             shouldStop = true;

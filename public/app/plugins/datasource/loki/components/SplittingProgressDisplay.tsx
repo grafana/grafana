@@ -10,11 +10,18 @@ export function SplittingProgressDisplay({ queryResponse, refId }: Props) {
     return null;
   }
   const dataFrame = (queryResponse?.series || []).find((frame) => frame.refId === refId);
-  if (!dataFrame || dataFrame.meta?.custom?.progress === undefined) {
+  if (!dataFrame || !dataFrame.meta?.custom) {
     return null;
   }
 
-  return <p>{dataFrame.meta?.custom?.progress * 100}%</p>;
+  const { requestNumber, totalRequests } = dataFrame.meta?.custom;
+  const percentage = Math.round((requestNumber / totalRequests) * 100);
+
+  return (
+    <p>
+      {requestNumber}/{totalRequests} | {percentage}%
+    </p>
+  );
 }
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
