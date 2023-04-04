@@ -63,3 +63,4 @@ traceqlSearch,alpha,@grafana/observability-traces-and-profiling,false,false,fals
 prometheusMetricEncyclopedia,alpha,@grafana/observability-metrics,false,false,false,true
 timeSeriesTable,alpha,@grafana/app-o11y,false,false,false,true
 influxdbBackendMigration,alpha,@grafana/observability-metrics,false,false,false,true
+fieldNameMatcherFallback,alpha,@grafana/observability-metrics,false,false,false,true

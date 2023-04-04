@@ -82,4 +82,5 @@ export interface FeatureToggles {
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
   influxdbBackendMigration?: boolean;
+  fieldNameMatcherFallback?: boolean;
 }

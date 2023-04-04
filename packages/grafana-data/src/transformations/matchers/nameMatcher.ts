@@ -4,7 +4,6 @@ import { Field, DataFrame, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../..
 import { FieldMatcherInfo, FrameMatcherInfo, FieldMatcher } from '../../types/transformations';
 
 import { FieldMatcherID, FrameMatcherID } from './ids';
-
 export interface RegexpOrNamesMatcherOptions {
   pattern?: string;
   names?: string[];
@@ -40,32 +39,41 @@ const fieldNameMatcher: FieldMatcherInfo<string> = {
   defaultOptions: '',
 
   get: (name: string): FieldMatcher => {
-    let fallback: FieldMatcher | undefined = undefined;
+    const fieldNameMatcherFallback = window.grafanaBootData.settings.featureToggles.fieldNameMatcherFallback;
+    // wrapped in a feature toggle
+    // so we may turn this off, with prometheusDataplane toggle, if we have unexpected behavior/errors
+    if (fieldNameMatcherFallback) {
+      let fallback: FieldMatcher | undefined = undefined;
 
-    // In an effor to support migrating to a consistent data contract, the
-    // naming conventions need to get normalized.  However many existing setups
-    // exist that would no longer match names if that changes.  This injects
-    // fallback logic when when the data frame has not type version specified
-    if (name === TIME_SERIES_VALUE_FIELD_NAME) {
-      fallback = (field: Field, frame: DataFrame) => {
+      // In an effor to support migrating to a consistent data contract, the
+      // naming conventions need to get normalized.  However many existing setups
+      // exist that would no longer match names if that changes.  This injects
+      // fallback logic when when the data frame has not type version specified
+      if (name === TIME_SERIES_VALUE_FIELD_NAME) {
+        fallback = (field: Field, frame: DataFrame) => {
+          return (
+            Boolean(field.labels) && // Value was reasonable when the name was set in labels or on the frame
+            field.labels?.__name__ === field.name
+          );
+        };
+      } else if (name === 'Time' || name === 'time') {
+        fallback = (field: Field, frame: DataFrame) => {
+          return frame.meta?.typeVersion == null && field.type === FieldType.time;
+        };
+      }
+
+      return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
         return (
-          Boolean(field.labels) && // Value was reasonable when the name was set in labels or on the frame
-          field.labels?.__name__ === field.name
+          name === field.name ||
+          name === getFieldDisplayName(field, frame, allFrames) ||
+          Boolean(fallback && fallback(field, frame, allFrames))
         );
       };
-    } else if (name === 'Time' || name === 'time') {
-      fallback = (field: Field, frame: DataFrame) => {
-        return frame.meta?.typeVersion == null && field.type === FieldType.time;
+    } else {
+      return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
+        return name === field.name || getFieldDisplayName(field, frame, allFrames) === name;
       };
     }
-
-    return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
-      return (
-        name === field.name ||
-        name === getFieldDisplayName(field, frame, allFrames) ||
-        Boolean(fallback && fallback(field, frame, allFrames))
-      );
-    };
   },
 
   getOptionsDisplayText: (name: string) => {

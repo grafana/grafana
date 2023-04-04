@@ -94,6 +94,7 @@ Alpha features might be changed or removed without prior notice.
 | `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component      |
 | `timeSeriesTable`                  | Enable time series table transformer & sparkline cell type                                                |
 | `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                 |
+| `fieldNameMatcherFallback`         | Dataplane field matcher support for existing configurations to match on field names of Value or Time      |
 
 ## Development feature toggles
 

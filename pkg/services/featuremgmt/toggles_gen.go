@@ -262,4 +262,8 @@ const (
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
+
+	// FlagFieldNameMatcherFallback
+	// Dataplane field matcher support for existing configurations to match on field names of Value or Time
+	FlagFieldNameMatcherFallback = "fieldNameMatcherFallback"
 )
