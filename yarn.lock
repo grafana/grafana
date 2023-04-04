@@ -20373,6 +20373,7 @@ __metadata:
     sass-loader: 13.2.0
     selecto: 1.22.0
     semver: 7.3.8
+    ses: ^0.18.2
     sinon: 15.0.1
     slate: 0.47.9
     slate-plain-serializer: 0.7.13
@@ -33085,6 +33086,13 @@ __metadata:
     parseurl: ~1.3.3
     send: 0.18.0
   checksum: af57fc13be40d90a12562e98c0b7855cf6e8bd4c107fe9a45c212bf023058d54a1871b1c89511c3958f70626fff47faeb795f5d83f8cf88514dbaeb2b724464d
+  languageName: node
+  linkType: hard
+
+"ses@npm:^0.18.2":
+  version: 0.18.2
+  resolution: "ses@npm:0.18.2"
+  checksum: e85c41952dd62bf973c4003dfd9d071f6fb5b432d969eb0ded7baf7467982852241aa5b2adadecd802be8b0747f45bc9d0b92944fb588e062e03e4fe97277ee0
   languageName: node
   linkType: hard
 

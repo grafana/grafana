@@ -32,6 +32,7 @@ import * as ticks from 'app/core/utils/ticks';
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
+import { importPluginInsideSandbox } from './sandboxing';
 import { locateFromCDN, translateForCDN } from './systemjsPlugins/pluginCDN';
 import { fetchCSS, locateCSS } from './systemjsPlugins/pluginCSS';
 import { locateWithCache, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
@@ -184,6 +185,12 @@ export async function importPluginModule(path: string, version?: string): Promis
     } else {
       return builtIn;
     }
+  }
+
+  // POC SES TODO: define how to decide if a plugin loads via compartments or directly
+  if (path.includes('sespoc')) {
+    console.log('SES POC: loading plugin via compartments', path);
+    return importPluginInsideSandbox(path);
   }
   return grafanaRuntime.SystemJS.import(path);
 }
