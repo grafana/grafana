@@ -22,7 +22,7 @@ OpenTelemetry must be enabled and configured for the Grafana instance. Please re
 As of Grafana 9.5.0, plugins tracing must be enabled manually on a per-plugin basis, by specifying `tracing = true` in the plugin's config section:
 
 ```ini
-[plugins.plugin-id]
+[plugin.myorg-myplugin-datasource]
 tracing = true
 ```
 
