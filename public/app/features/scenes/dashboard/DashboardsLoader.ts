@@ -11,7 +11,6 @@ import {
   SceneGridLayout,
   SceneGridRow,
   SceneTimeRange,
-  SceneObject,
   SceneQueryRunner,
   SceneVariableSet,
   VariableValueSelectors,
@@ -22,11 +21,11 @@ import {
   ConstantVariable,
   SceneRefreshPicker,
   SceneDataTransformer,
+  SceneGridItem,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { graphToTimeseriesOptions } from 'app/plugins/panel/timeseries/migrations';
 import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
@@ -64,7 +63,9 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
 
   private initDashboard(rsp: DashboardDTO) {
     // Just to have migrations run
-    const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
+    const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
+      autoMigrateOldPanels: true,
+    });
 
     const dashboard = createDashboardSceneFromDashboardModel(oldModel);
 
@@ -81,14 +82,14 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
   }
 }
 
-export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObject[] {
+export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<SceneGridItem | SceneGridRow> {
   // collects all panels and rows
-  const panels: SceneObject[] = [];
+  const panels: Array<SceneGridItem | SceneGridRow> = [];
 
   // indicates expanded row that's currently processed
   let currentRow: PanelModel | null = null;
   // collects panels in the currently processed, expanded row
-  let currentRowPanels: SceneObject[] = [];
+  let currentRowPanels: SceneGridItem[] = [];
 
   for (const panel of oldPanels) {
     if (panel.type === 'row') {
@@ -99,9 +100,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
             new SceneGridRow({
               title: panel.title,
               isCollapsed: true,
-              placement: {
-                y: panel.gridPos.y,
-              },
+              y: panel.gridPos.y,
               children: panel.panels ? panel.panels.map(createVizPanelFromPanelModel) : [],
             })
           );
@@ -116,9 +115,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
           panels.push(
             new SceneGridRow({
               title: currentRow!.title,
-              placement: {
-                y: currentRow.gridPos.y,
-              },
+              y: currentRow.gridPos.y,
               children: currentRowPanels,
             })
           );
@@ -144,9 +141,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
     panels.push(
       new SceneGridRow({
         title: currentRow!.title,
-        placement: {
-          y: currentRow.gridPos.y,
-        },
+        y: currentRow.gridPos.y,
         children: currentRowPanels,
       })
     );
@@ -269,35 +264,29 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
     maxDataPoints: panel.maxDataPoints ?? undefined,
   });
 
-  // Migrate graph to timeseries
-  if (panel.type === 'graph') {
-    const { fieldConfig, options } = graphToTimeseriesOptions(panel);
-    panel.fieldConfig = fieldConfig;
-    panel.options = options;
-    panel.type = 'timeseries';
-  }
-
-  return new VizPanel({
-    title: panel.title,
-    pluginId: panel.type,
-    placement: {
-      x: panel.gridPos.x,
-      y: panel.gridPos.y,
-      width: panel.gridPos.w,
-      height: panel.gridPos.h,
-    },
-    options: panel.options ?? {},
-    fieldConfig: panel.fieldConfig,
-    pluginVersion: panel.pluginVersion,
-    displayMode: panel.transparent ? 'transparent' : undefined,
-    // To be replaced with it's own option persited option instead derived
-    hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
-    $data: panel.transformations?.length
-      ? new SceneDataTransformer({
-          $data: queryRunner,
-          transformations: panel.transformations,
-        })
-      : queryRunner,
+  return new SceneGridItem({
+    x: panel.gridPos.x,
+    y: panel.gridPos.y,
+    width: panel.gridPos.w,
+    height: panel.gridPos.h,
+    isDraggable: true,
+    isResizable: true,
+    body: new VizPanel({
+      title: panel.title,
+      pluginId: panel.type,
+      options: panel.options ?? {},
+      fieldConfig: panel.fieldConfig,
+      pluginVersion: panel.pluginVersion,
+      displayMode: panel.transparent ? 'transparent' : undefined,
+      // To be replaced with it's own option persited option instead derived
+      hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
+      $data: panel.transformations?.length
+        ? new SceneDataTransformer({
+            $data: queryRunner,
+            transformations: panel.transformations,
+          })
+        : queryRunner,
+    }),
   });
 }
 

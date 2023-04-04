@@ -33,7 +33,7 @@ import { CustomVariableModel } from '../../../features/variables/types';
 
 import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
-import { runQueryInChunks } from './queryChunking';
+import { runSplitQuery } from './querySplitting';
 import { parseToNodeNamesArray } from './queryUtils';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
 import { LokiVariableSupport } from './variables';
@@ -45,7 +45,7 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-jest.mock('./queryChunking');
+jest.mock('./querySplitting');
 
 const templateSrvStub = {
   getAdhocFilters: jest.fn(() => [] as unknown[]),
@@ -1127,7 +1127,7 @@ describe('LokiDatasource', () => {
   describe('Query splitting', () => {
     beforeAll(() => {
       config.featureToggles.lokiQuerySplitting = true;
-      jest.mocked(runQueryInChunks).mockReturnValue(
+      jest.mocked(runSplitQuery).mockReturnValue(
         of({
           data: [],
         })
@@ -1153,7 +1153,7 @@ describe('LokiDatasource', () => {
       });
 
       await expect(ds.query(query)).toEmitValuesWith(() => {
-        expect(runQueryInChunks).toHaveBeenCalled();
+        expect(runSplitQuery).toHaveBeenCalled();
       });
     });
   });

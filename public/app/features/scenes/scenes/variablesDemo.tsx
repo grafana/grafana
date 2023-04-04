@@ -12,6 +12,7 @@ import {
   NestedScene,
   SceneRefreshPicker,
   TextBoxVariable,
+  SceneFlexItem,
 } from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
@@ -66,48 +67,62 @@ export function getVariablesDemo(): DashboardScene {
     body: new SceneFlexLayout({
       direction: 'row',
       children: [
-        new SceneFlexLayout({
-          direction: 'column',
-          children: [
-            new SceneFlexLayout({
-              children: [
-                new VizPanel({
-                  pluginId: 'timeseries',
-                  title: 'handler: $handler',
-                  $data: getQueryRunnerWithRandomWalkQuery({
-                    alias: 'handler: $handler',
-                  }),
-                }),
-                new SceneCanvasText({
-                  text: 'Text: ${textbox}',
-                  fontSize: 20,
-                  align: 'center',
-                }),
-                new SceneCanvasText({
-                  placement: { width: '40%' },
-                  text: 'server: ${server} pod:${pod}',
-                  fontSize: 20,
-                  align: 'center',
-                }),
-              ],
-            }),
-            new NestedScene({
-              title: 'Collapsable inner scene',
-              canCollapse: true,
-              body: new SceneFlexLayout({
-                direction: 'row',
-                children: [
-                  new VizPanel({
-                    pluginId: 'timeseries',
-                    title: 'handler: $handler',
-                    $data: getQueryRunnerWithRandomWalkQuery({
-                      alias: 'handler: $handler',
+        new SceneFlexItem({
+          body: new SceneFlexLayout({
+            direction: 'column',
+            children: [
+              new SceneFlexItem({
+                body: new SceneFlexLayout({
+                  children: [
+                    new SceneFlexItem({
+                      body: new VizPanel({
+                        pluginId: 'timeseries',
+                        title: 'handler: $handler',
+                        $data: getQueryRunnerWithRandomWalkQuery({
+                          alias: 'handler: $handler',
+                        }),
+                      }),
                     }),
-                  }),
-                ],
+                    new SceneFlexItem({
+                      body: new SceneCanvasText({
+                        text: 'Text: ${textbox}',
+                        fontSize: 20,
+                        align: 'center',
+                      }),
+                    }),
+                    new SceneFlexItem({
+                      width: '40%',
+                      body: new SceneCanvasText({
+                        text: 'server: ${server} pod:${pod}',
+                        fontSize: 20,
+                        align: 'center',
+                      }),
+                    }),
+                  ],
+                }),
               }),
-            }),
-          ],
+              new SceneFlexItem({
+                body: new NestedScene({
+                  title: 'Collapsable inner scene',
+                  canCollapse: true,
+                  body: new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                      new SceneFlexItem({
+                        body: new VizPanel({
+                          pluginId: 'timeseries',
+                          title: 'handler: $handler',
+                          $data: getQueryRunnerWithRandomWalkQuery({
+                            alias: 'handler: $handler',
+                          }),
+                        }),
+                      }),
+                    ],
+                  }),
+                }),
+              }),
+            ],
+          }),
         }),
       ],
     }),
@@ -159,22 +174,22 @@ export function getVariablesDemoWithAll(): DashboardScene {
     body: new SceneFlexLayout({
       direction: 'row',
       children: [
-        new SceneFlexLayout({
-          children: [
-            new VizPanel({
-              pluginId: 'timeseries',
-              title: 'handler: $handler',
-              $data: getQueryRunnerWithRandomWalkQuery({
-                alias: 'handler: $handler',
-              }),
+        new SceneFlexItem({
+          body: new VizPanel({
+            pluginId: 'timeseries',
+            title: 'handler: $handler',
+            $data: getQueryRunnerWithRandomWalkQuery({
+              alias: 'handler: $handler',
             }),
-            new SceneCanvasText({
-              placement: { width: '40%' },
-              text: 'server: ${server} pod:${pod}',
-              fontSize: 20,
-              align: 'center',
-            }),
-          ],
+          }),
+        }),
+        new SceneFlexItem({
+          width: '40%',
+          body: new SceneCanvasText({
+            text: 'server: ${server} pod:${pod}',
+            fontSize: 20,
+            align: 'center',
+          }),
         }),
       ],
     }),

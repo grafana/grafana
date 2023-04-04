@@ -353,25 +353,27 @@ describe('Query imports', () => {
 
     it('identifies selectors with JSON parser data', async () => {
       jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([{}] as DataFrame[]);
-      extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: false, hasJSON: true });
+      extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: false, hasJSON: true, hasPack: false });
 
       expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
         extractedLabelKeys,
         unwrapLabelKeys,
         hasJSON: true,
         hasLogfmt: false,
+        hasPack: false,
       });
     });
 
     it('identifies selectors with Logfmt parser data', async () => {
       jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([{}] as DataFrame[]);
-      extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: true, hasJSON: false });
+      extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: true, hasJSON: false, hasPack: false });
 
       expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
         extractedLabelKeys,
         unwrapLabelKeys,
         hasJSON: false,
         hasLogfmt: true,
+        hasPack: false,
       });
     });
 
@@ -384,6 +386,7 @@ describe('Query imports', () => {
         unwrapLabelKeys: [],
         hasJSON: false,
         hasLogfmt: false,
+        hasPack: false,
       });
       expect(extractLogParserFromDataFrameMock).not.toHaveBeenCalled();
     });
