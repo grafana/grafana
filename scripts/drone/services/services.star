@@ -34,22 +34,17 @@ def integration_test_services():
             },
             "volumes": [{"name": "mysql", "path": "/var/lib/mysql"}],
         },
+        {
+            "name": "redis",
+            "image": "bitnami/redis:6.2-debian-10",
+            "environment": {},
+        },
+        {
+            "name": "memcached",
+            "image": "memcached:1.6.9-alpine",
+            "environment": {},
+        },
     ]
-
-    services.extend(
-        [
-            {
-                "name": "redis",
-                "image": "bitnami/redis:6.2-debian-10",
-                "environment": {},
-            },
-            {
-                "name": "memcached",
-                "image": "memcached:1.6.9-alpine",
-                "environment": {},
-            },
-        ],
-    )
 
     return services
 
