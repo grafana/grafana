@@ -16,12 +16,15 @@ export function useMigrateDatabaseFields<T extends SQLOptions, S = {}>({
 }: DataSourcePluginOptionsEditorProps<T, S>) {
   useEffect(() => {
     const jsonData = options.jsonData;
-    const newOptions = { ...options };
+    let newOptions = { ...options };
+    let optionsUpdated = false;
 
+    // Migrate the database field from the column into the jsonData object
     if (options.database) {
       logDebug(`Migrating from options.database with value ${options.database} for ${options.name}`);
       newOptions.database = '';
       newOptions.jsonData = { ...jsonData, database: options.database };
+      optionsUpdated = true;
     }
 
     // Set default values for max open connections, max idle connection,
@@ -47,8 +50,14 @@ export function useMigrateDatabaseFields<T extends SQLOptions, S = {}>({
         maxIdleConns: maxIdleConns,
         maxIdleConnsAuto: true,
       };
+
+      // Make sure we issue an update if options changed
+      optionsUpdated = true;
     }
 
-    onOptionsChange(newOptions);
+    // Only issue an update if we changed options
+    if (optionsUpdated) {
+      onOptionsChange(newOptions);
+    }
   }, [onOptionsChange, options]);
 }
