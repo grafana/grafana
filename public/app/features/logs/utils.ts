@@ -1,4 +1,4 @@
-import { countBy, chain, max } from 'lodash';
+import { countBy, chain } from 'lodash';
 
 import {
   LogLevel,
@@ -164,8 +164,7 @@ export function logRowsToReadableJson(logs: LogRowModel[]) {
   });
 }
 
-export const getLogsVolumeDimensions = (dataFrames: DataFrame[]) => {
-  let maximumValue = -Infinity;
+export const getLogsVolumeMaximumRange = (dataFrames: DataFrame[]) => {
   let widestRange = { from: Infinity, to: -Infinity };
 
   dataFrames.forEach((dataFrame: DataFrame) => {
@@ -176,25 +175,26 @@ export const getLogsVolumeDimensions = (dataFrames: DataFrame[]) => {
         to: Math.max(widestRange.to, meta.absoluteRange.to),
       };
     }
-    const fieldCache = new FieldCache(dataFrame);
-    const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
-    if (valueField) {
-      maximumValue = Math.max(maximumValue, max(valueField.values.toArray()));
-    }
   });
 
-  return {
-    maximumValue,
-    widestRange,
-  };
+  return widestRange;
 };
 
-export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] => {
+/**
+ * Merge data frames by level and calculate maximum total value for all levels together
+ */
+export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames: DataFrame[]; maximum: number } => {
   if (dataFrames.length === 0) {
     throw new Error('Cannot aggregate data frames: there must be at least one data frame to aggregate');
   }
 
+  // aggregate by level (to produce data frames)
   const aggregated: Record<string, Record<number, number>> = {};
+
+  // aggregate totals to align Y axis when multiple log volumes are shown
+  const totals: Record<number, number> = {};
+  let maximumValue = -Infinity;
+
   const configs: Record<
     string,
     { meta?: QueryResultMeta; valueFieldConfig: FieldConfig; timeFieldConfig: FieldConfig }
@@ -227,6 +227,9 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] 
       const value: number = valueField.values.get(pointIndex);
       aggregated[level] ??= {};
       aggregated[level][time] = (aggregated[level][time] || 0) + value;
+
+      totals[time] = (totals[time] || 0) + value;
+      maximumValue = Math.max(totals[time], maximumValue);
     }
   });
 
@@ -251,7 +254,7 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] 
     results.push(levelDataFrame);
   });
 
-  return results;
+  return { dataFrames: results, maximum: maximumValue };
 };
 
 export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: string } | null => {

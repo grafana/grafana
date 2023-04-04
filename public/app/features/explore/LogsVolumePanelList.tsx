@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { groupBy, mapValues } from 'lodash';
+import { flatten, groupBy, mapValues } from 'lodash';
 import React, { useMemo } from 'react';
 
 import {
@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { Button, InlineField, useStyles2 } from '@grafana/ui';
 
-import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeDimensions } from '../logs/utils';
+import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../logs/utils';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
 import { SupplementaryResultError } from './SupplementaryResultError';
@@ -47,18 +47,20 @@ export const LogsVolumePanelList = ({
 }: Props) => {
   const {
     logVolumes,
-    maximum: allLogsVolumeMaximum,
-    widestRange,
+    maximumValue: allLogsVolumeMaximumValue,
+    maximumRange: allLogsVolumeMaximumRange,
   } = useMemo(() => {
-    const data = logsVolumeData?.data || [];
-    const grouped = groupBy(data, 'meta.custom.datasourceName');
+    let maximumValue = -Infinity;
+    const grouped = groupBy(logsVolumeData?.data || [], 'meta.custom.datasourceName');
     const logVolumes = mapValues(grouped, (value) => {
-      return mergeLogsVolumeDataFrames(value);
+      const mergedData = mergeLogsVolumeDataFrames(value);
+      maximumValue = Math.max(maximumValue, mergedData.maximum);
+      return mergedData.dataFrames;
     });
-    const dimensions = getLogsVolumeDimensions(data);
+    const maximumRange = getLogsVolumeMaximumRange(flatten(Object.values(logVolumes)));
     return {
-      maximum: dimensions.maximumValue,
-      widestRange: dimensions.widestRange,
+      maximumValue,
+      maximumRange,
       logVolumes,
     };
   }, [logsVolumeData]);
@@ -75,8 +77,8 @@ export const LogsVolumePanelList = ({
   const timeoutError = isTimeoutErrorResponse(logsVolumeData);
 
   const visibleRange = {
-    from: Math.max(absoluteRange.from, widestRange.from),
-    to: Math.min(absoluteRange.to, widestRange.to),
+    from: Math.max(absoluteRange.from, allLogsVolumeMaximumRange.from),
+    to: Math.min(absoluteRange.to, allLogsVolumeMaximumRange.to),
   };
 
   if (logsVolumeData?.state === LoadingState.Loading) {
@@ -103,7 +105,7 @@ export const LogsVolumePanelList = ({
           <LogsVolumePanel
             key={index}
             absoluteRange={visibleRange}
-            allLogsVolumeMaximum={allLogsVolumeMaximum}
+            allLogsVolumeMaximum={allLogsVolumeMaximumValue}
             width={width}
             logsVolumeData={logsVolumeData}
             onUpdateTimeRange={onUpdateTimeRange}
