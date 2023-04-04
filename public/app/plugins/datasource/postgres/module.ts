@@ -1,8 +1,8 @@
 import { DataSourcePlugin } from '@grafana/data';
 import { SQLQuery } from 'app/features/plugins/sql/types';
 
-import { PostgresQueryEditor } from './PostgresQueryEditor';
 import { CheatSheet } from './CheatSheet';
+import { PostgresQueryEditor } from './PostgresQueryEditor';
 import { PostgresConfigEditor } from './configuration/ConfigurationEditor';
 import { PostgresDatasource } from './datasource';
 import { PostgresOptions, SecureJsonData } from './types';
