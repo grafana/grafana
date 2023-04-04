@@ -552,7 +552,7 @@ export class DashboardModel implements TimeModel {
   }
 
   processRepeats() {
-    if (this.isSnapshotTruthy() || !this.hasVariables()) {
+    if (this.isSnapshotTruthy() || !this.hasVariables() || this.panelInView) {
       return;
     }
 
