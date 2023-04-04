@@ -27,7 +27,7 @@ const defaultProps = {
 
 describe('<TracePageSearchBar>', () => {
   describe('truthy textFilter', () => {
-    it('renders UiFindInput with correct props', () => {
+    it('renders SearchBarInput with correct props', () => {
       render(<TracePageSearchBar {...(defaultProps as unknown as TracePageSearchBarProps)} />);
       expect((screen.getByPlaceholderText('Find...') as HTMLInputElement)['value']).toEqual('value');
       const suffix = screen.getByLabelText('Search bar suffix');

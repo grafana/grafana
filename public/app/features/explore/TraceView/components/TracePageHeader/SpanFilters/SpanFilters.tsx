@@ -14,8 +14,7 @@
 
 import { css } from '@emotion/css';
 import { uniq } from 'lodash';
-import * as React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useState, memo } from 'react';
 import { useToggle } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
@@ -46,13 +45,7 @@ export type SpanFilterProps = {
   datasourceType: string;
 };
 
-interface SpanData {
-  serviceNames: string[];
-  spanNames: string[];
-  tagKeys: string[];
-}
-
-export const SpanFilters = React.memo((props: SpanFilterProps) => {
+export const SpanFilters = memo((props: SpanFilterProps) => {
   const {
     trace,
     search,
@@ -64,85 +57,93 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
   } = props;
   const styles = { ...useStyles2(getStyles) };
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
-  const [spanData, setSpanData] = useState<SpanData>({
-    serviceNames: [],
-    spanNames: [],
-    tagKeys: [],
-  });
+  const [serviceNames, setServiceNames] = useState<Array<SelectableValue<string>>>();
+  const [spanNames, setSpanNames] = useState<Array<SelectableValue<string>>>();
+  const [tagKeys, setTagKeys] = useState<Array<SelectableValue<string>>>();
   const [tagValues, setTagValues] = useState<{ [key: string]: Array<SelectableValue<string>> }>({});
 
-  useEffect(() => {
-    const serviceNames: string[] = [];
-    const spanNames: string[] = [];
-    const tagKeys: string[] = [];
+  if (!trace) {
+    return null;
+  }
 
-    trace.spans.map((span) => {
-      serviceNames.push(span.process.serviceName);
-      spanNames.push(span.operationName);
+  const getServiceNames = () => {
+    if (!serviceNames) {
+      const serviceNames = trace.spans.map((span) => {
+        return span.process.serviceName;
+      });
+      setServiceNames(
+        uniq(serviceNames)
+          .sort()
+          .map((name) => {
+            return toOption(name);
+          })
+      );
+    }
+  };
 
-      span.tags.map((tag) => {
-        tagKeys.push(tag.key);
+  const getSpanNames = () => {
+    if (!spanNames) {
+      const spanNames = trace.spans.map((span) => {
+        return span.operationName;
       });
-      span.process.tags.map((tag) => {
-        tagKeys.push(tag.key);
-      });
-      if (span.logs !== null) {
-        span.logs.map((log) => {
-          log.fields.map((field) => {
-            tagKeys.push(field.key);
-          });
+      setSpanNames(
+        uniq(spanNames)
+          .sort()
+          .map((name) => {
+            return toOption(name);
+          })
+      );
+    }
+  };
+
+  const getTagKeys = () => {
+    if (!tagKeys) {
+      const keys: string[] = [];
+
+      trace.spans.forEach((span) => {
+        span.tags.forEach((tag) => {
+          keys.push(tag.key);
         });
-      }
-    });
-
-    const spanData = {
-      serviceNames: uniq(serviceNames).sort(),
-      spanNames: uniq(spanNames).sort(),
-      tagKeys: uniq(tagKeys).sort(),
-    };
-
-    setSpanData(spanData);
-  }, [trace]);
-
-  const serviceNameOptions = () => {
-    return spanData.serviceNames.map((name) => {
-      return toOption(name);
-    });
-  };
-
-  const spanNameOptions = () => {
-    return spanData.spanNames.map((name) => {
-      return toOption(name);
-    });
-  };
-
-  const tagKeyOptions = () => {
-    return spanData.tagKeys.map((name) => {
-      return toOption(name);
-    });
-  };
-
-  const tagValueOptions = (key: string) => {
-    let values: string[] = [];
-
-    trace.spans.map((span) => {
-      span.tags.map((tag) => {
-        if (tag.key === key) {
-          values.push(tag.value.toString());
-        }
-      });
-      span.process.tags.map((tag) => {
-        if (tag.key === key) {
-          values.push(tag.value.toString());
-        }
-      });
-      if (span.logs !== null) {
-        span.logs.map((log) => {
-          log.fields.map((field) => {
-            if (field.key === key) {
-              values.push(field.value.toString());
-            }
+        span.process.tags.forEach((tag) => {
+          keys.push(tag.key);
+        });
+        if (span.logs !== null) {
+          span.logs.forEach((log) => {
+            log.fields.forEach((field) => {
+              keys.push(field.key);
+            });
           });
+        }
+      });
+
+      setTagKeys(
+        uniq(keys)
+          .sort()
+          .map((name) => {
+            return toOption(name);
+          })
+      );
+    }
+  };
+
+  const getTagValues = async (key: string) => {
+    const values: string[] = [];
+
+    trace.spans.forEach((span) => {
+      const tagValue = span.tags.find((t) => t.key === key)?.value;
+      if (tagValue) {
+        values.push(tagValue.toString());
+      }
+      const processTagValue = span.process.tags.find((t) => t.key === key)?.value;
+      if (processTagValue) {
+        values.push(processTagValue.toString());
+      }
+      if (span.logs !== null) {
+        span.logs.forEach((log) => {
+          const logsTagValue = log.fields.find((t) => t.key === key)?.value;
+          if (logsTagValue) {
+            values.push(logsTagValue.toString());
+          }
         });
       }
     });
@@ -177,10 +178,6 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
     setSearch({ ...search, tags: tags });
   };
 
-  if (!trace) {
-    return null;
-  }
-
   const collapseLabel = (
     <Tooltip
       content="Filter your spans below. Each filter added acts as an AND operator i.e. the more filters, the more specific the filtered spans."
@@ -209,7 +206,8 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
                 aria-label="Select service name"
                 isClearable
                 onChange={(v) => setSearch({ ...search, serviceName: v?.value || '' })}
-                options={serviceNameOptions()}
+                onOpenMenu={getServiceNames}
+                options={serviceNames}
                 placeholder="All service names"
               />
             </HorizontalGroup>
@@ -228,7 +226,8 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
                 aria-label="Select span name"
                 isClearable
                 onChange={(v) => setSearch({ ...search, spanName: v?.value || '' })}
-                options={spanNameOptions()}
+                onOpenMenu={getSpanNames}
+                options={spanNames}
                 placeholder="All span names"
               />
             </HorizontalGroup>
@@ -284,21 +283,25 @@ export const SpanFilters = React.memo((props: SpanFilterProps) => {
                           }),
                         });
 
-                        if (v?.value) {
-                          setTagValues({
-                            ...tagValues,
-                            [tag.id]: tagValueOptions(v.value),
-                          });
-                        } else {
-                          // removed value
-                          const updatedValues = { ...tagValues };
-                          if (updatedValues[tag.id]) {
-                            delete updatedValues[tag.id];
+                        const loadTagValues = async () => {
+                          if (v?.value) {
+                            setTagValues({
+                              ...tagValues,
+                              [tag.id]: await getTagValues(v.value),
+                            });
+                          } else {
+                            // removed value
+                            const updatedValues = { ...tagValues };
+                            if (updatedValues[tag.id]) {
+                              delete updatedValues[tag.id];
+                            }
+                            setTagValues(updatedValues);
                           }
-                          setTagValues(updatedValues);
-                        }
+                        };
+                        loadTagValues();
                       }}
-                      options={tagKeyOptions()}
+                      onOpenMenu={getTagKeys}
+                      options={tagKeys}
                       placeholder="Select tag"
                       value={tag.key}
                     />

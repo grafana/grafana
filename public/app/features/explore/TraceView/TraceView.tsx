@@ -35,6 +35,7 @@ import {
   TTraceTimeline,
 } from './components';
 import { SpanFilters } from './components/TracePageHeader/SpanFilters/SpanFilters';
+import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
@@ -147,12 +148,12 @@ export function TraceView(props: Props) {
         <>
           {config.featureToggles.newTraceView ? (
             <>
-              <NewTracePageHeader
+              <NewTracePageHeader trace={traceProp} timeZone={timeZone} />
+              <SpanGraph
                 trace={traceProp}
+                viewRange={viewRange}
                 updateNextViewRangeTime={updateNextViewRangeTime}
                 updateViewRangeTime={updateViewRangeTime}
-                viewRange={viewRange}
-                timeZone={timeZone}
               />
               <SpanFilters
                 trace={traceProp}

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { memo, Dispatch, SetStateAction, useEffect } from 'react';
+import React, { memo, Dispatch, SetStateAction, useEffect, useMemo } from 'react';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -21,7 +21,7 @@ import { Button, useStyles2 } from '@grafana/ui';
 import { SearchProps } from '../../useSearch';
 import { convertTimeFilter } from '../utils/filter-spans';
 
-export type NewTracePageSearchBarProps = {
+export type TracePageSearchBarProps = {
   search: SearchProps;
   setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
   spanFilterMatches: Set<string> | undefined;
@@ -30,7 +30,7 @@ export type NewTracePageSearchBarProps = {
   datasourceType: string;
 };
 
-export default memo(function NewTracePageSearchBar(props: NewTracePageSearchBarProps) {
+export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProps) {
   const { search, spanFilterMatches, focusedSpanIdForSearch, setFocusedSpanIdForSearch, datasourceType } = props;
   const styles = useStyles2(getStyles);
 
@@ -82,14 +82,17 @@ export default memo(function NewTracePageSearchBar(props: NewTracePageSearchBarP
     setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex - 1]);
   };
 
-  const buttonEnabled =
-    (search.serviceName && search.serviceName !== '') ||
-    (search.spanName && search.spanName !== '') ||
-    convertTimeFilter(search.from || '') ||
-    convertTimeFilter(search.to || '') ||
-    search.tags.some((tag) => {
-      return tag.key;
-    });
+  const buttonEnabled = useMemo(() => {
+    return (
+      (search.serviceName && search.serviceName !== '') ||
+      (search.spanName && search.spanName !== '') ||
+      convertTimeFilter(search.from || '') ||
+      convertTimeFilter(search.to || '') ||
+      search.tags.some((tag) => {
+        return tag.key;
+      })
+    );
+  }, [search.from, search.serviceName, search.spanName, search.tags, search.to]);
 
   return (
     <div className={styles.searchBar}>

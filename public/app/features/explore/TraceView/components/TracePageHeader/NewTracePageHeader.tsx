@@ -14,13 +14,12 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import * as React from 'react';
+import React, { memo, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { ViewRangeTimeUpdate, TUpdateViewRangeTimeFunction, ViewRange } from '../TraceTimelineViewer/types';
 import ExternalLinks from '../common/ExternalLinks';
 import TraceName from '../common/TraceName';
 import { getTraceLinks } from '../model/link-patterns';
@@ -29,22 +28,18 @@ import { Trace } from '../types';
 import { formatDuration } from '../utils/date';
 
 import TracePageActions from './Actions/TracePageActions';
-import SpanGraph from './SpanGraph';
 import { timestamp, getStyles } from './TracePageHeader';
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
-  updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
-  updateViewRangeTime: TUpdateViewRangeTimeFunction;
-  viewRange: ViewRange;
   timeZone: TimeZone;
 };
 
-export const NewTracePageHeader = React.memo((props: TracePageHeaderProps) => {
-  const { trace, updateNextViewRangeTime, updateViewRangeTime, viewRange, timeZone } = props;
+export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
+  const { trace, timeZone } = props;
   const styles = { ...useStyles2(getStyles), ...useStyles2(getNewStyles) };
 
-  const links = React.useMemo(() => {
+  const links = useMemo(() => {
     if (!trace) {
       return [];
     }
@@ -107,13 +102,6 @@ export const NewTracePageHeader = React.memo((props: TracePageHeaderProps) => {
           </Tooltip>
         )}
       </div>
-
-      <SpanGraph
-        trace={trace}
-        viewRange={viewRange}
-        updateNextViewRangeTime={updateNextViewRangeTime}
-        updateViewRangeTime={updateViewRangeTime}
-      />
     </header>
   );
 });
