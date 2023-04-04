@@ -68,23 +68,21 @@ export class DatasourceSrv implements DataSourceService {
     const isstring = typeof ref === 'string';
     let nameOrUid = isstring ? (ref as string) : ((ref as any)?.uid as string | undefined);
 
-    if (nameOrUid === 'default' || nameOrUid === null || nameOrUid === undefined) {
-      if (!isstring && ref) {
-        const type = (ref as any)?.type as string;
-        if (type === ExpressionDatasourceRef.type) {
-          return expressionDatasource.instanceSettings;
-        } else if (type) {
-          console.log('FIND Default instance for datasource type?', ref);
-        }
-      }
-      return this.settingsMapByUid[this.defaultName] ?? this.settingsMapByName[this.defaultName];
-    }
-
     // Expressions has a new UID as __expr__ See: https://github.com/grafana/grafana/pull/62510/
     // But we still have dashboards/panels with old expression UID (-100)
     // To support both UIDs until we migrate them all to new one, this check is necessary
     if (isExpressionReference(nameOrUid)) {
       return expressionDatasource.instanceSettings;
+    }
+
+    if (nameOrUid === 'default' || nameOrUid === null || nameOrUid === undefined) {
+      if (!isstring && ref) {
+        const type = (ref as any)?.type as string;
+        if (type) {
+          console.log('FIND Default instance for datasource type?', ref);
+        }
+      }
+      return this.settingsMapByUid[this.defaultName] ?? this.settingsMapByName[this.defaultName];
     }
 
     // Complex logic to support template variable data source names
@@ -114,7 +112,7 @@ export class DatasourceSrv implements DataSourceService {
       };
     }
 
-    return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid];
+    return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid] ?? this.settingsMapById[nameOrUid];
   }
 
   get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
@@ -154,7 +152,7 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     // find the metadata
-    const instanceSettings = this.settingsMapByUid[key] ?? this.settingsMapByName[key] ?? this.settingsMapById[key];
+    const instanceSettings = this.getInstanceSettings(key);
     if (!instanceSettings) {
       return Promise.reject({ message: `Datasource ${key} was not found` });
     }

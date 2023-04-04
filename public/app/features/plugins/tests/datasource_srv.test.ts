@@ -221,6 +221,29 @@ describe('datasource_srv', () => {
       });
     });
 
+    describe('when loading datasource', () => {
+      it('should load expressions', async () => {
+        let api = await dataSourceSrv.loadDatasource('-100'); // Legacy expression id
+        expect(api.uid).toBe(ExpressionDatasourceRef.uid);
+
+        api = await dataSourceSrv.loadDatasource('__expr__'); // Legacy expression id
+        expect(api.uid).toBe(ExpressionDatasourceRef.uid);
+
+        api = await dataSourceSrv.loadDatasource('Expression'); // Legacy expression id
+        expect(api.uid).toBe(ExpressionDatasourceRef.uid);
+      });
+
+      it('should load by variable', async () => {
+        const api = await dataSourceSrv.loadDatasource('${datasource}');
+        expect(api.meta).toBe(dataSourceInit.BBB.meta);
+      });
+
+      it('should load by name', async () => {
+        let api = await dataSourceSrv.loadDatasource('ZZZ');
+        expect(api.meta).toBe(dataSourceInit.ZZZ.meta);
+      });
+    });
+
     describe('when getting external metric sources', () => {
       it('should return list of explore sources', () => {
         const externalSources = dataSourceSrv.getExternal();
