@@ -100,6 +100,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       padding: theme.spacing(2, 1, 2, 2),
       minWidth: '250px',
+
       [theme.breakpoints.up('md')]: {
         padding: theme.spacing(4.5, 1, 2, 2),
       },
