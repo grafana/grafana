@@ -296,6 +296,10 @@ We've added support for JWT authentication.
 
 We've added support for custom session parameters.
 
+## Postgres, MySQL, and MSSQL Datasources
+
+We've moved the `database` property under the `jsonData` key in the datasource configuration. This change is backwards compatible, and existing configurations will continue to work.
+
 ## Before you upgrade
 
 There are no known breaking changes associated with this version of Grafana.
