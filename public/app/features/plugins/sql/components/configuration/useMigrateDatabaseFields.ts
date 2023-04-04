@@ -10,7 +10,7 @@ import { SQLOptions } from '../../types';
  * 1. Moves the database field from the options object to jsonData.database and empties the database field.
  * 2. If max open connections, max idle connections, and auto idle are all undefined set these to default values.
  */
-export function useMigrateDatabaseField<T extends SQLOptions, S = {}>({
+export function useMigrateDatabaseFields<T extends SQLOptions, S = {}>({
   onOptionsChange,
   options,
 }: DataSourcePluginOptionsEditorProps<T, S>) {

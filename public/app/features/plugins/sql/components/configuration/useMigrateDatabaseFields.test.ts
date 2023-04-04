@@ -5,7 +5,7 @@ import { DataSourceSettings } from '@grafana/data';
 import { SQLConnectionDefaults } from '../../constants';
 import { SQLOptions } from '../../types';
 
-import { useMigrateDatabaseField } from './useMigrateDatabaseField';
+import { useMigrateDatabaseFields } from './useMigrateDatabaseFields';
 
 describe('Database Field Migration', () => {
   let defaultProps = {
@@ -48,7 +48,7 @@ describe('Database Field Migration', () => {
 
     // @ts-ignore Ignore this line as it's expected that
     // the database object will not be in necessary (most current) state
-    const { rerender, result } = renderHook(() => useMigrateDatabaseField(props));
+    const { rerender, result } = renderHook(() => useMigrateDatabaseFields(props));
     rerender();
   });
 
@@ -65,7 +65,7 @@ describe('Database Field Migration', () => {
 
     // @ts-ignore @ts-ignore Ignore this line as it's expected that
     // the database object will not be in necessary (most current) state
-    const { rerender, result } = renderHook(() => useMigrateDatabaseField(props));
+    const { rerender, result } = renderHook(() => useMigrateDatabaseFields(props));
     rerender();
   });
 });
