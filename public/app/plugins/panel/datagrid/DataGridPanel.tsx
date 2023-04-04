@@ -28,7 +28,7 @@ import '@glideapps/glide-data-grid/dist/index.css';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { AddColumn } from './components/AddColumn';
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 import { EMPTY_DF, GRAFANA_DS, publishSnapshot } from './utils';
 
 const ICON_WIDTH = 30;
@@ -36,7 +36,7 @@ const ICON_WIDTH = 30;
 interface Props extends PanelProps<PanelOptions> {}
 
 export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig }) => {
-  const [gridData, setGridData] = useState<DataFrame>(data.series[0]);
+  const [gridData, setGridData] = useState<DataFrame>(data.series[options.selectedSeries ?? 0]);
   const [columns, setColumns] = useState<GridColumn[]>([]);
   const [isSnapshotted, setIsSnapshotted] = useState<boolean>(false);
 
@@ -77,13 +77,6 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   }, [gridData, theme.typography.fontSize]);
 
   useEffect(() => {
-    if (options.useBlankSnapshot) {
-      setIsSnapshotted(true);
-      setGridData(EMPTY_DF);
-    }
-  }, [options.useBlankSnapshot, id]);
-
-  useEffect(() => {
     setGridColumns();
   }, [gridData, setGridColumns]);
 
@@ -92,15 +85,14 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
 
     if (panelModel?.datasource?.type !== GRAFANA_DS.type) {
       setIsSnapshotted(false);
-      options.useBlankSnapshot = false;
     }
   }, [id, options, data]);
 
   useEffect(() => {
     if (!isSnapshotted) {
-      setGridData(data.series[0]);
+      setGridData(data.series[options.selectedSeries ?? 0]);
     }
-  }, [data, isSnapshotted]);
+  }, [data, isSnapshotted, options.selectedSeries]);
 
   useEffect(() => {
     if (isSnapshotted) {
@@ -259,6 +251,9 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         onRowAppended={addNewRow}
         rowMarkers={'clickable-number'}
         onColumnResize={onColumnResize}
+        onCellContextMenu={(cell) => {
+          console.log(cell);
+        }}
         trailingRowOptions={{
           sticky: false,
           tint: true,

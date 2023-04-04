@@ -10,4 +10,10 @@
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-export interface PanelOptions {}
+export interface PanelOptions {
+  selectedSeries: number;
+}
+
+export const defaultPanelOptions: Partial<PanelOptions> = {
+  selectedSeries: 0,
+};
