@@ -17,6 +17,7 @@ import (
 	"github.com/ory/fosite/compose"
 	"github.com/ory/fosite/storage"
 	"github.com/ory/fosite/token/jwt"
+	"gopkg.in/square/go-jose.v2"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -45,6 +46,7 @@ const (
 type OAuth2ServiceImpl struct {
 	cache         *localcache.CacheService
 	memstore      *storage.MemoryStore
+	cfg           *setting.Cfg
 	sqlstore      oauthserver.Store
 	oauthProvider fosite.OAuth2Provider
 	logger        log.Logger
@@ -53,7 +55,35 @@ type OAuth2ServiceImpl struct {
 	saService     serviceaccounts.Service
 	userService   user.Service
 	teamService   team.Service
-	publicKey     *rsa.PublicKey
+	publicKey     interface{}
+}
+
+// Remove this
+type KeyService interface {
+	GetJWKS() (jose.JSONWebKeySet, error)
+	GetJWK(keyID string) (jose.JSONWebKey, error)
+	GetPublicKey(keyID string) (interface{}, error)
+	GetPrivateKey(privateKeyID string) (interface{}, error)
+}
+
+type DummyKeyService struct {
+	skv kvstore.SecretsKVStore
+}
+
+func (ks *DummyKeyService) GetJWKS() (jose.JSONWebKeySet, error) {
+	return jose.JSONWebKeySet{}, nil
+}
+
+func (ks *DummyKeyService) GetJWK(keyID string) (jose.JSONWebKey, error) {
+	return jose.JSONWebKey{}, nil
+}
+
+func (ks *DummyKeyService) GetPublicKey(keyID string) (interface{}, error) {
+	return nil, nil
+}
+
+func (ks *DummyKeyService) GetPrivateKey(privateKeyID string) (interface{}, error) {
+	return loadServerPrivateKey(ks.skv)
 }
 
 func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, skv kvstore.SecretsKVStore,
@@ -62,34 +92,46 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, sk
 
 	// TODO: Make this configurable
 	config := &fosite.Config{
-		AccessTokenLifespan: time.Minute * 30,
+		AccessTokenLifespan: cfg.OAuth2ServerAccessTokenLifespan,
 		// GlobalSecret:        []byte("some-cool-secret-that-is-32bytes"),
 		TokenURL:          fmt.Sprintf("%voauth2/token", cfg.AppURL),
 		AccessTokenIssuer: cfg.AppURL,
 		IDTokenIssuer:     cfg.AppURL,
 		ScopeStrategy:     fosite.WildcardScopeStrategy,
-		// ...
 	}
 
-	privateKey, errLoadKey := loadServerPrivateKey(skv)
+	keyService := &DummyKeyService{
+		skv: skv,
+	}
+
+	// TODO: Replace this part with KeyService.GetServerPrivateKey()
+	privateKey, errLoadKey := keyService.GetPrivateKey(cfg.OAuth2ServerDefaultServerKeyID)
 	if errLoadKey != nil {
-		// TODO log something
 		return nil, errLoadKey
 	}
 
-	// storage := memstorage.NewGrafanaPluginAuthStore(config)
+	var publicKey interface{}
+	switch k := privateKey.(type) {
+	case *rsa.PrivateKey:
+		publicKey = &k.PublicKey
+	case *ecdsa.PrivateKey:
+		publicKey = &k.PublicKey
+	default:
+		return nil, fmt.Errorf("unknown private key type %T", k)
+	}
 
 	s := &OAuth2ServiceImpl{
 		cache:         localcache.New(cacheExpirationTime, cacheCleanupInterval),
+		cfg:           cfg,
 		accessControl: accessControl,
 		acService:     acSvc,
 		memstore:      storage.NewMemoryStore(),
-		sqlstore:      oauthstore.NewStore(db),
+		sqlstore:      oauthstore.NewStore(db, cfg),
 		logger:        log.New("oauthserver"),
 		userService:   userSvc,
 		saService:     svcAccSvc,
 		teamService:   teamSvc,
-		publicKey:     &privateKey.PublicKey,
+		publicKey:     publicKey,
 	}
 
 	api := api.NewAPI(router, s)
@@ -273,14 +315,14 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName
 	s.logger.Debug("Generate service account", "external service name", extSvcName, "orgID", oauthserver.TmpOrgID, "name", slug)
 	sa, err := s.saService.CreateServiceAccount(ctx, oauthserver.TmpOrgID, &serviceaccounts.CreateServiceAccountForm{
 		Name:       slug,
-		Role:       newRole(roletype.RoleViewer), // TODO: Use empty role
+		Role:       newRole(roletype.RoleViewer), // FIXME: Use empty role
 		IsDisabled: newBool(false),
 	})
 	if err != nil {
 		return oauthserver.NoServiceAccountID, err
 	}
 
-	s.logger.Debug("Create tailored role for service account", "external service name", extSvcName, "name", slug, "service_account_id", sa.Id, "permissions", permissions)
+	s.logger.Debug("create tailored role for service account", "external service name", extSvcName, "name", slug, "service_account_id", sa.Id, "permissions", permissions)
 	if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
 		OrgID:             ac.GlobalOrgID,
 		Global:            true,
@@ -299,12 +341,11 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 		return nil, nil
 	}
 
-	keyType := "ecdsa"
 	var publicPem, privatePem string
 
 	if keyOption.Generate {
-		switch keyType {
-		case "ecdsa":
+		switch s.cfg.OAuth2ServerGeneratedKeyTypeForClient {
+		case "ECDSA":
 			privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 			if err != nil {
 				return nil, err
@@ -327,19 +368,21 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 				Type:  "PRIVATE KEY",
 				Bytes: privateDer,
 			}))
-		case "rsa":
+			s.logger.Debug("ECDSA key has been generated")
+		case "RSA":
 			privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 			if err != nil {
 				return nil, err
 			}
 			publicPem = string(pem.EncodeToMemory(&pem.Block{
-				Type:  "PUBLIC KEY",
+				Type:  "RSA PUBLIC KEY",
 				Bytes: x509.MarshalPKCS1PublicKey(&privateKey.PublicKey),
 			}))
 			privatePem = string(pem.EncodeToMemory(&pem.Block{
 				Type:  "RSA PRIVATE KEY",
 				Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
 			}))
+			s.logger.Debug("RSA key has been generated")
 		}
 
 		return &oauthserver.KeyResult{
@@ -347,7 +390,6 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 			PublicPem:  publicPem,
 			Generated:  true,
 		}, nil
-
 	}
 
 	// TODO allow specifying a URL to get the public key
@@ -358,6 +400,11 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 	// }
 
 	if keyOption.PublicPEM != "" {
+		_, err := oauthserver.ParsePublicKeyPem([]byte(keyOption.PublicPEM))
+		if err != nil {
+			s.logger.Error("cannot parse PEM encoded string", "error", err)
+			return nil, err
+		}
 		return &oauthserver.KeyResult{
 			PublicPem: keyOption.PublicPEM,
 		}, nil
@@ -527,7 +574,6 @@ func (s *OAuth2ServiceImpl) saveServiceAccount(ctx context.Context, extSvcName s
 // ComputeClientScopesOnTarget computes the scopes that a client has on a specific user (targetLogin) only searching in the subset of scopes provided
 func (s *OAuth2ServiceImpl) computeClientScopesOnUser(ctx context.Context, client *oauthserver.Client, userID int64) (fosite.Arguments, error) {
 	// TODO I used userID here as we used it for the ext jwt service, but it would be better to use login as app shouldn't know the user id
-	// TODO Inefficient again as we fetch the user to populate the id_token again later
 	// Check user existence
 	_, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
 	if err != nil {

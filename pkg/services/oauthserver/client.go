@@ -134,9 +134,7 @@ func (c *Client) GetOrgScopes() fosite.Arguments {
 // GetScopes returns the scopes this client is allowed to request.
 func (c *Client) GetScopes() fosite.Arguments {
 	// TODO cache scopes in client
-	ret := c.GetOpenIDScope()
-
-	ret = append(ret, c.GetOrgScopes()...)
+	ret := c.GetOrgScopes()
 
 	// Org Scope
 	if c.SignedInUser != nil && c.SignedInUser.Permissions != nil {

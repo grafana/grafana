@@ -9,45 +9,18 @@ import (
 
 	"github.com/ory/fosite"
 	"github.com/ory/fosite/handler/oauth2"
-	"github.com/ory/fosite/handler/openid"
-	"github.com/ory/fosite/handler/pkce"
 	"github.com/ory/fosite/handler/rfc7523"
 	"gopkg.in/square/go-jose.v2"
 
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
-// TODO do we really need to implement all of the following interfaces?
-var _ openid.OpenIDConnectRequestStorage = &OAuth2ServiceImpl{}
 var _ fosite.ClientManager = &OAuth2ServiceImpl{}
 var _ oauth2.AuthorizeCodeStorage = &OAuth2ServiceImpl{}
-var _ pkce.PKCERequestStorage = &OAuth2ServiceImpl{}
 var _ oauth2.AccessTokenStorage = &OAuth2ServiceImpl{}
 var _ oauth2.RefreshTokenStorage = &OAuth2ServiceImpl{}
-var _ oauth2.ResourceOwnerPasswordCredentialsGrantStorage = &OAuth2ServiceImpl{}
-var _ oauth2.TokenRevocationStorage = &OAuth2ServiceImpl{}
 var _ rfc7523.RFC7523KeyStorage = &OAuth2ServiceImpl{}
-var _ fosite.PARStorage = &OAuth2ServiceImpl{}
-
-// CreateOpenIDConnectSession creates an open id connect session
-// for a given authorize code. This is relevant for explicit open id connect flow.
-func (s *OAuth2ServiceImpl) CreateOpenIDConnectSession(ctx context.Context, authorizeCode string, requester fosite.Requester) error {
-	return s.memstore.CreateOpenIDConnectSession(ctx, authorizeCode, requester)
-}
-
-// GetOpenIDConnectSession returns error
-// - nil if a session was found,
-// - ErrNoSessionFound if no session was found
-// - or an arbitrary error if an error occurred.
-func (s *OAuth2ServiceImpl) GetOpenIDConnectSession(ctx context.Context, authorizeCode string, requester fosite.Requester) (fosite.Requester, error) {
-	return s.memstore.GetOpenIDConnectSession(ctx, authorizeCode, requester)
-}
-
-// Deprecated: DeleteOpenIDConnectSession is not called from anywhere.
-// Originally, it should remove an open id connect session from the store.
-func (s *OAuth2ServiceImpl) DeleteOpenIDConnectSession(ctx context.Context, authorizeCode string) error {
-	return s.memstore.DeleteOpenIDConnectSession(ctx, authorizeCode)
-}
+var _ oauth2.TokenRevocationStorage = &OAuth2ServiceImpl{}
 
 // GetClient loads the client by its ID or returns an error
 // if the client does not exist or another error occurred.
@@ -90,18 +63,6 @@ func (s *OAuth2ServiceImpl) InvalidateAuthorizeCodeSession(ctx context.Context, 
 	return s.memstore.InvalidateAuthorizeCodeSession(ctx, code)
 }
 
-func (s *OAuth2ServiceImpl) GetPKCERequestSession(ctx context.Context, signature string, session fosite.Session) (fosite.Requester, error) {
-	return s.memstore.GetPKCERequestSession(ctx, signature, session)
-}
-
-func (s *OAuth2ServiceImpl) CreatePKCERequestSession(ctx context.Context, signature string, requester fosite.Requester) error {
-	return s.memstore.CreatePKCERequestSession(ctx, signature, requester)
-}
-
-func (s *OAuth2ServiceImpl) DeletePKCERequestSession(ctx context.Context, signature string) error {
-	return s.memstore.DeletePKCERequestSession(ctx, signature)
-}
-
 func (s *OAuth2ServiceImpl) CreateAccessTokenSession(ctx context.Context, signature string, request fosite.Requester) (err error) {
 	return s.memstore.CreateAccessTokenSession(ctx, signature, request)
 }
@@ -124,12 +85,6 @@ func (s *OAuth2ServiceImpl) GetRefreshTokenSession(ctx context.Context, signatur
 
 func (s *OAuth2ServiceImpl) DeleteRefreshTokenSession(ctx context.Context, signature string) (err error) {
 	return s.memstore.DeleteRefreshTokenSession(ctx, signature)
-}
-
-// Authenticate a user based on name and secret.
-// We won't use this method until later on.
-func (s *OAuth2ServiceImpl) Authenticate(ctx context.Context, name string, secret string) error {
-	return s.memstore.Authenticate(ctx, name, secret)
 }
 
 // RevokeRefreshToken revokes a refresh token as specified in:
@@ -169,9 +124,6 @@ func (s *OAuth2ServiceImpl) RevokeAccessToken(ctx context.Context, requestID str
 // GetPublicKey returns public key, issued by 'issuer', and assigned for subject. Public key is used to check
 // signature of jwt assertion in authorization grants.
 func (s *OAuth2ServiceImpl) GetPublicKey(ctx context.Context, issuer string, subject string, kid string) (*jose.JSONWebKey, error) {
-	if kid != "1" {
-		return nil, fosite.ErrNotFound
-	}
 	return s.sqlstore.GetExternalServicePublicKey(ctx, issuer)
 }
 
@@ -188,9 +140,6 @@ func (s *OAuth2ServiceImpl) GetPublicKeys(ctx context.Context, issuer string, su
 
 // GetPublicKeyScopes returns assigned scope for assertion, identified by public key, issued by 'issuer'.
 func (s *OAuth2ServiceImpl) GetPublicKeyScopes(ctx context.Context, issuer string, subject string, kid string) ([]string, error) {
-	if kid != "1" {
-		return nil, fosite.ErrNotFound
-	}
 	app, err := s.GetExternalService(ctx, issuer)
 	if err != nil {
 		return nil, err
@@ -214,19 +163,4 @@ func (s *OAuth2ServiceImpl) IsJWTUsed(ctx context.Context, jti string) (bool, er
 // considered valid based on the applicable "exp" instant. (https://tools.ietf.org/html/rfc7523#section-3)
 func (s *OAuth2ServiceImpl) MarkJWTUsedForTime(ctx context.Context, jti string, exp time.Time) error {
 	return s.memstore.MarkJWTUsedForTime(ctx, jti, exp)
-}
-
-// CreatePARSession stores the pushed authorization request context. The requestURI is used to derive the key.
-func (s *OAuth2ServiceImpl) CreatePARSession(ctx context.Context, requestURI string, request fosite.AuthorizeRequester) error {
-	return s.memstore.CreatePARSession(ctx, requestURI, request)
-}
-
-// GetPARSession gets the push authorization request context. The caller is expected to merge the AuthorizeRequest.
-func (s *OAuth2ServiceImpl) GetPARSession(ctx context.Context, requestURI string) (fosite.AuthorizeRequester, error) {
-	return s.memstore.GetPARSession(ctx, requestURI)
-}
-
-// DeletePARSession deletes the context.
-func (s *OAuth2ServiceImpl) DeletePARSession(ctx context.Context, requestURI string) (err error) {
-	return s.memstore.DeletePARSession(ctx, requestURI)
 }

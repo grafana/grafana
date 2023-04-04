@@ -17,14 +17,14 @@ echo -e "curl -X ${blue}POST${reset} -H ${blue}'Content-type: application/x-www-
 -d grant_type=${blue}client_credentials${reset} \
 -d client_id=${blue}$client_id${reset} \
 -d client_secret=${blue}$client_secret${reset} \
--d scope=${blue}\"openid profile email teams permissions org.1\"${reset} \
+-d scope=${blue}\"profile email teams permissions org.1\"${reset} \
 ${red}http://localhost:3000/oauth2/token${reset}"
 
 curl -X POST -H 'Content-type: application/x-www-form-urlencoded' \
 -d grant_type=client_credentials \
 -d client_id=$client_id \
 -d client_secret=$client_secret \
--d scope="openid profile email teams permissions org.1" \
+-d scope="profile email teams permissions org.1" \
 http://localhost:3000/oauth2/token | jq > $current_dir/client_credentials_token.json
 
 pause

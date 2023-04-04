@@ -34,12 +34,12 @@ type Store interface {
 	GetExternalService(ctx context.Context, id string) (*Client, error)
 	GetExternalServiceByName(ctx context.Context, app string) (*Client, error)
 
-	GetExternalServicePublicKey(ctx context.Context, id string) (*jose.JSONWebKey, error)
+	GetExternalServicePublicKey(ctx context.Context, clientID string) (*jose.JSONWebKey, error)
 }
 
 type KeyOption struct {
-	// URL       string `json:"url,omitempty"` // TODO allow specifying a URL to fetch the key from
-	PublicPEM string `json:"publicPEM,omitempty"`
+	// URL       string `json:"url,omitempty"` // TODO allow specifying a URL (to a .jwks file) to fetch the key from
+	PublicPEM string `json:"public_pem,omitempty"`
 	Generate  bool   `json:"generate,omitempty"`
 }
 
@@ -50,3 +50,8 @@ type ExternalServiceRegistration struct {
 	RedirectURI            *string                    `json:"redirectUri,omitempty"`
 	Key                    *KeyOption                 `json:"key,omitempty"`
 }
+
+const (
+	RS256 = "RS256"
+	ES256 = "ES256"
+)

@@ -28,8 +28,7 @@ echo -e $publicKey | tr -d '"' > $public_key_file
 # Todo add jku and kid
 header="{
     \"alg\": \"$alg\",
-    \"typ\": \"JWT\",
-    \"kid\": \"1\"
+    \"typ\": \"JWT\"
 }"
 
 payload="{

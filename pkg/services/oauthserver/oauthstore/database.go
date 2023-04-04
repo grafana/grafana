@@ -2,21 +2,26 @@ package oauthstore
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/rsa"
 
 	"gopkg.in/square/go-jose.v2"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type store struct {
-	db db.DB
+	db  db.DB
+	cfg *setting.Cfg
 }
 
-func NewStore(db db.DB) oauthserver.Store {
+func NewStore(db db.DB, cfg *setting.Cfg) oauthserver.Store {
 	return &store{
-		db: db,
+		db:  db,
+		cfg: cfg,
 	}
 }
 
@@ -143,20 +148,20 @@ func (s *store) GetExternalService(ctx context.Context, id string) (*oauthserver
 
 // GetPublicKey returns public key, issued by 'issuer', and assigned for subject. Public key is used to check
 // signature of jwt assertion in authorization grants.
-func (s *store) GetExternalServicePublicKey(ctx context.Context, id string) (*jose.JSONWebKey, error) {
+func (s *store) GetExternalServicePublicKey(ctx context.Context, clientID string) (*jose.JSONWebKey, error) {
 	res := &oauthserver.Client{}
-	if id == "" {
+	if clientID == "" {
 		return nil, oauthserver.ErrClientRequiredID
 	}
 
 	if err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		getKeyQuery := `SELECT public_pem FROM oauth_client WHERE client_id = ?`
-		found, err := sess.SQL(getKeyQuery, id).Get(res)
+		found, err := sess.SQL(getKeyQuery, clientID).Get(res)
 		if err != nil {
 			return err
 		}
 		if !found {
-			return oauthserver.ErrClientNotFound(id)
+			return oauthserver.ErrClientNotFound(clientID)
 		}
 		return nil
 	}); err != nil {
@@ -168,9 +173,16 @@ func (s *store) GetExternalServicePublicKey(ctx context.Context, id string) (*jo
 		return nil, errParseKey
 	}
 
+	var alg string
+	switch key.(type) {
+	case *rsa.PublicKey:
+		alg = oauthserver.RS256
+	case *ecdsa.PublicKey:
+		alg = oauthserver.ES256
+	}
+
 	return &jose.JSONWebKey{
-		KeyID:     "1",
-		Algorithm: "RS256",
+		Algorithm: alg,
 		Key:       key,
 	}, nil
 }
