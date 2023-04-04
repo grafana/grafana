@@ -2259,7 +2259,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2316,7 +2319,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2390,7 +2396,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2453,7 +2462,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2506,6 +2518,7 @@ steps:
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
+  - grabpl
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2744,7 +2757,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2768,6 +2784,12 @@ platform:
 services: []
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout ${DRONE_TAG}
@@ -2787,6 +2809,7 @@ steps:
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
+  - grabpl
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2796,12 +2819,6 @@ steps:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.17.1
   name: identify-runner
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
 - commands:
   - yarn install --immutable
   depends_on:
@@ -2829,7 +2846,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2878,6 +2898,7 @@ steps:
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
+  - grabpl
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2937,7 +2958,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -3020,7 +3044,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -3073,6 +3100,7 @@ steps:
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
+  - grabpl
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3264,7 +3292,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -3323,6 +3354,7 @@ steps:
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
+  - grabpl
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -4345,6 +4377,7 @@ steps:
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
+  - grabpl
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -4998,6 +5031,7 @@ steps:
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
+  - grabpl
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5270,6 +5304,12 @@ platform:
 services: []
 steps:
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout ${DRONE_BRANCH}
@@ -5288,6 +5328,7 @@ steps:
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
+  - grabpl
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5297,12 +5338,6 @@ steps:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.17.1
   name: identify-runner
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
 - commands:
   - yarn install --immutable
   depends_on:
@@ -5375,6 +5410,7 @@ steps:
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
+  - grabpl
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5509,6 +5545,7 @@ steps:
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
+  - grabpl
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5729,6 +5766,7 @@ steps:
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
+  - grabpl
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -6121,6 +6159,7 @@ steps:
   - mv /tmp/grabpl bin/
   depends_on:
   - clone-enterprise
+  - grabpl
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -6507,6 +6546,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 04f5f2d68a176e1087b598f827902a5565308616b3bf889d3d4a928132b01d5c
+hmac: b501639ae35db5abec37f97cdd39d2a31051ec9800424c72ba0869ca3fe60d0b
 
 ...

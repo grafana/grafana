@@ -128,6 +128,7 @@ def init_enterprise_step(ver_mode):
         "image": build_image,
         "depends_on": [
             "clone-enterprise",
+            "grabpl",
         ],
         "environment": environment,
         "commands": [
