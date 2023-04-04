@@ -182,7 +182,7 @@ For details, see the [template variables documentation]({{< relref "./template-v
 
 ## Incremental Dashboard Queries (beta)
 
-As of Grafana 9.5, data sources can be configured to query dashboards incrementally, instead of querying the entire duration on each dashboard refresh.
+As of Grafana 10, data sources can be configured to query live dashboards incrementally, instead of re-querying the entire duration on each dashboard refresh.
 This can be toggled on or off in the datasource configuration or provisioning file (under `incrementalQuerying` in jsonData).
 Additionally, the amount of overlap between incremental queries can be configured using the `incrementalQueryOverlapWindow` jsonData field, the default value is 10m (10 minutes).
 
