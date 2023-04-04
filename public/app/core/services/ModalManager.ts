@@ -44,7 +44,7 @@ export class ModalManager {
   }
 
   onReactModalDismiss = () => {
-    this.root.unmount();
+    this.root.render(null);
     this.reactModalRoot.removeChild(this.reactModalNode);
   };
 
