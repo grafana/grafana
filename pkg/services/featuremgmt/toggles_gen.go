@@ -310,4 +310,8 @@ const (
 	// FlagRenderAuthJWT
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
+
+	// FlagPyroscopeFlameGraph
+	// Changes flame graph to pyroscope one
+	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
 )

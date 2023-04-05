@@ -6271,6 +6271,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@pyroscope/flamegraph@npm:^0.35.5":
+  version: 0.35.5
+  resolution: "@pyroscope/flamegraph@npm:0.35.5"
+  peerDependencies:
+    graphviz-react: ^1.2.5
+    react: ">=16.14.0"
+    react-dom: ">=16.14.0"
+    true-myth: ^5.1.2
+  checksum: e63580683f5d2333202415b827ebe78986294d1fe49de978b62400e5cd070afd1f48d071ff7e5c22bc1ace6c52e9767e85650b34444c6ad0c9ecb23788d83ffd
+  languageName: node
+  linkType: hard
+
 "@radix-ui/react-compose-refs@npm:1.0.0":
   version: 1.0.0
   resolution: "@radix-ui/react-compose-refs@npm:1.0.0"
@@ -20126,6 +20138,7 @@ __metadata:
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.10
     "@popperjs/core": 2.11.6
     "@prometheus-io/lezer-promql": ^0.37.0-rc.1
+    "@pyroscope/flamegraph": ^0.35.5
     "@react-aria/button": 3.6.1
     "@react-aria/dialog": 3.3.1
     "@react-aria/focus": 3.8.0
