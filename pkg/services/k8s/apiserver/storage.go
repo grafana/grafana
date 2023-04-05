@@ -153,24 +153,24 @@ func (s *Storage) getSignedInUser(ctx context.Context, obj runtime.Object) (*use
 		return nil, apierrors.NewForbidden(s.groupResource, accessor.GetName(), fmt.Errorf("unable to fetch user from context"))
 	}
 
-	if user.GetName() == authnz.ApiServerUser || len(user.GetExtra()["user-id"]) == 0 && len(user.GetExtra()["org-id"]) == 0 {
-		return nil, apierrors.NewForbidden(s.groupResource, accessor.GetName(), fmt.Errorf("unable to convert k8s service account to Grafana user"))
+	userQuery := grafanaUser.GetSignedInUserQuery{}
+
+	if user.GetName() == authnz.ApiServerUser {
+		userQuery.OrgID = 1
+		userQuery.UserID = 1
+		//return nil, apierrors.NewForbidden(s.groupResource, accessor.GetName(), fmt.Errorf("unable to convert k8s service account to Grafana user"))
+	} else {
+		userQuery.UserID, err = strconv.ParseInt(user.GetExtra()["user-id"][0], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't determine the Grafana user id from extras map")
+		}
+
+		userQuery.OrgID, err = strconv.ParseInt(user.GetExtra()["org-id"][0], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't determine the Grafana org id from extras map")
+		}
 	}
 
-	userId, err := strconv.Atoi(user.GetExtra()["user-id"][0])
-	if err != nil {
-		return nil, fmt.Errorf("couldn't determine the Grafana user id from extras map")
-	}
-
-	orgId, _ := strconv.Atoi(user.GetExtra()["org-id"][0])
-	if err != nil {
-		return nil, fmt.Errorf("couldn't determine the Grafana org id from extras map")
-	}
-
-	userQuery := grafanaUser.GetSignedInUserQuery{
-		UserID: int64(userId),
-		OrgID:  int64(orgId),
-	}
 	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &userQuery)
 	if err != nil {
 		return nil, apierrors.NewForbidden(s.groupResource, accessor.GetName(), fmt.Errorf("could not determine the user backing the service account: %s", err.Error()))
