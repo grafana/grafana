@@ -27,6 +27,7 @@ Object.defineProperty(Array.prototype, 'buffer', {
   get: function () {
     return this;
   },
+  set: function() {}
 });
 
 let notified = false;
@@ -57,17 +58,19 @@ const unused = 'not used';
  * @public
  */
 export class ArrayVector<T = any> extends Array<T> implements MutableVector<T> {
-  // eslint-ignore-next-line
-  // buffer: T[];
+  buffer: T[];
 
-  constructor(buffer?: T[]) {
+  constructor(buffer: T[] = []) {
     super();
 
     if (!notified) {
       console.error(notice);
       notified = true;
     }
-    return (buffer ?? []) as unknown as ArrayVector<T>;
+
+    this.buffer = buffer;
+
+    return buffer as unknown as ArrayVector<T>;
   }
 
   add(value: T) {
