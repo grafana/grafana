@@ -17,10 +17,10 @@ import (
 func NewCachingMiddleware(cachingService caching.CachingService) plugins.ClientMiddleware {
 	log := log.New("caching_middleware")
 	if err := prometheus.Register(QueryRequestHistogram); err != nil {
-		log.Error("error registering prometheus collector", "error", err)
+		log.Error("error registering prometheus collector 'QueryRequestHistogram'", "error", err)
 	}
 	if err := prometheus.Register(ResourceRequestHistogram); err != nil {
-		log.Error("error registering prometheus collector", "error", err)
+		log.Error("error registering prometheus collector 'ResourceRequestHistogram'", "error", err)
 	}
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &CachingMiddleware{
