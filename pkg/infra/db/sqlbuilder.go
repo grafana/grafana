@@ -13,7 +13,7 @@ import (
 )
 
 func NewSqlBuilder(cfg *setting.Cfg, features featuremgmt.FeatureToggles, dialect migrator.Dialect, recursiveQueriesAreSupported bool) SQLBuilder {
-	return SQLBuilder{cfg: cfg, dialect: dialect, recursiveQueriesAreSupported: recursiveQueriesAreSupported}
+	return SQLBuilder{cfg: cfg, features: features, dialect: dialect, recursiveQueriesAreSupported: recursiveQueriesAreSupported}
 }
 
 type SQLBuilder struct {
