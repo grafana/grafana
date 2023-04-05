@@ -18,8 +18,6 @@ export function doTimeRegionQuery(config: TimeRegionConfig, range: TimeRange, tz
     return undefined;
   }
 
-  console.log('regions', regions);
-
   const times: number[] = [];
   const timesEnd: number[] = [];
   const colors: string[] = [];
