@@ -10,8 +10,6 @@ ARG JS_SRC=js-builder
 
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} as js-builder
 
-RUN apk add --no-cache git make clang build-base python3
-
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
 WORKDIR /tmp/grafana
