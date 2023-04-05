@@ -67,7 +67,7 @@ type redisPeer struct {
 	position int
 	// The time when we computed the position in the cluster the last time successfully.
 	positionFetchedAt time.Time
-	// The duration we want to return the postion if the network is down.
+	// The duration we want to return the position if the network is down.
 	positionValidFor time.Duration
 }
 
@@ -202,13 +202,12 @@ func (p *redisPeer) heartbeatLoop() {
 			ticker.Stop()
 			return
 		}
-
 	}
 }
 
 func (p *redisPeer) Position() int {
 	members := p.Members()
-	// When the members array is empty and we fetched our position succesfully
+	// When the members array is empty and we fetched our position successfully
 	// prior, we can assume that currently the network is down.
 	// To prevent a spike of duplicate messages, we return for the duration of
 	// lastPositionValidFor the last known position and only failover to position
