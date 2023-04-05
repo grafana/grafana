@@ -166,13 +166,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         </FieldSet>
       ) : null}
 
-      <ConnectionLimits
-        labelWidth={WIDTH_SHORT}
-        jsonData={jsonData}
-        onPropertyChanged={(property, value) => {
-          updateDatasourcePluginJsonDataOption(props, property, value);
-        }}
-      ></ConnectionLimits>
+      <ConnectionLimits labelWidth={WIDTH_SHORT} options={options} onOptionsChange={onOptionsChange} />
 
       <FieldSet label="MySQL details">
         <InlineField

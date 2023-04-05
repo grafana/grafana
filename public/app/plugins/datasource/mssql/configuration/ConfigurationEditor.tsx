@@ -232,13 +232,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         ) : null}
       </FieldSet>
 
-      <ConnectionLimits
-        labelWidth={shortWidth}
-        jsonData={jsonData}
-        onPropertyChanged={(property, value) => {
-          updateDatasourcePluginJsonDataOption(props, property, value);
-        }}
-      ></ConnectionLimits>
+      <ConnectionLimits labelWidth={shortWidth} options={options} onOptionsChange={onOptionsChange} />
 
       <FieldSet label="MS SQL details">
         <InlineField

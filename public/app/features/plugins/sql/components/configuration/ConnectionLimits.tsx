@@ -1,51 +1,63 @@
 import React from 'react';
 
+import { DataSourceSettings } from '@grafana/data';
 import { FieldSet, InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { SQLConnectionDefaults } from '../../constants';
-import { SQLConnectionLimits } from '../../types';
+import { SQLConnectionLimits, SQLOptions } from '../../types';
 
 interface Props<T> {
-  onJsonDataChanged?: (values: {}) => void;
-  onPropertyChanged: (property: keyof T, value?: number) => void;
+  onOptionsChange: Function;
+  options: DataSourceSettings<SQLOptions>;
   labelWidth: number;
-  jsonData: SQLConnectionLimits;
 }
 
 export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>) => {
-  const { onJsonDataChanged, onPropertyChanged, labelWidth, jsonData } = props;
+  const { onOptionsChange, options, labelWidth } = props;
+  const jsonData = options.jsonData;
   const autoIdle = jsonData.maxIdleConnsAuto !== undefined ? jsonData.maxIdleConnsAuto : false;
+
+  // Update JSON data with new values
+  const updateJsonData = (values: {}) => {
+    const newOpts = {
+      ...options,
+      jsonData: {
+        ...jsonData,
+        ...values,
+      },
+    };
+
+    return onOptionsChange(newOpts);
+  };
 
   // For the case of idle connections and connection lifetime
   // use a shared function to update respective properties
   const onJSONDataNumberChanged = (property: keyof SQLConnectionLimits) => {
     return (number?: number) => {
-      if (onPropertyChanged) {
-        onPropertyChanged(property, number);
-      }
+      updateJsonData({ property: number });
     };
   };
 
   // Calculate the number of idle connections
   // automatically based on maximum connection
-  // number
+  // number. Currently the same.
   const getAutoIdleConns = (number: number) => {
-    return number >= SQLConnectionDefaults.AUTO_IDLE_THRESHOLD
-      ? Math.ceil(number / 2)
-      : SQLConnectionDefaults.AUTO_IDLE_MIN;
+    return number;
   };
 
   // When the maximum number of connections is changed
   // see if we have the automatic idle option enabled
   const onMaxConnectionsChanged = (number?: number) => {
-    if (onJsonDataChanged && autoIdle && number) {
-      onJsonDataChanged({
+    if (autoIdle && number) {
+      updateJsonData({
         maxOpenConns: number,
         maxIdleConns: getAutoIdleConns(number),
       });
-    } else {
-      onPropertyChanged('maxOpenConns', number);
+    } else if (number !== undefined) {
+      updateJsonData({
+        maxOpenConns: number,
+      });
     }
   };
 
@@ -69,13 +81,11 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
       }
     }
 
-    if (onJsonDataChanged) {
-      onJsonDataChanged({
-        maxIdleConnsAuto: !autoIdle,
-        maxIdleConns: idleConns,
-        maxOpenConns: maxConns,
-      });
-    }
+    updateJsonData({
+      maxIdleConnsAuto: !autoIdle,
+      maxIdleConns: idleConns,
+      maxOpenConns: maxConns,
+    });
   };
 
   return (
@@ -119,7 +129,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
           labelWidth={8}
           tooltip={
             <span>
-              If enabled, automatically set the number of <i>Maximum idle connections</i> to half of the{' '}
+              If enabled, automatically set the number of <i>Maximum idle connections</i> to the same value as
               <i>Max open connections</i>. If the number of maximum open connections is not set it will be set to the
               default ({SQLConnectionDefaults.MAX_CONNS}).
             </span>
