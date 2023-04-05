@@ -58,7 +58,7 @@ describe('Database Field Migration', () => {
       onOptionsChange: (options: DataSourceSettings) => {
         const jsonData = options.jsonData as SQLOptions;
         expect(jsonData.maxOpenConns).toBe(SQLConnectionDefaults.MAX_CONNS);
-        expect(jsonData.maxIdleConns).toBe(Math.ceil(SQLConnectionDefaults.MAX_CONNS / 2));
+        expect(jsonData.maxIdleConns).toBe(Math.ceil(SQLConnectionDefaults.MAX_CONNS));
         expect(jsonData.maxIdleConnsAuto).toBe(true);
       },
     };
