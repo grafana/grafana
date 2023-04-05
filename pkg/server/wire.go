@@ -62,6 +62,7 @@ import (
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
@@ -235,6 +236,7 @@ var wireBasicSet = wire.NewSet(
 	store.ProvideService,
 	store.ProvideSystemUsersService,
 	live.ProvideService,
+	export.ProvideService,
 	pushhttp.ProvideService,
 	contexthandler.ProvideService,
 	ldapservice.ProvideService,
