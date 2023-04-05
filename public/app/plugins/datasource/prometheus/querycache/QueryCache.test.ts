@@ -1,6 +1,14 @@
 import moment from 'moment';
 
-import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@grafana/data/src';
+import {
+  ArrayVector,
+  DataFrame,
+  DataQueryRequest,
+  DateTime,
+  dateTime, FieldType,
+  MutableDataFrame,
+  TimeRange
+} from '@grafana/data/src';
 
 import { InfluxQuery } from '../../influxdb/types';
 import { QueryEditorMode } from '../querybuilder/shared/types';
@@ -543,7 +551,7 @@ describe('QueryCache: Influx', function () {
       from: firstFrom,
       to: firstTo,
       raw: {
-        from: 'now-6h',
+        from: 'now-15m',
         to: 'now',
       },
     };
@@ -551,15 +559,64 @@ describe('QueryCache: Influx', function () {
 
     const secondFrom = dateTime("2023-04-04T20:51:20.643Z");
     const secondTo = dateTime("2023-04-04T20:53:38.022Z").add(6, 'hours');
+    const firstFromClone = (firstFrom as moment.Moment).clone();
+
+    const firstFrames = [new MutableDataFrame({
+      length: 0,
+      name: "",
+      refId: "",
+      fields: [
+        {
+          name: '',
+          type: FieldType.time,
+          values: new ArrayVector([firstFromClone.valueOf(), firstFromClone.add(1, 'minute'),firstFromClone.add(1, 'minute'), firstFromClone.add(1, 'minute'), firstFromClone.add(1, 'minute')]),
+        },
+        {
+        name: '',
+        type: FieldType.number,
+        config : {
+
+        },
+        values: new ArrayVector([1,2,3,4,5]),
+        labels: {
+          'label': 'value'
+        }
+      }]
+    })];
 
     const secondRange: TimeRange = {
       from: secondFrom,
       to: secondTo,
       raw: {
-        from: 'now-6h',
+        from: 'now-15m',
         to: 'now',
       },
     };
+
+    const secondFromClone = (secondFrom as moment.Moment).clone();
+
+    const secondFrames = [new MutableDataFrame({
+      length: 0,
+      name: "",
+      refId: "",
+      fields: [
+        {
+          name: '',
+          type: FieldType.time,
+          values: new ArrayVector([secondFromClone.valueOf(), secondFromClone.add(1, 'minute'),secondFromClone.add(1, 'minute')]),
+        },
+        {
+          name: '',
+          type: FieldType.number,
+          config : {
+
+          },
+          values: new ArrayVector([1,2,3,4,5]),
+          labels: {
+            'label': 'value'
+          }
+        }]
+    })];
 
     const dashboardId = `dashid--`;
     const panelId = 2;
