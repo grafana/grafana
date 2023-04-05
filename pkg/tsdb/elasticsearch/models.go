@@ -120,5 +120,6 @@ func describeMetric(metricType, field string) string {
 	if metricType == countType {
 		return text
 	}
+
 	return text + " " + field
 }
