@@ -67,6 +67,13 @@ func handleDataplaneTS(frames data.Frames) (mathexp.Results, error) {
 	if err != nil {
 		return mathexp.Results{}, err
 	}
+	if sc.NoData() {
+		noData := mathexp.NoData{}.New()
+		if len(dps.Frames()) == 1 {
+			noData.Frame = dps.Frames()[0]
+		}
+		return mathexp.Results{Values: mathexp.Values{noData}}, nil
+	}
 	res := mathexp.Results{}
 	res.Values = make([]mathexp.Value, 0, len(sc.Refs))
 	for _, s := range sc.Refs {
@@ -88,6 +95,13 @@ func handleDataplaneNumeric(frames data.Frames) (mathexp.Results, error) {
 	nc, err := dn.GetCollection(false)
 	if err != nil {
 		return mathexp.Results{}, err
+	}
+	if nc.NoData() {
+		noData := mathexp.NoData{}.New()
+		if len(dn.Frames()) == 1 {
+			noData.Frame = dn.Frames()[0]
+		}
+		return mathexp.Results{Values: mathexp.Values{noData}}, nil
 	}
 	res := mathexp.Results{}
 	res.Values = make([]mathexp.Value, 0, len(nc.Refs))
