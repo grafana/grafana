@@ -60,8 +60,6 @@ export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceM
 /**
  * static fields are pre-set in the UI, dynamic fields are added by the user
  */
-export type TraceqlSearchFilterType = ('static' | 'dynamic');
-
 export enum TraceqlSearchScope {
   Resource = 'resource',
   Span = 'span',
@@ -85,10 +83,6 @@ export interface TraceqlFilter {
    * The tag for the search filter, for example: .http.status_code, .service.name, status
    */
   tag?: string;
-  /**
-   * The type of the filter, can either be static (pre defined in the UI) or dynamic
-   */
-  type: TraceqlSearchFilterType;
   /**
    * The value for the search filter
    */

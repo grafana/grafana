@@ -174,6 +174,7 @@ async function getParserCompletions(
   prefix: string,
   hasJSON: boolean,
   hasLogfmt: boolean,
+  hasPack: boolean,
   extractedLabelKeys: string[],
   hasParserInQuery: boolean
 ) {
@@ -183,17 +184,27 @@ async function getParserCompletions(
   const hasLevelInExtractedLabels = extractedLabelKeys.some((key) => key === 'level');
 
   if (hasJSON) {
-    allParsers.delete('json');
     // We show "detected" label only if there is no previous parser in the query
     const extra = hasParserInQuery ? '' : ' (detected)';
-    completions.push({
-      type: 'PARSER',
-      label: `json${extra}`,
-      insertText: `${prefix}json`,
-      documentation: hasLevelInExtractedLabels
-        ? 'Use it to get log-levels in the histogram'
-        : explainOperator(LokiOperationId.Json),
-    });
+    if (hasPack) {
+      allParsers.delete('unpack');
+      completions.push({
+        type: 'PARSER',
+        label: `unpack${extra}`,
+        insertText: `${prefix}unpack`,
+        documentation: explainOperator(LokiOperationId.Unpack),
+      });
+    } else {
+      allParsers.delete('json');
+      completions.push({
+        type: 'PARSER',
+        label: `json${extra}`,
+        insertText: `${prefix}json`,
+        documentation: hasLevelInExtractedLabels
+          ? 'Use it to get log-levels in the histogram'
+          : explainOperator(LokiOperationId.Json),
+      });
+    }
   }
 
   if (hasLogfmt) {
@@ -234,7 +245,7 @@ export async function getAfterSelectorCompletions(
     query = trimEnd(logQuery, '| ');
   }
 
-  const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(query);
+  const { extractedLabelKeys, hasJSON, hasLogfmt, hasPack } = await dataProvider.getParserAndLabelKeys(query);
   const hasQueryParser = isQueryWithParser(query).queryWithParser;
 
   const prefix = `${hasSpace ? '' : ' '}${afterPipe ? '' : '| '}`;
@@ -242,6 +253,7 @@ export async function getAfterSelectorCompletions(
     prefix,
     hasJSON,
     hasLogfmt,
+    hasPack,
     extractedLabelKeys,
     hasQueryParser
   );

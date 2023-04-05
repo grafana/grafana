@@ -27,8 +27,11 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `cloudWatchDynamicLabels`           | Use dynamic labels instead of alias patterns in CloudWatch datasource                                                                                                        | Yes                |
 | `dataConnectionsConsole`            | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins. | Yes                |
 | `internationalization`              | Enables internationalization                                                                                                                                                 | Yes                |
+| `topnav`                            | Enables new top navigation and page layouts                                                                                                                                  | Yes                |
 | `cloudWatchCrossAccountQuerying`    | Enables cross-account querying in CloudWatch datasources                                                                                                                     | Yes                |
+| `newPanelChromeUI`                  | Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu                                                                                          | Yes                |
 | `accessTokenExpirationCheck`        | Enable OAuth access_token expiration check and token refresh using the refresh_token                                                                                         |                    |
+| `emptyDashboardPage`                | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                             | Yes                |
 | `disablePrometheusExemplarSampling` | Disable Prometheus exemplar sampling                                                                                                                                         |                    |
 | `logsSampleInExplore`               | Enables access to the logs sample feature in Explore                                                                                                                         | Yes                |
 
@@ -44,10 +47,11 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `validateDashboardsOnSave`                | Validate dashboard JSON POSTed to api/dashboards/db                                                                                                                                          |
 | `autoMigrateOldPanels`                    | Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)                                                                                                           |
 | `disableAngular`                          | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
-| `topnav`                                  | Displays new top nav and page layouts                                                                                                                                                        |
+| `grpcServer`                              | Run the GRPC server                                                                                                                                                                          |
 | `accessControlOnCall`                     | Access control primitives for OnCall                                                                                                                                                         |
 | `alertingNoNormalState`                   | Stop maintaining state of alerts that are not firing                                                                                                                                         |
 | `disableElasticsearchBackendExploreQuery` | Disable executing of Elasticsearch Explore queries trough backend                                                                                                                            |
+| `renderAuthJWT`                           | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                         |
 
 ## Alpha feature toggles
 
@@ -77,12 +81,11 @@ Alpha features might be changed or removed without prior notice.
 | `logRequestsInstrumentedAsUnknown` | Logs the path for requests that are instrumented as unknown                                                                                                                                         |
 | `redshiftAsyncQueryDataSupport`    | Enable async query data support for Redshift                                                                                                                                                        |
 | `athenaAsyncQueryDataSupport`      | Enable async query data support for Athena                                                                                                                                                          |
-| `newPanelChromeUI`                 | Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu                                                                                                                 |
 | `showDashboardValidationWarnings`  | Show warnings when dashboards do not validate against the schema                                                                                                                                    |
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                                                                                                                |
 | `elasticsearchBackendMigration`    | Use Elasticsearch as backend data source                                                                                                                                                            |
+| `showTraceId`                      | Show trace ids for requests                                                                                                                                                                         |
 | `datasourceOnboarding`             | Enable data source onboarding page                                                                                                                                                                  |
-| `emptyDashboardPage`               | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                                                    |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                                        |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                                                      |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                                                   |
@@ -96,9 +99,14 @@ Alpha features might be changed or removed without prior notice.
 | `traceqlSearch`                    | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries                                                                                           |
 | `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component                                                                                                |
 | `timeSeriesTable`                  | Enable time series table transformer & sparkline cell type                                                                                                                                          |
+| `prometheusResourceBrowserCache`   | Displays browser caching options in Prometheus data source configuration                                                                                                                            |
 | `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                                                                                                           |
 | `clientTokenRotation`              | Replaces the current in-request token rotation so that the client initiates the rotation                                                                                                            |
 | `prometheusDataplane`              | Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present. |
+| `alertStateHistoryLokiSecondary`   | Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.                                                                                        |
+| `alertStateHistoryLokiPrimary`     | Enable a remote Loki instance as the primary source for state history reads.                                                                                                                        |
+| `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                                                                                                          |
+| `unifiedRequestLog`                | Writes error logs to the request logger                                                                                                                                                             |
 
 ## Development feature toggles
 
@@ -107,6 +115,5 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | Feature toggle name | Description                                         |
 | ------------------- | --------------------------------------------------- |
 | `k8s`               | Explore native k8s integrations                     |
-| `grpcServer`        | Run GRPC server                                     |
 | `entityStore`       | SQL-based entity store (requires storage flag also) |
 | `nestedFolders`     | Enable folder nesting                               |

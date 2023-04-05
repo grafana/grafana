@@ -25,16 +25,16 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { appEvents } from 'app/core/core';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import { t, Trans } from 'app/core/internationalization';
+import { setStarred } from 'app/core/reducers/navBarTree';
+import { AddPanelButton } from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { KioskMode } from 'app/types';
 import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
-
-import { setStarred } from '../../../../core/reducers/navBarTree';
-import { getDashboardSrv } from '../../services/DashboardSrv';
-import { DashboardModel } from '../../state';
 
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
@@ -305,14 +305,19 @@ export const DashNav = React.memo<Props>((props) => {
     }
 
     if (canEdit && !isFullscreen) {
-      buttons.push(
-        <ToolbarButton
-          tooltip={t('dashboard.toolbar.add-panel', 'Add panel')}
-          icon="panel-add"
-          onClick={onAddPanel}
-          key="button-panel-add"
-        />
-      );
+      if (config.featureToggles.emptyDashboardPage) {
+        buttons.push(<AddPanelButton dashboard={dashboard} key="panel-add-dropdown" />);
+      } else {
+        buttons.push(
+          <ToolbarButton
+            tooltip={t('dashboard.toolbar.add-panel', 'Add panel')}
+            icon="panel-add"
+            iconSize="xl"
+            onClick={onAddPanel}
+            key="button-panel-add"
+          />
+        );
+      }
     }
 
     if (canSave && !isFullscreen) {
