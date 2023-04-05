@@ -17,6 +17,7 @@ export interface DynamicTableColumnProps<T = unknown> {
 
   renderCell: (item: DynamicTableItemProps<T>, index: number) => ReactNode;
   size?: number | string;
+  className?: string;
 }
 
 export interface DynamicTableItemProps<T = unknown> {
@@ -132,7 +133,11 @@ export const DynamicTable = <T extends object>({
                 </div>
               )}
               {cols.map((col) => (
-                <div className={cx(styles.cell, styles.bodyCell)} data-column={col.label} key={`${item.id}-${col.id}`}>
+                <div
+                  className={cx(styles.cell, styles.bodyCell, col.className)}
+                  data-column={col.label}
+                  key={`${item.id}-${col.id}`}
+                >
                   {col.renderCell(item, index)}
                 </div>
               ))}

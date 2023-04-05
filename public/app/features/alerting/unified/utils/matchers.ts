@@ -37,6 +37,7 @@ interface MatchedInstance {
   };
 }
 
+// TODO We can probably remove this as filtering is done in the backend
 export const findAlertInstancesWithMatchers = (
   instances: Alert[],
   matchers: MatcherFieldValue[]

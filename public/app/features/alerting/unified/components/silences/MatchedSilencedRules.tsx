@@ -1,110 +1,81 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
-import { useDebounce } from 'react-use';
+import React from 'react';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Badge, useStyles2 } from '@grafana/ui';
-import { useDispatch } from 'app/types';
-import { Alert, AlertingRule } from 'app/types/unified-alerting';
+import { AlertmanagerAlert, Matcher } from 'app/plugins/datasource/alertmanager/types';
 
-import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
-import { fetchAllPromAndRulerRulesAction } from '../../state/actions';
-import { MatcherFieldValue, SilenceFormFields } from '../../types/silence-form';
-import { findAlertInstancesWithMatchers } from '../../utils/matchers';
-import { isAlertingRule } from '../../utils/rules';
+import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { AlertLabels } from '../AlertLabels';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
-import { AlertStateTag } from '../rules/AlertStateTag';
 
-type MatchedRulesTableItemProps = DynamicTableItemProps<{
-  matchedInstance: Alert;
-}>;
-type MatchedRulesTableColumnProps = DynamicTableColumnProps<{ matchedInstance: Alert }>;
+import { AmAlertStateTag } from './AmAlertStateTag';
 
-export const MatchedSilencedRules = () => {
-  const [matchedAlertRules, setMatchedAlertRules] = useState<MatchedRulesTableItemProps[]>([]);
-  const formApi = useFormContext<SilenceFormFields>();
-  const dispatch = useDispatch();
-  const { watch } = formApi;
-  const matchers: MatcherFieldValue[] = watch('matchers');
+interface Props {
+  amSourceName: string;
+  matchers: Matcher[];
+}
+
+export const MatchedSilencedRules = ({ amSourceName, matchers }: Props) => {
+  const { useGetAlertmanagerAlertsQuery } = alertmanagerApi;
   const styles = useStyles2(getStyles);
   const columns = useColumns();
 
-  useEffect(() => {
-    dispatch(fetchAllPromAndRulerRulesAction());
-  }, [dispatch]);
-
-  const combinedNamespaces = useCombinedRuleNamespaces();
-  useDebounce(
-    () => {
-      const matchedInstances = combinedNamespaces.flatMap((namespace) => {
-        return namespace.groups.flatMap((group) => {
-          return group.rules
-            .map((combinedRule) => combinedRule.promRule)
-            .filter((rule): rule is AlertingRule => isAlertingRule(rule))
-            .flatMap((rule) => findAlertInstancesWithMatchers(rule.alerts ?? [], matchers));
-        });
-      });
-      setMatchedAlertRules(matchedInstances);
-    },
-    500,
-    [combinedNamespaces, matchers]
+  const { currentData: alerts = [] } = useGetAlertmanagerAlertsQuery(
+    { amSourceName, filter: { matchers } },
+    { skip: matchers.length === 0 }
   );
+
+  const tableItemAlerts = alerts.map<DynamicTableItemProps<AlertmanagerAlert>>((alert) => ({
+    id: alert.fingerprint,
+    data: alert,
+  }));
 
   return (
     <div>
       <h4 className={styles.title}>
         Affected alert instances
-        {matchedAlertRules.length > 0 ? (
-          <Badge className={styles.badge} color="blue" text={matchedAlertRules.length} />
+        {tableItemAlerts.length > 0 ? (
+          <Badge className={styles.badge} color="blue" text={tableItemAlerts.length} />
         ) : null}
       </h4>
       <div className={styles.table}>
         {matchers.every((matcher) => !matcher.value && !matcher.name) ? (
           <span>Add a valid matcher to see affected alerts</span>
         ) : (
-          <DynamicTable
-            items={matchedAlertRules}
-            isExpandable={false}
-            cols={columns}
-            pagination={{ itemsPerPage: 5 }}
-          />
+          <DynamicTable items={tableItemAlerts} isExpandable={false} cols={columns} pagination={{ itemsPerPage: 10 }} />
         )}
       </div>
     </div>
   );
 };
 
-function useColumns(): MatchedRulesTableColumnProps[] {
+function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
+  const styles = useStyles2(getStyles);
+
   return [
     {
       id: 'state',
       label: 'State',
-      renderCell: function renderStateTag({ data: { matchedInstance } }) {
-        return <AlertStateTag state={matchedInstance.state} />;
+      renderCell: function renderStateTag({ data }) {
+        return <AmAlertStateTag state={data.status.state} />;
       },
-      size: '160px',
+      size: '120px',
+      className: styles.stateColumn,
     },
     {
       id: 'labels',
       label: 'Labels',
-      renderCell: function renderName({ data: { matchedInstance } }) {
-        return <AlertLabels labels={matchedInstance.labels} />;
+      renderCell: function renderName({ data }) {
+        return <AlertLabels labels={data.labels} className={styles.alertLabels} />;
       },
       size: 'auto',
     },
     {
       id: 'created',
       label: 'Created',
-      renderCell: function renderSummary({ data: { matchedInstance } }) {
-        return (
-          <>
-            {matchedInstance.activeAt.startsWith('0001')
-              ? '-'
-              : dateTime(matchedInstance.activeAt).format('YYYY-MM-DD HH:mm:ss')}
-          </>
-        );
+      renderCell: function renderSummary({ data }) {
+        return <>{data.startsAt.startsWith('0001') ? '-' : dateTime(data.startsAt).format('YYYY-MM-DD HH:mm:ss')}</>;
       },
       size: '180px',
     },
@@ -124,5 +95,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   badge: css`
     margin-left: ${theme.spacing(1)};
+  `,
+  stateColumn: css`
+    display: flex;
+    align-items: center;
+  `,
+  alertLabels: css`
+    justify-content: flex-start;
   `,
 });
