@@ -195,6 +195,10 @@ const (
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
 
+	// FlagShowTraceId
+	// Show trace ids for requests
+	FlagShowTraceId = "showTraceId"
+
 	// FlagDatasourceOnboarding
 	// Enable data source onboarding page
 	FlagDatasourceOnboarding = "datasourceOnboarding"
