@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/plugins"
 	"gopkg.in/square/go-jose.v2"
 )
 
@@ -20,8 +20,8 @@ var (
 )
 
 type OAuth2Service interface {
-	RegisterExternalService(ctx context.Context, app *ExternalServiceRegistration) (*ClientDTO, error)
-	SaveExternalService(ctx context.Context, cmd *ExternalServiceRegistration) (*ClientDTO, error)
+	RegisterExternalService(ctx context.Context, app *plugins.ExternalServiceRegistration) (*plugins.ClientDTO, error)
+	SaveExternalService(ctx context.Context, cmd *plugins.ExternalServiceRegistration) (*plugins.ClientDTO, error)
 	GetExternalService(ctx context.Context, id string) (*Client, error)
 	HandleTokenRequest(rw http.ResponseWriter, req *http.Request)
 	HandleIntrospectionRequest(rw http.ResponseWriter, req *http.Request)
@@ -35,20 +35,6 @@ type Store interface {
 	GetExternalServiceByName(ctx context.Context, app string) (*Client, error)
 
 	GetExternalServicePublicKey(ctx context.Context, clientID string) (*jose.JSONWebKey, error)
-}
-
-type KeyOption struct {
-	// URL       string `json:"url,omitempty"` // TODO allow specifying a URL (to a .jwks file) to fetch the key from
-	PublicPEM string `json:"public_pem,omitempty"`
-	Generate  bool   `json:"generate,omitempty"`
-}
-
-type ExternalServiceRegistration struct {
-	ExternalServiceName    string                     `json:"name"`
-	Permissions            []accesscontrol.Permission `json:"permissions,omitempty"`
-	ImpersonatePermissions []accesscontrol.Permission `json:"impersonatePermissions,omitempty"`
-	RedirectURI            *string                    `json:"redirectUri,omitempty"`
-	Key                    *KeyOption                 `json:"key,omitempty"`
 }
 
 const (

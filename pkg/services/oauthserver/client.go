@@ -12,6 +12,7 @@ import (
 	"github.com/ory/fosite"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -33,22 +34,6 @@ func ParsePublicKeyPem(publicPem []byte) (interface{}, error) {
 	}
 }
 
-type KeyResult struct {
-	URL        string `json:"url,omitempty"`
-	PrivatePem string `json:"private,omitempty"`
-	PublicPem  string `json:"public,omitempty"`
-	Generated  bool   `json:"generated,omitempty"`
-}
-
-type ClientDTO struct {
-	ExternalServiceName string     `json:"name"`
-	ID                  string     `json:"clientId"`
-	Secret              string     `json:"clientSecret"`
-	GrantTypes          string     `xorm:"grant_types"` // CSV value
-	RedirectURI         string     `json:"redirectUri,omitempty"`
-	KeyResult           *KeyResult `json:"key,omitempty"`
-}
-
 type Client struct {
 	ID                     int64           `xorm:"id pk autoincr"`
 	OrgIDs                 []int64         `xorm:"org_id"`
@@ -65,8 +50,8 @@ type Client struct {
 	// Domain           string `xorm:"domain"`
 }
 
-func (c *Client) ToDTO() *ClientDTO {
-	c2 := ClientDTO{
+func (c *Client) ToDTO() *plugins.ClientDTO {
+	c2 := plugins.ClientDTO{
 		ExternalServiceName: c.ExternalServiceName,
 		ID:                  c.ClientID,
 		Secret:              c.Secret,
@@ -74,7 +59,7 @@ func (c *Client) ToDTO() *ClientDTO {
 		RedirectURI:         c.RedirectURI,
 	}
 	if len(c.PublicPem) > 0 {
-		c2.KeyResult = &KeyResult{PublicPem: string(c.PublicPem)}
+		c2.KeyResult = &plugins.KeyResult{PublicPem: string(c.PublicPem)}
 	}
 	return &c2
 }

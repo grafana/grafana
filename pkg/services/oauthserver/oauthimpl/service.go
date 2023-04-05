@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthserver/api"
@@ -174,7 +175,7 @@ func (s *OAuth2ServiceImpl) RandString(n int) (string, error) {
 
 // TODO it would be great to create the service account in the same DB session as the client
 func (s *OAuth2ServiceImpl) RegisterExternalService(ctx context.Context,
-	registration *oauthserver.ExternalServiceRegistration) (*oauthserver.ClientDTO, error) {
+	registration *plugins.ExternalServiceRegistration) (*plugins.ClientDTO, error) {
 	if registration == nil {
 		s.logger.Warn("RegisterExternalService called without registration")
 		return nil, nil
@@ -301,7 +302,7 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName
 	return sa.Id, nil
 }
 
-func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oauthserver.KeyOption) (*oauthserver.KeyResult, error) {
+func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *plugins.KeyOption) (*plugins.KeyResult, error) {
 	if keyOption == nil {
 		return nil, nil
 	}
@@ -350,7 +351,7 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 			s.logger.Debug("RSA key has been generated")
 		}
 
-		return &oauthserver.KeyResult{
+		return &plugins.KeyResult{
 			PrivatePem: privatePem,
 			PublicPem:  publicPem,
 			Generated:  true,
@@ -370,7 +371,7 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 			s.logger.Error("cannot parse PEM encoded string", "error", err)
 			return nil, err
 		}
-		return &oauthserver.KeyResult{
+		return &plugins.KeyResult{
 			PublicPem: keyOption.PublicPEM,
 		}, nil
 	}
@@ -426,7 +427,7 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 }
 
 // TODO it would be great to create the service account in the same DB session as the client
-func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (*oauthserver.ClientDTO, error) {
+func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *plugins.ExternalServiceRegistration) (*plugins.ClientDTO, error) {
 	if registration == nil {
 		s.logger.Warn("RegisterExternalService called without registration")
 		return nil, nil
