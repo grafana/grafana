@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"fmt"
+	"net"
 	"sort"
 	"strconv"
 	"sync"
@@ -16,7 +17,6 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -30,12 +30,13 @@ type redisConfig struct {
 }
 
 const (
-	peerPattern         = "*"
-	fullState           = "full_state"
-	fullStateChannel    = fullState
-	fullStateChannelReq = fullStateChannel + ":request"
-	update              = "update"
-	redisServerLabel    = "redis-server"
+	peerPattern          = "*"
+	fullState            = "full_state"
+	fullStateChannel     = fullState
+	fullStateChannelReq  = fullStateChannel + ":request"
+	update               = "update"
+	redisServerLabel     = "redis-server"
+	networkRetryInterval = time.Second * 10
 )
 
 type redisPeer struct {
@@ -60,6 +61,13 @@ type redisPeer struct {
 	messagesSent         *prometheus.CounterVec
 	messagesSentSize     *prometheus.CounterVec
 	nodePingDuration     *prometheus.HistogramVec
+
+	// Last known position in the cluster.
+	position int
+	// The time when we computed the position in the cluster the last time successfully.
+	positionFetchedAt time.Time
+	// The duration we want to return the postion if the network is down.
+	positionValidFor time.Duration
 }
 
 func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
@@ -95,6 +103,7 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		prefix:            cfg.prefix,
 		heartbeatInterval: time.Second * 5,
 		heartbeatTimeout:  time.Second * 60,
+		positionValidFor:  time.Second * 60,
 	}
 
 	// The metrics for the redis peer are exactly the same as for the official
@@ -183,10 +192,11 @@ func (p *redisPeer) heartbeatLoop() {
 			startTime := time.Now()
 			cmd := p.redis.Set(context.Background(), p.withPrefix(p.name), time.Now().Unix(), time.Minute*5)
 			reqDur := time.Since(startTime)
-			p.nodePingDuration.WithLabelValues(redisServerLabel).Observe(reqDur.Seconds())
 			if cmd.Err() != nil {
-				logger.Error("failed to set key", "err", cmd.Err())
+				p.logger.Error("error setting the heartbeat key", "err", cmd.Err(), "peer", p.withPrefix(p.name))
+				continue
 			}
+			p.nodePingDuration.WithLabelValues(redisServerLabel).Observe(reqDur.Seconds())
 		case <-p.shutdownc:
 			ticker.Stop()
 			return
@@ -196,12 +206,25 @@ func (p *redisPeer) heartbeatLoop() {
 }
 
 func (p *redisPeer) Position() int {
-	for i, peer := range p.Members() {
+	members := p.Members()
+	// When the members array is empty and we fetched our position succesfully
+	// prior, we can assume that currently the network is down.
+	// To prevent a spike of duplicate messages, we return for the duration of
+	// lastPositionValidFor the last known position and only failover to position
+	// 0 afterwards if we do not eventually recover.
+	if len(members) == 0 && p.positionFetchedAt.After(time.Now().Add(-p.positionValidFor)) {
+		p.logger.Warn("failed to fetch position from redis, falling back to last know position", "last_known", p.position)
+		return p.position
+	}
+	for i, peer := range members {
 		if peer == p.name {
 			p.logger.Debug("cluster position found", "name", p.name, "position", i)
+			p.position = i
+			p.positionFetchedAt = time.Now()
 			return i
 		}
 	}
+
 	return 0
 }
 
@@ -232,11 +255,12 @@ func (p *redisPeer) GetHealthScore() int {
 func (p *redisPeer) Members() []string {
 	// The 100 is a hint for the server, how many records there might be for the
 	// provided pattern. It _might_ only return the first 100 records, which should
-	// be more than enough for our use-case.
+	// be more than enough for our use case.
 	// More here: https://redis.io/commands/scan/
 	members, _, err := p.redis.Scan(context.Background(), 0, p.withPrefix(peerPattern), 100).Result()
 	if err != nil {
 		p.logger.Error("error getting keys from redis", "err", err, "pattern", p.withPrefix(peerPattern))
+		return []string{}
 	}
 	// This might happen on startup, when no value is in the store yet.
 	if len(members) == 0 {
@@ -277,7 +301,7 @@ func (p *redisPeer) WaitReady(ctx context.Context) error {
 	}
 }
 
-// Settle is copied from uptream.
+// Settle is mostly copied from uptream.
 // Ref: https://github.com/prometheus/alertmanager/blob/2888649b473970400c0bd375fdd563486dc80481/cluster/cluster.go#L674-L712
 func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 	const NumOkayRequired = 3
@@ -325,7 +349,7 @@ func (p *redisPeer) AddState(key string, state cluster.State, _ prometheus.Regis
 	p.mtx.Unlock()
 	return &RedisChannel{
 		p:       p,
-		channel: p.prefix + key,
+		channel: p.withPrefix(key),
 		msgType: update,
 	}
 }
@@ -338,15 +362,20 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 		default:
 			p.messagesReceived.WithLabelValues(update).Inc()
 			data, err := channel.ReceiveMessage(context.Background())
+			if err, ok := err.(*net.OpError); ok && err != nil {
+				p.logger.Error("network error, waiting 10 seconds before retry", "err", err, "channel", p.withPrefix(name))
+				time.Sleep(networkRetryInterval)
+				continue
+			}
 			if err != nil {
-				p.logger.Error("error receiving message from redis", "err", err, "channel", data.Channel)
+				p.logger.Error("error receiving message from redis", "err", err, "channel", p.withPrefix(name))
 				continue
 			}
 			p.messagesReceivedSize.WithLabelValues(update).Add(float64(len(data.Payload)))
 			var part clusterpb.Part
 			if err := proto.Unmarshal([]byte(data.Payload), &part); err != nil {
 				p.logger.Warn("error decoding the received broadcast message", "err", err)
-				return
+				continue
 			}
 
 			p.mtx.RLock()
@@ -354,11 +383,11 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 			p.mtx.RUnlock()
 
 			if !ok {
-				return
+				continue
 			}
 			if err := s.Merge(part.Data); err != nil {
 				p.logger.Warn("error merging the received broadcast message", "err", err, "key", name)
-				return
+				continue
 			}
 		}
 	}
@@ -371,8 +400,13 @@ func (p *redisPeer) fullStateReqReceiveLoop() {
 			return
 		default:
 			data, err := p.subs[fullStateChannelReq].ReceiveMessage(context.Background())
+			if err, ok := err.(*net.OpError); ok && err != nil {
+				p.logger.Error("network error, waiting 10 seconds before retry", "err", err, "channel", p.withPrefix(fullStateChannelReq))
+				time.Sleep(networkRetryInterval)
+				continue
+			}
 			if err != nil {
-				p.logger.Error("error receiving message from redis", "err", err, "channel", data.Channel)
+				p.logger.Error("error receiving message from redis", "err", err, "channel", p.withPrefix(fullStateChannelReq))
 				continue
 			}
 			if data.Payload == p.name {
@@ -391,8 +425,13 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 		default:
 			p.messagesReceived.WithLabelValues(fullState).Inc()
 			data, err := p.subs[fullStateChannel].ReceiveMessage(context.Background())
+			if err, ok := err.(*net.OpError); ok && err != nil {
+				p.logger.Error("network error, waiting 10 seconds before retry", "err", err, "channel", p.withPrefix(fullStateChannel))
+				time.Sleep(networkRetryInterval)
+				continue
+			}
 			if err != nil {
-				p.logger.Error("error receiving message from redis", "err", err, "channel", data.Channel)
+				p.logger.Error("error receiving message from redis", "err", err, "channel", p.withPrefix(fullStateChannel))
 				continue
 			}
 			p.messagesReceivedSize.WithLabelValues(fullState).Add(float64(len(data.Payload)))
@@ -400,8 +439,9 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 			var fs clusterpb.FullState
 			if err := proto.Unmarshal([]byte(data.Payload), &fs); err != nil {
 				p.logger.Warn("error unmarshaling the received remote state", "err", err)
-				return
+				continue
 			}
+			// This inline func is just a lazy workaround so we can use defer in the loop.
 			func() {
 				p.mtx.RLock()
 				defer p.mtx.RUnlock()
@@ -444,7 +484,7 @@ func (p *redisPeer) fullStateSyncPublishLoop() {
 func (p *redisPeer) requestFullState() {
 	pub := p.redis.Publish(context.Background(), p.withPrefix(fullStateChannelReq), p.name)
 	if pub.Err() != nil {
-		p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", p.withPrefix(fullStateChannel))
+		p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", p.withPrefix(fullStateChannelReq))
 	}
 }
 
