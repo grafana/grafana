@@ -224,18 +224,26 @@ func (l *Loader) validateSignatures(ctx context.Context, loadedPlugins []*plugin
 			l.log.Debug("stopped plugins verification reader goroutine")
 		}()
 		l.log.Debug("started plugins verification reader goroutine")
+
+		var signatureErrorsDone, validatedPluginsDone bool
 		for {
+			if signatureErrorsDone && validatedPluginsDone {
+				// Exit only when BOTH signatureErrors and validatedPlugins have been closed and fully consumed.
+				return
+			}
 			select {
 			case signatureErr, ok := <-signatureErrors:
 				if !ok {
-					return
+					signatureErrorsDone = true
+					continue
 				}
 				l.errsMux.Lock()
 				l.errs[signatureErr.PluginID] = signatureErr
 				l.errsMux.Unlock()
 			case p, ok := <-validatedPlugins:
 				if !ok {
-					return
+					validatedPluginsDone = true
+					continue
 				}
 				verifiedPlugins = append(verifiedPlugins, p)
 			}
