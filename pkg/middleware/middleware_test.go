@@ -583,7 +583,7 @@ func TestMiddlewareContext(t *testing.T) {
 		configure := func(cfg *setting.Cfg) {
 			cfg.AuthProxyEnabled = true
 			cfg.AuthProxyAutoSignUp = true
-			cfg.LDAPEnabled = true
+			cfg.LDAPAuthEnabled = true
 			cfg.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			cfg.AuthProxyHeaderProperty = "username"
 			cfg.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS", "Role": "X-WEBAUTH-ROLE"}
@@ -627,7 +627,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Nil(t, sc.context)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 			cfg.AuthProxyAutoSignUp = false
 		})
 
@@ -648,7 +648,7 @@ func TestMiddlewareContext(t *testing.T) {
 			require.Contains(t, list.Items, "X-WEBAUTH-ROLE")
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 			cfg.AuthProxyAutoSignUp = true
 		})
 
@@ -671,7 +671,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Equal(t, orgRole, string(sc.context.OrgRole))
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 			cfg.AuthProxyAutoSignUp = true
 		})
 
@@ -697,7 +697,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Equal(t, "", string(sc.context.OrgRole))
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 			cfg.AuthProxyAutoSignUp = true
 		})
 
@@ -715,7 +715,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Equal(t, targetOrgID, sc.context.OrgID)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 			cfg.AuthProxyAutoSignUp = true
 		})
 
@@ -789,7 +789,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Equal(t, orgID, sc.context.OrgID)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 		})
 
 		middlewareScenario(t, "Should allow the request from whitelist IP", func(t *testing.T, sc *scenarioContext) {
@@ -807,7 +807,7 @@ func TestMiddlewareContext(t *testing.T) {
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 			cfg.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 		})
 
 		middlewareScenario(t, "Should not allow the request from whitelisted IP", func(t *testing.T, sc *scenarioContext) {
@@ -823,7 +823,7 @@ func TestMiddlewareContext(t *testing.T) {
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 			cfg.AuthProxyWhitelist = "8.8.8.8"
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 		})
 
 		middlewareScenario(t, "Should return 407 status code if LDAP says no", func(t *testing.T, sc *scenarioContext) {
