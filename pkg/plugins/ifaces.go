@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/services/oauthserver"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 // Store is the publicly accessible storage for plugins.
@@ -127,6 +127,37 @@ func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
 	return fn(next)
 }
 
+// Structs from pkg/services/oauthserver/client.go
+type KeyOption struct {
+	// URL       string `json:"url,omitempty"` // TODO allow specifying a URL (to a .jwks file) to fetch the key from
+	PublicPEM string `json:"public_pem,omitempty"`
+	Generate  bool   `json:"generate,omitempty"`
+}
+
+type ExternalServiceRegistration struct {
+	ExternalServiceName    string                     `json:"name"`
+	Permissions            []accesscontrol.Permission `json:"permissions,omitempty"`
+	ImpersonatePermissions []accesscontrol.Permission `json:"impersonatePermissions,omitempty"`
+	RedirectURI            *string                    `json:"redirectUri,omitempty"`
+	Key                    *KeyOption                 `json:"key,omitempty"`
+}
+
+type KeyResult struct {
+	URL        string `json:"url,omitempty"`
+	PrivatePem string `json:"private,omitempty"`
+	PublicPem  string `json:"public,omitempty"`
+	Generated  bool   `json:"generated,omitempty"`
+}
+
+type ClientDTO struct {
+	ExternalServiceName string     `json:"name"`
+	ID                  string     `json:"clientId"`
+	Secret              string     `json:"clientSecret"`
+	GrantTypes          string     `xorm:"grant_types"` // CSV value
+	RedirectURI         string     `json:"redirectUri,omitempty"`
+	KeyResult           *KeyResult `json:"key,omitempty"`
+}
+
 type OAuth2Service interface {
-	SaveExternalService(ctx context.Context, cmd *oauthserver.ExternalServiceRegistration) (*oauthserver.ClientDTO, error)
+	SaveExternalService(ctx context.Context, cmd *ExternalServiceRegistration) (*ClientDTO, error)
 }

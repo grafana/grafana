@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/services/oauthserver"
 )
 
 type Initializer struct {
@@ -129,8 +128,8 @@ func (i *Initializer) getPluginSettings(pluginID string, cfg *config.Cfg) (plugi
 	return ps, nil
 }
 
-func (i *Initializer) oauth2OnBehalfOfVars(pluginID string, oauthAppInfo *oauthserver.ExternalServiceRegistration) ([]string, error) {
-	cli, err := i.oauthServer.SaveExternalService(context.Background(), &oauthserver.ExternalServiceRegistration{
+func (i *Initializer) oauth2OnBehalfOfVars(pluginID string, oauthAppInfo *plugins.ExternalServiceRegistration) ([]string, error) {
+	cli, err := i.oauthServer.SaveExternalService(context.Background(), &plugins.ExternalServiceRegistration{
 		ExternalServiceName:    pluginID,
 		Permissions:            oauthAppInfo.Permissions,
 		ImpersonatePermissions: oauthAppInfo.ImpersonatePermissions,

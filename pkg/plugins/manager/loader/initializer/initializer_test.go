@@ -2,6 +2,7 @@ package initializer
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -169,6 +170,64 @@ func TestInitializer_envVars(t *testing.T) {
 		assert.Equal(t, "GF_ENTERPRISE_APP_URL=https://myorg.com/", envVars[5])
 		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[6])
 	})
+
+	t.Run("backend app with oauth registration info", func(t *testing.T) {
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID:                       "test",
+				OauthServiceRegistration: &plugins.ExternalServiceRegistration{},
+			},
+		}
+
+		i := &Initializer{
+			cfg: &config.Cfg{},
+			log: log.NewTestLogger(),
+			backendProvider: &fakeBackendProvider{
+				plugin: p,
+			},
+			oauthServer: &fakeOAuthServer{
+				cli: &plugins.ClientDTO{
+					ID:     "test",
+					Secret: "secret",
+					KeyResult: &plugins.KeyResult{
+						PrivatePem: "private",
+					},
+				},
+			},
+		}
+
+		envVars, err := i.envVars(p)
+		assert.NoError(t, err)
+		assert.Len(t, envVars, 5)
+		assert.Equal(t, "GF_VERSION=", envVars[0])
+		assert.Equal(t, "GF_APP_URL=", envVars[1])
+		assert.Equal(t, "GF_PLUGIN_APP_CLIENT_ID=test", envVars[2])
+		assert.Equal(t, "GF_PLUGIN_APP_CLIENT_SECRET=secret", envVars[3])
+		assert.Equal(t, "GF_PLUGIN_APP_PRIVATE_KEY=private", envVars[4])
+	})
+
+	t.Run("backend app with oauth registration info return an error", func(t *testing.T) {
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID:                       "test",
+				OauthServiceRegistration: &plugins.ExternalServiceRegistration{},
+			},
+		}
+
+		i := &Initializer{
+			cfg: &config.Cfg{},
+			log: log.NewTestLogger(),
+			backendProvider: &fakeBackendProvider{
+				plugin: p,
+			},
+			oauthServer: &fakeOAuthServer{
+				err: fmt.Errorf("boom"),
+			},
+		}
+
+		_, err := i.envVars(p)
+		assert.ErrorContains(t, err, "boom")
+	})
 }
 
 func TestInitializer_getAWSEnvironmentVariables(t *testing.T) {
@@ -209,4 +268,13 @@ func (f *fakeBackendProvider) BackendFactory(_ context.Context, _ *plugins.Plugi
 	return func(_ string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
 		return f.plugin, nil
 	}
+}
+
+type fakeOAuthServer struct {
+	cli *plugins.ClientDTO
+	err error
+}
+
+func (f *fakeOAuthServer) SaveExternalService(ctx context.Context, cmd *plugins.ExternalServiceRegistration) (*plugins.ClientDTO, error) {
+	return f.cli, f.err
 }
