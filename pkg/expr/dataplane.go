@@ -54,8 +54,9 @@ func handleDataplaneFrames(k data.FrameTypeKind, frames data.Frames) (mathexp.Re
 		return handleDataplaneTS(frames)
 	case data.KindNumeric:
 		return handleDataplaneNumeric(frames)
+	default:
+		return mathexp.Results{}, fmt.Errorf("kind %s not supported by server side expressions", k)
 	}
-	return mathexp.Results{}, fmt.Errorf("kind %s not supported by server side expressions", k)
 }
 
 func handleDataplaneTS(frames data.Frames) (mathexp.Results, error) {
