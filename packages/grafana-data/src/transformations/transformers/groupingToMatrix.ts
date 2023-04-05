@@ -1,8 +1,9 @@
 import { map } from 'rxjs/operators';
 
 import { MutableDataFrame } from '../../dataframe';
-import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, DataTransformerInfo, Field, FieldType, SpecialValue, Vector } from '../../types';
+import { fieldMatchers } from '../matchers';
+import { FieldMatcherID } from '../matchers/ids';
 
 import { DataTransformerID } from './ids';
 
@@ -83,6 +84,14 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
             values.push(value);
           }
 
+          // setting the displayNameFromDS in prometheus overrides
+          // the column name based on value fields that are numbers
+          // this prevents columns that should be named 1000190
+          // from becoming named {__name__: 'metricName'}
+          if (typeof columnName === 'number') {
+            valueField.config.displayNameFromDS = undefined;
+          }
+
           resultFrame.addField({
             name: columnName.toString(),
             values: values,
@@ -110,7 +119,9 @@ function findKeyField(frame: DataFrame, matchTitle: string): Field | null {
   for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
     const field = frame.fields[fieldIndex];
 
-    if (matchTitle === getFieldDisplayName(field)) {
+    const matcher = fieldMatchers.get(FieldMatcherID.byName).get(matchTitle);
+
+    if (matcher(field, frame, [frame])) {
       return field;
     }
   }
