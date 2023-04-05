@@ -11,6 +11,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { LinkButton, usePanelContext, useStyles2, VerticalGroup, VizTooltipOptions } from '@grafana/ui';
+import { findField } from 'app/features/dimensions';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
 import { ScatterSeriesConfig, SeriesMapping } from './models.gen';
@@ -69,14 +70,16 @@ export const TooltipView = ({
     range,
   });
 
+  let extraFields: Field[] = frame.fields.filter((f) => f !== xField && f !== yField);
+
   let yValue: YValue | null = null;
   let extraFacets: ExtraFacets | null = null;
   if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
     const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointColor?.field ?? '';
     const sizeFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointSize?.field ?? '';
 
-    const colorFacet = colorFacetFieldName ? frame.fields.find((f) => f.name === colorFacetFieldName) : undefined;
-    const sizeFacet = sizeFacetFieldName ? frame.fields.find((f) => f.name === sizeFacetFieldName) : undefined;
+    const colorFacet = colorFacetFieldName ? findField(frame, colorFacetFieldName) : undefined;
+    const sizeFacet = sizeFacetFieldName ? findField(frame, sizeFacetFieldName) : undefined;
 
     extraFacets = {
       colorFacetFieldName,
@@ -84,6 +87,8 @@ export const TooltipView = ({
       colorFacetValue: colorFacet?.values.get(rowIndex),
       sizeFacetValue: sizeFacet?.values.get(rowIndex),
     };
+
+    extraFields = extraFields.filter((f) => f !== colorFacet && f !== sizeFacet);
   }
 
   yValue = {
@@ -101,7 +106,7 @@ export const TooltipView = ({
         </tr>
         <tbody>
           <tr>
-            <th>{xField.name}</th>
+            <th>{getFieldDisplayName(xField, frame)}</th>
             <td>{fmt(xField, xField.values.get(rowIndex))}</td>
           </tr>
           <tr>
@@ -120,6 +125,12 @@ export const TooltipView = ({
               <td>{extraFacets.sizeFacetValue}</td>
             </tr>
           )}
+          {extraFields.map((field, i) => (
+            <tr key={i}>
+              <th>{getFieldDisplayName(field, frame)}:</th>
+              <td>{fmt(field, field.values.get(rowIndex))}</td>
+            </tr>
+          ))}
           {links.length > 0 && (
             <tr>
               <td colSpan={2}>
