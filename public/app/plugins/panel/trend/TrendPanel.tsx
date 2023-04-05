@@ -57,6 +57,9 @@ export const TrendPanel = ({
     // Make sure values are ascending
     if (xFieldIdx != null) {
       const field = frames[0].fields[xFieldIdx];
+
+      console.log(Array.isArray(field.values));
+
       if (field.type === FieldType.number && !isLikelyAscendingVector(field.values)) {
         return {
           warning: `Values must be in ascending order`,
