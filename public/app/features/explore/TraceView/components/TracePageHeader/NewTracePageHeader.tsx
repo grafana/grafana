@@ -14,10 +14,11 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import * as React from 'react';
+import { get, maxBy, values } from 'lodash';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, BadgeColor, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import ExternalLinks from '../common/ExternalLinks';
@@ -50,19 +51,26 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       line-height: 1em;
       margin: -0.5em 0.5em 1.5em 0.5em;
     `,
+    duration: css`
+      color: #aaa;
+      margin: 0 0.75em;
+    `,
+    tooltip: css`
+      color: #aaa;
+      margin: -14px 0.5em 0 0;
+    `,
+    timestamp: css`
+      vertical-align: middle;
+    `,
+    tagMeta: css`
+      margin: 0 0.75em;
+      vertical-align: text-top;
+    `,
     tag: css`
       margin: 0 0.5em 0 0;
     `,
-    url: css`
-      margin: -2.5px 0.3em;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      max-width: 30%;
-      display: inline-block;
-    `,
-    divider: css`
-      margin: 0 0.75em;
+    total: css`
+      vertical-align: middle;
     `,
     header: css`
       label: TracePageHeader;
@@ -95,13 +103,28 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
 
   const { method, status, url } = getHeaderTags(trace.spans);
 
+  const tooltip = () => {
+    const services = new Set(values(trace.processes).map((p) => p.serviceName)).size;
+    const depth = get(maxBy(trace.spans, 'depth'), 'depth', 0) + 1;
+
+    return (
+      <>
+        <div>Services: {services}</div>
+        <div>Depth: {depth}</div>
+        <div>{url && url.length > 0 ? `URL: ${url[0].value}` : ''}</div>
+      </>
+    );
+  };
+
   const title = (
     <h1 className={cx(styles.title)}>
       <TraceName traceName={getTraceName(trace.spans)} />
-      <small>
-        <span className={styles.divider}>|</span>
-        {formatDuration(trace.duration)}
-      </small>
+      <small className={styles.duration}>{formatDuration(trace.duration)}</small>
+      <Tooltip content={tooltip} interactive={true}>
+        <span className={styles.tooltip}>
+          <Icon name="info-circle" size="lg" />
+        </span>
+      </Tooltip>
     </h1>
   );
 
@@ -123,27 +146,29 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
       </div>
 
       <div className={styles.subtitle}>
-        {timestamp(trace, timeZone, styles)}
-        {method || status || url ? <span className={styles.divider}>|</span> : undefined}
-        {method && method.length > 0 && (
-          <Tooltip content={'http.method'} interactive={true}>
-            <span className={styles.tag}>
-              <Badge text={method[0].value} color="blue" />
-            </span>
-          </Tooltip>
-        )}
-        {status && status.length > 0 && (
-          <Tooltip content={'http.status_code'} interactive={true}>
-            <span className={styles.tag}>
-              <Badge text={status[0].value} color={statusColor} />
-            </span>
-          </Tooltip>
-        )}
-        {url && url.length > 0 && (
-          <Tooltip content={'http.url or http.target or http.path'} interactive={true}>
-            <span className={styles.url}>{url[0].value}</span>
-          </Tooltip>
-        )}
+        <span className={styles.timestamp}>{timestamp(trace, timeZone, styles)}</span>
+        <span className={styles.tagMeta}>
+          {method && method.length > 0 && (
+            <Tooltip content={'http.method'} interactive={true}>
+              <span className={styles.tag}>
+                <Badge text={method[0].value} color="blue" />
+              </span>
+            </Tooltip>
+          )}
+          {status && status.length > 0 && (
+            <Tooltip content={'http.status_code'} interactive={true}>
+              <span className={styles.tag}>
+                <Badge text={status[0].value} color={statusColor} />
+              </span>
+            </Tooltip>
+          )}
+          <span className={styles.total}>Total Spans: {trace.spans.length}</span>
+          {/* {url && url.length > 0 && (
+            <Tooltip content={'http.url or http.target or http.path'} interactive={true}>
+              <span className={styles.url}>{url[0].value}</span>
+            </Tooltip>
+          )} */}
+        </span>
       </div>
 
       <SpanGraph
