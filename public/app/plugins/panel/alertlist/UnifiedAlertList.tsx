@@ -32,7 +32,7 @@ import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/un
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { AccessControlAction, useDispatch } from 'app/types';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { getAlertingRule } from '../../../features/alerting/unified/utils/rules';
 import { AlertingRule, CombinedRuleWithLocation } from '../../../types/unified-alerting';
@@ -63,7 +63,11 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   useEffect(() => {
     //we need promRules and rulerRules for getting the uid when creating the alert link in panel in case of being a rulerRule.
     dispatch(
-      fetchAllPromAndRulerRulesAction(false, { limitAlerts: 1, matchers: props.options.alertInstanceLabelFilter })
+      fetchAllPromAndRulerRulesAction(false, {
+        limitAlerts: 1,
+        matchers: props.options.alertInstanceLabelFilter,
+        state: [GrafanaAlertState.Alerting, GrafanaAlertState.Normal],
+      })
     );
     const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => dispatch(fetchAllPromAndRulerRulesAction()));
     return () => {

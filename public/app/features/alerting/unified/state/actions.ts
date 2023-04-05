@@ -25,6 +25,7 @@ import {
   StateHistoryItem,
 } from 'app/types/unified-alerting';
 import {
+  GrafanaAlertState,
   PostableRulerRuleGroupDTO,
   PromApplication,
   RulerRuleDTO,
@@ -106,7 +107,14 @@ export const fetchPromRulesAction = createAsyncThunk(
       filter,
       limitAlerts,
       matchers,
-    }: { rulesSourceName: string; filter?: FetchPromRulesFilter; limitAlerts?: number; matchers?: string },
+      state,
+    }: {
+      rulesSourceName: string;
+      filter?: FetchPromRulesFilter;
+      limitAlerts?: number;
+      matchers?: string;
+      state?: GrafanaAlertState[];
+    },
     thunkAPI
   ): Promise<RuleNamespace[]> => {
     await thunkAPI.dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
@@ -116,7 +124,7 @@ export const fetchPromRulesAction = createAsyncThunk(
       thunk: 'unifiedalerting/fetchPromRules',
     });
 
-    return await withSerializedError(fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matchers));
+    return await withSerializedError(fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matchers, state));
   }
 );
 
@@ -348,6 +356,7 @@ interface FetchPromRulesRulesActionProps {
   filter?: FetchPromRulesFilter;
   limitAlerts?: number;
   matchers?: string;
+  state?: GrafanaAlertState[];
 }
 
 export function fetchAllPromAndRulerRulesAction(
