@@ -62,12 +62,6 @@ To configure basic settings for the data source, complete the following steps:
     | `Version` | The version of your Prometheus server, note that this field is not visible until the Prometheus type is selected. |
     | `Disable metrics lookup` | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances. |
     | `Custom query parameters` | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'. |
-    | **Exemplars configuration** | |
-    | `Internal link` | Enable this option is you have an internal link. When you enable this option, you will see a data source selector. Select the backend tracing data store for your exemplar data. |
-    | `Data source` | You will see this option only if you enable `Internal link` option. Select the backend tracing data store for your exemplar data. |
-    | `URL` | You will see this option only if the `Internal link` option is disabled. Enter the full URL of the external link. You can interpolate the value from the field with `${__value.raw }` macro. |
-    | `URL Label` | (Optional) add a custom display label to override the value of the `Label name` field. |
-    | `Label name` | Add a name for the exemplar traceID property. |
 
         **Exemplars configuration:**
 
