@@ -152,7 +152,7 @@ func (l *Loader) validateSignature(plugin *plugins.Plugin) *plugins.SignatureErr
 	if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
 		_, err := plugin.FS.Open("module.js")
 		if err != nil {
-			if errors.Is(err, plugins.ErrFileNotExist) && !l.pluginsCDN.PluginSupported(plugin.ID) {
+			if errors.Is(err, plugins.ErrFileNotExist) {
 				l.log.Warn("Plugin missing module.js", "pluginID", plugin.ID,
 					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
 			}
