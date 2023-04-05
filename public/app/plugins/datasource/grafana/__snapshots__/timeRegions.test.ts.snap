@@ -1,5 +1,75 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`grafana data source supports time region query 1`] = `
+{
+  "fields": [
+    {
+      "config": {},
+      "labels": undefined,
+      "name": "time",
+      "type": "time",
+      "values": [
+        1609718400000,
+        1610323200000,
+        1610928000000,
+        1611532800000,
+        1612137600000,
+      ],
+    },
+    {
+      "config": {},
+      "labels": undefined,
+      "name": "timeEnd",
+      "type": "time",
+      "values": [
+        1609891199000,
+        1610495999000,
+        1611100799000,
+        1611705599000,
+        1612310399000,
+      ],
+    },
+    {
+      "config": {
+        "color": {
+          "fixedColor": "green",
+          "mode": "fixed",
+        },
+      },
+      "labels": undefined,
+      "name": "color",
+      "type": "string",
+      "values": [
+        "green",
+        "green",
+        "green",
+        "green",
+        "green",
+      ],
+    },
+    {
+      "config": {},
+      "labels": undefined,
+      "name": "line",
+      "type": "boolean",
+      "values": [
+        true,
+        true,
+        true,
+        true,
+        true,
+      ],
+    },
+  ],
+  "meta": {
+    "dataTopic": "annotations",
+    "type": "timeranges",
+  },
+  "name": undefined,
+  "refId": undefined,
+}
+`;
+
 exports[`grafana data source time region query 1`] = `
 {
   "fields": [
