@@ -4,6 +4,7 @@ import {
   SceneTimePicker,
   SceneGridLayout,
   SceneTimeRange,
+  SceneRefreshPicker,
   SceneGridItem,
 } from '@grafana/scenes';
 import { TestDataQueryType } from 'app/plugins/datasource/testdata/dataquery.gen';
@@ -77,6 +78,6 @@ export function getGridWithMultipleTimeRanges(): DashboardScene {
     }),
     $timeRange: globalTimeRange,
     $data: getQueryRunnerWithRandomWalkQuery(),
-    actions: [new SceneTimePicker({})],
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
   });
 }

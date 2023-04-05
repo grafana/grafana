@@ -1,10 +1,10 @@
 import { PluginExtension } from '@grafana/data';
 
 export type GetPluginExtensions = ({
-  placement,
+  extensionPointId,
   context,
 }: {
-  placement: string;
+  extensionPointId: string;
   context?: object | Record<string | symbol, unknown>;
 }) => {
   extensions: PluginExtension[];

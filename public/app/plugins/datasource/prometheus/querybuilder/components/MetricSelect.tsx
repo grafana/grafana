@@ -114,7 +114,10 @@ export function MetricSelect({ datasource, query, onChange, onGetMetrics, labels
     });
   };
 
-  const debouncedSearch = debounce((query: string) => getMetricLabels(query), 300);
+  const debouncedSearch = debounce(
+    (query: string) => getMetricLabels(query),
+    datasource.getDebounceTimeInMilliseconds()
+  );
 
   return (
     <EditorFieldGroup>

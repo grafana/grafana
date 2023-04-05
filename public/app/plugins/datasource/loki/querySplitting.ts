@@ -13,8 +13,8 @@ import {
 import { LoadingState } from '@grafana/schema';
 
 import { LokiDatasource } from './datasource';
-import { getRangeChunks as getLogsRangeChunks } from './logsTimeChunking';
-import { getRangeChunks as getMetricRangeChunks } from './metricTimeChunking';
+import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
+import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
 import { isLogsQuery } from './queryUtils';
 import { combineResponses } from './responseUtils';
 import { LokiQuery, LokiQueryType } from './types';
@@ -38,8 +38,8 @@ export function partitionTimeRange(
   const step = Math.max(intervalMs * resolution, safeStep);
 
   const ranges = isLogsQuery
-    ? getLogsRangeChunks(start, end, duration)
-    : getMetricRangeChunks(start, end, step, duration);
+    ? splitLogsTimeRange(start, end, duration)
+    : splitMetricTimeRange(start, end, step, duration);
 
   return ranges.map(([start, end]) => {
     const from = dateTime(start);
@@ -83,7 +83,7 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
 
 type LokiGroupedRequest = Array<{ request: DataQueryRequest<LokiQuery>; partition: TimeRange[] }>;
 
-export function runGroupedQueriesInChunks(datasource: LokiDatasource, requests: LokiGroupedRequest) {
+export function runSplitGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest) {
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
 
@@ -154,11 +154,14 @@ export function runGroupedQueriesInChunks(datasource: LokiDatasource, requests: 
 
 function getNextRequestPointers(requests: LokiGroupedRequest, requestGroup: number, requestN: number) {
   // There's a pending request from the next group:
-  if (requests[requestGroup + 1]?.partition[requestN - 1]) {
-    return {
-      nextRequestGroup: requestGroup + 1,
-      nextRequestN: requestN,
-    };
+  for (let i = requestGroup + 1; i < requests.length; i++) {
+    const group = requests[i];
+    if (group.partition[requestN - 1]) {
+      return {
+        nextRequestGroup: i,
+        nextRequestN: requestN,
+      };
+    }
   }
   return {
     // Find the first group where `[requestN - 1]` is defined
@@ -167,7 +170,7 @@ function getNextRequestPointers(requests: LokiGroupedRequest, requestGroup: numb
   };
 }
 
-export function runQueryInChunks(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
+export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   const queries = request.targets.filter((query) => !query.hide);
   const [instantQueries, normalQueries] = partition(queries, (query) => query.queryType === LokiQueryType.Instant);
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
@@ -176,10 +179,10 @@ export function runQueryInChunks(datasource: LokiDatasource, request: DataQueryR
 
   const oneDayMs = 24 * 60 * 60 * 1000;
   const rangePartitionedLogQueries = groupBy(logQueries, (query) =>
-    query.chunkDuration ? durationToMilliseconds(parseDuration(query.chunkDuration)) : oneDayMs
+    query.splitDuration ? durationToMilliseconds(parseDuration(query.splitDuration)) : oneDayMs
   );
   const rangePartitionedMetricQueries = groupBy(metricQueries, (query) =>
-    query.chunkDuration ? durationToMilliseconds(parseDuration(query.chunkDuration)) : oneDayMs
+    query.splitDuration ? durationToMilliseconds(parseDuration(query.splitDuration)) : oneDayMs
   );
 
   const requests: LokiGroupedRequest = [];
@@ -222,5 +225,5 @@ export function runQueryInChunks(datasource: LokiDatasource, request: DataQueryR
     });
   }
 
-  return runGroupedQueriesInChunks(datasource, requests);
+  return runSplitGroupedQueries(datasource, requests);
 }

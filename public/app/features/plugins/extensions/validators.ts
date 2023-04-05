@@ -29,10 +29,10 @@ export function assertLinkPathIsValid(pluginId: string, path: string) {
   }
 }
 
-export function assertPlacementIsValid(extension: PluginExtensionLinkConfig) {
-  if (!isPlacementValid(extension)) {
+export function assertExtensionPointIdIsValid(extension: PluginExtensionLinkConfig) {
+  if (!isExtensionPointIdValid(extension)) {
     throw new Error(
-      `Invalid extension "${extension.title}". The placement should start with either "grafana/" or "plugins/" (currently: "${extension.placement}"). Skipping the extension.`
+      `Invalid extension "${extension.title}". The extensionPointId should start with either "grafana/" or "plugins/" (currently: "${extension.extensionPointId}"). Skipping the extension.`
     );
   }
 }
@@ -65,8 +65,10 @@ export function isLinkPathValid(pluginId: string, path: string) {
   return Boolean(typeof path === 'string' && path.length > 0 && path.startsWith(`/a/${pluginId}/`));
 }
 
-export function isPlacementValid(extension: PluginExtensionLinkConfig) {
-  return Boolean(extension.placement?.startsWith('grafana/') || extension.placement?.startsWith('plugins/'));
+export function isExtensionPointIdValid(extension: PluginExtensionLinkConfig) {
+  return Boolean(
+    extension.extensionPointId?.startsWith('grafana/') || extension.extensionPointId?.startsWith('plugins/')
+  );
 }
 
 export function isConfigureFnValid(extension: PluginExtensionLinkConfig) {
@@ -77,18 +79,21 @@ export function isStringPropValid(prop: unknown) {
   return typeof prop === 'string' && prop.length > 0;
 }
 
-export function isPromise(value: unknown) {
-  return value instanceof Promise || (typeof value === 'object' && value !== null && 'then' in value);
-}
-
 export function isPluginExtensionConfigValid(pluginId: string, extension: PluginExtensionLinkConfig): boolean {
   try {
-    assertStringProps(extension, ['title', 'description', 'placement']);
-    assertPlacementIsValid(extension);
+    assertStringProps(extension, ['title', 'description', 'extensionPointId']);
+    assertExtensionPointIdIsValid(extension);
     assertConfigureIsValid(extension);
 
     if (isPluginExtensionLinkConfig(extension)) {
-      assertLinkPathIsValid(pluginId, extension.path);
+      if (!extension.path && !extension.onClick) {
+        logWarning(`Invalid extension "${extension.title}". Either "path" or "onClick" is required.`);
+        return false;
+      }
+
+      if (extension.path) {
+        assertLinkPathIsValid(pluginId, extension.path);
+      }
     }
 
     return true;
@@ -99,4 +104,10 @@ export function isPluginExtensionConfigValid(pluginId: string, extension: Plugin
 
     return false;
   }
+}
+
+export function isPromise(value: unknown): value is Promise<unknown> {
+  return (
+    value instanceof Promise || (typeof value === 'object' && value !== null && 'then' in value && 'catch' in value)
+  );
 }
