@@ -841,7 +841,6 @@ func getFieldName(dataField data.Field, target *Query, metricTypeCount int) stri
 
 	field := ""
 	if v, ok := dataField.Labels["field"]; ok {
-		// Rename from target[Metrics].ID - Field
 		field = v
 		delete(dataField.Labels, "field")
 	}
