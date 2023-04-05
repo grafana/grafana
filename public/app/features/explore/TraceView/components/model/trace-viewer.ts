@@ -66,12 +66,8 @@ export function findHeaderTags(spans: TraceSpan[]) {
       return tag.key === 'http.status_code';
     });
 
-    const url = spans[i].tags.filter((tag) => {
-      return tag.key === 'http.url' || tag.key === 'http.target' || tag.key === 'http.path';
-    });
-
-    if (method.length > 0 || status.length > 0 || url.length > 0) {
-      return { method, status, url };
+    if (method.length > 0 || status.length > 0) {
+      return { method, status };
     }
   }
   return {};

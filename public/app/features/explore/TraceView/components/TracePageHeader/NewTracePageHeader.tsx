@@ -49,7 +49,7 @@ const getNewStyles = (theme: GrafanaTheme2) => {
     subtitle: css`
       flex: 1;
       line-height: 1em;
-      margin: -0.5em 0.5em 1.5em 0.5em;
+      margin: -0.5em 0.5em 0.75em 0.5em;
     `,
     duration: css`
       color: #aaa;
@@ -101,7 +101,7 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
     return null;
   }
 
-  const { method, status, url } = getHeaderTags(trace.spans);
+  const { method, status } = getHeaderTags(trace.spans);
 
   const tooltip = () => {
     const services = new Set(values(trace.processes).map((p) => p.serviceName)).size;
@@ -111,7 +111,6 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
       <>
         <div>Services: {services}</div>
         <div>Depth: {depth}</div>
-        <div>{url && url.length > 0 ? `URL: ${url[0].value}` : ''}</div>
       </>
     );
   };
@@ -163,11 +162,6 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
             </Tooltip>
           )}
           <span className={styles.total}>Total Spans: {trace.spans.length}</span>
-          {/* {url && url.length > 0 && (
-            <Tooltip content={'http.url or http.target or http.path'} interactive={true}>
-              <span className={styles.url}>{url[0].value}</span>
-            </Tooltip>
-          )} */}
         </span>
       </div>
 
