@@ -72,4 +72,4 @@ In addition to Grafana, Grafana Labs also provides the following open source pro
 
 **Grafana Mimir:** Grafana Mimir is an open source software project that provides a scalable long-term storage for Prometheus. For more information about Grafana Mimir, refer to [Grafana Mimir documentation](https://grafana.com/docs/mimir/latest/).
 
-**Grafana Phlare:** Grafana Phlare is an open source software project for aggregating continuous profiling data. Continuous profiling is an observability signal that allows you to understand your workload's resources (CPU, memory, etc...) usage down to the line number. Refer to [Grafana Phlare documentation](https://grafana.com/docs/phlare/latest/).
+**Grafana Phlare:** Grafana Phlare is an open-source software project for aggregating continuous profiling data. Continuous profiling is an observability signal that enables you to understand your workload's resource (CPU, memory, etc.) usage to the exact line number. For more information about using Grafana Phlare, refer to [Grafana Phlare documentation](https://grafana.com/docs/phlare/latest/).
