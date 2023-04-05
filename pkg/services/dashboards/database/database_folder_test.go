@@ -688,12 +688,12 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 				OrgId:        viewer.OrgID,
 			}
 
-			err = testSearchDashboards(dashboardReadStore, query)
+			res, err := testSearchDashboards(dashboardReadStore, query)
 			require.NoError(t, err)
 
-			require.Equal(t, len(tc.expectedTitles), len(query.Result))
+			require.Equal(t, len(tc.expectedTitles), len(res))
 			for i, tlt := range tc.expectedTitles {
-				assert.Equal(t, tlt, query.Result[i].Title)
+				assert.Equal(t, tlt, res[i].Title)
 			}
 		})
 	}
