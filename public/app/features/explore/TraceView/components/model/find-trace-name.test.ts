@@ -302,7 +302,6 @@ describe('getTraceName', () => {
           value: '200',
         },
       ],
-      url: [],
     });
   });
 });
