@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
-import { subMinutes, getUnixTime } from 'date-fns';
-import { groupBy, uniqueId } from 'lodash';
+import { getUnixTime, subMinutes } from 'date-fns';
+import { groupBy, isEmpty, isEqual, uniqBy, uniqueId } from 'lodash';
 import React from 'react';
 
-import { dateTimeFormat, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Alert, Icon, TagList, UPlotChart, useStyles2 } from '@grafana/ui';
-import { GrafanaAlertState, GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
+import { Alert, Icon, TagList, useStyles2 } from '@grafana/ui';
+import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
 import { stateHistoryApi } from '../../api/stateHistoryApi';
+import { Label } from '../Label';
 
 import { AlertStateTag } from './AlertStateTag';
 
@@ -63,26 +64,28 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     return JSON.stringify(record.line.labels);
   });
 
+  // find common labels so we can extract those from the instances
+  const commonLabels = extractCommonLabels(groupedLines);
+
   return (
     <Stack>
+      {!isEmpty(commonLabels) && (
+        <>
+          Common labels: <TagList tags={commonLabels.map((label) => label.join('='))} />
+        </>
+      )}
       {Object.entries(groupedLines).map(([key, records]) => {
         return (
           <Stack direction="column" key={key}>
             <h4>
-              <TagList tags={stringifyRecord(records[0].line.labels)} />
+              <TagList
+                tags={omitLabels(Object.entries(records[0].line.labels), commonLabels).map(
+                  ([key, value]) => `${key}=${value}`
+                )}
+              />
             </h4>
             {/* <UPlotChart width={400} height={50} data={dataFormat} timeRange={timeRange} /> */}
             <LogRecordViewer records={records} />
-            {/* <Stack direction="column">
-              {records.map((logRecord) => (
-                <Stack key={uniqueId()} direction="row">
-                  <div>
-                    {logRecord.line.previous} {'->'} {logRecord.line.current}
-                  </div>
-                  <div>{logRecord.timestamp}</div>
-                </Stack>
-              ))}
-            </Stack> */}
           </Stack>
         );
       })}
@@ -100,7 +103,7 @@ function LogRecordViewer({ records }: { records: LogRecord[] }) {
           <AlertStateTag state={logRecord.line.previous} size="sm" muted />
           <Icon name="arrow-right" />
           <AlertStateTag state={logRecord.line.current} />
-          <div>{stringifyRecord(logRecord.line.values)}</div>
+          <Stack direction="row">{renderValues(logRecord.line.values)}</Stack>
           <div>{dateTimeFormat(logRecord.timestamp)}</div>
         </React.Fragment>
       ))}
@@ -108,8 +111,35 @@ function LogRecordViewer({ records }: { records: LogRecord[] }) {
   );
 }
 
-function stringifyRecord (record: Record<string, unknown>) {
-  return Object.entries(record).map(([key, value]) => `${key}=${value}`)
+function extractCommonLabels(groupedLines: Record<string, LogRecord[]>): Array<[string, string]> {
+  const groupLabels = Object.keys(groupedLines);
+  const groupLabelsArray: Array<[string, string]> = groupLabels.flatMap((label) => Object.entries(JSON.parse(label)));
+
+  // find all common labels by looking and which ones occur multiple times, then create a unique array of items for those
+  const commonLabels = uniqBy(
+    groupLabelsArray.filter((label) => {
+      const count = groupLabelsArray.filter((l) => isEqual(label, l)).length;
+      return count > 1;
+    }),
+    (label) => JSON.stringify(label)
+  );
+
+  return commonLabels;
+}
+
+// omit "common" labels from "labels"
+function omitLabels(labels: Array<[string, string]>, common: Array<[string, string]>): Array<[string, string]> {
+  return labels.filter((label) => {
+    return !common.find((l) => JSON.stringify(l) === JSON.stringify(label));
+  });
+}
+
+function renderValues(record: Record<string, number>): JSX.Element[] {
+  const values = Object.entries(record);
+
+  return values.map(([key, value]) => {
+    return <Label key={key} label={key} value={value} />;
+  });
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
