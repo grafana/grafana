@@ -47,7 +47,7 @@ Complete the following steps to create an Okta application.
 
 1. Click **Done**.
 
-## Enable Okta OAuth in Grafana Instance
+## Enable Okta OAuth in a Grafana instance
 
 This section includes tasks you must complete to enable Okta OAuth in self-hosted Grafana or Grafana Cloud.
 
