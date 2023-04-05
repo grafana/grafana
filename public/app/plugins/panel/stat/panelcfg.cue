@@ -28,11 +28,10 @@ composableKinds: PanelCfg: {
 					{
 						PanelOptions: {
 							common.SingleStatBaseOptions
-							graphMode:    common.BigValueGraphMode | *"area"
-							colorMode:    common.BigValueColorMode | *"value"
-							hasGradient?: bool | *true
-							justifyMode:  common.BigValueJustifyMode | *"auto"
-							textMode:     common.BigValueTextMode | *"auto"
+							graphMode:   common.BigValueGraphMode | *"area"
+							colorMode:   common.BigValueColorMode | *"value"
+							justifyMode: common.BigValueJustifyMode | *"auto"
+							textMode:    common.BigValueTextMode | *"auto"
 						} @cuetsy(kind="interface")
 					},
 				]

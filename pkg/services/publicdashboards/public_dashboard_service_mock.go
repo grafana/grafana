@@ -254,7 +254,7 @@ func (_m *FakePublicDashboardService) FindDashboard(ctx context.Context, orgId i
 	return r0, r1
 }
 
-// FindEnabledDashboardAndDashboardByAccessToken provides a mock function with given fields: ctx, accessToken
+// FindEnabledPublicDashboardAndDashboardByAccessToken provides a mock function with given fields: ctx, accessToken
 func (_m *FakePublicDashboardService) FindEnabledPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, *dashboards.Dashboard, error) {
 	ret := _m.Called(ctx, accessToken)
 

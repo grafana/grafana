@@ -8,7 +8,7 @@ import { createDefaultConfigOptions } from './mocks';
 describe('ElasticDetails', () => {
   describe('Max concurrent Shard Requests', () => {
     it('should render "Max concurrent Shard Requests" ', () => {
-      render(<ElasticDetails onChange={() => {}} value={createDefaultConfigOptions({ esVersion: '8.2.0' })} />);
+      render(<ElasticDetails onChange={() => {}} value={createDefaultConfigOptions()} />);
       expect(screen.getByLabelText('Max concurrent Shard Requests')).toBeInTheDocument();
     });
   });
@@ -43,32 +43,5 @@ describe('ElasticDetails', () => {
         jsonData: expect.objectContaining({ interval: 'Monthly' }),
       })
     );
-  });
-
-  describe('version change', () => {
-    const tc = { version: '7.10+', maxConcurrentShardRequests: 6, expectedMaxConcurrentShardRequests: 6 };
-
-    const onChangeMock = jest.fn();
-    it(`sets maxConcurrentShardRequests=${tc.expectedMaxConcurrentShardRequests} if version=${tc.version},`, async () => {
-      render(
-        <ElasticDetails
-          onChange={onChangeMock}
-          value={createDefaultConfigOptions({
-            maxConcurrentShardRequests: tc.maxConcurrentShardRequests,
-            esVersion: '7.0.0',
-          })}
-        />
-      );
-
-      const selectEl = screen.getByLabelText('ElasticSearch version');
-
-      await selectEvent.select(selectEl, tc.version, { container: document.body });
-
-      expect(onChangeMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          jsonData: expect.objectContaining({ maxConcurrentShardRequests: tc.expectedMaxConcurrentShardRequests }),
-        })
-      );
-    });
   });
 });

@@ -4,7 +4,7 @@ import React, { HTMLProps } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { stylesFactory, useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
@@ -26,8 +26,7 @@ export interface TabProps extends HTMLProps<HTMLAnchorElement> {
 
 export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
   ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, ...otherProps }, ref) => {
-    const theme = useTheme2();
-    const tabsStyles = getTabStyles(theme);
+    const tabsStyles = useStyles2(getStyles);
     const content = () => (
       <>
         {icon && <Icon name={icon} />}
@@ -61,7 +60,7 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
 
 Tab.displayName = 'Tab';
 
-const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     item: css`
       list-style: none;
@@ -74,41 +73,13 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
       padding: ${theme.spacing(1.5, 2, 1)};
       display: block;
       height: 100%;
+
       svg {
         margin-right: ${theme.spacing(1)};
       }
 
       &:focus-visible {
-+        ${getFocusStyles(theme)}
-      }
-    `,
-    notActive: css`
-      a:hover,
-      &:hover,
-      &:focus {
-        color: ${theme.colors.text.primary};
-
-        &::before {
-          display: block;
-          content: ' ';
-          position: absolute;
-          left: 0;
-          right: 0;
-          height: 4px;
-          border-radius: 2px;
-          bottom: 0px;
-          background: ${theme.colors.action.hover};
-        }
-      }
-    `,
-    activeStyle: css`
-      label: activeTabStyle;
-      color: ${theme.colors.text.primary};
-      overflow: hidden;
-      font-weight: ${theme.typography.fontWeightMedium};
-
-      a {
-        color: ${theme.colors.text.primary};
+        ${getFocusStyles(theme)}
       }
 
       &::before {
@@ -118,13 +89,36 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
         left: 0;
         right: 0;
         height: 4px;
-        border-radius: 2px;
+        border-radius: ${theme.shape.radius.default};
         bottom: 0px;
-        background-image: ${theme.colors.gradients.brandHorizontal} !important;
+      }
+    `,
+    notActive: css`
+      a:hover,
+      &:hover,
+      &:focus {
+        color: ${theme.colors.text.primary};
+
+        &::before {
+          background-color: ${theme.colors.action.hover};
+        }
+      }
+    `,
+    activeStyle: css`
+      label: activeTabStyle;
+      color: ${theme.colors.text.primary};
+      overflow: hidden;
+
+      a {
+        color: ${theme.colors.text.primary};
+      }
+
+      &::before {
+        background-image: ${theme.colors.gradients.brandHorizontal};
       }
     `,
     suffix: css`
       margin-left: ${theme.spacing(1)};
     `,
   };
-});
+};

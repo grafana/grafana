@@ -213,6 +213,22 @@ func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title strin
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	logger := s.log.FromContext(ctx)
 
+	if cmd.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+
+	if !s.accessControl.IsDisabled() && s.features.IsEnabled(featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
+		// Check that the user is allowed to create a subfolder in this folder
+		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.ParentUID))
+		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
+		if evalErr != nil {
+			return nil, evalErr
+		}
+		if !hasAccess {
+			return nil, dashboards.ErrFolderAccessDenied
+		}
+	}
+
 	dashFolder := dashboards.NewDashboardFolder(cmd.Title)
 	dashFolder.OrgID = cmd.OrgID
 
@@ -223,9 +239,6 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 
 	dashFolder.SetUID(trimmedUID)
 
-	if cmd.SignedInUser == nil {
-		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
-	}
 	user := cmd.SignedInUser
 	userID := user.UserID
 	if userID == 0 {
@@ -478,15 +491,33 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	g, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
-	if err != nil {
-		return nil, err
-	}
-	if canSave, err := g.CanSave(); err != nil || !canSave {
-		if err != nil {
-			return nil, toFolderError(err)
+	// Check that the user is allowed to move the folder to the destination folder
+	if !s.accessControl.IsDisabled() {
+		var evaluator accesscontrol.Evaluator
+		if cmd.NewParentUID != "" {
+			evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.NewParentUID))
+		} else {
+			// Evaluate folder creation permission when moving folder to the root level
+			evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
 		}
-		return nil, dashboards.ErrFolderAccessDenied
+		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
+		if evalErr != nil {
+			return nil, evalErr
+		}
+		if !hasAccess {
+			return nil, dashboards.ErrFolderAccessDenied
+		}
+	} else {
+		g, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
+		if err != nil {
+			return nil, err
+		}
+		if canSave, err := g.CanSave(); err != nil || !canSave {
+			if err != nil {
+				return nil, toFolderError(err)
+			}
+			return nil, dashboards.ErrFolderAccessDenied
+		}
 	}
 
 	// here we get the folder, we need to get the height of current folder
@@ -512,10 +543,14 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		}
 	}
 
+	newParentUID := ""
+	if cmd.NewParentUID != "" {
+		newParentUID = cmd.NewParentUID
+	}
 	return s.store.Update(ctx, folder.UpdateFolderCommand{
 		UID:          cmd.UID,
 		OrgID:        cmd.OrgID,
-		NewParentUID: &cmd.NewParentUID,
+		NewParentUID: &newParentUID,
 		SignedInUser: cmd.SignedInUser,
 	})
 }
@@ -634,23 +669,9 @@ func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		return nil, dashboards.ErrDashboardUidTooLong
 	}
 
-	isParentFolderChanged, err := s.dashboardStore.ValidateDashboardBeforeSave(ctx, dash, dto.Overwrite)
+	_, err := s.dashboardStore.ValidateDashboardBeforeSave(ctx, dash, dto.Overwrite)
 	if err != nil {
 		return nil, err
-	}
-
-	if isParentFolderChanged {
-		// Check that the user is allowed to add a dashboard to the folder
-		guardian, err := guardian.NewByDashboard(ctx, dash, dto.OrgID, dto.User)
-		if err != nil {
-			return nil, err
-		}
-		if canSave, err := guardian.CanCreate(dash.FolderID, dash.IsFolder); err != nil || !canSave {
-			if err != nil {
-				return nil, err
-			}
-			return nil, dashboards.ErrDashboardUpdateAccessDenied
-		}
 	}
 
 	guard, err := getGuardianForSavePermissionCheck(ctx, dash, dto.User)

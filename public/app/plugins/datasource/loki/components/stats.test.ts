@@ -1,4 +1,4 @@
-import { TimeRange } from '@grafana/data';
+import { dateTime, getDefaultTimeRange } from '@grafana/data';
 
 import { createLokiDatasource } from '../mocks';
 
@@ -8,23 +8,45 @@ describe('shouldUpdateStats', () => {
   it('should return true if the query has changed', () => {
     const query = '{job="grafana"}';
     const prevQuery = '{job="not-grafana"}';
-    const timerange = { raw: { from: 'now-1h', to: 'now' } } as TimeRange;
-    const prevTimerange = { raw: { from: 'now-1h', to: 'now' } } as TimeRange;
+    const timerange = getDefaultTimeRange();
+    const prevTimerange = timerange;
     expect(shouldUpdateStats(query, prevQuery, timerange, prevTimerange)).toBe(true);
   });
+
   it('should return true if the timerange has changed', () => {
     const query = '{job="grafana"}';
     const prevQuery = '{job="grafana"}';
-    const timerange = { raw: { from: 'now-1h', to: 'now' } } as TimeRange;
-    const prevTimerange = { raw: { from: 'now-2h', to: 'now' } } as TimeRange;
+    const timerange = getDefaultTimeRange();
+    timerange.raw.from = 'now-14h';
+    const prevTimerange = getDefaultTimeRange();
     expect(shouldUpdateStats(query, prevQuery, timerange, prevTimerange)).toBe(true);
   });
 
   it('should return false if the query and timerange have not changed', () => {
     const query = '{job="grafana"}';
     const prevQuery = '{job="grafana"}';
-    const timerange = { raw: { from: 'now-1h', to: 'now' } } as TimeRange;
-    const prevTimerange = { raw: { from: 'now-1h', to: 'now' } } as TimeRange;
+    const timerange = getDefaultTimeRange();
+    const prevTimerange = timerange;
+    expect(shouldUpdateStats(query, prevQuery, timerange, prevTimerange)).toBe(false);
+  });
+
+  it('should return false if the query and timerange have not changed', () => {
+    const query = '{job="grafana"}';
+    const prevQuery = '{job="grafana"}';
+    const timerange = getDefaultTimeRange();
+    const prevTimerange = getDefaultTimeRange();
+    expect(shouldUpdateStats(query, prevQuery, timerange, prevTimerange)).toBe(false);
+  });
+
+  it('should return false if the query and timerange with absolute and relative mixed have not changed', () => {
+    const query = '{job="grafana"}';
+    const prevQuery = '{job="grafana"}';
+    const now = dateTime(Date.now());
+    const timerange = getDefaultTimeRange();
+    timerange.raw.from = now;
+
+    const prevTimerange = getDefaultTimeRange();
+    prevTimerange.raw.from = now;
     expect(shouldUpdateStats(query, prevQuery, timerange, prevTimerange)).toBe(false);
   });
 });

@@ -47,11 +47,13 @@ export function sanitize(unsanitizedString: string): string {
   }
 }
 
-export function sanitizeTrustedTypes(unsanitizedString: string, conf?: string): any {
-
+export function sanitizeTrustedTypes(unsanitizedString: string, conf?: string): TrustedHTML {
   switch (conf) {
     case 'svg':
-      return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true, USE_PROFILES: { svg: true, svgFilters: true } });
+      return DOMPurify.sanitize(unsanitizedString, {
+        RETURN_TRUSTED_TYPE: true,
+        USE_PROFILES: { svg: true, svgFilters: true },
+      });
     case 'rss':
       return DOMPurify.sanitize(unsanitizedString, {
         RETURN_TRUSTED_TYPE: true,
@@ -101,6 +103,5 @@ export function escapeHtml(str: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/'/g, '&#39;')
-    .replace(/\//g, '&#47;')
     .replace(/"/g, '&quot;');
 }

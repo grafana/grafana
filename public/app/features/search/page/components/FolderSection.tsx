@@ -5,12 +5,15 @@ import { useAsync, useLocalStorage } from 'react-use';
 import { GrafanaTheme2, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Card, Checkbox, CollapsableSection, Icon, Spinner, useStyles2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 import { SearchItem } from '../..';
-import { getGrafanaSearcher, SearchQuery } from '../../service';
+import { GENERAL_FOLDER_UID } from '../../constants';
+import { getGrafanaSearcher } from '../../service';
+import { getFolderChildren } from '../../service/folders';
 import { queryResultToViewItem } from '../../service/utils';
 import { DashboardViewItem } from '../../types';
 import { SelectionChecker, SelectionToggle } from '../selection';
@@ -23,6 +26,27 @@ interface SectionHeaderProps {
   section: DashboardViewItem;
   renderStandaloneBody?: boolean; // render the body on its own
   tags?: string[];
+}
+
+async function getChildren(section: DashboardViewItem, tags: string[] | undefined): Promise<DashboardViewItem[]> {
+  if (config.featureToggles.nestedFolders) {
+    return getFolderChildren(section.uid, section.title);
+  }
+
+  const query = section.itemsUIDs
+    ? {
+        uid: section.itemsUIDs,
+      }
+    : {
+        query: '*',
+        kind: ['dashboard'],
+        location: section.uid,
+        sort: 'name_sort',
+        limit: 1000, // this component does not have infinite scroll, so we need to load everything upfront
+      };
+
+  const raw = await getGrafanaSearcher().search({ ...query, tags });
+  return raw.view.map((v) => queryResultToViewItem(v, raw.view));
 }
 
 export const FolderSection = ({
@@ -42,22 +66,10 @@ export const FolderSection = ({
     if (!sectionExpanded && !renderStandaloneBody) {
       return Promise.resolve([]);
     }
-    let query: SearchQuery = {
-      query: '*',
-      kind: ['dashboard'],
-      location: section.uid,
-      sort: 'name_sort',
-      limit: 1000, // this component does not have infinate scroll, so we need to load everything upfront
-    };
-    if (section.itemsUIDs) {
-      query = {
-        uid: section.itemsUIDs, // array of UIDs
-      };
-    }
 
-    const raw = await getGrafanaSearcher().search({ ...query, tags });
-    const items = raw.view.map((v) => queryResultToViewItem(v, raw.view));
-    return items;
+    const childItems = getChildren(section, tags);
+
+    return childItems;
   }, [sectionExpanded, tags]);
 
   const onSectionExpand = () => {
@@ -72,8 +84,8 @@ export const FolderSection = ({
       selectionToggle(section.kind, section.uid);
       const sub = results.value ?? [];
       for (const item of sub) {
-        if (selection('dashboard', item.uid!) !== checked) {
-          selectionToggle('dashboard', item.uid!);
+        if (selection(item.kind, item.uid!) !== checked) {
+          selectionToggle(item.kind, item.uid!);
         }
       }
     }
@@ -104,14 +116,10 @@ export const FolderSection = ({
           key={item.uid}
           item={item}
           onTagSelected={onTagSelected}
-          onToggleChecked={(item) => {
-            if (selectionToggle) {
-              selectionToggle('dashboard', item.uid!);
-            }
-          }}
+          onToggleChecked={(item) => selectionToggle?.(item.kind, item.uid)}
           editable={Boolean(selection != null)}
           onClickItem={onClickItem}
-          isSelected={selectionToggle && selection?.(item.kind, item.uid)}
+          isSelected={selection?.(item.kind, item.uid)}
         />
       );
     });
@@ -153,7 +161,7 @@ export const FolderSection = ({
 
           <div className={styles.text}>
             <span id={labelId}>{section.title}</span>
-            {section.url && section.uid !== 'general' && (
+            {section.url && section.uid !== GENERAL_FOLDER_UID && (
               <a href={section.url} className={styles.link}>
                 <span className={styles.separator}>|</span> <Icon name="folder-upload" />{' '}
                 {t('search.folder-view.go-to-folder', 'Go to folder')}
@@ -170,6 +178,7 @@ export const FolderSection = ({
 
 const getSectionHeaderStyles = (theme: GrafanaTheme2, editable: boolean) => {
   const sm = theme.spacing(1);
+
   return {
     wrapper: css`
       align-items: center;

@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"io/fs"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -24,9 +25,20 @@ type Installer interface {
 	Remove(ctx context.Context, pluginID string) error
 }
 
-type PluginSource struct {
-	Class Class
-	Paths []string
+type PluginSource interface {
+	PluginClass(ctx context.Context) Class
+	PluginURIs(ctx context.Context) []string
+	DefaultSignature(ctx context.Context) (Signature, bool)
+}
+
+type FileStore interface {
+	// File retrieves a plugin file.
+	File(ctx context.Context, pluginID, filename string) (*File, error)
+}
+
+type File struct {
+	Content []byte
+	ModTime time.Time
 }
 
 type CompatOpts struct {

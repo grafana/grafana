@@ -38,8 +38,10 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
   tomorrow.setDate(tomorrow.getDate() + 1);
 
   const maxExpirationDate = new Date();
-  if (config.tokenExpirationDayLimit !== undefined) {
+  if (config.tokenExpirationDayLimit !== undefined && config.tokenExpirationDayLimit > -1) {
     maxExpirationDate.setDate(maxExpirationDate.getDate() + config.tokenExpirationDayLimit + 1);
+  } else {
+    maxExpirationDate.setDate(8640000000000000);
   }
   const defaultExpirationDate = config.tokenExpirationDayLimit !== undefined && config.tokenExpirationDayLimit > 0;
 
@@ -107,16 +109,14 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
               }}
             />
           </Field>
-          {!isWithExpirationDate && (
-            <Field label="Expiration">
-              <RadioButtonGroup
-                options={EXPIRATION_OPTIONS}
-                value={isWithExpirationDate}
-                onChange={setIsWithExpirationDate}
-                size="md"
-              />
-            </Field>
-          )}
+          <Field label="Expiration">
+            <RadioButtonGroup
+              options={EXPIRATION_OPTIONS}
+              value={isWithExpirationDate}
+              onChange={setIsWithExpirationDate}
+              size="md"
+            />
+          </Field>
           {isWithExpirationDate && (
             <Field label="Expiration date">
               <DatePickerWithInput

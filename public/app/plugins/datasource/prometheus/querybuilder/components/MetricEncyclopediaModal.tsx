@@ -9,16 +9,17 @@ import { EditorField } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
-  Card,
-  Collapse,
+  CellProps,
+  Column,
   InlineField,
-  InlineSwitch,
+  Switch,
   Input,
+  InteractiveTable,
   Modal,
   MultiSelect,
   Select,
   Spinner,
-  useStyles2,
+  useTheme2,
 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
@@ -110,7 +111,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
   const [hasMetadata, setHasMetadata] = useState<boolean>(true);
   const [metaHaystack, setMetaHaystack] = useState<string[]>([]);
   const [nameHaystack, setNameHaystack] = useState<string[]>([]);
-  const [openTabs, setOpenTabs] = useState<string[]>([]);
 
   // pagination
   const [resultsPerPage, setResultsPerPage] = useState<number>(DEFAULT_RESULTS_PER_PAGE);
@@ -129,6 +129,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
   const [filteredMetricCount, setFilteredMetricCount] = useState<number>();
   // backend search metric names by text
   const [useBackend, setUseBackend] = useState<boolean>(false);
+  const [disableTextWrap, setDisableTextWrap] = useState<boolean>(false);
 
   const updateMetricsMetadata = useCallback(async () => {
     // *** Loading Gif
@@ -197,7 +198,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
     updateMetricsMetadata();
   }, [updateMetricsMetadata]);
 
-  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const styles = getStyles(theme, disableTextWrap);
 
   const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
     return {
@@ -272,6 +274,12 @@ export const MetricEncyclopediaModal = (props: Props) => {
       });
     }
 
+    if (excludeNullMetadata) {
+      filteredMetrics = filteredMetrics.filter((m: MetricData) => {
+        return m.type !== undefined && m.description !== undefined;
+      });
+    }
+
     return filteredMetrics;
   }
 
@@ -319,7 +327,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
         setMetrics(metrics);
         setFilteredMetricCount(metrics.length);
         setIsLoading(false);
-      }, 300),
+      }, datasource.getDebounceTimeInMilliseconds()),
     [datasource, query.labels]
   );
 
@@ -410,11 +418,74 @@ export const MetricEncyclopediaModal = (props: Props) => {
     return results ?? 10;
   };
 
+  const ButtonCell = ({
+    row: {
+      original: { value },
+    },
+  }: CellProps<MetricData, void>) => {
+    return (
+      <Button
+        size="sm"
+        variant={'secondary'}
+        fill={'solid'}
+        aria-label="use this metric button"
+        data-testid={testIds.useMetric}
+        onClick={() => {
+          onChange({ ...query, metric: value });
+          reportInteraction('grafana_prom_metric_encycopedia_tracking', {
+            metric: value,
+            hasVariables: variables.length > 0,
+            hasMetadata: hasMetadata,
+            totalMetricCount: metrics.length,
+            fuzzySearchQuery: fuzzySearchQuery,
+            fullMetaSearch: fullMetaSearch,
+            selectedTypes: selectedTypes,
+            letterSearch: letterSearch,
+          });
+          onClose();
+        }}
+      >
+        Use this metric
+      </Button>
+    );
+  };
+
+  function tableResults(metrics: MetricsData) {
+    const tableData: MetricsData = metrics;
+
+    const columns: Array<Column<MetricData>> = [
+      { id: '', header: 'Select', cell: ButtonCell },
+      { id: 'value', header: 'Name' },
+      { id: 'type', header: 'Type' },
+      { id: 'description', header: 'Description' },
+    ];
+
+    return <InteractiveTable className={styles.table} columns={columns} data={tableData} getRowId={(r) => r.value} />;
+  }
+
+  function fuzzySearchCallback(query: string, fullMetaSearchVal: boolean) {
+    if (useBackend && query === '') {
+      // get all metrics data if a user erases everything in the input
+      updateMetricsMetadata();
+    } else if (useBackend) {
+      debouncedBackendSearch(query);
+    } else {
+      // search either the names or all metadata
+      // fuzzy search go!
+
+      if (fullMetaSearchVal) {
+        debouncedFuzzySearch(metaHaystack, query, setFuzzyMetaSearchResults);
+      } else {
+        debouncedFuzzySearch(nameHaystack, query, setFuzzyNameSearchResults);
+      }
+    }
+  }
+
   return (
     <Modal
       data-testid={testIds.metricModal}
       isOpen={isOpen}
-      title="Browse Metrics"
+      title="Browse metrics"
       onDismiss={onClose}
       aria-label="Metric Encyclopedia"
       className={styles.modal}
@@ -429,21 +500,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
               onInput={(e) => {
                 const value = e.currentTarget.value ?? '';
                 setFuzzySearchQuery(value);
-                if (useBackend && value === '') {
-                  // get all metrics data if a user erases everything in the input
-                  updateMetricsMetadata();
-                } else if (useBackend) {
-                  debouncedBackendSearch(value);
-                } else {
-                  // search either the names or all metadata
-                  // fuzzy search go!
 
-                  if (fullMetaSearch) {
-                    debouncedFuzzySearch(metaHaystack, value, setFuzzyMetaSearchResults);
-                  } else {
-                    debouncedFuzzySearch(nameHaystack, value, setFuzzyNameSearchResults);
-                  }
-                }
+                fuzzySearchCallback(value, fullMetaSearch);
 
                 setPageNum(1);
               }}
@@ -490,23 +548,23 @@ export const MetricEncyclopediaModal = (props: Props) => {
         <EditorField label="Search Settings">
           <>
             <div className={styles.selectItem}>
-              <InlineSwitch
+              <Switch
                 data-testid={testIds.searchWithMetadata}
                 value={fullMetaSearch}
                 disabled={useBackend || !hasMetadata}
                 onChange={() => {
-                  setFullMetaSearch(!fullMetaSearch);
+                  const newVal = !fullMetaSearch;
+                  setFullMetaSearch(newVal);
+
+                  fuzzySearchCallback(fuzzySearchQuery, newVal);
+
                   setPageNum(1);
                 }}
               />
               <p className={styles.selectItemLabel}>{placeholders.metadataSearchSwitch}</p>
             </div>
-            {/* <div className={styles.selectItem}>
-                  <InlineSwitch data-testid={'im not sure what this toggle does.'} value={false} onChange={() => {}} />
-                  <p className={styles.selectItemLabel}>Disable fuzzy search metadata browsing (HELP!)</p>
-                </div> */}
             <div className={styles.selectItem}>
-              <InlineSwitch
+              <Switch
                 data-testid={testIds.setUseBackend}
                 value={useBackend}
                 onChange={() => {
@@ -531,7 +589,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
           </>
         </EditorField>
       </div>
-
       <h4 className={styles.resultsHeading}>Results</h4>
       <div className={styles.resultsData}>
         <div className={styles.resultsDataCount}>
@@ -547,80 +604,26 @@ export const MetricEncyclopediaModal = (props: Props) => {
 
       <div className={styles.alphabetRow}>
         <div>{letterSearchComponent()}</div>
-        <div className={styles.selectItem}>
-          <InlineSwitch
-            value={excludeNullMetadata}
-            disabled={useBackend || !hasMetadata}
-            onChange={() => {
-              setExcludeNullMetadata(!excludeNullMetadata);
-              setPageNum(1);
-            }}
-          />
-          <p className={styles.selectItemLabel}>{placeholders.excludeNoMetadata}</p>
+        <div className={styles.alphabetRowToggles}>
+          <div className={styles.selectItem}>
+            <Switch value={disableTextWrap} onChange={() => setDisableTextWrap((p) => !p)} />
+            <p className={styles.selectItemLabel}>Disable text wrap</p>
+          </div>
+          <div className={styles.selectItem}>
+            <Switch
+              value={excludeNullMetadata}
+              disabled={useBackend || !hasMetadata}
+              onChange={() => {
+                setExcludeNullMetadata(!excludeNullMetadata);
+                setPageNum(1);
+              }}
+            />
+            <p className={styles.selectItemLabel}>{placeholders.excludeNoMetadata}</p>
+          </div>
         </div>
       </div>
 
-      <div className={styles.results}>
-        {metrics &&
-          displayedMetrics(metrics).map((metric: MetricData, idx) => {
-            return (
-              <Collapse
-                aria-label={`open and close ${metric.value} query starter card`}
-                data-testid={testIds.metricCard}
-                key={metric.value}
-                label={metric.value}
-                isOpen={openTabs.includes(metric.value)}
-                collapsible={true}
-                onToggle={() =>
-                  setOpenTabs((tabs) =>
-                    // close tab if it's already open, otherwise open it
-                    tabs.includes(metric.value) ? tabs.filter((t) => t !== metric.value) : [...tabs, metric.value]
-                  )
-                }
-              >
-                <div className={styles.cardsContainer}>
-                  <Card className={styles.card}>
-                    <Card.Description>
-                      {metric.description && metric.type ? (
-                        <>
-                          Type: <span className={styles.metadata}>{metric.type}</span>
-                          <br />
-                          Description: <span className={styles.metadata}>{metric.description}</span>
-                        </>
-                      ) : (
-                        <i>No metadata available</i>
-                      )}
-                    </Card.Description>
-                    <Card.Actions>
-                      {/* *** Make selecting a metric easier, consider click on text */}
-                      <Button
-                        size="sm"
-                        aria-label="use this metric button"
-                        data-testid={testIds.useMetric}
-                        onClick={() => {
-                          onChange({ ...query, metric: metric.value });
-                          reportInteraction('grafana_prom_metric_encycopedia_tracking', {
-                            metric: metric.value,
-                            hasVariables: variables.length > 0,
-                            hasMetadata: hasMetadata,
-                            totalMetricCount: metrics.length,
-                            fuzzySearchQuery: fuzzySearchQuery,
-                            fullMetaSearch: fullMetaSearch,
-                            selectedTypes: selectedTypes,
-                            letterSearch: letterSearch,
-                          });
-                          onClose();
-                        }}
-                      >
-                        Use this metric
-                      </Button>
-                    </Card.Actions>
-                  </Card>
-                </div>
-              </Collapse>
-            );
-          })}
-      </div>
+      <div className={styles.results}>{metrics && tableResults(displayedMetrics(metrics))}</div>
 
       <div className={styles.pageSettingsWrapper}>
         <div className={styles.pageSettings}>
@@ -698,7 +701,7 @@ function alphabetically(ascending: boolean, metadataFilters: boolean) {
   };
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
   return {
     modal: css`
       width: 85vw;
@@ -709,6 +712,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     inputWrapper: css`
       display: flex;
       flex-direction: row;
+      flex-wrap: wrap;
       gap: ${theme.spacing(2)};
       margin-bottom: ${theme.spacing(2)};
     `,
@@ -717,6 +721,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     inputItem: css`
       flex-grow: 1;
+      flex-basis: 20%;
+      ${theme.breakpoints.down('md')} {
+        min-width: 100%;
+      }
     `,
     selectWrapper: css`
       margin-bottom: ${theme.spacing(2)};
@@ -724,6 +732,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     selectItem: css`
       display: flex;
       flex-direction: row;
+      align-items: center;
     `,
     selectItemLabel: css`
       margin: 0 0 0 ${theme.spacing(1)};
@@ -746,8 +755,18 @@ const getStyles = (theme: GrafanaTheme2) => {
     alphabetRow: css`
       display: flex;
       flex-direction: row;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
+      column-gap: ${theme.spacing(1)};
+      margin-bottom: ${theme.spacing(1)};
+    `,
+    alphabetRowToggles: css`
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      flex-wrap: wrap;
+      column-gap: ${theme.spacing(1)};
     `,
     results: css`
       height: 300px;
@@ -757,24 +776,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding-top: ${theme.spacing(1.5)};
       display: flex;
       flex-direction: row;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
     `,
     pageSettings: css`
       display: flex;
       flex-direction: row;
-      align-items: center;
-    `,
-    cardsContainer: css`
-      display: flex;
-      flex-direction: row;
       flex-wrap: wrap;
-      justify-content: space-between;
-    `,
-    card: css`
-      width: 100%;
-      display: flex;
-      flex-direction: column;
+      align-items: center;
     `,
     selAlpha: css`
       cursor: pointer;
@@ -786,11 +796,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     gray: css`
       color: grey;
     `,
-    metadata: css`
-      color: rgb(204, 204, 220);
-    `,
     loadingSpinner: css`
       display: inline-block;
+    `,
+    table: css`
+      white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
+      td {
+        vertical-align: baseline;
+      }
     `,
   };
 };

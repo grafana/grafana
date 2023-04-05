@@ -22,7 +22,7 @@ describe('MetricEncyclopediaModal', () => {
   it('renders the modal', async () => {
     setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
-      expect(screen.getByText('Browse Metrics')).toBeInTheDocument();
+      expect(screen.getByText('Browse metrics')).toBeInTheDocument();
     });
   });
 
@@ -76,19 +76,6 @@ describe('MetricEncyclopediaModal', () => {
     await userEvent.click(interactiveMetric);
 
     expect(screen.getByText('all-metrics-help')).toBeInTheDocument();
-  });
-
-  it('displays no metadata for a metric missing metadata when the metric is clicked', async () => {
-    setup(defaultQuery, listOfMetrics);
-    await waitFor(() => {
-      expect(screen.getByText('b')).toBeInTheDocument();
-    });
-
-    const interactiveMetric = screen.getByText('b');
-
-    await userEvent.click(interactiveMetric);
-
-    expect(screen.getByText('No metadata available')).toBeInTheDocument();
   });
 
   // Filtering

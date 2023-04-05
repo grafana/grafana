@@ -9,8 +9,10 @@ import (
 )
 
 const (
-	cloudMonitor    = "cloudmonitoring"
-	resourceManager = "cloudresourcemanager"
+	cloudMonitor         = "cloudmonitoring"
+	resourceManager      = "cloudresourcemanager"
+	cloudMonitorScope    = "https://www.googleapis.com/auth/monitoring.read"
+	resourceManagerScope = "https://www.googleapis.com/auth/cloudplatformprojects.readonly"
 )
 
 type routeInfo struct {
@@ -23,12 +25,12 @@ var routes = map[string]routeInfo{
 	cloudMonitor: {
 		method: "GET",
 		url:    "https://monitoring.googleapis.com",
-		scopes: []string{"https://www.googleapis.com/auth/monitoring.read"},
+		scopes: []string{cloudMonitorScope},
 	},
 	resourceManager: {
 		method: "GET",
 		url:    "https://cloudresourcemanager.googleapis.com",
-		scopes: []string{"https://www.googleapis.com/auth/cloudplatformprojects.readonly"},
+		scopes: []string{resourceManagerScope},
 	},
 }
 
@@ -49,7 +51,7 @@ func getMiddleware(model *datasourceInfo, routePath string) (httpclient.Middlewa
 		providerConfig.JwtTokenConfig = &tokenprovider.JwtTokenConfig{
 			Email:      model.clientEmail,
 			URI:        model.tokenUri,
-			PrivateKey: []byte(model.decryptedSecureJSONData["privateKey"]),
+			PrivateKey: []byte(model.privateKey),
 		}
 		provider = tokenprovider.NewJwtAccessTokenProvider(providerConfig)
 	}
