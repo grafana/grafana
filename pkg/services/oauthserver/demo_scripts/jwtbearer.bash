@@ -1,8 +1,8 @@
 #!/bin/bash
 
 current_dir=$( dirname $0 )
-if [[ $# -lt 1 ]]; then
-    echo "Usage: $0 <user_id> [--no-pause]"
+if [[ $# -lt 2 ]]; then
+    echo "Usage: $0 <user_id> <alg> [--no-pause]"
     exit 1
 fi
 
@@ -12,8 +12,8 @@ no_pause="$3"
 answer=$( cat $current_dir/registerapp_response.json )
 client_id=$( echo $answer | jq -r '.clientId' )
 client_secret=$( echo $answer | jq -r '.clientSecret' )
-privateKey=$( echo $answer | jq -r '.key.private' )
-publicKey=$( echo $answer | jq -r '.key.public' )
+privateKey=$( echo $answer | jq '.key.private' )
+publicKey=$( echo $answer | jq '.key.public' )
 
 user_id="$1"
 alg="$2"
@@ -67,7 +67,7 @@ then
 else
     echo "Creating RS256 signature"
     openssl dgst -sha256 -sign $private_key_file -out sig.txt unsigned.b64
-    cat sig.txt | basenc --base64url | tr +/ -_ | tr -d '=' | tr -d '\n' > sig.b64
+    cat sig.txt | base64 | tr +/ -_ | tr -d '=' | tr -d '\n' > sig.b64
     rm sig.txt
 fi
 
