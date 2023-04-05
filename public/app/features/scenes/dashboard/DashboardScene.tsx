@@ -8,6 +8,8 @@ import { PageToolbar, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 
+import { viewAsTypescript } from './ViewAsTypescript';
+
 interface DashboardSceneState extends SceneObjectState {
   title: string;
   uid?: string;
@@ -48,6 +50,16 @@ function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) 
       />
     );
   }
+
+  toolbarActions.push(
+    <ToolbarButton
+      icon="brackets-curly"
+      onClick={() => viewAsTypescript(model)}
+      tooltip="View as scene Typescript code"
+      key="scene-to-dashboard-switch"
+    />
+  );
+
   const pageToolbar = config.featureToggles.topnav ? (
     <AppChromeUpdate actions={toolbarActions} />
   ) : (

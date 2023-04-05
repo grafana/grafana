@@ -266,7 +266,7 @@
     "@grafana/lezer-logql": "0.1.2",
     "@grafana/monaco-logql": "^0.0.7",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "^0.3.0",
+    "@grafana/scenes": "portal:/home/torkel/dev/scenes/packages/scenes",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@kusto/monaco-kusto": "5.3.6",

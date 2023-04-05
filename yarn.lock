@@ -3326,9 +3326,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^0.3.0":
+"@grafana/scenes@portal:/home/torkel/dev/scenes/packages/scenes::locator=grafana%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "@grafana/scenes@npm:0.3.0"
+  resolution: "@grafana/scenes@portal:/home/torkel/dev/scenes/packages/scenes::locator=grafana%40workspace%3A."
   dependencies:
     "@grafana/e2e-selectors": canary
     "@grafana/experimental": 1.0.1
@@ -3336,7 +3336,6 @@ __metadata:
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
-  checksum: 3610cedcc150b9d6e3d6948056bb1bbbfe58d7fa0ff6e762eec6619bb0940504db867ea87e56160f27e4d93772f6203493bf87d353a1b18d2664e74a03f03a05
   languageName: node
   linkType: soft
 
@@ -20110,7 +20109,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.2
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^0.3.0
+    "@grafana/scenes": "portal:/home/torkel/dev/scenes/packages/scenes"
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
