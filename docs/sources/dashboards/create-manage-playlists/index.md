@@ -26,16 +26,17 @@ Use the information in this section to access existing playlists. Start and cont
 
 ### Access a playlist
 
-1. Hover your cursor over Grafana’s side menu.
-1. Click **Playlists**. You will see a list of existing playlists.
+1. Click **Dashboards** in the left-side menu.
+1. Click **Playlists** to see a list of existing playlists.
 
 ### Start a playlist
 
-You can start a playlist in five different view modes. View mode determine how the menus and navigation bar appear on the dashboards.
+You can start a playlist in five different view modes. View modes determine how the menus and navigation bar appear on the dashboards.
 
 By default, each dashboard is displayed for the amount of time entered in the Interval field, which you set when you create or edit a playlist. After you start a playlist, you can control it with the navbar at the top of the page.
 
-1. [Access](#access-playlist) the playlist page to see a list of existing playlists.
+1. Click **Dashboards** in the left-side menu.
+1. Click **Playlists** to see a list of existing playlists.
 1. Find the playlist you want to start, then click **Start playlist**. The start playlist dialog opens.
 1. Select one of the five playlist modes available based on the information in the following table.
 1. Click **Start <playlist name>**.
@@ -67,7 +68,9 @@ You can control a playlist in **Normal** or **TV** mode after it's started, usin
 
 You can create a playlist to present dashboards in a sequence, with a set order and time interval between dashboards.
 
-1. In the playlist page, click **New playlist**. The New playlist page opens.
+1. Click **Dashboards** in the left-side menu.
+1. Click **Playlists** to see a list of existing playlists.
+1. Click **New playlist**. The New playlist page opens.
 1. In the **Name** text box, enter a descriptive name.
 1. In the **Interval** text box, enter a time interval. Grafana displays a particular dashboard for the interval of time specified here before moving on to the next dashboard.
 1. In Dashboards, add existing dashboards to the playlist using **Add by title** and **Add by tag** drop-down options. The dashboards you add are listed in a sequential order.
@@ -82,8 +85,8 @@ You can create a playlist to present dashboards in a sequence, with a set order 
 
 You can save a playlist and add it to your **Playlists** page, where you can start it. Be sure that all the dashboards you want to appear in your playlist are added when creating or editing the playlist before saving it.
 
-1. To access the Playlist feature, hover your cursor over Grafana's side menu.
-1. Click **Playlists**.
+1. Click **Dashboards** in the left-side menu.
+1. Click **Playlists** to see a list of existing playlists.
 1. Click on the playlist.
 1. Edit the playlist.
 1. Ensure that your playlist has a **Name**, **Interval**, and at least one **Dashboard** added to it.
@@ -95,33 +98,44 @@ You can edit a playlist by updating its name, interval time, and by adding, remo
 
 ### Edit a playlist
 
-1. In the playlist page, click **Edit playlist**. The Edit playlist page opens.
+1. Click **Dashboards** in the left-side menu.
+1. Click **Playlists** to see a list of existing playlists.
+1. Find the playlist you want to update and click **Edit playlist**.
 1. Update the name and time interval, then add or remove dashboards from the playlist using instructions in [Create a playlist](#create-a-playlist).
 1. Click **Save** to save your changes.
 
 ### Delete a playlist
 
-1. Click **Playlists**.
-1. Next to the Playlist you want to delete, click **Remove[x]**.
+1. Click **Dashboards** in the left-side menu.
+1. Click **Playlists** to see a list of existing playlists.
+1. Find the playlist you want to remove.
+1. Click **Delete playlist**.
 
 ### Rearrange dashboard order
 
-1. Next to the dashboard you want to move, click the up or down arrow.
+1. Click **Dashboards** in the left-side menu.
+1. Click **Playlists** to see a list of existing playlists.
+1. Find the playlist you want to update and click **Edit playlist**.
+1. Click and drag the dashboards into your desired order.
 1. Click **Save** to save your changes.
 
 ### Remove a dashboard
 
-1. Click **Remove[x]** to remove a dashboard from the playlist.
+1. Click **Dashboards** in the left-side menu.
+1. Click **Playlists** to see a list of existing playlists.
+1. Find the playlist you want to update and click **Edit playlist**.
+1. Click **[x]** on the name of the dashboard you want to remove from the playlist.
 1. Click **Save** to save your changes.
 
 ## Share a playlist in a view mode
 
 You can share a playlist by copying the link address on the view mode you prefer, and pasting the URL to your destination.
 
-1.  From the Dashboards submenu, click **Playlists**.
-1.  Next to the playlist you want to share, click **Start playlist**.
-1.  In the dropdown, right click the view mode you prefer.
-1.  Click **Copy Link Address** to copy the URL to your clipboard.
+1.  Click **Dashboards** in the left-side menu.
+1.  Click **Playlists** to see a list of existing playlists.
+1.  Click the share icon of the playlist you want to share.
+1.  Select the view mode you prefer.
+1.  Click **Copy** next to the Link URL to copy it to your clipboard.
 
         Example: The URL for the first playlist on the Grafana Play site in Kiosk mode will look like this:
 

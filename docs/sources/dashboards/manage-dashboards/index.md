@@ -55,7 +55,7 @@ When you save a dashboard, you can either select a folder for the dashboard to b
 
 ## Manage dashboards
 
-On the **Manage dashboards and folders** page, you can:
+On the Dashboards page, you can:
 
 - create a folder
 - create a dashboard
@@ -65,17 +65,17 @@ On the **Manage dashboards and folders** page, you can:
 
 ### Dashboard folder page
 
-You can complete the following tasks on the **Dashboard Folder** page:
+You can complete the following tasks on a dashboard folder page:
 
 - Move or delete dashboards in a folder
-- Rename a folder (available under the **Settings** tab)
+- Rename a folder (available on the Settings tab)
 - Assign permissions to folders (which are inherited by the dashboards in the folder)
 
-To navigate to the dashboard folder page, click the cog appears when you hover over a folder in the dashboard search result list or the **Manage dashboards and folders** page.
+To navigate to the dashboard folder page, hover over the name of the folder and click **Go to folder** in the dashboard search result list or on the Dashboards page.
 
 ### Dashboard permissions
 
-You can assign permissions to a folder. Any permissions you assign are inherited by the dashboards in the folder. An Access Control List (ACL) is used where **Organization Role**, **Team** and a **User** can be assigned permissions.
+You can assign permissions to a folder. Any permissions you assign are inherited by the dashboards in the folder. An Access Control List (ACL) is used where **Organization Role**, **Team**, and a **User** can be assigned permissions.
 
 For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../administration/roles-and-permissions/#dashboard-permissions" >}}).
 
@@ -102,7 +102,8 @@ A template variable of the type `Constant` will automatically be hidden in the d
 
 ### Import a dashboard
 
-1. Click **Dashboards > Import** in the side menu.
+1. Click **Dashboards** in the left-side menu.
+1. Click **New** and select **Import** in the dropdown menu.
 1. Perform one of the following steps:
 
    - Upload a dashboard JSON file
@@ -118,7 +119,7 @@ The import process enables you to change the name of the dashboard, pick the dat
 
 Find dashboards for common server applications at [Grafana.com/dashboards](https://grafana.com/dashboards).
 
-{{< figure src="/static/img/docs/v50/gcom_dashboard_list.png" max-width="700px" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-gcom-dashboards.png" >}}
 
 ## Troubleshoot dashboards
 
