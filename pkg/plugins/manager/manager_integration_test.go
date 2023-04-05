@@ -189,6 +189,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"table-old":      {},
 		"text":           {},
 		"timeseries":     {},
+		"trend":          {},
 		"welcome":        {},
 		"xychart":        {},
 	}
