@@ -7,17 +7,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Change theme...",
-      "dark-theme": "Dark",
-      "light-theme": "Light"
+      "change-theme": "テーマを変更",
+      "dark-theme": "ダーク",
+      "light-theme": "ライト"
     },
     "search-box": {
       "placeholder": "Search or jump to..."
     },
     "section": {
       "actions": "Actions",
-      "dashboard-search-results": "Dashboards",
-      "folder-search-results": "Folders",
+      "dashboard-search-results": "ダッシュボード",
+      "folder-search-results": "フォルダ",
       "pages": "Pages",
       "preferences": "Preferences",
       "recent-dashboards": "Recent dashboards"
@@ -25,9 +25,9 @@
   },
   "common": {
     "locale": {
-      "default": "Default"
+      "default": "Japanese - 日本語"
     },
-    "save": "Save"
+    "save": "保存"
   },
   "dashboard": {
     "inspect": {
