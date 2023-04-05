@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"sort"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -79,8 +81,20 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 		return errCh
 	}
 
-	go func() {
+	// This is a new background job, so let's create a brand new context for it.
+	// We want it to be isolated, i.e. we don't want grafana shutdowns to interrupt this work
+	// immediately but rather try to flush writes.
+	// This also prevents timeouts or other lingering objects (like transactions) from being
+	// incorrectly propagated here from other areas.
+	writeCtx := context.Background()
+	writeCtx, cancel := context.WithTimeout(writeCtx, StateHistoryWriteTimeout)
+	writeCtx = history_model.WithRuleData(writeCtx, rule)
+	writeCtx = tracing.ContextWithSpan(writeCtx, tracing.SpanFromContext(ctx))
+
+	go func(ctx context.Context) {
+		defer cancel()
 		defer close(errCh)
+		logger := h.log.FromContext(ctx)
 
 		org := fmt.Sprint(rule.OrgID)
 		h.metrics.WritesTotal.WithLabelValues(org, "loki").Inc()
@@ -92,7 +106,7 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 			h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(logStream.Values)))
 			errCh <- fmt.Errorf("failed to save alert state history batch: %w", err)
 		}
-	}()
+	}(writeCtx)
 	return errCh
 }
 
@@ -360,8 +374,14 @@ func buildLogQuery(query models.HistoryQuery) (string, error) {
 	logQL := selectorString(selectors)
 
 	labelFilters := ""
-	for k, v := range query.Labels {
-		labelFilters += fmt.Sprintf(" | labels_%s=%q", k, v)
+	labelKeys := make([]string, 0, len(query.Labels))
+	for k := range query.Labels {
+		labelKeys = append(labelKeys, k)
+	}
+	// Ensure that all queries we build are deterministic.
+	sort.Strings(labelKeys)
+	for _, k := range labelKeys {
+		labelFilters += fmt.Sprintf(" | labels_%s=%q", k, query.Labels[k])
 	}
 
 	if labelFilters != "" {

@@ -24,11 +24,12 @@ import (
 )
 
 const (
-	HeaderPluginID      = "X-Plugin-Id"      // can be used for routing
-	HeaderDatasourceUID = "X-Datasource-Uid" // can be used for routing/ load balancing
-	HeaderDashboardUID  = "X-Dashboard-Uid"  // mainly useful for debuging slow queries
-	HeaderPanelID       = "X-Panel-Id"       // mainly useful for debuging slow queries
-	HeaderQueryGroupID  = "X-Query-Group-Id" // mainly useful for finding related queries with query chunking
+	HeaderPluginID       = "X-Plugin-Id"         // can be used for routing
+	HeaderDatasourceUID  = "X-Datasource-Uid"    // can be used for routing/ load balancing
+	HeaderDashboardUID   = "X-Dashboard-Uid"     // mainly useful for debuging slow queries
+	HeaderPanelID        = "X-Panel-Id"          // mainly useful for debuging slow queries
+	HeaderQueryGroupID   = "X-Query-Group-Id"    // mainly useful for finding related queries with query chunking
+	HeaderFromExpression = "X-Grafana-From-Expr" // used by datasources to identify expression queries
 )
 
 func ProvideService(

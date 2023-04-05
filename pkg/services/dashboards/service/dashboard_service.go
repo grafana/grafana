@@ -547,15 +547,15 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) error {
+func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (model.HitList, error) {
 	res, err := dr.FindDashboards(ctx, query)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	makeQueryResult(query, res)
+	hits := makeQueryResult(query, res)
 
-	return nil
+	return hits, nil
 }
 
 func getHitType(item dashboards.DashboardSearchProjection) model.HitType {
@@ -569,8 +569,8 @@ func getHitType(item dashboards.DashboardSearchProjection) model.HitType {
 	return hitType
 }
 
-func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) {
-	query.Result = make([]*model.Hit, 0)
+func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) model.HitList {
+	hitList := make([]*model.Hit, 0)
 	hits := make(map[int64]*model.Hit)
 
 	for _, item := range res {
@@ -598,13 +598,14 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 				hit.SortMetaName = query.Sort.MetaName
 			}
 
-			query.Result = append(query.Result, hit)
+			hitList = append(hitList, hit)
 			hits[item.ID] = hit
 		}
 		if len(item.Term) > 0 {
 			hit.Tags = append(hit.Tags, item.Term)
 		}
 	}
+	return hitList
 }
 
 func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
