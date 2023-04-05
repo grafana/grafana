@@ -31,7 +31,7 @@ Object.defineProperty(Array.prototype, 'buffer', {
 
 let notified = false;
 let notice =
-  'ArrayVector is deprecated and will be removed in Grafana 9. Please migrate to plain arrays for field.values.';
+  'ArrayVector is deprecated and will be removed in Grafana 11. Please use plain arrays for field.values.';
 
 /*
 function ArrayVector(arr) {
