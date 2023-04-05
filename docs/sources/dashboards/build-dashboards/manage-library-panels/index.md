@@ -72,7 +72,7 @@ You can view a list of available library panels and search for a library panel.
 1. Click **Library panels**.
 
    You can see a list of previously defined library panels.
-   {{< /media/docs/grafana/panels-visualizations/screenshot-library-panel-list-9-5.png" class="docs-image--no-shadow" max-width= "900px" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-library-panel-list-9-5.png" class="docs-image--no-shadow" max-width= "900px" >}}
 
 1. Search for a specific library panel if you know its name.
 
