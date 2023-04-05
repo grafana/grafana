@@ -40,17 +40,19 @@ type sqlStore struct {
 	log        *log.ConcreteLogger
 	cfg        *setting.Cfg
 	tagService tag.Service
+	features   featuremgmt.FeatureToggles
 }
 
 func ProvideAlertStore(
 	db db.DB,
-	cacheService *localcache.CacheService, cfg *setting.Cfg, tagService tag.Service) AlertStore {
+	cacheService *localcache.CacheService, cfg *setting.Cfg, tagService tag.Service, features featuremgmt.FeatureToggles) AlertStore {
 	return &sqlStore{
 		db:         db,
 		cache:      cacheService,
 		log:        log.New("alerting.store"),
 		cfg:        cfg,
 		tagService: tagService,
+		features:   features,
 	}
 }
 
@@ -114,7 +116,7 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *alertmodels.Ge
 	}
 
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		builder := db.NewSqlBuilder(ss.cfg, featuremgmt.WithFeatures(), ss.db.GetDialect(), recursiveQueriesAreSupported)
+		builder := db.NewSqlBuilder(ss.cfg, ss.features, ss.db.GetDialect(), recursiveQueriesAreSupported)
 
 		builder.Write(`SELECT
 		alert.id,
