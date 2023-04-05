@@ -7,7 +7,7 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { createDashboardSceneFromDashboardModel } from 'app/features/scenes/dashboard/DashboardsLoader';
 
 import { getTimeSrv } from '../../services/TimeSrv';
-import { PanelModel } from '../../state';
+import { DashboardModel, PanelModel } from '../../state';
 import { setDashboardToFetchFromLocalStorage } from '../../state/initDashboard';
 
 import { Randomize } from './randomizer';
@@ -79,9 +79,11 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
     const snapshotSize = formattedValueToString(getValueFormat('bytes')(snapshotText?.length ?? 0));
 
     let scene: SceneObject | undefined = undefined;
+
     if (config.featureToggles.scenes && !panel.isAngularPlugin()) {
       try {
-        const dash = createDashboardSceneFromDashboardModel(snapshot);
+        const oldModel = new DashboardModel(snapshot);
+        const dash = createDashboardSceneFromDashboardModel(oldModel);
         scene = dash.state.body; // skip the wrappers
       } catch (ex) {
         console.log('Error creating scene:', ex);
