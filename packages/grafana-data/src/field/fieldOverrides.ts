@@ -294,7 +294,7 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
  * Merge the links from the data source config and the panel config
  * @param dataSourceLinks coming from the datasource
  * @param defaultLinks coming from the panel config
- * @returns unique merged links
+ * @returns merged links
  */
 
 function mergeLinks(dataSourceLinks: DataLink[], defaultLinks: DataLink[]) {
