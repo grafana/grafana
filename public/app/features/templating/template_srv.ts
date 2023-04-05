@@ -1,4 +1,4 @@
-import { escape, isString, property } from 'lodash';
+import { escape, isString } from 'lodash';
 
 import {
   deprecationWarning,
@@ -24,6 +24,7 @@ import { isAdHoc } from '../variables/guard';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { variableRegex } from '../variables/utils';
 
+import { getFieldAccessor } from './fieldAccessorCache';
 import { formatVariableValue } from './formatVariableValue';
 import { macroRegistry } from './macroRegistry';
 
@@ -206,18 +207,9 @@ export class TemplateSrv implements BaseTemplateSrv {
     return values;
   }
 
-  private getFieldAccessor(fieldPath: string) {
-    const accessor = this.fieldAccessorCache[fieldPath];
-    if (accessor) {
-      return accessor;
-    }
-
-    return (this.fieldAccessorCache[fieldPath] = property(fieldPath));
-  }
-
   private getVariableValue(scopedVar: ScopedVar, fieldPath: string | undefined) {
     if (fieldPath) {
-      return this.getFieldAccessor(fieldPath)(scopedVar.value);
+      return getFieldAccessor(fieldPath)(scopedVar.value);
     }
 
     return scopedVar.value;

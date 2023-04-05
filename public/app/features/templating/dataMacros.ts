@@ -1,5 +1,3 @@
-import { property } from 'lodash';
-
 import {
   DisplayProcessor,
   FieldType,
@@ -11,6 +9,7 @@ import {
 } from '@grafana/data';
 import { VariableCustomFormatterFn } from '@grafana/scenes';
 
+import { getFieldAccessor } from './fieldAccessorCache';
 import { formatVariableValue } from './formatVariableValue';
 import { getTemplateProxyForField } from './templateProxies';
 
@@ -118,21 +117,6 @@ function getFallbackDisplayProcessor() {
   }
 
   return fallbackDisplayProcessor;
-}
-
-interface FieldAccessorCache {
-  [key: string]: (obj: any) => any;
-}
-
-let fieldAccessorCache: FieldAccessorCache = {};
-
-function getFieldAccessor(fieldPath: string) {
-  const accessor = fieldAccessorCache[fieldPath];
-  if (accessor) {
-    return accessor;
-  }
-
-  return (fieldAccessorCache[fieldPath] = property(fieldPath));
 }
 
 /**
