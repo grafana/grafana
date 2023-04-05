@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"sort"
@@ -362,7 +363,8 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 		default:
 			p.messagesReceived.WithLabelValues(update).Inc()
 			data, err := channel.ReceiveMessage(context.Background())
-			if err, ok := err.(*net.OpError); ok && err != nil {
+
+			if errors.Is(err, &net.OpError{}) {
 				p.logger.Error("network error, waiting 10 seconds before retry", "err", err, "channel", p.withPrefix(name))
 				time.Sleep(networkRetryInterval)
 				continue
@@ -400,7 +402,7 @@ func (p *redisPeer) fullStateReqReceiveLoop() {
 			return
 		default:
 			data, err := p.subs[fullStateChannelReq].ReceiveMessage(context.Background())
-			if err, ok := err.(*net.OpError); ok && err != nil {
+			if errors.Is(err, &net.OpError{}) {
 				p.logger.Error("network error, waiting 10 seconds before retry", "err", err, "channel", p.withPrefix(fullStateChannelReq))
 				time.Sleep(networkRetryInterval)
 				continue
@@ -425,7 +427,7 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 		default:
 			p.messagesReceived.WithLabelValues(fullState).Inc()
 			data, err := p.subs[fullStateChannel].ReceiveMessage(context.Background())
-			if err, ok := err.(*net.OpError); ok && err != nil {
+			if errors.Is(err, &net.OpError{}) {
 				p.logger.Error("network error, waiting 10 seconds before retry", "err", err, "channel", p.withPrefix(fullStateChannel))
 				time.Sleep(networkRetryInterval)
 				continue
