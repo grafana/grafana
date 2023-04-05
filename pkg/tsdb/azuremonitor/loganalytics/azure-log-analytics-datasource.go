@@ -287,10 +287,13 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		resultFormat := dataquery.AzureMonitorQueryAzureTracesResultFormatTrace
 		traceIdVariable := "${__data.fields.traceID}"
 		queryJSONModel.AzureTraces.ResultFormat = &resultFormat
-		queryJSONModel.AzureTraces.Query = &query.Query
 
 		if *queryJSONModel.AzureTraces.OperationId == "" {
-			updatedQuery := buildTracesQuery(&traceIdVariable, queryJSONModel.AzureTraces.TraceTypes)
+			splits := strings.Split(query.Query, "|")
+			splits = append(splits[:2], splits[1:]...)
+			splits[2] = fmt.Sprintf(" where (operation_Id != '' and operation_Id == '%s') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '%s')", traceIdVariable, traceIdVariable)
+			updatedQuery := strings.Join(splits, "|")
+
 			queryJSONModel.AzureTraces.Query = &updatedQuery
 			queryJSONModel.AzureTraces.OperationId = &traceIdVariable
 		}
@@ -516,13 +519,13 @@ func buildTracesQuery(operationId *string, traceTypes []string) string {
 	set truncationmaxsize=67108864;
 	union isfuzzy=true %s
 	| where $__timeFilter()`, strings.Join(eventTypes, ","))
-	propertiesQuery := fmt.Sprintf(`| extend duration = iff(isnull(duration), toreal(0), duration)
-  | extend spanID = iff(itemType == "pageView" or isempty(id), tostring(new_guid()), id)
-  | extend serviceName = iff(isempty(name), column_ifexists("problemId", ""), name)
-  | extend tags = bag_pack_columns(%s)
-  | project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name
-  | project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType
-  | order by startTime asc`, strings.Join(tags, ","))
+	propertiesQuery := fmt.Sprintf(`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))
+	| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))
+	| extend serviceName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))
+	| extend tags = bag_pack_columns(%s)
+	| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name
+	| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType
+	| order by startTime asc`, strings.Join(tags, ","))
 
 	return baseQuery + whereClause + propertiesQuery
 }
