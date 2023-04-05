@@ -290,24 +290,13 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
   }
 }
 
-/**
- * Merge the links from the data source config and the panel config
- * @param dataSourceLinks coming from the datasource
- * @param defaultLinks coming from the panel config
- * @returns merged links
- */
-
-function mergeLinks(dataSourceLinks: DataLink[], defaultLinks: DataLink[]) {
-  // Combine the config links and the default links
-  return [...dataSourceLinks, ...defaultLinks];
-}
-
 // config -> from DS
 // defaults -> from Panel config
 export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfig, context: FieldOverrideEnv) {
   // For cases where we have links on the datasource config and the panel config, we need to merge them
   if (config.links && defaults.links) {
-    config.links = mergeLinks(config.links, defaults.links);
+    // Combine the data source links and the panel default config links
+    config.links = [...config.links, ...defaults.links];
   }
   for (const fieldConfigProperty of context.fieldConfigRegistry.list()) {
     if (fieldConfigProperty.isCustom && !config.custom) {
