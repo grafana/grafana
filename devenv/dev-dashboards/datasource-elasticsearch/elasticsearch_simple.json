@@ -130,7 +130,7 @@
           },
           "metrics": [
             {
-              "field": "value",
+              "field": "@value",
               "id": "1",
               "type": "max"
             }
@@ -223,7 +223,7 @@
         {
           "bucketAggs": [
             {
-              "field": "metric",
+              "field": "@metric",
               "id": "3",
               "settings": {
                 "min_doc_count": 1,
@@ -251,7 +251,7 @@
           "dsType": "elasticsearch",
           "metrics": [
             {
-              "field": "value",
+              "field": "@value",
               "id": "1",
               "type": "avg"
             }
@@ -265,7 +265,7 @@
           "alias": "",
           "bucketAggs": [
             {
-              "field": "metric",
+              "field": "@metric",
               "id": "3",
               "settings": {
                 "min_doc_count": "1",
@@ -402,7 +402,7 @@
           "dsType": "elasticsearch",
           "metrics": [
             {
-              "field": "value",
+              "field": "@value",
               "id": "1",
               "meta": {},
               "settings": {
@@ -524,7 +524,7 @@
           "dsType": "elasticsearch",
           "metrics": [
             {
-              "field": "value",
+              "field": "@value",
               "id": "1",
               "meta": {
                 "std_deviation_bounds_lower": true,
@@ -631,21 +631,21 @@
           "dsType": "elasticsearch",
           "metrics": [
             {
-              "field": "value",
+              "field": "@value",
               "id": "1",
               "meta": {},
               "settings": {},
               "type": "avg"
             },
             {
-              "field": "value",
+              "field": "@value",
               "id": "3",
               "meta": {},
               "settings": {},
               "type": "max"
             },
             {
-              "field": "value",
+              "field": "@value",
               "id": "4",
               "meta": {},
               "settings": {},
@@ -923,7 +923,7 @@
               "level": 1,
               "line": 2,
               "location": 13,
-              "metric": 14,
+              "@metric": 14,
               "shapes": 15,
               "sort": 16,
               "value": 17

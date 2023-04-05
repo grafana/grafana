@@ -823,7 +823,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "avg"
                 }
@@ -930,7 +930,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "avg"
                 }
@@ -1048,7 +1048,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "settings": {
                     "percents": [
@@ -1164,7 +1164,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "settings": {
                     "percents": [
@@ -1291,7 +1291,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "min"
                 }
@@ -1398,7 +1398,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "min"
                 }
@@ -1516,7 +1516,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "sum"
                 }
@@ -1623,7 +1623,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "sum"
                 }
@@ -1741,7 +1741,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "max"
                 }
@@ -1848,7 +1848,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "max"
                 }
@@ -1966,7 +1966,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "meta": {
                     "avg": true,
@@ -2083,7 +2083,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "meta": {
                     "avg": true,
@@ -2211,7 +2211,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "cardinality"
                 }
@@ -2318,7 +2318,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "cardinality"
                 }
@@ -2695,7 +2695,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "hide": false,
                   "id": "1",
                   "type": "cardinality"
@@ -2813,7 +2813,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "hide": false,
                   "id": "1",
                   "type": "cardinality"
@@ -2942,7 +2942,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "max"
                 },
@@ -3059,7 +3059,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "max"
                 },
@@ -3187,7 +3187,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "avg"
                 },
@@ -3304,7 +3304,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "avg"
                 },
@@ -3692,7 +3692,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "settings": {
                     "precision_threshold": "10"
@@ -3809,7 +3809,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "settings": {
                     "precision_threshold": "10"
@@ -3937,7 +3937,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "max"
                 },
@@ -4051,7 +4051,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "max"
                 },
@@ -4429,7 +4429,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "settings": {
                     "precision_threshold": "10"
@@ -4546,7 +4546,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "settings": {
                     "precision_threshold": "10"
@@ -5157,7 +5157,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "min"
                 },
@@ -5272,7 +5272,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "min"
                 },
@@ -5416,7 +5416,7 @@
                   "type": "count"
                 },
                 {
-                  "field": "value",
+                  "field": "@value",
                   "hide": true,
                   "id": "4",
                   "type": "avg"
@@ -5547,7 +5547,7 @@
                   "type": "count"
                 },
                 {
-                  "field": "value",
+                  "field": "@value",
                   "hide": true,
                   "id": "4",
                   "type": "avg"
@@ -6203,7 +6203,7 @@
                   "type": "terms"
                 },
                 {
-                  "field": "metric",
+                  "field": "@metric",
                   "id": "5",
                   "settings": {
                     "min_doc_count": "1",
@@ -6243,7 +6243,7 @@
                   "type": "count"
                 },
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "3",
                   "type": "avg"
                 }
@@ -6350,7 +6350,7 @@
                   "type": "terms"
                 },
                 {
-                  "field": "metric",
+                  "field": "@metric",
                   "id": "5",
                   "settings": {
                     "min_doc_count": "1",
@@ -6390,7 +6390,7 @@
                   "type": "count"
                 },
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "3",
                   "type": "avg"
                 }
@@ -6508,7 +6508,7 @@
                   "type": "terms"
                 },
                 {
-                  "field": "metric",
+                  "field": "@metric",
                   "id": "5",
                   "settings": {
                     "min_doc_count": "1",
@@ -6548,7 +6548,7 @@
                   "type": "count"
                 },
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "3",
                   "type": "avg"
                 }
@@ -6656,7 +6656,7 @@
                   "type": "terms"
                 },
                 {
-                  "field": "metric",
+                  "field": "@metric",
                   "id": "5",
                   "settings": {
                     "min_doc_count": "1",
@@ -6696,7 +6696,7 @@
                   "type": "count"
                 },
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "3",
                   "type": "avg"
                 }
@@ -6840,7 +6840,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "cardinality"
                 }
@@ -6959,7 +6959,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "cardinality"
                 }
@@ -7561,7 +7561,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "avg"
                 }
@@ -7680,7 +7680,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "avg"
                 }
@@ -7810,7 +7810,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "avg"
                 }
@@ -7929,7 +7929,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "type": "avg"
                 }
@@ -8074,7 +8074,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "meta": {
                     "std_deviation_bounds_lower": true,
@@ -8198,7 +8198,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "meta": {
                     "std_deviation_bounds_lower": true,
@@ -8333,7 +8333,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "meta": {
                     "std_deviation": true,
@@ -8462,7 +8462,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "meta": {
                     "std_deviation": true,
@@ -9433,7 +9433,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "settings": {
                     "percents": [
@@ -9558,7 +9558,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "settings": {
                     "percents": [
@@ -9697,7 +9697,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "settings": {
                     "script": "_value * 2"
@@ -9729,7 +9729,7 @@
               "hide": false,
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "settings": {
                     "script": "_value * 1.5"
@@ -9840,7 +9840,7 @@
               },
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "settings": {
                     "script": "_value * 2"
@@ -9872,7 +9872,7 @@
               "hide": false,
               "metrics": [
                 {
-                  "field": "value",
+                  "field": "@value",
                   "id": "1",
                   "settings": {
                     "script": "_value * 1.5"

@@ -85,10 +85,10 @@ async function elasticSetupIndexTemplate() {
           hostname: {
             type: 'keyword',
           },
-          value: {
+          "@value": {
             type: 'integer',
           },
-          metric: {
+          "@metric": {
             type: 'keyword',
           },
           description: {
@@ -132,8 +132,8 @@ function getRandomLogItem(counter, timestamp) {
       {"type": "square"},
     ],
     hostname: chooseRandomElement(['hostname1', 'hostname2', 'hostname3', 'hostname4', 'hostname5', 'hostname6']),
-    value: counter,
-    metric: chooseRandomElement(['cpu', 'memory', 'latency']),
+    "@value": counter,
+    "@metric": chooseRandomElement(['cpu', 'memory', 'latency']),
     description: "this is description"
   };
 }
