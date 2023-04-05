@@ -10345,7 +10345,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Datasource tests - Elastic migration",
+  "title": "Datasource tests - Elasticsearch migration",
   "uid": "es_migration",
   "version": 1,
   "weekStart": ""
