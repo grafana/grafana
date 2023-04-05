@@ -125,16 +125,8 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 		return err
 	}
 
-	contentType := rawLokiResponse.ContentType
-
-	if strings.HasPrefix(contentType, "text/plain") {
-		contentType = "text/plain"
-	} else {
-		contentType = "application/json"
-	}
-
 	respHeaders := map[string][]string{
-		"content-type": {contentType},
+		"content-type": {"application/json"},
 	}
 	if rawLokiResponse.Encoding != "" {
 		respHeaders["content-encoding"] = []string{rawLokiResponse.Encoding}
