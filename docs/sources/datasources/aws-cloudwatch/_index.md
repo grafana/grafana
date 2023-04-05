@@ -261,7 +261,7 @@ datasources:
       profile: secondary
 ```
 
-**Using accessKey and secretKey:**
+##### Using accessKey and secretKey
 
 ```yaml
 apiVersion: 1
