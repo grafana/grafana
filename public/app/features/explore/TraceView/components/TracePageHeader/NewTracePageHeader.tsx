@@ -101,8 +101,6 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
     return null;
   }
 
-  const { method, status } = getHeaderTags(trace.spans);
-
   const tooltip = () => {
     const services = new Set(values(trace.processes).map((p) => p.serviceName)).size;
     const depth = get(maxBy(trace.spans, 'depth'), 'depth', 0) + 1;
@@ -127,6 +125,7 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
     </h1>
   );
 
+  const { method, status } = getHeaderTags(trace.spans);
   let statusColor: BadgeColor = 'green';
   if (status && status.length > 0) {
     if (status[0].value.toString().charAt(0) === '4') {
@@ -135,6 +134,8 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
       statusColor = 'red';
     }
   }
+
+  const totalSpans = `Total Spans: ${trace.spans.length}`;
 
   return (
     <header className={styles.header}>
@@ -161,7 +162,7 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
               </span>
             </Tooltip>
           )}
-          <span className={styles.total}>Total Spans: {trace.spans.length}</span>
+          <span className={styles.total}>{totalSpans}</span>
         </span>
       </div>
 
