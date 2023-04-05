@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import React, { ReactElement } from 'react';
 
+import { IconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { Dropdown } from '../Dropdown/Dropdown';
@@ -15,6 +16,7 @@ interface PanelMenuProps {
   placement?: TooltipPlacement;
   offset?: [number, number];
   onVisibleChange?: (state: boolean) => void;
+  icon?: IconName;
 }
 
 export function PanelMenu({
@@ -25,6 +27,7 @@ export function PanelMenu({
   dragClassCancel,
   menuButtonClass,
   onVisibleChange,
+  icon = 'ellipsis-v',
 }: PanelMenuProps) {
   const testId = title ? selectors.components.Panels.Panel.menu(title) : `panel-menu-button`;
   return (
@@ -32,7 +35,7 @@ export function PanelMenu({
       <ToolbarButton
         aria-label={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
         title="Menu"
-        icon="ellipsis-v"
+        icon={icon}
         iconSize="md"
         narrow
         data-testid={testId}

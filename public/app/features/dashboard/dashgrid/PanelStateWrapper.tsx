@@ -35,6 +35,7 @@ import {
   SeriesVisibilityChangeMode,
   AdHocFilterItem,
 } from '@grafana/ui';
+import { PanelChromeMenu } from '@grafana/ui/src/components/PanelChrome/PanelChromeMenu';
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -51,9 +52,11 @@ import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annota
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
+import { getPanelHeaderExtensionsMenu } from '../utils/getPanelHeaderExtensionsMenu';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
+import { PanelHeaderMenuNew } from './PanelHeader/PanelHeaderMenu';
 import { PanelHeaderMenuWrapperNew } from './PanelHeader/PanelHeaderMenuWrapper';
 import { PanelHeaderTitleItems } from './PanelHeader/PanelHeaderTitleItems';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
@@ -693,6 +696,19 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         </div>
       );
 
+      const extensionMenuItems = getPanelHeaderExtensionsMenu({ panel, dashboard });
+      let actions = [];
+      if (extensionMenuItems.length > 0) {
+        actions.push(
+          <PanelChromeMenu
+            key="panel-header-extensions-dropdown"
+            menu={<PanelHeaderMenuNew items={extensionMenuItems} />}
+            title="Panel header extensions"
+            icon="plug"
+          />
+        );
+      }
+
       return (
         <PanelChrome
           width={width}
@@ -704,6 +720,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           description={!!panel.description ? this.onShowPanelDescription : undefined}
           titleItems={titleItems}
           menu={this.props.hideMenu ? undefined : menu}
+          actions={actions}
           dragClass={dragClass}
           dragClassCancel="grid-drag-cancel"
           padding={padding}

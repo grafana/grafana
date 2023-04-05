@@ -12,8 +12,8 @@ import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { Tooltip } from '../Tooltip';
 
 import { HoverWidget } from './HoverWidget';
+import { PanelChromeMenu } from './PanelChromeMenu';
 import { PanelDescription } from './PanelDescription';
-import { PanelMenu } from './PanelMenu';
 import { PanelStatus } from './PanelStatus';
 import { TitleItem } from './TitleItem';
 
@@ -91,9 +91,6 @@ export function PanelChrome({
   // detect if we are on touch devices
   const isTouchDevice = useMedia(pointerQuery);
   const hasHeader = !hoverHeader || isTouchDevice;
-
-  // hover menu is only shown on hover when not on touch devices
-  const showOnHoverClass = !isTouchDevice ? 'show-on-hover' : '';
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
@@ -181,19 +178,7 @@ export function PanelChrome({
 
           {headerContent}
 
-          {menu && (
-            <PanelMenu
-              menu={menu}
-              title={title}
-              placement="bottom-end"
-              menuButtonClass={cx(
-                { [styles.hiddenMenu]: !isTouchDevice },
-                styles.menuItem,
-                dragClassCancel,
-                showOnHoverClass
-              )}
-            />
-          )}
+          {menu && <PanelChromeMenu menu={menu} title={title} dragClassCancel={dragClassCancel} />}
         </div>
       )}
 
@@ -321,17 +306,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-    }),
-    hiddenMenu: css({
-      visibility: 'hidden',
-    }),
-    menuItem: css({
-      label: 'panel-menu',
-      border: 'none',
-      background: theme.colors.secondary.main,
-      '&:hover': {
-        background: theme.colors.secondary.shade,
-      },
     }),
     errorContainerFloating: css({
       label: 'error-container',

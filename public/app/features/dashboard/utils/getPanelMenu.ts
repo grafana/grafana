@@ -1,4 +1,4 @@
-import { PanelMenuItem, PluginExtensionPoints, type PluginExtensionPanelContext } from '@grafana/data';
+import { PanelMenuItem, PluginExtensionPoints } from '@grafana/data';
 import {
   isPluginExtensionLink,
   AngularComponent,
@@ -25,6 +25,7 @@ import {
 } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
+import { createExtensionPanelContext } from 'app/features/plugins/extensions/contexts';
 import { store } from 'app/store/store';
 
 import { navigateToExplore } from '../../explore/state/main';
@@ -281,7 +282,7 @@ export function getPanelMenu(
   if (!config.featureToggles.newPanelChromeUI) {
     const { extensions } = getPluginExtensions({
       extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
-      context: createExtensionContext(panel, dashboard),
+      context: createExtensionPanelContext(panel, dashboard),
     });
 
     if (extensions.length > 0 && !panel.isEditing) {
@@ -321,26 +322,10 @@ export function getPanelMenu(
   return menu;
 }
 
-function truncateTitle(title: string, length: number): string {
+export function truncateTitle(title: string, length: number): string {
   if (title.length < length) {
     return title;
   }
   const part = title.slice(0, length - 3);
   return `${part.trimEnd()}...`;
-}
-
-function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): PluginExtensionPanelContext {
-  return {
-    id: panel.id,
-    pluginId: panel.type,
-    title: panel.title,
-    timeRange: dashboard.time,
-    timeZone: dashboard.timezone,
-    dashboard: {
-      uid: dashboard.uid,
-      title: dashboard.title,
-      tags: Array.from<string>(dashboard.tags),
-    },
-    targets: panel.targets,
-  };
 }
