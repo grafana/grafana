@@ -75,3 +75,4 @@ alertStateHistoryLokiPrimary,alpha,@grafana/alerting-squad,false,false,false,fal
 alertStateHistoryLokiOnly,alpha,@grafana/alerting-squad,false,false,false,false
 unifiedRequestLog,alpha,@grafana/backend-platform,false,false,false,false
 renderAuthJWT,beta,@grafana/grafana-as-code,false,false,false,false
+pyroscopeFlameGraph,alpha,@grafana/observability-traces-and-profiling,false,false,false,false

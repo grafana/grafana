@@ -5,14 +5,17 @@ option go_package = "./;entity";
 
 message GRN {
   // the tenant/org id
+  // In k8s land, this will be namespace
   int64 tenant_id = 1;
 
   // Identify the entity kind.  This kind will be used to apply a schema to the body and
   // will trigger additional indexing behavior.
+  // In k8s land, this is actuall GVK
   string kind = 3;
 
   // Unique ID
   // 40 characters or less, no slashes or other special characters
+  // In k8s land, this should be name
   string UID = 4;
 }
 
@@ -21,38 +24,59 @@ message Entity {
   // Entity identifier
   GRN GRN = 1;
 
-  // The version will change when the entity is saved. It is not necessarily sortable
-  string version = 2;
+  // Globally unique ID set by the system.  This can not be set explicitly
+  string guid = 2;
+
+  // The resourceVersion -- it will change whenever anythign on the object is saved
+  uint64 version = 3;
 
   // Time in epoch milliseconds that the entity was created
-  int64 created_at = 3;
+  int64 created_at = 4;
 
   // Time in epoch milliseconds that the entity was updated
-  int64 updated_at = 4;
+  int64 updated_at = 5;
 
   // Who created the entity
-  string created_by = 5;
+  string created_by = 6;
 
   // Who updated the entity
-  string updated_by = 6;
+  string updated_by = 7;
 
   // The folder UID (not stored in the body)
-  string folder = 7;
+  string folder = 8;
 
   // MD5 digest of the body
-  string ETag = 8;
+  string ETag = 9;
 
   // Content Length
-  int64 size = 9;
+  int64 size = 10;
 
   // Raw bytes of the storage entity.  The kind will determine what is a valid payload
-  bytes body = 10;
+  bytes body = 11;
+
+  // k8s style status (ignored for now)
+  bytes status = 12;
 
   // Entity summary as JSON
-  bytes summary_json = 11;
+  bytes summary_json = 13;
+
+  // Access information (attached to the single instance)
+  repeated EntityAccess access = 14;
 
   // External location info
-  EntityOriginInfo origin = 12;
+  EntityOriginInfo origin = 15;
+}
+
+// Manage access control
+message EntityAccess {
+  // Who (team or user)
+  string role = 1;
+
+  // What kind of things (ie, dashboard or dashboard.permissions)
+  string subject = 2;
+
+  // What you can do (read/write/etc)
+  string verb = 3;
 }
 
 // This stores additional metadata for items entities that were synced from external systmes
@@ -83,7 +107,7 @@ message EntityErrorInfo {
 // This is a subset of Entity that does not include body or sync info
 message EntityVersionInfo {
   // The version will change when the entity is saved. It is not necessarily sortable
-  string version = 1;
+  uint64 version = 1;
 
   // Time in epoch milliseconds that the entity was updated
   int64 updated_at = 2;
@@ -111,14 +135,17 @@ message ReadEntityRequest {
   // Entity identifier
   GRN GRN = 1;
 
-  // Fetch an explicit version
-  string version = 2;
+  // Fetch an explicit version (0 is latest)
+  uint64 version = 2;
 
   // Include the full body bytes
   bool with_body = 3;
 
+  // Include the status bytes (ignored for now)
+  bool with_status = 4;
+
   // Include derived summary metadata
-  bool with_summary = 4;
+  bool with_summary = 5;
 }
 
 //------------------------------------------------------
@@ -137,6 +164,10 @@ message BatchReadEntityResponse {
 // Write request/response
 //-----------------------------------------------
 
+// TODO?
+// * directly define labels (currently from indexer)
+// * directly define annotations... meta?
+
 message WriteEntityRequest {
   // Entity identifier
   GRN GRN = 1;
@@ -147,11 +178,14 @@ message WriteEntityRequest {
   // The raw entity body
   bytes body = 3;
 
+  // k8s style status (ignored for now)
+  bytes status = 4;
+
   // Message that can be seen when exploring entity history
-  string comment = 4;
+  string comment = 5;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  string previous_version = 5;
+  uint64 previous_version = 6;
 }
 
 // This operation is useful when syncing a resource from external sources
@@ -188,11 +222,11 @@ message AdminWriteEntityRequest {
 
   // An explicit version identifier
   // Optional, if set, this will overwrite/define an explicit version
-  string version = 9;
+  uint64 version = 9;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
   // This may not be used along with an explicit version in the request
-  string previous_version = 10;
+  uint64 previous_version = 10;
 
   // Request that all previous versions are removed from the history
   // This will make sense for systems that manage history explicitly externallay
@@ -209,14 +243,17 @@ message WriteEntityResponse {
   // Entity identifier
   GRN GRN = 2;
 
+  // The internal GUID for this object
+  string GUID = 3;
+
   // Entity details with the body removed
-  EntityVersionInfo entity = 3; 
+  EntityVersionInfo entity = 4; 
 
   // Entity summary as JSON
-  bytes summary_json = 4;
+  bytes summary_json = 5;
 
   // Status code
-  Status status = 5;
+  Status status = 6;
 
   // Status enumeration
   enum Status {
@@ -236,7 +273,7 @@ message DeleteEntityRequest {
   GRN GRN = 1;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  string previous_version = 3;
+  uint64 previous_version = 3;
 }
 
 message DeleteEntityResponse {
@@ -312,7 +349,7 @@ message EntitySearchResult {
   GRN GRN = 1;
 
   // The current veresion of this entity
-  string version = 2;
+  uint64 version = 2;
 
   // Content Length
   int64 size = 3;
