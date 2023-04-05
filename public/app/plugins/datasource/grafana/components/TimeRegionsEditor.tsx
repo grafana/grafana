@@ -45,7 +45,7 @@ export const TimeRegionsEditor = ({ value, onChange }: Props) => {
 
   const getNextRegionName = () => {
     const label = 'T';
-    let idx = value?.length ? value?.length + 1 : 0;
+    let idx = value?.length ?? 0;
     const max = idx + 100;
 
     while (true && idx < max) {
