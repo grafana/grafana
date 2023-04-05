@@ -4,12 +4,24 @@ import { MutableVector } from '../types/vector';
 // https://jsfiddle.net/Lbj7co84/
 // TODO: typings kung fu
 
+declare global {
+  interface Array<T> {
+    get buffer(): T[];
+    set buffer(value: T[]);
+    get(idx: number): T;
+    set(idx: number, value: T): void;
+    add(value: T): void;
+    toArray(): T[];
+    toJSON(): string;
+  }
+}
+
 // JS original sin
 Object.assign(Array.prototype, {
-  get(idx: string | number): any {
+  get(idx: number): any {
     return (this as any)[idx];
   },
-  set(idx: string | number, value: any) {
+  set(idx: number, value: any) {
     (this as any)[idx] = value;
   },
   add(value: any) {
@@ -27,12 +39,11 @@ Object.defineProperty(Array.prototype, 'buffer', {
   get: function () {
     return this;
   },
-  set: function() {}
+  set: function () {},
 });
 
 let notified = false;
-let notice =
-  'ArrayVector is deprecated and will be removed in Grafana 11. Please use plain arrays for field.values.';
+let notice = 'ArrayVector is deprecated and will be removed in Grafana 11. Please use plain arrays for field.values.';
 
 /*
 function ArrayVector(arr) {
@@ -89,7 +100,7 @@ export class ArrayVector<T = any> extends Array<T> implements MutableVector<T> {
     throw unused;
   }
 
-  toJSON(): T[] {
+  toJSON(): string {
     throw unused;
   }
 }

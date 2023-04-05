@@ -136,7 +136,7 @@ export interface Field<T = any, V = Vector<T>> {
    *  Meta info about how field and how to display it
    */
   config: FieldConfig;
-  values: V; // The raw field values
+  values: V | T[]; // The raw field values
   labels?: Labels;
 
   /**

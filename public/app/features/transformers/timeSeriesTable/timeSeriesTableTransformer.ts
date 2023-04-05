@@ -80,7 +80,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
     // add values to each label based field of this frame
     const labels = frame.fields[1].labels;
     for (const labelKey of Object.keys(labelFields)) {
-      const labelValue = labels?.[labelKey] ?? null;
+      const labelValue = labels?.[labelKey] ?? '';
       labelFields[labelKey].values.add(labelValue);
     }
 
