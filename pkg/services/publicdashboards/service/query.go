@@ -46,14 +46,16 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 			OrgID:        dash.OrgID,
 			DashboardID:  dash.ID,
 			DashboardUID: dash.UID,
-			Limit:        anno.Target.Limit,
-			MatchAny:     anno.Target.MatchAny,
 			SignedInUser: anonymousUser,
 		}
 
-		if anno.Target.Type == "tags" {
-			annoQuery.DashboardID = 0
-			annoQuery.Tags = anno.Target.Tags
+		if anno.Target != nil {
+			annoQuery.Limit = anno.Target.Limit
+			annoQuery.MatchAny = anno.Target.MatchAny
+			if anno.Target.Type == "tags" {
+				annoQuery.DashboardID = 0
+				annoQuery.Tags = anno.Target.Tags
+			}
 		}
 
 		annotationItems, err := pd.AnnotationsRepo.Find(ctx, annoQuery)
@@ -82,7 +84,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 
 			// We want events from tag queries to overwrite existing events
 			_, has := uniqueEvents[event.Id]
-			if !has || (has && anno.Target.Type == "tags") {
+			if !has || (has && anno.Target != nil && anno.Target.Type == "tags") {
 				uniqueEvents[event.Id] = event
 			}
 		}
@@ -211,7 +213,10 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 	var datasourceUids []string
 	exists := map[string]bool{}
 
-	for _, panelObj := range dashboard.Get("panels").MustArray() {
+	// collapsed rows contain panels in a nested structure, so we need to flatten them before calculate unique uids
+	flattenedPanels := getFlattenedPanels(dashboard)
+
+	for _, panelObj := range flattenedPanels {
 		panel := simplejson.NewFromAny(panelObj)
 		uid := getDataSourceUidFromJson(panel)
 
@@ -234,6 +239,23 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 	}
 
 	return datasourceUids
+}
+
+func getFlattenedPanels(dashboard *simplejson.Json) []interface{} {
+	var flatPanels []interface{}
+	for _, panelObj := range dashboard.Get("panels").MustArray() {
+		panel := simplejson.NewFromAny(panelObj)
+		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
+		// if it is not collapsed, the row does not have any panels
+		if panel.Get("type").MustString() == "row" {
+			if panel.Get("collapsed").MustBool() {
+				flatPanels = append(flatPanels, panel.Get("panels").MustArray()...)
+			}
+		} else {
+			flatPanels = append(flatPanels, panelObj)
+		}
+	}
+	return flatPanels
 }
 
 func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.Json {
