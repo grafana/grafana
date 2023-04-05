@@ -13,13 +13,12 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { memo, Dispatch, SetStateAction, useEffect, useMemo } from 'react';
+import React, { memo, Dispatch, SetStateAction, useEffect } from 'react';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import { SearchProps } from '../../useSearch';
-import { convertTimeFilter } from '../utils/filter-spans';
 
 export type TracePageSearchBarProps = {
   search: SearchProps;
@@ -82,17 +81,7 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
     setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex - 1]);
   };
 
-  const buttonEnabled = useMemo(() => {
-    return (
-      (search.serviceName && search.serviceName !== '') ||
-      (search.spanName && search.spanName !== '') ||
-      convertTimeFilter(search.from || '') ||
-      convertTimeFilter(search.to || '') ||
-      search.tags.some((tag) => {
-        return tag.key;
-      })
-    );
-  }, [search.from, search.serviceName, search.spanName, search.tags, search.to]);
+  const buttonEnabled = spanFilterMatches && spanFilterMatches?.size > 0;
 
   return (
     <div className={styles.searchBar}>

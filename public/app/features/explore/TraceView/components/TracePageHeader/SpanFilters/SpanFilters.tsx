@@ -268,7 +268,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Tags" labelWidth={16} tooltip="Filter by tags, process tags or log tags in your spans.">
+          <InlineField label="Tags" labelWidth={16} tooltip="Filter by tags, process tags or log fields in your spans.">
             <div>
               {search.tags.map((tag, i) => (
                 <div key={i}>

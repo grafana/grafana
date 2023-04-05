@@ -38,10 +38,7 @@ describe('<NewTracePageSearchBar>', () => {
   it('renders buttons that can be used to search if filters added', () => {
     const props = {
       ...defaultProps,
-      search: {
-        ...defaultProps.search,
-        serviceName: 'service',
-      },
+      spanFilterMatches: new Set(['2ed38015486087ca']),
     };
     render(<NewTracePageSearchBar {...(props as unknown as TracePageSearchBarProps)} />);
     const nextResButton = screen.queryByRole('button', { name: 'Next result button' });
