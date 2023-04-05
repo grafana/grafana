@@ -51,6 +51,8 @@ console.log(Array.isArray(arv));
 console.log(arv.slice());
 */
 
+const unused = 'not used';
+
 /**
  * @public
  */
@@ -69,22 +71,22 @@ export class ArrayVector<T = any> extends Array<T> implements MutableVector<T> {
   }
 
   add(value: T) {
-    throw 'not used';
+    throw unused;
   }
 
   get(index: number): T {
-    throw 'not used';
+    throw unused;
   }
 
   set(index: number, value: T) {
-    throw 'not used';
+    throw unused;
   }
 
   toArray(): T[] {
-    throw 'not used';
+    throw unused;
   }
 
   toJSON(): T[] {
-    throw 'not used';
+    throw unused;
   }
 }
