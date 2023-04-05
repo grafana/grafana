@@ -17,6 +17,8 @@ export enum PanelLayout {
 
 export interface PanelOptions {
   folderId?: number;
+  includeVars: boolean;
+  keepTime: boolean;
   layout?: PanelLayout;
   maxItems: number;
   query: string;
@@ -28,6 +30,8 @@ export interface PanelOptions {
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
+  includeVars: false,
+  keepTime: false,
   layout: PanelLayout.List,
   maxItems: 10,
   query: '',
