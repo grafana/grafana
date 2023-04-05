@@ -25,3 +25,7 @@ For more information and examples, please refer to [InfluxDB Provisioning]({{< r
 ### Dashboard previews deprecation notice
 
 We are deprecating the [Dashboard previews]({{< relref "../search/dashboard-previews" >}}) feature, and will remove it in Grafana v10. We have started exploring alternative ways of adding visual previews using the Scenes framework, and we'll share more information about it in the future.
+
+### Migrate your API keys to service accounts
+
+We are upgrading Grafana [API keys]({{< relref "../administration/api-keys/" >}}) to Service Accounts. Service Accounts are a superset of API Keys; they include token rotation and compatibility with [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}). In a future release, we will automatically migrate all existing API keys to Service Accounts. All of your existing tokens will continue to work; they will simply be migrated to Service Accounts. You can preempt this change by migrating your existing API keys to Service Accounts using Grafana's UI or API; see instructions in the [API keys docs]({{< relref "../administration/api-keys/#migrate-api-keys-to-grafana-service-accounts" >}}).
