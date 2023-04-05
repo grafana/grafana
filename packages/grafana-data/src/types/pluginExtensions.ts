@@ -45,7 +45,7 @@ export type PluginExtensionLinkConfig<Context extends object = object> = PluginE
   Context,
   Pick<PluginExtensionLink, 'path'> & {
     type: PluginExtensionTypes.link;
-    onClick?: (event: React.MouseEvent, helpers: PluginExtensionEventHelpers<Context>) => void;
+    onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
   }
 >;
 
