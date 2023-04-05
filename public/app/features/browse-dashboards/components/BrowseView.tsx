@@ -13,6 +13,9 @@ interface BrowseDashboardsViewProps {
 export default function BrowseDashboardsView({ folderUID }: BrowseDashboardsViewProps) {
   const [nestedData, setNestedData] = useState<NestedData>({});
 
+  // Note: entire implementation of this component must be replaced.
+  // This is just to show proof of concept for fetching and showing the data
+
   useEffect(() => {
     const folderKey = folderUID ?? '$$root';
 
