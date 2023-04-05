@@ -96,6 +96,8 @@ export const install = createAsyncThunk(
   }
 );
 
+export const unsetInstall = createAsyncThunk(`${STATE_PREFIX}/install`, async () => ({}));
+
 export const uninstall = createAsyncThunk(`${STATE_PREFIX}/uninstall`, async (id: string, thunkApi) => {
   try {
     await uninstallPlugin(id);
