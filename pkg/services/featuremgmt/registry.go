@@ -458,6 +458,12 @@ var (
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:        "lokiMetricDataplane",
+			Description: "Changes responses from Loki to be compliant with the dataplane specification.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:        "alertStateHistoryLokiSecondary",
 			Description: "Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.",
 			State:       FeatureStateAlpha,

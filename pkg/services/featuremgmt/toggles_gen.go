@@ -279,6 +279,10 @@ const (
 	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
 	FlagPrometheusDataplane = "prometheusDataplane"
 
+	// FlagLokiMetricDataplane
+	// Changes responses from Loki to be compliant with the dataplane specification.
+	FlagLokiMetricDataplane = "lokiMetricDataplane"
+
 	// FlagAlertStateHistoryLokiSecondary
 	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
 	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
