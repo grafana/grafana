@@ -65,6 +65,7 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
   elasticsearchBackendMigration?: boolean;
+  showTraceId?: boolean;
   datasourceOnboarding?: boolean;
   emptyDashboardPage?: boolean;
   secureSocksDatasourceProxy?: boolean;
@@ -93,4 +94,5 @@ export interface FeatureToggles {
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
+  pyroscopeFlameGraph?: boolean;
 }

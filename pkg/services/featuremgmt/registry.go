@@ -316,6 +316,12 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:        "showTraceId",
+			Description: "Show trace ids for requests",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:        "datasourceOnboarding",
 			Description: "Enable data source onboarding page",
 			State:       FeatureStateAlpha,
@@ -498,6 +504,12 @@ var (
 			Description: "Uses JWT-based auth for rendering instead of relying on remote cache",
 			State:       FeatureStateBeta,
 			Owner:       grafanaAsCodeSquad,
+		},
+		{
+			Name:        "pyroscopeFlameGraph",
+			Description: "Changes flame graph to pyroscope one",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 		},
 	}
 )
