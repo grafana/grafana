@@ -42,7 +42,6 @@ type SystemStats struct {
 	DataKeys                  int64
 	ActiveDataKeys            int64
 	PublicDashboards          int64
-	Correlations              int64
 }
 
 type DataSourceStats struct {
