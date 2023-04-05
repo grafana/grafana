@@ -53,6 +53,26 @@ export const TrendPanel = ({
       }
     }
 
+    // Make sure values are ascending
+    if (xFieldIdx != null) {
+      const field = frames[0].fields[xFieldIdx];
+      if (field.type === FieldType.number) {
+        // we may support ordinal soon
+        let last = Number.NEGATIVE_INFINITY;
+        const values = field.values.toArray();
+        for (let i = 0; i < values.length; i++) {
+          const v = values[i];
+          if (last > v) {
+            return {
+              warning: `Values must be in ascending order (index: ${i}, ${last} > ${v})`,
+              frames,
+            };
+          }
+          last = v;
+        }
+      }
+    }
+
     return { frames: prepareGraphableFields(frames, config.theme2, undefined, xFieldIdx) };
   }, [data, options.xField]);
 
