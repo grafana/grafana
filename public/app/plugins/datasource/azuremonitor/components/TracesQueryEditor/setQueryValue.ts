@@ -27,7 +27,7 @@ const buildTracesQuery = (operationId?: string): string => {
 export function setKustoQuery(query: AzureMonitorQuery, operationId?: string): AzureMonitorQuery {
   return {
     ...query,
-    azureLogAnalytics: {
+    azureTraces: {
       ...query.azureLogAnalytics,
       operationId,
       query: buildTracesQuery(operationId),

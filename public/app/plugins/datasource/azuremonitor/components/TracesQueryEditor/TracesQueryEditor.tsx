@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
@@ -56,7 +56,15 @@ const TracesQueryEditor = ({
     [onChange, query]
   );
 
-  const [operationId, setOperationId] = useState<string>(query.azureLogAnalytics?.operationId ?? '');
+  const [operationId, setOperationId] = useState<string>(query.azureTraces?.operationId ?? '');
+
+  useEffect(() => {
+    if (query.azureTraces?.operationId) {
+      if (!operationId || operationId !== query.azureTraces.operationId) {
+        setOperationId(query.azureTraces.operationId);
+      }
+    }
+  }, [query.azureTraces?.operationId, operationId, setOperationId]);
 
   const handleChange = useCallback((ev: React.FormEvent) => {
     if (ev.target instanceof HTMLInputElement) {
@@ -81,8 +89,6 @@ const TracesQueryEditor = ({
             <ResourceField
               query={query}
               datasource={datasource}
-              inlineField={true}
-              labelWidth={10}
               subscriptionId={subscriptionId}
               variableOptionGroup={variableOptionGroup}
               onQueryChange={onResourcesChange}
@@ -93,7 +99,7 @@ const TracesQueryEditor = ({
                 ResourceRowType.Resource,
                 ResourceRowType.Variable,
               ]}
-              resources={query.azureLogAnalytics?.resources ?? []}
+              resources={query.azureTraces?.resources ?? []}
               queryType="logs"
               disableRow={disableRow}
               renderAdvanced={(resources, onChange) => (

@@ -67,22 +67,7 @@ func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context
 	return result, nil
 }
 
-func getApiURL(queryJSONModel types.LogJSONQuery) string {
-	// Legacy queries only specify a Workspace GUID, which we need to use the old workspace-centric
-	// API URL for, and newer queries specifying a resource URI should use resource-centric API.
-	// However, legacy workspace queries using a `workspaces()` template variable will be resolved
-	// to a resource URI, so they should use the new resource-centric.
-	azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
-	var resourceOrWorkspace string
-
-	if len(azureLogAnalyticsTarget.Resources) > 0 {
-		resourceOrWorkspace = azureLogAnalyticsTarget.Resources[0]
-	} else if azureLogAnalyticsTarget.Resource != "" {
-		resourceOrWorkspace = azureLogAnalyticsTarget.Resource
-	} else {
-		resourceOrWorkspace = azureLogAnalyticsTarget.Workspace
-	}
-
+func getApiURL(resourceOrWorkspace string) string {
 	matchesResourceURI, _ := regexp.MatchString("^/subscriptions/", resourceOrWorkspace)
 
 	if matchesResourceURI {
@@ -96,33 +81,70 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(logger log.Logger, queries []
 	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
 
 	for _, query := range queries {
-		queryJSONModel := types.LogJSONQuery{}
-		err := json.Unmarshal(query.JSON, &queryJSONModel)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode the Azure Log Analytics query object from JSON: %w", err)
+		resources := []string{}
+		var resourceOrWorkspace string
+		var queryString string
+		var resultFormat string
+		if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
+			queryJSONModel := types.LogJSONQuery{}
+			err := json.Unmarshal(query.JSON, &queryJSONModel)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode the Azure Log Analytics query object from JSON: %w", err)
+			}
+
+			azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
+			logger.Debug("AzureLogAnalytics", "target", azureLogAnalyticsTarget)
+
+			resultFormat = azureLogAnalyticsTarget.ResultFormat
+			if resultFormat == "" {
+				resultFormat = types.TimeSeries
+			}
+
+			// Legacy queries only specify a Workspace GUID, which we need to use the old workspace-centric
+			// API URL for, and newer queries specifying a resource URI should use resource-centric API.
+			// However, legacy workspace queries using a `workspaces()` template variable will be resolved
+			// to a resource URI, so they should use the new resource-centric.
+			if len(azureLogAnalyticsTarget.Resources) > 0 {
+				resources = azureLogAnalyticsTarget.Resources
+				resourceOrWorkspace = azureLogAnalyticsTarget.Resources[0]
+			} else if azureLogAnalyticsTarget.Resource != "" {
+				resources = []string{azureLogAnalyticsTarget.Resource}
+				resourceOrWorkspace = azureLogAnalyticsTarget.Resource
+			} else {
+				resourceOrWorkspace = azureLogAnalyticsTarget.Workspace
+			}
+
+			queryString = azureLogAnalyticsTarget.Query
 		}
 
-		azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
-		logger.Debug("AzureLogAnalytics", "target", azureLogAnalyticsTarget)
+		if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
+			queryJSONModel := types.TracesJSONQuery{}
+			err := json.Unmarshal(query.JSON, &queryJSONModel)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode the Azure Traces query object from JSON: %w", err)
+			}
 
-		resultFormat := azureLogAnalyticsTarget.ResultFormat
-		if resultFormat == "" {
-			resultFormat = types.TimeSeries
+			azureTracesTarget := queryJSONModel.AzureTraces
+			logger.Debug("AzureTraces", "target", azureTracesTarget)
+
+			resultFormat = string(*azureTracesTarget.ResultFormat)
+			if resultFormat == "" {
+				resultFormat = types.Table
+			}
+
+			resources = azureTracesTarget.Resources
+			resourceOrWorkspace = azureTracesTarget.Resources[0]
+
+			queryString = *azureTracesTarget.Query
 		}
 
-		apiURL := getApiURL(queryJSONModel)
+		apiURL := getApiURL(resourceOrWorkspace)
 
-		rawQuery, err := macros.KqlInterpolate(logger, query, dsInfo, azureLogAnalyticsTarget.Query, "TimeGenerated")
+		rawQuery, err := macros.KqlInterpolate(logger, query, dsInfo, queryString, "TimeGenerated")
 		if err != nil {
 			return nil, err
 		}
 
-		resources := []string{}
-		if len(azureLogAnalyticsTarget.Resources) > 0 {
-			resources = azureLogAnalyticsTarget.Resources
-		} else if azureLogAnalyticsTarget.Resource != "" {
-			resources = []string{azureLogAnalyticsTarget.Resource}
-		}
 		azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, &AzureLogAnalyticsQuery{
 			RefID:        query.RefID,
 			ResultFormat: resultFormat,
@@ -258,19 +280,19 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 			return dataResponse
 		}
 
-		resultFormat := dataquery.AzureMonitorQueryAzureLogAnalyticsResultFormatTrace
+		resultFormat := dataquery.AzureMonitorQueryAzureTracesResultFormatTrace
 		traceIdVariable := "${__data.fields.traceID}"
-		queryJSONModel.AzureLogAnalytics.ResultFormat = &resultFormat
-		queryJSONModel.AzureLogAnalytics.Query = &query.Query
+		queryJSONModel.AzureTraces.ResultFormat = &resultFormat
+		queryJSONModel.AzureTraces.Query = &query.Query
 
-		if *queryJSONModel.AzureLogAnalytics.OperationId == "" {
+		if *queryJSONModel.AzureTraces.OperationId == "" {
 			splits := strings.Split(query.Query, "|")
 			splits = append(splits[:2], splits[1:]...)
 			splits[2] = fmt.Sprintf(" where (operation_Id != '' and operation_Id == '%s') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '%s')", traceIdVariable, traceIdVariable)
 			updatedQuery := strings.Join(splits, "|")
 
-			queryJSONModel.AzureLogAnalytics.Query = &updatedQuery
-			queryJSONModel.AzureLogAnalytics.OperationId = &traceIdVariable
+			queryJSONModel.AzureTraces.Query = &updatedQuery
+			queryJSONModel.AzureTraces.OperationId = &traceIdVariable
 		}
 
 		AddCustomDataLink(*frame, data.DataLink{

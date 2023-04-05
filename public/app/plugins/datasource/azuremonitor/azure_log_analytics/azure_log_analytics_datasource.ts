@@ -58,8 +58,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   filterQuery(item: AzureMonitorQuery): boolean {
     return (
       item.hide !== true &&
-      !!item.azureLogAnalytics?.query &&
-      (!!item.azureLogAnalytics.resources?.length || !!item.azureLogAnalytics.workspace)
+      ((!!item.azureLogAnalytics?.query &&
+        (!!item.azureLogAnalytics.resources?.length || !!item.azureLogAnalytics.workspace)) ||
+        (!!item.azureTraces?.query && !!item.azureTraces.resources?.length))
     );
   }
 
@@ -111,34 +112,66 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
-    const item = target.azureLogAnalytics;
-    if (!item) {
-      return target;
+    let item;
+    if (target.queryType === AzureQueryType.LogAnalytics && target.azureLogAnalytics) {
+      item = target.azureLogAnalytics;
+      const templateSrv = getTemplateSrv();
+      const resources = item.resources?.map((r) => templateSrv.replace(r, scopedVars));
+      let workspace = templateSrv.replace(item.workspace, scopedVars);
+
+      if (!workspace && !resources && this.firstWorkspace) {
+        workspace = this.firstWorkspace;
+      }
+
+      const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
+
+      return {
+        ...target,
+        queryType: target.queryType || AzureQueryType.LogAnalytics,
+
+        azureLogAnalytics: {
+          resultFormat: item.resultFormat,
+          query,
+          resources,
+          // Workspace was removed in Grafana 8, but remains for backwards compat
+          workspace,
+        },
+      };
     }
 
-    const templateSrv = getTemplateSrv();
-    const resources = item.resources?.map((r) => templateSrv.replace(r, scopedVars));
-    let workspace = templateSrv.replace(item.workspace, scopedVars);
+    if (target.queryType === AzureQueryType.AzureTraces && target.azureTraces) {
+      item = target.azureTraces;
+      const templateSrv = getTemplateSrv();
+      const resources = item.resources?.map((r) => templateSrv.replace(r, scopedVars));
+      const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
+      const traceTypes = item.traceTypes?.map((t) => templateSrv.replace(t, scopedVars));
+      const filters = (item.filters ?? [])
+        .filter((f) => f.property)
+        .map((f) => {
+          const filters = f.filters?.map((filter) => templateSrv.replace(filter ?? '', scopedVars));
+          return {
+            property: templateSrv.replace(f.property, scopedVars),
+            operation: f.operation || 'eq',
+            filters: filters || [],
+          };
+        });
 
-    if (!workspace && !resources && this.firstWorkspace) {
-      workspace = this.firstWorkspace;
+      return {
+        ...target,
+        queryType: target.queryType || AzureQueryType.AzureTraces,
+
+        azureTraces: {
+          resultFormat: item.resultFormat,
+          query,
+          resources,
+          operationId: templateSrv.replace(target.azureTraces?.operationId, scopedVars),
+          filters,
+          traceTypes,
+        },
+      };
     }
 
-    const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
-
-    return {
-      ...target,
-      queryType: target.queryType || AzureQueryType.LogAnalytics,
-
-      azureLogAnalytics: {
-        resultFormat: item.resultFormat,
-        query,
-        resources,
-        operationId: templateSrv.replace(target.azureLogAnalytics?.operationId, scopedVars),
-        // Workspace was removed in Grafana 8, but remains for backwards compat
-        workspace,
-      },
-    };
+    return target;
   }
 
   /*
