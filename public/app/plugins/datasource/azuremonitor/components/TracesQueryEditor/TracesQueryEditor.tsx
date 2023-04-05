@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
@@ -13,6 +13,7 @@ import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 
+import TraceTypeField from './TraceTypeField';
 import { setFormatAs, setQueryOperationId } from './setQueryValue';
 
 interface TracesQueryEditorProps {
@@ -96,10 +97,6 @@ const TracesQueryEditor = ({
               )}
               selectionNotice={() => 'You may only choose items of the same resource type.'}
             />
-          </EditorFieldGroup>
-        </EditorRow>
-        <EditorRow>
-          <EditorFieldGroup>
             <Field label="Operation ID">
               <Input
                 id="azure-monitor-traces-operation-id-field"
@@ -109,6 +106,21 @@ const TracesQueryEditor = ({
                 width={40}
               />
             </Field>
+          </EditorFieldGroup>
+        </EditorRow>
+        <EditorRow>
+          <EditorFieldGroup>
+            <TraceTypeField
+              datasource={datasource}
+              onQueryChange={onChange}
+              query={query}
+              setError={setError}
+              variableOptionGroup={variableOptionGroup}
+            />
+          </EditorFieldGroup>
+        </EditorRow>
+        <EditorRow>
+          <EditorFieldGroup>
             <FormatAsField
               datasource={datasource}
               setError={setError}

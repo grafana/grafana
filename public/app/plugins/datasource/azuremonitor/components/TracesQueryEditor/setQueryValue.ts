@@ -19,3 +19,13 @@ export function setFormatAs(query: AzureMonitorQuery, formatAs: ResultFormat): A
     },
   };
 }
+
+export function setTraceTypes(query: AzureMonitorQuery, traceTypes: string[]): AzureMonitorQuery {
+  return {
+    ...query,
+    azureTraces: {
+      ...query.azureTraces,
+      traceTypes,
+    },
+  };
+}
