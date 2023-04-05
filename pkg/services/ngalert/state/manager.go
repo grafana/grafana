@@ -376,7 +376,6 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 		if err != nil {
 			logger.Error("Failed to save alert state", "labels", s.Labels.String(), "state", s.State, "error", err)
 		}
-
 	}
 }
 
