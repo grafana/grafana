@@ -7,9 +7,12 @@ import {
   dataFrameToJSON,
   DatagridDataChangeEvent,
   MutableDataFrame,
+  Field,
 } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+
+const ICON_AND_MENU_WIDTH = 30;
 
 export const EMPTY_DF = {
   name: 'A',
@@ -52,6 +55,19 @@ interface CellRange {
   width: number;
   height: number;
 }
+
+//TODO: not sure about the fontSize param. need to check and see if it's the right one
+export const getCellWidth = (field: Field, fontSize: number): number => {
+  return Math.max(
+    field.name.length * fontSize + ICON_AND_MENU_WIDTH, //header text
+    field.values
+      .toArray()
+      .reduce(
+        (acc: number, val: string | number) => (val?.toString().length > acc ? (acc = val?.toString().length) : acc),
+        0
+      ) * fontSize //cell text
+  );
+};
 
 export const deleteRows = (gridData: DataFrame, rows: number[], hardDelete = false): DataFrame => {
   for (let i = 0; i < rows.length; i++) {

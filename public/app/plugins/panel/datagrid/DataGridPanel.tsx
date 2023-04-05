@@ -40,13 +40,12 @@ import {
   deleteRows,
   EMPTY_CELL,
   EMPTY_GRID_SELECTION,
+  getCellWidth,
   GRAFANA_DS,
   publishSnapshot,
   RIGHT_ELEMENT_PROPS,
   TRAILING_ROW_OPTIONS,
 } from './utils';
-
-const ICON_WIDTH = 30;
 
 interface DatagridContextMenuData {
   x?: number;
@@ -98,7 +97,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     setColumns((prevColumns) => [
       ...gridData.fields.map((f, i) => {
         const displayName = getFieldDisplayName(f, gridData);
-        const width = prevColumns[i]?.width ?? displayName.length * theme.typography.fontSize + ICON_WIDTH;
+        const width = prevColumns[i]?.width ?? getCellWidth(f, theme.typography.fontSize);
         return { title: displayName, width: width, icon: typeToIconMap.get(f.type), hasMenu: true };
       }),
     ]);
@@ -243,7 +242,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   const onColumnResize = (column: GridColumn, newSize: number, colIndex: number, newSizeWithGrow: number) => {
     setColumns((prevColumns) => {
       const newColumns = [...prevColumns];
-      newColumns[colIndex] = { title: column.title, icon: column.icon, width: newSize };
+      newColumns[colIndex] = { title: column.title, icon: column.icon, width: newSize, hasMenu: true };
       return newColumns;
     });
   };
@@ -301,6 +300,31 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     });
   };
 
+  const onColumnMove = (from: number, to: number) => {
+    const newFrame = new MutableDataFrame(gridData);
+    const field = newFrame.fields[from];
+    newFrame.fields.splice(from, 1);
+    newFrame.fields.splice(to, 0, field);
+
+    setIsSnapshotted(true);
+    setGridData(newFrame);
+  };
+
+  const onRowMove = (from: number, to: number) => {
+    const newFrame = new MutableDataFrame(gridData);
+
+    for (const field of newFrame.fields) {
+      const values = field.values.toArray();
+      const value = values[from];
+      values.splice(from, 1);
+      values.splice(to, 0, value);
+      field.values = new ArrayVector(values);
+    }
+
+    setIsSnapshotted(true);
+    setGridData(newFrame);
+  };
+
   if (!document.getElementById('portal')) {
     const portal = document.createElement('div');
     portal.id = 'portal';
@@ -311,7 +335,6 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
 
-  //TODO multiple series support
   const numRows = gridData.length;
   const styles = getStyles(theme);
 
@@ -331,9 +354,6 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         onPaste={true}
         gridSelection={gridSelection}
         onGridSelectionChange={setGridSelection}
-        onHeaderClicked={() => {
-          console.log('header clicked');
-        }}
         onRowAppended={addNewRow}
         onDelete={onDeletePressed}
         rowMarkers={'clickable-number'}
@@ -345,6 +365,8 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         rightElement={<AddColumn onColumnInputBlur={onColumnInputBlur} divStyle={styles.addColumnDiv} />}
         rightElementProps={RIGHT_ELEMENT_PROPS}
         freezeColumns={columnFreezeIndex}
+        onRowMoved={onRowMove}
+        onColumnMoved={onColumnMove}
       />
       {contextMenuData.isContextMenuOpen && (
         <DatagridContextMenu
