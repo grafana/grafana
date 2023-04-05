@@ -61,6 +61,40 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 			)
 		})
 
+		t.Run("user ACL with nested folders", func(t *testing.T) {
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_EDIT},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+		})
+
 		t.Run("role ACL", func(t *testing.T) {
 			test(t,
 				DashboardProps{},
@@ -92,6 +126,40 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldNotFind,
 				featuremgmt.WithFeatures(),
+			)
+		})
+
+		t.Run("role ACL with nested folders", func(t *testing.T) {
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Role: org.RoleViewer, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Role: org.RoleViewer, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Role: org.RoleEditor, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Role: org.RoleEditor, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
 			)
 		})
 
@@ -129,6 +197,40 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 			)
 		})
 
+		t.Run("team ACL with nested folders", func(t *testing.T) {
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_EDIT},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_EDIT},
+				Search{UserFromACL: false, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+		})
+
 		t.Run("defaults for user ACL", func(t *testing.T) {
 			test(t,
 				DashboardProps{},
@@ -160,6 +262,40 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
 				featuremgmt.WithFeatures(),
+			)
+		})
+
+		t.Run("defaults for user ACL with nested folders", func(t *testing.T) {
+			test(t,
+				DashboardProps{},
+				nil,
+				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{OrgId: -1},
+				nil,
+				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{OrgId: -1},
+				nil,
+				Search{OrgId: -1, UsersOrgRole: org.RoleEditor, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{OrgId: -1},
+				nil,
+				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
 			)
 		})
 	})
