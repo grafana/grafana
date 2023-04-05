@@ -214,6 +214,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       overflow-y: hidden;
       overflow-x: auto;
       margin-right: 8px;
+      margin-left: 12px;
       padding-left: 4px;
       padding-right: 0.25em;
       position: relative;
@@ -221,15 +222,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       scrollbar-width: none;
       &::-webkit-scrollbar {
         display: none;
-      }
-      &::before {
-        content: ' ';
-        position: absolute;
-        top: 4px;
-        bottom: 4px;
-        left: 0;
-        border-left: 4px solid;
-        border-left-color: inherit;
       }
       &:focus {
         text-decoration: none;
@@ -249,7 +241,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     svcName: css`
       label: svcName;
-      padding: 0 0.25rem 0 0.5rem;
       font-size: 0.9em;
     `,
     svcNameChildrenCollapsed: css`
@@ -411,8 +402,6 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       return Object.values(links).reduce((count, arr) => count + arr.length, 0);
     };
 
-    console.log({ span, prevSpan });
-
     return (
       <TimelineRow
         className={cx(
@@ -439,6 +428,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               onClick={isParent ? this._childrenToggle : undefined}
               childrenVisible={isChildrenExpanded}
               span={span}
+              color={color}
               hoverIndentGuideIds={hoverIndentGuideIds}
               addHoverIndentGuideId={addHoverIndentGuideId}
               removeHoverIndentGuideId={removeHoverIndentGuideId}

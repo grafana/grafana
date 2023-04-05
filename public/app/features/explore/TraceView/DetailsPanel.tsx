@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { GrafanaTheme2, TimeZone } from '@grafana/data';
 import { Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
+import { ExploreDrawer } from '../ExploreDrawer';
+
 import { TraceSpan } from './components';
 import { getAbsoluteTime } from './components/TraceTimelineViewer/SpanDetail';
 import AccordianKeyValues from './components/TraceTimelineViewer/SpanDetail/AccordianKeyValues';
@@ -58,12 +60,13 @@ const tabs = [
 type Props = {
   span?: TraceSpan;
   timeZone: TimeZone;
+  width: number;
 };
 
 export function DetailsPanel(props: Props) {
   const [tabsState, updateTabsState] = useState(tabs);
   const styles = useStyles2(getStyles);
-  const { span, timeZone } = props;
+  const { span, timeZone, width } = props;
 
   if (!span) {
     return null;
@@ -104,7 +107,7 @@ export function DetailsPanel(props: Props) {
   const linksGetter = () => [];
 
   return (
-    <div className={styles.container}>
+    <ExploreDrawer width={width}>
       <div className={styles.header}>
         <h4 className={cx(ubM0)}>{operationName}</h4>
         <div className={styles.listWrapper}>
@@ -153,9 +156,12 @@ export function DetailsPanel(props: Props) {
             </div>
           </div>
         )}
-        {tabsState[1].active && <div>Second tab content</div>}
-        {tabsState[2].active && <div>Third tab content</div>}
+        {tabsState[1].active && <div>Events not yet implemented</div>}
+        {tabsState[2].active && <div>Logs not yet implemented</div>}
+        {tabsState[3].active && <div>Warnings not yet implemented</div>}
+        {tabsState[4].active && <div>Stack Traces not yet implemented</div>}
+        {tabsState[5].active && <div>References not yet implemented</div>}
       </TabContent>
-    </div>
+    </ExploreDrawer>
   );
 }

@@ -17,7 +17,7 @@ const styles = {
   `,
 };
 
-export const TracesPanel = ({ data }: PanelProps) => {
+export const TracesPanel = ({ data, width }: PanelProps) => {
   const topOfViewRef = createRef<HTMLDivElement>();
   const traceProp = useMemo(() => transformDataFrames(data.series[0]), [data.series]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
@@ -65,6 +65,7 @@ export const TracesPanel = ({ data }: PanelProps) => {
         datasource={dataSource.value}
         topOfViewRef={topOfViewRef}
         topOfViewRefType={TopOfViewRefType.Panel}
+        width={width}
       />
     </div>
   );

@@ -18,7 +18,7 @@ import { get as _get } from 'lodash';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
+import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import { TraceSpan } from '../types';
@@ -40,7 +40,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     indentGuide: css`
       label: indentGuide;
       /* The size of the indentGuide is based off of the iconWrapper */
-      padding-right: calc(0.5rem + 12px);
+      padding: 0 0.5rem;
       height: 100%;
       border-left: 3px solid transparent;
       display: inline-flex;
@@ -60,7 +60,20 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     iconWrapper: css`
       label: iconWrapper;
       position: absolute;
-      right: 0.25rem;
+      right: -0.5rem;
+      top: 0.3rem;
+    `,
+    spanCountSquare: (color: string) => css`
+      border: 2px solid ${color};
+      border-radius: 4px;
+      padding: 0.2rem;
+      line-height: 0.8rem;
+      font-size: 0.8rem;
+      width: 24px;
+      text-align: center;
+    `,
+    spanCountSquareFilled: (color: string) => css`
+      background: ${color};
     `,
   };
 });
@@ -70,6 +83,7 @@ export type TProps = {
   onClick?: () => void;
   span: TraceSpan;
   showChildrenIcon?: boolean;
+  color: string;
 
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
@@ -133,18 +147,19 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
   };
 
   render() {
-    const { childrenVisible, onClick, showChildrenIcon, span, theme } = this.props;
+    const { childrenVisible, onClick, span, theme, color } = this.props;
     const { hasChildren, spanID } = span;
     const wrapperProps = hasChildren ? { onClick, role: 'switch', 'aria-checked': childrenVisible } : null;
-    const icon =
-      showChildrenIcon &&
-      hasChildren &&
-      (childrenVisible ? (
-        <Icon name={'angle-down'} data-testid="icon-arrow-down" />
-      ) : (
-        <Icon name={'angle-right'} data-testid="icon-arrow-right" />
-      ));
     const styles = getStyles(theme);
+    const icon = (
+      <div
+        className={cx(styles.spanCountSquare(color), {
+          [styles.spanCountSquareFilled(color)]: !childrenVisible || !hasChildren,
+        })}
+      >
+        {span.childSpanCount}
+      </div>
+    );
     return (
       <span className={cx(styles.SpanTreeOffset, { [styles.SpanTreeOffsetParent]: hasChildren })} {...wrapperProps}>
         {this.ancestorIds.map((ancestorId) => (

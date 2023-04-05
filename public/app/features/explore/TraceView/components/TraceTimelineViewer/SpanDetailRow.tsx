@@ -145,6 +145,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
             hoverIndentGuideIds={hoverIndentGuideIds}
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
+            color={color}
           />
           <Button
             fill="text"

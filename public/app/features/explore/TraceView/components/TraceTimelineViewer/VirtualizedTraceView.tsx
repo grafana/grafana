@@ -32,7 +32,6 @@ import { getColorByKey } from '../utils/color-generator';
 import ListView from './ListView';
 import SpanBarRow from './SpanBarRow';
 import DetailState from './SpanDetail/DetailState';
-import SpanDetailRow from './SpanDetailRow';
 import {
   createViewedBoundsFunc,
   findServerChildSpan,
@@ -411,7 +410,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     const isFocused = spanID === focusedSpanId || spanID === focusedSpanIdForSearch;
     const showErrorIcon = isErrorSpan(span) || (isCollapsed && spanContainsErredSpan(trace.spans, spanIndex));
 
-    const { span: prevSpan } = this.getRowStates()[spanIndex > 1 ? spanIndex - 1 : 0];
+    const prevRowState = this.getRowStates()[spanIndex > 1 ? spanIndex - 1 : 0];
 
     // Check for direct child "server" span if the span is a "client" span.
     let rpc = null;
@@ -469,73 +468,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           removeHoverIndentGuideId={removeHoverIndentGuideId}
           createSpanLink={createSpanLink}
           datasourceType={datasourceType}
-          prevSpan={prevSpan}
-        />
-      </div>
-    );
-  }
-
-  renderSpanDetailRow(span: TraceSpan, key: string, style: React.CSSProperties, attrs: {}) {
-    const { spanID } = span;
-    const { serviceName } = span.process;
-    const {
-      detailLogItemToggle,
-      detailLogsToggle,
-      detailProcessToggle,
-      detailReferencesToggle,
-      detailReferenceItemToggle,
-      detailWarningsToggle,
-      detailStackTracesToggle,
-      detailStates,
-      detailTagsToggle,
-      detailToggle,
-      spanNameColumnWidth,
-      trace,
-      timeZone,
-      hoverIndentGuideIds,
-      addHoverIndentGuideId,
-      removeHoverIndentGuideId,
-      linksGetter,
-      createSpanLink,
-      focusedSpanId,
-      createFocusSpanLink,
-      topOfViewRefType,
-      theme,
-      datasourceType,
-    } = this.props;
-    const detailState = detailStates.get(spanID);
-    if (!trace || !detailState) {
-      return null;
-    }
-    const color = getColorByKey(serviceName, theme);
-    const styles = getStyles(this.props);
-    return (
-      <div className={styles.row} key={key} style={{ ...style, zIndex: 1 }} {...attrs}>
-        <SpanDetailRow
-          color={color}
-          columnDivision={spanNameColumnWidth}
-          onDetailToggled={detailToggle}
-          detailState={detailState}
-          linksGetter={linksGetter}
-          logItemToggle={detailLogItemToggle}
-          logsToggle={detailLogsToggle}
-          processToggle={detailProcessToggle}
-          referenceItemToggle={detailReferenceItemToggle}
-          referencesToggle={detailReferencesToggle}
-          warningsToggle={detailWarningsToggle}
-          stackTracesToggle={detailStackTracesToggle}
-          span={span}
-          timeZone={timeZone}
-          tagsToggle={detailTagsToggle}
-          traceStartTime={trace.startTime}
-          hoverIndentGuideIds={hoverIndentGuideIds}
-          addHoverIndentGuideId={addHoverIndentGuideId}
-          removeHoverIndentGuideId={removeHoverIndentGuideId}
-          createSpanLink={createSpanLink}
-          focusedSpanId={focusedSpanId}
-          createFocusSpanLink={createFocusSpanLink}
-          topOfViewRefType={topOfViewRefType}
-          datasourceType={datasourceType}
+          prevSpan={prevRowState?.span}
         />
       </div>
     );

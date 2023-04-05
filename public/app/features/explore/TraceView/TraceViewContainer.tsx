@@ -19,6 +19,7 @@ interface Props {
   scrollElement?: Element;
   queryResponse: PanelData;
   topOfViewRef: RefObject<HTMLDivElement>;
+  width: number;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -41,7 +42,7 @@ export function TraceViewContainer(props: Props) {
   // At this point we only show single trace
   const frame = props.dataFrames[0];
   const style = useStyles2(getStyles);
-  const { dataFrames, splitOpenFn, exploreId, scrollElement, topOfViewRef, queryResponse } = props;
+  const { dataFrames, splitOpenFn, exploreId, scrollElement, topOfViewRef, queryResponse, width } = props;
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
@@ -83,6 +84,7 @@ export function TraceViewContainer(props: Props) {
         datasource={datasource}
         topOfViewRef={topOfViewRef}
         topOfViewRefType={TopOfViewRefType.Explore}
+        width={width}
       />
     </div>
   );

@@ -71,10 +71,11 @@ type Props = {
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef: RefObject<HTMLDivElement>;
   topOfViewRefType: TopOfViewRefType;
+  width: number;
 };
 
 export function TraceView(props: Props) {
-  const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType } = props;
+  const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType, width } = props;
 
   const {
     detailStates,
@@ -204,7 +205,7 @@ export function TraceView(props: Props) {
             setSelectedSpan={setSelectedSpan}
             selectedSpanId={selectedSpan?.spanID}
           />
-          <DetailsPanel span={selectedSpan} timeZone={timeZone} />
+          <DetailsPanel span={selectedSpan} timeZone={timeZone} width={width} />
         </>
       ) : (
         <div className={styles.noDataMsg}>No data</div>
