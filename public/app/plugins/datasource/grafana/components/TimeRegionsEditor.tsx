@@ -31,8 +31,6 @@ const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
   };
 });
 
-days.unshift({ label: 'Everyday', value: undefined! });
-
 export function TimeRegionsEditor({ value, onChange }: Props) {
   const defaultTimezone = useMemo(() => getDashboardSrv().dashboard?.getTimezone(), []);
   const addTimeRegion = () => {
@@ -121,7 +119,7 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
             options={days}
             isClearable
             placeholder="Everyday"
-            value={days.find((v) => v.value === value.fromDayOfWeek)}
+            value={value.fromDayOfWeek ?? null}
             onChange={(v) => onChange(index, { ...value, fromDayOfWeek: v ? v.value : undefined })}
             width={20}
           />
@@ -140,7 +138,7 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
             options={days}
             isClearable
             placeholder="Everyday"
-            value={days.find((v) => v.value === value.toDayOfWeek)}
+            value={value.toDayOfWeek ?? null}
             onChange={(v) => onChange(index, { ...value, toDayOfWeek: v ? v.value : undefined })}
             width={20}
           />
