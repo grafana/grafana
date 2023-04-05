@@ -30,6 +30,11 @@ export interface ByNamesMatcherOptions {
   readOnly?: boolean;
   prefix?: string;
 }
+// wrapped in a feature toggle
+// so we may turn this off, with prometheusDataplane toggle, if we have unexpected behavior/errors
+// grafana-data does not have access to runtime
+// eslint-disable-next-line
+const useMatcherFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.fieldNameMatcherFallback;
 
 // General Field matcher
 const fieldNameMatcher: FieldMatcherInfo<string> = {
@@ -39,42 +44,17 @@ const fieldNameMatcher: FieldMatcherInfo<string> = {
   defaultOptions: '',
 
   get: (name: string): FieldMatcher => {
-    // how to get the feature toggle in grafana-data because we cannot import config from grafana-runtime
-    const fieldNameMatcherFallback = window.grafanaBootData.settings.featureToggles.fieldNameMatcherFallback;
-    // wrapped in a feature toggle
-    // so we may turn this off, with prometheusDataplane toggle, if we have unexpected behavior/errors
-    if (fieldNameMatcherFallback) {
-      let fallback: FieldMatcher | undefined = undefined;
+    const uniqueNames = new Set<string>([name] ?? []);
 
-      // In an effor to support migrating to a consistent data contract, the
-      // naming conventions need to get normalized.  However many existing setups
-      // exist that would no longer match names if that changes.  This injects
-      // fallback logic when when the data frame has not type version specified
-      if (name === TIME_SERIES_VALUE_FIELD_NAME) {
-        fallback = (field: Field, frame: DataFrame) => {
-          return (
-            Boolean(field.labels) && // Value was reasonable when the name was set in labels or on the frame
-            field.labels?.__name__ === field.name
-          );
-        };
-      } else if (name === 'Time' || name === 'time') {
-        fallback = (field: Field, frame: DataFrame) => {
-          return frame.meta?.typeVersion == null && field.type === FieldType.time;
-        };
-      }
+    const fallback = fieldNameFallback(uniqueNames);
 
-      return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
-        return (
-          name === field.name ||
-          name === getFieldDisplayName(field, frame, allFrames) ||
-          Boolean(fallback && fallback(field, frame, allFrames))
-        );
-      };
-    } else {
-      return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
-        return name === field.name || getFieldDisplayName(field, frame, allFrames) === name;
-      };
-    }
+    return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
+      return (
+        name === field.name ||
+        name === getFieldDisplayName(field, frame, allFrames) ||
+        Boolean(fallback && fallback(field, frame, allFrames))
+      );
+    };
   },
 
   getOptionsDisplayText: (name: string) => {
@@ -95,8 +75,14 @@ const multipleFieldNamesMatcher: FieldMatcherInfo<ByNamesMatcherOptions> = {
     const { names, mode = ByNamesMatcherMode.include } = options;
     const uniqueNames = new Set<string>(names ?? []);
 
+    const fallback = fieldNameFallback(uniqueNames);
+
     const matcher = (field: Field, frame: DataFrame, frames: DataFrame[]) => {
-      return uniqueNames.has(field.name) || uniqueNames.has(getFieldDisplayName(field, frame, frames));
+      return (
+        uniqueNames.has(field.name) ||
+        uniqueNames.has(getFieldDisplayName(field, frame, frames)) ||
+        Boolean(fallback && fallback(field, frame, frames))
+      );
     };
 
     if (mode === ByNamesMatcherMode.exclude) {
@@ -116,6 +102,31 @@ const multipleFieldNamesMatcher: FieldMatcherInfo<ByNamesMatcherOptions> = {
     return `All of: ${displayText}`;
   },
 };
+
+// In an effor to support migrating to a consistent data contract, the
+// naming conventions need to get normalized.  However many existing setups
+// exist that would no longer match names if that changes.  This injects
+// fallback logic when when the data frame has not type version specified
+export function fieldNameFallback(fields: Set<string>) {
+  let fallback: FieldMatcher | undefined = undefined;
+
+  if (useMatcherFallback) {
+    if (fields.has(TIME_SERIES_VALUE_FIELD_NAME)) {
+      fallback = (field: Field, frame: DataFrame) => {
+        return (
+          Boolean(field.labels) && // Value was reasonable when the name was set in labels or on the frame
+          field.labels?.__name__ === field.name
+        );
+      };
+    } else if (fields.has('Time') || fields.has('time')) {
+      fallback = (field: Field, frame: DataFrame) => {
+        return frame.meta?.typeVersion == null && field.type === FieldType.time;
+      };
+    }
+  }
+
+  return fallback;
+}
 
 const regexpFieldNameMatcher: FieldMatcherInfo<string> = {
   id: FieldMatcherID.byRegexp,
