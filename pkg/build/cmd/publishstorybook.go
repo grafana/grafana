@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/grafana/grafana/pkg/build/gcloud/storage"
 	"log"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/build/gcloud"
+	"github.com/grafana/grafana/pkg/build/gcloud/storage"
 	"github.com/grafana/grafana/pkg/build/versions"
 	"github.com/urfave/cli/v2"
 )
