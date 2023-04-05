@@ -44,7 +44,6 @@ type redisPeer struct {
 	redis  *redis.Client
 	prefix string
 	logger log.Logger
-	quorum int
 	states map[string]cluster.State
 	subs   map[string]*redis.PubSub
 	mtx    sync.RWMutex
@@ -89,7 +88,6 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		name:              name,
 		redis:             rdb,
 		logger:            logger,
-		quorum:            3,
 		states:            map[string]cluster.State{},
 		subs:              map[string]*redis.PubSub{},
 		pushPullInterval:  pushPullInterval,
@@ -280,6 +278,8 @@ func (p *redisPeer) WaitReady(ctx context.Context) error {
 	}
 }
 
+// Settle is copied from uptream.
+// Ref: https://github.com/prometheus/alertmanager/blob/2888649b473970400c0bd375fdd563486dc80481/cluster/cluster.go#L674-L712
 func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 	const NumOkayRequired = 3
 	level.Info(p.logger).Log("msg", "Waiting for gossip to settle...", "interval", interval)
