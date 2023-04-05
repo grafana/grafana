@@ -118,7 +118,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
     return runWithRetry(
       (targets: StartQueryRequest[]) => {
-        return this.makeLogActionRequest('StartQuery', targets);
+        return this.makeLogActionRequest('StartQuery', targets, options);
       },
       startQueryRequests,
       timeoutFunc
@@ -269,8 +269,12 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     }
   }
 
-  makeLogActionRequest(subtype: LogAction, queryParams: CloudWatchLogsRequest[]): Observable<DataFrame[]> {
-    const range = this.timeSrv.timeRange();
+  makeLogActionRequest(
+    subtype: LogAction,
+    queryParams: CloudWatchLogsRequest[],
+    options?: DataQueryRequest<CloudWatchQuery>
+  ): Observable<DataFrame[]> {
+    const range = options?.range || this.timeSrv.timeRange();
 
     const requestParams = {
       from: range.from.valueOf().toString(),
@@ -297,7 +301,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     return this.awsRequest(this.dsQueryEndpoint, requestParams, {
       'X-Cache-Skip': 'true',
     }).pipe(
-      map((response) => resultsToDataFrames({ data: response })),
+      map((response) => resultsToDataFrames(response)),
       catchError((err: FetchError) => {
         if (config.featureToggles.datasourceQueryMultiStatus && err.status === 207) {
           throw err;

@@ -205,9 +205,9 @@ To determine the number of active users:
 
 1. Sign in to Grafana Enterprise as a System Administrator.
 
-1. Click **Server Admin** (the shield icon).
+1. Click **Administration** in the left-side menu.
 
-1. Click **Statistics and licensing**.
+1. Click **Stats and license**.
 
 1. Review the utilization count on the **Utilization** panel.
 

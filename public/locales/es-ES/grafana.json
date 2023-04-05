@@ -7,20 +7,19 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "",
-      "dark-theme": "",
-      "light-theme": "",
-      "search": ""
+      "change-theme": "Cambiar tema...",
+      "dark-theme": "Oscuro",
+      "light-theme": "Claro"
     },
     "search-box": {
       "placeholder": ""
     },
     "section": {
-      "actions": "",
-      "dashboard-search-results": "",
+      "actions": "Acciones",
+      "dashboard-search-results": "Paneles de control",
       "folder-search-results": "",
-      "pages": "",
-      "preferences": "",
+      "pages": "Páginas",
+      "preferences": "Preferencias",
       "recent-dashboards": ""
     }
   },
@@ -58,7 +57,7 @@
       "panel-transforms": "Transformaciones de panel",
       "series-to-columns": "Series unidas por el tiempo",
       "transformation": "Series unidas por el tiempo",
-      "transformations-description": "Los datos de la tabla se muestran con transformaciones definidas en la pestaña Transformar del panel.",
+      "transformations-description": "Los datos de la tabla se muestran con las transformaciones definidas en la pestaña Transformaciones del panel.",
       "transformations-label": "Aplicar transformaciones de panel"
     },
     "inspect-json": {
@@ -84,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "Añadir panel",
-      "comments-show": "Mostrar comentarios del panel de control",
       "mark-favorite": "Marcar como favorito",
       "open-original": "Abrir el panel de control original",
       "playlist-next": "Ir al siguiente panel de control",
@@ -167,7 +165,7 @@
       "title": "Reglas de alerta"
     },
     "alerting-receivers": {
-      "subtitle": "Decida cómo se notifica a sus contactos cuando se activa una alerta",
+      "subtitle": "",
       "title": "Puntos de contacto"
     },
     "alerting-silences": {
@@ -198,7 +196,7 @@
       "title": "Crear"
     },
     "create-alert": {
-      "title": "Nueva regla de alerta"
+      "title": ""
     },
     "create-dashboard": {
       "title": "Panel de control"
@@ -207,7 +205,7 @@
       "title": "Carpeta"
     },
     "create-import": {
-      "title": "Importar"
+      "title": ""
     },
     "dashboards": {
       "subtitle": "Cree y administre paneles de control para visualizar sus datos",
@@ -241,7 +239,7 @@
     },
     "library-panels": {
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
-      "title": "Paneles de la librería"
+      "title": "Paneles de librería"
     },
     "manage-dashboards": {
       "title": "Navegar"
@@ -254,7 +252,7 @@
       "title": "Seguimiento"
     },
     "new": {
-      "title": ""
+      "title": "Nuevo"
     },
     "new-dashboard": {
       "title": "Nuevo panel de control"
@@ -282,7 +280,7 @@
       "title": "Cambiar contraseña"
     },
     "profile/settings": {
-      "title": "Preferencias"
+      "title": "Perfil"
     },
     "profile/switch-org": "Cambiar de organización",
     "public": {
@@ -292,7 +290,6 @@
       "title": "Escenas"
     },
     "search": {
-      "placeholder": "Buscar Grafana",
       "placeholderCommandPalette": ""
     },
     "search-dashboards": {
@@ -359,22 +356,22 @@
   },
   "panel": {
     "header-menu": {
-      "copy": "",
-      "create-library-panel": "",
-      "duplicate": "",
-      "edit": "",
-      "explore": "",
-      "get-help": "",
+      "copy": "Copiar",
+      "create-library-panel": "Crear panel de librería",
+      "duplicate": "Duplicar",
+      "edit": "Editar",
+      "explore": "Explorar",
+      "get-help": "Obtener ayuda",
       "hide-legend": "Ocultar leyenda",
       "inspect": "Inspeccionar",
       "inspect-data": "Datos",
       "inspect-json": "JSON de panel",
       "more": "Más...",
-      "query": "",
-      "remove": "",
+      "query": "Consulta",
+      "remove": "Eliminar",
       "share": "Compartir",
       "show-legend": "Mostrar leyenda",
-      "unlink-library-panel": "",
+      "unlink-library-panel": "Desvincular panel de librería",
       "view": "Vista"
     }
   },
@@ -400,28 +397,33 @@
       "include-panels": "",
       "remove-datasource-filter": "",
       "sort-placeholder": "",
-      "starred": "",
+      "starred": "Destacado",
       "view-as-folders": "",
       "view-as-grid": "",
       "view-as-list": ""
     },
     "dashboard-actions": {
-      "import": "",
-      "new": "",
-      "new-dashboard": "",
-      "new-folder": ""
+      "import": "Importar",
+      "new": "Nuevo",
+      "new-dashboard": "Nuevo panel de control",
+      "new-folder": "Nueva carpeta"
     },
     "folder-view": {
       "go-to-folder": "",
       "select-folder": ""
     },
+    "result-kind": {
+      "dashboard": "Panel de control",
+      "folder": "Carpeta",
+      "panel": ""
+    },
     "results-table": {
       "datasource-header": "",
       "location-header": "",
-      "name-header": "",
+      "name-header": "Nombre",
       "tags-header": "",
-      "type-dashboard": "",
-      "type-folder": "",
+      "type-dashboard": "Panel de control",
+      "type-folder": "Carpeta",
       "type-header": ""
     },
     "search-input": {
@@ -610,7 +612,7 @@
       "placeholder": ""
     },
     "dropdown": {
-      "placeholder": ""
+      "placeholder": "Introducir el valor de la variable"
     },
     "picker": {
       "link-all": "Todo",
@@ -619,7 +621,7 @@
       "option-tooltip": "Eliminar selecciones"
     },
     "textbox": {
-      "placeholder": ""
+      "placeholder": "Introducir el valor de la variable"
     }
   }
 }

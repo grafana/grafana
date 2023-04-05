@@ -9,8 +9,7 @@
     "action": {
       "change-theme": "Change theme...",
       "dark-theme": "Dark",
-      "light-theme": "Light",
-      "search": "Search"
+      "light-theme": "Light"
     },
     "search-box": {
       "placeholder": "Search or jump to..."
@@ -84,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "Add panel",
-      "comments-show": "Show dashboard comments",
       "mark-favorite": "Mark as favorite",
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
@@ -176,7 +174,7 @@
     },
     "alerts-and-incidents": {
       "subtitle": "Alerting and incident management apps",
-      "title": "Alerts & incidents"
+      "title": "Alerts & IRM"
     },
     "api-keys": {
       "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",
@@ -207,7 +205,7 @@
       "title": "Folder"
     },
     "create-import": {
-      "title": "Import"
+      "title": "Import dashboard"
     },
     "dashboards": {
       "subtitle": "Create and manage dashboards to visualize your data",
@@ -292,7 +290,6 @@
       "title": "Scenes"
     },
     "search": {
-      "placeholder": "Search Grafana",
       "placeholderCommandPalette": "Search or jump to..."
     },
     "search-dashboards": {
@@ -414,6 +411,11 @@
     "folder-view": {
       "go-to-folder": "Go to folder",
       "select-folder": "Select folder"
+    },
+    "result-kind": {
+      "dashboard": "Dashboard",
+      "folder": "Folder",
+      "panel": "Panel"
     },
     "results-table": {
       "datasource-header": "Data source",

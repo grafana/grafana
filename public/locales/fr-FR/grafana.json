@@ -7,21 +7,20 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "",
-      "dark-theme": "",
-      "light-theme": "",
-      "search": ""
+      "change-theme": "Modifier le thème...",
+      "dark-theme": "Sombre",
+      "light-theme": "Clair"
     },
     "search-box": {
       "placeholder": ""
     },
     "section": {
-      "actions": "",
-      "dashboard-search-results": "",
+      "actions": "Actions",
+      "dashboard-search-results": "Tableaux de bord",
       "folder-search-results": "",
-      "pages": "",
-      "preferences": "",
-      "recent-dashboards": ""
+      "pages": "Pages",
+      "preferences": "Préférences",
+      "recent-dashboards": "Tableaux de bord récents"
     }
   },
   "common": {
@@ -84,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "Ajouter un panneau",
-      "comments-show": "Afficher les commentaires du tableau de bord",
       "mark-favorite": "Marquer comme favori",
       "open-original": "Ouvrir le tableau de bord d'origine",
       "playlist-next": "Accéder au tableau de bord suivant",
@@ -167,7 +165,7 @@
       "title": "Règles d'alerte"
     },
     "alerting-receivers": {
-      "subtitle": "Décider la manière dont vos contacts sont informés lorsqu'une alerte se déclenche",
+      "subtitle": "",
       "title": "Points de contact"
     },
     "alerting-silences": {
@@ -198,7 +196,7 @@
       "title": "Créer"
     },
     "create-alert": {
-      "title": "Nouvelle règle d'alerte"
+      "title": ""
     },
     "create-dashboard": {
       "title": "Tableau de bord"
@@ -207,7 +205,7 @@
       "title": "Dossier"
     },
     "create-import": {
-      "title": "Importer"
+      "title": ""
     },
     "dashboards": {
       "subtitle": "Créer et gérer des tableaux de bord pour visualiser vos données",
@@ -254,7 +252,7 @@
       "title": "Suivi"
     },
     "new": {
-      "title": ""
+      "title": "Nouveau"
     },
     "new-dashboard": {
       "title": "Nouveau tableau de bord"
@@ -282,7 +280,7 @@
       "title": "Modifier le mot de passe"
     },
     "profile/settings": {
-      "title": "Préférences"
+      "title": "Profil"
     },
     "profile/switch-org": "Passer à une autre organisation",
     "public": {
@@ -292,7 +290,6 @@
       "title": "Scènes"
     },
     "search": {
-      "placeholder": "Rechercher dans Grafana",
       "placeholderCommandPalette": ""
     },
     "search-dashboards": {
@@ -359,22 +356,22 @@
   },
   "panel": {
     "header-menu": {
-      "copy": "",
-      "create-library-panel": "",
-      "duplicate": "",
-      "edit": "",
-      "explore": "",
-      "get-help": "",
+      "copy": "Copier",
+      "create-library-panel": "Créer un panneau Bibliothèque",
+      "duplicate": "Dupliquer",
+      "edit": "Modifier",
+      "explore": "Explorer",
+      "get-help": "Obtenir de l’aide",
       "hide-legend": "Masquer la légende",
       "inspect": "Inspecter",
       "inspect-data": "Données",
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
-      "query": "",
-      "remove": "",
+      "query": "Requête",
+      "remove": "Supprimer",
       "share": "Partager",
       "show-legend": "Afficher la légende",
-      "unlink-library-panel": "",
+      "unlink-library-panel": "Dissocier le panneau Bibliothèque",
       "view": "Afficher"
     }
   },
@@ -400,28 +397,33 @@
       "include-panels": "",
       "remove-datasource-filter": "",
       "sort-placeholder": "",
-      "starred": "",
+      "starred": "Favoris",
       "view-as-folders": "",
       "view-as-grid": "",
       "view-as-list": ""
     },
     "dashboard-actions": {
-      "import": "",
-      "new": "",
-      "new-dashboard": "",
-      "new-folder": ""
+      "import": "Importer",
+      "new": "Nouveau",
+      "new-dashboard": "Nouveau tableau de bord",
+      "new-folder": "Nouveau dossier"
     },
     "folder-view": {
       "go-to-folder": "",
       "select-folder": ""
     },
+    "result-kind": {
+      "dashboard": "Tableau de bord",
+      "folder": "Dossier",
+      "panel": ""
+    },
     "results-table": {
       "datasource-header": "",
       "location-header": "",
-      "name-header": "",
+      "name-header": "Nom",
       "tags-header": "",
-      "type-dashboard": "",
-      "type-folder": "",
+      "type-dashboard": "Tableau de bord",
+      "type-folder": "Dossier",
       "type-header": ""
     },
     "search-input": {
@@ -610,7 +612,7 @@
       "placeholder": ""
     },
     "dropdown": {
-      "placeholder": ""
+      "placeholder": "Entrer la valeur de la variable"
     },
     "picker": {
       "link-all": "Tout",
@@ -619,7 +621,7 @@
       "option-tooltip": "Effacer les sélections"
     },
     "textbox": {
-      "placeholder": ""
+      "placeholder": "Entrer la valeur de la variable"
     }
   }
 }

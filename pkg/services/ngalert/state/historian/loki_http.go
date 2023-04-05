@@ -17,12 +17,8 @@ import (
 	"github.com/weaveworks/common/http/client"
 )
 
-const defaultClientTimeout = 30 * time.Second
-
 func NewRequester() client.Requester {
-	return &http.Client{
-		Timeout: defaultClientTimeout,
-	}
+	return &http.Client{}
 }
 
 // encoder serializes log streams to some byte format.
@@ -101,14 +97,6 @@ const (
 	// Not Equal operator supporting RegEx (!~)
 	NeqRegEx Operator = "!~"
 )
-
-type Selector struct {
-	// Label to Select
-	Label string
-	Op    Operator
-	// Value that is expected
-	Value string
-}
 
 func newLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger) *httpLokiClient {
 	tc := client.NewTimedClient(req, metrics.WriteDuration)
@@ -234,11 +222,8 @@ func (c *httpLokiClient) setAuthAndTenantHeaders(req *http.Request) {
 		req.Header.Add("X-Scope-OrgID", c.cfg.TenantID)
 	}
 }
-func (c *httpLokiClient) rangeQuery(ctx context.Context, selectors []Selector, start, end int64) (queryRes, error) {
+func (c *httpLokiClient) rangeQuery(ctx context.Context, logQL string, start, end int64) (queryRes, error) {
 	// Run the pre-flight checks for the query.
-	if len(selectors) == 0 {
-		return queryRes{}, fmt.Errorf("at least one selector required to query")
-	}
 	if start > end {
 		return queryRes{}, fmt.Errorf("start time cannot be after end time")
 	}
@@ -246,7 +231,7 @@ func (c *httpLokiClient) rangeQuery(ctx context.Context, selectors []Selector, s
 	queryURL := c.cfg.ReadPathURL.JoinPath("/loki/api/v1/query_range")
 
 	values := url.Values{}
-	values.Set("query", selectorString(selectors))
+	values.Set("query", logQL)
 	values.Set("start", fmt.Sprintf("%d", start))
 	values.Set("end", fmt.Sprintf("%d", end))
 
@@ -292,35 +277,6 @@ func (c *httpLokiClient) rangeQuery(ctx context.Context, selectors []Selector, s
 	}
 
 	return result, nil
-}
-
-func selectorString(selectors []Selector) string {
-	if len(selectors) == 0 {
-		return "{}"
-	}
-	// Build the query selector.
-	query := ""
-	for _, s := range selectors {
-		query += fmt.Sprintf("%s%s%q,", s.Label, s.Op, s.Value)
-	}
-	// Remove the last comma, as we append one to every selector.
-	query = query[:len(query)-1]
-	return "{" + query + "}"
-}
-
-func NewSelector(label, op, value string) (Selector, error) {
-	if !isValidOperator(op) {
-		return Selector{}, fmt.Errorf("'%s' is not a valid query operator", op)
-	}
-	return Selector{Label: label, Op: Operator(op), Value: value}, nil
-}
-
-func isValidOperator(op string) bool {
-	switch op {
-	case "=", "!=", "=~", "!~":
-		return true
-	}
-	return false
 }
 
 type queryRes struct {

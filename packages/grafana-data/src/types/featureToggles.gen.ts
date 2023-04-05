@@ -43,7 +43,8 @@ export interface FeatureToggles {
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
   validateDashboardsOnSave?: boolean;
-  autoMigrateGraphPanels?: boolean;
+  autoMigrateOldPanels?: boolean;
+  disableAngular?: boolean;
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
   scenes?: boolean;
@@ -64,7 +65,9 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
   elasticsearchBackendMigration?: boolean;
+  showTraceId?: boolean;
   datasourceOnboarding?: boolean;
+  emptyDashboardPage?: boolean;
   secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;
   disablePrometheusExemplarSampling?: boolean;
@@ -81,6 +84,16 @@ export interface FeatureToggles {
   traceqlSearch?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
+  prometheusResourceBrowserCache?: boolean;
   influxdbBackendMigration?: boolean;
+  clientTokenRotation?: boolean;
+  disableElasticsearchBackendExploreQuery?: boolean;
+  prometheusDataplane?: boolean;
+  alertStateHistoryLokiSecondary?: boolean;
+  alertStateHistoryLokiPrimary?: boolean;
+  alertStateHistoryLokiOnly?: boolean;
+  unifiedRequestLog?: boolean;
+  renderAuthJWT?: boolean;
+  pyroscopeFlameGraph?: boolean;
   fieldNameMatcherFallback?: boolean;
 }

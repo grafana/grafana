@@ -190,13 +190,7 @@ function legacyCreateSpanLinkFactory(
 
         // Check if all variables are defined and don't show if they aren't. This is usually handled by the
         // getQueryFor* functions but this is for case of custom query supplied by the user.
-        if (
-          getVariableUsageInfo(
-            dataLink.internal!.query,
-            scopedVars,
-            getTemplateSrv().getAllVariablesInTarget.bind(getTemplateSrv())
-          ).allVariablesDefined
-        ) {
+        if (getVariableUsageInfo(dataLink.internal!.query, scopedVars).allVariablesDefined) {
           const link = mapInternalLinkToExplore({
             link: dataLink,
             internalLink: dataLink.internal!,
