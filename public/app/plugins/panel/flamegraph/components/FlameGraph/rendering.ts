@@ -1,4 +1,3 @@
-import { DisplayProcessor } from '@grafana/data';
 import { colors } from '@grafana/ui';
 
 import {
@@ -10,7 +9,7 @@ import {
   PIXELS_PER_LEVEL,
 } from '../../constants';
 
-import { ItemWithStart } from './dataTransform';
+import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type RectData = {
   width: number;
@@ -28,19 +27,18 @@ type RectData = {
  * into bigger rects.
  */
 export function getRectDimensionsForLevel(
-  level: ItemWithStart[],
+  data: FlameGraphDataContainer,
+  level: LevelItem[],
   levelIndex: number,
   totalTicks: number,
   rangeMin: number,
-  pixelsPerTick: number,
-  processor: DisplayProcessor,
-  getLabelValue: (value: number | string) => string
+  pixelsPerTick: number
 ): RectData[] {
   const coordinatesLevel = [];
   for (let barIndex = 0; barIndex < level.length; barIndex += 1) {
     const item = level[barIndex];
     const barX = getBarX(item.start, totalTicks, rangeMin, pixelsPerTick);
-    let curBarTicks = item.value;
+    let curBarTicks = data.getValue(item.itemIndex);
 
     // merge very small blocks into big "collapsed" ones for performance
     const collapsed = curBarTicks * pixelsPerTick <= COLLAPSE_THRESHOLD;
@@ -48,14 +46,14 @@ export function getRectDimensionsForLevel(
       while (
         barIndex < level.length - 1 &&
         item.start + curBarTicks === level[barIndex + 1].start &&
-        level[barIndex + 1].value * pixelsPerTick <= COLLAPSE_THRESHOLD
+        data.getValue(level[barIndex + 1].itemIndex) * pixelsPerTick <= COLLAPSE_THRESHOLD
       ) {
         barIndex += 1;
-        curBarTicks += level[barIndex].value;
+        curBarTicks += data.getValue(level[barIndex].itemIndex);
       }
     }
 
-    const displayValue = processor(item.value);
+    const displayValue = data.getValueDisplay(item.itemIndex);
     let unit = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
 
     const width = curBarTicks * pixelsPerTick - (collapsed ? 0 : BAR_BORDER_WIDTH * 2);
@@ -66,7 +64,7 @@ export function getRectDimensionsForLevel(
       y: levelIndex * PIXELS_PER_LEVEL,
       collapsed,
       ticks: curBarTicks,
-      label: getLabelValue(item.label),
+      label: data.getLabel(item.itemIndex),
       unitLabel: unit,
     });
   }

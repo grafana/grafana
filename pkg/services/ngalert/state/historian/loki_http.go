@@ -17,12 +17,8 @@ import (
 	"github.com/weaveworks/common/http/client"
 )
 
-const defaultClientTimeout = 30 * time.Second
-
 func NewRequester() client.Requester {
-	return &http.Client{
-		Timeout: defaultClientTimeout,
-	}
+	return &http.Client{}
 }
 
 // encoder serializes log streams to some byte format.
