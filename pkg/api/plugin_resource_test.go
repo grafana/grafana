@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -49,6 +50,7 @@ func TestCallResource(t *testing.T) {
 	require.NoError(t, err)
 
 	cfg := setting.NewCfg()
+
 	cfg.StaticRootPath = staticRootPath
 	cfg.IsFeatureToggleEnabled = func(_ string) bool {
 		return false
@@ -57,11 +59,13 @@ func TestCallResource(t *testing.T) {
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(nil, &cloudwatch.CloudWatchService{}, nil, nil, nil, nil,
 		nil, nil, nil, nil, testdatasource.ProvideService(cfg, featuremgmt.WithFeatures()), nil, nil, nil, nil, nil, nil)
-	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
+	var pCfg *config.Cfg
+	pCfg, err = config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
+	require.NoError(t, err)
 	reg := registry.ProvideService()
-	cdn := pluginscdn.ProvideService(pCfg)
 	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(), fakes.NewFakeRoleRegistry(), cdn, assetpath.ProvideService(cdn))
+		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(), fakes.NewFakeRoleRegistry(),
+		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)))
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)
@@ -103,7 +107,7 @@ func TestCallResource(t *testing.T) {
 			req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 			return errors.New("something went wrong")
 		}),
-	}, pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{})...)
+	}, pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{}, tracing.InitializeTracerForTest())...)
 	require.NoError(t, err)
 
 	srv = SetupAPITestServer(t, func(hs *HTTPServer) {

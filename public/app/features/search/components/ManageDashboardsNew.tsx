@@ -61,7 +61,7 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
         </div>
         {viewActions && (
           <DashboardActions
-            folderUid={folderUid}
+            folder={folder}
             canCreateFolders={canCreateFolders}
             canCreateDashboards={canCreateDashboards}
           />

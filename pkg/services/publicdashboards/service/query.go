@@ -46,14 +46,16 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 			OrgID:        dash.OrgID,
 			DashboardID:  dash.ID,
 			DashboardUID: dash.UID,
-			Limit:        anno.Target.Limit,
-			MatchAny:     anno.Target.MatchAny,
 			SignedInUser: anonymousUser,
 		}
 
-		if anno.Target.Type == "tags" {
-			annoQuery.DashboardID = 0
-			annoQuery.Tags = anno.Target.Tags
+		if anno.Target != nil {
+			annoQuery.Limit = anno.Target.Limit
+			annoQuery.MatchAny = anno.Target.MatchAny
+			if anno.Target.Type == "tags" {
+				annoQuery.DashboardID = 0
+				annoQuery.Tags = anno.Target.Tags
+			}
 		}
 
 		annotationItems, err := pd.AnnotationsRepo.Find(ctx, annoQuery)
@@ -82,7 +84,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 
 			// We want events from tag queries to overwrite existing events
 			_, has := uniqueEvents[event.Id]
-			if !has || (has && anno.Target.Type == "tags") {
+			if !has || (has && anno.Target != nil && anno.Target.Type == "tags") {
 				uniqueEvents[event.Id] = event
 			}
 		}

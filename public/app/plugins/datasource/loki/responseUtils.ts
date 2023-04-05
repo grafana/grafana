@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 
 import { isBytesString } from './languageUtils';
-import { isLogLineJSON, isLogLineLogfmt } from './lineParser';
+import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
 
 export function dataFrameHasLokiError(frame: DataFrame): boolean {
   const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values.toArray() ?? [];
@@ -23,27 +23,34 @@ export function dataFrameHasLevelLabel(frame: DataFrame): boolean {
   return labelSets.some((labels) => labels.level !== undefined);
 }
 
-export function extractLogParserFromDataFrame(frame: DataFrame): { hasLogfmt: boolean; hasJSON: boolean } {
+export function extractLogParserFromDataFrame(frame: DataFrame): {
+  hasLogfmt: boolean;
+  hasJSON: boolean;
+  hasPack: boolean;
+} {
   const lineField = frame.fields.find((field) => field.type === FieldType.string);
   if (lineField == null) {
-    return { hasJSON: false, hasLogfmt: false };
+    return { hasJSON: false, hasLogfmt: false, hasPack: false };
   }
 
   const logLines: string[] = lineField.values.toArray();
 
   let hasJSON = false;
   let hasLogfmt = false;
+  let hasPack = false;
 
   logLines.forEach((line) => {
     if (isLogLineJSON(line)) {
       hasJSON = true;
+
+      hasPack = isLogLinePacked(line);
     }
     if (isLogLineLogfmt(line)) {
       hasLogfmt = true;
     }
   });
 
-  return { hasLogfmt, hasJSON };
+  return { hasLogfmt, hasJSON, hasPack };
 }
 
 export function extractLabelKeysFromDataFrame(frame: DataFrame): string[] {
@@ -147,7 +154,15 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
   // some grafana parts do not behave well.
   // we just choose the old error, if it exists,
   // otherwise the new error, if it exists.
-  currentResult.error = currentResult.error ?? newResult.error;
+  const mergedError = currentResult.error ?? newResult.error;
+  if (mergedError != null) {
+    currentResult.error = mergedError;
+  }
+
+  const mergedTraceIds = [...(currentResult.traceIds ?? []), ...(newResult.traceIds ?? [])];
+  if (mergedTraceIds.length > 0) {
+    currentResult.traceIds = mergedTraceIds;
+  }
 
   return currentResult;
 }

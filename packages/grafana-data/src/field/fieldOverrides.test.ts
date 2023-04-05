@@ -199,35 +199,9 @@ describe('applyFieldOverrides', () => {
         fieldConfigRegistry: new FieldConfigOptionsRegistry(),
       });
 
-      expect(withOverrides[0].fields[0].state!.scopedVars).toMatchInlineSnapshot(`
-        {
-          "__field": {
-            "text": "Field",
-            "value": {},
-          },
-          "__series": {
-            "text": "Series",
-            "value": {
-              "name": "A",
-            },
-          },
-        }
-      `);
-
-      expect(withOverrides[1].fields[0].state!.scopedVars).toMatchInlineSnapshot(`
-        {
-          "__field": {
-            "text": "Field",
-            "value": {},
-          },
-          "__series": {
-            "text": "Series",
-            "value": {
-              "name": "B",
-            },
-          },
-        }
-      `);
+      expect(withOverrides[0].fields[0].state!.scopedVars?.__dataContext?.value.frame).toBe(withOverrides[0]);
+      expect(withOverrides[0].fields[0].state!.scopedVars?.__dataContext?.value.frameIndex).toBe(0);
+      expect(withOverrides[0].fields[0].state!.scopedVars?.__dataContext?.value.field).toBe(withOverrides[0].fields[0]);
     });
   });
 
@@ -329,7 +303,7 @@ describe('applyFieldOverrides', () => {
     data.fields[1].getLinks!({ valueRowIndex: 0 });
 
     expect(data.fields[1].config.decimals).toEqual(1);
-    expect(replaceVariablesCalls[3].__value.value.text).toEqual('100.0');
+    expect(replaceVariablesCalls[3].__dataContext?.value.rowIndex).toEqual(0);
   });
 
   it('creates a deep clone of field config', () => {
