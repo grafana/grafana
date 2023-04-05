@@ -11,9 +11,15 @@ weight: 15
 
 Along with metrics, Explore allows you to investigate your logs in the following data sources:
 
+- [AWS CloudWatch]({{< relref "../datasources/aws-cloudwatch/" >}})
+- [Azure Monitor]({{< relref "../datasources/azure-monitor/" >}})
+- [Datadog](https://grafana.com/docs/plugins/grafana-datadog-datasource/latest/)
+- [Dynatrace](https://grafana.com/docs/plugins/grafana-dynatrace-datasource/latest/)
 - [Elasticsearch]({{< relref "../datasources/elasticsearch/" >}})
-- [InfluxDB]({{< relref "../datasources/influxdb/" >}})
+- [InfluxDb]({{< relref "../datasources/influxdb/" >}})
 - [Loki]({{< relref "../datasources/loki/" >}})
+- [New Relic](https://grafana.com/docs/plugins/grafana-newrelic-datasource/latest/)
+- [Splunk](https://grafana.com/docs/plugins/grafana-splunk-datasource/latest/)
 
 During an infrastructure monitoring and incident response, you can dig deeper into the metrics and logs to find the cause. Explore also allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow:
 
