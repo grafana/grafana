@@ -1,8 +1,9 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
 import {
+  DataFrame,
   FrameMatcherID,
-  getFieldDisplayName,
+  getFrameDisplayName,
   MatcherConfig,
   SelectableValue,
   StandardEditorProps,
@@ -34,13 +35,7 @@ const recoverRefIdMissing = (
 type Props = StandardEditorProps<MatcherConfig>;
 
 export const FrameSelectionEditor = ({ value, context, onChange, item }: Props) => {
-  const listOfRefId = useMemo(() => {
-    return context.data.map((f) => ({
-      value: f.refId ?? '',
-      label: `Query: ${f.refId ?? '(missing refId)'} (size: ${f.length})`,
-      description: f.fields.map((f) => getFieldDisplayName(f)).join(', '),
-    }));
-  }, [context.data]);
+  const listOfRefIds = useMemo(() => getListOfQueryRefIds(context.data), [context.data]);
 
   const [priorSelectionState, updatePriorSelectionState] = useState<{
     refIds: SelectableValue[];
@@ -52,10 +47,10 @@ export const FrameSelectionEditor = ({ value, context, onChange, item }: Props) 
 
   const currentValue = useMemo(() => {
     return (
-      listOfRefId.find((refId) => refId.value === value?.options) ??
-      recoverRefIdMissing(listOfRefId, priorSelectionState.refIds, priorSelectionState.value)
+      listOfRefIds.find((refId) => refId.value === value?.options) ??
+      recoverRefIdMissing(listOfRefIds, priorSelectionState.refIds, priorSelectionState.value)
     );
-  }, [value, listOfRefId, priorSelectionState]);
+  }, [value, listOfRefIds, priorSelectionState]);
 
   const onFilterChange = useCallback(
     (v: SelectableValue<string>) => {
@@ -71,15 +66,15 @@ export const FrameSelectionEditor = ({ value, context, onChange, item }: Props) 
     [onChange]
   );
 
-  if (listOfRefId !== priorSelectionState.refIds || currentValue?.value !== priorSelectionState.value) {
+  if (listOfRefIds !== priorSelectionState.refIds || currentValue?.value !== priorSelectionState.value) {
     updatePriorSelectionState({
-      refIds: listOfRefId,
+      refIds: listOfRefIds,
       value: currentValue?.value,
     });
   }
   return (
     <Select
-      options={listOfRefId}
+      options={listOfRefIds}
       onChange={onFilterChange}
       isClearable={true}
       placeholder="Change filter"
@@ -87,3 +82,38 @@ export const FrameSelectionEditor = ({ value, context, onChange, item }: Props) 
     />
   );
 };
+
+function getListOfQueryRefIds(data: DataFrame[]): Array<SelectableValue<string>> {
+  const queries = new Map<string, DataFrame[]>();
+
+  for (const frame of data) {
+    const refId = frame.refId ?? '';
+    const frames = queries.get(refId) ?? [];
+
+    if (frames.length === 0) {
+      queries.set(refId, frames);
+    }
+
+    frames.push(frame);
+  }
+
+  const values: Array<SelectableValue<string>> = [];
+
+  for (const [refId, frames] of queries.entries()) {
+    values.push({
+      value: refId,
+      label: `Query: ${refId ?? '(missing refId)'}`,
+      description: getFramesDescription(frames),
+    });
+  }
+
+  return values;
+}
+
+function getFramesDescription(frames: DataFrame[]): string {
+  return `Frames (${frames.length}):
+    ${frames
+      .slice(0, Math.min(3, frames.length))
+      .map((x) => getFrameDisplayName(x))
+      .join(', ')} ${frames.length > 3 ? '...' : ''}`;
+}
