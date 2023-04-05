@@ -140,7 +140,6 @@ func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissi
 	}
 
 	f := accessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
-		recQueries:                   make([]clause, 0, maximumRecursiveQueries),
 		recursiveQueriesAreSupported: recursiveQueriesAreSupported,
 	}
 
@@ -305,6 +304,9 @@ func (f *accessControlDashboardPermissionFilter) With() (string, []interface{}) 
 }
 
 func (f *accessControlDashboardPermissionFilter) addRecQry(queryName string, whereUIDSelect string, whereParams []interface{}) {
+	if len(f.recQueries) == 0 {
+		f.recQueries = make([]clause, 0, maximumRecursiveQueries)
+	}
 	c := make([]interface{}, len(whereParams))
 	copy(c, whereParams)
 	f.recQueries = append(f.recQueries, clause{
