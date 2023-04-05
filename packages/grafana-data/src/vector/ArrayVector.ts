@@ -1,22 +1,19 @@
 import { MutableVector } from '../types/vector';
 
-import { FunctionalVector } from './FunctionalVector';
-
 // WIP polyfill for replacing ArrayVector() with a plain array
 // https://jsfiddle.net/Lbj7co84/
 // TODO: typings kung fu
 
 // JS original sin
-/* eslint-disable */
 Object.assign(Array.prototype, {
-  get(idx) {
-    return this[idx];
+  get(idx: string | number): any {
+    return (this as any)[idx];
   },
-  set(idx, value) {
-    this[idx] = value;
+  set(idx: string | number, value: any) {
+    (this as any)[idx] = value;
   },
-  add(value) {
-    this.push(value);
+  add(value: any) {
+    (this as any).push(value);
   },
   toArray() {
     return this;
@@ -25,10 +22,9 @@ Object.assign(Array.prototype, {
     return this;
   },
 });
-/* eslint-enable */
 
 Object.defineProperty(Array.prototype, 'buffer', {
-  get: function() {
+  get: function () {
     return this;
   },
 });
@@ -58,8 +54,8 @@ console.log(arv.slice());
 /**
  * @public
  */
-export class ArrayVector<T = any> extends FunctionalVector<T> implements MutableVector<T> {
-  buffer: T[];
+export class ArrayVector<T = any> extends Array<T> implements MutableVector<T> {
+  buffer: T[] = [];
 
   constructor(buffer?: T[]) {
     super();
@@ -71,31 +67,37 @@ export class ArrayVector<T = any> extends FunctionalVector<T> implements Mutable
     return (buffer ?? []) as unknown as ArrayVector<T>;
   }
 
-  get length() {
-    return this.buffer.length;
+  //   /** @deprecated -- not necessary anymore */
+  //   get buffer(): T[] {
+  //     throw 'not used';
+  //   };
+  // ​
+  //   /** @deprecated -- not necessary anymore */
+  //   set buffer(v: T[]) {
+  //     throw 'not used';
+  //   };
+  // ​
+  get length(): number {
+    throw 'not used';
   }
 
   add(value: T) {
-    this.buffer.push(value);
+    throw 'not used';
   }
 
   get(index: number): T {
-    return this.buffer[index];
+    throw 'not used';
   }
 
   set(index: number, value: T) {
-    this.buffer[index] = value;
-  }
-
-  reverse() {
-    this.buffer.reverse();
+    throw 'not used';
   }
 
   toArray(): T[] {
-    return this.buffer;
+    throw 'not used';
   }
 
   toJSON(): T[] {
-    return this.buffer;
+    throw 'not used';
   }
 }
