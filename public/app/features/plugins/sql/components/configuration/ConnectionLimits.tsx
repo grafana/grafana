@@ -130,7 +130,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
           tooltip={
             <span>
               If enabled, automatically set the number of <i>Maximum idle connections</i> to the same value as
-              <i>Max open connections</i>. If the number of maximum open connections is not set it will be set to the
+              <i> Max open connections</i>. If the number of maximum open connections is not set it will be set to the
               default ({SQLConnectionDefaults.MAX_CONNS}).
             </span>
           }
