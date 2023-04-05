@@ -170,9 +170,13 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 		dto.PublicDashboard.Share = PublicShareType
 	}
 
-	uid, err := pd.NewPublicDashboardUid(ctx)
-	if err != nil {
-		return nil, err
+	// allow us to pass in uid when creating a public dashboard
+	uid := dto.PublicDashboard.Uid
+	if dto.PublicDashboard.Uid == "" {
+		uid, err = pd.NewPublicDashboardUid(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	accessToken, err := pd.NewPublicDashboardAccessToken(ctx)

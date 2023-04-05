@@ -1,0 +1,17 @@
+clusters:
+- name: authz-webhook
+  cluster:
+    certificate-authority: ../data/k8s/ca.crt
+    server: https://127.0.0.1:2999/k8s/authz
+users:
+- name: api-server
+  user:
+    # authz webhook plugin in k8s will use the specified certs to authenticate to the webhook
+    client-certificate: ../data/k8s/embedded-k8s-authz-plugin.crt
+    client-key: ../data/k8s/embedded-k8s-authz-plugin.key
+current-context: authz-webhook
+contexts:
+- context:
+    cluster: authz-webhook
+    user: api-server
+  name: authz-webhook

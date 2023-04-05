@@ -46,7 +46,12 @@ type dashboardTag struct {
 // DashboardStore implements the Store interface
 var _ dashboards.Store = (*dashboardStore)(nil)
 
-func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service) (dashboards.Store, error) {
+// TODO: ¯\_(ツ)_/¯
+// This is a type for the original SQL based store
+// This only exists for wire dependency fooling
+type DashboardSQLStore dashboards.Store
+
+func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service) (DashboardSQLStore, error) {
 	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -1059,4 +1064,91 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits.Set(globalQuotaTag, cfg.Quota.Global.Dashboard)
 	limits.Set(orgQuotaTag, cfg.Quota.Org.Dashboard)
 	return limits, nil
+}
+
+func (d *dashboardStore) SaveDashboardWithMetadata(ctx context.Context, msg string, dash *dashboards.Dashboard, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
+	var result *dashboards.Dashboard
+	var err error
+
+	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		result, err = saveDashboardWithUID(sess, msg, dash, d.emitEntityEvent())
+		if err == nil && provisioning != nil {
+			provisioning.DashboardID = result.ID
+			return saveProvisionedData(sess, provisioning, result)
+		}
+		return err
+	})
+	return result, err
+}
+
+func saveDashboardWithUID(sess *db.Session, msg string, dash *dashboards.Dashboard, emitEntityEvent bool) (*dashboards.Dashboard, error) {
+	var existing dashboards.Dashboard
+	dashWithUIDExists, err := sess.Where("uid=? AND org_id=?", dash.UID, dash.OrgID).Get(&existing)
+	if err != nil {
+		return nil, err
+	}
+
+	var affectedRows int64
+	if dashWithUIDExists {
+		dash.ID = existing.ID
+		dash.SetVersion(existing.Version + 1)
+		affectedRows, err = sess.MustCols("folder_id").ID(dash.ID).Update(dash)
+	} else {
+		dash.SetVersion(1)
+		metrics.MApiDashboardInsert.Inc()
+		affectedRows, err = sess.Insert(dash)
+	}
+
+	if err != nil {
+		return nil, err // error inserting rows
+	}
+
+	if affectedRows == 0 {
+		return nil, dashboards.ErrDashboardNotFound
+	}
+
+	dashVersion := &dashver.DashboardVersion{
+		DashboardID:   dash.ID,
+		ParentVersion: existing.Version,
+		//	RestoredFrom:  cmd.RestoredFrom, ???
+		Version:   dash.Version,
+		Created:   time.Now(),
+		CreatedBy: dash.UpdatedBy,
+		Message:   msg,
+		Data:      dash.Data,
+	}
+
+	//---------------------------------------------
+	// Past here is the same as saveDashboard(...)
+	//---------------------------------------------
+
+	// insert version entry
+	if affectedRows, err = sess.Insert(dashVersion); err != nil {
+		return nil, err
+	} else if affectedRows == 0 {
+		return nil, dashboards.ErrDashboardNotFound
+	}
+
+	// delete existing tags
+	if _, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.ID); err != nil {
+		return nil, err
+	}
+
+	// insert new tags
+	tags := dash.GetTags()
+	if len(tags) > 0 {
+		for _, tag := range tags {
+			if _, err := sess.Insert(dashboardTag{DashboardId: dash.ID, Term: tag}); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if emitEntityEvent {
+		_, err := sess.Insert(createEntityEvent(dash, store.EntityEventTypeUpdate))
+		if err != nil {
+			return dash, err
+		}
+	}
+	return dash, nil
 }

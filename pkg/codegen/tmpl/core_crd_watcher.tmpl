@@ -1,0 +1,55 @@
+package {{ .Props.MachineName }}
+
+import (
+  "context"
+
+  "github.com/grafana/grafana/pkg/infra/log"
+  "github.com/grafana/grafana/pkg/registry/corekind"
+  "github.com/grafana/grafana/pkg/services/k8s/crd"
+)
+
+type Watcher interface {
+	Add(context.Context, *{{ .Props.Name }}) error
+	Update(context.Context, *{{ .Props.Name }}, *{{ .Props.Name }}) error
+	Delete(context.Context, *{{ .Props.Name }}) error
+}
+
+type WatcherWrapper struct {
+	log log.Logger
+	watcher Watcher
+}
+
+func NewWatcherWrapper(watcher Watcher) *WatcherWrapper {
+	return &WatcherWrapper{
+		log: log.New("k8s.{{ .Props.MachineName }}.watcher"),
+		watcher: watcher,
+	}
+}
+
+func (w *WatcherWrapper) Add(ctx context.Context, obj any) error {
+	conv, err := fromUnstructured(obj)
+	if err != nil {
+		return err
+	}
+	return w.watcher.Add(ctx, conv)
+}
+
+func (w *WatcherWrapper) Update(ctx context.Context, oldObj, newObj any) error {
+	convOld, err := fromUnstructured(oldObj)
+	if err != nil {
+		return err
+	}
+	convNew, err := fromUnstructured(newObj)
+	if err != nil {
+		return err
+	}
+	return w.watcher.Update(ctx, convOld, convNew)
+}
+
+func (w *WatcherWrapper) Delete(ctx context.Context, obj any) error {
+	conv, err := fromUnstructured(obj)
+	if err != nil {
+		return err
+	}
+	return w.watcher.Delete(ctx, conv)
+}

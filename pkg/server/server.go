@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/modules"
+	moduleRegistry "github.com/grafana/grafana/pkg/modules/registry"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -39,7 +40,7 @@ type Options struct {
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
-	moduleService modules.Engine,
+	moduleService modules.Engine, moduleRegistry moduleRegistry.Registry,
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
 	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, moduleService)
@@ -129,11 +130,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	if err := s.roleRegistry.RegisterFixedRoles(s.context); err != nil {
-		return err
-	}
-
-	return s.provisioningService.RunInitProvisioners(s.context)
+	return s.roleRegistry.RegisterFixedRoles(s.context)
 }
 
 // Run initializes and starts services. This will block until all services have

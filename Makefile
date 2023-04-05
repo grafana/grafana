@@ -9,7 +9,7 @@ include .bingo/Variables.mk
 
 .PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue
 
-GO = go
+GO = CGO_CFLAGS="-DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_USE_ALLOCA=1" go
 GO_FILES ?= ./pkg/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
@@ -250,6 +250,14 @@ clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"
 	rm -rf node_modules
 	rm -rf public/build
+	rm -rf data/k8s
+
+clean-k8s:
+	rm -rf data/k8s
+
+clean-k8s-certs:
+	rm -rf data/k8s/*.crt
+	rm -rf data/k8s/*.key
 
 gen-ts:
 	@echo "generating TypeScript definitions"

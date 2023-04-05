@@ -1,11 +1,27 @@
-package crd
+package {{ .Props.MachineName }}
 
 import (
   _ "embed"
+  "fmt"
+  "encoding/json"
 
+  metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
   "github.com/grafana/grafana/pkg/kinds/{{ .Props.MachineName }}"
+  "github.com/grafana/grafana/pkg/registry/corekind"
+  "github.com/grafana/grafana/pkg/services/k8s/crd"
+  "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+  "k8s.io/apimachinery/pkg/runtime"
   "github.com/grafana/kindsys/k8ssys"
 )
+
+var coreReg = corekind.NewBase(nil)
+var Kind = coreReg.{{ .Props.Name }}()
+
+var CRD = crd.Kind{
+	GrafanaKind: Kind,
+	Object:      &{{ .Props.Name }}{},
+	ObjectList:  &{{ .Props.Name }}List{},
+}
 
 // The CRD YAML representation of the {{ .Props.Name }} kind.
 //
@@ -15,11 +31,64 @@ var CRDYaml []byte
 // {{ .Props.Name }} is the Go CRD representation of a single {{ .Props.Name }} object.
 // It implements [runtime.Object], and is used in k8s scheme construction.
 type {{ .Props.Name }} struct {
-  k8ssys.Base[{{ .Props.MachineName }}.{{ .Props.Name }}]
+	crd.Base[{{ .Props.MachineName }}.{{ .Props.Name }}]
+}
+
+func ({{.Props.MachineName }}CRD *{{ .Props.Name }}) UnmarshalJSON(data []byte) error {
+	m := make(map[string]interface{})
+    json.Unmarshal(data, &m)
+
+	u := &unstructured.Unstructured{}
+	u.SetUnstructuredContent(m)
+
+	obj, err := fromUnstructured(u)
+	if err != nil {
+		return err
+	}
+
+	*{{ .Props.MachineName}}CRD = *obj
+	return nil
 }
 
 // {{ .Props.Name }}List is the Go CRD representation of a list {{ .Props.Name }} objects.
 // It implements [runtime.Object], and is used in k8s scheme construction.
 type {{ .Props.Name }}List struct {
-  k8ssys.ListBase[{{ .Props.MachineName }}.{{ .Props.Name }}]
+	crd.ListBase[{{ .Props.MachineName }}.{{ .Props.Name }}]
+}
+
+// fromUnstructured converts an *unstructured.Unstructured object to a *{{ .Props.Name }}.
+func fromUnstructured(obj any) (*{{ .Props.Name }}, error) {
+	uObj, ok := obj.(*unstructured.Unstructured)
+	if !ok {
+		return nil, fmt.Errorf("failed to convert to *unstructured.Unstructured")
+	}
+
+	var {{ .Props.MachineName }} crd.Base[{{.Props.MachineName }}.{{ .Props.Name }}]
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(uObj.UnstructuredContent(), &{{ .Props.MachineName }})
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert to {{ .Props.Name }}: %w", err)
+	}
+
+	return &{{ .Props.Name }}{ {{ .Props.MachineName }} }, nil
+}
+
+// toUnstructured converts a {{ .Props.Name }} to an *unstructured.Unstructured.
+func toUnstructured(obj *{{ .Props.MachineName }}.{{ .Props.Name }}, metadata metav1.ObjectMeta) (*unstructured.Unstructured, error) {
+	{{ .Props.MachineName }}Obj := crd.Base[{{ .Props.MachineName }}.{{ .Props.Name }}]{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       CRD.GVK().Kind,
+			APIVersion: CRD.GVK().Group + "/" + CRD.GVK().Version,
+		},
+		ObjectMeta: metadata,
+		Spec:       *obj,
+	}
+
+	out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&{{ .Props.MachineName }}Obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return &unstructured.Unstructured{
+		Object: out,
+	}, nil
 }

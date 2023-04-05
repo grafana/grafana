@@ -38,7 +38,7 @@ func (j crdTypesJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 	}
 
 	name := kind.Props().Common().MachineName
-	path := filepath.Join(j.parentpath, name, "crd", name+"_crd_gen.go")
+	path := filepath.Join(j.parentpath, name, name+"_crd_gen.go")
 	b, err := postprocessGoFile(genGoFile{
 		path: path,
 		in:   buf.Bytes(),

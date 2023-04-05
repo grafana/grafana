@@ -10,11 +10,10 @@ import (
 	"cuelang.org/go/encoding/openapi"
 	cueyaml "cuelang.org/go/pkg/encoding/yaml"
 	"github.com/grafana/codejen"
-	"github.com/grafana/kindsys/k8ssys"
+	"github.com/grafana/grafana/pkg/services/k8s/crd"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 	goyaml "gopkg.in/yaml.v3"
-
-	"github.com/grafana/kindsys"
 )
 
 // TODO this jenny is quite sloppy, having been quickly adapted from app-sdk. It needs love
@@ -55,14 +54,14 @@ func (j yamlCRDJenny) Generate(k kindsys.Kind) (*codejen.File, error) {
 		Metadata: customResourceDefinitionMetadata{
 			Name: fmt.Sprintf("%s.%s", props.PluralMachineName, props.CRD.Group),
 		},
-		Spec: k8ssys.CustomResourceDefinitionSpec{
+		Spec: crd.CustomResourceDefinitionSpec{
 			Group: props.CRD.Group,
 			Scope: props.CRD.Scope,
-			Names: k8ssys.CustomResourceDefinitionSpecNames{
+			Names: crd.CustomResourceDefinitionSpecNames{
 				Kind:   props.Name,
 				Plural: props.PluralMachineName,
 			},
-			Versions: make([]k8ssys.CustomResourceDefinitionSpecVersion, 0),
+			Versions: make([]crd.CustomResourceDefinitionSpecVersion, 0),
 		},
 	}
 	latest := lin.Latest().Version()
@@ -113,19 +112,19 @@ func (j yamlCRDJenny) Generate(k kindsys.Kind) (*codejen.File, error) {
 		contents = b.Bytes()
 	}
 
-	return codejen.NewFile(filepath.Join(j.parentpath, props.MachineName, "crd", props.MachineName+".crd.yml"), contents, j), nil
+	return codejen.NewFile(filepath.Join(j.parentpath, props.MachineName, props.MachineName+".crd.yml"), contents, j), nil
 }
 
-// customResourceDefinition differs from k8ssys.CustomResourceDefinition in that it doesn't use the metav1
+// customResourceDefinition differs from crd.CustomResourceDefinition in that it doesn't use the metav1
 // TypeMeta and ObjectMeta, as those do not contain YAML tags and get improperly serialized to YAML.
 // Since we don't need to use it with the kubernetes go-client, we don't need the extra functionality attached.
 //
 //nolint:lll
 type customResourceDefinition struct {
-	Kind       string                              `json:"kind,omitempty" yaml:"kind,omitempty" protobuf:"bytes,1,opt,name=kind"`
-	APIVersion string                              `json:"apiVersion,omitempty" yaml:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
-	Metadata   customResourceDefinitionMetadata    `json:"metadata,omitempty" yaml:"metadata,omitempty"`
-	Spec       k8ssys.CustomResourceDefinitionSpec `json:"spec"`
+	Kind       string                           `json:"kind,omitempty" yaml:"kind,omitempty" protobuf:"bytes,1,opt,name=kind"`
+	APIVersion string                           `json:"apiVersion,omitempty" yaml:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
+	Metadata   customResourceDefinitionMetadata `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	Spec       crd.CustomResourceDefinitionSpec `json:"spec"`
 }
 
 type customResourceDefinitionMetadata struct {
@@ -141,30 +140,30 @@ type cueOpenAPIEncodedComponents struct {
 	Schemas map[string]any `json:"schemas"`
 }
 
-func valueToCRDSpecVersion(str string, name string, stored bool) (k8ssys.CustomResourceDefinitionSpecVersion, error) {
+func valueToCRDSpecVersion(str string, name string, stored bool) (crd.CustomResourceDefinitionSpecVersion, error) {
 	// Decode the bytes back into an object where we can trim the openAPI clutter out
 	// and grab just the schema as a map[string]any (which is what k8s wants)
 	back := cueOpenAPIEncoded{}
 	err := goyaml.Unmarshal([]byte(str), &back)
 	if err != nil {
-		return k8ssys.CustomResourceDefinitionSpecVersion{}, err
+		return crd.CustomResourceDefinitionSpecVersion{}, err
 	}
 	if len(back.Components.Schemas) != 1 {
 		// There should only be one schema here...
 		// TODO: this may change with subresources--but subresources should have defined names
-		return k8ssys.CustomResourceDefinitionSpecVersion{}, fmt.Errorf("version %s has multiple schemas", name)
+		return crd.CustomResourceDefinitionSpecVersion{}, fmt.Errorf("version %s has multiple schemas", name)
 	}
 	var def map[string]any
 	for _, v := range back.Components.Schemas {
 		ok := false
 		def, ok = v.(map[string]any)
 		if !ok {
-			return k8ssys.CustomResourceDefinitionSpecVersion{},
+			return crd.CustomResourceDefinitionSpecVersion{},
 				fmt.Errorf("error generating openapi schema - generated schema has invalid type")
 		}
 	}
 
-	return k8ssys.CustomResourceDefinitionSpecVersion{
+	return crd.CustomResourceDefinitionSpecVersion{
 		Name:    name,
 		Served:  true,
 		Storage: stored,

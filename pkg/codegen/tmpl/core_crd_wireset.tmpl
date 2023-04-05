@@ -1,0 +1,11 @@
+package resources
+
+import (
+	"github.com/google/wire"
+	{{range .Kinds }}
+	"{{ $.KindPackagePrefix }}/{{ .Props.MachineName }}"{{end}}
+)
+
+var WireSet = wire.NewSet({{range $i, $k := .Kinds }}
+	{{ $k.Props.MachineName }}.WireSet,{{end}}
+)
