@@ -362,7 +362,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return err
 	}
 
-	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDatabaseMetrics) {
+	if ss.dbCfg.ExposeQueryMetrics {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
@@ -468,6 +468,7 @@ func (ss *SQLStore) readConfig() error {
 	ss.dbCfg.ServerCertName = sec.Key("server_cert_name").String()
 	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
 	ss.dbCfg.IsolationLevel = sec.Key("isolation_level").String()
+	ss.dbCfg.ExposeQueryMetrics = sec.Key("expose_query_metrics").MustBool(false)
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 	ss.dbCfg.WALEnabled = sec.Key("wal").MustBool(false)
@@ -754,4 +755,5 @@ type DatabaseConfig struct {
 	QueryRetries int
 	// SQLite only
 	TransactionRetries int
+	ExposeQueryMetrics bool
 }
