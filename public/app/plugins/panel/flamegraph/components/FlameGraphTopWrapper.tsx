@@ -1,5 +1,4 @@
 import { FlamegraphRenderer } from '@pyroscope/flamegraph';
-import { Profile } from '@pyroscope/models';
 import React from 'react';
 import '@pyroscope/flamegraph/dist/index.css';
 
@@ -38,7 +37,9 @@ type Row = {
  * @param data
  */
 function dataFrameToFlameBearer(data: DataFrame) {
-  const profile: Profile = {
+  // Unfortunately we cannot use @pyroscope/models for now as they publish ts files which then get type checked and
+  // they do not pass our with our tsconfig
+  const profile: any = {
     version: 1,
     flamebearer: {
       names: [],
