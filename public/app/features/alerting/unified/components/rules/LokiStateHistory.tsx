@@ -69,7 +69,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
         return (
           <Stack direction="column" key={key}>
             <h4>
-              <TagList tags={Object.entries(records[0].line.labels).map(([key, value]) => `${key}=${value}`)} />
+              <TagList tags={stringifyRecord(records[0].line.labels)} />
             </h4>
             {/* <UPlotChart width={400} height={50} data={dataFormat} timeRange={timeRange} /> */}
             <LogRecordViewer records={records} />
@@ -100,12 +100,16 @@ function LogRecordViewer({ records }: { records: LogRecord[] }) {
           <AlertStateTag state={logRecord.line.previous} size="sm" muted />
           <Icon name="arrow-right" />
           <AlertStateTag state={logRecord.line.current} />
-          <div></div>
+          <div>{stringifyRecord(logRecord.line.values)}</div>
           <div>{dateTimeFormat(logRecord.timestamp)}</div>
         </React.Fragment>
       ))}
     </div>
   );
+}
+
+function stringifyRecord (record: Record<string, unknown>) {
+  return Object.entries(record).map(([key, value]) => `${key}=${value}`)
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
