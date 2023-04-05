@@ -99,8 +99,8 @@ export const ConfigureCorrelationSourceForm = () => {
                 ))}
               </div>
               <div>
-                A data point needs to provide values to all. variables as fields or as transformations output to make
-                the correlation button appear in the visualization.
+                A data point needs to provide values to all variables as fields or as transformations output to make the
+                correlation button appear in the visualization.
               </div>
             </Card.Description>
           </Card>
