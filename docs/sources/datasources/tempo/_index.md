@@ -38,15 +38,14 @@ To configure basic settings for the data source, complete the following steps:
 
 1.  Set the data source's basic configuration options:
 
-        | Name           | Description                                                              |
-
+    | Name           | Description                                                              |
     | -------------- | ------------------------------------------------------------------------ |
-    | **Name** | Sets the name you use to refer to the data source in panels and queries. |
-    | **Default** | Sets the data source that's pre-selected for new panels. |
-    | **URL** | Sets the URL of the Tempo instance, such as `http://tempo`. |
-    | **Basic Auth** | Enables basic authentication to the Tempo data source. |
-    | **User** | Sets the user name for basic authentication. |
-    | **Password** | Sets the password for basic authentication. |
+    | **Name**       | Sets the name you use to refer to the data source in panels and queries. |
+    | **Default**    | Sets the data source that's pre-selected for new panels.                 |
+    | **URL**        | Sets the URL of the Tempo instance, such as `http://tempo`.              |
+    | **Basic Auth** | Enables basic authentication to the Tempo data source.                   |
+    | **User**       | Sets the user name for basic authentication.                             |
+    | **Password**   | Sets the password for basic authentication.                              |
 
 You can also configure settings specific to the Tempo data source. These options are described in the sections below.
 
