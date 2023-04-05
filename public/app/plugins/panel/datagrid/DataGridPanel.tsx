@@ -8,6 +8,9 @@ import DataEditor, {
   GridColumnIcon,
   GridSelection,
   CellClickedEventArgs,
+  Rectangle,
+  HeaderClickedEventArgs,
+  SizedGridColumn,
 } from '@glideapps/glide-data-grid';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -50,6 +53,7 @@ interface DatagridContextMenuData {
   y?: number;
   column?: number;
   row?: number;
+  isHeaderMenu?: boolean;
   isContextMenuOpen: boolean;
 }
 
@@ -57,11 +61,12 @@ interface Props extends PanelProps<PanelOptions> {}
 
 export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig }) => {
   const [gridData, setGridData] = useState<DataFrame>(data.series[options.selectedSeries ?? 0]);
-  const [columns, setColumns] = useState<GridColumn[]>([]);
-  const [isSnapshotted, setIsSnapshotted] = useState<boolean>(false);
+  const [columns, setColumns] = useState<SizedGridColumn[]>([]);
   const [contextMenuData, setContextMenuData] = useState<DatagridContextMenuData>({ isContextMenuOpen: false });
-  const [toggleSearch, setToggleSearch] = useState<boolean>(false);
   const [gridSelection, setGridSelection] = useState<GridSelection>(EMPTY_GRID_SELECTION);
+  const [columnFreezeIndex, setColumnFreezeIndex] = useState<number>(-1);
+  const [toggleSearch, setToggleSearch] = useState<boolean>(false);
+  const [isSnapshotted, setIsSnapshotted] = useState<boolean>(false);
 
   const theme = useTheme2();
   const gridTheme = {
@@ -90,13 +95,13 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
       return;
     }
 
-    setColumns(
-      gridData.fields.map((f) => {
+    setColumns((prevColumns) => [
+      ...gridData.fields.map((f, i) => {
         const displayName = getFieldDisplayName(f, gridData);
-        const width = displayName.length * theme.typography.fontSize + ICON_WIDTH;
-        return { title: displayName, width: width, icon: typeToIconMap.get(f.type) };
-      })
-    );
+        const width = prevColumns[i]?.width ?? displayName.length * theme.typography.fontSize + ICON_WIDTH;
+        return { title: displayName, width: width, icon: typeToIconMap.get(f.type), hasMenu: true };
+      }),
+    ]);
   }, [gridData, theme.typography.fontSize]);
 
   useEffect(() => {
@@ -229,10 +234,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
 
   const addNewRow = () => {
     const newFrame = new MutableDataFrame(gridData);
-
-    for (const field of newFrame.fields) {
-      field.values.add(null);
-    }
+    newFrame.appendRow(new Array(newFrame.fields.length).fill(null));
 
     setIsSnapshotted(true);
     setGridData(newFrame);
@@ -269,9 +271,33 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     setContextMenuData({
       x: event.bounds.x + event.localEventX,
       y: event.bounds.y + event.localEventY,
-      column: cell[0],
+      column: cell[0] === -1 ? undefined : cell[0], //row numbers
       row: cell[1],
       isContextMenuOpen: true,
+      isHeaderMenu: false,
+    });
+  };
+
+  const onHeaderContextMenu = (colIndex: number, event: HeaderClickedEventArgs) => {
+    event.preventDefault();
+    setContextMenuData({
+      x: event.bounds.x + event.localEventX,
+      y: event.bounds.y + event.localEventY,
+      column: colIndex,
+      row: undefined, //header
+      isContextMenuOpen: true,
+      isHeaderMenu: false,
+    });
+  };
+
+  const onHeaderMenuClick = (col: number, screenPosition: Rectangle) => {
+    setContextMenuData({
+      x: screenPosition.x + screenPosition.width,
+      y: screenPosition.y + screenPosition.height,
+      column: col,
+      row: undefined, //header
+      isContextMenuOpen: true,
+      isHeaderMenu: true,
     });
   };
 
@@ -313,21 +339,27 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         rowMarkers={'clickable-number'}
         onColumnResize={onColumnResize}
         onCellContextMenu={onCellContextMenu}
+        onHeaderContextMenu={onHeaderContextMenu}
+        onHeaderMenuClick={onHeaderMenuClick}
         trailingRowOptions={TRAILING_ROW_OPTIONS}
         rightElement={<AddColumn onColumnInputBlur={onColumnInputBlur} divStyle={styles.addColumnDiv} />}
         rightElementProps={RIGHT_ELEMENT_PROPS}
+        freezeColumns={columnFreezeIndex}
       />
       {contextMenuData.isContextMenuOpen && (
         <DatagridContextMenu
           x={contextMenuData.x!}
           y={contextMenuData.y!}
-          column={contextMenuData.column!}
-          row={contextMenuData.row!}
+          column={contextMenuData.column}
+          row={contextMenuData.row}
           data={gridData}
           saveData={setGridData}
           closeContextMenu={closeContextMenu}
           setToggleSearch={setToggleSearch}
           gridSelection={gridSelection}
+          isHeaderMenu={contextMenuData.isHeaderMenu}
+          setColumnFreezeIndex={setColumnFreezeIndex}
+          columnFreezeIndex={columnFreezeIndex}
         />
       )}
     </>

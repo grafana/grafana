@@ -1,7 +1,8 @@
 import { GridSelection } from '@glideapps/glide-data-grid';
 import React from 'react';
 
-import { ArrayVector, DataFrame } from '@grafana/data';
+import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
+import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import { ContextMenu, MenuItem } from '@grafana/ui';
 import { MenuDivider } from '@grafana/ui/src/components/Menu/MenuDivider';
 
@@ -10,13 +11,16 @@ import { deleteRows, EMPTY_DF } from '../utils';
 interface Props {
   x: number;
   y: number;
-  column: number;
-  row: number;
+  column?: number;
+  row?: number;
   data: DataFrame;
   saveData: (data: DataFrame) => void;
   closeContextMenu: () => void;
   setToggleSearch: (toggleSearch: boolean) => void;
   gridSelection: GridSelection;
+  isHeaderMenu?: boolean;
+  setColumnFreezeIndex: (index: number) => void;
+  columnFreezeIndex: number;
 }
 
 export const DatagridContextMenu = ({
@@ -29,6 +33,9 @@ export const DatagridContextMenu = ({
   closeContextMenu,
   setToggleSearch,
   gridSelection,
+  isHeaderMenu,
+  setColumnFreezeIndex,
+  columnFreezeIndex,
 }: Props) => {
   let selectedRows: number[] = [];
   let selectedColumns: number[] = [];
@@ -42,78 +49,75 @@ export const DatagridContextMenu = ({
   }
 
   let rowDeletionLabel = 'Delete row';
-  if (selectedRows.length) {
+  if (selectedRows.length && selectedRows.length > 1) {
     rowDeletionLabel = `Delete ${selectedRows.length} rows`;
   }
 
   let columnDeletionLabel = 'Delete column';
-  if (selectedColumns.length) {
+  if (selectedColumns.length && selectedColumns.length > 1) {
     columnDeletionLabel = `Delete ${selectedColumns.length} columns`;
   }
 
-  const renderItems = () => (
+  const renderContextMenuItems = () => (
     <>
-      <MenuItem
-        label={rowDeletionLabel}
-        onClick={() => {
-          if (selectedRows.length) {
-            saveData(deleteRows(data, selectedRows, true));
-            return;
-          }
+      {row || selectedRows.length ? (
+        <MenuItem
+          label={rowDeletionLabel}
+          onClick={() => {
+            if (selectedRows.length) {
+              saveData(deleteRows(data, selectedRows, true));
+              return;
+            }
 
-          saveData(deleteRows(data, [row], true));
-        }}
-      />
-      <MenuItem
-        label={columnDeletionLabel}
-        onClick={() => {
-          if (selectedColumns.length) {
+            if (row) {
+              saveData(deleteRows(data, [row], true));
+            }
+          }}
+        />
+      ) : null}
+      {column || selectedColumns.length ? (
+        <MenuItem
+          label={columnDeletionLabel}
+          onClick={() => {
+            if (selectedColumns.length) {
+              saveData({
+                ...data,
+                fields: data.fields.filter((_, index) => !selectedColumns.includes(index)),
+              });
+              return;
+            }
+
+            if (column) {
+              saveData({
+                ...data,
+                fields: data.fields.filter((_, index) => index !== column),
+              });
+            }
+          }}
+        />
+      ) : null}
+      <MenuDivider />
+      {row && !selectedRows.length ? (
+        <MenuItem
+          label="Clear row"
+          onClick={() => {
+            saveData(deleteRows(data, [row]));
+          }}
+        />
+      ) : null}
+      {column && !selectedColumns.length ? (
+        <MenuItem
+          label="Clear column"
+          onClick={() => {
+            const field = data.fields[column];
+            field.values = new ArrayVector(field.values.toArray().map(() => null));
+
             saveData({
               ...data,
-              fields: data.fields.filter((_, index) => !selectedColumns.includes(index)),
             });
-            return;
-          }
-
-          saveData({
-            ...data,
-            fields: data.fields.filter((_, index) => index !== column),
-          });
-        }}
-      />
-      <MenuDivider />
-      {/* TODO: decide if we keep this or not. Delete Keypress covers this and selection delete scenario so I feel this is not needed 
-      <MenuItem
-        label="Clear cell"
-        onClick={() => {
-          const field = data.fields[column];
-          const valuesArray = field.values.toArray();
-          valuesArray.splice(row, 1, null);
-          field.values = new ArrayVector(valuesArray);
-
-          saveData({
-            ...data,
-          });
-        }}
-        shortcut="Delete"
-      /> */}
-      <MenuItem
-        label="Clear row"
-        onClick={() => {
-          saveData(deleteRows(data, [row]));
-        }}
-      />
-      <MenuItem
-        label="Clear column"
-        onClick={() => {
-          const field = data.fields[column];
-          field.values = new ArrayVector(field.values.toArray().map(() => null));
-
-          saveData({
-            ...data,
-          });
-        }}
-      />
+          }}
+        />
+      ) : null}
       <MenuDivider />
       <MenuItem
         label="Remove all data"
@@ -125,5 +129,105 @@ export const DatagridContextMenu = ({
     </>
   );
 
-  return <ContextMenu renderMenuItems={renderItems} x={x} y={y} onClose={closeContextMenu} />;
+  const renderHeaderMenuItems = () => {
+    if (!column) {
+      return null;
+    }
+
+    const fieldType = data.fields[column].type;
+    let labelTpl = 'Change to %s field type';
+    const fieldTypeConversionData: Array<{
+      label: string;
+      options: {
+        targetField: string;
+        destinationType: FieldType;
+      };
+    }> = [];
+
+    const addToConversionData = (fieldType: FieldType) => {
+      fieldTypeConversionData.push({
+        label: labelTpl.replace('%s', fieldType),
+        options: {
+          targetField: data.fields[column].name,
+          destinationType: fieldType,
+        },
+      });
+    };
+
+    if (fieldType === FieldType.string) {
+      addToConversionData(FieldType.number);
+      addToConversionData(FieldType.boolean);
+    } else if (fieldType === FieldType.number) {
+      addToConversionData(FieldType.string);
+      addToConversionData(FieldType.boolean);
+    } else if (fieldType === FieldType.boolean) {
+      addToConversionData(FieldType.number);
+      addToConversionData(FieldType.string);
+    }
+
+    let columnFreezeLabel = 'Set column freeze position';
+    const columnIdx = column + 1;
+    if (columnFreezeIndex === columnIdx) {
+      columnFreezeLabel = 'Unset column freeze';
+    }
+
+    return (
+      <>
+        {fieldTypeConversionData.map((conversionData, index) => (
+          <MenuItem
+            key={index}
+            label={conversionData.label}
+            onClick={() => {
+              const field = convertFieldType(data.fields[column], conversionData.options);
+              const copy = {
+                name: data.name,
+                fields: [...data.fields],
+                length: data.length,
+              };
+              copy.fields[column] = field;
+
+              saveData(copy);
+            }}
+          />
+        ))}
+        <MenuItem
+          label={columnFreezeLabel}
+          onClick={() => {
+            if (columnFreezeIndex === columnIdx) {
+              setColumnFreezeIndex(-1);
+            } else {
+              setColumnFreezeIndex(columnIdx);
+            }
+          }}
+        />
+        <MenuDivider />
+        <MenuItem
+          label={columnDeletionLabel}
+          onClick={() => {
+            if (selectedColumns.length) {
+              saveData({
+                ...data,
+                fields: data.fields.filter((_, index) => !selectedColumns.includes(index)),
+              });
+              return;
+            }
+
+            saveData({
+              ...data,
+              fields: data.fields.filter((_, index) => index !== column),
+            });
+          }}
+        />
+      </>
+    );
+  };
+
+  return (
+    <ContextMenu
+      renderMenuItems={isHeaderMenu ? renderHeaderMenuItems : renderContextMenuItems}
+      x={x}
+      y={y}
+      onClose={closeContextMenu}
+    />
+  );
 };
