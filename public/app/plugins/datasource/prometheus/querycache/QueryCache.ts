@@ -4,7 +4,7 @@ import {
   DataQueryRequest,
   dateTime,
   durationToMilliseconds,
-  Field,
+  Field, incrRoundDn,
   isValidDuration,
   parseDuration,
 } from '@grafana/data/src';
@@ -113,10 +113,11 @@ export class QueryCache<T extends SupportedQueryTypes> {
     }
 
     if (doPartialQuery) {
-      // 10m re-query overlap
-
       // clamp to make sure we don't re-query previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
       let newFromPartial = Math.max(prevTo! - this.overlapWindowMs, newFrom);
+
+      // Round down to the closest second
+      // newFromPartial = incrRoundDn(newFromPartial, 1000)
 
       // modify to partial query
       request = {

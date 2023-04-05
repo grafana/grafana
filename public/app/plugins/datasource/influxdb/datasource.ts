@@ -160,7 +160,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     this.cache = new QueryCache<InfluxQuery>(
       this.getInfluxTargetSignature.bind(this),
-      '10m' //@todo
+      '2m' //@todo
     );
 
     if (this.isFlux) {

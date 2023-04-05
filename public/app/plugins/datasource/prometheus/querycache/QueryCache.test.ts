@@ -2,6 +2,7 @@ import moment from 'moment';
 
 import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@grafana/data/src';
 
+import { InfluxQuery } from '../../influxdb/types';
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
 
@@ -19,7 +20,45 @@ const getPrometheusTargetSignature = (request: DataQueryRequest<PromQuery>, targ
   )}|${targ.exemplar}`;
 };
 
-const mockRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQueryRequest<PromQuery> => {
+const getInfluxTargetSignature = (request: DataQueryRequest<InfluxQuery>, targ: InfluxQuery) => {
+  return `${request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.query}|${JSON.stringify(targ.select)}`;
+};
+
+const mockInfluxRequest = (request: Partial<DataQueryRequest<InfluxQuery>>): DataQueryRequest<InfluxQuery> => {
+  const defaultRequest: DataQueryRequest<InfluxQuery> = {
+    scopedVars: {
+      __interval: { text: '15s', value: '15s' },
+      __interval_ms: { text: '15000', value: 15000 },
+      // @todo user variable?
+    },
+    startTime: 0,
+    app: 'unknown',
+    requestId: '',
+    timezone: '',
+    range: {
+      from: moment('2023-01-30T19:33:01.332Z') as DateTime,
+      to: moment('2023-01-30T20:33:01.332Z') as DateTime,
+      raw: { from: 'now-1h', to: 'now' },
+    },
+    interval: '15s',
+    intervalMs: 15000,
+    targets: [
+      {
+        rawQuery: true,
+        query: 'SELECT * FROM cpu',
+        datasource: { type: 'influx', uid: '8675309' },
+        refId: 'A',
+      },
+    ]
+  };
+
+  return {
+    ...defaultRequest,
+    ...request
+  }
+};
+
+const mockPromRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQueryRequest<PromQuery> => {
   // Histogram
   const defaultRequest: DataQueryRequest<PromQuery> = {
     app: 'undefined',
@@ -59,7 +98,7 @@ const mockRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQueryR
   };
 };
 
-describe('QueryCache', function () {
+describe('QueryCache: Generic', function () {
   it('instantiates', () => {
     const storage = new QueryCache(() => '', '10m');
     expect(storage).toBeInstanceOf(QueryCache);
@@ -110,7 +149,7 @@ describe('QueryCache', function () {
     cache.set(targetIdentity, targetSignature);
 
     const firstStoredFrames = storage.procFrames(
-      mockRequest({
+      mockPromRequest({
         range: firstRange,
         dashboardUID: dashboardId,
         panelId: panelId,
@@ -131,7 +170,7 @@ describe('QueryCache', function () {
     // Should return the request frames unaltered
     expect(firstStoredFrames).toEqual(firstFrames);
 
-    const secondRequest = mockRequest({
+    const secondRequest = mockPromRequest({
       range: secondRange,
       dashboardUID: dashboardId,
       panelId: panelId,
@@ -164,7 +203,9 @@ describe('QueryCache', function () {
       expect(firstFramesLength).toBeGreaterThan(secondFramesLength);
     });
   });
+});
 
+describe('QueryCache: Prometheus', function () {
   it('Merges incremental queries in storage', () => {
     const scenarios = [
       IncrementalStorageDataFrameScenarios.histogram.getSeriesWithGapAtEnd(),
@@ -214,7 +255,7 @@ describe('QueryCache', function () {
       // This can't change
       const targetIdentity = `${dashboardId}|${panelId}|A`;
 
-      const request = mockRequest({
+      const request = mockPromRequest({
         range: firstRange,
         dashboardUID: dashboardId,
         panelId: panelId,
@@ -243,7 +284,7 @@ describe('QueryCache', function () {
       // Should return the request frames unaltered
       expect(firstStoredFrames).toEqual(firstFrames);
 
-      const secondRequest = mockRequest({
+      const secondRequest = mockPromRequest({
         range: secondRange,
         dashboardUID: dashboardId,
         panelId: panelId,
@@ -366,7 +407,7 @@ describe('QueryCache', function () {
 
     const targetIdentity = `${dashboardId}|${panelId}|A`;
 
-    const request = mockRequest({
+    const request = mockPromRequest({
       range: firstRange,
       dashboardUID: dashboardId,
       panelId: panelId,
@@ -385,7 +426,7 @@ describe('QueryCache', function () {
     const firstMergedLength = firstQueryResult[0].fields[0].values.length;
 
     const secondQueryResult = storage.procFrames(
-      mockRequest({
+      mockPromRequest({
         range: secondRange,
         dashboardUID: dashboardId,
         panelId: panelId,
@@ -412,7 +453,7 @@ describe('QueryCache', function () {
     cache.set(targetIdentity, `'1=1'|${interval}|${JSON.stringify(thirdRange.raw)}`);
 
     storage.procFrames(
-      mockRequest({
+      mockPromRequest({
         range: thirdRange,
         dashboardUID: dashboardId,
         panelId: panelId,
@@ -447,7 +488,7 @@ describe('QueryCache', function () {
       utcOffsetSec: -21600,
     };
 
-    const request = mockRequest({
+    const request = mockPromRequest({
       interval: requestInterval,
       targets: [target],
     });
@@ -457,7 +498,7 @@ describe('QueryCache', function () {
   });
 
   it('will not modify request with absolute duration', () => {
-    const request = mockRequest({
+    const request = mockPromRequest({
       range: {
         from: moment('2023-01-30T19:33:01.332Z') as DateTime,
         to: moment('2023-01-30T20:33:01.332Z') as DateTime,
@@ -472,7 +513,7 @@ describe('QueryCache', function () {
   });
 
   it('mark request as shouldCache', () => {
-    const request = mockRequest();
+    const request = mockPromRequest();
     const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m');
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
@@ -480,10 +521,73 @@ describe('QueryCache', function () {
   });
 
   it('Should modify request', () => {
-    const request = mockRequest();
+    const request = mockPromRequest();
     const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m');
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(true);
+  });
+});
+
+describe('QueryCache: Influx', function () {
+  it('avoids removing frames in influx', () => {
+    const storage = new QueryCache<InfluxQuery>(getInfluxTargetSignature, '10m');
+
+    const cache = new Map<string, string>();
+
+    const firstFrom = dateTime("2023-04-04T20:13:58.601Z");
+    // End time of scenario
+    const firstTo = dateTime("2023-04-04T20:18:58.601Z")
+
+    const firstRange: TimeRange = {
+      from: firstFrom,
+      to: firstTo,
+      raw: {
+        from: 'now-6h',
+        to: 'now',
+      },
+    };
+
+
+    const secondFrom = dateTime("2023-04-04T20:51:20.643Z");
+    const secondTo = dateTime("2023-04-04T20:53:38.022Z").add(6, 'hours');
+
+    const secondRange: TimeRange = {
+      from: secondFrom,
+      to: secondTo,
+      raw: {
+        from: 'now-6h',
+        to: 'now',
+      },
+    };
+
+    const dashboardId = `dashid--`;
+    const panelId = 2;
+
+    // This can't change
+    const targetIdentity = `${dashboardId}|${panelId}|A`;
+
+    const request = mockInfluxRequest({
+      range: firstRange,
+      dashboardUID: dashboardId,
+      panelId: panelId,
+    });
+
+    // But the signature can, and we should clean up any non-matching signatures
+    const targetSignature = getInfluxTargetSignature(request, request.targets[0]);
+
+    // const firstFrames =
+
+    cache.set(targetIdentity, targetSignature);
+
+    const firstStoredFrames = storage.procFrames(
+      request,
+      {
+        requests: [], // unused
+        targSigs: cache,
+        shouldCache: true,
+      },
+      firstFrames
+    );
   });
 });
