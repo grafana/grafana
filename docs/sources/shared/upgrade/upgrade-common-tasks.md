@@ -105,9 +105,9 @@ To upgrade Grafana installed from the binary `.tar.gz` package, complete the fol
 
 1. Extract the downloaded package and overwrite the existing files.
 
-### RPM, YUM, Zypper
+### RPM or YUM
 
-To upgrade Grafana installed using RPM, YUM, or Zypper, complete the following steps:
+To upgrade Grafana installed using RPM or YUM complete the following steps:
 
 1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
 
