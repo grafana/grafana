@@ -99,7 +99,11 @@ func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response
 //
 // Will return details of the created API key.
 //
-// Deprecated: This endpoint is deprecated and will be removed in a future version. Please use POST /api/serviceaccounts and POST /api/serviceaccounts/{id}/tokens instead see: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
+// Please use POST /api/serviceaccounts and POST /api/serviceaccounts/{id}/tokens
+//
+// instead see: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
+//
+// Deprecated: true
 //
 // Responses:
 // 200: postAPIkeyResponse
