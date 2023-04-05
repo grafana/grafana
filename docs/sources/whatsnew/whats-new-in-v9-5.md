@@ -74,7 +74,7 @@ Grafana’s new panel design is available only for React-based panels. No Angula
 
 _Experimental in all editions of Grafana._
 
-When you have thousands or millions of Prometheus metrics, it can be hard to find the exact one you're looking for. Enable feature toggle `prometheusMetricEncyclopedia` to replace the basic metric select dropdown in the Prometheus query builder  with a paginated and searchable metric *encyclopedia*. 
+When you have thousands or millions of Prometheus metrics, it can be hard to find the exact one you're looking for. Enable feature toggle `prometheusMetricEncyclopedia` to replace the basic metric select dropdown in the Prometheus query builder with a paginated and searchable metric _encyclopedia_.
 
 Here's what you can do with the metric encyclopedia:
 
@@ -89,6 +89,7 @@ Here's what you can do with the metric encyclopedia:
 _Experimental in all editions of Grafana._
 
 New feature toggle `prometheusResourceBrowserCache` provides the ability to cache Prometheus editor API calls in the Prometheus data source configuration.
+This improves Prometheus query editor performance, the biggest performance improvements will be seen by users with high cardinality Prometheus instances.
 
 ## Removing the button to create API keys from the UI
 
@@ -143,6 +144,7 @@ Alert rules that are configured to fire when an evaluation returns no data now o
 ### Improved Notification Policies view
 
 Updates to the notification policies view make it easier to use and manage:
+
 - View default policy and nested policies at a glance
 - New tab for mute timings
 - View alert instances for each policy
