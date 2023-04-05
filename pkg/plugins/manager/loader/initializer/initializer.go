@@ -79,11 +79,7 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) ([]string, error) {
 
 	hostEnv = append(hostEnv, i.awsEnvVars()...)
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(i.cfg.Azure)...)
-	settings, err := i.getPluginSettings(plugin.ID, i.cfg)
-	if err != nil {
-		return nil, err
-	}
-	return settings.asEnvVar("GF_PLUGIN", hostEnv), nil
+	return getPluginSettings(plugin.ID, i.cfg).asEnvVar("GF_PLUGIN", hostEnv), nil
 }
 
 func (i *Initializer) awsEnvVars() []string {
@@ -116,7 +112,7 @@ func (ps pluginSettings) asEnvVar(prefix string, hostEnv []string) []string {
 	return env
 }
 
-func (i *Initializer) getPluginSettings(pluginID string, cfg *config.Cfg) (pluginSettings, error) {
+func getPluginSettings(pluginID string, cfg *config.Cfg) pluginSettings {
 	ps := pluginSettings{}
 	for k, v := range cfg.PluginSettings[pluginID] {
 		if k == "path" || strings.ToLower(k) == "id" {
@@ -125,7 +121,7 @@ func (i *Initializer) getPluginSettings(pluginID string, cfg *config.Cfg) (plugi
 		ps[k] = v
 	}
 
-	return ps, nil
+	return ps
 }
 
 func (i *Initializer) oauth2OnBehalfOfVars(pluginID string, oauthAppInfo *plugins.ExternalServiceRegistration) ([]string, error) {
