@@ -12,7 +12,7 @@ function getDescription(ruleType: RuleFormType | undefined) {
     return 'Select the Namespace and Group for your recording rule.';
   }
   const docsLink =
-    'https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation/#the-values-variable';
+    'https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation';
   const LinkToDocs = () => (
     <span>
       Click{' '}
