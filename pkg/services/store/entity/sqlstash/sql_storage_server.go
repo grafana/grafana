@@ -353,16 +353,14 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 
 		// Set the comment on this write
 		versionInfo.Comment = r.Comment
-		if rsp.GUID != "" {
+		if rsp.GUID == "" {
+			versionInfo.Version = 1
+		} else {
 			isUpdate = true
 
 			// Increment the version
 			versionInfo.Version += 1
-		} else {
-			versionInfo.Version = 1
-		}
 
-		if isUpdate {
 			// Clear the labels+refs
 			if _, err := tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=? OR parent_grn=?", oid, oid); err != nil {
 				return err
