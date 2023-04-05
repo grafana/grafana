@@ -5,17 +5,6 @@ declare global {
   }
 }
 
-const monacoPath = (window.__grafana_public_path__ ?? 'public/') + 'lib/monaco/min/vs';
-
-const scripts = [
-  [`${monacoPath}/language/kusto/bridge.min.js`],
-  [
-    `${monacoPath}/language/kusto/kusto.javascript.client.min.js`,
-    `${monacoPath}/language/kusto/newtonsoft.json.min.js`,
-    `${monacoPath}/language/kusto/Kusto.Language.Bridge.min.js`,
-  ],
-];
-
 function loadScript(script: HTMLScriptElement | string): Promise<void> {
   return new Promise((resolve, reject) => {
     let scriptEl: HTMLScriptElement;
@@ -47,6 +36,17 @@ const loadMonacoKusto = () => {
 };
 
 export default async function loadKusto() {
+  const monacoPath = (window.__grafana_public_path__ ?? 'public/') + 'lib/monaco/min/vs';
+
+  const scripts = [
+    [`${monacoPath}/language/kusto/bridge.min.js`],
+    [
+      `${monacoPath}/language/kusto/kusto.javascript.client.min.js`,
+      `${monacoPath}/language/kusto/newtonsoft.json.min.js`,
+      `${monacoPath}/language/kusto/Kusto.Language.Bridge.min.js`,
+    ],
+  ];
+
   let promise = Promise.resolve();
 
   for (const parallelScripts of scripts) {
