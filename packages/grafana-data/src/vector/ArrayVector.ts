@@ -55,30 +55,17 @@ console.log(arv.slice());
  * @public
  */
 export class ArrayVector<T = any> extends Array<T> implements MutableVector<T> {
-  buffer: T[] = [];
+  // eslint-ignore-next-line
+  // buffer: T[];
 
   constructor(buffer?: T[]) {
     super();
-    // this.buffer = buffer ? buffer : [];
+
     if (!notified) {
       console.error(notice);
       notified = true;
     }
     return (buffer ?? []) as unknown as ArrayVector<T>;
-  }
-
-  //   /** @deprecated -- not necessary anymore */
-  //   get buffer(): T[] {
-  //     throw 'not used';
-  //   };
-  // ​
-  //   /** @deprecated -- not necessary anymore */
-  //   set buffer(v: T[]) {
-  //     throw 'not used';
-  //   };
-  // ​
-  get length(): number {
-    throw 'not used';
   }
 
   add(value: T) {
