@@ -25,10 +25,9 @@ func PublishStorybookAction(c *cli.Context) error {
 	}
 
 	cfg := publishConfig{
-		srcBucket:       c.String("src-bucket"),
-		storybookBucket: c.String("storybook-bucket"),
-		security:        c.Bool("security"),
-		tag:             strings.TrimPrefix(c.String("tag"), "v"),
+		srcBucket: c.String("src-bucket"),
+		security:  c.Bool("security"),
+		tag:       strings.TrimPrefix(c.String("tag"), "v"),
 	}
 
 	err := copyStorybook(cfg)
