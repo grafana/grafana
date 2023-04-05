@@ -207,7 +207,7 @@ describe('AutoSaveField ', () => {
     act(() => {
       jest.runAllTimers();
     });
-    expect(mockOnFinishChange).toHaveBeenCalled();
+    expect(mockOnFinishChange).toHaveBeenCalledWith('This is a test text');
     expect(await screen.findByText('Saved!')).toBeInTheDocument();
   });
 });
@@ -235,7 +235,7 @@ describe('Input, as AutoSaveField child, ', () => {
     act(() => {
       jest.runAllTimers();
     });
-    expect(mockOnFinishChangeError).toHaveBeenCalled();
+    expect(mockOnFinishChangeError).toHaveBeenCalledWith('This is a test text');
     expect(await screen.findByText('There was an error')).toBeInTheDocument();
   });
 
@@ -286,7 +286,7 @@ describe('TextArea, as AutoSaveField child, ', () => {
       jest.runAllTimers();
     });
 
-    expect(mockOnFinishChange).toHaveBeenCalled();
+    expect(mockOnFinishChange).toHaveBeenCalledWith('This is a test text');
     expect(await screen.findByText('Saved!')).toBeInTheDocument();
   });
 
@@ -300,7 +300,7 @@ describe('TextArea, as AutoSaveField child, ', () => {
     act(() => {
       jest.runAllTimers();
     });
-    expect(mockOnFinishChangeError).toHaveBeenCalled();
+    expect(mockOnFinishChangeError).toHaveBeenCalledWith('This is a test text');
     expect(await screen.findByText('There was an error')).toBeInTheDocument();
   });
 
@@ -350,7 +350,7 @@ describe('Checkbox, as AutoSaveField child, ', () => {
     act(() => {
       jest.runAllTimers();
     });
-    expect(mockOnFinishChange).toHaveBeenCalled();
+    expect(mockOnFinishChange).toHaveBeenCalledWith(true);
     expect(await screen.findByText('Saved!')).toBeInTheDocument();
   });
 
@@ -364,7 +364,7 @@ describe('Checkbox, as AutoSaveField child, ', () => {
     act(() => {
       jest.runAllTimers();
     });
-    expect(mockOnFinishChangeError).toHaveBeenCalled();
+    expect(mockOnFinishChangeError).toHaveBeenCalledWith(true);
     expect(await screen.findByText('There was an error')).toBeInTheDocument();
   });
 });
@@ -401,7 +401,7 @@ describe('Switch, as AutoSaveField child, ', () => {
     act(() => {
       jest.runAllTimers();
     });
-    expect(mockOnFinishChange).toHaveBeenCalled();
+    expect(mockOnFinishChange).toHaveBeenCalledWith(true);
     expect(await screen.findByText('Saved!')).toBeInTheDocument();
   });
 
@@ -415,7 +415,7 @@ describe('Switch, as AutoSaveField child, ', () => {
     act(() => {
       jest.runAllTimers();
     });
-    expect(mockOnFinishChangeError).toHaveBeenCalled();
+    expect(mockOnFinishChangeError).toHaveBeenCalledWith(true);
     expect(await screen.findByText('There was an error')).toBeInTheDocument();
   });
 });
@@ -446,7 +446,7 @@ describe('RadioButtonGroup, as AutoSaveField child, ', () => {
     act(() => {
       jest.runAllTimers();
     });
-    expect(mockOnFinishChange).toHaveBeenCalled();
+    expect(mockOnFinishChange).toHaveBeenCalledWith('light');
     expect(await screen.findByText('Saved!')).toBeInTheDocument();
   });
 
@@ -459,7 +459,7 @@ describe('RadioButtonGroup, as AutoSaveField child, ', () => {
     act(() => {
       jest.runAllTimers();
     });
-    expect(mockOnFinishChangeError).toHaveBeenCalled();
+    expect(mockOnFinishChangeError).toHaveBeenCalledWith('light');
     expect(await screen.findByText('There was an error')).toBeInTheDocument();
   });
 });
@@ -493,7 +493,7 @@ describe('Select, as AutoSaveField child, ', () => {
     act(() => {
       jest.runAllTimers();
     });
-    expect(mockOnFinishChange).toHaveBeenCalled();
+    expect(mockOnFinishChange).toHaveBeenCalledWith('dark');
     expect(await screen.findByText('Saved!')).toBeInTheDocument();
   });
 
@@ -506,7 +506,7 @@ describe('Select, as AutoSaveField child, ', () => {
     act(() => {
       jest.runAllTimers();
     });
-    expect(mockOnFinishChangeError).toHaveBeenCalled();
+    expect(mockOnFinishChangeError).toHaveBeenCalledWith('dark');
     expect(await screen.findByText('There was an error')).toBeInTheDocument();
   });
 
