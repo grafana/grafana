@@ -36,8 +36,8 @@ type Props = StandardEditorProps<MatcherConfig>;
 export const FrameSelectionEditor = ({ value, context, onChange, item }: Props) => {
   const listOfRefId = useMemo(() => {
     return context.data.map((f) => ({
-      value: f.refId,
-      label: `Query: ${f.refId} (size: ${f.length})`,
+      value: f.refId ?? '',
+      label: `Query: ${f.refId ?? '(missing refId)'} (size: ${f.length})`,
       description: f.fields.map((f) => getFieldDisplayName(f)).join(', '),
     }));
   }, [context.data]);
