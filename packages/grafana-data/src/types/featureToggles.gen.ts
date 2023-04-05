@@ -65,6 +65,7 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
   elasticsearchBackendMigration?: boolean;
+  showTraceId?: boolean;
   datasourceOnboarding?: boolean;
   emptyDashboardPage?: boolean;
   secureSocksDatasourceProxy?: boolean;
@@ -83,6 +84,7 @@ export interface FeatureToggles {
   traceqlSearch?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
+  prometheusResourceBrowserCache?: boolean;
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
   disableElasticsearchBackendExploreQuery?: boolean;
@@ -90,4 +92,7 @@ export interface FeatureToggles {
   alertStateHistoryLokiSecondary?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
+  unifiedRequestLog?: boolean;
+  renderAuthJWT?: boolean;
+  pyroscopeFlameGraph?: boolean;
 }

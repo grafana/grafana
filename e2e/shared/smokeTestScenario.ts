@@ -10,8 +10,8 @@ export const smokeTestScenario = {
   scenario: () => {
     // wait for time to be set to account for any layout shift
     e2e().contains('2020-01-01 00:00:00 to 2020-01-01 06:00:00').should('be.visible');
-    e2e.components.PageToolbar.item('Add panel').click();
-    e2e.pages.AddDashboard.addNewPanel().click();
+    e2e.components.PageToolbar.itemButton('Add panel button').click();
+    e2e.components.PageToolbar.itemButton('Add new visualization menu item').click();
 
     e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()
       .should('be.visible')
