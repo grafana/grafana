@@ -179,6 +179,27 @@ func TestHandleDataplaneNumeric(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("should read correct number of items from examples", func(t *testing.T) {
+		es, err := examples.GetExamples()
+		require.NoError(t, err)
+
+		numericExamples, err := es.Filter(examples.FilterOptions{
+			Version: data.FrameTypeVersion{0, 1},
+			Valid:   util.Pointer(true),
+			Kind:    data.KindNumeric,
+			NoData:  util.Pointer(false),
+		})
+		require.NoError(t, err)
+
+		for _, example := range numericExamples.AsSlice() {
+			t.Run(example.Info().ID, func(t *testing.T) {
+				res, err := handleDataplaneNumeric(example.Frames("A"))
+				require.NoError(t, err)
+				require.Len(t, res.Values, example.Info().ItemCount)
+			})
+		}
+	})
 }
 
 func TestHandleDataplaneTS(t *testing.T) {
@@ -199,6 +220,26 @@ func TestHandleDataplaneTS(t *testing.T) {
 				res, err := handleDataplaneTS(example.Frames("A"))
 				require.NoError(t, err)
 				require.Len(t, res.Values, 1)
+			})
+		}
+	})
+	t.Run("should read correct number of items from examples", func(t *testing.T) {
+		es, err := examples.GetExamples()
+		require.NoError(t, err)
+
+		tsExamples, err := es.Filter(examples.FilterOptions{
+			Version: data.FrameTypeVersion{0, 1},
+			Valid:   util.Pointer(true),
+			Kind:    data.KindTimeSeries,
+			NoData:  util.Pointer(false),
+		})
+		require.NoError(t, err)
+
+		for _, example := range tsExamples.AsSlice() {
+			t.Run(example.Info().ID, func(t *testing.T) {
+				res, err := handleDataplaneTS(example.Frames("A"))
+				require.NoError(t, err)
+				require.Len(t, res.Values, example.Info().ItemCount)
 			})
 		}
 	})
