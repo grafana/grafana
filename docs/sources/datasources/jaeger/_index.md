@@ -289,6 +289,22 @@ If the file has multiple traces, Grafana visualizes its first trace.
 }
 ```
 
+## Span Filters
+
+> **Note:** This feature is behind the `newTraceView` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
+> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+
+![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
+
+Allows you to filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
+
+You can add one or more of the following filters:
+
+- Service name,
+- Span name,
+- Duration,
+- Tags (which include tags, process tags, and log fields).
+
 ## Link to a trace ID from logs
 
 You can link to Jaeger traces from logs in Loki, Elasticsearch, Splunk, and other logs data sources by configuring an internal link.
