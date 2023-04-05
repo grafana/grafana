@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-kit/log/level"
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
 	"github.com/prometheus/alertmanager/cluster"
@@ -282,7 +281,7 @@ func (p *redisPeer) WaitReady(ctx context.Context) error {
 // Ref: https://github.com/prometheus/alertmanager/blob/2888649b473970400c0bd375fdd563486dc80481/cluster/cluster.go#L674-L712
 func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 	const NumOkayRequired = 3
-	level.Info(p.logger).Log("msg", "Waiting for gossip to settle...", "interval", interval)
+	p.logger.Info("Waiting for gossip to settle...", "interval", interval)
 	start := time.Now()
 	nPeers := 0
 	nOkay := 0
@@ -291,7 +290,7 @@ func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 		select {
 		case <-ctx.Done():
 			elapsed := time.Since(start)
-			level.Info(p.logger).Log("msg", "gossip not settled but continuing anyway", "polls", totalPolls, "elapsed", elapsed)
+			p.logger.Info("gossip not settled but continuing anyway", "polls", totalPolls, "elapsed", elapsed)
 			close(p.readyc)
 			return
 		case <-time.After(interval):
@@ -299,15 +298,15 @@ func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 		elapsed := time.Since(start)
 		n := len(p.Members())
 		if nOkay >= NumOkayRequired {
-			level.Info(p.logger).Log("msg", "gossip settled; proceeding", "elapsed", elapsed)
+			p.logger.Info("gossip settled; proceeding", "elapsed", elapsed)
 			break
 		}
 		if n == nPeers {
 			nOkay++
-			level.Debug(p.logger).Log("msg", "gossip looks settled", "elapsed", elapsed)
+			p.logger.Debug("gossip looks settled", "elapsed", elapsed)
 		} else {
 			nOkay = 0
-			level.Info(p.logger).Log("msg", "gossip not settled", "polls", totalPolls, "before", nPeers, "now", n, "elapsed", elapsed)
+			p.logger.Info("gossip not settled", "polls", totalPolls, "before", nPeers, "now", n, "elapsed", elapsed)
 		}
 		nPeers = n
 		totalPolls++
@@ -346,7 +345,7 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 			p.messagesReceivedSize.WithLabelValues(update).Add(float64(len(data.Payload)))
 			var part clusterpb.Part
 			if err := proto.Unmarshal([]byte(data.Payload), &part); err != nil {
-				level.Warn(p.logger).Log("msg", "decode broadcast", "err", err)
+				p.logger.Warn("error decoding the received broadcast message", "err", err)
 				return
 			}
 
@@ -358,7 +357,7 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 				return
 			}
 			if err := s.Merge(part.Data); err != nil {
-				level.Warn(p.logger).Log("msg", "merge broadcast", "err", err, "key", name)
+				p.logger.Warn("error merging the received broadcast message", "err", err, "key", name)
 				return
 			}
 		}
@@ -400,7 +399,7 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 
 			var fs clusterpb.FullState
 			if err := proto.Unmarshal([]byte(data.Payload), &fs); err != nil {
-				level.Warn(p.logger).Log("msg", "merge remote state", "err", err)
+				p.logger.Warn("error unmarshaling the received remote state", "err", err)
 				return
 			}
 			func() {
@@ -409,11 +408,11 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 				for _, part := range fs.Parts {
 					s, ok := p.states[part.Key]
 					if !ok {
-						level.Warn(p.logger).Log("received", "unknown state key", "len", len(data.Payload), "key", part.Key)
+						p.logger.Warn("received", "unknown state key", "len", len(data.Payload), "key", part.Key)
 						continue
 					}
 					if err := s.Merge(part.Data); err != nil {
-						level.Warn(p.logger).Log("msg", "merge remote state", "err", err, "key", part.Key)
+						p.logger.Warn("error merging the received remote state", "err", err, "key", part.Key)
 						return
 					}
 				}
@@ -425,7 +424,7 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 func (p *redisPeer) fullStateSyncPublish() {
 	pub := p.redis.Publish(context.Background(), p.withPrefix(fullStateChannel), p.LocalState())
 	if pub.Err() != nil {
-		p.logger.Error("msg", "error publishing message to redis", "err", pub.Err(), "channel", p.withPrefix(fullStateChannel))
+		p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", p.withPrefix(fullStateChannel))
 	}
 }
 
@@ -445,7 +444,7 @@ func (p *redisPeer) fullStateSyncPublishLoop() {
 func (p *redisPeer) requestFullState() {
 	pub := p.redis.Publish(context.Background(), p.withPrefix(fullStateChannelReq), p.name)
 	if pub.Err() != nil {
-		p.logger.Error("msg", "error publishing message to redis", "err", pub.Err(), "channel", p.withPrefix(fullStateChannel))
+		p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", p.withPrefix(fullStateChannel))
 	}
 }
 
@@ -459,13 +458,13 @@ func (p *redisPeer) LocalState() []byte {
 	for key, s := range p.states {
 		b, err := s.MarshalBinary()
 		if err != nil {
-			level.Warn(p.logger).Log("msg", "encode local state", "err", err, "key", key)
+			p.logger.Warn("error encoding the local state", "err", err, "key", key)
 		}
 		all.Parts = append(all.Parts, clusterpb.Part{Key: key, Data: b})
 	}
 	b, err := proto.Marshal(all)
 	if err != nil {
-		level.Warn(p.logger).Log("msg", "encode local state", "err", err)
+		p.logger.Warn("error encoding the local state to proto", "err", err)
 	}
 	p.messagesSent.WithLabelValues(fullState).Inc()
 	p.messagesSentSize.WithLabelValues(fullState).Add(float64(len(b)))
@@ -499,6 +498,6 @@ func (c *RedisChannel) Broadcast(b []byte) {
 	// An error here might not be as critical as one might think on first sight.
 	// The state will eventually be propagted to other members by the full sync.
 	if pub.Err() != nil {
-		c.p.logger.Error("msg", "error publishing message to redis", "err", pub.Err(), "channel", c.channel)
+		c.p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", c.channel)
 	}
 }
