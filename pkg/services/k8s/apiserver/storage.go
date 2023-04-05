@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/k8s/authnz"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -86,10 +87,18 @@ func (s *Storage) Create(ctx context.Context, obj runtime.Object, createValidati
 	if err != nil {
 		return nil, err
 	}
+	cmd, err := objectToWriteCommand(user.OrgID, obj, options)
+	if err != nil {
+		return nil, err
+	}
+	out, err := s.entityStore.Write(appcontext.WithUser(ctx, user), cmd)
+	if err != nil {
+		return nil, err
+	}
 
-	s.log.Debug("Create called", "user", user.UserID, "org", user.OrgID, "kind", obj.GetObjectKind().GroupVersionKind().Kind)
+	s.log.Debug("Create called", "user", user.UserID, "org", user.OrgID, "kind", out.GUID)
 
-	return nil, fmt.Errorf("not implemented")
+	return obj, nil //nil, fmt.Errorf("not implemented")
 }
 
 func (s *Storage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
