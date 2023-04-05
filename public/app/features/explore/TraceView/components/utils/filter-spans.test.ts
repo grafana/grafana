@@ -14,7 +14,7 @@
 
 import { TraceSpan } from '../types';
 
-import filterSpans from './filter-spans';
+import { filterSpans } from './filter-spans';
 
 describe('filterSpans', () => {
   // span0 contains strings that end in 0 or 1

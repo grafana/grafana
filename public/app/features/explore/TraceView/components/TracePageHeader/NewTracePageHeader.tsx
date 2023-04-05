@@ -14,75 +14,32 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import * as React from 'react';
+import React, { memo, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { autoColor } from '../Theme';
 import ExternalLinks from '../common/ExternalLinks';
 import TraceName from '../common/TraceName';
 import { getTraceLinks } from '../model/link-patterns';
 import { getHeaderTags, getTraceName } from '../model/trace-viewer';
+import { Trace } from '../types';
 import { formatDuration } from '../utils/date';
 
 import TracePageActions from './Actions/TracePageActions';
-import SpanGraph from './SpanGraph';
-import { TracePageHeaderEmbedProps, timestamp, getStyles } from './TracePageHeader';
+import { timestamp, getStyles } from './TracePageHeader';
 
-const getNewStyles = (theme: GrafanaTheme2) => {
-  return {
-    titleRow: css`
-      label: TracePageHeaderTitleRow;
-      align-items: center;
-      display: flex;
-      padding: 0 0.5em 0 0.5em;
-    `,
-    title: css`
-      label: TracePageHeaderTitle;
-      color: inherit;
-      flex: 1;
-      font-size: 1.7em;
-      line-height: 1em;
-    `,
-    subtitle: css`
-      flex: 1;
-      line-height: 1em;
-      margin: -0.5em 0.5em 1.5em 0.5em;
-    `,
-    tag: css`
-      margin: 0 0.5em 0 0;
-    `,
-    url: css`
-      margin: -2.5px 0.3em;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      max-width: 30%;
-      display: inline-block;
-    `,
-    divider: css`
-      margin: 0 0.75em;
-    `,
-    header: css`
-      label: TracePageHeader;
-      background-color: ${theme.colors.background.primary};
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      padding: 0.5em 0.25em 0 0.25em;
-      & > :last-child {
-        border-bottom: 1px solid ${autoColor(theme, '#ccc')};
-      }
-    `,
-  };
+export type TracePageHeaderProps = {
+  trace: Trace | null;
+  timeZone: TimeZone;
 };
 
-export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
-  const { trace, updateNextViewRangeTime, updateViewRangeTime, viewRange, timeZone } = props;
-
+export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
+  const { trace, timeZone } = props;
   const styles = { ...useStyles2(getStyles), ...useStyles2(getNewStyles) };
-  const links = React.useMemo(() => {
+
+  const links = useMemo(() => {
     if (!trace) {
       return [];
     }
@@ -145,13 +102,47 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
           </Tooltip>
         )}
       </div>
-
-      <SpanGraph
-        trace={trace}
-        viewRange={viewRange}
-        updateNextViewRangeTime={updateNextViewRangeTime}
-        updateViewRangeTime={updateViewRangeTime}
-      />
     </header>
   );
-}
+});
+
+NewTracePageHeader.displayName = 'NewTracePageHeader';
+
+const getNewStyles = (theme: GrafanaTheme2) => {
+  return {
+    header: css`
+      background-color: ${theme.colors.background.primary};
+      padding: 0.5em 0.25em 0 0.25em;
+    `,
+    titleRow: css`
+      align-items: center;
+      display: flex;
+      padding: 0 0.5em 0 0.5em;
+    `,
+    title: css`
+      color: inherit;
+      flex: 1;
+      font-size: 1.7em;
+      line-height: 1em;
+    `,
+    subtitle: css`
+      flex: 1;
+      line-height: 1em;
+      margin: -0.5em 0.5em 0.75em 0.5em;
+    `,
+    tag: css`
+      margin: 0 0.5em 0 0;
+    `,
+    url: css`
+      margin: -2.5px 0.3em;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      max-width: 30%;
+      display: inline-block;
+    `,
+    divider: css`
+      margin: 0 0.75em;
+    `,
+  };
+};
