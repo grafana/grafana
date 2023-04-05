@@ -26,8 +26,7 @@ function getDescription(ruleType: RuleFormType | undefined) {
     return (
       <span>
         {' '}
-        Write a summary to help you better manage your alerts.
-        <LinkToDocs />
+        Write a summary to help you better manage your alerts. <LinkToDocs />
       </span>
     );
   }
@@ -36,7 +35,6 @@ function getDescription(ruleType: RuleFormType | undefined) {
       <span>
         {' '}
         Select the Namespace and evaluation group for your alert. Write a summary to help you better manage your alerts.{' '}
-        <LinkToDocs />
       </span>
     );
   }
