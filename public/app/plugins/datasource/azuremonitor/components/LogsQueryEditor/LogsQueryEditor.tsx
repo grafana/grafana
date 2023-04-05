@@ -12,6 +12,7 @@ import { parseResourceDetails } from '../ResourcePicker/utils';
 
 import AdvancedResourcePicker from './AdvancedResourcePicker';
 import QueryField from './QueryField';
+import { setFormatAs } from './setQueryValue';
 import useMigrations from './useMigrations';
 
 interface LogsQueryEditorProps {
@@ -105,6 +106,8 @@ const LogsQueryEditor = ({
                   { label: 'Table', value: ResultFormat.Table },
                 ]}
                 defaultValue={ResultFormat.Table}
+                setFormatAs={setFormatAs}
+                resultFormat={query.azureLogAnalytics?.resultFormat}
               />
             )}
 

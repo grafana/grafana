@@ -34,3 +34,12 @@ export function setKustoQuery(query: AzureMonitorQuery, operationId?: string): A
     },
   };
 }
+export function setFormatAs(query: AzureMonitorQuery, formatAs: ResultFormat): AzureMonitorQuery {
+  return {
+    ...query,
+    azureTraces: {
+      ...query.azureTraces,
+      resultFormat: formatAs,
+    },
+  };
+}

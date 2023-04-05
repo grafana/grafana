@@ -135,6 +135,8 @@ const TracesQueryEditor = ({
                 { label: 'Trace', value: ResultFormat.Trace },
               ]}
               defaultValue={ResultFormat.Table}
+              setFormatAs={setFormatAs}
+              resultFormat={query.azureTraces?.resultFormat}
             />
           </EditorFieldGroup>
         </EditorRow>
