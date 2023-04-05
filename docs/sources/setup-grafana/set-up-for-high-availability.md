@@ -13,18 +13,19 @@ weight: 900
 
 # Set up Grafana for high availability
 
-Setting up Grafana for high availability is fairly simple. You just need a shared database for storing dashboard, users,
-and other persistent data. So the default embedded SQLite database will not work, you will have to switch to MySQL or Postgres.
+By default, Grafana uses an embedded sqlite3 database to store users, dashboards, and other persistent data. To set Grafana up for high availability a shared database is required to store this data. This shared database can be either MySQL or Postgres.
 
 <div class="text-center">
   <img src="/static/img/docs/tutorials/grafana-high-availability.png"  max-width= "800px" class="center" />
 </div>
 
-## Configure multiple servers to use the same database
+## Pre-requisite Setup 
 
-First, you need to set up MySQL or Postgres on another server and configure Grafana to use that database.
-You can find the configuration for doing that in the [[database]]({{< relref "configure-grafana/#database" >}}) section in the Grafana config.
-Grafana will now persist all long term data in the database. How to configure the database for high availability is out of scope for this guide. We recommend finding an expert on the database you're using.
+In order to proceed with setting up Grafana for high availability you will need to first configure a MySQL or Postgres database. It is recommended that this database be configured to be highly available. Configuring the database itself for high availability is out of scope for this guide, but instructions can be found online for each database.
+
+## Configure multiple Grafana servers to use the same database
+
+Once you have either a Postgres or MySQL database available, you can now configure your multiple Grafana instances to use a shared backend database. Grafana has default and custom configuration files and you can update the database settings by updating your custom configuration file as described in the [[database]]({{< relref "configure-grafana/#database" >}}) section of the Grafana configuration. Once configured to use a shared database, your multiple Grafana instances will now persist all long term data in that database. 
 
 ## Alerting high availability
 
