@@ -64,33 +64,33 @@ export interface QueryRunnerOptions<
   app?: CoreApp;
 }
 
-const isObj = (v: any) => v != null && typeof v === 'object';
+// const isObj = (v: any) => v != null && typeof v === 'object';
 
-const copy = (o: any) => {
-  let out: any;
+// const copy = (o: any) => {
+//   let out: any;
 
-  if (Array.isArray(o)) {
-    let val = o.find((v) => v != null);
+//   if (Array.isArray(o)) {
+//     let val = o.find((v) => v != null);
 
-    if (Array.isArray(val) || isObj(val)) {
-      out = Array(o.length);
-      for (let i = 0; i < o.length; i++) {
-        out[i] = copy(o[i]);
-      }
-    } else {
-      out = o.slice();
-    }
-  } else if (isObj(o)) {
-    out = {};
-    for (let [k, v] of Object.entries(o)) {
-      out[k] = copy(v);
-    }
-  } else {
-    out = o;
-  }
+//     if (Array.isArray(val) || isObj(val)) {
+//       out = Array(o.length);
+//       for (let i = 0; i < o.length; i++) {
+//         out[i] = copy(o[i]);
+//       }
+//     } else {
+//       out = o.slice();
+//     }
+//   } else if (isObj(o)) {
+//     out = {};
+//     for (let [k, v] of Object.entries(o)) {
+//       out[k] = copy(v);
+//     }
+//   } else {
+//     out = o;
+//   }
 
-  return out;
-};
+//   return out;
+// };
 
 let counter = 100;
 
@@ -141,11 +141,11 @@ export class PanelQueryRunner {
         let streamingPacketWithSameSchema = false;
 
         /* eslint-disable */
-        console.time('copy');
-        let c = copy(data.series);
-        console.timeEnd('copy');
+        // console.time('copy');
+        // let c = copy(data.series);
+        // console.timeEnd('copy');
 
-        console.log(c);
+        // console.log(c);
         /* eslint-enable */
 
         if (withFieldConfig && data.series?.length) {
