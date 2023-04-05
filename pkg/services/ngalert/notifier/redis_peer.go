@@ -251,7 +251,7 @@ func (p *redisPeer) Members() []string {
 	}
 	peers := []string{}
 	// After getting the list of possible members from redis, we filter
-	// those out that have failed to send a heartbeat in the last 60 seconds.
+	// those out that have failed to send a heartbeat during the heartbeatTimeout.
 	for i, peer := range members {
 		val := values.Val()[i]
 		if val == nil {
