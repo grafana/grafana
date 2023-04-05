@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
+	"github.com/grafana/grafana/pkg/services/auth/keyimpl"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -88,8 +89,8 @@ var wireExtsBasicSet = wire.NewSet(
 	pluginsintegration.WireExtensionSet,
 	publicdashboardsService.ProvideServiceWrapper,
 	wire.Bind(new(publicdashboards.ServiceWrapper), new(*publicdashboardsService.PublicDashboardServiceWrapperImpl)),
-	auth.ProvideEmbeddedKeyService,
-	wire.Bind(new(auth.KeyService), new(*auth.EmbeddedKeyService)),
+	keyimpl.ProvideEmbeddedKeyService,
+	wire.Bind(new(auth.KeyService), new(*keyimpl.EmbeddedKeyService)),
 )
 
 var wireExtsSet = wire.NewSet(
