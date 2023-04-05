@@ -214,9 +214,9 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 	exists := map[string]bool{}
 
 	// collapsed rows contain panels in a nested structure, so we need to flatten them before calculate unique uids
-	flatPanels := getFlattenPanels(dashboard)
-	//flatPanels = append(flatPanels, panel.Get("panels").MustArray()...)
-	for _, panelObj := range flatPanels {
+	flattenedPanels := getFlattenedPanels(dashboard)
+
+	for _, panelObj := range flattenedPanels {
 		panel := simplejson.NewFromAny(panelObj)
 		uid := getDataSourceUidFromJson(panel)
 
@@ -241,7 +241,7 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 	return datasourceUids
 }
 
-func getFlattenPanels(dashboard *simplejson.Json) []interface{} {
+func getFlattenedPanels(dashboard *simplejson.Json) []interface{} {
 	var flatPanels []interface{}
 	for _, panelObj := range dashboard.Get("panels").MustArray() {
 		panel := simplejson.NewFromAny(panelObj)
