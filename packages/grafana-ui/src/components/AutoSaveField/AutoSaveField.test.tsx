@@ -64,7 +64,7 @@ const setupTextArea = (propOverrides?: Partial<Props>) => {
 };
 
 const setupCheckbox = (propOverrides?: Partial<Props>) => {
-  const props: Omit<Props, 'children'> = {
+  const props: Omit<Props<Boolean>, 'children'> = {
     label: 'Test',
     onFinishChange: mockOnFinishChange,
     htmlFor: 'checkbox-test',
@@ -74,13 +74,13 @@ const setupCheckbox = (propOverrides?: Partial<Props>) => {
   Object.assign(props, propOverrides);
 
   render(
-    <AutoSaveField {...props}>
+    <AutoSaveField<Boolean> {...props}>
       {(onChange) => (
         <Checkbox
           id="checkbox-test"
           name="checkbox-test"
           onChange={(e) => {
-            onChange(e.currentTarget.value);
+            onChange(e.currentTarget.checked);
           }}
         />
       )}
@@ -89,7 +89,7 @@ const setupCheckbox = (propOverrides?: Partial<Props>) => {
 };
 
 const setupSwitch = (propOverrides?: Partial<Props>) => {
-  const props: Omit<Props, 'children'> = {
+  const props: Omit<Props<Boolean>, 'children'> = {
     label: 'Test',
     onFinishChange: mockOnFinishChange,
     htmlFor: 'switch-test',
@@ -99,13 +99,13 @@ const setupSwitch = (propOverrides?: Partial<Props>) => {
   Object.assign(props, propOverrides);
 
   render(
-    <AutoSaveField {...props}>
+    <AutoSaveField<Boolean> {...props}>
       {(onChange) => (
         <Switch
           id="switch-test"
           name="switch-test"
           onChange={(e) => {
-            onChange(e.currentTarget.value);
+            onChange(e.currentTarget.checked);
           }}
         />
       )}
@@ -152,7 +152,7 @@ const setupSelect = (propOverrides?: Partial<Props>) => {
         <SelectBase
           data-testid="select-test"
           onChange={(option) => {
-            onChange(option.value);
+            onChange(option.value ?? '');
           }}
           options={options}
         />

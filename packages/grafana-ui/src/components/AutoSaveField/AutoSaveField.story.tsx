@@ -73,10 +73,6 @@ const themeOptions = [
   { value: 'light', label: 'Light' },
   { value: 'system', label: 'System' },
 ];
-enum ThemeSwitchOption {
-  Light = 'light',
-  Dark = 'dark',
-}
 
 export const Basic: Story = (args) => {
   const [inputValue, setInputValue] = useState('');
@@ -150,7 +146,7 @@ export const AllComponents: Story = (args) => {
           />
         )}
       </AutoSaveField>
-      <AutoSaveField
+      <AutoSaveField<Boolean>
         onFinishChange={args.inputSuccessful ? getSuccess : getError}
         label="Checkbox as a child"
         {...args}
@@ -162,9 +158,9 @@ export const AllComponents: Story = (args) => {
             name="checkbox-test"
             value={checkBoxTest}
             onChange={(e) => {
-              const value = e.currentTarget.checked.toString();
+              const value = e.currentTarget.checked;
               onChange(value);
-              setCheckBoxTest(e.currentTarget.checked);
+              setCheckBoxTest(value);
             }}
           />
         )}
@@ -185,15 +181,18 @@ export const AllComponents: Story = (args) => {
           />
         )}
       </AutoSaveField>
-      <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} label="Switch as a child" {...args}>
+      <AutoSaveField<Boolean>
+        onFinishChange={args.inputSuccessful ? getSuccess : getError}
+        label="Switch as a child"
+        {...args}
+      >
         {(onChange) => (
           <Switch
             label="Switch test"
             name="switch-test"
             value={switchTest}
             onChange={(e) => {
-              const value = e.currentTarget.checked ? ThemeSwitchOption.Dark : ThemeSwitchOption.Light;
-              onChange(value);
+              onChange(e.currentTarget.checked);
               setSwitchTest(e.currentTarget.checked);
             }}
           />

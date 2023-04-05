@@ -16,17 +16,15 @@ or
 import { debounce} from 'lodash';
  */
 
-export interface Props extends FieldProps {
-  //Function to be run onBlur or when finishing writing
-  onFinishChange: (inputValue: string | number | readonly string[] | undefined) => Promise<void>;
-  saveErrorMessage?: string;
-}
-
 const SHOW_SUCCESS_DURATION = 2 * 1000;
 
-type GenericProps<T> = Omit<Props, 'children'> & { children: (onChange: (newValue: T) => void) => React.ReactElement };
-
-export function AutoSaveField<T = string>(props: GenericProps<T>) {
+export interface Props<T = string> extends Omit<FieldProps, 'children'> {
+  //Function to be run onBlur or when finishing writing
+  onFinishChange: (inputValue: T) => Promise<void>;
+  saveErrorMessage?: string;
+  children: (onChange: (newValue: T) => void) => React.ReactElement;
+}
+export function AutoSaveField<T = string>(props: Props<T>) {
   const {
     invalid,
     loading,
@@ -61,7 +59,7 @@ export function AutoSaveField<T = string>(props: GenericProps<T>) {
   }, [fieldState]);
 
   const handleChange = useCallback(
-    (nextValue) => {
+    (nextValue: T) => {
       if (invalid) {
         return;
       }
