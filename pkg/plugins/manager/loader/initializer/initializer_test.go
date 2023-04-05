@@ -313,9 +313,11 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "otlp enabled composite propagation",
 			cfg: &config.Cfg{
-				Opentelemetry: config.OpentelemetryCfg{
-					Address:     "127.0.0.1:4317",
-					Propagation: "w3c,jaeger",
+				Tracing: config.Tracing{
+					OpenTelemetry: config.OpenTelemetryCfg{
+						Address:     "127.0.0.1:4317",
+						Propagation: "w3c,jaeger",
+					},
 				},
 				PluginSettings: map[string]map[string]string{
 					pluginID: {"tracing": "true"},
