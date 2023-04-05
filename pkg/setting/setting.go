@@ -225,7 +225,8 @@ type Cfg struct {
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
 	CSPReportOnlyTemplate string
 	AngularSupportEnabled bool
-	TempDataLifetime      time.Duration
+
+	TempDataLifetime time.Duration
 
 	// Plugins
 	PluginsEnableAlpha               bool

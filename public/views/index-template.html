@@ -33,7 +33,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="msapplication-TileColor" content="#2b5797" />
     <meta name="msapplication-config" content="public/img/browserconfig.xml" />
-
   </head>
 
   <body class="theme-[[ .Theme ]] [[.AppNameBodyClass]]">
@@ -174,6 +173,7 @@
         display: none !important;
       }
     </style>
+
     <div class="preloader">
       <div class="preloader__enter">
         <div class="preloader__bounce">
@@ -241,6 +241,7 @@
         }
       </script>
     </div>
+
     <div id="reactRoot"></div>
 
     <script nonce="[[.Nonce]]">
@@ -273,6 +274,7 @@
         }
         document.head.appendChild(cssLink);
       }
+
       window.__grafana_load_failed = function() {
         var preloader = document.getElementsByClassName("preloader");
         if (preloader.length) {
@@ -295,6 +297,7 @@
         window.nonce = '[[.Nonce]]';
       [[end]]
     </script>
+
     [[if .GoogleTagManagerId]]
     <!-- Google Tag Manager -->
     <script nonce="[[.Nonce]]">
@@ -345,6 +348,7 @@
       type="text/javascript"
     ></script>
     <% } %> <% } %>
+
     <script nonce="[[.Nonce]]">
       performance.mark('frontend_boot_js_done_time_seconds');
     </script>
