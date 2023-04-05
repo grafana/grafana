@@ -2,7 +2,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { RuleNamespace } from 'app/types/unified-alerting';
-import { PromRulesResponse } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertState, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -15,10 +15,11 @@ export interface PrometheusDataSourceConfig {
   dataSourceName: string;
   limitAlerts?: number;
   matchers?: string;
+  state?: GrafanaAlertState[];
 }
 
 export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
-  const { dataSourceName, limitAlerts, matchers } = dataSourceConfig;
+  const { dataSourceName, limitAlerts, matchers, state } = dataSourceConfig;
 
   return {
     rules: (filter?: FetchPromRulesFilter) => {
@@ -33,6 +34,13 @@ export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfi
         searchParams.set('matchers', matchers);
       }
 
+      if (dataSourceName === GRAFANA_RULES_SOURCE_NAME && state) {
+        state.forEach((item: GrafanaAlertState) => {
+          searchParams.append('state', item);
+        });
+      }
+
+      //@TODO: multiple states are not working as parameters don't maintain multiple keys after this call
       const params = prepareRulesFilterQueryParams(searchParams, filter);
 
       return {
@@ -61,13 +69,14 @@ export async function fetchRules(
   dataSourceName: string,
   filter?: FetchPromRulesFilter,
   limitAlerts?: number,
-  matchers?: string
+  matchers?: string,
+  state?: GrafanaAlertState[]
 ): Promise<RuleNamespace[]> {
   if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
     throw new Error('Filtering by dashboard UID is only supported for Grafana Managed rules.');
   }
 
-  const { url, params } = prometheusUrlBuilder({ dataSourceName, limitAlerts, matchers }).rules(filter);
+  const { url, params } = prometheusUrlBuilder({ dataSourceName, limitAlerts, matchers, state }).rules(filter);
 
   const response = await lastValueFrom(
     getBackendSrv().fetch<PromRulesResponse>({
