@@ -54,7 +54,7 @@ const props: Props = {
   },
   onChange: jest.fn(),
   onGetMetrics: jest.fn().mockResolvedValue(mockValues),
-  disabled: false,
+  metricLookupDisabled: false,
 };
 
 describe('MetricSelect', () => {
@@ -129,15 +129,6 @@ describe('MetricSelect', () => {
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'new');
     await waitFor(() => expect(document.querySelector('mark')).not.toBeInTheDocument());
-  });
-
-  it('disables the component when disable prop is true', async () => {
-    const disabledProps: Props = {
-      ...props,
-      disabled: true,
-    };
-    render(<MetricSelect {...disabledProps} />);
-    await waitFor(() => expect(screen.getByText('(Disabled)').parentElement).toBeInTheDocument());
   });
 });
 

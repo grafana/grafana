@@ -208,14 +208,14 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   }, [datasource, query, withTemplateVariableOptions]);
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
-  const MetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
+  const isMetricEncyclopediaEnabled = config.featureToggles.prometheusMetricEncyclopedia;
 
   const initHints = datasource.getInitHints();
 
   return (
     <>
       <EditorRow>
-        {MetricEncyclopedia ? (
+        {isMetricEncyclopediaEnabled && !datasource.lookupsDisabled ? (
           <>
             <Button
               className={styles.button}
@@ -249,12 +249,12 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           </>
         ) : (
           <MetricSelect
-            disabled={datasource.lookupsDisabled}
             query={query}
             onChange={onChange}
             onGetMetrics={onGetMetrics}
             datasource={datasource}
             labelsFilters={query.labels}
+            metricLookupDisabled={datasource.lookupsDisabled}
           />
         )}
         <LabelFilters

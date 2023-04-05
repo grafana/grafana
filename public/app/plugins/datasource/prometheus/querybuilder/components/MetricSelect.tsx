@@ -16,7 +16,7 @@ import { PromVisualQuery } from '../types';
 const splitSeparator = ' ';
 
 export interface Props {
-  disabled: boolean;
+  metricLookupDisabled: boolean;
   query: PromVisualQuery;
   onChange: (query: PromVisualQuery) => void;
   onGetMetrics: () => Promise<SelectableValue[]>;
@@ -26,7 +26,14 @@ export interface Props {
 
 export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
 
-export function MetricSelect({ datasource, query, onChange, onGetMetrics, labelsFilters, disabled }: Props) {
+export function MetricSelect({
+  datasource,
+  query,
+  onChange,
+  onGetMetrics,
+  labelsFilters,
+  metricLookupDisabled,
+}: Props) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
     metrics?: Array<SelectableValue<any>>;
@@ -115,20 +122,26 @@ export function MetricSelect({ datasource, query, onChange, onGetMetrics, labels
     });
   };
 
+  // When metric and label lookup is disabled we won't request labels
+  const metricLookupDisabledSearch = () => Promise.resolve([]);
+
   const debouncedSearch = debounce((query: string) => getMetricLabels(query), 300);
 
   return (
     <EditorFieldGroup>
-      <EditorField label="Metric" disabled={disabled}>
+      <EditorField label="Metric">
         <AsyncSelect
           inputId="prometheus-metric-select"
           className={styles.select}
           value={query.metric ? toOption(query.metric) : undefined}
-          placeholder={disabled ? '(Disabled)' : 'Select metric'}
+          placeholder={'Select metric'}
           allowCustomValue
           formatOptionLabel={formatOptionLabel}
           filterOption={customFilterOption}
           onOpenMenu={async () => {
+            if (metricLookupDisabled) {
+              return;
+            }
             setState({ isLoading: true });
             const metrics = await onGetMetrics();
             if (metrics.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
@@ -136,7 +149,7 @@ export function MetricSelect({ datasource, query, onChange, onGetMetrics, labels
             }
             setState({ metrics, isLoading: undefined });
           }}
-          loadOptions={debouncedSearch}
+          loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
           isLoading={state.isLoading}
           defaultOptions={state.metrics}
           onChange={({ value }) => {
