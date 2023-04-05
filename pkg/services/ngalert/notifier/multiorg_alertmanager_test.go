@@ -320,7 +320,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 	require.NoError(t, err)
 	ctx := context.Background()
 
-	// Ensure that one Alertmanagers is created per org.
+	// Ensure that one Alertmanager is created per org.
 	{
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
@@ -331,7 +331,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, defaultConfig, cfgs[1].AlertmanagerConfiguration)
 	require.Equal(t, defaultConfig, cfgs[2].AlertmanagerConfiguration)
-	// store id for later use.
+	// Store id for later use.
 	originalId := cfgs[2].ID
 	require.Equal(t, defaultConfig, cfgs[3].AlertmanagerConfiguration)
 

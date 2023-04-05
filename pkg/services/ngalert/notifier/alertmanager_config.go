@@ -48,12 +48,12 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 func (moa *MultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Context, orgId int64, id int64) error {
 	config, err := moa.configStore.GetHistoricalConfiguration(ctx, orgId, id)
 	if err != nil {
-		return fmt.Errorf("failed to get previously applied configuration: %w", err)
+		return fmt.Errorf("failed to get historical alertmanager configuration: %w", err)
 	}
 
 	cfg, err := Load([]byte(config.AlertmanagerConfiguration))
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal alertmanager configuration: %w", err)
+		return fmt.Errorf("failed to unmarshal historical alertmanager configuration: %w", err)
 	}
 
 	am, err := moa.AlertmanagerFor(orgId)
