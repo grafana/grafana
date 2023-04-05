@@ -268,7 +268,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/dave/dst v0.27.2
 	github.com/go-jose/go-jose/v3 v3.0.0
-	github.com/grafana/dataplane/sdata v0.0.4
+	github.com/grafana/dataplane/sdata v0.0.5
 	github.com/grafana/go-mssqldb v0.9.1
 	github.com/grafana/kindsys v0.0.0-20230309200316-812b9884a375
 	github.com/grafana/thema v0.0.0-20230302221249-6952e4a999b7
@@ -424,5 +424,3 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
-
-replace github.com/grafana/dataplane/sdata => /home/kbrandt/go/github.com/grafana/dataplane/sdata
