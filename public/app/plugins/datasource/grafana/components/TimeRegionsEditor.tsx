@@ -31,7 +31,7 @@ const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
   };
 });
 
-export function TimeRegionsEditor({ value, onChange }: Props) {
+export const TimeRegionsEditor = ({ value, onChange }: Props) => {
   const defaultTimezone = useMemo(() => getDashboardSrv().dashboard?.getTimezone(), []);
   const addTimeRegion = () => {
     const r: TimeRegionConfig = {
@@ -78,7 +78,7 @@ export function TimeRegionsEditor({ value, onChange }: Props) {
       </Button>
     </>
   );
-}
+};
 
 interface SingleRegion {
   value: TimeRegionConfig;
@@ -86,7 +86,7 @@ interface SingleRegion {
   onChange: (index: number, value?: TimeRegionConfig) => void;
 }
 
-function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
+const TimeRegionEditor = ({ value, index, onChange }: SingleRegion) => {
   const getTime = (time: string | undefined): Moment | undefined => {
     if (!time) {
       return undefined;
@@ -114,7 +114,7 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
         />
       </InlineField>
       <InlineField label="From">
-        <HorizontalGroup spacing="none">
+        <HorizontalGroup spacing="xs">
           <Select
             options={days}
             isClearable
@@ -133,7 +133,7 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
         </HorizontalGroup>
       </InlineField>
       <InlineField label="To">
-        <HorizontalGroup spacing="none">
+        <HorizontalGroup spacing="xs">
           <Select
             options={days}
             isClearable
@@ -182,4 +182,4 @@ function TimeRegionEditor({ value, index, onChange }: SingleRegion) {
       </InlineField>
     </InlineFieldRow>
   );
-}
+};
