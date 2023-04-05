@@ -20,7 +20,7 @@ export type PluginExtension = {
 export type PluginExtensionLink = PluginExtension & {
   type: PluginExtensionTypes.link;
   path?: string;
-  onClick?: (event: React.MouseEvent) => void;
+  onClick?: (event?: React.MouseEvent) => void;
 };
 
 // Objects used for registering extensions (in app plugins)
