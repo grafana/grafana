@@ -2,9 +2,10 @@ package env
 
 import (
 	"fmt"
-	"github.com/urfave/cli/v2"
 	"os"
 	"strings"
+
+	"github.com/urfave/cli/v2"
 )
 
 // RequireListWithEnvFallback first checks the CLI for a flag with the required
