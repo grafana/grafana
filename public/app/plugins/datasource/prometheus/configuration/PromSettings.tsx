@@ -19,10 +19,11 @@ import {
   Select,
 } from '@grafana/ui';
 
+import config from '../../../../core/config';
 import { useUpdateDatasource } from '../../../../features/datasources/state';
 import { PromApplication, PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
 import { QueryEditorMode } from '../querybuilder/shared/types';
-import { PromOptions } from '../types';
+import { PrometheusCacheLevel, PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
@@ -37,6 +38,13 @@ const httpOptions = [
 const editorOptions = [
   { value: QueryEditorMode.Builder, label: 'Builder' },
   { value: QueryEditorMode.Code, label: 'Code' },
+];
+
+const cacheValueOptions = [
+  { value: PrometheusCacheLevel.Low, label: 'Low' },
+  { value: PrometheusCacheLevel.Medium, label: 'Medium' },
+  { value: PrometheusCacheLevel.High, label: 'High' },
+  { value: PrometheusCacheLevel.None, label: 'None' },
 ];
 
 type PrometheusSelectItemsType = Array<{ value: PromApplication; label: PromApplication }>;
@@ -301,7 +309,7 @@ export const PromSettings = (props: Props) => {
         </div>
         <div className="gf-form">
           <FormField
-            label="Default Editor"
+            label="Default editor"
             labelWidth={14}
             inputEl={
               <Select
@@ -335,6 +343,25 @@ export const PromSettings = (props: Props) => {
             />
           </div>
         </div>
+        {config.featureToggles.prometheusResourceBrowserCache && (
+          <div className="gf-form-inline">
+            <div className="gf-form max-width-30">
+              <FormField
+                label="Cache level"
+                labelWidth={14}
+                tooltip="Sets the browser caching level for editor queries. Higher cache settings are recommended for high cardinality data sources."
+                inputEl={
+                  <Select
+                    className={`width-25`}
+                    onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
+                    options={cacheValueOptions}
+                    value={cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel)}
+                  />
+                }
+              />
+            </div>
+          </div>
+        )}
       </div>
       <ExemplarsSettings
         options={options.jsonData.exemplarTraceIdDestinations}

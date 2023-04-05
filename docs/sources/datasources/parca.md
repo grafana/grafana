@@ -24,8 +24,8 @@ To access Parca settings, click the **Configuration** (gear) icon, then click **
 | ------------ | ------------------------------------------------------------------ |
 | `Name`       | A name to specify the data source in panels, queries, and Explore. |
 | `Default`    | The default data source will be pre-selected for new panels.       |
-| `URL`        | The URL of the Tempo instance, e.g., `http://localhost:4100`       |
-| `Basic Auth` | Enable basic authentication to the Tempo data source.              |
+| `URL`        | The URL of the Parca instance, e.g., `http://localhost:4100`       |
+| `Basic Auth` | Enable basic authentication to the Parca data source.              |
 | `User`       | User name for basic authentication.                                |
 | `Password`   | Password for basic authentication.                                 |
 

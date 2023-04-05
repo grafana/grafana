@@ -149,6 +149,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('datadata-macros', import '../dev-dashboards/feature-templating/datadata-macros.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('demo1', import '../dev-dashboards/datasource-testdata/demo1.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -156,21 +163,21 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('elasticsearch_compare', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_compare.json') +
+    dashboard.new('elasticsearch_complex', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_complex.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
         id: 0,
       }
     },
-    dashboard.new('elasticsearch_v7', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_v7.json') +
+    dashboard.new('elasticsearch_migration', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_migration.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
         id: 0,
       }
     },
-    dashboard.new('elasticsearch_v7_filebeat', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_v7_filebeat.json') +
+    dashboard.new('elasticsearch_simple', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_simple.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {

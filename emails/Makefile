@@ -1,14 +1,18 @@
-build: build-html build-txt
+build: clean build-mjml build-grunt
 
-build-html:
+clean:
+	rm -rf dist/
+	mkdir dist/
+
+build-mjml:
 	npx mjml \
 		--config.beautify true \
 		--config.minify false \
 		--config.validationLevel=strict \
 		--config.keepComments=false \
-		./templates/*.mjml --output ../public/emails/
+		./templates/*.mjml --output ./dist/
 
-build-txt:
+build-grunt:
 	npx grunt
 
-.PHONY: build build-html build-txt
+.PHONY: clean build build-mjml build-grunt

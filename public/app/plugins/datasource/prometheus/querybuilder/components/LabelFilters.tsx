@@ -18,6 +18,7 @@ export interface Props {
   /** If set to true, component will show error message until at least 1 filter is selected */
   labelFilterRequired?: boolean;
   getLabelValuesAutofillSuggestions: (query: string, labelName?: string) => Promise<SelectableValue[]>;
+  debounceDuration: number;
 }
 
 export function LabelFilters({
@@ -27,6 +28,7 @@ export function LabelFilters({
   onGetLabelValues,
   labelFilterRequired,
   getLabelValuesAutofillSuggestions,
+  debounceDuration,
 }: Props) {
   const defaultOp = '=';
   const [items, setItems] = useState<Array<Partial<QueryBuilderLabelFilter>>>([{ op: defaultOp }]);
@@ -63,6 +65,7 @@ export function LabelFilters({
           onChange={onLabelsChange}
           renderItem={(item: Partial<QueryBuilderLabelFilter>, onChangeItem, onDelete) => (
             <LabelFilterItem
+              debounceDuration={debounceDuration}
               item={item}
               defaultOp={defaultOp}
               onChange={onChangeItem}

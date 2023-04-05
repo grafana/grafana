@@ -53,6 +53,7 @@ For logs where a level label is specified, we use the value of the label to dete
 | warning               |  warning  |     yellow |
 | info                  |   info    |      green |
 | information           |   info    |      green |
+| informational         |   info    |      green |
 | notice                |   info    |      green |
 | dbug                  |   debug   |       blue |
 | debug                 |   debug   |       blue |
@@ -99,7 +100,7 @@ You can change the order of received logs from the default descending order (new
 
 ## Labels and detected fields
 
-Each log row has an extendable area with its labels and detected fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
+Each log row has an extendable area with its labels and detected fields, for more robust interaction. You can filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
 ## Escaping newlines
 
@@ -112,12 +113,12 @@ To automatically fix incorrectly escaped sequences that Explore has detected:
 
 Explore replaces these sequences. When it does so, the option will change from "Escape newlines" to "Remove escaping". Evaluate the changes as the parsing may not be accurate based on the input received. You can revert the replacements by clicking "Remove escaping".
 
-### Data links
+## Data links
 
 By using data links, you can turn any part of a log message into an internal or external link. The created link is visible as a button in the **Links** section inside the **Log details** view.
 {{< figure src="/static/img/docs/explore/data-link-9-4.png" max-width="800px" caption="Data link in Explore" >}}
 
-### Toggle field visibility
+## Toggle field visibility
 
 Expand a log line and click the eye icon to show or hide fields.
 
@@ -141,7 +142,7 @@ after switching to the Logs data source, the query changes to:
 
 This will return a chunk of logs in the selected time range that can be grepped/text searched.
 
-## Logs sample
+### Logs sample
 
 If the selected data source implements logs sample, and supports both log and metric queries, then for metric queries you will be able to automatically see samples of log lines that contributed to visualized metrics. This feature is currently supported by Loki data sources.
 
