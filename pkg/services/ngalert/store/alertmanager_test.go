@@ -476,7 +476,7 @@ func TestIntegrationGetHistoricalConfiguration(t *testing.T) {
 
 		// Verify that we cannot retrieve the config from org=2 when passing in org=1.
 		_, err = store.GetHistoricalConfiguration(ctx, org, historyTablePK)
-		require.Error(tt, ErrNoAlertmanagerConfiguration)
+		require.Error(tt, err, ErrNoAlertmanagerConfiguration)
 	})
 }
 
