@@ -28,6 +28,7 @@ func ProvideCachingService() *OSSCachingService {
 	return &OSSCachingService{}
 }
 
+//go:generate mockery --name CachingService --structname FakeOSSCachingService --inpackage --filename caching_service_mock.go
 type CachingService interface {
 	// HandleQueryRequest uses a QueryDataRequest to check the cache for any existing results for that query.
 	// If none are found, it should return a CachedQueryDataResponse with an UpdateCacheFn which can be used to update the results cache after the fact.
