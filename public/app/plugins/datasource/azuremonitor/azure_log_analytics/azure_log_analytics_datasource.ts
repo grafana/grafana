@@ -60,7 +60,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       item.hide !== true &&
       ((!!item.azureLogAnalytics?.query &&
         (!!item.azureLogAnalytics.resources?.length || !!item.azureLogAnalytics.workspace)) ||
-        (!!item.azureTraces?.query && !!item.azureTraces.resources?.length))
+        !!item.azureTraces?.resources?.length)
     );
   }
 

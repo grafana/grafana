@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
@@ -12,7 +13,7 @@ import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 
-import { setKustoQuery } from './setQueryValue';
+import { setFormatAs, setQueryOperationId } from './setQueryValue';
 
 interface TracesQueryEditorProps {
   query: AzureMonitorQuery;
@@ -45,26 +46,15 @@ const TracesQueryEditor = ({
     return rowResourceNS !== selectedRowSampleNs;
   };
 
-  const onOperationIdChange = useCallback(
-    (value: string) => {
-      if (value) {
-        onChange(setKustoQuery(query, value));
-      } else {
-        onChange(setKustoQuery(query));
-      }
-    },
-    [onChange, query]
-  );
-
   const [operationId, setOperationId] = useState<string>(query.azureTraces?.operationId ?? '');
 
-  useEffect(() => {
+  useEffectOnce(() => {
     if (query.azureTraces?.operationId) {
       if (!operationId || operationId !== query.azureTraces.operationId) {
         setOperationId(query.azureTraces.operationId);
       }
     }
-  }, [query.azureTraces?.operationId, operationId, setOperationId]);
+  });
 
   const handleChange = useCallback((ev: React.FormEvent) => {
     if (ev.target instanceof HTMLInputElement) {
@@ -73,13 +63,9 @@ const TracesQueryEditor = ({
   }, []);
 
   const handleBlur = useCallback(() => {
-    onOperationIdChange(operationId);
-  }, [onOperationIdChange, operationId]);
-
-  const onResourcesChange = (newQuery: AzureMonitorQuery) => {
-    const updatedQuery = setKustoQuery(newQuery);
-    onChange(updatedQuery);
-  };
+    const newQuery = setQueryOperationId(query, operationId);
+    onChange(newQuery);
+  }, [onChange, operationId, query]);
 
   return (
     <span data-testid="azure-monitor-logs-query-editor-with-experimental-ui">
@@ -91,7 +77,7 @@ const TracesQueryEditor = ({
               datasource={datasource}
               subscriptionId={subscriptionId}
               variableOptionGroup={variableOptionGroup}
-              onQueryChange={onResourcesChange}
+              onQueryChange={onChange}
               setError={setError}
               selectableEntryTypes={[
                 ResourceRowType.Subscription,
@@ -100,7 +86,7 @@ const TracesQueryEditor = ({
                 ResourceRowType.Variable,
               ]}
               resources={query.azureTraces?.resources ?? []}
-              queryType="logs"
+              queryType="traces"
               disableRow={disableRow}
               renderAdvanced={(resources, onChange) => (
                 // It's required to cast resources because the resource picker

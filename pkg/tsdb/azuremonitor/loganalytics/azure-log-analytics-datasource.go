@@ -127,15 +127,19 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(logger log.Logger, queries []
 			azureTracesTarget := queryJSONModel.AzureTraces
 			logger.Debug("AzureTraces", "target", azureTracesTarget)
 
-			resultFormat = string(*azureTracesTarget.ResultFormat)
-			if resultFormat == "" {
+			if azureTracesTarget.ResultFormat == nil {
 				resultFormat = types.Table
+			} else {
+				resultFormat = string(*azureTracesTarget.ResultFormat)
+				if resultFormat == "" {
+					resultFormat = types.Table
+				}
 			}
 
 			resources = azureTracesTarget.Resources
 			resourceOrWorkspace = azureTracesTarget.Resources[0]
 
-			queryString = *azureTracesTarget.Query
+			queryString = buildTracesQuery(queryJSONModel.AzureTraces.OperationId, queryJSONModel.AzureTraces.TraceTypes)
 		}
 
 		apiURL := getApiURL(resourceOrWorkspace)
@@ -286,11 +290,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		queryJSONModel.AzureTraces.Query = &query.Query
 
 		if *queryJSONModel.AzureTraces.OperationId == "" {
-			splits := strings.Split(query.Query, "|")
-			splits = append(splits[:2], splits[1:]...)
-			splits[2] = fmt.Sprintf(" where (operation_Id != '' and operation_Id == '%s') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '%s')", traceIdVariable, traceIdVariable)
-			updatedQuery := strings.Join(splits, "|")
-
+			updatedQuery := buildTracesQuery(&traceIdVariable, queryJSONModel.AzureTraces.TraceTypes)
 			queryJSONModel.AzureTraces.Query = &updatedQuery
 			queryJSONModel.AzureTraces.OperationId = &traceIdVariable
 		}
@@ -493,4 +493,36 @@ func encodeQuery(rawQuery string) (string, error) {
 	}
 
 	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
+}
+
+func buildTracesQuery(operationId *string, traceTypes []string) string {
+	eventTypes := traceTypes
+	if len(eventTypes) == 0 {
+		eventTypes = Tables
+	}
+
+	var tags []string
+	for _, t := range eventTypes {
+		tags = append(tags, getTagsForTable(t)...)
+	}
+
+	whereClause := ""
+
+	if *operationId != "" {
+		whereClause = fmt.Sprintf("| where (operation_Id != '' and operation_Id == '%s') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '%s')", *operationId, *operationId)
+	}
+
+	baseQuery := fmt.Sprintf(`set truncationmaxrecords=10000;
+	set truncationmaxsize=67108864;
+	union isfuzzy=true %s
+	| where $__timeFilter()`, strings.Join(eventTypes, ","))
+	propertiesQuery := fmt.Sprintf(`| extend duration = iff(isnull(duration), toreal(0), duration)
+  | extend spanID = iff(itemType == "pageView" or isempty(id), tostring(new_guid()), id)
+  | extend serviceName = iff(isempty(name), column_ifexists("problemId", ""), name)
+  | extend tags = bag_pack_columns(%s)
+  | project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name
+  | project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType
+  | order by startTime asc`, strings.Join(tags, ","))
+
+	return baseQuery + whereClause + propertiesQuery
 }
