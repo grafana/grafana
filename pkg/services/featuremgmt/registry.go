@@ -316,6 +316,12 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:        "showTraceId",
+			Description: "Show trace ids for requests",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:        "datasourceOnboarding",
 			Description: "Enable data source onboarding page",
 			State:       FeatureStateAlpha,
