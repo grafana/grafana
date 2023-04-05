@@ -7,6 +7,7 @@ import DataEditor, {
   EditableGridCell,
   GridColumnIcon,
   GridSelection,
+  CellClickedEventArgs,
 } from '@glideapps/glide-data-grid';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -31,7 +32,16 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { AddColumn } from './components/AddColumn';
 import { DatagridContextMenu } from './components/DatagridContextMenu';
 import { PanelOptions } from './panelcfg.gen';
-import { EMPTY_CELL, GRAFANA_DS, publishSnapshot } from './utils';
+import {
+  clearCellsFromRangeSelection,
+  deleteRows,
+  EMPTY_CELL,
+  EMPTY_GRID_SELECTION,
+  GRAFANA_DS,
+  publishSnapshot,
+  RIGHT_ELEMENT_PROPS,
+  TRAILING_ROW_OPTIONS,
+} from './utils';
 
 const ICON_WIDTH = 30;
 
@@ -51,6 +61,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   const [isSnapshotted, setIsSnapshotted] = useState<boolean>(false);
   const [contextMenuData, setContextMenuData] = useState<DatagridContextMenuData>({ isContextMenuOpen: false });
   const [toggleSearch, setToggleSearch] = useState<boolean>(false);
+  const [gridSelection, setGridSelection] = useState<GridSelection>(EMPTY_GRID_SELECTION);
 
   const theme = useTheme2();
   const gridTheme = {
@@ -220,7 +231,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     const newFrame = new MutableDataFrame(gridData);
 
     for (const field of newFrame.fields) {
-      field.values.add('');
+      field.values.add(null);
     }
 
     setIsSnapshotted(true);
@@ -240,29 +251,28 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   };
 
   const onDeletePressed = (selection: GridSelection) => {
-    if (!selection.current || !selection.current.range) {
-      return false;
+    if (selection.current && selection.current.range) {
+      setGridData(clearCellsFromRangeSelection(gridData, selection.current.range));
+      return true;
     }
 
-    const colFrom: number = selection.current.range.x;
-    const rowFrom: number = selection.current.range.y;
-    const colTo: number = selection.current.range.x + selection.current.range.width - 1;
-
-    for (let i = colFrom; i <= colTo; i++) {
-      const field = gridData.fields[i];
-
-      const valuesArray = field.values.toArray();
-      valuesArray.splice(
-        rowFrom,
-        selection.current.range.height,
-        ...new Array(selection.current.range.height).fill(null)
-      );
-      field.values = new ArrayVector(valuesArray);
+    if (selection.rows) {
+      setGridData(deleteRows(gridData, selection.rows.toArray()));
+      return true;
     }
 
-    setGridData(new MutableDataFrame(gridData));
+    return false;
+  };
 
-    return true;
+  const onCellContextMenu = (cell: Item, event: CellClickedEventArgs) => {
+    event.preventDefault();
+    setContextMenuData({
+      x: event.bounds.x + event.localEventX,
+      y: event.bounds.y + event.localEventY,
+      column: cell[0],
+      row: cell[1],
+      isContextMenuOpen: true,
+    });
   };
 
   if (!document.getElementById('portal')) {
@@ -293,6 +303,8 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         showSearch={toggleSearch}
         onSearchClose={() => setToggleSearch(false)}
         onPaste={true}
+        gridSelection={gridSelection}
+        onGridSelectionChange={setGridSelection}
         onHeaderClicked={() => {
           console.log('header clicked');
         }}
@@ -300,26 +312,10 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         onDelete={onDeletePressed}
         rowMarkers={'clickable-number'}
         onColumnResize={onColumnResize}
-        onCellContextMenu={(cell, event) => {
-          event.preventDefault();
-          setContextMenuData({
-            x: event.bounds.x + event.localEventX,
-            y: event.bounds.y + event.localEventY,
-            column: cell[0],
-            row: cell[1],
-            isContextMenuOpen: true,
-          });
-        }}
-        trailingRowOptions={{
-          sticky: false,
-          tint: true,
-          targetColumn: 0,
-        }}
+        onCellContextMenu={onCellContextMenu}
+        trailingRowOptions={TRAILING_ROW_OPTIONS}
         rightElement={<AddColumn onColumnInputBlur={onColumnInputBlur} divStyle={styles.addColumnDiv} />}
-        rightElementProps={{
-          fill: true,
-          sticky: false,
-        }}
+        rightElementProps={RIGHT_ELEMENT_PROPS}
       />
       {contextMenuData.isContextMenuOpen && (
         <DatagridContextMenu
@@ -331,6 +327,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
           saveData={setGridData}
           closeContextMenu={closeContextMenu}
           setToggleSearch={setToggleSearch}
+          gridSelection={gridSelection}
         />
       )}
     </>

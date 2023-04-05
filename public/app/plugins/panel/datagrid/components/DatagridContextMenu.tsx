@@ -1,10 +1,11 @@
+import { GridSelection } from '@glideapps/glide-data-grid';
 import React from 'react';
 
 import { ArrayVector, DataFrame } from '@grafana/data';
 import { ContextMenu, MenuItem } from '@grafana/ui';
 import { MenuDivider } from '@grafana/ui/src/components/Menu/MenuDivider';
 
-import { EMPTY_DF } from '../utils';
+import { deleteRows, EMPTY_DF } from '../utils';
 
 interface Props {
   x: number;
@@ -15,6 +16,7 @@ interface Props {
   saveData: (data: DataFrame) => void;
   closeContextMenu: () => void;
   setToggleSearch: (toggleSearch: boolean) => void;
+  gridSelection: GridSelection;
 }
 
 export const DatagridContextMenu = ({
@@ -26,28 +28,53 @@ export const DatagridContextMenu = ({
   saveData,
   closeContextMenu,
   setToggleSearch,
+  gridSelection,
 }: Props) => {
+  let selectedRows: number[] = [];
+  let selectedColumns: number[] = [];
+
+  if (gridSelection.rows) {
+    selectedRows = gridSelection.rows.toArray();
+  }
+
+  if (gridSelection.columns) {
+    selectedColumns = gridSelection.columns.toArray();
+  }
+
+  let rowDeletionLabel = 'Delete row';
+  if (selectedRows.length) {
+    rowDeletionLabel = `Delete ${selectedRows.length} rows`;
+  }
+
+  let columnDeletionLabel = 'Delete column';
+  if (selectedColumns.length) {
+    columnDeletionLabel = `Delete ${selectedColumns.length} columns`;
+  }
+
   const renderItems = () => (
     <>
       <MenuItem
-        label="Delete row"
+        label={rowDeletionLabel}
         onClick={() => {
-          saveData({
-            ...data,
-            fields: data.fields.map((field) => {
-              const valuesArray = field.values.toArray();
-              valuesArray.splice(row, 1);
-              field.values = new ArrayVector(valuesArray);
+          if (selectedRows.length) {
+            saveData(deleteRows(data, selectedRows, true));
+            return;
+          }
 
-              return field;
-            }),
-            length: data.length - 1,
-          });
+          saveData(deleteRows(data, [row], true));
         }}
       />
       <MenuItem
-        label="Delete column"
+        label={columnDeletionLabel}
         onClick={() => {
+          if (selectedColumns.length) {
+            saveData({
+              ...data,
+              fields: data.fields.filter((_, index) => !selectedColumns.includes(index)),
+            });
+            return;
+          }
+
           saveData({
             ...data,
             fields: data.fields.filter((_, index) => index !== column),
@@ -73,16 +100,7 @@ export const DatagridContextMenu = ({
       <MenuItem
         label="Clear row"
         onClick={() => {
-          saveData({
-            ...data,
-            fields: data.fields.map((field) => {
-              const valuesArray = field.values.toArray();
-              valuesArray.splice(row, 1, null);
-              field.values = new ArrayVector(valuesArray);
-
-              return field;
-            }),
-          });
+          saveData(deleteRows(data, [row]));
         }}
       />
       <MenuItem
