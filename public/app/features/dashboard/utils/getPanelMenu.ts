@@ -278,31 +278,33 @@ export function getPanelMenu(
     });
   }
 
-  const { extensions } = getPluginExtensions({
-    extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
-    context: createExtensionContext(panel, dashboard),
-  });
-
-  if (extensions.length > 0 && !panel.isEditing) {
-    const extensionsMenu: PanelMenuItem[] = [];
-
-    for (const extension of extensions) {
-      if (isPluginExtensionLink(extension)) {
-        extensionsMenu.push({
-          text: truncateTitle(extension.title, 25),
-          href: extension.path,
-          onClick: extension.onClick,
-        });
-        continue;
-      }
-    }
-
-    menu.push({
-      text: 'Extensions',
-      iconClassName: 'plug',
-      type: 'submenu',
-      subMenu: extensionsMenu,
+  if (!config.featureToggles.newPanelChromeUI) {
+    const { extensions } = getPluginExtensions({
+      extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
+      context: createExtensionContext(panel, dashboard),
     });
+
+    if (extensions.length > 0 && !panel.isEditing) {
+      const extensionsMenu: PanelMenuItem[] = [];
+
+      for (const extension of extensions) {
+        if (isPluginExtensionLink(extension)) {
+          extensionsMenu.push({
+            text: truncateTitle(extension.title, 25),
+            href: extension.path,
+            onClick: extension.onClick,
+          });
+          continue;
+        }
+      }
+
+      menu.push({
+        text: 'Extensions',
+        iconClassName: 'plug',
+        type: 'submenu',
+        subMenu: extensionsMenu,
+      });
+    }
   }
 
   if (dashboard.canEditPanel(panel) && !panel.isEditing && !panel.isViewing) {
