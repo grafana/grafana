@@ -31,8 +31,6 @@ export const BrowseDashboardsPage = memo(({ match, location }: Props) => {
   const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
   const navModel = useMemo(() => (folderDTO ? buildNavModel(folderDTO) : undefined), [folderDTO]);
 
-  const body = searchState.query ? <SearchView searchState={searchState} /> : <BrowseView folderUID={folderUID} />;
-
   return (
     <Page navId="dashboards/browse" pageNav={navModel}>
       <Page.Contents>
@@ -40,7 +38,7 @@ export const BrowseDashboardsPage = memo(({ match, location }: Props) => {
 
         {folderDTO && <pre>{JSON.stringify(folderDTO, null, 2)}</pre>}
 
-        {body}
+        {searchState.query ? <SearchView searchState={searchState} /> : <BrowseView folderUID={folderUID} />}
       </Page.Contents>
     </Page>
   );

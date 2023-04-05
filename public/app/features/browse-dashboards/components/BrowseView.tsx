@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { Icon } from '@grafana/ui';
+import { Icon, IconButton, Link } from '@grafana/ui';
 import { getFolderChildren } from 'app/features/search/service/folders';
 import { DashboardViewItem } from 'app/features/search/types';
 
@@ -16,7 +16,7 @@ export default function BrowseDashboardsView({ folderUID }: BrowseDashboardsView
   useEffect(() => {
     const folderKey = folderUID ?? '$$root';
 
-    getFolderChildren(folderUID).then((children) => {
+    getFolderChildren(folderUID, undefined, true).then((children) => {
       setNestedData((v) => ({ ...v, [folderKey]: children }));
     });
   }, [folderUID]);
@@ -67,12 +67,23 @@ function BrowseItem({
 
   return (
     <>
-      <div onClick={() => item.kind === 'folder' && onFolderClick(item.uid)}>
-        <Icon name={item.kind === 'folder' ? (childItems ? 'folder-open' : 'folder') : 'apps'} /> {item.title}
+      <div>
+        {item.kind === 'folder' ? (
+          <IconButton onClick={() => onFolderClick(item.uid)} name={childItems ? 'angle-down' : 'angle-right'} />
+        ) : (
+          <span style={{ paddingRight: 20 }} />
+        )}
+        <Icon name={item.kind === 'folder' ? (childItems ? 'folder-open' : 'folder') : 'apps'} />{' '}
+        <Link href={item.kind === 'folder' ? `/nested-dashboards/f/${item.uid}` : `/d/${item.uid}`}>{item.title}</Link>
       </div>
 
       {childItems && (
         <ul style={{ marginLeft: 16 }}>
+          {childItems.length === 0 && (
+            <li>
+              <em>Empty folder</em>
+            </li>
+          )}
           {childItems.map((childItem) => {
             return (
               <li key={childItem.uid}>
