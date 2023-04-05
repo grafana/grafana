@@ -9,14 +9,13 @@ import (
 )
 
 func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) (*pCfg.Cfg, error) {
-	aws := settingProvider.Section("aws")
 	plugins := settingProvider.Section("plugins")
-
 	allowedUnsigned := grafanaCfg.PluginsAllowUnsigned
 	if len(plugins.KeyValue("allow_loading_unsigned_plugins").Value()) > 0 {
 		allowedUnsigned = strings.Split(plugins.KeyValue("allow_loading_unsigned_plugins").Value(), ",")
 	}
 
+	aws := settingProvider.Section("aws")
 	allowedAuth := grafanaCfg.AWSAllowedAuthProviders
 	if len(aws.KeyValue("allowed_auth_providers").Value()) > 0 {
 		allowedUnsigned = strings.Split(settingProvider.KeyValue("plugins", "allow_loading_unsigned_plugins").Value(), ",")
