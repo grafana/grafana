@@ -8,6 +8,7 @@ import (
 	"log"
 	"mime"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -455,4 +456,15 @@ func asChunks(files []File, chunkSize int) [][]File {
 		fileChunks = [][]File{files}
 	}
 	return fileChunks
+}
+
+func GCSCopy(desc, src, dest string) error {
+	args := strings.Split(fmt.Sprintf("-m cp -r gs://%s gs://%s", src, dest), " ")
+	// nolint:gosec
+	cmd := exec.Command("gsutil", args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to publish %s: %w\n%s", desc, err, out)
+	}
+	return nil
 }
