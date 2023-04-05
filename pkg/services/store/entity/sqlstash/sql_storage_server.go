@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -331,7 +331,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			}
 			versionInfo = &entity.EntityVersionInfo{}
 		} else {
-			versionInfo, err = s.selectForUpdate(ctx, tx, oid)
+			versionInfo, rsp.GUID, err = s.selectForUpdate(ctx, tx, oid)
 			if err != nil {
 				return err
 			}
@@ -345,7 +345,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		}
 
 		// Optimistic locking
-		if r.PreviousVersion != "" {
+		if r.PreviousVersion > 0 { // require it to be set???
 			if r.PreviousVersion != versionInfo.Version {
 				return fmt.Errorf("optimistic lock failed")
 			}
@@ -353,20 +353,13 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 
 		// Set the comment on this write
 		versionInfo.Comment = r.Comment
-		if r.Version == "" {
-			if versionInfo.Version == "" {
-				versionInfo.Version = "1"
-			} else {
-				// Increment the version
-				i, _ := strconv.ParseInt(versionInfo.Version, 0, 64)
-				if i < 1 {
-					i = timestamp
-				}
-				versionInfo.Version = fmt.Sprintf("%d", i+1)
-				isUpdate = true
-			}
+		if rsp.GUID != "" {
+			isUpdate = true
+
+			// Increment the version
+			versionInfo.Version += 1
 		} else {
-			versionInfo.Version = r.Version
+			versionInfo.Version = 1
 		}
 
 		if isUpdate {
@@ -391,7 +384,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			"grn, version, message, "+
 			"size, body, etag, folder, access, "+
 			"updated_at, updated_by) "+
-			"VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 			oid, versionInfo.Version, versionInfo.Comment,
 			versionInfo.Size, body, versionInfo.ETag, r.Folder, access,
 			updatedAt, versionInfo.UpdatedBy,
@@ -425,21 +418,21 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			if createdBy == "" {
 				createdBy = updatedBy
 			}
-
+			rsp.GUID = uuid.New().String()
 			_, err = tx.Exec(ctx, "INSERT INTO entity ("+
-				"grn, tenant_id, kind, uid, folder, "+
+				"guid, grn, tenant_id, kind, uid, folder, "+
 				"size, body, etag, version, "+
 				"updated_at, updated_by, created_at, created_by, "+
 				"name, description, slug, "+
 				"labels, fields, errors, "+
 				"origin, origin_key, origin_ts) "+
-				"VALUES (?, ?, ?, ?, ?, "+
+				"VALUES (?, ?, ?, ?, ?, ?, "+
 				" ?, ?, ?, ?, "+
 				" ?, ?, ?, ?, "+
 				" ?, ?, ?, "+
 				" ?, ?, ?, "+
 				" ?, ?, ?)",
-				oid, grn.TenantId, grn.Kind, grn.UID, r.Folder,
+				rsp.GUID, oid, grn.TenantId, grn.Kind, grn.UID, r.Folder,
 				versionInfo.Size, body, etag, versionInfo.Version,
 				updatedAt, createdBy, createdAt, createdBy,
 				summary.model.Name, summary.model.Description, summary.model.Slug,
@@ -490,26 +483,27 @@ func (s *sqlEntityServer) fillCreationInfo(ctx context.Context, tx *session.Sess
 	return errClose
 }
 
-func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, grn string) (*entity.EntityVersionInfo, error) {
-	q := "SELECT etag,version,updated_at,size FROM entity WHERE grn=?"
+func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, grn string) (*entity.EntityVersionInfo, string, error) {
+	q := "SELECT guid,etag,version,updated_at,size FROM entity WHERE grn=?"
 	if false { // TODO, MYSQL/PosgreSQL can lock the row " FOR UPDATE"
 		q += " FOR UPDATE"
 	}
+	guid := ""
 	rows, err := tx.Query(ctx, q, grn)
 	if err != nil {
-		return nil, err
+		return nil, guid, err
 	}
 	current := &entity.EntityVersionInfo{}
 	if rows.Next() {
-		err = rows.Scan(&current.ETag, &current.Version, &current.UpdatedAt, &current.Size)
+		err = rows.Scan(&guid, &current.ETag, &current.Version, &current.UpdatedAt, &current.Size)
 	}
 
 	errClose := rows.Close()
 	if err != nil {
-		return nil, err
+		return nil, guid, err
 	}
 
-	return current, errClose
+	return current, guid, errClose
 }
 
 func (s *sqlEntityServer) writeSearchInfo(

@@ -178,7 +178,7 @@ func (s *httpEntityStore) doWriteEntity(c *contextmodel.ReqContext) response.Res
 		Body:            b,
 		Folder:          params["folder"],
 		Comment:         params["comment"],
-		PreviousVersion: params["previousVersion"],
+		PreviousVersion: parseVersion(params["previousVersion"]),
 	})
 	if err != nil {
 		return response.Error(500, "?", err)
@@ -193,7 +193,7 @@ func (s *httpEntityStore) doDeleteEntity(c *contextmodel.ReqContext) response.Re
 	}
 	rsp, err := s.store.Delete(c.Req.Context(), &entity.DeleteEntityRequest{
 		GRN:             grn,
-		PreviousVersion: params["previousVersion"],
+		PreviousVersion: parseVersion(params["previousVersion"]),
 	})
 	if err != nil {
 		return response.Error(500, "?", err)

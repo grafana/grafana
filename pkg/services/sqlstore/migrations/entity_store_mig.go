@@ -24,6 +24,9 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 	tables = append(tables, migrator.Table{
 		Name: "entity",
 		Columns: []*migrator.Column{
+			// Likely should be the primary key, and remove GRN (duplicate tenant+kind+uid/name)
+			{Name: "guid", Type: migrator.DB_Uuid, Nullable: false}, // required... should be primary key? with unique key on tenant+kind+uid?
+
 			// Object ID (OID) will be unique across all objects/instances
 			// uuid5( tenant_id, kind + uid )
 			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false, IsPrimaryKey: true},
@@ -39,7 +42,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 			{Name: "body", Type: migrator.DB_LongBlob, Nullable: true}, // null when nested or remote
 			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false, IsLatin: true}, // md5(body)
-			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
+			{Name: "version", Type: migrator.DB_BigInt, Length: 128, Nullable: false},
 
 			// Who changed what when -- We should avoid JOINs with other tables in the database
 			{Name: "updated_at", Type: migrator.DB_BigInt, Nullable: false},
@@ -135,7 +138,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 		Name: "entity_history",
 		Columns: []*migrator.Column{
 			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
-			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
+			{Name: "version", Type: migrator.DB_BigInt, Length: 128, Nullable: false},
 
 			// Raw bytes
 			{Name: "folder", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
@@ -208,7 +211,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
 	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v22)" // change this when we want to wipe and reset the object tables
+	suffix := " (v33)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("EntityStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'EntityStore init%';
 	`)))

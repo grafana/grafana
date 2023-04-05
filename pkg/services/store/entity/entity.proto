@@ -107,7 +107,7 @@ message EntityErrorInfo {
 // This is a subset of Entity that does not include body or sync info
 message EntityVersionInfo {
   // The version will change when the entity is saved. It is not necessarily sortable
-  string version = 1;
+  uint64 version = 1;
 
   // Time in epoch milliseconds that the entity was updated
   int64 updated_at = 2;
@@ -164,6 +164,10 @@ message BatchReadEntityResponse {
 // Write request/response
 //-----------------------------------------------
 
+// TODO?
+// * directly define labels (currently from indexer)
+// * directly define annotations... meta?
+
 message WriteEntityRequest {
   // Entity identifier
   GRN GRN = 1;
@@ -174,11 +178,14 @@ message WriteEntityRequest {
   // The raw entity body
   bytes body = 3;
 
+  // k8s style status (ignored for now)
+  bytes status = 4;
+
   // Message that can be seen when exploring entity history
-  string comment = 4;
+  string comment = 5;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  string previous_version = 5;
+  uint64 previous_version = 6;
 }
 
 // This operation is useful when syncing a resource from external sources
@@ -215,11 +222,11 @@ message AdminWriteEntityRequest {
 
   // An explicit version identifier
   // Optional, if set, this will overwrite/define an explicit version
-  string version = 9;
+  uint64 version = 9;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
   // This may not be used along with an explicit version in the request
-  string previous_version = 10;
+  uint64 previous_version = 10;
 
   // Request that all previous versions are removed from the history
   // This will make sense for systems that manage history explicitly externallay
@@ -236,14 +243,17 @@ message WriteEntityResponse {
   // Entity identifier
   GRN GRN = 2;
 
+  // The internal GUID for this object
+  string GUID = 3;
+
   // Entity details with the body removed
-  EntityVersionInfo entity = 3; 
+  EntityVersionInfo entity = 4; 
 
   // Entity summary as JSON
-  bytes summary_json = 4;
+  bytes summary_json = 5;
 
   // Status code
-  Status status = 5;
+  Status status = 6;
 
   // Status enumeration
   enum Status {
@@ -263,7 +273,7 @@ message DeleteEntityRequest {
   GRN GRN = 1;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  string previous_version = 3;
+  uint64 previous_version = 3;
 }
 
 message DeleteEntityResponse {
@@ -339,7 +349,7 @@ message EntitySearchResult {
   GRN GRN = 1;
 
   // The current veresion of this entity
-  string version = 2;
+  uint64 version = 2;
 
   // Content Length
   int64 size = 3;
