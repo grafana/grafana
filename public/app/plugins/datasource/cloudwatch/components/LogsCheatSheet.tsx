@@ -288,7 +288,7 @@ export default class LogsCheatSheet extends PureComponent<
           If you are seeing masked data, you may have CloudWatch logs data protection enabled.{' '}
           <a
             className={cx(link)}
-            href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/#cloudwatch-logs-data-protection"
+            href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/#cloudwatch-logs-data-protection"
             target="_blank"
             rel="noreferrer"
           >
