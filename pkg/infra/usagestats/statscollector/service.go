@@ -315,6 +315,8 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 
 	metrics.MStatTotalPublicDashboards.Set(float64(statsResult.PublicDashboards))
 
+	metrics.MStatTotalCorrelations.Set(float64(statsResult.Correlations))
+
 	dsResult, err := s.statsService.GetDataSourceStats(ctx, &stats.GetDataSourceStatsQuery{})
 	if err != nil {
 		s.log.Error("Failed to get datasource stats", "error", err)
