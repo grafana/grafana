@@ -36,7 +36,7 @@ export function useMigrateDatabaseFields<T extends SQLOptions, S = {}>({
     ) {
       // It's expected that the default will be greater than 4
       const maxOpenConns = SQLConnectionDefaults.MAX_CONNS;
-      const maxIdleConns = Math.ceil(maxOpenConns / 2);
+      const maxIdleConns = maxOpenConns;
 
       logDebug(
         `Setting default max open connections to ${maxOpenConns} and setting max idle connection to ${maxIdleConns}`
