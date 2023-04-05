@@ -75,7 +75,7 @@ export const getProductTourSteps = (
   ...(isPmmAdmin && !!settings?.sttEnabled
     ? [
         {
-          selector: '.dropdown > [aria-label="Advisor Checks"]',
+          selector: '.dropdown > [aria-label="Advisors"]',
           content: (
             <SidebarStep title={Messages.advisors.title}>
               <p>{Messages.advisors.pmmIncludes}</p>
