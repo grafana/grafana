@@ -124,6 +124,7 @@ datasources:
 
   - name: gdev-elasticsearch
     type: elasticsearch
+    uid: gdev-elasticsearch
     access: proxy
     database: "[logs-]YYYY.MM.DD"
     url: http://localhost:9200

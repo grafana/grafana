@@ -1,9 +1,6 @@
 package config
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -33,63 +30,24 @@ type Cfg struct {
 
 	PluginsCDNURLTemplate string
 
-	Opentelemetry OpentelemetryCfg
+	Tracing Tracing
 }
 
-func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) (*Cfg, error) {
-	return NewCfg(settingProvider, grafanaCfg)
-}
-
-func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) (*Cfg, error) {
-	logger := log.New("plugin.cfg")
-
-	aws := settingProvider.Section("aws")
-	plugins := settingProvider.Section("plugins")
-
-	allowedUnsigned := grafanaCfg.PluginsAllowUnsigned
-	if len(plugins.KeyValue("allow_loading_unsigned_plugins").Value()) > 0 {
-		allowedUnsigned = strings.Split(plugins.KeyValue("allow_loading_unsigned_plugins").Value(), ",")
-	}
-
-	allowedAuth := grafanaCfg.AWSAllowedAuthProviders
-	if len(aws.KeyValue("allowed_auth_providers").Value()) > 0 {
-		allowedUnsigned = strings.Split(settingProvider.KeyValue("plugins", "allow_loading_unsigned_plugins").Value(), ",")
-	}
-
-	otelCfg, err := NewOpentelemetryCfg(grafanaCfg)
-	if err != nil {
-		return nil, fmt.Errorf("new opentelemetry cfg: %w", err)
-	}
+func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
+	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, azure *azsettings.AzureSettings, grafanaVersion string,
+	logDatasourceRequests bool, pluginsCDNURLTemplate string, tracing Tracing) *Cfg {
 	return &Cfg{
-		log:                     logger,
-		PluginsPath:             grafanaCfg.PluginsPath,
-		BuildVersion:            grafanaCfg.BuildVersion,
-		DevMode:                 settingProvider.KeyValue("", "app_mode").MustBool(grafanaCfg.Env == setting.Dev),
-		PluginSettings:          extractPluginSettings(settingProvider),
-		PluginsAllowUnsigned:    allowedUnsigned,
-		AWSAllowedAuthProviders: allowedAuth,
-		AWSAssumeRoleEnabled:    aws.KeyValue("assume_role_enabled").MustBool(grafanaCfg.AWSAssumeRoleEnabled),
-		Azure:                   grafanaCfg.Azure,
-		LogDatasourceRequests:   grafanaCfg.PluginLogBackendRequests,
-		PluginsCDNURLTemplate:   grafanaCfg.PluginsCDNURLTemplate,
-		Opentelemetry:           otelCfg,
-	}, nil
-}
-
-func extractPluginSettings(settingProvider setting.Provider) setting.PluginSettings {
-	ps := setting.PluginSettings{}
-	for sectionName, sectionCopy := range settingProvider.Current() {
-		if !strings.HasPrefix(sectionName, "plugin.") {
-			continue
-		}
-		// Calling Current() returns a redacted version of section. We need to replace the map values with the unredacted values.
-		section := settingProvider.Section(sectionName)
-		for k := range sectionCopy {
-			sectionCopy[k] = section.KeyValue(k).MustString("")
-		}
-		pluginID := strings.Replace(sectionName, "plugin.", "", 1)
-		ps[pluginID] = sectionCopy
+		log:                     log.New("plugin.cfg"),
+		PluginsPath:             pluginsPath,
+		BuildVersion:            grafanaVersion,
+		DevMode:                 devMode,
+		PluginSettings:          pluginSettings,
+		PluginsAllowUnsigned:    pluginsAllowUnsigned,
+		AWSAllowedAuthProviders: awsAllowedAuthProviders,
+		AWSAssumeRoleEnabled:    awsAssumeRoleEnabled,
+		Azure:                   azure,
+		LogDatasourceRequests:   logDatasourceRequests,
+		PluginsCDNURLTemplate:   pluginsCDNURLTemplate,
+		Tracing:                 tracing,
 	}
-
-	return ps
 }
