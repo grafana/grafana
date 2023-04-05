@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { config } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
@@ -16,7 +17,11 @@ export function EditDataSourcePage(props: Props) {
   const nav = useDataSourceSettingsNav(uid, pageId);
 
   return (
-    <Page navId="datasources" pageNav={nav.main} actions={<EditDataSourceActions uid={uid} />}>
+    <Page
+      navId="datasources"
+      pageNav={nav.main}
+      actions={config.featureToggles.topnav ? <EditDataSourceActions uid={uid} /> : undefined}
+    >
       <Page.Contents>
         <EditDataSource uid={uid} pageId={pageId} />
       </Page.Contents>
