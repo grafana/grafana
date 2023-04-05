@@ -9,12 +9,17 @@ export type State = 'good' | 'bad' | 'warning' | 'neutral' | 'info';
 type Props = {
   state: State;
   size?: 'md' | 'sm';
+  muted?: boolean;
 };
 
-export const StateTag = ({ children, state, size = 'md' }: React.PropsWithChildren<Props>) => {
+export const StateTag = ({ children, state, size = 'md', muted = false }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
 
-  return <span className={cx(styles.common, styles[state], styles[size])}>{children || state}</span>;
+  return (
+    <span className={cx(styles.common, styles[state], styles[size], { [styles.muted]: muted })}>
+      {children || state}
+    </span>
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -60,5 +65,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   sm: css`
     padding: ${theme.spacing(0.3, 0.5)};
     min-width: 52px;
+  `,
+  muted: css`
+    opacity: 0.5;
   `,
 });

@@ -9,10 +9,11 @@ interface Props {
   state: PromAlertingRuleState | GrafanaAlertState | GrafanaAlertStateWithReason | AlertState;
   size?: 'md' | 'sm';
   isPaused?: boolean;
+  muted?: boolean;
 }
 
-export const AlertStateTag = ({ state, isPaused = false, size = 'md' }: Props) => (
-  <StateTag state={alertStateToState(state)} size={size}>
+export const AlertStateTag = ({ state, isPaused = false, size = 'md', muted = false }: Props) => (
+  <StateTag state={alertStateToState(state)} size={size} muted={muted}>
     {alertStateToReadable(state)} {isPaused ? ' (Paused)' : ''}
   </StateTag>
 );
