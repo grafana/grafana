@@ -56,7 +56,7 @@ func (i *Initializer) Initialize(ctx context.Context, p *plugins.Plugin) error {
 func (i *Initializer) envVars(plugin *plugins.Plugin) ([]string, error) {
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", i.cfg.BuildVersion),
-		fmt.Sprintf("GF_APP_URL=%s", i.cfg.AppURL),
+		fmt.Sprintf("GF_APP_URL=%s", i.cfg.GrafanaAppURL),
 	}
 
 	if i.license != nil {
