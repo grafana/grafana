@@ -45,7 +45,7 @@ Administrators can also [configure the data source via YAML]({{< relref "#provis
 | **Password**         | Database user's password                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | **Session Timezone** | Specify the time zone used in the database session, such as `Europe/Berlin` or `+02:00`. This is necessary, if the timezone of the database (or the host of the database) is set to something other than UTC. Set the value used in the session with `SET time_zone='...'`. If you leave this field empty, then the time zone is not updated. For more information, refer to the [MySQL documentation](https://dev.mysql.com/doc/refman/8.0/en/time-zone-support.html). |
 | **Max open**         | The maximum number of open connections to the database, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                                  |
-| **Max idle**         | The maximum number of connections in the idle connection pool, default `50` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                            |
+| **Max idle**         | The maximum number of connections in the idle connection pool, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                           |
 | **Auto (max idle)**  | If set will set the maximum number of idle connections to the number of maximum open connections (Grafana v10+). Default is `true`.                                                                                                                                                                                                                                                                                                                                     |
 | **Max lifetime**     | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_wait_timeout) in MySQL (Grafana v5.4+).                                                                                                                                                                                               |
 
@@ -127,8 +127,8 @@ datasources:
     jsonData:
       tlsAuth: true
       database: grafana
-      maxOpenConns: 0 # Grafana v5.4+
-      maxIdleConns: 2 # Grafana v5.4+
+      maxOpenConns: 100 # Grafana v5.4+
+      maxIdleConns: 100 # Grafana v5.4+
       maxIdleConnsAuto: true # Grafana v10+
       connMaxLifetime: 14400 # Grafana v5.4+
     secureJsonData:

@@ -141,8 +141,8 @@ datasources:
     jsonData:
       database: grafana
       sslmode: 'disable' # disable/require/verify-ca/verify-full
-      maxOpenConns: 0 # Grafana v5.4+
-      maxIdleConns: 2 # Grafana v5.4+
+      maxOpenConns: 100 # Grafana v5.4+
+      maxIdleConns: 100 # Grafana v5.4+
       maxIdleConnsAuto: true # Grafana v10+
       connMaxLifetime: 14400 # Grafana v5.4+
       postgresVersion: 903 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
