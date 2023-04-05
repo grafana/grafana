@@ -20,7 +20,8 @@ type CacheQueryResponseFn func(context.Context, *backend.QueryDataResponse)
 type CachedQueryDataResponse struct {
 	// The cached data response associated with a query, or nil if no cached data is found
 	Response *backend.QueryDataResponse
-	// A function that should be used to cache a QueryDataResponse for a given query - can be set to nil by the method implementation
+	// A function that should be used to cache a QueryDataResponse for a given query.
+	// It can be set to nil by the method implementation (if there is an error, for example), so it should be checked before being called.
 	UpdateCacheFn CacheQueryResponseFn
 }
 
