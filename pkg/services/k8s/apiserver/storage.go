@@ -3,18 +3,22 @@ package apiserver
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/k8s/authnz"
 	"strconv"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/k8s/authnz"
+	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	grafanaUser "github.com/grafana/grafana/pkg/services/user"
 	customStorage "k8s.io/apiextensions-apiserver/pkg/storage"
-	"k8s.io/apiextensions-apiserver/pkg/storage/filepath"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -24,83 +28,152 @@ var _ customStorage.Storage = (*Storage)(nil)
 
 // wrap the filepath storage so we can test overriding functions
 type Storage struct {
-	customStorage.Storage
-	groupResource schema.GroupResource
-	userService   grafanaUser.Service
+	log            log.Logger
+	groupResource  schema.GroupResource
+	userService    grafanaUser.Service
+	entityStore    entity.EntityStoreServer
+	gr             schema.GroupResource
+	strategy       customStorage.Strategy
+	optsGetter     generic.RESTOptionsGetter
+	tableConvertor rest.TableConvertor
+	newFunc        customStorage.NewObjectFunc
+	newListFunc    customStorage.NewObjectFunc
 }
 
-// this is called before the apiserver starts up
-func ProvideStorage(userService grafanaUser.Service) customStorage.NewStorageFunc {
+func ProvideStorage(userService grafanaUser.Service, entityStore entity.EntityStoreServer) customStorage.NewStorageFunc {
 	return func(
 		gr schema.GroupResource,
 		strategy customStorage.Strategy,
 		optsGetter generic.RESTOptionsGetter,
 		tableConvertor rest.TableConvertor,
-		newFunc, newListFunc customStorage.NewObjectFunc,
+		newFunc customStorage.NewObjectFunc,
+		newListFunc customStorage.NewObjectFunc,
 	) (customStorage.Storage, error) {
-		s, err := filepath.Storage(gr, strategy, optsGetter, tableConvertor, newFunc, newListFunc)
-		if err != nil {
-			return nil, err
-		}
-
 		return &Storage{
-			Storage:       s,
-			groupResource: gr,
-			userService:   userService,
+			log:            log.New("k8s.apiserver.storage"),
+			groupResource:  gr,
+			userService:    userService,
+			entityStore:    entityStore,
+			gr:             gr,
+			strategy:       strategy,
+			optsGetter:     optsGetter,
+			tableConvertor: tableConvertor,
+			newFunc:        newFunc,
+			newListFunc:    newListFunc,
 		}, nil
 	}
 }
 
-// test to override the storage function from the filepath storage
+func (s *Storage) New() runtime.Object {
+	return s.newFunc()
+}
+
+func (s *Storage) NewList() runtime.Object {
+	return s.newListFunc()
+}
+
+func (s *Storage) ShortNames() []string {
+	return s.strategy.ShortNames()
+}
+
+func (s *Storage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (s *Storage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	user, err := s.getSignedInUser(ctx, obj)
+	if err != nil {
+		return nil, err
+	}
+
+	s.log.Debug("Create called", "user", user.UserID, "org", user.OrgID, "kind", obj.GetObjectKind().GroupVersionKind().Kind)
+
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *Storage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *Storage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, fmt.Errorf("not implemented")
+}
+
+func (s *Storage) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *Storage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	return nil, false, fmt.Errorf("not implemented")
+}
+
+func (s *Storage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *Storage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *Storage) Destroy() {
+}
+
+func (s *Storage) GetCreateStrategy() rest.RESTCreateStrategy {
+	return s.strategy
+}
+
+func (s *Storage) GetUpdateStrategy() rest.RESTUpdateStrategy {
+	return s.strategy
+}
+
+func (s *Storage) GetDeleteStrategy() rest.RESTDeleteStrategy {
+	return s.strategy
+}
+
+func (s *Storage) GetStrategy() customStorage.Strategy {
+	return s.strategy
+}
+
+func (s *Storage) SetStrategy(strategy customStorage.Strategy) {
+	s.strategy = strategy
+}
+
+func (s *Storage) NamespaceScoped() bool {
+	return s.strategy.NamespaceScoped()
+}
+
+func (s *Storage) getSignedInUser(ctx context.Context, obj runtime.Object) (*user.SignedInUser, error) {
+	accessor, err := apimeta.Accessor(obj)
+	if err != nil {
+		return nil, err
+	}
 	user, ok := request.UserFrom(ctx)
 	if !ok {
-		return nil, fmt.Errorf("couldn't determine the K8s user")
+		return nil, apierrors.NewForbidden(s.groupResource, accessor.GetName(), fmt.Errorf("unable to fetch user from context"))
 	}
 
-	// Run the Grafana RBAC for GLSA token based direct kubectl access only
-	if user.GetName() != authnz.ApiServerUser && len(user.GetExtra()["user-id"]) != 0 && len(user.GetExtra()["org-id"]) != 0 {
-		accessor, err := apimeta.Accessor(obj)
-
-		if err != nil {
-			fmt.Errorf("error determining accessor: %s", err.Error())
-			return nil, err
-		}
-
-		userId, err := strconv.Atoi(user.GetExtra()["user-id"][0])
-		if err != nil {
-			return nil, fmt.Errorf("couldn't determine the Grafana user id from extras map")
-		}
-
-		orgId, _ := strconv.Atoi(user.GetExtra()["org-id"][0])
-		if err != nil {
-			return nil, fmt.Errorf("couldn't determine the Grafana org id from extras map")
-		}
-
-		userQuery := grafanaUser.GetSignedInUserQuery{
-			UserID: int64(userId),
-			OrgID:  int64(orgId),
-		}
-		signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &userQuery)
-		if err != nil {
-			return nil, apierrors.NewForbidden(s.groupResource, accessor.GetName(), fmt.Errorf("could not determine the user backing the service account: %s", err.Error()))
-		}
-
-		dg, err := guardian.New(ctx, 0, int64(orgId), signedInUser)
-		if err != nil {
-			return nil, fmt.Errorf("couldn't initialize permissions guardian for this request")
-		}
-
-		allowed, err := dg.CanCreate(0, false)
-		if err != nil {
-			fmt.Errorf("error running permission evaluation: %s", err.Error())
-			return nil, err
-		}
-
-		if !allowed {
-			return nil, apierrors.NewForbidden(s.groupResource, accessor.GetName(), fmt.Errorf("serviceaccount does not have enough permissions to fulfill this operation"))
-		}
+	if user.GetName() == authnz.ApiServerUser || len(user.GetExtra()["user-id"]) == 0 && len(user.GetExtra()["org-id"]) == 0 {
+		return nil, apierrors.NewForbidden(s.groupResource, accessor.GetName(), fmt.Errorf("unable to convert k8s service account to Grafana user"))
 	}
 
-	return s.Storage.Create(ctx, obj, createValidation, options)
+	userId, err := strconv.Atoi(user.GetExtra()["user-id"][0])
+	if err != nil {
+		return nil, fmt.Errorf("couldn't determine the Grafana user id from extras map")
+	}
+
+	orgId, _ := strconv.Atoi(user.GetExtra()["org-id"][0])
+	if err != nil {
+		return nil, fmt.Errorf("couldn't determine the Grafana org id from extras map")
+	}
+
+	userQuery := grafanaUser.GetSignedInUserQuery{
+		UserID: int64(userId),
+		OrgID:  int64(orgId),
+	}
+	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &userQuery)
+	if err != nil {
+		return nil, apierrors.NewForbidden(s.groupResource, accessor.GetName(), fmt.Errorf("could not determine the user backing the service account: %s", err.Error()))
+	}
+
+	return signedInUser, nil
 }
