@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 
-import { FieldType, PanelProps, Field } from '@grafana/data';
+import { FieldType, PanelProps } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { KeyboardPlugin, TimeSeries, TooltipDisplayMode, TooltipPlugin, usePanelContext } from '@grafana/ui';
-import { findField } from 'app/features/dimensions';
+import { findFieldIndex } from 'app/features/dimensions';
 
 import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 import { prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/utils';
@@ -32,10 +32,10 @@ export const TrendPanel = ({
     }
 
     let frames = data.series;
-    let xField: Field | undefined = undefined;
+    let xFieldIdx: number | undefined;
     if (options.xField) {
-      xField = findField(frames[0], options.xField);
-      if (!xField) {
+      xFieldIdx = findFieldIndex(frames[0], options.xField);
+      if (xFieldIdx == null) {
         return {
           warning: 'Unable to find field: ' + options.xField,
           frames: data.series,
@@ -43,8 +43,9 @@ export const TrendPanel = ({
       }
     } else {
       // first number field
-      xField = frames[0].fields.find((f) => f.type === FieldType.number);
-      if (!xField) {
+      // Perhaps we can/should support any ordinal rather than an error here
+      xFieldIdx = frames[0].fields.findIndex((f) => f.type === FieldType.number);
+      if (xFieldIdx === -1) {
         return {
           warning: 'No numeric fields found for X axis',
           frames,
@@ -52,12 +53,7 @@ export const TrendPanel = ({
       }
     }
 
-    // Make sure the numeric x field is first in the frame
-    if (xField !== frames[0].fields[0]) {
-      frames = [{ ...frames[0], fields: [xField, ...frames[0].fields.filter((f) => f !== xField)] }];
-    }
-
-    return { frames: prepareGraphableFields(frames, config.theme2, undefined, true) };
+    return { frames: prepareGraphableFields(frames, config.theme2, undefined, xFieldIdx) };
   }, [data, options.xField]);
 
   if (info.warning || !info.frames) {
