@@ -26,6 +26,7 @@ import { ExploreId } from 'app/types/explore';
 
 import { changePanelState } from '../state/explorePane';
 
+import { DetailsPanel } from './DetailsPanel';
 import {
   SpanBarOptionsData,
   Trace,
@@ -33,6 +34,7 @@ import {
   NewTracePageHeader,
   TraceTimelineViewer,
   TTraceTimeline,
+  TraceSpan,
 } from './components';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
@@ -90,13 +92,14 @@ export function TraceView(props: Props) {
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
+  const [selectedSpan, setSelectedSpan] = useState<TraceSpan | undefined>();
 
   const styles = useStyles2(getStyles);
 
   /**
    * Keeps state of resizable name column width
    */
-  const [spanNameColumnWidth, setSpanNameColumnWidth] = useState(0.25);
+  const [spanNameColumnWidth, setSpanNameColumnWidth] = useState(0.4);
 
   const [focusedSpanId, createFocusSpanLink] = useFocusSpanLink({
     refId: props.dataFrames[0]?.refId,
@@ -198,7 +201,10 @@ export function TraceView(props: Props) {
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
             topOfViewRefType={topOfViewRefType}
+            setSelectedSpan={setSelectedSpan}
+            selectedSpanId={selectedSpan?.spanID}
           />
+          <DetailsPanel span={selectedSpan} timeZone={timeZone} />
         </>
       ) : (
         <div className={styles.noDataMsg}>No data</div>

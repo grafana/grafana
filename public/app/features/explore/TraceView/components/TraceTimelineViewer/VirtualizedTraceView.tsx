@@ -117,6 +117,8 @@ type TVirtualizedTraceViewOwnProps = {
   topOfViewRef?: RefObject<HTMLDivElement>;
   topOfViewRefType?: TopOfViewRefType;
   datasourceType: string;
+  setSelectedSpan: React.Dispatch<React.SetStateAction<TraceSpan | undefined>>;
+  selectedSpanId?: string;
 };
 
 export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
@@ -363,9 +365,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   renderRow = (key: string, style: React.CSSProperties, index: number, attrs: {}) => {
     const { isDetail, span, spanIndex } = this.getRowStates()[index];
-    return isDetail
-      ? this.renderSpanDetailRow(span, key, style, attrs)
-      : this.renderSpanBarRow(span, spanIndex, key, style, attrs);
+
+    return isDetail ? null : this.renderSpanBarRow(span, spanIndex, key, style, attrs);
   };
 
   scrollToSpan = (spanID?: string) => {
@@ -384,8 +385,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     const {
       childrenHiddenIDs,
       childrenToggle,
-      detailStates,
-      detailToggle,
       findMatchesIDs,
       spanNameColumnWidth,
       trace,
@@ -398,6 +397,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       focusedSpanIdForSearch,
       theme,
       datasourceType,
+      setSelectedSpan,
+      selectedSpanId,
     } = this.props;
     // to avert flow error
     if (!trace) {
@@ -405,10 +406,12 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     }
     const color = getColorByKey(serviceName, theme);
     const isCollapsed = childrenHiddenIDs.has(spanID);
-    const isDetailExpanded = detailStates.has(spanID);
+    const isDetailExpanded = spanID === selectedSpanId;
     const isMatchingFilter = findMatchesIDs ? findMatchesIDs.has(spanID) : false;
     const isFocused = spanID === focusedSpanId || spanID === focusedSpanIdForSearch;
     const showErrorIcon = isErrorSpan(span) || (isCollapsed && spanContainsErredSpan(trace.spans, spanIndex));
+
+    const { span: prevSpan } = this.getRowStates()[spanIndex > 1 ? spanIndex - 1 : 0];
 
     // Check for direct child "server" span if the span is a "client" span.
     let rpc = null;
@@ -451,7 +454,9 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           isMatchingFilter={isMatchingFilter}
           isFocused={isFocused}
           numTicks={NUM_TICKS}
-          onDetailToggled={detailToggle}
+          onDetailToggled={(args) => {
+            setSelectedSpan(span);
+          }}
           onChildrenToggled={childrenToggle}
           rpc={rpc}
           noInstrumentedServer={noInstrumentedServer}
@@ -464,6 +469,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           removeHoverIndentGuideId={removeHoverIndentGuideId}
           createSpanLink={createSpanLink}
           datasourceType={datasourceType}
+          prevSpan={prevSpan}
         />
       </div>
     );

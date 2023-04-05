@@ -73,7 +73,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     endpointName: css`
       label: endpointName;
-      color: ${autoColor(theme, '#808080')};
+      color: ${autoColor(theme, '#333')};
     `,
     view: css`
       label: view;
@@ -250,7 +250,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     svcName: css`
       label: svcName;
       padding: 0 0.25rem 0 0.5rem;
-      font-size: 1.05em;
+      font-size: 0.9em;
     `,
     svcNameChildrenCollapsed: css`
       label: svcNameChildrenCollapsed;
@@ -326,6 +326,7 @@ export type SpanBarRowProps = {
   clippingRight?: boolean;
   createSpanLink?: SpanLinkFunc;
   datasourceType: string;
+  prevSpan?: TraceSpan;
 };
 
 /**
@@ -376,6 +377,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       theme,
       createSpanLink,
       datasourceType,
+      prevSpan,
     } = this.props;
     const {
       duration,
@@ -408,6 +410,8 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
 
       return Object.values(links).reduce((count, arr) => count + arr.length, 0);
     };
+
+    console.log({ span, prevSpan });
 
     return (
       <TimelineRow
@@ -465,7 +469,8 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                     className={styles.errorIcon}
                   />
                 )}
-                {serviceName}{' '}
+                {(!prevSpan || prevSpan.spanID === span.spanID || prevSpan.process.serviceName !== serviceName) &&
+                  `${serviceName} `}
                 {rpc && (
                   <span>
                     <Icon name={'arrow-right'} />{' '}

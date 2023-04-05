@@ -113,6 +113,8 @@ export type TProps = TExtractUiFindFromStateReturn & {
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
   topOfViewRefType?: TopOfViewRefType;
+  setSelectedSpan: React.Dispatch<React.SetStateAction<TraceSpan | undefined>>;
+  selectedSpanId?: string;
 };
 
 type State = {
