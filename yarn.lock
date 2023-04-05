@@ -5303,6 +5303,42 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@locker/near-membrane-base@npm:0.12.13":
+  version: 0.12.13
+  resolution: "@locker/near-membrane-base@npm:0.12.13"
+  dependencies:
+    "@locker/near-membrane-shared": 0.12.13
+  checksum: d52b3dee029a8a8a7a66a6657eac91f0b2f8d4b50163cc2401257eff0a00a2847a26447f309c00497eeb04c010f8f0ba1f1f86820cf8ec957ccfc82a9e9c4f52
+  languageName: node
+  linkType: hard
+
+"@locker/near-membrane-dom@npm:^0.12.13":
+  version: 0.12.13
+  resolution: "@locker/near-membrane-dom@npm:0.12.13"
+  dependencies:
+    "@locker/near-membrane-base": 0.12.13
+    "@locker/near-membrane-shared": 0.12.13
+    "@locker/near-membrane-shared-dom": 0.12.13
+  checksum: 32a322c946952b7c1bfdd5d42364a99b36bc99bb84f165b5447eb7727a0cce6e192209d70009ff3ee8187a17531b3c37a5532db0ec631e521984144b2a1210dc
+  languageName: node
+  linkType: hard
+
+"@locker/near-membrane-shared-dom@npm:0.12.13":
+  version: 0.12.13
+  resolution: "@locker/near-membrane-shared-dom@npm:0.12.13"
+  dependencies:
+    "@locker/near-membrane-shared": 0.12.13
+  checksum: 49c7fa33f33e6220ef2c3985c6240f9ef16779b94d2b11a557f81136bfab1b0ea1f4abed22b6f0f717bcba798a1c78b93f1f8eb4854120ef5964afbec2dca222
+  languageName: node
+  linkType: hard
+
+"@locker/near-membrane-shared@npm:0.12.13":
+  version: 0.12.13
+  resolution: "@locker/near-membrane-shared@npm:0.12.13"
+  checksum: 42c4fa4d6df6522850155e9503d42eae8fc85e1728ce7e5c5ac600fd4b14af3ab08f796a22a77cd77c02b76aa663ac981787926bf2d52af764987b5b9a4a6a2d
+  languageName: node
+  linkType: hard
+
 "@mapbox/jsonlint-lines-primitives@npm:~2.0.2":
   version: 2.0.2
   resolution: "@mapbox/jsonlint-lines-primitives@npm:2.0.2"
@@ -20120,6 +20156,7 @@ __metadata:
     "@lezer/common": 1.0.2
     "@lezer/highlight": 1.1.3
     "@lezer/lr": 1.3.3
+    "@locker/near-membrane-dom": ^0.12.13
     "@opentelemetry/api": 1.4.0
     "@opentelemetry/exporter-collector": 0.25.0
     "@opentelemetry/semantic-conventions": 1.9.1
