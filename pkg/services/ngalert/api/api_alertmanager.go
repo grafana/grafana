@@ -235,28 +235,29 @@ func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *cont
 	}
 
 	err = srv.mam.ActivateHistoricalConfiguration(c.Req.Context(), c.OrgID, confId)
-	if err == nil {
-		return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration activated"})
-	}
-	var unknownReceiverError notifier.UnknownReceiverError
-	if errors.As(err, &unknownReceiverError) {
-		return ErrResp(http.StatusBadRequest, unknownReceiverError, "")
-	}
-	var configRejectedError notifier.AlertmanagerConfigRejectedError
-	if errors.As(err, &configRejectedError) {
-		return ErrResp(http.StatusBadRequest, configRejectedError, "")
-	}
-	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-		return response.Error(http.StatusNotFound, err.Error(), err)
-	}
-	if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
-		return response.Error(http.StatusNotFound, err.Error(), err)
-	}
-	if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
-		return response.Error(http.StatusConflict, err.Error(), err)
+	if err != nil {
+		var unknownReceiverError notifier.UnknownReceiverError
+		if errors.As(err, &unknownReceiverError) {
+			return ErrResp(http.StatusBadRequest, unknownReceiverError, "")
+		}
+		var configRejectedError notifier.AlertmanagerConfigRejectedError
+		if errors.As(err, &configRejectedError) {
+			return ErrResp(http.StatusBadRequest, configRejectedError, "")
+		}
+		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			return response.Error(http.StatusNotFound, err.Error(), err)
+		}
+		if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
+			return response.Error(http.StatusNotFound, err.Error(), err)
+		}
+		if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
+			return response.Error(http.StatusConflict, err.Error(), err)
+		}
+
+		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	return ErrResp(http.StatusInternalServerError, err, "")
+	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration activated"})
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, body apimodels.PostableUserConfig) response.Response {

@@ -191,27 +191,22 @@ func (st *DBstore) GetAppliedConfigurations(ctx context.Context, orgID int64, li
 
 // GetHistoricalConfiguration returns a single historical configuration based on provided org and id.
 func (st *DBstore) GetHistoricalConfiguration(ctx context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error) {
-	var config *models.HistoricAlertConfiguration
+	var config models.HistoricAlertConfiguration
 	if err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		cfg := &models.HistoricAlertConfiguration{}
 		ok, err := sess.Table("alert_configuration_history").
 			Where("id = ? AND org_id = ?", id, orgID).
-			Get(cfg)
+			Get(&config)
 		if err != nil {
 			return err
 		}
-
 		if !ok {
 			return ErrNoAlertmanagerConfiguration
 		}
-
-		config = cfg
 		return nil
 	}); err != nil {
-		return &models.HistoricAlertConfiguration{}, err
+		return nil, err
 	}
-
-	return config, nil
+	return &config, nil
 }
 
 func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, limit int) (int64, error) {
