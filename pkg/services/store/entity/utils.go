@@ -1,5 +1,8 @@
 package entity
 
+// :GRIMICE:
+var WireCircularDependencyHack EntityStoreServer
+
 // The admin request is a superset of write request features
 func ToAdminWriteEntityRequest(req *WriteEntityRequest) *AdminWriteEntityRequest {
 	return &AdminWriteEntityRequest{

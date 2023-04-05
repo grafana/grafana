@@ -34,6 +34,7 @@ func ProvideSQLEntityServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcs
 		resolver: resolver,
 	}
 	entity.RegisterEntityStoreServer(grpcServerProvider.GetServer(), entityServer)
+	entity.WireCircularDependencyHack = entityServer
 	return entityServer
 }
 

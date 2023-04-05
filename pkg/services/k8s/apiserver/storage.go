@@ -40,7 +40,7 @@ type Storage struct {
 	newListFunc    customStorage.NewObjectFunc
 }
 
-func ProvideStorage(userService grafanaUser.Service, entityStore entity.EntityStoreServer) customStorage.NewStorageFunc {
+func ProvideStorage(userService grafanaUser.Service) customStorage.NewStorageFunc {
 	return func(
 		gr schema.GroupResource,
 		strategy customStorage.Strategy,
@@ -49,11 +49,12 @@ func ProvideStorage(userService grafanaUser.Service, entityStore entity.EntitySt
 		newFunc customStorage.NewObjectFunc,
 		newListFunc customStorage.NewObjectFunc,
 	) (customStorage.Storage, error) {
+		fmt.Printf("create storage for GR: %v", gr)
 		return &Storage{
 			log:            log.New("k8s.apiserver.storage"),
 			groupResource:  gr,
 			userService:    userService,
-			entityStore:    entityStore,
+			entityStore:    entity.WireCircularDependencyHack,
 			gr:             gr,
 			strategy:       strategy,
 			optsGetter:     optsGetter,
