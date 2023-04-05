@@ -7,7 +7,7 @@ import { Button, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
-import { useDataSource, useDataSourceRights, useDeleteLoadedDataSource, useUpdateDatasource } from '../state';
+import { useDataSource, useDataSourceRights, useDeleteLoadedDataSource } from '../state';
 import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
@@ -27,18 +27,11 @@ export function EditDataSourceActions({ uid }: ActionsProps) {
   const styles = useStyles2(getStyles);
   const dataSource = useDataSource(uid);
   const onDelete = useDeleteLoadedDataSource();
-  const onUpdate = useUpdateDatasource();
 
-  const { readOnly, hasWriteRights, hasDeleteRights } = useDataSourceRights(uid);
+  const { readOnly, hasDeleteRights } = useDataSourceRights(uid);
   const hasExploreRights = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
 
-  const canSave = !readOnly && hasWriteRights;
   const canDelete = !readOnly && hasDeleteRights;
-
-  const onSubmit = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    e.preventDefault();
-    await onUpdate({ ...dataSource });
-  };
 
   return (
     <>
@@ -82,18 +75,6 @@ export function EditDataSourceActions({ uid }: ActionsProps) {
       <Button type="button" variant="destructive" disabled={!canDelete} onClick={onDelete} className={styles.button}>
         Delete
       </Button>
-
-      {canSave && (
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={!canSave}
-          onClick={(event) => onSubmit(event)}
-          className={styles.button}
-        >
-          Save changes
-        </Button>
-      )}
     </>
   );
 }
