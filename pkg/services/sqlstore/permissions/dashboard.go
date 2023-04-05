@@ -304,7 +304,7 @@ func (f *accessControlDashboardPermissionFilter) With() (string, []interface{}) 
 }
 
 func (f *accessControlDashboardPermissionFilter) addRecQry(queryName string, whereUIDSelect string, whereParams []interface{}) {
-	if len(f.recQueries) == 0 {
+	if f.recQueries == nil {
 		f.recQueries = make([]clause, 0, maximumRecursiveQueries)
 	}
 	c := make([]interface{}, len(whereParams))
