@@ -106,7 +106,8 @@ export function dataMacro(
     fields: getFieldDisplayValuesProxy({ frame, rowIndex }),
   };
 
-  return getFieldAccessor(fieldPath)(obj) ?? '';
+  const value = getFieldAccessor(fieldPath)(obj) ?? '';
+  return formatVariableValue(value, format);
 }
 
 let fallbackDisplayProcessor: DisplayProcessor | undefined;
@@ -165,5 +166,6 @@ export function fieldMacro(
   const { frame, field, data } = dataContext.value;
   const obj = getTemplateProxyForField(field, frame, data);
 
-  return getFieldAccessor(fieldPath)(obj) ?? '';
+  const value = getFieldAccessor(fieldPath)(obj) ?? '';
+  return formatVariableValue(value, format);
 }

@@ -18,7 +18,7 @@ describe('dataMacros', () => {
         name: 'CoolNumber',
         type: FieldType.number,
         values: [5, 10],
-        labels: { cluster: 'US' },
+        labels: { cluster: 'US', region: 'west=1' },
         display: (value: number) => {
           return { text: value.toString(), numeric: value, suffix: '%' };
         },
@@ -107,6 +107,7 @@ describe('dataMacros', () => {
     expect(_templateSrv.replace('${__data.fields["CoolNumber"].text}', scopedVars)).toBe('10');
     expect(_templateSrv.replace('${__data.name}', scopedVars)).toBe('frameName');
     expect(_templateSrv.replace('${__data.refId}', scopedVars)).toBe('refIdA');
+    expect(_templateSrv.replace('${__data.fields[0]:percentencode}', scopedVars)).toBe('10%25');
   });
 
   it('${__data.*} should return match when the rowIndex is missing dataContext is not there', () => {
@@ -152,5 +153,6 @@ describe('dataMacros', () => {
 
     expect(_templateSrv.replace('${__field.name}', scopedVars)).toBe('CoolNumber');
     expect(_templateSrv.replace('${__field.labels.cluster}', scopedVars)).toBe('US');
+    expect(_templateSrv.replace('${__field.labels.region:percentencode}', scopedVars)).toBe('west%3D1');
   });
 });

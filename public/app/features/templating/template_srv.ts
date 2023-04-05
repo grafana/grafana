@@ -28,10 +28,6 @@ import { getFieldAccessor } from './fieldAccessorCache';
 import { formatVariableValue } from './formatVariableValue';
 import { macroRegistry } from './macroRegistry';
 
-interface FieldAccessorCache {
-  [key: string]: (obj: any) => any;
-}
-
 /**
  * Internal regex replace function
  */
@@ -55,7 +51,6 @@ export class TemplateSrv implements BaseTemplateSrv {
   private index: any = {};
   private grafanaVariables = new Map<string, any>();
   private timeRange?: TimeRange | null = null;
-  private fieldAccessorCache: FieldAccessorCache = {};
 
   constructor(private dependencies: TemplateSrvDependencies = runtimeDependencies) {
     this._variables = [];
