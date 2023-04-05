@@ -292,40 +292,24 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
 
 /**
  * Merge the links from the data source config and the panel config
- * @param configLinks coming from the datasource
+ * @param dataSourceLinks coming from the datasource
  * @param defaultLinks coming from the panel config
  * @returns unique merged links
  */
 
-function mergeLinks(configLinks: DataLink[], defaultLinks: DataLink[]) {
+function mergeLinks(dataSourceLinks: DataLink[], defaultLinks: DataLink[]) {
   // Combine the config links and the default links
-  const combinedLinks = [...configLinks, ...defaultLinks];
-
-  // Deduplicate the combined array of links
-  // note: this is necessary to prevent default links from being displayed multiple times
-  // as setFieldConfigDefaults is called multiple times for each data frame
-
-  const uniqueLinks = combinedLinks.reduce((accumulator: DataLink[], currentLink) => {
-    const existingLink = accumulator.find((link) => JSON.stringify(link) === JSON.stringify(currentLink));
-    if (!existingLink) {
-      accumulator.push(currentLink);
-    }
-
-    return accumulator;
-  }, []);
-
-  return uniqueLinks;
+  return [...dataSourceLinks, ...defaultLinks];
 }
 
 // config -> from DS
 // defaults -> from Panel config
 export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfig, context: FieldOverrideEnv) {
+  // For cases where we have links on the datasource config and the panel config, we need to merge them
+  if (config.links && defaults.links) {
+    config.links = mergeLinks(config.links, defaults.links);
+  }
   for (const fieldConfigProperty of context.fieldConfigRegistry.list()) {
-    // For cases where we have links on the datasource config and the panel config, we need to merge them
-    if (config.links && defaults.links) {
-      config.links = mergeLinks(config.links, defaults.links);
-    }
-
     if (fieldConfigProperty.isCustom && !config.custom) {
       config.custom = {};
     }
