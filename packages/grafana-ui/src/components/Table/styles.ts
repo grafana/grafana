@@ -29,7 +29,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       width: 'auto !important',
       boxShadow: `0 0 2px ${theme.colors.primary.main}`,
       background: background ?? rowHoverBg,
-      zIndex: 1,
+      zIndex: 2,
     };
 
     return css`
