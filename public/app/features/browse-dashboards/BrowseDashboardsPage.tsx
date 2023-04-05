@@ -1,15 +1,16 @@
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useMemo } from 'react';
 
-import { Icon } from '@grafana/ui';
+import { locationSearchToObject } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-import { getFolderChildren } from '../search/service/folders';
-import { DashboardViewItem } from '../search/types';
+import { buildNavModel } from '../folders/state/navModel';
+import { parseRouteParams } from '../search/utils';
 
 import { skipToken, useGetFolderQuery } from './api/browseDashboardsAPI';
 import BrowseActions from './components/BrowseActions';
-import NestedDashboardsList from './components/NestedDashboardsList';
+import BrowseView from './components/BrowseView';
+import SearchView from './components/SearchView';
 
 export interface BrowseDashboardsPageRouteParams {
   uid?: string;
@@ -20,57 +21,26 @@ interface Props extends GrafanaRouteComponentProps<BrowseDashboardsPageRoutePara
 
 // New Browse/Manage/Search Dashboards views for nested folders
 
-type NestedData = Record<string, DashboardViewItem[] | undefined>;
-
 export const BrowseDashboardsPage = memo(({ match, location }: Props) => {
   const { uid: folderUID } = match.params;
 
-  const { data } = useGetFolderQuery(folderUID ?? skipToken);
+  const searchState = useMemo(() => {
+    return parseRouteParams(locationSearchToObject(location.search));
+  }, [location.search]);
 
-  const [nestedData, setNestedData] = useState<NestedData>({});
+  const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
+  const navModel = useMemo(() => (folderDTO ? buildNavModel(folderDTO) : undefined), [folderDTO]);
 
-  useEffect(() => {
-    const folderKey = folderUID ?? '$$root';
-
-    getFolderChildren(folderUID).then((children) => {
-      setNestedData((v) => ({ ...v, [folderKey]: children }));
-    });
-  }, [folderUID]);
-
-  const items = nestedData[folderUID ?? '$$root'] ?? [];
-
-  const handleNodeClick = useCallback(
-    (uid: string) => {
-      if (nestedData[uid]) {
-        setNestedData((v) => ({ ...v, [uid]: undefined }));
-        return;
-      }
-
-      getFolderChildren(uid).then((children) => {
-        setNestedData((v) => ({ ...v, [uid]: children }));
-      });
-    },
-    [nestedData]
-  );
+  const body = searchState.query ? <SearchView searchState={searchState} /> : <BrowseView folderUID={folderUID} />;
 
   return (
-    <Page navId="dashboards/browse">
+    <Page navId="dashboards/browse" pageNav={navModel}>
       <Page.Contents>
         <BrowseActions />
 
-        <NestedDashboardsList />
+        {folderDTO && <pre>{JSON.stringify(folderDTO, null, 2)}</pre>}
 
-        <pre>{JSON.stringify(data, null, 2)}</pre>
-
-        <ul style={{ marginLeft: 16 }}>
-          {items.map((item) => {
-            return (
-              <li key={item.uid}>
-                <BrowseItem item={item} nestedData={nestedData} onFolderClick={handleNodeClick} />
-              </li>
-            );
-          })}
-        </ul>
+        {body}
       </Page.Contents>
     </Page>
   );
@@ -79,35 +49,3 @@ export const BrowseDashboardsPage = memo(({ match, location }: Props) => {
 BrowseDashboardsPage.displayName = 'BrowseDashboardsPage';
 
 export default BrowseDashboardsPage;
-
-function BrowseItem({
-  item,
-  nestedData,
-  onFolderClick,
-}: {
-  item: DashboardViewItem;
-  nestedData: NestedData;
-  onFolderClick: (uid: string) => void;
-}) {
-  const childItems = nestedData[item.uid];
-
-  return (
-    <>
-      <div onClick={() => item.kind === 'folder' && onFolderClick(item.uid)}>
-        <Icon name={item.kind === 'folder' ? (childItems ? 'folder-open' : 'folder') : 'apps'} /> {item.title}
-      </div>
-
-      {childItems && (
-        <ul style={{ marginLeft: 16 }}>
-          {childItems.map((childItem) => {
-            return (
-              <li key={childItem.uid}>
-                <BrowseItem item={childItem} nestedData={nestedData} onFolderClick={onFolderClick} />{' '}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </>
-  );
-}
