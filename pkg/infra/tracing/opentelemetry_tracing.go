@@ -105,7 +105,7 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 	return nil
 }
 
-func (ots *Opentelemetry) OtelExporterEnabled() bool {
+func (ots *Opentelemetry) OTelExporterEnabled() bool {
 	return ots.Enabled == otlpExporter
 }
 

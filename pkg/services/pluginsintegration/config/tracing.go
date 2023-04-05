@@ -15,7 +15,7 @@ func newTracingCfg(grafanaCfg *setting.Cfg) (pCfg.Tracing, error) {
 	if err != nil {
 		return pCfg.Tracing{}, fmt.Errorf("parse settings: %w", err)
 	}
-	if !ots.OtelExporterEnabled() {
+	if !ots.OTelExporterEnabled() {
 		return pCfg.Tracing{}, nil
 	}
 	return pCfg.Tracing{
