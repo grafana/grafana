@@ -109,7 +109,7 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 		if ch != "" {
 			ResourceRequestHistogram.With(prometheus.Labels{
 				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
-				"cache":           resp.Headers[caching.XCacheHeader][0],
+				"cache":           ch,
 			}).Observe(time.Since(start).Seconds())
 		}
 	}()
