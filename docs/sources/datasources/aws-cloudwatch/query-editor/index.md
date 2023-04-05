@@ -220,7 +220,7 @@ When making `stats` queries in [Explore]({{< relref "../../../explore/" >}}), ma
 
 ## Cross-account observability
 
-The CloudWatch plugin provides the ability to monitor and troubleshoot applications that span multiple accounts within a region. Using cross-account observability, you can seamlessly search, visualize and analyze metrics and logs without worrying about account boundaries.
+The CloudWatch plugin allows monitoring and troubleshooting applications that span multiple accounts within a region. Using cross-account observability, you can seamlessly search, visualize, and analyze metrics and logs without worrying about account boundaries.
 
 ### Getting started
 
