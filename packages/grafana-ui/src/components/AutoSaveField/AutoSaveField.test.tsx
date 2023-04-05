@@ -2,7 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { createTheme, SelectableValue } from '@grafana/data';
 
 import { Checkbox } from '../Forms/Checkbox';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
@@ -241,6 +241,7 @@ describe('Input, as AutoSaveField child, ', () => {
 
   it('shows a red border when invalid is true', async () => {
     setup({ invalid: true, onFinishChange: mockOnFinishChangeError });
+    const theme = createTheme();
     const inputField = screen.getByRole('textbox', {
       name: 'Test',
     });
@@ -250,7 +251,7 @@ describe('Input, as AutoSaveField child, ', () => {
       jest.runAllTimers();
     });
     expect(mockOnFinishChangeError).not.toHaveBeenCalled();
-    expect(inputField).toHaveStyle(`border: 1px solid #ff5286;`);
+    expect(inputField).toHaveStyle(`border: 1px solid ${theme.colors.error.border};`);
   });
 });
 
@@ -306,16 +307,21 @@ describe('TextArea, as AutoSaveField child, ', () => {
 
   it('shows a red border when invalid is true', async () => {
     setupTextArea({ invalid: true, onFinishChange: mockOnFinishChangeError });
+    const theme = createTheme();
     const textArea = screen.getByRole('textbox', {
       name: 'Test',
     });
+    await user.hover(textArea);
     await user.type(textArea, 'This is a test text');
     expect(textArea).toHaveValue('This is a test text');
+
     act(() => {
       jest.runAllTimers();
     });
     expect(mockOnFinishChangeError).not.toHaveBeenCalled();
-    expect(textArea).toHaveStyle(`border: 1px solid rgba(204, 204, 220, 0.15)`);
+    await user.unhover(textArea);
+    expect(textArea).toHaveStyle(`border: 1px solid ${theme.colors.error.border}`);
+    screen.debug();
   });
 });
 
@@ -509,19 +515,4 @@ describe('Select, as AutoSaveField child, ', () => {
     expect(mockOnFinishChangeError).toHaveBeenCalledWith('dark');
     expect(await screen.findByText('There was an error')).toBeInTheDocument();
   });
-
-  /*TODO*/
-  // it('shows a red border when invalid is true', async () => {
-  //   setupSelect({ invalid: true, onFinishChange: mockOnFinishChangeError });
-  //   const selectInput = screen.getByRole('combobox');
-  //   expect(selectInput).toBeInTheDocument();
-  //   await user.click(screen.getByText('Choose'));
-  //   const selectOptions = screen.getAllByLabelText('Select option');
-  //   await user.click(selectOptions[1]);
-  //   act(() => {
-  //     jest.runAllTimers();
-  //   });
-  //   expect(mockOnFinishChangeError).not.toHaveBeenCalled();
-  //   expect(screen.getByTestId('select-test')).toHaveStyle(`border: 1px solid #ff5286;`);
-  // });
 });
