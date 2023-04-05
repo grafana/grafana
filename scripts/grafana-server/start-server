@@ -48,7 +48,7 @@ $RUNDIR/bin/"$ARCH"grafana-server \
   --pidfile=$RUNDIR/pid \
   cfg:server.http_port=$PORT \
   cfg:server.router_logging=1 \
-  cfg:app_mode=development \
+  cfg:app_mode=test \
   cfg:enterprise.license_path=$1
 
 # 2>&1 > $RUNDIR/output.log &
