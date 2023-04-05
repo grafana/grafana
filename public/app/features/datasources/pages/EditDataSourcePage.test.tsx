@@ -5,6 +5,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { LayoutModes } from '@grafana/data';
 import { setAngularLoader } from '@grafana/runtime';
+import config from 'app/core/config';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
 
@@ -57,6 +58,7 @@ describe('<EditDataSourcePage>', () => {
   const dataSourceMeta = getMockDataSourceMeta();
   const dataSourceSettings = getMockDataSourceSettingsState();
   let store: Store;
+  const topnavValue = config.featureToggles.topnav;
 
   beforeAll(() => {
     setAngularLoader({
@@ -94,7 +96,12 @@ describe('<EditDataSourcePage>', () => {
     });
   });
 
+  afterAll(() => {
+    config.featureToggles.topnav = topnavValue;
+  });
+
   it('should render the edit page without an issue', async () => {
+    config.featureToggles.topnav = false;
     setup(uid, store);
 
     expect(screen.queryByText('Loading ...')).not.toBeInTheDocument();
@@ -104,11 +111,24 @@ describe('<EditDataSourcePage>', () => {
 
     // Buttons
     expect(screen.queryByRole('button', { name: /Back/i })).toBeVisible();
-    expect(screen.queryAllByRole('button', { name: /Delete/i })).toHaveLength(2);
+    expect(screen.queryByRole('button', { name: /Delete/i })).toBeVisible();
     expect(screen.queryByRole('button', { name: /Save (.*) test/i })).toBeVisible();
-    expect(screen.queryAllByText('Explore')).toHaveLength(2);
+    expect(screen.queryByRole('link', { name: /Explore/i })).toBeVisible();
 
     // wait for the rest of the async processes to finish
     expect(await screen.findByText(name)).toBeVisible();
+  });
+
+  it('should show updated action buttons when topnav is on', () => {
+    config.featureToggles.topnav = true;
+
+    setup(uid, store);
+
+    // Buttons
+    expect(screen.queryAllByRole('button', { name: /Back/i })).toHaveLength(0);
+    expect(screen.queryByRole('button', { name: /Delete/i })).toBeVisible();
+    expect(screen.queryByRole('button', { name: /Save (.*) test/i })).toBeVisible();
+    expect(screen.queryByRole('link', { name: /Build a dashboard/i })).toBeVisible();
+    expect(screen.queryAllByRole('link', { name: /Explore/i })).toHaveLength(2);
   });
 });
