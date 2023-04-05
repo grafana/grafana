@@ -105,6 +105,10 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 	return nil
 }
 
+func (ots *Opentelemetry) OTelExporterEnabled() bool {
+	return ots.Enabled == otlpExporter
+}
+
 func splitCustomAttribs(s string) ([]attribute.KeyValue, error) {
 	res := []attribute.KeyValue{}
 
