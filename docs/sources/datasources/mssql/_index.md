@@ -53,7 +53,7 @@ To configure basic settings for the data source, complete the following steps:
 | **Encrypt**         | Determines whether to negotiate a secure SSL TCP/IP connection with the server, or to which extent. Default is `false`.                                                                                                                         |
 | **Max open**        | Sets the maximum number of open connections to the database. Default is `100`.                                                                                                                                                                  |
 | **Max idle**        | Sets the maximum number of connections in the idle connection pool. Default is `100`.                                                                                                                                                           |
-| **Auto (max idle)** | If set will set the maximum number of idle connections to the number of maximum open connections (Grafana 10+). Default is `true`.                                                                                                              |
+| **Auto (max idle)** | If set will set the maximum number of idle connections to the number of maximum open connections (Grafana v10+). Default is `true`.                                                                                                             |
 | **Max lifetime**    | Sets the maximum number of seconds that the data source can reuse a connection. Default is `14400` (4 hours).                                                                                                                                   |
 
 You can also configure settings specific to the Microsoft SQL Server data source. These options are described in the sections below.
@@ -123,8 +123,9 @@ datasources:
     user: grafana
     jsonData:
       database: grafana
-      maxOpenConns: 0 # Grafana v5.4+
-      maxIdleConns: 2 # Grafana v5.4+
+      maxOpenConns: 100 # Grafana v5.4+
+      maxIdleConns: 100 # Grafana v5.4+
+      maxIdleConnsAuto: true # Grafana v10+
       connMaxLifetime: 14400 # Grafana v5.4+
       connectionTimeout: 0 # Grafana v9.3+
     secureJsonData:
