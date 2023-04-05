@@ -203,19 +203,9 @@ func main() {
 					Action: PublishStorybookAction,
 					Flags: []cli.Flag{
 						&editionFlag,
-						&cli.BoolFlag{
-							Name:  "security",
-							Usage: "Security release",
-						},
-						&cli.StringFlag{
-							Name:  "tag",
-							Usage: "Grafana version tag",
-						},
-						&cli.StringFlag{
-							Name:  "src-bucket",
-							Value: "grafana-prerelease",
-							Usage: "Google Cloud Storage bucket",
-						},
+						&securityFlag,
+						&tagFlag,
+						&srcFlag,
 					},
 				},
 				{
@@ -224,28 +214,11 @@ func main() {
 					Action: PublishStaticAssetsAction,
 					Flags: []cli.Flag{
 						&editionFlag,
-						&cli.BoolFlag{
-							Name:  "security",
-							Usage: "Security release",
-						},
-						&cli.StringFlag{
-							Name:  "security-dest-bucket",
-							Usage: "Google Cloud Storage bucket for security packages (or $SECURITY_DEST_BUCKET)",
-						},
-						&cli.StringFlag{
-							Name:  "tag",
-							Usage: "Grafana version tag",
-						},
-						&cli.StringFlag{
-							Name:  "src-bucket",
-							Value: "grafana-prerelease",
-							Usage: "Google Cloud Storage bucket",
-						},
-						&cli.StringFlag{
-							Name:  "dest-bucket",
-							Value: "grafana-downloads",
-							Usage: "Google Cloud Storage bucket for published packages",
-						},
+						&securityFlag,
+						&securityDestBucketFlag,
+						&tagFlag,
+						&srcFlag,
+						&destFlag,
 						&cli.StringFlag{
 							Name:  "static-assets-bucket",
 							Value: "grafana-static-assets",
@@ -263,28 +236,11 @@ func main() {
 					Action: PublishArtifactsAction,
 					Flags: []cli.Flag{
 						&editionFlag,
-						&cli.BoolFlag{
-							Name:  "security",
-							Usage: "Security release",
-						},
-						&cli.StringFlag{
-							Name:  "security-dest-bucket",
-							Usage: "Google Cloud Storage bucket for security packages (or $SECURITY_DEST_BUCKET)",
-						},
-						&cli.StringFlag{
-							Name:  "tag",
-							Usage: "Grafana version tag",
-						},
-						&cli.StringFlag{
-							Name:  "src-bucket",
-							Value: "grafana-prerelease",
-							Usage: "Google Cloud Storage bucket",
-						},
-						&cli.StringFlag{
-							Name:  "dest-bucket",
-							Value: "grafana-downloads",
-							Usage: "Google Cloud Storage bucket for published packages",
-						},
+						&securityFlag,
+						&securityDestBucketFlag,
+						&tagFlag,
+						&srcFlag,
+						&destFlag,
 						&cli.StringFlag{
 							Name:  "enterprise2-dest-bucket",
 							Value: "grafana-downloads-enterprise2",
