@@ -441,6 +441,124 @@ describe('setFieldConfigDefaults', () => {
       }
     `);
   });
+
+  it('applies field config defaults correctly when links property exist in field config and no links are defined in panel', () => {
+    const dsFieldConfig: FieldConfig = {
+      links: [
+        {
+          title: 'Google link',
+          url: 'https://google.com',
+        },
+      ],
+    };
+
+    const panelFieldConfig: FieldConfig = {};
+
+    const context: FieldOverrideEnv = {
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
+    };
+
+    // we mutate dsFieldConfig
+    // @ts-ignore
+    setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
+
+    expect(dsFieldConfig).toMatchInlineSnapshot(`
+      {
+        "custom": {},
+        "links": [
+          {
+            "title": "Google link",
+            "url": "https://google.com",
+          },
+        ],
+      }
+    `);
+  });
+
+  it('applies field config defaults correctly when links property exist in panel config and no links are defined in ds field config', () => {
+    const dsFieldConfig: FieldConfig = {};
+
+    const panelFieldConfig: FieldConfig = {
+      links: [
+        {
+          title: 'Google link',
+          url: 'https://google.com',
+        },
+      ],
+    };
+
+    const context: FieldOverrideEnv = {
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
+    };
+
+    // we mutate dsFieldConfig
+    // @ts-ignore
+    setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
+
+    expect(dsFieldConfig).toMatchInlineSnapshot(`
+      {
+        "custom": {},
+        "links": [
+          {
+            "title": "Google link",
+            "url": "https://google.com",
+          },
+        ],
+      }
+    `);
+  });
+
+  it('applies a merge strategy for links when they exist in ds config and panel', () => {
+    const dsFieldConfig: FieldConfig = {
+      links: [
+        {
+          title: 'Google link',
+          url: 'https://google.com',
+        },
+      ],
+    };
+
+    const panelFieldConfig: FieldConfig = {
+      links: [
+        {
+          title: 'Grafana',
+          url: 'https://grafana.com',
+        },
+      ],
+    };
+
+    const context: FieldOverrideEnv = {
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
+    };
+
+    // we mutate dsFieldConfig
+    setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
+
+    expect(dsFieldConfig).toMatchInlineSnapshot(`
+      {
+        "custom": {},
+        "links": [
+          {
+            "title": "Google link",
+            "url": "https://google.com",
+          },
+          {
+            "title": "Grafana",
+            "url": "https://grafana.com",
+          },
+        ],
+      }
+    `);
+  });
 });
 
 describe('setDynamicConfigValue', () => {
