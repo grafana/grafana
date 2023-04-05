@@ -39,6 +39,7 @@ const fieldNameMatcher: FieldMatcherInfo<string> = {
   defaultOptions: '',
 
   get: (name: string): FieldMatcher => {
+    // how to get the feature toggle in grafana-data because we cannot import config from grafana-runtime
     const fieldNameMatcherFallback = window.grafanaBootData.settings.featureToggles.fieldNameMatcherFallback;
     // wrapped in a feature toggle
     // so we may turn this off, with prometheusDataplane toggle, if we have unexpected behavior/errors
