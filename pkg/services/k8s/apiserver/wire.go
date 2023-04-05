@@ -8,4 +8,5 @@ var WireSet = wire.NewSet(
 	ProvideService,
 	wire.Bind(new(Service), new(*service)),
 	wire.Bind(new(RestConfigProvider), new(*service)),
+	ProvideStorage,
 )

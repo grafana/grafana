@@ -26,25 +26,29 @@ var _ customStorage.Storage = (*Storage)(nil)
 type Storage struct {
 	customStorage.Storage
 	groupResource schema.GroupResource
+	userService   grafanaUser.Service
 }
 
 // this is called before the apiserver starts up
-var NewStorage customStorage.NewStorageFunc = func(
-	gr schema.GroupResource,
-	strategy customStorage.Strategy,
-	optsGetter generic.RESTOptionsGetter,
-	tableConvertor rest.TableConvertor,
-	newFunc, newListFunc customStorage.NewObjectFunc,
-) (customStorage.Storage, error) {
-	s, err := filepath.Storage(gr, strategy, optsGetter, tableConvertor, newFunc, newListFunc)
-	if err != nil {
-		return nil, err
-	}
+func ProvideStorage(userService grafanaUser.Service) customStorage.NewStorageFunc {
+	return func(
+		gr schema.GroupResource,
+		strategy customStorage.Strategy,
+		optsGetter generic.RESTOptionsGetter,
+		tableConvertor rest.TableConvertor,
+		newFunc, newListFunc customStorage.NewObjectFunc,
+	) (customStorage.Storage, error) {
+		s, err := filepath.Storage(gr, strategy, optsGetter, tableConvertor, newFunc, newListFunc)
+		if err != nil {
+			return nil, err
+		}
 
-	return &Storage{
-		Storage:       s,
-		groupResource: gr,
-	}, nil
+		return &Storage{
+			Storage:       s,
+			groupResource: gr,
+			userService:   userService,
+		}, nil
+	}
 }
 
 // test to override the storage function from the filepath storage
@@ -73,15 +77,16 @@ func (s *Storage) Create(ctx context.Context, obj runtime.Object, createValidati
 			return nil, fmt.Errorf("couldn't determine the Grafana org id from extras map")
 		}
 
-		signedInUser := grafanaUser.SignedInUser{
+		userQuery := grafanaUser.GetSignedInUserQuery{
 			UserID: int64(userId),
 			OrgID:  int64(orgId),
 		}
+		signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &userQuery)
+		if err != nil {
+			return nil, apierrors.NewForbidden(s.groupResource, accessor.GetName(), fmt.Errorf("could not determine the user backing the service account: %s", err.Error()))
+		}
 
-		// TODO: permissions are currently empty, somehow set them using accesscontrol service
-		// signedInUser.Permissions = accesscontrol.GetUserPermissions
-
-		dg, err := guardian.New(ctx, 0, int64(orgId), &signedInUser)
+		dg, err := guardian.New(ctx, 0, int64(orgId), signedInUser)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't initialize permissions guardian for this request")
 		}

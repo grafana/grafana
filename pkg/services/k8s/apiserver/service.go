@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"context"
+	customStorage "k8s.io/apiextensions-apiserver/pkg/storage"
 	"net"
 	"path"
 
@@ -45,17 +46,19 @@ type service struct {
 
 	etcdProvider kine.EtcdProvider
 	restConfig   *rest.Config
+	newStorage   customStorage.NewStorageFunc
 
 	dataPath  string
 	stopCh    chan struct{}
 	stoppedCh chan error
 }
 
-func ProvideService(etcdProvider kine.EtcdProvider, cfg *setting.Cfg) (*service, error) {
+func ProvideService(etcdProvider kine.EtcdProvider, cfg *setting.Cfg, newStorage customStorage.NewStorageFunc) (*service, error) {
 	s := &service{
 		dataPath:     path.Join(cfg.DataPath, "k8s"),
 		etcdProvider: etcdProvider,
 		stopCh:       make(chan struct{}),
+		newStorage:   newStorage,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.KubernetesAPIServer)
@@ -68,8 +71,8 @@ func (s *service) GetRestConfig() *rest.Config {
 }
 
 func (s *service) start(ctx context.Context) error {
-	customresource.Storage = NewStorage
-	customresourcedefinition.Storage = NewStorage
+	customresource.Storage = s.newStorage
+	customresourcedefinition.Storage = s.newStorage
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
