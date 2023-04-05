@@ -224,8 +224,6 @@ The CloudWatch plugin provides the ability to monitor and troubleshoot applicati
 
 ### Getting started
 
-<!-- To enable cross-account observability, first enable it in CloudWatch using the official [CloudWatch docs](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html), then add [two new API actions](https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/#cross-account-observability) to the IAM policy attached to the role/user running the plugin. -->
-
 To enable cross-account observability do the following:
 
 1. Go to the official [CloudWatch docs](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html) and follow the instructions on enabling cross-account observability.

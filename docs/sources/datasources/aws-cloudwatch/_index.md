@@ -84,7 +84,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-**Logs-only permissions**
+##### Logs-only permissions
 
 ```json
 {
@@ -234,7 +234,7 @@ For more information about provisioning, and for available configuration options
 
 #### Provisioning examples
 
-**Using AWS SDK (default):**
+##### Using AWS SDK (default)
 
 ```yaml
 apiVersion: 1
@@ -246,7 +246,7 @@ datasources:
       defaultRegion: eu-west-2
 ```
 
-**Using credentials' profile name (non-default):**
+##### Using credentials' profile name (non-default)
 
 ```yaml
 apiVersion: 1
@@ -277,7 +277,7 @@ datasources:
       secretKey: '<your secret key>'
 ```
 
-**Using AWS SDK Default and ARN of IAM Role to Assume:**
+##### Using AWS SDK Default and ARN of IAM Role to Assume
 
 ```yaml
 apiVersion: 1
