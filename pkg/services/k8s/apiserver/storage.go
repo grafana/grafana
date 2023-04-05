@@ -26,12 +26,11 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
-var _ customStorage.Storage = (*Storage)(nil)
+var _ customStorage.Storage = (*entityStorage)(nil)
 
 // wrap the filepath storage so we can test overriding functions
-type Storage struct {
+type entityStorage struct {
 	log            log.Logger
-	fileStore      customStorage.Storage
 	groupResource  schema.GroupResource
 	userService    grafanaUser.Service
 	entityStore    entity.EntityStoreServer
@@ -53,14 +52,13 @@ func ProvideStorage(userService grafanaUser.Service) customStorage.NewStorageFun
 		newListFunc customStorage.NewObjectFunc,
 	) (customStorage.Storage, error) {
 		fmt.Printf("create storage for GR: %v", gr)
-		s, err := filepath.Storage(gr, strategy, optsGetter, tableConvertor, newFunc, newListFunc)
-		if err != nil {
-			return nil, err
+
+		if true {
+			return filepath.Storage(gr, strategy, optsGetter, tableConvertor, newFunc, newListFunc)
 		}
 
-		return &Storage{
+		return &entityStorage{
 			log:            log.New("k8s.apiserver.storage"),
-			fileStore:      s,
 			groupResource:  gr,
 			userService:    userService,
 			entityStore:    entity.WireCircularDependencyHack,
@@ -74,29 +72,23 @@ func ProvideStorage(userService grafanaUser.Service) customStorage.NewStorageFun
 	}
 }
 
-func (s *Storage) New() runtime.Object {
+func (s *entityStorage) New() runtime.Object {
 	return s.newFunc()
 }
 
-func (s *Storage) NewList() runtime.Object {
+func (s *entityStorage) NewList() runtime.Object {
 	return s.newListFunc()
 }
 
-func (s *Storage) ShortNames() []string {
+func (s *entityStorage) ShortNames() []string {
 	return s.strategy.ShortNames()
 }
 
-func (s *Storage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return s.fileStore.Get(ctx, name, options)
+func (s *entityStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
-func (s *Storage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	// write to file store
-	obj, err := s.fileStore.Create(ctx, obj, createValidation, options)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *entityStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	user, err := s.getSignedInUser(ctx, obj)
 	if err != nil {
 		return nil, err
@@ -115,59 +107,59 @@ func (s *Storage) Create(ctx context.Context, obj runtime.Object, createValidati
 	return obj, nil //nil, fmt.Errorf("not implemented")
 }
 
-func (s *Storage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.fileStore.List(ctx, options)
+func (s *entityStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
-func (s *Storage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return s.fileStore.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+func (s *entityStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, fmt.Errorf("not implemented")
 }
 
-func (s *Storage) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
-	return s.fileStore.Watch(ctx, options)
+func (s *entityStorage) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
-func (s *Storage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return s.fileStore.Delete(ctx, name, deleteValidation, options)
+func (s *entityStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	return nil, false, fmt.Errorf("not implemented")
 }
 
-func (s *Storage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return s.fileStore.DeleteCollection(ctx, deleteValidation, options, listOptions)
+func (s *entityStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
-func (s *Storage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return s.fileStore.ConvertToTable(ctx, object, tableOptions)
+func (s *entityStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
-func (s *Storage) Destroy() {
-	s.fileStore.Destroy()
+func (s *entityStorage) Destroy() {
+	// destroy
 }
 
-func (s *Storage) GetCreateStrategy() rest.RESTCreateStrategy {
+func (s *entityStorage) GetCreateStrategy() rest.RESTCreateStrategy {
 	return s.strategy
 }
 
-func (s *Storage) GetUpdateStrategy() rest.RESTUpdateStrategy {
+func (s *entityStorage) GetUpdateStrategy() rest.RESTUpdateStrategy {
 	return s.strategy
 }
 
-func (s *Storage) GetDeleteStrategy() rest.RESTDeleteStrategy {
+func (s *entityStorage) GetDeleteStrategy() rest.RESTDeleteStrategy {
 	return s.strategy
 }
 
-func (s *Storage) GetStrategy() customStorage.Strategy {
+func (s *entityStorage) GetStrategy() customStorage.Strategy {
 	return s.strategy
 }
 
-func (s *Storage) SetStrategy(strategy customStorage.Strategy) {
+func (s *entityStorage) SetStrategy(strategy customStorage.Strategy) {
 	s.strategy = strategy
 }
 
-func (s *Storage) NamespaceScoped() bool {
+func (s *entityStorage) NamespaceScoped() bool {
 	return s.strategy.NamespaceScoped()
 }
 
-func (s *Storage) getSignedInUser(ctx context.Context, obj runtime.Object) (*user.SignedInUser, error) {
+func (s *entityStorage) getSignedInUser(ctx context.Context, obj runtime.Object) (*user.SignedInUser, error) {
 	accessor, err := apimeta.Accessor(obj)
 	if err != nil {
 		return nil, err
