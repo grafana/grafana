@@ -169,7 +169,11 @@ For more information and examples please refer to the [InfluxDB Provisioning doc
 
 _Generally available in all editions of Grafana._
 
-With this release we are reinforcing organization role syncing behavior when external authentication providers are used. We are introducing a new feature toggle called `onlyExternalOrgRoleSync`. Once enabled, users signing in to Grafana cannot change organization roles that have been synchronized from an external authentication provider, like Active Directory or Google Oauth.
+Grafana 9.4 provided the ability to configure synchronization of organization roles for each OAuth provider. When synchonization is switched on, the organization role would be applied to the user from the OAuth provider upon signing in. After signing in, during the session you can change the user’s organization role.
+
+With this release, we are reinforcing organization role syncing behavior by introducing a new feature toggle called `onlyExternalOrgRoleSync`. Once enabled, users signing in to Grafana cannot change organization roles that have been synchronized from an external authentication provider, like Active Directory or Google Oauth. This can help ensure the right users maintain the right level of access at all times.
+
+This feature should be used if you want to enforce strict role synchronization from your auth provider to the organization roles.
 
 If you want to enable this feature, you'll need to enable the `onlyExternalOrgRoleSync` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support. We will also be automatically enabling this feature for Grafana Cloud instances over the upcoming weeks.
 
