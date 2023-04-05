@@ -15,7 +15,7 @@ If you install via RPM or the `.tar.gz` file, then you must manually update Graf
 
 ## Install Grafana from the YUM respository
 
-If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo yum update`.
+If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo zypper update`.
 
 | Grafana Version    | Package            | Repository                |
 | ------------------ | ------------------ | ------------------------- |
@@ -30,7 +30,6 @@ To install Grafana using a YUM repository, complete the following steps:
 
    ```bash
    sudo zypper addrepo https://rpm.grafana.com grafana
-
    ```
 
 1. To install Grafana OSS, run the following command:
@@ -61,7 +60,7 @@ If you install Grafana manually using YUM or RPM, then you must manually update 
 1. Copy and paste the RPM package URL and the local RPM package information from the installation page into the pattern shown below, then run the commands.
 
    ```bash
-   sudo yum install initscripts urw-fonts wget
+   sudo zypper install initscripts urw-fonts wget
    wget <rpm package url>
    sudo rpm -Uvh <local rpm package>
    ```
@@ -82,4 +81,4 @@ Complete the following steps to install Grafana using the standalone binaries:
 
 ## Next steps
 
-Refer to [Start the Grafana server]({{< relref "../../../getting-started/build-first-dashboard/" >}}).
+Refer to [Start the Grafana server]({{< relref "../start-restart-grafana/" >}}).

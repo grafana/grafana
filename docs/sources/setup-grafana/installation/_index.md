@@ -5,8 +5,7 @@ aliases:
   - ../installation/installation/
   - ../installation/requirements/
   - /docs/grafana/v2.1/installation/install/
-  - ../../installation/installation/rpm/
-  - ../../installation/rpm/
+  - ./rpm/
 description: Installation guide for Grafana
 title: Install Grafana
 weight: 100
