@@ -7,11 +7,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/k8s/authnz"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/user"
-
-	grafanaUser "github.com/grafana/grafana/pkg/services/user"
+	userpkg "github.com/grafana/grafana/pkg/services/user"
 	customStorage "k8s.io/apiextensions-apiserver/pkg/storage"
 	"k8s.io/apiextensions-apiserver/pkg/storage/filepath"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -31,8 +30,8 @@ var _ customStorage.Storage = (*entityStorage)(nil)
 // wrap the filepath storage so we can test overriding functions
 type entityStorage struct {
 	log            log.Logger
-	groupResource  schema.GroupResource
-	userService    grafanaUser.Service
+	userService    userpkg.Service
+	acService      accesscontrol.Service
 	entityStore    entity.EntityStoreServer
 	gr             schema.GroupResource
 	strategy       customStorage.Strategy
@@ -42,7 +41,7 @@ type entityStorage struct {
 	newListFunc    customStorage.NewObjectFunc
 }
 
-func ProvideStorage(userService grafanaUser.Service) customStorage.NewStorageFunc {
+func ProvideStorage(userService userpkg.Service, acService accesscontrol.Service) customStorage.NewStorageFunc {
 	return func(
 		gr schema.GroupResource,
 		strategy customStorage.Strategy,
@@ -59,8 +58,8 @@ func ProvideStorage(userService grafanaUser.Service) customStorage.NewStorageFun
 
 		return &entityStorage{
 			log:            log.New("k8s.apiserver.storage"),
-			groupResource:  gr,
 			userService:    userService,
+			acService:      acService,
 			entityStore:    entity.WireCircularDependencyHack,
 			gr:             gr,
 			strategy:       strategy,
@@ -159,22 +158,23 @@ func (s *entityStorage) NamespaceScoped() bool {
 	return s.strategy.NamespaceScoped()
 }
 
-func (s *entityStorage) getSignedInUser(ctx context.Context, obj runtime.Object) (*user.SignedInUser, error) {
+func (s *entityStorage) getSignedInUser(ctx context.Context, obj runtime.Object) (*userpkg.SignedInUser, error) {
 	accessor, err := apimeta.Accessor(obj)
 	if err != nil {
 		return nil, err
 	}
 	user, ok := request.UserFrom(ctx)
 	if !ok {
-		return nil, apierrors.NewForbidden(s.groupResource, accessor.GetName(), fmt.Errorf("unable to fetch user from context"))
+		return nil, apierrors.NewForbidden(s.gr, accessor.GetName(), fmt.Errorf("unable to fetch user from context"))
 	}
 
-	userQuery := grafanaUser.GetSignedInUserQuery{}
+	userQuery := userpkg.GetSignedInUserQuery{}
 
 	if user.GetName() == authnz.ApiServerUser {
 		userQuery.OrgID = 1
 		userQuery.UserID = 1
-		//return nil, apierrors.NewForbidden(s.groupResource, accessor.GetName(), fmt.Errorf("unable to convert k8s service account to Grafana user"))
+	} else if len(user.GetExtra()["user-id"]) == 0 || len(user.GetExtra()["org-id"]) == 0 {
+		return nil, fmt.Errorf("insufficient information on user context, couldn't determine UserID and OrgID")
 	} else {
 		userQuery.UserID, err = strconv.ParseInt(user.GetExtra()["user-id"][0], 10, 64)
 		if err != nil {
@@ -189,7 +189,19 @@ func (s *entityStorage) getSignedInUser(ctx context.Context, obj runtime.Object)
 
 	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &userQuery)
 	if err != nil {
-		return nil, apierrors.NewForbidden(s.groupResource, accessor.GetName(), fmt.Errorf("could not determine the user backing the service account: %s", err.Error()))
+		return nil, apierrors.NewForbidden(s.gr, accessor.GetName(), fmt.Errorf("could not determine the user backing the service account: %s", err.Error()))
+	}
+
+	if signedInUser.Permissions == nil {
+		signedInUser.Permissions = make(map[int64]map[string][]string)
+	}
+
+	if signedInUser.Permissions[signedInUser.OrgID] == nil {
+		permissions, err := s.acService.GetUserPermissions(ctx, signedInUser, accesscontrol.Options{})
+		if err != nil {
+			fmt.Errorf("failed fetching permissions for user: userID=%d, error=%s", signedInUser.UserID, err.Error())
+		}
+		signedInUser.Permissions[signedInUser.OrgID] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
 	return signedInUser, nil
