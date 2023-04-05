@@ -46,13 +46,12 @@ func (hs *HTTPServer) AdminGetSettings(c *contextmodel.ReqContext) response.Resp
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) AdminGetStats(c *contextmodel.ReqContext) response.Response {
-	statsQuery := stats.GetAdminStatsQuery{}
-
-	if err := hs.statsService.GetAdminStats(c.Req.Context(), &statsQuery); err != nil {
+	adminStats, err := hs.statsService.GetAdminStats(c.Req.Context(), &stats.GetAdminStatsQuery{})
+	if err != nil {
 		return response.Error(500, "Failed to get admin stats from database", err)
 	}
 
-	return response.JSON(http.StatusOK, statsQuery.Result)
+	return response.JSON(http.StatusOK, adminStats)
 }
 
 func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *user.SignedInUser, bag setting.SettingsBag) (setting.SettingsBag, error) {

@@ -11,11 +11,9 @@ import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
-import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { getRoutes as getQueryLibraryRoutes } from 'app/features/query-library/routes';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
@@ -501,14 +499,11 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
       ),
     },
-    ...getBrowseStorageRoutes(),
     ...getDynamicDashboardRoutes(),
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
-    ...getLiveRoutes(),
     ...getAlertingRoutes(),
     ...getProfileRoutes(),
-    ...getQueryLibraryRoutes(),
     ...extraRoutes,
     ...getPublicDashboardRoutes(),
     ...getDataConnectionsRoutes(),
@@ -518,28 +513,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     // TODO[Router]
     // ...playlistRoutes,
-  ];
-}
-
-export function getBrowseStorageRoutes(cfg = config): RouteDescriptor[] {
-  if (!cfg.featureToggles.dashboardsFromStorage) {
-    return [];
-  }
-  return [
-    {
-      path: '/g/:slug*.json', // suffix will eventually include dashboard
-      pageClass: 'page-dashboard',
-      routeName: DashboardRoutes.Path,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
-      ),
-    },
-    {
-      path: '/g/:slug*',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "StorageFolderPage" */ '../features/storage/StorageFolderPage')
-      ),
-    },
   ];
 }
 

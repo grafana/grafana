@@ -67,11 +67,11 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 						OrgId:        1,
 						DashboardIds: []int64{flder.ID, dashInRoot.ID},
 					}
-					err := testSearchDashboards(dashboardStore, query)
+					hits, err := testSearchDashboards(dashboardStore, query)
 					require.NoError(t, err)
-					require.Equal(t, len(query.Result), 2)
-					require.Equal(t, query.Result[0].ID, flder.ID)
-					require.Equal(t, query.Result[1].ID, dashInRoot.ID)
+					require.Equal(t, len(hits), 2)
+					require.Equal(t, hits[0].ID, flder.ID)
+					require.Equal(t, hits[1].ID, dashInRoot.ID)
 				})
 			})
 
@@ -90,11 +90,11 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 						SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 						OrgId:        1, DashboardIds: []int64{flder.ID, dashInRoot.ID},
 					}
-					err := testSearchDashboards(dashboardStore, query)
+					hits, err := testSearchDashboards(dashboardStore, query)
 					require.NoError(t, err)
 
-					require.Equal(t, len(query.Result), 1)
-					require.Equal(t, query.Result[0].ID, dashInRoot.ID)
+					require.Equal(t, len(hits), 1)
+					require.Equal(t, hits[0].ID, dashInRoot.ID)
 				})
 
 				t.Run("when the user is given permission", func(t *testing.T) {
@@ -109,11 +109,11 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{flder.ID, dashInRoot.ID},
 						}
-						err := testSearchDashboards(dashboardStore, query)
+						hits, err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
-						require.Equal(t, len(query.Result), 2)
-						require.Equal(t, query.Result[0].ID, flder.ID)
-						require.Equal(t, query.Result[1].ID, dashInRoot.ID)
+						require.Equal(t, len(hits), 2)
+						require.Equal(t, hits[0].ID, flder.ID)
+						require.Equal(t, hits[1].ID, dashInRoot.ID)
 					})
 				})
 
@@ -128,11 +128,11 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{flder.ID, dashInRoot.ID},
 						}
-						err := testSearchDashboards(dashboardStore, query)
+						hits, err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
-						require.Equal(t, len(query.Result), 2)
-						require.Equal(t, query.Result[0].ID, flder.ID)
-						require.Equal(t, query.Result[1].ID, dashInRoot.ID)
+						require.Equal(t, len(hits), 2)
+						require.Equal(t, hits[0].ID, flder.ID)
+						require.Equal(t, hits[1].ID, dashInRoot.ID)
 					})
 				})
 			})
@@ -150,10 +150,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					query := &dashboards.FindPersistedDashboardsQuery{
 						SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer}, OrgId: 1, DashboardIds: []int64{flder.ID, childDash.ID, dashInRoot.ID},
 					}
-					err := testSearchDashboards(dashboardStore, query)
+					hits, err := testSearchDashboards(dashboardStore, query)
 					require.NoError(t, err)
-					require.Equal(t, len(query.Result), 1)
-					require.Equal(t, query.Result[0].ID, dashInRoot.ID)
+					require.Equal(t, len(hits), 1)
+					require.Equal(t, hits[0].ID, dashInRoot.ID)
 				})
 
 				t.Run("when the user is given permission to child", func(t *testing.T) {
@@ -164,11 +164,11 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 					t.Run("should be able to search for child dashboard but not folder", func(t *testing.T) {
 						query := &dashboards.FindPersistedDashboardsQuery{SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer}, OrgId: 1, DashboardIds: []int64{flder.ID, childDash.ID, dashInRoot.ID}}
-						err := testSearchDashboards(dashboardStore, query)
+						hits, err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
-						require.Equal(t, len(query.Result), 2)
-						require.Equal(t, query.Result[0].ID, childDash.ID)
-						require.Equal(t, query.Result[1].ID, dashInRoot.ID)
+						require.Equal(t, len(hits), 2)
+						require.Equal(t, hits[0].ID, childDash.ID)
+						require.Equal(t, hits[1].ID, dashInRoot.ID)
 					})
 				})
 
@@ -183,12 +183,12 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{flder.ID, dashInRoot.ID, childDash.ID},
 						}
-						err := testSearchDashboards(dashboardStore, query)
+						hits, err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
-						require.Equal(t, len(query.Result), 3)
-						require.Equal(t, query.Result[0].ID, flder.ID)
-						require.Equal(t, query.Result[1].ID, childDash.ID)
-						require.Equal(t, query.Result[2].ID, dashInRoot.ID)
+						require.Equal(t, len(hits), 3)
+						require.Equal(t, hits[0].ID, flder.ID)
+						require.Equal(t, hits[1].ID, childDash.ID)
+						require.Equal(t, hits[2].ID, dashInRoot.ID)
 					})
 				})
 			})
@@ -224,13 +224,13 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 						},
 						OrgId: 1,
 					}
-					err := testSearchDashboards(dashboardStore, query)
+					hits, err := testSearchDashboards(dashboardStore, query)
 					require.NoError(t, err)
-					require.Equal(t, len(query.Result), 4)
-					require.Equal(t, query.Result[0].ID, folder1.ID)
-					require.Equal(t, query.Result[1].ID, folder2.ID)
-					require.Equal(t, query.Result[2].ID, childDash1.ID)
-					require.Equal(t, query.Result[3].ID, dashInRoot.ID)
+					require.Equal(t, len(hits), 4)
+					require.Equal(t, hits[0].ID, folder1.ID)
+					require.Equal(t, hits[1].ID, folder2.ID)
+					require.Equal(t, hits[2].ID, childDash1.ID)
+					require.Equal(t, hits[3].ID, dashInRoot.ID)
 				})
 			})
 
@@ -250,10 +250,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder1.ID, childDash1.ID, childDash2.ID, dashInRoot.ID},
 						}
-						err := testSearchDashboards(dashboardStore, query)
+						hits, err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
-						require.Equal(t, len(query.Result), 1)
-						require.Equal(t, query.Result[0].ID, dashInRoot.ID)
+						require.Equal(t, len(hits), 1)
+						require.Equal(t, hits[0].ID, dashInRoot.ID)
 					})
 				})
 				t.Run("and a dashboard is moved from folder with acl to the folder without an acl", func(t *testing.T) {
@@ -266,13 +266,13 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder2.ID, childDash1.ID, childDash2.ID, dashInRoot.ID},
 						}
-						err := testSearchDashboards(dashboardStore, query)
+						hits, err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
-						require.Equal(t, len(query.Result), 4)
-						require.Equal(t, query.Result[0].ID, folder2.ID)
-						require.Equal(t, query.Result[1].ID, childDash1.ID)
-						require.Equal(t, query.Result[2].ID, childDash2.ID)
-						require.Equal(t, query.Result[3].ID, dashInRoot.ID)
+						require.Equal(t, len(hits), 4)
+						require.Equal(t, hits[0].ID, folder2.ID)
+						require.Equal(t, hits[1].ID, childDash1.ID)
+						require.Equal(t, hits[2].ID, childDash2.ID)
+						require.Equal(t, hits[3].ID, dashInRoot.ID)
 					})
 				})
 
@@ -290,13 +290,13 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder2.ID, childDash1.ID, childDash2.ID, dashInRoot.ID},
 						}
-						err = testSearchDashboards(dashboardStore, query)
+						hits, err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
-						require.Equal(t, len(query.Result), 4)
-						require.Equal(t, query.Result[0].ID, folder2.ID)
-						require.Equal(t, query.Result[1].ID, childDash1.ID)
-						require.Equal(t, query.Result[2].ID, childDash2.ID)
-						require.Equal(t, query.Result[3].ID, dashInRoot.ID)
+						require.Equal(t, len(hits), 4)
+						require.Equal(t, hits[0].ID, folder2.ID)
+						require.Equal(t, hits[1].ID, childDash1.ID)
+						require.Equal(t, hits[2].ID, childDash2.ID)
+						require.Equal(t, hits[3].ID, dashInRoot.ID)
 					})
 				})
 			})
@@ -331,12 +331,12 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 						Type:         "dash-folder",
 					}
 
-					err := testSearchDashboards(dashboardStore, &query)
+					hits, err := testSearchDashboards(dashboardStore, &query)
 					require.NoError(t, err)
 
-					require.Equal(t, len(query.Result), 2)
-					require.Equal(t, query.Result[0].ID, folder1.ID)
-					require.Equal(t, query.Result[1].ID, folder2.ID)
+					require.Equal(t, len(hits), 2)
+					require.Equal(t, hits[0].ID, folder1.ID)
+					require.Equal(t, hits[1].ID, folder2.ID)
 				})
 
 				t.Run("should have edit permission in folders", func(t *testing.T) {
@@ -366,12 +366,12 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				}
 
 				t.Run("Should have write access to all dashboard folders with default ACL", func(t *testing.T) {
-					err := testSearchDashboards(dashboardStore, &query)
+					hits, err := testSearchDashboards(dashboardStore, &query)
 					require.NoError(t, err)
 
-					require.Equal(t, len(query.Result), 2)
-					require.Equal(t, query.Result[0].ID, folder1.ID)
-					require.Equal(t, query.Result[1].ID, folder2.ID)
+					require.Equal(t, len(hits), 2)
+					require.Equal(t, hits[0].ID, folder1.ID)
+					require.Equal(t, hits[1].ID, folder2.ID)
 				})
 
 				t.Run("Should have write access to one dashboard folder if default role changed to view for one folder", func(t *testing.T) {
@@ -380,11 +380,11 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					})
 					require.NoError(t, err)
 
-					err = testSearchDashboards(dashboardStore, &query)
+					hits, err := testSearchDashboards(dashboardStore, &query)
 					require.NoError(t, err)
 
-					require.Equal(t, len(query.Result), 1)
-					require.Equal(t, query.Result[0].ID, folder2.ID)
+					require.Equal(t, len(hits), 1)
+					require.Equal(t, hits[0].ID, folder2.ID)
 				})
 
 				t.Run("should have edit permission in folders", func(t *testing.T) {
@@ -414,10 +414,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				}
 
 				t.Run("Should have no write access to any dashboard folders with default ACL", func(t *testing.T) {
-					err := testSearchDashboards(dashboardStore, &query)
+					hits, err := testSearchDashboards(dashboardStore, &query)
 					require.NoError(t, err)
 
-					require.Equal(t, len(query.Result), 0)
+					require.Equal(t, len(hits), 0)
 				})
 
 				t.Run("Should be able to get one dashboard folder if default role changed to edit for one folder", func(t *testing.T) {
@@ -426,11 +426,11 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					})
 					require.NoError(t, err)
 
-					err = testSearchDashboards(dashboardStore, &query)
+					hits, err := testSearchDashboards(dashboardStore, &query)
 					require.NoError(t, err)
 
-					require.Equal(t, len(query.Result), 1)
-					require.Equal(t, query.Result[0].ID, folder1.ID)
+					require.Equal(t, len(hits), 1)
+					require.Equal(t, hits[0].ID, folder1.ID)
 				})
 
 				t.Run("should not have edit permission in folders", func(t *testing.T) {

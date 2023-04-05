@@ -35,7 +35,7 @@ You can see a list of users with accounts on your Grafana server. This action mi
 **To view a list of users**:
 
 1. Sign in to Grafana as a server administrator.
-1. Hover your cursor over the **Server Admin** (shield) icon until a menu appears, and click **Users**.
+1. Click **Administration** in the left-side menu, and then **Users**.
 
 > **Note:** If you have [organization administrator]({{< relref "../../roles-and-permissions/#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can still [view of list of users in a given organization]({{< relref "../manage-org-users/#view-a-list-of-organization-users" >}}).
 
@@ -50,7 +50,7 @@ View user details when you want to see login, and organizations and permissions 
 **To view user details**:
 
 1. Sign in to Grafana as a server administrator.
-1. Hover your cursor over the **Server Admin** (shield) icon until a menu appears, and click **Users**.
+1. Click **Administration** in the left-side menu, and then **Users**.
 1. Click a user.
 
 A user account contains the following sections.
@@ -82,7 +82,7 @@ Edit a user account when you want to modify user login credentials, or delete, d
 **To edit a user account**:
 
 1. Sign in to Grafana as a server administrator.
-1. Hover your cursor over the **Server Admin** (shield) icon until a menu appears, and click **Users**.
+1. Click **Administration** in the left-side menu, and then **Users**.
 1. Click a user.
 1. Complete any of the following actions, as necessary.
 
@@ -109,7 +109,7 @@ When you configure advanced authentication using Oauth, SAML, LDAP, or the Auth 
 **To add a user**:
 
 1. Sign in to Grafana as a server administrator.
-1. Hover your cursor over the **Server Admin** (shield) icon until a menu appears, and click **Users**.
+1. Click **Administration** in the left-side menu, and then **Users**.
 1. Click **New user**.
 1. Complete the fields and click **Create user**.
 
@@ -128,9 +128,9 @@ The force logout action can apply to one device that is logged in to Grafana, or
 - Ensure you have Grafana server administrator privileges
 
 1. Sign in to Grafana as a server administrator.
-1. Hover your cursor over the **Server Admin** (shield) icon until a menu appears, and click **Users**.
+1. Click **Administration** in the left-side menu, and then **Users**.
 1. Click a user.
-1. Scroll down to the **Sessions** section.
+1. Scroll down to the Sessions section.
 1. Perform one of the following actions:
    - Click **Force logout** next to the session entry that you want logged out of Grafana.
    - Click **Force logout from all devices**.

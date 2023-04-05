@@ -45,10 +45,6 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
       return <i className={getFontAwesomeIconStyles(name, className)} {...divElementProps} style={style} />;
     }
 
-    if (name === 'panel-add') {
-      size = 'xl';
-    }
-
     if (!cacheInitialized) {
       initIconCache();
     }

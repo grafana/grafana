@@ -14,7 +14,6 @@ import (
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/provisioning/alerting/file"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -64,8 +63,8 @@ type AlertRuleService interface {
 	GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroup, error)
 	ReplaceRuleGroup(ctx context.Context, orgID int64, group alerting_models.AlertRuleGroup, userID int64, provenance alerting_models.Provenance) error
 	GetAlertRuleWithFolderTitle(ctx context.Context, orgID int64, ruleUID string) (provisioning.AlertRuleWithFolderTitle, error)
-	GetAlertRuleGroupWithFolderTitle(ctx context.Context, orgID int64, folder, group string) (file.AlertRuleGroupWithFolderTitle, error)
-	GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64) ([]file.AlertRuleGroupWithFolderTitle, error)
+	GetAlertRuleGroupWithFolderTitle(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroupWithFolderTitle, error)
+	GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64) ([]alerting_models.AlertRuleGroupWithFolderTitle, error)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) response.Response {
@@ -337,7 +336,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *contextmodel.ReqContext, f
 		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, AlertRuleGroupToApi(g))
+	return response.JSON(http.StatusOK, ApiAlertRuleGroupFromAlertRuleGroup(g))
 }
 
 // RouteGetAlertRulesExport retrieves all alert rules in a format compatible with file provisioning.
@@ -347,7 +346,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
-	e, err := file.NewAlertingFileExport(groupsWithTitle)
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle(groupsWithTitle)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
@@ -365,7 +364,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqCont
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rule group")
 	}
 
-	e, err := file.NewAlertingFileExport([]file.AlertRuleGroupWithFolderTitle{g})
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]alerting_models.AlertRuleGroupWithFolderTitle{g})
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
@@ -383,7 +382,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, 
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	e, err := file.NewAlertingFileExport([]file.AlertRuleGroupWithFolderTitle{{
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]alerting_models.AlertRuleGroupWithFolderTitle{{
 		AlertRuleGroup: &alerting_models.AlertRuleGroup{
 			Title:     rule.AlertRule.RuleGroup,
 			FolderUID: rule.AlertRule.NamespaceUID,
@@ -403,7 +402,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, 
 func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, ag definitions.AlertRuleGroup, folderUID string, group string) response.Response {
 	ag.FolderUID = folderUID
 	ag.Title = group
-	groupModel, err := AlertRuleGroupFromApi(ag)
+	groupModel, err := AlertRuleGroupFromApiAlertRuleGroup(ag)
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}
