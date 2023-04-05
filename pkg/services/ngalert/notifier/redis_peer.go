@@ -379,10 +379,7 @@ func (p *redisPeer) fullStateReqReceiveLoop() {
 			if data.Payload == p.name {
 				continue
 			}
-			cmd := p.redis.Publish(context.Background(), p.withPrefix(fullStateChannel), p.LocalState())
-			if cmd.Err() != nil {
-				p.logger.Error("error publishing message to redis", "err", cmd.Err(), "channel", data.Channel)
-			}
+			p.fullStateSyncPublish()
 		}
 	}
 }
@@ -499,6 +496,8 @@ func (c *RedisChannel) Broadcast(b []byte) {
 	c.p.messagesSent.WithLabelValues(c.msgType).Inc()
 	c.p.messagesSentSize.WithLabelValues(c.msgType).Add(float64(len(b)))
 	pub := c.p.redis.Publish(context.Background(), c.channel, string(b))
+	// In error here might not be as critical as one might think on first sight.
+	// The state will eventually be propagted to other members by the full sync.
 	if pub.Err() != nil {
 		c.p.logger.Error("msg", "error publishing message to redis", "err", pub.Err(), "channel", c.channel)
 	}
