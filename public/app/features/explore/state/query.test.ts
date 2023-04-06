@@ -123,10 +123,12 @@ async function setupStore(queries: DataQuery[], datasourceInstance: Partial<Data
   const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
     ...defaultInitialState,
     explore: {
-      [exploreId]: {
-        ...defaultInitialState.explore.panes[exploreId],
-        queries: queries,
-        datasourceInstance: datasourceInstance,
+      panes: {
+        [exploreId]: {
+          ...defaultInitialState.explore.panes[exploreId],
+          queries: queries,
+          datasourceInstance: datasourceInstance,
+        },
       },
     },
   } as unknown as Partial<StoreState>);
@@ -204,16 +206,18 @@ describe('running queries', () => {
     const exploreId = 'left';
     const initialState = {
       explore: {
-        [exploreId]: {
-          datasourceInstance: { name: 'testDs' },
-          initialized: true,
-          loading: true,
-          querySubscription: unsubscribable,
-          queries: ['A'],
-          range: testRange,
-          supplementaryQueries: {
-            [SupplementaryQueryType.LogsVolume]: { enabled: true },
-            [SupplementaryQueryType.LogsSample]: { enabled: true },
+        panes: {
+          [exploreId]: {
+            datasourceInstance: { name: 'testDs' },
+            initialized: true,
+            loading: true,
+            querySubscription: unsubscribable,
+            queries: ['A'],
+            range: testRange,
+            supplementaryQueries: {
+              [SupplementaryQueryType.LogsVolume]: { enabled: true },
+              [SupplementaryQueryType.LogsSample]: { enabled: true },
+            },
           },
         },
       },
@@ -254,10 +258,12 @@ describe('changeQueries', () => {
       const { dispatch } = configureStore({
         ...defaultInitialState,
         explore: {
-          ['left']: {
-            ...defaultInitialState.explore.panes.left,
-            datasourceInstance: datasources[0],
-            queries: originalQueries,
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: datasources[0],
+              queries: originalQueries,
+            },
           },
         },
       } as unknown as Partial<StoreState>);
@@ -286,10 +292,12 @@ describe('changeQueries', () => {
       const { dispatch } = configureStore({
         ...defaultInitialState,
         explore: {
-          ['left']: {
-            ...defaultInitialState.explore.panes.left,
-            datasourceInstance: datasources[0],
-            queries: [{ refId: 'A', datasource: datasources[0].getRef() }],
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: datasources[0],
+              queries: [{ refId: 'A', datasource: datasources[0].getRef() }],
+            },
           },
         },
       } as unknown as Partial<StoreState>);
@@ -313,10 +321,12 @@ describe('changeQueries', () => {
       const { dispatch, getState } = configureStore({
         ...defaultInitialState,
         explore: {
-          ['left']: {
-            ...defaultInitialState.explore.panes.left,
-            datasourceInstance: datasources[0],
-            queries: originalQueries,
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: datasources[0],
+              queries: originalQueries,
+            },
           },
         },
       } as unknown as Partial<StoreState>);
@@ -336,10 +346,12 @@ describe('changeQueries', () => {
       const { dispatch, getState } = configureStore({
         ...defaultInitialState,
         explore: {
-          ['left']: {
-            ...defaultInitialState.explore.panes.left,
-            datasourceInstance: datasources[0],
-            queries: [{ refId: 'A', datasource: datasources[0].getRef() }],
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: datasources[0],
+              queries: [{ refId: 'A', datasource: datasources[0].getRef() }],
+            },
           },
         },
       } as unknown as Partial<StoreState>);
@@ -368,9 +380,11 @@ describe('importing queries', () => {
       const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...defaultInitialState,
         explore: {
-          ['left']: {
-            ...defaultInitialState.explore.panes.left,
-            datasourceInstance: datasources[0],
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: datasources[0],
+            },
           },
         },
       } as unknown as Partial<StoreState>);
@@ -627,13 +641,15 @@ describe('reducer', () => {
       const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...defaultInitialState,
         explore: {
-          ['left']: {
-            ...defaultInitialState.explore.panes.left,
-            queryResponse: {
-              series: [{ name: 'test name' }],
-              state: LoadingState.Done,
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              queryResponse: {
+                series: [{ name: 'test name' }],
+                state: LoadingState.Done,
+              },
+              absoluteRange: { from: 1621348027000, to: 1621348050000 },
             },
-            absoluteRange: { from: 1621348027000, to: 1621348050000 },
           },
         },
       } as unknown as Partial<StoreState>);
@@ -649,10 +665,12 @@ describe('reducer', () => {
       const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...defaultInitialState,
         explore: {
-          ['left']: {
-            ...defaultInitialState.explore.panes.left,
-            queryResponse: { series: [{ name: 'test name' }], state: LoadingState.Loading },
-            absoluteRange: { from: 1621348027000, to: 1621348050000 },
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              queryResponse: { series: [{ name: 'test name' }], state: LoadingState.Loading },
+              absoluteRange: { from: 1621348027000, to: 1621348050000 },
+            },
           },
         },
       } as unknown as Partial<StoreState>);
@@ -666,19 +684,21 @@ describe('reducer', () => {
       const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...defaultInitialState,
         explore: {
-          ['left']: {
-            ...defaultInitialState.explore.panes.left,
-            queryResponse: {
-              series: [{ name: 'test name' }],
-              state: LoadingState.Done,
-            },
-            absoluteRange: { from: 1621348027000, to: 1621348050000 },
-            cache: [
-              {
-                key: 'from=1621348027000&to=1621348050000',
-                value: { series: [{ name: 'old test name' }], state: LoadingState.Done },
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              queryResponse: {
+                series: [{ name: 'test name' }],
+                state: LoadingState.Done,
               },
-            ],
+              absoluteRange: { from: 1621348027000, to: 1621348050000 },
+              cache: [
+                {
+                  key: 'from=1621348027000&to=1621348050000',
+                  value: { series: [{ name: 'old test name' }], state: LoadingState.Done },
+                },
+              ],
+            },
           },
         },
       } as unknown as Partial<StoreState>);
@@ -695,14 +715,16 @@ describe('reducer', () => {
       const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...defaultInitialState,
         explore: {
-          ['left']: {
-            ...defaultInitialState.explore.panes.left,
-            cache: [
-              {
-                key: 'from=1621348027000&to=1621348050000',
-                value: { series: [{ name: 'old test name' }], state: 'Done' },
-              },
-            ],
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              cache: [
+                {
+                  key: 'from=1621348027000&to=1621348050000',
+                  value: { series: [{ name: 'old test name' }], state: 'Done' },
+                },
+              ],
+            },
           },
         },
       } as unknown as Partial<StoreState>);
@@ -736,22 +758,24 @@ describe('reducer', () => {
       const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...defaultInitialState,
         explore: {
-          ['left']: {
-            ...defaultInitialState.explore.panes.left,
-            datasourceInstance: {
-              query: jest.fn(),
-              getRef: jest.fn(),
-              meta: {
-                id: 'something',
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: {
+                query: jest.fn(),
+                getRef: jest.fn(),
+                meta: {
+                  id: 'something',
+                },
+                getDataProvider: () => {
+                  return mockDataProvider();
+                },
+                getSupportedSupplementaryQueryTypes: () => [
+                  SupplementaryQueryType.LogsVolume,
+                  SupplementaryQueryType.LogsSample,
+                ],
+                getSupplementaryQuery: jest.fn(),
               },
-              getDataProvider: () => {
-                return mockDataProvider();
-              },
-              getSupportedSupplementaryQueryTypes: () => [
-                SupplementaryQueryType.LogsVolume,
-                SupplementaryQueryType.LogsSample,
-              ],
-              getSupplementaryQuery: jest.fn(),
             },
           },
         },
