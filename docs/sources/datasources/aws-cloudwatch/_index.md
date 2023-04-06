@@ -31,11 +31,12 @@ Once you've added the data source, you can [configure it]({{< relref "#configure
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `CloudWatch` in the search bar.
+1. Click **CloudWatch**.
 
-1. Hover the cursor over the **Configuration** (gear) icon.
-1. Select **Data Sources**.
-1. Select the CloudWatch data source.
+   The **Settings** tab of the data source is displayed.
 
 ### Configure AWS authentication
 
