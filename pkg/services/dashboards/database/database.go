@@ -939,9 +939,14 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if !ac.IsDisabled(d.cfg) {
+		recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
+		if err != nil {
+			return nil, err
+		}
+
 		// if access control is enabled, overwrite the filters so far
 		filters = []interface{}{
-			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type),
+			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported),
 		}
 	}
 
