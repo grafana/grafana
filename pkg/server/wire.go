@@ -119,6 +119,7 @@ import (
 	serviceaccountsretriever "github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
+	"github.com/grafana/grafana/pkg/services/spicedb"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	starApi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
@@ -370,6 +371,7 @@ var wireBasicSet = wire.NewSet(
 	loggermw.Provide,
 	modules.WireSet,
 	moduleRegistry.WireSet,
+	spicedb.WireSet,
 )
 
 var wireSet = wire.NewSet(

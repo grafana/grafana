@@ -17,7 +17,7 @@ type SpiceDB struct {
 	errors chan error
 }
 
-func ProvideSpiceDB() *SpiceDB {
+func ProvideService() *SpiceDB {
 	s := &SpiceDB{
 		log: log.New("spicedb"),
 	}
@@ -26,9 +26,8 @@ func ProvideSpiceDB() *SpiceDB {
 }
 
 func (s *SpiceDB) starting(ctx context.Context) error {
-	emptyDS, err := memdb.NewMemdbDatastore(0, revisionQuantization, gcWindow)
 	srv, err := server.NewConfigWithOptions(
-		server.WithDatastore(ds),
+		//server.WithDatastore(ds),
 		server.WithDispatchMaxDepth(50),
 		server.WithMaximumPreconditionCount(1000),
 		server.WithMaximumUpdatesPerWrite(1000),

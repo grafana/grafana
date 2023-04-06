@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/k8s/kine"
 	publicdashboardWebhooks "github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard/webhooks"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/spicedb"
 )
 
 type Registry interface{}
@@ -32,6 +33,7 @@ func ProvideRegistry(
 	httpServer *api.HTTPServer,
 	pdWebhooks *publicdashboardWebhooks.WebhooksAPI,
 	provisioning *provisioning.ProvisioningServiceImpl,
+	spiceDB *spicedb.SpiceDB,
 ) *registry {
 	return NewRegistry(
 		moduleManager,
@@ -44,6 +46,7 @@ func ProvideRegistry(
 		httpServer,
 		pdWebhooks,
 		provisioning,
+		spiceDB,
 	)
 }
 

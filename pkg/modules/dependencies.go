@@ -17,6 +17,8 @@ const (
 	Provisioning string = "provisioning"
 
 	PublicDashboardsWebhooks string = "public-dashboards-webhooks"
+
+	SpiceDB string = "spicedb"
 )
 
 var DependencyMap = map[string][]string{
@@ -35,5 +37,7 @@ var DependencyMap = map[string][]string{
 
 	PublicDashboardsWebhooks: {KubernetesClientset},
 
-	All: {Kubernetes, HTTPServer, PublicDashboardsWebhooks, Provisioning},
+	SpiceDB: {},
+
+	All: {Kubernetes, HTTPServer, PublicDashboardsWebhooks, Provisioning, SpiceDB},
 }
