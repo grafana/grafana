@@ -65,9 +65,14 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 			frames = data.Frames{dataframe}
 		}
 
-		respD := resp.Responses["A"]
+		refId := "A"
+		if(q.RefID != "") {
+			refId = q.RefID
+		}
+
+		respD := resp.Responses[refId]
 		respD.Frames = frames
-		resp.Responses["A"] = respD
+		resp.Responses[refId] = respD
 	}
 
 	return resp, nil
