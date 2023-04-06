@@ -48,6 +48,7 @@ function useStateHistoryModal() {
         closeOnEscape={true}
         title="State history"
         className={styles.modal}
+        contentClassName={styles.modalContent}
       >
         <Suspense fallback={'Loading...'}>
           {implementation === StateHistoryImplementation.Loki && <LokiStateHistory ruleUID={rule.grafana_alert.uid} />}
@@ -71,6 +72,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 80%;
     height: 80%;
     min-width: 800px;
+  `,
+  modalContent: css`
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    padding: ${theme.spacing()};
   `,
 });
 

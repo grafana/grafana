@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { getUnixTime, subMinutes } from 'date-fns';
-import { groupBy, isEmpty, isEqual, sortBy, uniqBy, uniqueId } from 'lodash';
+import { groupBy, isEmpty, isEqual, take, uniqBy, uniqueId } from 'lodash';
 import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -91,7 +91,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   };
 
   const dataFrames: DataFrame[] = Object.entries(groupedLines).map<DataFrame>(([key, records]) => {
-    const recordsSorted = sortBy(records, (record) => record.timestamp);
+    const recordsSorted = records;
 
     const frame: DataFrame = {
       fields: [
@@ -145,24 +145,26 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     return frame;
   });
 
+  const frameSubset = take(dataFrames, 10);
+
   return (
-    <div className={styles.fullWidth}>
-      <Stack direction="column">
-        {!isEmpty(commonLabels) && (
-          <div>
-            Common labels: <TagList tags={commonLabels.map((label) => label.join('='))} />
-          </div>
-        )}
+    <div className={styles.fullSize}>
+      {!isEmpty(commonLabels) && (
+        <Stack direction="row" alignItems="center">
+          <strong>Common labels</strong>
+          <TagList tags={commonLabels.map((label) => label.join('='))} />
+        </Stack>
+      )}
+      <div style={{ flex: 1 }}>
         <AutoSizer>
           {({ width, height }) => (
             <TimelineChart
-              data-testid={height}
-              frames={dataFrames}
+              frames={frameSubset}
               timeRange={timeRange}
               timeZone={'browser'}
               mode={TimelineMode.Changes}
               // TODO do the math to get a good height
-              height={300}
+              height={height}
               width={width}
               showValue={VisibilityMode.Never}
               theme={theme}
@@ -178,11 +180,33 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
                 { label: 'Pending', color: 'yellow', yAxis: 1 },
                 { label: 'Alerting', color: 'red', yAxis: 1 },
               ]}
-            />
+            >
+              {(builder) => {
+                builder.setSync();
+                const interpolator = builder.getTooltipInterpolator();
+
+                // I found this in TooltipPlugin.tsx
+                if (interpolator) {
+                  builder.addHook('setCursor', (u) => {
+                    interpolator(
+                      () => {
+                        // this one returns a number and gives us the ID for what series we are hovering over
+                      },
+                      (idx) => {
+                        // this is supposed to be the X-axis ID for the timestamp but it's always 0
+                        console.log(idx);
+                      },
+                      () => {},
+                      u
+                    );
+                  });
+                }
+              }}
+            </TimelineChart>
           )}
         </AutoSizer>
-        <LogRecordViewerByTimestamp records={linesWithTimestamp} commonLabels={commonLabels} />
-      </Stack>
+      </div>
+      <LogRecordViewerByTimestamp records={linesWithTimestamp} commonLabels={commonLabels} />
     </div>
   );
 };
@@ -232,9 +256,7 @@ function LogRecordViewerByInstance({ records, commonLabels }: LogRecordViewerPro
 function LogRecordViewerByTimestamp({ records, commonLabels }: LogRecordViewerProps) {
   const styles = useStyles2(getStyles);
 
-  const groupedLines = groupBy(records, (record: LogRecord) => {
-    return record.timestamp;
-  });
+  const groupedLines = groupBy(records, (record: LogRecord) => record.timestamp);
 
   return (
     <div className={styles.logsScrollable}>
@@ -242,7 +264,7 @@ function LogRecordViewerByTimestamp({ records, commonLabels }: LogRecordViewerPr
         return (
           <div key={key}>
             <Stack direction="column">
-              <h4 id={key}>{dateTimeFormat(parseInt(key, 10))}</h4>
+              <div id={key}>{dateTimeFormat(parseInt(key, 10))}</div>
               <div className={styles.logsContainer}>
                 {records.map((logRecord) => (
                   <React.Fragment key={uniqueId()}>
@@ -306,13 +328,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: ${theme.spacing(2, 1)};
     align-items: center;
   `,
-  fullWidth: css`
+  fullSize: css`
     min-width: 100%;
-  `,
+    height: 100%;
+    overflow: hidden;
 
+    display: flex;
+    flex-direction: column;
+  `,
   logsScrollable: css`
     height: 500px;
     overflow: scroll;
+
+    flex: 1;
   `,
 });
 
