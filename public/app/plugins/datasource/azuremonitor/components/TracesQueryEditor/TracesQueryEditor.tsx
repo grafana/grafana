@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { useEffectOnce } from 'react-use';
+import React, { useCallback, useEffect, useState } from 'react';
+import { usePrevious } from 'react-use';
 
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
@@ -48,14 +48,15 @@ const TracesQueryEditor = ({
   };
 
   const [operationId, setOperationId] = useState<string>(query.azureTraces?.operationId ?? '');
+  const previousOperationId = usePrevious(query.azureTraces?.operationId);
 
-  useEffectOnce(() => {
+  useEffect(() => {
     if (query.azureTraces?.operationId) {
-      if (!operationId || operationId !== query.azureTraces.operationId) {
+      if (previousOperationId !== query.azureTraces.operationId) {
         setOperationId(query.azureTraces.operationId);
       }
     }
-  });
+  }, [setOperationId, previousOperationId, query, operationId]);
 
   const handleChange = useCallback((ev: React.FormEvent) => {
     if (ev.target instanceof HTMLInputElement) {
@@ -63,10 +64,13 @@ const TracesQueryEditor = ({
     }
   }, []);
 
-  const handleBlur = useCallback(() => {
-    const newQuery = setQueryOperationId(query, operationId);
-    onChange(newQuery);
-  }, [onChange, operationId, query]);
+  const handleBlur = useCallback(
+    (ev: React.FormEvent) => {
+      const newQuery = setQueryOperationId(query, operationId);
+      onChange(newQuery);
+    },
+    [onChange, operationId, query]
+  );
 
   return (
     <span data-testid="azure-monitor-logs-query-editor-with-experimental-ui">
