@@ -2408,7 +2408,7 @@ steps:
   - build-frontend-packages
   environment:
     GCP_KEY:
-      from_secret: gcp_ke
+      from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/build-container:1.7.2
@@ -6798,6 +6798,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 160d9fceeb892082d85090e1e1a83b1e3c92d9856072da8eeda973b8122f5276
+hmac: 8aab4d7ca003a3e67102ec7559baf04868aca3569d2971747ebef4eb26d52480
 
 ...
