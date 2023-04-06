@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/registryentity"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -40,7 +39,7 @@ type Service struct {
 	bus bus.Bus
 
 	mutex    sync.RWMutex
-	registry map[string]registryentity.RegistryEntityService
+	registry map[string]folder.RegistryEntityService
 }
 
 func ProvideService(
@@ -63,7 +62,7 @@ func ProvideService(
 		accessControl:        ac,
 		bus:                  bus,
 		db:                   db,
-		registry:             make(map[string]registryentity.RegistryEntityService),
+		registry:             make(map[string]folder.RegistryEntityService),
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		srv.DBMigration(db)
@@ -818,13 +817,13 @@ func toFolderError(err error) error {
 	return err
 }
 
-func (s *Service) RegisterEntityService(r registryentity.RegistryEntityService) error {
+func (s *Service) RegisterEntityService(r folder.RegistryEntityService) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	_, ok := s.registry[r.Kind()]
 	if ok {
-		return registryentity.ErrTargetSrvConflict
+		return folder.ErrTargetSrvConflict
 	}
 
 	s.registry[r.Kind()] = r

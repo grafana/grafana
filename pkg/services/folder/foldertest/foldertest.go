@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/registryentity"
 )
 
 type FakeService struct {
@@ -47,6 +46,6 @@ func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (
 	return s.ExpectedFolder, s.ExpectedError
 }
 
-func (s *FakeService) RegisterEntityService(service registryentity.RegistryEntityService) error {
+func (s *FakeService) RegisterEntityService(service folder.RegistryEntityService) error {
 	return nil
 }

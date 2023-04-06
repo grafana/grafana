@@ -2,8 +2,6 @@ package folder
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/services/registryentity"
 )
 
 type Service interface {
@@ -27,7 +25,7 @@ type Service interface {
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error
 	// Move changes a folder's parent folder to the requested new parent.
 	Move(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
-	RegisterEntityService(service registryentity.RegistryEntityService) error
+	RegisterEntityService(service RegistryEntityService) error
 }
 
 // FolderStore is a folder store.

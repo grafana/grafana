@@ -1,6 +1,7 @@
 package folder
 
 import (
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/user"
@@ -13,6 +14,7 @@ var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-
 var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
 var ErrFolderTooDeep = errutil.NewBase(errutil.StatusInternal, "folder.too-deep")
 var ErrCircularReference = errutil.NewBase(errutil.StatusBadRequest, "folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
+var ErrTargetSrvConflict = errors.New("target srv conflict")
 
 const (
 	GeneralFolderUID     = "general"

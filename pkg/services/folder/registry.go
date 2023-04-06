@@ -1,4 +1,4 @@
-package registryentity
+package folder
 
 import (
 	"context"
