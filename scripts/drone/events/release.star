@@ -64,10 +64,19 @@ load("scripts/drone/vault.star", "from_secret", "prerelease_bucket")
 
 ver_mode = "release"
 release_trigger = {
-    "event": {"exclude": ["promote"]},
-    "ref": [
-        "refs/tags/v*",
-    ],
+    "event": {
+        "exclude": [
+            "promote",
+        ],
+    },
+    "ref": {
+        "include": [
+            "refs/tags/v*",
+        ],
+        "exclude": [
+            "refs/tags/*-cloud*",
+        ],
+    },
 }
 
 def store_npm_packages_step():
@@ -195,6 +204,12 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         mysql_integration_tests_step(),
     ]
 
+    # We don't need to run integration tests at release time since they have
+    # been run multiple times before:
+    if ver_mode in ("release"):
+        integration_test_steps = []
+        volumes = []
+
     windows_pipeline = pipeline(
         name = "{}-oss-windows".format(ver_mode),
         edition = "oss",
@@ -202,11 +217,9 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         steps = get_windows_steps(edition = "oss", ver_mode = ver_mode),
         platform = "windows",
         depends_on = [
-            # 'oss-build-e2e-publish-{}'.format(ver_mode),
             "{}-oss-build-e2e-publish".format(ver_mode),
             "{}-oss-test-frontend".format(ver_mode),
             "{}-oss-test-backend".format(ver_mode),
-            "{}-oss-integration-tests".format(ver_mode),
         ],
         environment = environment,
     )
@@ -223,7 +236,10 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         ),
         test_frontend(trigger, ver_mode),
         test_backend(trigger, ver_mode),
-        pipeline(
+    ]
+
+    if ver_mode not in ("release"):
+        pipelines.append(pipeline(
             name = "{}-oss-integration-tests".format(ver_mode),
             edition = "oss",
             trigger = trigger,
@@ -237,9 +253,9 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
                     integration_test_steps,
             environment = environment,
             volumes = volumes,
-        ),
-        windows_pipeline,
-    ]
+        ))
+
+    pipelines.append(windows_pipeline)
 
     return pipelines
 
@@ -335,7 +351,15 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     integration_test_steps = [
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
+        redis_integration_tests_step(),
+        memcached_integration_tests_step(),
     ]
+
+    # We don't need to run integration tests at release time since they have
+    # been run multiple times before:
+    if ver_mode in ("release"):
+        integration_test_steps = []
+        volumes = []
 
     windows_pipeline = pipeline(
         name = "{}-enterprise-windows".format(ver_mode),
@@ -344,11 +368,9 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         steps = get_windows_steps(edition = "enterprise", ver_mode = ver_mode),
         platform = "windows",
         depends_on = [
-            # 'enterprise-build-e2e-publish-{}'.format(ver_mode),
             "{}-enterprise-build-e2e-publish".format(ver_mode),
             "{}-enterprise-test-frontend".format(ver_mode),
             "{}-enterprise-test-backend".format(ver_mode),
-            "{}-enterprise-integration-tests".format(ver_mode),
         ],
         environment = environment,
     )
@@ -365,7 +387,10 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         ),
         test_frontend_enterprise(trigger, ver_mode, source = source),
         test_backend_enterprise(trigger, ver_mode, source = source),
-        pipeline(
+    ]
+
+    if ver_mode not in ("release"):
+        pipelines.append(pipeline(
             name = "{}-enterprise-integration-tests".format(ver_mode),
             edition = "enterprise",
             trigger = trigger,
@@ -387,16 +412,12 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
                     [
                         wire_install_step(),
                     ] +
-                    integration_test_steps +
-                    [
-                        redis_integration_tests_step(),
-                        memcached_integration_tests_step(),
-                    ],
+                    integration_test_steps,
             environment = environment,
             volumes = volumes,
-        ),
-        windows_pipeline,
-    ]
+        ))
+
+    pipelines.append(windows_pipeline)
 
     return pipelines
 
@@ -574,7 +595,6 @@ def publish_packages_pipeline():
         "target": ["public"],
     }
     oss_steps = [
-        download_grabpl_step(),
         compile_build_cmd(),
         publish_linux_packages_step(edition = "oss", package_manager = "deb"),
         publish_linux_packages_step(edition = "oss", package_manager = "rpm"),
@@ -582,7 +602,6 @@ def publish_packages_pipeline():
     ]
 
     enterprise_steps = [
-        download_grabpl_step(),
         compile_build_cmd(),
         publish_linux_packages_step(edition = "enterprise", package_manager = "deb"),
         publish_linux_packages_step(edition = "enterprise", package_manager = "rpm"),
@@ -651,7 +670,79 @@ def artifacts_page_pipeline():
                 compile_build_cmd("enterprise"),
                 artifacts_page_step(),
             ],
-            edition = "all",
+            edition = "enterprise",
             environment = {"EDITION": "enterprise"},
         ),
     ]
+
+def integration_test_pipelines():
+    """
+    Trigger integration tests on release builds
+
+    These pipelines should be triggered when we have a release that does a lot of
+    cherry-picking and we still want to have all the integration tests run on that
+    particular build.
+
+    Returns:
+      List of Drone pipelines (one for enterprise and one for oss integration tests)
+    """
+    trigger = {
+        "event": ["promote"],
+        "target": "integration-tests",
+    }
+    pipelines = []
+    volumes = integration_test_services_volumes()
+    oss_integration_test_steps = [
+        postgres_integration_tests_step(),
+        mysql_integration_tests_step(),
+    ]
+    enterprise_integration_test_steps = oss_integration_test_steps + [
+        redis_integration_tests_step(),
+        memcached_integration_tests_step(),
+    ]
+    source = "${DRONE_TAG}"
+
+    pipelines.append(pipeline(
+        name = "integration-tests-oss",
+        edition = "oss",
+        trigger = trigger,
+        services = integration_test_services(edition = "oss"),
+        steps = [
+                    download_grabpl_step(),
+                    identify_runner_step(),
+                    verify_gen_cue_step(),
+                    wire_install_step(),
+                ] +
+                oss_integration_test_steps,
+        environment = {"EDITION": "oss"},
+        volumes = volumes,
+    ))
+
+    pipelines.append(pipeline(
+        name = "integration-tests-enterprise",
+        edition = "enterprise",
+        trigger = trigger,
+        services = integration_test_services(edition = "enterprise"),
+        steps = [
+                    download_grabpl_step(),
+                    identify_runner_step(),
+                    clone_enterprise_step(source = source),
+                    init_enterprise_step(ver_mode),
+                ] +
+                with_deps(
+                    [
+                        verify_gen_cue_step(),
+                    ],
+                    [
+                        "init-enterprise",
+                    ],
+                ) +
+                [
+                    wire_install_step(),
+                ] +
+                enterprise_integration_test_steps,
+        environment = {"EDITION": "enterprise"},
+        volumes = volumes,
+    ))
+
+    return pipelines

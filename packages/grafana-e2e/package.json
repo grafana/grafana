@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/e2e",
-  "version": "9.2.11",
+  "version": "9.2.16",
   "description": "Grafana End-to-End Test Library",
   "keywords": [
     "cli",
@@ -61,7 +61,7 @@
     "@babel/core": "7.19.0",
     "@babel/preset-env": "7.19.0",
     "@cypress/webpack-preprocessor": "5.12.0",
-    "@grafana/e2e-selectors": "9.2.11",
+    "@grafana/e2e-selectors": "9.2.16",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@mochajs/json-file-reporter": "^1.2.0",
     "babel-loader": "8.2.5",

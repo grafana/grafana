@@ -352,7 +352,7 @@ func (client *Client) DownloadDirectory(ctx context.Context, bucket *storage.Buc
 	}
 
 	for _, file := range files {
-		err = client.downloadFile(ctx, bucket, file.FullPath, filepath.Join(destPath, file.PathTrimmed))
+		err = client.downloadFile(ctx, bucket, file.FullPath, file.PathTrimmed)
 		if err != nil {
 			return err
 		}
