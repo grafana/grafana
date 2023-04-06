@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
 import React, { FormEvent, MouseEvent, useState } from 'react';
-import { IconName } from 'src/types/icon';
 
 import { dateMath, dateTime, getDefaultTimeRange, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { stylesFactory } from '../../themes';
 import { useTheme2 } from '../../themes/ThemeContext';
+import { IconName } from '../../types/icon';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../Icon/Icon';
 import { getInputStyles } from '../Input/Input';
