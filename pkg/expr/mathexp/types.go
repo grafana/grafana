@@ -149,6 +149,8 @@ func NumberFromRef(refID string, nr numeric.MetricRef) (Number, error) {
 		TypeVersion: data.FrameTypeVersion{0, 1},
 	})
 
+	frame.Fields[0].Config = nr.ValueField.Config
+
 	return Number{frame}, nil
 }
 
