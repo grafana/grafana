@@ -1,15 +1,36 @@
 import { css } from '@emotion/css';
+import { deepClone } from 'fast-json-patch';
 import React from 'react';
+import { render } from 'react-dom';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import {
+  DataLinkTransformationConfig,
+  DataSourceInstanceSettings,
+  getSupportedTransTypeDetails,
+  GrafanaTheme2,
+  SupportedTransformationType,
+} from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Card, Field, FieldSet, Input, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Card,
+  Field,
+  FieldArray,
+  FieldSet,
+  IconButton,
+  Input,
+  InputControl,
+  Select,
+  useStyles2,
+} from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { getVariableUsageInfo } from '../../explore/utils/links';
 
 import { useCorrelationsFormContext } from './correlationsFormContext';
+import { emptyTransformation } from './types';
 import { getInputId } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -21,6 +42,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-weight: ${theme.typography.fontWeightMedium};
   `,
 });
+
+const getTransformOptions = () => {
+  return Object.keys(SupportedTransformationType).map((key) => {
+    const transType = getSupportedTransTypeDetails(
+      SupportedTransformationType[key as keyof typeof SupportedTransformationType]
+    );
+    return {
+      label: transType.label,
+      value: transType.value,
+      description: transType.description,
+    };
+  });
+};
 
 export const ConfigureCorrelationSourceForm = () => {
   const { control, formState, register, getValues } = useFormContext();
@@ -34,11 +68,19 @@ export const ConfigureCorrelationSourceForm = () => {
     (variable) => variable.variableName + (variable.fieldPath ? `.${variable.fieldPath}` : '')
   );
 
+  const transformations = getValues('config.transformations');
+  transformations.map((transformation: DataLinkTransformationConfig) => {
+    let transformationDetails = getSupportedTransTypeDetails(transformation.type);
+    return { ...transformation, ...transformationDetails };
+  });
+  console.log(transformations);
+  const transformOptions = getTransformOptions();
+
   return (
     <>
       <FieldSet label="Configure source data source (3/3)">
         <p>
-          Links are displayed with results of the selected origin source data. They shown along with the value of the
+          Links are displayed with results of the selected origin source data. They show along with the value of the
           provided <em>results field</em>.
         </p>
         <Controller
@@ -84,27 +126,94 @@ export const ConfigureCorrelationSourceForm = () => {
             readOnly={readOnly}
           />
         </Field>
-
         {variables.length > 0 && (
           <Card>
             <Card.Heading>Variables used in the target query</Card.Heading>
             <Card.Description>
-              <div>
-                You have used following variables in the target query:{' '}
-                {variables.map((name, i) => (
-                  <span className={styles.variable} key={i}>
-                    {name}
-                    {i < variables.length - 1 ? ', ' : ''}
-                  </span>
-                ))}
-              </div>
-              <div>
-                A data point needs to provide values to all variables as fields or as transformations output to make the
-                correlation button appear in the visualization.
-              </div>
+              You have used following variables in the target query:{' '}
+              {variables.map((name, i) => (
+                <span className={styles.variable} key={i}>
+                  {name}
+                  {i < variables.length - 1 ? ', ' : ''}
+                </span>
+              ))}
+              <br />A data point needs to provide values to all variables as fields or as transformations output to make
+              the correlation button appear in the visualization.
             </Card.Description>
           </Card>
         )}
+        <FieldArray name="config.transformations" control={control}>
+          {({ fields, append, remove }) => (
+            <>
+              <Stack direction="column" alignItems="flex-start">
+                <div>Transformations</div>
+                {fields.length === 0 && <div> No transformations defined.</div>}
+                {fields.length > 0 && (
+                  <div>
+                    {fields.map((field, index) => {
+                      console.log('field', field);
+                      console.log('transformations', transformations[index]);
+                      let transformationDetails = getSupportedTransTypeDetails(transformations[index].type);
+                      //console.log("transformation details", transformationDetails);
+                      return (
+                        <Stack direction="row" key={field.id} alignItems="center">
+                          <Field label="Type">
+                            <InputControl
+                              render={({ field: { onChange, ref, ...field } }) => (
+                                <Select
+                                  {...field}
+                                  onChange={(value) => {
+                                    console.log(value);
+                                    transformationDetails = getSupportedTransTypeDetails(
+                                      SupportedTransformationType[
+                                        value.label as keyof typeof SupportedTransformationType
+                                      ]
+                                    );
+                                  }}
+                                  options={transformOptions}
+                                  aria-label="Type"
+                                />
+                              )}
+                              defaultValue={field.type}
+                              control={control}
+                              name={`config.transformations.${index}.type`}
+                              rules={{ required: { value: true, message: 'Please select a transformation type' } }}
+                            />
+                          </Field>
+                          <Field label="Expression">
+                            <Input
+                              {...register(`config.transformations[${index}].expression`)}
+                              defaultValue={field.expression}
+                              disabled={!transformations[index].showExpression}
+                            />
+                          </Field>
+                          <Field label="Field">
+                            <Input
+                              {...register(`config.transformations[${index}].mapValue`)}
+                              defaultValue={field.mapValue}
+                              disabled={!transformations[index].showMapValue}
+                            />
+                          </Field>
+                          <IconButton
+                            type="button"
+                            tooltip="Remove transformation"
+                            name={'trash-alt'}
+                            onClick={() => remove(index)}
+                          >
+                            Remove
+                          </IconButton>
+                        </Stack>
+                      );
+                    })}
+                  </div>
+                )}
+                <Button icon="plus" onClick={() => append({ type: undefined })} variant="secondary" type="button">
+                  Add transformation
+                </Button>
+              </Stack>
+            </>
+          )}
+        </FieldArray>
       </FieldSet>
     </>
   );

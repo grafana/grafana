@@ -8,6 +8,11 @@ export type GetCorrelationsResponse = Correlation[];
 
 type CorrelationConfigType = 'query';
 
+export enum TransformationType {
+  Logfmt = 'logfmt',
+  Regex = 'regex',
+}
+
 export interface CorrelationConfig {
   field: string;
   target: object;

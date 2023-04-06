@@ -53,14 +53,48 @@ export interface DataLink<T extends DataQuery = any> {
 }
 
 /** @internal */
-export enum SupportedTransformationTypes {
+export enum SupportedTransformationType {
   Regex = 'regex',
   Logfmt = 'logfmt',
 }
 
+interface SupportedTransformationTypeDetails {
+  label: string;
+  value: string;
+  description?: string;
+  showExpression: boolean;
+  showMapValue: boolean;
+}
+
+export function getSupportedTransTypeDetails(
+  transType: SupportedTransformationType
+): SupportedTransformationTypeDetails {
+  switch (transType) {
+    case SupportedTransformationType.Logfmt:
+      return {
+        label: 'Logfmt',
+        value: SupportedTransformationType.Logfmt,
+        description: 'Parse provided field with logfmt to get variables',
+        showExpression: false,
+        showMapValue: false,
+      };
+    case SupportedTransformationType.Regex:
+      return {
+        label: 'Regex',
+        value: SupportedTransformationType.Regex,
+        description:
+          'Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value.',
+        showExpression: true,
+        showMapValue: true,
+      };
+    default:
+      return { label: transType, value: transType, showExpression: false, showMapValue: false };
+  }
+}
+
 /** @internal */
 export interface DataLinkTransformationConfig {
-  type: SupportedTransformationTypes;
+  type: SupportedTransformationType;
   field?: string;
   expression?: string;
   mapValue?: string;

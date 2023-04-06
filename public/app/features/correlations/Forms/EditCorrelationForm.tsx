@@ -36,7 +36,7 @@ export const EditCorrelationForm = ({ onUpdated, correlation, readOnly = false }
     <CorrelationsFormContextProvider data={{ loading, readOnly, correlation }}>
       <Wizard<EditFormDTO>
         defaultValues={correlation}
-        pages={[ConfigureCorrelationBasicInfoForm, ConfigureCorrelationTargetForm, ConfigureCorrelationSourceForm]}
+        pages={[ConfigureCorrelationSourceForm]}
         onSubmit={readOnly ? (e) => () => {} : onSubmit}
         navigation={CorrelationFormNavigation}
       />
