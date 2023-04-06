@@ -12,7 +12,6 @@ export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
 export enum PanelLayout {
   List = 'list',
-  Previews = 'previews',
 }
 
 export interface PanelOptions {
