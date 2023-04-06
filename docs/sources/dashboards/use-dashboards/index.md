@@ -29,9 +29,9 @@ The following image and descriptions highlights all dashboards features.
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-annotated-9-5-0.png" width="700px" >}}
 
-- **Grafana home** (1): Click the Grafana home icon to be redirected to the home page configured in the Grafana instance.
+- **Grafana home** (1): Click **Home** in the breadcrumb to be redirected to the home page configured in the Grafana instance.
 - **Dashboard title** (2): When you click the dashboard title you can search for dashboard contained in the current folder.
-- **Share dashboard** (3): Use this option to share the current dashboard by link or snapshot. You can also export the dashboard definition from the share modal.
+- **Share dashboard or panel** (3): Use this option to share the current dashboard or panel by link or snapshot. You can also export the dashboard definition from the share modal.
 - **Add** (4): Use this option to add a panel, dashboard row, or library panel to the current dashboard.
 - **Save dashboard** (5): Click to save changes to your dashboard.
 - **Dashboard insights** (6): Click to view analytics about your dashboard including information about users, activity, query counts.
@@ -130,7 +130,7 @@ Hover your cursor over the field to see the exact time stamps in the range and t
 
 Click the current time range to change it. You can change the current time using a _relative time range_, such as the last 15 minutes, or an _absolute time range_, such as `2020-05-14 00:00:00 to 2020-05-15 23:59:59`.
 
-<img class="no-shadow" src="/static/img/docs/time-range-controls/change-current-time-range-7-0.png" max-width="900px">
+<img class="no-shadow" src="/media/docs/grafana/dashboards/screenshot-change-current-time-range.png" max-width="900px">
 
 #### Relative time range
 
