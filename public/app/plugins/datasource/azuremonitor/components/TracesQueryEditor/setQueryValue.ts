@@ -1,4 +1,4 @@
-import { AzureMonitorQuery, ResultFormat } from '../../types';
+import { AzureMonitorQuery, AzureTracesFilter, ResultFormat } from '../../types';
 
 export function setQueryOperationId(query: AzureMonitorQuery, operationId?: string): AzureMonitorQuery {
   return {
@@ -26,6 +26,16 @@ export function setTraceTypes(query: AzureMonitorQuery, traceTypes: string[]): A
     azureTraces: {
       ...query.azureTraces,
       traceTypes,
+    },
+  };
+}
+
+export function setFilters(query: AzureMonitorQuery, filters: AzureTracesFilter[]): AzureMonitorQuery {
+  return {
+    ...query,
+    azureTraces: {
+      ...query.azureTraces,
+      filters,
     },
   };
 }
