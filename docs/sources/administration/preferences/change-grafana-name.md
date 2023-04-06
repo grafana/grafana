@@ -53,4 +53,4 @@ To change the team name or email, follow these steps:
 
 ## Change user name or email
 
-To learn how to edit your user information, refer to [Edit your profile]({{< relref "../manage-user-preferences/_index.md#edit-your-profile" >}}).
+To learn how to edit your user information, refer to [Edit your profile]({{< relref "../../manage-users/user-admin/user-profile" >}}).

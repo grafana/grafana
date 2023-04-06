@@ -29,11 +29,13 @@ Grafana displays all organizations set up on the server, listed in alphabetical 
 Add an organization to your Grafana server.
 
 {{< docs/list >}}
+
 {{< docs/shared "manage-users/view-server-org-list.md" >}}
 
 1. Click **+ New org**.
 1. Enter the name of the new organization and then click **Create**.
-   {{< /docs/list >}}
+
+{{< /docs/list >}}
 
 Two things happen:
 
