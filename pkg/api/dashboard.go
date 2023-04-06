@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -32,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -53,6 +55,13 @@ func dashboardGuardianResponse(err error) response.Response {
 		return response.Error(500, "Error while checking dashboard permissions", err)
 	}
 	return response.Error(403, "Access denied to this dashboard", nil)
+}
+
+func dashboardsDeleteGuardianResponse(err error, dash dashboards.Dashboard) dashboards.DeleteDashboardStatus {
+	if err != nil {
+		return dashboards.DeleteDashboardsRes(500, "", "Error while checking dashboard permissions", dash)
+	}
+	return dashboards.DeleteDashboardsRes(403, "", "Access denied to this dashboard", dash)
 }
 
 // swagger:route POST /dashboards/trim dashboards trimDashboard
@@ -348,6 +357,144 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
 		"id":      dash.ID,
 	})
+}
+
+// DeleteDashboardsByTagsUIDs swagger:route DELETE /dashboards dashboards deleteDashboardsByTagsORUIDs
+//
+// Delete dashboard by tags and UIDs.
+//
+// Will delete the dashboard given the specified tags.
+//
+// Responses:
+// 207: deleteDashboardsByTagsORUIDsResponse
+// 200: deleteDashboardsByTagsORUIDsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) DeleteDashboardsByTagsORUIDs(c *contextmodel.ReqContext) response.Response {
+	return hs.deleteDashboardsByTagsORUIDs(c)
+}
+
+func (hs *HTTPServer) deleteDashboardsByTagsORUIDs(c *contextmodel.ReqContext) response.Response {
+	deleteDashReq := dashboards.DeleteDashboardsRequest{}
+	if err := web.Bind(c.Req, &deleteDashReq); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	if len(deleteDashReq.Tags) == 0 && len(deleteDashReq.UIDs) == 0 {
+		return response.Error(http.StatusBadRequest, "Provide either tags or UIDs to delete dashboards", errors.New("unexpected input"))
+	}
+	if len(deleteDashReq.Tags) != 0 && len(deleteDashReq.UIDs) != 0 {
+		return response.Error(http.StatusBadRequest, "Both tags and uids are not allowed to delete dashboards", errors.New("unexpected input"))
+	}
+
+	deleteDashboards, rsp := hs.getDashboardsHelper(c.Req.Context(), c.OrgID, deleteDashReq.Tags, deleteDashReq.UIDs, c.SignedInUser)
+	if rsp != nil {
+		return rsp
+	}
+
+	totalCount := len(deleteDashboards)
+	finalRes := dashboards.DeleteDashboardsResponse{}
+	delDashRes := make(chan dashboards.DeleteDashboardStatus, totalCount)
+
+	for _, dash := range deleteDashboards {
+		go func(dash dashboards.DashboardSearchProjection) {
+			delDashRes <- hs.deleteDashboardByTagORUID(c, dash)
+		}(dash)
+	}
+
+	for i := 0; i < totalCount; i++ {
+		res := <-delDashRes
+		finalRes.Status = append(finalRes.Status, res)
+		if res.StatusCode == http.StatusOK {
+			finalRes.SuccessCount += 1
+		} else {
+			finalRes.FailedCount += 1
+		}
+	}
+
+	if totalCount == finalRes.SuccessCount {
+		return response.JSON(http.StatusOK, finalRes)
+	}
+	if totalCount == finalRes.FailedCount {
+		return response.JSON(http.StatusForbidden, finalRes)
+	}
+
+	return response.JSON(http.StatusMultiStatus, finalRes)
+
+}
+
+func (hs *HTTPServer) deleteDashboardByTagORUID(c *contextmodel.ReqContext, dash dashboards.DashboardSearchProjection) dashboards.DeleteDashboardStatus {
+
+	dashboard := &dashboards.Dashboard{ID: dash.ID, UID: dash.UID, Slug: dash.Slug, OrgID: c.OrgID, FolderID: dash.FolderID, IsFolder: dash.IsFolder}
+	guardian, err := guardian.NewByUID(c.Req.Context(), dash.UID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		grafanaErr := &errutil.Error{}
+		if !errors.As(err, grafanaErr) {
+			return dashboards.DeleteDashboardsRes(http.StatusInternalServerError, "", fmt.Sprintf("unexpected error type [%s]: %s", reflect.TypeOf(err), err.Error()), *dashboard)
+		}
+		dashboards.DeleteDashboardsRes(grafanaErr.Public().StatusCode, "", string(grafanaErr.Reason.Status()), *dashboard)
+	}
+
+	if canDelete, err := guardian.CanDelete(); err != nil || !canDelete {
+		return dashboardsDeleteGuardianResponse(err, *dashboard)
+	}
+
+	// disconnect all library elements for this dashboard
+	err = hs.LibraryElementService.DisconnectElementsFromDashboard(c.Req.Context(), dash.ID)
+	if err != nil {
+		hs.log.Error("Failed to disconnect library elements", "dashboard", dash.ID, "user", c.SignedInUser.UserID, "error", err)
+	}
+
+	// deletes all related public dashboard entities
+	err = hs.PublicDashboardsApi.PublicDashboardService.DeleteByDashboard(c.Req.Context(), dashboard)
+	if err != nil {
+		hs.log.Error("Failed to delete public dashboard")
+	}
+
+	err = hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.ID, c.OrgID)
+	if err != nil {
+		var dashboardErr dashboards.DashboardErr
+		if ok := errors.As(err, &dashboardErr); ok {
+			if errors.Is(err, dashboards.ErrDashboardCannotDeleteProvisionedDashboard) {
+				return dashboards.DeleteDashboardsRes(dashboardErr.StatusCode, "", dashboardErr.Error(), *dashboard)
+			}
+		}
+		return dashboards.DeleteDashboardsRes(http.StatusInternalServerError, "", "Failed to delete dashboard", *dashboard)
+
+	}
+
+	if hs.Live != nil {
+		err := hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.OrgID, c.ToUserDisplayDTO(), dash.UID)
+		if err != nil {
+			hs.log.Error("Failed to broadcast delete info", "dashboard", dash.UID, "error", err)
+		}
+	}
+
+	return dashboards.DeleteDashboardsRes(http.StatusOK, fmt.Sprintf("Dashboard %s deleted", dash.Title), "", *dashboard)
+
+}
+
+func (hs *HTTPServer) getDashboardsHelper(ctx context.Context, orgID int64, tags []string, uids []string, signedInUser *user.SignedInUser) ([]dashboards.DashboardSearchProjection, response.Response) {
+
+	query := dashboards.FindPersistedDashboardsQuery{
+		OrgId:        orgID,
+		SignedInUser: signedInUser,
+	}
+	if len(tags) > 0 {
+		query.Tags = tags
+	}
+	if len(uids) > 0 {
+		query.DashboardUIDs = uids
+	}
+
+	queryResult, err := hs.DashboardService.FindDashboards(ctx, &query)
+	if err != nil {
+		return nil, response.Error(404, "Dashboard not found", err)
+	}
+
+	return queryResult, nil
 }
 
 // swagger:route POST /dashboards/db dashboards postDashboard
@@ -1131,6 +1278,19 @@ type DeleteDashboardByUIDParams struct {
 	// in:path
 	// required:true
 	UID string `json:"uid"`
+}
+
+// swagger:parameters deleteDashboardsByTagsORUIDs
+type DeleteDashboardsByTagsORUIDsParams struct {
+	// in:body
+	// required:true
+	Body dashboards.DeleteDashboardsRequest
+}
+
+// swagger:response deleteDashboardsByTagsORUIDsResponse
+type DeleteDashboardsByTagsORUIDsResponse struct {
+	// in:body
+	Body dashboards.DeleteDashboardsResponse `json:"body"`
 }
 
 // swagger:parameters postDashboard

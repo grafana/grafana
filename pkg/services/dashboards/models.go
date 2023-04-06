@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -418,4 +419,40 @@ type FindPersistedDashboardsQuery struct {
 	Filters []interface{}
 
 	Result model.HitList
+}
+
+type DeleteDashboardsRequest struct {
+	Tags []string `json:"tags"`
+	UIDs []string `json:"UIDs"`
+}
+
+type DeleteDashboardsResponse struct {
+	Total        int                     `json:"total"`
+	SuccessCount int                     `json:"successCount"`
+	FailedCount  int                     `json:"failedCount"`
+	Status       []DeleteDashboardStatus `json:"status"`
+}
+
+type DeleteDashboardStatus struct {
+	UID        string `json:"uid"`
+	Title      string `json:"title"`
+	Message    string `json:"message,omitempty"`
+	Error      string `json:"error,omitempty"`
+	Status     string `json:"status"`
+	StatusCode int    `json:"statusCode"`
+}
+
+func DeleteDashboardsRes(statusCode int, message string, err string, dash Dashboard) DeleteDashboardStatus {
+	status := "Success"
+	if statusCode != http.StatusOK {
+		status = "Failed"
+	}
+	return DeleteDashboardStatus{
+		UID:        dash.UID,
+		Title:      dash.Title,
+		Message:    message,
+		Error:      err,
+		Status:     status,
+		StatusCode: statusCode,
+	}
 }

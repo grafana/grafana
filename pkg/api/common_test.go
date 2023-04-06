@@ -59,7 +59,18 @@ func loggedInUserScenario(t *testing.T, desc string, url string, routePattern st
 	loggedInUserScenarioWithRole(t, desc, "GET", url, routePattern, org.RoleEditor, fn, sqlStore)
 }
 
-func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role org.RoleType, fn scenarioFunc, sqlStore db.DB) {
+type deleteOpts struct {
+	deletePayload interface{}
+}
+type Option func(f *deleteOpts)
+
+func withDeletePayload(payload interface{}) Option {
+	return func(f *deleteOpts) {
+		f.deletePayload = payload
+	}
+}
+
+func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role org.RoleType, fn scenarioFunc, sqlStore db.DB, opts ...Option) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = sqlStore
@@ -70,6 +81,17 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 			sc.context.OrgID = testOrgID
 			sc.context.Login = testUserLogin
 			sc.context.OrgRole = role
+
+			deleteOpts := &deleteOpts{}
+			for _, opt := range opts {
+				opt(deleteOpts)
+			}
+
+			if deleteOpts.deletePayload != nil {
+				c.Req.Body = mockRequestBody(deleteOpts.deletePayload)
+				c.Req.Header.Add("Content-Type", "application/json")
+			}
+
 			if sc.handlerFunc != nil {
 				return sc.handlerFunc(sc.context)
 			}

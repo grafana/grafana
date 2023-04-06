@@ -246,8 +246,10 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersionDTO{}
 		teamService := &teamtest.FakeService{}
 		dashboardService := dashboards.NewFakeDashboardService(t)
+		fakeDashProj := []dashboards.DashboardSearchProjection{{Title: "Child dash"}}
 
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(fakeDash, nil)
+		dashboardService.On("FindDashboards", mock.Anything, mock.AnythingOfType("*dashboards.FindPersistedDashboardsQuery")).Return(fakeDashProj, nil)
 		qResult := []*dashboards.DashboardACLInfoDTO{
 			{
 				DashboardID: 1,
@@ -308,6 +310,14 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
 
+			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards",
+				"/api/dashboards", role, func(sc *scenarioContext) {
+					setUp()
+					sc.sqlStore = mockSQLStore
+					hs.callDeleteDashboardByTagsORUIDs(t, sc, dashboardService, nil)
+					assert.Equal(t, 403, sc.resp.Code)
+				}, mockSQLStore, withDeletePayload(dashboards.DeleteDashboardsRequest{UIDs: []string{"abcdefghi"}}))
+
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1",
 				"/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 					setUp()
@@ -345,6 +355,14 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
+
+			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards",
+				"/api/dashboards", role, func(sc *scenarioContext) {
+					setUp()
+					hs.callDeleteDashboardByTagsORUIDs(t, sc, dashboardService, nil)
+
+					assert.Equal(t, 403, sc.resp.Code)
+				}, mockSQLStore, withDeletePayload(dashboards.DeleteDashboardsRequest{UIDs: []string{"abcdefghi"}}))
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1",
 				"/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
@@ -401,6 +419,20 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 				assert.Equal(t, 200, sc.resp.Code)
 			}, mockSQLStore)
+
+			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards", "/api/dashboards", role, func(sc *scenarioContext) {
+				setUpInner()
+				dashboardService := dashboards.NewFakeDashboardService(t)
+				qResult := []dashboards.DashboardSearchProjection{{Title: "test"}}
+				dashboardService.On("FindDashboards", mock.Anything, mock.AnythingOfType("*dashboards.FindPersistedDashboardsQuery")).Return(qResult, nil)
+				dashboardService.On("DeleteDashboard", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(nil)
+
+				pubdashService := publicdashboards.NewFakePublicDashboardService(t)
+				pubdashService.On("DeleteByDashboard", mock.Anything, mock.Anything).Return(nil)
+				hs.callDeleteDashboardByTagsORUIDs(t, sc, dashboardService, pubdashService)
+
+				assert.Equal(t, 200, sc.resp.Code)
+			}, mockSQLStore, withDeletePayload(dashboards.DeleteDashboardsRequest{UIDs: []string{"abcdefghi"}}))
 		})
 
 		t.Run("When user is an Org Viewer and viewers can edit", func(t *testing.T) {
@@ -435,6 +467,13 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				hs.callDeleteDashboardByUID(t, sc, dashboardService, nil)
 				assert.Equal(t, 403, sc.resp.Code)
 			}, mockSQLStore)
+
+			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+				setUpInner()
+
+				hs.callDeleteDashboardByTagsORUIDs(t, sc, dashboardService, nil)
+				assert.Equal(t, 403, sc.resp.Code)
+			}, mockSQLStore, withDeletePayload(dashboards.DeleteDashboardsRequest{UIDs: []string{"abcdefghi"}}))
 		})
 
 		t.Run("When user is an Org Viewer but has an admin permission", func(t *testing.T) {
@@ -474,6 +513,20 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 				assert.Equal(t, 200, sc.resp.Code)
 			}, mockSQLStore)
+
+			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards", "/api/dashboards", role, func(sc *scenarioContext) {
+				setUpInner()
+				sc.sqlStore = mockSQLStore
+				dashboardService := dashboards.NewFakeDashboardService(t)
+				qResult := []dashboards.DashboardSearchProjection{{Title: "test"}}
+				dashboardService.On("FindDashboards", mock.Anything, mock.AnythingOfType("*dashboards.FindPersistedDashboardsQuery")).Return(qResult, nil)
+				dashboardService.On("DeleteDashboard", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(nil)
+				pubdashService := publicdashboards.NewFakePublicDashboardService(t)
+				pubdashService.On("DeleteByDashboard", mock.Anything, mock.Anything).Return(nil)
+				hs.callDeleteDashboardByTagsORUIDs(t, sc, dashboardService, pubdashService)
+
+				assert.Equal(t, 200, sc.resp.Code)
+			}, mockSQLStore, withDeletePayload(dashboards.DeleteDashboardsRequest{UIDs: []string{"abcdefghi"}}))
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 				setUpInner()
@@ -518,6 +571,13 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 				assert.Equal(t, 403, sc.resp.Code)
 			}, mockSQLStore)
+
+			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards", "/api/dashboards", role, func(sc *scenarioContext) {
+				setUpInner()
+				hs.callDeleteDashboardByTagsORUIDs(t, sc, dashboardService, nil)
+
+				assert.Equal(t, 403, sc.resp.Code)
+			}, mockSQLStore, withDeletePayload(dashboards.DeleteDashboardsRequest{UIDs: []string{"abcdefghi"}}))
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 				setUpInner()
@@ -1016,6 +1076,16 @@ func (hs *HTTPServer) callDeleteDashboardByUID(t *testing.T,
 	pubdashApi := api.ProvideApi(mockPubdashService, nil, nil, featuremgmt.WithFeatures())
 	hs.PublicDashboardsApi = pubdashApi
 	sc.handlerFunc = hs.DeleteDashboardByUID
+	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
+}
+
+func (hs *HTTPServer) callDeleteDashboardByTagsORUIDs(t *testing.T,
+	sc *scenarioContext, mockDashboard *dashboards.FakeDashboardService, mockPubdashService *publicdashboards.FakePublicDashboardService) {
+
+	hs.DashboardService = mockDashboard
+	pubdashApi := api.ProvideApi(mockPubdashService, nil, nil, featuremgmt.WithFeatures())
+	hs.PublicDashboardsApi = pubdashApi
+	sc.handlerFunc = hs.DeleteDashboardsByTagsORUIDs
 	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 }
 
