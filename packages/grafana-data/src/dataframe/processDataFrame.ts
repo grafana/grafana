@@ -49,7 +49,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
 
   for (const row of table.rows) {
     for (let i = 0; i < fields.length; i++) {
-      fields[i].values.buffer.push(row[i]);
+      fields[i].values.push(row[i]);
     }
   }
 
@@ -123,8 +123,8 @@ function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
 
   for (let i = 0; i < graphSeries.data.length; i++) {
     const row = graphSeries.data[i];
-    x.buffer.push(row[1]);
-    y.buffer.push(row[0]);
+    x.push(row[1]);
+    y.push(row[0]);
   }
 
   return {
@@ -145,7 +145,7 @@ function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
         values: y,
       },
     ],
-    length: x.buffer.length,
+    length: x.length,
   };
 }
 
@@ -164,7 +164,7 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
   ];
 
   for (const point of timeSeries.datapoints) {
-    fields[0].values.buffer.push(point);
+    fields[0].values.push(point);
   }
 
   return {
