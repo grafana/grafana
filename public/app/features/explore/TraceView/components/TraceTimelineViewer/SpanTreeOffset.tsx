@@ -77,6 +77,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       font-size: 0.8rem;
       width: 24px;
       text-align: center;
+      background: ${theme.colors.background.primary};
     `,
     spanCountSquareFilled: (color: string) => css`
       background: ${color};
