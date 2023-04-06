@@ -480,4 +480,70 @@ describe('grafana data source', () => {
       ]
     `);
   });
+
+  it('handles timezone conversion UTC-CDT', () => {
+    // region TZ = UTC
+    // dashboard TZ = 'America/Chicago'
+    // Mon Apr 03 2023 08:00:00 GMT+0000 -> Mon Apr 03 2023 08:00:00 GMT+0000 (UTC)
+    // Mon Apr 03 2023 03:00:00 GMT-0500 -> Mon Apr 03 2023 03:00:00 GMT-0500 (CDT)
+
+    const frame = doTimeRegionQuery(
+      { name: 'T1', color: 'green', fromDayOfWeek: 1, from: '08:00', line: false, timezone: 'utc' },
+      {
+        from: dateTime('2023-03-30'),
+        to: dateTime('2023-04-06'),
+        raw: {
+          to: '',
+          from: '',
+        },
+      },
+      'America/Chicago'
+    );
+
+    expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
+      [
+        {
+          "config": {},
+          "labels": undefined,
+          "name": "time",
+          "type": "time",
+          "values": [
+            1680508800000,
+          ],
+        },
+        {
+          "config": {},
+          "labels": undefined,
+          "name": "timeEnd",
+          "type": "time",
+          "values": [
+            1680508800000,
+          ],
+        },
+        {
+          "config": {
+            "color": {
+              "fixedColor": "green",
+              "mode": "fixed",
+            },
+          },
+          "labels": undefined,
+          "name": "color",
+          "type": "string",
+          "values": [
+            "green",
+          ],
+        },
+        {
+          "config": {},
+          "labels": undefined,
+          "name": "line",
+          "type": "boolean",
+          "values": [
+            false,
+          ],
+        },
+      ]
+    `);
+  });
 });
