@@ -3,10 +3,10 @@ import type { StorybookConfig } from '@storybook/react-webpack5';
 // avoid importing from @grafana/data to prevent node error: ERR_REQUIRE_ESM
 import { availableIconsIndex, IconName } from '../../grafana-data/src/types/icon';
 import { getIconSubDir } from '../src/components/Icon/utils';
-const stories = ['../src/**/*.story.@(tsx|mdx)'];
-if (process.env.NODE_ENV !== 'production') {
-  stories.push('../src/**/*.story.internal.@(tsx|mdx)');
-}
+const stories = ['../src/Intro.mdx', '../src/components/Button/Button.story.tsx'];
+// if (process.env.NODE_ENV !== 'production') {
+//   stories.push('../src/**/*.story.internal.@(tsx|mdx)');
+// }
 
 // We limit icon paths to only the available icons so publishing
 // doesn't require uploading 1000s of unused assets.
@@ -19,23 +19,14 @@ const iconPaths = Object.keys(availableIconsIndex)
       to: `/public/img/icons/${subDir}/${iconName}.svg`,
     };
   });
+
 const mainConfig: StorybookConfig = {
   stories,
   addons: [
     {
-      // work around docs 6.5.x not resolving correctly with yarn PnP
-      name: path.dirname(require.resolve('@storybook/addon-docs/package.json')),
-      options: {
-        configureJSX: true,
-        babelOptions: {},
-      },
-    },
-    {
       name: '@storybook/addon-essentials',
       options: {
         backgrounds: false,
-        // work around docs 6.5.x not resolving correctly with yarn PnP
-        docs: false,
       },
     },
     '@storybook/addon-a11y',
