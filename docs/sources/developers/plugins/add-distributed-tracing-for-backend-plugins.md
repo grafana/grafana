@@ -11,13 +11,16 @@ title: Add distributed tracing for backend plugins
 > **Note:** Only Opentelemetry is supported. If Grafana is configured to use a deprecated tracing systems (Jaeger or Opentracing),
 > tracing will be disabled in the plugin. Please note that Opentelemetry + Jaeger propagator is supported.
 
+## Introduction
+
 Distributed tracing allows backend plugin developers to create custom spans in their plugins, and send them to the same endpoint
 as the main Grafana instance. This also propagates the tracing context from the Grafana instance to the plugin, so the plugin's spans
 will be correlated to the correct trace.
 
-<!-- TODO: link to OpenTelemetry configuration guide -->
+## Configuration
 
-OpenTelemetry must be enabled and configured for the Grafana instance. Please refer to this guide for more information.
+OpenTelemetry must be enabled and configured for the Grafana instance. Please refer to [this section](
+{{< relref "../../setup-grafana/configure-grafana/#tracingopentelemetry" >}}) for more information.
 
 As of Grafana 9.5.0, plugins tracing must be enabled manually on a per-plugin basis, by specifying `tracing = true` in the plugin's config section:
 
@@ -26,13 +29,7 @@ As of Grafana 9.5.0, plugins tracing must be enabled manually on a per-plugin ba
 tracing = true
 ```
 
-Alternatively, environment variables can also be used:
-
-<!-- TODO: confirm this is possible/correct -->
-
-`GRAFANA_PLUGIN_GRAFANA_DATASOURCEHTTPBACKEND_DATASOURCE_TRACING=true`
-
-## OpenTelemetry tracer
+## Implementing tracing in your plugin
 
 When OpenTelemetry tracing is enabled on the main Grafana instance and tracing is enabeld for a plugin,
 the Opentelemetry endpoint address and propagation format will be passed to the plugin during startup,
@@ -41,22 +38,41 @@ which will be used to configure a global tracer.
 <ol>
 <li>The global tracer is configured automatically if you use <code>datasource.Manage</code> or <code>app.Manage</code> to run your plugin.
 
-If you are not using them, you have to configure the global tracer manually by calling:
+This also allows you to specify custom attributes for the default tracer:
 
 ```go
-backend.SetupTracer()
+func main() {
+    if err := datasource.Manage("MY_PLUGIN_ID", plugin.NewDatasource, datasource.ManageOpts{
+        TracingOpts: tracing.Opts{
+            // Optional custom attributes attached to the tracer's resource.
+            // The tracer will already have some SDK and runtime ones pre-populated.
+            CustomAttributes: []attribute.KeyValue{
+                attribute.String("my_plugin.my_attribute", "custom value"),
+            },
+        },
+    }); err != nil {
+        log.DefaultLogger.Error(err.Error())
+        os.Exit(1)
+    }
+}
+```
+
+If you are not using automatic instance management, you have to configure the global tracer manually by calling:
+
+```go
+backend.SetupTracer("MY_PLUGIN_ID", tracing.Opts{})
 ```
 
 </li>
 
 <li>
-Once tracing is configured (either manually or by calling `Manage`), you can access the global tracer with:
+Once tracing is configured (either manually or by calling <code>Manage</code>), you can access the global tracer with:
 
 ```go
 tracing.DefaultTracer()
 ```
 
-this returns an OpenTelemetry `tracer.Tracer`, and can be used to create spans.
+this returns an [OpenTelemetry trace.Tracer](https://pkg.go.dev/go.opentelemetry.io/otel/trace#Tracer), and can be used to create spans.
 
 For example:
 
@@ -79,43 +95,22 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 }
 ```
 
+Please refer to the [OpenTelemetry Go SDK](https://pkg.go.dev/go.opentelemetry.io/otel) for in-depth documentation on all the features provided by OpenTelemetry.
+
+If tracing is disabled in Grafana, `backend.DefaultTracer()` returns a no-op tracer.
+
 </li>
 
 </ol>
 
-<!-- TODO: link to OpenTelemetry Go SDK -->
-
-Please refer to the OpenTelemetry Go SDK for in-depth documentation on all the features provided by OpenTelemetry.
-
-If tracing is disabled in Grafana, `backend.DefaultTracer()` returns a no-op tracer.
-
-## Custom tracer provider attributes
-
-<!-- TODO: explain where to pass it -->
-
-```go
-// DatasourceOpts contains the default ManageOpts for the datasource.
-var DatasourceOpts = datasource.ManageOpts{
-    TracingOpts: tracing.Opts{
-        // Optional custom attributes attached to the tracer's resource.
-        // The tracer will already have some SDK and runtime ones pre-populated.
-        CustomAttributes: []attribute.KeyValue{
-            attribute.String("my_plugin.my_attribute", "custom value"),
-        },
-    },
-}
-```
-
-## Tracing GRPC calls
+### Tracing GRPC calls
 
 A new span is created automatically for each GRPC call (`QueryData`, `CheckHealth`, etc), both on Grafana's side and
 on the plugin's side.
 
 This also injects the trace context into the `context.Context` passed to those methods.
 
-<!-- TODO: URL to trace.SpanContext definition -->
-
-This allows you to retreive the `trace.SpanContext` by using `tracing.SpanContextFromContext` by passing the original `context.Context` as first argument:
+This allows you to retreive the [trace.SpanContext](https://pkg.go.dev/go.opentelemetry.io/otel/trace#SpanContext) by using `tracing.SpanContextFromContext` by passing the original `context.Context` to it:
 
 ```go
 func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (backend.DataResponse, error) {
@@ -126,9 +121,13 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 }
 ```
 
-## Tracing HTTP requests
+### Tracing HTTP requests
 
 When tracing is enabled, a `TracingMiddleware` is also added to the default middleware stack to all http clients created
 using the `httpclient.New` or `httpclient.NewProvider`, unless custom middlewares are specified.
 
-This middleware creates spans for each outgoing HTTP request.
+This middleware creates spans for each outgoing HTTP request and provides some useful attributes and events related to the HTTP request.
+
+## Complete plugin example
+
+You can refer to the [datasource-http-backend plugin example](https://github.com/grafana/grafana-plugin-examples/tree/main/examples/datasource-http-backend) for a complete example of a plugin that has full tracing support.
