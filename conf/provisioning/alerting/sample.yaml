@@ -2,71 +2,71 @@
 apiVersion: 1
 
 # # List of rule groups to import or update
-groups:
-    # <int> organization ID, default = 1
-  - orgId: 1
-    # <string, required> name of the rule group
-    name: my_rule_group
-    # <string, required> name of the folder the rule group will be stored in
-    folder: my_first_folder
-    # <duration, required> interval of the rule group evaluation
-    interval: 60s
-    # <list, required> list of rules that are part of the rule group
-    rules:
-      # <string, required> unique identifier for the rule
-    - uid: my_id_1
-      # <string, required> title of the rule, will be displayed in the UI
-      title: my_first_rule
-      # <string, required> query used for the condition
-      condition: A
-      # <list, required> list of query objects that should be executed on each
-      #                  evaluation - should be obtained via the API
-      data:
-      - refId: A
-        datasourceUid: "__expr__"
-        model:
-          conditions:
-          - evaluator:
-              params:
-              - 3
-              type: gt
-            operator:
-              type: and
-            query:
-              params:
-              - A
-            reducer:
-              type: last
-            type: query
-          datasource:
-            type: __expr__
-            uid: "__expr__"
-          expression: 1==0
-          intervalMs: 1000
-          maxDataPoints: 43200
-          refId: A
-          type: math
-      # <string> UID of a dashboard that the alert rule should be linked to
-      dashboardUid: my_dashboard
-      # <int> ID of the panel that the alert rule should be linked to
-      panelId: 123
-      # <string> state of the alert rule when no data is returned
-      #          possible values: "NoData", "Alerting", "OK", default = NoData
-      noDataState: Alerting
-      # <string> state of the alert rule when the query execution
-      #          fails - possible values: "Error", "Alerting", "OK"
-      #          default = Alerting
-      executionErrorState: Alerting
-      # <duration, required> how long the alert condition should be breached before Firing. Before this time has elapsed, the alert is considered to be Pending
-      for: 60s
-      # <map<string, string>> map of strings to attach arbitrary custom data
-      annotations:
-        some_key: some_value
-      # <map<string, string> map of strings to filter and
-      #                      route alerts
-      labels:
-        team: sre_team_1
-      isPaused: false
+# groups:
+#     # <int> organization ID, default = 1
+#   - orgId: 1
+#     # <string, required> name of the rule group
+#     name: my_rule_group
+#     # <string, required> name of the folder the rule group will be stored in
+#     folder: my_first_folder
+#     # <duration, required> interval of the rule group evaluation
+#     interval: 60s
+#     # <list, required> list of rules that are part of the rule group
+#     rules:
+#       # <string, required> unique identifier for the rule
+#     - uid: my_id_1
+#       # <string, required> title of the rule, will be displayed in the UI
+#       title: my_first_rule
+#       # <string, required> query used for the condition
+#       condition: A
+#       # <list, required> list of query objects that should be executed on each
+#       #                  evaluation - should be obtained via the API
+#       data:
+#       - refId: A
+#         datasourceUid: "__expr__"
+#         model:
+#           conditions:
+#           - evaluator:
+#               params:
+#               - 3
+#               type: gt
+#             operator:
+#               type: and
+#             query:
+#               params:
+#               - A
+#             reducer:
+#               type: last
+#             type: query
+#           datasource:
+#             type: __expr__
+#             uid: "__expr__"
+#           expression: 1==0
+#           intervalMs: 1000
+#           maxDataPoints: 43200
+#           refId: A
+#           type: math
+#       # <string> UID of a dashboard that the alert rule should be linked to
+#       dashboardUid: my_dashboard
+#       # <int> ID of the panel that the alert rule should be linked to
+#       panelId: 123
+#       # <string> state of the alert rule when no data is returned
+#       #          possible values: "NoData", "Alerting", "OK", default = NoData
+#       noDataState: Alerting
+#       # <string> state of the alert rule when the query execution
+#       #          fails - possible values: "Error", "Alerting", "OK"
+#       #          default = Alerting
+#       executionErrorState: Alerting
+#       # <duration, required> how long the alert condition should be breached before Firing. Before this time has elapsed, the alert is considered to be Pending
+#       for: 60s
+#       # <map<string, string>> map of strings to attach arbitrary custom data
+#       annotations:
+#         some_key: some_value
+#       # <map<string, string> map of strings to filter and
+#       #                      route alerts
+#       labels:
+#         team: sre_team_1
+#       isPaused: false
 
 # # List of alert rule UIDs that should be deleted
 # deleteRules:
