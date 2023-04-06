@@ -4,6 +4,7 @@ import React from 'react';
 
 import { Alert, AlertVariant, VerticalGroup } from '@grafana/ui';
 
+import { StoryExample } from '../../utils/storybook/StoryExample';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from '../Alert/Alert.mdx';
 
@@ -58,6 +59,41 @@ WithActions.args = {
   severity: 'error',
   onRemove: action('Remove button clicked'),
   buttonContent: 'Close',
+};
+
+export const Examples: ComponentStory<typeof Alert> = () => {
+  return (
+    <VerticalGroup>
+      <StoryExample name="With buttonContent and children">
+        <Alert
+          title={'The title of the alert'}
+          severity={'error'}
+          buttonContent={<span>Close</span>}
+          onRemove={action('Remove button clicked')}
+        >
+          Child content that includes some alert details, like maybe what actually happened
+        </Alert>
+      </StoryExample>
+      <StoryExample name="No dismiss">
+        <Alert title={'No dismiss'} severity={'success'} />
+      </StoryExample>
+      <StoryExample name="Severities">
+        <VerticalGroup>
+          {severities.map((severity) => (
+            <Alert
+              title={`Severity: ${severity}`}
+              severity={severity}
+              key={severity}
+              onRemove={action('Remove button clicked')}
+              elevated={true}
+            >
+              Child content
+            </Alert>
+          ))}
+        </VerticalGroup>
+      </StoryExample>
+    </VerticalGroup>
+  );
 };
 
 export default meta;
