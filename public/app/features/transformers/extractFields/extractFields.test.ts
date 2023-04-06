@@ -65,7 +65,7 @@ describe('Fields from JSON', () => {
             "config": {},
             "name": "object.nestedArray[0]",
             "type": "number",
-            "values": [
+            "values": ArrayVector [
               1,
             ],
           },
@@ -73,7 +73,7 @@ describe('Fields from JSON', () => {
             "config": {},
             "name": "object.nestedArray[1]",
             "type": "number",
-            "values": [
+            "values": ArrayVector [
               2,
             ],
           },
@@ -81,7 +81,7 @@ describe('Fields from JSON', () => {
             "config": {},
             "name": "object.nestedString",
             "type": "string",
-            "values": [
+            "values": ArrayVector [
               "Hallo World",
             ],
           },
@@ -118,7 +118,7 @@ describe('Fields from JSON', () => {
               "multipleFrames": false,
             },
             "type": "time",
-            "values": [
+            "values": ArrayVector [
               1669638911691,
             ],
           },
@@ -126,7 +126,7 @@ describe('Fields from JSON', () => {
             "config": {},
             "name": "object.nestedArray[2]",
             "type": "number",
-            "values": [
+            "values": ArrayVector [
               3,
             ],
           },
@@ -134,7 +134,7 @@ describe('Fields from JSON', () => {
             "config": {},
             "name": "object.nestedArray[3]",
             "type": "number",
-            "values": [
+            "values": ArrayVector [
               4,
             ],
           },
@@ -142,7 +142,7 @@ describe('Fields from JSON', () => {
             "config": {},
             "name": "object.nestedString",
             "type": "string",
-            "values": [
+            "values": ArrayVector [
               "Hallo World",
             ],
           },
@@ -170,7 +170,7 @@ describe('Fields from JSON', () => {
             "config": {},
             "name": "object.nestedString",
             "type": "string",
-            "values": [
+            "values": ArrayVector [
               "Hallo World",
             ],
           },
@@ -178,7 +178,7 @@ describe('Fields from JSON', () => {
             "config": {},
             "name": "invalid.path",
             "type": "string",
-            "values": [
+            "values": ArrayVector [
               "Not Found",
             ],
           },

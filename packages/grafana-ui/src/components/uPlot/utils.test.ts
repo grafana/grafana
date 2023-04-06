@@ -616,7 +616,7 @@ describe('preparePlotData2', () => {
 
     expect(preparePlotData2(df, getStackingGroups(df))).toMatchInlineSnapshot(`
       [
-        [
+        ArrayVector [
           1639455966000,
           1639629625944,
           1639803285888,

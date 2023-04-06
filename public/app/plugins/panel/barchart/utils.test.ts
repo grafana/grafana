@@ -203,7 +203,7 @@ describe('BarChart utils', () => {
 
       const field = displayValues.viz[0].fields[1];
       expect(field.values.toArray()).toMatchInlineSnapshot(`
-        [
+        ArrayVector [
           -10,
           null,
           10,
@@ -216,14 +216,14 @@ describe('BarChart utils', () => {
       const legendField = displayLegendValuesAsc.fields[1];
 
       expect(legendField.values.toArray()).toMatchInlineSnapshot(`
-      [
-        -10,
-        null,
-        10,
-        null,
-        null,
-      ]
-    `);
+        ArrayVector [
+          -10,
+          null,
+          10,
+          null,
+          null,
+        ]
+      `);
     });
 
     it('should sort fields when legend sortBy and sortDesc are set', () => {

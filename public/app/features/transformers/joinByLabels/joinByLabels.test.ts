@@ -64,7 +64,7 @@ describe('Join by labels', () => {
           "Temp",
           "Speed",
         ],
-        "rows": [
+        "rows": ArrayVector [
           [
             "A",
             "J1",
@@ -121,7 +121,7 @@ describe('Join by labels', () => {
             "config": {},
             "name": "Error",
             "type": "string",
-            "values": [
+            "values": ArrayVector [
               "No labels in result",
             ],
           },

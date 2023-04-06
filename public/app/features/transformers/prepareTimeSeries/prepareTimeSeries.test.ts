@@ -95,11 +95,11 @@ describe('Prepare time series transformer', () => {
             "region": "a",
           },
           "name": "wide",
-          "time": [
+          "time": ArrayVector [
             1,
             2,
           ],
-          "values": [
+          "values": ArrayVector [
             10,
             30,
           ],
@@ -109,11 +109,11 @@ describe('Prepare time series transformer', () => {
             "region": "b",
           },
           "name": "wide",
-          "time": [
+          "time": ArrayVector [
             1,
             2,
           ],
-          "values": [
+          "values": ArrayVector [
             20,
             40,
           ],
@@ -123,11 +123,11 @@ describe('Prepare time series transformer', () => {
             "region": "a",
           },
           "name": "wide",
-          "time": [
+          "time": ArrayVector [
             1,
             2,
           ],
-          "values": [
+          "values": ArrayVector [
             2,
             4,
           ],
@@ -137,11 +137,11 @@ describe('Prepare time series transformer', () => {
             "region": "b",
           },
           "name": "wide",
-          "time": [
+          "time": ArrayVector [
             1,
             2,
           ],
-          "values": [
+          "values": ArrayVector [
             3,
             5,
           ],

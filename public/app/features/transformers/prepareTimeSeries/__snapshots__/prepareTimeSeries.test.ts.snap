@@ -8,7 +8,7 @@ exports[`Prepare time series transformer should handle long to multi 1`] = `
         "config": {},
         "name": "time",
         "type": "time",
-        "values": [
+        "values": ArrayVector [
           1,
           2,
           3,
@@ -21,7 +21,7 @@ exports[`Prepare time series transformer should handle long to multi 1`] = `
         },
         "name": "speed",
         "type": "number",
-        "values": [
+        "values": ArrayVector [
           4,
           6,
           8,
@@ -41,7 +41,7 @@ exports[`Prepare time series transformer should handle long to multi 1`] = `
         "config": {},
         "name": "time",
         "type": "time",
-        "values": [
+        "values": ArrayVector [
           1,
           2,
           3,
@@ -54,7 +54,7 @@ exports[`Prepare time series transformer should handle long to multi 1`] = `
         },
         "name": "speed",
         "type": "number",
-        "values": [
+        "values": ArrayVector [
           5,
           7,
           9,
@@ -88,7 +88,7 @@ exports[`Prepare time series transformer should handle long to wide 1`] = `
           },
         },
         "type": "time",
-        "values": [
+        "values": ArrayVector [
           1,
           2,
           3,
@@ -107,7 +107,7 @@ exports[`Prepare time series transformer should handle long to wide 1`] = `
           },
         },
         "type": "number",
-        "values": [
+        "values": ArrayVector [
           4,
           6,
           8,
@@ -126,7 +126,7 @@ exports[`Prepare time series transformer should handle long to wide 1`] = `
           },
         },
         "type": "number",
-        "values": [
+        "values": ArrayVector [
           5,
           7,
           9,

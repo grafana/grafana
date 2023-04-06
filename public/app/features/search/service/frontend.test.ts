@@ -44,7 +44,7 @@ describe('FrontendSearcher', () => {
     const results = await frontendSearcher.search(query);
 
     expect(results.view.fields.name.values.toArray()).toMatchInlineSnapshot(`
-      [
+      ArrayVector [
         "bar dog",
         "cow baz",
       ]
@@ -61,7 +61,7 @@ describe('FrontendSearcher', () => {
     const results = await frontendSearcher.search(query);
 
     expect(results.view.fields.name.values.toArray()).toMatchInlineSnapshot(`
-      [
+      ArrayVector [
         "bar dog",
       ]
     `);

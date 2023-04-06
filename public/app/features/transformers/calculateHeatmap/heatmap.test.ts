@@ -96,7 +96,7 @@ describe('Heatmap transformer', () => {
       }
     `);
     expect(heatmap.fields[1].values.toArray()).toMatchInlineSnapshot(`
-      [
+      ArrayVector [
         0,
         1,
         2,

@@ -86,7 +86,7 @@ describe('prepare timeseries graph', () => {
 
     const field = frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values.toArray()).toMatchInlineSnapshot(`
-      [
+      ArrayVector [
         -10,
         null,
         10,
@@ -107,7 +107,7 @@ describe('prepare timeseries graph', () => {
 
     const field = frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values.toArray()).toMatchInlineSnapshot(`
-      [
+      ArrayVector [
         1,
         null,
         2,
@@ -131,7 +131,7 @@ describe('prepare timeseries graph', () => {
 
     const field = frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values.toArray()).toMatchInlineSnapshot(`
-      [
+      ArrayVector [
         1,
         20,
         2,

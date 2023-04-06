@@ -83,12 +83,12 @@ describe('Candlestick data', () => {
     // Close should be offset by one and dupliate last point
     expect({ open: info.open!.values.toArray(), close: info.close!.values.toArray() }).toMatchInlineSnapshot(`
       {
-        "close": [
+        "close": ArrayVector [
           5,
           6,
           6,
         ],
-        "open": [
+        "open": ArrayVector [
           4,
           5,
           6,

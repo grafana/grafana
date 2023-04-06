@@ -38,7 +38,7 @@ describe('Rows to fields', () => {
             "labels": {},
             "name": "Temperature",
             "type": "number",
-            "values": [
+            "values": ArrayVector [
               10,
             ],
           },
@@ -51,7 +51,7 @@ describe('Rows to fields', () => {
             "labels": {},
             "name": "Pressure",
             "type": "number",
-            "values": [
+            "values": ArrayVector [
               200,
             ],
           },

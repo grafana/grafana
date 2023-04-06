@@ -201,14 +201,14 @@ describe('toDataFrame', () => {
     expect(dataFrame.fields.map((f) => ({ [f.name]: f.values.toArray() }))).toMatchInlineSnapshot(`
       [
         {
-          "First": ArrayVector [
+          "First": [
             "2019-02-15",
             "2019-03-15",
             "2019-04-15",
           ],
         },
         {
-          "Second": ArrayVector [
+          "Second": [
             3,
             9,
             16,

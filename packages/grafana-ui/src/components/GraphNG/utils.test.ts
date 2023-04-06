@@ -335,7 +335,7 @@ describe('GraphNG utils', () => {
               },
             },
             "type": "time",
-            "values": [
+            "values": ArrayVector [
               1,
               1.1,
               2,
@@ -368,7 +368,7 @@ describe('GraphNG utils', () => {
               },
             },
             "type": "number",
-            "values": [
+            "values": ArrayVector [
               1,
               undefined,
               1,
@@ -401,7 +401,7 @@ describe('GraphNG utils', () => {
               },
             },
             "type": "number",
-            "values": [
+            "values": ArrayVector [
               undefined,
               undefined,
               undefined,
@@ -433,7 +433,7 @@ describe('GraphNG utils', () => {
               },
             },
             "type": "number",
-            "values": [
+            "values": ArrayVector [
               undefined,
               undefined,
               undefined,
@@ -465,7 +465,7 @@ describe('GraphNG utils', () => {
               },
             },
             "type": "number",
-            "values": [
+            "values": ArrayVector [
               4,
               4,
               undefined,
@@ -500,7 +500,7 @@ describe('GraphNG utils', () => {
               },
             },
             "type": "number",
-            "values": [
+            "values": ArrayVector [
               4,
               4,
               undefined,

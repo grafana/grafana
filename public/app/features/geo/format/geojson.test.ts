@@ -88,22 +88,22 @@ describe('Read GeoJSON', () => {
       }, {})
     ).toMatchInlineSnapshot(`
       {
-        "hello": [
+        "hello": ArrayVector [
           "A",
           "B",
           null,
         ],
-        "id": [
+        "id": ArrayVector [
           "A",
           null,
           null,
         ],
-        "mixed": [
+        "mixed": ArrayVector [
           null,
           "first",
           "2",
         ],
-        "number": [
+        "number": ArrayVector [
           null,
           1.2,
           2.3,

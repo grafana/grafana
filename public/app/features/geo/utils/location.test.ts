@@ -34,7 +34,7 @@ describe('handle location parsing', () => {
     const info = getGeometryField(frame, matchers);
     expect(info.field!.type).toBe(FieldType.geo);
     expect(info.field!.values.toArray().map((p) => toLonLat((p as Point).getCoordinates()))).toMatchInlineSnapshot(`
-      [
+      ArrayVector [
         [
           -122.01416015625001,
           36.979980468750014,
@@ -60,7 +60,7 @@ describe('handle location parsing', () => {
     const matchers = await getLocationMatchers();
     const geo = getGeometryField(frame, matchers).field!;
     expect(geo.values.toArray().map((p) => toLonLat((p as Point).getCoordinates()))).toMatchInlineSnapshot(`
-      [
+      ArrayVector [
         [
           0,
           0,
@@ -87,7 +87,7 @@ describe('handle location parsing', () => {
     });
     const geo = getGeometryField(frame, matchers).field!;
     expect(geo.values.toArray().map((p) => toLonLat((p as Point).getCoordinates()))).toMatchInlineSnapshot(`
-      [
+      ArrayVector [
         [
           -122.01416015625001,
           36.979980468750014,
