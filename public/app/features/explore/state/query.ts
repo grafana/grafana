@@ -451,10 +451,7 @@ async function handleHistory(
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export const runQueries = (
-  exploreId: ExploreId,
-  options?: { replaceUrl?: boolean; preserveCache?: boolean }
-): ThunkResult<void> => {
+export const runQueries = (exploreId: ExploreId, options?: { preserveCache?: boolean }): ThunkResult<void> => {
   return (dispatch, getState) => {
     dispatch(updateTime({ exploreId }));
 

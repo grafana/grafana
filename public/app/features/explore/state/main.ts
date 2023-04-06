@@ -1,9 +1,9 @@
 import { createAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
-import { ExploreUrlState, serializeStateToUrlParam, SplitOpenOptions } from '@grafana/data';
+import { SplitOpenOptions } from '@grafana/data';
 import { DataSourceSrv, locationService } from '@grafana/runtime';
-import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
+import { GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 
@@ -14,7 +14,7 @@ import { CorrelationData } from '../../correlations/useCorrelations';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 
 import { initializeExplore, paneReducer } from './explorePane';
-import { getUrlStateFromPaneState, makeExplorePaneState } from './utils';
+import { makeExplorePaneState } from './utils';
 
 //
 // Actions and Payloads
@@ -51,11 +51,6 @@ export const maximizePaneAction = createAction<{
 export const evenPaneResizeAction = createAction('explore/evenPaneResizeAction');
 
 /**
- * Resets state for explore.
- */
-export const resetExploreAction = createAction('explore/resetExplore');
-
-/**
  * Close the split view and save URL state.
  */
 export interface SplitCloseActionPayload {
@@ -63,36 +58,14 @@ export interface SplitCloseActionPayload {
 }
 export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/splitClose');
 
+export interface SetPaneStateActionPayload {
+  [itemId: string]: Partial<ExploreItemState>;
+}
+export const setPaneState = createAction<SetPaneStateActionPayload>('explore/setPaneState');
+
 //
 // Action creators
 //
-
-/**
- * Save local redux state back to the URL. Should be called when there is some change that should affect the URL.
- * Not all of the redux state is reflected in URL though.
- */
-export const stateSave = (options?: { replace?: boolean }): ThunkResult<void> => {
-  return (_, getState) => {
-    const { left, right } = getState().explore.panes;
-    const orgId = getState().user.orgId.toString();
-    const urlStates: { [index: string]: string | null } = { orgId };
-
-    urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left!));
-
-    if (right) {
-      urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right));
-    } else {
-      urlStates.right = null;
-    }
-
-    if (
-      locationService.getSearch().get('right') !== urlStates.right ||
-      locationService.getSearch().get('left') !== urlStates.left
-    ) {
-      locationService.partial({ ...urlStates }, options?.replace);
-    }
-  };
-};
 
 /**
  * Opens a new right split pane by navigating to appropriate URL. It either copies existing state of the left pane
@@ -101,24 +74,20 @@ export const stateSave = (options?: { replace?: boolean }): ThunkResult<void> =>
  */
 export const splitOpen = createAsyncThunk(
   'explore/splitOpen',
-  async (options: SplitOpenOptions | undefined, { getState }) => {
+  async (options: SplitOpenOptions | undefined, { getState, dispatch }) => {
     const leftState: ExploreItemState = getState().explore.panes.left!;
-    const leftUrlState = getUrlStateFromPaneState(leftState);
-    let rightUrlState: ExploreUrlState = leftUrlState;
 
-    if (options) {
-      const { query, queries } = options;
-
-      rightUrlState = {
-        datasource: options.datasourceUid,
-        queries: queries ?? (query ? [query] : []),
-        range: options.range || leftState.range,
-        panelsState: options.panelsState,
-      };
-    }
-
-    const urlState = serializeStateToUrlParam(rightUrlState);
-    locationService.partial({ right: urlState }, true);
+    dispatch(
+      initializeExplore({
+        exploreId: ExploreId.right,
+        containerWidth: 0,
+        // TODO: fix this
+        datasource: options?.datasourceUid || leftState.datasourceInstance?.uid!,
+        queries: options?.queries ?? (options?.query ? [options?.query] : leftState.queries),
+        range: options?.range || leftState.range,
+        panelsState: options?.panelsState || leftState.panelsState,
+      })
+    );
   }
 );
 
@@ -127,6 +96,7 @@ export const splitOpen = createAsyncThunk(
  * update the URL and let the components handle it because if we swap panes from right to left it is not easily apparent
  * from the URL.
  */
+// FIXME: this is superfluous, we can just use splitCloseAction
 export function splitClose(itemId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     dispatch(splitCloseAction({ itemId }));
@@ -169,9 +139,7 @@ export const navigateToExplore = (
 const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
-  panes: {
-    [ExploreId.left]: initialExploreItemState,
-  },
+  panes: {},
   correlations: undefined,
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
@@ -262,23 +230,6 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
-  if (resetExploreAction.match(action)) {
-    // FIXME: reducers should REALLY not have side effects.
-    for (const [, pane] of Object.entries(state.panes).filter(([exploreId]) => exploreId !== ExploreId.left)) {
-      stopQueryState(pane!.querySubscription);
-    }
-
-    return {
-      ...initialExploreState,
-      panes: {
-        left: {
-          ...initialExploreItemState,
-          queries: state.panes.left!.queries,
-        },
-      },
-    };
-  }
-
   if (richHistorySettingsUpdatedAction.match(action)) {
     const richHistorySettings = action.payload;
     return {
@@ -312,13 +263,13 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     if (exploreId !== undefined) {
       return {
         ...state,
-        panes: Object.entries(state.panes).reduce<ExploreState['panes']>((acc, [id, pane]) => {
+        panes: Object.entries(state.panes).reduce<ExploreState['panes']>((panes, [id, pane]) => {
           if (id === exploreId) {
-            acc[id as ExploreId] = paneReducer(pane, action);
+            panes[id as ExploreId] = paneReducer(pane, action);
           } else {
-            acc[id as ExploreId] = pane;
+            panes[id as ExploreId] = pane;
           }
-          return acc;
+          return panes;
         }, {}),
       };
     }
