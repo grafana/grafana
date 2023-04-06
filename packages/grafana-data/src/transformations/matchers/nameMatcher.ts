@@ -108,7 +108,7 @@ export function fieldNameFallback(fields: Set<string>) {
   // grafana-data does not have access to runtime so we are accessing the window object
   // to get access to the prometheusDataplane featureToggle
   // eslint-disable-next-line
-  const useMatcherFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.prometheusDataplane;
+  const useMatcherFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.fieldNameMatcherFallback;
   if (useMatcherFallback) {
     if (fields.has(TIME_SERIES_VALUE_FIELD_NAME)) {
       fallback = (field: Field, frame: DataFrame) => {

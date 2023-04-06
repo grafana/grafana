@@ -11,7 +11,7 @@ import { ByNamesMatcherMode } from './nameMatcher';
 (window as any).grafanaBootData = {
   settings: {
     featureToggles: {
-      prometheusDataplane: true,
+      fieldNameMatcherFallback: true,
     },
   },
 };

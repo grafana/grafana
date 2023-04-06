@@ -511,5 +511,12 @@ var (
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 		},
+		{
+			Name:         "fieldNameMatcherFallback",
+			Description:  "More lenient field name matchers to support the dataplane contract for changing field name structure in prometheus",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
 	}
 )
