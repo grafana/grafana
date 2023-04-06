@@ -24,7 +24,7 @@ Explore visualizations that currently support showing links based on correlation
 
 You can configure correlations using [Administration > Correlation page]({{< relref "/docs/grafana/latest/administration/" >}}) or with [provisioning]({{< relref "/docs/grafana/latest/administration/provisioning" >}}).
 
-> **Note:** Correlations are available in Grafana 10.0+ as an opt-in beta feature.
+> **Note:** Correlations are available in Grafana 10.0+ as an opt-in beta feature. Modify Grafana [configuration file]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana/#configuration-file-location" >}}) to enable the `correlations` [feature toggle]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana/#feature_toggles" >}}) to use it.
 
 ## Example of how links work in Explore once set up
 
