@@ -48,8 +48,9 @@ export function SqlQueryEditor({
       setHasDatabaseConfigIssue(true);
     }
 
-    // This tests if the Postgres datacource was configured with a default database or not.
-    if (queryHeaderProps?.disableDatasetSelector) {
+    // This tests if the Postgres datacource - Postgres datasources are passed a default prop of `disableDatasetSelector` -
+    // was configured with a default database or not (preconfiguredDatabase).
+    if (queryHeaderProps?.disableDatasetSelector && !preconfiguredDatabase) {
       setHasNoPostgresDefaultDatabaseConfig(true);
     }
   }, [preconfiguredDatabase, query, onChange, queryHeaderProps]);
