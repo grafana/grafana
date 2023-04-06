@@ -122,15 +122,16 @@ func InstrumentCheckHealthRequest(ctx context.Context, req *backend.PluginContex
 }
 
 // InstrumentCallResourceRequest instruments callResource.
-func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
+func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, requestSize float64, fn func() error) error {
+	pluginRequestSizeHistogram.WithLabelValues("backend-datasource", req.PluginID, EndpointCallResource,
+		string(cfg.Target)).Observe(requestSize)
 	return instrumentPluginRequest(ctx, cfg, req, EndpointCallResource, fn)
 }
 
 // InstrumentQueryDataRequest instruments success rate and latency of query data requests.
-func InstrumentQueryDataRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
+func InstrumentQueryDataRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg,
+	requestSize float64, fn func() error) error {
+	pluginRequestSizeHistogram.WithLabelValues("backend-datasource", req.PluginID, EndpointQueryData,
+		string(cfg.Target)).Observe(requestSize)
 	return instrumentPluginRequest(ctx, cfg, req, EndpointQueryData, fn)
-}
-
-func InstrumentRequestSize(pluginId, endpoint, target string, size float64) {
-	pluginRequestSizeHistogram.WithLabelValues("backend-datasource", pluginId, endpoint, target).Observe(size)
 }
