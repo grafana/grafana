@@ -7,6 +7,10 @@ import { MutableVector } from '../types/vector';
 declare global {
   interface Array<T> {
     /** @deprecated used to migrate Vector to array */
+    get buffer(): T[];
+    /** @deprecated used to migrate Vector to array */
+    set buffer(value: T[]);
+    /** @deprecated used to migrate Vector to array */
     get(idx: number): T;
     /** @deprecated used to migrate Vector to array */
     set(idx: number, value: T): void;
@@ -21,6 +25,14 @@ declare global {
 
 // JS original sin
 Object.assign(Array.prototype, {
+  get buffer() {
+    return this as any;
+  },
+  set buffer(values: T[]) {
+    (this as any).length = 0;
+    (this as any).push(...values);
+  },
+
   get(idx: number): any {
     return (this as any)[idx];
   },
@@ -41,13 +53,8 @@ Object.assign(Array.prototype, {
  * @deprecated use a simple Array<T>
  */
 export class ArrayVector<T = any> extends Array<T> implements MutableVector<T> {
-  buffer: T[];
-
   constructor(buffer: T[] = []) {
     super();
-
-    this.buffer = buffer;
-
     return buffer as ArrayVector<T>;
   }
 }
