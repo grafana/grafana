@@ -567,7 +567,7 @@ func (sch *schedule) getRuleExtraLabels(evalCtx *evaluation) map[string]string {
 	return extraLabels
 }
 
-func ScheduleUserFor(orgID int64) *user.SignedInUser {
+func SchedulerUserFor(orgID int64) *user.SignedInUser {
 	return &user.SignedInUser{
 		UserID:           -1,
 		IsServiceAccount: true,
