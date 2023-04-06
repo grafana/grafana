@@ -1,7 +1,23 @@
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference types="ses" />
+import * as emotion from '@emotion/css';
+import * as emotionReact from '@emotion/react';
 import createVirtualEnvironment from '@locker/near-membrane-dom';
+import * as d3 from 'd3';
+import jquery from 'jquery';
+import _ from 'lodash'; // eslint-disable-line lodash/import-scope
+import moment from 'moment'; // eslint-disable-line no-restricted-imports
+import prismjs from 'prismjs';
 import react from 'react';
+import reactDom from 'react-dom';
+import * as reactRedux from 'react-redux'; // eslint-disable-line no-restricted-imports
+import * as reactRouter from 'react-router-dom';
+import * as redux from 'redux';
+import * as rxjs from 'rxjs';
+import * as rxjsOperators from 'rxjs/operators';
+import slate from 'slate';
+import slatePlain from 'slate-plain-serializer';
+import slateReact from 'slate-react';
 
 import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
@@ -11,6 +27,31 @@ import { getGeneralSandboxDistortionMap } from './sandbox/distortion_map';
 import { createSandboxDocument } from './sandbox/document_sandbox';
 
 const prefix = '[sandbox]';
+
+export const compartmentDependencies = {
+  '@grafana/data': grafanaData,
+  '@grafana/ui': grafanaUIraw,
+  '@grafana/runtime': grafanaRuntime,
+  lodash: _,
+  moment,
+  jquery,
+  d3,
+  rxjs,
+  'rxjs/operators': rxjsOperators,
+  'react-router-dom': reactRouter,
+  // Experimental modules
+  prismjs,
+  slate,
+  'slate-react': slateReact,
+  'slate-plain-serializer': slatePlain,
+  react,
+  'react-dom': reactDom,
+  'react-redux': reactRedux,
+  redux,
+  emotion,
+  '@emotion/css': emotion,
+  '@emotion/react': emotionReact,
+};
 
 export function getSandboxedWebApis({ pluginName, isDevMode }: { pluginName: string; isDevMode: boolean }) {
   const sandboxLog = function (...args: unknown[]) {
@@ -34,13 +75,6 @@ export function getSandboxedWebApis({ pluginName, isDevMode }: { pluginName: str
     },
   };
 }
-
-export const compartmentDependencies = {
-  '@grafana/data': grafanaData,
-  '@grafana/ui': grafanaUIraw,
-  '@grafana/runtime': grafanaRuntime,
-  react: react,
-};
 
 const importSandboxCache = new Map<string, Promise<any>>();
 
@@ -68,7 +102,7 @@ export async function doImportPluginInsideSandbox(path: string): Promise<any> {
   return new Promise(async (resolve, reject) => {
     const pluginName = path.split('/')[1];
 
-    console.log('Importing plugin inside sandbox: ', pluginName, ' from path: ', path, '');
+    console.log('[actually] Importing plugin inside sandbox: ', pluginName, ' from path: ', path, '');
     const pluginCode = await getPluginCode(path);
 
     let pluginExports = {};

@@ -172,6 +172,8 @@ for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
+const nearMembranePOCPluginList = ['marcusolsson-json-datasource', 'sespoc', 'marcusolsson-dynamictext-panel'];
+
 export async function importPluginModule(path: string, version?: string): Promise<any> {
   if (version) {
     registerPluginInCache({ path, version });
@@ -187,15 +189,15 @@ export async function importPluginModule(path: string, version?: string): Promis
     }
   }
 
-  console.log('Requested plugin module: ', path);
+  console.log('requesting plugin: ', path, 'version: ', version, '');
 
-  // POC SES TODO: define how to decide if a plugin loads via compartments or directly
-  if (path.includes('sespoc')) {
-    console.log('SES POC: loading plugin via compartments', path);
+  // if path contains any string in nearMembranePOCPluginList, load it via compartments
+  if (nearMembranePOCPluginList.some((pluginName) => path.includes(pluginName))) {
+    console.log('Sandbox POC: loading plugin via compartments', path);
     return importPluginInsideSandbox(path);
   }
 
-  console.log('SES POC: loading plugin directly', path);
+  console.log('Sandbox POC: loading plugin directly', path);
   return grafanaRuntime.SystemJS.import(path);
 }
 
