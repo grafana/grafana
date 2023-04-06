@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-type RegistryEntityService interface {
+type RegistryService interface {
 	DeleteInFolder(ctx context.Context, orgID int64, UID string) error
 	Kind() string
 }

@@ -46,6 +46,6 @@ func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (
 	return s.ExpectedFolder, s.ExpectedError
 }
 
-func (s *FakeService) RegisterEntityService(service folder.RegistryEntityService) error {
+func (s *FakeService) RegisterService(service folder.RegistryService) error {
 	return nil
 }

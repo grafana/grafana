@@ -39,7 +39,7 @@ type Service struct {
 	bus bus.Bus
 
 	mutex    sync.RWMutex
-	registry map[string]folder.RegistryEntityService
+	registry map[string]folder.RegistryService
 }
 
 func ProvideService(
@@ -62,7 +62,7 @@ func ProvideService(
 		accessControl:        ac,
 		bus:                  bus,
 		db:                   db,
-		registry:             make(map[string]folder.RegistryEntityService),
+		registry:             make(map[string]folder.RegistryService),
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		srv.DBMigration(db)
@@ -817,7 +817,7 @@ func toFolderError(err error) error {
 	return err
 }
 
-func (s *Service) RegisterEntityService(r folder.RegistryEntityService) error {
+func (s *Service) RegisterService(r folder.RegistryService) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
