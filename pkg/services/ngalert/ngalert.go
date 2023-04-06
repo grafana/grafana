@@ -198,7 +198,7 @@ func (ng *AlertNG) init() error {
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
 	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {
-		subscribeToFolderChanges(ng.Log, ng.bus, store, scheduler)
+		subscribeToFolderChanges(ng.Log, ng.bus, store)
 	}
 
 	ng.stateManager = stateManager
@@ -218,7 +218,6 @@ func (ng *AlertNG) init() error {
 		DatasourceCache:      ng.DataSourceCache,
 		DatasourceService:    ng.DataSourceService,
 		RouteRegister:        ng.RouteRegister,
-		Schedule:             ng.schedule,
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
 		TransactionManager:   store,
@@ -263,25 +262,17 @@ func (ng *AlertNG) init() error {
 	return DeclareFixedRoles(ng.accesscontrolService)
 }
 
-func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore, scheduler schedule.ScheduleService) {
+func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {
 	// if folder title is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
 	// clean up the current state
 	bus.AddEventListener(func(ctx context.Context, e *events.FolderTitleUpdated) error {
 		// do not block the upstream execution
 		go func(evt *events.FolderTitleUpdated) {
 			logger.Info("Got folder title updated event. updating rules in the folder", "folderUID", evt.UID)
-			updated, err := dbStore.IncreaseVersionForAllRulesInNamespace(context.Background(), evt.OrgID, evt.UID)
+			_, err := dbStore.IncreaseVersionForAllRulesInNamespace(context.Background(), evt.OrgID, evt.UID)
 			if err != nil {
 				logger.Error("Failed to update alert rules in the folder after its title was changed", "error", err, "folderUID", evt.UID, "folder", evt.Title)
 				return
-			}
-			if len(updated) > 0 {
-				logger.Info("Rules that belong to the folder have been updated successfully. Clearing their status", "folderUID", evt.UID, "updatedRules", len(updated))
-				for _, key := range updated {
-					scheduler.UpdateAlertRule(key.AlertRuleKey, key.Version)
-				}
-			} else {
-				logger.Debug("No alert rules found in the folder. nothing to update", "folderUID", evt.UID, "folder", evt.Title)
 			}
 		}(e)
 		return nil

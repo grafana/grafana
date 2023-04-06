@@ -17,7 +17,7 @@ export const ImageCell: FC<TableCellProps> = (props) => {
     <div {...cellProps} className={tableStyles.cellContainer}>
       {!hasLinks && <img src={displayValue.text} className={tableStyles.imageCell} alt="" />}
       {hasLinks && (
-        <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
+        <DataLinksContextMenu style={{ height: '100%' }} links={() => getCellLinks(field, row) || []}>
           {(api) => {
             return (
               <div onClick={api.openMenu} className={cx(tableStyles.imageCellLink, api.targetClassName)}>

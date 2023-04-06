@@ -46,7 +46,7 @@ describe('getFilteredRoutes', () => {
     expect(filteredRoutes).toContain(routes[2]);
   });
 
-  it('Should only return entries matching provided label query', () => {
+  it('Should only return entries matching provided matcher query', () => {
     // Arrange
     const routes: FormAmRoute[] = [
       buildAmRoute({ id: '1' }),
@@ -56,6 +56,28 @@ describe('getFilteredRoutes', () => {
 
     // Act
     const filteredRoutes = getFilteredRoutes(routes, 'severity=critical', undefined);
+
+    // Assert
+    expect(filteredRoutes).toHaveLength(1);
+    expect(filteredRoutes).toContain(routes[1]);
+  });
+
+  it('Should only return entries matching all provided matchers', () => {
+    // Arrange
+    const routes: FormAmRoute[] = [
+      buildAmRoute({ id: '1' }),
+      buildAmRoute({
+        id: '2',
+        object_matchers: [
+          buildMatcher('severity', 'critical', MatcherOperator.regex),
+          buildMatcher('cloud', 'aws', MatcherOperator.regex),
+        ],
+      }),
+      buildAmRoute({ id: '3', object_matchers: [buildMatcher('severity', 'critical', MatcherOperator.regex)] }),
+    ];
+
+    // Act
+    const filteredRoutes = getFilteredRoutes(routes, 'severity=~critical, cloud=~aws', undefined);
 
     // Assert
     expect(filteredRoutes).toHaveLength(1);
@@ -78,7 +100,7 @@ describe('getFilteredRoutes', () => {
     expect(filteredRoutes).toContain(routes[1]);
   });
 
-  it('Should only return entries matching provided label and contact query', () => {
+  it('Should only return entries matching provided matcher and contact query', () => {
     // Arrange
     const routes: FormAmRoute[] = [
       buildAmRoute({ id: '1' }),

@@ -64,6 +64,9 @@ func TestRetryingOnFailures(t *testing.T) {
 	sess := store.GetSqlxSession()
 	rows, err := sess.Query(context.Background(), `SELECT "hello",2.3,4`)
 	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, rows.Close())
+	}()
 	require.True(t, rows.Next()) // first row
 
 	str1 := ""

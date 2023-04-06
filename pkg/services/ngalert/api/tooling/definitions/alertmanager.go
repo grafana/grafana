@@ -696,7 +696,7 @@ func (c *GettableApiAlertingConfig) validate() error {
 type Config struct {
 	Global            *config.GlobalConfig      `yaml:"global,omitempty" json:"global,omitempty"`
 	Route             *Route                    `yaml:"route,omitempty" json:"route,omitempty"`
-	InhibitRules      []*config.InhibitRule     `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
+	InhibitRules      []config.InhibitRule      `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
 	MuteTimeIntervals []config.MuteTimeInterval `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty"`
 	Templates         []string                  `yaml:"templates" json:"templates"`
 }

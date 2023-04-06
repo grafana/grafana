@@ -68,7 +68,7 @@ func TestDefaultTemplateString(t *testing.T) {
 	_, err = f.WriteString(DefaultTemplateString)
 	require.NoError(t, err)
 
-	tmpl, err := template.FromGlobs(f.Name())
+	tmpl, err := template.FromGlobs([]string{f.Name()})
 	require.NoError(t, err)
 
 	externalURL, err := url.Parse("http://localhost/grafana")

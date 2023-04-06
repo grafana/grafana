@@ -6,19 +6,19 @@ aliases:
   - cloudwatch/
   - preconfig-cloudwatch-dashboards/
   - provision-cloudwatch/
-description: Guide for using AWS CloudWatch in Grafana
+description: Guide for using Amazon CloudWatch in Grafana
 keywords:
   - grafana
   - cloudwatch
   - guide
-menuTitle: AWS CloudWatch
-title: AWS CloudWatch data source
+menuTitle: Amazon CloudWatch
+title: Amazon CloudWatch data source
 weight: 200
 ---
 
-# AWS CloudWatch data source
+# Amazon CloudWatch data source
 
-Grafana ships with built-in support for AWS CloudWatch.
+Grafana ships with built-in support for Amazon CloudWatch.
 This topic describes queries, templates, variables, and other configuration specific to the CloudWatch data source.
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).

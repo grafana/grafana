@@ -71,6 +71,7 @@ beforeEach(() => {
   config.featureToggles.publicDashboards = true;
   mockDashboard = new DashboardModel({
     uid: 'mockDashboardUid',
+    timezone: 'utc',
   });
 
   mockPanel = new PanelModel({

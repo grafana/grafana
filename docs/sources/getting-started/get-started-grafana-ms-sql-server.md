@@ -10,7 +10,7 @@ weight: 500
 
 # Get started with Grafana and MS SQL Server
 
-Microsoft SQL Server is a popular relational database management system that is widely used in development and production environments. This topic walks you through the steps to create a series of dashboards in Grafana to display metrics from a MS SQL Server database. You can also configure the MS SQL Server data source on a [Grafana Cloud](/docs/grafana-cloud/) instance without having to host Grafana yourself.
+Microsoft SQL Server is a popular relational database management system that is widely used in development and production environments. This topic walks you through the steps to create a series of dashboards in Grafana to display metrics from a MS SQL Server database.
 
 > **Note:** You must install Grafana 5.1+ in order to use the integrated MS SQL data source.
 
@@ -53,7 +53,7 @@ Optionally, play around this dashboard and customize it to:
 
 #### Start building dashboards
 
-Now that you have gained some idea of using the pre-packaged MS SQL data source and some test data, the next step is to setup your own instance of MS SQL Server database and data your development or sandbox area. In the previous steps, if you followed along the path of deploying your own instance of MS SQL Server, you are already on your way.
+Now that you have gained some idea of using the pre-packaged MS SQL data source and some test data, the next step is to setup your own instance of MS SQL Server database and data your development or sandbox area.
 
 To fetch data from your own instance of MS SQL Server, add the data source using instructions in Step 4 of this topic. In Grafana [Explore]({{< relref "../explore/" >}}) build queries to experiment with the metrics you want to monitor.
 

@@ -151,6 +151,7 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 		return fmt.Errorf("failed to bulk-create roles: %w", err)
 	}
 
+	//nolint:gosimple // fixed in main
 	for i := range createdRoles {
 		allRoles = append(allRoles, createdRoles[i])
 	}

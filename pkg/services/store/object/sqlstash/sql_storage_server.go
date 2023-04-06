@@ -506,6 +506,7 @@ func (s *sqlObjectServer) fillCreationInfo(ctx context.Context, tx *session.Sess
 			err = rows.Scan(&createdAt, &createdBy)
 		}
 		if err == nil {
+			//nolint:sqlclosecheck
 			err = rows.Close()
 		}
 	}
@@ -526,6 +527,7 @@ func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.Sessi
 		err = rows.Scan(&current.ETag, &current.Version, &current.UpdatedAt, &current.Size)
 	}
 	if err == nil {
+		//nolint:sqlclosecheck
 		err = rows.Close()
 	}
 	return current, err

@@ -20,14 +20,6 @@ var (
 	testUpdateOrgQuotaCmd = `{ "limit": 20 }`
 )
 
-var testOrgQuota = setting.OrgQuota{
-	User:       10,
-	DataSource: 10,
-	Dashboard:  10,
-	ApiKey:     10,
-	AlertRule:  10,
-}
-
 // setupDBAndSettingsForAccessControlQuotaTests stores users and create two orgs
 func setupDBAndSettingsForAccessControlQuotaTests(t *testing.T, sc accessControlScenarioContext) {
 	t.Helper()
