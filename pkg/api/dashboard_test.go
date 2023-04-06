@@ -1096,26 +1096,30 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		cfg, dashboardStore, folderStore, db.InitTestDB(t), featuremgmt.WithFeatures())
 
 	if dashboardService == nil {
-		dashboardService = service.ProvideDashboardServiceImpl(
+		dashboardService, err = service.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore, nil, features, folderPermissions, dashboardPermissions,
 			ac, folderSvc,
 		)
+		require.NoError(t, err)
 	}
 
+	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
+		cfg, dashboardStore, folderStore, nil, features, folderPermissions, dashboardPermissions,
+		ac, folderSvc,
+	)
+	require.NoError(t, err)
+
 	hs := &HTTPServer{
-		Cfg:                   cfg,
-		LibraryPanelService:   &libraryPanelsService,
-		LibraryElementService: &libraryElementsService,
-		SQLStore:              sc.sqlStore,
-		ProvisioningService:   provisioningService,
-		AccessControl:         accesscontrolmock.New(),
-		dashboardProvisioningService: service.ProvideDashboardServiceImpl(
-			cfg, dashboardStore, folderStore, nil, features, folderPermissions, dashboardPermissions,
-			ac, folderSvc,
-		),
-		DashboardService: dashboardService,
-		Features:         featuremgmt.WithFeatures(),
-		Kinds:            corekind.NewBase(nil),
+		Cfg:                          cfg,
+		LibraryPanelService:          &libraryPanelsService,
+		LibraryElementService:        &libraryElementsService,
+		SQLStore:                     sc.sqlStore,
+		ProvisioningService:          provisioningService,
+		AccessControl:                accesscontrolmock.New(),
+		dashboardProvisioningService: dashboardProvisioningService,
+		DashboardService:             dashboardService,
+		Features:                     featuremgmt.WithFeatures(),
+		Kinds:                        corekind.NewBase(nil),
 	}
 
 	hs.callGetDashboard(sc)
