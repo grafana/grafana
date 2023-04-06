@@ -17,22 +17,23 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 )
 
 type (
-	MetricEditorMode uint32
-	MetricQueryType  uint32
+	MetricEditorMode dataquery.MetricEditorMode
+	MetricQueryType  dataquery.MetricQueryType
 	GMDApiMode       uint32
 )
 
 const (
-	MetricEditorModeBuilder MetricEditorMode = iota
-	MetricEditorModeRaw
+	MetricEditorModeBuilder = dataquery.CloudWatchMetricsQueryMetricEditorModeN0
+	MetricEditorModeRaw     = dataquery.CloudWatchMetricsQueryMetricEditorModeN1
 )
 
 const (
-	MetricQueryTypeSearch MetricQueryType = iota
-	MetricQueryTypeQuery
+	MetricQueryTypeSearch = dataquery.CloudWatchMetricsQueryMetricQueryTypeN0
+	MetricQueryTypeQuery  = dataquery.CloudWatchMetricsQueryMetricQueryTypeN1
 )
 
 const (
@@ -67,8 +68,8 @@ type CloudWatchQuery struct {
 	MatchExact        bool
 	UsedExpression    string
 	TimezoneUTCOffset string
-	MetricQueryType   MetricQueryType
-	MetricEditorMode  MetricEditorMode
+	MetricQueryType   dataquery.CloudWatchMetricsQueryMetricQueryType
+	MetricEditorMode  dataquery.CloudWatchMetricsQueryMetricEditorMode
 	AccountId         *string
 }
 
@@ -213,25 +214,9 @@ const timeSeriesQuery = "timeSeriesQuery"
 var validMetricDataID = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]*$`)
 
 type metricsDataQuery struct {
-	Dimensions        map[string]interface{} `json:"dimensions"`
-	Expression        string                 `json:"expression"`
-	Label             *string                `json:"label"`
-	Id                string                 `json:"id"`
-	MatchExact        *bool                  `json:"matchExact"`
-	MetricEditorMode  *MetricEditorMode      `json:"metricEditorMode"`
-	MetricName        string                 `json:"metricName"`
-	MetricQueryType   MetricQueryType        `json:"metricQueryType"`
-	Namespace         string                 `json:"namespace"`
-	Period            string                 `json:"period"`
-	Region            string                 `json:"region"`
-	SqlExpression     string                 `json:"sqlExpression"`
-	Statistic         *string                `json:"statistic"`
-	Statistics        []*string              `json:"statistics"`
-	TimezoneUTCOffset string                 `json:"timezoneUTCOffset"`
-	QueryType         string                 `json:"type"`
-	Hide              *bool                  `json:"hide"`
-	Alias             string                 `json:"alias"`
-	AccountId         *string                `json:"accountId"`
+	dataquery.CloudWatchMetricsQuery
+	Type              string `json:"type"`
+	TimezoneUTCOffset string `json:"timezoneUTCOffset"`
 }
 
 // ParseMetricDataQueries decodes the metric data queries json, validates, sets default values and returns an array of CloudWatchQueries.
@@ -246,7 +231,7 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			return nil, &QueryError{Err: err, RefID: query.RefID}
 		}
 
-		queryType := metricsDataQuery.QueryType
+		queryType := metricsDataQuery.Type
 		if queryType != timeSeriesQuery && queryType != "" {
 			continue
 		}
@@ -255,19 +240,45 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 	}
 
 	result := make([]*CloudWatchQuery, 0, len(metricDataQueries))
+
 	for refId, mdq := range metricDataQueries {
+		alias := ""
+		if mdq.Alias != nil {
+			alias = *mdq.Alias
+		}
+
+		metricName := ""
+		if mdq.MetricName != nil {
+			metricName = *mdq.MetricName
+		}
+
+		metricQueryType := MetricQueryTypeSearch
+		if mdq.MetricQueryType != nil {
+			metricQueryType = *mdq.MetricQueryType
+		}
+
+		sqlExpression := ""
+		if mdq.SqlExpression != nil {
+			sqlExpression = *mdq.SqlExpression
+		}
+
+		expression := ""
+		if mdq.Expression != nil {
+			expression = *mdq.Expression
+		}
+
 		cwQuery := &CloudWatchQuery{
 			logger:            logger,
-			Alias:             mdq.Alias,
+			Alias:             alias,
 			RefId:             refId,
 			Id:                mdq.Id,
 			Region:            mdq.Region,
 			Namespace:         mdq.Namespace,
-			MetricName:        mdq.MetricName,
-			MetricQueryType:   mdq.MetricQueryType,
-			SqlExpression:     mdq.SqlExpression,
+			MetricName:        metricName,
+			MetricQueryType:   metricQueryType,
+			SqlExpression:     sqlExpression,
 			TimezoneUTCOffset: mdq.TimezoneUTCOffset,
-			Expression:        mdq.Expression,
+			Expression:        expression,
 		}
 
 		if err := cwQuery.validateAndSetDefaults(refId, mdq, startTime, endTime, defaultRegion, crossAccountQueryingEnabled); err != nil {
@@ -337,14 +348,14 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 	if metricsDataQuery.Hide != nil {
 		q.ReturnData = !*metricsDataQuery.Hide
 	}
-	if metricsDataQuery.QueryType == "" {
+	if metricsDataQuery.Type == "" {
 		// If no type is provided we assume we are called by alerting service, which requires to return data!
 		// Note, this is sort of a hack, but the official Grafana interfaces do not carry the information
 		// who (which service) called the TsdbQueryEndpoint.Query(...) function.
 		q.ReturnData = true
 	}
 
-	if metricsDataQuery.MetricEditorMode == nil && len(metricsDataQuery.Expression) > 0 {
+	if metricsDataQuery.MetricEditorMode == nil && metricsDataQuery.Expression != nil && len(*metricsDataQuery.Expression) > 0 {
 		// this should only ever happen if this is an alerting query that has not yet been migrated in the frontend
 		q.MetricEditorMode = MetricEditorModeRaw
 	} else {
@@ -369,7 +380,7 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 func getStatistic(query metricsDataQuery) string {
 	// If there's not a statistic property in the json, we know it's the legacy format and then it has to be migrated
 	if query.Statistic == nil {
-		return *query.Statistics[0]
+		return query.Statistics[0]
 	}
 	return *query.Statistic
 }
@@ -389,14 +400,17 @@ func getLabel(query metricsDataQuery, dynamicLabelsEnabled bool) string {
 	if query.Label != nil {
 		return *query.Label
 	}
-	if query.Alias == "" {
+	if query.Alias != nil && *query.Alias == "" {
 		return ""
 	}
 
 	var result string
 	if dynamicLabelsEnabled {
-		fullAliasField := query.Alias
-		matches := legacyAliasRegexp.FindAllStringSubmatch(query.Alias, -1)
+		fullAliasField := ""
+		if query.Alias != nil {
+			fullAliasField = *query.Alias
+		}
+		matches := legacyAliasRegexp.FindAllStringSubmatch(fullAliasField, -1)
 
 		for _, groups := range matches {
 			fullMatch := groups[0]
@@ -428,7 +442,10 @@ func calculatePeriodBasedOnTimeRange(startTime, endTime time.Time) int {
 }
 
 func getPeriod(query metricsDataQuery, startTime, endTime time.Time) (int, error) {
-	periodString := query.Period
+	periodString := ""
+	if query.Period != nil {
+		periodString = *query.Period
+	}
 	var period int
 	var err error
 	if strings.ToLower(periodString) == "auto" || periodString == "" {

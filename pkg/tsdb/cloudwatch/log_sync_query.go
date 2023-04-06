@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
@@ -29,7 +30,11 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 		}
 
 		logsQuery.Subtype = "StartQuery"
-		logsQuery.QueryString = logsQuery.Expression
+		expression := ""
+		if logsQuery.Expression != nil {
+			expression = *logsQuery.Expression
+		}
+		logsQuery.QueryString = expression
 
 		region := logsQuery.Region
 		if logsQuery.Region == "" || region == defaultRegion {
@@ -86,7 +91,9 @@ func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient cloudwatc
 	}
 
 	requestParams := models.LogsQuery{
-		Region:  logsQuery.Region,
+		CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
+			Region: logsQuery.Region,
+		},
 		QueryId: *startQueryOutput.QueryId,
 	}
 
