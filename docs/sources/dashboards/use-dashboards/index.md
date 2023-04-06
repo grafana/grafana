@@ -31,7 +31,7 @@ The following image and descriptions highlights all dashboards features.
 
 - (1) **Grafana home**: Click the Grafana home icon to be redirected to the home page configured in the Grafana instance.
 - (2) **Dashboard title**: When you click the dashboard title you can search for dashboard contained in the current folder.
-- (3) **Share dashboard**: Use this option to share the current dashboard by link or snapshot. You can also export the dashboard definition from the share modal.
+- (3) **Share dashboard or panel**: Use this option to share the current dashboard by link or snapshot. You can also export the dashboard definition from the share modal.
 - (4) **Add a new panel**: Use this option to add a panel, dashboard row, or library panel to the current dashboard.
 - (5) **Dashboard settings**: Use this option to change dashboard name, folder, and tags and manage variables and annotation queries. For more information about dashboard settings, refer to [Modify dashboard settings]({{< relref "../build-dashboards/modify-dashboard-settings/" >}}).
 - (6) **Time picker dropdown**: Click to select relative time range options and set custom absolute time ranges.
