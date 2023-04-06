@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { getUnixTime, subMinutes } from 'date-fns';
 import { groupBy, isEmpty, isEqual, sortBy, uniqBy, uniqueId } from 'lodash';
 import React from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   ArrayVector,
@@ -44,6 +45,7 @@ interface Props {
 const LokiStateHistory = ({ ruleUID }: Props) => {
   const { useGetRuleHistoryQuery } = stateHistoryApi;
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
 
   const from = getUnixTime(subMinutes(new Date(), 60));
   const { currentData: stateHistory, isLoading, isError, error } = useGetRuleHistoryQuery({ ruleUid: ruleUID, from });
@@ -144,35 +146,61 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   });
 
   return (
-    <Stack>
-      {!isEmpty(commonLabels) && (
-        <>
-          Common labels: <TagList tags={commonLabels.map((label) => label.join('='))} />
-        </>
-      )}
-      <TimelineChart
-        frames={dataFrames}
-        timeRange={timeRange}
-        timeZone={'browser'}
-        mode={TimelineMode.Changes}
-        height={400}
-        width={690}
-        showValue={VisibilityMode.Never}
-        theme={theme}
-        rowHeight={0.8}
-        legend={{
-          calcs: [],
-          displayMode: LegendDisplayMode.List,
-          placement: 'bottom',
-          showLegend: true,
-        }}
-        legendItems={[
-          { label: 'Normal', color: 'green', yAxis: 1 },
-          { label: 'Pending', color: 'yellow', yAxis: 1 },
-          { label: 'Alerting', color: 'red', yAxis: 1 },
-        ]}
-      />
-      {/* <UPlotChart width={400} height={50} data={dataFormat} timeRange={timeRange} config={config} /> */}
+    <div className={styles.fullWidth}>
+      <Stack direction="column">
+        {!isEmpty(commonLabels) && (
+          <div>
+            Common labels: <TagList tags={commonLabels.map((label) => label.join('='))} />
+          </div>
+        )}
+        <AutoSizer>
+          {({ width, height }) => (
+            <TimelineChart
+              data-testid={height}
+              frames={dataFrames}
+              timeRange={timeRange}
+              timeZone={'browser'}
+              mode={TimelineMode.Changes}
+              // TODO do the math to get a good height
+              height={300}
+              width={width}
+              showValue={VisibilityMode.Never}
+              theme={theme}
+              rowHeight={0.8}
+              legend={{
+                calcs: [],
+                displayMode: LegendDisplayMode.List,
+                placement: 'bottom',
+                showLegend: true,
+              }}
+              legendItems={[
+                { label: 'Normal', color: 'green', yAxis: 1 },
+                { label: 'Pending', color: 'yellow', yAxis: 1 },
+                { label: 'Alerting', color: 'red', yAxis: 1 },
+              ]}
+            />
+          )}
+        </AutoSizer>
+        <LogRecordViewerByTimestamp records={linesWithTimestamp} commonLabels={commonLabels} />
+      </Stack>
+    </div>
+  );
+};
+
+interface LogRecordViewerProps {
+  records: LogRecord[];
+  commonLabels: Array<[string, string]>;
+}
+
+function LogRecordViewerByInstance({ records, commonLabels }: LogRecordViewerProps) {
+  const styles = useStyles2(getStyles);
+
+  const groupedLines = groupBy(records, (record: LogRecord) => {
+    return JSON.stringify(record.line.labels);
+  });
+
+  return (
+    <>
       {Object.entries(groupedLines).map(([key, records]) => {
         return (
           <Stack direction="column" key={key}>
@@ -183,28 +211,59 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
                 )}
               />
             </h4>
-            <LogRecordViewer records={records} />
+            <div className={styles.logsContainer}>
+              {records.map((logRecord) => (
+                <React.Fragment key={uniqueId()}>
+                  <AlertStateTag state={logRecord.line.previous} size="sm" muted />
+                  <Icon name="arrow-right" />
+                  <AlertStateTag state={logRecord.line.current} />
+                  <Stack direction="row">{renderValues(logRecord.line.values)}</Stack>
+                  <div>{dateTimeFormat(logRecord.timestamp)}</div>
+                </React.Fragment>
+              ))}
+            </div>
           </Stack>
         );
       })}
-    </Stack>
+    </>
   );
-};
+}
 
-function LogRecordViewer({ records }: { records: LogRecord[] }) {
+function LogRecordViewerByTimestamp({ records, commonLabels }: LogRecordViewerProps) {
   const styles = useStyles2(getStyles);
 
+  const groupedLines = groupBy(records, (record: LogRecord) => {
+    return record.timestamp;
+  });
+
   return (
-    <div className={styles.logsContainer}>
-      {records.map((logRecord) => (
-        <React.Fragment key={uniqueId()}>
-          <AlertStateTag state={logRecord.line.previous} size="sm" muted />
-          <Icon name="arrow-right" />
-          <AlertStateTag state={logRecord.line.current} />
-          <Stack direction="row">{renderValues(logRecord.line.values)}</Stack>
-          <div>{dateTimeFormat(logRecord.timestamp)}</div>
-        </React.Fragment>
-      ))}
+    <div className={styles.logsScrollable}>
+      {Object.entries(groupedLines).map(([key, records]) => {
+        return (
+          <div key={key}>
+            <Stack direction="column">
+              <h4 id={key}>{dateTimeFormat(parseInt(key, 10))}</h4>
+              <div className={styles.logsContainer}>
+                {records.map((logRecord) => (
+                  <React.Fragment key={uniqueId()}>
+                    <AlertStateTag state={logRecord.line.previous} size="sm" muted />
+                    <Icon name="arrow-right" />
+                    <AlertStateTag state={logRecord.line.current} />
+                    <Stack direction="row">{renderValues(logRecord.line.values)}</Stack>
+                    <div>
+                      <TagList
+                        tags={omitLabels(Object.entries(logRecord.line.labels), commonLabels).map(
+                          ([key, value]) => `${key}=${value}`
+                        )}
+                      />
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
+            </Stack>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -246,6 +305,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     grid-template-columns: max-content max-content max-content auto max-content;
     gap: ${theme.spacing(2, 1)};
     align-items: center;
+  `,
+  fullWidth: css`
+    min-width: 100%;
+  `,
+
+  logsScrollable: css`
+    height: 500px;
+    overflow: scroll;
   `,
 });
 
