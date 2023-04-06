@@ -34,8 +34,8 @@ export const LogContextButtons = (props: Props) => {
 
   return (
     <ButtonGroup className={styles.logSamplesButton}>
-      <ToolbarButton aria-label="Add lines" variant="canvas" onClick={onAddClick} icon="plus" narrow />
-      <ToolbarButton aria-label="Remove lines" variant="canvas" onClick={onRemoveClick} icon="minus" narrow />
+      {/* <ToolbarButton aria-label="Add lines" variant="canvas" onClick={onAddClick} icon="plus" narrow />
+      <ToolbarButton aria-label="Remove lines" variant="canvas" onClick={onRemoveClick} icon="minus" narrow /> */}
       <ButtonSelect variant="canvas" value={option} options={LoadMoreOptions} onChange={onChangeOption} />
     </ButtonGroup>
   );

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import {
+  DataFrame,
   DataQueryResponse,
   DataSourceWithLogsContextSupport,
   GrafanaTheme2,
@@ -116,6 +117,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
   const onChangeLimitOption = (option: SelectableValue<number>) => {
     setLoadMoreOption(option);
+    setLimit(option.value!);
   };
 
   const onAddLimit = () => {
@@ -148,8 +150,18 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       });
 
       setContext({
-        after: logsModels[0].rows.reverse(),
-        before: logsModels[1].rows.reverse(),
+        after: logsModels[0].rows.reverse().filter((r) => {
+          // if(r.uid && r.uid){
+          //   return r.uid !== row.uid;
+          // }
+          return r.timeEpochNs !== row.timeEpochNs;
+        }),
+        before: logsModels[1].rows.reverse().filter((r) => {
+          // if(r.uid && r.uid){
+          //   return r.uid !== row.uid;
+          // }
+          return r.timeEpochNs !== row.timeEpochNs;
+        }),
       });
     } else {
       setContext({ after: [], before: [] });
@@ -188,7 +200,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       )}
       <div className={flexRow}>
         <div>
-          Showing {limit} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match
+          {/* Showing {limit} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match */}
         </div>
         <div>
           <LogContextButtons
@@ -240,7 +252,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
             wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
             prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
             enableLogDetails={true}
-            timeZone={'UTC'}
+            timeZone={timeZone}
             displayedFields={displayedFields}
             onClickShowField={showField}
             onClickHideField={hideField}
@@ -249,7 +261,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       </div>
       <div>
         <div>
-          Showing {limit} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match
+          {/* Showing {limit} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match */}
         </div>
       </div>
     </Modal>
