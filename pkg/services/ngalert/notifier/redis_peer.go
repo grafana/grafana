@@ -360,9 +360,7 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 		case <-p.shutdownc:
 			return
 		default:
-			p.messagesReceived.WithLabelValues(update).Inc()
 			data, err := channel.ReceiveMessage(context.Background())
-
 			var opErr *net.OpError
 			if errors.As(err, &opErr) {
 				p.logger.Error("network error, waiting 10 seconds before retry", "err", err, "channel", p.withPrefix(name))
@@ -373,6 +371,7 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 				p.logger.Error("error receiving message from redis", "err", err, "channel", p.withPrefix(name))
 				continue
 			}
+			p.messagesReceived.WithLabelValues(update).Inc()
 			p.messagesReceivedSize.WithLabelValues(update).Add(float64(len(data.Payload)))
 			var part clusterpb.Part
 			if err := proto.Unmarshal([]byte(data.Payload), &part); err != nil {
@@ -430,7 +429,6 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 		case <-p.shutdownc:
 			return
 		default:
-			p.messagesReceived.WithLabelValues(fullState).Inc()
 			data, err := p.subs[fullStateChannel].ReceiveMessage(context.Background())
 			var opErr *net.OpError
 			if errors.As(err, &opErr) {
@@ -442,6 +440,7 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 				p.logger.Error("error receiving message from redis", "err", err, "channel", p.withPrefix(fullStateChannel))
 				continue
 			}
+			p.messagesReceived.WithLabelValues(fullState).Inc()
 			p.messagesReceivedSize.WithLabelValues(fullState).Add(float64(len(data.Payload)))
 
 			var fs clusterpb.FullState
@@ -540,12 +539,13 @@ func (c *RedisChannel) Broadcast(b []byte) {
 	if err != nil {
 		return
 	}
-	c.p.messagesSent.WithLabelValues(c.msgType).Inc()
-	c.p.messagesSentSize.WithLabelValues(c.msgType).Add(float64(len(b)))
 	pub := c.p.redis.Publish(context.Background(), c.channel, string(b))
 	// An error here might not be as critical as one might think on first sight.
 	// The state will eventually be propagted to other members by the full sync.
 	if pub.Err() != nil {
 		c.p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", c.channel)
+		return
 	}
+	c.p.messagesSent.WithLabelValues(c.msgType).Inc()
+	c.p.messagesSentSize.WithLabelValues(c.msgType).Add(float64(len(b)))
 }
