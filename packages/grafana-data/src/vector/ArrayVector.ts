@@ -34,7 +34,7 @@ Object.assign(Array.prototype, {
     return this;
   },
   get buffer() {
-    return (this as unknown as []);
+    return this as unknown as [];
   },
   set buffer(values: []) {
     (this as unknown as []).length = 0;
@@ -42,20 +42,14 @@ Object.assign(Array.prototype, {
   },
 });
 
-const notice = 'ArrayVector is deprecated and will be removed in Grafana 11. Please use plain arrays for field.values.';
-let notified = false;
-
 /**
  * @public
+ *
+ * @deprecated use a simple Array<T>
  */
 export class ArrayVector<T = any> extends Array<T> implements MutableVector<T> {
   constructor(buffer: T[] = []) {
     super();
-
-    if (!notified) {
-      console.error(notice);
-      notified = true;
-    }
 
     return buffer;
   }

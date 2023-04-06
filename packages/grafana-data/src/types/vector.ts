@@ -1,3 +1,4 @@
+/** @deprecated use a simple Array<T> */
 export interface Vector<T = any> {
   length: number;
 
