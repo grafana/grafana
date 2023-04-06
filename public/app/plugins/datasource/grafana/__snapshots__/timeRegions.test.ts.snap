@@ -9,11 +9,10 @@ exports[`grafana data source supports time region query 1`] = `
       "name": "time",
       "type": "time",
       "values": [
-        1609718400000,
-        1610323200000,
-        1610928000000,
-        1611532800000,
-        1612137600000,
+        1678060800000,
+        1678665600000,
+        1679270400000,
+        1679875200000,
       ],
     },
     {
@@ -22,11 +21,10 @@ exports[`grafana data source supports time region query 1`] = `
       "name": "timeEnd",
       "type": "time",
       "values": [
-        1609891199000,
-        1610495999000,
-        1611100799000,
-        1611705599000,
-        1612310399000,
+        1678233599000,
+        1678838399000,
+        1679443199000,
+        1680047999000,
       ],
     },
     {
@@ -44,7 +42,6 @@ exports[`grafana data source supports time region query 1`] = `
         "green",
         "green",
         "green",
-        "green",
       ],
     },
     {
@@ -57,7 +54,6 @@ exports[`grafana data source supports time region query 1`] = `
         true,
         true,
         true,
-        true,
       ],
     },
   ],
@@ -65,57 +61,6 @@ exports[`grafana data source supports time region query 1`] = `
     "dataTopic": "annotations",
     "type": "timeranges",
   },
-  "name": undefined,
-  "refId": undefined,
-}
-`;
-
-exports[`grafana data source time region query 1`] = `
-{
-  "fields": [
-    {
-      "config": {},
-      "labels": undefined,
-      "name": "Time",
-      "type": "time",
-      "values": [
-        1609736400000,
-        1609909199000,
-        1610341200000,
-        1610513999000,
-        1610946000000,
-        1611118799000,
-        1611550800000,
-        1611723599000,
-        1612155600000,
-        1612328399000,
-      ],
-    },
-    {
-      "config": {
-        "color": {
-          "fixedColor": "green",
-          "mode": "fixed",
-        },
-      },
-      "labels": undefined,
-      "name": "T1",
-      "type": "boolean",
-      "values": [
-        true,
-        false,
-        true,
-        false,
-        true,
-        false,
-        true,
-        false,
-        true,
-        false,
-      ],
-    },
-  ],
-  "meta": undefined,
   "name": undefined,
   "refId": undefined,
 }
