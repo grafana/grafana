@@ -6,19 +6,15 @@ import { MutableVector } from '../types/vector';
 
 declare global {
   interface Array<T> {
-    /** @deprecated used to migrage Vector to array */
-    get buffer(): T[];
-    /** @deprecated used to migrage Vector to array */
-    set buffer(values: T[]);
-    /** @deprecated used to migrage Vector to array */
+    /** @deprecated used to migrate Vector to array */
     get(idx: number): T;
-    /** @deprecated used to migrage Vector to array */
+    /** @deprecated used to migrate Vector to array */
     set(idx: number, value: T): void;
-    /** @deprecated used to migrage Vector to array */
+    /** @deprecated used to migrate Vector to array */
     add(value: T): void;
-    /** @deprecated used to migrage Vector to array */
+    /** @deprecated used to migrate Vector to array */
     toArray(): T[];
-    /** @deprecated used to migrage Vector to array */
+    /** @deprecated used to migrate Vector to array */
     toJSON(): T[];
   }
 }
@@ -37,16 +33,6 @@ Object.assign(Array.prototype, {
   toArray() {
     return this;
   },
-  toJSON() {
-    return this;
-  },
-  get buffer() {
-    return this as unknown as [];
-  },
-  set buffer(values: []) {
-    (this as unknown as []).length = 0;
-    (this as unknown as []).push(...values);
-  },
 });
 
 /**
@@ -55,10 +41,18 @@ Object.assign(Array.prototype, {
  * @deprecated use a simple Array<T>
  */
 export class ArrayVector<T = any> extends Array<T> implements MutableVector<T> {
+  buffer: T[];
+
   constructor(buffer: T[] = []) {
     super();
 
-    return buffer;
+    this.buffer = buffer;
+
+    return buffer as ArrayVector<T>;
+  }
+
+  toJSON() {
+    return this.buffer;
   }
 }
 
