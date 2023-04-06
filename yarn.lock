@@ -3374,6 +3374,7 @@ __metadata:
     "@storybook/addon-storysource": 7.0.2
     "@storybook/addons": 7.0.2
     "@storybook/api": 7.0.2
+    "@storybook/blocks": 7.0.2
     "@storybook/client-api": 7.0.2
     "@storybook/components": 7.0.2
     "@storybook/core-events": 7.0.2
