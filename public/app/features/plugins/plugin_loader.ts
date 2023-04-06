@@ -32,7 +32,7 @@ import * as ticks from 'app/core/utils/ticks';
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
-import { importPluginInsideSandbox } from './sandboxing';
+import { availableCompartmentDependenciesMap, importPluginInsideSandbox } from './sandboxing';
 import { locateFromCDN, translateForCDN } from './systemjsPlugins/pluginCDN';
 import { fetchCSS, locateCSS } from './systemjsPlugins/pluginCSS';
 import { locateWithCache, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
@@ -85,6 +85,7 @@ grafanaRuntime.SystemJS.config({
 });
 
 export function exposeToPlugin(name: string, component: any) {
+  availableCompartmentDependenciesMap.set(name, component);
   grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
     module.exports = component;
   });
@@ -177,6 +178,7 @@ const nearMembranePOCPluginList = [
   'sespoc',
   'marcusolsson-dynamictext-panel',
   'myorg-extensions-app',
+  'grafana-polystat-panel',
 ];
 
 export async function importPluginModule(path: string, version?: string): Promise<any> {

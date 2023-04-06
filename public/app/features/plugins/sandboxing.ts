@@ -1,59 +1,18 @@
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference types="ses" />
-import * as emotion from '@emotion/css';
-import * as emotionReact from '@emotion/react';
 import createVirtualEnvironment from '@locker/near-membrane-dom';
-import * as d3 from 'd3';
-import jquery from 'jquery';
-import _ from 'lodash'; // eslint-disable-line lodash/import-scope
-import moment from 'moment'; // eslint-disable-line no-restricted-imports
-import prismjs from 'prismjs';
-import react from 'react';
-import reactDom from 'react-dom';
-import * as reactRedux from 'react-redux'; // eslint-disable-line no-restricted-imports
-import * as reactRouter from 'react-router-dom';
-import * as redux from 'redux';
-import * as rxjs from 'rxjs';
-import * as rxjsOperators from 'rxjs/operators';
-import slate from 'slate';
-import slatePlain from 'slate-plain-serializer';
-import slateReact from 'slate-react';
 
-import * as grafanaData from '@grafana/data';
-import * as grafanaRuntime from '@grafana/runtime';
-import * as grafanaUIraw from '@grafana/ui';
+import { GrafanaPlugin } from '@grafana/data';
 
 import { getGeneralSandboxDistortionMap } from './sandbox/distortion_map';
 import { createSandboxDocument } from './sandbox/document_sandbox';
 
 const prefix = '[sandbox]';
 
-export const compartmentDependencies = {
-  '@grafana/data': grafanaData,
-  '@grafana/ui': grafanaUIraw,
-  '@grafana/runtime': grafanaRuntime,
-  lodash: _,
-  moment,
-  jquery,
-  d3,
-  rxjs,
-  'rxjs/operators': rxjsOperators,
-  'react-router-dom': reactRouter,
-  // Experimental modules
-  prismjs,
-  slate,
-  'slate-react': slateReact,
-  'slate-plain-serializer': slatePlain,
-  react,
-  'react-dom': reactDom,
-  'react-redux': reactRedux,
-  redux,
-  emotion,
-  '@emotion/css': emotion,
-  '@emotion/react': emotionReact,
-};
+type CompartmentDependencyModule = unknown;
+export const availableCompartmentDependenciesMap = new Map<string, CompartmentDependencyModule>();
 
-export function getSandboxedWebApis({ pluginName, isDevMode }: { pluginName: string; isDevMode: boolean }) {
+export function getSandboxedWebApis({ pluginName }: { pluginName: string; isDevMode: boolean }) {
   const sandboxLog = function (...args: unknown[]) {
     console.log(`${prefix} ${pluginName}:`, ...args);
   };
@@ -97,7 +56,7 @@ async function getPluginCode(path: string) {
   return await response.text();
 }
 
-export async function doImportPluginInsideSandbox(path: string): Promise<any> {
+export async function doImportPluginInsideSandbox(path: string): Promise<{ plugin: GrafanaPlugin }> {
   let resolved = false;
   return new Promise(async (resolve, reject) => {
     const pluginName = path.split('/')[1];
@@ -105,16 +64,16 @@ export async function doImportPluginInsideSandbox(path: string): Promise<any> {
     console.log('[actually] Importing plugin inside sandbox: ', pluginName, ' from path: ', path, '');
     const pluginCode = await getPluginCode(path);
 
-    let pluginExports = {};
-
     const sandboxDocument = createSandboxDocument();
     const generalDistortionMap = getGeneralSandboxDistortionMap();
-    const distortionMap = new Map(generalDistortionMap);
+    const pluginDistortionMap = new Map(generalDistortionMap);
 
-    distortionMap.set(document.body, sandboxDocument.body);
-    distortionMap.set(document, sandboxDocument);
+    pluginDistortionMap.set(document.body, sandboxDocument.body);
+    pluginDistortionMap.set(document, sandboxDocument);
 
     const env = createVirtualEnvironment(window, {
+      // distortions are interceptors to modify the behavior of objects when
+      // the code inside the sandbox tries to access them
       distortionCallback(v) {
         //@ts-ignore
         // if (v.name) {
@@ -123,15 +82,25 @@ export async function doImportPluginInsideSandbox(path: string): Promise<any> {
         // } else {
         //   console.log('distortionCallback', v);
         // }
-        return distortionMap.get(v) ?? v;
+        return pluginDistortionMap.get(v) ?? v;
       },
+      // custom functions we make available to plugins in their window object
       endowments: Object.getOwnPropertyDescriptors({
-        define(deps: string[], code: () => {}) {
-          //@ts-ignore
-          const resolvedDeps = deps.map((dep) => compartmentDependencies[dep]);
-          // execute the module's code with dependencies to get its export
-          //@ts-ignore
-          pluginExports = code.apply(null, resolvedDeps);
+        define(deps: string[], code: (...args: CompartmentDependencyModule[]) => { plugin: GrafanaPlugin }) {
+          const resolvedDeps: CompartmentDependencyModule[] = [];
+          for (const dep of deps) {
+            const resolvedDep = availableCompartmentDependenciesMap.get(dep);
+            if (!resolvedDep) {
+              throw new Error(`[sandbox] Could not resolve dependency ${dep} when loading plugin ${path}`);
+            }
+            resolvedDeps.push(resolvedDep);
+          }
+          const pluginExports: { plugin: GrafanaPlugin } = code.apply(null, resolvedDeps);
+
+          if (!pluginExports.plugin) {
+            throw new Error(`[sandbox] Plugin ${path} did not export a plugin`);
+          }
+
           if (!resolved) {
             resolved = true;
             resolve(pluginExports);
