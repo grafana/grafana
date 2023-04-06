@@ -1,6 +1,8 @@
+import { css } from '@emotion/css';
 import React, { memo, useMemo } from 'react';
 
 import { locationSearchToObject } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
@@ -33,7 +35,7 @@ const BrowseDashboardsPage = memo(({ match, location }: Props) => {
 
   return (
     <Page navId="dashboards/browse" pageNav={navModel}>
-      <Page.Contents>
+      <Page.Contents className={styles.pageContents}>
         <BrowseActions />
 
         {folderDTO && <pre>{JSON.stringify(folderDTO, null, 2)}</pre>}
@@ -42,6 +44,14 @@ const BrowseDashboardsPage = memo(({ match, location }: Props) => {
       </Page.Contents>
     </Page>
   );
+});
+
+const getStyles = () => ({
+  pageContents: css({
+    display: 'grid',
+    gridTemplateRows: 'auto 1fr',
+    height: '100%',
+  }),
 });
 
 BrowseDashboardsPage.displayName = 'BrowseDashboardsPage';
