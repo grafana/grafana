@@ -116,10 +116,10 @@ export function SqlQueryEditor({
             setHasDatabaseConfigIssue(false);
             onChange({ ...query, dataset: preconfiguredDatabase });
           }}
-          buttonContent="FINISHED"
+          buttonContent="UNDERSTOOD"
         >
           Your default database configuration has been changed or updated. Make note of the query you have built before
-          clicking FINISHED. Clicking FINISHED will update your query parameters with the new database data.
+          clicking UNDERSTOOD. Clicking UNDERSTOOD will update your query parameters with the new database data.
         </Alert>
       )}
       {hasNoPostgresDefaultDatabaseConfig && (

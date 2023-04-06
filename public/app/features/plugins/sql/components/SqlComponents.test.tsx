@@ -5,8 +5,6 @@ import { DatasetSelector } from './DatasetSelector';
 import { SqlQueryEditor } from './QueryEditor';
 import { buildSqlQueryEditorProps, buildMockDataSelectorProps } from './SqlComponents.testHelpers';
 
-// jest.mock('');
-
 describe('SqlQueryEditor', () => {
   describe('alerts', () => {
     it('should render the `database_update` alert correctly', async () => {
