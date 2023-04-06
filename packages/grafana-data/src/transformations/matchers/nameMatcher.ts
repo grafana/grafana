@@ -30,11 +30,6 @@ export interface ByNamesMatcherOptions {
   readOnly?: boolean;
   prefix?: string;
 }
-// wrapped in a feature toggle
-// so we may turn this off, with prometheusDataplane toggle, if we have unexpected behavior/errors
-// grafana-data does not have access to runtime
-// eslint-disable-next-line
-const useMatcherFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.fieldNameMatcherFallback;
 
 // General Field matcher
 const fieldNameMatcher: FieldMatcherInfo<string> = {
@@ -110,6 +105,10 @@ const multipleFieldNamesMatcher: FieldMatcherInfo<ByNamesMatcherOptions> = {
 export function fieldNameFallback(fields: Set<string>) {
   let fallback: FieldMatcher | undefined = undefined;
 
+  // grafana-data does not have access to runtime so we are accessing the window object
+  // to get access to the prometheusDataplane featureToggle
+  // eslint-disable-next-line
+  const useMatcherFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.fieldNameMatcherFallback;
   if (useMatcherFallback) {
     if (fields.has(TIME_SERIES_VALUE_FIELD_NAME)) {
       fallback = (field: Field, frame: DataFrame) => {
