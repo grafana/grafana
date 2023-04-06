@@ -31,6 +31,8 @@ tracing = true
 
 ## Implementing tracing in your plugin
 
+> **Note:** Make sure you are using at least grafana-plugins-sdk-go v0.157.0. You can update with `go get -u github.com/grafana/grafana-plugin-sdk-go`.
+
 When OpenTelemetry tracing is enabled on the main Grafana instance and tracing is enabeld for a plugin,
 the Opentelemetry endpoint address and propagation format will be passed to the plugin during startup,
 which will be used to configure a global tracer.
