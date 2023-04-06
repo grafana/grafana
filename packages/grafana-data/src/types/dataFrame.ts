@@ -136,7 +136,21 @@ export interface Field<T = any, V = Vector<T>> {
    *  Meta info about how field and how to display it
    */
   config: FieldConfig;
-  values: V | T[]; // The raw field values
+
+  /**
+   * The raw field values
+   * In Grafana 10, this accepts both simple arrays and the Vector interface
+   * In Grafana 11, the Vector interface will be removed
+   */
+  values: V | T[];
+
+  /**
+   * When type === FieldType.Time, this can optionally store
+   * the nanosecond-precison fractions as integers between
+   * 0 and 999999.
+   */
+  nanos?: number[];
+
   labels?: Labels;
 
   /**
