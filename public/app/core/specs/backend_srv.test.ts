@@ -184,7 +184,7 @@ describe('backendSrv', () => {
           })
           .catch((error) => {
             expect(error).toEqual({ message: 'UnAuthorized' });
-            expect(appEventsMock.emit).toHaveBeenCalledTimes(2);
+            expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
             expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, ['UnAuthorized', '']);
           });
       });
