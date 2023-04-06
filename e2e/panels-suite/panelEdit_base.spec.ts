@@ -79,6 +79,7 @@ e2e.scenario({
     e2e.components.PluginVisualization.current().should((e) => expect(e).to.contain('Time series'));
 
     // Check that table view works
+    e2e.components.Panels.Panel.loadingBar().should('not.exist');
     e2e.components.PanelEditor.toggleTableView().click({ force: true });
     e2e.components.Panels.Visualization.Table.header()
       .should('be.visible')

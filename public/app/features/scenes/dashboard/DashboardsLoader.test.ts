@@ -13,6 +13,8 @@ import { defaultDashboard, LoadingState, Panel, RowPanel, VariableType } from '@
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
 import { DashboardScene } from './DashboardScene';
 import {
@@ -21,6 +23,7 @@ import {
   createSceneVariableFromVariableModel,
   DashboardLoader,
 } from './DashboardsLoader';
+import { ShareQueryDataProvider } from './ShareQueryDataProvider';
 
 describe('DashboardLoader', () => {
   describe('when fetching/loading a dashboard', () => {
@@ -327,6 +330,21 @@ describe('DashboardLoader', () => {
 
       expect((vizPanelSceneObject.state.body as VizPanel)?.state.displayMode).toEqual('transparent');
       expect((vizPanelSceneObject.state.body as VizPanel)?.state.hoverHeader).toEqual(true);
+    });
+
+    it('should handle a dashboard query data source', () => {
+      const panel = {
+        title: '',
+        type: 'test-plugin',
+        datasource: { uid: SHARED_DASHBOARD_QUERY, type: DASHBOARD_DATASOURCE_PLUGIN_ID },
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        transparent: true,
+        targets: [{ refId: 'A', panelId: 10 }],
+      };
+
+      const vizPanel = createVizPanelFromPanelModel(new PanelModel(panel)).state.body as VizPanel;
+
+      expect(vizPanel.state.$data).toBeInstanceOf(ShareQueryDataProvider);
     });
   });
 

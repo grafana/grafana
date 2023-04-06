@@ -50,6 +50,8 @@ export interface FolderRequestOptions {
   withAccessControl?: boolean;
 }
 
+const GRAFANA_TRACEID_HEADER = 'grafana-trace-id';
+
 export class BackendSrv implements BackendService {
   private inFlightRequests: Subject<string> = new Subject<string>();
   private HTTP_REQUEST_CANCELED = -1;
@@ -223,6 +225,7 @@ export class BackendSrv implements BackendService {
           type,
           redirected,
           config: options,
+          traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
         };
         return fetchResponse;
       }),
@@ -238,7 +241,13 @@ export class BackendSrv implements BackendService {
         filter((response) => response.ok === false),
         mergeMap((response) => {
           const { status, statusText, data } = response;
-          const fetchErrorResponse: FetchError = { status, statusText, data, config: options };
+          const fetchErrorResponse: FetchError = {
+            status,
+            statusText,
+            data,
+            config: options,
+            traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
+          };
           return throwError(fetchErrorResponse);
         }),
         retryWhen((attempts: Observable<any>) =>

@@ -1,7 +1,7 @@
 {
   "name": "@grafana/eslint-plugin",
   "description": "ESLint rules for use within the Grafana repo. Not suitable (or supported) for external use.",
-  "version": "9.5.0-pre",
+  "version": "10.0.0-pre",
   "main": "./index.cjs",
   "author": "Grafana Labs",
   "license": "Apache-2.0",

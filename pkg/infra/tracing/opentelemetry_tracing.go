@@ -105,6 +105,10 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 	return nil
 }
 
+func (ots *Opentelemetry) OTelExporterEnabled() bool {
+	return ots.Enabled == otlpExporter
+}
+
 func splitCustomAttribs(s string) ([]attribute.KeyValue, error) {
 	res := []attribute.KeyValue{}
 
@@ -319,4 +323,16 @@ func (s OpentelemetrySpan) AddEvents(keys []string, values []EventValue) {
 			s.span.AddEvent(keys[i], trace.WithAttributes(attribute.Key(keys[i]).Int64(v.Num)))
 		}
 	}
+}
+
+func (s OpentelemetrySpan) contextWithSpan(ctx context.Context) context.Context {
+	if s.span != nil {
+		ctx = trace.ContextWithSpan(ctx, s.span)
+		// Grafana also manages its own separate traceID in the context in addition to what opentracing handles.
+		// It's derived from the span. Ensure that we propagate this too.
+		if traceID := s.span.SpanContext().TraceID(); traceID.IsValid() {
+			ctx = context.WithValue(ctx, traceKey{}, traceValue{traceID.String(), s.span.SpanContext().IsSampled()})
+		}
+	}
+	return ctx
 }
