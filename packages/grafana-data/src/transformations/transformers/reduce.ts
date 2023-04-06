@@ -191,9 +191,9 @@ export function mergeResults(data: DataFrame[]): DataFrame | undefined {
         const isSameField = baseField.type === field.type && baseField.name === field.name;
 
         if (isFirstField || isSameField) {
-          const baseValues: any[] = baseField.values.toArray();
-          const values: any[] = field.values.toArray();
-          (baseField.values as unknown as ArrayVector).buffer = baseValues.concat(values);
+          const baseValues = baseField.values;
+          const values = field.values;
+          baseField.values = (baseValues as any[]).concat(values);
         }
       }
     }

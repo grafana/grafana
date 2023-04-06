@@ -28,7 +28,7 @@ Object.assign(Array.prototype, {
   get buffer() {
     return this as any;
   },
-  set buffer(values: T[]) {
+  set buffer(values: []) {
     (this as any).length = 0;
     (this as any).push(...values);
   },
@@ -53,9 +53,14 @@ Object.assign(Array.prototype, {
  * @deprecated use a simple Array<T>
  */
 export class ArrayVector<T = any> extends Array<T> implements MutableVector<T> {
+  // built-in methods will use this as the constructor
+  static get [Symbol.species]() {
+    return Array;
+  }
+
   constructor(buffer: T[] = []) {
     super();
-    return buffer as ArrayVector<T>;
+    return buffer;
   }
 }
 
