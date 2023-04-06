@@ -47,44 +47,47 @@ export function GrafanaRuleQueryViewer({
 
   return (
     <Stack gap={2} direction="column">
-      <Stack gap={2}>
-        {dataQueries.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
-          const dataSource = dsByUid[datasourceUid];
+      <div style={{ maxWidth: '100%' }}>
+        <Stack gap={2}>
+          {dataQueries.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
+            const dataSource = dsByUid[datasourceUid];
 
-          return (
-            <QueryPreview
-              key={index}
-              refId={refId}
-              isAlertCondition={condition === refId}
-              model={model}
-              relativeTimeRange={relativeTimeRange}
-              evalTimeRange={evalTimeRanges[refId]}
-              dataSource={dataSource}
-              queryData={evalDataByQuery[refId]}
-              onEvalTimeRangeChange={(timeRange) => onTimeRangeChange(refId, timeRange)}
-            />
-          );
-        })}
-      </Stack>
-
-      <Stack gap={1}>
-        {expressions.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
-          const dataSource = dsByUid[datasourceUid];
-
-          return (
-            isExpressionQuery(model) && (
-              <ExpressionPreview
+            return (
+              <QueryPreview
                 key={index}
                 refId={refId}
                 isAlertCondition={condition === refId}
                 model={model}
+                relativeTimeRange={relativeTimeRange}
+                evalTimeRange={evalTimeRanges[refId]}
                 dataSource={dataSource}
-                evalData={evalDataByQuery[refId]}
+                queryData={evalDataByQuery[refId]}
+                onEvalTimeRangeChange={(timeRange) => onTimeRangeChange(refId, timeRange)}
               />
-            )
-          );
-        })}
-      </Stack>
+            );
+          })}
+        </Stack>
+      </div>
+      <div style={{ maxWidth: '100%' }}>
+        <Stack gap={1}>
+          {expressions.map(({ model, refId, datasourceUid }, index) => {
+            const dataSource = dsByUid[datasourceUid];
+
+            return (
+              isExpressionQuery(model) && (
+                <ExpressionPreview
+                  key={index}
+                  refId={refId}
+                  isAlertCondition={condition === refId}
+                  model={model}
+                  dataSource={dataSource}
+                  evalData={evalDataByQuery[refId]}
+                />
+              )
+            );
+          })}
+        </Stack>
+      </div>
     </Stack>
   );
 }

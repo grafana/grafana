@@ -141,12 +141,11 @@ export function RuleViewerVisualization({
 function createExploreLink(settings: DataSourceInstanceSettings, model: AlertDataQuery): string {
   const { name } = settings;
   const { refId, ...rest } = model;
-  const queryParams = { ...rest, datasource: name };
 
   return urlUtil.renderUrl(`${config.appSubUrl}/explore`, {
     left: JSON.stringify({
       datasource: name,
-      queries: [{ refId: 'A', ...queryParams }],
+      queries: [{ refId: 'A', ...rest }],
       range: { from: 'now-1h', to: 'now' },
     }),
   });
