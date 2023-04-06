@@ -342,7 +342,7 @@ export class StreamingDataFrame implements DataFrame {
 
       appended.forEach((v, i) => {
         const { state, values } = this.fields[i];
-        values.buffer = v;
+        values.buffer = v as any[];
         if (state) {
           state.calcs = undefined;
         }
@@ -378,7 +378,7 @@ export class StreamingDataFrame implements DataFrame {
     } else {
       values.forEach((v, i) => {
         if (this.fields[i]?.values) {
-          this.fields[i].values.buffer = v;
+          this.fields[i].values.buffer = v as any[];
         }
       });
 
