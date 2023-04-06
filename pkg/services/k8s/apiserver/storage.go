@@ -2,8 +2,10 @@ package apiserver
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -14,11 +16,14 @@ import (
 	customStorage "k8s.io/apiextensions-apiserver/pkg/storage"
 	"k8s.io/apiextensions-apiserver/pkg/storage/filepath"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -52,7 +57,7 @@ func ProvideStorage(userService userpkg.Service, acService accesscontrol.Service
 	) (customStorage.Storage, error) {
 		fmt.Printf("create storage for GR: %v", gr)
 
-		if true {
+		if gr.Resource != "dashboards" {
 			return filepath.Storage(gr, strategy, optsGetter, tableConvertor, newFunc, newListFunc)
 		}
 
@@ -84,7 +89,56 @@ func (s *entityStorage) ShortNames() []string {
 }
 
 func (s *entityStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("not implemented")
+	obj := s.newFunc().(*unstructured.Unstructured)
+	objMeta, err := meta.Accessor(obj)
+	if err != nil {
+		return nil, err
+	}
+	objMeta.SetName(name)
+	objMeta.SetNamespace("default")
+
+	user, err := s.getSignedInUser(ctx, obj)
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := s.entityStore.Read(appcontext.WithUser(ctx, user), &entity.ReadEntityRequest{
+		GRN: &entity.GRN{
+			TenantId: user.OrgID,
+			Kind:     strings.ToLower(obj.GetObjectKind().GroupVersionKind().Kind),
+			UID:      name, // the UID
+		},
+		WithBody:   true,
+		WithStatus: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if out == nil || out.GRN == nil {
+		return nil, apierrors.NewNotFound(s.gr, name)
+	}
+
+	objMeta.SetUID(types.UID(out.Guid))
+	objMeta.SetResourceVersion(formatResourceVersion(out.Version))
+
+	var spec map[string]interface{}
+	err = json.Unmarshal(out.Body, &spec)
+	if err != nil {
+		return nil, err
+	}
+
+	obj.Object["spec"] = spec
+
+	// err = runtime.DefaultUnstructuredConverter.FromUnstructured(uObj.UnstructuredContent(), obj)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to convert to PublicDashboard: %w", err)
+	// }
+
+	// if true {
+	// 	return nil, apierrors.NewNotFound(s.gr, name)
+	// }
+
+	return obj, nil
 }
 
 func (s *entityStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
@@ -92,7 +146,7 @@ func (s *entityStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	if err != nil {
 		return nil, err
 	}
-	cmd, err := objectToWriteCommand(user.OrgID, obj, options)
+	cmd, err := objectToWriteCommand(user.OrgID, obj)
 	if err != nil {
 		return nil, err
 	}
@@ -101,33 +155,46 @@ func (s *entityStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, err
 	}
 
-	s.log.Debug("Create called", "user", user.UserID, "org", user.OrgID, "kind", out.GUID)
+	objMeta, err := meta.Accessor(obj)
+	if err != nil {
+		return nil, err
+	}
 
-	return obj, nil //nil, fmt.Errorf("not implemented")
+	objMeta.SetUID(types.UID(out.GUID))
+	objMeta.SetResourceVersion(formatResourceVersion(out.Entity.Version))
+
+	return obj, nil
 }
 
 func (s *entityStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("not implemented")
+	return nil, fmt.Errorf("not implemented (list)")
 }
 
-func (s *entityStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("not implemented")
+func (s *entityStorage) Update(ctx context.Context,
+	name string,
+	objInfo rest.UpdatedObjectInfo,
+	createValidation rest.ValidateObjectFunc,
+	updateValidation rest.ValidateObjectUpdateFunc,
+	forceAllowCreate bool,
+	options *metav1.UpdateOptions,
+) (runtime.Object, bool, error) {
+	return nil, false, fmt.Errorf("UPAGE not implemented (" + name + ")")
 }
 
 func (s *entityStorage) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
-	return nil, fmt.Errorf("not implemented")
+	return nil, fmt.Errorf("WATCH not implemented")
 }
 
 func (s *entityStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("not implemented")
+	return nil, false, fmt.Errorf("DELETE not implemented (" + name + ")")
 }
 
 func (s *entityStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("not implemented")
+	return nil, fmt.Errorf("DeleteCollection not implemented")
 }
 
 func (s *entityStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return nil, fmt.Errorf("not implemented")
+	return s.tableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *entityStorage) Destroy() {

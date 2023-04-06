@@ -1,30 +1,58 @@
 package apiserver
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func objectToWriteCommand(orgID int64, obj runtime.Object, options *metav1.CreateOptions) (*entity.WriteEntityRequest, error) {
-	uObj, ok := obj.(*unstructured.Unstructured)
-	if !ok {
-		return nil, fmt.Errorf("failed to convert to *unstructured.Unstructured")
+func objectToWriteCommand(orgID int64, obj runtime.Object) (*entity.WriteEntityRequest, error) {
+	raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		return nil, err
 	}
-	var err error
+	uObj := unstructured.Unstructured{}
+	uObj.SetUnstructuredContent(raw)
+
+	// Convert from CRD names to entity api names
+	// HACK for now
+	kind := strings.ToLower(uObj.GetKind())
 
 	req := &entity.WriteEntityRequest{
 		GRN: &entity.GRN{
 			TenantId: orgID, // from the user
-			Kind:     uObj.GetObjectKind().GroupVersionKind().Kind,
+			Kind:     kind,
 			UID:      uObj.GetName(),
 		},
 	}
 
-	req.Body, err = uObj.MarshalJSON()
+	rv := uObj.GetResourceVersion()
+	if rv != "" {
+		// req.PreviousVersion, err = strconv.ParseUint(rv, 10, 64)
+		// if err != nil {
+		// 	return nil, fmt.Errorf("unable to parse resource version")
+		// }
+		fmt.Printf("TODO: %s\n", rv)
+	}
 
+	v, ok := raw["spec"]
+	if ok {
+		req.Body, err = json.Marshal(v)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read spec")
+		}
+	}
+
+	v, ok = raw["status"]
+	if ok {
+		req.Status, err = json.Marshal(v)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read spec")
+		}
+	}
 	return req, err
 }
