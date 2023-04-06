@@ -63,14 +63,14 @@ const getTestContext = (overides?: object) => {
 
   backendSrv['parseRequestOptions'] = parseRequestOptionsMock;
 
-  const expectCallChain = () => {
-    expect(fromFetchMock).toHaveBeenCalledTimes(1);
+  const expectCallChain = (calls = 1) => {
+    expect(fromFetchMock).toHaveBeenCalledTimes(calls);
   };
 
-  const expectRequestCallChain = (options: unknown) => {
+  const expectRequestCallChain = (options: unknown, calls = 1) => {
     expect(parseRequestOptionsMock).toHaveBeenCalledTimes(1);
     expect(parseRequestOptionsMock).toHaveBeenCalledWith(options);
-    expectCallChain();
+    expectCallChain(calls);
   };
 
   return {
@@ -179,12 +179,12 @@ describe('backendSrv', () => {
             expect(appEventsMock.emit).not.toHaveBeenCalled();
             expect(logoutMock).not.toHaveBeenCalled();
             expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
-            expectRequestCallChain({ url, method: 'GET', retry: 0 });
+            expectRequestCallChain({ url, method: 'GET', retry: 0 }, 2);
             jest.advanceTimersByTime(50);
           })
           .catch((error) => {
             expect(error).toEqual({ message: 'UnAuthorized' });
-            expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
+            expect(appEventsMock.emit).toHaveBeenCalledTimes(2);
             expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, ['UnAuthorized', '']);
           });
       });
