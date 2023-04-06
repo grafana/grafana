@@ -32,14 +32,14 @@ describe('Exemplars', () => {
   });
 
   it('should be able to navigate to configured data source', () => {
-    let intercept = 'prometheus';
     e2e().intercept('/api/ds/query', (req) => {
-      if (intercept === 'prometheus') {
-        // For second intercept, we want to send tempo response
-        intercept = 'tempo';
+      const datasourceType = req.body.queries[0].datasource.type;
+      if (datasourceType === 'prometheus') {
         req.reply({ fixture: 'exemplars-query-response.json' });
-      } else {
+      } else if (datasourceType === 'tempo') {
         req.reply({ fixture: 'tempo-response.json' });
+      } else {
+        req.reply({});
       }
     });
 

@@ -37,6 +37,13 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     this.variables = new TestDataVariableSupport();
   }
 
+  getDefaultQuery(): Partial<TestData> {
+    return {
+      scenarioId: TestDataQueryType.RandomWalk,
+      seriesCount: 1,
+    };
+  }
+
   query(options: DataQueryRequest<TestData>): Observable<DataQueryResponse> {
     const backendQueries: TestData[] = [];
     const streams: Array<Observable<DataQueryResponse>> = [];
