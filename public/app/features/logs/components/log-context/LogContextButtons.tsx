@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { ButtonGroup, ButtonSelect, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { ButtonGroup, ButtonSelect, useStyles2 } from '@grafana/ui';
 
 const getStyles = () => {
   return {
@@ -23,19 +23,15 @@ export const LoadMoreOptions: Array<SelectableValue<number>> = [
 export type Props = {
   option: SelectableValue<number>;
   onChangeOption: (item: SelectableValue<number>) => void;
-  onAddClick: () => void;
-  onRemoveClick: () => void;
   position?: 'top' | 'bottom';
 };
 
 export const LogContextButtons = (props: Props) => {
-  const { option, onChangeOption, onAddClick, onRemoveClick } = props;
+  const { option, onChangeOption } = props;
   const styles = useStyles2(getStyles);
 
   return (
     <ButtonGroup className={styles.logSamplesButton}>
-      {/* <ToolbarButton aria-label="Add lines" variant="canvas" onClick={onAddClick} icon="plus" narrow />
-      <ToolbarButton aria-label="Remove lines" variant="canvas" onClick={onRemoveClick} icon="minus" narrow /> */}
       <ButtonSelect variant="canvas" value={option} options={LoadMoreOptions} onChange={onChangeOption} />
     </ButtonGroup>
   );

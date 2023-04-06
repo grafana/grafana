@@ -120,18 +120,6 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     setLimit(option.value!);
   };
 
-  const onAddLimit = () => {
-    if (loadMoreOption.value) {
-      setLimit(limit + loadMoreOption.value);
-    }
-  };
-
-  const onRemoveLimit = () => {
-    if (loadMoreOption.value) {
-      setLimit(limit - loadMoreOption.value);
-    }
-  };
-
   const [_, fetchResults] = useAsyncFn(async () => {
     if (open && row && limit) {
       const rawResults = await Promise.all([
@@ -199,16 +187,9 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         <div className={datasourceUi}>{getLogRowContextUi(row, fetchResults)}</div>
       )}
       <div className={flexRow}>
+        <div>{/* Showing {limit} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match */}</div>
         <div>
-          {/* Showing {limit} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match */}
-        </div>
-        <div>
-          <LogContextButtons
-            onRemoveClick={onRemoveLimit}
-            onAddClick={onAddLimit}
-            onChangeOption={onChangeLimitOption}
-            option={loadMoreOption}
-          />
+          <LogContextButtons onChangeOption={onChangeLimitOption} option={loadMoreOption} />
         </div>
       </div>
       <div ref={scrollElement} className={logRowGroups}>
@@ -260,9 +241,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         </div>
       </div>
       <div>
-        <div>
-          {/* Showing {limit} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match */}
-        </div>
+        <div>{/* Showing {limit} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match */}</div>
       </div>
     </Modal>
   );

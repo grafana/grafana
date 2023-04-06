@@ -7,26 +7,16 @@ import { LogContextButtons, LoadMoreOptions } from './LogContextButtons';
 
 describe('LogContextButtons', () => {
   const onChangeOption = jest.fn();
-  const onAddClick = jest.fn();
-  const onRemoveClick = jest.fn();
   const option: SelectableValue<number> = { label: '10 lines', value: 10 };
   const position: 'top' | 'bottom' = 'bottom';
 
   beforeEach(() => {
-    render(
-      <LogContextButtons
-        option={option}
-        onChangeOption={onChangeOption}
-        onAddClick={onAddClick}
-        onRemoveClick={onRemoveClick}
-        position={position}
-      />
-    );
+    render(<LogContextButtons option={option} onChangeOption={onChangeOption} position={position} />);
   });
 
-  it('should render a ButtonGroup with three buttons', () => {
+  it('should render a ButtonGroup with one button', () => {
     const buttons = screen.getAllByRole('button');
-    expect(buttons.length).toBe(3);
+    expect(buttons.length).toBe(1);
   });
 
   it('should render a ButtonSelect with LoadMoreOptions', () => {
@@ -52,21 +42,5 @@ describe('LogContextButtons', () => {
     fireEvent.click(twentyLinesButton);
     const newOption = { label: '20 lines', value: 20 };
     expect(onChangeOption).toHaveBeenCalledWith(newOption);
-  });
-
-  it('should call onAddClick when the "add" button is clicked', () => {
-    const addButton = screen.getByRole('button', {
-      name: /add lines/i,
-    });
-    fireEvent.click(addButton);
-    expect(onAddClick).toHaveBeenCalled();
-  });
-
-  it('should call onRemoveClick when the "remove" button is clicked', () => {
-    const removeButton = screen.getByRole('button', {
-      name: /remove lines/i,
-    });
-    fireEvent.click(removeButton);
-    expect(onRemoveClick).toHaveBeenCalled();
   });
 });
