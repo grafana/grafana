@@ -29,7 +29,7 @@ export function doTimeRegionQuery(config: TimeRegionConfig, range: TimeRange, tz
     let from = region.from;
     let to = region.to;
 
-    const info = getTimeZoneInfo(regionTimezone, from);
+    const info = getTimeZoneInfo(regionTimezone, Date.now());
     if (info) {
       const offset = info.offsetInMins * 60 * 1000;
       from += offset;
