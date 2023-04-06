@@ -17,7 +17,7 @@ describe('SqlQueryEditor', () => {
       });
     });
 
-    it('should render the `database_update` alert correctly', async () => {
+    it('should render the `no_postgres_database` alert correctly', async () => {
       render(
         <SqlQueryEditor
           {...buildSqlQueryEditorProps(undefined, { queryHeaderProps: { disableDatasetSelector: true } })}
