@@ -508,7 +508,7 @@ describe('backendSrv', () => {
           expect(inspectorPacket).toBe(error);
           expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
           expect(logoutMock).not.toHaveBeenCalled();
-          expectRequestCallChain({ url, method: 'GET', retry: 0 });
+          expectRequestCallChain({ url, method: 'GET', retry: 0 }, 2);
         });
       });
     });
