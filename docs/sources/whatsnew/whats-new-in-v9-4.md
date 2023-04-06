@@ -298,7 +298,7 @@ We've added support for custom session parameters.
 
 ## Postgres, MySQL, and MSSQL data sources
 
-We've moved the `database` property under the `jsonData` key in the datasource configuration. This change is backwards compatible, and existing configurations will continue to work.
+The `database` property is now under the `jsonData` key in the data source configuration. This change is backward compatible, and existing configurations will continue to work.
 
 ## Before you upgrade
 
