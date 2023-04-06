@@ -50,10 +50,6 @@ export class ArrayVector<T = any> extends Array<T> implements MutableVector<T> {
 
     return buffer as ArrayVector<T>;
   }
-
-  toJSON() {
-    return this.buffer;
-  }
 }
 
 /*
