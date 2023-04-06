@@ -80,6 +80,26 @@ describe('MSSQLDatasource', () => {
     });
   });
 
+  describe('When performing metricFindQuery and backendSrv returns undefined dataframe', () => {
+    it('should return an empty array', async () => {
+      const query = 'select * from atable';
+      const response = {
+        results: {
+          tempvar: {
+            refId: 'tempvar',
+            frames: [],
+          },
+        },
+      };
+
+      fetchMock.mockImplementation(() => of(createFetchResponse(response)));
+
+      const results = await ctx.ds.metricFindQuery(query);
+
+      expect(results.length).toBe(0);
+    });
+  });
+
   describe('When performing metricFindQuery with key, value columns', () => {
     let results: MetricFindValue[];
     const query = 'select * from atable';

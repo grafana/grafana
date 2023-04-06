@@ -64,6 +64,25 @@ describe('MySQLDatasource', () => {
     });
   });
 
+  describe('When performing metricFindQuery and backendSrv returns undefined dataframe', () => {
+    it('should return an empty array', async () => {
+      const query = 'select * from atable';
+      const response = {
+        results: {
+          tempvar: {
+            refId: 'tempvar',
+            frames: [],
+          },
+        },
+      };
+
+      const { ds } = setupTextContext(response);
+      const results = await ds.metricFindQuery(query, {});
+
+      expect(results.length).toBe(0);
+    });
+  });
+
   describe('When performing metricFindQuery that returns multiple string fields', () => {
     const query = 'select * from atable';
     const response = {

@@ -303,6 +303,25 @@ describe('PostgreSQLDatasource', () => {
     });
   });
 
+  describe('When performing metricFindQuery and backendSrv returns undefined dataframe', () => {
+    it('should return an empty array', async () => {
+      const query = 'select * from atable';
+      const response = {
+        results: {
+          tempvar: {
+            refId: 'tempvar',
+            frames: [],
+          },
+        },
+      };
+
+      const { ds } = setupTestContext(response);
+      const results = await ds.metricFindQuery(query, {});
+
+      expect(results.length).toBe(0);
+    });
+  });
+
   describe('When performing metricFindQuery that returns multiple string fields', () => {
     it('should return list of all string field values', async () => {
       const query = 'select * from atable';
