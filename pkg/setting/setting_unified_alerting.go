@@ -31,7 +31,7 @@ const (
 		"receivers": [{
 			"name": "grafana-default-email",
 			"grafana_managed_receiver_configs": [{
-				"uid": "",
+				"uid": "grafana-default-email",
 				"name": "email receiver",
 				"type": "email",
 				"isDefault": true,
