@@ -103,8 +103,8 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		shutdownc:         make(chan struct{}),
 		prefix:            cfg.prefix,
 		heartbeatInterval: time.Second * 5,
-		heartbeatTimeout:  time.Second * 60,
-		positionValidFor:  time.Second * 60,
+		heartbeatTimeout:  time.Minute,
+		positionValidFor:  time.Minute,
 	}
 
 	// The metrics for the redis peer are exactly the same as for the official
@@ -412,6 +412,10 @@ func (p *redisPeer) fullStateReqReceiveLoop() {
 				p.logger.Error("error receiving message from redis", "err", err, "channel", p.withPrefix(fullStateChannelReq))
 				continue
 			}
+			// The payload of a full state request is the name of the peer that is
+			// requesting the full state. In case we received our own request, we
+			// can just ignore it. Redis pub/sub fanouts to all clients, regardless
+			// if a client was also the publisher.
 			if data.Payload == p.name {
 				continue
 			}
