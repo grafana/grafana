@@ -16,10 +16,10 @@ import (
 // attempt to read and write query results to the cache
 func NewCachingMiddleware(cachingService caching.CachingService) plugins.ClientMiddleware {
 	log := log.New("caching_middleware")
-	if err := prometheus.Register(QueryRequestHistogram); err != nil {
+	if err := prometheus.Register(QueryCachingRequestHistogram); err != nil {
 		log.Error("error registering prometheus collector 'QueryRequestHistogram'", "error", err)
 	}
-	if err := prometheus.Register(ResourceRequestHistogram); err != nil {
+	if err := prometheus.Register(ResourceCachingRequestHistogram); err != nil {
 		log.Error("error registering prometheus collector 'ResourceRequestHistogram'", "error", err)
 	}
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
@@ -59,7 +59,7 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	defer func() {
 		// record request duration if caching was used
 		if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
-			QueryRequestHistogram.With(prometheus.Labels{
+			QueryCachingRequestHistogram.With(prometheus.Labels{
 				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
 				"cache":           ch,
 				"query_type":      getQueryType(reqCtx),
@@ -105,7 +105,7 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	defer func() {
 		// record request duration if caching was used
 		if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
-			ResourceRequestHistogram.With(prometheus.Labels{
+			ResourceCachingRequestHistogram.With(prometheus.Labels{
 				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
 				"cache":           ch,
 			}).Observe(time.Since(start).Seconds())

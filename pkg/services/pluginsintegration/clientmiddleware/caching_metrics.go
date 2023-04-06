@@ -11,18 +11,18 @@ const (
 	QueryDashboard = "dashboard"
 )
 
-var QueryRequestHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+var QueryCachingRequestHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 	Namespace: metrics.ExporterName,
 	Subsystem: "caching",
-	Name:      "query_request_duration_seconds",
+	Name:      "query_caching_request_duration_seconds",
 	Help:      "histogram of grafana query endpoint requests in seconds",
 	Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 }, []string{"datasource_type", "cache", "query_type"})
 
-var ResourceRequestHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+var ResourceCachingRequestHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 	Namespace: metrics.ExporterName,
 	Subsystem: "caching",
-	Name:      "resource_request_duration_seconds",
+	Name:      "resource_caching_request_duration_seconds",
 	Help:      "histogram of grafana resource endpoint requests in seconds",
 	Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 }, []string{"datasource_type", "cache"})
