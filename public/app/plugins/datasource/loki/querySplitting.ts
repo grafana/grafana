@@ -154,11 +154,14 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
 
 function getNextRequestPointers(requests: LokiGroupedRequest, requestGroup: number, requestN: number) {
   // There's a pending request from the next group:
-  if (requests[requestGroup + 1]?.partition[requestN - 1]) {
-    return {
-      nextRequestGroup: requestGroup + 1,
-      nextRequestN: requestN,
-    };
+  for (let i = requestGroup + 1; i < requests.length; i++) {
+    const group = requests[i];
+    if (group.partition[requestN - 1]) {
+      return {
+        nextRequestGroup: i,
+        nextRequestN: requestN,
+      };
+    }
   }
   return {
     // Find the first group where `[requestN - 1]` is defined

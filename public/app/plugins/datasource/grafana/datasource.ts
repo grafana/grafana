@@ -66,6 +66,12 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     };
   }
 
+  getDefaultQuery(): Partial<GrafanaQuery> {
+    return {
+      queryType: GrafanaQueryType.RandomWalk,
+    };
+  }
+
   query(request: DataQueryRequest<GrafanaQuery>): Observable<DataQueryResponse> {
     const results: Array<Observable<DataQueryResponse>> = [];
     const targets: GrafanaQuery[] = [];
