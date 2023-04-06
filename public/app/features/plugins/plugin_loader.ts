@@ -172,7 +172,12 @@ for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
-const nearMembranePOCPluginList = ['marcusolsson-json-datasource', 'sespoc', 'marcusolsson-dynamictext-panel'];
+const nearMembranePOCPluginList = [
+  'marcusolsson-json-datasource',
+  'sespoc',
+  'marcusolsson-dynamictext-panel',
+  'myorg-extensions-app',
+];
 
 export async function importPluginModule(path: string, version?: string): Promise<any> {
   if (version) {
