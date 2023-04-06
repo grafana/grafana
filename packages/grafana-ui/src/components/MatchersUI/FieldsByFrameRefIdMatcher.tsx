@@ -28,12 +28,12 @@ const recoverRefIdMissing = (
   return;
 };
 
-type Props = {
+export interface Props {
   value?: string; // refID
   data: DataFrame[];
   onChange: (value: string) => void;
   placeholder?: string;
-};
+}
 
 // Not exported globally... but used in grafana core
 export function RefIDPicker({ value, data, onChange, placeholder }: Props) {
