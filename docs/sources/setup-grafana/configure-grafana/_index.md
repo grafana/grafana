@@ -1965,18 +1965,6 @@ Enter a comma-separated list of plugin identifiers to hide in the plugin catalog
 
 <hr>
 
-## [plugin.plugin_id]
-
-This section allows to configure plugin-specific settings. `plugin_id` must be replaced with the plugin id present in `plugin.json`.
-
-### tracing
-
-> **Note**: Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as well](#tracingopentelemetry).
-
-If `true`, propagate the tracing context to this backend plugin and enable tracing in the plugin (if it supports it).
-
-<hr>
-
 ## [live]
 
 ### max_connections
@@ -2029,6 +2017,20 @@ Address string of selected the high availability (HA) Live engine. For Redis, it
 ha_engine = redis
 ha_engine_address = 127.0.0.1:6379
 ```
+
+<hr>
+
+## [plugin.plugin_id]
+
+This section allows to configure plugin-specific settings. `plugin_id` must be replaced with the plugin id present in `plugin.json`.
+
+Properties described in this section are available for all plugins, but must be set for each plugin.
+
+### tracing
+
+> **Note**: Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as well](#tracingopentelemetry).
+
+If `true`, propagate the tracing context to the plugin backend and enable tracing (if it supports it).
 
 <hr>
 
