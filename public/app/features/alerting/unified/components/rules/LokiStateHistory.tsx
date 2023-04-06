@@ -223,11 +223,11 @@ function extractCommonLabels(groupedLines: Record<string, LogRecord[]>): Array<[
   const groupLabels = Object.keys(groupedLines);
   const groupLabelsArray: Array<[string, string]> = groupLabels.flatMap((label) => Object.entries(JSON.parse(label)));
 
-  // find all common labels by looking and which ones occur multiple times, then create a unique array of items for those
+  // find all common labels by looking and which ones occur in every record, then create a unique array of items for those
   const commonLabels = uniqBy(
     groupLabelsArray.filter((label) => {
       const count = groupLabelsArray.filter((l) => isEqual(label, l)).length;
-      return count > 1;
+      return count === Object.keys(groupedLines).length;
     }),
     (label) => JSON.stringify(label)
   );
