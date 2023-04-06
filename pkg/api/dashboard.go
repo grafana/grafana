@@ -422,11 +422,9 @@ func (hs *HTTPServer) deleteDashboardsByTagsORUIDs(c *contextmodel.ReqContext) r
 	}
 
 	return response.JSON(http.StatusMultiStatus, finalRes)
-
 }
 
 func (hs *HTTPServer) deleteDashboardByTagORUID(c *contextmodel.ReqContext, dash dashboards.DashboardSearchProjection) dashboards.DeleteDashboardStatus {
-
 	dashboard := &dashboards.Dashboard{ID: dash.ID, UID: dash.UID, Slug: dash.Slug, OrgID: c.OrgID, FolderID: dash.FolderID, IsFolder: dash.IsFolder}
 	guardian, err := guardian.NewByUID(c.Req.Context(), dash.UID, c.OrgID, c.SignedInUser)
 	if err != nil {
@@ -462,7 +460,6 @@ func (hs *HTTPServer) deleteDashboardByTagORUID(c *contextmodel.ReqContext, dash
 			}
 		}
 		return dashboards.DeleteDashboardsRes(http.StatusInternalServerError, "", "Failed to delete dashboard", *dashboard)
-
 	}
 
 	if hs.Live != nil {
@@ -473,11 +470,9 @@ func (hs *HTTPServer) deleteDashboardByTagORUID(c *contextmodel.ReqContext, dash
 	}
 
 	return dashboards.DeleteDashboardsRes(http.StatusOK, fmt.Sprintf("Dashboard %s deleted", dash.Title), "", *dashboard)
-
 }
 
 func (hs *HTTPServer) getDashboardsHelper(ctx context.Context, orgID int64, tags []string, uids []string, signedInUser *user.SignedInUser) ([]dashboards.DashboardSearchProjection, response.Response) {
-
 	query := dashboards.FindPersistedDashboardsQuery{
 		OrgId:        orgID,
 		SignedInUser: signedInUser,

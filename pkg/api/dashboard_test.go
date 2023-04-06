@@ -529,6 +529,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				setUpInner()
 				sc.sqlStore = mockSQLStore
 				dashboardService := dashboards.NewFakeDashboardService(t)
+				qResult1 := dashboards.NewDashboard("test")
+				dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult1, nil)
 				qResult := []dashboards.DashboardSearchProjection{{Title: "test"}}
 				dashboardService.On("FindDashboards", mock.Anything, mock.AnythingOfType("*dashboards.FindPersistedDashboardsQuery")).Return(qResult, nil)
 				dashboardService.On("DeleteDashboard", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(nil)
@@ -1215,7 +1217,6 @@ func (hs *HTTPServer) callDeleteDashboardByUID(t *testing.T,
 
 func (hs *HTTPServer) callDeleteDashboardByTagsORUIDs(t *testing.T,
 	sc *scenarioContext, mockDashboard *dashboards.FakeDashboardService, mockPubdashService *publicdashboards.FakePublicDashboardService) {
-
 	hs.DashboardService = mockDashboard
 	pubdashApi := api.ProvideApi(mockPubdashService, nil, nil, featuremgmt.WithFeatures())
 	hs.PublicDashboardsApi = pubdashApi
