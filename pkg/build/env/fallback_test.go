@@ -47,7 +47,7 @@ func TestRequireListWithEnvFallback(t *testing.T) {
 			name:        flag1,
 			envName:     "",
 			expected:    []string(nil),
-			expectedErr: cli.Exit(fmt.Sprintf("Required flag (flag1) or environment variable () not set"), 1),
+			expectedErr: cli.Exit("Required flag (flag1) or environment variable () not set", 1),
 		},
 	}
 	for _, tt := range tests {
@@ -93,7 +93,7 @@ func TestRequireStringWithEnvFallback(t *testing.T) {
 			name:        flag1,
 			envName:     "",
 			expected:    "",
-			expectedErr: cli.Exit(fmt.Sprintf("Required flag (flag1) or environment variable () not set"), 1),
+			expectedErr: cli.Exit("Required flag (flag1) or environment variable () not set", 1),
 		},
 	}
 	for _, tt := range tests {
