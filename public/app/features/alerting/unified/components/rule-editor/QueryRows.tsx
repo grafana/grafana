@@ -177,7 +177,11 @@ export class QueryRows extends PureComponent<Props, State> {
   };
 
   getDataSourceSettings = (query: AlertQuery): DataSourceInstanceSettings | undefined => {
-    return getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+    let uid = query.datasourceUid;
+    if (isExpressionQuery(query.model)) {
+      uid = query.model.datasource?.type ?? query.datasourceUid;
+    }
+    return getDataSourceSrv().getInstanceSettings(uid);
   };
 
   getThresholdsForQueries = (queries: AlertQuery[]): Record<string, ThresholdsConfig> => {
