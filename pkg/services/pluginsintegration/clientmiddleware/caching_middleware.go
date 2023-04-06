@@ -54,12 +54,11 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	start := time.Now()
 
 	// First look in the query cache if enabled
-	cr := m.caching.HandleQueryRequest(ctx, req)
-	ch := reqCtx.Resp.Header().Get(caching.XCacheHeader)
+	hit, cr := m.caching.HandleQueryRequest(ctx, req)
 
 	defer func() {
 		// record request duration if caching was used
-		if ch != "" {
+		if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
 			QueryRequestHistogram.With(prometheus.Labels{
 				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
 				"cache":           ch,
@@ -69,7 +68,7 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	}()
 
 	// Cache hit; return the response
-	if ch == caching.StatusHit {
+	if hit {
 		return cr.Response, nil
 	}
 
@@ -101,12 +100,11 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	start := time.Now()
 
 	// First look in the resource cache if enabled
-	resp := m.caching.HandleResourceRequest(ctx, req)
-	ch := reqCtx.Resp.Header().Get(caching.XCacheHeader)
+	hit, resp := m.caching.HandleResourceRequest(ctx, req)
 
 	defer func() {
 		// record request duration if caching was used
-		if ch != "" {
+		if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
 			ResourceRequestHistogram.With(prometheus.Labels{
 				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
 				"cache":           ch,
@@ -115,7 +113,7 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	}()
 
 	// Cache hit; send the response and return
-	if ch == caching.StatusHit {
+	if hit {
 		return sender.Send(resp)
 	}
 
