@@ -47,5 +47,5 @@ func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (
 }
 
 func (s *FakeService) RegisterService(service folder.RegistryService) error {
-	return nil
+	return s.ExpectedError
 }
