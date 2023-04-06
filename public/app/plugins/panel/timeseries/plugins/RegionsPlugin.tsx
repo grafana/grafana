@@ -66,14 +66,12 @@ export const RegionsPlugin = ({ regions, config }: RegionsPluginProps) => {
         let w = u.valToPos(to, 'x', true) - x;
         let h = u.bbox.height;
 
-        w = w === 0 ? 1 : w;
-
         const color = theme.visualization.getColorByName(colorsRef.current[i]);
 
         ctx.fillStyle = color;
         ctx.fillRect(x, y, w, h);
 
-        if (linesRef.current[i]) {
+        if (linesRef.current[i] || w === 0) {
           renderLine(x, color);
 
           const x1 = u.valToPos(to, 'x', true);
