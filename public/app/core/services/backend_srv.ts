@@ -361,8 +361,7 @@ export class BackendSrv implements BackendService {
                       },
                     })
                   );
-
-                  return of({});
+                  return throwError(() => error);
                 }
 
                 let authChecker = () => this.loginPing();
