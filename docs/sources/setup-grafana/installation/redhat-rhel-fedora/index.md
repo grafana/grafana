@@ -13,7 +13,7 @@ You can install Grafana using a YUM repository, using RPM, or by downloading a b
 
 If you install via RPM or the `.tar.gz` file, then you must manually update Grafana for each new version.
 
-## Install Grafana from the YUM respository
+## Install Grafana from the YUM repository
 
 If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo yum update`.
 
