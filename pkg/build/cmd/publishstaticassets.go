@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/build/env"
@@ -24,10 +23,6 @@ func PublishStaticAssetsAction(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	securityDestBucket, err := env.RequireStringWithEnvFallback(c, "security-dest-bucket", "SECURITY_DEST_BUCKET")
-	if err != nil {
-		return err
-	}
 
 	if err := gcloud.ActivateServiceAccount(); err != nil {
 		return fmt.Errorf("error connecting to gcp, %q", err)
@@ -35,34 +30,23 @@ func PublishStaticAssetsAction(c *cli.Context) error {
 
 	cfg := publishConfig{
 		srcBucket:           c.String("src-bucket"),
-		destBucket:          c.String("dest-bucket"),
 		staticAssetsBucket:  c.String("static-assets-bucket"),
 		staticAssetEditions: staticAssetEditions,
 		security:            c.Bool("security"),
 		tag:                 strings.TrimPrefix(c.String("tag"), "v"),
 	}
 
-	if cfg.security {
-		cfg.destBucket = securityDestBucket
-	}
-
-	err = copyStaticAssets(cfg)
+	gcs, err := storage.New()
 	if err != nil {
 		return err
 	}
-	return nil
-}
+	bucket := gcs.Bucket(cfg.staticAssetsBucket)
 
-func copyStaticAssets(cfg publishConfig) error {
-	for _, edition := range cfg.staticAssetEditions {
-		log.Printf("Copying static assets for %s", edition)
-		srcURL := fmt.Sprintf("%s/artifacts/static-assets/%s/%s/*", cfg.srcBucket, edition, cfg.tag)
-		destURL := fmt.Sprintf("%s/%s/%s/", cfg.staticAssetsBucket, edition, cfg.tag)
-		err := storage.GCSCopy("static assets", srcURL, destURL)
-		if err != nil {
-			return fmt.Errorf("error copying static assets, %q", err)
+	for _, edition := range staticAssetEditions {
+		if err := gcs.CopyRemoteDir(c.Context, gcs.Bucket(fmt.Sprintf("%s", cfg.srcBucket)), fmt.Sprintf("artifacts/static-assets/%s/%s", edition, cfg.tag), bucket, fmt.Sprintf("%s/%s", edition, cfg.tag)); err != nil {
+			return err
 		}
 	}
-	log.Printf("Successfully copied static assets!")
+
 	return nil
 }
