@@ -209,6 +209,7 @@ class DataSourceWithBackend<
       url += '&expression=true';
     }
 
+    // Appending request ID to url to facilitate client-side performance metrics. See #65244 for more context.
     if (requestId) {
       url += `&requestId=${requestId}`;
     }

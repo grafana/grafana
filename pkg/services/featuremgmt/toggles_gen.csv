@@ -1,5 +1,4 @@
 Name,State,Owner,requiresDevMode,RequiresLicense,RequiresRestart,FrontendOnly
-alertingBigTransactions,alpha,@grafana/alerting-squad,false,false,false,false
 trimDefaults,beta,@grafana/grafana-as-code,false,false,false,false
 disableEnvelopeEncryption,stable,@grafana/grafana-as-code,false,false,false,false
 database_metrics,stable,@grafana/hosted-grafana-team,false,false,false,false
@@ -46,6 +45,7 @@ accessControlOnCall,beta,@grafana/grafana-authnz-team,false,false,false,false
 nestedFolders,alpha,@grafana/backend-platform,true,false,false,false
 accessTokenExpirationCheck,stable,@grafana/grafana-authnz-team,false,false,false,false
 elasticsearchBackendMigration,alpha,@grafana/observability-logs,false,false,false,false
+showTraceId,alpha,@grafana/observability-logs,false,false,false,false
 datasourceOnboarding,alpha,@grafana/dashboards-squad,false,false,false,false
 emptyDashboardPage,stable,@grafana/dashboards-squad,false,false,false,true
 secureSocksDatasourceProxy,alpha,@grafana/hosted-grafana-team,false,false,false,false
@@ -74,3 +74,4 @@ alertStateHistoryLokiPrimary,alpha,@grafana/alerting-squad,false,false,false,fal
 alertStateHistoryLokiOnly,alpha,@grafana/alerting-squad,false,false,false,false
 unifiedRequestLog,alpha,@grafana/backend-platform,false,false,false,false
 renderAuthJWT,beta,@grafana/grafana-as-code,false,false,false,false
+pyroscopeFlameGraph,alpha,@grafana/observability-traces-and-profiling,false,false,false,false

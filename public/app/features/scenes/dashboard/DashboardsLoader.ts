@@ -22,13 +22,17 @@ import {
   SceneRefreshPicker,
   SceneDataTransformer,
   SceneGridItem,
+  SceneDataProvider,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/types';
 import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
+import { ShareQueryDataProvider } from './ShareQueryDataProvider';
+import { getVizPanelKeyForPanelId } from './utils';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -259,11 +263,6 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
 }
 
 export function createVizPanelFromPanelModel(panel: PanelModel) {
-  const queryRunner = new SceneQueryRunner({
-    queries: panel.targets,
-    maxDataPoints: panel.maxDataPoints ?? undefined,
-  });
-
   return new SceneGridItem({
     x: panel.gridPos.x,
     y: panel.gridPos.y,
@@ -272,6 +271,7 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
     isDraggable: true,
     isResizable: true,
     body: new VizPanel({
+      key: getVizPanelKeyForPanelId(panel.id),
       title: panel.title,
       pluginId: panel.type,
       options: panel.options ?? {},
@@ -280,14 +280,36 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
       displayMode: panel.transparent ? 'transparent' : undefined,
       // To be replaced with it's own option persited option instead derived
       hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
-      $data: panel.transformations?.length
-        ? new SceneDataTransformer({
-            $data: queryRunner,
-            transformations: panel.transformations,
-          })
-        : queryRunner,
+      $data: createPanelDataProvider(panel),
     }),
   });
+}
+
+export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | undefined {
+  if (!panel.targets?.length) {
+    return undefined;
+  }
+
+  let dataProvider: SceneDataProvider | undefined = undefined;
+
+  if (panel.datasource?.uid === SHARED_DASHBOARD_QUERY) {
+    dataProvider = new ShareQueryDataProvider({ query: panel.targets[0] });
+  } else {
+    dataProvider = new SceneQueryRunner({
+      queries: panel.targets,
+      maxDataPoints: panel.maxDataPoints ?? undefined,
+    });
+  }
+
+  // Wrap inner data provider in a data transformer
+  if (panel.transformations?.length) {
+    dataProvider = new SceneDataTransformer({
+      $data: dataProvider,
+      transformations: panel.transformations,
+    });
+  }
+
+  return dataProvider;
 }
 
 let loader: DashboardLoader | null = null;
