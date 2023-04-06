@@ -69,6 +69,7 @@ export const AuthConfigPageUnconnected = ({
                 displayName={provider.displayName}
                 authType={provider.type}
                 enabled={providerStatuses[provider.id]?.enabled}
+                configPath={provider.configPath}
               />
             ))}
           </div>
@@ -93,6 +94,7 @@ export const AuthConfigPageUnconnected = ({
                 displayName={provider.displayName}
                 authType={provider.protocol}
                 enabled={providerStatuses[provider.id]?.enabled}
+                configPath={provider.configPath}
               />
             ))}
           </div>

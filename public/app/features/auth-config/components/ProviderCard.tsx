@@ -17,10 +17,11 @@ type Props = {
 
 export function ProviderCard({ providerId, displayName, enabled, configPath, authType, badges }: Props) {
   const styles = useStyles2(getStyles);
-  const basePath = configPath || 'admin/authentication';
+  const basePath = 'admin/authentication/';
+  configPath = basePath + (configPath || providerId);
 
   return (
-    <Card href={`${basePath}/${providerId}`} className={styles.container}>
+    <Card href={configPath} className={styles.container}>
       <Card.Heading className={styles.name}>{displayName}</Card.Heading>
       <div className={styles.footer}>
         {authType && <Badge text={authType} color="blue" icon="info-circle" />}
