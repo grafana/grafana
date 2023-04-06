@@ -161,7 +161,7 @@ const setupSelect = (propOverrides?: Partial<Props>) => {
   );
 };
 
-/* 
+/*
 Cases to cover:
 1.- General:
   a) It renders
@@ -311,7 +311,6 @@ describe('TextArea, as AutoSaveField child, ', () => {
     const textArea = screen.getByRole('textbox', {
       name: 'Test',
     });
-    await user.hover(textArea);
     await user.type(textArea, 'This is a test text');
     expect(textArea).toHaveValue('This is a test text');
 
@@ -319,9 +318,7 @@ describe('TextArea, as AutoSaveField child, ', () => {
       jest.runAllTimers();
     });
     expect(mockOnFinishChangeError).not.toHaveBeenCalled();
-    await user.unhover(textArea);
-    expect(textArea).toHaveStyle(`border: 1px solid ${theme.colors.error.border}`);
-    screen.debug();
+    expect(textArea).toHaveStyle(`border-color: ${theme.colors.error.border}`);
   });
 });
 
