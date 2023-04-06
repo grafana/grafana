@@ -123,7 +123,7 @@ datasources:
           name: TraceID
           # url will be interpreted as query for the datasource
           url: '$${__value.raw}'
-          # optional paramater for URL Label to set a custom display label for the link.
+          # optional for URL Label to set a custom display label for the link.
           urlDisplayLabel: "View Trace"
 
         # Field with external link.
