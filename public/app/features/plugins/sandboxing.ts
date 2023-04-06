@@ -7,29 +7,20 @@ import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
 import * as grafanaUIraw from '@grafana/ui';
 
-const prefix = '[sandbox]';
+import { getGeneralSandboxDistortionMap } from './sandbox/distortion_map';
+import { createSandboxDocument } from './sandbox/document_sandbox';
 
-export function createSandboxDocument(): Document {
-  const sandboxDocument = document.implementation.createDocument('http://www.w3.org/1999/xhtml', 'html', null);
-  const body = document.createElementNS('http://www.w3.org/1999/xhtml', 'body');
-  body.setAttribute('id', 'abc');
-  sandboxDocument.documentElement.appendChild(body);
-  return sandboxDocument;
-}
+const prefix = '[sandbox]';
 
 export function getSandboxedWebApis({ pluginName, isDevMode }: { pluginName: string; isDevMode: boolean }) {
   const sandboxLog = function (...args: unknown[]) {
     console.log(`${prefix} ${pluginName}:`, ...args);
   };
 
-  console.log('isDevMode', isDevMode);
-  const sandboxDoc = createSandboxDocument();
-
   return {
     alert: function (message: string) {
       sandboxLog('alert()', message);
     },
-    document: sandboxDoc,
     console: {
       log: sandboxLog,
       warn: sandboxLog,
@@ -41,7 +32,6 @@ export function getSandboxedWebApis({ pluginName, isDevMode }: { pluginName: str
       sandboxLog('fetch()', url, options);
       return Promise.reject('fetch() is not allowed in plugins');
     },
-    window: {},
   };
 }
 
@@ -68,22 +58,37 @@ export function importPluginInsideSandbox(path: string): Promise<any> {
   return promise;
 }
 
+async function getPluginCode(path: string) {
+  const response = await fetch('public/' + path + '.js');
+  return await response.text();
+}
+
 export async function doImportPluginInsideSandbox(path: string): Promise<any> {
   let resolved = false;
   return new Promise(async (resolve, reject) => {
     const pluginName = path.split('/')[1];
+
     console.log('Importing plugin inside sandbox: ', pluginName, ' from path: ', path, '');
-    // load plugin code into a string
-    const response = await fetch('public/' + path + '.js');
-    const pluginCode = await response.text();
+    const pluginCode = await getPluginCode(path);
 
     let pluginExports = {};
-    // const isDevMode = process.enjv.NODE_ENV === 'development';
 
-    const distortionMap = new Map();
+    const sandboxDocument = createSandboxDocument();
+    const generalDistortionMap = getGeneralSandboxDistortionMap();
+    const distortionMap = new Map(generalDistortionMap);
+
+    distortionMap.set(document.body, sandboxDocument.body);
+    distortionMap.set(document, sandboxDocument);
 
     const env = createVirtualEnvironment(window, {
       distortionCallback(v) {
+        //@ts-ignore
+        // if (v.name) {
+        //   //@ts-ignore
+        //   console.log('distortionCallback', v.name, v);
+        // } else {
+        //   console.log('distortionCallback', v);
+        // }
         return distortionMap.get(v) ?? v;
       },
       endowments: Object.getOwnPropertyDescriptors({
@@ -102,6 +107,7 @@ export async function doImportPluginInsideSandbox(path: string): Promise<any> {
           pluginName,
           isDevMode: true,
         }),
+        document: sandboxDocument,
       }),
     });
 

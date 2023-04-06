@@ -187,11 +187,15 @@ export async function importPluginModule(path: string, version?: string): Promis
     }
   }
 
+  console.log('Requested plugin module: ', path);
+
   // POC SES TODO: define how to decide if a plugin loads via compartments or directly
   if (path.includes('sespoc')) {
     console.log('SES POC: loading plugin via compartments', path);
     return importPluginInsideSandbox(path);
   }
+
+  console.log('SES POC: loading plugin directly', path);
   return grafanaRuntime.SystemJS.import(path);
 }
 
