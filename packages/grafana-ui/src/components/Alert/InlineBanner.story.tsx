@@ -85,7 +85,6 @@ export const Examples: ComponentStory<typeof Alert> = () => {
               severity={severity}
               key={severity}
               onRemove={action('Remove button clicked')}
-              elevated={true}
             >
               Child content
             </Alert>
