@@ -12,7 +12,7 @@ export const PlatformService = {
   forceDisconnect(): Promise<void> {
     return api.post<void, Object>('/v1/Platform/Disconnect', { force: true }, true);
   },
-  getServerInfo(): Promise<{ pmm_server_id: string; pmm_server_name: string }> {
+  getServerInfo(): Promise<{ pmm_server_id: string; pmm_server_name: string; pmm_server_telemetry_id: string }> {
     return api.post(`/v1/Platform/ServerInfo`, {}, true);
   },
 };

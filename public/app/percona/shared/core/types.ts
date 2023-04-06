@@ -74,6 +74,7 @@ export interface PrioritizedLabels {
 export interface ServerInfo {
   serverName: string;
   serverId: string;
+  serverTelemetryId: string;
 }
 
 export enum Severity {
