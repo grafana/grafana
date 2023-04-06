@@ -8,16 +8,16 @@ title: Add distributed tracing for backend plugins
 > grafana-plugins-sdk-go v0.157.0. If you run a plugin with tracing features on an older version of Grafana,
 > tracing will be disabled.
 
-> **Note:** Only Opentelemetry is supported. If Grafana is configured to use a deprecated tracing systems (Jaeger or Opentracing),
-> tracing will be disabled in the plugin. Please note that Opentelemetry + Jaeger propagator is supported.
-
 ## Introduction
 
 Distributed tracing allows backend plugin developers to create custom spans in their plugins, and send them to the same endpoint
-as the main Grafana instance. This also propagates the tracing context from the Grafana instance to the plugin, so the plugin's spans
-will be correlated to the correct trace.
+and with the same propagation format as the main Grafana instance. The tracing context is also propagated from the Grafana instance
+to the plugin, so the plugin's spans will be correlated to the correct trace.
 
 ## Configuration
+
+> **Note:** Only OpenTelemetry is supported. If Grafana is configured to use a deprecated tracing system (Jaeger or OpenTracing),
+> tracing will be disabled in the plugin. Please note that OpenTelemetry + Jaeger propagator is supported.
 
 OpenTelemetry must be enabled and configured for the Grafana instance. Please refer to [this section](
 {{< relref "../../setup-grafana/configure-grafana/#tracingopentelemetry" >}}) for more information.
@@ -31,10 +31,10 @@ tracing = true
 
 ## Implementing tracing in your plugin
 
-> **Note:** Make sure you are using at least grafana-plugins-sdk-go v0.157.0. You can update with `go get -u github.com/grafana/grafana-plugin-sdk-go`.
+> **Note:** Make sure you are using at least grafana-plugin-sdk-go v0.157.0. You can update with `go get -u github.com/grafana/grafana-plugin-sdk-go`.
 
 When OpenTelemetry tracing is enabled on the main Grafana instance and tracing is enabeld for a plugin,
-the Opentelemetry endpoint address and propagation format will be passed to the plugin during startup,
+the OpenTelemetry endpoint address and propagation format will be passed to the plugin during startup,
 which will be used to configure a global tracer.
 
 <ol>
@@ -59,7 +59,9 @@ func main() {
 }
 ```
 
-If you are not using automatic instance management, you have to configure the global tracer manually by calling:
+If you are not using automatic instance management, you have to configure the global tracer manually before your plugin starts serving requests.
+
+You can do so with:
 
 ```go
 backend.SetupTracer("MY_PLUGIN_ID", tracing.Opts{})
@@ -94,10 +96,12 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
     )
     defer span.End()
     log.DefaultLogger.Debug("query", "traceID", trace.SpanContextFromContext(ctx).TraceID())
+
+    // ...
 }
 ```
 
-Please refer to the [OpenTelemetry Go SDK](https://pkg.go.dev/go.opentelemetry.io/otel) for in-depth documentation on all the features provided by OpenTelemetry.
+Please refer to the [OpenTelemetry Go SDK](https://pkg.go.dev/go.opentelemetry.io/otel) for in-depth documentation about all the features provided by OpenTelemetry.
 
 If tracing is disabled in Grafana, `backend.DefaultTracer()` returns a no-op tracer.
 
@@ -125,10 +129,10 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 
 ### Tracing HTTP requests
 
-When tracing is enabled, a `TracingMiddleware` is also added to the default middleware stack to all http clients created
+When tracing is enabled, a `TracingMiddleware` is also added to the default middleware stack to all HTTP clients created
 using the `httpclient.New` or `httpclient.NewProvider`, unless custom middlewares are specified.
 
-This middleware creates spans for each outgoing HTTP request and provides some useful attributes and events related to the HTTP request.
+This middleware creates spans for each outgoing HTTP request and provides some useful attributes and events related to the request's lifecycle.
 
 ## Complete plugin example
 
