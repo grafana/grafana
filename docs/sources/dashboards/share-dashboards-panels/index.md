@@ -143,7 +143,7 @@ A panel snapshot shares an interactive panel publicly. Grafana strips sensitive 
 
 You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by [Grafana Labs](https://grafana.com), that enables you to publish dashboard snapshots to an external Grafana instance. You can optionally set an expiration time if you want the snapshot to be removed after a certain time period.
 
-1. In the **Share Panel** dialog, click **Snapshot** to open the tab.
+1. In the **Share Panel** dialog, click **Snapshot** to go to the tab.
 1. Click **Publish to snapshots.raintank.io** or **Local Snapshot**.
 
    Grafana generates the link of the snapshot.

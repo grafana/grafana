@@ -37,11 +37,11 @@ By default, each dashboard is displayed for the amount of time entered in the In
 
 1. Click **Dashboards** in the left-side menu.
 1. Click **Playlists** to see a list of existing playlists.
-1. Find the playlist you want to start, then click **Start playlist**. The start playlist dialog opens.
-1. Select one of the five playlist modes available based on the information in the following table.
-1. Click **Start <playlist name>**.
+1. Find the playlist you want to start, then click **Start playlist**.
+1. In the modal that opens, select one of the five playlist modes available, based on the information in the table below.
+1. Click **Start \<playlist name\>**.
 
-The playlist displays each dashboard for the time specified in the `Interval` field, set when creating or editing a playlist. Once a playlist starts, you can [control](#control-a-playlist) it using the navbar at the top of your screen.
+The playlist displays each dashboard for the time specified in the **Interval** field, set when creating or editing a playlist. Once a playlist starts, you can [control](#control-a-playlist) it using the navbar at the top of your screen.
 
 | Mode                              | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -124,21 +124,21 @@ You can edit a playlist by updating its name, interval time, and by adding, remo
 1. Click **Dashboards** in the left-side menu.
 1. Click **Playlists** to see a list of existing playlists.
 1. Find the playlist you want to update and click **Edit playlist**.
-1. Click **[x]** on the name of the dashboard you want to remove from the playlist.
+1. Click **\[x\]** on the name of the dashboard you want to remove from the playlist.
 1. Click **Save** to save your changes.
 
 ## Share a playlist in a view mode
 
 You can share a playlist by copying the link address on the view mode you prefer, and pasting the URL to your destination.
 
-1.  Click **Dashboards** in the left-side menu.
-1.  Click **Playlists** to see a list of existing playlists.
-1.  Click the share icon of the playlist you want to share.
-1.  Select the view mode you prefer.
-1.  Click **Copy** next to the Link URL to copy it to your clipboard.
+1. Click **Dashboards** in the left-side menu.
+1. Click **Playlists** to see a list of existing playlists.
+1. Click the share icon of the playlist you want to share.
+1. Select the view mode you prefer.
+1. Click **Copy** next to the Link URL to copy it to your clipboard.
 
-        Example: The URL for the first playlist on the Grafana Play site in Kiosk mode will look like this:
+   For example, the URL for the first playlist on the Grafana Play site in Kiosk mode will look like this:
 
-    [https://play.grafana.org/playlists/play/1?kiosk](https://play.grafana.org/playlists/play/1?kiosk).
+   [https://play.grafana.org/playlists/play/1?kiosk](https://play.grafana.org/playlists/play/1?kiosk).
 
-1.  Paste the URL to your destination.
+1. Paste the URL to your destination.

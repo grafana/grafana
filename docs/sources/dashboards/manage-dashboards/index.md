@@ -48,7 +48,9 @@ Folders help you organize and group dashboards, which is useful when you have ma
 
 **To create a dashboard folder:**
 
-1. Sign in to Grafana and on the side menu, click **Dashboards > New folder**.
+1. Sign in to Grafana.
+1. Click **Dashboards** in the left-side menu.
+1. On the Dashboards page, click **New** and select **New folder** in the dropdown.
 1. Enter a unique name and click **Create**.
 
 When you save a dashboard, you can either select a folder for the dashboard to be saved in or create a new folder.
@@ -87,10 +89,11 @@ You can use the Grafana UI or the [HTTP API]({{< relref "../../developers/http_a
 
 The dashboard export action creates a Grafana JSON file that contains everything you need, including layout, variables, styles, data sources, queries, and so on, so that you can later import the dashboard.
 
+1. Click **Dashboards** in the left-side menu.
 1. Open the dashboard you want to export.
-2. Click the **Share** icon.
-3. Click **Export**.
-4. Click **Save to file**.
+1. Click the **Share** icon.
+1. Click **Export**.
+1. Click **Save to file**.
 
 Grafana downloads a JSON file to your local machine.
 
