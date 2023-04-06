@@ -6,10 +6,8 @@ import React from 'react';
 import {
   ArrayVector,
   DataFrame,
-  dataFrameFromJSON,
   dateTime,
   dateTimeFormat,
-  Field,
   FieldType,
   getDisplayProcessor,
   GrafanaTheme2,
@@ -17,15 +15,13 @@ import {
 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { LegendDisplayMode, MappingType, ThresholdsMode, VisibilityMode } from '@grafana/schema';
-import { Alert, Icon, TagList, UPlotChart, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, Icon, TagList, useStyles2, useTheme2 } from '@grafana/ui';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import { TimelineMode } from 'app/core/components/TimelineChart/utils';
-import { makeDataFramesForLogs } from 'app/core/logsModel';
 import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
 import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { Label } from '../Label';
-import { formatLabels } from '../expressions/util';
 
 import { AlertStateTag } from './AlertStateTag';
 
@@ -67,8 +63,6 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   // @ts-ignore
   const timestamps: number[] = stateHistory?.data?.values[0] ?? [];
   const lines = stateHistory?.data?.values[1] ?? [];
-
-  // stateHistory && console.log(dataFrameFromJSON(stateHistory));
 
   const linesWithTimestamp = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
     // @ts-ignore
@@ -133,11 +127,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
             ],
             thresholds: {
               mode: ThresholdsMode.Absolute,
-              steps: [
-                // { value: 0, color: 'green', state: 'Normal' },
-                // { value: 1, color: 'yellow', state: 'Pending' },
-                // { value: 2, color: '#E0226E', state: 'Alerting' },
-              ],
+              steps: [],
             },
           },
         },
