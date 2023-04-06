@@ -117,7 +117,7 @@ describe('navigateToExplore', () => {
 describe('Explore reducer', () => {
   describe('split view', () => {
     describe('split close', () => {
-      it('should keep right pane as left when left is closed', () => {
+      it('should move right pane to left when left is closed', () => {
         const leftItemMock = {
           containerWidth: 100,
         } as unknown as ExploreItemState;
@@ -127,8 +127,10 @@ describe('Explore reducer', () => {
         } as unknown as ExploreItemState;
 
         const initialState = {
-          left: leftItemMock,
-          right: rightItemMock,
+          panes: {
+            left: leftItemMock,
+            right: rightItemMock,
+          },
         } as unknown as ExploreState;
 
         // closing left item
@@ -138,9 +140,10 @@ describe('Explore reducer', () => {
           .thenStateShouldEqual({
             evenSplitPanes: true,
             largerExploreId: undefined,
-            left: rightItemMock,
+            panes: {
+              left: rightItemMock,
+            },
             maxedExploreId: undefined,
-            right: undefined,
             syncedTimes: false,
           } as unknown as ExploreState);
       });
@@ -154,8 +157,10 @@ describe('Explore reducer', () => {
         } as unknown as ExploreItemState;
 
         const initialState = {
-          left: leftItemMock,
-          right: rightItemMock,
+          panes: {
+            left: leftItemMock,
+            right: rightItemMock,
+          },
         } as unknown as ExploreState;
 
         // closing left item
@@ -165,9 +170,10 @@ describe('Explore reducer', () => {
           .thenStateShouldEqual({
             evenSplitPanes: true,
             largerExploreId: undefined,
-            left: leftItemMock,
+            panes: {
+              left: leftItemMock,
+            },
             maxedExploreId: undefined,
-            right: undefined,
             syncedTimes: false,
           } as unknown as ExploreState);
       });
@@ -178,8 +184,10 @@ describe('Explore reducer', () => {
         } as unknown as ExploreItemState;
 
         const initialState = {
-          left: itemMock,
-          right: itemMock,
+          panes: {
+            right: itemMock,
+            left: itemMock,
+          },
           syncedTimes: true,
         } as unknown as ExploreState;
 
@@ -188,8 +196,9 @@ describe('Explore reducer', () => {
           .whenActionIsDispatched(splitCloseAction({ itemId: 'right' }))
           .thenStateShouldEqual({
             evenSplitPanes: true,
-            left: itemMock,
-            right: undefined,
+            panes: {
+              left: itemMock,
+            },
             syncedTimes: false,
           } as unknown as ExploreState);
       });
