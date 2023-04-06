@@ -109,7 +109,7 @@ export function SqlQueryEditor({
         <Alert
           data-testid="database_update"
           severity="warning"
-          title="Default datasource configuration"
+          title="Default datasource update"
           elevated={true}
           onRemove={() => {
             // Remove the warning, and reset state with the new database.
@@ -126,7 +126,7 @@ export function SqlQueryEditor({
         <Alert
           data-testid="no_postgres_database"
           severity="warning"
-          title="Default datasource configuration"
+          title="Default datasource error"
           elevated={true}
           onRemove={() => setHasNoPostgresDefaultDatabaseConfig(false)}
         >
