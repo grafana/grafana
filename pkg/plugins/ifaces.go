@@ -56,6 +56,7 @@ type FS interface {
 
 	Base() string
 	Files() []string
+	Remove() error
 }
 
 type FoundBundle struct {

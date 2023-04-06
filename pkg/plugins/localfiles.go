@@ -70,6 +70,10 @@ func (f LocalFS) Files() []string {
 	return files
 }
 
+func (f LocalFS) Remove() error {
+	return os.RemoveAll(f.basePath)
+}
+
 var _ fs.File = (*LocalFile)(nil)
 
 type LocalFile struct {

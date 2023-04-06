@@ -232,40 +232,18 @@ func (r *FakePluginRepo) GetPluginDownloadOptions(ctx context.Context, pluginID,
 }
 
 type FakePluginStorage struct {
-	Store        map[string]struct{}
-	AddFunc      func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
-	RegisterFunc func(_ context.Context, pluginID, pluginDir string) error
-	RemoveFunc   func(_ context.Context, pluginID string) error
+	ExtractFunc func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
 }
 
 func NewFakePluginStorage() *FakePluginStorage {
-	return &FakePluginStorage{
-		Store: map[string]struct{}{},
-	}
+	return &FakePluginStorage{}
 }
 
-func (s *FakePluginStorage) Register(ctx context.Context, pluginID, pluginDir string) error {
-	s.Store[pluginID] = struct{}{}
-	if s.RegisterFunc != nil {
-		return s.RegisterFunc(ctx, pluginID, pluginDir)
-	}
-	return nil
-}
-
-func (s *FakePluginStorage) Add(ctx context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
-	s.Store[pluginID] = struct{}{}
-	if s.AddFunc != nil {
-		return s.AddFunc(ctx, pluginID, z)
+func (s *FakePluginStorage) Extract(ctx context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+	if s.ExtractFunc != nil {
+		return s.ExtractFunc(ctx, pluginID, z)
 	}
 	return &storage.ExtractedPluginArchive{}, nil
-}
-
-func (s *FakePluginStorage) Remove(ctx context.Context, pluginID string) error {
-	delete(s.Store, pluginID)
-	if s.RemoveFunc != nil {
-		return s.RemoveFunc(ctx, pluginID)
-	}
-	return nil
 }
 
 type FakeProcessManager struct {
@@ -358,7 +336,8 @@ func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ str
 }
 
 type FakePluginFiles struct {
-	OpenFunc func(name string) (fs.File, error)
+	OpenFunc   func(name string) (fs.File, error)
+	RemoveFunc func() error
 
 	base string
 }
@@ -382,6 +361,13 @@ func (f *FakePluginFiles) Base() string {
 
 func (f *FakePluginFiles) Files() []string {
 	return []string{}
+}
+
+func (f *FakePluginFiles) Remove() error {
+	if f.RemoveFunc != nil {
+		return f.RemoveFunc()
+	}
+	return nil
 }
 
 type FakeSourceRegistry struct {
