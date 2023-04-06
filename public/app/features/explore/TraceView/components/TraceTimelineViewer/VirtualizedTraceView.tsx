@@ -362,6 +362,15 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     return DEFAULT_HEIGHTS.detail;
   };
 
+  getVisibleSpanIds = memoizeOne((start: number, end: number) => {
+    const spanIds = [];
+    for (let i = start; i < end; i++) {
+      const rowState = this.getRowStates()[i];
+      spanIds.push(rowState.span.spanID);
+    }
+    return spanIds;
+  });
+
   renderRow = (key: string, style: React.CSSProperties, index: number, attrs: {}) => {
     const { isDetail, span, spanIndex } = this.getRowStates()[index];
 
@@ -439,6 +448,10 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       };
     }
 
+    const start = Math.max((this.listView?.getTopVisibleIndex() || 0) - 40, 0);
+    const end = this.listView?.getBottomVisibleIndex() || 0;
+    const visibleSpanIds = this.getVisibleSpanIds(start, end);
+
     const styles = getStyles(this.props);
     return (
       <div className={styles.row} key={key} style={style} {...attrs}>
@@ -454,7 +467,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           isFocused={isFocused}
           numTicks={NUM_TICKS}
           onDetailToggled={(args) => {
-            setSelectedSpan(span);
+            setSelectedSpan(selectedSpanId === span.spanID ? undefined : span);
           }}
           onChildrenToggled={childrenToggle}
           rpc={rpc}
@@ -469,6 +482,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           createSpanLink={createSpanLink}
           datasourceType={datasourceType}
           prevSpan={prevRowState?.span}
+          visibleSpanIds={visibleSpanIds}
         />
       </div>
     );

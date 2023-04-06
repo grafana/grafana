@@ -146,6 +146,8 @@ export function TraceView(props: Props) {
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
 
+  const clearSelectedSpan = () => setSelectedSpan(undefined);
+
   return (
     <>
       {props.dataFrames?.length && traceProp ? (
@@ -223,7 +225,7 @@ export function TraceView(props: Props) {
             setSelectedSpan={setSelectedSpan}
             selectedSpanId={selectedSpan?.spanID}
           />
-          <DetailsPanel span={selectedSpan} timeZone={timeZone} width={width} />
+          <DetailsPanel span={selectedSpan} timeZone={timeZone} width={width} clearSelectedSpan={clearSelectedSpan} />
         </>
       ) : (
         <div className={styles.noDataMsg}>No data</div>

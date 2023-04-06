@@ -318,6 +318,7 @@ export type SpanBarRowProps = {
   createSpanLink?: SpanLinkFunc;
   datasourceType: string;
   prevSpan?: TraceSpan;
+  visibleSpanIds: string[];
 };
 
 /**
@@ -369,6 +370,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       createSpanLink,
       datasourceType,
       prevSpan,
+      visibleSpanIds,
     } = this.props;
     const {
       duration,
@@ -429,6 +431,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               childrenVisible={isChildrenExpanded}
               span={span}
               color={color}
+              visibleSpanIds={visibleSpanIds}
               hoverIndentGuideIds={hoverIndentGuideIds}
               addHoverIndentGuideId={addHoverIndentGuideId}
               removeHoverIndentGuideId={removeHoverIndentGuideId}

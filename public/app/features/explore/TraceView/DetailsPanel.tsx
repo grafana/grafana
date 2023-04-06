@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2, TimeZone } from '@grafana/data';
-import { Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { ExploreDrawer } from '../ExploreDrawer';
 
@@ -15,12 +15,14 @@ import { formatDuration } from './components/utils/date';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   header: css`
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
     gap: 0 1rem;
     margin-bottom: 0.25rem;
     padding: 0.5rem;
+  `,
+  flexSpaceBetween: css`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   `,
   container: css`
     height: 300px;
@@ -61,12 +63,13 @@ type Props = {
   span?: TraceSpan;
   timeZone: TimeZone;
   width: number;
+  clearSelectedSpan: () => void;
 };
 
 export function DetailsPanel(props: Props) {
   const [tabsState, updateTabsState] = useState(tabs);
   const styles = useStyles2(getStyles);
-  const { span, timeZone, width } = props;
+  const { span, timeZone, width, clearSelectedSpan } = props;
 
   if (!span) {
     return null;
@@ -108,11 +111,21 @@ export function DetailsPanel(props: Props) {
 
   return (
     <ExploreDrawer width={width}>
-      <div className={styles.header}>
-        <h4 className={cx(ubM0)}>{operationName}</h4>
-        <div className={styles.listWrapper}>
-          <LabeledList className={ubTxRightAlign} divider={true} items={overviewItems} />
+      <div className={cx(styles.header, styles.flexSpaceBetween)}>
+        <div
+          className={cx(
+            styles.flexSpaceBetween,
+            css`
+              flex: 1 0 auto;
+            `
+          )}
+        >
+          <h4 className={cx(ubM0)}>{operationName}</h4>
+          <div className={styles.listWrapper}>
+            <LabeledList className={ubTxRightAlign} divider={true} items={overviewItems} />
+          </div>
         </div>
+        <Button icon={'times'} variant={'secondary'} fill={'outline'} onClick={clearSelectedSpan} size={'sm'} />
       </div>
       <TabsBar>
         {tabsState.map((tab, index) => {

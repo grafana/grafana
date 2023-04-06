@@ -40,10 +40,12 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     indentGuide: css`
       label: indentGuide;
       /* The size of the indentGuide is based off of the iconWrapper */
-      padding: 0 0.5rem;
+      margin-left: calc(0.5rem + 3px);
+      margin-right: calc(0.5rem - 3px);
       height: 100%;
       border-left: 3px solid transparent;
       display: inline-flex;
+      transition: margin 500ms ease-in-out;
       &::before {
         content: '';
         padding-left: 1px;
@@ -56,6 +58,10 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       &::before {
         background-color: transparent;
       }
+    `,
+    indentGuideThin: css`
+      margin-left: 0.1rem;
+      margin-right: 0.1rem;
     `,
     iconWrapper: css`
       label: iconWrapper;
@@ -84,6 +90,7 @@ export type TProps = {
   span: TraceSpan;
   showChildrenIcon?: boolean;
   color: string;
+  visibleSpanIds: string[];
 
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
@@ -147,14 +154,14 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
   };
 
   render() {
-    const { childrenVisible, onClick, span, theme, color } = this.props;
+    const { childrenVisible, onClick, span, theme, color, visibleSpanIds } = this.props;
     const { hasChildren, spanID } = span;
     const wrapperProps = hasChildren ? { onClick, role: 'switch', 'aria-checked': childrenVisible } : null;
     const styles = getStyles(theme);
     const icon = (
       <div
         className={cx(styles.spanCountSquare(color), {
-          [styles.spanCountSquareFilled(color)]: !childrenVisible || !hasChildren,
+          [styles.spanCountSquareFilled(color)]: !childrenVisible,
         })}
       >
         {span.childSpanCount}
@@ -167,6 +174,7 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
             key={ancestorId}
             className={cx(styles.indentGuide, {
               [styles.indentGuideActive]: this.props.hoverIndentGuideIds.has(ancestorId),
+              [styles.indentGuideThin]: ancestorId !== 'root' && !visibleSpanIds.includes(ancestorId),
             })}
             data-ancestor-id={ancestorId}
             data-testid="SpanTreeOffset--indentGuide"
