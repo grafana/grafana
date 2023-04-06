@@ -45,8 +45,11 @@ export interface Vector<T = any> {
    */
   toArray(): T[];
 
-  // /** Standard array function */
-  // map<V>(transform: (item: T, index: number) => V): V[];
+  /** Standard array function */
+  map<V>(transform: (item: T, index: number) => V): V[];
+
+  /** Allow using spread operators on values */
+  [Symbol.iterator](): IterableIterator<T>;
 }
 
 /**
