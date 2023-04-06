@@ -85,14 +85,14 @@ describe('grafana data source', () => {
     `);
   });
 
-  it('handles timezone conversion CST-UTC', () => {
-    // region TZ = America/Chicago
+  it('handles timezone conversion browser-UTC', () => {
+    // region TZ = browser (Pacific/Easter)
     // dashboard TZ = UTC
-    // Mon Mar 06 2023 00:00:00 GMT-0600 -> Mon Mar 06 2023 23:59:59 GMT-0600 (CST)
-    // Mon Mar 06 2023 06:00:00 GMT+0000 -> Tue Mar 07 2023 05:59:59 GMT+0000
+    // Mon Mar 06 2023 00:00:00 GMT-0600 -> Mon Mar 06 2023 23:59:59 GMT-0600
+    // Mon Mar 06 2023 06:00:00 GMT+0000 -> Mon Mar 06 2023 05:59:59 GMT+0000
 
     const frame = doTimeRegionQuery(
-      { name: 'T1', color: 'green', fromDayOfWeek: 1, line: true, timezone: 'America/Chicago' },
+      { name: 'T1', color: 'green', fromDayOfWeek: 1, line: true, timezone: 'browser' },
       {
         from: dateTime('2023-03-01'),
         to: dateTime('2023-03-08'),
@@ -151,6 +151,72 @@ describe('grafana data source', () => {
     `);
   });
 
+  it('handles timezone conversion CDT-UTC', () => {
+    // region TZ = America/Chicago
+    // dashboard TZ = UTC
+    // Mon Mar 06 2023 00:00:00 GMT-0500 -> Mon Mar 06 2023 23:59:59 GMT-0500 (CDT)
+    // Mon Mar 06 2023 05:00:00 GMT+0000 -> Tue Mar 07 2023 04:59:59 GMT+0000
+
+    const frame = doTimeRegionQuery(
+      { name: 'T1', color: 'green', fromDayOfWeek: 1, line: true, timezone: 'America/Chicago' },
+      {
+        from: dateTime('2023-03-01'),
+        to: dateTime('2023-03-08'),
+        raw: {
+          to: '',
+          from: '',
+        },
+      },
+      'utc'
+    );
+
+    expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
+      [
+        {
+          "config": {},
+          "labels": undefined,
+          "name": "time",
+          "type": "time",
+          "values": [
+            1678078800000,
+          ],
+        },
+        {
+          "config": {},
+          "labels": undefined,
+          "name": "timeEnd",
+          "type": "time",
+          "values": [
+            1678165199000,
+          ],
+        },
+        {
+          "config": {
+            "color": {
+              "fixedColor": "green",
+              "mode": "fixed",
+            },
+          },
+          "labels": undefined,
+          "name": "color",
+          "type": "string",
+          "values": [
+            "green",
+          ],
+        },
+        {
+          "config": {},
+          "labels": undefined,
+          "name": "line",
+          "type": "boolean",
+          "values": [
+            true,
+          ],
+        },
+      ]
+    `);
+  });
+
   it('handles timezone conversion Europe/Amsterdam-UTC', () => {
     // region TZ = Europe/Amsterdam
     // dashboard TZ = UTC
@@ -178,7 +244,7 @@ describe('grafana data source', () => {
           "name": "time",
           "type": "time",
           "values": [
-            1678057200000,
+            1678053600000,
           ],
         },
         {
@@ -187,7 +253,7 @@ describe('grafana data source', () => {
           "name": "timeEnd",
           "type": "time",
           "values": [
-            1678143599000,
+            1678139999000,
           ],
         },
         {
