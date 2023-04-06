@@ -20,7 +20,7 @@ export abstract class FunctionalVector<T = any> implements Vector<T>, Iterable<T
     return this.iterator();
   }
 
-  forEach(iterator: (row: T) => void) {
+  forEach(iterator: (row: T) => void): void {
     return vectorator(this).forEach(iterator);
   }
 
@@ -52,7 +52,7 @@ export function vectorator<T>(vector: Vector<T>) {
       }
     },
 
-    forEach(iterator: (row: T) => void) {
+    forEach(iterator: (row: T) => void): void {
       for (let i = 0; i < vector.length; i++) {
         iterator(vector.get(i));
       }

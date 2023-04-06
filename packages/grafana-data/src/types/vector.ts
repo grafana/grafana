@@ -45,8 +45,14 @@ export interface Vector<T = any> {
    */
   toArray(): T[];
 
-  /** Standard array function */
+  /** Support array style map functions */
   map<V>(transform: (item: T, index: number) => V): V[];
+
+  /** Support array style forEach */
+  forEach(iterator: (row: T) => void): void;
+
+  /** Support array style filter */
+  filter(predicate: (item: T) => boolean): T[];
 
   /** Allow using spread operators on values */
   [Symbol.iterator](): IterableIterator<T>;
