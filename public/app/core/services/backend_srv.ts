@@ -342,7 +342,7 @@ export class BackendSrv implements BackendService {
   }
 
   private handleStreamError<T>(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<T>> {
-    const { isSignedIn } = this.dependencies.contextSrv;
+    const { isSignedIn } = this.dependencies.contextSrv.user;
 
     return (inputStream) =>
       inputStream.pipe(
