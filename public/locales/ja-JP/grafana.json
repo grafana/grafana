@@ -2,7 +2,7 @@
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
   "clipboard-button": {
     "inline-toast": {
-      "success": "Copied"
+      "success": "コピーしました"
     }
   },
   "command-palette": {
@@ -25,7 +25,7 @@
   },
   "common": {
     "locale": {
-      "default": "Japanese - 日本語"
+      "default": "日本語"
     },
     "save": "保存"
   },
@@ -82,15 +82,15 @@
       "table-title": "Stats"
     },
     "toolbar": {
-      "add-panel": "Add panel",
+      "add-panel": "パネルを追加",
       "mark-favorite": "Mark as favorite",
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
       "refresh": "Refresh dashboard",
-      "save": "Save dashboard",
-      "settings": "Dashboard settings",
+      "save": "ダッシュボードを保存",
+      "settings": "ダッシュボード設定",
       "share": "Share dashboard or panel",
       "tv-button": "Cycle view mode",
       "unmark-favorite": "Unmark as favorite"
@@ -209,11 +209,11 @@
     },
     "dashboards": {
       "subtitle": "Create and manage dashboards to visualize your data",
-      "title": "Dashboards"
+      "title": "ダッシュボード"
     },
     "datasources": {
       "subtitle": "Add and configure data sources",
-      "title": "Data sources"
+      "title": "データソース"
     },
     "explore": {
       "title": "Explore"
@@ -255,10 +255,10 @@
       "title": "New"
     },
     "new-dashboard": {
-      "title": "New dashboard"
+      "title": "新しいダッシュボード"
     },
     "new-folder": {
-      "title": "New folder"
+      "title": "新しいフォルダ"
     },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",
@@ -277,7 +277,7 @@
       "title": "Notification history"
     },
     "profile/password": {
-      "title": "Change password"
+      "title": "パスワードを変更"
     },
     "profile/settings": {
       "title": "Profile"
@@ -293,7 +293,7 @@
       "placeholderCommandPalette": "Search or jump to..."
     },
     "search-dashboards": {
-      "title": "Search dashboards"
+      "title": "ダッシュボードを探す"
     },
     "server-settings": {
       "subtitle": "View the settings defined in your Grafana config",
@@ -305,7 +305,7 @@
     },
     "sign-in": "Sign in",
     "sign-out": {
-      "title": "Sign out"
+      "title": "サインアウト"
     },
     "snapshots": {
       "subtitle": "Interactive, publically available, point-in-time representations of dashboards",
@@ -359,7 +359,7 @@
       "copy": "Copy",
       "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
-      "edit": "Edit",
+      "edit": "編集",
       "explore": "Explore",
       "get-help": "Get help",
       "hide-legend": "Hide legend",
@@ -368,8 +368,8 @@
       "inspect-json": "Panel JSON",
       "more": "More...",
       "query": "Query",
-      "remove": "Remove",
-      "share": "Share",
+      "remove": "削除",
+      "share": "シェア",
       "show-legend": "Show legend",
       "unlink-library-panel": "Unlink library panel",
       "view": "View"
@@ -555,12 +555,12 @@
       "time-zone-selection": "Time zone selection"
     },
     "range-content": {
-      "apply-button": "Apply time range",
+      "apply-button": "時間範囲を適用",
       "default-error": "Please enter a past date or \"now\"",
       "fiscal-year": "Fiscal year",
-      "from-input": "From",
+      "from-input": "から",
       "range-error": "\"From\" can't be after \"To\"",
-      "to-input": "To"
+      "to-input": "まで"
     },
     "range-picker": {
       "backwards-time-aria-label": "Move time range backwards",
