@@ -206,6 +206,14 @@ var Versions = VersionMap{
 	},
 	CloudMode: {
 		Variants: []Variant{
+			VariantArmV6,
+			VariantArmV7,
+			VariantArmV7Musl,
+			VariantArm64,
+			VariantArm64Musl,
+			VariantDarwinAmd64,
+			VariantWindowsAmd64,
+			VariantLinuxAmd64,
 			VariantLinuxAmd64Musl,
 		},
 		PluginSignature: PluginSignature{
@@ -216,9 +224,12 @@ var Versions = VersionMap{
 			ShouldSave: true,
 			Architectures: []Architecture{
 				ArchAMD64,
+				ArchARM64,
+				ArchARMv7,
 			},
 			Distribution: []Distribution{
 				Alpine,
+				Ubuntu,
 			},
 			PrereleaseBucket: "grafana-prerelease/artifacts/docker",
 		},
