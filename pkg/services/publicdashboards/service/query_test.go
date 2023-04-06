@@ -432,6 +432,218 @@ const (
   ],
   "schemaVersion": 35
 }`
+
+	dashboardWithCollapsedRows = `
+{
+"panels": [
+    {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 12,
+      "title": "Row title",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "qCbTUC37k"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "qCbTUC37k"
+          },
+          "editorMode": "builder",
+          "expr": "access_evaluation_duration_bucket",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 10,
+      "panels": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P49A45DF074423DFB"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 0,
+            "y": 10
+          },
+          "id": 8,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "9.4.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "P49A45DF074423DFB"
+              },
+              "query": "// v.bucket, v.timeRangeStart, and v.timeRange stop are all variables supported by the flux plugin and influxdb\nfrom(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_value\"] >= 10 and r[\"_value\"] <= 20)",
+              "refId": "A"
+            }
+          ],
+          "title": "Panel Title",
+          "type": "timeseries"
+        }
+      ],
+      "title": "Row title 1",
+      "type": "row"
+    }
+  ]
+}`
 )
 
 func TestGetQueryDataResponse(t *testing.T) {
@@ -500,7 +712,7 @@ func TestFindAnnotations(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		config := setting.NewCfg()
 		tagService := tagimpl.ProvideService(sqlStore, sqlStore.Cfg)
-		annotationsRepo := annotationsimpl.ProvideService(sqlStore, config, tagService)
+		annotationsRepo := annotationsimpl.ProvideService(sqlStore, config, featuremgmt.WithFeatures(), tagService)
 		fakeStore := FakePublicDashboardStore{}
 		service := &PublicDashboardServiceImpl{
 			log:             log.New("test.logger"),
@@ -950,6 +1162,16 @@ func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
 
 		uids := getUniqueDashboardDatasourceUids(json)
 		require.Len(t, uids, 0)
+	})
+
+	t.Run("can get unique datasource ids from dashboard with rows", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(dashboardWithCollapsedRows))
+		require.NoError(t, err)
+
+		uids := getUniqueDashboardDatasourceUids(json)
+		require.Len(t, uids, 2)
+		require.Equal(t, "qCbTUC37k", uids[0])
+		require.Equal(t, "P49A45DF074423DFB", uids[1])
 	})
 }
 

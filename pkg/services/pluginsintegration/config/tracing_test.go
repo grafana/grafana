@@ -8,15 +8,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewOpentelemetryCfg(t *testing.T) {
+func TestNewTracingCfg(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		cfg := setting.NewCfg()
 
-		otelCfg, err := NewOpentelemetryCfg(cfg)
+		tracingCfg, err := newTracingCfg(cfg)
 		require.NoError(t, err)
-		assert.False(t, otelCfg.IsEnabled(), "otel should be disabled")
-		assert.Empty(t, otelCfg.Address)
-		assert.Empty(t, otelCfg.Propagation)
+		assert.False(t, tracingCfg.IsEnabled(), "tracing should be disabled")
+		assert.Empty(t, tracingCfg.OpenTelemetry.Address)
+		assert.Empty(t, tracingCfg.OpenTelemetry.Propagation)
 	})
 
 	t.Run("enabled", func(t *testing.T) {
@@ -39,11 +39,11 @@ func TestNewOpentelemetryCfg(t *testing.T) {
 					otlpSect.Key("propagation").SetValue(tc.propagation)
 				}
 
-				otelCfg, err := NewOpentelemetryCfg(cfg)
+				tracingCfg, err := newTracingCfg(cfg)
 				require.NoError(t, err)
-				assert.True(t, otelCfg.IsEnabled(), "otel should be enabled")
-				assert.Equal(t, address, otelCfg.Address)
-				assert.Equal(t, tc.propagation, otelCfg.Propagation)
+				assert.True(t, tracingCfg.IsEnabled(), "tracing should be enabled")
+				assert.Equal(t, address, tracingCfg.OpenTelemetry.Address)
+				assert.Equal(t, tc.propagation, tracingCfg.OpenTelemetry.Propagation)
 			})
 		}
 	})
