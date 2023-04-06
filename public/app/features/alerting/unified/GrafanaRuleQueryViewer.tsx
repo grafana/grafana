@@ -44,10 +44,11 @@ export function GrafanaRuleQueryViewer({
   const dsByUid = keyBy(Object.values(config.datasources), (ds) => ds.uid);
   const dataQueries = queries.filter((q) => !isExpressionQuery(q.model));
   const expressions = queries.filter((q) => isExpressionQuery(q.model));
+  const styles = useStyles2(getExpressionViewerStyles);
 
   return (
     <Stack gap={2} direction="column">
-      <div style={{ maxWidth: '100%' }}>
+      <div className={styles.maxWidthContainer}>
         <Stack gap={2}>
           {dataQueries.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
             const dataSource = dsByUid[datasourceUid];
@@ -68,7 +69,7 @@ export function GrafanaRuleQueryViewer({
           })}
         </Stack>
       </div>
-      <div style={{ maxWidth: '100%' }}>
+      <div className={styles.maxWidthContainer}>
         <Stack gap={1}>
           {expressions.map(({ model, refId, datasourceUid }, index) => {
             const dataSource = dsByUid[datasourceUid];
@@ -392,6 +393,9 @@ const getExpressionViewerStyles = (theme: GrafanaTheme2) => {
 
   return {
     ...common,
+    maxWidthContainer: css`
+      max-width: 100%;
+    `,
     container: css`
       padding: ${theme.spacing(1)};
       display: flex;
