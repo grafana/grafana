@@ -314,8 +314,4 @@ const (
 	// FlagPyroscopeFlameGraph
 	// Changes flame graph to pyroscope one
 	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
-  
-  // FlagFieldNameMatcherFallback
-	// Dataplane field matcher support for existing configurations to match on field names of Value or Time
-	FlagFieldNameMatcherFallback = "fieldNameMatcherFallback"
 )

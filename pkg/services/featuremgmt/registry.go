@@ -511,12 +511,5 @@ var (
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 		},
-    {
-      Name:         "fieldNameMatcherFallback",
-			Description:  "Dataplane field matcher support for existing configurations to match on field names of Value or Time",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityMetricsSquad,
-    },
 	}
 )
