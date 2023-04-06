@@ -54,7 +54,7 @@ export function addLogLevelToSeries(series: DataFrame, lineIndex: number): DataF
   const lines = series.fields[lineIndex];
   for (let i = 0; i < lines.values.length; i++) {
     const line = lines.values.get(lineIndex);
-    levels.buffer.push(getLogLevel(line));
+    levels.push(getLogLevel(line));
   }
 
   return {

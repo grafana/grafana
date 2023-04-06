@@ -120,19 +120,19 @@ export function reduceSeriesToRows(
       });
 
       if (labelsToFields) {
-        names.buffer[i] = field.name;
+        names[i] = field.name;
         if (field.labels) {
           for (const key of Object.keys(field.labels)) {
-            labels[key].set(i, field.labels[key]);
+            labels[key][i] = field.labels[key];
           }
         }
       } else {
-        names.buffer[i] = getFieldDisplayName(field, series, data);
+        names[i] = getFieldDisplayName(field, series, data);
       }
 
       for (const info of calculators) {
         const v = results[info.id];
-        calcs[info.id].buffer[i] = v;
+        calcs[info.id][i] = v;
       }
     }
 
