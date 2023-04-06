@@ -1,10 +1,11 @@
 import { uniq } from 'lodash';
 import React, { useMemo, useState } from 'react';
+import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
 import { TimeRange, SelectableValue, CoreApp, DataFrame } from '@grafana/data';
 import { AccessoryButton, EditorList } from '@grafana/experimental';
-import { Field, HorizontalGroup, Select } from '@grafana/ui';
+import { AsyncSelect, Field, HorizontalGroup, Select } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import {
@@ -19,94 +20,76 @@ import { useAsyncState } from '../../utils/useAsyncState';
 import { tablesSchema } from './consts';
 import { setFilters } from './setQueryValue';
 
-const useTraceProperties = (
+const getTraceProperties = async (
   query: AzureMonitorQuery,
   datasource: Datasource,
-  setError: (source: string, error: AzureMonitorErrorish | undefined) => void,
   timeRange: TimeRange,
   traceTypes: string[],
-  filters: AzureTracesFilter[],
   propertyMap: Map<string, SelectableValue[]>,
-  setPropertyMap: React.Dispatch<React.SetStateAction<Map<string, Array<SelectableValue<string>>>>>
-): void => {
-  const resources = query.azureTraces?.resources;
-  useAsyncState(
-    async () => {
-      const { azureTraces } = query;
-      if (!azureTraces) {
-        return;
-      }
+  setPropertyMap: React.Dispatch<React.SetStateAction<Map<string, Array<SelectableValue<string>>>>>,
+  filter?: Partial<AzureTracesFilter>
+): Promise<SelectableValue[]> => {
+  const { azureTraces } = query;
+  if (!azureTraces) {
+    return [];
+  }
 
-      const { resources } = azureTraces;
+  const { resources } = azureTraces;
 
-      if (!resources || !filters) {
-        return;
-      }
+  if (!resources || !filter) {
+    return [];
+  }
 
-      let propertiesQuery = ``;
-      let bagQuery = '';
-      for (const filter of filters) {
-        if (filter.property !== '') {
-          if (propertyMap.has(filter.property)) {
-            continue;
-          } else {
-            propertiesQuery += `let ${filter.property} = toscalar(union isfuzzy=true ${traceTypes.join(',')}
-            | distinct ${filter.property}
-            | summarize make_list(${filter.property}));`;
-            bagQuery += `"${filter.property}", ${filter.property}`;
-          }
-        }
-      }
+  if (!filter.property) {
+    return [];
+  }
 
-      const queryString = `${propertiesQuery}
-      print properties = bag_pack(${bagQuery});`;
-      if (propertiesQuery !== '') {
-        const results = await lastValueFrom(
-          datasource.azureLogAnalyticsDatasource.query({
-            requestId: 'azure-traces-properties-req',
-            interval: '',
-            intervalMs: 0,
-            scopedVars: {},
-            timezone: '',
-            startTime: 0,
-            app: CoreApp.Unknown,
-            targets: [
-              {
-                ...query,
-                azureLogAnalytics: {
-                  resources,
-                  query: queryString,
-                },
-                queryType: AzureQueryType.LogAnalytics,
-              },
-            ],
-            range: timeRange,
-          })
-        );
-        if (results.data.length > 0) {
-          const result: DataFrame = results.data[0];
-          if (result.fields.length > 0) {
-            const properties: { [key: string]: string[] } = JSON.parse(result.fields[0].values.toArray()[0]);
-            Object.keys(properties).forEach((prop) =>
-              propertyMap.set(
-                prop,
-                properties[prop]
-                  .filter((value: string) => value !== '')
-                  .map((value: string) => ({ label: value, value }))
-              )
-            );
-            setPropertyMap(propertyMap);
-          }
-        }
-      }
-    },
-    setError,
-    [datasource, resources, query]
+  const queryString = `let ${filter.property} = toscalar(union isfuzzy=true ${traceTypes.join(',')}
+  | distinct ${filter.property}
+  | summarize make_list(${filter.property}));
+      print properties = bag_pack("${filter.property}", ${filter.property});`;
+
+  const results = await lastValueFrom(
+    datasource.azureLogAnalyticsDatasource.query({
+      requestId: 'azure-traces-properties-req',
+      interval: '',
+      intervalMs: 0,
+      scopedVars: {},
+      timezone: '',
+      startTime: 0,
+      app: CoreApp.Unknown,
+      targets: [
+        {
+          ...query,
+          azureLogAnalytics: {
+            resources,
+            query: queryString,
+          },
+          queryType: AzureQueryType.LogAnalytics,
+        },
+      ],
+      range: timeRange,
+    })
   );
+  if (results.data.length > 0) {
+    const result: DataFrame = results.data[0];
+    if (result.fields.length > 0) {
+      const properties: { [key: string]: string[] } = JSON.parse(result.fields[0].values.toArray()[0]);
+      const values = properties[filter.property]
+        .filter((value: string) => value !== '')
+        .map((value: string) => ({ label: value, value }));
+      propertyMap.set(filter.property, values);
+      setPropertyMap(propertyMap);
+      return values;
+    }
+  }
+
+  return [];
 };
 
 const Filters = ({ query, datasource, onQueryChange, setError }: AzureQueryEditorFieldProps) => {
   const { azureTraces } = query;
+  const timeRange = datasource.azureLogAnalyticsDatasource.timeSrv.timeRange();
   const queryTraceTypes = azureTraces?.traceTypes ? azureTraces.traceTypes : Object.keys(tablesSchema);
 
   const excludedProperties = new Set([
@@ -127,16 +110,6 @@ const Filters = ({ query, datasource, onQueryChange, setError }: AzureQueryEdito
   const [propertyMap, setPropertyMap] = useState(new Map<string, Array<SelectableValue<string>>>());
 
   const filters = useMemo(() => query.azureTraces?.filters ?? [], [query.azureTraces?.filters]);
-  useTraceProperties(
-    query,
-    datasource,
-    setError,
-    datasource.azureLogAnalyticsDatasource.timeSrv.timeRange(),
-    queryTraceTypes,
-    filters,
-    propertyMap,
-    setPropertyMap
-  );
 
   const onFieldChange = <Key extends keyof AzureTracesFilter>(
     fieldName: Key,
@@ -148,11 +121,52 @@ const Filters = ({ query, datasource, onQueryChange, setError }: AzureQueryEdito
     onChange(item);
   };
 
-  const renderFilters = (
+  const RenderFilters = (
     item: Partial<AzureTracesFilter>,
     onChange: (item: Partial<AzureTracesFilter>) => void,
     onDelete: () => void
   ) => {
+    const [loading, setLoading] = useState(false);
+    const [values, setValues] = useState(propertyMap.get(item.property ?? ''));
+    const value = () => {
+      if (item.property && values) {
+        const exists = values.find((val) => item.property === val.value);
+        if (!exists) {
+          return undefined;
+        } else {
+          return exists;
+        }
+      }
+      return undefined;
+    };
+
+    const loadOptions = async () => {
+      setLoading(true);
+      if (item.property && item.property !== '') {
+        const vals = propertyMap.get(item.property);
+        if (!vals) {
+          const promise = await getTraceProperties(
+            query,
+            datasource,
+            timeRange,
+            queryTraceTypes,
+            propertyMap,
+            setPropertyMap,
+            item
+          );
+          setValues(promise);
+          setLoading(false);
+          return promise;
+        } else {
+          setValues(vals);
+          setLoading(false);
+          return Promise.resolve(vals);
+        }
+      }
+      const empty: Array<SelectableValue<string>> = [];
+      return Promise.resolve(empty);
+    };
+
     return (
       <HorizontalGroup spacing="none">
         <Select
@@ -163,13 +177,16 @@ const Filters = ({ query, datasource, onQueryChange, setError }: AzureQueryEdito
           onChange={(e) => onFieldChange('property', item, e.value ?? '', onChange)}
           width={25}
         />
-        <Select
+        <AsyncSelect
           menuShouldPortal
           placeholder="Value"
-          value={item.filters ? { value: item.filters[0], label: item.filters[0] } : null}
-          options={propertyMap.get(item.property ?? '') ?? []}
+          //   value={value()}
+          loadOptions={loadOptions}
+          isLoading={loading}
+          onOpenMenu={loadOptions}
           onChange={() => {}}
           width={25}
+          defaultOptions={values}
         />
         <AccessoryButton aria-label="Remove" icon="times" variant="secondary" onClick={onDelete} type="button" />
       </HorizontalGroup>
@@ -188,7 +205,7 @@ const Filters = ({ query, datasource, onQueryChange, setError }: AzureQueryEdito
   };
   return (
     <Field label="Filters">
-      <EditorList items={filters} onChange={changedFunc} renderItem={renderFilters} />
+      <EditorList items={filters} onChange={changedFunc} renderItem={RenderFilters} />
     </Field>
   );
 };
