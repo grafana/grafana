@@ -6,7 +6,7 @@ import { Select } from '@grafana/ui';
 
 import { DB, ResourceSelectorProps, toOption } from '../types';
 
-interface DatasetSelectorProps extends ResourceSelectorProps {
+export interface DatasetSelectorProps extends ResourceSelectorProps {
   db: DB;
   dataset: string | null;
   preconfiguredDataset: string;

@@ -14,11 +14,18 @@ import { QueryHeader, QueryHeaderProps } from './QueryHeader';
 import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
-interface Props extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
+export interface SqlQueryEditorProps extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
   queryHeaderProps?: Pick<QueryHeaderProps, 'disableDatasetSelector'>;
 }
 
-export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range, queryHeaderProps }: Props) {
+export function SqlQueryEditor({
+  datasource,
+  query,
+  onChange,
+  onRunQuery,
+  range,
+  queryHeaderProps,
+}: SqlQueryEditorProps) {
   const [hasDatabaseConfigIssue, setHasDatabaseConfigIssue] = useState<boolean>(false);
   const [hasNoPostgresDefaultDatabaseConfig, setHasNoPostgresDefaultDatabaseConfig] = useState<boolean>(false);
 
@@ -99,7 +106,7 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
     <>
       {hasDatabaseConfigIssue && (
         <Alert
-          id="database_update"
+          data-testid="database_update"
           severity="warning"
           title="Default datasource configuration"
           elevated={true}
@@ -116,7 +123,7 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
       )}
       {hasNoPostgresDefaultDatabaseConfig && (
         <Alert
-          id="no_postgres_database"
+          data-testid="no_postgres_database"
           severity="warning"
           title="Default datasource configuration"
           elevated={true}
