@@ -188,7 +188,7 @@ func (l *Loader) Unload(ctx context.Context, pluginID string) error {
 		return plugins.ErrPluginNotInstalled
 	}
 
-	if !plugin.IsExternalPlugin() {
+	if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
 		return plugins.ErrUninstallCorePlugin
 	}
 
