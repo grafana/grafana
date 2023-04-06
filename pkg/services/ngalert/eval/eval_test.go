@@ -533,7 +533,7 @@ func TestValidate(t *testing.T) {
 			})
 
 			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil), store)
-			evalCtx := Context(context.Background(), u)
+			evalCtx := NewContext(context.Background(), u)
 
 			err := evaluator.Validate(evalCtx, condition)
 			if testCase.error {
