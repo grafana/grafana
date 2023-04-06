@@ -113,6 +113,17 @@ const TimeRegionEditor = ({ value, index, onChange }: SingleRegion) => {
           width={10}
         />
       </InlineField>
+      <InlineField label="Color">
+        <ColorValueEditor value={value.color} onChange={(color) => onChange(index, { ...value, color: color! })} />
+      </InlineField>
+      <InlineField>
+        <InlineSwitch
+          label="Line"
+          showLabel={true}
+          value={value.line}
+          onChange={(e) => onChange(index, { ...value, line: e.currentTarget.checked })}
+        />
+      </InlineField>
       <InlineField label="From">
         <HorizontalGroup spacing="xs">
           <Select
@@ -158,17 +169,6 @@ const TimeRegionEditor = ({ value, index, onChange }: SingleRegion) => {
           onChange={(v) => onChange(index, { ...value, timezone: v })}
           width={35}
           menuShouldPortal={true}
-        />
-      </InlineField>
-      <InlineField label="Color">
-        <ColorValueEditor value={value.color} onChange={(color) => onChange(index, { ...value, color: color! })} />
-      </InlineField>
-      <InlineField>
-        <InlineSwitch
-          label="Line"
-          showLabel={true}
-          value={value.line}
-          onChange={(e) => onChange(index, { ...value, line: e.currentTarget.checked })}
         />
       </InlineField>
       <InlineField
