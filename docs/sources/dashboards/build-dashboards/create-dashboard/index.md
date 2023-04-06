@@ -30,6 +30,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. Write or construct a query in the query language of your data source.
 
    For more information about data sources, refer to [Data sources]({{< relref "../../../datasources/" >}}) for specific guidelines.
+   
 
 1. In the visualization list, select a visualization type.
 
