@@ -10,15 +10,10 @@
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-export enum PanelLayout {
-  List = 'list',
-}
-
 export interface PanelOptions {
   folderId?: number;
   includeVars: boolean;
   keepTime: boolean;
-  layout?: 'list';
   maxItems: number;
   query: string;
   showHeadings: boolean;
