@@ -373,7 +373,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		logger := logger.New("version", e.rule.Version, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
 
-		evalCtx := eval.NewContext(ctx, ScheduleUserFor(e.rule.OrgID))
+		evalCtx := eval.NewContext(ctx, SchedulerUserFor(e.rule.OrgID))
 		ruleEval, err := sch.evaluatorFactory.Create(evalCtx, e.rule.GetEvalCondition())
 		var results eval.Results
 		var dur time.Duration
