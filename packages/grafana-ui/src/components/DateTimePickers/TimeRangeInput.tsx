@@ -6,7 +6,6 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { stylesFactory } from '../../themes';
 import { useTheme2 } from '../../themes/ThemeContext';
-import { IconName } from '../../types/icon';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../Icon/Icon';
 import { getInputStyles } from '../Input/Input';
