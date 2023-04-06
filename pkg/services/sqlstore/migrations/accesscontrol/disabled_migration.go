@@ -80,5 +80,8 @@ func (m *DisabledMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error
 		return fmt.Errorf("failed to remove managed permissions migrations: %w", err)
 	}
 
+	// Note: we also need to clear migration from the in-memory representation of migration log
+	mg.RemoveMigrationLogs(migrations[:]...)
+
 	return nil
 }
