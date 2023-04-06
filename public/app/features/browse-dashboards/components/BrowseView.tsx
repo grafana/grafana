@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList as List } from 'react-window';
+import InfiniteLoader from 'react-window-infinite-loader';
 
 import { Icon, IconButton, Link } from '@grafana/ui';
 import { getFolderChildren } from 'app/features/search/service/folders';
@@ -83,11 +84,22 @@ export function BrowseView({ folderUID }: BrowseViewProps) {
     };
   }, [flatTree, handleFolderClick]);
 
+  const onItemsRendered = useCallback((args) => {
+    console.log('onItemsRendered', args);
+  }, []);
+
   return (
     <div style={{ height: '100%', border: '1px solid grey' }}>
       <AutoSizer>
         {({ width, height }) => (
-          <List height={height} width={width} itemCount={flatTree.length} itemData={virtualData} itemSize={35}>
+          <List
+            onItemsRendered={onItemsRendered}
+            height={height}
+            width={width}
+            itemCount={flatTree.length}
+            itemData={virtualData}
+            itemSize={35}
+          >
             {Row}
           </List>
         )}
