@@ -823,7 +823,7 @@ func (s *Service) RegisterService(r folder.RegistryService) error {
 
 	_, ok := s.registry[r.Kind()]
 	if ok {
-		return folder.ErrTargetSrvConflict
+		return folder.ErrTargetRegistrySrvConflict.Errorf("target registry service: %s already exists", r.Kind())
 	}
 
 	s.registry[r.Kind()] = r
