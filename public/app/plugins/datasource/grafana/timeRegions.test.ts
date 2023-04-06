@@ -112,7 +112,7 @@ describe('grafana data source', () => {
           "name": "time",
           "type": "time",
           "values": [
-            1678082400000,
+            1678078800000,
           ],
         },
         {
@@ -121,7 +121,7 @@ describe('grafana data source', () => {
           "name": "timeEnd",
           "type": "time",
           "values": [
-            1678168799000,
+            1678165199000,
           ],
         },
         {
@@ -151,11 +151,11 @@ describe('grafana data source', () => {
     `);
   });
 
-  it('handles timezone conversion CDT-UTC', () => {
-    // region TZ = America/Chicago
+  it('handles timezone conversion CST-UTC', () => {
+    // region TZ = America/Chicago (CST)
     // dashboard TZ = UTC
-    // Mon Mar 06 2023 00:00:00 GMT-0500 -> Mon Mar 06 2023 23:59:59 GMT-0500 (CDT)
-    // Mon Mar 06 2023 05:00:00 GMT+0000 -> Tue Mar 07 2023 04:59:59 GMT+0000
+    // Mon Mar 06 2023 00:00:00 GMT-0600 -> Mon Mar 06 2023 23:59:59 GMT-0600 (CDT)
+    // Mon Mar 06 2023 06:00:00 GMT+0000 -> Tue Mar 07 2023 05:59:59 GMT+0000
 
     const frame = doTimeRegionQuery(
       { name: 'T1', color: 'green', fromDayOfWeek: 1, line: true, timezone: 'America/Chicago' },
@@ -178,7 +178,7 @@ describe('grafana data source', () => {
           "name": "time",
           "type": "time",
           "values": [
-            1678078800000,
+            1678082400000,
           ],
         },
         {
@@ -187,7 +187,7 @@ describe('grafana data source', () => {
           "name": "timeEnd",
           "type": "time",
           "values": [
-            1678165199000,
+            1678168799000,
           ],
         },
         {
@@ -244,7 +244,7 @@ describe('grafana data source', () => {
           "name": "time",
           "type": "time",
           "values": [
-            1678053600000,
+            1678057200000,
           ],
         },
         {
@@ -253,7 +253,7 @@ describe('grafana data source', () => {
           "name": "timeEnd",
           "type": "time",
           "values": [
-            1678139999000,
+            1678143599000,
           ],
         },
         {
