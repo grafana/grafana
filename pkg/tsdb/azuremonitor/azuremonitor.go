@@ -87,7 +87,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
-		jsonDataObj := map[string]interface{}{}
+		jsonDataObj := map[string]any{}
 		err = json.Unmarshal(settings.JSONData, &jsonDataObj)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
