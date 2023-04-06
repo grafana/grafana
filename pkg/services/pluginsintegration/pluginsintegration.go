@@ -97,6 +97,7 @@ func NewClientDecorator(cfg *setting.Cfg, pCfg *pCfg.Cfg,
 func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer) []plugins.ClientMiddleware {
 	skipCookiesNames := []string{cfg.LoginCookieName}
 	middlewares := []plugins.ClientMiddleware{
+		clientmiddleware.NewPluginsMetricMiddleware(),
 		clientmiddleware.NewTracingMiddleware(tracer),
 		clientmiddleware.NewTracingHeaderMiddleware(),
 		clientmiddleware.NewClearAuthHeadersMiddleware(),

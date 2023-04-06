@@ -29,12 +29,26 @@ var (
 		Help:      "Plugin request duration",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 	}, []string{"plugin_id", "endpoint", "target"})
+
+	pluginRequestSizeHistogram = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "grafana",
+			Name:      "plugin_request_size_bytes",
+			Help:      "histogram of plugin request sizes returned",
+			Buckets:   []float64{128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576},
+		}, []string{"source", "plugin_id", "endpoint", "target"},
+	)
 )
 
 const (
 	statusOK        = "ok"
 	statusError     = "error"
 	statusCancelled = "cancelled"
+
+	EndpointCallResource   = "callResource"
+	EndpointCheckHealth    = "checkHealth"
+	EndpointCollectMetrics = "collectMetrics"
+	EndpointQueryData      = "queryData"
 )
 
 var logger = plog.New("plugin.instrumentation")
@@ -99,20 +113,24 @@ type Cfg struct {
 
 // InstrumentCollectMetrics instruments collectMetrics.
 func InstrumentCollectMetrics(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
-	return instrumentPluginRequest(ctx, cfg, req, "collectMetrics", fn)
+	return instrumentPluginRequest(ctx, cfg, req, EndpointCollectMetrics, fn)
 }
 
 // InstrumentCheckHealthRequest instruments checkHealth.
 func InstrumentCheckHealthRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
-	return instrumentPluginRequest(ctx, cfg, req, "checkHealth", fn)
+	return instrumentPluginRequest(ctx, cfg, req, EndpointCheckHealth, fn)
 }
 
 // InstrumentCallResourceRequest instruments callResource.
 func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
-	return instrumentPluginRequest(ctx, cfg, req, "callResource", fn)
+	return instrumentPluginRequest(ctx, cfg, req, EndpointCallResource, fn)
 }
 
 // InstrumentQueryDataRequest instruments success rate and latency of query data requests.
 func InstrumentQueryDataRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
-	return instrumentPluginRequest(ctx, cfg, req, "queryData", fn)
+	return instrumentPluginRequest(ctx, cfg, req, EndpointQueryData, fn)
+}
+
+func InstrumentRequestSize(pluginId, endpoint, target string, size float64) {
+	pluginRequestSizeHistogram.WithLabelValues("backend-datasource", pluginId, endpoint, target).Observe(size)
 }
