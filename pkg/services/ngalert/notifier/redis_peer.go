@@ -349,6 +349,7 @@ func (p *redisPeer) AddState(key string, state cluster.State, _ prometheus.Regis
 	p.mtx.Unlock()
 	return &RedisChannel{
 		p:       p,
+		key:     key,
 		channel: p.withPrefix(key),
 		msgType: update,
 	}
@@ -390,6 +391,7 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 				p.logger.Warn("error merging the received broadcast message", "err", err, "key", name)
 				continue
 			}
+			p.logger.Debug("partial state was successfully merged", "key", name)
 		}
 	}
 }
@@ -463,6 +465,7 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 						return
 					}
 				}
+				p.logger.Debug("full state was successfully merged")
 			}()
 		}
 	}
@@ -530,12 +533,13 @@ func (p *redisPeer) Shutdown() {
 
 type RedisChannel struct {
 	p       *redisPeer
+	key     string
 	channel string
 	msgType string
 }
 
 func (c *RedisChannel) Broadcast(b []byte) {
-	b, err := proto.Marshal(&clusterpb.Part{Key: c.channel, Data: b})
+	b, err := proto.Marshal(&clusterpb.Part{Key: c.key, Data: b})
 	if err != nil {
 		return
 	}
