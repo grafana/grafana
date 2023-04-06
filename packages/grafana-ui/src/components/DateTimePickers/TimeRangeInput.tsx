@@ -32,7 +32,7 @@ export interface TimeRangeInputProps {
   /** Controls visibility of the preset time ranges (e.g. **Last 5 minutes**) in the picker menu */
   hideQuickRanges?: boolean;
   disabled?: boolean;
-  icon?: IconName;
+  showIcon?: boolean;
 }
 
 const noop = () => {};
@@ -48,7 +48,7 @@ export const TimeRangeInput = ({
   isReversed = true,
   hideQuickRanges = false,
   disabled = false,
-  icon,
+  showIcon = false,
 }: TimeRangeInputProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const theme = useTheme2();
@@ -87,7 +87,7 @@ export const TimeRangeInput = ({
         aria-label={selectors.components.TimePicker.openButton}
         onClick={onOpen}
       >
-        {icon && <Icon name={icon} size={'sm'} className={styles.icon} />}
+        {showIcon && <Icon name="clock-nine" size={'sm'} className={styles.icon} />}
         {isValidTimeRange(value) ? (
           <TimePickerButtonLabel value={value} timeZone={timeZone} />
         ) : (
