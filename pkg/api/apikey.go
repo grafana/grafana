@@ -20,6 +20,9 @@ import (
 //
 // Will return auth keys.
 //
+// instead see: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
+//
+// Deprecated: true
 // Responses:
 // 200: getAPIkeyResponse
 // 401: unauthorisedError
@@ -66,6 +69,9 @@ func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 //
 // Delete API key.
 //
+// instead see: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
+//
+// Deprecated: true
 // Responses:
 // 200: okResponse
 // 401: unauthorisedError
