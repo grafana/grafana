@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
 
 export function nullToValue(frame: DataFrame) {
   return {
@@ -17,7 +17,7 @@ export function nullToValue(frame: DataFrame) {
 
         return {
           ...field,
-          values: new ArrayVector(transformedVals),
+          values: transformedVals,
         };
       } else {
         return field;
