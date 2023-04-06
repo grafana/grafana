@@ -21,9 +21,10 @@ export class ArrayVector<T = any> extends Array<T> implements Vector {
   set buffer(values: T[]) {
     this.length = 0;
     if (values?.length) {
-      for (let i = 0; i < values.length; i++) {
-        this.push(values[i]);
-      }
+      this.push(...values);
+      // for (let i = 0; i < values.length; i++) {
+      //   this.push(values[i]);
+      // }
     }
   }
 }
