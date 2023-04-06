@@ -11,6 +11,7 @@ import {
   DataSourceJsonData,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
+  Field,
   FieldCache,
   FieldColorModeId,
   FieldType,
@@ -348,6 +349,26 @@ function getLabelsForFrameRow(fields: LogFields, index: number): Labels {
   }
 }
 
+function makeNsString(index: number, timeField: Field, timeNsField?: Field): string | undefined {
+  const timeFieldNanos = timeField.nanos;
+  if (timeFieldNanos != null) {
+    const ts = timeField.values.get(index);
+    const time = toUtc(ts);
+    const nano = timeFieldNanos[index];
+    const result = `${time.valueOf()}${nano.toString().padStart(6, '0')}`;
+    // debug:
+    const oldResult = timeNsField!?.values.get(index);
+    console.log('match:', result === oldResult, oldResult, result);
+    return result;
+  }
+
+  if (timeNsField != null) {
+    return timeNsField.values.get(index);
+  }
+
+  return undefined;
+}
+
 /**
  * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
  * like common labels.
@@ -409,7 +430,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
       const time = toUtc(ts);
-      const tsNs = timeNanosecondField ? timeNanosecondField.values.get(j) : undefined;
+      const tsNs = makeNsString(j, timeField, timeNanosecondField);
       const timeEpochNs = tsNs ? tsNs : time.valueOf() + '000000';
 
       // In edge cases, this can be undefined. If undefined, we want to replace it with empty string.
