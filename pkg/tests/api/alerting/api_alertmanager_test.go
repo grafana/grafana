@@ -674,168 +674,168 @@ func TestIntegrationRulerAccess(t *testing.T) {
 	}
 }
 
-// func TestIntegrationDeleteFolderWithRules(t *testing.T) {
-// 	testinfra.SQLiteIntegrationTest(t)
+func TestIntegrationDeleteFolderWithRules(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
 
-// 	// Setup Grafana and its Database
-// 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-// 		DisableLegacyAlerting: true,
-// 		EnableUnifiedAlerting: true,
-// 		EnableQuota:           true,
-// 		DisableAnonymous:      true,
-// 		ViewersCanEdit:        true,
-// 		AppModeProduction:     true,
-// 	})
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		EnableQuota:           true,
+		DisableAnonymous:      true,
+		ViewersCanEdit:        true,
+		AppModeProduction:     true,
+	})
 
-// 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-// 	createUser(t, store, user.CreateUserCommand{
-// 		DefaultOrgRole: string(org.RoleViewer),
-// 		Password:       "viewer",
-// 		Login:          "viewer",
-// 	})
-// 	createUser(t, store, user.CreateUserCommand{
-// 		DefaultOrgRole: string(org.RoleEditor),
-// 		Password:       "editor",
-// 		Login:          "editor",
-// 	})
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleViewer),
+		Password:       "viewer",
+		Login:          "viewer",
+	})
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "editor",
+		Login:          "editor",
+	})
 
-// 	apiClient := newAlertingApiClient(grafanaListedAddr, "editor", "editor")
+	apiClient := newAlertingApiClient(grafanaListedAddr, "editor", "editor")
 
-// 	// Create the namespace we'll save our alerts to.
-// 	namespaceUID := "default"
-// 	apiClient.CreateFolder(t, namespaceUID, namespaceUID)
+	// Create the namespace we'll save our alerts to.
+	namespaceUID := "default"
+	apiClient.CreateFolder(t, namespaceUID, namespaceUID)
 
-// 	createRule(t, apiClient, "default")
+	createRule(t, apiClient, "default")
 
-// 	// First, let's have an editor create a rule within the folder/namespace.
-// 	{
-// 		u := fmt.Sprintf("http://editor:editor@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
-// 		// nolint:gosec
-// 		resp, err := http.Get(u)
-// 		require.NoError(t, err)
-// 		t.Cleanup(func() {
-// 			err := resp.Body.Close()
-// 			require.NoError(t, err)
-// 		})
-// 		b, err := io.ReadAll(resp.Body)
-// 		require.NoError(t, err)
+	// First, let's have an editor create a rule within the folder/namespace.
+	{
+		u := fmt.Sprintf("http://editor:editor@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(u)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
 
-// 		assert.Equal(t, 200, resp.StatusCode)
+		assert.Equal(t, 200, resp.StatusCode)
 
-// 		re := regexp.MustCompile(`"uid":"([\w|-]+)"`)
-// 		b = re.ReplaceAll(b, []byte(`"uid":""`))
-// 		re = regexp.MustCompile(`"updated":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)"`)
-// 		b = re.ReplaceAll(b, []byte(`"updated":"2021-05-19T19:47:55Z"`))
+		re := regexp.MustCompile(`"uid":"([\w|-]+)"`)
+		b = re.ReplaceAll(b, []byte(`"uid":""`))
+		re = regexp.MustCompile(`"updated":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)"`)
+		b = re.ReplaceAll(b, []byte(`"updated":"2021-05-19T19:47:55Z"`))
 
-// 		expectedGetRulesResponseBody := fmt.Sprintf(`{
-// 			"default": [
-// 				{
-// 					"name": "arulegroup",
-// 					"interval": "1m",
-// 					"rules": [
-// 						{
-// 							"expr": "",
-// 							"for": "2m",
-// 							"labels": {
-// 								"label1": "val1"
-// 							},
-// 							"annotations": {
-// 								"annotation1": "val1"
-// 							},
-// 							"grafana_alert": {
-// 								"id": 1,
-// 								"orgId": 1,
-// 								"title": "rule under folder default",
-// 								"condition": "A",
-// 								"data": [
-// 									{
-// 										"refId": "A",
-// 										"queryType": "",
-// 										"relativeTimeRange": {
-// 											"from": 18000,
-// 											"to": 10800
-// 										},
-// 										"datasourceUid": "__expr__",
-// 										"model": {
-// 											"expression": "2 + 3 > 1",
-// 											"intervalMs": 1000,
-// 											"maxDataPoints": 43200,
-// 											"type": "math"
-// 										}
-// 									}
-// 								],
-// 								"updated": "2021-05-19T19:47:55Z",
-// 								"intervalSeconds": 60,
-// 								"is_paused": false,
-// 								"version": 1,
-// 								"uid": "",
-// 								"namespace_uid": %q,
-// 								"namespace_id": 1,
-// 								"rule_group": "arulegroup",
-// 								"no_data_state": "NoData",
-// 								"exec_err_state": "Alerting"
-// 							}
-// 						}
-// 					]
-// 				}
-// 			]
-// 		}`, namespaceUID)
-// 		assert.JSONEq(t, expectedGetRulesResponseBody, string(b))
-// 	}
+		expectedGetRulesResponseBody := fmt.Sprintf(`{
+			"default": [
+				{
+					"name": "arulegroup",
+					"interval": "1m",
+					"rules": [
+						{
+							"expr": "",
+							"for": "2m",
+							"labels": {
+								"label1": "val1"
+							},
+							"annotations": {
+								"annotation1": "val1"
+							},
+							"grafana_alert": {
+								"id": 1,
+								"orgId": 1,
+								"title": "rule under folder default",
+								"condition": "A",
+								"data": [
+									{
+										"refId": "A",
+										"queryType": "",
+										"relativeTimeRange": {
+											"from": 18000,
+											"to": 10800
+										},
+										"datasourceUid": "__expr__",
+										"model": {
+											"expression": "2 + 3 > 1",
+											"intervalMs": 1000,
+											"maxDataPoints": 43200,
+											"type": "math"
+										}
+									}
+								],
+								"updated": "2021-05-19T19:47:55Z",
+								"intervalSeconds": 60,
+								"is_paused": false,
+								"version": 1,
+								"uid": "",
+								"namespace_uid": %q,
+								"namespace_id": 1,
+								"rule_group": "arulegroup",
+								"no_data_state": "NoData",
+								"exec_err_state": "Alerting"
+							}
+						}
+					]
+				}
+			]
+		}`, namespaceUID)
+		assert.JSONEq(t, expectedGetRulesResponseBody, string(b))
+	}
 
-// 	// Next, the editor can not delete the folder because it contains Grafana 8 alerts.
-// 	{
-// 		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s", grafanaListedAddr, namespaceUID)
-// 		req, err := http.NewRequest(http.MethodDelete, u, nil)
-// 		require.NoError(t, err)
-// 		client := &http.Client{}
-// 		resp, err := client.Do(req)
-// 		require.NoError(t, err)
-// 		t.Cleanup(func() {
-// 			err := resp.Body.Close()
-// 			require.NoError(t, err)
-// 		})
-// 		b, err := io.ReadAll(resp.Body)
-// 		require.NoError(t, err)
-// 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-// 		require.JSONEq(t, `{"message":"folder cannot be deleted: folder contains alert rules"}`, string(b))
-// 	}
+	// Next, the editor can not delete the folder because it contains Grafana 8 alerts.
+	{
+		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s", grafanaListedAddr, namespaceUID)
+		req, err := http.NewRequest(http.MethodDelete, u, nil)
+		require.NoError(t, err)
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		require.JSONEq(t, `{"message":"folder cannot be deleted: folder contains alert rules"}`, string(b))
+	}
 
-// 	// Next, the editor can delete the folder if forceDeleteRules is true.
-// 	{
-// 		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s?forceDeleteRules=true", grafanaListedAddr, namespaceUID)
-// 		req, err := http.NewRequest(http.MethodDelete, u, nil)
-// 		require.NoError(t, err)
-// 		client := &http.Client{}
-// 		resp, err := client.Do(req)
-// 		require.NoError(t, err)
-// 		t.Cleanup(func() {
-// 			err := resp.Body.Close()
-// 			require.NoError(t, err)
-// 		})
-// 		_, err = io.ReadAll(resp.Body)
-// 		require.NoError(t, err)
-// 		require.Equal(t, 200, resp.StatusCode)
-// 	}
+	// Next, the editor can delete the folder if forceDeleteRules is true.
+	{
+		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s?forceDeleteRules=true", grafanaListedAddr, namespaceUID)
+		req, err := http.NewRequest(http.MethodDelete, u, nil)
+		require.NoError(t, err)
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		_, err = io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, 200, resp.StatusCode)
+	}
 
-// 	// Finally, we ensure the rules were deleted.
-// 	{
-// 		u := fmt.Sprintf("http://editor:editor@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
-// 		// nolint:gosec
-// 		resp, err := http.Get(u)
-// 		require.NoError(t, err)
-// 		t.Cleanup(func() {
-// 			err := resp.Body.Close()
-// 			require.NoError(t, err)
-// 		})
-// 		b, err := io.ReadAll(resp.Body)
-// 		require.NoError(t, err)
+	// Finally, we ensure the rules were deleted.
+	{
+		u := fmt.Sprintf("http://editor:editor@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(u)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
 
-// 		assert.Equal(t, 200, resp.StatusCode)
-// 		assert.JSONEq(t, "{}", string(b))
-// 	}
-// }
+		assert.Equal(t, 200, resp.StatusCode)
+		assert.JSONEq(t, "{}", string(b))
+	}
+}
 
 func TestIntegrationAlertRuleCRUD(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
