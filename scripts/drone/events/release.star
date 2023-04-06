@@ -65,10 +65,19 @@ load("scripts/drone/vault.star", "from_secret", "prerelease_bucket")
 
 ver_mode = "release"
 release_trigger = {
-    "event": {"exclude": ["promote"]},
-    "ref": [
-        "refs/tags/v*",
-    ],
+    "event": {
+        "exclude": [
+            "promote",
+        ],
+    },
+    "ref": {
+        "include": [
+            "refs/tags/v*",
+        ],
+        "exclude": [
+            "refs/tags/*-cloud*",
+        ],
+    },
 }
 
 def store_npm_packages_step():
@@ -132,7 +141,7 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
 
     environment = {"EDITION": "oss"}
 
-    services = integration_test_services(edition = "oss")
+    services = integration_test_services()
     volumes = integration_test_services_volumes()
 
     init_steps = [
@@ -194,6 +203,8 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     integration_test_steps = [
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
+        redis_integration_tests_step(),
+        memcached_integration_tests_step(),
     ]
 
     # We don't need to run integration tests at release time since they have
@@ -273,7 +284,7 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
 
     environment = {"EDITION": "enterprise"}
 
-    services = integration_test_services(edition = "enterprise")
+    services = integration_test_services()
     volumes = integration_test_services_volumes()
 
     init_steps = [
@@ -685,11 +696,9 @@ def integration_test_pipelines():
     }
     pipelines = []
     volumes = integration_test_services_volumes()
-    oss_integration_test_steps = [
+    integration_test_steps = [
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
-    ]
-    enterprise_integration_test_steps = oss_integration_test_steps + [
         redis_integration_tests_step(),
         memcached_integration_tests_step(),
     ]
@@ -699,7 +708,7 @@ def integration_test_pipelines():
         name = "integration-tests-oss",
         edition = "oss",
         trigger = trigger,
-        services = integration_test_services(edition = "oss"),
+        services = integration_test_services(),
         steps = [
                     download_grabpl_step(),
                     identify_runner_step(),
@@ -707,7 +716,7 @@ def integration_test_pipelines():
                     verify_gen_jsonnet_step(),
                     wire_install_step(),
                 ] +
-                oss_integration_test_steps,
+                integration_test_steps,
         environment = {"EDITION": "oss"},
         volumes = volumes,
     ))
@@ -716,7 +725,7 @@ def integration_test_pipelines():
         name = "integration-tests-enterprise",
         edition = "enterprise",
         trigger = trigger,
-        services = integration_test_services(edition = "enterprise"),
+        services = integration_test_services(),
         steps = [
                     download_grabpl_step(),
                     identify_runner_step(),
@@ -735,7 +744,7 @@ def integration_test_pipelines():
                 [
                     wire_install_step(),
                 ] +
-                enterprise_integration_test_steps,
+                integration_test_steps,
         environment = {"EDITION": "enterprise"},
         volumes = volumes,
     ))

@@ -13,7 +13,7 @@ e2e.scenario({
     e2e.flows.openDashboard({ uid: 'TkZXxlNG3' });
     e2e().wait('@query');
 
-    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
+    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST, true);
 
     // New panel editor opens when navigating from Panel menu
     e2e.components.PanelEditor.General.content().should('be.visible');
@@ -79,6 +79,7 @@ e2e.scenario({
     e2e.components.PluginVisualization.current().should((e) => expect(e).to.contain('Time series'));
 
     // Check that table view works
+    e2e.components.Panels.Panel.loadingBar().should('not.exist');
     e2e.components.PanelEditor.toggleTableView().click({ force: true });
     e2e.components.Panels.Visualization.Table.header()
       .should('be.visible')

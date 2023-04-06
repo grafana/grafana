@@ -797,6 +797,12 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment: {}
+  image: redis:6.2.11-alpine
+  name: redis
+- environment: {}
+  image: memcached:1.6.9-alpine
+  name: memcached
 steps:
 - commands:
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
@@ -892,6 +898,26 @@ steps:
     MYSQL_HOST: mysql
   image: grafana/build-container:1.7.2
   name: mysql-integration-tests
+- commands:
+  - dockerize -wait tcp://redis:6379/0 -timeout 120s
+  - go clean -testcache
+  - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
+  depends_on:
+  - wire-install
+  environment:
+    REDIS_URL: redis://redis:6379/0
+  image: grafana/build-container:1.7.2
+  name: redis-integration-tests
+- commands:
+  - dockerize -wait tcp://memcached:11211 -timeout 120s
+  - go clean -testcache
+  - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
+  depends_on:
+  - wire-install
+  environment:
+    MEMCACHED_HOSTS: memcached:11211
+  image: grafana/build-container:1.7.2
+  name: memcached-integration-tests
 trigger:
   event:
   - pull_request
@@ -1797,6 +1823,12 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment: {}
+  image: redis:6.2.11-alpine
+  name: redis
+- environment: {}
+  image: memcached:1.6.9-alpine
+  name: memcached
 steps:
 - commands:
   - mkdir -p bin
@@ -1870,6 +1902,26 @@ steps:
     MYSQL_HOST: mysql
   image: grafana/build-container:1.7.2
   name: mysql-integration-tests
+- commands:
+  - dockerize -wait tcp://redis:6379/0 -timeout 120s
+  - go clean -testcache
+  - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
+  depends_on:
+  - wire-install
+  environment:
+    REDIS_URL: redis://redis:6379/0
+  image: grafana/build-container:1.7.2
+  name: redis-integration-tests
+- commands:
+  - dockerize -wait tcp://memcached:11211 -timeout 120s
+  - go clean -testcache
+  - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
+  depends_on:
+  - wire-install
+  environment:
+    MEMCACHED_HOSTS: memcached:11211
+  image: grafana/build-container:1.7.2
+  name: memcached-integration-tests
 trigger:
   branch: main
   event:
@@ -2366,7 +2418,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2423,7 +2478,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2497,7 +2555,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2560,7 +2621,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2852,7 +2916,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -2938,7 +3005,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -3047,7 +3117,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -3130,7 +3203,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -3375,7 +3451,10 @@ trigger:
     exclude:
     - promote
   ref:
-  - refs/tags/v*
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -4929,6 +5008,12 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment: {}
+  image: redis:6.2.11-alpine
+  name: redis
+- environment: {}
+  image: memcached:1.6.9-alpine
+  name: memcached
 steps:
 - commands:
   - mkdir -p bin
@@ -4995,6 +5080,26 @@ steps:
     MYSQL_HOST: mysql
   image: grafana/build-container:1.7.2
   name: mysql-integration-tests
+- commands:
+  - dockerize -wait tcp://redis:6379/0 -timeout 120s
+  - go clean -testcache
+  - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
+  depends_on:
+  - wire-install
+  environment:
+    REDIS_URL: redis://redis:6379/0
+  image: grafana/build-container:1.7.2
+  name: redis-integration-tests
+- commands:
+  - dockerize -wait tcp://memcached:11211 -timeout 120s
+  - go clean -testcache
+  - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
+  depends_on:
+  - wire-install
+  environment:
+    MEMCACHED_HOSTS: memcached:11211
+  image: grafana/build-container:1.7.2
+  name: memcached-integration-tests
 trigger:
   ref:
   - refs/heads/v[0-9]*
@@ -5590,7 +5695,7 @@ services:
   - name: mysql
     path: /var/lib/mysql
 - environment: {}
-  image: redis:6.2.1-alpine
+  image: redis:6.2.11-alpine
   name: redis
 - environment: {}
   image: memcached:1.6.9-alpine
@@ -5691,8 +5796,7 @@ steps:
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
   depends_on:
   - wire-install
   environment:
@@ -5702,8 +5806,7 @@ steps:
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
   depends_on:
   - wire-install
   environment:
@@ -6085,6 +6188,12 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment: {}
+  image: redis:6.2.11-alpine
+  name: redis
+- environment: {}
+  image: memcached:1.6.9-alpine
+  name: memcached
 steps:
 - commands:
   - mkdir -p bin
@@ -6151,6 +6260,26 @@ steps:
     MYSQL_HOST: mysql
   image: grafana/build-container:1.7.2
   name: mysql-integration-tests
+- commands:
+  - dockerize -wait tcp://redis:6379/0 -timeout 120s
+  - go clean -testcache
+  - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
+  depends_on:
+  - wire-install
+  environment:
+    REDIS_URL: redis://redis:6379/0
+  image: grafana/build-container:1.7.2
+  name: redis-integration-tests
+- commands:
+  - dockerize -wait tcp://memcached:11211 -timeout 120s
+  - go clean -testcache
+  - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
+  depends_on:
+  - wire-install
+  environment:
+    MEMCACHED_HOSTS: memcached:11211
+  image: grafana/build-container:1.7.2
+  name: memcached-integration-tests
 trigger:
   event:
   - promote
@@ -6203,7 +6332,7 @@ services:
   - name: mysql
     path: /var/lib/mysql
 - environment: {}
-  image: redis:6.2.1-alpine
+  image: redis:6.2.11-alpine
   name: redis
 - environment: {}
   image: memcached:1.6.9-alpine
@@ -6305,8 +6434,7 @@ steps:
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
   depends_on:
   - wire-install
   environment:
@@ -6316,8 +6444,7 @@ steps:
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
   depends_on:
   - wire-install
   environment:
@@ -6626,6 +6753,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: fdd3de326221eb73f644939b750b98b25de8dddbf9b9fc43e7a1db64e9a51088
+hmac: 54bded4dc7c3ffbbf3859a4f8f6364f59f3b6e0696152a0b835211eca7119e50
 
 ...

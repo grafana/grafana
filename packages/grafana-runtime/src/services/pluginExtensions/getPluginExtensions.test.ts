@@ -9,10 +9,10 @@ describe('Plugin Extensions / Get Plugin Extensions', () => {
     const getter: GetPluginExtensions = jest.fn().mockReturnValue({ extensions: [] });
 
     setPluginExtensionGetter(getter);
-    getPluginExtensions({ placement: 'panel-menu' });
+    getPluginExtensions({ extensionPointId: 'panel-menu' });
 
     expect(getter).toHaveBeenCalledTimes(1);
-    expect(getter).toHaveBeenCalledWith({ placement: 'panel-menu' });
+    expect(getter).toHaveBeenCalledWith({ extensionPointId: 'panel-menu' });
   });
 
   test('should throw an error when trying to redefine the app-wide extension-getter function', () => {
@@ -33,7 +33,7 @@ describe('Plugin Extensions / Get Plugin Extensions', () => {
     setPluginExtensionGetter(undefined);
 
     expect(() => {
-      getPluginExtensions({ placement: 'panel-menu' });
+      getPluginExtensions({ extensionPointId: 'panel-menu' });
     }).toThrowError();
   });
 });
