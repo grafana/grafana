@@ -84,7 +84,7 @@ func TestCachingMiddleware(t *testing.T) {
 
 			resp, err := cdt.Decorator.QueryData(req.Context(), qdr)
 			assert.NoError(t, err)
-			// Cache service is called again
+			// Cache service is called once
 			cs.AssertCalls(t, "HandleQueryRequest", 1)
 			// Equals nil (returned by the decorator test)
 			assert.Nil(t, resp)
@@ -161,10 +161,65 @@ func TestCachingMiddleware(t *testing.T) {
 
 			err := cdt.Decorator.CallResource(req.Context(), crr, storeOneResponseCallResourceSender)
 			assert.NoError(t, err)
-			// Cache service is called again
+			// Cache service is called once
 			cs.AssertCalls(t, "HandleResourceRequest", 1)
 			// Nil response was sent
 			assert.Nil(t, sentResponse)
+		})
+	})
+
+	t.Run("When RequestContext is nil", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/doesnt/matter", nil)
+		require.NoError(t, err)
+
+		cs := caching.NewFakeOSSCachingService()
+		cdt := clienttest.NewClientDecoratorTest(t,
+			// Skip the request context in this case
+			clienttest.WithMiddlewares(NewCachingMiddleware(cs)),
+		)
+		reqCtx := contexthandler.FromContext(req.Context())
+		require.Nil(t, reqCtx)
+
+		jsonDataMap := map[string]interface{}{}
+		jsonDataBytes, err := json.Marshal(&jsonDataMap)
+		require.NoError(t, err)
+
+		pluginCtx := backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				JSONData: jsonDataBytes,
+			},
+		}
+
+		t.Run("Query caching is skipped", func(t *testing.T) {
+			t.Cleanup(func() {
+				cs.Reset()
+			})
+
+			qdr := &backend.QueryDataRequest{
+				PluginContext: pluginCtx,
+			}
+
+			resp, err := cdt.Decorator.QueryData(context.Background(), qdr)
+			assert.NoError(t, err)
+			// Cache service is never called
+			cs.AssertCalls(t, "HandleQueryRequest", 0)
+			// Equals nil (returned by the decorator test)
+			assert.Nil(t, resp)
+		})
+
+		t.Run("Resource caching is skipped", func(t *testing.T) {
+			t.Cleanup(func() {
+				cs.Reset()
+			})
+
+			crr := &backend.CallResourceRequest{
+				PluginContext: pluginCtx,
+			}
+
+			err := cdt.Decorator.CallResource(req.Context(), crr, nopCallResourceSender)
+			assert.NoError(t, err)
+			// Cache service is never called
+			cs.AssertCalls(t, "HandleResourceRequest", 0)
 		})
 	})
 }
