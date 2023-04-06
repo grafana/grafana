@@ -1,3 +1,36 @@
+// WIP polyfill for replacing ArrayVector() with a plain array
+// https://jsfiddle.net/Lbj7co84/
+// TODO: typings kung fu
+
+declare global {
+  interface Array<T> {
+    /** @deprecated used to migrate Vector to array */
+    get(idx: number): T;
+    /** @deprecated used to migrate Vector to array */
+    set(idx: number, value: T): void;
+    /** @deprecated used to migrate Vector to array */
+    add(value: T): void;
+    /** @deprecated used to migrate Vector to array */
+    toArray(): T[];
+  }
+}
+
+// JS original sin
+Object.assign(Array.prototype, {
+  get(idx: number): any {
+    return (this as any)[idx];
+  },
+  set(idx: number, value: any) {
+    (this as any)[idx] = value;
+  },
+  add(value: any) {
+    (this as any).push(value);
+  },
+  toArray() {
+    return this;
+  },
+});
+
 /** @deprecated use a simple Array<T> */
 export interface Vector<T = any> {
   length: number;
@@ -11,6 +44,9 @@ export interface Vector<T = any> {
    * Get the results as an array.
    */
   toArray(): T[];
+
+  // /** Standard array function */
+  // map<V>(transform: (item: T, index: number) => V): V[];
 }
 
 /**

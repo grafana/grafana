@@ -39,7 +39,7 @@ describe('align frames', () => {
         [
           {
             "name": "TheTime",
-            "values": [
+            "values": ArrayVector [
               1000,
               1500,
               2000,
@@ -47,7 +47,7 @@ describe('align frames', () => {
           },
           {
             "name": "A",
-            "values": [
+            "values": ArrayVector [
               1,
               undefined,
               100,
@@ -55,7 +55,7 @@ describe('align frames', () => {
           },
           {
             "name": "A",
-            "values": [
+            "values": ArrayVector [
               2,
               20,
               200,
@@ -63,7 +63,7 @@ describe('align frames', () => {
           },
           {
             "name": "B",
-            "values": [
+            "values": ArrayVector [
               3,
               30,
               300,
@@ -71,7 +71,7 @@ describe('align frames', () => {
           },
           {
             "name": "C",
-            "values": [
+            "values": ArrayVector [
               "first",
               "second",
               "third",
@@ -92,35 +92,35 @@ describe('align frames', () => {
         [
           {
             "name": "TheTime",
-            "values": [
+            "values": ArrayVector [
               1000,
               2000,
             ],
           },
           {
             "name": "A",
-            "values": [
+            "values": ArrayVector [
               1,
               100,
             ],
           },
           {
             "name": "A",
-            "values": [
+            "values": ArrayVector [
               2,
               200,
             ],
           },
           {
             "name": "B",
-            "values": [
+            "values": ArrayVector [
               3,
               300,
             ],
           },
           {
             "name": "C",
-            "values": [
+            "values": ArrayVector [
               "first",
               "third",
             ],
@@ -163,7 +163,7 @@ describe('align frames', () => {
               "frameIndex": 0,
             },
           },
-          "values": [
+          "values": ArrayVector [
             1000,
             1500,
             2000,
@@ -177,7 +177,7 @@ describe('align frames', () => {
               "frameIndex": 0,
             },
           },
-          "values": [
+          "values": ArrayVector [
             1,
             15,
             2,
@@ -191,7 +191,7 @@ describe('align frames', () => {
               "frameIndex": 1,
             },
           },
-          "values": [
+          "values": ArrayVector [
             1,
             undefined,
             2,
@@ -296,21 +296,21 @@ describe('align frames', () => {
       [
         {
           "name": "TheTime",
-          "values": [
+          "values": ArrayVector [
             1000,
             2000,
           ],
         },
         {
           "name": "A",
-          "values": [
+          "values": ArrayVector [
             1,
             100,
           ],
         },
         {
           "name": "A",
-          "values": [
+          "values": ArrayVector [
             200,
             undefined,
           ],

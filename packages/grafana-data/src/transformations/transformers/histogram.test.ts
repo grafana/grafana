@@ -36,7 +36,7 @@ describe('histogram frames frames', () => {
             "unit": "mph",
           },
           "name": "xMin",
-          "values": [
+          "values": ArrayVector [
             1,
             2,
             3,
@@ -53,7 +53,7 @@ describe('histogram frames frames', () => {
             "unit": "mph",
           },
           "name": "xMax",
-          "values": [
+          "values": ArrayVector [
             2,
             3,
             4,
@@ -70,7 +70,7 @@ describe('histogram frames frames', () => {
             "unit": undefined,
           },
           "name": "A",
-          "values": [
+          "values": ArrayVector [
             1,
             1,
             1,
@@ -87,7 +87,7 @@ describe('histogram frames frames', () => {
             "unit": undefined,
           },
           "name": "B",
-          "values": [
+          "values": ArrayVector [
             0,
             0,
             1,
@@ -104,7 +104,7 @@ describe('histogram frames frames', () => {
             "unit": undefined,
           },
           "name": "C",
-          "values": [
+          "values": ArrayVector [
             0,
             0,
             0,
@@ -121,7 +121,7 @@ describe('histogram frames frames', () => {
             "unit": undefined,
           },
           "name": "C",
-          "values": [
+          "values": ArrayVector [
             0,
             0,
             0,
@@ -146,7 +146,7 @@ describe('histogram frames frames', () => {
       [
         {
           "name": "xMin",
-          "values": [
+          "values": ArrayVector [
             1,
             2,
             3,
@@ -160,7 +160,7 @@ describe('histogram frames frames', () => {
         },
         {
           "name": "xMax",
-          "values": [
+          "values": ArrayVector [
             2,
             3,
             4,
@@ -174,7 +174,7 @@ describe('histogram frames frames', () => {
         },
         {
           "name": "count",
-          "values": [
+          "values": ArrayVector [
             1,
             1,
             2,

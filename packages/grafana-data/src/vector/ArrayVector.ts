@@ -1,66 +1,33 @@
-import { MutableVector } from '../types/vector';
-
-// WIP polyfill for replacing ArrayVector() with a plain array
-// https://jsfiddle.net/Lbj7co84/
-// TODO: typings kung fu
-
-declare global {
-  interface Array<T> {
-    /** @deprecated used to migrate Vector to array */
-    get buffer(): T[];
-    /** @deprecated used to migrate Vector to array */
-    set buffer(value: T[]);
-    /** @deprecated used to migrate Vector to array */
-    get(idx: number): T;
-    /** @deprecated used to migrate Vector to array */
-    set(idx: number, value: T): void;
-    /** @deprecated used to migrate Vector to array */
-    add(value: T): void;
-    /** @deprecated used to migrate Vector to array */
-    toArray(): T[];
-    /** @deprecated used to migrate Vector to array */
-    toJSON(): T[];
-  }
-}
-
-// JS original sin
-Object.assign(Array.prototype, {
-  get buffer() {
-    return this as any;
-  },
-  set buffer(values: []) {
-    (this as any).length = 0;
-    (this as any).push(...values);
-  },
-
-  get(idx: number): any {
-    return (this as any)[idx];
-  },
-  set(idx: number, value: any) {
-    (this as any)[idx] = value;
-  },
-  add(value: any) {
-    (this as any).push(value);
-  },
-  toArray() {
-    return this;
-  },
-});
+import { Vector } from '../types';
 
 /**
  * @public
  *
  * @deprecated use a simple Array<T>
  */
-export class ArrayVector<T = any> extends Array<T> implements MutableVector<T> {
-  // built-in methods will use this as the constructor
-  static get [Symbol.species]() {
-    return Array;
+export class ArrayVector<T = any> extends Array<T> implements Vector {
+  // // built-in methods will use this as the constructor
+  // static get [Symbol.species]() {
+  //   return Array;
+  // }
+
+  constructor(buffer?: T[]) {
+    super();
+
+    if (buffer) {
+      this.buffer = buffer;
+    }
   }
 
-  constructor(buffer: T[] = []) {
-    super();
-    return buffer;
+  get buffer() {
+    return this as T[];
+  }
+
+  set buffer(values: T[]) {
+    this.length = 0;
+    if (values?.length) {
+      this.push(...values);
+    }
   }
 }
 

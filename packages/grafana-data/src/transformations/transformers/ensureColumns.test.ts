@@ -58,7 +58,7 @@ describe('ensureColumns transformer', () => {
               "name": "TheTime",
               "state": {},
               "type": "time",
-              "values": [
+              "values": ArrayVector [
                 1000,
                 2000,
               ],
@@ -69,7 +69,7 @@ describe('ensureColumns transformer', () => {
               "name": "A",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 1,
                 100,
               ],
@@ -80,7 +80,7 @@ describe('ensureColumns transformer', () => {
               "name": "B",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 2,
                 200,
               ],
@@ -91,7 +91,7 @@ describe('ensureColumns transformer', () => {
               "name": "C",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 3,
                 300,
               ],
@@ -102,7 +102,7 @@ describe('ensureColumns transformer', () => {
               "name": "D",
               "state": {},
               "type": "string",
-              "values": [
+              "values": ArrayVector [
                 "first",
                 "second",
               ],

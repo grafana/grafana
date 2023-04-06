@@ -24,7 +24,7 @@ export abstract class FunctionalVector<T = any> implements Vector<T>, Iterable<T
     return vectorator(this).forEach(iterator);
   }
 
-  map<V>(transform: (item: T, index: number) => V) {
+  map<V>(transform: (item: T, index: number) => V): V[] {
     return vectorator(this).map(transform);
   }
 
@@ -58,7 +58,7 @@ export function vectorator<T>(vector: Vector<T>) {
       }
     },
 
-    map<V>(transform: (item: T, index: number) => V) {
+    map<V>(transform: (item: T, index: number) => V): V[] {
       const result: V[] = [];
       for (let i = 0; i < vector.length; i++) {
         result.push(transform(vector.get(i), i));

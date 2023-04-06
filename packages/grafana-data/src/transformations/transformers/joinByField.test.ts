@@ -50,7 +50,7 @@ describe('JOIN Transformer', () => {
                 "name": "time",
                 "state": {},
                 "type": "time",
-                "values": [
+                "values": ArrayVector [
                   1000,
                   3000,
                   4000,
@@ -67,7 +67,7 @@ describe('JOIN Transformer', () => {
                 "name": "temperature",
                 "state": {},
                 "type": "number",
-                "values": [
+                "values": ArrayVector [
                   undefined,
                   10.3,
                   10.4,
@@ -84,7 +84,7 @@ describe('JOIN Transformer', () => {
                 "name": "humidity",
                 "state": {},
                 "type": "number",
-                "values": [
+                "values": ArrayVector [
                   undefined,
                   10000.3,
                   10000.4,
@@ -101,7 +101,7 @@ describe('JOIN Transformer', () => {
                 "name": "temperature",
                 "state": {},
                 "type": "number",
-                "values": [
+                "values": ArrayVector [
                   11.1,
                   11.3,
                   undefined,
@@ -118,7 +118,7 @@ describe('JOIN Transformer', () => {
                 "name": "humidity",
                 "state": {},
                 "type": "number",
-                "values": [
+                "values": ArrayVector [
                   11000.1,
                   11000.3,
                   undefined,
@@ -152,7 +152,7 @@ describe('JOIN Transformer', () => {
                 "name": "temperature",
                 "state": {},
                 "type": "number",
-                "values": [
+                "values": ArrayVector [
                   10.3,
                   10.4,
                   10.5,
@@ -173,7 +173,7 @@ describe('JOIN Transformer', () => {
                   "multipleFrames": true,
                 },
                 "type": "time",
-                "values": [
+                "values": ArrayVector [
                   3000,
                   4000,
                   5000,
@@ -192,7 +192,7 @@ describe('JOIN Transformer', () => {
                 "name": "humidity",
                 "state": {},
                 "type": "number",
-                "values": [
+                "values": ArrayVector [
                   10000.3,
                   10000.4,
                   10000.5,
@@ -213,7 +213,7 @@ describe('JOIN Transformer', () => {
                   "multipleFrames": true,
                 },
                 "type": "time",
-                "values": [
+                "values": ArrayVector [
                   undefined,
                   undefined,
                   undefined,
@@ -232,7 +232,7 @@ describe('JOIN Transformer', () => {
                 "name": "humidity",
                 "state": {},
                 "type": "number",
-                "values": [
+                "values": ArrayVector [
                   undefined,
                   undefined,
                   undefined,
@@ -274,7 +274,7 @@ describe('JOIN Transformer', () => {
                   "multipleFrames": true,
                 },
                 "type": "time",
-                "values": [
+                "values": ArrayVector [
                   1000,
                   3000,
                   4000,
@@ -291,7 +291,7 @@ describe('JOIN Transformer', () => {
                 "name": "temperature",
                 "state": {},
                 "type": "number",
-                "values": [
+                "values": ArrayVector [
                   undefined,
                   10.3,
                   10.4,
@@ -308,7 +308,7 @@ describe('JOIN Transformer', () => {
                 "name": "humidity",
                 "state": {},
                 "type": "number",
-                "values": [
+                "values": ArrayVector [
                   undefined,
                   10000.3,
                   10000.4,
@@ -325,7 +325,7 @@ describe('JOIN Transformer', () => {
                 "name": "temperature",
                 "state": {},
                 "type": "number",
-                "values": [
+                "values": ArrayVector [
                   11.1,
                   11.3,
                   undefined,
@@ -342,7 +342,7 @@ describe('JOIN Transformer', () => {
                 "name": "humidity",
                 "state": {},
                 "type": "number",
-                "values": [
+                "values": ArrayVector [
                   11000.1,
                   11000.3,
                   undefined,
@@ -393,7 +393,7 @@ describe('JOIN Transformer', () => {
                   "name": "time",
                   "state": {},
                   "type": "time",
-                  "values": [
+                  "values": ArrayVector [
                     1000,
                     2000,
                     3000,
@@ -408,7 +408,7 @@ describe('JOIN Transformer', () => {
                   "name": "temperature",
                   "state": {},
                   "type": "number",
-                  "values": [
+                  "values": ArrayVector [
                     1,
                     3,
                     5,
@@ -423,7 +423,7 @@ describe('JOIN Transformer', () => {
                   "name": "temperature",
                   "state": {},
                   "type": "number",
-                  "values": [
+                  "values": ArrayVector [
                     2,
                     4,
                     6,
@@ -476,7 +476,7 @@ describe('JOIN Transformer', () => {
               "name": "time",
               "state": {},
               "type": "time",
-              "values": [
+              "values": ArrayVector [
                 1,
                 2,
                 3,
@@ -490,7 +490,7 @@ describe('JOIN Transformer', () => {
               "name": "temperature",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10,
                 11,
                 12,
@@ -504,7 +504,7 @@ describe('JOIN Transformer', () => {
               "name": "temperature",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 20,
                 22,
                 24,
@@ -547,7 +547,7 @@ describe('JOIN Transformer', () => {
               "name": "time",
               "state": {},
               "type": "time",
-              "values": [
+              "values": ArrayVector [
                 1,
               ],
             },
@@ -557,7 +557,7 @@ describe('JOIN Transformer', () => {
               "name": "temperature",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10,
               ],
             },
@@ -567,7 +567,7 @@ describe('JOIN Transformer', () => {
               "name": "temperature",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 20,
               ],
             },
@@ -615,7 +615,7 @@ describe('JOIN Transformer', () => {
               "name": "time",
               "state": {},
               "type": "time",
-              "values": [
+              "values": ArrayVector [
                 3000,
                 5000,
               ],
@@ -628,7 +628,7 @@ describe('JOIN Transformer', () => {
               "name": "temperature",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10.3,
                 10.5,
               ],
@@ -641,7 +641,7 @@ describe('JOIN Transformer', () => {
               "name": "humidity",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10000.3,
                 10000.5,
               ],
@@ -654,7 +654,7 @@ describe('JOIN Transformer', () => {
               "name": "temperature",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10.3,
                 10.5,
               ],
@@ -667,7 +667,7 @@ describe('JOIN Transformer', () => {
               "name": "humidity",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10000.3,
                 10000.5,
               ],
@@ -696,7 +696,7 @@ describe('JOIN Transformer', () => {
               "name": "temperature",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10.3,
                 10.5,
               ],
@@ -711,7 +711,7 @@ describe('JOIN Transformer', () => {
                 "multipleFrames": true,
               },
               "type": "time",
-              "values": [
+              "values": ArrayVector [
                 3000,
                 5000,
               ],
@@ -724,7 +724,7 @@ describe('JOIN Transformer', () => {
               "name": "humidity",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10000.3,
                 10000.5,
               ],
@@ -739,7 +739,7 @@ describe('JOIN Transformer', () => {
                 "multipleFrames": true,
               },
               "type": "time",
-              "values": [
+              "values": ArrayVector [
                 3000,
                 5000,
               ],
@@ -752,7 +752,7 @@ describe('JOIN Transformer', () => {
               "name": "humidity",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10000.3,
                 10000.5,
               ],
@@ -787,7 +787,7 @@ describe('JOIN Transformer', () => {
                 "multipleFrames": true,
               },
               "type": "time",
-              "values": [
+              "values": ArrayVector [
                 3000,
                 5000,
               ],
@@ -800,7 +800,7 @@ describe('JOIN Transformer', () => {
               "name": "temperature",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10.3,
                 10.5,
               ],
@@ -813,7 +813,7 @@ describe('JOIN Transformer', () => {
               "name": "humidity",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10000.3,
                 10000.5,
               ],
@@ -826,7 +826,7 @@ describe('JOIN Transformer', () => {
               "name": "temperature",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10.3,
                 10.5,
               ],
@@ -839,7 +839,7 @@ describe('JOIN Transformer', () => {
               "name": "humidity",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10000.3,
                 10000.5,
               ],
@@ -886,7 +886,7 @@ describe('JOIN Transformer', () => {
                   "name": "time",
                   "state": {},
                   "type": "time",
-                  "values": [
+                  "values": ArrayVector [
                     1000,
                     2000,
                     3000,
@@ -901,7 +901,7 @@ describe('JOIN Transformer', () => {
                   "name": "temperature",
                   "state": {},
                   "type": "number",
-                  "values": [
+                  "values": ArrayVector [
                     1,
                     3,
                     5,
@@ -916,7 +916,7 @@ describe('JOIN Transformer', () => {
                   "name": "temperature",
                   "state": {},
                   "type": "number",
-                  "values": [
+                  "values": ArrayVector [
                     2,
                     4,
                     6,
@@ -970,7 +970,7 @@ describe('JOIN Transformer', () => {
               "name": "time",
               "state": {},
               "type": "time",
-              "values": [
+              "values": ArrayVector [
                 1,
                 2,
                 3,
@@ -984,7 +984,7 @@ describe('JOIN Transformer', () => {
               "name": "temperature",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10,
                 11,
                 12,
@@ -998,7 +998,7 @@ describe('JOIN Transformer', () => {
               "name": "temperature",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 20,
                 22,
                 24,
@@ -1042,7 +1042,7 @@ describe('JOIN Transformer', () => {
               "name": "time",
               "state": {},
               "type": "time",
-              "values": [
+              "values": ArrayVector [
                 1,
               ],
             },
@@ -1052,7 +1052,7 @@ describe('JOIN Transformer', () => {
               "name": "temperature",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10,
               ],
             },
@@ -1062,7 +1062,7 @@ describe('JOIN Transformer', () => {
               "name": "temperature",
               "state": {},
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 20,
               ],
             },

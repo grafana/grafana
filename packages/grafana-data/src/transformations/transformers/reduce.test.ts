@@ -403,7 +403,7 @@ describe('Reducer Transformer', () => {
             "config": {},
             "name": "Field",
             "type": "string",
-            "values": [
+            "values": ArrayVector [
               "value",
               "value",
               "value",
@@ -414,20 +414,20 @@ describe('Reducer Transformer', () => {
             "config": {},
             "name": "state",
             "type": "string",
-            "values": [
+            "values": ArrayVector [
               "CA",
               "NY",
               "CA",
-              ,
+              undefined,
             ],
           },
           {
             "config": {},
             "name": "country",
             "type": "string",
-            "values": [
-              ,
-              ,
+            "values": ArrayVector [
+              undefined,
+              undefined,
               "USA",
               "USA",
             ],
@@ -436,7 +436,7 @@ describe('Reducer Transformer', () => {
             "config": {},
             "name": "Max",
             "type": "number",
-            "values": [
+            "values": ArrayVector [
               6,
               6,
               6,

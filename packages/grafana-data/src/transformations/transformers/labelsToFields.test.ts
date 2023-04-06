@@ -93,19 +93,19 @@ describe('Labels as Columns', () => {
       const data = received[0];
       expect(toSimpleObject(data[0])).toMatchInlineSnapshot(`
         {
-          "Value": [
+          "Value": ArrayVector [
             1,
             2,
           ],
-          "feelsLike": [
+          "feelsLike": ArrayVector [
             "ok",
             "ok",
           ],
-          "location": [
+          "location": ArrayVector [
             "inside",
             "inside",
           ],
-          "time": [
+          "time": ArrayVector [
             1000,
             2000,
           ],
@@ -184,26 +184,26 @@ describe('Labels as Columns', () => {
 
       expect(toSimpleObject(data[0])).toMatchInlineSnapshot(`
         {
-          "location": [
+          "location": ArrayVector [
             "inside",
           ],
-          "temp": [
+          "temp": ArrayVector [
             1,
           ],
-          "time": [
+          "time": ArrayVector [
             1000,
           ],
         }
       `);
       expect(toSimpleObject(data[1])).toMatchInlineSnapshot(`
         {
-          "location": [
+          "location": ArrayVector [
             "outside",
           ],
-          "temp": [
+          "temp": ArrayVector [
             -1,
           ],
-          "time": [
+          "time": ArrayVector [
             2000,
           ],
         }
@@ -262,31 +262,31 @@ describe('Labels as Columns', () => {
       expect(received[0][0].fields.map((f) => ({ [f.name]: f.values.toArray() }))).toMatchInlineSnapshot(`
         [
           {
-            "time": [
+            "time": ArrayVector [
               1000,
               2000,
             ],
           },
           {
-            "a": [
+            "a": ArrayVector [
               1,
               3,
             ],
           },
           {
-            "b": [
+            "b": ArrayVector [
               2,
               4,
             ],
           },
           {
-            "foo": [
+            "foo": ArrayVector [
               "thing",
               "thing",
             ],
           },
           {
-            "bar": [
+            "bar": ArrayVector [
               "thing",
               "thing",
             ],
@@ -353,14 +353,14 @@ describe('Labels as Columns', () => {
           {
             "fields": [
               {
-                "label": [
+                "label": ArrayVector [
                   "foo",
                   "bar",
                   "zaz",
                 ],
               },
               {
-                "value": [
+                "value": ArrayVector [
                   "thing",
                   "a",
                   "xyz",
@@ -372,13 +372,13 @@ describe('Labels as Columns', () => {
           {
             "fields": [
               {
-                "label": [
+                "label": ArrayVector [
                   "foo",
                   "bar",
                 ],
               },
               {
-                "value": [
+                "value": ArrayVector [
                   "thing",
                   "b",
                 ],
@@ -417,13 +417,13 @@ describe('Labels as Columns', () => {
           {
             "fields": [
               {
-                "label": [
+                "label": ArrayVector [
                   "zaz",
                   "bar",
                 ],
               },
               {
-                "value": [
+                "value": ArrayVector [
                   "xyz",
                   "a",
                 ],
@@ -434,13 +434,13 @@ describe('Labels as Columns', () => {
           {
             "fields": [
               {
-                "label": [
+                "label": ArrayVector [
                   "zaz",
                   "bar",
                 ],
               },
               {
-                "value": [
+                "value": ArrayVector [
                   undefined,
                   "b",
                 ],
