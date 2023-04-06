@@ -13,7 +13,7 @@ import { createAsyncThunk, ThunkResult } from '../../../types';
 import { CorrelationData } from '../../correlations/useCorrelations';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 
-import { paneReducer } from './explorePane';
+import { initializeExplore, paneReducer } from './explorePane';
 import { getUrlStateFromPaneState, makeExplorePaneState } from './utils';
 
 //
@@ -294,6 +294,16 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       panes: {
         ...state.panes,
         right: initialExploreItemState,
+      },
+    };
+  }
+
+  if (initializeExplore.pending.match(action)) {
+    return {
+      ...state,
+      panes: {
+        ...state.panes,
+        [action.meta.arg.exploreId]: initialExploreItemState,
       },
     };
   }
