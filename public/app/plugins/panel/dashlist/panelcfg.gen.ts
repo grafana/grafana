@@ -18,7 +18,7 @@ export interface PanelOptions {
   folderId?: number;
   includeVars: boolean;
   keepTime: boolean;
-  layout?: PanelLayout;
+  layout?: 'list';
   maxItems: number;
   query: string;
   showHeadings: boolean;
@@ -31,7 +31,6 @@ export interface PanelOptions {
 export const defaultPanelOptions: Partial<PanelOptions> = {
   includeVars: false,
   keepTime: false,
-  layout: PanelLayout.List,
   maxItems: 10,
   query: '',
   showHeadings: true,
