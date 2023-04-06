@@ -6,12 +6,19 @@ import { MutableVector } from '../types/vector';
 
 declare global {
   interface Array<T> {
+    /** @deprecated used to migrage Vector to array */
     get buffer(): T[];
+    /** @deprecated used to migrage Vector to array */
     set buffer(values: T[]);
+    /** @deprecated used to migrage Vector to array */
     get(idx: number): T;
+    /** @deprecated used to migrage Vector to array */
     set(idx: number, value: T): void;
+    /** @deprecated used to migrage Vector to array */
     add(value: T): void;
+    /** @deprecated used to migrage Vector to array */
     toArray(): T[];
+    /** @deprecated used to migrage Vector to array */
     toJSON(): T[];
   }
 }
