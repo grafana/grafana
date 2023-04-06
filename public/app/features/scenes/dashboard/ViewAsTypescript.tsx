@@ -35,7 +35,7 @@ export function ViewAsTypescriptModal({ onDismiss, scene }: ModalProps) {
         width: 1200px;
       `}
     >
-      <CodeEditor value={code} language="typescript" height={800} />
+      <CodeEditor value={code} language="typescript" height={800} readOnly={false} />
     </Modal>
   );
 }
@@ -58,7 +58,7 @@ function renderToTypescript(obj: SceneObject, indent: number) {
     code += `${indentStr}${key}: ${renderProperty((obj.state as any)[key], indent)}\n`;
   }
 
-  return code + `}\n`;
+  return code + `})\n`;
 }
 
 function renderProperty(value: any, indent: number) {
