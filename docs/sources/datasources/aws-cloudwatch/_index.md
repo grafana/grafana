@@ -6,19 +6,19 @@ aliases:
   - cloudwatch/
   - preconfig-cloudwatch-dashboards/
   - provision-cloudwatch/
-description: Guide for using AWS CloudWatch in Grafana
+description: Guide for using Amazon CloudWatch in Grafana
 keywords:
   - grafana
   - cloudwatch
   - guide
-menuTitle: AWS CloudWatch
-title: AWS CloudWatch data source
+menuTitle: Amazon CloudWatch
+title: Amazon CloudWatch data source
 weight: 200
 ---
 
-# AWS CloudWatch data source
+# Amazon CloudWatch data source
 
-Grafana ships with built-in support for AWS CloudWatch.
+Grafana ships with built-in support for Amazon CloudWatch.
 This topic describes queries, templates, variables, and other configuration specific to the CloudWatch data source.
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
@@ -375,3 +375,7 @@ For more information, refer to the AWS documentation for [Service Quotas](https:
 The CloudWatch plugin enables you to monitor and troubleshoot applications across multiple regional accounts. Using cross-account observability, you can seamlessly search, visualize and analyze metrics and logs without worrying about account boundaries.
 
 To use this feature, configure in the [AWS console under Cloudwatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), a monitoring and source account, and then add the necessary IAM permissions as described above.
+
+## CloudWatch Logs data protection
+
+CloudWatch Logs can safeguard data by using log group data protection policies. If you have data protection enabled for a log group, then any sensitive data that matches the data identifiers you've selected will be masked. In order to view masked data you will need to have the `logs:Unmask` IAM permission enabled. See the AWS documentation on how to [help protect sensitive log data with masking](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html) to learn more about this.

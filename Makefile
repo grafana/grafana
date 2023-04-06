@@ -143,6 +143,18 @@ test-go-integration-mysql: devenv-mysql ## Run integration tests for mysql backe
 	$(GO) clean -testcache
 	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -run Integration -covermode=atomic -timeout=2m {}'
 
+.PHONY: test-go-integration-redis
+test-go-integration-redis: ## Run integration tests for redis cache.
+	@echo "test backend integration redis tests"
+	$(GO) clean -testcache
+	REDIS_URL=localhost:6379 $(GO) test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
+
+.PHONY: test-go-integration-memcached
+test-go-integration-memcached: ## Run integration tests for memcached cache.
+	@echo "test backend integration memcached tests"
+	$(GO) clean -testcache
+	MEMCACHED_HOSTS=localhost:11211 $(GO) test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
+
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
 	yarn test
@@ -165,15 +177,13 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 
 ##@ Docker
 
-TMP_DIR!=mktemp -d
 TAG_SUFFIX=$(if $(WIRE_TAGS)!=oss,-$(WIRE_TAGS))
 PLATFORM=linux/amd64
 
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
-	cp -Lrf . $(TMP_DIR)
-	DOCKER_BUILDKIT=1 \
-	docker build $(TMP_DIR) \
+	tar -ch . | \
+	docker buildx build - \
 	--platform $(PLATFORM) \
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
@@ -183,9 +193,8 @@ build-docker-full: ## Build Docker image for development.
 
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	@echo "build docker container"
-	cp -Lrf . $(TMP_DIR)
-	DOCKER_BUILDKIT=1 \
-	docker build $(TMP_DIR) \
+	tar -ch . | \
+	docker buildx build - \
 	--platform $(PLATFORM) \
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \

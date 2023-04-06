@@ -31,6 +31,16 @@ export const plugin = new PanelPlugin<PanelOptions>(DashList)
 
     builder
       .addBooleanSwitch({
+        path: 'keepTime',
+        name: 'Include current time range',
+        defaultValue: defaultPanelOptions.keepTime,
+      })
+      .addBooleanSwitch({
+        path: 'includeVars',
+        name: 'Include current template variable values',
+        defaultValue: defaultPanelOptions.includeVars,
+      })
+      .addBooleanSwitch({
         path: 'showStarred',
         name: 'Starred',
         defaultValue: defaultPanelOptions.showStarred,

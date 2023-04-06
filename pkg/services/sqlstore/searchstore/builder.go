@@ -44,6 +44,9 @@ func (b *Builder) ToSQL(limit, page int64) (string, []interface{}) {
 }
 
 func (b *Builder) buildSelect() {
+	var recQuery string
+	var recQueryParams []interface{}
+
 	b.sql.WriteString(
 		`SELECT
 			dashboard.id,
@@ -61,9 +64,25 @@ func (b *Builder) buildSelect() {
 		if f, ok := f.(FilterSelect); ok {
 			b.sql.WriteString(fmt.Sprintf(", %s", f.Select()))
 		}
+
+		if f, ok := f.(FilterWith); ok {
+			recQuery, recQueryParams = f.With()
+		}
 	}
 
 	b.sql.WriteString(` FROM `)
+
+	if recQuery == "" {
+		return
+	}
+
+	// prepend recursive queries
+	var bf bytes.Buffer
+	bf.WriteString(recQuery)
+	bf.WriteString(b.sql.String())
+
+	b.sql = bf
+	b.params = append(recQueryParams, b.params...)
 }
 
 func (b *Builder) applyFilters() (ordering string) {

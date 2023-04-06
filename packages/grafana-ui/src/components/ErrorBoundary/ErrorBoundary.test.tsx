@@ -2,9 +2,18 @@ import { captureException } from '@sentry/browser';
 import { render, screen } from '@testing-library/react';
 import React, { FC } from 'react';
 
+import { faro } from '@grafana/faro-web-sdk';
+
 import { ErrorBoundary } from './ErrorBoundary';
 
 jest.mock('@sentry/browser');
+jest.mock('@grafana/faro-web-sdk', () => ({
+  faro: {
+    api: {
+      pushError: jest.fn(),
+    },
+  },
+}));
 
 const ErrorThrower: FC<{ error: Error }> = ({ error }) => {
   throw error;
@@ -44,6 +53,8 @@ describe('ErrorBoundary', () => {
     expect(context.contexts).toHaveProperty('react');
     expect(context.contexts.react).toHaveProperty('componentStack');
     expect(context.contexts.react.componentStack).toMatch(/^\s+at ErrorThrower (.*)\s+at ErrorBoundary (.*)\s*$/);
+    expect(faro.api.pushError).toHaveBeenCalledTimes(1);
+    expect((faro.api.pushError as jest.Mock).mock.calls[0][0]).toBe(problem);
   });
 
   it('should recover when when recover props change', async () => {

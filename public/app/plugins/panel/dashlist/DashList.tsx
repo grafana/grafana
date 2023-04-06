@@ -2,16 +2,27 @@ import { css, cx } from '@emotion/css';
 import { take } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, InterpolateFunction, PanelProps } from '@grafana/data';
+import {
+  DateTime,
+  GrafanaTheme2,
+  InterpolateFunction,
+  PanelProps,
+  textUtil,
+  UrlQueryValue,
+  urlUtil,
+} from '@grafana/data';
 import { CustomScrollbar, stylesFactory, useStyles2 } from '@grafana/ui';
 import { Icon, IconProps } from '@grafana/ui/src/components/Icon/Icon';
 import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
+import { getConfig } from 'app/core/config';
 import { setStarred } from 'app/core/reducers/navBarTree';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { SearchCard } from 'app/features/search/components/SearchCard';
 import { DashboardSearchItem } from 'app/features/search/types';
+import { getVariablesUrlParams } from 'app/features/variables/getAllVariableValuesForUrl';
 import { useDispatch } from 'app/types';
 
 import { PanelLayout, PanelOptions } from './panelcfg.gen';
@@ -143,26 +154,47 @@ export function DashList(props: PanelProps<PanelOptions>) {
 
   const renderList = (dashboards: Dashboard[]) => (
     <ul>
-      {dashboards.map((dash) => (
-        <li className={css.dashlistItem} key={`dash-${dash.uid}`}>
-          <div className={css.dashlistLink}>
-            <div className={css.dashlistLinkBody}>
-              <a className={css.dashlistTitle} href={dash.url}>
-                {dash.title}
-              </a>
-              {dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
+      {dashboards.map((dash) => {
+        let url = dash.url;
+        let params: { [key: string]: string | DateTime | UrlQueryValue } = {};
+
+        if (props.options.keepTime) {
+          const range = getTimeSrv().timeRangeForUrl();
+          params['from'] = range.from;
+          params['to'] = range.to;
+        }
+
+        if (props.options.includeVars) {
+          params = {
+            ...params,
+            ...getVariablesUrlParams(),
+          };
+        }
+
+        url = urlUtil.appendQueryToUrl(url, urlUtil.toUrlParams(params));
+        url = getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
+
+        return (
+          <li className={css.dashlistItem} key={`dash-${dash.uid}`}>
+            <div className={css.dashlistLink}>
+              <div className={css.dashlistLinkBody}>
+                <a className={css.dashlistTitle} href={url}>
+                  {dash.title}
+                </a>
+                {dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
+              </div>
+              <IconToggle
+                aria-label={`Star dashboard "${dash.title}".`}
+                className={css.dashlistStar}
+                enabled={{ name: 'favorite', type: 'mono' }}
+                disabled={{ name: 'star', type: 'default' }}
+                checked={dash.isStarred}
+                onClick={(e) => toggleDashboardStar(e, dash)}
+              />
             </div>
-            <IconToggle
-              aria-label={`Star dashboard "${dash.title}".`}
-              className={css.dashlistStar}
-              enabled={{ name: 'favorite', type: 'mono' }}
-              disabled={{ name: 'star', type: 'default' }}
-              checked={dash.isStarred}
-              onClick={(e) => toggleDashboardStar(e, dash)}
-            />
-          </div>
-        </li>
-      ))}
+          </li>
+        );
+      })}
     </ul>
   );
 
@@ -170,7 +202,7 @@ export function DashList(props: PanelProps<PanelOptions>) {
     <ul className={css.gridContainer}>
       {dashboards.map((dash) => (
         <li key={dash.uid}>
-          <SearchCard item={{ ...dash, kind: 'folder' }} />
+          <SearchCard item={{ ...dash, kind: 'dashboard' }} />
         </li>
       ))}
     </ul>

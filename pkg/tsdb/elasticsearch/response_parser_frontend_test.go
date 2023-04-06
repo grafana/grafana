@@ -1030,7 +1030,7 @@ func TestPercentilesWithoutDateHistogram(t *testing.T) {
 			  "3": {
 				"buckets": [
 				  {
-					"1": { "values": { "75": 3.3, "90": 5.5 } },
+					"1": { "values": { "90": 5.5, "75": 3.3 } },
 					"doc_count": 10,
 					"key": "id1"
 				  },

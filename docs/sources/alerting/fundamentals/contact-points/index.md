@@ -25,9 +25,9 @@ You can also use notification templating to customize notification messages for 
 
 If you've created an OnCall contact point in the Grafana OnCall application, you can view it in the Alerting application.
 
-## Supported contact point types
+## Supported contact point integrations
 
-The following table lists the contact point types supported by Grafana.
+The following table lists the contact point integrations supported by Grafana.
 
 | Name                                             | Type                      | Grafana Alertmanager | Other Alertmanagers                                                                                      |
 | ------------------------------------------------ | ------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |
@@ -54,6 +54,6 @@ The following table lists the contact point types supported by Grafana.
 
 ## Useful links
 
-[Manage contact points](https://grafana.com/docs/grafana/next/alerting/manage-notifications/create-contact-point/)
+[Manage contact points](/docs/grafana/next/alerting/manage-notifications/create-contact-point/)
 
-[Create and edit notification templates](https://grafana.com/docs/grafana/next/alerting/manage-notifications/create-message-template/)
+[Create and edit notification templates](/docs/grafana/next/alerting/manage-notifications/create-message-template/)
