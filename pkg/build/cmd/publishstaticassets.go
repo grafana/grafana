@@ -43,7 +43,7 @@ func PublishStaticAssetsAction(c *cli.Context) error {
 	bucket := gcs.Bucket(cfg.staticAssetsBucket)
 
 	for _, edition := range staticAssetEditions {
-		if err := gcs.CopyRemoteDir(c.Context, gcs.Bucket(fmt.Sprintf("%s", cfg.srcBucket)), fmt.Sprintf("artifacts/static-assets/%s/%s", edition, cfg.tag), bucket, fmt.Sprintf("%s/%s", edition, cfg.tag)); err != nil {
+		if err := gcs.CopyRemoteDir(c.Context, gcs.Bucket(cfg.srcBucket), fmt.Sprintf("artifacts/static-assets/%s/%s", edition, cfg.tag), bucket, fmt.Sprintf("%s/%s", edition, cfg.tag)); err != nil {
 			return err
 		}
 	}

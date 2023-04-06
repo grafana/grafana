@@ -203,9 +203,13 @@ func main() {
 					Action: PublishStorybookAction,
 					Flags: []cli.Flag{
 						&editionFlag,
-						&securityFlag,
 						&tagFlag,
 						&srcFlag,
+						&cli.StringFlag{
+							Name:  "storybook-bucket",
+							Value: "grafana-storybook",
+							Usage: "Google Cloud Storage bucket for storybooks",
+						},
 					},
 				},
 				{

@@ -25,48 +25,40 @@ func PublishStorybookAction(c *cli.Context) error {
 	}
 
 	cfg := publishConfig{
-		srcBucket: c.String("src-bucket"),
-		security:  c.Bool("security"),
-		tag:       strings.TrimPrefix(c.String("tag"), "v"),
+		srcBucket:       c.String("src-bucket"),
+		storybookBucket: c.String("storybook-bucket"),
+		tag:             strings.TrimPrefix(c.String("tag"), "v"),
 	}
 
-	err := copyStorybook(cfg)
+	gcs, err := storage.New()
 	if err != nil {
 		return err
 	}
+	bucket := gcs.Bucket(cfg.storybookBucket)
+	if err := gcs.CopyRemoteDir(c.Context, gcs.Bucket(cfg.srcBucket), fmt.Sprintf("artifacts/storybook/v%s", cfg.tag), bucket, cfg.tag); err != nil {
+		return err
+	}
+
+	if latest, err := isLatest(cfg); err != nil && latest {
+		log.Printf("Copying storybooks to latest...")
+		if err := gcs.CopyRemoteDir(c.Context, gcs.Bucket(cfg.srcBucket), fmt.Sprintf("artifacts/storybook/v%s", cfg.tag), bucket, "latest"); err != nil {
+			return err
+		}
+	} else {
+		return err
+	}
+
 	return nil
 }
 
-func copyStorybook(cfg publishConfig) error {
-	if cfg.security {
-		log.Printf("skipping storybook copy - not needed for a security release")
-		return nil
-	}
-	log.Printf("Copying storybooks...")
-	srcURL := fmt.Sprintf("%s/artifacts/storybook/v%s/*", cfg.srcBucket, cfg.tag)
-	destURL := fmt.Sprintf("%s/%s", cfg.storybookBucket, cfg.tag)
-	err := storage.GCSCopy("storybook", srcURL, destURL)
-	if err != nil {
-		return fmt.Errorf("error copying storybook. %q", err)
-	}
+func isLatest(cfg publishConfig) (bool, error) {
 	stableVersion, err := versions.GetLatestVersion(versions.LatestStableVersionURL)
 	if err != nil {
-		return err
+		return false, err
 	}
 	isLatest, err := versions.IsGreaterThanOrEqual(cfg.tag, stableVersion)
 	if err != nil {
-		return err
+		return false, err
 	}
-	if isLatest {
-		log.Printf("Copying storybooks to latest...")
-		srcURL := fmt.Sprintf("%s/artifacts/storybook/v%s/*", cfg.srcBucket, cfg.tag)
-		destURL := fmt.Sprintf("%s/latest", cfg.storybookBucket)
-		err := storage.GCSCopy("storybook (latest)", srcURL, destURL)
-		if err != nil {
-			return fmt.Errorf("error copying storybook to latest. %q", err)
-		}
-	}
-
-	log.Printf("Successfully copied storybook!")
-	return nil
+	return isLatest, nil
 }
