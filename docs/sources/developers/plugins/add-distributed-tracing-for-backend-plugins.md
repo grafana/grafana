@@ -110,7 +110,7 @@ on the plugin's side.
 
 This also injects the trace context into the `context.Context` passed to those methods.
 
-This allows you to retreive the [trace.SpanContext](https://pkg.go.dev/go.opentelemetry.io/otel/trace#SpanContext) by using `tracing.SpanContextFromContext` by passing the original `context.Context` to it:
+This allows you to retrieve the [trace.SpanContext](https://pkg.go.dev/go.opentelemetry.io/otel/trace#SpanContext) by using `tracing.SpanContextFromContext` by passing the original `context.Context` to it:
 
 ```go
 func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (backend.DataResponse, error) {
