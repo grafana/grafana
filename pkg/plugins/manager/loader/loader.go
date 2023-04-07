@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -169,8 +170,11 @@ func (l *Loader) validateSignature(plugin *plugins.Plugin) *plugins.SignatureErr
 	return nil
 }
 
-func (l *Loader) validateSignatures(ctx context.Context, loadedPlugins []*plugins.Plugin) []*plugins.Plugin {
-	const workers = 24
+func (l *Loader) validateSignatures(ctx context.Context, workers int, loadedPlugins []*plugins.Plugin) []*plugins.Plugin {
+	if workers == 0 {
+		workers = runtime.NumCPU()
+	}
+	l.log.Debug("starting workers", "workers", workers)
 
 	var wg sync.WaitGroup
 
@@ -285,7 +289,7 @@ func (l *Loader) startPlugins(ctx context.Context, verifiedPlugins []*plugins.Pl
 
 func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	loadedPlugins := l.getLoadedPlugins(ctx, src, found)
-	verifiedPlugins := l.validateSignatures(ctx, loadedPlugins)
+	verifiedPlugins := l.validateSignatures(ctx, 0, loadedPlugins)
 	if err := l.initializePlugins(ctx, verifiedPlugins); err != nil {
 		return nil, err
 	}
