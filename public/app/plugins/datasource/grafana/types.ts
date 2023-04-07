@@ -1,6 +1,6 @@
 import { DataQuery, DataFrameJSON } from '@grafana/data';
 import { LiveDataFilter } from '@grafana/runtime';
-import { TimeRegionConfig as CommonTimeRegionConfig } from 'app/core/utils/timeRegions';
+import { BaseTimeRegionConfig } from 'app/core/utils/timeRegions';
 import { SearchQuery } from 'app/features/search/service';
 
 //----------------------------------------------
@@ -32,7 +32,7 @@ export interface GrafanaQuery extends DataQuery {
   file?: GrafanaQueryFile;
 }
 
-export interface TimeRegionConfig extends CommonTimeRegionConfig {
+export interface TimeRegionConfig extends BaseTimeRegionConfig {
   name: string;
   color: string;
   line?: boolean;

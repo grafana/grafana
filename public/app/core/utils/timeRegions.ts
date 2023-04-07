@@ -1,7 +1,7 @@
 import { AbsoluteTimeRange, dateTime, TimeRange } from '@grafana/data';
-import { TimeRegionConfig as DsTimeRegionConfig } from 'app/plugins/datasource/grafana/types';
+import { TimeRegionConfig } from 'app/plugins/datasource/grafana/types';
 
-export interface TimeRegionConfig {
+export interface BaseTimeRegionConfig {
   from?: string;
   fromDayOfWeek?: number; // 1-7
 
@@ -16,7 +16,7 @@ interface ParsedTime {
   s?: number; // 0-59
 }
 
-export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): AbsoluteTimeRange[] {
+export function calculateTimesWithin(cfg: BaseTimeRegionConfig, tRange: TimeRange): AbsoluteTimeRange[] {
   if (!(cfg.fromDayOfWeek || cfg.from) && !(cfg.toDayOfWeek || cfg.to)) {
     return [];
   }
@@ -170,7 +170,7 @@ export function formatTimeOfDayString(t?: ParsedTime): string {
   return str;
 }
 
-export const getNextRegionName = (regions: DsTimeRegionConfig[] | undefined) => {
+export const getNextRegionName = (regions: TimeRegionConfig[] | undefined) => {
   const label = 'T';
   let idx = regions?.length ?? 0;
   const max = idx + 100;
