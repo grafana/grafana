@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"testing/fstest"
 
 	"github.com/grafana/codejen"
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 )
 
@@ -33,8 +36,12 @@ func (j *psrJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 	}
 
 	name := strings.ToLower(fmt.Sprintf("%s_%s", decl.PluginPath, decl.SchemaInterface.Name()))
-	kindPath := filepath.Join("composable", filepath.Dir(decl.PluginPath))
-	oldKind, err := corecodegen.GetPublishedKind(name, j.path, kindPath)
+	oldKindString, err := corecodegen.GetPublishedKind(name, "composable")
+	if err != nil {
+		return nil, err
+	}
+
+	oldKind, err := loadComposableKind(name, oldKindString, "composable")
 	if err != nil {
 		return nil, err
 	}
@@ -50,4 +57,27 @@ func (j *psrJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 	}
 
 	return codejen.NewFile(filepath.Join(j.path, "next", "composable", name+".cue"), newKindBytes, j), nil
+}
+
+func loadComposableKind(name string, kind string, category string) (kindsys.Kind, error) {
+	// re := regexp.MustCompile(`([a-zA-Z]+/([a-zA-Z])_[a-zA-Z]`)
+	parts := strings.Split(name, "/")
+	if len(parts) > 1 {
+		name = parts[1]
+	}
+
+	fs := fstest.MapFS{
+		fmt.Sprintf("%s.cue", name): &fstest.MapFile{
+			Data: []byte("package grafanaplugin\n"+kind),
+		},
+	}
+
+	rt := cuectx.GrafanaThemaRuntime()
+
+	def, err := pfs.LoadComposableKindDef(fs, rt, fmt.Sprintf("%s.cue", name))
+	if err != nil {
+		return nil, fmt.Errorf("%s is not a valid kind: %w", name, err)
+	}
+
+	return kindsys.BindComposable(rt, def)
 }

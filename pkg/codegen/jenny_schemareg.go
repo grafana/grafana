@@ -3,8 +3,10 @@ package codegen
 import (
 	"fmt"
 	"path/filepath"
+	"testing/fstest"
 
 	"github.com/grafana/codejen"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 )
@@ -27,7 +29,12 @@ func (j *schemaregjenny) JennyName() string {
 
 func (j *schemaregjenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 	name := kind.Props().Common().MachineName
-	oldKind, err := GetPublishedKind(name, j.path, "core")
+	oldKindString, err := GetPublishedKind(name, "core")
+	if err != nil {
+		return nil, err
+	}
+
+	oldKind, err := loadCoreKind(name, oldKindString, "core")
 	if err != nil {
 		return nil, err
 	}
@@ -49,4 +56,21 @@ func (j *schemaregjenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 
 	path := filepath.Join(j.path, "next", "core", name+".cue")
 	return codejen.NewFile(path, newKindBytes, j), nil
+}
+
+func loadCoreKind(name string, kind string, category string) (kindsys.Kind, error) {
+	fs := fstest.MapFS{
+		fmt.Sprintf("%s.cue", name): &fstest.MapFile{
+			Data: []byte(kind),
+		},
+	}
+
+	rt := cuectx.GrafanaThemaRuntime()
+
+	def, err := cuectx.LoadCoreKindDef(fmt.Sprintf("%s.cue", name), rt.Context(), fs)
+	if err != nil {
+		return nil, fmt.Errorf("%s is not a valid kind: %w", name, err)
+	}
+
+	return kindsys.BindCore(rt, def)
 }

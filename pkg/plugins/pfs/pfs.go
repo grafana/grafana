@@ -235,6 +235,41 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 	return pp, nil
 }
 
+func LoadComposableKindDef(fsys fs.FS, rt *thema.Runtime, defpath string) (kindsys.Def[kindsys.ComposableProperties], error) {
+	pp := ParsedPlugin{
+		ComposableKinds: make(map[string]kindsys.Composable),
+		Properties: plugindef.PluginDef{
+			Id: defpath,
+		},
+	}
+
+	fsys, err := ensureCueMod(fsys, pp.Properties)
+	if err != nil {
+		return kindsys.Def[kindsys.ComposableProperties]{}, fmt.Errorf("%s has invalid cue.mod: %w", pp.Properties.Id, err)
+	}
+
+	bi, err := cuectx.LoadInstanceWithGrafana(fsys, "", load.Package(PackageName))
+	if err != nil {
+		return kindsys.Def[kindsys.ComposableProperties]{}, err
+	}
+
+	ctx := rt.Context()
+	v := ctx.BuildInstance(bi)
+	if v.Err() != nil {
+		return kindsys.Def[kindsys.ComposableProperties]{}, fmt.Errorf("%s not a valid CUE instance: %w", defpath, v.Err())
+	}
+
+	props, err := kindsys.ToKindProps[kindsys.ComposableProperties](v)
+	if err != nil {
+		return kindsys.Def[kindsys.ComposableProperties]{}, err
+	}
+
+	return kindsys.Def[kindsys.ComposableProperties]{
+		V:          v,
+		Properties: props,
+	}, nil
+}
+
 func ensureCueMod(fsys fs.FS, pdef plugindef.PluginDef) (fs.FS, error) {
 	if modf, err := fs.ReadFile(fsys, "cue.mod/module.cue"); err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
