@@ -63,7 +63,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   useEffect(() => {
     const subject = pointerSubject.current;
     subject.subscribe((x) => {
-      const timestamp = frameSubsetRef.current[x.seriesIdx - 1].fields[0].values.get(x.pointIdx - 1);
+      const timestamp = frameSubsetRef.current[x.seriesIdx - 1]?.fields[0].values.get(x.pointIdx - 1);
       console.log(`Series: ${x.seriesIdx} | Point: ${x.pointIdx} |`, 'Timestamp: ', dateTimeFormat(timestamp));
 
       const refToScroll = logsRef.current.find((x) => parseInt(x.id, 10) === timestamp);
