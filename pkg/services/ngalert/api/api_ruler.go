@@ -303,7 +303,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 	}
 
 	rules, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.OrgID, namespace, func(condition ngmodels.Condition) error {
-		return srv.conditionValidator.Validate(eval.Context(c.Req.Context(), c.SignedInUser), condition)
+		return srv.conditionValidator.Validate(eval.NewContext(c.Req.Context(), c.SignedInUser), condition)
 	}, srv.cfg)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
