@@ -31,6 +31,11 @@ import {
   SortOrder,
   GraphTransform,
 } from '@grafana/schema';
+import { getNextRefIdChar } from 'app/core/utils/query';
+import { getNextRegionName } from 'app/core/utils/timeRegions';
+import { GrafanaQuery, GrafanaQueryType, TimeRegionConfig } from 'app/plugins/datasource/grafana/types';
+
+import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 import { defaultGraphConfig } from './config';
 import { PanelOptions } from './panelcfg.gen';
@@ -46,10 +51,16 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
 ) => {
   // Changing from angular/flot panel to react/uPlot
   if (prevPluginId === 'graph' && prevOptions.angular) {
-    const { fieldConfig, options } = graphToTimeseriesOptions({
+    const { fieldConfig, options, target } = graphToTimeseriesOptions({
       ...prevOptions.angular,
       fieldConfig: prevFieldConfig,
+      panel: panel,
     });
+
+    if (target) {
+      panel.targets = panel.targets ? [target, ...panel.targets] : [target];
+    }
+
     panel.fieldConfig = fieldConfig; // Mutates the incoming panel
     panel.alert = prevOptions.angular.alert;
     return options;
@@ -61,7 +72,13 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
   return {};
 };
 
-export function graphToTimeseriesOptions(angular: any): { fieldConfig: FieldConfigSource; options: PanelOptions } {
+export function graphToTimeseriesOptions(angular: any): {
+  fieldConfig: FieldConfigSource;
+  options: PanelOptions;
+  target: GrafanaQuery | undefined;
+} {
+  let target: GrafanaQuery | undefined = undefined;
+
   const overrides: ConfigOverrideRule[] = angular.fieldConfig?.overrides ?? [];
   const yaxes = angular.yaxes ?? [];
   let y1 = getFieldConfigFromOldAxis(yaxes[0]);
@@ -352,6 +369,36 @@ export function graphToTimeseriesOptions(angular: any): { fieldConfig: FieldConf
     }
   }
 
+  // timeRegions migration
+  const timeRegionsConfig: GraphTimeRegionConfig[] = angular.timeRegions;
+  if (angular.panel?.datasource?.uid === 'grafana' && timeRegionsConfig.length) {
+    let regions: TimeRegionConfig[] = [];
+    const defaultTimezone = getDashboardSrv().dashboard?.getTimezone();
+
+    timeRegionsConfig.forEach((timeRegion) => {
+      regions.push({
+        name: getNextRegionName(timeRegionsConfig),
+        color: timeRegion.fillColor,
+        line: timeRegion.line,
+        fromDayOfWeek: timeRegion.fromDayOfWeek,
+        toDayOfWeek: timeRegion.toDayOfWeek,
+        from: timeRegion.from,
+        to: timeRegion.to,
+        timezone: defaultTimezone,
+      });
+    });
+
+    target = {
+      refId: angular.panel?.targets?.length ? getNextRefIdChar(angular.panel.targets) : 'A',
+      datasource: {
+        type: 'datasource',
+        uid: 'grafana',
+      },
+      queryType: GrafanaQueryType.TimeRegions,
+      timeRegions: regions,
+    };
+  }
+
   const tooltipConfig = angular.tooltip;
   if (tooltipConfig) {
     if (tooltipConfig.shared !== undefined) {
@@ -469,7 +516,18 @@ export function graphToTimeseriesOptions(angular: any): { fieldConfig: FieldConf
       overrides,
     },
     options,
+    target,
   };
+}
+
+interface GraphTimeRegionConfig extends TimeRegionConfig {
+  colorMode: string;
+
+  fill: boolean;
+  fillColor: string;
+
+  line: boolean;
+  lineColor: string;
 }
 
 function getThresholdColor(threshold: AngularThreshold): string {

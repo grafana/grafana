@@ -14,6 +14,7 @@ import {
   TimeZonePicker,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
+import { getNextRegionName } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { TimeRegionConfig } from '../types';
@@ -35,27 +36,12 @@ export const TimeRegionsEditor = ({ value, onChange }: Props) => {
   const defaultTimezone = useMemo(() => getDashboardSrv().dashboard?.getTimezone(), []);
   const addTimeRegion = () => {
     const r: TimeRegionConfig = {
-      name: getNextRegionName(),
+      name: getNextRegionName(value),
       color: 'rgba(235, 113, 113, 0.40)',
       line: false,
       timezone: defaultTimezone,
     };
     onChange(value ? [...value, r] : [r]);
-  };
-
-  const getNextRegionName = () => {
-    const label = 'T';
-    let idx = value?.length ?? 0;
-    const max = idx + 100;
-
-    while (true && idx < max) {
-      const name = `${label}${idx++}`;
-      if (!value?.some((val) => val.name === name)) {
-        return name;
-      }
-    }
-
-    return `${label}${Date.now()}`;
   };
 
   const onChangeItem = (idx: number, v?: TimeRegionConfig) => {

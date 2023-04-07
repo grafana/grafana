@@ -1,4 +1,5 @@
 import { AbsoluteTimeRange, dateTime, TimeRange } from '@grafana/data';
+import { TimeRegionConfig as DsTimeRegionConfig } from 'app/plugins/datasource/grafana/types';
 
 export interface TimeRegionConfig {
   from?: string;
@@ -168,3 +169,18 @@ export function formatTimeOfDayString(t?: ParsedTime): string {
 
   return str;
 }
+
+export const getNextRegionName = (regions: DsTimeRegionConfig[] | undefined) => {
+  const label = 'T';
+  let idx = regions?.length ?? 0;
+  const max = idx + 100;
+
+  while (true && idx < max) {
+    const name = `${label}${idx++}`;
+    if (!regions?.some((val) => val.name === name)) {
+      return name;
+    }
+  }
+
+  return `${label}${Date.now()}`;
+};
