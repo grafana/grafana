@@ -73,7 +73,7 @@ export function transformV2(
   options: { exemplarTraceIdDestinations?: ExemplarTraceIdDestination[] }
 ) {
   // migration for dataplane field name issue
-  if (config.featureToggles.prometheusDataplane) {
+  if (config.featureToggles.dataplanePrometheusFrontendSupport) {
     // update displayNameFromDS in the field config
     response.data.forEach((f: DataFrame) => {
       const target = request.targets.find((t) => t.refId === f.refId);

@@ -315,7 +315,7 @@ const (
 	// Changes flame graph to pyroscope one
 	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
 
-	// FlagFieldNameMatcherFallback
-	// More lenient field name matchers to support the dataplane contract for changing field name structure in prometheus
-	FlagFieldNameMatcherFallback = "fieldNameMatcherFallback"
+	// FlagDataplanePrometheusFrontendSupport
+	// Prometheus support for dataplane contract in transformations for matching on field names
+	FlagDataplanePrometheusFrontendSupport = "dataplanePrometheusFrontendSupport"
 )

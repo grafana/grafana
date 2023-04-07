@@ -76,4 +76,4 @@ alertStateHistoryLokiOnly,alpha,@grafana/alerting-squad,false,false,false,false
 unifiedRequestLog,alpha,@grafana/backend-platform,false,false,false,false
 renderAuthJWT,beta,@grafana/grafana-as-code,false,false,false,false
 pyroscopeFlameGraph,alpha,@grafana/observability-traces-and-profiling,false,false,false,false
-fieldNameMatcherFallback,alpha,@grafana/observability-metrics,false,false,false,true
+dataplanePrometheusFrontendSupport,alpha,@grafana/observability-metrics,false,false,false,true

@@ -95,5 +95,5 @@ export interface FeatureToggles {
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
   pyroscopeFlameGraph?: boolean;
-  fieldNameMatcherFallback?: boolean;
+  dataplanePrometheusFrontendSupport?: boolean;
 }
