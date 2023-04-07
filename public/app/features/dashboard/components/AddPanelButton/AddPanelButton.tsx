@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Dropdown, Button, useTheme2, Icon } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
 
-import { AddPanelMenu } from './AddPanelMenu';
+import AddPanelMenu from './AddPanelMenu';
 
 export interface Props {
   dashboard: DashboardModel;

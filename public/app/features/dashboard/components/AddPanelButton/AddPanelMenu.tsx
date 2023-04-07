@@ -16,7 +16,7 @@ interface Props {
   dashboard: DashboardModel;
 }
 
-export const AddPanelMenu = ({ dashboard }: Props) => {
+const AddPanelMenu = ({ dashboard }: Props) => {
   const copiedPanelPlugin = useMemo(() => getCopiedPanelPlugin(), []);
 
   return (
@@ -62,3 +62,5 @@ export const AddPanelMenu = ({ dashboard }: Props) => {
     </Menu>
   );
 };
+
+export default AddPanelMenu;

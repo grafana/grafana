@@ -26,7 +26,7 @@ import { appEvents } from 'app/core/core';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import { t, Trans } from 'app/core/internationalization';
 import { setStarred } from 'app/core/reducers/navBarTree';
-import { AddPanelButton } from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
+import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
