@@ -12,7 +12,7 @@ export interface Props {
   canCreate: boolean;
 }
 
-export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
+const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -29,7 +29,6 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           <Button
             size="lg"
             icon="plus"
-            aria-label="Add new panel"
             onClick={() => {
               reportInteraction('Create new panel');
               const id = onCreateNewPanel(dashboard);
@@ -49,7 +48,6 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             <Button
               icon="plus"
               fill="outline"
-              aria-label="Add new row"
               onClick={() => {
                 reportInteraction('Create new row');
                 onCreateNewRow(dashboard);
@@ -67,7 +65,6 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             <Button
               icon="plus"
               fill="outline"
-              aria-label="Add new panel from panel library"
               onClick={() => {
                 reportInteraction('Add a panel from the panel library');
                 onAddLibraryPanel(dashboard);
@@ -82,6 +79,8 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     </div>
   );
 };
+
+export default DashboardEmpty;
 
 function getStyles(theme: GrafanaTheme2) {
   return {
