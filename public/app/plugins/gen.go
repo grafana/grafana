@@ -55,6 +55,7 @@ func main() {
 		kind2pd(corecodegen.DocsJenny(
 			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
 		)),
+		codegen.PluginSchemaRegistryJenny("pkg/schemaregistry"),
 	)
 
 	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"))
