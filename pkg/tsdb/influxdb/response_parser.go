@@ -103,7 +103,6 @@ func transformRows(rows []Row, query Query) data.Frames {
 		} else {
 			for colIndex, column := range row.Columns {
 				if column == "time" {
-
 					continue
 				}
 
@@ -115,8 +114,10 @@ func transformRows(rows []Row, query Query) data.Frames {
 
 				for _, valuePair := range row.Values {
 					timestamp, timestampErr := parseTimestamp(valuePair[0])
+					value := valuePair[1]
+
 					// we only add this row if the timestamp is valid
-					if timestampErr == nil {
+					if timestampErr == nil && value != nil {
 						timeArray = append(timeArray, timestamp)
 						switch valType {
 						case "string":
