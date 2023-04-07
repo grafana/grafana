@@ -4,7 +4,9 @@ package entity
 func ToAdminWriteEntityRequest(req *WriteEntityRequest) *AdminWriteEntityRequest {
 	return &AdminWriteEntityRequest{
 		GRN:             req.GRN,
+		Meta:            req.Meta,
 		Body:            req.Body,
+		Status:          req.Status,
 		Folder:          req.Folder,
 		Comment:         req.Comment,
 		PreviousVersion: req.PreviousVersion,
