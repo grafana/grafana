@@ -8,7 +8,7 @@ ARTIFACTS_DIR="./npm-artifacts"
 for file in $ARTIFACTS_DIR/*.tgz; do
   echo "🔍 Checking NPM package: $file"
   # get filename then strip everything after package name.
-  dir_name=$(basename "$file" .tgz | sed 's/@\(.*\)-[0-9].*/\1/')
+  dir_name=$(basename "$file" .tgz | sed 's/^@\(.*\)-[0-9]*[.]*[0-9]*[.]*[0-9]*-\([0-9]*[a-zA-Z]*\)/\1/')
   mkdir -p "./npm-artifacts/$dir_name"
   tar -xzf "$file" -C "./npm-artifacts/$dir_name" --strip-components=1
 
