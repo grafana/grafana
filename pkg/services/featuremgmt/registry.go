@@ -513,7 +513,7 @@ var (
 		},
 		{
 			Name:         "dataplaneFrontendFallback",
-			Description:  "Support dataplane contract field name change for tranformations and field name matchers where the name is different",
+			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,

@@ -27,7 +27,7 @@ export const TransformationFilter = ({ index, data, config, onChange }: Transfor
 
   return (
     <div className={styles.wrapper}>
-      <h5>Apply tranformation to</h5>
+      <h5>Apply transformation to</h5>
       <FrameSelectionEditor
         value={config.filter!}
         context={context}
