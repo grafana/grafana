@@ -71,7 +71,6 @@ export class QueryCache {
   private overlapWindowMs: number;
   private perfObeserver?: PerformanceObserver;
   private shouldProfile: boolean;
-  private timer?: NodeJS.Timer;
 
   pendingRequestIdsToTargSigs = new Map<
     RequestID,
@@ -184,7 +183,7 @@ export class QueryCache {
 
       this.perfObeserver.observe({ type: 'resource', buffered: false });
 
-      this.timer = setInterval(this.sendPendingTrackingEvents, 60000);
+      setInterval(this.sendPendingTrackingEvents, 60000);
 
       window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
     }
