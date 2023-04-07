@@ -66,7 +66,8 @@ func ProvideStorage(userService userpkg.Service, acService accesscontrol.Service
 	) (customStorage.Storage, error) {
 		fmt.Printf("create storage for GR: %v", gr)
 
-		if gr.Resource != "dashboards" {
+		// CRDs
+		if strings.HasSuffix(gr.Group, "k8s.io") {
 			return filepath.Storage(gr, strategy, optsGetter, tableConvertor, newFunc, newListFunc)
 		}
 
@@ -150,6 +151,10 @@ func (s *entityStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	if err != nil {
 		return nil, err
 	}
+	if cmd.GRN.Kind == "" {
+		cmd.GRN.Kind = s.gr.Resource // CRD?
+	}
+
 	out, err := s.entityStore.Write(appcontext.WithUser(ctx, user), cmd)
 	if err != nil {
 		return nil, err
@@ -175,9 +180,14 @@ func (s *entityStorage) List(ctx context.Context, options *internalversion.ListO
 	if err != nil {
 		return nil, err
 	}
+
+	// HACK
+	k := strings.ToLower(s.gr.Resource)
+	k = strings.TrimSuffix(k, "s") // remove the trailing "s"
+
 	rsp, err := s.entityStore.Search(appcontext.WithUser(ctx, user), &entity.EntitySearchRequest{
 		Limit:      options.Limit,
-		Kind:       []string{"dashboard"}, // HACK!!! strings.ToLower(s.gr.Resource)},
+		Kind:       []string{k},
 		WithBody:   true,
 		WithLabels: true,
 	})

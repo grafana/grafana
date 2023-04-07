@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -18,16 +19,18 @@ func objectToWriteCommand(orgID int64, obj runtime.Object) (*entity.WriteEntityR
 	uObj := unstructured.Unstructured{}
 	uObj.SetUnstructuredContent(raw)
 
-	// Convert from CRD names to entity api names
-	// HACK for now
-	kind := strings.ToLower(uObj.GetKind())
-
 	req := &entity.WriteEntityRequest{
 		GRN: &entity.GRN{
-			TenantId: orgID, // from the user
-			Kind:     kind,
+			TenantId: orgID,                           // from the user
+			Kind:     strings.ToLower(uObj.GetKind()), // hack
 			UID:      uObj.GetName(),
 		},
+	}
+
+	crd, ok := obj.(*apiextensions.CustomResourceDefinition)
+	if ok {
+		req.GRN.Kind = crd.Kind
+		req.GRN.UID = crd.Name
 	}
 
 	rv := uObj.GetResourceVersion()

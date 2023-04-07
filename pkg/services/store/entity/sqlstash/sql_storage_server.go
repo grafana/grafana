@@ -127,8 +127,8 @@ func (s *sqlEntityServer) validateGRN(ctx context.Context, grn *entity.GRN) (*en
 	if grn.UID == "" {
 		return nil, fmt.Errorf("GRN missing UID")
 	}
-	if len(grn.UID) > 40 {
-		return nil, fmt.Errorf("GRN UID is too long (>40)")
+	if len(grn.UID) > 64 {
+		return nil, fmt.Errorf("GRN UID is too long (>64)")
 	}
 	if strings.ContainsAny(grn.UID, "/#$@?") {
 		return nil, fmt.Errorf("invalid character in GRN")
