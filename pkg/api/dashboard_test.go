@@ -1220,7 +1220,7 @@ func (hs *HTTPServer) callDeleteDashboardByTagsORUIDs(t *testing.T,
 	hs.DashboardService = mockDashboard
 	pubdashApi := api.ProvideApi(mockPubdashService, nil, nil, featuremgmt.WithFeatures())
 	hs.PublicDashboardsApi = pubdashApi
-	sc.handlerFunc = hs.DeleteDashboardsByTagsORUIDs
+	sc.handlerFunc = hs.DeleteDashboardsByTagsOrUIDs
 	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 }
 

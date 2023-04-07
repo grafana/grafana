@@ -359,24 +359,24 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 	})
 }
 
-// DeleteDashboardsByTagsUIDs swagger:route DELETE /dashboards dashboards deleteDashboardsByTagsORUIDs
+// DeleteDashboardsByTagsUIDs swagger:route DELETE /dashboards dashboards deleteDashboardsByTagsOrUIDs
 //
 // Delete dashboard by tags and UIDs.
 //
 // Will delete the dashboard given the specified tags.
 //
 // Responses:
-// 207: deleteDashboardsByTagsORUIDsResponse
-// 200: deleteDashboardsByTagsORUIDsResponse
+// 207: deleteDashboardsByTagsOrUIDsResponse
+// 200: deleteDashboardsByTagsOrUIDsResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteDashboardsByTagsORUIDs(c *contextmodel.ReqContext) response.Response {
-	return hs.deleteDashboardsByTagsORUIDs(c)
+func (hs *HTTPServer) DeleteDashboardsByTagsOrUIDs(c *contextmodel.ReqContext) response.Response {
+	return hs.deleteDashboardsByTagsOrUIDs(c)
 }
 
-func (hs *HTTPServer) deleteDashboardsByTagsORUIDs(c *contextmodel.ReqContext) response.Response {
+func (hs *HTTPServer) deleteDashboardsByTagsOrUIDs(c *contextmodel.ReqContext) response.Response {
 	deleteDashReq := dashboards.DeleteDashboardsRequest{}
 	if err := web.Bind(c.Req, &deleteDashReq); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -400,7 +400,7 @@ func (hs *HTTPServer) deleteDashboardsByTagsORUIDs(c *contextmodel.ReqContext) r
 
 	for _, dash := range deleteDashboards {
 		go func(dash dashboards.DashboardSearchProjection) {
-			delDashRes <- hs.deleteDashboardByTagORUID(c, dash)
+			delDashRes <- hs.deleteDashboardByTagOrUID(c, dash)
 		}(dash)
 	}
 
@@ -424,8 +424,16 @@ func (hs *HTTPServer) deleteDashboardsByTagsORUIDs(c *contextmodel.ReqContext) r
 	return response.JSON(http.StatusMultiStatus, finalRes)
 }
 
-func (hs *HTTPServer) deleteDashboardByTagORUID(c *contextmodel.ReqContext, dash dashboards.DashboardSearchProjection) dashboards.DeleteDashboardStatus {
-	dashboard := &dashboards.Dashboard{ID: dash.ID, UID: dash.UID, Slug: dash.Slug, OrgID: c.OrgID, FolderID: dash.FolderID, IsFolder: dash.IsFolder}
+func (hs *HTTPServer) deleteDashboardByTagOrUID(c *contextmodel.ReqContext, dash dashboards.DashboardSearchProjection) dashboards.DeleteDashboardStatus {
+	dashboard := &dashboards.Dashboard{
+		ID:       dash.ID,
+		UID:      dash.UID,
+		Slug:     dash.Slug,
+		OrgID:    c.OrgID,
+		FolderID: dash.FolderID,
+		IsFolder: dash.IsFolder,
+	}
+
 	guardian, err := guardian.NewByUID(c.Req.Context(), dash.UID, c.OrgID, c.SignedInUser)
 	if err != nil {
 		grafanaErr := &errutil.Error{}
@@ -1302,15 +1310,15 @@ type DeleteDashboardByUIDParams struct {
 	UID string `json:"uid"`
 }
 
-// swagger:parameters deleteDashboardsByTagsORUIDs
-type DeleteDashboardsByTagsORUIDsParams struct {
+// swagger:parameters deleteDashboardsByTagsOrUIDs
+type DeleteDashboardsByTagsOrUIDsParams struct {
 	// in:body
 	// required:true
 	Body dashboards.DeleteDashboardsRequest
 }
 
-// swagger:response deleteDashboardsByTagsORUIDsResponse
-type DeleteDashboardsByTagsORUIDsResponse struct {
+// swagger:response deleteDashboardsByTagsOrUIDsResponse
+type DeleteDashboardsByTagsOrUIDsResponse struct {
 	// in:body
 	Body dashboards.DeleteDashboardsResponse `json:"body"`
 }
