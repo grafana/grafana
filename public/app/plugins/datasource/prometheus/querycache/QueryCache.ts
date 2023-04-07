@@ -72,6 +72,8 @@ export class QueryCache {
   private perfObeserver?: PerformanceObserver;
   private shouldProfile: boolean;
 
+  sendEventsInterval = 60000;
+
   pendingRequestIdsToTargSigs = new Map<
     RequestID,
     {
@@ -183,7 +185,7 @@ export class QueryCache {
 
       this.perfObeserver.observe({ type: 'resource', buffered: false });
 
-      setInterval(this.sendPendingTrackingEvents, 60000);
+      setInterval(this.sendPendingTrackingEvents, this.sendEventsInterval);
 
       window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
     }
@@ -195,6 +197,13 @@ export class QueryCache {
     for (let [key, value] of entries) {
       if (!value.sent) {
         this.pendingAccumulatedEvents.set(key, { ...value, sent: true });
+        faro.api.pushMeasurement({
+          type: 'custom',
+          values: {
+            thing: 0,
+            thing2: 1,
+          },
+        });
         faro.api.pushEvent(
           'prometheus incremental query response size',
           {
