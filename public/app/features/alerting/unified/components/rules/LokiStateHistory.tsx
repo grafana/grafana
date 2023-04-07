@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict, getUnixTime, subMinutes } from 'date-fns';
-import { groupBy, isEmpty, isEqual, take, uniqBy, uniqueId } from 'lodash';
+import { groupBy, isEmpty, isEqual, last, sortBy, take, uniq, uniqBy, uniqueId } from 'lodash';
 import React, { useEffect, useRef } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { BehaviorSubject } from 'rxjs';
@@ -52,6 +52,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   const styles = useStyles2(getStyles);
 
   const frameSubsetRef = useRef<DataFrame[]>([]);
+
   const logsRef = useRef<HTMLDivElement[]>([]);
   const pointerSubject = useRef(
     new BehaviorSubject<{ seriesIdx: number; pointIdx: number }>({ seriesIdx: 0, pointIdx: 0 })
@@ -63,8 +64,11 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   useEffect(() => {
     const subject = pointerSubject.current;
     subject.subscribe((x) => {
-      const timestamp = frameSubsetRef.current[x.seriesIdx - 1]?.fields[0].values.get(x.pointIdx - 1);
-      console.log(`Series: ${x.seriesIdx} | Point: ${x.pointIdx} |`, 'Timestamp: ', dateTimeFormat(timestamp));
+      const uniqueTimestamps = sortBy(
+        uniq(frameSubsetRef.current.flatMap((frame) => frame.fields[0].values.toArray()))
+      );
+
+      const timestamp = uniqueTimestamps[x.pointIdx];
 
       const refToScroll = logsRef.current.find((x) => parseInt(x.id, 10) === timestamp);
       refToScroll?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -107,8 +111,8 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   // find common labels so we can extract those from the instances
   const commonLabels = extractCommonLabels(groupedLines);
 
-  const fromDateTime = dateTime(linesWithTimestamp.at(-1)?.timestamp);
-  const toDateTime = dateTime(linesWithTimestamp.at(-0)?.timestamp);
+  const fromDateTime = dateTime(from * 1000);
+  const toDateTime = dateTime(Date.now());
   const timeRange: TimeRange = {
     from: fromDateTime,
     to: toDateTime,
@@ -121,11 +125,13 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     const timeField: Field = {
       name: 'time',
       type: FieldType.time,
-      values: new ArrayVector(records.map((record) => record.timestamp)),
+      values: new ArrayVector([...records.map((record) => record.timestamp), Date.now()]),
       config: { displayName: 'Time', custom: { fillOpacity: 100 } },
     };
 
     timeIndex.sort(fieldIndexComparer(timeField));
+
+    const stateValues = new ArrayVector([...records.map((record) => record.line.current), last(records)?.line.current]);
 
     const frame: DataFrame = {
       fields: [
@@ -136,7 +142,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
         {
           name: 'state',
           type: FieldType.string,
-          values: new ArrayVector(records.map((record) => record.line.current)),
+          values: new SortedVector(stateValues, timeIndex),
           config: {
             displayName: omitLabels(Object.entries(JSON.parse(key)), commonLabels)
               .map(([key, label]) => `${key}=${label}`)
