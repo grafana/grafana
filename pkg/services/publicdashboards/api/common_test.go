@@ -25,9 +25,13 @@ import (
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/query"
+	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
+
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -129,13 +133,16 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 		}
 	}
 
+	ds := &fakeDatasources.FakeDataSourceService{}
+	pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &plugins.FakePluginStore{}, ds, pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()), plugincontext.ProvideKeyService())
+
 	return query.ProvideService(
 		setting.NewCfg(),
 		cs,
 		nil,
 		&fakePluginRequestValidator{},
-		&fakeDatasources.FakeDataSourceService{},
 		fpc,
+		pCtxProvider,
 	)
 }
 

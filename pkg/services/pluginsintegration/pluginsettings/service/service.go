@@ -73,6 +73,10 @@ func (s *Service) GetPluginSettingByPluginID(ctx context.Context, args *pluginse
 		return nil, err
 	}
 
+	if query.Result == nil {
+		return nil, pluginsettings.ErrPluginSettingNotFound
+	}
+
 	return &pluginsettings.DTO{
 		ID:             query.Result.Id,
 		OrgID:          query.Result.OrgId,

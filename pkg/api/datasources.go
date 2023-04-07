@@ -20,7 +20,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -801,23 +800,16 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *contextmodel.ReqContext) response
 }
 
 func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *datasources.DataSource) response.Response {
-	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
+	pCtx, exists, err := hs.pluginContextProvider.GetWithDataSource(c.Req.Context(), ds.Type, c.SignedInUser, ds)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Unable to get plugin context", err)
+	}
 	if !exists {
 		return response.Error(http.StatusInternalServerError, "Unable to find datasource plugin", nil)
 	}
-
-	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn(c.Req.Context()))
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Unable to get datasource model", err)
-	}
 	req := &backend.CheckHealthRequest{
-		PluginContext: backend.PluginContext{
-			User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
-			OrgID:                      c.OrgID,
-			PluginID:                   plugin.ID,
-			DataSourceInstanceSettings: dsInstanceSettings,
-		},
-		Headers: map[string]string{},
+		PluginContext: pCtx,
+		Headers:       map[string]string{},
 	}
 
 	var dsURL string

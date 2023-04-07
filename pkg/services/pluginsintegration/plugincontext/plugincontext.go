@@ -19,12 +19,12 @@ import (
 )
 
 func ProvideService(cacheService *localcache.CacheService, pluginStore plugins.Store,
-	dataSourceCache datasources.CacheService, dataSourceService datasources.DataSourceService,
-	pluginSettingsService pluginsettings.Service) *Provider {
+	dataSourceService datasources.DataSourceService, pluginSettingsService pluginsettings.Service,
+	keyProvider KeyProvider) *Provider {
 	return &Provider{
+		keyProvider:           keyProvider,
 		cacheService:          cacheService,
 		pluginStore:           pluginStore,
-		dataSourceCache:       dataSourceCache,
 		dataSourceService:     dataSourceService,
 		pluginSettingsService: pluginSettingsService,
 		logger:                log.New("plugincontext"),
@@ -34,9 +34,9 @@ func ProvideService(cacheService *localcache.CacheService, pluginStore plugins.S
 type Provider struct {
 	cacheService          *localcache.CacheService
 	pluginStore           plugins.Store
-	dataSourceCache       datasources.CacheService
 	dataSourceService     datasources.DataSourceService
 	pluginSettingsService pluginsettings.Service
+	keyProvider           KeyProvider
 	logger                log.Logger
 }
 
@@ -57,9 +57,10 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 
 	datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn(ctx))
 	if err != nil {
-		return pCtx, exists, fmt.Errorf("%v: %w", "Failed to convert datasource", err)
+		return pCtx, exists, err
 	}
 	pCtx.DataSourceInstanceSettings = datasourceSettings
+	pCtx.Key = p.keyProvider.DataSourceKey(ctx, datasourceSettings)
 
 	return pCtx, true, nil
 }
@@ -102,7 +103,12 @@ func (p *Provider) pluginContext(ctx context.Context, pluginID string, user *use
 			DecryptedSecureJSONData: decryptedSecureJSONData,
 			Updated:                 updated,
 		},
+		Key: p.keyProvider.AppKey(ctx, plugin.ID, user.OrgID),
 	}, true, nil
+}
+
+func (p *Provider) InvalidateSettingsCache(_ context.Context, pluginID string) {
+	p.cacheService.Delete(getCacheKey(pluginID))
 }
 
 func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string, user *user.SignedInUser) (*pluginsettings.DTO, error) {
@@ -125,10 +131,6 @@ func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string,
 
 	p.cacheService.Set(cacheKey, ps, pluginSettingsCacheTTL)
 	return ps, nil
-}
-
-func (p *Provider) InvalidateSettingsCache(_ context.Context, pluginID string) {
-	p.cacheService.Delete(getCacheKey(pluginID))
 }
 
 func (p *Provider) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {

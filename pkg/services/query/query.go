@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,16 +38,16 @@ func ProvideService(
 	dataSourceCache datasources.CacheService,
 	expressionService *expr.Service,
 	pluginRequestValidator validations.PluginRequestValidator,
-	dataSourceService datasources.DataSourceService,
 	pluginClient plugins.Client,
+	pCtxProvider *plugincontext.Provider,
 ) *ServiceImpl {
 	g := &ServiceImpl{
 		cfg:                    cfg,
 		dataSourceCache:        dataSourceCache,
 		expressionService:      expressionService,
 		pluginRequestValidator: pluginRequestValidator,
-		dataSourceService:      dataSourceService,
 		pluginClient:           pluginClient,
+		pCtxProvider:           pCtxProvider,
 		log:                    log.New("query_data"),
 	}
 	g.log.Info("Query Service initialization")
@@ -69,6 +70,7 @@ type ServiceImpl struct {
 	pluginRequestValidator validations.PluginRequestValidator
 	dataSourceService      datasources.DataSourceService
 	pluginClient           plugins.Client
+	pCtxProvider           *plugincontext.Provider
 	log                    log.Logger
 }
 
@@ -175,7 +177,7 @@ func (s *ServiceImpl) handleExpressions(ctx context.Context, user *user.SignedIn
 	}
 
 	if user != nil { // for passthrough authentication, SSE does not authenticate
-		exprReq.User = adapters.BackendUserFromSignedInUser(user)
+		exprReq.User = user
 		exprReq.OrgId = user.OrgID
 	}
 
@@ -224,20 +226,17 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user *use
 		}
 	}
 
-	instanceSettings, err := adapters.ModelToInstanceSettings(ds, s.decryptSecureJsonDataFn(ctx))
+	pCtx, exists, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
 	if err != nil {
 		return nil, err
 	}
-
+	if !exists {
+		return nil, errors.New("foobar")
+	}
 	req := &backend.QueryDataRequest{
-		PluginContext: backend.PluginContext{
-			OrgID:                      ds.OrgID,
-			PluginID:                   ds.Type,
-			User:                       adapters.BackendUserFromSignedInUser(user),
-			DataSourceInstanceSettings: instanceSettings,
-		},
-		Headers: map[string]string{},
-		Queries: []backend.DataQuery{},
+		PluginContext: pCtx,
+		Headers:       map[string]string{},
+		Queries:       []backend.DataQuery{},
 	}
 
 	for _, q := range queries {
@@ -351,10 +350,4 @@ func (s *ServiceImpl) getDataSourceFromQuery(ctx context.Context, user *user.Sig
 	}
 
 	return nil, ErrInvalidDatasourceID
-}
-
-func (s *ServiceImpl) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
-	return func(ds *datasources.DataSource) (map[string]string, error) {
-		return s.dataSourceService.DecryptedValues(ctx, ds)
-	}
 }

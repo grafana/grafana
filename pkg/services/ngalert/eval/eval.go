@@ -247,6 +247,7 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 	req := &expr.Request{
 		OrgId:   ctx.User.OrgID,
 		Headers: buildDatasourceHeaders(ctx),
+		User:    ctx.User,
 	}
 
 	datasources := make(map[string]*datasources.DataSource, len(data))

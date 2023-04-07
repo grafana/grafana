@@ -260,7 +260,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.R
 		return response.Error(500, "Failed to update plugin setting", err)
 	}
 
-	hs.PluginContextProvider.InvalidateSettingsCache(c.Req.Context(), pluginID)
+	hs.pluginContextProvider.InvalidateSettingsCache(c.Req.Context(), pluginID)
 
 	return response.Success("Plugin settings updated")
 }
@@ -394,7 +394,7 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *contextmodel.ReqContext, plugin 
 func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser)
+	pCtx, found, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser)
 	if err != nil {
 		return response.Error(500, "Failed to get plugin settings", err)
 	}

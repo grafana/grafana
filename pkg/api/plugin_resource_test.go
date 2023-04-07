@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -69,11 +70,12 @@ func TestCallResource(t *testing.T) {
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)
 
-	pcp := plugincontext.ProvideService(localcache.ProvideService(), ps, &datasources.FakeCacheService{}, &datasources.FakeDataSourceService{}, pluginSettings.ProvideService(db.InitTestDB(t), nil))
+	pcp := plugincontext.ProvideService(localcache.ProvideService(), ps, &datasources.FakeDataSourceService{},
+		pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()), plugincontext.ProvideKeyService())
 
 	srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
-		hs.PluginContextProvider = pcp
+		hs.pluginContextProvider = pcp
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = ps
 		hs.pluginClient = pluginClient.ProvideService(reg, pCfg)
@@ -111,7 +113,7 @@ func TestCallResource(t *testing.T) {
 
 	srv = SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
-		hs.PluginContextProvider = pcp
+		hs.pluginContextProvider = pcp
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = ps
 		hs.pluginClient = pc

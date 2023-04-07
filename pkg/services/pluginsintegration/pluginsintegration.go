@@ -56,6 +56,8 @@ var WireSet = wire.NewSet(
 	repo.ProvideService,
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	plugincontext.ProvideService,
+	plugincontext.ProvideKeyService,
+	wire.Bind(new(plugincontext.KeyProvider), new(*plugincontext.KeyService)),
 	licensing.ProvideLicensing,
 	wire.Bind(new(plugins.Licensing), new(*licensing.Service)),
 	wire.Bind(new(sources.Registry), new(*sources.Service)),

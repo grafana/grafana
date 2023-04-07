@@ -27,7 +27,7 @@ func (hs *HTTPServer) CallResource(c *contextmodel.ReqContext) {
 }
 
 func (hs *HTTPServer) callPluginResource(c *contextmodel.ReqContext, pluginID string) {
-	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser)
+	pCtx, found, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
 		return
@@ -49,7 +49,7 @@ func (hs *HTTPServer) callPluginResource(c *contextmodel.ReqContext, pluginID st
 }
 
 func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContext, pluginID string, ds *datasources.DataSource) {
-	pCtx, found, err := hs.PluginContextProvider.GetWithDataSource(c.Req.Context(), pluginID, c.SignedInUser, ds)
+	pCtx, found, err := hs.pluginContextProvider.GetWithDataSource(c.Req.Context(), pluginID, c.SignedInUser, ds)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
 		return
