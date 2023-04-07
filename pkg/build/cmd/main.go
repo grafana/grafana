@@ -245,6 +245,10 @@ func main() {
 						&tagFlag,
 						&srcFlag,
 						&destFlag,
+						&cli.StringSliceFlag{
+							Name:  "artifacts-editions",
+							Usage: "Editions for which the artifacts should be delivered (oss,enterprise,enterprise2), (or $ARTIFACTS_EDITIONS)",
+						},
 						&cli.StringFlag{
 							Name:  "enterprise2-dest-bucket",
 							Value: "grafana-downloads-enterprise2",

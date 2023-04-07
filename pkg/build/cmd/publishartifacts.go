@@ -24,8 +24,12 @@ func PublishArtifactsAction(c *cli.Context) error {
 	security := c.Bool("security")
 	var securityDestBucket, enterprise2SecurityPrefix string
 
+	artifactsEditions, err := env.RequireListWithEnvFallback(c, "artifacts-editions", "ARTIFACTS_EDITIONS")
+	if err != nil {
+		return err
+	}
+
 	if security {
-		var err error
 		securityDestBucket, err = env.RequireStringWithEnvFallback(c, "security-dest-bucket", "SECURITY_DEST_BUCKET")
 		if err != nil {
 			return err
@@ -58,36 +62,42 @@ func PublishArtifactsAction(c *cli.Context) error {
 		return err
 	}
 
-	err = copyDownloads(c, gcs, cfg)
-	if err != nil {
-		return err
+	for _, edition := range artifactsEditions {
+		switch edition {
+		case "oss", "enterprise":
+			err = copyArtifacts(c, gcs, cfg, edition)
+			if err != nil {
+				return err
+			}
+		case "enterprise2":
+			err = copyEnterprise2Artifacts(c, gcs, cfg)
+			if err != nil {
+				return err
+			}
+		default:
+			log.Printf("unrecognised artifacts edition: %s\n", edition)
+		}
 	}
-	err = copyEnterprise2Downloads(c, gcs, cfg)
-	if err != nil {
-		return err
-	}
+
 	return nil
 }
 
-func copyDownloads(c *cli.Context, gcs *storage.Client, cfg publishConfig) error {
-	for _, edition := range []string{
-		"oss", "enterprise",
-	} {
-		bucket := gcs.Bucket(cfg.destBucket)
-		destURL := edition
-		if !cfg.security {
-			destURL = filepath.Join(destURL, "release")
-		}
-		log.Printf("Copying downloads for %s, from %s bucket to %s bucket", edition, cfg.srcBucket, destURL)
-		if err := gcs.CopyRemoteDir(c.Context, gcs.Bucket(cfg.srcBucket), fmt.Sprintf("artifacts/downloads/v%s/%s/release", cfg.tag, edition), bucket, destURL); err != nil {
-			return err
-		}
+func copyArtifacts(c *cli.Context, gcs *storage.Client, cfg publishConfig, edition string) error {
+	bucket := gcs.Bucket(cfg.destBucket)
+	destURL := edition
+	if !cfg.security {
+		destURL = filepath.Join(destURL, "release")
 	}
+	log.Printf("Copying downloads for %s, from %s bucket to %s bucket", edition, cfg.srcBucket, destURL)
+	if err := gcs.CopyRemoteDir(c.Context, gcs.Bucket(cfg.srcBucket), fmt.Sprintf("artifacts/downloads/v%s/%s/release", cfg.tag, edition), bucket, destURL); err != nil {
+		return err
+	}
+
 	log.Printf("Successfully copied downloads.")
 	return nil
 }
 
-func copyEnterprise2Downloads(c *cli.Context, gcs *storage.Client, cfg publishConfig) error {
+func copyEnterprise2Artifacts(c *cli.Context, gcs *storage.Client, cfg publishConfig) error {
 	bucket := gcs.Bucket(cfg.enterprise2DestBucket)
 	var prefix string
 	if cfg.security {
