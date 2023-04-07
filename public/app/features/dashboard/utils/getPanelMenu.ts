@@ -332,16 +332,13 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
     id: panel.id,
     pluginId: panel.type,
     title: panel.title,
-    timeRange: Object.assign({}, dashboard.time),
+    timeRange: dashboard.time,
     timeZone: dashboard.timezone,
     dashboard: {
       uid: dashboard.uid,
       title: dashboard.title,
       tags: Array.from<string>(dashboard.tags),
     },
-    targets: panel.targets.map((t) => ({
-      refId: t.refId,
-      pluginId: t.datasource?.type ?? 'unknown',
-    })),
+    targets: panel.targets,
   };
 }

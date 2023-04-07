@@ -86,7 +86,7 @@ export const LogsVolumePanelList = ({
   } else if (timeoutError) {
     return (
       <SupplementaryResultError
-        title="The logs volume query is taking too long and has timed out"
+        title="The logs volume query has timed out"
         // Using info to avoid users thinking that the actual query has failed.
         severity="info"
         suggestedAction="Retry"

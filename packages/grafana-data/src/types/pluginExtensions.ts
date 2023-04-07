@@ -1,3 +1,5 @@
+import { DataQuery } from '@grafana/schema';
+
 import { RawTimeRange, TimeZone } from './time';
 
 // Plugin Extensions types
@@ -18,7 +20,7 @@ export type PluginExtension = {
 export type PluginExtensionLink = PluginExtension & {
   type: PluginExtensionTypes.link;
   path?: string;
-  onClick?: (event: React.MouseEvent) => void;
+  onClick?: (event?: React.MouseEvent) => void;
 };
 
 // Objects used for registering extensions (in app plugins)
@@ -43,7 +45,7 @@ export type PluginExtensionLinkConfig<Context extends object = object> = PluginE
   Context,
   Pick<PluginExtensionLink, 'path'> & {
     type: PluginExtensionTypes.link;
-    onClick?: (event: React.MouseEvent, helpers: PluginExtensionEventHelpers<Context>) => void;
+    onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
   }
 >;
 
@@ -73,16 +75,11 @@ export type PluginExtensionPanelContext = {
   timeRange: RawTimeRange;
   timeZone: TimeZone;
   dashboard: Dashboard;
-  targets: Target[];
+  targets: DataQuery[];
 };
 
 type Dashboard = {
   uid: string;
   title: string;
   tags: string[];
-};
-
-type Target = {
-  pluginId: string;
-  refId: string;
 };
