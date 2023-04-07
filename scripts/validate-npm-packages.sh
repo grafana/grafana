@@ -5,7 +5,7 @@
 # the correct files and package.json properties.
 ARTIFACTS_DIR="./npm-artifacts"
 
-for file in $ARTIFACTS_DIR/*.tgz; do
+for file in "$ARTIFACTS_DIR"/*.tgz; do
   echo "🔍 Checking NPM package: $file"
   # get filename then strip everything after package name.
   dir_name=$(basename "$file" .tgz | sed 's/^@\(.*\)-[0-9]*[.]*[0-9]*[.]*[0-9]*-\([0-9]*[a-zA-Z]*\)/\1/')
@@ -19,7 +19,7 @@ for file in $ARTIFACTS_DIR/*.tgz; do
   fi
 
   # Navigate inside the new extracted directory
-  pushd "./npm-artifacts/$dir_name"
+  pushd "./npm-artifacts/$dir_name" || exit
 
   # Check for required files
 	check_files=("package.json" "README.md" "CHANGELOG.md" "LICENSE_APACHE2")
@@ -38,7 +38,7 @@ for file in $ARTIFACTS_DIR/*.tgz; do
     fi
 
     echo -e "✅ Passed: package checks for $file.\n"
-    popd
+    popd || exit
     continue
   fi
 
@@ -71,10 +71,10 @@ for file in $ARTIFACTS_DIR/*.tgz; do
   done
 
   echo -e "✅ Passed: package checks for $file.\n"
-  popd
+  popd || exit
 
 done
 
 echo "🚀 All NPM package checks passed! 🚀"
-rm -rf $ARTIFACTS_DIR/*/
+rm -rf "${ARTIFACTS_DIR:?}/"*/
 exit 0
