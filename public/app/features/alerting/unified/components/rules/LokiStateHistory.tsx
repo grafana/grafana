@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { getUnixTime, subMinutes } from 'date-fns';
+import { formatDistanceToNowStrict, getUnixTime, subMinutes } from 'date-fns';
 import { groupBy, isEmpty, isEqual, take, uniqBy, uniqueId } from 'lodash';
 import React, { useEffect, useRef } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -156,6 +156,9 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
                   Normal: {
                     color: 'green',
                   },
+                  NoData: {
+                    color: 'blue',
+                  },
                 },
               },
             ],
@@ -212,6 +215,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
                 { label: 'Normal', color: 'green', yAxis: 1 },
                 { label: 'Pending', color: 'yellow', yAxis: 1 },
                 { label: 'Alerting', color: 'red', yAxis: 1 },
+                { label: 'NoData', color: 'blue', yAxis: 1 },
               ]}
             >
               {(builder) => {
@@ -308,8 +312,8 @@ function LogRecordViewerByTimestamp({ records, commonLabels, logsRef }: LogRecor
       {Object.entries(groupedLines).map(([key, records]) => {
         return (
           <div id={key} key={key} ref={(element) => element && logsRef.current.push(element)}>
-            <Stack direction="column">
-              <div>{dateTimeFormat(parseInt(key, 10))}</div>
+            <div>
+              <Timestamp time={parseInt(key, 10)} />
               <div className={styles.logsContainer}>
                 {records.map((logRecord) => (
                   <React.Fragment key={uniqueId()}>
@@ -327,13 +331,32 @@ function LogRecordViewerByTimestamp({ records, commonLabels, logsRef }: LogRecor
                   </React.Fragment>
                 ))}
               </div>
-            </Stack>
+            </div>
           </div>
         );
       })}
     </div>
   );
 }
+
+interface TimestampProps {
+  time: number; // epoch timestamp
+}
+
+const Timestamp = ({ time }: TimestampProps) => {
+  const dateTime = new Date(time);
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.timestampWrapper}>
+      <Stack direction="row" alignItems="center" gap={1}>
+        <Icon name="clock-nine" />
+        <span className={styles.timestampText}>{dateTimeFormat(dateTime)}</span>
+        <small>({formatDistanceToNowStrict(dateTime)} ago)</small>
+      </Stack>
+    </div>
+  );
+};
 
 function extractCommonLabels(groupedLines: Record<string, LogRecord[]>): Array<[string, string]> {
   const groupLabels = Object.keys(groupedLines);
@@ -386,6 +409,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: scroll;
 
     flex: 1;
+  `,
+  timestampWrapper: css`
+    color: ${theme.colors.text.secondary};
+    padding: ${theme.spacing(2)} 0;
+  `,
+  timestampText: css`
+    color: ${theme.colors.text.primary};
+    font-weight: ${theme.typography.fontWeightBold};
   `,
 });
 
