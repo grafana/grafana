@@ -891,7 +891,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 			TagID:        int64(1),
 		})
 	}
-	sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		batchSize := 1000
 		numOfBatches := numAnnotations / batchSize
 		for i := 0; i < numOfBatches; i++ {
@@ -906,6 +906,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 		}
 		return nil
 	})
+	require.NoError(b, err)
 
 	annotationWithTheTag := annotations.Item{
 		ID:          int64(numAnnotations) + 1,
@@ -918,7 +919,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 		Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
 		Data:        simplejson.NewFromAny(map[string]interface{}{"data1": "I am a cool data", "data2": "I am another cool data"}),
 	}
-	err := repo.Add(context.Background(), &annotationWithTheTag)
+	err = repo.Add(context.Background(), &annotationWithTheTag)
 	require.NoError(b, err)
 
 	b.ResetTimer()
