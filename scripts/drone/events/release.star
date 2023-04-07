@@ -576,7 +576,7 @@ def publish_static_assets_step():
             "STATIC_ASSET_EDITIONS": from_secret("static_asset_editions"),
         },
         "commands": [
-            './bin/build artifacts static-assets --tag ${DRONE_TAG}',
+            "./bin/build artifacts static-assets --tag ${DRONE_TAG}",
         ],
         "depends_on": ["compile-build-cmd"],
     }
@@ -590,12 +590,21 @@ def publish_storybook_step():
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
         },
         "commands": [
-            './bin/build artifacts storybook --tag ${DRONE_TAG}',
+            "./bin/build artifacts storybook --tag ${DRONE_TAG}",
         ],
         "depends_on": ["compile-build-cmd"],
     }
 
 def publish_artifacts_pipelines(mode):
+    """Published artifacts after they've been stored and tested in prerelease buckets.
+
+    Args:
+      mode: public or security.
+        Defaults to ''.
+
+    Returns:
+      List of Drone pipelines.
+    """
     trigger = {
         "event": ["promote"],
         "target": [mode],
@@ -606,7 +615,7 @@ def publish_artifacts_pipelines(mode):
         publish_static_assets_step(),
     ]
     if mode != "security":
-        steps.extend([publish_storybook_step(),])
+        steps.extend([publish_storybook_step()])
 
     return [
         pipeline(
