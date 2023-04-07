@@ -124,7 +124,7 @@ datasources:
           # url will be interpreted as query for the datasource
           url: '$${__value.raw}'
           # optional for URL Label to set a custom display label for the link.
-          urlDisplayLabel: "View Trace"
+          urlDisplayLabel: 'View Trace'
 
         # Field with external link.
         - matcherRegex: "traceID=(\\w+)"
