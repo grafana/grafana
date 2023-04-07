@@ -97,10 +97,17 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 
 	serviceResolver := &serviceResolver{serverConfig.SharedInformerFactory.Core().V1().Services().Lister()}
 
+	var crdRESTOptionsGetter generic.RESTOptionsGetter
+	// TODO: figure out how to replace this
+	//crdRESTOptionsGetter, err := apiextensionsserveroptions.NewCRDRESTOptionsGetter(*o.RecommendedOptions.Etcd)
+	//if err != nil {
+	//	return apiextensionsapiserver.Config{}, err
+	//}
+
 	apiextensionsConfig := apiextensionsapiserver.Config{
 		GenericConfig: serverConfig,
 		ExtraConfig: apiextensionsapiserver.ExtraConfig{
-			CRDRESTOptionsGetter: nil,
+			CRDRESTOptionsGetter: crdRESTOptionsGetter,
 			MasterCount:          1,
 			ServiceResolver:      serviceResolver,
 			AuthResolverWrapper:  authWrapperFactory(serverConfig.LoopbackClientConfig),

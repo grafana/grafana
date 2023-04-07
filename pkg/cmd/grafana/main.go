@@ -9,7 +9,6 @@ import (
 
 	gcli "github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	gsrv "github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
-	gkubectl "github.com/grafana/grafana/pkg/services/k8s/cmd"
 )
 
 // The following variables cannot be constants, since they can be overridden through the -X link flag
@@ -32,7 +31,6 @@ func main() {
 		Commands: []*cli.Command{
 			gcli.CLICommand(version),
 			gsrv.ServerCommand(version, commit, buildBranch, buildstamp),
-			gkubectl.CLICommand(version),
 		},
 		CommandNotFound:      cmdNotFound,
 		EnableBashCompletion: true,
