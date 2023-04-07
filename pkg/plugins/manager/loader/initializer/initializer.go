@@ -67,25 +67,30 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 	hostEnv = append(hostEnv, i.awsEnvVars()...)
 	hostEnv = append(hostEnv, i.secureSocksProxyEnvVars()...)
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(i.cfg.Azure)...)
+	hostEnv = append(hostEnv, i.tracingEnvVars(plugin)...)
 
-	// Tracing
+	ev := getPluginSettings(plugin.ID, i.cfg).asEnvVar("GF_PLUGIN", hostEnv)
+	return ev
+}
+
+func (i *Initializer) tracingEnvVars(plugin *plugins.Plugin) []string {
 	var pluginTracingEnabled bool
 	if v, exists := i.cfg.PluginSettings[plugin.ID]["tracing"]; exists {
 		pluginTracingEnabled = v == "true"
 	}
-	if i.cfg.Tracing.IsEnabled() && pluginTracingEnabled {
-		if plugin.Info.Version != "" {
-			hostEnv = append(hostEnv, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
-		}
-		hostEnv = append(
-			hostEnv,
-			fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", i.cfg.Tracing.OpenTelemetry.Address),
-			fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", i.cfg.Tracing.OpenTelemetry.Propagation),
-		)
+	if !i.cfg.Tracing.IsEnabled() || !pluginTracingEnabled {
+		return nil
 	}
 
-	ev := getPluginSettings(plugin.ID, i.cfg).asEnvVar("GF_PLUGIN", hostEnv)
-	return ev
+	var vars []string
+	if plugin.Info.Version != "" {
+		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
+	}
+	return append(
+		vars,
+		fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", i.cfg.Tracing.OpenTelemetry.Address),
+		fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", i.cfg.Tracing.OpenTelemetry.Propagation),
+	)
 }
 
 func (i *Initializer) awsEnvVars() []string {
