@@ -241,7 +241,7 @@ func TestDashboardService(t *testing.T) {
 			require.Equal(t, int64(3), count)
 		})
 
-		t.Run("Count dashboards in folder", func(t *testing.T) {
+		t.Run("Delete dashboards in folder", func(t *testing.T) {
 			fakeStore.On("DeleteDashboardsInFolder", mock.Anything, mock.AnythingOfType("*dashboards.DeleteDashboardsInFolderRequest")).Return(nil).Once()
 			folderSvc.ExpectedFolder = &folder.Folder{ID: 1}
 			err := service.DeleteInFolder(context.Background(), 1, "uid")
