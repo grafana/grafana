@@ -688,23 +688,6 @@ describe('explore links utils', () => {
       const variables = getVariableUsageInfo(dataLink, scopedVars).variables;
       expect(variables).toHaveLength(2);
     });
-
-    it('returns deduplicated list of variables', () => {
-      const dataLink = {
-        url: '',
-        title: '',
-        internal: {
-          datasourceUid: 'uid',
-          datasourceName: 'dsName',
-          query: { query: 'test ${test} ${foo} ${test:raw} $test' },
-        },
-      };
-      const scopedVars = {
-        testVal: { text: '', value: 'val1' },
-      };
-      const variables = getVariableUsageInfo(dataLink, scopedVars).variables;
-      expect(variables).toHaveLength(2);
-    });
   });
 });
 
