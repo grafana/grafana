@@ -264,14 +264,23 @@ message WriteEntityResponse {
   // Entity details with the body removed
   EntityVersionInfo entity = 4; 
 
+  // k8s body
+  bytes body = 5;
+
+  // k8s meta
+  bytes meta_json = 6;
+
+  // k8s meta
+  bytes status_json = 7;
+
   // Entity summary as JSON
-  bytes summary_json = 5;
+  bytes summary_json = 8;
   
   // Full k8s style resource (meta+spec+status)
-  bytes resource_json = 6;
+  bytes resource_json = 9;
 
   // Status code
-  Status status = 7;
+  Status status = 10;
 
   // Status enumeration
   enum Status {
@@ -366,48 +375,56 @@ message EntitySearchResult {
   // Entity identifier
   GRN GRN = 1;
 
+  string guid = 2;
+
   // The current veresion of this entity
-  uint64 version = 2;
+  uint64 version = 3;
 
   // Content Length
-  int64 size = 3;
+  int64 size = 4;
 
   // Time in epoch milliseconds that the entity was updated
-  int64 updated_at = 4;
+  int64 updated_at = 5;
 
   // Who updated the entity
-  string updated_by = 5;
+  string updated_by = 6;
 
   // Optionally include the full entity body
-  bytes body = 6;
+  bytes body = 7;
+
+  // k8s meta
+  bytes meta = 8;
+
+  // k8s meta
+  bytes status = 9;
 
   // Full k8s style resource (meta+spec+status)
-  bytes resource_json = 7;
+  bytes resource_json = 10;
 
   //----------------------------------------
   // Derived from body in the summary
   //----------------------------------------
 
   // Always included
-  string name = 8;
+  string name = 11;
 
   // Always included
-  string description = 9;
+  string description = 12;
 
   // The structured labels
-  map<string,string> labels = 10;
+  map<string,string> labels = 13;
 
   // Folder UID
-  string folder = 11;
+  string folder = 14;
 
   // Slugified name
-  string slug = 12;
+  string slug = 15;
 
   // Optionally include extracted JSON
-  bytes fields_json = 13;
+  bytes fields_json = 16;
 
   // EntityErrorInfo in json
-  bytes error_json = 14;
+  bytes error_json = 17;
 }
 
 message EntitySearchResponse {

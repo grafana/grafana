@@ -39,7 +39,10 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 			{Name: "access", Type: migrator.DB_Text, Nullable: true}, // JSON object
 
 			// The raw entity body (any byte array)
+			{Name: "meta", Type: migrator.DB_Blob, Nullable: true},     // raw meta object from k8s (with standard stuff removed)
 			{Name: "body", Type: migrator.DB_LongBlob, Nullable: true}, // null when nested or remote
+			{Name: "status", Type: migrator.DB_Blob, Nullable: true},   // raw status object
+
 			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false, IsLatin: true}, // md5(body)
 			{Name: "version", Type: migrator.DB_BigInt, Length: 128, Nullable: false},
@@ -212,7 +215,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
 	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v55)" // change this when we want to wipe and reset the object tables
+	suffix := " (v123)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("EntityStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'EntityStore init%';
 	`)))

@@ -304,7 +304,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 	}
 
 	var access []byte //
-	etag := createContentsHash(body)
+	etag := createContentsHash(body, r.Meta, r.Status)
 	rsp := &entity.WriteEntityResponse{
 		GRN:    grn,
 		Status: entity.WriteEntityResponse_CREATED, // Will be changed if not true
@@ -396,13 +396,13 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		if isUpdate {
 			rsp.Status = entity.WriteEntityResponse_UPDATED
 			_, err = tx.Exec(ctx, "UPDATE entity SET "+
-				"body=?, size=?, etag=?, version=?, "+
+				"body=?, meta=?, status=?, size=?, etag=?, version=?, "+
 				"updated_at=?, updated_by=?,"+
 				"name=?, description=?,"+
 				"labels=?, fields=?, errors=?, "+
 				"origin=?, origin_key=?, origin_ts=? "+
 				"WHERE grn=?",
-				body, versionInfo.Size, etag, versionInfo.Version,
+				body, r.Meta, r.Status, versionInfo.Size, etag, versionInfo.Version,
 				updatedAt, versionInfo.UpdatedBy,
 				summary.model.Name, summary.model.Description,
 				summary.labels, summary.fields, summary.errors,
@@ -419,19 +419,19 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			rsp.GUID = uuid.New().String()
 			_, err = tx.Exec(ctx, "INSERT INTO entity ("+
 				"guid, grn, tenant_id, kind, uid, folder, "+
-				"size, body, etag, version, "+
+				"size, body, meta, status, etag, version, "+
 				"updated_at, updated_by, created_at, created_by, "+
 				"name, description, slug, "+
 				"labels, fields, errors, "+
 				"origin, origin_key, origin_ts) "+
 				"VALUES (?, ?, ?, ?, ?, ?, "+
-				" ?, ?, ?, ?, "+
+				" ?, ?, ?, ?, ?, ?, "+
 				" ?, ?, ?, ?, "+
 				" ?, ?, ?, "+
 				" ?, ?, ?, "+
 				" ?, ?, ?)",
 				rsp.GUID, oid, grn.TenantId, grn.Kind, grn.UID, r.Folder,
-				versionInfo.Size, body, etag, versionInfo.Version,
+				versionInfo.Size, body, r.Meta, r.Status, etag, versionInfo.Version,
 				updatedAt, createdBy, createdAt, createdBy,
 				summary.model.Name, summary.model.Description, summary.model.Slug,
 				summary.labels, summary.fields, summary.errors,
@@ -448,6 +448,9 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		}
 		return err
 	})
+	rsp.Body = body           // k8s
+	rsp.MetaJson = r.Meta     // k8s
+	rsp.StatusJson = r.Status // k8s
 	rsp.SummaryJson = summary.marshaled
 	if err != nil {
 		rsp.Status = entity.WriteEntityResponse_ERROR
@@ -725,14 +728,14 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	}
 
 	fields := []string{
-		"grn", "tenant_id", "kind", "uid",
+		"grn", "guid", "tenant_id", "kind", "uid",
 		"version", "folder", "slug", "errors", // errors are always returned
 		"size", "updated_at", "updated_by",
 		"name", "description", // basic summary
 	}
 
 	if r.WithBody {
-		fields = append(fields, "body")
+		fields = append(fields, "body", "meta", "status")
 	}
 
 	if r.WithLabels {
@@ -791,13 +794,13 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		summaryjson := summarySupport{}
 
 		args := []interface{}{
-			&oid, &result.GRN.TenantId, &result.GRN.Kind, &result.GRN.UID,
+			&oid, &result.Guid, &result.GRN.TenantId, &result.GRN.Kind, &result.GRN.UID,
 			&result.Version, &result.Folder, &result.Slug, &summaryjson.errors,
 			&result.Size, &result.UpdatedAt, &result.UpdatedBy,
 			&result.Name, &summaryjson.description,
 		}
 		if r.WithBody {
-			args = append(args, &result.Body)
+			args = append(args, &result.Body, &result.Meta, &result.Status)
 		}
 		if r.WithLabels {
 			args = append(args, &summaryjson.labels)
