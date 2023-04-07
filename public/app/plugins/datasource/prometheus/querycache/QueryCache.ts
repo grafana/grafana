@@ -72,6 +72,7 @@ export class QueryCache {
   private perfObeserver?: PerformanceObserver;
   private shouldProfile: boolean;
 
+  // @todo change to 5 minutes before push
   sendEventsInterval = 60000;
 
   pendingRequestIdsToTargSigs = new Map<
