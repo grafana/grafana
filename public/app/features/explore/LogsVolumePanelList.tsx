@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { flatten, groupBy, mapValues } from 'lodash';
+import { flatten, groupBy, mapValues, sortBy } from 'lodash';
 import React, { useMemo } from 'react';
 
 import {
@@ -51,7 +51,8 @@ export const LogsVolumePanelList = ({
     maximumRange: allLogsVolumeMaximumRange,
   } = useMemo(() => {
     let maximumValue = -Infinity;
-    const grouped = groupBy(logsVolumeData?.data || [], 'meta.custom.datasourceName');
+    const sorted = sortBy(logsVolumeData?.data || [], 'meta.custom.datasourceName');
+    const grouped = groupBy(sorted, 'meta.custom.datasourceName');
     const logVolumes = mapValues(grouped, (value) => {
       const mergedData = mergeLogsVolumeDataFrames(value);
       maximumValue = Math.max(maximumValue, mergedData.maximum);
