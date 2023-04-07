@@ -37,6 +37,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-family: ${theme.typography.fontFamilyMonospace};
     font-weight: ${theme.typography.fontWeightMedium};
   `,
+  // set fixed position from the top instead of centring as the container
+  // may get bigger when the for is invalid
+  removeButton: css`
+    margin-top: 25px;
+  `,
 });
 
 const getTransformOptions = () => {
@@ -142,8 +147,13 @@ export const ConfigureCorrelationSourceForm = () => {
                   <div>
                     {fields.map((field, index) => {
                       return (
-                        <Stack direction="row" key={field.id} alignItems="center">
-                          <Field label="Type">
+                        <Stack direction="row" key={field.id} alignItems="top">
+                          <Field
+                            label="Type"
+                            invalid={!!formState.errors?.config?.transformations?.[index]?.type}
+                            error={formState.errors?.config?.transformations?.[index]?.type?.message}
+                            validationMessageHorizontalOverflow={true}
+                          >
                             <InputControl
                               render={({ field: { onChange, ref, ...field } }) => (
                                 <Select
@@ -186,14 +196,16 @@ export const ConfigureCorrelationSourceForm = () => {
                               }
                             />
                           </Field>
-                          <IconButton
-                            type="button"
-                            tooltip="Remove transformation"
-                            name={'trash-alt'}
-                            onClick={() => remove(index)}
-                          >
-                            Remove
-                          </IconButton>
+                          <div className={styles.removeButton}>
+                            <IconButton
+                              type="button"
+                              tooltip="Remove transformation"
+                              name={'trash-alt'}
+                              onClick={() => remove(index)}
+                            >
+                              Remove
+                            </IconButton>
+                          </div>
                         </Stack>
                       );
                     })}
