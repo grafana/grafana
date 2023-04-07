@@ -56,3 +56,19 @@ func objectToWriteCommand(orgID int64, obj runtime.Object) (*entity.WriteEntityR
 	}
 	return req, err
 }
+
+func searchResultToK8s(obj *unstructured.Unstructured, res *entity.EntitySearchResult) *unstructured.Unstructured {
+	obj.SetNamespace("default")
+	obj.SetResourceVersion(formatResourceVersion(res.Version))
+	obj.SetName(res.GRN.UID)
+
+	// Missing GUID.... and meta....
+
+	if res.Body != nil {
+		var spec map[string]interface{}
+		_ = json.Unmarshal(res.Body, &spec)
+		obj.Object["spec"] = spec
+	}
+
+	return obj
+}

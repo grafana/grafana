@@ -2,7 +2,7 @@
   "apiVersion": "dashboard.core.grafana.com/v0-0alpha1",
   "kind": "Dashboard",
   "metadata": {
-    "name": "ryan-yyyy",
+    "name": "ryan-zzzzzzz",
     "namespace": "default"
   },
   "spec": {
