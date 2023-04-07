@@ -28,12 +28,6 @@ var (
 			Owner:       hostedGrafanaTeam,
 		},
 		{
-			Name:        "dashboardPreviews",
-			Description: "Create and show thumbnails for dashboard search results",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
 			Name:         "live-service-web-worker",
 			Description:  "This will use a webworker thread to processes events rather than the main thread",
 			State:        FeatureStateAlpha,
