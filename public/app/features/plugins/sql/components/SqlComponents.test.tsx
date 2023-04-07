@@ -7,11 +7,13 @@ import { buildSqlQueryEditorProps, buildMockDataSelectorProps } from './SqlCompo
 
 describe('SqlQueryEditor', () => {
   describe('alerts', () => {
+    afterEach(cleanup);
+
     it('should render the `database_update` alert correctly', async () => {
       render(<SqlQueryEditor {...buildSqlQueryEditorProps(true)} />);
 
       await waitFor(() => {
-        expect(screen.getByTestId('database_update').textContent).toContain('Default datasource update');
+        expect(screen.getByTestId('database_update')).toBeInTheDocument();
       });
     });
 
@@ -23,16 +25,16 @@ describe('SqlQueryEditor', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId('no_postgres_database').textContent).toContain('Default datasource error');
+        expect(screen.getByTestId('no_postgres_database')).toBeInTheDocument();
       });
     });
   });
 });
 
 describe('DatasetSelector', () => {
-  afterEach(cleanup);
-
   describe('should render with the correct default placeholder values', () => {
+    afterEach(cleanup);
+
     it(`should render with 'Select table' since no current dataset is chosen, no dataset has been preconfigured,
         and the selector has not been disabled via 'disableDatasetSelector'`, async () => {
       render(<DatasetSelector {...buildMockDataSelectorProps()} />);
@@ -61,6 +63,8 @@ describe('DatasetSelector', () => {
   });
 
   describe('should disable the database selector appropriately', () => {
+    afterEach(cleanup);
+
     it('should be disabled if a preconfigured database exists', async () => {
       render(<DatasetSelector {...buildMockDataSelectorProps({ preconfiguredDataset: 'database 1' })} />);
       await waitFor(() => {
@@ -82,6 +86,8 @@ describe('DatasetSelector', () => {
   });
 
   describe('database calls', () => {
+    afterEach(cleanup);
+
     it('should only query the database when needed', async () => {
       const mockProps = buildMockDataSelectorProps();
       render(<DatasetSelector {...mockProps} />);

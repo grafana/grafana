@@ -36,7 +36,6 @@ const buildMockDatasource = (hasDefaultDatabaseConfigured?: boolean) => {
     filterQuery: jest.fn(),
     applyTemplateVariables: jest.fn(),
     metricFindQuery: jest.fn(),
-    // @ts-ignore
     templateSrv: {
       getVariables: jest.fn(),
       replace: jest.fn(),

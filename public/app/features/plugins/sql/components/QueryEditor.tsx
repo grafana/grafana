@@ -43,13 +43,13 @@ export function SqlQueryEditor({
 
   useEffect(() => {
     // This checks to see whether there is indeed a default database (preconfiguredDataset), and if so,
-    // if that default database is different than they currently-chosen one. Both scenarios require a possible alert.
+    // if that default database is different than they currently-chosen one. Both scenarios require an alert.
     if (!!preconfiguredDatabase && query.dataset !== preconfiguredDatabase) {
       setHasDatabaseConfigIssue(true);
     }
 
-    // This tests if the Postgres datacource - Postgres datasources are passed a default prop of `disableDatasetSelector` -
-    // was configured with a default database or not (preconfiguredDatabase).
+    // This tests if the Postgres datasource - Postgres datasources are passed a default prop of `disableDatasetSelector` -
+    // was configured with a default database or not (preconfiguredDatabase). Then throw approriate warning.
     if (queryHeaderProps?.disableDatasetSelector && !preconfiguredDatabase) {
       setHasNoPostgresDefaultDatabaseConfig(true);
     }
