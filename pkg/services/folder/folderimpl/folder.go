@@ -606,10 +606,6 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 		result = append(result, subfolders...)
 	}
 
-	err = s.deleteChildrenInFolder(ctx, cmd.OrgID, cmd.UID)
-	if err != nil {
-		return result, err
-	}
 	logger.Info("deleting folder and its contents", "org_id", cmd.OrgID, "uid", cmd.UID)
 	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
 	if err != nil {
