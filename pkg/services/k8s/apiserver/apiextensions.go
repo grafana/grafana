@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/certgenerator"
 	apiextensionsapiserver "k8s.io/apiextensions-apiserver/pkg/apiserver"
 	apiextensionsserveroptions "k8s.io/apiextensions-apiserver/pkg/cmd/server/options"
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -97,17 +97,10 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 
 	serviceResolver := &serviceResolver{serverConfig.SharedInformerFactory.Core().V1().Services().Lister()}
 
-	var crdRESTOptionsGetter generic.RESTOptionsGetter
-	// TODO: figure out how to replace this
-	//crdRESTOptionsGetter, err := apiextensionsserveroptions.NewCRDRESTOptionsGetter(*o.RecommendedOptions.Etcd)
-	//if err != nil {
-	//	return apiextensionsapiserver.Config{}, err
-	//}
-
 	apiextensionsConfig := apiextensionsapiserver.Config{
 		GenericConfig: serverConfig,
 		ExtraConfig: apiextensionsapiserver.ExtraConfig{
-			CRDRESTOptionsGetter: crdRESTOptionsGetter,
+			CRDRESTOptionsGetter: &restOptionsGetter{},
 			MasterCount:          1,
 			ServiceResolver:      serviceResolver,
 			AuthResolverWrapper:  authWrapperFactory(serverConfig.LoopbackClientConfig),
@@ -150,16 +143,14 @@ func (a *authResolver) ClientConfigForService(serviceName, serviceNamespace stri
 	return a.config, nil
 }
 
-type restOptionsGetter struct {
-	codec runtime.Codec
-}
+type restOptionsGetter struct{}
 
 func (r restOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
 	return generic.RESTOptions{
 		StorageConfig: &storagebackend.ConfigForResource{
 			GroupResource: resource,
 			Config: storagebackend.Config{
-				Codec: r.codec,
+				Codec: unstructured.UnstructuredJSONScheme,
 			},
 		},
 	}, nil
