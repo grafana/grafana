@@ -141,7 +141,7 @@ For details, refer to the [query editor documentation]({{< relref "./query-edito
 In the dataset dropdown, choose the MsSQL database to query. The dropdown is be populated with the databases that the user has access to.
 When the dataset is selected, the table dropdown is populated with the tables that are available.
 
-NOTE: If a default database has been choosen through the Data Source configuration page, the Dataset Dropdown will be disabled, and only that configured database will be avilable for querying.
+NOTE: If a default database has been chosen through the Data Source configuration page, the Dataset Dropdown will be disabled, and only that configured database will be available for querying.
 
 ## Use template variables
 
