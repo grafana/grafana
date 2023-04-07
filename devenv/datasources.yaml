@@ -7,7 +7,6 @@ deleteDatasources:
   - name: gdev-influxdb2-influxql
   - name: gdev-loki-0.3
   - name: gdev-loki-0.4
-  - name: gdev-loki
   - name: gdev-elasticsearch-v2-metrics
   - name: gdev-elasticsearch-v2-logs
   - name: gdev-elasticsearch-v5-metrics
@@ -234,7 +233,6 @@ datasources:
 
   - name: gdev-loki
     type: loki
-    uid: gdev-loki
     access: proxy
     url: http://localhost:3100
     editable: false
@@ -253,41 +251,17 @@ datasources:
           target:
             expr: "{ job=\"test\" }"
           field: "traceID"
-      - targetUID: WyFv5154z
-        label: "Provision test 1"
-        description: "this is a test correlation frogdm provisioning"
-        config:
-          type: query
-          target:
-            editorMode: "code"
-            format: "table"
-            rawQuery: "true"
-            rawSql: "SELECT * FROM superhero WHERE name='$${path}' AND eyecolor='$${__data.fields.traceID}'"
-            refId: "A"
-          field: "Line"
-          transformations:
-            - type: "logfmt"
-            - type: "regex"
-              expression: 'url=http[s]?:\/\/(\S*)'
-              mapValue: "path"
-      - targetUID: WyFv5154z
-        label: "Provision test 2"
-        description: "this is a test correlation from provisioning"
-        config:
-          type: query
-          target:
-            editorMode: "code"
-            format: "table"
-            rawQuery: "true"
-            rawSql: "SELECT * FROM superhero WHERE name='$${path}'"
-            refId: "A"
-          field: "Line"
-          transformations:
-            - type: "regex"
-              expression: 'url=http[s]?:\/\/(\S*)'
-              mapValue: "path"
     jsonData:
       manageAlerts: false
+      derivedFields:
+        - name: "traceID"
+          matcherRegex: "traceID=(\\w+)"
+          url: "$${__value.raw}"
+          datasourceUid: gdev-jaeger
+        - name: "traceID"
+          matcherRegex: "traceID=(\\w+)"
+          url: "$${__value.raw}"
+          datasourceUid: gdev-zipkin
 
   - name: gdev-jaeger
     type: jaeger
