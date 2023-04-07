@@ -247,6 +247,7 @@ func main() {
 						&destFlag,
 						&cli.StringSliceFlag{
 							Name:  "artifacts-editions",
+							Value: cli.NewStringSlice("oss", "enterprise", "enterprise2"),
 							Usage: "Editions for which the artifacts should be delivered (oss,enterprise,enterprise2), (or $ARTIFACTS_EDITIONS)",
 						},
 						&cli.StringFlag{
