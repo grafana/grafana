@@ -2219,8 +2219,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/correlations/Forms/ConfigureCorrelationSourceForm.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/dashboard/components/AddPanelWidget/AddPanelWidget.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]

@@ -1,11 +1,8 @@
 import { css } from '@emotion/css';
-import { deepClone } from 'fast-json-patch';
 import React from 'react';
-import { render } from 'react-dom';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import {
-  DataLinkTransformationConfig,
   DataSourceInstanceSettings,
   getSupportedTransTypeDetails,
   GrafanaTheme2,
@@ -30,7 +27,6 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getVariableUsageInfo } from '../../explore/utils/links';
 
 import { useCorrelationsFormContext } from './correlationsFormContext';
-import { emptyTransformation } from './types';
 import { getInputId } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -57,7 +53,7 @@ const getTransformOptions = () => {
 };
 
 export const ConfigureCorrelationSourceForm = () => {
-  const { control, formState, register, getValues } = useFormContext();
+  const { control, formState, register, getValues, setValue, watch } = useFormContext();
   const styles = useStyles2(getStyles);
   const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.uid);
 
@@ -68,12 +64,6 @@ export const ConfigureCorrelationSourceForm = () => {
     (variable) => variable.variableName + (variable.fieldPath ? `.${variable.fieldPath}` : '')
   );
 
-  const transformations = getValues('config.transformations');
-  transformations.map((transformation: DataLinkTransformationConfig) => {
-    let transformationDetails = getSupportedTransTypeDetails(transformation.type);
-    return { ...transformation, ...transformationDetails };
-  });
-  console.log(transformations);
   const transformOptions = getTransformOptions();
 
   return (
@@ -151,10 +141,6 @@ export const ConfigureCorrelationSourceForm = () => {
                 {fields.length > 0 && (
                   <div>
                     {fields.map((field, index) => {
-                      console.log('field', field);
-                      console.log('transformations', transformations[index]);
-                      let transformationDetails = getSupportedTransTypeDetails(transformations[index].type);
-                      //console.log("transformation details", transformationDetails);
                       return (
                         <Stack direction="row" key={field.id} alignItems="center">
                           <Field label="Type">
@@ -163,12 +149,9 @@ export const ConfigureCorrelationSourceForm = () => {
                                 <Select
                                   {...field}
                                   onChange={(value) => {
-                                    console.log(value);
-                                    transformationDetails = getSupportedTransTypeDetails(
-                                      SupportedTransformationType[
-                                        value.label as keyof typeof SupportedTransformationType
-                                      ]
-                                    );
+                                    setValue(`config.transformations.${index}.expression`, '');
+                                    setValue(`config.transformations.${index}.mapValue`, '');
+                                    onChange(value.value);
                                   }}
                                   options={transformOptions}
                                   aria-label="Type"
@@ -180,18 +163,27 @@ export const ConfigureCorrelationSourceForm = () => {
                               rules={{ required: { value: true, message: 'Please select a transformation type' } }}
                             />
                           </Field>
+                          <Field label="Field">
+                            <Input {...register(`config.transformations.${index}.field`)} defaultValue={field.field} />
+                          </Field>
                           <Field label="Expression">
                             <Input
-                              {...register(`config.transformations[${index}].expression`)}
+                              {...register(`config.transformations.${index}.expression`)}
                               defaultValue={field.expression}
-                              disabled={!transformations[index].showExpression}
+                              disabled={
+                                !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
+                                  .showExpression
+                              }
                             />
                           </Field>
-                          <Field label="Field">
+                          <Field label="Map value">
                             <Input
-                              {...register(`config.transformations[${index}].mapValue`)}
+                              {...register(`config.transformations.${index}.mapValue`)}
                               defaultValue={field.mapValue}
-                              disabled={!transformations[index].showMapValue}
+                              disabled={
+                                !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
+                                  .showMapValue
+                              }
                             />
                           </Field>
                           <IconButton
