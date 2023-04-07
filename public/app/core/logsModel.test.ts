@@ -1216,7 +1216,6 @@ describe('logs volume', () => {
         from: FROM.valueOf(),
         to: TO.valueOf(),
       },
-      reuseWhenZoomingIn: true,
     };
 
     await expect(volumeProvider).toEmitValuesWith((received) => {
@@ -1248,7 +1247,6 @@ describe('logs volume', () => {
         from: FROM.valueOf(),
         to: TO.valueOf(),
       },
-      reuseWhenZoomingIn: true,
     };
 
     await expect(volumeProvider).toEmitValuesWith((received) => {

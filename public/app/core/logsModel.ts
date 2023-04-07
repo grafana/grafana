@@ -688,7 +688,6 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
               absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
               datasourceName: datasource.name,
               sourceQuery: options.targets.find((dataQuery) => dataQuery.refId === sourceRefId)!,
-              reuseWhenZoomingIn: true,
             };
 
             dataFrame.meta = {
