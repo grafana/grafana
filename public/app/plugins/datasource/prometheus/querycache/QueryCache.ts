@@ -71,6 +71,7 @@ export class QueryCache {
   private overlapWindowMs: number;
   private perfObeserver?: PerformanceObserver;
   private shouldProfile: boolean;
+  private timer?: NodeJS.Timer;
 
   pendingRequestIdsToTargSigs = new Map<
     RequestID,
@@ -81,6 +82,21 @@ export class QueryCache {
       interval?: string;
       panelId?: number;
       expr?: string;
+    }
+  >();
+
+  pendingAccumulatedEvents = new Map<
+    string,
+    {
+      requestCount: number;
+      savedBytesTotal: number;
+      initialRequestSize: number;
+      lastRequestSize: number;
+      panelId: string;
+      dashId: string;
+      expr: string;
+      interval: string;
+      sent: boolean;
     }
   >();
 
@@ -135,21 +151,21 @@ export class QueryCache {
 
                   for (let [, value] of entries) {
                     if (value.identity === currentRequest.identity && value.bytes !== null) {
-                      faro.api.pushEvent(
-                        'prometheus incremental query response size',
-                        {
-                          initialRequestBytes: value.bytes.toString(10),
-                          subsequentRequestBytes: requestTransferSize.toString(10),
-                          panelId: currentRequest.panelId?.toString(10) ?? '',
-                          dashId: currentRequest.dashboardUID ?? '',
-                          expr: currentRequest.expr ?? '',
-                          interval: currentRequest.interval ?? '',
-                        },
-                        'no-interaction',
-                        {
-                          skipDedupe: true,
-                        }
-                      );
+                      const previous = this.pendingAccumulatedEvents.get(value.identity);
+
+                      const savedBytes = value.bytes - requestTransferSize;
+
+                      this.pendingAccumulatedEvents.set(value.identity, {
+                        requestCount: (previous?.requestCount ?? 0) + 1,
+                        savedBytesTotal: (previous?.savedBytesTotal ?? 0) + savedBytes,
+                        initialRequestSize: value.bytes,
+                        lastRequestSize: requestTransferSize,
+                        panelId: currentRequest.panelId?.toString() ?? '',
+                        dashId: currentRequest.dashboardUID ?? '',
+                        expr: currentRequest.expr ?? '',
+                        interval: currentRequest.interval ?? '',
+                      });
+
                       // We don't need to save each subsequent request, only the first one
                       this.pendingRequestIdsToTargSigs.delete(requestId);
 
@@ -167,8 +183,39 @@ export class QueryCache {
       });
 
       this.perfObeserver.observe({ type: 'resource', buffered: false });
+
+      this.timer = setInterval(this.sendPendingTrackingEvents, 60000);
+
+      window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
     }
   }
+
+  sendPendingTrackingEvents = () => {
+    const entries = this.pendingAccumulatedEvents.entries();
+
+    for (let [key, value] of entries) {
+      if (!value.sent) {
+        this.pendingAccumulatedEvents.set(key, { ...value, sent: true });
+        faro.api.pushEvent(
+          'prometheus incremental query response size',
+          {
+            requestCount: value.requestCount.toString(),
+            savedBytesTotal: value.savedBytesTotal.toString(),
+            initialRequestSize: value.initialRequestSize.toString(),
+            lastRequestSize: value.lastRequestSize.toString(),
+            panelId: value.panelId.toString(),
+            dashId: value.dashId.toString(),
+            expr: value.expr.toString(),
+            interval: value.interval.toString(),
+          },
+          'no-interaction',
+          {
+            skipDedupe: true,
+          }
+        );
+      }
+    }
+  };
 
   // can be used to change full range request to partial, split into multiple requests
   requestInfo(request: DataQueryRequest<PromQuery>, interpolateString: StringInterpolator): CacheRequestInfo {
