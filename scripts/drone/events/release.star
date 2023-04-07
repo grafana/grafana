@@ -566,41 +566,31 @@ def publish_artifacts_step(mode):
         "depends_on": ["compile-build-cmd"],
     }
 
-def publish_static_assets_step(mode):
-    security = ""
-    if mode == "security":
-        security = "--security "
+def publish_static_assets_step():
     return {
         "name": "publish-static-assets",
         "image": publish_image,
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
-            "SECURITY_DEST_BUCKET": from_secret("security_dest_bucket"),
             "STATIC_ASSET_EDITIONS": from_secret("static_asset_editions"),
         },
         "commands": [
-            "./bin/build artifacts static-assets {}--tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}".format(
-                security,
-            ),
+            './bin/build artifacts static-assets --tag ${DRONE_TAG}',
         ],
         "depends_on": ["compile-build-cmd"],
     }
 
-def publish_storybook_step(mode):
-    security = ""
-    if mode == "security":
-        security = "--security "
+def publish_storybook_step():
     return {
         "name": "publish-storybook",
         "image": publish_image,
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
+            "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
         },
         "commands": [
-            "./bin/build artifacts storybook {}--tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}".format(
-                security,
-            ),
+            './bin/build artifacts storybook --tag ${DRONE_TAG}',
         ],
         "depends_on": ["compile-build-cmd"],
     }
@@ -613,9 +603,10 @@ def publish_artifacts_pipelines(mode):
     steps = [
         compile_build_cmd(),
         publish_artifacts_step(mode),
-        publish_storybook_step(mode),
-        publish_static_assets_step(mode),
+        publish_static_assets_step(),
     ]
+    if mode != "security":
+        steps.extend([publish_storybook_step(),])
 
     return [
         pipeline(

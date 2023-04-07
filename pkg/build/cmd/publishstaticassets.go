@@ -32,7 +32,6 @@ func PublishStaticAssetsAction(c *cli.Context) error {
 		srcBucket:           c.String("src-bucket"),
 		staticAssetsBucket:  c.String("static-assets-bucket"),
 		staticAssetEditions: staticAssetEditions,
-		security:            c.Bool("security"),
 		tag:                 strings.TrimPrefix(c.String("tag"), "v"),
 	}
 
