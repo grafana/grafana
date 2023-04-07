@@ -314,4 +314,8 @@ const (
 	// FlagPyroscopeFlameGraph
 	// Changes flame graph to pyroscope one
 	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
+
+	// FlagDataplaneFrontendFallback
+	// Support dataplane contract field name change for tranformations and field name matchers where the name is different
+	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
 )

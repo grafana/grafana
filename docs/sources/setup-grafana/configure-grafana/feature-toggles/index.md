@@ -108,6 +108,7 @@ Alpha features might be changed or removed without prior notice.
 | `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                                                                                                          |
 | `unifiedRequestLog`                | Writes error logs to the request logger                                                                                                                                                             |
 | `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                                                                                                                |
+| `dataplaneFrontendFallback`        | Support dataplane contract field name change for tranformations and field name matchers where the name is different                                                                                 |
 
 ## Development feature toggles
 
