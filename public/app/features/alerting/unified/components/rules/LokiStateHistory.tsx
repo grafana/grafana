@@ -1,20 +1,23 @@
 import { css } from '@emotion/css';
 import { getUnixTime, subMinutes } from 'date-fns';
 import { groupBy, isEmpty, isEqual, take, uniqBy, uniqueId } from 'lodash';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { BehaviorSubject, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 import {
   ArrayVector,
   DataFrame,
   dateTime,
   dateTimeFormat,
+  Field,
   FieldType,
   getDisplayProcessor,
   GrafanaTheme2,
+  SortedVector,
   TimeRange,
 } from '@grafana/data';
+import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
 import { Stack } from '@grafana/experimental';
 import { LegendDisplayMode, MappingType, ThresholdsMode, VisibilityMode } from '@grafana/schema';
 import { Alert, Icon, TagList, useStyles2, useTheme2 } from '@grafana/ui';
@@ -47,7 +50,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   const { useGetRuleHistoryQuery } = stateHistoryApi;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  // const [cursorState, setCursorState] = useState({seriesIdx: 0, pointIdx: 0});
+
   const frameSubsetRef = useRef<DataFrame[]>([]);
   const logsRef = useRef<HTMLDivElement[]>([]);
   const pointerSubject = useRef(
@@ -113,13 +116,22 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   };
 
   const dataFrames: DataFrame[] = Object.entries(groupedLines).map<DataFrame>(([key, records]) => {
+    const timeIndex = records.map((_, index) => index);
+
+    const timeField: Field = {
+      name: 'time',
+      type: FieldType.time,
+      values: new ArrayVector(records.map((record) => record.timestamp)),
+      config: { displayName: 'Time', custom: { fillOpacity: 100 } },
+    };
+
+    timeIndex.sort(fieldIndexComparer(timeField));
+
     const frame: DataFrame = {
       fields: [
         {
-          name: 'time',
-          type: FieldType.time,
-          values: new ArrayVector(records.map((record) => record.timestamp)),
-          config: { displayName: 'Time', custom: { fillOpacity: 100 } },
+          ...timeField,
+          values: new SortedVector(timeField.values, timeIndex),
         },
         {
           name: 'state',
