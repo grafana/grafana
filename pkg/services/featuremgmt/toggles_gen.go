@@ -7,10 +7,6 @@
 package featuremgmt
 
 const (
-	// FlagAlertingBigTransactions
-	// Use big transactions for alerting database writes
-	FlagAlertingBigTransactions = "alertingBigTransactions"
-
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
@@ -148,7 +144,7 @@ const (
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer
-	// Run GRPC server
+	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
 
 	// FlagEntityStore
@@ -194,6 +190,10 @@ const (
 	// FlagElasticsearchBackendMigration
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
+
+	// FlagShowTraceId
+	// Show trace ids for requests
+	FlagShowTraceId = "showTraceId"
 
 	// FlagDatasourceOnboarding
 	// Enable data source onboarding page
@@ -306,4 +306,8 @@ const (
 	// FlagRenderAuthJWT
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
+
+	// FlagPyroscopeFlameGraph
+	// Changes flame graph to pyroscope one
+	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
 )

@@ -108,14 +108,14 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
 function getLinkExtensionOnClick(
   config: PluginExtensionLinkConfig,
   context?: object
-): ((event: React.MouseEvent) => void) | undefined {
+): ((event?: React.MouseEvent) => void) | undefined {
   const { onClick } = config;
 
   if (!onClick) {
     return;
   }
 
-  return function onClickExtensionLink(event: React.MouseEvent) {
+  return function onClickExtensionLink(event?: React.MouseEvent) {
     try {
       const result = onClick(event, getEventHelpers(context));
 

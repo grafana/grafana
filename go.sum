@@ -1297,6 +1297,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW3
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.157.0 h1:Qm0r5A4TsG+Tmy8Vagffqv21t3R/tzFUdYZZpd9COYE=
 github.com/grafana/grafana-plugin-sdk-go v0.157.0/go.mod h1:FwinU1fti54nWWsacIdL8D2WfYcKOWB2VRMtxnBbY+o=
+github.com/grafana/grafana-plugin-sdk-go v0.158.0 h1:kucTwr4LEa6hoSunnRqkuEeJOgbBTFrhdGNkJrMV4Zg=
+github.com/grafana/grafana-plugin-sdk-go v0.158.0/go.mod h1:7/F3lL/w3MGuZTwu0jam5oL/4zNOQmhs2k8WZ9VlzhI=
 github.com/grafana/kindsys v0.0.0-20230309200316-812b9884a375 h1:iWFjqAU5GjIV/HetIE/Me6VF3SRw29u5QviMVbJUVQo=
 github.com/grafana/kindsys v0.0.0-20230309200316-812b9884a375/go.mod h1:213a3clTiegHfheYcLPLeEyHv/azK/fAF67OEbzuLzw=
 github.com/grafana/mysql v1.6.8 h1:kyo38C4NgghJMqaPrkWPy4rifAcipQVF+dKttfpgTCs=

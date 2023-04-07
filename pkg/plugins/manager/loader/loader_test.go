@@ -447,63 +447,6 @@ func TestLoader_Load(t *testing.T) {
 				},
 			},
 		},
-		{
-			name:  "Load CDN plugin",
-			class: plugins.External,
-			cfg: &config.Cfg{
-				PluginsCDNURLTemplate: "https://cdn.example.com",
-				PluginSettings: setting.PluginSettings{
-					"grafana-worldmap-panel": {"cdn": "true"},
-				},
-			},
-			pluginPaths: []string{"../testdata/cdn"},
-			want: []*plugins.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID:   "grafana-worldmap-panel",
-						Type: "panel",
-						Name: "Worldmap Panel",
-						Info: plugins.Info{
-							Version: "0.3.3",
-							Links: []plugins.InfoLink{
-								{Name: "Project site", URL: "https://github.com/grafana/worldmap-panel"},
-								{Name: "MIT License", URL: "https://github.com/grafana/worldmap-panel/blob/master/LICENSE"},
-							},
-							Logos: plugins.Logos{
-								// Path substitution
-								Small: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
-								Large: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
-							},
-							Screenshots: []plugins.Screenshots{
-								{
-									Name: "World",
-									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-world.png",
-								},
-								{
-									Name: "USA",
-									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-usa.png",
-								},
-								{
-									Name: "Light Theme",
-									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-light-theme.png",
-								},
-							},
-						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "3.x.x",
-							Plugins:        []plugins.Dependency{},
-						},
-					},
-					FS: plugins.NewLocalFS(map[string]struct{}{
-						filepath.Join(parentDir, "testdata/cdn/plugin", "plugin.json"): {},
-					}, filepath.Join(parentDir, "testdata/cdn/plugin")),
-					Class:     plugins.External,
-					Signature: plugins.SignatureValid,
-					BaseURL:   "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
-					Module:    "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module",
-				},
-			},
-		},
 	}
 	for _, tt := range tests {
 		reg := fakes.NewFakePluginRegistry()
@@ -533,6 +476,89 @@ func TestLoader_Load(t *testing.T) {
 			verifyState(t, tt.want, reg, procPrvdr, storage, procMgr)
 		})
 	}
+}
+
+func TestLoader_Load_CustomSource(t *testing.T) {
+	t.Run("Load a plugin", func(t *testing.T) {
+		parentDir, err := filepath.Abs("../")
+		if err != nil {
+			t.Errorf("could not construct absolute path of current dir")
+			return
+		}
+
+		cfg := &config.Cfg{
+			PluginsCDNURLTemplate: "https://cdn.example.com",
+			PluginSettings: setting.PluginSettings{
+				"grafana-worldmap-panel": {"cdn": "true"},
+			},
+		}
+
+		pluginPaths := []string{"../testdata/cdn"}
+		expected := []*plugins.Plugin{{
+			JSONData: plugins.JSONData{
+				ID:   "grafana-worldmap-panel",
+				Type: "panel",
+				Name: "Worldmap Panel",
+				Info: plugins.Info{
+					Version: "0.3.3",
+					Links: []plugins.InfoLink{
+						{Name: "Project site", URL: "https://github.com/grafana/worldmap-panel"},
+						{Name: "MIT License", URL: "https://github.com/grafana/worldmap-panel/blob/master/LICENSE"},
+					},
+					Logos: plugins.Logos{
+						// Path substitution
+						Small: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
+						Large: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
+					},
+					Screenshots: []plugins.Screenshots{
+						{
+							Name: "World",
+							Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-world.png",
+						},
+						{
+							Name: "USA",
+							Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-usa.png",
+						},
+						{
+							Name: "Light Theme",
+							Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-light-theme.png",
+						},
+					},
+				},
+				Dependencies: plugins.Dependencies{
+					GrafanaVersion: "3.x.x",
+					Plugins:        []plugins.Dependency{},
+				},
+			},
+			FS: plugins.NewLocalFS(map[string]struct{}{
+				filepath.Join(parentDir, "testdata/cdn/plugin", "plugin.json"): {},
+			}, filepath.Join(parentDir, "testdata/cdn/plugin")),
+			Class:     plugins.Bundled,
+			Signature: plugins.SignatureValid,
+			BaseURL:   "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
+			Module:    "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module",
+		}}
+
+		l := newLoader(cfg)
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.Bundled
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return pluginPaths
+			},
+			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
+				return plugins.Signature{
+					Status: plugins.SignatureValid,
+				}, true
+			},
+		})
+
+		require.NoError(t, err)
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
+		}
+	})
 }
 
 func TestLoader_setDefaultNavURL(t *testing.T) {
@@ -1304,10 +1330,9 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 }
 
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
-	cdn := pluginscdn.ProvideService(cfg)
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
-		fakes.NewFakeRoleRegistry(), cdn, assetpath.ProvideService(cdn), finder.NewLocalFinder())
+		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder())
 
 	for _, cb := range cbs {
 		cb(l)
