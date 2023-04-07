@@ -3327,7 +3327,7 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes@npm:^0.3.0":
-  version: 0.3.0
+  version: 0.0.0-use.local
   resolution: "@grafana/scenes@npm:0.3.0"
   dependencies:
     "@grafana/e2e-selectors": canary
@@ -3338,7 +3338,7 @@ __metadata:
     uuid: ^9.0.0
   checksum: 3610cedcc150b9d6e3d6948056bb1bbbfe58d7fa0ff6e762eec6619bb0940504db867ea87e56160f27e4d93772f6203493bf87d353a1b18d2664e74a03f03a05
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@grafana/schema@10.0.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
@@ -6268,6 +6268,18 @@ __metadata:
   version: 1.1.0
   resolution: "@protobufjs/utf8@npm:1.1.0"
   checksum: f9bf3163d13aaa3b6f5e6fbf37a116e094ea021c0e1f2a7ccd0e12a29e2ce08dafba4e8b36e13f8ed7397e1591610ce880ed1289af4d66cf4ace8a36a9557278
+  languageName: node
+  linkType: hard
+
+"@pyroscope/flamegraph@npm:^0.35.5":
+  version: 0.35.5
+  resolution: "@pyroscope/flamegraph@npm:0.35.5"
+  peerDependencies:
+    graphviz-react: ^1.2.5
+    react: ">=16.14.0"
+    react-dom: ">=16.14.0"
+    true-myth: ^5.1.2
+  checksum: e63580683f5d2333202415b827ebe78986294d1fe49de978b62400e5cd070afd1f48d071ff7e5c22bc1ace6c52e9767e85650b34444c6ad0c9ecb23788d83ffd
   languageName: node
   linkType: hard
 
@@ -20126,6 +20138,7 @@ __metadata:
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.10
     "@popperjs/core": 2.11.6
     "@prometheus-io/lezer-promql": ^0.37.0-rc.1
+    "@pyroscope/flamegraph": ^0.35.5
     "@react-aria/button": 3.6.1
     "@react-aria/dialog": 3.3.1
     "@react-aria/focus": 3.8.0

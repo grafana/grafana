@@ -166,8 +166,6 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		if err != nil {
 			return nil, err
 		}
-		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
-
 		if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); errDeclareRoles != nil {
 			l.log.Warn("Declare plugin roles failed.", "pluginID", p.ID, "err", errDeclareRoles)
 		}
@@ -176,6 +174,10 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 	for _, p := range verifiedPlugins {
 		if err := l.load(ctx, p); err != nil {
 			l.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
+		}
+
+		if !p.IsCorePlugin() && !p.IsBundledPlugin() {
+			metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 		}
 	}
 
