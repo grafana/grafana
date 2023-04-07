@@ -269,7 +269,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 			ruleGroup.Rules = filteredRules
 		}
 
-		if limitRulesPerGroup > -1 && int64(len(rules)) > limitRulesPerGroup {
+		if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
 			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
 		}
 
