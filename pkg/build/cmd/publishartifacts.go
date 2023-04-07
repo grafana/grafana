@@ -21,13 +21,19 @@ func PublishArtifactsAction(c *cli.Context) error {
 		return cli.Exit("", 1)
 	}
 
-	securityDestBucket, err := env.RequireStringWithEnvFallback(c, "security-dest-bucket", "SECURITY_DEST_BUCKET")
-	if err != nil {
-		return err
-	}
-	enterprise2SecurityPrefix, err := env.RequireStringWithEnvFallback(c, "enterprise2-security-prefix", "ENTERPRISE2_SECURITY_PREFIX")
-	if err != nil {
-		return err
+	security := c.Bool("security")
+	var securityDestBucket, enterprise2SecurityPrefix string
+
+	if security {
+		var err error
+		securityDestBucket, err = env.RequireStringWithEnvFallback(c, "security-dest-bucket", "SECURITY_DEST_BUCKET")
+		if err != nil {
+			return err
+		}
+		enterprise2SecurityPrefix, err = env.RequireStringWithEnvFallback(c, "enterprise2-security-prefix", "ENTERPRISE2_SECURITY_PREFIX")
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := gcloud.ActivateServiceAccount(); err != nil {
@@ -39,7 +45,7 @@ func PublishArtifactsAction(c *cli.Context) error {
 		destBucket:                c.String("dest-bucket"),
 		enterprise2DestBucket:     c.String("enterprise2-dest-bucket"),
 		enterprise2SecurityPrefix: enterprise2SecurityPrefix,
-		security:                  c.Bool("security"),
+		security:                  security,
 		tag:                       strings.TrimPrefix(c.String("tag"), "v"),
 	}
 
@@ -47,47 +53,50 @@ func PublishArtifactsAction(c *cli.Context) error {
 		cfg.destBucket = securityDestBucket
 	}
 
-	err = copyDownloads(cfg)
+	gcs, err := storage.New()
 	if err != nil {
 		return err
 	}
-	err = copyEnterprise2Downloads(cfg)
+
+	err = copyDownloads(c, gcs, cfg)
+	if err != nil {
+		return err
+	}
+	err = copyEnterprise2Downloads(c, gcs, cfg)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func copyDownloads(cfg publishConfig) error {
+func copyDownloads(c *cli.Context, gcs *storage.Client, cfg publishConfig) error {
 	for _, edition := range []string{
 		"oss", "enterprise",
 	} {
-		destURL := fmt.Sprintf("%s/%s/", cfg.destBucket, edition)
-		srcURL := fmt.Sprintf("%s/artifacts/downloads/v%s/%s/release/*", cfg.srcBucket, cfg.tag, edition)
+		bucket := gcs.Bucket(cfg.destBucket)
+		destURL := edition
 		if !cfg.security {
 			destURL = filepath.Join(destURL, "release")
 		}
-		log.Printf("Copying downloads for %s, from %s bucket to %s bucket", edition, srcURL, destURL)
-		err := storage.GCSCopy("downloads", srcURL, destURL)
-		if err != nil {
-			return fmt.Errorf("error copying downloads, %q", err)
+		log.Printf("Copying downloads for %s, from %s bucket to %s bucket", edition, cfg.srcBucket, destURL)
+		if err := gcs.CopyRemoteDir(c.Context, gcs.Bucket(cfg.srcBucket), fmt.Sprintf("artifacts/downloads/v%s/%s/release", cfg.tag, edition), bucket, destURL); err != nil {
+			return err
 		}
 	}
 	log.Printf("Successfully copied downloads.")
 	return nil
 }
 
-func copyEnterprise2Downloads(cfg publishConfig) error {
+func copyEnterprise2Downloads(c *cli.Context, gcs *storage.Client, cfg publishConfig) error {
+	bucket := gcs.Bucket(cfg.enterprise2DestBucket)
 	var prefix string
 	if cfg.security {
 		prefix = cfg.enterprise2SecurityPrefix
 	}
-	srcURL := fmt.Sprintf("%s/artifacts/downloads-enterprise2/v%s/enterprise2/release/*", cfg.srcBucket, cfg.tag)
-	destURL := fmt.Sprintf("%s/enterprise2/%srelease", cfg.enterprise2DestBucket, prefix)
-	log.Printf("Copying downloads for enterprise2, from %s bucket to %s bucket", srcURL, destURL)
-	err := storage.GCSCopy("enterprise2 downloads", srcURL, destURL)
-	if err != nil {
-		return fmt.Errorf("error copying ")
+	destURL := fmt.Sprintf("enterprise2/%srelease", prefix)
+	log.Printf("Copying downloads for enterprise2, from %s bucket to %s bucket", cfg.srcBucket, destURL)
+	if err := gcs.CopyRemoteDir(c.Context, gcs.Bucket(cfg.srcBucket), fmt.Sprintf("artifacts/downloads-enterprise2/v%s/enterprise2/release", cfg.tag), bucket, destURL); err != nil {
+		return err
 	}
 	return nil
 }
