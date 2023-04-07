@@ -50,6 +50,7 @@ export const TransformationsEditor = (props: Props) => {
                                 onChange(value.value);
                               }}
                               options={transformOptions}
+                              width={25}
                               aria-label="Type"
                             />
                           )}
