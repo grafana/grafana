@@ -568,7 +568,7 @@ def build_frontend_package_step(edition, ver_mode):
             "./bin/build build-frontend-packages --jobs 8 --edition {} ".format(edition) +
             "--build-id {}".format(build_no),
             "yarn packages:pack",
-            "./scripts/validate-npm-packages.sh"
+            "./scripts/validate-npm-packages.sh",
         ]
 
     return {
