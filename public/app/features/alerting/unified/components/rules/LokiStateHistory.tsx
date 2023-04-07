@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { getUnixTime, subMinutes } from 'date-fns';
 import { groupBy, isEmpty, isEqual, take, uniqBy, uniqueId } from 'lodash';
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 
 import {
   ArrayVector,
@@ -46,9 +47,30 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   const { useGetRuleHistoryQuery } = stateHistoryApi;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  // const [cursorState, setCursorState] = useState({seriesIdx: 0, pointIdx: 0});
+  const frameSubsetRef = useRef<DataFrame[]>([]);
+  const logsRef = useRef<HTMLDivElement[]>([]);
+  const pointerSubject = useRef(
+    new BehaviorSubject<{ seriesIdx: number; pointIdx: number }>({ seriesIdx: 0, pointIdx: 0 })
+  );
 
   const from = getUnixTime(subMinutes(new Date(), 60));
   const { currentData: stateHistory, isLoading, isError, error } = useGetRuleHistoryQuery({ ruleUid: ruleUID, from });
+
+  useEffect(() => {
+    const subject = pointerSubject.current;
+    subject.subscribe((x) => {
+      const timestamp = frameSubsetRef.current[x.seriesIdx - 1].fields[0].values.get(x.pointIdx - 1);
+      console.log(`Series: ${x.seriesIdx} | Point: ${x.pointIdx} |`, 'Timestamp: ', dateTimeFormat(timestamp));
+
+      const refToScroll = logsRef.current.find((x) => parseInt(x.id, 10) === timestamp);
+      refToScroll?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    return () => {
+      subject.unsubscribe();
+    };
+  }, []);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -91,20 +113,18 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   };
 
   const dataFrames: DataFrame[] = Object.entries(groupedLines).map<DataFrame>(([key, records]) => {
-    const recordsSorted = records;
-
     const frame: DataFrame = {
       fields: [
         {
           name: 'time',
           type: FieldType.time,
-          values: new ArrayVector(recordsSorted.map((record) => record.timestamp)),
+          values: new ArrayVector(records.map((record) => record.timestamp)),
           config: { displayName: 'Time', custom: { fillOpacity: 100 } },
         },
         {
           name: 'state',
           type: FieldType.string,
-          values: new ArrayVector(recordsSorted.map((record) => record.line.current)),
+          values: new ArrayVector(records.map((record) => record.line.current)),
           config: {
             displayName: omitLabels(Object.entries(JSON.parse(key)), commonLabels)
               .map(([key, label]) => `${key}=${label}`)
@@ -146,6 +166,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   });
 
   const frameSubset = take(dataFrames, 10);
+  frameSubsetRef.current = frameSubset;
 
   return (
     <div className={styles.fullSize}>
@@ -189,12 +210,23 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
                 if (interpolator) {
                   builder.addHook('setCursor', (u) => {
                     interpolator(
-                      () => {
+                      (seriesIdx) => {
+                        if (seriesIdx) {
+                          const currentPointer = pointerSubject.current.getValue();
+                          pointerSubject.current.next({ ...currentPointer, seriesIdx });
+                          // setCursorState(prev => ({...prev, seriesIdx}));
+                        }
+                        // console.log('Series Index: ', seriesIdx)
                         // this one returns a number and gives us the ID for what series we are hovering over
                       },
-                      (idx) => {
+                      (pointIdx) => {
+                        if (pointIdx) {
+                          const currentPointer = pointerSubject.current.getValue();
+                          pointerSubject.current.next({ ...currentPointer, pointIdx });
+                          // setCursorState(prev => ({...prev, pointIdx}));
+                        }
                         // this is supposed to be the X-axis ID for the timestamp but it's always 0
-                        console.log(idx);
+                        // console.log('Point Index: ', pointIdx);
                       },
                       () => {},
                       u
@@ -206,7 +238,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
           )}
         </AutoSizer>
       </div>
-      <LogRecordViewerByTimestamp records={linesWithTimestamp} commonLabels={commonLabels} />
+      <LogRecordViewerByTimestamp records={linesWithTimestamp} commonLabels={commonLabels} logsRef={logsRef} />
     </div>
   );
 };
@@ -214,9 +246,10 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
 interface LogRecordViewerProps {
   records: LogRecord[];
   commonLabels: Array<[string, string]>;
+  logsRef: React.MutableRefObject<HTMLDivElement[]>;
 }
 
-function LogRecordViewerByInstance({ records, commonLabels }: LogRecordViewerProps) {
+function LogRecordViewerByInstance({ records, commonLabels, logsRef }: LogRecordViewerProps) {
   const styles = useStyles2(getStyles);
 
   const groupedLines = groupBy(records, (record: LogRecord) => {
@@ -237,13 +270,13 @@ function LogRecordViewerByInstance({ records, commonLabels }: LogRecordViewerPro
             </h4>
             <div className={styles.logsContainer}>
               {records.map((logRecord) => (
-                <React.Fragment key={uniqueId()}>
+                <div key={uniqueId()} ref={(ref) => ref && logsRef.current.push(ref)}>
                   <AlertStateTag state={logRecord.line.previous} size="sm" muted />
                   <Icon name="arrow-right" />
                   <AlertStateTag state={logRecord.line.current} />
                   <Stack direction="row">{renderValues(logRecord.line.values)}</Stack>
                   <div>{dateTimeFormat(logRecord.timestamp)}</div>
-                </React.Fragment>
+                </div>
               ))}
             </div>
           </Stack>
@@ -253,7 +286,7 @@ function LogRecordViewerByInstance({ records, commonLabels }: LogRecordViewerPro
   );
 }
 
-function LogRecordViewerByTimestamp({ records, commonLabels }: LogRecordViewerProps) {
+function LogRecordViewerByTimestamp({ records, commonLabels, logsRef }: LogRecordViewerProps) {
   const styles = useStyles2(getStyles);
 
   const groupedLines = groupBy(records, (record: LogRecord) => record.timestamp);
@@ -262,9 +295,9 @@ function LogRecordViewerByTimestamp({ records, commonLabels }: LogRecordViewerPr
     <div className={styles.logsScrollable}>
       {Object.entries(groupedLines).map(([key, records]) => {
         return (
-          <div key={key}>
+          <div id={key} key={key} ref={(element) => element && logsRef.current.push(element)}>
             <Stack direction="column">
-              <div id={key}>{dateTimeFormat(parseInt(key, 10))}</div>
+              <div>{dateTimeFormat(parseInt(key, 10))}</div>
               <div className={styles.logsContainer}>
                 {records.map((logRecord) => (
                   <React.Fragment key={uniqueId()}>
