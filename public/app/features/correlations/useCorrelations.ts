@@ -5,7 +5,14 @@ import { DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceSrv, FetchResponse } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { Correlation, CreateCorrelationParams, RemoveCorrelationParams, UpdateCorrelationParams } from './types';
+import {
+  Correlation,
+  CreateCorrelationParams,
+  CreateCorrelationResponse,
+  RemoveCorrelationParams,
+  UpdateCorrelationParams,
+  UpdateCorrelationResponse,
+} from './types';
 
 export interface CorrelationData extends Omit<Correlation, 'sourceUID' | 'targetUID'> {
   source: DataSourceInstanceSettings;
@@ -44,7 +51,9 @@ export const useCorrelations = () => {
 
   const [createInfo, create] = useAsyncFn<(params: CreateCorrelationParams) => Promise<CorrelationData>>(
     ({ sourceUID, ...correlation }) =>
-      backend.post(`/api/datasources/uid/${sourceUID}/correlations`, correlation).then(toEnrichedCorrelationData),
+      backend
+        .post(`/api/datasources/uid/${sourceUID}/correlations`, correlation)
+        .then((response: CreateCorrelationResponse) => toEnrichedCorrelationData(response.result)),
     [backend]
   );
 
@@ -57,7 +66,7 @@ export const useCorrelations = () => {
     ({ sourceUID, uid, ...correlation }) =>
       backend
         .patch(`/api/datasources/uid/${sourceUID}/correlations/${uid}`, correlation)
-        .then(toEnrichedCorrelationData),
+        .then((response: UpdateCorrelationResponse) => toEnrichedCorrelationData(response.result)),
     [backend]
   );
 

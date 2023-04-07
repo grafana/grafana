@@ -6,6 +6,16 @@ export interface AddCorrelationResponse {
 
 export type GetCorrelationsResponse = Correlation[];
 
+export type CreateCorrelationResponse = {
+  message: string;
+  result: Correlation;
+};
+
+export type UpdateCorrelationResponse = {
+  message: string;
+  result: Correlation;
+};
+
 type CorrelationConfigType = 'query';
 
 export interface CorrelationConfig {
