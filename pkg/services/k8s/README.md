@@ -34,9 +34,7 @@ Run a `make clean-k8s-certs` as mentioned above.
 ## Stateful Directories
 
 1. `data/k8s`: this directory is gitignored but is ensured to exist by 
-`cert-generator` and `kine`. Once existent, it ends up holding all the
-temporary k8s things such as certificates as well as the SQLite database
-powering Kine.
+`cert-generator`.
    1. `grafana.kubeconfig`: The `kubectl` configuration provided here
    is apiserver loopback config. While this is mostly an internal detail of
    how apiserver manages itself, its currently exposed to support development.

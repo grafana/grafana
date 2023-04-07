@@ -7,7 +7,6 @@ const (
 
 	HTTPServer string = "http-server"
 
-	Kine                string = "kine"
 	KubernetesCRDs      string = "kubernetes-crds"
 	KubernetesAPIServer string = "kubernetes-apiserver"
 	KubernetesInformers string = "kubernetes-informers"
@@ -24,8 +23,7 @@ var DependencyMap = map[string][]string{
 
 	HTTPServer: {CertGenerator},
 
-	Kine:                {},
-	KubernetesAPIServer: {CertGenerator, Kine},
+	KubernetesAPIServer: {CertGenerator},
 	KubernetesClientset: {KubernetesAPIServer},
 	KubernetesCRDs:      {KubernetesClientset},
 	KubernetesInformers: {KubernetesCRDs},
@@ -35,5 +33,5 @@ var DependencyMap = map[string][]string{
 
 	PublicDashboardsWebhooks: {KubernetesClientset},
 
-	All: {Kubernetes, HTTPServer, PublicDashboardsWebhooks, Provisioning},
+	All: {Kubernetes, HTTPServer, Provisioning},
 }

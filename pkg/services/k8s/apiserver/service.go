@@ -2,23 +2,18 @@ package apiserver
 
 import (
 	"context"
-	"net"
 	"path"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/certgenerator"
-	"github.com/grafana/grafana/pkg/services/k8s/kine"
 	"github.com/grafana/grafana/pkg/setting"
-	serveroptions "k8s.io/apiserver/pkg/server/options"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
-	"k8s.io/kubernetes/cmd/kube-apiserver/app"
-	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
-	authzmodes "k8s.io/kubernetes/pkg/kubeapiserver/authorizer/modes"
 )
 
 const (
@@ -41,19 +36,17 @@ type RestConfigProvider interface {
 type service struct {
 	*services.BasicService
 
-	etcdProvider kine.EtcdProvider
-	restConfig   *rest.Config
+	restConfig *rest.Config
 
 	dataPath  string
 	stopCh    chan struct{}
 	stoppedCh chan error
 }
 
-func ProvideService(etcdProvider kine.EtcdProvider, cfg *setting.Cfg) (*service, error) {
+func ProvideService(cfg *setting.Cfg) (*service, error) {
 	s := &service{
-		dataPath:     path.Join(cfg.DataPath, "k8s"),
-		etcdProvider: etcdProvider,
-		stopCh:       make(chan struct{}),
+		dataPath: path.Join(cfg.DataPath, "k8s"),
+		stopCh:   make(chan struct{}),
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.KubernetesAPIServer)
@@ -66,43 +59,26 @@ func (s *service) GetRestConfig() *rest.Config {
 }
 
 func (s *service) start(ctx context.Context) error {
-	// Get the util to get the paths to pre-generated certs
-	certUtil := certgenerator.CertUtil{
-		K8sDataPath: s.dataPath,
-	}
-
-	serverRunOptions := options.NewServerRunOptions()
-	serverRunOptions.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
-
-	serverRunOptions.SecureServing.ServerCert.CertKey = serveroptions.CertKey{
-		CertFile: certUtil.APIServerCertFile(),
-		KeyFile:  certUtil.APIServerKeyFile(),
-	}
-
-	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{DefaultAPIServerHost}
-	serverRunOptions.Authentication.WebHook.ConfigFile = "conf/k8s-authn-webhook-config"
-	serverRunOptions.Authentication.WebHook.Version = "v1"
-
-	serverRunOptions.Authorization.Modes = []string{authzmodes.ModeRBAC, authzmodes.ModeWebhook}
-	serverRunOptions.Authorization.WebhookConfigFile = "conf/k8s-authz-webhook-config"
-	serverRunOptions.Authorization.WebhookVersion = "v1"
-
-	etcdConfig := s.etcdProvider.GetConfig()
-	serverRunOptions.Etcd.StorageConfig.Transport.ServerList = etcdConfig.Endpoints
-	serverRunOptions.Etcd.StorageConfig.Transport.CertFile = etcdConfig.TLSConfig.CertFile
-	serverRunOptions.Etcd.StorageConfig.Transport.KeyFile = etcdConfig.TLSConfig.KeyFile
-	serverRunOptions.Etcd.StorageConfig.Transport.TrustedCAFile = etcdConfig.TLSConfig.CAFile
-
-	completedOptions, err := app.Complete(serverRunOptions)
-	if err != nil {
-		return err
-	}
-
 	logger := logr.New(newLogAdapter())
 	logger.V(1)
 	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
 
-	server, err := app.CreateServerChain(completedOptions)
+	extensionsConfig, err := createAPIExtensionsConfig(s.dataPath)
+	if err != nil {
+		return err
+	}
+
+	extensionServer, err := createAPIExtensionsServer(&extensionsConfig, genericapiserver.NewEmptyDelegate())
+	if err != nil {
+		return err
+	}
+
+	config, err := createAggregatorConfig(extensionsConfig.GenericConfig.Config)
+	if err != nil {
+		return err
+	}
+
+	server, err := createAggregatorServer(config, extensionServer.GenericAPIServer, extensionServer.Informers)
 	if err != nil {
 		return err
 	}
@@ -141,8 +117,8 @@ func (s *service) running(ctx context.Context) error {
 func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 	clusters := make(map[string]*clientcmdapi.Cluster)
 	clusters["default-cluster"] = &clientcmdapi.Cluster{
-		Server:                   restConfig.Host,
-		CertificateAuthorityData: restConfig.CAData,
+		Server:                restConfig.Host,
+		InsecureSkipTLSVerify: restConfig.Insecure,
 	}
 
 	contexts := make(map[string]*clientcmdapi.Context)
@@ -154,7 +130,6 @@ func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 
 	authinfos := make(map[string]*clientcmdapi.AuthInfo)
 	authinfos["default"] = &clientcmdapi.AuthInfo{
-		Token:    restConfig.BearerToken,
 		Username: restConfig.Username,
 		Password: restConfig.Password,
 	}
