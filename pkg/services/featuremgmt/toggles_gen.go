@@ -312,6 +312,6 @@ const (
 	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
 
 	// FlagExternalServiceAuth
-	// An OAuth2 authentication provider that allows external service to authenticate against Grafana
+	// Starts an OAuth2 authentication provider for external services
 	FlagExternalServiceAuth = "externalServiceAuth"
 )

@@ -507,7 +507,7 @@ var (
 		},
 		{
 			Name:            "externalServiceAuth",
-			Description:     "An OAuth2 authentication provider that allows external service to authenticate against Grafana",
+			Description:     "Starts an OAuth2 authentication provider for external services",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 			Owner:           grafanaAuthnzSquad,
