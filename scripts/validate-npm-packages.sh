@@ -56,17 +56,19 @@ for file in $ARTIFACTS_DIR/*.tgz; do
 
   # Assert esm builds
   esm_packages=("grafana-data" "grafana-ui" "grafana-runtime" "grafana-e2e-selectors" "grafana-schema")
-  if [[ "${esm_packages[*]}" =~ "$dir" ]]; then
-    if [[ ! -d "dist/esm" || ! -f "dist/esm/index.js" ]]; then
-        echo -e "❌ Failed: Missing esm directory or esm entry file in package $dir.\n"
+  for esm_package in "${esm_packages[@]}"; do
+    if [[ "$dir_name" == "$esm_package" ]]; then
+      if [ ! -d dist/esm ] || [ ! -f dist/esm/index.js ]; then
+        echo -e "❌ Failed: Missing 'dist/esm' directory or required esm files in package $dir_name.\n"
         exit 1
-    fi
+      fi
 
-    if [[ $(jq -r '.module' package.json) != "dist/esm/index.js" ]]; then
-        echo -e "❌ Failed: module property incorrect in package.json file in package $dir.\n"
+      if [ "$(jq -r '.module' package.json)" != "dist/esm/index.js" ]; then
+        echo -e "❌ Failed: Incorrect package.json properties in package $dir_name.\n"
         exit 1
+      fi
     fi
-  fi
+  done
 
   echo -e "✅ Passed: package checks for $file.\n"
   popd
