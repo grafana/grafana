@@ -95,7 +95,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           // this prevents columns that should be named 1000190
           // from becoming named {__name__: 'metricName'}
           if (supportDataplaneFallback && typeof columnName === 'number') {
-            valueField.config.displayNameFromDS = undefined;
+            valueField.config = { ...valueField.config, displayNameFromDS: undefined };
           }
 
           resultFrame.addField({
