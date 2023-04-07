@@ -505,5 +505,12 @@ var (
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 		},
+		{
+			Name:            "externalServiceAuth",
+			Description:     "An OAuth2 authentication provider that allows external service to authenticate against Grafana",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+			Owner:           grafanaAuthnzSquad,
+		},
 	}
 )

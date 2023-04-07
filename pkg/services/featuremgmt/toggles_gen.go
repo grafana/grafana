@@ -310,4 +310,8 @@ const (
 	// FlagPyroscopeFlameGraph
 	// Changes flame graph to pyroscope one
 	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
+
+	// FlagExternalServiceAuth
+	// An OAuth2 authentication provider that allows external service to authenticate against Grafana
+	FlagExternalServiceAuth = "externalServiceAuth"
 )

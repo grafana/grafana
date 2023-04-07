@@ -112,8 +112,9 @@ Alpha features might be changed or removed without prior notice.
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name | Description                                         |
-| ------------------- | --------------------------------------------------- |
-| `k8s`               | Explore native k8s integrations                     |
-| `entityStore`       | SQL-based entity store (requires storage flag also) |
-| `nestedFolders`     | Enable folder nesting                               |
+| Feature toggle name   | Description                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------------------- |
+| `k8s`                 | Explore native k8s integrations                                                                |
+| `entityStore`         | SQL-based entity store (requires storage flag also)                                            |
+| `nestedFolders`       | Enable folder nesting                                                                          |
+| `externalServiceAuth` | An OAuth2 authentication provider that allows external service to authenticate against Grafana |
