@@ -1,4 +1,5 @@
 import {
+  ArrayVector,
   DataFrame,
   Field,
   FieldType,
@@ -84,12 +85,14 @@ export function prepareGraphableFields(
           hasValueField = useNumericX ? fieldIdx > 0 : true;
           copy = {
             ...field,
-            values: field.values.map((v) => {
-              if (!(Number.isFinite(v) || v == null)) {
-                return null;
-              }
-              return v;
-            }),
+            values: new ArrayVector(
+              field.values.toArray().map((v) => {
+                if (!(Number.isFinite(v) || v == null)) {
+                  return null;
+                }
+                return v;
+              })
+            ),
           };
 
           fields.push(copy);
@@ -97,7 +100,7 @@ export function prepareGraphableFields(
         case FieldType.string:
           copy = {
             ...field,
-            values: field.values.toArray().slice(),
+            values: new ArrayVector(field.values.toArray()),
           };
 
           fields.push(copy);

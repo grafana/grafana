@@ -53,7 +53,7 @@ describe('Rename By Regex Transformer', () => {
                 "multipleFrames": false,
               },
               "type": "time",
-              "values": [
+              "values": ArrayVector [
                 3000,
                 4000,
                 5000,
@@ -70,7 +70,7 @@ describe('Rename By Regex Transformer', () => {
                 "multipleFrames": false,
               },
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10000.3,
                 10000.4,
                 10000.5,
@@ -106,7 +106,7 @@ describe('Rename By Regex Transformer', () => {
                 "multipleFrames": false,
               },
               "type": "time",
-              "values": [
+              "values": ArrayVector [
                 3000,
                 4000,
                 5000,
@@ -123,7 +123,7 @@ describe('Rename By Regex Transformer', () => {
                 "multipleFrames": false,
               },
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10000.3,
                 10000.4,
                 10000.5,
@@ -158,7 +158,7 @@ describe('Rename By Regex Transformer', () => {
                 "multipleFrames": false,
               },
               "type": "time",
-              "values": [
+              "values": ArrayVector [
                 3000,
                 4000,
                 5000,
@@ -175,7 +175,7 @@ describe('Rename By Regex Transformer', () => {
                 "multipleFrames": false,
               },
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10000.3,
                 10000.4,
                 10000.5,
@@ -210,7 +210,7 @@ describe('Rename By Regex Transformer', () => {
                 "multipleFrames": false,
               },
               "type": "time",
-              "values": [
+              "values": ArrayVector [
                 3000,
                 4000,
                 5000,
@@ -227,7 +227,7 @@ describe('Rename By Regex Transformer', () => {
                 "multipleFrames": false,
               },
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 10000.3,
                 10000.4,
                 10000.5,

@@ -4,6 +4,7 @@ import { QueryResultMeta } from '../types/data';
 import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
 import { MutableVector, Vector } from '../types/vector';
 import { makeFieldParser } from '../utils/fieldParser';
+import { ArrayVector } from '../vector/ArrayVector';
 import { FunctionalVector } from '../vector/FunctionalVector';
 
 import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
@@ -20,7 +21,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   meta?: QueryResultMeta;
   fields: MutableField[] = [];
 
-  private first = new Array(0);
+  private first: Vector = new ArrayVector();
   private creator: MutableVectorCreator;
 
   constructor(source?: DataFrame | DataFrameDTO, creator?: MutableVectorCreator) {
@@ -30,7 +31,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     this.creator = creator
       ? creator
       : (buffer?: any[]) => {
-          return buffer ? buffer.slice() : [];
+          return new ArrayVector(buffer);
         };
 
     // Copy values from
@@ -119,7 +120,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     }
 
     this.fields.push(field);
-    this.first = this.fields[0].values as any;
+    this.first = this.fields[0].values;
 
     // Make sure the field starts with a given length
     if (startLength) {

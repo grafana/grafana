@@ -176,7 +176,7 @@ describe('Grouping to Matrix', () => {
             "config": {},
             "name": "Row\\Column",
             "type": "string",
-            "values": [
+            "values": ArrayVector [
               "R1",
               "R2",
             ],
@@ -187,7 +187,7 @@ describe('Grouping to Matrix', () => {
             },
             "name": "C1",
             "type": "number",
-            "values": [
+            "values": ArrayVector [
               1,
               4,
             ],
@@ -198,7 +198,7 @@ describe('Grouping to Matrix', () => {
             },
             "name": "C2",
             "type": "number",
-            "values": [
+            "values": ArrayVector [
               5,
               "",
             ],

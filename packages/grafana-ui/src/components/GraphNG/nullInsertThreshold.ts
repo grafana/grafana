@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, incrRoundDn } from '@grafana/data';
+import { ArrayVector, DataFrame, FieldType, incrRoundDn } from '@grafana/data';
 
 type InsertMode = (prev: number, next: number, threshold: number) => number;
 
@@ -83,7 +83,7 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
       length: filledFieldValues[0].length,
       fields: frame.fields.map((field, i) => ({
         ...field,
-        values: filledFieldValues[i],
+        values: new ArrayVector(filledFieldValues[i]),
       })),
     };
   }

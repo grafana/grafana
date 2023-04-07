@@ -37,7 +37,7 @@ describe('DataFrame JSON', () => {
               "entities": {},
               "name": "time",
               "type": "time",
-              "values": [
+              "values": ArrayVector [
                 100,
                 200,
                 300,
@@ -58,7 +58,7 @@ describe('DataFrame JSON', () => {
               },
               "name": "name",
               "type": "string",
-              "values": [
+              "values": ArrayVector [
                 NaN,
                 Infinity,
                 undefined,
@@ -73,7 +73,7 @@ describe('DataFrame JSON', () => {
               },
               "name": "value",
               "type": "number",
-              "values": [
+              "values": ArrayVector [
                 1,
                 2,
                 -Infinity,
@@ -114,7 +114,7 @@ describe('DataFrame JSON', () => {
               "entities": {},
               "name": "time",
               "type": "time",
-              "values": [
+              "values": ArrayVector [
                 100,
                 200,
                 300,
@@ -126,7 +126,7 @@ describe('DataFrame JSON', () => {
               "entities": {},
               "name": "value",
               "type": "string",
-              "values": [
+              "values": ArrayVector [
                 "bar",
                 "foo",
                 "baz",

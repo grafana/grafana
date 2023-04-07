@@ -93,7 +93,7 @@ describe('Labels as Columns', () => {
       const data = received[0];
       expect(toSimpleObject(data[0])).toMatchInlineSnapshot(`
         {
-          "Value": [
+          "Value": ArrayVector [
             1,
             2,
           ],
@@ -105,7 +105,7 @@ describe('Labels as Columns', () => {
             "inside",
             "inside",
           ],
-          "time": [
+          "time": ArrayVector [
             1000,
             2000,
           ],
@@ -187,10 +187,10 @@ describe('Labels as Columns', () => {
           "location": ArrayVector [
             "inside",
           ],
-          "temp": [
+          "temp": ArrayVector [
             1,
           ],
-          "time": [
+          "time": ArrayVector [
             1000,
           ],
         }
@@ -200,10 +200,10 @@ describe('Labels as Columns', () => {
           "location": ArrayVector [
             "outside",
           ],
-          "temp": [
+          "temp": ArrayVector [
             -1,
           ],
-          "time": [
+          "time": ArrayVector [
             2000,
           ],
         }
@@ -262,19 +262,19 @@ describe('Labels as Columns', () => {
       expect(received[0][0].fields.map((f) => ({ [f.name]: f.values.toArray() }))).toMatchInlineSnapshot(`
         [
           {
-            "time": [
+            "time": ArrayVector [
               1000,
               2000,
             ],
           },
           {
-            "a": [
+            "a": ArrayVector [
               1,
               3,
             ],
           },
           {
-            "b": [
+            "b": ArrayVector [
               2,
               4,
             ],
