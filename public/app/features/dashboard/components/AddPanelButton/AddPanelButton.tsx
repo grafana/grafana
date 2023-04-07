@@ -8,11 +8,11 @@ import { DashboardModel } from 'app/features/dashboard/state';
 
 import { AddPanelMenu } from './AddPanelMenu';
 
-interface Props {
+export interface Props {
   dashboard: DashboardModel;
 }
 
-export const AddPanelButton = ({ dashboard }: Props) => {
+const AddPanelButton = ({ dashboard }: Props) => {
   const styles = getStyles(useTheme2());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -36,6 +36,8 @@ export const AddPanelButton = ({ dashboard }: Props) => {
     </Dropdown>
   );
 };
+
+export default AddPanelButton;
 
 function getStyles(theme: GrafanaTheme2) {
   return {
