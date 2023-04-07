@@ -99,4 +99,4 @@ Complete the following steps to install Grafana using the standalone binaries:
 
 ## Next steps
 
-Refer to [Start the Grafana server]({{< relref "../start-restart-grafana/" >}}).
+Refer to [Start the Grafana server]({{< relref "../../start-restart-grafana/" >}}).
