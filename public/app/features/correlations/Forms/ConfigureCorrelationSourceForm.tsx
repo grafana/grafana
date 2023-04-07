@@ -2,30 +2,14 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import {
-  DataSourceInstanceSettings,
-  getSupportedTransTypeDetails,
-  GrafanaTheme2,
-  SupportedTransformationType,
-} from '@grafana/data';
-import { Stack } from '@grafana/experimental';
+import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import {
-  Button,
-  Card,
-  Field,
-  FieldArray,
-  FieldSet,
-  IconButton,
-  Input,
-  InputControl,
-  Select,
-  useStyles2,
-} from '@grafana/ui';
+import { Card, Field, FieldSet, Input, useStyles2 } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { getVariableUsageInfo } from '../../explore/utils/links';
 
+import { TransformationsEditor } from './TransformationsEditor';
 import { useCorrelationsFormContext } from './correlationsFormContext';
 import { getInputId } from './utils';
 
@@ -37,28 +21,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-family: ${theme.typography.fontFamilyMonospace};
     font-weight: ${theme.typography.fontWeightMedium};
   `,
-  // set fixed position from the top instead of centring as the container
-  // may get bigger when the for is invalid
-  removeButton: css`
-    margin-top: 25px;
-  `,
 });
 
-const getTransformOptions = () => {
-  return Object.keys(SupportedTransformationType).map((key) => {
-    const transType = getSupportedTransTypeDetails(
-      SupportedTransformationType[key as keyof typeof SupportedTransformationType]
-    );
-    return {
-      label: transType.label,
-      value: transType.value,
-      description: transType.description,
-    };
-  });
-};
-
 export const ConfigureCorrelationSourceForm = () => {
-  const { control, formState, register, getValues, setValue, watch } = useFormContext();
+  const { control, formState, register, getValues } = useFormContext();
   const styles = useStyles2(getStyles);
   const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.uid);
 
@@ -68,9 +34,6 @@ export const ConfigureCorrelationSourceForm = () => {
   const variables = getVariableUsageInfo(currentTargetQuery, {}).variables.map(
     (variable) => variable.variableName + (variable.fieldPath ? `.${variable.fieldPath}` : '')
   );
-
-  const transformOptions = getTransformOptions();
-
   return (
     <>
       <FieldSet label="Configure source data source (3/3)">
@@ -137,87 +100,7 @@ export const ConfigureCorrelationSourceForm = () => {
             </Card.Description>
           </Card>
         )}
-        <FieldArray name="config.transformations" control={control}>
-          {({ fields, append, remove }) => (
-            <>
-              <Stack direction="column" alignItems="flex-start">
-                <div>Transformations</div>
-                {fields.length === 0 && <div> No transformations defined.</div>}
-                {fields.length > 0 && (
-                  <div>
-                    {fields.map((field, index) => {
-                      return (
-                        <Stack direction="row" key={field.id} alignItems="top">
-                          <Field
-                            label="Type"
-                            invalid={!!formState.errors?.config?.transformations?.[index]?.type}
-                            error={formState.errors?.config?.transformations?.[index]?.type?.message}
-                            validationMessageHorizontalOverflow={true}
-                          >
-                            <InputControl
-                              render={({ field: { onChange, ref, ...field } }) => (
-                                <Select
-                                  {...field}
-                                  onChange={(value) => {
-                                    setValue(`config.transformations.${index}.expression`, '');
-                                    setValue(`config.transformations.${index}.mapValue`, '');
-                                    onChange(value.value);
-                                  }}
-                                  options={transformOptions}
-                                  aria-label="Type"
-                                />
-                              )}
-                              defaultValue={field.type}
-                              control={control}
-                              name={`config.transformations.${index}.type`}
-                              rules={{ required: { value: true, message: 'Please select a transformation type' } }}
-                            />
-                          </Field>
-                          <Field label="Field">
-                            <Input {...register(`config.transformations.${index}.field`)} defaultValue={field.field} />
-                          </Field>
-                          <Field label="Expression">
-                            <Input
-                              {...register(`config.transformations.${index}.expression`)}
-                              defaultValue={field.expression}
-                              disabled={
-                                !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
-                                  .showExpression
-                              }
-                            />
-                          </Field>
-                          <Field label="Map value">
-                            <Input
-                              {...register(`config.transformations.${index}.mapValue`)}
-                              defaultValue={field.mapValue}
-                              disabled={
-                                !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
-                                  .showMapValue
-                              }
-                            />
-                          </Field>
-                          <div className={styles.removeButton}>
-                            <IconButton
-                              type="button"
-                              tooltip="Remove transformation"
-                              name={'trash-alt'}
-                              onClick={() => remove(index)}
-                            >
-                              Remove
-                            </IconButton>
-                          </div>
-                        </Stack>
-                      );
-                    })}
-                  </div>
-                )}
-                <Button icon="plus" onClick={() => append({ type: undefined })} variant="secondary" type="button">
-                  Add transformation
-                </Button>
-              </Stack>
-            </>
-          )}
-        </FieldArray>
+        <TransformationsEditor />
       </FieldSet>
     </>
   );
