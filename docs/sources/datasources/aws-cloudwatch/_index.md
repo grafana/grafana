@@ -50,7 +50,7 @@ For authentication options and configuration details, refer to [AWS authenticati
 To read CloudWatch metrics and EC2 tags, instances, regions, and alarms, you must grant Grafana permissions via IAM.
 You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication]({{< relref "./aws-authentication/" >}}).
 
-**Metrics-only:**
+##### Metrics-only permissions
 
 ```json
 {
@@ -85,7 +85,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-**Logs-only:**
+##### Logs-only permissions
 
 ```json
 {
@@ -120,7 +120,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-**Metrics and Logs:**
+##### Metrics and logs permissions
 
 ```json
 {
@@ -168,7 +168,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-**Cross-account observability: (see below) **
+##### Cross-account observability permissions
 
 ```json
 {
@@ -235,7 +235,7 @@ For more information about provisioning, and for available configuration options
 
 #### Provisioning examples
 
-**Using AWS SDK (default):**
+##### Using AWS SDK (default)
 
 ```yaml
 apiVersion: 1
@@ -247,7 +247,7 @@ datasources:
       defaultRegion: eu-west-2
 ```
 
-**Using credentials' profile name (non-default):**
+##### Using credentials' profile name (non-default)
 
 ```yaml
 apiVersion: 1
@@ -262,7 +262,7 @@ datasources:
       profile: secondary
 ```
 
-**Using accessKey and secretKey:**
+##### Using accessKey and secretKey
 
 ```yaml
 apiVersion: 1
@@ -278,7 +278,7 @@ datasources:
       secretKey: '<your secret key>'
 ```
 
-**Using AWS SDK Default and ARN of IAM Role to Assume:**
+##### Using AWS SDK Default and ARN of IAM Role to Assume
 
 ```yaml
 apiVersion: 1
