@@ -314,8 +314,4 @@ const (
 	// FlagPyroscopeFlameGraph
 	// Changes flame graph to pyroscope one
 	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
-
-	// FlagDataplanePrometheusFrontendSupport
-	// Prometheus support for dataplane contract in transformations for matching on field names
-	FlagDataplanePrometheusFrontendSupport = "dataplanePrometheusFrontendSupport"
 )

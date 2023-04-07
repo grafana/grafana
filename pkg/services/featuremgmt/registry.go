@@ -511,12 +511,5 @@ var (
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 		},
-		{
-			Name:         "dataplanePrometheusFrontendSupport",
-			Description:  "Prometheus support for dataplane contract in transformations for matching on field names",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityMetricsSquad,
-		},
 	}
 )
