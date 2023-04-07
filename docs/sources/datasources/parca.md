@@ -18,16 +18,25 @@ Grafana ships with built-in support for Parca, a continuous profiling OSS databa
 
 ## Configure the Parca data source
 
-To access Parca settings, click the **Configuration** (gear) icon, then click **Data Sources** > **Parca**.
+To configure basic settings for the data source, complete the following steps:
 
-| Name         | Description                                                        |
-| ------------ | ------------------------------------------------------------------ |
-| `Name`       | A name to specify the data source in panels, queries, and Explore. |
-| `Default`    | The default data source will be pre-selected for new panels.       |
-| `URL`        | The URL of the Parca instance, e.g., `http://localhost:4100`       |
-| `Basic Auth` | Enable basic authentication to the Parca data source.              |
-| `User`       | User name for basic authentication.                                |
-| `Password`   | Password for basic authentication.                                 |
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `Parca` in the search bar.
+1. Click **Parca**.
+
+   The **Settings** tab of the data source is displayed.
+
+1. Set the data source's basic configuration options:
+
+   | Name         | Description                                                        |
+   | ------------ | ------------------------------------------------------------------ |
+   | `Name`       | A name to specify the data source in panels, queries, and Explore. |
+   | `Default`    | The default data source will be pre-selected for new panels.       |
+   | `URL`        | The URL of the Parca instance, e.g., `http://localhost:4100`       |
+   | `Basic Auth` | Enable basic authentication to the Parca data source.              |
+   | `User`       | User name for basic authentication.                                |
+   | `Password`   | Password for basic authentication.                                 |
 
 ## Querying
 

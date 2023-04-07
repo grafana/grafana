@@ -7,10 +7,6 @@
 package featuremgmt
 
 const (
-	// FlagAlertingBigTransactions
-	// Use big transactions for alerting database writes
-	FlagAlertingBigTransactions = "alertingBigTransactions"
-
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
@@ -314,4 +310,8 @@ const (
 	// FlagPyroscopeFlameGraph
 	// Changes flame graph to pyroscope one
 	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
+
+	// FlagDataplaneFrontendFallback
+	// Support dataplane contract field name change for transformations and field name matchers where the name is different
+	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
 )
