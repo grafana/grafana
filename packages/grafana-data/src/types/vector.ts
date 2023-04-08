@@ -1,3 +1,33 @@
+declare global {
+  interface Array<T> {
+    /** @deprecated this only exists to help migrate Vector to Array */
+    get(idx: number): T;
+    /** @deprecated this only exists to help migrate Vector to Array */
+    set(idx: number, value: T): void;
+    /** @deprecated this only exists to help migrate Vector to Array */
+    add(value: T): void;
+    /** @deprecated this only exists to help migrate Vector to Array */
+    toArray(): T[];
+  }
+}
+
+// JS original sin
+Object.assign(Array.prototype, {
+  get(idx: number): any {
+    return (this as any)[idx];
+  },
+  set(idx: number, value: any) {
+    (this as any)[idx] = value;
+  },
+  add(value: any) {
+    (this as any).push(value);
+  },
+  toArray() {
+    return this;
+  },
+});
+
+/** @deprecated use a simple Array<T> */
 export interface Vector<T = any> extends Array<T> {
   length: number;
 

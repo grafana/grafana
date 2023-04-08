@@ -124,14 +124,12 @@ export function prepareGraphableFields(
             ...field,
             config,
             type: FieldType.number,
-            values: new ArrayVector(
-              field.values.toArray().map((v) => {
-                if (v == null) {
-                  return v;
-                }
-                return Boolean(v) ? 1 : 0;
-              })
-            ),
+            values: field.values.map((v) => {
+              if (v == null) {
+                return v;
+              }
+              return Boolean(v) ? 1 : 0;
+            }),
           };
 
           if (!isBooleanUnit(config.unit)) {
