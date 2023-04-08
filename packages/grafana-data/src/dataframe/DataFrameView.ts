@@ -103,6 +103,11 @@ export class DataFrameView<T = any> extends FunctionalVector<T> {
     return this.obj;
   }
 
+  /** noop */
+  push(...vals: T[]): void {
+    throw 'unsupported operation';
+  }
+
   toArray(): T[] {
     return new Array(this.data.length)
       .fill(0) // Needs to make a full copy

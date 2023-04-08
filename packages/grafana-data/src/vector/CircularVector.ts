@@ -119,8 +119,17 @@ export class CircularVector<T = any> extends FunctionalVector<T> implements Muta
 
   /**
    * Add the value to the buffer
+   *
+   * (Note the implementation gets set in the constructor)
    */
   add: (value: T) => void;
+
+  /** support standard array push syntax */
+  push(...vals: T[]) {
+    for (const v of vals) {
+      this.add(v);
+    }
+  }
 
   get(index: number) {
     return this.buffer[(index + this.index) % this.buffer.length];

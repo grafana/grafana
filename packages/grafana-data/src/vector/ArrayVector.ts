@@ -17,6 +17,11 @@ export class ArrayVector<T = any> extends FunctionalVector<T> implements Mutable
     return this.buffer.length;
   }
 
+  /** support standard array push syntax */
+  push(...vals: T[]) {
+    this.buffer.push(...vals);
+  }
+
   add(value: T) {
     this.buffer.push(value);
   }

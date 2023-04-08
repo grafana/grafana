@@ -20,6 +20,10 @@ export class IndexVector extends FunctionalVector<number> {
     return index;
   }
 
+  push(...vals: number[]): void {
+    throw 'unsupported operation';
+  }
+
   /**
    * Returns a field representing the range [0 ... length-1]
    */

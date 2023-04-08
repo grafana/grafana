@@ -19,4 +19,8 @@ export class AsNumberVector extends FunctionalVector<number> {
   get(index: number) {
     return +this.field.get(index);
   }
+
+  push(...vals: number[]): void {
+    throw 'unsupported operation';
+  }
 }

@@ -8,6 +8,8 @@ export abstract class FunctionalVector<T = any> implements Vector<T>, Iterable<T
 
   abstract get(index: number): T;
 
+  abstract push(...vals: T[]): void;
+
   // Implement "iterator protocol"
   *iterator() {
     for (let i = 0; i < this.length; i++) {

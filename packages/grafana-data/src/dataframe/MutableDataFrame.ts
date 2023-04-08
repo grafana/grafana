@@ -210,6 +210,12 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     }
   }
 
+  push(...vals: T[]): void {
+    for (const v of vals) {
+      this.add(v);
+    }
+  }
+
   /**
    * Add values from an object to corresponding fields. Similar to appendRow but does not create new fields.
    */

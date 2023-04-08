@@ -11,6 +11,9 @@ export interface Vector<T = any> {
    */
   toArray(): T[];
 
+  /** Support array push syntax */
+  push(...vals: T[]): void;
+
   /** Support array style map functions */
   map<V>(transform: (item: T, index: number) => V): V[];
 

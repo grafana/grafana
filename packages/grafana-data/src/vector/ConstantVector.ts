@@ -16,6 +16,10 @@ export class ConstantVector<T = any> extends FunctionalVector<T> {
     return this.value;
   }
 
+  push(...vals: T[]): void {
+    throw 'unsupported operation';
+  }
+
   toArray(): T[] {
     const arr = new Array<T>(this.length);
     return arr.fill(this.value);
