@@ -114,7 +114,7 @@ export class CircularVector<T = any> extends FunctionalVector<T> implements Muta
   }
 
   reverse() {
-    this.buffer.reverse();
+    return this.buffer.reverse();
   }
 
   /**
@@ -125,10 +125,13 @@ export class CircularVector<T = any> extends FunctionalVector<T> implements Muta
   add: (value: T) => void;
 
   /** support standard array push syntax */
-  push(...vals: T[]) {
+  push(...vals: T[]): number {
+    let count = 0;
     for (const v of vals) {
       this.add(v);
+      count++;
     }
+    return count;
   }
 
   get(index: number) {

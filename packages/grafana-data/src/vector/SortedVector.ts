@@ -19,10 +19,6 @@ export class SortedVector<T = any> extends FunctionalVector<T> {
     return this.source.get(this.order[index]);
   }
 
-  push(...vals: T[]): void {
-    throw 'unsupported operation';
-  }
-
   toArray(): T[] {
     return vectorToArray(this);
   }

@@ -20,10 +20,6 @@ export class BinaryOperationVector extends FunctionalVector<number> {
     return this.operation(this.left.get(index), this.right.get(index));
   }
 
-  push(...vals: number[]): void {
-    throw 'unsupported operation';
-  }
-
   toArray(): number[] {
     return vectorToArray(this);
   }

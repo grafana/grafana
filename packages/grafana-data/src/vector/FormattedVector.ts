@@ -16,10 +16,6 @@ export class FormattedVector<T = any> extends FunctionalVector<string> {
     return this.source.length;
   }
 
-  push(...vals: string[]): void {
-    throw 'unsupported operation';
-  }
-
   get(index: number): string {
     const v = this.source.get(index);
     return formattedValueToString(this.formatter(v));

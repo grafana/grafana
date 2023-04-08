@@ -25,10 +25,6 @@ class ArrayPropertyVector<T = any> extends FunctionalVector<T> {
     return this.converter(this.source[index][this.prop]);
   }
 
-  push(...vals: T[]): void {
-    throw 'unsupported operation';
-  }
-
   toArray(): T[] {
     return vectorToArray(this);
   }
@@ -109,10 +105,6 @@ export class ArrayDataFrame<T = any> extends FunctionalVector<T> implements Data
    */
   get(idx: number): T {
     return this.source[idx];
-  }
-
-  push(...vals: T[]): void {
-    this.source.push(...vals);
   }
 
   /**

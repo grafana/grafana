@@ -148,15 +148,6 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     }
   }
 
-  /**
-   * Reverse all values
-   */
-  reverse() {
-    for (const f of this.fields) {
-      f.values.reverse();
-    }
-  }
-
   private parsers: Map<Field, (v: string) => any> | undefined = undefined;
 
   /**
@@ -210,10 +201,14 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     }
   }
 
-  push(...vals: T[]): void {
+  /** support standard array push syntax */
+  push(...vals: T[]): number {
+    let count = 0;
     for (const v of vals) {
       this.add(v);
+      count++;
     }
+    return count;
   }
 
   /**

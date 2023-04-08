@@ -23,10 +23,6 @@ export class AppendedVectors<T = any> extends FunctionalVector<T> {
     this.length = startAt;
   }
 
-  push(...vals: T[]): void {
-    throw 'unsupported operation';
-  }
-
   /**
    * Make the vector look like it is this long
    */

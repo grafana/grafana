@@ -18,10 +18,6 @@ export class RowVector extends FunctionalVector<number> {
     return this.columns.length;
   }
 
-  push(...vals: number[]): void {
-    throw 'unsupported operation';
-  }
-
   get(index: number): number {
     return this.columns[index].get(this.rowIndex);
   }
