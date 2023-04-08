@@ -203,12 +203,17 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
 
   /** support standard array push syntax */
   push(...vals: T[]): number {
-    let count = 0;
     for (const v of vals) {
       this.add(v);
-      count++;
     }
-    return count;
+    return this.length;
+  }
+
+  reverse() {
+    for (const field of this.fields) {
+      field.values.reverse();
+    }
+    return this;
   }
 
   /**

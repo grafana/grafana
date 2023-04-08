@@ -126,12 +126,10 @@ export class CircularVector<T = any> extends FunctionalVector<T> implements Muta
 
   /** support standard array push syntax */
   push(...vals: T[]): number {
-    let count = 0;
     for (const v of vals) {
       this.add(v);
-      count++;
     }
-    return count;
+    return this.length;
   }
 
   get(index: number) {

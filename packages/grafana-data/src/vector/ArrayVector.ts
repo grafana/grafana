@@ -29,6 +29,11 @@ export class ArrayVector<T = any> extends FunctionalVector<T> implements Mutable
     this.buffer[index] = value;
   }
 
+  /** support standard array push syntax */
+  push(...vals: T[]): number {
+    return this.buffer.push(...vals);
+  }
+
   reverse() {
     return this.buffer.reverse();
   }
