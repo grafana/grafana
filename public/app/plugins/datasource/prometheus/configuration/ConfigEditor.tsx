@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import React, { useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
-import { AlertingSettings, DataSourceHttpSettings, Alert, SecureSocksProxySettings } from '@grafana/ui';
+import { AlertingSettings, DataSourceHttpSettingsOverhaul, Alert, SecureSocksProxySettings } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { PromOptions } from '../types';
@@ -33,7 +34,7 @@ export const ConfigEditor = (props: Props) => {
         </Alert>
       )}
 
-      <DataSourceHttpSettings
+      <DataSourceHttpSettingsOverhaul
         defaultUrl="http://localhost:9090"
         dataSourceConfig={options}
         showAccessOptions={showAccessOptions.current}
@@ -46,10 +47,31 @@ export const ConfigEditor = (props: Props) => {
       {config.featureToggles.secureSocksDatasourceProxy && (
         <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
       )}
+      <>
+        <hr />
+        <h3 className="page-heading">Additional Settings</h3>
+        <p className={`${styles.description}`}>
+          Additional settings are optional settings that can be configured for more control over your data source.
+        </p>
+        <AlertingSettings<PromOptions> options={options} onOptionsChange={onOptionsChange} />
 
-      <AlertingSettings<PromOptions> options={options} onOptionsChange={onOptionsChange} />
-
-      <PromSettings options={options} onOptionsChange={onOptionsChange} />
+        <PromSettings options={options} onOptionsChange={onOptionsChange} />
+      </>
     </>
   );
+};
+
+const styles = {
+  additionalSettings: css`
+    margin-bottom: 25px;
+  `,
+  description: css`
+    font-size: 12px;
+  `,
+  inlineError: css`
+    margin: 0px 0px 4px 245px;
+  `,
+  switchField: css`
+    align-items: center;
+  `,
 };

@@ -58,6 +58,7 @@ const prometheusFlavorSelectItems: PrometheusSelectItemsType = [
 
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
 
+const LABEL_WIDTH = 26;
 /**
  * Returns the closest version to what the user provided that we have in our PromFlavorVersions for the currently selected flavor
  * Bugs: It will only reject versions that are a major release apart, so Mimir 2.x might get selected for Prometheus 2.8 if the user selects an incorrect flavor
@@ -158,6 +159,7 @@ export const PromSettings = (props: Props) => {
 
   return (
     <>
+      <h3 className="page-heading">Prometheus Behavioural</h3>
       <div className="gf-form-group">
         {/* Scrape interval */}
         <div className="gf-form-inline">
@@ -167,7 +169,7 @@ export const PromSettings = (props: Props) => {
               labelWidth={13}
               inputEl={
                 <Input
-                  className="width-6"
+                  className="width-20"
                   value={options.jsonData.timeInterval}
                   spellCheck={false}
                   placeholder="15s"
@@ -188,7 +190,7 @@ export const PromSettings = (props: Props) => {
               labelWidth={13}
               inputEl={
                 <Input
-                  className="width-6"
+                  className="width-20"
                   value={options.jsonData.queryTimeout}
                   onChange={onChangeHandler('queryTimeout', options, onOptionsChange)}
                   spellCheck={false}
@@ -201,26 +203,44 @@ export const PromSettings = (props: Props) => {
             />
           </div>
         </div>
-        {/* HTTP Method */}
+      </div>
+
+      <h3 className="page-heading">UI</h3>
+      <div className="gf-form-group">
         <div className="gf-form">
-          <InlineFormLabel
-            width={13}
-            tooltip="You can use either POST or GET HTTP method to query your Prometheus data source. POST is the recommended method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network."
-          >
-            HTTP method
-          </InlineFormLabel>
-          <Select
-            aria-label="Select HTTP method"
-            options={httpOptions}
-            value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
-            onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
-            className="width-6"
-            disabled={options.readOnly}
+          <FormField
+            label="Default editor"
+            labelWidth={13}
+            inputEl={
+              <Select
+                aria-label={`Default Editor (Code or Builder)`}
+                options={editorOptions}
+                value={editorOptions.find((o) => o.value === options.jsonData.defaultEditor)}
+                onChange={onChangeHandler('defaultEditor', options, onOptionsChange)}
+                width={40}
+                disabled={options.readOnly}
+              />
+            }
+            tooltip={`Set default editor option (builder/code) for all users of this datasource. If no option was selected, the default editor will be the "builder". If they switch to other option rather than the specified with this setting on the panel we always show the selected editor for that user.`}
           />
+        </div>
+        <div className="gf-form">
+          <InlineField
+            labelWidth={LABEL_WIDTH}
+            label="Disable metrics lookup"
+            tooltip="Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances."
+            disabled={options.readOnly}
+          >
+            <InlineSwitch
+              value={options.jsonData.disableMetricsLookup ?? false}
+              onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableMetricsLookup')}
+            />
+          </InlineField>
         </div>
       </div>
 
-      <h3 className="page-heading">Type and version</h3>
+      <h3 className="page-heading">Performance</h3>
+      {/* <h4 className="page-heading">Type and version</h4> */}
       {!options.jsonData.prometheusType && !options.jsonData.prometheusVersion && options.readOnly && (
         <div style={{ marginBottom: '12px' }}>
           For more information on configuring prometheus type and version in data sources, see the{' '}
@@ -259,7 +279,7 @@ export const PromSettings = (props: Props) => {
                       });
                     }
                   )}
-                  width={20}
+                  width={40}
                   disabled={options.readOnly}
                 />
               }
@@ -281,7 +301,7 @@ export const PromSettings = (props: Props) => {
                       (o) => o.value === options.jsonData.prometheusVersion
                     )}
                     onChange={onChangeHandler('prometheusVersion', options, onOptionsChange)}
-                    width={20}
+                    width={40}
                     disabled={options.readOnly}
                   />
                 }
@@ -290,49 +310,38 @@ export const PromSettings = (props: Props) => {
             </div>
           )}
         </div>
+        {config.featureToggles.prometheusResourceBrowserCache && (
+          <div className="gf-form-inline">
+            <div className="gf-form max-width-30">
+              <FormField
+                label="Cache level"
+                labelWidth={13}
+                tooltip="Sets the browser caching level for editor queries. Higher cache settings are recommended for high cardinality data sources."
+                inputEl={
+                  <Select
+                    width={40}
+                    onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
+                    options={cacheValueOptions}
+                    value={cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel)}
+                  />
+                }
+              />
+            </div>
+          </div>
+        )}
       </div>
 
-      <h3 className="page-heading">Misc</h3>
+      <h3 className="page-heading">Advanced</h3>
       <div className="gf-form-group">
-        <div className="gf-form">
-          <InlineField
-            labelWidth={28}
-            label="Disable metrics lookup"
-            tooltip="Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances."
-            disabled={options.readOnly}
-          >
-            <InlineSwitch
-              value={options.jsonData.disableMetricsLookup ?? false}
-              onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableMetricsLookup')}
-            />
-          </InlineField>
-        </div>
-        <div className="gf-form">
-          <FormField
-            label="Default editor"
-            labelWidth={14}
-            inputEl={
-              <Select
-                aria-label={`Default Editor (Code or Builder)`}
-                options={editorOptions}
-                value={editorOptions.find((o) => o.value === options.jsonData.defaultEditor)}
-                onChange={onChangeHandler('defaultEditor', options, onOptionsChange)}
-                width={20}
-                disabled={options.readOnly}
-              />
-            }
-            tooltip={`Set default editor option (builder/code) for all users of this datasource. If no option was selected, the default editor will be the "builder". If they switch to other option rather than the specified with this setting on the panel we always show the selected editor for that user.`}
-          />
-        </div>
         <div className="gf-form-inline">
           <div className="gf-form max-width-30">
             <FormField
               label="Custom query parameters"
-              labelWidth={14}
+              labelWidth={13}
               tooltip="Add custom parameters to all Prometheus or Thanos queries."
               inputEl={
                 <Input
-                  className="width-25"
+                  className="width-20"
                   value={options.jsonData.customQueryParameters}
                   onChange={onChangeHandler('customQueryParameters', options, onOptionsChange)}
                   spellCheck={false}
@@ -343,25 +352,25 @@ export const PromSettings = (props: Props) => {
             />
           </div>
         </div>
-        {config.featureToggles.prometheusResourceBrowserCache && (
-          <div className="gf-form-inline">
-            <div className="gf-form max-width-30">
-              <FormField
-                label="Cache level"
-                labelWidth={14}
-                tooltip="Sets the browser caching level for editor queries. Higher cache settings are recommended for high cardinality data sources."
-                inputEl={
-                  <Select
-                    className={`width-25`}
-                    onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
-                    options={cacheValueOptions}
-                    value={cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel)}
-                  />
-                }
-              />
-            </div>
+        <div className="gf-form-inline">
+          {/* HTTP Method */}
+          <div className="gf-form">
+            <InlineFormLabel
+              width={13}
+              tooltip="You can use either POST or GET HTTP method to query your Prometheus data source. POST is the recommended method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network."
+            >
+              HTTP method
+            </InlineFormLabel>
+            <Select
+              width={40}
+              aria-label="Select HTTP method"
+              options={httpOptions}
+              value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
+              onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
+              disabled={options.readOnly}
+            />
           </div>
-        )}
+        </div>
       </div>
       <ExemplarsSettings
         options={options.jsonData.exemplarTraceIdDestinations}
