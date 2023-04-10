@@ -107,7 +107,6 @@ export function SqlQueryEditor({
     <>
       {hasDatabaseConfigIssue && (
         <Alert
-          data-testid="database_update"
           severity="warning"
           title="Default datasource update"
           elevated={true}
@@ -124,7 +123,6 @@ export function SqlQueryEditor({
       )}
       {hasNoPostgresDefaultDatabaseConfig && (
         <Alert
-          data-testid="no_postgres_database"
           severity="warning"
           title="Default datasource error"
           elevated={true}

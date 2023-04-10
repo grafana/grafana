@@ -18,7 +18,7 @@ const buildMockDB = (): DB => ({
 });
 
 // This data is of type `SqlDatasource`
-const buildMockDatasource = (hasDefaultDatabaseConfigured?: boolean) => {
+export const buildMockDatasource = (hasDefaultDatabaseConfigured?: boolean) => {
   return {
     id: Infinity,
     type: '',
@@ -72,16 +72,13 @@ const buildMockDatasource = (hasDefaultDatabaseConfigured?: boolean) => {
   };
 };
 
-export function buildSqlQueryEditorProps(
-  hasDefaultDatabaseConfigured?: boolean,
-  overrides?: Partial<SqlQueryEditorProps>
-): SqlQueryEditorProps {
+export function buildSqlQueryEditorProps(overrides?: Partial<SqlQueryEditorProps>): SqlQueryEditorProps {
   return {
     onChange: jest.fn(),
     query: { refId: '123', dataset: 'chosen database' },
     onRunQuery: jest.fn(),
     // @ts-ignore
-    datasource: buildMockDatasource(hasDefaultDatabaseConfigured),
+    datasource: buildMockDatasource(),
     ...overrides,
   };
 }

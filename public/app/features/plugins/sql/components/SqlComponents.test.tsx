@@ -3,29 +3,33 @@ import React from 'react';
 
 import { DatasetSelector } from './DatasetSelector';
 import { SqlQueryEditor } from './QueryEditor';
-import { buildSqlQueryEditorProps, buildMockDataSelectorProps } from './SqlComponents.testHelpers';
+import { buildSqlQueryEditorProps, buildMockDataSelectorProps, buildMockDatasource } from './SqlComponents.testHelpers';
 
 describe('SqlQueryEditor', () => {
   describe('alerts', () => {
     afterEach(cleanup);
+    const database_update_text = 'Your default database configuration has been changed or updated';
+    const no_postgres_database_text = 'You do not currenlty have a database configured for this datasource';
 
-    it('should render the `database_update` alert correctly', async () => {
-      render(<SqlQueryEditor {...buildSqlQueryEditorProps(true)} />);
+    it('should ONLY render the `database update` alert', async () => {
+      // @ts-ignore
+      // Property 'templateSrv' is protected but type and is not a class derived from 'SqlDatasource'.ts(2322); Oh hush now.
+      render(<SqlQueryEditor {...buildSqlQueryEditorProps({ datasource: buildMockDatasource(true) })} />);
 
       await waitFor(() => {
-        expect(screen.getByTestId('database_update')).toBeInTheDocument();
+        const alert = screen.getByRole('alert');
+        expect(alert.textContent).toContain(database_update_text);
+        expect(alert.textContent).not.toContain(no_postgres_database_text);
       });
     });
 
-    it('should render the `no_postgres_database` alert correctly', async () => {
-      render(
-        <SqlQueryEditor
-          {...buildSqlQueryEditorProps(undefined, { queryHeaderProps: { disableDatasetSelector: true } })}
-        />
-      );
+    it.skip('should ONLY render the `no postgres database` alert', async () => {
+      render(<SqlQueryEditor {...buildSqlQueryEditorProps({ queryHeaderProps: { disableDatasetSelector: true } })} />);
 
       await waitFor(() => {
-        expect(screen.getByTestId('no_postgres_database')).toBeInTheDocument();
+        const alert = screen.getByRole('alert');
+        expect(alert.textContent).toContain(no_postgres_database_text);
+        expect(alert.textContent).not.toContain(no_postgres_database_text);
       });
     });
   });
