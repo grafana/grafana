@@ -21,6 +21,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-family: ${theme.typography.fontFamilyMonospace};
     font-weight: ${theme.typography.fontWeightMedium};
   `,
+  // we alternate background colors, make card slightly darker than either
+  cardContainerBackground: css`
+    background-color: rgba(0, 0, 0, 0.05);
+  `,
 });
 
 export const ConfigureCorrelationSourceForm = () => {
@@ -85,7 +89,7 @@ export const ConfigureCorrelationSourceForm = () => {
           />
         </Field>
         {variables.length > 0 && (
-          <Card>
+          <Card className={styles.cardContainerBackground}>
             <Card.Heading>Variables used in the target query</Card.Heading>
             <Card.Description>
               You have used following variables in the target query:{' '}

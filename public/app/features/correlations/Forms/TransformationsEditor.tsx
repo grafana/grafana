@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { SupportedTransformationType } from '@grafana/data';
+import { GrafanaTheme2, SupportedTransformationType } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import {
   Button,
@@ -12,6 +12,7 @@ import {
   IconButton,
   Input,
   InputControl,
+  Label,
   Select,
   Tooltip,
   useStyles2,
@@ -19,7 +20,11 @@ import {
 
 type Props = {};
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
+  heading: css`
+    font-size: ${theme.typography.h5.fontSize};
+    font-weight: ${theme.typography.fontWeightRegular};
+  `,
   // set fixed position from the top instead of centring as the container
   // may get bigger when the for is invalid
   removeButton: css`
@@ -38,7 +43,7 @@ export const TransformationsEditor = (props: Props) => {
       {({ fields, append, remove }) => (
         <>
           <Stack direction="column" alignItems="flex-start">
-            <div>Transformations</div>
+            <div className={styles.heading}>Transformations</div>
             {fields.length === 0 && <div> No transformations defined.</div>}
             {fields.length > 0 && (
               <div>
@@ -48,7 +53,7 @@ export const TransformationsEditor = (props: Props) => {
                       <Field
                         label={
                           <Stack gap={0.5}>
-                            <span>Type</span>
+                            <Label>Type</Label>
                             <Tooltip
                               content={
                                 <div>
@@ -87,7 +92,7 @@ export const TransformationsEditor = (props: Props) => {
                       <Field
                         label={
                           <Stack gap={0.5}>
-                            <span>Field</span>
+                            <Label>Field</Label>
                             <Tooltip
                               content={
                                 <div>
@@ -108,7 +113,7 @@ export const TransformationsEditor = (props: Props) => {
                       <Field
                         label={
                           <Stack gap={0.5}>
-                            <span>Expression</span>
+                            <Label>Expression</Label>
                             <Tooltip
                               content={
                                 <div>
@@ -135,7 +140,7 @@ export const TransformationsEditor = (props: Props) => {
                       <Field
                         label={
                           <Stack gap={0.5}>
-                            <span>Map value</span>
+                            <Label>Map value</Label>
                             <Tooltip
                               content={
                                 <div>
