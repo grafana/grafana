@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SupportedTransformationType } from '@grafana/data';
@@ -18,7 +18,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-type Props = {};
+type Props = { readOnly: boolean };
 
 const getStyles = (theme: GrafanaTheme2) => ({
   heading: css`
@@ -33,7 +33,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export const TransformationsEditor = (props: Props) => {
-  const { control, formState, register, setValue, watch } = useFormContext();
+  const { control, formState, register, setValue, watch, getValues } = useFormContext();
+  const { readOnly } = props;
+  const [keptVals, setKeptVals] = useState<{ [key: string]: { expression: string; mapValue: string } }>({});
+
   const styles = useStyles2(getStyles);
 
   const transformOptions = getTransformOptions();
@@ -74,9 +77,37 @@ export const TransformationsEditor = (props: Props) => {
                             <Select
                               {...field}
                               onChange={(value) => {
-                                setValue(`config.transformations.${index}.expression`, '');
-                                setValue(`config.transformations.${index}.mapValue`, '');
-                                onChange(value.value);
+                                if (!readOnly) {
+                                  const currentValues = getValues().config.transformations[index];
+                                  setKeptVals({
+                                    ...keptVals,
+                                    [index.toString()]: {
+                                      expression: currentValues.expression,
+                                      mapValue: currentValues.mapValue,
+                                    },
+                                  });
+                                  const newValueDetails = getSupportedTransTypeDetails(value.value);
+
+                                  if (newValueDetails.showExpression) {
+                                    setValue(
+                                      `config.transformations.${index}.expression`,
+                                      keptVals[index.toString()]?.expression || ''
+                                    );
+                                  } else {
+                                    setValue(`config.transformations.${index}.expression`, '');
+                                  }
+
+                                  if (newValueDetails.showMapValue) {
+                                    setValue(
+                                      `config.transformations.${index}.mapValue`,
+                                      keptVals[index.toString()]?.mapValue || ''
+                                    );
+                                  } else {
+                                    setValue(`config.transformations.${index}.mapValue`, '');
+                                  }
+
+                                  onChange(value.value);
+                                }
                               }}
                               options={transformOptions}
                               width={25}
@@ -108,7 +139,11 @@ export const TransformationsEditor = (props: Props) => {
                           </Stack>
                         }
                       >
-                        <Input {...register(`config.transformations.${index}.field`)} defaultValue={field.field} />
+                        <Input
+                          {...register(`config.transformations.${index}.field`)}
+                          readOnly={readOnly}
+                          defaultValue={field.field}
+                        />
                       </Field>
                       <Field
                         label={
@@ -132,6 +167,7 @@ export const TransformationsEditor = (props: Props) => {
                         <Input
                           {...register(`config.transformations.${index}.expression`)}
                           defaultValue={field.expression}
+                          readOnly={readOnly}
                           disabled={
                             !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).showExpression
                           }
@@ -159,29 +195,39 @@ export const TransformationsEditor = (props: Props) => {
                         <Input
                           {...register(`config.transformations.${index}.mapValue`)}
                           defaultValue={field.mapValue}
+                          readOnly={readOnly}
                           disabled={
                             !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).showMapValue
                           }
                         />
                       </Field>
-                      <div className={styles.removeButton}>
-                        <IconButton
-                          type="button"
-                          tooltip="Remove transformation"
-                          name={'trash-alt'}
-                          onClick={() => remove(index)}
-                        >
-                          Remove
-                        </IconButton>
-                      </div>
+                      {!readOnly && (
+                        <div className={styles.removeButton}>
+                          <IconButton
+                            type="button"
+                            tooltip="Remove transformation"
+                            name={'trash-alt'}
+                            onClick={() => remove(index)}
+                          >
+                            Remove
+                          </IconButton>
+                        </div>
+                      )}
                     </Stack>
                   );
                 })}
               </div>
             )}
-            <Button icon="plus" onClick={() => append({ type: undefined })} variant="secondary" type="button">
-              Add transformation
-            </Button>
+            {!readOnly && (
+              <Button
+                icon="plus"
+                onClick={() => append({ type: undefined }, { shouldFocus: false })}
+                variant="secondary"
+                type="button"
+              >
+                Add transformation
+              </Button>
+            )}
           </Stack>
         </>
       )}

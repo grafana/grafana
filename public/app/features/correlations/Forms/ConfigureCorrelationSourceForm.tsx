@@ -101,10 +101,13 @@ export const ConfigureCorrelationSourceForm = () => {
               ))}
               <br />A data point needs to provide values to all variables as fields or as transformations output to make
               the correlation button appear in the visualization.
+              <br />
+              Note: Not every variable needs to be explicitly defined below. A transformation such as{' '}
+              <span className={styles.variable}>logfmt</span> will create variables for every key/value pair.
             </Card.Description>
           </Card>
         )}
-        <TransformationsEditor />
+        <TransformationsEditor readOnly={readOnly} />
       </FieldSet>
     </>
   );
