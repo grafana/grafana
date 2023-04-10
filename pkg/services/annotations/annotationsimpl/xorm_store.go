@@ -515,10 +515,10 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 		sql := fmt.Sprintf(deleteQuery, annotationType, cutoffDate, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
 
 		affected, err := r.executeUntilDoneOrCancelled(ctx, sql)
-		totalAffected += affected
 		if err != nil {
 			return totalAffected, err
 		}
+		totalAffected += affected
 	}
 
 	if cfg.MaxCount > 0 {

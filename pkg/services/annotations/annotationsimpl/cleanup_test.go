@@ -169,7 +169,7 @@ func TestAnnotationCleanUp_Timeout(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.AnnotationCleanupJobBatchSize = 100 // batch size > total number of annotations
 	createTestAnnotations(t, fakeSQL, annotationCount, 6)
-	cleaner := ProvideCleanupService(fakeSQL, cfg)
+	cleaner := ProvideCleanupService(fakeSQL, cfg, &featuremgmt.FeatureManager{})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 	defer cancel()
