@@ -64,7 +64,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   const [columns, setColumns] = useState<SizedGridColumn[]>([]);
   const [contextMenuData, setContextMenuData] = useState<DatagridContextMenuData>({ isContextMenuOpen: false });
   const [gridSelection, setGridSelection] = useState<GridSelection>(EMPTY_GRID_SELECTION);
-  const [columnFreezeIndex, setColumnFreezeIndex] = useState<number>(-1);
+  const [columnFreezeIndex, setColumnFreezeIndex] = useState<number>(0);
   const [toggleSearch, setToggleSearch] = useState<boolean>(false);
   const [isSnapshotted, setIsSnapshotted] = useState<boolean>(false);
   const [isResizeInProgress, setIsResizeInProgress] = useState<boolean>(false);
@@ -340,6 +340,9 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         width={'100%'}
         height={'100%'}
         theme={gridTheme}
+        smoothScrollX
+        smoothScrollY
+        overscrollY={50}
         onCellEdited={isDatagridEditEnabled() ? onCellEdited : undefined}
         getCellsForSelection={isDatagridEditEnabled() ? true : undefined}
         showSearch={isDatagridEditEnabled() ? toggleSearch : false}

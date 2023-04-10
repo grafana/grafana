@@ -100,7 +100,7 @@ export const DatagridContextMenu = ({
         />
       ) : null}
       <MenuDivider />
-      {row && !selectedRows.length ? (
+      {row !== undefined && row >= 0 && !selectedRows.length ? (
         <MenuItem
           label="Clear row"
           onClick={() => {
@@ -108,7 +108,7 @@ export const DatagridContextMenu = ({
           }}
         />
       ) : null}
-      {column && !selectedColumns.length ? (
+      {column !== undefined && column >= 0 && !selectedColumns.length ? (
         <MenuItem
           label="Clear column"
           onClick={() => {
@@ -197,7 +197,7 @@ export const DatagridContextMenu = ({
           label={columnFreezeLabel}
           onClick={() => {
             if (columnFreezeIndex === columnIdx) {
-              setColumnFreezeIndex(-1);
+              setColumnFreezeIndex(0);
             } else {
               setColumnFreezeIndex(columnIdx);
             }
