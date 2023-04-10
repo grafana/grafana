@@ -3,6 +3,7 @@ import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
 
@@ -12,13 +13,13 @@ import { ServiceAccountRoleRow } from './ServiceAccountRoleRow';
 interface Props {
   serviceAccount: ServiceAccountDTO;
   timeZone: TimeZone;
-  roleOptions: Role[];
   onChange: (serviceAccount: ServiceAccountDTO) => void;
 }
 
-export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, onChange }: Props): JSX.Element {
+export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
+  const [roles, setRoles] = React.useState<Role[]>([]);
 
   const onRoleChange = (role: OrgRole) => {
     onChange({ ...serviceAccount, role: role });
@@ -27,6 +28,22 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, o
   const onNameChange = (newValue: string) => {
     onChange({ ...serviceAccount, name: newValue });
   };
+  // TODO: this is a temporary solution to fetch roles for service accounts
+  // until we make use of the state from the serviceaccountspage
+  // and pass it down to the serviceaccountprofile
+  React.useEffect(() => {
+    if (contextSrv.licensedAccessControlEnabled()) {
+      if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+        fetchRoleOptions(serviceAccount.orgId)
+          .then((roles) => {
+            setRoles(roles);
+          })
+          .catch((err) => {
+            console.log('fetchRoleOptions error: ', err);
+          });
+      }
+    }
+  }, [serviceAccount.orgId]);
 
   return (
     <div className={styles.section}>
@@ -44,7 +61,7 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, o
             label="Roles"
             serviceAccount={serviceAccount}
             onRoleChange={onRoleChange}
-            roleOptions={roleOptions}
+            roleOptions={roles}
           />
           <ServiceAccountProfileRow
             label="Creation date"

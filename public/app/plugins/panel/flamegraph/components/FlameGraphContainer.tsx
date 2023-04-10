@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, DataFrameView, CoreApp, getEnumDisplayProcessor, createTheme } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { DataFrame, CoreApp } from '@grafana/data';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH, PIXELS_PER_LEVEL } from '../constants';
 
 import FlameGraph from './FlameGraph/FlameGraph';
-import { Item, nestedSetToLevels } from './FlameGraph/dataTransform';
+import { FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { SelectedView } from './types';
@@ -30,36 +30,21 @@ const FlameGraphContainer = (props: Props) => {
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+  const theme = useTheme2();
 
-  const labelField = props.data?.fields.find((f) => f.name === 'label');
-
-  // Label can actually be an enum field so depending on that we have to access it through display processor. This is
-  // both a backward compatibility but also to allow using a simple dataFrame without enum config. This would allow
-  // users to use this panel with correct query from data sources that do not return profiles natively.
-  const getLabelValue = useCallback(
-    (label: string | number) => {
-      const enumConfig = labelField?.config?.type?.enum;
-      if (enumConfig) {
-        return getEnumDisplayProcessor(createTheme(), enumConfig)(label).text;
-      } else {
-        return label.toString();
-      }
-    },
-    [labelField]
-  );
-
-  // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular
-  // level of the flame graph. We do this temporary as in the end we should be able to render directly by iterating
-  // over the dataFrame rows.
-  const levels = useMemo(() => {
+  const [dataContainer, levels] = useMemo((): [FlameGraphDataContainer, LevelItem[][]] | [undefined, undefined] => {
     if (!props.data) {
-      return [];
+      return [undefined, undefined];
     }
-    const dataView = new DataFrameView<Item>(props.data);
-    return nestedSetToLevels(dataView);
-  }, [props.data]);
+    const container = new FlameGraphDataContainer(props.data, theme);
 
-  const styles = useStyles2(() => getStyles(props.app, PIXELS_PER_LEVEL * levels.length));
+    // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular
+    // level of the flame graph. We do this temporary as in the end we should be able to render directly by iterating
+    // over the dataFrame rows.
+    return [container, nestedSetToLevels(container)];
+  }, [props.data, theme]);
+
+  const styles = useStyles2(() => getStyles(props.app, PIXELS_PER_LEVEL * (levels?.length ?? 0)));
 
   // If user resizes window with both as the selected view
   useEffect(() => {
@@ -81,7 +66,7 @@ const FlameGraphContainer = (props: Props) => {
 
   return (
     <>
-      {props.data && (
+      {dataContainer && (
         <div ref={sizeRef} className={styles.container}>
           <FlameGraphHeader
             app={props.app}
@@ -98,7 +83,7 @@ const FlameGraphContainer = (props: Props) => {
 
           {selectedView !== SelectedView.FlameGraph && (
             <FlameGraphTopTableContainer
-              data={props.data}
+              data={dataContainer}
               app={props.app}
               totalLevels={levels.length}
               selectedView={selectedView}
@@ -108,13 +93,12 @@ const FlameGraphContainer = (props: Props) => {
               setSelectedBarIndex={setSelectedBarIndex}
               setRangeMin={setRangeMin}
               setRangeMax={setRangeMax}
-              getLabelValue={getLabelValue}
             />
           )}
 
           {selectedView !== SelectedView.TopTable && (
             <FlameGraph
-              data={props.data}
+              data={dataContainer}
               app={props.app}
               flameGraphHeight={props.flameGraphHeight}
               levels={levels}
@@ -128,7 +112,6 @@ const FlameGraphContainer = (props: Props) => {
               setRangeMin={setRangeMin}
               setRangeMax={setRangeMax}
               selectedView={selectedView}
-              getLabelValue={getLabelValue}
             />
           )}
         </div>

@@ -110,6 +110,8 @@ type UnifiedAlertingStateHistorySettings struct {
 	// if one of them is set.
 	LokiBasicAuthPassword string
 	LokiBasicAuthUsername string
+	MultiPrimary          string
+	MultiSecondaries      []string
 	ExternalLabels        map[string]string
 }
 
@@ -135,7 +137,7 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 	// than disable it. This issue can be found here
 	hasEnabled := section.Key("enabled").Value() != ""
 	if !hasEnabled {
-		// TODO: Remove in Grafana v9
+		// TODO: Remove in Grafana v10
 		if cfg.IsFeatureToggleEnabled("ngalert") {
 			cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
 			// feature flag overrides the legacy alerting setting
@@ -330,6 +332,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		LokiTenantID:          stateHistory.Key("loki_tenant_id").MustString(""),
 		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
 		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
+		MultiPrimary:          stateHistory.Key("primary").MustString(""),
+		MultiSecondaries:      splitTrim(stateHistory.Key("secondaries").MustString(""), ","),
 		ExternalLabels:        stateHistoryLabels.KeysHash(),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
@@ -340,4 +344,12 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 func GetAlertmanagerDefaultConfiguration() string {
 	return alertmanagerDefaultConfiguration
+}
+
+func splitTrim(s string, sep string) []string {
+	spl := strings.Split(s, sep)
+	for i := range spl {
+		spl[i] = strings.TrimSpace(spl[i])
+	}
+	return spl
 }

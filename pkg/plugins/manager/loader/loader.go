@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -33,7 +32,6 @@ type Loader struct {
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
 	pluginStorage      storage.Manager
-	pluginsCDN         *pluginscdn.Service
 	assetPath          *assetpath.Service
 	log                log.Logger
 	cfg                *config.Cfg
@@ -42,18 +40,19 @@ type Loader struct {
 }
 
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
-	roleRegistry plugins.RoleRegistry, pluginsCDNService *pluginscdn.Service, assetPath *assetpath.Service) *Loader {
+	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
+	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		storage.FileSystem(log.NewPrettyLogger("loader.fs"), cfg.PluginsPath), roleRegistry, pluginsCDNService, assetPath)
+		storage.FileSystem(log.NewPrettyLogger("loader.fs"), cfg.PluginsPath), roleRegistry, assetPath,
+		pluginFinder)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry,
-	pluginsCDNService *pluginscdn.Service, assetPath *assetpath.Service) *Loader {
+	assetPath *assetpath.Service, pluginFinder finder.Finder) *Loader {
 	return &Loader{
-		pluginFinder:       finder.NewService(),
+		pluginFinder:       pluginFinder,
 		pluginRegistry:     pluginRegistry,
 		pluginInitializer:  initializer.New(cfg, backendProvider, license),
 		signatureValidator: signature.NewValidator(authorizer),
@@ -63,21 +62,20 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 		log:                log.New("plugin.loader"),
 		roleRegistry:       roleRegistry,
 		cfg:                cfg,
-		pluginsCDN:         pluginsCDNService,
 		assetPath:          assetPath,
 	}
 }
 
-func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
-	found, err := l.pluginFinder.Find(ctx, paths...)
+func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+	found, err := l.pluginFinder.Find(ctx, src)
 	if err != nil {
 		return nil, err
 	}
 
-	return l.loadPlugins(ctx, class, found)
+	return l.loadPlugins(ctx, src, found)
 }
 
-func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
+func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	var loadedPlugins []*plugins.Plugin
 	for _, p := range found {
 		if _, exists := l.pluginRegistry.Plugin(ctx, p.Primary.JSONData.ID); exists {
@@ -85,19 +83,12 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, found []*
 			continue
 		}
 
-		var sig plugins.Signature
-		if l.pluginsCDN.PluginSupported(p.Primary.JSONData.ID) {
-			// CDN plugins have no signature checks for now.
-			sig = plugins.Signature{Status: plugins.SignatureValid}
-		} else {
-			var err error
-			sig, err = signature.Calculate(l.log, class, p.Primary)
-			if err != nil {
-				l.log.Warn("Could not calculate plugin signature state", "pluginID", p.Primary.JSONData.ID, "err", err)
-				continue
-			}
+		sig, err := signature.Calculate(ctx, l.log, src, p.Primary)
+		if err != nil {
+			l.log.Warn("Could not calculate plugin signature state", "pluginID", p.Primary.JSONData.ID, "err", err)
+			continue
 		}
-		plugin, err := l.createPluginBase(p.Primary.JSONData, class, p.Primary.FS)
+		plugin, err := l.createPluginBase(p.Primary.JSONData, src.PluginClass(ctx), p.Primary.FS)
 		if err != nil {
 			l.log.Error("Could not create primary plugin base", "pluginID", p.Primary.JSONData.ID, "err", err)
 			continue
@@ -115,7 +106,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, found []*
 				continue
 			}
 
-			cp, err := l.createPluginBase(c.JSONData, class, c.FS)
+			cp, err := l.createPluginBase(c.JSONData, plugin.Class, c.FS)
 			if err != nil {
 				l.log.Error("Could not create child plugin base", "pluginID", p.Primary.JSONData.ID, "err", err)
 				continue
@@ -152,7 +143,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, found []*
 		if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
 			_, err := plugin.FS.Open("module.js")
 			if err != nil {
-				if errors.Is(err, plugins.ErrFileNotExist) && !l.pluginsCDN.PluginSupported(plugin.ID) {
+				if errors.Is(err, plugins.ErrFileNotExist) {
 					l.log.Warn("Plugin missing module.js", "pluginID", plugin.ID,
 						"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
 				}
@@ -175,8 +166,6 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, found []*
 		if err != nil {
 			return nil, err
 		}
-		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
-
 		if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); errDeclareRoles != nil {
 			l.log.Warn("Declare plugin roles failed.", "pluginID", p.ID, "err", errDeclareRoles)
 		}
@@ -185,6 +174,10 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, found []*
 	for _, p := range verifiedPlugins {
 		if err := l.load(ctx, p); err != nil {
 			l.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
+		}
+
+		if !p.IsCorePlugin() && !p.IsBundledPlugin() {
+			metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 		}
 	}
 

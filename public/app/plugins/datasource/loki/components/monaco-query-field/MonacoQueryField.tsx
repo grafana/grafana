@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { debounce } from 'lodash';
 import React, { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,6 +8,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
 import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
+
+import { isValidQuery } from '../../queryUtils';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
@@ -76,6 +79,9 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
       border-radius: ${theme.shape.borderRadius()};
       border: 1px solid ${theme.components.input.borderColor};
       width: 100%;
+      .monaco-editor .suggest-widget {
+        min-width: 50%;
+      }
     `,
     placeholder: css`
       ::after {
@@ -87,7 +93,15 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
   };
 };
 
-const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasource, placeholder }: Props) => {
+const MonacoQueryField = ({
+  history,
+  onBlur,
+  onRunQuery,
+  initialValue,
+  datasource,
+  placeholder,
+  onQueryType,
+}: Props) => {
   const id = uuidv4();
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
@@ -138,6 +152,14 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
     editor.onDidChangeModelContent(checkDecorators);
   };
 
+  const onTypeDebounced = debounce(async (query: string) => {
+    if (!onQueryType || (isValidQuery(query) === false && query !== '')) {
+      return;
+    }
+
+    onQueryType(query);
+  }, 1000);
+
   return (
     <div
       aria-label={selectors.components.QueryField.container}
@@ -181,6 +203,8 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
               severity: monaco.MarkerSeverity.Error,
               ...boundary,
             }));
+
+            onTypeDebounced(query);
             monaco.editor.setModelMarkers(model, 'owner', markers);
           });
           const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef);

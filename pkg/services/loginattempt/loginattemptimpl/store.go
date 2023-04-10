@@ -14,14 +14,14 @@ type xormStore struct {
 }
 
 type store interface {
-	CreateLoginAttempt(ctx context.Context, cmd CreateLoginAttemptCommand) error
+	CreateLoginAttempt(ctx context.Context, cmd CreateLoginAttemptCommand) (loginattempt.LoginAttempt, error)
 	DeleteOldLoginAttempts(ctx context.Context, cmd DeleteOldLoginAttemptsCommand) (int64, error)
 	DeleteLoginAttempts(ctx context.Context, cmd DeleteLoginAttemptsCommand) error
 	GetUserLoginAttemptCount(ctx context.Context, query GetUserLoginAttemptCountQuery) (int64, error)
 }
 
-func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd CreateLoginAttemptCommand) error {
-	return xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd CreateLoginAttemptCommand) (result loginattempt.LoginAttempt, err error) {
+	err = xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		loginAttempt := loginattempt.LoginAttempt{
 			Username:  cmd.Username,
 			IpAddress: cmd.IpAddress,
@@ -32,10 +32,11 @@ func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd CreateLoginAtte
 			return err
 		}
 
-		cmd.Result = loginAttempt
+		result = loginAttempt
 
 		return nil
 	})
+	return result, err
 }
 
 func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd DeleteOldLoginAttemptsCommand) (int64, error) {

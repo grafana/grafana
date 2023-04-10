@@ -1,6 +1,9 @@
 package kind
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 name:        "LibraryPanel"
 maturity:    "experimental"
@@ -52,8 +55,8 @@ lineage: seqs: [
 					folderUid:           string @grafanamaturity(ToMetadata="sys")
 					connectedDashboards: int64
 
-					created: string @grafanamaturity(ToMetadata="sys") // time.Time in golang
-					updated: string @grafanamaturity(ToMetadata="sys") // time.Time in golang
+					created: string & time.Time
+					updated: string & time.Time
 
 					createdBy: #LibraryElementDTOMetaUser @grafanamaturity(ToMetadata="sys")
 					updatedBy: #LibraryElementDTOMetaUser @grafanamaturity(ToMetadata="sys")

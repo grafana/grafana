@@ -25,11 +25,7 @@ const logModeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
   },
 ];
 
-export const AxisEditor: React.FC<StandardEditorProps<HeatmapCalculationBucketConfig, any>> = ({
-  value,
-  onChange,
-  item,
-}) => {
+export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<HeatmapCalculationBucketConfig>) => {
   return (
     <HorizontalGroup>
       <RadioButtonGroup

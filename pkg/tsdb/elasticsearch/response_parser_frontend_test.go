@@ -1030,7 +1030,7 @@ func TestPercentilesWithoutDateHistogram(t *testing.T) {
 			  "3": {
 				"buckets": [
 				  {
-					"1": { "values": { "75": 3.3, "90": 5.5 } },
+					"1": { "values": { "90": 5.5, "75": 3.3 } },
 					"doc_count": 10,
 					"key": "id1"
 				  },
@@ -1055,24 +1055,24 @@ func TestPercentilesWithoutDateHistogram(t *testing.T) {
 	require.Len(t, frames, 1)
 	requireFrameLength(t, frames[0], 2)
 
-	// require.Len(t, frames[0].Fields, 3) // FIXME
+	require.Len(t, frames[0].Fields, 3)
 
-	// f1 := frames[0].Fields[0] // FIXME
-	// f2 := frames[0].Fields[1] // FIXME
-	// f3 := frames[0].Fields[2] // FIXME
+	f1 := frames[0].Fields[0]
+	f2 := frames[0].Fields[1]
+	f3 := frames[0].Fields[2]
 
-	// require.Equal(t, "id", f1.Name)        // FIXME
-	// require.Equal(t, "p75 value", f2.Name) // FIXME
-	// require.Equal(t, "p90 value", f3.Name) // FIXME
+	require.Equal(t, "id", f1.Name)
+	require.Equal(t, "p75 value", f2.Name)
+	require.Equal(t, "p90 value", f3.Name)
 
-	// requireStringAt(t, "id1", f1, 0) // FIXME
-	// requireStringAt(t, "id2", f1, 1) // FIXME
+	requireStringAt(t, "id1", f1, 0)
+	requireStringAt(t, "id2", f1, 1)
 
-	// requireFloatAt(t, 3.3, f2, 0) // FIXME
-	// requireFloatAt(t, 2.3, f2, 1) // FIXME
+	requireFloatAt(t, 3.3, f2, 0)
+	requireFloatAt(t, 2.3, f2, 1)
 
-	// requireFloatAt(t, 5.5, f3, 0) // FIXME
-	// requireFloatAt(t, 4.5, f3, 1) // FIXME
+	requireFloatAt(t, 5.5, f3, 0)
+	requireFloatAt(t, 4.5, f3, 1)
 }
 
 func TestMultipleMetricsOfTheSameType(t *testing.T) {

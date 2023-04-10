@@ -2,9 +2,9 @@ import { css, cx } from '@emotion/css';
 import { capitalize, uniqueId } from 'lodash';
 import React, { FC, useCallback, useState } from 'react';
 
-import { DataFrame, dateTimeFormat, GrafanaTheme2, LoadingState, PanelData, isTimeSeriesFrames } from '@grafana/data';
+import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { AutoSizeInput, clearButtonStyles, Icon, IconButton, Select, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, Button, clearButtonStyles, Icon, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -13,6 +13,7 @@ import { Threshold } from 'app/features/expressions/components/Threshold';
 import { ExpressionQuery, ExpressionQueryType, gelTypes } from 'app/features/expressions/types';
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { usePagination } from '../../hooks/usePagination';
 import { HoverCard } from '../HoverCard';
 import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
@@ -105,6 +106,7 @@ export const Expression: FC<ExpressionProps> = ({
         />
         <div className={styles.expression.body}>{renderExpressionType(query)}</div>
         {hasResults && <ExpressionResult series={series} isAlertCondition={isAlertCondition} />}
+
         <div className={styles.footer}>
           <Stack direction="row" alignItems="center">
             <AlertConditionIndicator
@@ -131,30 +133,65 @@ interface ExpressionResultProps {
   series: DataFrame[];
   isAlertCondition?: boolean;
 }
-
+export const PAGE_SIZE = 20;
 export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCondition }) => {
+  const { pageItems, previousPage, nextPage, numberOfPages, pageStart, pageEnd } = usePagination(series, 1, PAGE_SIZE);
   const styles = useStyles2(getStyles);
 
   // sometimes we receive results where every value is just "null" when noData occurs
   const emptyResults = isEmptySeries(series);
   const isTimeSeriesResults = !emptyResults && isTimeSeriesFrames(series);
 
+  const shouldShowPagination = numberOfPages > 1;
+
   return (
     <div className={styles.expression.results}>
       {!emptyResults && isTimeSeriesResults && (
         <div>
-          {series.map((frame, index) => (
-            <TimeseriesRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
+          {pageItems.map((frame, index) => (
+            <TimeseriesRow
+              key={uniqueId()}
+              frame={frame}
+              index={pageStart + index}
+              isAlertCondition={isAlertCondition}
+            />
           ))}
         </div>
       )}
       {!emptyResults &&
         !isTimeSeriesResults &&
-        series.map((frame, index) => (
+        pageItems.map((frame, index) => (
           // There's no way to uniquely identify a frame that doesn't cause render bugs :/ (Gilles)
-          <FrameRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
+          <FrameRow key={uniqueId()} frame={frame} index={pageStart + index} isAlertCondition={isAlertCondition} />
         ))}
       {emptyResults && <div className={cx(styles.expression.noData, styles.mutedText)}>No data</div>}
+      {shouldShowPagination && (
+        <div className={styles.pagination.wrapper} data-testid="paginate-expression">
+          <Stack>
+            <Button
+              variant="secondary"
+              fill="outline"
+              onClick={previousPage}
+              icon="angle-left"
+              size="sm"
+              aria-label="previous-page"
+            />
+            <Spacer />
+            <span className={styles.mutedText}>
+              {pageStart} - {pageEnd} of {series.length}
+            </span>
+            <Spacer />
+            <Button
+              variant="secondary"
+              fill="outline"
+              onClick={nextPage}
+              icon="angle-right"
+              size="sm"
+              aria-label="next-page"
+            />
+          </Stack>
+        </div>
+      )}
     </div>
   );
 };
@@ -286,8 +323,11 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
 const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => {
   const styles = useStyles2(getStyles);
 
-  const hasLabels = frame.fields[1].labels;
-  const name = hasLabels ? formatLabels(frame.fields[1].labels ?? {}) : 'Series ' + index;
+  const valueField = frame.fields[1]; // field 0 is "time", field 1 is "value"
+
+  const hasLabels = valueField.labels;
+  const displayNameFromDS = valueField.config?.displayNameFromDS;
+  const name = displayNameFromDS ?? (hasLabels ? formatLabels(valueField.labels ?? {}) : 'Series ' + index);
 
   const timestamps = frame.fields[0].values.toArray();
 
@@ -429,11 +469,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   timeseriesTableWrapper: css`
     max-height: 500px;
-    max-width: 300px;
 
     overflow-y: scroll;
-
-    padding: 0 !important; // not sure why but style override doesn't work otherwise :( (Gilles)
   `,
   timeseriesTable: css`
     table-layout: auto;
@@ -462,4 +499,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       }
     }
   `,
+  pagination: {
+    wrapper: css`
+      border-top: 1px solid ${theme.colors.border.medium};
+      padding: ${theme.spacing()};
+    `,
+  },
 });

@@ -244,21 +244,27 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 	}
 }
 
-func resultNoData(state *State, rule *models.AlertRule, result eval.Result, _ log.Logger) {
-	startsAt := state.StartsAt
-	if startsAt.IsZero() {
-		startsAt = result.EvaluatedAt
-	}
-	endsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-	err := result.Error
-
+func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
 	switch rule.NoDataState {
 	case models.Alerting:
-		state.SetAlerting(models.StateReasonNoData, startsAt, endsAt, err)
+		logger.Debug("Execution no data state is Alerting", "handler", "resultAlerting", "previous_handler", "resultNoData")
+		resultAlerting(state, rule, result, logger, models.StateReasonNoData)
 	case models.NoData:
-		state.SetNoData(startsAt, endsAt, err)
+		if state.State == eval.NoData {
+			logger.Debug("Keeping state", "state", state.State)
+			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+		} else {
+			// This is the first occurrence of no data
+			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.NoData)
+			state.SetNoData(result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), nil)
+		}
 	case models.OK:
-		state.SetNormal(models.StateReasonNoData, startsAt, endsAt, err)
+		logger.Debug("Execution no data state is Normal", "handler", "resultNormal", "previous_handler", "resultNoData")
+		resultNormal(state, rule, result, logger, models.StateReasonNoData)
+	default:
+		err := fmt.Errorf("unsupported no data state: %s", rule.NoDataState)
+		state.SetError(state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), err)
+		state.Annotations["Error"] = err.Error()
 	}
 }
 

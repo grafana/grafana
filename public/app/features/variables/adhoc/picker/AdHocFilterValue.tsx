@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { DataSourceRef, MetricFindValue, SelectableValue } from '@grafana/data';
 import { SegmentAsync } from '@grafana/ui';
@@ -14,14 +14,7 @@ interface Props {
   disabled?: boolean;
 }
 
-export const AdHocFilterValue: FC<Props> = ({
-  datasource,
-  disabled,
-  onChange,
-  filterKey,
-  filterValue,
-  placeHolder,
-}) => {
+export const AdHocFilterValue = ({ datasource, disabled, onChange, filterKey, filterValue, placeHolder }: Props) => {
   const loadValues = () => fetchFilterValues(datasource, filterKey);
 
   return (

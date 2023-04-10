@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
@@ -12,7 +12,7 @@ export interface Props {
   onChange: (name: string | null) => void;
 }
 
-export const RepeatRowSelect: FC<Props> = ({ repeat, onChange, id }) => {
+export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {
   const variables = useSelector((state) => {
     return getVariablesByKey(getLastKey(state), state);
   });

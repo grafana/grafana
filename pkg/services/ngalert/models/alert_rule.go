@@ -138,6 +138,13 @@ type AlertRuleGroup struct {
 	Rules      []AlertRule
 }
 
+// AlertRuleGroupWithFolderTitle extends AlertRuleGroup with orgID and folder title
+type AlertRuleGroupWithFolderTitle struct {
+	*AlertRuleGroup
+	OrgID       int64
+	FolderTitle string
+}
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64 `xorm:"pk autoincr 'id'"`
@@ -364,16 +371,12 @@ type AlertRuleVersion struct {
 type GetAlertRuleByUIDQuery struct {
 	UID   string
 	OrgID int64
-
-	Result *AlertRule
 }
 
 // GetAlertRulesGroupByRuleUIDQuery is the query for retrieving a group of alerts by UID of a rule that belongs to that group
 type GetAlertRulesGroupByRuleUIDQuery struct {
 	UID   string
 	OrgID int64
-
-	Result []*AlertRule
 }
 
 // ListAlertRulesQuery is the query for listing alert rules
@@ -387,8 +390,6 @@ type ListAlertRulesQuery struct {
 	// to return just those for a dashboard and panel.
 	DashboardUID string
 	PanelID      int64
-
-	Result RulesGroup
 }
 
 // CountAlertRulesQuery is the query for counting alert rules
@@ -409,8 +410,6 @@ type ListNamespaceAlertRulesQuery struct {
 	OrgID int64
 	// Namespace is the folder slug
 	NamespaceUID string
-
-	Result []*AlertRule
 }
 
 // ListOrgRuleGroupsQuery is the query for listing unique rule groups
@@ -423,8 +422,6 @@ type ListOrgRuleGroupsQuery struct {
 	// to return just those for a dashboard and panel.
 	DashboardUID string
 	PanelID      int64
-
-	Result [][]string
 }
 
 type UpdateRule struct {

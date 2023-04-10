@@ -7,9 +7,6 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
@@ -18,8 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,6 +30,7 @@ var localFSComparer = cmp.Comparer(func(fs1 plugins.LocalFS, fs2 plugins.LocalFS
 	fs1Files := fs1.Files()
 	fs2Files := fs2.Files()
 
+	finder.NewLocalFinder()
 	sort.SliceStable(fs1Files, func(i, j int) bool {
 		return fs1Files[i] < fs1Files[j]
 	})
@@ -445,63 +447,6 @@ func TestLoader_Load(t *testing.T) {
 				},
 			},
 		},
-		{
-			name:  "Load CDN plugin",
-			class: plugins.External,
-			cfg: &config.Cfg{
-				PluginsCDNURLTemplate: "https://cdn.example.com",
-				PluginSettings: setting.PluginSettings{
-					"grafana-worldmap-panel": {"cdn": "true"},
-				},
-			},
-			pluginPaths: []string{"../testdata/cdn"},
-			want: []*plugins.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID:   "grafana-worldmap-panel",
-						Type: "panel",
-						Name: "Worldmap Panel",
-						Info: plugins.Info{
-							Version: "0.3.3",
-							Links: []plugins.InfoLink{
-								{Name: "Project site", URL: "https://github.com/grafana/worldmap-panel"},
-								{Name: "MIT License", URL: "https://github.com/grafana/worldmap-panel/blob/master/LICENSE"},
-							},
-							Logos: plugins.Logos{
-								// Path substitution
-								Small: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
-								Large: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
-							},
-							Screenshots: []plugins.Screenshots{
-								{
-									Name: "World",
-									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-world.png",
-								},
-								{
-									Name: "USA",
-									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-usa.png",
-								},
-								{
-									Name: "Light Theme",
-									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-light-theme.png",
-								},
-							},
-						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "3.x.x",
-							Plugins:        []plugins.Dependency{},
-						},
-					},
-					FS: plugins.NewLocalFS(map[string]struct{}{
-						filepath.Join(parentDir, "testdata/cdn/plugin", "plugin.json"): {},
-					}, filepath.Join(parentDir, "testdata/cdn/plugin")),
-					Class:     plugins.External,
-					Signature: plugins.SignatureValid,
-					BaseURL:   "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
-					Module:    "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module",
-				},
-			},
-		},
 	}
 	for _, tt := range tests {
 		reg := fakes.NewFakePluginRegistry()
@@ -516,7 +461,7 @@ func TestLoader_Load(t *testing.T) {
 		})
 
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := l.Load(context.Background(), tt.class, tt.pluginPaths)
+			got, err := l.Load(context.Background(), sources.NewLocalSource(tt.class, tt.pluginPaths))
 			require.NoError(t, err)
 			if !cmp.Equal(got, tt.want, compareOpts...) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))
@@ -531,6 +476,89 @@ func TestLoader_Load(t *testing.T) {
 			verifyState(t, tt.want, reg, procPrvdr, storage, procMgr)
 		})
 	}
+}
+
+func TestLoader_Load_CustomSource(t *testing.T) {
+	t.Run("Load a plugin", func(t *testing.T) {
+		parentDir, err := filepath.Abs("../")
+		if err != nil {
+			t.Errorf("could not construct absolute path of current dir")
+			return
+		}
+
+		cfg := &config.Cfg{
+			PluginsCDNURLTemplate: "https://cdn.example.com",
+			PluginSettings: setting.PluginSettings{
+				"grafana-worldmap-panel": {"cdn": "true"},
+			},
+		}
+
+		pluginPaths := []string{"../testdata/cdn"}
+		expected := []*plugins.Plugin{{
+			JSONData: plugins.JSONData{
+				ID:   "grafana-worldmap-panel",
+				Type: "panel",
+				Name: "Worldmap Panel",
+				Info: plugins.Info{
+					Version: "0.3.3",
+					Links: []plugins.InfoLink{
+						{Name: "Project site", URL: "https://github.com/grafana/worldmap-panel"},
+						{Name: "MIT License", URL: "https://github.com/grafana/worldmap-panel/blob/master/LICENSE"},
+					},
+					Logos: plugins.Logos{
+						// Path substitution
+						Small: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
+						Large: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
+					},
+					Screenshots: []plugins.Screenshots{
+						{
+							Name: "World",
+							Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-world.png",
+						},
+						{
+							Name: "USA",
+							Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-usa.png",
+						},
+						{
+							Name: "Light Theme",
+							Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-light-theme.png",
+						},
+					},
+				},
+				Dependencies: plugins.Dependencies{
+					GrafanaVersion: "3.x.x",
+					Plugins:        []plugins.Dependency{},
+				},
+			},
+			FS: plugins.NewLocalFS(map[string]struct{}{
+				filepath.Join(parentDir, "testdata/cdn/plugin", "plugin.json"): {},
+			}, filepath.Join(parentDir, "testdata/cdn/plugin")),
+			Class:     plugins.Bundled,
+			Signature: plugins.SignatureValid,
+			BaseURL:   "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
+			Module:    "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module",
+		}}
+
+		l := newLoader(cfg)
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.Bundled
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return pluginPaths
+			},
+			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
+				return plugins.Signature{
+					Status: plugins.SignatureValid,
+				}, true
+			},
+		})
+
+		require.NoError(t, err)
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
+		}
+	})
 }
 
 func TestLoader_setDefaultNavURL(t *testing.T) {
@@ -679,7 +707,14 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				})
 				setting.AppUrl = tt.appURL
 
-				got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths)
+				got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+					PluginClassFunc: func(ctx context.Context) plugins.Class {
+						return plugins.External
+					},
+					PluginURIsFunc: func(ctx context.Context) []string {
+						return tt.pluginPaths
+					},
+				})
 				require.NoError(t, err)
 				sort.SliceStable(got, func(i, j int) bool {
 					return got[i].ID < got[j].ID
@@ -792,7 +827,14 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
 		})
 
-		got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths)
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return tt.pluginPaths
+			},
+		})
 		require.NoError(t, err)
 
 		if !cmp.Equal(got, tt.want, compareOpts...) {
@@ -868,7 +910,14 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
-		got, err := l.Load(context.Background(), plugins.External, paths)
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return paths
+			},
+		})
 		require.NoError(t, err)
 
 		if !cmp.Equal(got, expected, compareOpts...) {
@@ -947,7 +996,14 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
-		got, err := l.Load(context.Background(), plugins.External, []string{pluginDir, pluginDir})
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return []string{pluginDir, pluginDir}
+			},
+		})
 		require.NoError(t, err)
 
 		if !cmp.Equal(got, expected, compareOpts...) {
@@ -1046,7 +1102,14 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
 
-		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"})
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return []string{"../testdata/nested-plugins"}
+			},
+		})
 		require.NoError(t, err)
 
 		// to ensure we can compare with expected
@@ -1062,7 +1125,14 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
 
 		t.Run("Load will exclude plugins that already exist", func(t *testing.T) {
-			got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"})
+			got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+				PluginClassFunc: func(ctx context.Context) plugins.Class {
+					return plugins.External
+				},
+				PluginURIsFunc: func(ctx context.Context) []string {
+					return []string{"../testdata/nested-plugins"}
+				},
+			})
 			require.NoError(t, err)
 
 			// to ensure we can compare with expected
@@ -1213,7 +1283,14 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
-		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/app-with-child"})
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return []string{"../testdata/app-with-child"}
+			},
+		})
 		require.NoError(t, err)
 
 		// to ensure we can compare with expected
@@ -1253,10 +1330,9 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 }
 
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
-	cdn := pluginscdn.ProvideService(cfg)
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
-		fakes.NewFakeRoleRegistry(), cdn, assetpath.ProvideService(cdn))
+		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder())
 
 	for _, cb := range cbs {
 		cb(l)

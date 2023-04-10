@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useInterval } from 'react-use';
 
 import { Time, TimeProps } from './Time';
@@ -11,7 +11,7 @@ export interface ElapsedTimeProps extends Omit<TimeProps, 'timeInMs'> {
   resetKey?: any;
 }
 
-export const ElapsedTime: FC<ElapsedTimeProps> = ({ resetKey, humanize, className }) => {
+export const ElapsedTime = ({ resetKey, humanize, className }: ElapsedTimeProps) => {
   const [elapsed, setElapsed] = useState(0); // the current value of elapsed
 
   // hook that will schedule a interval and then update the elapsed value on every tick.

@@ -21,8 +21,6 @@ var (
 	logger = log.New("expr")
 )
 
-const FromExpressionHeaderName = "FromExpression"
-
 type QueryError struct {
 	RefID string
 	Err   error
@@ -229,7 +227,6 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		},
 		Headers: dn.request.Headers,
 	}
-	req.Headers[FromExpressionHeaderName] = "true"
 
 	responseType := "unknown"
 	defer func() {

@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -75,7 +74,7 @@ type CoreGrafanaScope struct {
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	pluginStore plugins.Store, pluginClient plugins.Client, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore db.DB, secretsService secrets.Service,
-	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles,
+	usageStatsService usagestats.Service, queryDataService query.Service, toggles featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService, annotationsRepo annotations.Repository,
 	orgService org.Service) (*GrafanaLive, error) {
 	g := &GrafanaLive{
@@ -182,53 +181,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	}
 
 	g.ManagedStreamRunner = managedStreamRunner
-	if g.Features.IsEnabled(featuremgmt.FlagLivePipeline) {
-		var builder pipeline.RuleBuilder
-		if os.Getenv("GF_LIVE_DEV_BUILDER") != "" {
-			builder = &pipeline.DevRuleBuilder{
-				Node:                 node,
-				ManagedStream:        g.ManagedStreamRunner,
-				FrameStorage:         pipeline.NewFrameStorage(),
-				ChannelHandlerGetter: g,
-			}
-		} else {
-			storage := &pipeline.FileStorage{
-				DataPath:       cfg.DataPath,
-				SecretsService: g.SecretsService,
-			}
-			g.pipelineStorage = storage
-			builder = &pipeline.StorageRuleBuilder{
-				Node:                 node,
-				ManagedStream:        g.ManagedStreamRunner,
-				FrameStorage:         pipeline.NewFrameStorage(),
-				Storage:              storage,
-				ChannelHandlerGetter: g,
-				SecretsService:       g.SecretsService,
-			}
-		}
-		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
-
-		// Pre-build/validate channel rules for all organizations on start.
-		// This can be unreasonable to have in production scenario with many
-		// organizations.
-		orgQuery := &org.SearchOrgsQuery{}
-
-		result, err := orgService.Search(context.Background(), orgQuery)
-		if err != nil {
-			return nil, fmt.Errorf("can't get org list: %w", err)
-		}
-		for _, org := range result {
-			_, _, err := channelRuleGetter.Get(org.ID, "")
-			if err != nil {
-				return nil, fmt.Errorf("error building channel rules for org %d: %w", org.ID, err)
-			}
-		}
-
-		g.Pipeline, err = pipeline.New(channelRuleGetter)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	g.contextGetter = liveplugin.NewContextGetter(g.PluginContextProvider, g.DataSourceCache)
 	pipelinedChannelLocalPublisher := liveplugin.NewChannelLocalPublisher(node, g.Pipeline)
@@ -408,7 +360,7 @@ type GrafanaLive struct {
 	SecretsService        secrets.Service
 	pluginStore           plugins.Store
 	pluginClient          plugins.Client
-	queryDataService      *query.Service
+	queryDataService      query.Service
 	orgService            org.Service
 
 	node         *centrifuge.Node
@@ -613,7 +565,7 @@ func (g *GrafanaLive) handleOnRPC(client *centrifuge.Client, e centrifuge.RPCEve
 		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(http.StatusForbidden), Message: http.StatusText(http.StatusForbidden)}
 		}
-		var gfErr *errutil.Error
+		var gfErr errutil.Error
 		if errors.As(err, &gfErr) && gfErr.Reason.Status() == errutil.StatusBadRequest {
 			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: http.StatusText(http.StatusBadRequest)}
 		}

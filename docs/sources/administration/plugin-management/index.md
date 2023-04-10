@@ -77,7 +77,7 @@ Before following the steps below, make sure you are logged in as a Grafana admin
 
 <a id="#plugin-catalog-entry"></a>
 
-- Administrators can find the Plugin catalog at **Configuration > Plugins**.
+- Administrators can find the Plugin catalog at **Administration > Plugins**.
 
 ### Browse plugins
 

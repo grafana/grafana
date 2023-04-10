@@ -1,5 +1,5 @@
 import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
-import { FC, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ExploreId, useDispatch, useSelector } from 'app/types';
 
@@ -12,7 +12,7 @@ interface Props {
   exploreIdRight?: ExploreId;
 }
 
-export const ExploreActions: FC<Props> = ({ exploreIdLeft, exploreIdRight }: Props) => {
+export const ExploreActions = ({ exploreIdLeft, exploreIdRight }: Props) => {
   const [actions, setActions] = useState<Action[]>([]);
   const { query } = useKBar();
   const dispatch = useDispatch();

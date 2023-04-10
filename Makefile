@@ -77,7 +77,7 @@ gen-cue: ## Do all CUE/Thema code generation
 
 gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
-	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
+	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server
 
 fix-cue: $(CUE)
 	@echo "formatting cue files"
@@ -143,6 +143,18 @@ test-go-integration-mysql: devenv-mysql ## Run integration tests for mysql backe
 	$(GO) clean -testcache
 	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -run Integration -covermode=atomic -timeout=2m {}'
 
+.PHONY: test-go-integration-redis
+test-go-integration-redis: ## Run integration tests for redis cache.
+	@echo "test backend integration redis tests"
+	$(GO) clean -testcache
+	REDIS_URL=localhost:6379 $(GO) test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
+
+.PHONY: test-go-integration-memcached
+test-go-integration-memcached: ## Run integration tests for memcached cache.
+	@echo "test backend integration memcached tests"
+	$(GO) clean -testcache
+	MEMCACHED_HOSTS=localhost:11211 $(GO) test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
+
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
 	yarn test
@@ -165,15 +177,13 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 
 ##@ Docker
 
-TMP_DIR!=mktemp -d
 TAG_SUFFIX=$(if $(WIRE_TAGS)!=oss,-$(WIRE_TAGS))
 PLATFORM=linux/amd64
 
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
-	cp -Lrf . $(TMP_DIR)
-	DOCKER_BUILDKIT=1 \
-	docker build $(TMP_DIR) \
+	tar -ch . | \
+	docker buildx build - \
 	--platform $(PLATFORM) \
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
@@ -183,9 +193,8 @@ build-docker-full: ## Build Docker image for development.
 
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	@echo "build docker container"
-	cp -Lrf . $(TMP_DIR)
-	DOCKER_BUILDKIT=1 \
-	docker build $(TMP_DIR) \
+	tar -ch . | \
+	docker buildx build - \
 	--platform $(PLATFORM) \
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
@@ -203,12 +212,7 @@ ifeq ($(sources),)
 devenv:
 	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,openldap\n'
 else
-devenv: ${KIND} devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
-ifneq (,$(findstring apiserver,$(targets)))
-	@${KIND} create cluster --name grafana-devenv
-	$(eval targets := $(filter-out apiserver,$(targets)))
-endif
-
+devenv: devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
 	@cd devenv; \
 	./create_docker_compose.sh $(targets) || \
 	(rm -rf {docker-compose.yaml,conf.tmp,.env}; exit 1)
@@ -218,7 +222,6 @@ endif
 endif
 
 devenv-down: ## Stop optional services.
-	@${KIND} delete cluster --name grafana
 	@cd devenv; \
 	test -f docker-compose.yaml && \
 	docker-compose down || exit 0;

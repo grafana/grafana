@@ -24,7 +24,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"httpclientprovider_azure_auth": true,
 		"service-accounts":              true,
 		"database_metrics":              true,
-		"live-pipeline":                 true,
 		"live-service-web-worker":       true,
 		"k8s":                           true, // Camel case does not like this one
 	}
@@ -128,13 +127,15 @@ func generateTypeScript() string {
  * conf/custom.ini to enable features under development or not yet available in
  * stable version.
  *
- * Only enabled values will be returned in this interface
+ * Only enabled values will be returned in this interface.
+ *
+ * NOTE: the possible values may change between versions without notice, although
+ * this may cause compilation issues when depending on removed feature keys, the
+ * runtime state will continue to work.
  *
  * @public
  */
 export interface FeatureToggles {
-  [name: string]: boolean | undefined; // support any string value
-
 `
 	for _, flag := range standardFeatureFlags {
 		buf += "  " + getTypeScriptKey(flag.Name) + "?: boolean;\n"
