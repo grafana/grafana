@@ -31,9 +31,7 @@ _Generally available in all editions of Grafana._
 
 The navigation in Grafana has been updated with a new design and an improved structure to make it easier for you to access the data you need. With this update, you can quickly navigate between pages, giving you full visibility into the health of your systems.
 
-As Grafana evolved from a visualization platform to a comprehensive observability solution, we added numerous tools to support users throughout the software development life cycle. These tools focus on preventing incidents, monitoring applications or infrastructure, and aiding in incident response. However, the added functionality needs to be easily discoverable and navigable for it to be truly helpful.
-
-These are the key updates to Grafana’s navigation experience:
+As Grafana evolved from a visualization platform to a comprehensive observability solution, we added numerous tools to support users throughout the software development life cycle. These tools focus on preventing incidents, monitoring applications or infrastructure, and aiding incident response. However, the added functionality must be easily discoverable and navigable to be truly helpful. These key updates to Grafana’s navigation experience help address this:
 
 - A redesigned navigation menu that groups related tools together for easy access.
 - A command palette you can use to take actions in Grafana, like creating a dashboard or navigating to an app or page.
