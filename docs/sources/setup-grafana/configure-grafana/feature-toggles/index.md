@@ -48,6 +48,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `accessControlOnCall`                     | Access control primitives for OnCall                                                                                                                                                         |
 | `alertingNoNormalState`                   | Stop maintaining state of alerts that are not firing                                                                                                                                         |
 | `disableElasticsearchBackendExploreQuery` | Disable executing of Elasticsearch Explore queries trough backend                                                                                                                            |
+| `enableDatagridEditingPanel`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
 
 ## Alpha feature toggles
 

@@ -447,5 +447,12 @@ var (
 			State:       FeatureStateBeta,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
+		{
+			Name:         "enableDatagridEditingPanel",
+			Description:  "Enables the edit functionality in the datagrid panel",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        grafanaBiSquad,
+		},
 	}
 )

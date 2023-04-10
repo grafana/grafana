@@ -42,6 +42,7 @@ import {
   EMPTY_GRID_SELECTION,
   getCellWidth,
   GRAFANA_DS,
+  isDatagridEditEnabled,
   publishSnapshot,
   RIGHT_ELEMENT_PROPS,
   TRAILING_ROW_OPTIONS,
@@ -103,7 +104,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
           title: displayName,
           width: width,
           icon: typeToIconMap.get(f.type),
-          hasMenu: true,
+          hasMenu: isDatagridEditEnabled(),
           trailingRowOptions: { targetColumn: --i },
         };
       }),
@@ -160,7 +161,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         return {
           kind: GridCellKind.Number,
           data: value,
-          allowOverlay: true,
+          allowOverlay: isDatagridEditEnabled()!,
           readonly: false,
           displayData: value.toString(),
         };
@@ -168,7 +169,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         return {
           kind: GridCellKind.Text,
           data: value,
-          allowOverlay: true,
+          allowOverlay: isDatagridEditEnabled()!,
           readonly: false,
           displayData: value.toString(),
         };
@@ -225,7 +226,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         title: column.title,
         icon: column.icon,
         width: newSize,
-        hasMenu: true,
+        hasMenu: isDatagridEditEnabled(),
         trailingRowOptions: { targetColumn: colIndex },
       };
       return newColumns;
@@ -339,27 +340,31 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         width={'100%'}
         height={'100%'}
         theme={gridTheme}
-        onCellEdited={onCellEdited}
-        getCellsForSelection={true}
-        showSearch={toggleSearch}
+        onCellEdited={isDatagridEditEnabled() ? onCellEdited : undefined}
+        getCellsForSelection={isDatagridEditEnabled() ? true : undefined}
+        showSearch={isDatagridEditEnabled() ? toggleSearch : false}
         onSearchClose={() => setToggleSearch(false)}
-        onPaste={true}
+        onPaste={isDatagridEditEnabled() ? true : undefined}
         gridSelection={gridSelection}
-        onGridSelectionChange={setGridSelection}
-        onRowAppended={addNewRow}
-        onDelete={onDeletePressed}
-        rowMarkers={'both'}
+        onGridSelectionChange={isDatagridEditEnabled() ? setGridSelection : undefined}
+        onRowAppended={isDatagridEditEnabled() ? addNewRow : undefined}
+        onDelete={isDatagridEditEnabled() ? onDeletePressed : undefined}
+        rowMarkers={isDatagridEditEnabled() ? 'both' : 'number'}
         onColumnResize={onColumnResize}
         onColumnResizeEnd={onColumnResizeEnd}
-        onCellContextMenu={onCellContextMenu}
-        onHeaderContextMenu={onHeaderContextMenu}
-        onHeaderMenuClick={onHeaderMenuClick}
+        onCellContextMenu={isDatagridEditEnabled() ? onCellContextMenu : undefined}
+        onHeaderContextMenu={isDatagridEditEnabled() ? onHeaderContextMenu : undefined}
+        onHeaderMenuClick={isDatagridEditEnabled() ? onHeaderMenuClick : undefined}
         trailingRowOptions={TRAILING_ROW_OPTIONS}
-        rightElement={<AddColumn onColumnInputBlur={onColumnInputBlur} divStyle={styles.addColumnDiv} />}
+        rightElement={
+          isDatagridEditEnabled() ? (
+            <AddColumn onColumnInputBlur={onColumnInputBlur} divStyle={styles.addColumnDiv} />
+          ) : null
+        }
         rightElementProps={RIGHT_ELEMENT_PROPS}
         freezeColumns={columnFreezeIndex}
-        onRowMoved={onRowMove}
-        onColumnMoved={onColumnMove}
+        onRowMoved={isDatagridEditEnabled() ? onRowMove : undefined}
+        onColumnMoved={isDatagridEditEnabled() ? onColumnMove : undefined}
       />
       {contextMenuData.isContextMenuOpen && (
         <DatagridContextMenu

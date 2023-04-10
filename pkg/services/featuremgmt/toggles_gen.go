@@ -274,4 +274,8 @@ const (
 	// FlagDisableElasticsearchBackendExploreQuery
 	// Disable executing of Elasticsearch Explore queries trough backend
 	FlagDisableElasticsearchBackendExploreQuery = "disableElasticsearchBackendExploreQuery"
+
+	// FlagEnableDatagridEditingPanel
+	// Enables the edit functionality in the datagrid panel
+	FlagEnableDatagridEditingPanel = "enableDatagridEditingPanel"
 )

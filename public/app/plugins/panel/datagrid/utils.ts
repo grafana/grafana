@@ -9,6 +9,7 @@ import {
   MutableDataFrame,
   Field,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
@@ -133,4 +134,8 @@ export const publishSnapshot = (data: DataFrame, panelID: number): void => {
   });
 
   panelModel!.refresh();
+};
+
+export const isDatagridEditEnabled = () => {
+  return config.featureToggles.enableDatagridEditingPanel;
 };

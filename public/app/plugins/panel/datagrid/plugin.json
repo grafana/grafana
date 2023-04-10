@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Datagrid",
   "id": "datagrid",
+  "state": "beta",
 
   "info": {
     "author": {
@@ -9,8 +10,8 @@
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/icn-xychart.svg",
-      "large": "img/icn-xychart.svg"
+      "small": "img/icn-table-panel.svg",
+      "large": "img/icn-table-panel.svg"
     }
   }
 }

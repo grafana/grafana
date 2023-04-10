@@ -96,25 +96,26 @@ export class QueryGroup extends PureComponent<Props, State> {
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
 
-    //TODO this needs to be behind a feature flag
-    const dashboard = getDashboardSrv().getCurrent();
-    if (dashboard) {
-      dashboard.events.getStream(DatagridDataChangeEvent).subscribe({
-        next: async (event) => {
-          this.onQueriesChange([
-            {
-              refId: 'A',
-              datasource: {
-                type: 'grafana',
-                uid: 'grafana',
+    if (config.featureToggles.enableDatagridEditingPanel) {
+      const dashboard = getDashboardSrv().getCurrent();
+      if (dashboard) {
+        dashboard.events.getStream(DatagridDataChangeEvent).subscribe({
+          next: async (event) => {
+            this.onQueriesChange([
+              {
+                refId: 'A',
+                datasource: {
+                  type: 'grafana',
+                  uid: 'grafana',
+                },
+                queryType: GrafanaQueryType.Snapshot,
+                snapshot: event.payload.snapshot,
               },
-              queryType: GrafanaQueryType.Snapshot,
-              snapshot: event.payload.snapshot,
-            },
-          ]);
-          this.props.onRunQueries();
-        },
-      });
+            ]);
+            this.props.onRunQueries();
+          },
+        });
+      }
     }
 
     try {

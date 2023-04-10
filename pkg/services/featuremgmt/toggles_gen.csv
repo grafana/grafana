@@ -66,3 +66,4 @@ timeSeriesTable,alpha,@grafana/app-o11y,false,false,false,true
 influxdbBackendMigration,alpha,@grafana/observability-metrics,false,false,false,true
 clientTokenRotation,alpha,@grafana/grafana-authnz-team,false,false,false,false
 disableElasticsearchBackendExploreQuery,beta,@grafana/observability-logs,false,false,false,false
+enableDatagridEditingPanel,beta,@grafana/grafana-bi-squad,false,false,false,true
