@@ -67,7 +67,7 @@ func ProvideStorage(userService userpkg.Service, acService accesscontrol.Service
 		fmt.Printf("create storage for GR: %v", gr)
 
 		// CRDs
-		if true { //strings.HasSuffix(gr.Group, "k8s.io") {
+		if strings.HasSuffix(gr.Group, "k8s.io") {
 			return filepath.Storage(gr, strategy, optsGetter, tableConvertor, newFunc, newListFunc)
 		}
 
@@ -520,7 +520,8 @@ func (s *entityStorage) getSignedInUser(ctx context.Context, obj runtime.Object)
 	var err error
 	userQuery := userpkg.GetSignedInUserQuery{}
 
-	if user.GetName() == authnz.ApiServerUser {
+	s.log.Warn("user", "user", user.GetName())
+	if user.GetName() == authnz.ApiServerUser || user.GetName() == authnz.ApiServerAnonymous {
 		userQuery.OrgID = 1
 		userQuery.UserID = 1
 	} else if len(user.GetExtra()["user-id"]) == 0 || len(user.GetExtra()["org-id"]) == 0 {

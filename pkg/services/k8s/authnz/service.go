@@ -3,6 +3,7 @@ package authnz
 import (
 	"context"
 	"fmt"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 
 	"net/http"
@@ -22,6 +23,7 @@ import (
 const (
 	GrafanaAdminK8sUser = "gl-admin"
 	ApiServerUser       = "system:apiserver" // Constant provided for writing customer RBAC rules that may want to skip authorization for apiserver
+	ApiServerAnonymous  = "system:anonymous"
 )
 
 type K8sAuthnzAPI struct {
