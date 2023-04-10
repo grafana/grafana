@@ -19,6 +19,7 @@ type Props = {
   logsSortOrder?: LogsSortOrder | null;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   scrollToTopLogs: () => void;
+  scrollToFirstLog: () => void;
   addResultsToCache: () => void;
   clearCache: () => void;
 };
@@ -35,6 +36,7 @@ function LogsNavigation({
   loading,
   onChangeTime,
   scrollToTopLogs,
+  scrollToFirstLog,
   visibleRange,
   queries,
   clearCache,
@@ -123,6 +125,7 @@ function LogsNavigation({
           //If we are on the last page, create new range
           changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
         }
+        scrollToFirstLog();
       }}
       disabled={loading}
     >
@@ -150,6 +153,7 @@ function LogsNavigation({
             to: pages[currentPageIndex + indexChange].queryRange.to,
           });
         }
+        scrollToFirstLog();
         //If we are on the first page, button is disabled and we do nothing
       }}
       disabled={loading || onFirstPage}
