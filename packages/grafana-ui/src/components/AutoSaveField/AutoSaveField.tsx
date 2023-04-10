@@ -19,9 +19,11 @@ import { debounce} from 'lodash';
 const SHOW_SUCCESS_DURATION = 2 * 1000;
 
 export interface Props<T = string> extends Omit<FieldProps, 'children'> {
-  //Function to be run onBlur or when finishing writing
+  /** Saving request that will be triggered 600ms after changing the value */
   onFinishChange: (inputValue: T) => Promise<void>;
+  /** Custom error message to display on saving */
   saveErrorMessage?: string;
+  /** Input that will save its value on change  */
   children: (onChange: (newValue: T) => void) => React.ReactElement;
 }
 export function AutoSaveField<T = string>(props: Props<T>) {
