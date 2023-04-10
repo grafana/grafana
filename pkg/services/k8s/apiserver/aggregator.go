@@ -41,6 +41,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	v1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	v1helper "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1/helper"
+	"k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 	apiregistrationclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1"
@@ -56,7 +57,7 @@ func createAggregatorConfig(
 	// most of the config actually remains the same.  We only need to mess with a couple items related to the particulars of the aggregator
 	genericConfig := sharedConfig
 	genericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
-	genericConfig.RESTOptionsGetter = nil
+	genericConfig.RESTOptionsGetter = &restOptionsGetter{codec: aggregatorscheme.Codecs.LegacyCodec(v1beta1.SchemeGroupVersion)}
 	// prevent generic API server from installing the OpenAPI handler. Aggregator server
 	// has its own customized OpenAPI handler.
 	genericConfig.SkipOpenAPIInstallation = true

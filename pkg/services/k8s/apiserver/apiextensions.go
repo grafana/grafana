@@ -26,9 +26,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/certgenerator"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apiextensionsapiserver "k8s.io/apiextensions-apiserver/pkg/apiserver"
 	apiextensionsserveroptions "k8s.io/apiextensions-apiserver/pkg/cmd/server/options"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -96,11 +99,14 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 	}
 
 	serviceResolver := &serviceResolver{serverConfig.SharedInformerFactory.Core().V1().Services().Lister()}
+	serverConfig.RESTOptionsGetter = &restOptionsGetter{
+		codec: apiextensionsapiserver.Codecs.LegacyCodec(v1beta1.SchemeGroupVersion, v1.SchemeGroupVersion),
+	}
 
 	apiextensionsConfig := apiextensionsapiserver.Config{
 		GenericConfig: serverConfig,
 		ExtraConfig: apiextensionsapiserver.ExtraConfig{
-			CRDRESTOptionsGetter: &restOptionsGetter{},
+			CRDRESTOptionsGetter: &restOptionsGetter{codec: unstructured.UnstructuredJSONScheme},
 			MasterCount:          1,
 			ServiceResolver:      serviceResolver,
 			AuthResolverWrapper:  authWrapperFactory(serverConfig.LoopbackClientConfig),
@@ -143,14 +149,16 @@ func (a *authResolver) ClientConfigForService(serviceName, serviceNamespace stri
 	return a.config, nil
 }
 
-type restOptionsGetter struct{}
+type restOptionsGetter struct {
+	codec runtime.Codec
+}
 
 func (r restOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
 	return generic.RESTOptions{
 		StorageConfig: &storagebackend.ConfigForResource{
 			GroupResource: resource,
 			Config: storagebackend.Config{
-				Codec: unstructured.UnstructuredJSONScheme,
+				Codec: r.codec,
 			},
 		},
 	}, nil

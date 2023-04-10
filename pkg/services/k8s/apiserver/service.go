@@ -9,11 +9,14 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/certgenerator"
 	"github.com/grafana/grafana/pkg/setting"
+	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
+	"k8s.io/apiextensions-apiserver/pkg/registry/customresourcedefinition"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
+	aggregator "k8s.io/kube-aggregator/pkg/registry/apiservice/storage"
 )
 
 const (
@@ -59,6 +62,10 @@ func (s *service) GetRestConfig() *rest.Config {
 }
 
 func (s *service) start(ctx context.Context) error {
+	customresource.Storage = NewStorage
+	customresourcedefinition.Storage = NewStorage
+	aggregator.Storage = NewStorage
+
 	logger := logr.New(newLogAdapter())
 	logger.V(1)
 	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
