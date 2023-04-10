@@ -178,9 +178,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   getInfluxTargetSignature(request: DataQueryRequest<InfluxQuery>, targ: InfluxQuery) {
     const target = this.applyTemplateVariables(targ, request.scopedVars);
-    return `${request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${target.query}|${JSON.stringify(
-      target.select
-    )}`;
+
+    if (targ?.rawQuery) {
+      return `${request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${target.query}`;
+    }
+
+    return `${request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${JSON.stringify(target.select)}`;
   }
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
