@@ -23,7 +23,6 @@ import {
   PanelData,
   LoadingState,
 } from '../types/index';
-import { ArrayVector } from '../vector/ArrayVector';
 import { SortedVector } from '../vector/SortedVector';
 import { vectorToArray } from '../vector/vectorToArray';
 
@@ -38,7 +37,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
     return {
       name: text?.length ? text : c, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
-      values: new ArrayVector(),
+      values: new Array(0),
       type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
     };
   });
@@ -49,7 +48,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
 
   for (const row of table.rows) {
     for (let i = 0; i < fields.length; i++) {
-      fields[i].values.buffer.push(row[i]);
+      fields[i].values.push(row[i]);
     }
   }
 
@@ -87,7 +86,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       name: TIME_SERIES_TIME_FIELD_NAME,
       type: FieldType.time,
       config: {},
-      values: new ArrayVector<number>(times),
+      values: times,
     },
     {
       name: TIME_SERIES_VALUE_FIELD_NAME,
@@ -95,7 +94,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       config: {
         unit: timeSeries.unit,
       },
-      values: new ArrayVector<TimeSeriesValue>(values),
+      values: values,
       labels: timeSeries.tags,
     },
   ];
@@ -118,13 +117,13 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
  * to DataFrame.  See: https://github.com/grafana/grafana/issues/18528
  */
 function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
-  const x = new ArrayVector();
-  const y = new ArrayVector();
+  const x = new Array(0);
+  const y = new Array(0);
 
   for (let i = 0; i < graphSeries.data.length; i++) {
     const row = graphSeries.data[i];
-    x.buffer.push(row[1]);
-    y.buffer.push(row[0]);
+    x.push(row[1]);
+    y.push(row[0]);
   }
 
   return {
@@ -145,7 +144,7 @@ function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
         values: y,
       },
     ],
-    length: x.buffer.length,
+    length: x.length,
   };
 }
 
@@ -159,12 +158,12 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
         unit: timeSeries.unit,
         filterable: (timeSeries as any).filterable,
       },
-      values: new ArrayVector(),
+      values: new Array(0),
     },
   ];
 
   for (const point of timeSeries.datapoints) {
-    fields[0].values.buffer.push(point);
+    fields[0].values.push(point);
   }
 
   return {
@@ -313,6 +312,7 @@ export function toDataFrame(data: any): DataFrame {
   if ('fields' in data) {
     // DataFrameDTO does not have length
     if ('length' in data && data.fields[0]?.values?.get) {
+      console.log('assuming raw dataframe');
       return data as DataFrame;
     }
 
@@ -449,11 +449,11 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
   return {
     ...data,
     fields: data.fields.map((f) => {
-      const copy = [...f.values.toArray()];
-      copy.reverse();
+      const values = [...f.values.toArray()];
+      values.reverse();
       return {
         ...f,
-        values: new ArrayVector(copy),
+        values,
       };
     }),
   };

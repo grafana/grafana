@@ -213,7 +213,7 @@ describe('field convert types transformer', () => {
     expect(
       booleans[0].fields.map((f) => ({
         type: f.type,
-        values: f.values.toArray(),
+        values: f.values,
       }))
     ).toEqual([
       {

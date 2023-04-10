@@ -2,15 +2,14 @@ import { isString } from 'lodash';
 
 import { QueryResultMeta } from '../types/data';
 import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
-import { MutableVector, Vector } from '../types/vector';
 import { makeFieldParser } from '../utils/fieldParser';
 import { FunctionalVector } from '../vector/FunctionalVector';
 
 import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
 
-export type MutableField<T = any> = Field<T, MutableVector<T>>;
+export type MutableField<T = any> = Field<T>;
 
-type MutableVectorCreator = (buffer?: any[]) => MutableVector;
+type MutableVectorCreator = (buffer?: any[]) => any[];
 
 export const MISSING_VALUE = undefined; // Treated as connected in new graph panel
 
