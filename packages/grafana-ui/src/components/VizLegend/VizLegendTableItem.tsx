@@ -122,6 +122,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: none;
       font-size: inherit;
       padding: 0;
+      max-width: 600px;
+      text-overflow: ellipsis;
+      overflow: hidden;
     `,
     labelDisabled: css`
       label: LegendLabelDisabled;
