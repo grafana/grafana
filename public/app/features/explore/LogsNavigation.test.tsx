@@ -1,4 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
 import { LogsSortOrder } from '@grafana/data';
@@ -26,7 +27,7 @@ const defaultProps: LogsNavigationProps = {
   clearCache: jest.fn(),
 };
 
-const setup = (propOverrides?: object) => {
+const setup = (propOverrides?: Partial<LogsNavigationProps>) => {
   const props = {
     ...defaultProps,
     ...propOverrides,
@@ -74,10 +75,10 @@ describe('LogsNavigation', () => {
     expect(screen.getByTestId('logsNavigationPages')).toBeInTheDocument();
   });
 
-  it('should correctly request older logs when flipped order', () => {
+  it('should correctly request older logs when flipped order', async () => {
     const onChangeTimeMock = jest.fn();
     const { rerender } = setup({ onChangeTime: onChangeTimeMock });
-    fireEvent.click(screen.getByTestId('olderLogsButton'));
+    await userEvent.click(screen.getByTestId('olderLogsButton'));
     expect(onChangeTimeMock).toHaveBeenCalledWith({ from: 1637319359000, to: 1637322959000 });
 
     rerender(
@@ -89,7 +90,16 @@ describe('LogsNavigation', () => {
         logsSortOrder={LogsSortOrder.Ascending}
       />
     );
-    fireEvent.click(screen.getByTestId('olderLogsButton'));
+    await userEvent.click(screen.getByTestId('olderLogsButton'));
     expect(onChangeTimeMock).toHaveBeenCalledWith({ from: 1637319338000, to: 1637322938000 });
+  });
+
+  it('should reset the scroll when pagination is clic ked', async () => {
+    const scrollToFirstLogMock = jest.fn();
+    setup({ scrollToFirstLog: scrollToFirstLogMock });
+
+    expect(scrollToFirstLogMock).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByTestId('olderLogsButton'));
+    expect(scrollToFirstLogMock).toHaveBeenCalled();
   });
 });

@@ -1,11 +1,12 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
 import { LogsNavigationPages } from './LogsNavigationPages';
 
 type LogsNavigationPagesProps = ComponentProps<typeof LogsNavigationPages>;
 
-const setup = (propOverrides?: object) => {
+const setup = (propOverrides?: Partial<LogsNavigationPagesProps>) => {
   const props: LogsNavigationPagesProps = {
     pages: [
       {
@@ -42,5 +43,12 @@ describe('LogsNavigationPages', () => {
     setup({ oldestLogsFirst: true });
     expect(screen.getByText(/02:59:11 — 02:59:15/i)).toBeInTheDocument();
     expect(screen.getByText(/02:59:01 — 02:59:05/i)).toBeInTheDocument();
+  });
+  it('should render logs pages with correct range if normal order', async () => {
+    const onPageClicked = jest.fn();
+    setup({ onClick: onPageClicked });
+    expect(onPageClicked).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByText(/02:59:05 — 02:59:01/i));
+    expect(onPageClicked).toHaveBeenCalled();
   });
 });
