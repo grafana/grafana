@@ -1938,8 +1938,13 @@ describe('QueryCache: Influx', function () {
         return { value: value, originalIndex: idx };
       }).filter(value => value.value !== null);
 
-    expect(valuesAfterSecond?.length ?? 0).toBe(89);
+    const valuesOnly = valuesAfterSecond.map(value => value.value)
 
+    valuesAfterFirst?.forEach(value => {
+      expect(valuesOnly).toContainEqual(value.value)
+    })
+
+    expect(valuesAfterSecond?.length ?? 0).toBe(89);
   })
 
   // it('avoids removing frames in influx', () => {
