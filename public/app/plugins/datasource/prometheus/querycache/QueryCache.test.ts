@@ -16,7 +16,7 @@ import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
 
 import { CacheRequestInfo, QueryCache } from './QueryCache';
-import { IncrementalStorageDataFrameScenarios } from './QueryCacheTestData';
+import {IncrementalStorageDataFrameScenarios, IncrementalStorageDataFrameScenariosInflux} from './QueryCacheTestData';
 
 // Will not interpolate vars!
 const interpolateStringTest = (query: PromQuery) => {
@@ -539,157 +539,207 @@ describe('QueryCache: Prometheus', function () {
 });
 
 describe('QueryCache: Influx', function () {
-  it('avoids removing frames in influx', () => {
-    const storage = new QueryCache<InfluxQuery>(getInfluxTargetSignature, '1m');
-
-    const cache = new Map<string, string>();
-
-    const firstFrom = dateTime('2023-04-04T20:13:58.601Z');
-    // End time of scenario
-    const firstTo = dateTime('2023-04-04T20:18:58.601Z');
-
-    const firstRange: TimeRange = {
-      from: firstFrom,
-      to: firstTo,
-      raw: {
-        from: 'now-5m',
-        to: 'now',
-      },
-    };
-
-    const firstFromClone = (firstFrom as moment.Moment).clone();
-    const firstFrames = [
-      {
-        length: 5,
-        name: '',
-        refId: '',
-        fields: [
-          {
-            name: '',
-            type: FieldType.time,
-            values: new ArrayVector([
-              firstFromClone.valueOf(),
-              firstFromClone.add(1, 'minute').valueOf(),
-              firstFromClone.add(1, 'minute').valueOf(),
-              firstFromClone.add(1, 'minute').valueOf(),
-              firstFromClone.add(1, 'minute').valueOf(),
-            ]),
-          },
-          {
-            name: '',
-            type: FieldType.number,
-            config: {},
-            values: new ArrayVector([1, 2, 3, 4, 5]),
-            labels: {
-              label: 'value',
-            },
-          },
-        ],
-      },
+  it('Merges incremental queries in storage, is confusing', () => {
+    const scenarios = [
+      // IncrementalStorageDataFrameScenariosInflux.swappedRecords,
+      IncrementalStorageDataFrameScenariosInflux.missingRecords
     ];
+    scenarios.forEach((scenario, index) => {
+      const storage = new QueryCache<InfluxQuery>(getInfluxTargetSignature, '10m');
+      const firstFrames = scenario.first.dataFrames as unknown as DataFrame[];
+      const secondFrames = scenario.second.dataFrames as unknown as DataFrame[];
 
-    const secondFrom = dateTime('2023-04-04T20:16:58.601Z');
-    const secondTo = dateTime('2023-04-04T20:21:58.022Z');
+      const targetSignatures = new Map<string, string>();
 
-    const secondRange: TimeRange = {
-      from: secondFrom,
-      to: secondTo,
-      raw: {
-        from: 'now-5m',
-        to: 'now',
-      },
-    };
+      // start time of scenario
+      const firstFrom = dateTime("2023-04-10T12:37:30.601Z");
+      // End time of scenario, 15 minutes later
+      const firstTo = dateTime("2023-04-10T12:52:30.601Z");
 
-    const secondFromClone = (secondFrom as moment.Moment).clone();
+      const firstRange: TimeRange = {
+        from: firstFrom,
+        to: firstTo,
+        raw: {
+          from: 'now-15m',
+          to: 'now',
+        },
+      };
 
-    const secondFrames = [
-      {
-        length: 3,
-        name: '',
-        refId: '',
-        fields: [
-          {
-            name: '',
-            type: FieldType.time,
-            values: new ArrayVector([
-              secondFromClone.valueOf(),
-              secondFromClone.add(1, 'minute').valueOf(),
-              secondFromClone.add(1, 'minute').valueOf(),
-            ]),
-          },
-          {
-            name: '',
-            type: FieldType.number,
-            config: {},
-            values: new ArrayVector([6, 7, 8]),
-            labels: {
-              label: 'value',
-            },
-          },
-        ],
-      },
-    ];
+      // Same query 2 minutes later
+      const numberOfSamplesLater = 17;
 
-    const dashboardId = `dashid--`;
-    const panelId = 2;
+      const secondFrom = dateTime( "2023-04-10T12:37:36.963Z");
+      const secondTo = dateTime("2023-04-10T12:52:36.963Z");
 
-    // This can't change
-    const targetIdentity = `${dashboardId}|${panelId}|A`;
+      const secondRange: TimeRange = {
+        from: secondFrom,
+        to: secondTo,
+        raw: {
+          from: 'now-15m',
+          to: 'now',
+        },
+      };
 
-    const firstRequest = mockInfluxRequest({
-      range: firstRange,
-      dashboardUID: dashboardId,
-      panelId: panelId,
+      const dashboardId = '1052';
+      const panelId = 1;
+      let valuesAfterFirst;
+
+      // This can't change
+      const targetIdentity = `${dashboardId}|${panelId}|A`;
+
+      const request = mockInfluxRequest({
+        range: firstRange,
+        dashboardUID: dashboardId,
+        panelId: panelId,
+      });
+
+      // But the signature can, and we should clean up any non-matching signatures
+      const targetSignature = getInfluxTargetSignature(request, request.targets[0]);
+
+      targetSignatures.set(targetIdentity, targetSignature);
+
+      const firstStoredFrames = storage.procFrames(
+        request,
+        {
+          requests: scenario.first.requestInfo.requests, // unused
+          targSigs: targetSignatures,
+          shouldCache: true,
+        },
+        firstFrames
+      );
+
+      firstStoredFrames.forEach((frame: DataFrame) => {
+        let targIdent = `${request.dashboardUID}|${request.panelId}|${frame.refId}`;
+
+        valuesAfterFirst = storage.cache.get(targIdent)
+          ?.frames[0].fields[1].values.toArray()
+          ?.map((value, idx) => {
+            return {value: value, originalIndex: idx};
+          }).filter(value => value.value !== null);
+
+        expect(valuesAfterFirst?.length).toBe(88)
+      })
+
+      const cached = storage.cache.get(targetIdentity);
+
+      // I would expect that the number of values received from the API should be the same as the cached values?
+      expect(cached?.frames[0].fields[0].values.length).toEqual(firstFrames[0].fields[0].values.length);
+
+      // Should return the request frames unaltered
+      expect(firstStoredFrames).toEqual(firstFrames);
+
+      const secondRequest = mockInfluxRequest({
+        range: secondRange,
+        dashboardUID: dashboardId,
+        panelId: panelId,
+      });
+
+      const secondStoredFrames = storage.procFrames(
+        secondRequest,
+        {
+          requests: scenario.second.requestInfo.requests, // unused
+          targSigs: targetSignatures,
+          shouldCache: true,
+        },
+        secondFrames
+      );
+
+      let valuesAfterSecond: undefined | Array<{
+        value: string,
+        originalIndex: number,
+      }>;
+
+      secondStoredFrames.forEach((frame: DataFrame) => {
+        let targIdent = `${request.dashboardUID}|${request.panelId}|${frame.refId}`;
+
+         valuesAfterSecond = storage.cache.get(targIdent)
+          ?.frames[0].fields[1].values.toArray()
+          ?.map((value, idx) => {
+            return {value: value, originalIndex: idx};
+          }).filter(value => value.value !== null);
+
+        // expect(valuesAfterSecond?.length).toBe(89)
+      })
+
+      const storageLengthAfterSubsequentQuery = storage.cache.get(targetIdentity);
+
+      storageLengthAfterSubsequentQuery?.frames.forEach((dataFrame, index) => {
+        const secondFramesLength = secondFrames[index].fields[0].values.length;
+        const firstFramesLength = firstFrames[index].fields[0].values.length;
+
+        const cacheLength = dataFrame.fields[0].values.length;
+
+        // Cache can contain more, but never less
+        expect(cacheLength).toBeGreaterThanOrEqual(
+          secondFramesLength + firstFramesLength - (20 + numberOfSamplesLater)
+        );
+
+        // Fewer results are sent in incremental result
+        expect(firstFramesLength).toBeGreaterThan(secondFramesLength);
+      });
+
+      // All of the new values should be the ones that were stored, this is overkill
+      secondFrames.forEach((frame, frameIdx) => {
+        frame.fields.forEach((field, fieldIdx) => {
+          secondFrames[frameIdx].fields[fieldIdx].values.toArray().forEach((value) => {
+            expect(secondStoredFrames[frameIdx].fields[fieldIdx].values).toContain(value);
+          });
+        });
+      });
+
+      const secondRequestModified = {
+        ...secondRequest,
+        range: {
+          ...secondRequest.range,
+          to: dateTime(secondRequest.range.to.valueOf() + 30000),
+        },
+        rangeRaw: {
+          from: 'now-15m',
+          to: 'now',
+        },
+      };
+
+      let valuesAfterSecondModified;
+
+      secondStoredFrames.forEach((frame: DataFrame) => {
+        let targIdent = `${request.dashboardUID}|${request.panelId}|${frame.refId}`;
+
+        valuesAfterSecondModified = storage.cache.get(targIdent)
+          ?.frames[0].fields[1].values.toArray()
+          ?.map((value, idx) => {
+            return {value: value, originalIndex: idx};
+          }).filter(value => value.value !== null);
+
+        expect(valuesAfterSecondModified?.length).toBe(89)
+      })
+
+      if(valuesAfterFirst){
+        valuesAfterFirst.forEach(value => {
+          expect(valuesAfterSecond).toContainEqual(value)
+        })
+      }
+
+      const cacheRequest = storage.requestInfo(secondRequestModified);
+      expect(cacheRequest.requests[0].targets).toEqual(secondRequestModified.targets);
+      expect(cacheRequest.requests[0].range.to).toEqual(secondRequestModified.range.to);
+      expect(cacheRequest.requests[0].range.raw).toEqual(secondRequestModified.range.raw);
+      expect(cacheRequest.shouldCache).toBe(true);
     });
-
-    // But the signature can, and we should clean up any non-matching signatures
-    const targetSignature = getInfluxTargetSignature(firstRequest, firstRequest.targets[0]);
-
-    const secondRequest = mockInfluxRequest({
-      range: secondRange,
-      dashboardUID: dashboardId,
-      panelId: panelId,
-    });
-
-    cache.set(targetIdentity, targetSignature);
-
-    const firstStoredFrames = storage.procFrames(
-      firstRequest,
-      {
-        requests: [], // unused
-        targSigs: cache,
-        shouldCache: true,
-      },
-      firstFrames as DataFrame[]
-    );
-
-    expect(firstStoredFrames[0].fields[0].values.length).toBe(5);
-
-    const secondStoredFrames = storage.procFrames(
-      secondRequest,
-      {
-        requests: [], // unused
-        targSigs: cache,
-        shouldCache: true,
-      },
-      secondFrames as DataFrame[]
-    );
-
-    expect(secondStoredFrames[0].fields[1].values.length).toBe(5);
-    expect(secondStoredFrames[0].fields[0].values.length).toBe(5);
   });
   it('avoids removing frames in influx 2', () => {
     const storage = new QueryCache<InfluxQuery>(getInfluxTargetSignature, '1m');
 
     const cache = new Map<string, string>();
 
+    const dashboardId = `dashid`;
+    const panelId = 1;
+
     const firstRequest = {
       app: 'dashboard',
       requestId: 'Q100',
       timezone: 'browser',
-      panelId: 1,
-      dashboardId: 1052,
-      dashboardUID: 'e74c7505-cf1e-4605-bd6b-a043324e6dc5',
+      panelId: panelId,
+      dashboardUID: dashboardId,
       publicDashboardAccessToken: '',
       range: {
         from: dateTime('2023-04-05T19:01:22.111Z'),
@@ -1482,9 +1532,6 @@ describe('QueryCache: Influx', function () {
       },
     ] as DataFrame[];
 
-    const dashboardId = `dashid--`;
-    const panelId = 2;
-
     // This can't change
     const targetIdentity = `${dashboardId}|${panelId}|A`;
 
@@ -1495,15 +1542,23 @@ describe('QueryCache: Influx', function () {
 
     const firstStoredFrames = storage.procFrames(firstRequest, firstRequestInfo, firstFrames);
 
+    const valuesAfterFirst = storage.cache
+      .get(targetIdentity)
+      ?.frames[0].fields[1].values.toArray()
+      ?.map((value, idx) => {
+        return { value: value, originalIndex: idx };
+      }).filter(value => value.value !== null);
+
+    expect(valuesAfterFirst?.length).toBe(28);
+
     expect(firstStoredFrames[0].fields[0].values.length).toBe(582);
 
     const secondRequest = {
       app: 'dashboard',
       requestId: 'Q110',
       timezone: 'browser',
-      panelId: 1,
-      dashboardId: 1052,
-      dashboardUID: 'e74c7505-cf1e-4605-bd6b-a043324e6dc5',
+      panelId: panelId,
+      dashboardUID: dashboardId,
       publicDashboardAccessToken: '',
       range: {
         from: dateTime('2023-04-05T19:01:30.612Z'),
@@ -1716,7 +1771,6 @@ describe('QueryCache: Influx', function () {
               null,
               null,
               null,
-              null,
               0.3510560647298928,
               null,
               null,
@@ -1819,6 +1873,7 @@ describe('QueryCache: Influx', function () {
               null,
               null,
               null,
+              null,
             ]),
           },
         ],
@@ -1830,5 +1885,226 @@ describe('QueryCache: Influx', function () {
 
     expect(secondStoredFrames[0].fields[1].values.toArray().filter((v) => v !== null).length).toBe(28);
     expect(secondStoredFrames[0].fields[0].values.toArray().filter((v) => v !== null).length).toBe(600);
+
+    const valuesAfterSecond = storage.cache
+      .get(targetIdentity)
+      ?.frames[0].fields[1].values.toArray()
+      ?.map((value, idx) => {
+        return { value: value, originalIndex: idx };
+      }).filter(value => value.value !== null);
+
+    expect(valuesAfterSecond?.length ?? 0).toBe(28);
   });
+  it('is reproduction of bug from raw data', () => {
+    const storage = new QueryCache(getInfluxTargetSignature, '1m');
+    const firstRequestInfo = storage.requestInfo(IncrementalStorageDataFrameScenariosInflux.missingRecords2.first.initial);
+    const firstProcessedFrames = storage.procFrames(IncrementalStorageDataFrameScenariosInflux.missingRecords2.first.request, firstRequestInfo, IncrementalStorageDataFrameScenariosInflux.missingRecords2.first.dataFrames)
+
+    // All of the new values should be the ones that were stored, this is overkill
+    IncrementalStorageDataFrameScenariosInflux.missingRecords2.first.dataFrames.forEach((frame, frameIdx) => {
+      frame.fields.forEach((field, fieldIdx) => {
+        IncrementalStorageDataFrameScenariosInflux.missingRecords2.first.dataFrames[frameIdx].fields[fieldIdx].values.toArray().forEach((value) => {
+          expect(firstProcessedFrames[frameIdx].fields[fieldIdx].values).toContain(value);
+        });
+      });
+    });
+
+    const valuesAfterFirst = storage.cache
+      .get("e74c7505-cf1e-4605-bd6b-a043324e6dc5|1|A")
+      ?.frames[0].fields[1].values.toArray()
+      ?.map((value, idx) => {
+        return { value: value, originalIndex: idx };
+      }).filter(value => value.value !== null);
+
+    expect(valuesAfterFirst?.length ?? 0).toBe(89);
+
+
+    const secondRequestInfo = storage.requestInfo(IncrementalStorageDataFrameScenariosInflux.missingRecords2.second.initial)
+    const secondProcessedFrames = storage.procFrames(IncrementalStorageDataFrameScenariosInflux.missingRecords2.second.request, secondRequestInfo, IncrementalStorageDataFrameScenariosInflux.missingRecords2.second.dataFrames)
+
+    // All of the new values should be the ones that were stored, this is overkill
+    IncrementalStorageDataFrameScenariosInflux.missingRecords2.second.dataFrames.forEach((frame, frameIdx) => {
+      frame.fields.forEach((field, fieldIdx) => {
+        IncrementalStorageDataFrameScenariosInflux.missingRecords2.second.dataFrames[frameIdx].fields[fieldIdx].values.toArray().forEach((value) => {
+          expect(secondProcessedFrames[frameIdx].fields[fieldIdx].values).toContain(value);
+        });
+      });
+    });
+
+    const valuesAfterSecond = storage.cache
+      .get("e74c7505-cf1e-4605-bd6b-a043324e6dc5|1|A")
+      ?.frames[0].fields[1].values.toArray()
+      ?.map((value, idx) => {
+        return { value: value, originalIndex: idx };
+      }).filter(value => value.value !== null);
+
+    expect(valuesAfterSecond?.length ?? 0).toBe(89);
+
+  })
+
+  // it('avoids removing frames in influx', () => {
+  //   const storage = new QueryCache<InfluxQuery>(getInfluxTargetSignature, '1m');
+  //
+  //   const cache = new Map<string, string>();
+  //
+  //   const firstFrom = dateTime('2023-04-04T20:13:58.601Z');
+  //   // End time of scenario
+  //   const firstTo = dateTime(firstFrom.valueOf());
+  //   firstTo.add(5, 'minute')
+  //
+  //   const firstRange: TimeRange = {
+  //     from: firstFrom,
+  //     to: firstTo,
+  //     raw: {
+  //       from: 'now-5m',
+  //       to: 'now',
+  //     },
+  //   };
+  //
+  //   const firstFromClone = (firstFrom as moment.Moment).clone();
+  //   const firstFrames = [
+  //     {
+  //       length: 5,
+  //       name: '',
+  //       refId: 'A',
+  //       fields: [
+  //         {
+  //           name: '',
+  //           type: FieldType.time,
+  //           values: new ArrayVector([
+  //             firstFromClone.valueOf(),
+  //             firstFromClone.add(1, 'minute').valueOf(),
+  //             firstFromClone.add(1, 'minute').valueOf(),
+  //             firstFromClone.add(1, 'minute').valueOf(),
+  //             firstFromClone.add(1, 'minute').valueOf(),
+  //           ]),
+  //         },
+  //         {
+  //           name: '',
+  //           type: FieldType.number,
+  //           config: {},
+  //           values: new ArrayVector([1, 2, 3, 4, 5]),
+  //           labels: {
+  //             label: 'value',
+  //           },
+  //         },
+  //       ],
+  //     },
+  //   ];
+  //
+  //   const secondFrom = dateTime(firstFrom.valueOf()).add(0, 'minute') as DateTime;
+  //   // const secondTo = dateTime('2023-04-04T20:21:58.022Z');
+  //   const secondTo = dateTime(firstTo.valueOf());
+  //   secondTo.add(3, 'minute').set('ms', 22)
+  //
+  //   const secondRange: TimeRange = {
+  //     from: secondFrom,
+  //     to: secondTo,
+  //     raw: {
+  //       from: 'now-5m',
+  //       to: 'now',
+  //     },
+  //   };
+  //
+  //   const secondFromClone = (secondFrom as moment.Moment).clone();
+  //
+  //   const secondFrames = [
+  //     {
+  //       length: 3,
+  //       name: '',
+  //       refId: 'A',
+  //       fields: [
+  //         {
+  //           name: '',
+  //           type: FieldType.time,
+  //           values: new ArrayVector([
+  //             secondFromClone.valueOf(),
+  //             secondFromClone.add(1, 'minute').valueOf(),
+  //             secondFromClone.add(1, 'minute').valueOf(),
+  //           ]),
+  //         },
+  //         {
+  //           name: '',
+  //           type: FieldType.number,
+  //           config: {},
+  //           values: new ArrayVector([6, 7, 8]),
+  //           labels: {
+  //             label: 'value',
+  //           },
+  //         },
+  //       ],
+  //     },
+  //   ];
+  //
+  //   const dashboardId = `dashid`;
+  //   const panelId = 2;
+  //   let valuesAfterFirst: undefined | Array<{
+  //     value: string,
+  //     originalIndex: number,
+  //   }>;
+  //
+  //   // This can't change
+  //   const targetIdentity = `${dashboardId}|${panelId}|A`;
+  //
+  //   const firstRequest = mockInfluxRequest({
+  //     range: firstRange,
+  //     dashboardUID: dashboardId,
+  //     panelId: panelId,
+  //   });
+  //
+  //   // But the signature can, and we should clean up any non-matching signatures
+  //   const targetSignature = getInfluxTargetSignature(firstRequest, firstRequest.targets[0]);
+  //
+  //   const secondRequest = mockInfluxRequest({
+  //     range: secondRange,
+  //     dashboardUID: dashboardId,
+  //     panelId: panelId,
+  //   });
+  //
+  //   cache.set(targetIdentity, targetSignature);
+  //
+  //   const firstStoredFrames = storage.procFrames(
+  //     firstRequest,
+  //     {
+  //       requests: [], // unused
+  //       targSigs: cache,
+  //       shouldCache: true,
+  //     },
+  //     firstFrames as DataFrame[]
+  //   );
+  //
+  //   expect(firstStoredFrames[0].fields[0].values.length).toBe(5);
+  //
+  //   valuesAfterFirst = storage.cache
+  //     .get(targetIdentity)
+  //     ?.frames[0].fields[1].values.toArray()
+  //     ?.map((value, idx) => {
+  //       return { value: value, originalIndex: idx };
+  //     }).filter(value => value.value !== null);
+  //
+  //   expect(valuesAfterFirst?.length ?? 0).toBe(5);
+  //
+  //   const secondStoredFrames = storage.procFrames(
+  //     secondRequest,
+  //     {
+  //       requests: [], // unused
+  //       targSigs: cache,
+  //       shouldCache: true,
+  //     },
+  //     secondFrames as DataFrame[]
+  //   );
+  //
+  //   const valuesAfterSecond = storage.cache
+  //     .get(targetIdentity)
+  //     ?.frames[0].fields[1].values.toArray()
+  //     ?.map((value, idx) => {
+  //       return { value: value, originalIndex: idx };
+  //     }).filter(value => value.value !== null);
+  //
+  //   expect(valuesAfterSecond?.length ?? 0).toBe(5);
+  //
+  //
+  //   expect(secondStoredFrames[0].fields[1].values.toArray().length).toBe(5);
+  //   expect(secondStoredFrames[0].fields[0].values.toArray().length).toBe(5);
+  // });
 });
