@@ -13,7 +13,6 @@ export const MaxLinesField = (props: Props) => {
   return (
     <>
       <h3 className="page-heading">Queries</h3>
-
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">
