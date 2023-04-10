@@ -120,14 +120,12 @@ describe('refreshExplore', () => {
     expect(datasources.someDs.query).toHaveBeenCalledTimes(1);
   });
 
-  it('should not do anything if pane is not initialized', async () => {
-    const { dispatch, getState } = setup({
-      initialized: false,
-    });
+  it('should not do anything if pane is not present', async () => {
+    const { dispatch, getState } = setup({});
     const state = getState();
     await dispatch(
       refreshExplore(
-        'left',
+        'right',
         serializeStateToUrlParam({ datasource: 'newDs', queries: [{ expr: 'count()', refId: 'A' }], range: testRange })
       )
     );
