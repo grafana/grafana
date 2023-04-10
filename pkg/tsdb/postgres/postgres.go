@@ -54,11 +54,29 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		// Allow override of default for max open conns
+		var maxOpenConnsDefault = sqleng.MaxOpenConnsDefault
+		if cfg.SqlDatasourceMaxOpenConnsDefault != maxOpenConnsDefault {
+			maxOpenConnsDefault = cfg.SqlDatasourceMaxOpenConnsDefault
+		}
+
+		// Allow override of default for max idle conns
+		var maxIdleConnsDefault = sqleng.MaxIdleConnsDefault
+		if cfg.SqlDatasourceMaxOpenConnsDefault != maxIdleConnsDefault {
+			maxIdleConnsDefault = cfg.SqlDatasourceMaxIdleConnsDefault
+		}
+
+		// Allow override of the default for max connection lifetime
+		var connMaxLifetimeDefault = sqleng.ConnMaxLifetimeDefault
+		if cfg.SqlDatasourceMaxConnLifetimeDefault != connMaxLifetimeDefault {
+			connMaxLifetimeDefault = cfg.SqlDatasourceMaxConnLifetimeDefault
+		}
+
 		logger.Debug("Creating Postgres query endpoint")
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:        sqleng.MaxOpenConnsDefault,
-			MaxIdleConns:        sqleng.MaxIdleConnsDefault,
-			ConnMaxLifetime:     sqleng.ConnMaxLifetimeDefault,
+			MaxOpenConns:        maxOpenConnsDefault,
+			MaxIdleConns:        maxIdleConnsDefault,
+			ConnMaxLifetime:     connMaxLifetimeDefault,
 			Timescaledb:         false,
 			ConfigurationMethod: "file-path",
 			SecureDSProxy:       false,
