@@ -1,21 +1,13 @@
 import { uniq } from 'lodash';
 import React, { useMemo, useState } from 'react';
-import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
 import { TimeRange, SelectableValue, CoreApp, DataFrame } from '@grafana/data';
 import { AccessoryButton, EditorList } from '@grafana/experimental';
-import { AsyncSelect, Field, HorizontalGroup, Select } from '@grafana/ui';
+import { AsyncMultiSelect, Field, HorizontalGroup, Select } from '@grafana/ui';
 
 import Datasource from '../../datasource';
-import {
-  AzureMonitorErrorish,
-  AzureMonitorQuery,
-  AzureQueryEditorFieldProps,
-  AzureQueryType,
-  AzureTracesFilter,
-} from '../../types';
-import { useAsyncState } from '../../utils/useAsyncState';
+import { AzureMonitorQuery, AzureQueryEditorFieldProps, AzureQueryType, AzureTracesFilter } from '../../types';
 
 import { tablesSchema } from './consts';
 import { setFilters } from './setQueryValue';
@@ -109,15 +101,20 @@ const Filters = ({ query, datasource, onQueryChange, setError }: AzureQueryEdito
 
   const [propertyMap, setPropertyMap] = useState(new Map<string, Array<SelectableValue<string>>>());
 
-  const filters = useMemo(() => query.azureTraces?.filters ?? [], [query.azureTraces?.filters]);
+  const queryFilters = useMemo(() => query.azureTraces?.filters ?? [], [query.azureTraces?.filters]);
+  const [filters, updateFilters] = useState(queryFilters);
 
   const onFieldChange = <Key extends keyof AzureTracesFilter>(
     fieldName: Key,
     item: Partial<AzureTracesFilter>,
-    value: AzureTracesFilter[Key],
+    selected: SelectableValue<AzureTracesFilter[Key]>,
     onChange: (item: Partial<AzureTracesFilter>) => void
   ) => {
-    item[fieldName] = value;
+    if (fieldName === 'filters') {
+      item[fieldName] = selected.map((item: SelectableValue<string>) => item.value);
+    } else {
+      item[fieldName] = selected.value;
+    }
     onChange(item);
   };
 
@@ -128,17 +125,6 @@ const Filters = ({ query, datasource, onQueryChange, setError }: AzureQueryEdito
   ) => {
     const [loading, setLoading] = useState(false);
     const [values, setValues] = useState(propertyMap.get(item.property ?? ''));
-    const value = () => {
-      if (item.property && values) {
-        const exists = values.find((val) => item.property === val.value);
-        if (!exists) {
-          return undefined;
-        } else {
-          return exists;
-        }
-      }
-      return undefined;
-    };
 
     const loadOptions = async () => {
       setLoading(true);
@@ -174,19 +160,21 @@ const Filters = ({ query, datasource, onQueryChange, setError }: AzureQueryEdito
           placeholder="Property"
           value={item.property ? { value: item.property, label: item.property } : null}
           options={properties.map((type) => ({ label: type, value: type }))}
-          onChange={(e) => onFieldChange('property', item, e.value ?? '', onChange)}
+          onChange={(e) => onFieldChange('property', item, e, onChange)}
           width={25}
+          isClearable
         />
-        <AsyncSelect
+        <AsyncMultiSelect
           menuShouldPortal
           placeholder="Value"
-          //   value={value()}
+          value={item.filters ? item.filters.map((filter) => ({ value: filter, label: filter })) : []}
           loadOptions={loadOptions}
           isLoading={loading}
           onOpenMenu={loadOptions}
-          onChange={() => {}}
-          width={25}
+          onChange={(e) => onFieldChange('filters', item, e, onChange)}
+          width={35}
           defaultOptions={values}
+          isClearable
         />
         <AccessoryButton aria-label="Remove" icon="times" variant="secondary" onClick={onDelete} type="button" />
       </HorizontalGroup>
@@ -194,14 +182,23 @@ const Filters = ({ query, datasource, onQueryChange, setError }: AzureQueryEdito
   };
 
   const changedFunc = (changed: Array<Partial<AzureTracesFilter>>) => {
+    let updateQuery = false;
     const properData: AzureTracesFilter[] = changed.map((x) => {
+      if (x.property !== '' && x.filters && x.filters.length > 0 && x.operation !== '') {
+        updateQuery = true;
+      } else {
+        updateQuery = false;
+      }
       return {
         property: x.property ?? '',
         filters: x.filters ?? [],
-        operation: x.operation ?? '',
+        operation: x.operation ?? 'eq',
       };
     });
-    onQueryChange(setFilters(query, properData));
+    updateFilters(properData);
+    if (updateQuery || (queryFilters.length > 0 && properData.length === 0)) {
+      onQueryChange(setFilters(query, properData));
+    }
   };
   return (
     <Field label="Filters">
