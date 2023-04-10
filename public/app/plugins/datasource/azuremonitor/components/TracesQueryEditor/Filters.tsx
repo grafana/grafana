@@ -32,14 +32,16 @@ const getTraceProperties = async (
     return [];
   }
 
-  if (!filter.property) {
+  const property = filter.property;
+  if (!property) {
     return [];
   }
 
-  const queryString = `let ${filter.property} = toscalar(union isfuzzy=true ${traceTypes.join(',')}
-  | distinct ${filter.property}
-  | summarize make_list(${filter.property}));
-      print properties = bag_pack("${filter.property}", ${filter.property});`;
+  const queryString = `let ${property} = toscalar(union isfuzzy=true ${traceTypes.join(',')}
+  | where $__timeFilter(timestamp)
+  | summarize count=count() by ${property}
+  | summarize make_list(pack_all()));
+  print properties = bag_pack("${property}", ${property});`;
 
   const results = await lastValueFrom(
     datasource.azureLogAnalyticsDatasource.query({
@@ -66,11 +68,17 @@ const getTraceProperties = async (
   if (results.data.length > 0) {
     const result: DataFrame = results.data[0];
     if (result.fields.length > 0) {
-      const properties: { [key: string]: string[] } = JSON.parse(result.fields[0].values.toArray()[0]);
-      const values = properties[filter.property]
-        .filter((value: string) => value !== '')
-        .map((value: string) => ({ label: value, value }));
-      propertyMap.set(filter.property, values);
+      const properties: { [key: string]: Array<{ [key: string]: string | number; count: number }> } = JSON.parse(
+        result.fields[0].values.toArray()[0]
+      );
+      const values = properties[property].map((value) => {
+        let label = value[property];
+        if (value[property] === '') {
+          label = 'Empty';
+        }
+        return { label: `${label} - (${value.count})`, value: value[property] };
+      });
+      propertyMap.set(property, values);
       setPropertyMap(propertyMap);
       return values;
     }
