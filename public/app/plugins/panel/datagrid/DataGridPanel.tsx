@@ -391,6 +391,20 @@ const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => {
       .dvn-scroll-inner > div:nth-child(2) {
         pointer-events: none !important;
       }
+      scrollbar-color: ${theme.colors.background.secondary} ${theme.colors.background.primary};
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: ${theme.colors.background.primary};
+      }
+      ::-webkit-scrollbar-thumb {
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-corner {
+        display: none;
+      }
     `,
     addColumnDiv: css`
       width: ${width};
