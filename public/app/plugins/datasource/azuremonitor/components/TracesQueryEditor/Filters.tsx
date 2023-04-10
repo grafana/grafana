@@ -74,7 +74,7 @@ const getTraceProperties = async (
       const values = properties[property].map((value) => {
         let label = value[property];
         if (value[property] === '') {
-          label = 'Empty';
+          label = '<Empty>';
         }
         return { label: `${label} - (${value.count})`, value: value[property] };
       });
@@ -201,7 +201,11 @@ const Filters = ({ query, datasource, onQueryChange, setError }: AzureQueryEdito
         <AsyncMultiSelect
           menuShouldPortal
           placeholder="Value"
-          value={item.filters ? item.filters.map((filter) => ({ value: filter, label: filter })) : []}
+          value={
+            item.filters
+              ? item.filters.map((filter) => ({ value: filter, label: filter === '' ? '<Empty>' : filter }))
+              : []
+          }
           loadOptions={loadOptions}
           isLoading={loading}
           onOpenMenu={loadOptions}
