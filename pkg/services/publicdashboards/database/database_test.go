@@ -747,12 +747,16 @@ func TestGetMetrics(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 3, len(metrics.TotalPublicDashboards))
-		enabledAndPublicCount := 0
-		enabledAndEmailCount := 0
-		disabledAndEmailCount := 0
+		enabledAndPublicCount := -1
+		enabledAndEmailCount := -1
+		disabledAndEmailCount := -1
+		disabledAndPublicCount := -1
 		for _, metric := range metrics.TotalPublicDashboards {
 			if metric.ShareType == string(PublicShareType) && metric.IsEnabled {
 				enabledAndPublicCount = int(metric.TotalCount)
+			}
+			if metric.ShareType == string(PublicShareType) && !metric.IsEnabled {
+				disabledAndPublicCount = int(metric.TotalCount)
 			}
 			if metric.ShareType == string(EmailShareType) && metric.IsEnabled {
 				enabledAndEmailCount = int(metric.TotalCount)
@@ -765,6 +769,7 @@ func TestGetMetrics(t *testing.T) {
 		assert.Equal(t, 2, enabledAndPublicCount)
 		assert.Equal(t, 1, enabledAndEmailCount)
 		assert.Equal(t, 1, disabledAndEmailCount)
+		assert.Equal(t, -1, disabledAndPublicCount)
 	})
 }
 

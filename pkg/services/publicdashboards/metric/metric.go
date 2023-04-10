@@ -35,7 +35,7 @@ func ProvideService(
 }
 
 func (s *PublicDashboardsMetricServiceImpl) registerMetrics(prom prometheus.Registerer) error {
-	err := prom.Register(s.Metrics.PublicDashboardsTotal)
+	err := prom.Register(s.Metrics.PublicDashboardsAmount)
 	var alreadyRegisterErr prometheus.AlreadyRegisteredError
 	if errors.As(err, &alreadyRegisterErr) {
 		if alreadyRegisterErr.ExistingCollector == alreadyRegisterErr.NewCollector {
@@ -67,8 +67,8 @@ func (s *PublicDashboardsMetricServiceImpl) recordMetrics(ctx context.Context) {
 		return
 	}
 
-	s.Metrics.PublicDashboardsTotal.Reset()
+	s.Metrics.PublicDashboardsAmount.Reset()
 	for _, r := range records.TotalPublicDashboards {
-		s.Metrics.PublicDashboardsTotal.WithLabelValues(strconv.FormatBool(r.IsEnabled), r.ShareType).Set(r.TotalCount)
+		s.Metrics.PublicDashboardsAmount.WithLabelValues(strconv.FormatBool(r.IsEnabled), r.ShareType).Set(r.TotalCount)
 	}
 }

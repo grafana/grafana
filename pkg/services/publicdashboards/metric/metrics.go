@@ -4,17 +4,17 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var (
+const (
 	namespace = "grafana"
 )
 
 type Metrics struct {
-	PublicDashboardsTotal *prometheus.GaugeVec
+	PublicDashboardsAmount *prometheus.GaugeVec
 }
 
 func NewMetrics() *Metrics {
 	return &Metrics{
-		PublicDashboardsTotal: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		PublicDashboardsAmount: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Name:      "public_dashboards_amount",
 			Help:      "Total amount of public dashboards",
