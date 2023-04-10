@@ -52,7 +52,11 @@ export interface DataLink<T extends DataQuery = any> {
   origin?: DataLinkConfigOrigin;
 }
 
-/** @internal */
+/** @internal
+ *
+ * We provide tooltips with information about these to guide the user, please
+ * check for validity when adding more transformation types.
+ */
 export enum SupportedTransformationType {
   Regex = 'regex',
   Logfmt = 'logfmt',

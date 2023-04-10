@@ -4,7 +4,18 @@ import { useFormContext } from 'react-hook-form';
 
 import { SupportedTransformationType } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, FieldArray, IconButton, Input, InputControl, Select, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Field,
+  FieldArray,
+  Icon,
+  IconButton,
+  Input,
+  InputControl,
+  Select,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 
 type Props = {};
 
@@ -35,7 +46,20 @@ export const TransformationsEditor = (props: Props) => {
                   return (
                     <Stack direction="row" key={field.id} alignItems="top">
                       <Field
-                        label="Type"
+                        label={
+                          <Stack gap={0.5}>
+                            <span>Type</span>
+                            <Tooltip
+                              content={
+                                <div>
+                                  <p>The type of transformation that will be applied to the source data.</p>
+                                </div>
+                              }
+                            >
+                              <Icon name="info-circle" size="sm" />
+                            </Tooltip>
+                          </Stack>
+                        }
                         invalid={!!formState.errors?.config?.transformations?.[index]?.type}
                         error={formState.errors?.config?.transformations?.[index]?.type?.message}
                         validationMessageHorizontalOverflow={true}
@@ -60,10 +84,46 @@ export const TransformationsEditor = (props: Props) => {
                           rules={{ required: { value: true, message: 'Please select a transformation type' } }}
                         />
                       </Field>
-                      <Field label="Field">
+                      <Field
+                        label={
+                          <Stack gap={0.5}>
+                            <span>Field</span>
+                            <Tooltip
+                              content={
+                                <div>
+                                  <p>
+                                    Optional. The field to transform. If not specified, the transformation will be
+                                    applied to the results field.
+                                  </p>
+                                </div>
+                              }
+                            >
+                              <Icon name="info-circle" size="sm" />
+                            </Tooltip>
+                          </Stack>
+                        }
+                      >
                         <Input {...register(`config.transformations.${index}.field`)} defaultValue={field.field} />
                       </Field>
-                      <Field label="Expression">
+                      <Field
+                        label={
+                          <Stack gap={0.5}>
+                            <span>Expression</span>
+                            <Tooltip
+                              content={
+                                <div>
+                                  <p>
+                                    Optional. The expression the transformation will use. Currently only valid with
+                                    regular expressions, as logfmt does not need further specifications.
+                                  </p>
+                                </div>
+                              }
+                            >
+                              <Icon name="info-circle" size="sm" />
+                            </Tooltip>
+                          </Stack>
+                        }
+                      >
                         <Input
                           {...register(`config.transformations.${index}.expression`)}
                           defaultValue={field.expression}
@@ -72,7 +132,25 @@ export const TransformationsEditor = (props: Props) => {
                           }
                         />
                       </Field>
-                      <Field label="Map value">
+                      <Field
+                        label={
+                          <Stack gap={0.5}>
+                            <span>Map value</span>
+                            <Tooltip
+                              content={
+                                <div>
+                                  <p>
+                                    Optional. Defines the name of the variable. This is currently only valid for regular
+                                    expressions with a single, unnamed capture group.
+                                  </p>
+                                </div>
+                              }
+                            >
+                              <Icon name="info-circle" size="sm" />
+                            </Tooltip>
+                          </Stack>
+                        }
+                      >
                         <Input
                           {...register(`config.transformations.${index}.mapValue`)}
                           defaultValue={field.mapValue}
