@@ -29,6 +29,13 @@ var XormDriverMu sync.RWMutex
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
 
+// The default number of open connections & idle connections
+// for the xorm connection pool along with
+// max connection lifetime in seconds
+const MaxOpenConnsDefault = 100
+const MaxIdleConnsDefault = 100
+const ConnMaxLifetimeDefault = 14400
+
 var ErrConnectionFailed = errors.New("failed to connect to server - please inspect Grafana server log for details")
 
 // SQLMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
@@ -154,6 +161,8 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 	if err != nil {
 		return nil, err
 	}
+
+	log.Info(fmt.Sprintf("%#v", config.DSInfo.JsonData))
 
 	engine.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
 	engine.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
