@@ -1,47 +1,35 @@
-import { FunctionalVector } from './FunctionalVector';
+import { Vector } from '../types';
 
 /**
  * @public
+ *
+ * @deprecated use a simple Array<T>
  */
-export class ArrayVector<T = any> extends FunctionalVector<T> {
-  buffer: T[];
-
-  // This constructor needs to accept any otherwise the value takes over the definition
-  constructor(buffer?: any[]) {
+export class ArrayVector<T = any> extends Array<T> implements Vector<T> {
+  constructor(buffer?: T[]) {
     super();
-    this.buffer = buffer ? buffer : [];
+
+    if (buffer?.length) {
+      this.buffer = buffer;
+    }
   }
 
-  get length() {
-    return this.buffer.length;
+  get buffer() {
+    return this as T[];
   }
 
-  add(value: T): void {
-    this.buffer.push(value);
-  }
+  set buffer(values: T[]) {
+    this.length = 0;
 
-  get(index: number): T {
-    return this.buffer[index];
-  }
+    const len = values?.length;
 
-  set(index: number, value: T) {
-    this.buffer[index] = value;
-  }
+    if (len) {
+      let chonkSize = 65e3;
+      let numChonks = Math.ceil(len / chonkSize);
 
-  /** support standard array push syntax */
-  push(...vals: T[]): number {
-    return this.buffer.push(...vals);
-  }
-
-  reverse() {
-    return this.buffer.reverse();
-  }
-
-  toArray(): T[] {
-    return this.buffer;
-  }
-
-  toJSON(): T[] {
-    return this.buffer;
+      for (let chonkIdx = 0; chonkIdx < numChonks; chonkIdx++) {
+        this.push.apply(this, values.slice(chonkIdx * chonkSize, (chonkIdx + 1) * chonkSize));
+      }
+    }
   }
 }
