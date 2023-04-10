@@ -15,6 +15,16 @@ export abstract class FunctionalVector<T = any> implements Vector<T> {
     }
   }
 
+  set(index: number, value: any): void {
+    throw 'unsupported operation';
+  }
+
+  // This is a variable so it can be overidden by Circular vector
+  add = (value: T): void => {
+    throw 'unsupported operation';
+    return;
+  };
+
   /** Mutable instances will implement push */
   push(...vals: T[]): number {
     throw 'unsupported operation';
