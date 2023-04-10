@@ -135,6 +135,9 @@ const Filters = ({ query, datasource, onQueryChange, setError }: AzureQueryEdito
       item[fieldName] = selected.map((item: SelectableValue<string>) => item.value);
     } else {
       item[fieldName] = selected.value;
+      if (fieldName === 'property') {
+        item.filters = [];
+      }
     }
     onChange(item);
   };
