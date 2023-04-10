@@ -336,7 +336,7 @@ describe('LokiDatasource', () => {
 
       expect(result).toStrictEqual({
         status: 'success',
-        message: 'Data source connected and labels found.',
+        message: 'Data source successfully connected and labels found.',
       });
     });
 
@@ -347,7 +347,8 @@ describe('LokiDatasource', () => {
 
       expect(result).toStrictEqual({
         status: 'error',
-        message: 'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
+        message:
+          'Data source connected, but no labels were received. Verify that Loki and Promtail are correctly configured.',
       });
     });
 
@@ -358,7 +359,7 @@ describe('LokiDatasource', () => {
 
       expect(result).toStrictEqual({
         status: 'error',
-        message: 'Unable to fetch labels from Loki, please check the server logs for more details',
+        message: 'Unable to connect with Loki. Please check the server logs for more details.',
       });
     });
 
@@ -374,7 +375,7 @@ describe('LokiDatasource', () => {
 
       expect(result).toStrictEqual({
         status: 'error',
-        message: 'Unable to fetch labels from Loki (error42), please check the server logs for more details',
+        message: 'Unable to connect with Loki (error42). Please check the server logs for more details.',
       });
     });
   });
