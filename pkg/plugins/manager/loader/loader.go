@@ -164,7 +164,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 	for _, p := range verifiedPlugins {
 		err := l.pluginInitializer.Initialize(ctx, p)
 		if err != nil {
-			return nil, err
+			l.log.Error("Could not initialize plugin", "pluginId", p.ID, "err", err)
 		}
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 
