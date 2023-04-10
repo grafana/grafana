@@ -4,6 +4,10 @@ import (
 	"context"
 	"path"
 
+	customStorage "k8s.io/apiextensions-apiserver/pkg/storage"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/modules"
@@ -11,10 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresourcedefinition"
-	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
 	aggregator "k8s.io/kube-aggregator/pkg/registry/apiservice/storage"
 )
@@ -40,16 +42,18 @@ type service struct {
 	*services.BasicService
 
 	restConfig *rest.Config
+	newStorage customStorage.NewStorageFunc
 
 	dataPath  string
 	stopCh    chan struct{}
 	stoppedCh chan error
 }
 
-func ProvideService(cfg *setting.Cfg) (*service, error) {
+func ProvideService(cfg *setting.Cfg, newStorage customStorage.NewStorageFunc) (*service, error) {
 	s := &service{
-		dataPath: path.Join(cfg.DataPath, "k8s"),
-		stopCh:   make(chan struct{}),
+		dataPath:   path.Join(cfg.DataPath, "k8s"),
+		stopCh:     make(chan struct{}),
+		newStorage: newStorage,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.KubernetesAPIServer)
@@ -62,9 +66,10 @@ func (s *service) GetRestConfig() *rest.Config {
 }
 
 func (s *service) start(ctx context.Context) error {
-	customresource.Storage = NewStorage
-	customresourcedefinition.Storage = NewStorage
-	aggregator.Storage = NewStorage
+	// Use custom storage for CRDs
+	customresource.Storage = s.newStorage
+	customresourcedefinition.Storage = s.newStorage
+	aggregator.Storage = s.newStorage
 
 	logger := logr.New(newLogAdapter())
 	logger.V(1)

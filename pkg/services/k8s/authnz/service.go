@@ -3,6 +3,7 @@ package authnz
 import (
 	"context"
 	"fmt"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 
 	"net/http"
@@ -19,7 +20,11 @@ import (
 	authzV1 "k8s.io/api/authorization/v1"
 )
 
-const GrafanaAdminK8sUser = "gl-admin"
+const (
+	GrafanaAdminK8sUser = "gl-admin"
+	ApiServerUser       = "system:apiserver" // Constant provided for writing customer RBAC rules that may want to skip authorization for apiserver
+	ApiServerAnonymous  = "system:anonymous"
+)
 
 type K8sAuthnzAPI struct {
 	accessControl accesscontrol.AccessControl
@@ -95,14 +100,16 @@ func (api *K8sAuthnzAPI) authenticate(c *contextmodel.ReqContext) response.Respo
 		// Extra fields are set up here as placeholders. It is just to demonstrate that
 		// the authorization flow will have Username, Groups and additionally any other Extra fields as necessary
 		extra := make(map[string]authnV1.ExtraValue)
-		extra["token-name"] = []string{c.SignedInUser.Name}
-		extra["org-role"] = []string{string(c.SignedInUser.OrgRole)}
+		extra["token-name"] = []string{user.Name}
+		extra["org-role"] = []string{string(user.OrgRole)}
+		extra["org-id"] = []string{strconv.FormatInt(user.OrgID, 10)}
+		extra["user-id"] = []string{strconv.FormatInt(user.UserID, 10)}
 		return sendV1Response(authnV1.UserInfo{
 			// SignedInUser.Name could be anything, since it's just the token name
 			// as entered by the user. We normalize it for subsequent use in the authorization flow.
 			Username: GrafanaAdminK8sUser,
 			Groups:   []string{"server-admins"},
-			UID:      strconv.FormatInt(c.SignedInUser.UserID, 10),
+			UID:      strconv.FormatInt(user.UserID, 10),
 			Extra:    extra,
 		})
 	}
