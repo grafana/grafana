@@ -14,7 +14,7 @@ weight: -33
 
 Welcome to Grafana 9.5! We're excited to share some major updates to Grafana's navigation, tons of usability improvements to Alerting, and some promising experiments to help you query your Prometheus metrics. Also, read on to learn about our continued migration from API keys to service accounts, as well as deprecation of plugins that use Angular and a field in the InfluxDB data source.
 
-For more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v9.5, check out our [Upgrade Guide]({{< relref "../../upgrade-guide/upgrade-v9.5/index.md" >}}).
+For more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v9.5, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v9.5/index.md" >}}).
 
 <!-- Template below
 
