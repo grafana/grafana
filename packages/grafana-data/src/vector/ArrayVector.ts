@@ -7,7 +7,7 @@ export class ArrayVector<T = any> extends FunctionalVector<T> {
   buffer: T[];
 
   // This constructor needs to accept any otherwise the value takes over the definition
-  constructor(buffer?: T[]) {
+  constructor(buffer?: any[]) {
     super();
     this.buffer = buffer ? buffer : [];
   }
