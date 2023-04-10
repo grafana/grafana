@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Card, Field, FieldSet, Input, useStyles2 } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -13,19 +13,28 @@ import { TransformationsEditor } from './TransformationsEditor';
 import { useCorrelationsFormContext } from './correlationsFormContext';
 import { getInputId } from './utils';
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  label: css`
-    max-width: ${theme.spacing(80)};
-  `,
-  variable: css`
-    font-family: ${theme.typography.fontFamilyMonospace};
-    font-weight: ${theme.typography.fontWeightMedium};
-  `,
-  // we alternate background colors, make card slightly darker than either
-  cardContainerBackground: css`
-    background-color: rgba(0, 0, 0, 0.05);
-  `,
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  // show text color at 0.05% to show with alternating background colors of interactive table
+  const decomposedContrastColor = colorManipulator.decomposeColor(theme.colors.text.primary);
+
+  return {
+    label: css`
+      max-width: ${theme.spacing(80)};
+    `,
+    variable: css`
+      font-family: ${theme.typography.fontFamilyMonospace};
+      font-weight: ${theme.typography.fontWeightMedium};
+    `,
+    cardContainerBackground: css`
+      background-color: rgba(
+        ${decomposedContrastColor.values[0]},
+        ${decomposedContrastColor.values[1]},
+        ${decomposedContrastColor.values[2]},
+        0.05
+      );
+    `,
+  };
+};
 
 export const ConfigureCorrelationSourceForm = () => {
   const { control, formState, register, getValues } = useFormContext();
