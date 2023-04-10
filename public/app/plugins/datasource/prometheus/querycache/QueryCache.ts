@@ -32,7 +32,6 @@ export const defaultPrometheusQueryOverlapWindow = '10m';
 interface TargetCache {
   sig: TargetSig;
   prevTo: TimestampMs;
-  prevFrom: TimestampMs;
   frames: DataFrame[];
 }
 
@@ -86,7 +85,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
     // all targets are queried together, so we check for any that causes group cache invalidation & full re-query
     let doPartialQuery = shouldCache;
     let prevTo: TimestampMs | undefined = undefined;
-    let prevFrom: TimestampMs | undefined = undefined;
 
     // pre-compute reqTargSigs
     const reqTargSigs = new Map<TargetIdent, TargetSig>();
@@ -108,7 +106,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
         // only do partial queries when new request range follows prior request range (possibly with overlap)
         // e.g. now-6h with refresh <= 6h
         prevTo = cached?.prevTo ?? Infinity;
-        prevFrom = cached?.prevFrom ?? Infinity;
 
         doPartialQuery = newTo > prevTo && newFrom <= prevTo;
       }
@@ -118,7 +115,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
       }
     }
 
-    if (doPartialQuery && prevTo && prevFrom) {
+    if (doPartialQuery && prevTo) {
       // clamp to make sure we don't re-query previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
       let newFromPartial = Math.max(prevTo - this.overlapWindowMs, newFrom);
 
@@ -233,7 +230,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
           sig: requestInfo.targSigs.get(targIdent)!,
           frames: nonEmptyCachedFrames,
           prevTo: newTo,
-          prevFrom: newFrom,
         });
 
         outFrames.push(...nonEmptyCachedFrames);
