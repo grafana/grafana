@@ -312,7 +312,6 @@ export function toDataFrame(data: any): DataFrame {
   if ('fields' in data) {
     // DataFrameDTO does not have length
     if ('length' in data && data.fields[0]?.values?.get) {
-      console.log('assuming raw dataframe');
       return data as DataFrame;
     }
 
