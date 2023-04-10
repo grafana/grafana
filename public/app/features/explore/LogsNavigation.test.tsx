@@ -21,6 +21,7 @@ const defaultProps: LogsNavigationProps = {
   visibleRange: { from: 1637322959000, to: 1637322981811 },
   onChangeTime: jest.fn(),
   scrollToTopLogs: jest.fn(),
+  scrollToFirstLog: jest.fn(),
   addResultsToCache: jest.fn(),
   clearCache: jest.fn(),
 };

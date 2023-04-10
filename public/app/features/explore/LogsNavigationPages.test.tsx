@@ -21,7 +21,7 @@ const setup = (propOverrides?: object) => {
     oldestLogsFirst: false,
     timeZone: 'local',
     loading: false,
-    changeTime: jest.fn(),
+    onClick: jest.fn(),
     ...propOverrides,
   };
 
