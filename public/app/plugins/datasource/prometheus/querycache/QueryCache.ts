@@ -2,10 +2,10 @@ import {
   ArrayVector,
   DataFrame,
   DataQueryRequest,
-  DateTime,
   dateTime,
   durationToMilliseconds,
   Field,
+  incrRoundDn,
   isValidDuration,
   parseDuration,
 } from '@grafana/data/src';
@@ -125,38 +125,16 @@ export class QueryCache<T extends SupportedQueryTypes> {
       // clamp to make sure we don't re-query previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
       let newFromPartial = Math.max(prevTo - this.overlapWindowMs, prevFrom);
 
-      // Round down to the original to.
-      // What is the full duration
-      //
-      // console.log('');
-
       const newToDate = dateTime(newTo);
-      const newFromPartialDate = dateTime(newFromPartial) as moment.Moment;
-
-      // newToDate.set('seconds', newFromPartialDate.seconds());
-      // newToDate.set('ms', newFromPartialDate.milliseconds());
-
-      // console.log('prevFrom', prevFrom, dateTime(prevFrom).format('MM/DD/YYYY h:mm:ss.SSS A'))
-      // console.log('prevTo', prevTo, dateTime(prevTo).format('MM/DD/YYYY h:mm:ss.SSS A'))
-      //
-      // console.log('thisFrom', newFrom, dateTime(newFrom).format('MM/DD/YYYY h:mm:ss.SSS A'))
-      // console.log('thisTo', newTo, dateTime(newTo).format('MM/DD/YYYY h:mm:ss.SSS A'))
-      //
-      // console.log('thisFromPending', newFromPartialDate.valueOf(), newFromPartialDate.format('MM/DD/YYYY h:mm:ss.SSS A'))
-      // console.log('thisToPending', newToDate.valueOf(), newToDate.format('MM/DD/YYYY h:mm:ss.SSS A'))
-
-      // console.log('overlap', prevTo - newFromPartial);
-      // console.log('How much time has elapsed since last query', prevTo - newTo);
-
-      // console.log('duration of next query', newFromPartialDate.valueOf() - newToDate.valueOf())
+      const newFromPartialDate = dateTime(incrRoundDn(newFromPartial, request.intervalMs));
 
       // modify to partial query
       request = {
         ...request,
         range: {
           ...request.range,
-          from: newFromPartialDate as DateTime,
-          to: newToDate as DateTime,
+          from: newFromPartialDate,
+          to: newToDate,
         },
       };
     } else {
@@ -178,12 +156,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
     requestInfo: CacheRequestInfo<T> | undefined,
     respFrames: DataFrame[]
   ): DataFrame[] {
-    // console.warn('procFrames');
-    // console.log('procFrames request', JSON.parse(JSON.stringify(request)));
-    // console.log('procFrames requestInfo', JSON.parse(JSON.stringify(requestInfo)));
-    // console.log('procFrames respFrames', JSON.parse(JSON.stringify(respFrames)));
-    // console.log('procFrames cache', JSON.parse(JSON.stringify(this)));
-
     if (requestInfo?.shouldCache) {
       const newFrom = request.range.from.valueOf();
       const newTo = request.range.to.valueOf();
@@ -281,20 +253,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
           values: new ArrayVector(field.values.toArray().slice()),
         })),
       }));
-
-      respFrames.forEach((frame: DataFrame) => {
-        let targIdent = `${request.dashboardUID}|${request.panelId}|${frame.refId}`;
-
-        const valuesAfterSecond = this.cache
-          .get(targIdent)
-          ?.frames[0].fields[1].values.toArray()
-          ?.map((value, idx) => {
-            return { value: value, originalIndex: idx };
-          })
-          .filter((value) => value.value !== null);
-
-        // console.log('NUMBER OF VALUES', valuesAfterSecond?.length);
-      });
     }
 
     return respFrames;

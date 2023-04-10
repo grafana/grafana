@@ -1,8 +1,6 @@
 import { clone } from 'lodash';
 
-import { ArrayVector, DataFrame, DataQueryRequest, dateTime } from '@grafana/data/src';
-
-import { InfluxQuery } from '../../influxdb/types';
+import { ArrayVector, dateTime } from '@grafana/data/src';
 
 /**
  *
@@ -1017,7 +1015,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
               to: 'now',
             },
           },
-        ] as Array<DataQueryRequest<InfluxQuery>>,
+        ],
         targSigs: {},
         shouldCache: true,
       },
@@ -2242,7 +2240,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
               to: 'now',
             },
           },
-        ] as Array<DataQueryRequest<InfluxQuery>>,
+        ],
         targSigs: {},
         shouldCache: true,
       },
@@ -2419,8 +2417,8 @@ export const IncrementalStorageDataFrameScenariosInflux = {
             dashboardUID: 'e74c7505-cf1e-4605-bd6b-a043324e6dc5',
             publicDashboardAccessToken: '',
             range: {
-              from: '2023-04-10T14:48:30.525Z',
-              to: '2023-04-10T15:03:30.525Z',
+              from: dateTime('2023-04-10T14:48:30.525Z'),
+              to: dateTime('2023-04-10T15:03:30.525Z'),
               raw: {
                 from: 'now-15m',
                 to: 'now',
@@ -3644,8 +3642,8 @@ export const IncrementalStorageDataFrameScenariosInflux = {
             dashboardUID: 'e74c7505-cf1e-4605-bd6b-a043324e6dc5',
             publicDashboardAccessToken: '',
             range: {
-              from: '2023-04-10T15:03:00.525Z',
-              to: '2023-04-10T15:03:31.385Z',
+              from: dateTime('2023-04-10T15:03:00.525Z'),
+              to: dateTime('2023-04-10T15:03:31.385Z'),
               raw: {
                 from: 'now-15m',
                 to: 'now',
@@ -3708,6 +3706,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
               to: 'now',
             },
           },
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         ],
         targSigs: {},
         shouldCache: true,
@@ -3866,7 +3865,8 @@ export const IncrementalStorageDataFrameScenariosInflux = {
           from: 'now-15m',
           to: 'now',
         },
-      } as DataQueryRequest<InfluxQuery>,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      },
       request: {
         app: 'dashboard',
         requestId: 'Q100',
@@ -3939,7 +3939,8 @@ export const IncrementalStorageDataFrameScenariosInflux = {
           from: 'now-15m',
           to: 'now',
         },
-      } as DataQueryRequest<InfluxQuery>,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      },
       requestInfo: {
         requests: [
           {
@@ -4024,7 +4025,6 @@ export const IncrementalStorageDataFrameScenariosInflux = {
           name: 'cpu.mean',
           refId: 'A',
           meta: {
-            typeVersion: [0, 0],
             executedQueryString:
               'SELECT mean("usage_system") FROM "cpu" WHERE time >= 1681141350505ms and time <= 1681142250505ms GROUP BY time(1s) fill(null) ORDER BY time ASC',
           },
@@ -5047,7 +5047,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
                 null,
                 null,
                 null,
-                0.3655452101416886,
+                0.3655452101416886, // This is the value that gets removed
                 null,
                 null,
                 null,
@@ -5083,7 +5083,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
           ],
           length: 901,
         },
-      ] as DataFrame[],
+      ],
     },
     second: {
       initial: {
@@ -5158,7 +5158,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
           from: 'now-15m',
           to: 'now',
         },
-      } as DataQueryRequest<InfluxQuery>,
+      },
       request: {
         app: 'dashboard',
         requestId: 'Q101',
@@ -5231,7 +5231,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
           from: 'now-15m',
           to: 'now',
         },
-      } as DataQueryRequest<InfluxQuery>,
+      },
       requestInfo: {
         requests: [
           {
@@ -5316,7 +5316,6 @@ export const IncrementalStorageDataFrameScenariosInflux = {
           name: 'cpu.mean',
           refId: 'A',
           meta: {
-            typeVersion: [0, 0],
             executedQueryString:
               'SELECT mean("usage_system") FROM "cpu" WHERE time >= 1681142220505ms and time <= 1681142251230ms GROUP BY time(1s) fill(null) ORDER BY time ASC',
           },
@@ -5346,7 +5345,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
                 displayNameFromDS: 'cpu.mean',
               },
               values: new ArrayVector([
-                null,
+                0.3655452101416886, // I'd expect this value to be 0.3655452101416886 instead of null?
                 null,
                 null,
                 null,
@@ -5383,7 +5382,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
           ],
           length: 32,
         },
-      ] as DataFrame[],
+      ],
     },
   },
 };
