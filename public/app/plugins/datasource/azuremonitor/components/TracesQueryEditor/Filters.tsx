@@ -1,5 +1,5 @@
 import { uniq } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { TimeRange, SelectableValue, CoreApp, DataFrame } from '@grafana/data';
@@ -89,7 +89,6 @@ const getTraceProperties = async (
 
 const Filters = ({ query, datasource, onQueryChange, setError }: AzureQueryEditorFieldProps) => {
   const { azureTraces } = query;
-  const timeRange = datasource.azureLogAnalyticsDatasource.timeSrv.timeRange();
   const queryTraceTypes = azureTraces?.traceTypes ? azureTraces.traceTypes : Object.keys(tablesSchema);
 
   const excludedProperties = new Set([
@@ -108,9 +107,23 @@ const Filters = ({ query, datasource, onQueryChange, setError }: AzureQueryEdito
   );
 
   const [propertyMap, setPropertyMap] = useState(new Map<string, Array<SelectableValue<string>>>());
-
   const queryFilters = useMemo(() => query.azureTraces?.filters ?? [], [query.azureTraces?.filters]);
   const [filters, updateFilters] = useState(queryFilters);
+
+  const [timeRange, setTimeRange] = useState<TimeRange>({
+    ...datasource.azureLogAnalyticsDatasource.timeSrv.timeRange(),
+  });
+
+  const useTime = (time: TimeRange) => {
+    if (timeRange !== null && (timeRange.raw.from !== time.raw.from || timeRange.raw.to !== time.raw.to)) {
+      setTimeRange({ ...time });
+    }
+  };
+  useTime(datasource.azureLogAnalyticsDatasource.timeSrv.timeRange());
+
+  useEffect(() => {
+    setPropertyMap(new Map<string, Array<SelectableValue<string>>>());
+  }, [timeRange]);
 
   const onFieldChange = <Key extends keyof AzureTracesFilter>(
     fieldName: Key,
