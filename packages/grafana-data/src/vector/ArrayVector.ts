@@ -7,7 +7,7 @@ export class ArrayVector<T = any> extends FunctionalVector<T> {
   buffer: T[];
 
   // This constructor needs to accept any otherwise the value takes over the definition
-  constructor(buffer?: any[]) {
+  constructor(buffer?: T[]) {
     super();
     this.buffer = buffer ? buffer : [];
   }
@@ -16,9 +16,9 @@ export class ArrayVector<T = any> extends FunctionalVector<T> {
     return this.buffer.length;
   }
 
-  add = (value: T): void => {
+  add(value: T): void {
     this.buffer.push(value);
-  };
+  }
 
   get(index: number): T {
     return this.buffer[index];

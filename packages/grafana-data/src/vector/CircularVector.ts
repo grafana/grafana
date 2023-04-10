@@ -1,7 +1,4 @@
-import { MutableVector } from '../types/vector';
-
 import { FunctionalVector } from './FunctionalVector';
-import { vectorToArray } from './vectorToArray';
 
 interface CircularOptions<T> {
   buffer?: T[];
@@ -18,7 +15,7 @@ interface CircularOptions<T> {
  *
  * @public
  */
-export class CircularVector<T = any> extends FunctionalVector<T> implements MutableVector<T> {
+export class CircularVector<T = any> extends FunctionalVector<T> {
   private buffer: T[];
   private index: number;
   private capacity: number;
@@ -117,14 +114,6 @@ export class CircularVector<T = any> extends FunctionalVector<T> implements Muta
     return this.buffer.reverse();
   }
 
-  /** support standard array push syntax */
-  push(...vals: T[]): number {
-    for (const v of vals) {
-      this.add(v);
-    }
-    return this.length;
-  }
-
   get(index: number) {
     return this.buffer[(index + this.index) % this.buffer.length];
   }
@@ -135,13 +124,5 @@ export class CircularVector<T = any> extends FunctionalVector<T> implements Muta
 
   get length() {
     return this.buffer.length;
-  }
-
-  toArray(): T[] {
-    return vectorToArray(this);
-  }
-
-  toJSON(): T[] {
-    return vectorToArray(this);
   }
 }
