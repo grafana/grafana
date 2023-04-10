@@ -23,7 +23,7 @@ export function AlertingSettings<T extends AlertingConfig>({ options, onOptionsC
               labelWidth={27}
               label="Manage alerts via Alerting UI"
               disabled={options.readOnly}
-              tooltip="Enable to manage alerting rules for this data source."
+              tooltip="Enable it to manage alerting rules for this data source."
             >
               <InlineSwitch
                 value={options.jsonData.manageAlerts !== false}
