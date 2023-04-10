@@ -1,7 +1,35 @@
 import { e2e } from '@grafana/e2e';
 
+// TODO: Better way to generate this list (ideally including all panels >=beta state) (list is case sensitive)
+const PANELS_TO_CHECK = [
+  'Time series',
+  'Bar chart',
+  'Stat',
+  'Gauge',
+  'Bar gauge',
+  'Table',
+  'Pie chart',
+  'State timeline',
+  'Heatmap',
+  'Status history',
+  'Histogram',
+  'Text',
+  'Alert list',
+  'Dashboard list',
+  'News',
+  'Annotations list',
+  'Candlestick',
+  'Canvas',
+  'Flame Graph',
+  'Geomap',
+  'Logs',
+  'Node Graph',
+  'Traces',
+  'XY Chart',
+];
+
 e2e.scenario({
-  describeName: 'Panel edit panels smokescreen',
+  describeName: 'Panels smokescreen',
   itName: 'Tests each panel type in the panel edit view to ensure no crash',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
@@ -22,20 +50,17 @@ e2e.scenario({
     e2e.pages.AddDashboard.itemButton('Add new visualization menu item').click();
 
     // Loop through every panel type and ensure no crash
-    e2e.components.PanelEditor.toggleVizPicker().click();
-    e2e.components.PluginVisualization.item('Table').scrollIntoView().should('be.visible').click();
-    e2e.components.PanelEditor.toggleVizPicker().should((e) => expect(e).to.contain('Table'));
+    PANELS_TO_CHECK.forEach((panel) => {
+      e2e.components.PanelEditor.toggleVizPicker().click();
+      e2e.components.PluginVisualization.item(panel).scrollIntoView().should('be.visible').click();
 
-    e2e.components.PanelEditor.toggleVizPicker().click();
-    e2e.components.PluginVisualization.item('Stat').scrollIntoView().should('be.visible').click();
-    e2e.components.PanelEditor.toggleVizPicker().should((e) => expect(e).to.contain('Stat'));
+      // Wait for panel to load (TODO: Better way to do this?)
+      cy.wait(500);
 
-    e2e.components.PanelEditor.toggleVizPicker().click();
-    e2e.components.PluginVisualization.item('Gauge').scrollIntoView().should('be.visible').click();
-    e2e.components.PanelEditor.toggleVizPicker().should((e) => expect(e).to.contain('Gauge'));
+      e2e.components.PanelEditor.toggleVizPicker().should((e) => expect(e).to.contain(panel));
 
-    e2e.components.PanelEditor.toggleVizPicker().click();
-    e2e.components.PluginVisualization.item('Geomap').scrollIntoView().should('be.visible').click();
-    e2e.components.PanelEditor.toggleVizPicker().should((e) => expect(e).to.contain('Geomap'));
+      // TODO: Come up with better check / better failure messaging to clearly indicate which panel failed
+      cy.contains('An unexpected error happened').should('not.exist');
+    });
   },
 });
