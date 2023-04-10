@@ -43,7 +43,7 @@ export class CircularVector<T = any> extends FunctionalVector<T> implements Muta
    *  * head vs tail
    *  * growing buffer vs overwriting values
    */
-  private getAddFunction() {
+  private getAddFunction(): (value: T) => void {
     // When we are not at capacity, it should actually modify the buffer
     if (this.capacity > this.buffer.length) {
       if (this.tail) {
@@ -117,13 +117,6 @@ export class CircularVector<T = any> extends FunctionalVector<T> implements Muta
     return this.buffer.reverse();
   }
 
-  /**
-   * Add the value to the buffer
-   *
-   * (Note the implementation gets set in the constructor)
-   */
-  add: (value: T) => void;
-
   /** support standard array push syntax */
   push(...vals: T[]): number {
     for (const v of vals) {
@@ -136,7 +129,7 @@ export class CircularVector<T = any> extends FunctionalVector<T> implements Muta
     return this.buffer[(index + this.index) % this.buffer.length];
   }
 
-  set(index: number, value: T) {
+  set(index: number, value: any) {
     this.buffer[(index + this.index) % this.buffer.length] = value;
   }
 

@@ -8,7 +8,7 @@ import { Gazetteer } from '../gazetteer/gazetteer';
 
 import { decodeGeohash } from './geohash';
 
-export function pointFieldFromGeohash(geohash: Field<string>): Field<Point> {
+export function pointFieldFromGeohash(geohash: Field<string>): Field<Geometry | undefined> {
   return {
     name: geohash.name ?? 'Point',
     type: FieldType.geo,
@@ -25,7 +25,7 @@ export function pointFieldFromGeohash(geohash: Field<string>): Field<Point> {
   };
 }
 
-export function pointFieldFromLonLat(lon: Field, lat: Field): Field<Point> {
+export function pointFieldFromLonLat(lon: Field, lat: Field): Field<Geometry | undefined> {
   const buffer = new Array<Point>(lon.values.length);
   for (let i = 0; i < lon.values.length; i++) {
     const longitude = lon.values.get(i);

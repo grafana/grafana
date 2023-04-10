@@ -1,14 +1,13 @@
-import { MutableVector } from '../types/vector';
-
 import { FunctionalVector } from './FunctionalVector';
 
 /**
  * @public
  */
-export class ArrayVector<T = any> extends FunctionalVector<T> implements MutableVector<T> {
+export class ArrayVector<T = any> extends FunctionalVector<T> {
   buffer: T[];
 
-  constructor(buffer?: T[]) {
+  // This constructor needs to accept any otherwise the value takes over the definition
+  constructor(buffer?: any[]) {
     super();
     this.buffer = buffer ? buffer : [];
   }
@@ -17,9 +16,9 @@ export class ArrayVector<T = any> extends FunctionalVector<T> implements Mutable
     return this.buffer.length;
   }
 
-  add(value: T) {
+  add = (value: T): void => {
     this.buffer.push(value);
-  }
+  };
 
   get(index: number): T {
     return this.buffer[index];
