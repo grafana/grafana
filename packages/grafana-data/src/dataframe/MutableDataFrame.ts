@@ -2,20 +2,20 @@ import { isString } from 'lodash';
 
 import { QueryResultMeta } from '../types/data';
 import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
-import { MutableVector, Vector } from '../types/vector';
+import { Vector } from '../types/vector';
 import { makeFieldParser } from '../utils/fieldParser';
 import { ArrayVector } from '../vector/ArrayVector';
 import { FunctionalVector } from '../vector/FunctionalVector';
 
 import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
 
-export type MutableField<T = any> = Field<T, MutableVector<T>>;
+export type MutableField<T = any> = Field<T>;
 
-type MutableVectorCreator = (buffer?: any[]) => MutableVector;
+type MutableVectorCreator = (buffer?: any[]) => Vector;
 
 export const MISSING_VALUE = undefined; // Treated as connected in new graph panel
 
-export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame, MutableVector<T> {
+export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame {
   name?: string;
   refId?: string;
   meta?: QueryResultMeta;
