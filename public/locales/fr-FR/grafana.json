@@ -30,6 +30,23 @@
     "save": "Enregistrer"
   },
   "dashboard": {
+    "empty": {
+      "add-import": {
+        "body": "",
+        "button": "",
+        "header": ""
+      },
+      "add-row": {
+        "body": "",
+        "button": "",
+        "header": ""
+      },
+      "add-visualization": {
+        "body": "",
+        "button": "",
+        "header": ""
+      }
+    },
     "inspect": {
       "data-tab": "Données",
       "error-tab": "Erreur",
@@ -75,6 +92,7 @@
     },
     "inspect-stats": {
       "data-title": "Statistiques de source de données",
+      "data-traceids": "",
       "processing-time": "Durée de traitement des données",
       "queries": "Nombre de requêtes",
       "request-time": "Durée totale de la requête",
@@ -82,6 +100,13 @@
       "table-title": "Statistiques"
     },
     "toolbar": {
+      "add": "",
+      "add-menu": {
+        "import": "",
+        "paste-panel": "",
+        "row": "",
+        "visualization": ""
+      },
       "add-panel": "Ajouter un panneau",
       "mark-favorite": "Marquer comme favori",
       "open-original": "Ouvrir le tableau de bord d'origine",
@@ -123,6 +148,9 @@
       "folder": "Enregistrer dans le dossier",
       "folder-description": "Les autorisations du panneau de bibliothèque sont dérivées des autorisations du dossier",
       "name": "Nom du panneau de bibliothèque"
+    },
+    "add-widget": {
+      "title": ""
     }
   },
   "library-panels": {
@@ -399,7 +427,6 @@
       "sort-placeholder": "",
       "starred": "Favoris",
       "view-as-folders": "",
-      "view-as-grid": "",
       "view-as-list": ""
     },
     "dashboard-actions": {

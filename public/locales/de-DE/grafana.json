@@ -30,6 +30,23 @@
     "save": "Speichern"
   },
   "dashboard": {
+    "empty": {
+      "add-import": {
+        "body": "",
+        "button": "",
+        "header": ""
+      },
+      "add-row": {
+        "body": "",
+        "button": "",
+        "header": ""
+      },
+      "add-visualization": {
+        "body": "",
+        "button": "",
+        "header": ""
+      }
+    },
     "inspect": {
       "data-tab": "Daten",
       "error-tab": "Fehler",
@@ -75,6 +92,7 @@
     },
     "inspect-stats": {
       "data-title": "Statistiken zu Datenquellen",
+      "data-traceids": "",
       "processing-time": "Datenverarbeitungszeit",
       "queries": "Anzahl der Abfragen",
       "request-time": "Gesamte Anfragezeit",
@@ -82,6 +100,13 @@
       "table-title": "Statistiken"
     },
     "toolbar": {
+      "add": "",
+      "add-menu": {
+        "import": "",
+        "paste-panel": "",
+        "row": "",
+        "visualization": ""
+      },
       "add-panel": "Panel hinzufügen",
       "mark-favorite": "Als Favorit markieren",
       "open-original": "Original-Dashboard öffnen",
@@ -123,6 +148,9 @@
       "folder": "In Ordner speichern",
       "folder-description": "Berechtigungen des Bibliotheks-Panels werden von den Ordnerberechtigungen übernommen",
       "name": "Name des Bibliotheks-Panels"
+    },
+    "add-widget": {
+      "title": ""
     }
   },
   "library-panels": {
@@ -399,7 +427,6 @@
       "sort-placeholder": "",
       "starred": "Hervorgehoben",
       "view-as-folders": "",
-      "view-as-grid": "",
       "view-as-list": ""
     },
     "dashboard-actions": {

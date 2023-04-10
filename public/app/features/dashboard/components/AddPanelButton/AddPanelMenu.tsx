@@ -24,7 +24,7 @@ export const AddPanelMenu = ({ dashboard }: Props) => {
     <Menu>
       <Menu.Item
         key="add-visualisation"
-        label={t('dashboard.toolbar.add.visualization', 'Visualization')}
+        label={t('dashboard.toolbar.add-menu.visualization', 'Visualization')}
         testId={selectors.components.PageToolbar.itemButton('Add new visualization menu item')}
         onClick={() => {
           reportInteraction('Create new panel');
@@ -34,7 +34,7 @@ export const AddPanelMenu = ({ dashboard }: Props) => {
       />
       <Menu.Item
         key="add-row"
-        label={t('dashboard.toolbar.add.row', 'Row')}
+        label={t('dashboard.toolbar.add-menu.row', 'Row')}
         testId={selectors.components.PageToolbar.itemButton('Add new row menu item')}
         onClick={() => {
           reportInteraction('Create new row');
@@ -43,7 +43,7 @@ export const AddPanelMenu = ({ dashboard }: Props) => {
       />
       <Menu.Item
         key="add-panel-lib"
-        label={t('dashboard.toolbar.add.import-library', 'Import from library')}
+        label={t('dashboard.toolbar.add-menu.import', 'Import from library')}
         testId={selectors.components.PageToolbar.itemButton('Add new panel from panel library menu item')}
         onClick={() => {
           reportInteraction('Add a panel from the panel library');
@@ -52,7 +52,7 @@ export const AddPanelMenu = ({ dashboard }: Props) => {
       />
       <Menu.Item
         key="add-panel-clipboard"
-        label={t('dashboard.toolbar.add.paste-panel', 'Paste panel')}
+        label={t('dashboard.toolbar.add-menu.paste-panel', 'Paste panel')}
         testId={selectors.components.PageToolbar.itemButton('Add new panel from clipboard menu item')}
         onClick={() => {
           reportInteraction('Paste panel from clipboard');
