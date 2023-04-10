@@ -12,7 +12,7 @@ import {
   onPasteCopiedPanel,
 } from 'app/features/dashboard/utils/dashboard';
 
-interface Props {
+export interface Props {
   dashboard: DashboardModel;
 }
 

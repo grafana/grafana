@@ -7,7 +7,9 @@ import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardF
 
 import AddPanelButton, { Props } from './AddPanelButton';
 jest.mock('./AddPanelMenu', () => ({
-  AddPanelMenu: () => <div>Menu</div>,
+  ...jest.requireActual('./AddPanelMenu'),
+  __esModule: true,
+  default: () => <div>Menu</div>,
 }));
 
 function setup(options?: Partial<Props>) {
