@@ -12,7 +12,7 @@ type EvaluationContext struct {
 	User *user.SignedInUser
 }
 
-func Context(ctx context.Context, user *user.SignedInUser) EvaluationContext {
+func NewContext(ctx context.Context, user *user.SignedInUser) EvaluationContext {
 	return EvaluationContext{
 		Ctx:  ctx,
 		User: user,

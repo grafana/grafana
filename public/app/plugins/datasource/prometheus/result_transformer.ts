@@ -22,7 +22,8 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
-import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { calculateFieldDisplayName } from '@grafana/data/src/field/fieldState';
+import { config, FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { renderLegendFormat } from './legend';
 import {
@@ -71,6 +72,23 @@ export function transformV2(
   request: DataQueryRequest<PromQuery>,
   options: { exemplarTraceIdDestinations?: ExemplarTraceIdDestination[] }
 ) {
+  // migration for dataplane field name issue
+  if (config.featureToggles.prometheusDataplane) {
+    // update displayNameFromDS in the field config
+    response.data.forEach((f: DataFrame) => {
+      const target = request.targets.find((t) => t.refId === f.refId);
+      // check that the legend is selected as auto
+      if (target && target.legendFormat === '__auto') {
+        f.fields.forEach((field) => {
+          if (field.labels?.__name__ && field.labels?.__name__ === field.name) {
+            const fieldCopy = { ...field, name: TIME_SERIES_VALUE_FIELD_NAME };
+            field.config.displayNameFromDS = calculateFieldDisplayName(fieldCopy, f, response.data);
+          }
+        });
+      }
+    });
+  }
+
   const [tableFrames, framesWithoutTable] = partition<DataFrame>(response.data, (df) => isTableResult(df, request));
   const processedTableFrames = transformDFToTable(tableFrames);
 
@@ -650,13 +668,13 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
   return seriesList;
 }
 
-function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
+export function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
   let le1, le2;
 
   try {
     // fail if not integer. might happen with bad queries
-    le1 = parseSampleValue(s1.name ?? '');
-    le2 = parseSampleValue(s2.name ?? '');
+    le1 = parseSampleValue(s1.name ?? s1.fields[1].name);
+    le2 = parseSampleValue(s2.name ?? s2.fields[1].name);
   } catch (err) {
     console.error(err);
     return 0;

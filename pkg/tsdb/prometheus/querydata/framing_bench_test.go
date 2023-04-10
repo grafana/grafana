@@ -15,7 +15,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/kindsys"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
 
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
@@ -45,8 +48,11 @@ func BenchmarkExemplarJson(b *testing.B) {
 			Body:       io.NopCloser(bytes.NewReader(responseBytes)),
 		}
 		tCtx.httpProvider.setResponse(&res)
-		_, err := tCtx.queryData.Execute(context.Background(), query)
+		resp, err := tCtx.queryData.Execute(context.Background(), query)
 		require.NoError(b, err)
+		for _, r := range resp.Responses {
+			require.NoError(b, r.Error)
+		}
 	}
 }
 
@@ -121,8 +127,10 @@ func createJsonTestData(start int64, step int64, timestampCount int, seriesCount
 	bytes := []byte(fmt.Sprintf(`{"status":"success","data":{"resultType":"matrix","result":[%v]}}`, strings.Join(allSeries, ",")))
 
 	qm := models.QueryModel{
-		RangeQuery: true,
-		Expr:       "test",
+		PrometheusDataQuery: dataquery.PrometheusDataQuery{
+			Range: kindsys.Ptr(true),
+			Expr:  "test",
+		},
 	}
 
 	data, err := json.Marshal(&qm)

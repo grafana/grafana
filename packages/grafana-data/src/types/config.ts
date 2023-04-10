@@ -200,6 +200,7 @@ export interface GrafanaConfig {
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
+  anonymousEnabled: boolean;
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;

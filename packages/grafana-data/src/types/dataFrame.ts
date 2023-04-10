@@ -1,7 +1,7 @@
 import { ScopedVars } from './ScopedVars';
 import { QueryResultBase, Labels, NullValueMode } from './data';
 import { DataLink, LinkModel } from './dataLink';
-import { DecimalCount, DisplayProcessor, DisplayValue } from './displayValue';
+import { DecimalCount, DisplayProcessor, DisplayValue, DisplayValueAlignmentFactors } from './displayValue';
 import { FieldColor } from './fieldColor';
 import { ThresholdsConfig } from './thresholds';
 import { ValueMapping } from './valueMapping';
@@ -18,6 +18,7 @@ export enum FieldType {
   geo = 'geo',
   enum = 'enum',
   other = 'other', // Object, Array, etc
+  frame = 'frame', // DataFrame
 }
 
 /**
@@ -136,6 +137,14 @@ export interface Field<T = any, V = Vector<T>> {
    */
   config: FieldConfig;
   values: V; // The raw field values
+
+  /**
+   * When type === FieldType.Time, this can optionally store
+   * the nanosecond-precison fractions as integers between
+   * 0 and 999999.
+   */
+  nanos?: number[];
+
   labels?: Labels;
 
   /**
@@ -203,6 +212,12 @@ export interface FieldState {
    * this would applied more than one time.
    */
   nullThresholdApplied?: boolean;
+
+  /**
+   * Can be used by visualizations to cache max display value lengths to aid alignment.
+   * It's up to each visualization to calculate and set this.
+   */
+  alignmentFactors?: DisplayValueAlignmentFactors;
 }
 
 /** @public */

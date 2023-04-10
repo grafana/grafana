@@ -53,8 +53,12 @@ export * from './slider';
 export * from './accesscontrol';
 export * from './icon';
 export {
+  PluginExtensionTypes,
+  PluginExtensionPoints,
   type PluginExtension,
   type PluginExtensionLink,
-  isPluginExtensionLink,
-  PluginExtensionTypes,
+  type PluginExtensionConfig,
+  type PluginExtensionLinkConfig,
+  type PluginExtensionEventHelpers,
+  type PluginExtensionPanelContext,
 } from './pluginExtensions';

@@ -19,6 +19,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -132,6 +133,16 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) re
 	return response.JSON(http.StatusOK, config)
 }
 
+func (srv AlertmanagerSrv) RouteGetAlertingConfigHistory(c *contextmodel.ReqContext) response.Response {
+	limit := c.QueryInt("limit")
+	configs, err := srv.mam.GetAppliedAlertmanagerConfigurations(c.Req.Context(), c.OrgID, limit)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, err.Error())
+	}
+
+	return response.JSON(http.StatusOK, configs)
+}
+
 func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *contextmodel.ReqContext) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
@@ -217,6 +228,38 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *contextmodel.ReqContext) response
 	return response.JSON(http.StatusOK, gettableSilences)
 }
 
+func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *contextmodel.ReqContext, id string) response.Response {
+	confId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "failed to parse config id")
+	}
+
+	err = srv.mam.ActivateHistoricalConfiguration(c.Req.Context(), c.OrgID, confId)
+	if err != nil {
+		var unknownReceiverError notifier.UnknownReceiverError
+		if errors.As(err, &unknownReceiverError) {
+			return ErrResp(http.StatusBadRequest, unknownReceiverError, "")
+		}
+		var configRejectedError notifier.AlertmanagerConfigRejectedError
+		if errors.As(err, &configRejectedError) {
+			return ErrResp(http.StatusBadRequest, configRejectedError, "")
+		}
+		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			return response.Error(http.StatusNotFound, err.Error(), err)
+		}
+		if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
+			return response.Error(http.StatusNotFound, err.Error(), err)
+		}
+		if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
+			return response.Error(http.StatusConflict, err.Error(), err)
+		}
+
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+
+	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration activated"})
+}
+
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, body apimodels.PostableUserConfig) response.Response {
 	currentConfig, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgID)
 	// If a config is present and valid we proceed with the guard, otherwise we
@@ -267,7 +310,9 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	if err := body.ProcessConfig(srv.crypto.Encrypt); err != nil {
+	if err := body.ProcessConfig(func(ctx context.Context, payload []byte) ([]byte, error) {
+		return srv.crypto.Encrypt(ctx, payload, secrets.WithoutScope())
+	}); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
 	}
 

@@ -7,13 +7,18 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/grafana/alerting/logging"
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers"
 	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -131,7 +136,7 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 
 func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID int64,
 	contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) (apimodels.EmbeddedContactPoint, error) {
-	if err := contactPoint.Valid(ecp.encryptionService.GetDecryptedValue); err != nil {
+	if err := ValidateContactPoint(contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -140,7 +145,7 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 		return apimodels.EmbeddedContactPoint{}, err
 	}
 
-	extractedSecrets, err := contactPoint.ExtractSecrets()
+	extractedSecrets, err := RemoveSecretsForContactPoint(&contactPoint)
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
 	}
@@ -240,7 +245,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return err
 	}
-	secretKeys, err := contactPoint.SecretKeys()
+	secretKeys, err := GetSecretKeysForContactPointType(contactPoint.Type)
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
@@ -252,7 +257,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 
 	// validate merged values
-	if err := contactPoint.Valid(ecp.encryptionService.GetDecryptedValue); err != nil {
+	if err := ValidateContactPoint(contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -265,7 +270,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
 	// transform to internal model
-	extractedSecrets, err := contactPoint.ExtractSecrets()
+	extractedSecrets, err := RemoveSecretsForContactPoint(&contactPoint)
 	if err != nil {
 		return err
 	}
@@ -493,4 +498,63 @@ func replaceReferences(oldName, newName string, routes ...*apimodels.Route) {
 		}
 		replaceReferences(oldName, newName, route.Routes...)
 	}
+}
+
+func ValidateContactPoint(e apimodels.EmbeddedContactPoint, decryptFunc receivers.GetDecryptedValueFn) error {
+	if e.Type == "" {
+		return fmt.Errorf("type should not be an empty string")
+	}
+	if e.Settings == nil {
+		return fmt.Errorf("settings should not be empty")
+	}
+	factory, exists := alertingNotify.Factory(e.Type)
+	if !exists {
+		return fmt.Errorf("unknown type '%s'", e.Type)
+	}
+	jsonBytes, err := e.Settings.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	cfg, _ := receivers.NewFactoryConfig(&receivers.NotificationChannelConfig{
+		Settings: jsonBytes,
+		Type:     e.Type,
+	}, nil, decryptFunc, nil, nil, func(ctx ...interface{}) logging.Logger {
+		return &logging.FakeLogger{}
+	}, setting.BuildVersion)
+	if _, err := factory(cfg); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetSecretKeysForContactPointType returns settings keys of contact point of the given type that are expected to be secrets. Returns error is contact point type is not known.
+func GetSecretKeysForContactPointType(contactPointType string) ([]string, error) {
+	notifiers := channels_config.GetAvailableNotifiers()
+	for _, n := range notifiers {
+		if n.Type == contactPointType {
+			var secureFields []string
+			for _, field := range n.Options {
+				if field.Secure {
+					secureFields = append(secureFields, field.PropertyName)
+				}
+			}
+			return secureFields, nil
+		}
+	}
+	return nil, fmt.Errorf("no secrets configured for type '%s'", contactPointType)
+}
+
+// RemoveSecretsForContactPoint removes all secrets from the contact point's settings and returns them as a map. Returns error if contact point type is not known.
+func RemoveSecretsForContactPoint(e *apimodels.EmbeddedContactPoint) (map[string]string, error) {
+	s := map[string]string{}
+	secretKeys, err := GetSecretKeysForContactPointType(e.Type)
+	if err != nil {
+		return nil, err
+	}
+	for _, secretKey := range secretKeys {
+		secretValue := e.Settings.Get(secretKey).MustString()
+		e.Settings.Del(secretKey)
+		s[secretKey] = secretValue
+	}
+	return s, nil
 }

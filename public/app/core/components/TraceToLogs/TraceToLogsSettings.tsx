@@ -75,6 +75,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
     'elasticsearch',
     'grafana-splunk-datasource', // external
     'grafana-opensearch-datasource', // external
+    'grafana-falconlogscale-datasource', // external
   ];
 
   const traceToLogs = useMemo(
@@ -167,7 +168,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
       <InlineFieldRow>
         <InlineField
-          tooltip="Use a custom query with possibility to interpolate variables from the trace or span"
+          tooltip="Use a custom query with the possibility to interpolate variables from the trace or span"
           label="Use custom query"
           labelWidth={26}
         >
@@ -240,11 +241,11 @@ function TimeRangeShift(props: TimeRangeShiftProps) {
         label={`Span ${props.type} time shift`}
         labelWidth={26}
         grow
-        tooltip={`Shifts the ${props.type} time of the span. Default 0 Time units can be used here, for example: 5s, 1m, 3h`}
+        tooltip={`Shifts the ${props.type} time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)`}
       >
         <Input
           type="text"
-          placeholder="1h"
+          placeholder="0"
           width={40}
           onChange={(e) => props.onChange(e.currentTarget.value)}
           value={props.value}

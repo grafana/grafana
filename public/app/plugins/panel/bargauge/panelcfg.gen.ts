@@ -17,6 +17,7 @@ export interface PanelOptions extends common.SingleStatBaseOptions {
   minVizHeight: number;
   minVizWidth: number;
   showUnfilled: boolean;
+  valueMode: common.BarGaugeValueMode;
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
@@ -24,4 +25,5 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   minVizHeight: 10,
   minVizWidth: 0,
   showUnfilled: true,
+  valueMode: common.BarGaugeValueMode.Color,
 };

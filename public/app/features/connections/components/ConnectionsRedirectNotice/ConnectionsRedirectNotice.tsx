@@ -21,17 +21,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-export enum DestinationPage {
-  dataSources = 'dataSources',
-  connectData = 'connectData',
-}
-
-const destinationLinks = {
-  [DestinationPage.dataSources]: ROUTES.DataSources,
-  [DestinationPage.connectData]: ROUTES.ConnectData,
-};
-
-export function ConnectionsRedirectNotice({ destinationPage }: { destinationPage: DestinationPage }) {
+export function ConnectionsRedirectNotice() {
   const styles = useStyles2(getStyles);
 
   return (
@@ -41,7 +31,7 @@ export function ConnectionsRedirectNotice({ destinationPage }: { destinationPage
           Data sources have a new home! You can discover new data sources or manage existing ones in the new Connections
           page, accessible from the lefthand nav.
         </p>
-        <LinkButton aria-label="Link to Connections" icon="adjust-circle" href={destinationLinks[destinationPage]}>
+        <LinkButton aria-label="Link to Connections" icon="adjust-circle" href={ROUTES.DataSources}>
           See data sources in Connections
         </LinkButton>
       </div>

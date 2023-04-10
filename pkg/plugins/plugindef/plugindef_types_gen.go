@@ -46,6 +46,7 @@ const (
 const (
 	CategoryCloud      Category = "cloud"
 	CategoryEnterprise Category = "enterprise"
+	CategoryIot        Category = "iot"
 	CategoryLogging    Category = "logging"
 	CategoryOther      Category = "other"
 	CategoryProfiling  Category = "profiling"
@@ -252,29 +253,28 @@ type PluginDef struct {
 	// Schema definition for the plugin.json file. Used primarily for schema validation.
 	Schema *string `json:"$schema,omitempty"`
 
-	// For data source plugins, if the plugin supports alerting.
+	// For data source plugins, if the plugin supports alerting. Requires `backend` to be set to `true`.
 	Alerting *bool `json:"alerting,omitempty"`
 
 	// For data source plugins, if the plugin supports annotation
 	// queries.
 	Annotations *bool `json:"annotations,omitempty"`
 
-	// Set to true for app plugins that should be enabled by default
-	// in all orgs
+	// Set to true for app plugins that should be enabled and pinned to the navigation bar in all orgs.
 	AutoEnabled *bool `json:"autoEnabled,omitempty"`
 
 	// If the plugin has a backend component.
 	Backend *bool `json:"backend,omitempty"`
 
-	// builtin indicates whether the plugin is developed and shipped as part
-	// of Grafana. Also known as a "core plugin."
+	// [internal only] Indicates whether the plugin is developed and shipped as part
+	// of Grafana. Also known as a 'core plugin'.
 	BuiltIn bool `json:"builtIn"`
 
 	// Plugin category used on the Add data source page.
 	Category     *Category    `json:"category,omitempty"`
 	Dependencies Dependencies `json:"dependencies"`
 
-	// Grafana Enerprise specific features.
+	// Grafana Enterprise specific features.
 	EnterpriseFeatures *struct {
 		// Enable/Disable health diagnostics errors. Requires Grafana
 		// >=7.5.5.
@@ -290,12 +290,8 @@ type PluginDef struct {
 	// https://golang.org/doc/install/source#environment.
 	Executable *string `json:"executable,omitempty"`
 
-	// For data source plugins, include hidden queries in the data
-	// request.
-	HiddenQueries *bool `json:"hiddenQueries,omitempty"`
-
-	// hideFromList excludes the plugin from listings in Grafana's UI. Only
-	// allowed for builtin plugins.
+	// [internal only] Excludes the plugin from listings in Grafana's UI. Only
+	// allowed for `builtIn` plugins.
 	HideFromList bool `json:"hideFromList"`
 
 	// Unique name of the plugin. If the plugin is published on
@@ -310,18 +306,18 @@ type PluginDef struct {
 	// page in Grafana and others on grafana.com, if the plugin is published.
 	Info Info `json:"info"`
 
-	// For data source plugins, if the plugin supports logs.
+	// For data source plugins, if the plugin supports logs. It may be used to filter logs only features.
 	Logs *bool `json:"logs,omitempty"`
 
 	// For data source plugins, if the plugin supports metric queries.
-	// Used in Explore.
+	// Used to enable the plugin in the panel editor.
 	Metrics *bool `json:"metrics,omitempty"`
 
 	// Human-readable name of the plugin that is shown to the user in
 	// the UI.
 	Name string `json:"name"`
 
-	// The PascalCase name for the plugin. Used for creating machine-friendly
+	// [internal only] The PascalCase name for the plugin. Used for creating machine-friendly
 	// identifiers, typically in code generation.
 	//
 	// If not provided, defaults to name, but title-cased and sanitized (only
@@ -365,13 +361,10 @@ type PluginDef struct {
 	// ReleaseState indicates release maturity state of a plugin.
 	State *ReleaseState `json:"state,omitempty"`
 
-	// For data source plugins, if the plugin supports streaming.
+	// For data source plugins, if the plugin supports streaming. Used in Explore to start live streaming.
 	Streaming *bool `json:"streaming,omitempty"`
 
-	// This is an undocumented feature.
-	Tables *bool `json:"tables,omitempty"`
-
-	// For data source plugins, if the plugin supports tracing.
+	// For data source plugins, if the plugin supports tracing. Used for example to link logs (e.g. Loki logs) with tracing plugins.
 	Tracing *bool `json:"tracing,omitempty"`
 
 	// type indicates which type of Grafana plugin this is, of the defined

@@ -21,7 +21,7 @@ func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Respons
 		return response.Err(ErrInvalidAccessToken.Errorf("ViewPublicDashboard: invalid access token"))
 	}
 
-	pubdash, dash, err := api.PublicDashboardService.FindPublicDashboardAndDashboardByAccessToken(
+	pubdash, dash, err := api.PublicDashboardService.FindEnabledPublicDashboardAndDashboardByAccessToken(
 		c.Req.Context(),
 		accessToken,
 	)

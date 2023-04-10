@@ -30,13 +30,15 @@ You can see a list of users with accounts in your Grafana organization. If neces
 **To view a list of organization users**:
 
 1. Sign in to Grafana as an organization administrator.
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Users**.
+1. Navigate to **Administration > Users**.
 
 > **Note:** If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also [view a global list of users]({{< relref "../server-user-management#view-a-list-of-users" >}}) in the Server Admin section of Grafana.
 
 ## Change a user's organization permissions
 
 Update user permissions when you want to enhance or restrict a user's access to organization resources. For more information about organization permissions, refer to [Organization roles]({{< relref "../../roles-and-permissions/#organization-roles" >}}).
+
+> **Note:** Organization roles sync from the authentication provider on user sign-in. To prevent synchronization of organization roles from the authentication provider regardless of their role in the authentication provider, then refer to the `skip_org_role_sync` setting in your Grafana configuration. Refer to [skip org role sync]({{< relref "../../../setup-grafana/configure-grafana/#authgrafana_com-skip_org_role_sync" >}}) for more information.
 
 ### Before you begin
 
@@ -45,7 +47,7 @@ Update user permissions when you want to enhance or restrict a user's access to 
 **To change the organization role of a user**:
 
 1. Sign in to Grafana as an organization administrator.
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Users**.
+1. Navigate to **Administration > Users**.
 1. Find the user account for which you want to change the role.
 
    If necessary, use the search field to filter the list.
@@ -78,7 +80,7 @@ When you invite users to join an organization, you assign the **Admin**, **Edito
 
    > **Note**: It might be that you are currently in the proper organization and don't need to switch organizations.
 
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Users**.
+1. Navigate to **Administration > Users**.
 1. Click **Invite**.
 1. Enter the following information:
 
@@ -106,7 +108,7 @@ Periodically review invitations you have sent so that you can see a list of user
 **To manage a pending invitation**:
 
 1. Sign in to Grafana as an organization administrator.
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Users**.
+1. Navigate to **Administration > Users**.
 1. Click **Pending Invites**.
 
    The **Pending Invites** button appears only when there are unaccepted invitations.
@@ -128,7 +130,7 @@ This action does not remove the user account from the Grafana server.
 **To remove a user from an organization**:
 
 1. Sign in to Grafana as an organization administrator.
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Users**.
+1. Navigate to **Administration > Users**.
 1. Find the user account that you want to remove from the organization.
 
    Use the search field to filter the list, if necessary.

@@ -52,7 +52,7 @@ const getSeriesTableRowStyles = (theme: GrafanaTheme2) => {
 /**
  * @public
  */
-export const SeriesTableRow: React.FC<SeriesTableRowProps> = ({ color, label, value, isActive }) => {
+export const SeriesTableRow = ({ color, label, value, isActive }: SeriesTableRowProps) => {
   const styles = useStyles2(getSeriesTableRowStyles);
 
   return (
@@ -79,7 +79,7 @@ export interface SeriesTableProps {
 /**
  * @public
  */
-export const SeriesTable: React.FC<SeriesTableProps> = ({ timestamp, series }) => {
+export const SeriesTable = ({ timestamp, series }: SeriesTableProps) => {
   const styles = useStyles2(getSeriesTableRowStyles);
 
   return (

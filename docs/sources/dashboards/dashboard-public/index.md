@@ -38,7 +38,7 @@ If you are using Docker, use an environment variable to enable public dashboards
 --env GF_FEATURE_TOGGLES_ENABLE=publicDashboards
 ```
 
-> **Note:** For Grafana Cloud, you will need to contact support to have the feature enabled.
+> **Note:** For Grafana Cloud, contact support to have the feature enabled.
 
 ## Make a dashboard public
 
@@ -64,7 +64,63 @@ The dashboard is no longer accessible, even with the link, until you make it sha
 
 The link no longer works. You must create a new public URL as in [Make a dashboard public](#make-a-dashboard-public).
 
-## Supported datasources
+## Email sharing
+
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+
+Email sharing allows you to share your public dashboard with only specific people via email, instead of having it accessible to anyone with the URL.
+
+### Enable email sharing
+
+> **Note:** For Grafana Cloud, contact support to have the feature enabled.
+
+Add the `publicDashboardsEmailSharing` feature toggle to your `custom.ini` file.
+
+```
+[feature_toggles]
+publicDashboardsEmailSharing = true
+```
+
+### Invite a viewer
+
+1. Click the sharing icon to the right of the dashboard title.
+1. Click the **Public dashboard** tab.
+1. Click **Only specified people**.
+1. Enter the email you want to share the public dashboard with.
+1. Click **Invite**.
+1. The recipient(s) will receive an email with a one-time use link. This link must be used within **one hour** or it expires. Once the link is used, the viewer has access to the public dashboard for **30 days**.
+
+### Viewers requesting access
+
+If a viewer without access tries to navigate to the public dashboard, they'll be asked to request access by providing their email. They will receive an email with a new one-time use link if the email they provided has already been invited to view the public dashboard and has not been revoked.
+
+If the viewer doesn't have an invitation or it's been revoked, you won't be notified and no link is sent.
+
+### Revoke access for a viewer
+
+1. Click the sharing icon to the right of the dashboard title.
+1. Click the **Public dashboard** tab.
+1. Click **Revoke** on the viewer you'd like to revoke access for.
+
+Immediately, the viewer no longer has access to the public dashboard, nor can they use any existing one-time use links they may have.
+
+### Reinvite a viewer
+
+1. Click the sharing icon to the right of the dashboard title.
+1. Click the **Public dashboard** tab.
+1. Click **Resend** on the viewer you'd like to re-share the public dashboard with.
+
+The viewer will receive an email with a new one-time use link. This will invalidate all previously issued links for that viewer.
+
+### Access limitations
+
+One-time use links use browser cookies, so when a viewer is granted access via one of these links, they will only have access through the browser they used to claim the link.
+
+A single viewer cannot generate multiple valid one-time use links. When a new one-time use link is issued for a viewer, all previous ones are invalidated.
+
+If a Grafana user has read access to the parent dashboard, they can view the public dashboard without needing to have access granted.
+
+## Supported data sources
 
 Public dashboards _should_ work with any datasource that has the properties `backend` and `alerting` both set to true in it's `package.json`. However, this cannot always be
 guaranteed because plugin developers can override this functionality. The following lists include data sources confirmed to work with public dashboards and data sources that should work but have not been confirmed as compatible.
@@ -166,7 +222,6 @@ guaranteed because plugin developers can override this functionality. The follow
 
 - Panels that use frontend datasources will fail to fetch data.
 - Template variables are currently not supported, but are planned to be in the future.
-- The time range is permanently set to the default time range on the dashboard. If you update the default time range for a dashboard, it will be reflected in the public dashboard.
 - Exemplars will be omitted from the panel.
 - Only annotations that query the `-- Grafana --` datasource are supported.
 - Organization annotations are not supported.

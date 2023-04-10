@@ -21,6 +21,10 @@
             "_index": "logs-2023.02.09",
             "_id": "g2aeNoYB7vaC3bq-ezfK",
             "_score": null,
+            "highlight": {
+              "line": ["@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"],
+              "duplicated": ["@HIGHLIGHT@hello@/HIGHLIGHT@"]
+            },
             "_source": {
               "abc": null,
               "is_true": true,
@@ -60,6 +64,10 @@
             "_index": "logs-2023.02.09",
             "_id": "gmaeNoYB7vaC3bq-eDcN",
             "_score": null,
+            "highlight": {
+              "line": ["@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"],
+              "duplicated": ["@HIGHLIGHT@hello@/HIGHLIGHT@"]
+            },
             "_source": {
               "abc": null,
               "is_true": false,
@@ -93,6 +101,10 @@
             "_index": "logs-2023.02.09",
             "_id": "gWaeNoYB7vaC3bq-dDdL",
             "_score": null,
+            "highlight": {
+              "line": ["@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"],
+              "duplicated": ["@HIGHLIGHT@hello@/HIGHLIGHT@"]
+            },
             "_source": {
               "abc": "def",
               "is_true": true,
@@ -126,6 +138,10 @@
             "_index": "logs-2023.02.09",
             "_id": "gGaeNoYB7vaC3bq-cDeY",
             "_score": null,
+            "highlight": {
+              "line": ["@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"],
+              "duplicated": ["@HIGHLIGHT@hello@/HIGHLIGHT@"]
+            },
             "_source": {
               "abc": "def",
               "is_true": false,
@@ -165,6 +181,10 @@
             "_index": "logs-2023.02.09",
             "_id": "f2aeNoYB7vaC3bq-bDf7",
             "_score": null,
+            "highlight": {
+              "line": ["@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"],
+              "duplicated": ["@HIGHLIGHT@hello@/HIGHLIGHT@"]
+            },
             "_source": {
               "abc": "def",
               "is_true": false,

@@ -96,8 +96,7 @@ const Receivers = () => {
   const integrationsErrorCount = contactPointsState?.errorCount ?? 0;
 
   const disableAmSelect = !isRoot;
-
-  let pageNav = getPageNavigationModel(type, id, isduplicatingTemplate);
+  let pageNav = getPageNavigationModel(type, id ? decodeURIComponent(id) : undefined, isduplicatingTemplate);
 
   if (!alertManagerSourceName) {
     return isRoot ? (

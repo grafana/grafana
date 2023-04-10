@@ -117,6 +117,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   renderTimeStamp(epochMs: number) {
     return dateTimeFormat(epochMs, {
       timeZone: this.props.timeZone,
+      defaultWithMS: true,
     });
   }
 

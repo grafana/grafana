@@ -23,7 +23,7 @@ var _ DashboardGuardian = new(AccessControlDashboardGuardian)
 
 // NewAccessControlDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboardId.
 func NewAccessControlDashboardGuardian(
-	ctx context.Context, dashboardId int64, user *user.SignedInUser,
+	ctx context.Context, cfg *setting.Cfg, dashboardId int64, user *user.SignedInUser,
 	store db.DB, ac accesscontrol.AccessControl,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
@@ -48,6 +48,7 @@ func NewAccessControlDashboardGuardian(
 
 	return &AccessControlDashboardGuardian{
 		ctx:                         ctx,
+		cfg:                         cfg,
 		log:                         log.New("dashboard.permissions"),
 		dashboard:                   dashboard,
 		user:                        user,
@@ -61,7 +62,7 @@ func NewAccessControlDashboardGuardian(
 
 // NewAccessControlDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboardUID.
 func NewAccessControlDashboardGuardianByUID(
-	ctx context.Context, dashboardUID string, user *user.SignedInUser,
+	ctx context.Context, cfg *setting.Cfg, dashboardUID string, user *user.SignedInUser,
 	store db.DB, ac accesscontrol.AccessControl,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
@@ -85,6 +86,7 @@ func NewAccessControlDashboardGuardianByUID(
 	}
 
 	return &AccessControlDashboardGuardian{
+		cfg:                         cfg,
 		ctx:                         ctx,
 		log:                         log.New("dashboard.permissions"),
 		dashboard:                   dashboard,
@@ -101,13 +103,14 @@ func NewAccessControlDashboardGuardianByUID(
 // This constructor should be preferred over the other two if the dashboard in available
 // since it avoids querying the database for fetching the dashboard.
 func NewAccessControlDashboardGuardianByDashboard(
-	ctx context.Context, dashboard *dashboards.Dashboard, user *user.SignedInUser,
+	ctx context.Context, cfg *setting.Cfg, dashboard *dashboards.Dashboard, user *user.SignedInUser,
 	store db.DB, ac accesscontrol.AccessControl,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
 	dashboardService dashboards.DashboardService,
 ) (*AccessControlDashboardGuardian, error) {
 	return &AccessControlDashboardGuardian{
+		cfg:                         cfg,
 		ctx:                         ctx,
 		log:                         log.New("dashboard.permissions"),
 		dashboard:                   dashboard,
@@ -121,6 +124,7 @@ func NewAccessControlDashboardGuardianByDashboard(
 }
 
 type AccessControlDashboardGuardian struct {
+	cfg                         *setting.Cfg
 	ctx                         context.Context
 	log                         log.Logger
 	dashboard                   *dashboards.Dashboard
@@ -151,7 +155,7 @@ func (a *AccessControlDashboardGuardian) CanEdit() (bool, error) {
 		return false, ErrGuardianDashboardNotFound
 	}
 
-	if setting.ViewersCanEdit {
+	if a.cfg.ViewersCanEdit {
 		return a.CanView()
 	}
 
@@ -224,11 +228,19 @@ func (a *AccessControlDashboardGuardian) CanCreate(folderID int64, isFolder bool
 func (a *AccessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evaluator) (bool, error) {
 	ok, err := a.ac.Evaluate(a.ctx, a.user, evaluator)
 	if err != nil {
-		a.log.Debug("Failed to evaluate access control to folder or dashboard", "error", err, "userId", a.user.UserID, "id", a.dashboard.ID)
+		id := 0
+		if a.dashboard != nil {
+			id = int(a.dashboard.ID)
+		}
+		a.log.Debug("Failed to evaluate access control to folder or dashboard", "error", err, "userId", a.user.UserID, "id", id)
 	}
 
 	if !ok && err == nil {
-		a.log.Debug("Access denied to folder or dashboard", "userId", a.user.UserID, "id", a.dashboard.ID, "permissions", evaluator.GoString())
+		id := 0
+		if a.dashboard != nil {
+			id = int(a.dashboard.ID)
+		}
+		a.log.Debug("Access denied to folder or dashboard", "userId", a.user.UserID, "id", id, "permissions", evaluator.GoString())
 	}
 
 	return ok, err
