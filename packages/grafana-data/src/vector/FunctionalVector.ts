@@ -21,12 +21,13 @@ export abstract class FunctionalVector<T = any> implements Vector<T> {
 
   add(value: T): void {
     throw 'unsupported operation';
-    return;
   }
 
-  /** Mutable instances will implement push */
   push(...vals: T[]): number {
-    throw 'unsupported operation';
+    for (const v of vals) {
+      this.add(v);
+    }
+    return this.length;
   }
 
   // Implement "iterable protocol"

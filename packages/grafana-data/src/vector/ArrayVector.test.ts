@@ -19,15 +19,16 @@ describe('ArrayVector', () => {
     expect(av.toArray()).toEqual([1, 2, 3, 4]);
   });
 
-  it('typescript does not complain about nested types', () => {
+  it('typescript should not re-define the ArrayVector<T> based on input to the constructor', () => {
     const field: Field<number> = {
       name: 'test',
       config: {},
       type: FieldType.number,
-      values: new ArrayVector(),
+      values: new ArrayVector(), // this defaults to `new ArrayVector<any>()`
     };
     expect(field).toBeDefined();
 
+    // Before collapsing Vector, ReadWriteVector, and MutableVector these all worked fine
     field.values = new ArrayVector();
     field.values = new ArrayVector(undefined);
     field.values = new ArrayVector([1, 2, 3]);
