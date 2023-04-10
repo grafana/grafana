@@ -485,8 +485,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
             onEscapeNewlines={this.onEscapeNewlines}
             clearDetectedFields={this.clearDetectedFields}
           />
-          <div className={styles.logsSection}>
-            <div className={styles.logRows} data-testid="logRows" ref={this.firstLogRef}>
+          <div className={styles.logsSection} ref={this.firstLogRef}>
+            <div className={styles.logRows} data-testid="logRows">
               <LogRows
                 logRows={logRows}
                 deduplicatedRows={dedupedRows}
