@@ -56,9 +56,9 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		logger.Debug("Creating Postgres query endpoint")
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:        0,
-			MaxIdleConns:        2,
-			ConnMaxLifetime:     14400,
+			MaxOpenConns:        sqleng.MaxOpenConnsDefault,
+			MaxIdleConns:        sqleng.MaxIdleConnsDefault,
+			ConnMaxLifetime:     sqleng.ConnMaxLifetimeDefault,
 			Timescaledb:         false,
 			ConfigurationMethod: "file-path",
 			SecureDSProxy:       false,
