@@ -6,7 +6,7 @@ keywords:
   - documentation
   - upgrade
 title: Upgrade to Grafana v9.5
-menutitle: Upgrade to v9.5
+menuTitle: Upgrade to v9.5
 weight: 1800
 ---
 
