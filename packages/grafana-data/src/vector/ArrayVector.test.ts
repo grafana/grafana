@@ -32,6 +32,7 @@ describe('ArrayVector', () => {
     field.values = new ArrayVector();
     field.values = new ArrayVector(undefined);
     field.values = new ArrayVector([1, 2, 3]);
+    field.values = new ArrayVector([]);
     field.values = new ArrayVector([1, undefined]);
     field.values = new ArrayVector([null]);
     field.values = new ArrayVector(['a', 'b', 'c']);
