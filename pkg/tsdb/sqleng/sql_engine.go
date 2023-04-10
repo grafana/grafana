@@ -29,11 +29,13 @@ var XormDriverMu sync.RWMutex
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
 
-// The default number of open connections & idle connections
-// for the xorm connection pool along with
-// max connection lifetime in seconds
+// MaxOpenConnsDefault is the default number maximum number of open connections
 const MaxOpenConnsDefault = 100
+
+// MaxIdleConnsDefault is the default number maximum number of idle connections
 const MaxIdleConnsDefault = 100
+
+// ConnMaxLifetimeDefault is the default maximum connection lifetime in seconds
 const ConnMaxLifetimeDefault = 14400
 
 var ErrConnectionFailed = errors.New("failed to connect to server - please inspect Grafana server log for details")
