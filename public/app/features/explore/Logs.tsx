@@ -122,6 +122,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
   cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
+  firstLogRef = createRef<HTMLDivElement>();
   logsVolumeEventBus: EventBus;
 
   state: State = {
@@ -326,6 +327,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
   scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
 
+  scrollToFirstLog = () => this.firstLogRef.current?.scrollIntoView();
+
   render() {
     const {
       width,
@@ -483,7 +486,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             clearDetectedFields={this.clearDetectedFields}
           />
           <div className={styles.logsSection}>
-            <div className={styles.logRows} data-testid="logRows">
+            <div className={styles.logRows} data-testid="logRows" ref={this.firstLogRef}>
               <LogRows
                 logRows={logRows}
                 deduplicatedRows={dedupedRows}
@@ -535,6 +538,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               loading={loading}
               queries={logsQueries ?? []}
               scrollToTopLogs={this.scrollToTopLogs}
+              scrollToFirstLog={this.scrollToFirstLog}
               addResultsToCache={addResultsToCache}
               clearCache={clearCache}
             />
