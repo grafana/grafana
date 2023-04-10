@@ -67,7 +67,7 @@ func ProvideStorage(userService userpkg.Service, acService accesscontrol.Service
 		fmt.Printf("create storage for GR: %v", gr)
 
 		// CRDs
-		if strings.HasSuffix(gr.Group, "k8s.io") {
+		if true { //strings.HasSuffix(gr.Group, "k8s.io") {
 			return filepath.Storage(gr, strategy, optsGetter, tableConvertor, newFunc, newListFunc)
 		}
 

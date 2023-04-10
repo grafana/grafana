@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
 	"github.com/grafana/grafana/pkg/services/k8s/client"
 	"github.com/grafana/grafana/pkg/services/k8s/informer"
-	"github.com/grafana/grafana/pkg/services/k8s/kine"
 	publicdashboardWebhooks "github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard/webhooks"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 )
@@ -26,7 +25,6 @@ func ProvideRegistry(
 	apiServer apiserver.Service,
 	certGenerator certgenerator.Service,
 	crdRegistry *corecrd.Registry,
-	kineService kine.Service,
 	informerService informer.Service,
 	clientsetService client.Service,
 	httpServer *api.HTTPServer,
@@ -38,7 +36,6 @@ func ProvideRegistry(
 		apiServer,
 		certGenerator,
 		crdRegistry,
-		kineService,
 		informerService,
 		clientsetService,
 		httpServer,
