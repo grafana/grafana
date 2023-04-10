@@ -120,7 +120,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
     if (doPartialQuery && prevTo && prevFrom) {
       // clamp to make sure we don't re-query previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
-      let newFromPartial = Math.max(prevTo - this.overlapWindowMs, prevFrom);
+      let newFromPartial = Math.max(prevTo - this.overlapWindowMs, newFrom);
 
       const newToDate = dateTime(newTo);
       const newFromPartialDate = dateTime(incrRoundDn(newFromPartial, request.intervalMs));
