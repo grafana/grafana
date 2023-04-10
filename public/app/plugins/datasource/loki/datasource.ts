@@ -739,7 +739,7 @@ export class LokiDatasource
           : {
               status: 'error',
               message:
-                'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
+                'Data source connected, but no labels received. Verify that Loki and Promtail are configured properly.',
             };
       },
       (err) => {
@@ -750,7 +750,7 @@ export class LokiDatasource
         // because those will only describe how the request between browser<>server failed
         const info: string = err?.data?.message ?? '';
         const infoInParentheses = info !== '' ? ` (${info})` : '';
-        const message = `Unable to fetch labels from Loki${infoInParentheses}, please check the server logs for more details`;
+        const message = `Unable to connect with Loki${infoInParentheses}. Please check the server logs for more details`;
         return { status: 'error', message: message };
       }
     );
