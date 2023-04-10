@@ -45,10 +45,10 @@ const (
 	statusError     = "error"
 	statusCancelled = "cancelled"
 
-	EndpointCallResource   = "callResource"
-	EndpointCheckHealth    = "checkHealth"
-	EndpointCollectMetrics = "collectMetrics"
-	EndpointQueryData      = "queryData"
+	endpointCallResource   = "callResource"
+	endpointCheckHealth    = "checkHealth"
+	endpointCollectMetrics = "collectMetrics"
+	endpointQueryData      = "queryData"
 )
 
 var logger = plog.New("plugin.instrumentation")
@@ -113,25 +113,25 @@ type Cfg struct {
 
 // InstrumentCollectMetrics instruments collectMetrics.
 func InstrumentCollectMetrics(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
-	return instrumentPluginRequest(ctx, cfg, req, EndpointCollectMetrics, fn)
+	return instrumentPluginRequest(ctx, cfg, req, endpointCollectMetrics, fn)
 }
 
 // InstrumentCheckHealthRequest instruments checkHealth.
 func InstrumentCheckHealthRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
-	return instrumentPluginRequest(ctx, cfg, req, EndpointCheckHealth, fn)
+	return instrumentPluginRequest(ctx, cfg, req, endpointCheckHealth, fn)
 }
 
 // InstrumentCallResourceRequest instruments callResource.
 func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, requestSize float64, fn func() error) error {
-	pluginRequestSizeHistogram.WithLabelValues("backend-datasource", req.PluginID, EndpointCallResource,
+	pluginRequestSizeHistogram.WithLabelValues("grafana-backend", req.PluginID, endpointCallResource,
 		string(cfg.Target)).Observe(requestSize)
-	return instrumentPluginRequest(ctx, cfg, req, EndpointCallResource, fn)
+	return instrumentPluginRequest(ctx, cfg, req, endpointCallResource, fn)
 }
 
 // InstrumentQueryDataRequest instruments success rate and latency of query data requests.
 func InstrumentQueryDataRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg,
 	requestSize float64, fn func() error) error {
-	pluginRequestSizeHistogram.WithLabelValues("backend-datasource", req.PluginID, EndpointQueryData,
+	pluginRequestSizeHistogram.WithLabelValues("grafana-backend", req.PluginID, endpointQueryData,
 		string(cfg.Target)).Observe(requestSize)
-	return instrumentPluginRequest(ctx, cfg, req, EndpointQueryData, fn)
+	return instrumentPluginRequest(ctx, cfg, req, endpointQueryData, fn)
 }
