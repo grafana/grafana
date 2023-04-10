@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { TimeRange, SelectableValue, CoreApp, DataFrame } from '@grafana/data';
 import { AccessoryButton, EditorList } from '@grafana/experimental';
-import { AsyncMultiSelect, Field, HorizontalGroup, Select } from '@grafana/ui';
+import { AsyncMultiSelect, ButtonSelect, Field, HorizontalGroup, Select } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { AzureMonitorQuery, AzureQueryEditorFieldProps, AzureQueryType, AzureTracesFilter } from '../../types';
@@ -184,6 +184,16 @@ const Filters = ({ query, datasource, onQueryChange, setError }: AzureQueryEdito
           onChange={(e) => onFieldChange('property', item, e, onChange)}
           width={25}
           isClearable
+        />
+        <ButtonSelect<string>
+          placeholder="Operator"
+          value={item.operation ? { label: item.operation, value: item.operation } : undefined}
+          options={[
+            { label: '=', value: 'eq' },
+            { label: '!=', value: 'ne' },
+          ]}
+          onChange={(e) => onFieldChange('operation', item, e, onChange)}
+          defaultValue={'eq'}
         />
         <AsyncMultiSelect
           menuShouldPortal
