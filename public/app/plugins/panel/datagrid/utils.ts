@@ -40,8 +40,7 @@ export const EMPTY_GRID_SELECTION = {
 
 export const TRAILING_ROW_OPTIONS = {
   sticky: false,
-  tint: true,
-  targetColumn: 0,
+  tint: false,
 };
 
 export const RIGHT_ELEMENT_PROPS = {

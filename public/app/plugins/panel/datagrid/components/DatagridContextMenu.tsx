@@ -6,7 +6,7 @@ import { convertFieldType } from '@grafana/data/src/transformations/transformers
 import { ContextMenu, MenuItem } from '@grafana/ui';
 import { MenuDivider } from '@grafana/ui/src/components/Menu/MenuDivider';
 
-import { deleteRows, EMPTY_DF } from '../utils';
+import { deleteRows, EMPTY_DF, EMPTY_GRID_SELECTION } from '../utils';
 
 interface Props {
   x: number;
@@ -18,6 +18,7 @@ interface Props {
   closeContextMenu: () => void;
   setToggleSearch: (toggleSearch: boolean) => void;
   gridSelection: GridSelection;
+  setGridSelection: (gridSelection: GridSelection) => void;
   isHeaderMenu?: boolean;
   setColumnFreezeIndex: (index: number) => void;
   columnFreezeIndex: number;
@@ -33,6 +34,7 @@ export const DatagridContextMenu = ({
   closeContextMenu,
   setToggleSearch,
   gridSelection,
+  setGridSelection,
   isHeaderMenu,
   setColumnFreezeIndex,
   columnFreezeIndex,
@@ -60,22 +62,23 @@ export const DatagridContextMenu = ({
 
   const renderContextMenuItems = () => (
     <>
-      {row || selectedRows.length ? (
+      {(row !== undefined && row >= 0) || selectedRows.length ? (
         <MenuItem
           label={rowDeletionLabel}
           onClick={() => {
             if (selectedRows.length) {
               saveData(deleteRows(data, selectedRows, true));
+              setGridSelection(EMPTY_GRID_SELECTION);
               return;
             }
 
-            if (row) {
+            if (row !== undefined && row >= 0) {
               saveData(deleteRows(data, [row], true));
             }
           }}
         />
       ) : null}
-      {column || selectedColumns.length ? (
+      {(column !== undefined && column >= 0) || selectedColumns.length ? (
         <MenuItem
           label={columnDeletionLabel}
           onClick={() => {
@@ -87,7 +90,7 @@ export const DatagridContextMenu = ({
               return;
             }
 
-            if (column) {
+            if (column !== undefined && column >= 0) {
               saveData({
                 ...data,
                 fields: data.fields.filter((_, index) => index !== column),

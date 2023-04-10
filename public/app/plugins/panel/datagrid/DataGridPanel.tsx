@@ -66,6 +66,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   const [columnFreezeIndex, setColumnFreezeIndex] = useState<number>(-1);
   const [toggleSearch, setToggleSearch] = useState<boolean>(false);
   const [isSnapshotted, setIsSnapshotted] = useState<boolean>(false);
+  const [isResizeInProgress, setIsResizeInProgress] = useState<boolean>(false);
 
   const theme = useTheme2();
   const gridTheme = {
@@ -98,7 +99,13 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
       ...gridData.fields.map((f, i) => {
         const displayName = getFieldDisplayName(f, gridData);
         const width = prevColumns[i]?.width ?? getCellWidth(f, theme.typography.fontSize);
-        return { title: displayName, width: width, icon: typeToIconMap.get(f.type), hasMenu: true };
+        return {
+          title: displayName,
+          width: width,
+          icon: typeToIconMap.get(f.type),
+          hasMenu: true,
+          trailingRowOptions: { targetColumn: --i },
+        };
       }),
     ]);
   }, [gridData, theme.typography.fontSize]);
@@ -178,34 +185,6 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
 
     const values = field.values.toArray();
 
-    //TODO REMOVE THIS AND LET THE USER CHOOSE THE TYPE BY APPLYING TRANSFORMS!
-    // //todo maybe come back to this later and look for a better way
-    // //Convert field type and value between string and number if needed
-    // //If field type is number we check if the new value is numeric. If it isn't we change the field type
-    // let val = newValue.data;
-    // if (field.type === FieldType.number) {
-    //   if (!isNumeric(val)) {
-    //     field.type = FieldType.string;
-    //   } else {
-    //     val = Number(val);
-    //   }
-    //   //If field type is string we check if the new value is numeric. If it is numeric and all other fields are also numeric we change the field type
-    //   //If we change the field type we also convert all other values to numbers
-    // } else if (field.type === FieldType.string) {
-    //   if (isNumeric(val) && values.filter((_, index) => index !== row).findIndex((v) => !isNumeric(v)) === -1) {
-    //     field.type = FieldType.number;
-    //     val = Number(val);
-
-    //     if (values.findIndex((v) => typeof v === 'string') !== -1) {
-    //       values.forEach((v, index) => {
-    //         if (typeof v === 'string') {
-    //           values[index] = Number(v);
-    //         }
-    //       });
-    //     }
-    //   }
-    // }
-
     values[row] = newValue.data;
     field.values = new ArrayVector(values);
 
@@ -242,9 +221,21 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   const onColumnResize = (column: GridColumn, newSize: number, colIndex: number, newSizeWithGrow: number) => {
     setColumns((prevColumns) => {
       const newColumns = [...prevColumns];
-      newColumns[colIndex] = { title: column.title, icon: column.icon, width: newSize, hasMenu: true };
+      newColumns[colIndex] = {
+        title: column.title,
+        icon: column.icon,
+        width: newSize,
+        hasMenu: true,
+        trailingRowOptions: { targetColumn: colIndex },
+      };
       return newColumns;
     });
+
+    setIsResizeInProgress(true);
+  };
+
+  const onColumnResizeEnd = (column: GridColumn, newSize: number, colIndex: number, newSizeWithGrow: number) => {
+    setIsResizeInProgress(false);
   };
 
   const closeContextMenu = () => {
@@ -336,11 +327,12 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   }
 
   const numRows = gridData.length;
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, isResizeInProgress);
 
   return (
     <>
       <DataEditor
+        className={styles.dataEditor}
         getCellContent={getCellContent}
         columns={columns}
         rows={numRows}
@@ -356,8 +348,9 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         onGridSelectionChange={setGridSelection}
         onRowAppended={addNewRow}
         onDelete={onDeletePressed}
-        rowMarkers={'clickable-number'}
+        rowMarkers={'both'}
         onColumnResize={onColumnResize}
+        onColumnResizeEnd={onColumnResizeEnd}
         onCellContextMenu={onCellContextMenu}
         onHeaderContextMenu={onHeaderContextMenu}
         onHeaderMenuClick={onHeaderMenuClick}
@@ -379,6 +372,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
           closeContextMenu={closeContextMenu}
           setToggleSearch={setToggleSearch}
           gridSelection={gridSelection}
+          setGridSelection={setGridSelection}
           isHeaderMenu={contextMenuData.isHeaderMenu}
           setColumnFreezeIndex={setColumnFreezeIndex}
           columnFreezeIndex={columnFreezeIndex}
@@ -388,17 +382,23 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => {
   const height = '37px';
   const width = '120px';
 
   return {
+    dataEditor: css`
+      .dvn-scroll-inner > div:nth-child(2) {
+        pointer-events: none !important;
+      }
+    `,
     addColumnDiv: css`
       width: ${width};
       display: flex;
       flex-direction: column;
       background-color: ${theme.colors.background.primary};
       button {
+        pointer-events: ${isResizeInProgress ? 'none' : 'auto'};
         border: none;
         outline: none;
         height: ${height};
