@@ -8,13 +8,13 @@ aliases:
   - ../../../enterprise/saml/enable-saml/
   - ../../../enterprise/saml/set-up-saml-with-okta/
   - ../../../enterprise/saml/troubleshoot-saml/
-description: Learn how to configure SAML authentication in Grafana.
-menuTitle: Configure SAML authentication
-title: Configure SAML authentication in Grafana
+description: Learn how to configure SAML authentication in Grafana's configuration file.
+menuTitle: Configure SAML using the configuration file
+title: Configure SAML authentication using the configuration file
 weight: 1100
 ---
 
-# Configure SAML authentication in Grafana
+# Configure SAML authentication using the configuration file
 
 SAML authentication integration allows your Grafana users to log in by using an external SAML 2.0 Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
 

@@ -32,10 +32,8 @@ To follow this guide, you need:
 You can save your SAML configuration, see SAML integration status and enable or disable SAML authentication on the top right-hand side.
 If your SAML configuration is not valid or is incomplete, you will be notified about it when saving the configuration.
 
-SAML configuration is split across several pages. You can navigate between them by clicking on page titles on top of the screen or arrows on the bottom of the screen.
-
 1. Sign in to Grafana and navigate to **Administration > Authentication > SAML**.
-2. Click **General settings** and complete the section. Consult the following table for additional guidance about certain fields:
+1. Click **General settings** and complete the section. Consult the following table for additional guidance about certain fields:
 
 | Field               | Description                                                                                                                                                                                                                                             |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
