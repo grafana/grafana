@@ -3,7 +3,6 @@ package historian
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -171,8 +170,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 			res := statesToStream(rule, states, nil, l)
 
 			entry := requireSingleEntry(t, res)
-			lblJsn, _ := json.Marshal(states[0].Labels)
-			exp := fmt.Sprintf("%x", md5.Sum(lblJsn))
+			exp := labelFingerprint(states[0].Labels)
 			require.Equal(t, exp, entry.Fingerprint)
 		})
 	})

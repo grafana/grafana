@@ -2,7 +2,6 @@ package historian
 
 import (
 	"context"
-	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -257,7 +256,6 @@ func statesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		}
 
 		sanitizedLabels := removePrivateLabels(state.Labels)
-		instFingerprint, _ := json.Marshal(sanitizedLabels)
 		entry := lokiEntry{
 			SchemaVersion:  1,
 			Previous:       state.PreviousFormatted(),
@@ -266,7 +264,7 @@ func statesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			Condition:      rule.Condition,
 			DashboardUID:   rule.DashboardUID,
 			PanelID:        rule.PanelID,
-			Fingerprint:    fmt.Sprintf("%x", md5.Sum(instFingerprint)),
+			Fingerprint:    labelFingerprint(sanitizedLabels),
 			InstanceLabels: sanitizedLabels,
 		}
 		if state.State.State == eval.Error {
