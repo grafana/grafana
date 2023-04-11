@@ -1,9 +1,8 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import {
-  DataFrame,
   DataQueryResponse,
   DataSourceWithLogsContextSupport,
   GrafanaTheme2,
