@@ -177,7 +177,7 @@ To use this feature, enable the `onlyExternalOrgRoleSync` feature toggle. If you
 
 You can also _prevent_ the synchronization of organization roles from a given authentication provider. Learn more in our [skip org role sync]({{< relref "../setup-grafana/configure-grafana/#authgrafana_com-skip_org_role_sync/" >}}) documentation.
 
-### Reporting UI adapted to match the new navigation style
+## Reporting UI adapted to match the new navigation style
 
 _Generally available in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
 
@@ -185,7 +185,7 @@ We updated the reporting UI to better fit the new navigation style, adding a hor
 
 {{< figure src="/media/docs/grafana/Screenshot-newUI-report.png" max-width="750px" caption="Grafana new report UI" >}}
 
-### Experimental support to use JWTs as auth method
+## Experimental support to use JWTs as auth method
 
 _Experimental in all editions of Grafana, for on-prem users only._
 
