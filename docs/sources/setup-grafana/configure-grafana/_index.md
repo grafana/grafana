@@ -75,7 +75,7 @@ rendering_ignore_https_errors = true
 enable = newNavigation
 ```
 
-You can override them on Linux machines with:
+You can override variables on Linux machines with:
 
 ```bash
 export GF_DEFAULT_INSTANCE_NAME=my-instance
