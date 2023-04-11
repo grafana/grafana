@@ -201,8 +201,6 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 		return nil, err
 	}
 
-	log.Info(fmt.Sprintf("%#v", config.DSInfo.JsonData))
-
 	engine.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
 	engine.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
 	engine.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
