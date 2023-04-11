@@ -13,8 +13,11 @@ const (
 	TmpOrgID int64 = 1
 	// NoServiceAccountID is the ID we use for client that have no service account associated.
 	NoServiceAccountID int64 = 0
-	// OAuthUserScope is the scope that is used to identify the user that the external service is impersonating.
-	OAuthUserScope = "oauth:user:self"
+
+	// List of scopes used to identify the impersonated user.
+	ScopeUsersSelf       = "users:self"
+	ScopeGlobalUsersSelf = "global.users:self"
+	ScopeTeamsSelf       = "teams:self"
 )
 
 var (

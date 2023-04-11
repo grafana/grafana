@@ -172,15 +172,15 @@ func (c *Client) GetScopesOnUser(ctx context.Context, accessControl ac.AccessCon
 	if c.ImpersonatePermissions != nil {
 		perms := c.ImpersonatePermissions
 		for i := range perms {
-			if perms[i].Action == ac.ActionUsersRead && perms[i].Scope == OAuthUserScope {
+			if perms[i].Action == ac.ActionUsersRead && perms[i].Scope == ScopeGlobalUsersSelf {
 				ret = append(ret, "profile", "email")
 				continue
 			}
-			if perms[i].Action == ac.ActionUsersPermissionsRead && perms[i].Scope == OAuthUserScope {
+			if perms[i].Action == ac.ActionUsersPermissionsRead && perms[i].Scope == ScopeUsersSelf {
 				ret = append(ret, "entitlements")
 				continue
 			}
-			if perms[i].Action == ac.ActionTeamsRead && perms[i].Scope == OAuthUserScope {
+			if perms[i].Action == ac.ActionTeamsRead && perms[i].Scope == ScopeTeamsSelf {
 				ret = append(ret, "groups")
 				continue
 			}

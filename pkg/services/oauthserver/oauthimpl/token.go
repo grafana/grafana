@@ -262,29 +262,28 @@ func (*OAuth2ServiceImpl) filteredImpersonatePermissions(impersonatePermissions 
 	// Replace the scope self with the user id
 	correctScopes := []ac.Permission{}
 	for i := range impPerms {
-		if impPerms[i].Scope == oauthserver.OAuthUserScope {
-			switch impPerms[i].Action {
-			case ac.ActionUsersRead:
+		switch impPerms[i].Scope {
+		case oauthserver.ScopeGlobalUsersSelf:
+			correctScopes = append(correctScopes, ac.Permission{
+				Action: impPerms[i].Action,
+				Scope:  ac.Scope("global.users", "id", strconv.FormatInt(userID, 10)),
+			})
+		case oauthserver.ScopeUsersSelf:
+			correctScopes = append(correctScopes, ac.Permission{
+				Action: impPerms[i].Action,
+				Scope:  ac.Scope("users", "id", strconv.FormatInt(userID, 10)),
+			})
+		case oauthserver.ScopeTeamsSelf:
+			for i := range teams {
 				correctScopes = append(correctScopes, ac.Permission{
-					Action: ac.ActionUsersRead,
-					Scope:  ac.Scope("global.users", "id", strconv.FormatInt(userID, 10)),
+					Action: impPerms[i].Action,
+					Scope:  ac.Scope("teams", "id", strconv.FormatInt(teams[i].ID, 10)),
 				})
-			case ac.ActionUsersPermissionsRead:
-				correctScopes = append(correctScopes, ac.Permission{
-					Action: ac.ActionUsersPermissionsRead,
-					Scope:  ac.Scope("users", "id", strconv.FormatInt(userID, 10)),
-				})
-			case ac.ActionTeamsRead:
-				for i := range teams {
-					correctScopes = append(correctScopes, ac.Permission{
-						Action: ac.ActionTeamsRead,
-						Scope:  ac.Scope("teams", "id", strconv.FormatInt(teams[i].ID, 10)),
-					})
-				}
 			}
-			continue
+		default:
+			correctScopes = append(correctScopes, impPerms[i])
 		}
-		correctScopes = append(correctScopes, impPerms[i])
+		continue
 	}
 	return correctScopes
 }
