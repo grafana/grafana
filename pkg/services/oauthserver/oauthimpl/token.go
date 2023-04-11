@@ -84,7 +84,19 @@ func (s *OAuth2ServiceImpl) writeAccessError(ctx context.Context, rw http.Respon
 	s.oauthProvider.WriteAccessError(ctx, rw, accessRequest, err)
 }
 
-// V2
+func splitOAuthScopes(requestedScopes fosite.Arguments) (map[string]bool, map[string]bool) {
+	actionsFilter := map[string]bool{}
+	claimsFilter := map[string]bool{}
+	for _, scope := range requestedScopes {
+		switch scope {
+		case "profile", "email", "groups", "entitlements", "org.1":
+			claimsFilter[scope] = true
+		default:
+			actionsFilter[scope] = true
+		}
+	}
+	return actionsFilter, claimsFilter
+}
 
 func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest fosite.AccessRequester, currentOAuthSessionData *PluginAuthSession, client *oauthserver.Client) error {
 	if !accessRequest.GetGrantTypes().ExactOne(grantTypeJWTBearer) {
@@ -113,20 +125,7 @@ func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest f
 	}
 
 	// Split scopes into actions and claims
-	// If one of the requested scopes wasn't granted we wouldn't have reached this point
-	// so we can safely grant all of them
-	actionsFilter := map[string]bool{}
-	claimsFilter := map[string]bool{}
-	for _, scope := range accessRequest.GetRequestedScopes() {
-		// TODO: what about the org scope?
-		switch scope {
-		case "profile", "email", "groups", "entitlements", "org.1":
-			claimsFilter[scope] = true
-		default:
-			actionsFilter[scope] = true
-		}
-		// accessRequest.GrantScope(scope)
-	}
+	actionsFilter, claimsFilter := splitOAuthScopes(accessRequest.GetGrantedScopes())
 
 	// Get the user
 	query := user.GetUserByIDQuery{ID: userID}
@@ -305,17 +304,7 @@ func (s *OAuth2ServiceImpl) handleClientCredentials(ctx context.Context, accessR
 	currentOAuthSessionData.Username = sa.Login
 
 	// Split scopes into actions and claims
-	actionsFilter := map[string]bool{}
-	claimsFilter := map[string]bool{}
-	for _, scope := range accessRequest.GetRequestedScopes() {
-		// TODO: what about the org scope?
-		switch scope {
-		case "profile", "email", "groups", "entitlements", "org.1":
-			claimsFilter[scope] = true
-		default:
-			actionsFilter[scope] = true
-		}
-	}
+	actionsFilter, claimsFilter := splitOAuthScopes(accessRequest.GetGrantedScopes())
 
 	if claimsFilter["profile"] {
 		currentOAuthSessionData.JWTClaims.Add("name", sa.Name)
