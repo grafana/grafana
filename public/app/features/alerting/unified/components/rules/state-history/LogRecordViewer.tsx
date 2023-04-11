@@ -16,9 +16,10 @@ interface LogRecordViewerProps {
   records: LogRecord[];
   commonLabels: Array<[string, string]>;
   logsRef: React.MutableRefObject<HTMLDivElement[]>;
+  onLabelClick?: (label: string) => void;
 }
 
-export function LogRecordViewerByTimestamp({ records, commonLabels, logsRef }: LogRecordViewerProps) {
+export function LogRecordViewerByTimestamp({ records, commonLabels, logsRef, onLabelClick }: LogRecordViewerProps) {
   const styles = useStyles2(getStyles);
 
   const groupedLines = groupBy(records, (record: LogRecord) => record.timestamp);
@@ -44,6 +45,7 @@ export function LogRecordViewerByTimestamp({ records, commonLabels, logsRef }: L
                         tags={omitLabels(Object.entries(logRecord.line.labels), commonLabels).map(
                           ([key, value]) => `${key}=${value}`
                         )}
+                        onClick={onLabelClick}
                       />
                     </div>
                   </React.Fragment>

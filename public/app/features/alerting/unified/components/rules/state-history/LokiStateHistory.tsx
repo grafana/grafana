@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { groupBy, isEmpty, last, sortBy, take, uniq } from 'lodash';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { BehaviorSubject } from 'rxjs';
 
 import {
   ArrayVector,
   DataFrame,
+  DataFrameJSON,
   dateTime,
   Field,
   FieldType,
@@ -18,7 +19,7 @@ import {
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
 import { Stack } from '@grafana/experimental';
 import { LegendDisplayMode, MappingType, ThresholdsMode, VisibilityMode } from '@grafana/schema';
-import { Alert, TagList, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, FilterInput, TagList, useStyles2, useTheme2 } from '@grafana/ui';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import { TimelineMode } from 'app/core/components/TimelineChart/utils';
 
@@ -33,8 +34,8 @@ interface Props {
 
 const LokiStateHistory = ({ ruleUID }: Props) => {
   const { useGetRuleHistoryQuery } = stateHistoryApi;
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const [instancesFilter, setInstancesFilter] = useState('');
 
   const frameSubsetRef = useRef<DataFrame[]>([]);
 
@@ -43,13 +44,19 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     new BehaviorSubject<{ seriesIdx: number; pointIdx: number }>({ seriesIdx: 0, pointIdx: 0 })
   );
 
-  const timeRange = getDefaultTimeRange();
+  const timeRange = useMemo(() => getDefaultTimeRange(), []);
   const {
     currentData: stateHistory,
     isLoading,
     isError,
     error,
   } = useGetRuleHistoryQuery({ ruleUid: ruleUID, from: timeRange.from.unix(), to: timeRange.to.unix() });
+
+  const { dataFrames, historyRecords, commonLabels } = useInstanceHistoryRecords(stateHistory);
+
+  const onLogRecordLabelClick = (label: string) => {
+    setInstancesFilter(label);
+  };
 
   useEffect(() => {
     const subject = pointerSubject.current;
@@ -69,6 +76,8 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     };
   }, []);
 
+  const frameSubset = useMemo(() => take(dataFrames, 10), [dataFrames]);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -80,32 +89,6 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     );
   }
 
-  // merge timestamp with "line"
-  // @ts-ignore
-  const timestamps: number[] = stateHistory?.data?.values[0] ?? [];
-  const lines = stateHistory?.data?.values[1] ?? [];
-
-  const linesWithTimestamp = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
-    // @ts-ignore
-    const line: Line = lines[index];
-    acc.push({ timestamp, line });
-
-    return acc;
-  }, []);
-
-  // group all records by alert instance (unique set of labels)
-  const groupedLines = groupBy(linesWithTimestamp, (record: LogRecord) => {
-    return JSON.stringify(record.line.labels);
-  });
-
-  // find common labels so we can extract those from the instances
-  const commonLabels = extractCommonLabels(groupedLines);
-
-  const dataFrames: DataFrame[] = Object.entries(groupedLines).map<DataFrame>(([key, records]) => {
-    return logRecordsToDataFrame(key, records, commonLabels, theme);
-  });
-
-  const frameSubset = take(dataFrames, 10);
   frameSubsetRef.current = frameSubset;
 
   return (
@@ -118,67 +101,125 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
       )}
       <div style={{ flex: 1 }}>
         {!isEmpty(frameSubset) && (
-          <AutoSizer>
-            {({ width, height }) => (
-              <TimelineChart
-                frames={frameSubset}
-                timeRange={timeRange}
-                timeZone={'browser'}
-                mode={TimelineMode.Changes}
-                // TODO do the math to get a good height
-                height={height}
-                width={width}
-                showValue={VisibilityMode.Never}
-                theme={theme}
-                rowHeight={0.8}
-                legend={{
-                  calcs: [],
-                  displayMode: LegendDisplayMode.List,
-                  placement: 'bottom',
-                  showLegend: true,
-                }}
-                legendItems={[
-                  { label: 'Normal', color: theme.colors.success.main, yAxis: 1 },
-                  { label: 'Pending', color: theme.colors.warning.main, yAxis: 1 },
-                  { label: 'Alerting', color: theme.colors.error.main, yAxis: 1 },
-                  { label: 'NoData', color: theme.colors.info.main, yAxis: 1 },
-                ]}
-              >
-                {(builder) => {
-                  builder.setSync();
-                  const interpolator = builder.getTooltipInterpolator();
-
-                  // I found this in TooltipPlugin.tsx
-                  if (interpolator) {
-                    builder.addHook('setCursor', (u) => {
-                      interpolator(
-                        (seriesIdx) => {
-                          if (seriesIdx) {
-                            const currentPointer = pointerSubject.current.getValue();
-                            pointerSubject.current.next({ ...currentPointer, seriesIdx });
-                          }
-                        },
-                        (pointIdx) => {
-                          if (pointIdx) {
-                            const currentPointer = pointerSubject.current.getValue();
-                            pointerSubject.current.next({ ...currentPointer, pointIdx });
-                          }
-                        },
-                        () => {},
-                        u
-                      );
-                    });
-                  }
-                }}
-              </TimelineChart>
-            )}
-          </AutoSizer>
+          <LogTimelineViewer frames={frameSubset} timeRange={timeRange} pointerSubject={pointerSubject.current} />
         )}
       </div>
-      <LogRecordViewerByTimestamp records={linesWithTimestamp} commonLabels={commonLabels} logsRef={logsRef} />
+      <FilterInput label="Filter instances" value={instancesFilter} onChange={setInstancesFilter} />
+      <LogRecordViewerByTimestamp
+        records={historyRecords}
+        commonLabels={commonLabels}
+        logsRef={logsRef}
+        onLabelClick={onLogRecordLabelClick}
+      />
     </div>
   );
 };
+
+function useInstanceHistoryRecords(stateHistory?: DataFrameJSON) {
+  const theme = useTheme2();
+
+  return useMemo(() => {
+    // merge timestamp with "line"
+    // @ts-ignore
+    const timestamps: number[] = stateHistory?.data?.values[0] ?? [];
+    const lines = stateHistory?.data?.values[1] ?? [];
+
+    const linesWithTimestamp = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
+      // @ts-ignore
+      const line: Line = lines[index];
+      acc.push({ timestamp, line });
+
+      return acc;
+    }, []);
+
+    // group all records by alert instance (unique set of labels)
+    const groupedLines = groupBy(linesWithTimestamp, (record: LogRecord) => {
+      return JSON.stringify(record.line.labels);
+    });
+
+    // find common labels so we can extract those from the instances
+    const commonLabels = extractCommonLabels(groupedLines);
+
+    const dataFrames: DataFrame[] = Object.entries(groupedLines).map<DataFrame>(([key, records]) => {
+      return logRecordsToDataFrame(key, records, commonLabels, theme);
+    });
+
+    return {
+      historyRecords: linesWithTimestamp,
+      dataFrames,
+      commonLabels,
+    };
+  }, [stateHistory, theme]);
+}
+
+interface LogTimelineViewerProps {
+  frames: DataFrame[];
+  timeRange: TimeRange;
+  pointerSubject: BehaviorSubject<{ seriesIdx: number; pointIdx: number }>;
+}
+
+const LogTimelineViewer = React.memo(({ frames, timeRange, pointerSubject }: LogTimelineViewerProps) => {
+  const theme = useTheme2();
+
+  return (
+    <AutoSizer>
+      {({ width, height }) => (
+        <TimelineChart
+          frames={frames}
+          timeRange={timeRange}
+          timeZone={'browser'}
+          mode={TimelineMode.Changes}
+          // TODO do the math to get a good height
+          height={height}
+          width={width}
+          showValue={VisibilityMode.Never}
+          theme={theme}
+          rowHeight={0.8}
+          legend={{
+            calcs: [],
+            displayMode: LegendDisplayMode.List,
+            placement: 'bottom',
+            showLegend: true,
+          }}
+          legendItems={[
+            { label: 'Normal', color: theme.colors.success.main, yAxis: 1 },
+            { label: 'Pending', color: theme.colors.warning.main, yAxis: 1 },
+            { label: 'Alerting', color: theme.colors.error.main, yAxis: 1 },
+            { label: 'NoData', color: theme.colors.info.main, yAxis: 1 },
+          ]}
+        >
+          {(builder) => {
+            builder.setSync();
+            const interpolator = builder.getTooltipInterpolator();
+
+            // I found this in TooltipPlugin.tsx
+            if (interpolator) {
+              builder.addHook('setCursor', (u) => {
+                interpolator(
+                  (seriesIdx) => {
+                    if (seriesIdx) {
+                      const currentPointer = pointerSubject.getValue();
+                      pointerSubject.next({ ...currentPointer, seriesIdx });
+                    }
+                  },
+                  (pointIdx) => {
+                    if (pointIdx) {
+                      const currentPointer = pointerSubject.getValue();
+                      pointerSubject.next({ ...currentPointer, pointIdx });
+                    }
+                  },
+                  () => {},
+                  u
+                );
+              });
+            }
+          }}
+        </TimelineChart>
+      )}
+    </AutoSizer>
+  );
+});
+LogTimelineViewer.displayName = 'LogTimelineViewer';
 
 function logRecordsToDataFrame(
   instanceLabels: string,
