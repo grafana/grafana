@@ -3,10 +3,11 @@ import type { StorybookConfig } from '@storybook/react-webpack5';
 // avoid importing from @grafana/data to prevent node error: ERR_REQUIRE_ESM
 import { availableIconsIndex, IconName } from '../../grafana-data/src/types/icon';
 import { getIconSubDir } from '../src/components/Icon/utils';
-const stories = ['../src/Intro.mdx', '../src/components/Button/Button.story.tsx'];
-// if (process.env.NODE_ENV !== 'production') {
-//   stories.push('../src/**/*.story.internal.@(tsx|mdx)');
-// }
+
+const stories = ['../src/Intro.mdx', '../src/components/**/*.story.tsx'];
+if (process.env.NODE_ENV !== 'production') {
+  stories.push('../src/**/*.internal.story.@(tsx|mdx)');
+}
 
 // We limit icon paths to only the available icons so publishing
 // doesn't require uploading 1000s of unused assets.
