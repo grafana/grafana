@@ -107,13 +107,15 @@ Alpha features might be changed or removed without prior notice.
 | `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                                                                                                          |
 | `unifiedRequestLog`                | Writes error logs to the request logger                                                                                                                                                             |
 | `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                                                                                                                |
+| `dataplaneFrontendFallback`        | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                |
 
 ## Development feature toggles
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name | Description                                         |
-| ------------------- | --------------------------------------------------- |
-| `k8s`               | Explore native k8s integrations                     |
-| `entityStore`       | SQL-based entity store (requires storage flag also) |
-| `nestedFolders`     | Enable folder nesting                               |
+| Feature toggle name   | Description                                                    |
+| --------------------- | -------------------------------------------------------------- |
+| `k8s`                 | Explore native k8s integrations                                |
+| `entityStore`         | SQL-based entity store (requires storage flag also)            |
+| `nestedFolders`       | Enable folder nesting                                          |
+| `externalServiceAuth` | Starts an OAuth2 authentication provider for external services |

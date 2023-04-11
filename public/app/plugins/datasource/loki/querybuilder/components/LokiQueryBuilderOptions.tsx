@@ -101,7 +101,10 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               />
             </EditorField>
           )}
-          <EditorField label="Resolution">
+          <EditorField
+            label="Resolution"
+            tooltip="Sets the step parameter of Loki metrics range queries. With a resolution of 1/1, each pixel corresponds to one data point. 1/10 retrieves one data point per 10 pixels. Lower resolutions perform better."
+          >
             <Select
               isSearchable={false}
               onChange={onResolutionChange}

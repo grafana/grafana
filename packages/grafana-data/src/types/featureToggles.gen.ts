@@ -94,4 +94,6 @@ export interface FeatureToggles {
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
   pyroscopeFlameGraph?: boolean;
+  externalServiceAuth?: boolean;
+  dataplaneFrontendFallback?: boolean;
 }

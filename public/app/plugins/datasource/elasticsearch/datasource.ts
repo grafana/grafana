@@ -37,7 +37,7 @@ import { queryLogsVolume } from 'app/core/logsModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
-import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
+import { RowContextOptions } from '../../../features/logs/components/log-context/types';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 
 import { ElasticResponse } from './ElasticResponse';
@@ -561,7 +561,7 @@ export class ElasticDatasource
         return { data: [] };
       }
       /**
-       * The LogRowContextProvider requires there is a field in the dataFrame.fields
+       * The LogRowContext requires there is a field in the dataFrame.fields
        * named `ts` for timestamp and `line` for the actual log line to display.
        * Unfortunatly these fields are hardcoded and are required for the lines to
        * be properly displayed. This code just copies the fields based on this.timeField

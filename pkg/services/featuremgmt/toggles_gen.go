@@ -310,4 +310,12 @@ const (
 	// FlagPyroscopeFlameGraph
 	// Changes flame graph to pyroscope one
 	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
+
+	// FlagExternalServiceAuth
+	// Starts an OAuth2 authentication provider for external services
+	FlagExternalServiceAuth = "externalServiceAuth"
+
+	// FlagDataplaneFrontendFallback
+	// Support dataplane contract field name change for transformations and field name matchers where the name is different
+	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
 )

@@ -24,19 +24,29 @@ export class PostgresDatasource extends SqlDatasource {
 
   async getVersion(): Promise<string> {
     const value = await this.runSql<{ version: number }>(getVersion());
-    const results = value.fields.version.values.toArray();
+    const results = value.fields.version?.values.toArray();
+
+    if (!results) {
+      return '';
+    }
+
     return results[0].toString();
   }
 
   async getTimescaleDBVersion(): Promise<string | undefined> {
     const value = await this.runSql<{ extversion: string }>(getTimescaleDBVersion());
-    const results = value.fields.extversion.values.toArray();
+    const results = value.fields.extversion?.values.toArray();
+
+    if (!results) {
+      return undefined;
+    }
+
     return results[0];
   }
 
   async fetchTables(): Promise<string[]> {
     const tables = await this.runSql<{ table: string[] }>(showTables(), { refId: 'tables' });
-    return tables.fields.table.values.toArray().flat();
+    return tables.fields.table?.values.toArray().flat() ?? [];
   }
 
   getSqlLanguageDefinition(db: DB): LanguageDefinition {
