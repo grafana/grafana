@@ -520,4 +520,6 @@ replace k8s.io/mount-utils => k8s.io/mount-utils v0.26.3-rc.0
 
 replace k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.26.2
 
+replace k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.26.2
+
 replace gopkg.in/square/go-jose.v2 => gopkg.in/square/go-jose.v2 v2.2.2
