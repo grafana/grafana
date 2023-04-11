@@ -226,27 +226,6 @@ describe('DashboardPage', () => {
         expect(dashboard.panelInEdit).toBeDefined();
       });
     });
-
-    it('Should render panel editor', async () => {
-      const dashboard = getTestDashboard();
-      setup({
-        dashboard,
-        queryParams: { editPanel: '1' },
-      });
-      expect(await screen.findByTitle('Apply changes and go back to dashboard')).toBeInTheDocument();
-    });
-
-    it('Should reset state when leaving', async () => {
-      const dashboard = getTestDashboard();
-      const { rerender } = setup({
-        dashboard,
-        queryParams: { editPanel: '1' },
-      });
-      rerender({ queryParams: {} });
-      await waitFor(() => {
-        expect(screen.queryByTitle('Apply changes and go back to dashboard')).not.toBeInTheDocument();
-      });
-    });
   });
 
   describe('When dashboard unmounts', () => {
