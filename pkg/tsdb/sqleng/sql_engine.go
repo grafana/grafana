@@ -20,6 +20,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
@@ -93,6 +94,13 @@ type DataSourceInfo struct {
 	DecryptedSecureJSONData map[string]string
 }
 
+// Defaults for the xorm connection pool
+type DefaultConnectionInfo struct {
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime int
+}
+
 type DataPluginConfiguration struct {
 	DriverName        string
 	DSInfo            DataSourceInfo
@@ -133,6 +141,35 @@ func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) er
 	}
 
 	return e.queryResultTransformer.TransformQueryError(logger, err)
+}
+
+// Retrieve the default connection settings given access
+// to Grafana configuration. If these differ from the
+// prederminted defaults the defaults will be overriden
+func GetDefaultConnectionSettings(cfg *setting.Cfg) *DefaultConnectionInfo {
+	// Allow override of default for max open connections
+	var maxOpenConnsDefault = MaxOpenConnsDefault
+	if cfg.SqlDatasourceMaxOpenConnsDefault != maxOpenConnsDefault {
+		maxOpenConnsDefault = cfg.SqlDatasourceMaxOpenConnsDefault
+	}
+
+	// Allow override of default for max idle connections
+	var maxIdleConnsDefault = MaxIdleConnsDefault
+	if cfg.SqlDatasourceMaxOpenConnsDefault != maxIdleConnsDefault {
+		maxIdleConnsDefault = cfg.SqlDatasourceMaxIdleConnsDefault
+	}
+
+	// Allow override of the default for max connection lifetime
+	var connMaxLifetimeDefault = ConnMaxLifetimeDefault
+	if cfg.SqlDatasourceMaxConnLifetimeDefault != connMaxLifetimeDefault {
+		connMaxLifetimeDefault = cfg.SqlDatasourceMaxConnLifetimeDefault
+	}
+
+	return &DefaultConnectionInfo{
+		MaxOpenConns:    maxOpenConnsDefault,
+		MaxIdleConns:    maxIdleConnsDefault,
+		ConnMaxLifetime: connMaxLifetimeDefault,
+	}
 }
 
 func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,

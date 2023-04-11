@@ -51,28 +51,12 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *S
 
 func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		// Allow override of default for max open connections
-		var maxOpenConnsDefault = sqleng.MaxOpenConnsDefault
-		if cfg.SqlDatasourceMaxOpenConnsDefault != maxOpenConnsDefault {
-			maxOpenConnsDefault = cfg.SqlDatasourceMaxOpenConnsDefault
-		}
-
-		// Allow override of default for max idle connections
-		var maxIdleConnsDefault = sqleng.MaxIdleConnsDefault
-		if cfg.SqlDatasourceMaxOpenConnsDefault != maxIdleConnsDefault {
-			maxIdleConnsDefault = cfg.SqlDatasourceMaxIdleConnsDefault
-		}
-
-		// Allow override of the default for max connection lifetime
-		var connMaxLifetimeDefault = sqleng.ConnMaxLifetimeDefault
-		if cfg.SqlDatasourceMaxConnLifetimeDefault != connMaxLifetimeDefault {
-			connMaxLifetimeDefault = cfg.SqlDatasourceMaxConnLifetimeDefault
-		}
+		var connectionDefaults = sqleng.GetDefaultConnectionSettings(cfg)
 
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:    maxOpenConnsDefault,
-			MaxIdleConns:    maxIdleConnsDefault,
-			ConnMaxLifetime: connMaxLifetimeDefault,
+			MaxOpenConns:    connectionDefaults.MaxOpenConns,
+			MaxIdleConns:    connectionDefaults.MaxIdleConns,
+			ConnMaxLifetime: connectionDefaults.ConnMaxLifetime,
 			SecureDSProxy:   false,
 		}
 
