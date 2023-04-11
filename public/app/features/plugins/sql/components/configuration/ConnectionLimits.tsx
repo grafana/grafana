@@ -39,20 +39,13 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
     };
   };
 
-  // Calculate the number of idle connections
-  // automatically based on maximum connection
-  // number. Currently the same.
-  const getAutoIdleConns = (number: number) => {
-    return number;
-  };
-
   // When the maximum number of connections is changed
   // see if we have the automatic idle option enabled
   const onMaxConnectionsChanged = (number?: number) => {
     if (autoIdle && number) {
       updateJsonData({
         maxOpenConns: number,
-        maxIdleConns: getAutoIdleConns(number),
+        maxIdleConns: number,
       });
     } else if (number !== undefined) {
       updateJsonData({
@@ -74,10 +67,10 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
     if (!autoIdle) {
       if (jsonData.maxOpenConns !== undefined) {
         maxConns = jsonData.maxOpenConns;
-        idleConns = getAutoIdleConns(jsonData.maxOpenConns);
+        idleConns = jsonData.maxOpenConns;
       } else {
         maxConns = SQLConnectionDefaults.MAX_CONNS;
-        idleConns = getAutoIdleConns(SQLConnectionDefaults.MAX_CONNS);
+        idleConns = SQLConnectionDefaults.MAX_CONNS;
       }
     }
 
