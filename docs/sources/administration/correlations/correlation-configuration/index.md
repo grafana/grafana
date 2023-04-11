@@ -47,7 +47,7 @@ Example: If source results contain a field called “employee”, the value of t
 - A field variable ${\_\_data.fields.employee}
 - A correlation variable that maps the field value above to ${employee}
 
-Additionally to mapping field values to shorter variables names, more correlation variables can be created by applying transformations to existing fields.
+In addition to mapping field values to shorter variable names, more correlation variables can be created by applying transformations to existing fields
 
 Please check an example in [Use variables and transformations in a correlation]({{< relref "./use-variables-and-transformations" >}}).
 
