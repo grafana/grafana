@@ -87,12 +87,12 @@ Code mode supports autocompletion of tables, columns, SQL keywords, standard SQL
 
 In **Builder mode**, you can build queries using a visual interface.
 
-### Select a dataset and table
+### Dataset and Table selection
 
-In the **Dataset** dropdown, select the MS SQL database to query.
+In the dataset dropdown, choose the MSSQL database to query. The dropdown is be populated with the databases that the user has access to.
+When the dataset is selected, the table dropdown is populated with the tables that are available.
 
-Grafana populates the dropdown with the databases that the configured user can access.
-When you select a dataset, Grafana populates the **Table** dropdown with available tables.
+**Note:** If a default database has been chosen through the Data Source configuration page, the Dataset Dropdown will be disabled, and only that configured database will be available for querying.
 
 ### Select columns and aggregation functions (SELECT)
 
