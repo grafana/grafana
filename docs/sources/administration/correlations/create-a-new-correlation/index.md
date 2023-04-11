@@ -14,7 +14,6 @@ Make sure you have permission to add new correlations. Only users with write per
 1. Go to the Administration section in Grafana
 1. Open Correlations page
 1. Click the “Add” button in the top right corner
-1. A wizard will guide you through the correlation setup
 1. Provide a **label** for the correlation.
 1. Provide an optional **description**
 1. Go to the next page.
