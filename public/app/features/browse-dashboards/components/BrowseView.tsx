@@ -1,7 +1,6 @@
-/* eslint-disable react/jsx-key */
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTable, Column, TableInstance, useAbsoluteLayout, CellProps } from 'react-table';
+import { useTable, Column, TableInstance, CellProps } from 'react-table';
 import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -89,24 +88,21 @@ export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
   const tableColumns = useMemo(() => {
     const checkboxColumn: Column<FlatNestedTreeItem> = {
       id: 'checkbox',
-      // width: 30,
       Header: () => <input type="checkbox" />,
       Cell: () => <input type="checkbox" />,
     };
 
     const nameColumn: Column<FlatNestedTreeItem> = {
       id: 'name',
-      // width: 500,
       accessor: (row) => row,
       Header: 'Name',
-      Cell: (
-        { value }: CellProps<FlatNestedTreeItem, FlatNestedTreeItem> // TODO: generic args aren't type checked
-      ) => <BrowseItem item={value.item} isOpen={value.isOpen} level={value.level} onFolderClick={handleFolderClick} />,
+      Cell: (props: CellProps<FlatNestedTreeItem, unknown>) => (
+        <NameCell {...props} onFolderClick={handleFolderClick} />
+      ),
     };
 
     const typeColumn: Column<FlatNestedTreeItem> = {
       id: 'type',
-      // width: 300,
       accessor: (row) => row.item.kind,
       Header: 'Type',
     };
@@ -137,6 +133,7 @@ export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
           <div key={key} {...headerGroupProps} className={styles.headerRow}>
             {headerGroup.headers.map((column) => {
               const { key, ...headerProps } = column.getHeaderProps();
+
               return (
                 <div key={key} {...headerProps} role="columnheader" className={styles.cell}>
                   {column.render('Header')}
@@ -178,8 +175,10 @@ const Row = ({ index, style, data }: { index: number; style: React.CSSProperties
   return (
     <div {...row.getRowProps({ style })} className={styles.rowContainer}>
       {row.cells.map((cell) => {
+        const { key, ...cellProps } = cell.getCellProps();
+
         return (
-          <div {...cell.getCellProps()} className={styles.cell}>
+          <div key={key} {...cellProps} className={styles.cell}>
             {cell.render('Cell')}
           </div>
         );
@@ -188,17 +187,13 @@ const Row = ({ index, style, data }: { index: number; style: React.CSSProperties
   );
 };
 
-function BrowseItem({
-  item,
-  level,
-  isOpen,
-  onFolderClick,
-}: {
-  item: DashboardViewItem;
-  level: number;
-  isOpen?: boolean;
+type NameCellProps = CellProps<FlatNestedTreeItem, unknown> & {
   onFolderClick: (uid: string, newOpenState: boolean) => void;
-}) {
+};
+
+function NameCell({ row: { original: data }, onFolderClick }: NameCellProps) {
+  const { item, level, isOpen } = data;
+
   return (
     <span style={{ paddingLeft: level * 24 }}>
       {item.kind === 'folder' ? (
