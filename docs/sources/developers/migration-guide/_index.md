@@ -12,6 +12,7 @@ title: Migration guides
 
 <script>
 (function () {
+  // Previously all the migration docs were on a single page, and the different sections could be linked using URL hashes.
   var anchorRedirects = {
     "migrate-a-plugin-from-angular-to-react": "./angular-react/",
     "from-version-62x-to-74x": "./v6.x-v7.x/",
@@ -25,9 +26,10 @@ title: Migration guides
     "from-version-91x-to-92x": "./v9.1.x-v9.2.x/",
     "from-version-93x-to-94x": "./v9.3.x-v9.4.x/",
   };
-  var anchor = window.location.hash.substring(1);
-  if (anchor) {
-    window.location.replace(anchorRedirects[anchor]);
+  var hash = window.location.hash.substring(1);
+  var redirectTo = anchorRedirects[hash];
+  if (redirectTo) {
+    window.location.replace(redirectTo);
   }
 })();
 </script>
