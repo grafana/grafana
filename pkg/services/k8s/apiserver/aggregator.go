@@ -33,8 +33,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apiserver/pkg/authentication/authenticator"
+	"k8s.io/apiserver/pkg/authentication/request/anonymous"
+	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
+	"k8s.io/apiserver/pkg/authentication/request/union"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/healthz"
+	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/server/resourceconfig"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
@@ -61,6 +66,12 @@ func createAggregatorConfig(
 	// prevent generic API server from installing the OpenAPI handler. Aggregator server
 	// has its own customized OpenAPI handler.
 	genericConfig.SkipOpenAPIInstallation = true
+
+	//authenticator, err := newAuthenticator()
+	//if err != nil {
+	//	return nil, err
+	//}
+	//genericConfig.Authentication.Authenticator = authenticator
 
 	mergedResourceConfig, err := resourceconfig.MergeAPIResourceConfigs(aggregatorapiserver.DefaultAPIResourceConfigSource(), nil, aggregatorscheme.Scheme)
 	if err != nil {
@@ -140,6 +151,28 @@ func createAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, delega
 	}
 
 	return aggregatorServer, nil
+}
+
+func newAuthenticator() (authenticator.Request, error) {
+	reqHeaderOptions := options.RequestHeaderAuthenticationOptions{
+		ClientCAFile:        "data/k8s/ca.crt",
+		UsernameHeaders:     []string{"X-Remote-User"},
+		GroupHeaders:        []string{"X-Remote-Group"},
+		ExtraHeaderPrefixes: []string{"X-Remote-Extra-"},
+	}
+
+	reqHeaderConfig, err := reqHeaderOptions.ToAuthenticationRequestHeaderConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	requestHeaderAuthenticator := headerrequest.NewDynamic(
+		reqHeaderConfig.UsernameHeaders,
+		reqHeaderConfig.GroupHeaders,
+		reqHeaderConfig.ExtraHeaderPrefixes,
+	)
+
+	return union.New(requestHeaderAuthenticator, anonymous.NewAuthenticator()), nil
 }
 
 func makeAPIService(gv schema.GroupVersion) *v1.APIService {

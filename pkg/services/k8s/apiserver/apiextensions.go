@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/certgenerator"
+	oteltrace "go.opentelemetry.io/otel/trace"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apiextensionsapiserver "k8s.io/apiextensions-apiserver/pkg/apiserver"
@@ -80,6 +81,13 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 		return apiextensionsapiserver.Config{}, err
 	}
 
+	authenticator, err := newAuthenticator()
+	if err != nil {
+		return apiextensionsapiserver.Config{}, err
+	}
+
+	serverConfig.Authentication.Authenticator = authenticator
+
 	serverConfig.LoopbackClientConfig = &rest.Config{
 		TLSClientConfig: rest.TLSClientConfig{
 			Insecure: true,
@@ -88,8 +96,6 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 		Username: "grafana",
 		Password: "grafana",
 	}
-
-	serverConfig.SharedInformerFactory = informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
 
 	if err := o.APIEnablement.ApplyTo(
 		&serverConfig.Config,
@@ -102,6 +108,7 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 	serverConfig.RESTOptionsGetter = &restOptionsGetter{
 		codec: apiextensionsapiserver.Codecs.LegacyCodec(v1beta1.SchemeGroupVersion, v1.SchemeGroupVersion),
 	}
+	serverConfig.SharedInformerFactory = informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
 
 	apiextensionsConfig := apiextensionsapiserver.Config{
 		GenericConfig: serverConfig,
@@ -109,7 +116,7 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 			CRDRESTOptionsGetter: &restOptionsGetter{codec: unstructured.UnstructuredJSONScheme},
 			MasterCount:          1,
 			ServiceResolver:      serviceResolver,
-			AuthResolverWrapper:  authWrapperFactory(serverConfig.LoopbackClientConfig),
+			AuthResolverWrapper:  webhook.NewDefaultAuthenticationInfoResolverWrapper(nil, nil, serverConfig.LoopbackClientConfig, oteltrace.NewNoopTracerProvider()),
 		},
 	}
 
@@ -129,24 +136,6 @@ type serviceResolver struct {
 
 func (r *serviceResolver) ResolveEndpoint(namespace, name string, port int32) (*url.URL, error) {
 	return proxy.ResolveCluster(r.services, namespace, name, port)
-}
-
-func authWrapperFactory(conf *rest.Config) webhook.AuthenticationInfoResolverWrapper {
-	return func(webhook.AuthenticationInfoResolver) webhook.AuthenticationInfoResolver {
-		return &authResolver{config: conf}
-	}
-}
-
-type authResolver struct {
-	config *rest.Config
-}
-
-func (a *authResolver) ClientConfigFor(hostPort string) (*rest.Config, error) {
-	return a.config, nil
-}
-
-func (a *authResolver) ClientConfigForService(serviceName, serviceNamespace string, servicePort int) (*rest.Config, error) {
-	return a.config, nil
 }
 
 type restOptionsGetter struct {
