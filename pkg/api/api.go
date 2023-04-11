@@ -74,6 +74,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/login/:name", quota(string(auth.QuotaTargetSrv)), hs.OAuthLogin)
 	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
+	r.Post("/log", hs.frontendLogEndpoints())
+	r.Post("/log-grafana-javascript-agent", hs.frontendLogEndpoints())
 
 	// authed views
 	r.Get("/", reqSignedIn, hs.Index)
