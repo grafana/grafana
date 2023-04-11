@@ -1,8 +1,20 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
+import { FieldType, DataFrame } from '../../types';
+import { ArrayVector } from '../../vector';
 import { getFieldMatcher } from '../matchers';
 
 import { FieldMatcherID } from './ids';
 import { ByNamesMatcherMode } from './nameMatcher';
+
+// mock the default window.grafanaBootData settings
+// eslint-disable-next-line
+(window as any).grafanaBootData = {
+  settings: {
+    featureToggles: {
+      dataplaneFrontendFallback: true,
+    },
+  },
+};
 
 describe('Field Name by Regexp Matcher', () => {
   it('Match all with wildcard regex', () => {
@@ -385,6 +397,74 @@ describe('Field Regexp or Names Matcher', () => {
       expect(matcher(field, seriesWithNames, [seriesWithNames])).toBe(true);
     }
   });
+
+  it('Support fallback name matchers', () => {
+    const frame: DataFrame = {
+      fields: [
+        { name: 'time', type: FieldType.time, config: {}, values: new ArrayVector([1, 2]) },
+        {
+          name: 'UP',
+          type: FieldType.number,
+          config: {},
+          values: new ArrayVector([1, 2]),
+          labels: { __name__: 'UP' },
+        },
+      ],
+      name: 'X',
+      length: 2,
+    };
+
+    let matcher = getFieldMatcher({
+      id: FieldMatcherID.byName,
+      options: 'Value',
+    });
+    expect(matcher(frame.fields[0], frame, [])).toBeFalsy();
+    expect(matcher(frame.fields[1], frame, [])).toBeTruthy();
+
+    matcher = getFieldMatcher({
+      id: FieldMatcherID.byName,
+      options: 'Time',
+    });
+    expect(matcher(frame.fields[0], frame, [])).toBeTruthy();
+    expect(matcher(frame.fields[1], frame, [])).toBeFalsy();
+  });
+});
+
+it('Support fallback multiple names matchers', () => {
+  const frame: DataFrame = {
+    fields: [
+      { name: 'time', type: FieldType.time, config: {}, values: new ArrayVector([1, 2]) },
+      {
+        name: 'UP',
+        type: FieldType.number,
+        config: {},
+        values: new ArrayVector([1, 2]),
+        labels: { __name__: 'UP' },
+      },
+    ],
+    name: 'X',
+    length: 2,
+  };
+
+  let matcher = getFieldMatcher({
+    id: FieldMatcherID.byNames,
+    options: {
+      mode: ByNamesMatcherMode.include,
+      names: ['Value'],
+    },
+  });
+  expect(matcher(frame.fields[0], frame, [])).toBeFalsy();
+  expect(matcher(frame.fields[1], frame, [])).toBeTruthy();
+
+  matcher = getFieldMatcher({
+    id: FieldMatcherID.byNames,
+    options: {
+      mode: ByNamesMatcherMode.include,
+      names: ['Time'],
+    },
+  });
+  expect(matcher(frame.fields[0], frame, [])).toBeTruthy();
+  expect(matcher(frame.fields[1], frame, [])).toBeFalsy();
 });
 
 describe('Fields returned by query with refId', () => {

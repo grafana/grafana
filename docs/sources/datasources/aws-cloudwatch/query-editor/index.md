@@ -92,7 +92,7 @@ For example, to apply arithmetic operations to a metric, apply a unique string i
 
 > **Note:** If you use the expression field to reference another query, like `queryA * 2`, you can't create an alert rule based on that query.
 
-##### Period macro
+#### Period macro
 
 If you're using a CloudWatch [`SEARCH`](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) expression, you may want to use the `$__period_auto` macro rather than specifying a period explicitly. The `$__period_auto` macro will resolve to a [CloudWatch period](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html) that is suitable for the chosen time range.
 
@@ -218,9 +218,17 @@ When making `stats` queries in [Explore]({{< relref "../../../explore/" >}}), ma
 
 {{< figure src="/static/img/docs/v70/explore-mode-switcher.png" max-width="500px" class="docs-image--right" caption="Explore mode switcher" >}}
 
-### Getting started
+## Cross-account observability
 
-To enable cross-account observability, first enable it in CloudWatch using the official [CloudWatch docs](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html), then add [two new API actions]({{< relref "../#cross-account-observability" >}}) to the IAM policy attached to the role/user running the plugin.
+The CloudWatch plugin allows monitoring and troubleshooting applications that span multiple accounts within a region. Using cross-account observability, you can seamlessly search, visualize, and analyze metrics and logs without worrying about account boundaries.
+
+### Get started
+
+To enable cross-account observability, complete the following steps:
+
+1. Go to the [Amazon CloudWatch docs](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html) and follow the instructions on enabling cross-account observability.
+
+1. Add [two API actions](/docs/grafana/latest/datasources/aws-cloudwatch/#cross-account-observability-permissions) to the IAM policy attached to the role/user running the plugin.
 
 Cross-account querying is available in the plugin through the `Logs` mode and the `Metric search` mode. Once you have it configured correctly, you'll see a "Monitoring account" badge displayed in the query editor header.
 

@@ -10,12 +10,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "alertingBigTransactions",
-			Description: "Use big transactions for alerting database writes",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAlertingSquad,
-		},
-		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
@@ -316,6 +310,12 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:        "showTraceId",
+			Description: "Show trace ids for requests",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:        "datasourceOnboarding",
 			Description: "Enable data source onboarding page",
 			State:       FeatureStateAlpha,
@@ -498,6 +498,26 @@ var (
 			Description: "Uses JWT-based auth for rendering instead of relying on remote cache",
 			State:       FeatureStateBeta,
 			Owner:       grafanaAsCodeSquad,
+		},
+		{
+			Name:        "pyroscopeFlameGraph",
+			Description: "Changes flame graph to pyroscope one",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
+			Name:            "externalServiceAuth",
+			Description:     "Starts an OAuth2 authentication provider for external services",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+			Owner:           grafanaAuthnzSquad,
+		},
+		{
+			Name:         "dataplaneFrontendFallback",
+			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 	}
 )

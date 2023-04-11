@@ -12,10 +12,7 @@ import {
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-export interface RowContextOptions {
-  direction?: 'BACKWARD' | 'FORWARD';
-  limit?: number;
-}
+import { RowContextOptions } from './types';
 
 export interface LogRowContextRows {
   before?: string[];
