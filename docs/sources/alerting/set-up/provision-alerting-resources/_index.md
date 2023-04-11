@@ -24,21 +24,23 @@ There are three options to choose from:
 
    For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/alerting_provisioning/).
 
-   **Note:**
-
-   Typically, you cannot edit API-provisioned alert rules from the Grafana UI.
-
-   In order to enable editing, add the x-disable-provenance header to the following requests when creating or editing your alert rules in the API:
-
-   POST /api/v1/provisioning/alert-rules
-
-   PUT /api/v1/provisioning/alert-rules/{UID}
-
 1. Provision your alerting resources using Terraform.
 
 **Note:**
 
 Currently, provisioning for Grafana Alerting supports alert rules, contact points, mute timings, and templates. Provisioned alerting resources using file provisioning or Terraform can only be edited in the source that created them and not from within Grafana or any other source. For example, if you provision your alerting resources using files from disk, you cannot edit the data in Terraform or from within Grafana.
+
+In order to create/edit Grafana UI editable alerting resources, you can add the x-disable-provenance header to the following requests in the API:
+
+- `POST /api/v1/provisioning/alert-rules`
+- `POST /api/v1/provisioning/contact-points`
+- `POST /api/v1/provisioning/mute-timings`
+- `PUT /api/v1/provisioning/policies`
+- `PUT /api/v1/provisioning/templates/{name}`
+
+The next call will change provenance of all alert rules in the group.
+
+- `PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}`
 
 **Useful Links:**
 
