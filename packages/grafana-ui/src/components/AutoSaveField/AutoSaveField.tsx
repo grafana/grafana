@@ -97,7 +97,6 @@ export function AutoSaveField<T = string>(props: Props<T>) {
     <>
       <Field
         {...restProps}
-        loading={isLoading}
         invalid={isInvalid}
         disabled={disabled}
         error={error || (fieldState.showError && saveErrorMessage)}
@@ -109,6 +108,16 @@ export function AutoSaveField<T = string>(props: Props<T>) {
           })
         )}
       </Field>
+      {isLoading && (
+        <InlineToast
+          referenceElement={fieldRef.current}
+          placement="right"
+          alternativePlacement="bottom"
+          loading={isLoading}
+        >
+          Saving...
+        </InlineToast>
+      )}
       {fieldState.showSuccess && (
         <InlineToast
           suffixIcon={'check'}
