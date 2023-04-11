@@ -141,17 +141,17 @@ describe('AppRootPage', () => {
   it('should not render component if not at plugin path', async () => {
     getPluginSettingsMock.mockResolvedValue(pluginMeta);
 
-    class RootComponent extends Component<AppRootProps> {
+    class AnotherRootComponent extends Component<AppRootProps> {
       static timesRendered = 0;
       render() {
-        RootComponent.timesRendered += 1;
+        AnotherRootComponent.timesRendered += 1;
         return <p>my great component</p>;
       }
     }
 
     const plugin = new AppPlugin();
     plugin.meta = pluginMeta;
-    plugin.root = RootComponent;
+    plugin.root = AnotherRootComponent;
 
     importAppPluginMock.mockResolvedValue(plugin);
 
@@ -160,18 +160,18 @@ describe('AppRootPage', () => {
     expect(await screen.findByText('my great component')).toBeVisible();
 
     // renders the first time
-    expect(RootComponent.timesRendered).toEqual(2);
+    expect(AnotherRootComponent.timesRendered).toEqual(1);
 
     await act(async () => {
       locationService.push('/foo');
     });
 
-    expect(RootComponent.timesRendered).toEqual(2);
+    expect(AnotherRootComponent.timesRendered).toEqual(1);
 
     await act(async () => {
       locationService.push('/a/my-awesome-plugin');
     });
 
-    expect(RootComponent.timesRendered).toEqual(4);
+    expect(AnotherRootComponent.timesRendered).toEqual(2);
   });
 });
