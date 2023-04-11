@@ -35,7 +35,7 @@ export function LogRecordViewerByTimestamp({ records, commonLabels, logsRef, onL
                 {records.map((logRecord) => (
                   <React.Fragment key={uniqueId()}>
                     <AlertStateTag state={logRecord.line.previous} size="sm" muted />
-                    <Icon name="arrow-right" />
+                    <Icon name="arrow-right" size="sm" />
                     <AlertStateTag state={logRecord.line.current} />
                     <Stack direction="row">
                       <AlertInstanceValues record={logRecord.line.values} />
@@ -82,7 +82,7 @@ export function LogRecordViewerByInstance({ records, commonLabels, logsRef }: Lo
               {records.map((logRecord) => (
                 <div key={uniqueId()} ref={(ref) => ref && logsRef.current.push(ref)}>
                   <AlertStateTag state={logRecord.line.previous} size="sm" muted />
-                  <Icon name="arrow-right" />
+                  <Icon name="arrow-right" size="sm" />
                   <AlertStateTag state={logRecord.line.current} />
                   <Stack direction="row">
                     <AlertInstanceValues record={logRecord.line.values} />
@@ -109,7 +109,7 @@ const Timestamp = ({ time }: TimestampProps) => {
   return (
     <div className={styles.timestampWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
-        <Icon name="clock-nine" />
+        <Icon name="clock-nine" size="sm" />
         <span className={styles.timestampText}>{dateTimeFormat(dateTime)}</span>
         <small>({formatDistanceToNowStrict(dateTime)} ago)</small>
       </Stack>
@@ -145,10 +145,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   timestampWrapper: css`
     color: ${theme.colors.text.secondary};
-    padding: ${theme.spacing(2)} 0;
+    padding: ${theme.spacing(1)} 0;
   `,
   timestampText: css`
     color: ${theme.colors.text.primary};
+    font-size: ${theme.typography.bodySmall.fontSize};
     font-weight: ${theme.typography.fontWeightBold};
   `,
 });

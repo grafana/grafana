@@ -76,7 +76,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     };
   }, []);
 
-  const frameSubset = useMemo(() => take(dataFrames, 10), [dataFrames]);
+  const frameSubset = useMemo(() => take(dataFrames, 20), [dataFrames]);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -99,7 +99,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
           <TagList tags={commonLabels.map((label) => label.join('='))} />
         </Stack>
       )}
-      <div style={{ flex: 1 }}>
+      <div className={styles.graphWrapper}>
         {!isEmpty(frameSubset) && (
           <LogTimelineViewer frames={frameSubset} timeRange={timeRange} pointerSubject={pointerSubject.current} />
         )}
@@ -162,15 +162,14 @@ const LogTimelineViewer = React.memo(({ frames, timeRange, pointerSubject }: Log
   const theme = useTheme2();
 
   return (
-    <AutoSizer>
-      {({ width, height }) => (
+    <AutoSizer disableHeight>
+      {({ width }) => (
         <TimelineChart
           frames={frames}
           timeRange={timeRange}
           timeZone={'browser'}
           mode={TimelineMode.Changes}
-          // TODO do the math to get a good height
-          height={height}
+          height={20 * frames.length + 40}
           width={width}
           showValue={VisibilityMode.Never}
           theme={theme}
@@ -312,6 +311,9 @@ export const getStyles = (theme: GrafanaTheme2) => ({
 
     display: flex;
     flex-direction: column;
+  `,
+  graphWrapper: css`
+    padding: ${theme.spacing()} 0;
   `,
 });
 
