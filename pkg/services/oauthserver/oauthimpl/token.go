@@ -44,13 +44,13 @@ func (s *OAuth2ServiceImpl) HandleTokenRequest(rw http.ResponseWriter, req *http
 	}
 	currentOAuthSessionData.JWTClaims.Add("client_id", app.ClientID)
 
-	errClientCred := s.handleClientCredentialsV2(ctx, accessRequest, currentOAuthSessionData, app)
+	errClientCred := s.handleClientCredentials(ctx, accessRequest, currentOAuthSessionData, app)
 	if errClientCred != nil {
 		s.writeAccessError(ctx, rw, accessRequest, errClientCred)
 		return
 	}
 
-	errJWTBearer := s.handleJWTBearerV2(ctx, accessRequest, currentOAuthSessionData, app)
+	errJWTBearer := s.handleJWTBearer(ctx, accessRequest, currentOAuthSessionData, app)
 	if errJWTBearer != nil {
 		s.writeAccessError(ctx, rw, accessRequest, errJWTBearer)
 		return
@@ -86,7 +86,7 @@ func (s *OAuth2ServiceImpl) writeAccessError(ctx context.Context, rw http.Respon
 
 // V2
 
-func (s *OAuth2ServiceImpl) handleJWTBearerV2(ctx context.Context, accessRequest fosite.AccessRequester, currentOAuthSessionData *PluginAuthSession, client *oauthserver.Client) error {
+func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest fosite.AccessRequester, currentOAuthSessionData *PluginAuthSession, client *oauthserver.Client) error {
 	if !accessRequest.GetGrantTypes().ExactOne(grantTypeJWTBearer) {
 		return nil
 	}
@@ -288,7 +288,7 @@ func (*OAuth2ServiceImpl) filteredImpersonatePermissions(impersonatePermissions 
 	return correctScopes
 }
 
-func (s *OAuth2ServiceImpl) handleClientCredentialsV2(ctx context.Context, accessRequest fosite.AccessRequester, currentOAuthSessionData *PluginAuthSession, client *oauthserver.Client) error {
+func (s *OAuth2ServiceImpl) handleClientCredentials(ctx context.Context, accessRequest fosite.AccessRequester, currentOAuthSessionData *PluginAuthSession, client *oauthserver.Client) error {
 	if !accessRequest.GetGrantTypes().ExactOne("client_credentials") {
 		return nil
 	}
