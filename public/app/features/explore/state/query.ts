@@ -15,6 +15,7 @@ import {
   hasQueryImportSupport,
   HistoryItem,
   LoadingState,
+  LogsVolumeType,
   PanelEvents,
   QueryFixAction,
   SupplementaryQueryType,
@@ -338,7 +339,7 @@ export const importQueries = (
   sourceDataSource: DataSourceApi | undefined | null,
   targetDataSource: DataSourceApi,
   singleQueryChangeRef?: string // when changing one query DS to another in a mixed environment, we do not want to change all queries, just the one being changed
-): ThunkResult<Promise<void>> => {
+): ThunkResult<Promise<DataQuery[] | void>> => {
   return async (dispatch) => {
     if (!sourceDataSource) {
       // explore not initialized
@@ -395,6 +396,7 @@ export const importQueries = (
     }
 
     dispatch(queriesImportedAction({ exploreId, queries: nextQueries }));
+    return nextQueries;
   };
 };
 
@@ -695,6 +697,12 @@ function canReuseSupplementaryQueryData(
     head
   );
 
+  const allSupportZoomingIn = supplementaryQueryData.data.every((data: DataFrame) => {
+    // If log volume is based on returned log lines (i.e. LogsVolumeType.Limited),
+    // zooming in may return different results, so we don't want to reuse the data
+    return data.meta?.custom?.logsVolumeType === LogsVolumeType.FullRange;
+  });
+
   const allQueriesAreTheSame = deepEqual(newQueriesByRefId, existingDataByRefId);
 
   const allResultsHaveWiderRange = supplementaryQueryData.data.every((data: DataFrame) => {
@@ -707,7 +715,7 @@ function canReuseSupplementaryQueryData(
     return hasWiderRange;
   });
 
-  return allQueriesAreTheSame && allResultsHaveWiderRange;
+  return allSupportZoomingIn && allQueriesAreTheSame && allResultsHaveWiderRange;
 }
 
 /**
