@@ -826,7 +826,7 @@ func nameFields(queryResult backend.DataResponse, target *Query) {
 			valueField := frame.Fields[1]
 			fieldName := getFieldName(*valueField, target, metricTypeCount)
 			if valueField.Config == nil {
-    		valueField.Config = &data.FieldConfig{}
+				valueField.Config = &data.FieldConfig{}
 			}
 			valueField.Config.DisplayNameFromDS = fieldName
 		}
