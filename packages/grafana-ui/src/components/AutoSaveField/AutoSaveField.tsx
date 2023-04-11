@@ -1,6 +1,8 @@
+import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import React, { useCallback, useMemo, useRef } from 'react';
 
+import { useStyles2 } from '../../themes';
 import { Field, FieldProps } from '../Forms/Field';
 import { InlineToast } from '../InlineToast/InlineToast';
 
@@ -93,6 +95,8 @@ export function AutoSaveField<T = string>(props: Props<T>) {
    * use Field around input to pass the error message
    * use InlineToast.tsx to show the save message
    */
+  const styles = useStyles2(getStyles);
+
   return (
     <>
       <Field
@@ -102,6 +106,7 @@ export function AutoSaveField<T = string>(props: Props<T>) {
         disabled={disabled}
         error={error || (fieldState.showError && saveErrorMessage)}
         ref={fieldRef}
+        className={styles.widthFitContent}
       >
         {React.cloneElement(
           children((newValue) => {
@@ -134,3 +139,11 @@ export function AutoSaveField<T = string>(props: Props<T>) {
 }
 
 AutoSaveField.displayName = 'AutoSaveField';
+
+const getStyles = () => {
+  return {
+    widthFitContent: css({
+      width: 'fit-content',
+    }),
+  };
+};
