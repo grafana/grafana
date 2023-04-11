@@ -32,15 +32,26 @@ import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/un
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { AccessControlAction, useDispatch } from 'app/types';
-import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { getAlertingRule } from '../../../features/alerting/unified/utils/rules';
 import { AlertingRule, CombinedRuleWithLocation } from '../../../types/unified-alerting';
 
-import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
+import { GroupMode, SortOrder, StateFilter, UnifiedAlertListOptions, ViewMode } from './types';
 import GroupedModeView from './unified-alerting/GroupedView';
 import UngroupedModeView from './unified-alerting/UngroupedView';
 import { filterAlerts } from './util';
+
+function getStateList(state: StateFilter) {
+  const reducer = (list: string[], [stateKey, value]: [string, boolean]) => {
+    if (Boolean(value)) {
+      return [...list, stateKey];
+    } else {
+      return list;
+    }
+  };
+  return Object.entries(state).reduce(reducer, []);
+}
 
 export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
@@ -62,18 +73,27 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   useEffect(() => {
     //we need promRules and rulerRules for getting the uid when creating the alert link in panel in case of being a rulerRule.
+    const stateList = getStateList(props.options.stateFilter);
     dispatch(
       fetchAllPromAndRulerRulesAction(false, {
         limitAlerts: 1,
         matchers: props.options.alertInstanceLabelFilter,
-        state: [GrafanaAlertState.Alerting, GrafanaAlertState.Normal],
+        state: stateList,
       })
     );
-    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => dispatch(fetchAllPromAndRulerRulesAction()));
+    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () =>
+      dispatch(
+        fetchAllPromAndRulerRulesAction(false, {
+          limitAlerts: 1,
+          matchers: props.options.alertInstanceLabelFilter,
+          state: stateList,
+        })
+      )
+    );
     return () => {
       sub?.unsubscribe();
     };
-  }, [dispatch, dashboard, props.options.alertInstanceLabelFilter]);
+  }, [dispatch, dashboard, props.options.alertInstanceLabelFilter, props.options.stateFilter]);
 
   const { prom, ruler } = useUnifiedAlertingSelector((state) => ({
     prom: state.promRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState,

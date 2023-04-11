@@ -25,7 +25,6 @@ import {
   StateHistoryItem,
 } from 'app/types/unified-alerting';
 import {
-  GrafanaAlertState,
   PostableRulerRuleGroupDTO,
   PromApplication,
   RulerRuleDTO,
@@ -113,7 +112,7 @@ export const fetchPromRulesAction = createAsyncThunk(
       filter?: FetchPromRulesFilter;
       limitAlerts?: number;
       matchers?: string;
-      state?: GrafanaAlertState[];
+      state?: string[];
     },
     thunkAPI
   ): Promise<RuleNamespace[]> => {
@@ -356,7 +355,7 @@ interface FetchPromRulesRulesActionProps {
   filter?: FetchPromRulesFilter;
   limitAlerts?: number;
   matchers?: string;
-  state?: GrafanaAlertState[];
+  state?: string[];
 }
 
 export function fetchAllPromAndRulerRulesAction(
