@@ -22,7 +22,8 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
-import { LogMessageAnsi } from './LogMessageAnsi';
+import { LogMessageAnsi } from '../LogMessageAnsi';
+
 import { HasMoreContextRows, LogRowContextQueryErrors, LogRowContextRows } from './LogRowContextProvider';
 
 export enum LogGroupPosition {
@@ -357,7 +358,11 @@ export const LogRowContextGroup = ({
                         padding: 5px 0;
                       `}
                     >
-                      {typeof item === 'string' && textUtil.hasAnsiCodes(item) ? <LogMessageAnsi value={item} /> : item}
+                      {typeof item === 'string' && textUtil.hasAnsiCodes(item) ? (
+                        <LogMessageAnsi value={item} />
+                      ) : (
+                        String(item)
+                      )}
                     </div>
                   );
                 }}

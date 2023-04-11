@@ -26,7 +26,7 @@ export function DataSourceTestingStatus({ testingStatus }: Props) {
             <>
               {detailsMessage}
               {detailsVerboseMessage ? (
-                <details style={{ whiteSpace: 'pre-wrap' }}>{detailsVerboseMessage}</details>
+                <details style={{ whiteSpace: 'pre-wrap' }}>{String(detailsVerboseMessage)}</details>
               ) : null}
             </>
           )}

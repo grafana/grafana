@@ -71,7 +71,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
     }
   };
 
-  renderPanel = (isInView: boolean) => {
+  renderPanel = ({ isInView }: { isInView: boolean }) => {
     const { dashboard, panel, isViewing, isEditing, width, height, plugin, timezone, hideMenu } = this.props;
 
     if (!plugin) {
@@ -118,7 +118,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
         {this.renderPanel}
       </LazyLoader>
     ) : (
-      this.renderPanel(true)
+      this.renderPanel({ isInView: true })
     );
   }
 }
