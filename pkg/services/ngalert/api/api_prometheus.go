@@ -373,12 +373,14 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 				}
 			}
 
-			lbs := make(model.LabelSet)
-			for k, v := range alertState.Labels {
-				lbs[model.LabelName(k)] = model.LabelValue(v)
-			}
-			if !matchers.Matches(lbs) {
-				continue
+			if len(matchers) > 0 {
+				lbs := make(model.LabelSet)
+				for k, v := range alertState.Labels {
+					lbs[model.LabelName(k)] = model.LabelValue(v)
+				}
+				if !matchers.Matches(lbs) {
+					continue
+				}
 			}
 
 			alertingRule.Alerts = append(alertingRule.Alerts, alert)
