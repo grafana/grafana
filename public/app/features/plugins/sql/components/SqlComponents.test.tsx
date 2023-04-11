@@ -28,7 +28,7 @@ describe('SqlQueryEditor', () => {
       await waitFor(() => {
         const alert = screen.getByRole('alert');
         expect(alert.textContent).toContain(no_postgres_database_text);
-        expect(alert.textContent).not.toContain(no_postgres_database_text);
+        expect(alert.textContent).not.toContain(database_update_text);
       });
     });
   });
