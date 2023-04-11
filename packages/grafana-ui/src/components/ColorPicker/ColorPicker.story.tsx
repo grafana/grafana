@@ -1,6 +1,6 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/client-api';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { SeriesColorPicker, ColorPicker, clearButtonStyles, useStyles2 } from '@grafana/ui';
@@ -11,9 +11,12 @@ import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 import mdx from './ColorPicker.mdx';
 import { ColorPickerInput } from './ColorPickerInput';
 
-const meta: ComponentMeta<typeof ColorPicker> = {
+const meta: Meta<typeof ColorPicker> = {
   title: 'Pickers and Editors/ColorPicker',
   component: ColorPicker,
+  // SB7 has broken subcomponent types due to dropping support for the feature
+  // https://github.com/storybookjs/storybook/issues/20782
+  // @ts-ignore
   subcomponents: { SeriesColorPicker, ColorPickerInput },
   decorators: [withCenteredStory],
   parameters: {

@@ -9,6 +9,9 @@ import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 const meta: ComponentMeta<typeof ColorPickerPopover> = {
   title: 'Pickers and Editors/ColorPicker/Popovers',
   component: ColorPickerPopover,
+  // SB7 has broken subcomponent types due to dropping support for the feature
+  // https://github.com/storybookjs/storybook/issues/20782
+  // @ts-ignore
   subcomponents: { SeriesColorPickerPopover },
   decorators: [withCenteredStory],
 };
