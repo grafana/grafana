@@ -95,4 +95,5 @@ export interface FeatureToggles {
   renderAuthJWT?: boolean;
   pyroscopeFlameGraph?: boolean;
   externalServiceAuth?: boolean;
+  dataplaneFrontendFallback?: boolean;
 }
