@@ -67,7 +67,6 @@ func (s *OAuth2ServiceImpl) HandleTokenRequest(rw http.ResponseWriter, req *http
 	// All done, send the response.
 	// The client now has a valid access token
 	s.oauthProvider.WriteAccessResponse(ctx, rw, accessRequest, response)
-
 }
 
 func getUserIDFromSubject(subject string) (int64, error) {
