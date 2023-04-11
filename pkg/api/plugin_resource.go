@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -199,7 +200,9 @@ func (hs *HTTPServer) flushStream(ctx context.Context, req *backend.CallResource
 
 		if _, err := w.Write(resp.Body); err != nil {
 			hs.log.Error("Failed to write resource response", "err", err)
-		} else {
+		} else if hs.Features.IsEnabled(featuremgmt.FlagUseCachingService) {
+			// Placing the new service implementation behind a feature flag until it is known to be stable
+
 			// The enterprise implementation of this function will use the headers and status of the first response,
 			// And append the body of any subsequent responses. It waits for the context to be canceled before caching the cumulative result.
 			hs.cachingService.CacheResourceResponse(ctx, req, resp)

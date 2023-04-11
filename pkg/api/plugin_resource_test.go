@@ -108,7 +108,7 @@ func TestCallResource(t *testing.T) {
 			req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 			return errors.New("something went wrong")
 		}),
-	}, pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{}, tracing.InitializeTracerForTest(), &caching.OSSCachingService{})...)
+	}, pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{}, tracing.InitializeTracerForTest(), &caching.OSSCachingService{}, &featuremgmt.FeatureManager{})...)
 	require.NoError(t, err)
 
 	srv = SetupAPITestServer(t, func(hs *HTTPServer) {
