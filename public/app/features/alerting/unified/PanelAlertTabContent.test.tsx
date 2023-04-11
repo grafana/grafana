@@ -325,6 +325,8 @@ describe('PanelAlertTabContent', () => {
         dashboardUID: dashboard.uid,
         panelId: panel.id,
       },
+      undefined,
+      undefined,
       undefined
     );
   });
