@@ -43,7 +43,7 @@ export const TimePickerWithHistory = (props: Props) => {
 
 function deserializeHistory(values: TimePickerHistoryItem[]): TimeRange[] {
   // The history is saved in UTC and with the default date format, so we need to pass those values to the convertRawToRange
-  return values.map((item) => rangeUtil.convertRawToRange(item, 'utc', undefined));
+  return values.map((item) => rangeUtil.convertRawToRange(item, 'utc', undefined, 'YYYY-MM-DD HH:mm:ss'));
 }
 
 function migrateHistory(values: LSTimePickerHistoryItem[]): TimePickerHistoryItem[] {
