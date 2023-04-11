@@ -15,6 +15,10 @@ interface TableSelectorProps extends ResourceSelectorProps {
 
 export const TableSelector = ({ db, dataset, table, className, onChange }: TableSelectorProps) => {
   const state = useAsync(async () => {
+    if (!dataset) {
+      return [];
+    }
+
     const tables = await db.tables(dataset);
     return tables.map(toOption);
   }, [dataset]);
