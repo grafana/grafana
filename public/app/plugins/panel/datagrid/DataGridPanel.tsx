@@ -16,7 +16,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import {
   ArrayVector,
-  DataFrame,
   Field,
   MutableDataFrame,
   PanelProps,
@@ -30,8 +29,6 @@ import { useTheme2 } from '@grafana/ui';
 
 import '@glideapps/glide-data-grid/dist/index.css';
 
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-
 import { AddColumn } from './components/AddColumn';
 import { DatagridContextMenu } from './components/DatagridContextMenu';
 import { PanelOptions } from './panelcfg.gen';
@@ -41,7 +38,6 @@ import {
   EMPTY_CELL,
   EMPTY_GRID_SELECTION,
   getCellWidth,
-  GRAFANA_DS,
   isDatagridEditEnabled,
   publishSnapshot,
   RIGHT_ELEMENT_PROPS,
@@ -60,15 +56,15 @@ interface DatagridContextMenuData {
 interface Props extends PanelProps<PanelOptions> {}
 
 export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig }) => {
-  const [gridData, setGridData] = useState<DataFrame>(data.series[options.selectedSeries ?? 0]);
   const [columnWidths, setColumnWidths] = useState<Map<number, number>>(new Map());
   const [columns, setColumns] = useState<SizedGridColumn[]>([]);
   const [contextMenuData, setContextMenuData] = useState<DatagridContextMenuData>({ isContextMenuOpen: false });
   const [gridSelection, setGridSelection] = useState<GridSelection>(EMPTY_GRID_SELECTION);
   const [columnFreezeIndex, setColumnFreezeIndex] = useState<number>(0);
   const [toggleSearch, setToggleSearch] = useState<boolean>(false);
-  const [isSnapshotted, setIsSnapshotted] = useState<boolean>(false);
   const [isResizeInProgress, setIsResizeInProgress] = useState<boolean>(false);
+
+  const frame = data.series[options.selectedSeries ?? 0];
 
   const theme = useTheme2();
   const gridTheme = {
@@ -95,13 +91,13 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
       [FieldType.other, GridColumnIcon.HeaderReference],
     ]);
 
-    if (!gridData) {
+    if (!frame) {
       return;
     }
 
     setColumns([
-      ...gridData.fields.map((f, i) => {
-        const displayName = getFieldDisplayName(f, gridData);
+      ...frame.fields.map((f, i) => {
+        const displayName = getFieldDisplayName(f, frame);
         const width = columnWidths.get(i) ?? getCellWidth(f, theme.typography.fontSize);
         return {
           title: displayName,
@@ -112,37 +108,14 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         };
       }),
     ]);
-  }, [columnWidths, gridData, theme.typography.fontSize]);
+  }, [columnWidths, frame, theme.typography.fontSize]);
 
   useEffect(() => {
     setGridColumns();
-  }, [gridData, setGridColumns]);
-
-  useEffect(() => {
-    const panelModel = getDashboardSrv().getCurrent()?.getPanelById(id);
-
-    if (panelModel?.datasource?.type !== GRAFANA_DS.type) {
-      setIsSnapshotted(false);
-    } else {
-      setIsSnapshotted(true);
-    }
-  }, [id, options, data]);
-
-  useEffect(() => {
-    //If it's not using a snapshot keep intermediary layer gridData updated with data
-    if (!isSnapshotted) {
-      setGridData(data.series[options.selectedSeries ?? 0]);
-    }
-  }, [data, gridData.fields.length, gridData.length, isSnapshotted, options.selectedSeries]);
-
-  useEffect(() => {
-    if (isSnapshotted) {
-      publishSnapshot(gridData, id);
-    }
-  }, [gridData, id, isSnapshotted]);
+  }, [frame, setGridColumns]);
 
   const getCellContent = ([col, row]: Item): GridCell => {
-    const field: Field = gridData.fields[col];
+    const field: Field = frame.fields[col];
 
     if (!field) {
       return EMPTY_CELL;
@@ -187,7 +160,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
 
   const onCellEdited = (cell: Item, newValue: EditableGridCell) => {
     const [col, row] = cell;
-    const field: Field = gridData.fields[col];
+    const field: Field = frame.fields[col];
 
     if (!field) {
       return;
@@ -198,14 +171,13 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     values[row] = newValue.data;
     field.values = new ArrayVector(values);
 
-    setIsSnapshotted(true);
-    setGridData(new MutableDataFrame(gridData));
+    publishSnapshot(new MutableDataFrame(frame), id);
   };
 
   const onColumnInputBlur = (columnName: string) => {
-    const len = gridData.length ?? 0;
+    const len = frame.length ?? 0;
 
-    const newFrame = new MutableDataFrame(gridData);
+    const newFrame = new MutableDataFrame(frame);
 
     const field: Field = {
       name: columnName,
@@ -216,16 +188,14 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
 
     newFrame.addField(field);
 
-    setIsSnapshotted(true);
-    setGridData(newFrame);
+    publishSnapshot(newFrame, id);
   };
 
   const addNewRow = () => {
-    const newFrame = new MutableDataFrame(gridData);
+    const newFrame = new MutableDataFrame(frame);
     newFrame.appendRow(new Array(newFrame.fields.length).fill(null));
 
-    setIsSnapshotted(true);
-    setGridData(newFrame);
+    publishSnapshot(newFrame, id);
   };
 
   const onColumnResize = (column: GridColumn, newSize: number, colIndex: number, newSizeWithGrow: number) => {
@@ -249,12 +219,12 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
 
   const onDeletePressed = (selection: GridSelection) => {
     if (selection.current && selection.current.range) {
-      setGridData(clearCellsFromRangeSelection(gridData, selection.current.range));
+      publishSnapshot(clearCellsFromRangeSelection(frame, selection.current.range), id);
       return true;
     }
 
     if (selection.rows) {
-      setGridData(deleteRows(gridData, selection.rows.toArray()));
+      publishSnapshot(deleteRows(frame, selection.rows.toArray()), id);
       return true;
     }
 
@@ -297,17 +267,16 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   };
 
   const onColumnMove = (from: number, to: number) => {
-    const newFrame = new MutableDataFrame(gridData);
+    const newFrame = new MutableDataFrame(frame);
     const field = newFrame.fields[from];
     newFrame.fields.splice(from, 1);
     newFrame.fields.splice(to, 0, field);
 
-    setIsSnapshotted(true);
-    setGridData(newFrame);
+    publishSnapshot(newFrame, id);
   };
 
   const onRowMove = (from: number, to: number) => {
-    const newFrame = new MutableDataFrame(gridData);
+    const newFrame = new MutableDataFrame(frame);
 
     for (const field of newFrame.fields) {
       const values = field.values.toArray();
@@ -317,8 +286,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
       field.values = new ArrayVector(values);
     }
 
-    setIsSnapshotted(true);
-    setGridData(newFrame);
+    publishSnapshot(newFrame, id);
   };
 
   if (!document.getElementById('portal')) {
@@ -327,11 +295,11 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     document.body.appendChild(portal);
   }
 
-  if (!gridData) {
+  if (!frame) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
 
-  const numRows = gridData.length;
+  const numRows = frame.length;
   const styles = getStyles(theme, isResizeInProgress);
 
   return (
@@ -379,8 +347,8 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
           y={contextMenuData.y!}
           column={contextMenuData.column}
           row={contextMenuData.row}
-          data={gridData}
-          saveData={setGridData}
+          data={frame}
+          saveData={(data) => publishSnapshot(data, id)}
           closeContextMenu={closeContextMenu}
           setToggleSearch={setToggleSearch}
           gridSelection={gridSelection}
@@ -416,7 +384,7 @@ const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => {
       }
     `,
     addColumnDiv: css`
-      width: '120px';
+      width: 120px;
       display: flex;
       flex-direction: column;
       background-color: ${theme.colors.background.primary};
@@ -424,7 +392,7 @@ const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => {
         pointer-events: ${isResizeInProgress ? 'none' : 'auto'};
         border: none;
         outline: none;
-        height: '37px';
+        height: 37px;
         font-size: 20px;
         background-color: ${theme.colors.background.secondary};
         color: ${theme.colors.text.primary};
@@ -437,7 +405,7 @@ const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => {
         }
       }
       input {
-        height: '37px';
+        height: 37px;
         border: 1px solid ${theme.colors.primary.main};
         :focus {
           outline: none;

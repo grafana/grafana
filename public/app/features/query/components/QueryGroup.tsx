@@ -69,6 +69,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   backendSrv = backendSrv;
   dataSourceSrv = getDataSourceSrv();
   querySubscription: Unsubscribable | null = null;
+  datagridEditEventSubscription: Unsubscribable | null = null;
 
   state: State = {
     isLoadingHelp: false,
@@ -99,7 +100,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     if (config.featureToggles.enableDatagridEditingPanel) {
       const dashboard = getDashboardSrv().getCurrent();
       if (dashboard) {
-        dashboard.events.getStream(DatagridDataChangeEvent).subscribe({
+        this.datagridEditEventSubscription = dashboard.events.getStream(DatagridDataChangeEvent).subscribe({
           next: async (event) => {
             this.onQueriesChange([
               {
@@ -150,6 +151,13 @@ export class QueryGroup extends PureComponent<Props, State> {
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
       this.querySubscription = null;
+    }
+
+    if (config.featureToggles.enableDatagridEditingPanel) {
+      if (this.datagridEditEventSubscription) {
+        this.datagridEditEventSubscription.unsubscribe();
+        this.datagridEditEventSubscription = null;
+      }
     }
   }
 
