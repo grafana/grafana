@@ -185,7 +185,7 @@ We updated the reporting UI to better fit the new navigation style, adding a hor
 
 {{< figure src="/media/docs/grafana/Screenshot-newUI-report.png" max-width="750px" caption="Grafana new report UI" >}}
 
-## Experimental support to use JWTs as auth method
+## Experimental support for using JWTs as auth method
 
 _Experimental in all editions of Grafana, for on-prem users only._
 
