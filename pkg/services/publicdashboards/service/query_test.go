@@ -712,7 +712,7 @@ func TestFindAnnotations(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		config := setting.NewCfg()
 		tagService := tagimpl.ProvideService(sqlStore, sqlStore.Cfg)
-		annotationsRepo := annotationsimpl.ProvideService(sqlStore, config, tagService)
+		annotationsRepo := annotationsimpl.ProvideService(sqlStore, config, featuremgmt.WithFeatures(), tagService)
 		fakeStore := FakePublicDashboardStore{}
 		service := &PublicDashboardServiceImpl{
 			log:             log.New("test.logger"),

@@ -24,6 +24,9 @@ type Cfg struct {
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
 
+	// Proxy Settings
+	ProxySettings setting.SecureSocksDSProxySettings
+
 	BuildVersion string // TODO Remove
 
 	LogDatasourceRequests bool
@@ -34,8 +37,8 @@ type Cfg struct {
 }
 
 func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
-	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, azure *azsettings.AzureSettings, grafanaVersion string,
-	logDatasourceRequests bool, pluginsCDNURLTemplate string, tracing Tracing) *Cfg {
+	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
+	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, tracing Tracing) *Cfg {
 	return &Cfg{
 		log:                     log.New("plugin.cfg"),
 		PluginsPath:             pluginsPath,
@@ -46,6 +49,7 @@ func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSetti
 		AWSAllowedAuthProviders: awsAllowedAuthProviders,
 		AWSAssumeRoleEnabled:    awsAssumeRoleEnabled,
 		Azure:                   azure,
+		ProxySettings:           secureSocksDSProxy,
 		LogDatasourceRequests:   logDatasourceRequests,
 		PluginsCDNURLTemplate:   pluginsCDNURLTemplate,
 		Tracing:                 tracing,

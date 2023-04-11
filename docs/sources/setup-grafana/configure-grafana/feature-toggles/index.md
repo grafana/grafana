@@ -60,7 +60,6 @@ Alpha features might be changed or removed without prior notice.
 
 | Feature toggle name                | Description                                                                                                                                                                                         |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `alertingBigTransactions`          | Use big transactions for alerting database writes                                                                                                                                                   |
 | `dashboardPreviews`                | Create and show thumbnails for dashboard search results                                                                                                                                             |
 | `live-service-web-worker`          | This will use a webworker thread to processes events rather than the main thread                                                                                                                    |
 | `queryOverLive`                    | Use Grafana Live WebSocket to execute backend queries                                                                                                                                               |
@@ -109,6 +108,7 @@ Alpha features might be changed or removed without prior notice.
 | `disableSSEDataplane`              | Disables dataplane specific processing in server side expressions.                                                                                                                                  |
 | `unifiedRequestLog`                | Writes error logs to the request logger                                                                                                                                                             |
 | `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                                                                                                                |
+| `dataplaneFrontendFallback`        | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                |
 
 ## Development feature toggles
 

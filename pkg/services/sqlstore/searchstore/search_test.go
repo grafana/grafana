@@ -10,7 +10,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -146,6 +148,145 @@ func TestBuilder_Permissions(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Len(t, res, 0)
+}
+
+func TestBuilder_RBAC(t *testing.T) {
+	testsCases := []struct {
+		desc            string
+		userPermissions []accesscontrol.Permission
+		features        featuremgmt.FeatureToggles
+		expectedParams  []interface{}
+	}{
+		{
+			desc:     "no user permissions",
+			features: featuremgmt.WithFeatures(),
+			expectedParams: []interface{}{
+				int64(1),
+			},
+		},
+		{
+			desc: "user with view permission",
+			userPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
+			},
+			features: featuremgmt.WithFeatures(),
+			expectedParams: []interface{}{
+				int64(1),
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"dashboards:read",
+				"dashboards:write",
+				2,
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"dashboards:read",
+				"dashboards:write",
+				2,
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"folders:read",
+				"dashboards:create",
+				2,
+			},
+		},
+		{
+			desc: "user with view permission with nesting",
+			userPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
+			},
+			features: featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			expectedParams: []interface{}{
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"dashboards:read",
+				"dashboards:write",
+				2,
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"folders:read",
+				"dashboards:create",
+				2,
+				int64(1),
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"dashboards:read",
+				"dashboards:write",
+				2,
+			},
+		},
+	}
+
+	user := &user.SignedInUser{
+		UserID:  1,
+		OrgID:   1,
+		OrgRole: org.RoleViewer,
+	}
+
+	store := setupTestEnvironment(t)
+	createDashboards(t, store, 0, 1, user.OrgID)
+
+	recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
+	require.NoError(t, err)
+
+	for _, tc := range testsCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			if len(tc.userPermissions) > 0 {
+				user.Permissions = map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tc.userPermissions)}
+			}
+
+			level := dashboards.PERMISSION_EDIT
+
+			builder := &searchstore.Builder{
+				Filters: []interface{}{
+					searchstore.OrgFilter{OrgId: user.OrgID},
+					searchstore.TitleSorter{},
+					permissions.NewAccessControlDashboardPermissionFilter(
+						user,
+						level,
+						"",
+						tc.features,
+						recursiveQueriesAreSupported,
+					),
+				},
+				Dialect: store.GetDialect(),
+			}
+
+			res := []dashboards.DashboardSearchProjection{}
+			err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+				sql, params := builder.ToSQL(limit, page)
+				// TODO: replace with a proper test
+				assert.Equal(t, tc.expectedParams, params)
+				return sess.SQL(sql, params...).Find(&res)
+			})
+			require.NoError(t, err)
+
+			assert.Len(t, res, 0)
+		})
+	}
 }
 
 func setupTestEnvironment(t *testing.T) db.DB {

@@ -10,12 +10,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "alertingBigTransactions",
-			Description: "Use big transactions for alerting database writes",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAlertingSquad,
-		},
-		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
@@ -516,6 +510,13 @@ var (
 			Description: "Changes flame graph to pyroscope one",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
+			Name:         "dataplaneFrontendFallback",
+			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 	}
 )
