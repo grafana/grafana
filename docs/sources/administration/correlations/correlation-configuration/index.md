@@ -8,7 +8,7 @@ weight: 10
 Each correlation is configured with the following options:
 
 **Label**
-: Link label, shown in a visualization
+: Link label, shown in the visualization
 
 **Description**
 : Optional description
