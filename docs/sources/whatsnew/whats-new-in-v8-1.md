@@ -51,7 +51,7 @@ Color scheme: **Green-Yellow-Red (by value)**
 
 For more on how to configure Graphs with by value color schemes read [Graph and color schemes]({{< relref "../visualizations/time-series/" >}}).
 
-You can also create [annotations]({{< relref "../visualizations/time-series/annotate-time-series/" >}}) in the new Time series panel bringing it closer to parity with the legacy Graph panel. To learn more, refer to the [time series panel]({{< relref "../visualizations/time-series/" >}}).
+You can also create [annotations]({{< relref "../visualizations/time-series" >}}) in the new Time series panel bringing it closer to parity with the legacy Graph panel. To learn more, refer to the [time series panel]({{< relref "../visualizations/time-series/" >}}).
 
 ### Transformations improvements
 

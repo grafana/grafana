@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -209,7 +209,8 @@ func TestAMConfigAccess(t *testing.T) {
 	})
 
 	t.Run("when creating silence", func(t *testing.T) {
-		body := `
+		now := time.Now()
+		body := fmt.Sprintf(`
 		{
 			"comment": "string",
 			"createdBy": "string",
@@ -221,9 +222,10 @@ func TestAMConfigAccess(t *testing.T) {
 				"value": "string"
 			  }
 			],
-			"startsAt": "2021-03-31T13:17:04.419Z"
+			"startsAt": "%s",
+			"endsAt": "%s"
 		  }
-		`
+		`, now.Format(time.RFC3339), now.Add(10*time.Second).Format(time.RFC3339))
 
 		testCases := []testCase{
 			{

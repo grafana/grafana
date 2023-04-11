@@ -24,7 +24,7 @@ To learn more about Grafana Enterprise, refer to [our product page](https://graf
 
 ## Enterprise features in Grafana Cloud
 
-Many Grafana Enterprise features are also available in [Grafana Cloud]({{< ref "/grafana-cloud" >}}) Pro and Advanced accounts. For details, refer to [the Grafana Cloud features table](https://grafana.com/pricing/#featuresTable) and [Enterprise features available to Grafana Cloud Pro and Advanced accounts]({{< ref "/grafana-cloud/reference/enterprise-features" >}}).
+Many Grafana Enterprise features are also available in [Grafana Cloud]({{< relref "/docs/grafana-cloud" >}}) Pro and Advanced accounts. For details, refer to [the Grafana Cloud features table](https://grafana.com/pricing/#featuresTable).
 
 ## Authentication
 
