@@ -21,9 +21,9 @@ export function AlertingSettings<T extends AlertingConfig>({ options, onOptionsC
           <div className="gf-form">
             <InlineField
               labelWidth={27}
-              label="Manage alerts via Alerting UI"
+              label="Manage alert rules in Alerting UI"
               disabled={options.readOnly}
-              tooltip="Enable it to manage alerting rules for this data source."
+              tooltip="Enable it to manage alerting rules for this data source. To manage other alerting objects, you need to add an Alertmanager datasource."
             >
               <InlineSwitch
                 value={options.jsonData.manageAlerts !== false}
