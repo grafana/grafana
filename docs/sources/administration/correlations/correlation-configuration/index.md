@@ -63,10 +63,9 @@ For more details, please see the example in [Use variables and transformations i
 
 ### Logfmt transformation
 
-Logfmt transformation deconstructs a field value containing text formatted with [logfmt key/value pairs](https://brandur.org/logfmt). Each pair becomes a variable with the key being the name of the variable.
+The logfmt transformation deconstructs a field value containing text formatted with [logfmt key/value pairs](https://brandur.org/logfmt). Each pair becomes a variable with the key being the name of the variable.
 
-Logfmt transformation requires only specifying the input field name.
-
+The logfmt transformation only requires specifying the input field name if you would like the transformation to apply to a different field than the results field.
 Example output variables for field = “host=srv001 endpoint=/test app=foo”:
 
 | name     | value  |
