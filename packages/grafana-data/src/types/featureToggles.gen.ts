@@ -97,4 +97,5 @@ export interface FeatureToggles {
   enableElasticsearchBackendQuerying?: boolean;
   authenticationConfigUI?: boolean;
   advancedDataSourcePicker?: boolean;
+  opensearchDetectVersion?: boolean;
 }
