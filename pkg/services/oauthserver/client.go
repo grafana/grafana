@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/ory/fosite"
-	"golang.org/x/crypto/bcrypt"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -88,13 +87,8 @@ func (c *Client) GetID() string { return c.ClientID }
 
 // GetHashedSecret returns the hashed secret as it is stored in the store.
 func (c *Client) GetHashedSecret() []byte {
-	//TODO: see what we do here, the secret should be stored hashed, that means we'd loose the original
-	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(c.Secret), 12)
-	if err != nil {
-		// TODO: log error
-		return []byte{}
-	}
-	return hashedSecret
+	// Hashed version is stored in the secret field
+	return []byte(c.Secret)
 }
 
 // GetRedirectURIs returns the client's allowed redirect URIs.

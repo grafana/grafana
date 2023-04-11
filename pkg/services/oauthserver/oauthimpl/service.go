@@ -17,6 +17,7 @@ import (
 	"github.com/ory/fosite/compose"
 	"github.com/ory/fosite/storage"
 	"github.com/ory/fosite/token/jwt"
+	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/square/go-jose.v2"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -509,7 +510,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 
 	client.GrantTypes = strings.Join(s.computeGrantTypes(registration.Permissions, registration.ImpersonatePermissions), ",")
 
-	// Handle RSA key options
+	// Handle key options
 	s.logger.Debug("Handle key options")
 	keys, err := s.handleKeyOptions(ctx, registration.Key)
 	if err != nil {
@@ -519,14 +520,21 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	if keys != nil {
 		client.PublicPem = []byte(keys.PublicPem)
 	}
+	dto := client.ToDTO()
+	dto.KeyResult = keys
+
+	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(client.Secret), bcrypt.DefaultCost)
+	if err != nil {
+		s.logger.Error("Error hashing secret", "client", client.LogID(), "error", err)
+		return nil, err
+	}
+	client.Secret = string(hashedSecret)
 
 	err = s.sqlstore.SaveExternalService(ctx, client)
 	if err != nil {
 		s.logger.Error("Error saving external service", "client", client.LogID(), "error", err)
 		return nil, err
 	}
-	dto := client.ToDTO()
-	dto.KeyResult = keys
 	s.logger.Debug("Registered app", "client", client.LogID())
 	return dto, nil
 }
