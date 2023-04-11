@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -374,8 +375,16 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 			}
 			p.messagesReceived.WithLabelValues(update).Inc()
 			p.messagesReceivedSize.WithLabelValues(update).Add(float64(len(data.Payload)))
+			var envelop envelop
+			if err := json.Unmarshal([]byte(data.Payload), &envelop); err != nil {
+				p.logger.Warn("error decoding the received broadcast message", "err", err)
+				continue
+			}
+			if envelop.Sender == p.name {
+				continue
+			}
 			var part clusterpb.Part
-			if err := proto.Unmarshal([]byte(data.Payload), &part); err != nil {
+			if err := proto.Unmarshal(envelop.Payload, &part); err != nil {
 				p.logger.Warn("error decoding the received broadcast message", "err", err)
 				continue
 			}
@@ -445,8 +454,17 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 			p.messagesReceived.WithLabelValues(fullState).Inc()
 			p.messagesReceivedSize.WithLabelValues(fullState).Add(float64(len(data.Payload)))
 
+			var envelop envelop
+			if err := json.Unmarshal([]byte(data.Payload), &envelop); err != nil {
+				p.logger.Warn("error decoding the received broadcast message", "err", err)
+				continue
+			}
+			if envelop.Sender == p.name {
+				continue
+			}
+
 			var fs clusterpb.FullState
-			if err := proto.Unmarshal([]byte(data.Payload), &fs); err != nil {
+			if err := proto.Unmarshal(envelop.Payload, &fs); err != nil {
 				p.logger.Warn("error unmarshaling the received remote state", "err", err)
 				continue
 			}
@@ -516,6 +534,10 @@ func (p *redisPeer) LocalState() []byte {
 	if err != nil {
 		p.logger.Warn("error encoding the local state to proto", "err", err)
 	}
+	b, err = json.Marshal(envelop{Sender: p.name, Payload: b})
+	if err != nil {
+		p.logger.Warn("error encoding the local state to json", "err", err)
+	}
 	p.messagesSent.WithLabelValues(fullState).Inc()
 	p.messagesSentSize.WithLabelValues(fullState).Add(float64(len(b)))
 	return b
@@ -531,6 +553,14 @@ func (p *redisPeer) Shutdown() {
 	}
 }
 
+// The envelop is a simple wrapper for a message that we send through redis
+// pub/sub. This wrapper enables us to know from which peer the message is
+// coming and therfore we can ignoring our own message.
+type envelop struct {
+	Sender  string `json:"sender"`
+	Payload []byte `json:"payload"`
+}
+
 type RedisChannel struct {
 	p       *redisPeer
 	key     string
@@ -543,7 +573,14 @@ func (c *RedisChannel) Broadcast(b []byte) {
 	if err != nil {
 		return
 	}
-	pub := c.p.redis.Publish(context.Background(), c.channel, string(b))
+	data, err := json.Marshal(envelop{
+		Sender:  c.p.name,
+		Payload: b,
+	})
+	if err != nil {
+		return
+	}
+	pub := c.p.redis.Publish(context.Background(), c.channel, string(data))
 	// An error here might not be as critical as one might think on first sight.
 	// The state will eventually be propagted to other members by the full sync.
 	if pub.Err() != nil {
