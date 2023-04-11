@@ -15,11 +15,10 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/gobwas/glob"
-
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	"github.com/gobwas/glob"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
