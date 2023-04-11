@@ -471,6 +471,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               </InlineField>
             </div>
           </div>
+          <div ref={this.topLogsRef} />
           <LogsMetaRow
             logRows={logRows}
             meta={logsMeta || []}
@@ -482,7 +483,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             onEscapeNewlines={this.onEscapeNewlines}
             clearDetectedFields={this.clearDetectedFields}
           />
-          <div className={styles.logsSection} ref={this.topLogsRef}>
+          <div className={styles.logsSection}>
             <div className={styles.logRows} data-testid="logRows">
               <LogRows
                 logRows={logRows}
