@@ -52,7 +52,7 @@ export function InlineToast({
       >
         <span className={cx(styles.root, placementStyles[toastPlacement])}>
           {children && <span>{children}</span>}
-          {loading && <Spinner />}
+          {loading && <Spinner className={styles.loadingSpinner} />}
           {suffixIcon && <Icon name={suffixIcon} />}
         </span>
       </div>
@@ -72,6 +72,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'inline-flex',
       gap: theme.spacing(0.5),
       alignItems: 'center',
+    }),
+    loadingSpinner: css({
+      width: '16px',
+      height: '16px',
+      fontSize: 'inherit',
     }),
   };
 };
