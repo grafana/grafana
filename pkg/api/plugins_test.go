@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/caching"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -371,9 +372,10 @@ func Test_GetPluginAssets(t *testing.T) {
 
 func TestMakePluginResourceRequest(t *testing.T) {
 	hs := HTTPServer{
-		Cfg:          setting.NewCfg(),
-		log:          log.New(),
-		pluginClient: &fakePluginClient{},
+		Cfg:            setting.NewCfg(),
+		log:            log.New(),
+		pluginClient:   &fakePluginClient{},
+		cachingService: &caching.OSSCachingService{},
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
@@ -399,6 +401,7 @@ func TestMakePluginResourceRequestSetCookieNotPresent(t *testing.T) {
 		pluginClient: &fakePluginClient{
 			headers: map[string][]string{"Set-Cookie": {"monster"}},
 		},
+		cachingService: &caching.OSSCachingService{},
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	resp := httptest.NewRecorder()
@@ -433,6 +436,7 @@ func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
 						"x-another": {"hello"},
 					},
 				},
+				cachingService: &caching.OSSCachingService{},
 			}
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			resp := httptest.NewRecorder()
@@ -456,9 +460,10 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 		statusCode: http.StatusNoContent,
 	}
 	hs := HTTPServer{
-		Cfg:          setting.NewCfg(),
-		log:          log.New(),
-		pluginClient: pluginClient,
+		Cfg:            setting.NewCfg(),
+		log:            log.New(),
+		pluginClient:   pluginClient,
+		cachingService: &caching.OSSCachingService{},
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	resp := httptest.NewRecorder()
