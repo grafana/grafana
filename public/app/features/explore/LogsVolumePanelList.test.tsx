@@ -63,7 +63,7 @@ describe('LogsVolumePanelList', () => {
       },
       onLoadCallback
     );
-    expect(screen.getByText('The logs volume query is taking too long and has timed out')).toBeInTheDocument();
+    expect(screen.getByText('The logs volume query has timed out')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onLoadCallback).toHaveBeenCalled();
   });

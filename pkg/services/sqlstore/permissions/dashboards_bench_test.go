@@ -10,26 +10,59 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards int) {
-	store := setupBenchMark(b, numUsers, numDashboards)
+func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, numFolders, nestingLevel int) {
+	usr := user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{
+		1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+			{
+				Action: dashboards.ActionFoldersCreate,
+			},
+			{
+				Action: dashboards.ActionFoldersWrite,
+				Scope:  dashboards.ScopeFoldersAll,
+			},
+		}),
+	}}
+
+	features := featuremgmt.WithFeatures()
+	// if nestingLevel > 0 enable nested folders
+	if nestingLevel > 0 {
+		features = featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
+	}
+
+	store := setupBenchMark(b, usr, features, numUsers, numDashboards, numFolders, nestingLevel)
+
+	recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
+	require.NoError(b, err)
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		usr := &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: {}}}
-		filter := permissions.NewAccessControlDashboardPermissionFilter(usr, dashboards.PERMISSION_VIEW, "")
+		filter := permissions.NewAccessControlDashboardPermissionFilter(&usr, dashboards.PERMISSION_VIEW, "", features, recursiveQueriesAreSupported)
 		var result int
 		err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			q, params := filter.Where()
-			_, err := sess.SQL("SELECT COUNT(*) FROM dashboard WHERE "+q, params...).Get(&result)
+			recQry, recQryParams := filter.With()
+			params = append(recQryParams, params...)
+			_, err := sess.SQL(recQry+"SELECT COUNT(*) FROM dashboard WHERE "+q, params...).Get(&result)
 			return err
 		})
 		require.NoError(b, err)
@@ -37,15 +70,78 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards in
 	}
 }
 
-func setupBenchMark(b *testing.B, numUsers, numDashboards int) db.DB {
+func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.FeatureToggles, numUsers, numDashboards, numFolders, nestingLevel int) db.DB {
+	if nestingLevel > folder.MaxNestedFolderDepth {
+		nestingLevel = folder.MaxNestedFolderDepth
+	}
+
 	store := db.InitTestDB(b)
-	now := time.Now()
-	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		dashes := make([]dashboards.Dashboard, 0, numDashboards)
-		for i := 1; i <= numDashboards; i++ {
+
+	quotaService := quotatest.New(false, nil)
+
+	dashboardWriteStore, err := database.ProvideDashboardStore(store, store.Cfg, features, tagimpl.ProvideService(store, store.Cfg), quotaService)
+	require.NoError(b, err)
+
+	folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), store.Cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(store), store, features)
+
+	origNewGuardian := guardian.New
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
+	b.Cleanup(func() {
+		guardian.New = origNewGuardian
+	})
+
+	rootFolders := make([]*folder.Folder, 0, numFolders)
+	dashes := make([]dashboards.Dashboard, 0, numDashboards)
+	parentUID := ""
+	for i := 0; i < numFolders; i++ {
+		uid := fmt.Sprintf("f%d", i)
+		f, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+			UID:          uid,
+			OrgID:        usr.OrgID,
+			Title:        uid,
+			SignedInUser: &usr,
+			ParentUID:    parentUID,
+		})
+		require.NoError(b, err)
+		rootFolders = append(rootFolders, f)
+
+		parentUID := f.UID
+		var leaf *folder.Folder
+		for j := 1; j <= nestingLevel; j++ {
+			uid := fmt.Sprintf("f%d_%d", i, j)
+			sf, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+				UID:          uid,
+				OrgID:        usr.OrgID,
+				Title:        uid,
+				SignedInUser: &usr,
+				ParentUID:    parentUID,
+			})
+			require.NoError(b, err)
+			parentUID = sf.UID
+			leaf = sf
+		}
+
+		str := fmt.Sprintf("dashboard under folder %s", leaf.Title)
+		now := time.Now()
+		dashes = append(dashes, dashboards.Dashboard{
+			OrgID:    usr.OrgID,
+			IsFolder: false,
+			UID:      str,
+			Slug:     str,
+			Title:    str,
+			Data:     simplejson.New(),
+			Created:  now,
+			Updated:  now,
+			FolderID: leaf.ID,
+		})
+	}
+
+	err = store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		now := time.Now()
+		for i := len(dashes); i < numDashboards; i++ {
 			str := strconv.Itoa(i)
 			dashes = append(dashes, dashboards.Dashboard{
-				OrgID:    1,
+				OrgID:    usr.OrgID,
 				IsFolder: false,
 				UID:      str,
 				Slug:     str,
@@ -79,10 +175,24 @@ func setupBenchMark(b *testing.B, numUsers, numDashboards int) db.DB {
 				Created: now,
 			})
 			for _, dash := range dashes {
+				// add permission to read dashboards under the general
+				if dash.FolderID == 0 {
+					permissions = append(permissions, accesscontrol.Permission{
+						RoleID:  int64(i),
+						Action:  dashboards.ActionDashboardsRead,
+						Scope:   dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID),
+						Updated: now,
+						Created: now,
+					})
+				}
+			}
+
+			for _, f := range rootFolders {
+				// add permission to read folders under specific folders
 				permissions = append(permissions, accesscontrol.Permission{
 					RoleID:  int64(i),
 					Action:  dashboards.ActionDashboardsRead,
-					Scope:   dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID),
+					Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID),
 					Updated: now,
 					Created: now,
 				})
@@ -113,16 +223,52 @@ func setupBenchMark(b *testing.B, numUsers, numDashboards int) db.DB {
 	return store
 }
 
-func BenchmarkDashboardPermissionFilter_100_100(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 100, 100)
+func BenchmarkDashboardPermissionFilter_100_100_0_0(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 100, 0, 0)
 }
 
-func BenchmarkDashboardPermissionFilter_100_1000(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 100, 1000)
+func BenchmarkDashboardPermissionFilter_100_100_10_2(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 100, 10, 2)
 }
 
-func BenchmarkDashboardPermissionFilter_300_10000(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 300, 10000)
+func BenchmarkDashboardPermissionFilter_100_100_10_4(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 100, 10, 4)
+}
+
+func BenchmarkDashboardPermissionFilter_100_100_10_8(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 100, 10, 8)
+}
+
+func BenchmarkDashboardPermissionFilter_100_1000_0_0(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 1000, 0, 0)
+}
+
+func BenchmarkDashboardPermissionFilter_100_1000_10_2(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 1000, 10, 2)
+}
+
+func BenchmarkDashboardPermissionFilter_100_1000_10_4(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 1000, 10, 4)
+}
+
+func BenchmarkDashboardPermissionFilter_100_1000_10_8(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 1000, 10, 8)
+}
+
+func BenchmarkDashboardPermissionFilter_300_10000_0_0(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 300, 10000, 0, 0)
+}
+
+func BenchmarkDashboardPermissionFilter_300_10000_10_2(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 300, 10000, 10, 2)
+}
+
+func BenchmarkDashboardPermissionFilter_300_10000_10_4(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 300, 10000, 10, 4)
+}
+
+func BenchmarkDashboardPermissionFilter_300_10000_10_8(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 300, 10000, 10, 8)
 }
 
 func batch(count, batchSize int, eachFn func(start, end int) error) error {
