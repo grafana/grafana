@@ -183,4 +183,4 @@ _Generally available in Enterprise edition of Grafana._
 
 We updated the reporting UI to fit better the new navigation style, adding a horizontal slider and moving the Preview and Send buttons to the Action section in the page. We also fixed the alignment of the different sections. 
 
-{{< figure src="/media/docs/grafana/Screenshot-newUI-report.png" max-width="750px" caption="Grafana new report UI >}}
+{{< figure src="/media/docs/grafana/Screenshot-newUI-report.png" max-width="750px" caption="Grafana new report UI" >}}
