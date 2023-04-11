@@ -1,0 +1,277 @@
+import { css } from '@emotion/css';
+import { groupBy, isEmpty, last, sortBy, take, uniq } from 'lodash';
+import React, { useEffect, useRef } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import { BehaviorSubject } from 'rxjs';
+
+import {
+  ArrayVector,
+  DataFrame,
+  dateTime,
+  Field,
+  FieldType,
+  getDisplayProcessor,
+  GrafanaTheme2,
+  SortedVector,
+  TimeRange,
+} from '@grafana/data';
+import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
+import { Stack } from '@grafana/experimental';
+import { LegendDisplayMode, MappingType, ThresholdsMode, VisibilityMode } from '@grafana/schema';
+import { Alert, TagList, useStyles2, useTheme2 } from '@grafana/ui';
+import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
+import { TimelineMode } from 'app/core/components/TimelineChart/utils';
+
+import { stateHistoryApi } from '../../../api/stateHistoryApi';
+
+import { LogRecordViewerByTimestamp } from './LogRecordViewer';
+import { extractCommonLabels, LogRecord, omitLabels } from './common';
+
+interface Props {
+  ruleUID: string;
+}
+
+const LokiStateHistory = ({ ruleUID }: Props) => {
+  const { useGetRuleHistoryQuery } = stateHistoryApi;
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
+
+  const frameSubsetRef = useRef<DataFrame[]>([]);
+
+  const logsRef = useRef<HTMLDivElement[]>([]);
+  const pointerSubject = useRef(
+    new BehaviorSubject<{ seriesIdx: number; pointIdx: number }>({ seriesIdx: 0, pointIdx: 0 })
+  );
+
+  const timeRange = getDefaultTimeRange();
+  const {
+    currentData: stateHistory,
+    isLoading,
+    isError,
+    error,
+  } = useGetRuleHistoryQuery({ ruleUid: ruleUID, from: timeRange.from.unix(), to: timeRange.to.unix() });
+
+  useEffect(() => {
+    const subject = pointerSubject.current;
+    subject.subscribe((x) => {
+      const uniqueTimestamps = sortBy(
+        uniq(frameSubsetRef.current.flatMap((frame) => frame.fields[0].values.toArray()))
+      );
+
+      const timestamp = uniqueTimestamps[x.pointIdx];
+
+      const refToScroll = logsRef.current.find((x) => parseInt(x.id, 10) === timestamp);
+      refToScroll?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    return () => {
+      subject.unsubscribe();
+    };
+  }, []);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+  if (isError) {
+    return (
+      <Alert title="Error fetching the state history" severity="error">
+        {error instanceof Error ? error.message : 'Unable to fetch alert state history'}
+      </Alert>
+    );
+  }
+
+  // merge timestamp with "line"
+  // @ts-ignore
+  const timestamps: number[] = stateHistory?.data?.values[0] ?? [];
+  const lines = stateHistory?.data?.values[1] ?? [];
+
+  const linesWithTimestamp = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
+    // @ts-ignore
+    const line: Line = lines[index];
+    acc.push({ timestamp, line });
+
+    return acc;
+  }, []);
+
+  // group all records by alert instance (unique set of labels)
+  const groupedLines = groupBy(linesWithTimestamp, (record: LogRecord) => {
+    return JSON.stringify(record.line.labels);
+  });
+
+  // find common labels so we can extract those from the instances
+  const commonLabels = extractCommonLabels(groupedLines);
+
+  const dataFrames: DataFrame[] = Object.entries(groupedLines).map<DataFrame>(([key, records]) => {
+    return logRecordsToDataFrame(key, records, commonLabels, theme);
+  });
+
+  const frameSubset = take(dataFrames, 10);
+  frameSubsetRef.current = frameSubset;
+
+  return (
+    <div className={styles.fullSize}>
+      {!isEmpty(commonLabels) && (
+        <Stack direction="row" alignItems="center">
+          <strong>Common labels</strong>
+          <TagList tags={commonLabels.map((label) => label.join('='))} />
+        </Stack>
+      )}
+      <div style={{ flex: 1 }}>
+        {!isEmpty(frameSubset) && (
+          <AutoSizer>
+            {({ width, height }) => (
+              <TimelineChart
+                frames={frameSubset}
+                timeRange={timeRange}
+                timeZone={'browser'}
+                mode={TimelineMode.Changes}
+                // TODO do the math to get a good height
+                height={height}
+                width={width}
+                showValue={VisibilityMode.Never}
+                theme={theme}
+                rowHeight={0.8}
+                legend={{
+                  calcs: [],
+                  displayMode: LegendDisplayMode.List,
+                  placement: 'bottom',
+                  showLegend: true,
+                }}
+                legendItems={[
+                  { label: 'Normal', color: theme.colors.success.main, yAxis: 1 },
+                  { label: 'Pending', color: theme.colors.warning.main, yAxis: 1 },
+                  { label: 'Alerting', color: theme.colors.error.main, yAxis: 1 },
+                  { label: 'NoData', color: theme.colors.info.main, yAxis: 1 },
+                ]}
+              >
+                {(builder) => {
+                  builder.setSync();
+                  const interpolator = builder.getTooltipInterpolator();
+
+                  // I found this in TooltipPlugin.tsx
+                  if (interpolator) {
+                    builder.addHook('setCursor', (u) => {
+                      interpolator(
+                        (seriesIdx) => {
+                          if (seriesIdx) {
+                            const currentPointer = pointerSubject.current.getValue();
+                            pointerSubject.current.next({ ...currentPointer, seriesIdx });
+                          }
+                        },
+                        (pointIdx) => {
+                          if (pointIdx) {
+                            const currentPointer = pointerSubject.current.getValue();
+                            pointerSubject.current.next({ ...currentPointer, pointIdx });
+                          }
+                        },
+                        () => {},
+                        u
+                      );
+                    });
+                  }
+                }}
+              </TimelineChart>
+            )}
+          </AutoSizer>
+        )}
+      </div>
+      <LogRecordViewerByTimestamp records={linesWithTimestamp} commonLabels={commonLabels} logsRef={logsRef} />
+    </div>
+  );
+};
+
+function logRecordsToDataFrame(
+  instanceLabels: string,
+  records: LogRecord[],
+  commonLabels: Array<[string, string]>,
+  theme: GrafanaTheme2
+): DataFrame {
+  const parsedInstanceLabels = Object.entries<string>(JSON.parse(instanceLabels));
+
+  const timeIndex = records.map((_, index) => index);
+  const timeField: Field = {
+    name: 'time',
+    type: FieldType.time,
+    values: new ArrayVector([...records.map((record) => record.timestamp), Date.now()]),
+    config: { displayName: 'Time', custom: { fillOpacity: 100 } },
+  };
+
+  timeIndex.sort(fieldIndexComparer(timeField));
+
+  const stateValues = new ArrayVector([...records.map((record) => record.line.current), last(records)?.line.current]);
+
+  const frame: DataFrame = {
+    fields: [
+      {
+        ...timeField,
+        values: new SortedVector(timeField.values, timeIndex),
+      },
+      {
+        name: 'state',
+        type: FieldType.string,
+        values: new SortedVector(stateValues, timeIndex),
+        config: {
+          displayName: omitLabels(parsedInstanceLabels, commonLabels)
+            .map(([key, label]) => `${key}=${label}`)
+            .join(', '),
+          color: { mode: 'thresholds' },
+          custom: { fillOpacity: 100 },
+          mappings: [
+            {
+              type: MappingType.ValueToText,
+              options: {
+                Alerting: {
+                  color: theme.colors.error.main,
+                },
+                Pending: {
+                  color: theme.colors.warning.main,
+                },
+                Normal: {
+                  color: theme.colors.success.main,
+                },
+                NoData: {
+                  color: theme.colors.info.main,
+                },
+              },
+            },
+          ],
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [],
+          },
+        },
+      },
+    ],
+    length: records.length,
+    name: instanceLabels,
+  };
+
+  frame.fields.forEach((field) => {
+    field.display = getDisplayProcessor({ field, theme });
+  });
+
+  return frame;
+}
+
+function getDefaultTimeRange(): TimeRange {
+  const fromDateTime = dateTime().subtract(1, 'h');
+  const toDateTime = dateTime();
+  return {
+    from: fromDateTime,
+    to: toDateTime,
+    raw: { from: fromDateTime, to: toDateTime },
+  };
+}
+
+export const getStyles = (theme: GrafanaTheme2) => ({
+  fullSize: css`
+    min-width: 100%;
+    height: 100%;
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+  `,
+});
+
+export default LokiStateHistory;

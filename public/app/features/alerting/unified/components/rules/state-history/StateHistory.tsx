@@ -8,11 +8,10 @@ import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Tooltip, useStyle
 import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
 import { GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { useManagedAlertStateHistory } from '../../hooks/useManagedAlertStateHistory';
-import { AlertLabel } from '../AlertLabel';
-import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
-
-import { AlertStateTag } from './AlertStateTag';
+import { useManagedAlertStateHistory } from '../../../hooks/useManagedAlertStateHistory';
+import { AlertLabel } from '../../AlertLabel';
+import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../../DynamicTable';
+import { AlertStateTag } from '../AlertStateTag';
 
 type StateHistoryRowItem = {
   id: string;

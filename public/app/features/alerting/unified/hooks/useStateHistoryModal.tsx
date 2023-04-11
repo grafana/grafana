@@ -6,8 +6,8 @@ import { config } from '@grafana/runtime';
 import { Modal, useStyles2 } from '@grafana/ui';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-const AnnotationsStateHistory = lazy(() => import('../components/rules/StateHistory'));
-const LokiStateHistory = lazy(() => import('../components/rules/LokiStateHistory'));
+const AnnotationsStateHistory = lazy(() => import('../components/rules/state-history/StateHistory'));
+const LokiStateHistory = lazy(() => import('../components/rules/state-history/LokiStateHistory'));
 
 enum StateHistoryImplementation {
   Loki,
