@@ -4,8 +4,9 @@ import pluralize from 'pluralize';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
-import { clearButtonStyles, Icon, useStyles2 } from '@grafana/ui';
+import { Button, clearButtonStyles, Icon, useStyles2 } from '@grafana/ui';
 import { AlertInstancesTable } from 'app/features/alerting/unified/components/rules/AlertInstancesTable';
+import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
 import { Alert } from 'app/types/unified-alerting';
 
@@ -18,9 +19,10 @@ interface Props {
   alerts: Alert[];
   options: PanelProps<UnifiedAlertListOptions>['options'];
   grafanaTotalInstances?: number;
+  handleShowAllInstances?: () => void;
 }
 
-export const AlertInstances = ({ alerts, options, grafanaTotalInstances }: Props) => {
+export const AlertInstances = ({ alerts, options, grafanaTotalInstances, handleShowAllInstances }: Props) => {
   // when custom grouping is enabled, we will always uncollapse the list of alert instances
   const defaultShowInstances = options.groupMode === GroupMode.Custom ? true : options.showInstances;
   const [displayInstances, setDisplayInstances] = useState<boolean>(defaultShowInstances);
@@ -51,6 +53,29 @@ export const AlertInstances = ({ alerts, options, grafanaTotalInstances }: Props
     }
   }, [filteredAlerts]);
 
+  const onShowAllClick = async () => {
+    if (!handleShowAllInstances) {
+      return;
+    }
+    await handleShowAllInstances();
+    setDisplayInstances(true);
+  };
+
+  const footerRow =
+    hiddenInstances > 0 &&
+    grafanaTotalInstances &&
+    grafanaTotalInstances > INSTANCES_DISPLAY_LIMIT &&
+    filteredAlerts.length <= INSTANCES_DISPLAY_LIMIT ? (
+      <div className={styles.footerRow}>
+        <div>Limiting the result to {INSTANCES_DISPLAY_LIMIT} instances</div>
+        {
+          <Button size="sm" variant="secondary" onClick={onShowAllClick}>
+            Remove limit
+          </Button>
+        }
+      </div>
+    ) : undefined;
+
   return (
     <div>
       {options.groupMode === GroupMode.Default && (
@@ -67,14 +92,23 @@ export const AlertInstances = ({ alerts, options, grafanaTotalInstances }: Props
         <AlertInstancesTable
           instances={filteredAlerts}
           pagination={{ itemsPerPage: 2 * DEFAULT_PER_PAGE_PAGINATION }}
+          footerRow={footerRow}
         />
       )}
     </div>
   );
 };
 
-const getStyles = (_: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   clickable: css`
     cursor: pointer;
+  `,
+  footerRow: css`
+    display: flex;
+    flex-direction: column;
+    gap: ${theme.spacing(1)};
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
   `,
 });

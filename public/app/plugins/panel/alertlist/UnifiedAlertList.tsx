@@ -13,7 +13,7 @@ import {
   BigValueTextMode,
   CustomScrollbar,
   LoadingPlaceholder,
-  useStyles2,
+  useStyles2
 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -26,7 +26,7 @@ import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import {
   getAllRulesSourceNames,
   GRAFANA_DATASOURCE_NAME,
-  GRAFANA_RULES_SOURCE_NAME,
+  GRAFANA_RULES_SOURCE_NAME
 } from 'app/features/alerting/unified/utils/datasource';
 import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/redux';
 import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
@@ -96,6 +96,15 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     };
   }, [dispatch, dashboard, props.options.alertInstanceLabelFilter, props.options.stateFilter]);
 
+  const handleRemoveInstancesLimit = () => {
+    dispatch(
+      fetchAllPromAndRulerRulesAction(false, {
+        matcher: props.options.alertInstanceLabelFilter,
+        state: getStateList(props.options.stateFilter),
+      })
+    );
+  };
+
   const { prom, ruler } = useUnifiedAlertingSelector((state) => ({
     prom: state.promRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState,
     ruler: state.rulerRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState,
@@ -161,7 +170,11 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
             <GroupedModeView rules={rules} options={parsedOptions} />
           )}
           {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && haveResults && (
-            <UngroupedModeView rules={rules} options={parsedOptions} />
+            <UngroupedModeView
+              rules={rules}
+              options={props.options}
+              handleShowAllInstances={handleRemoveInstancesLimit}
+            />
           )}
         </section>
       </div>
@@ -245,12 +258,12 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     const alertingRule = getAlertingRule(rule);
     const filteredAlerts = alertingRule
       ? filterAlerts(
-          {
-            stateFilter: options.stateFilter,
-            alertInstanceLabelFilter: replaceVariables(options.alertInstanceLabelFilter),
-          },
-          alertingRule.alerts ?? []
-        )
+        {
+          stateFilter: options.stateFilter,
+          alertInstanceLabelFilter: replaceVariables(options.alertInstanceLabelFilter),
+        },
+        alertingRule.alerts ?? []
+      )
       : [];
     if (filteredAlerts.length) {
       // We intentionally don't set alerts to filteredAlerts

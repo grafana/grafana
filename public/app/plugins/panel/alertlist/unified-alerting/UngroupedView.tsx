@@ -26,6 +26,7 @@ import { UnifiedAlertListOptions } from '../types';
 type Props = {
   rules: CombinedRuleWithLocation[];
   options: UnifiedAlertListOptions;
+  handleShowAllInstances?: () => void;
 };
 
 function getGrafanaInstancesTotal(totals: Partial<Record<AlertInstanceTotalState, number>>) {
@@ -34,7 +35,7 @@ function getGrafanaInstancesTotal(totals: Partial<Record<AlertInstanceTotalState
     .reduce((total, currentTotal) => total + currentTotal, 0);
 }
 
-const UngroupedModeView = ({ rules, options }: Props) => {
+const UngroupedModeView = ({ rules, options, handleShowAllInstances }: Props) => {
   const styles = useStyles2(getStyles);
   const stateStyle = useStyles2(getStateTagStyles);
   const { href: returnTo } = useLocation();
@@ -112,6 +113,7 @@ const UngroupedModeView = ({ rules, options }: Props) => {
                     alerts={alertingRule.alerts ?? []}
                     options={options}
                     grafanaTotalInstances={grafanaInstancesTotal}
+                    handleShowAllInstances={handleShowAllInstances}
                   />
                 </div>
               </li>
