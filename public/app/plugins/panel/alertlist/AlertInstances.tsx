@@ -17,9 +17,10 @@ import { filterAlerts } from './util';
 interface Props {
   alerts: Alert[];
   options: PanelProps<UnifiedAlertListOptions>['options'];
+  grafanaTotalInstances?: number;
 }
 
-export const AlertInstances = ({ alerts, options }: Props) => {
+export const AlertInstances = ({ alerts, options, grafanaTotalInstances }: Props) => {
   // when custom grouping is enabled, we will always uncollapse the list of alert instances
   const defaultShowInstances = options.groupMode === GroupMode.Custom ? true : options.showInstances;
   const [displayInstances, setDisplayInstances] = useState<boolean>(defaultShowInstances);
@@ -37,7 +38,9 @@ export const AlertInstances = ({ alerts, options }: Props) => {
     [alerts, options]
   );
 
-  const hiddenInstances = alerts.length - filteredAlerts.length;
+  const hiddenInstances = grafanaTotalInstances
+    ? grafanaTotalInstances - filteredAlerts.length
+    : alerts.length - filteredAlerts.length;
 
   const uncollapsible = filteredAlerts.length > 0;
   const toggleShowInstances = uncollapsible ? toggleDisplayInstances : noop;
