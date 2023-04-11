@@ -57,6 +57,6 @@ sudo yum install freetype*
 sudo yum install urw-fonts
 ```
 
-## FAQs
+## More help
 
-Check out the [FAQ section](https://community.grafana.com/c/howto/faq) on the Grafana Community page for answers to frequently asked questions.
+Check out the [Grafana Community](https://community.grafana.com/) for more troubleshooting help (you must be logged in to post or comment). 
