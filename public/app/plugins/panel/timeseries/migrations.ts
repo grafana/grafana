@@ -31,11 +31,8 @@ import {
   SortOrder,
   GraphTransform,
 } from '@grafana/schema';
-import { getNextRefIdChar } from 'app/core/utils/query';
-import { getNextRegionName } from 'app/core/utils/timeRegions';
 import { GrafanaQuery, GrafanaQueryType, TimeRegionConfig } from 'app/plugins/datasource/grafana/types';
-
-import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { defaultGraphConfig } from './config';
 import { PanelOptions } from './panelcfg.gen';
@@ -59,6 +56,15 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
 
     if (target) {
       panel.targets = panel.targets ? [target, ...panel.targets] : [target];
+
+      // TODO: should be at the dashboard annotation level
+      // Swith to a mixed datasource (not yet working!)
+      if (target.datasource?.uid !== panel.datasource?.uid) {
+        panel.datasource = {
+          uid: MIXED_DATASOURCE_NAME,
+          type: 'mixed',
+        };
+      }
     }
 
     panel.fieldConfig = fieldConfig; // Mutates the incoming panel
@@ -370,26 +376,20 @@ export function graphToTimeseriesOptions(angular: any): {
   }
 
   // timeRegions migration
-  const timeRegionsConfig: GraphTimeRegionConfig[] = angular.timeRegions;
-  if (angular.panel?.datasource?.uid === 'grafana' && timeRegionsConfig.length) {
-    let regions: TimeRegionConfig[] = [];
-    const defaultTimezone = getDashboardSrv().dashboard?.getTimezone();
-
-    timeRegionsConfig.forEach((timeRegion) => {
-      regions.push({
-        name: getNextRegionName(timeRegionsConfig),
-        color: timeRegion.fillColor,
-        line: timeRegion.line,
-        fromDayOfWeek: timeRegion.fromDayOfWeek,
-        toDayOfWeek: timeRegion.toDayOfWeek,
-        from: timeRegion.from,
-        to: timeRegion.to,
-        timezone: defaultTimezone,
-      });
-    });
+  if (angular.timeRegions?.length) {
+    let regions: TimeRegionConfig[] = angular.timeRegions.map((old: GraphTimeRegionConfig, idx: number) => ({
+      name: `T${idx + 1}`,
+      color: old.fillColor,
+      line: old.line,
+      fromDayOfWeek: old.fromDayOfWeek,
+      toDayOfWeek: old.toDayOfWeek,
+      from: old.from,
+      to: old.to,
+      timezone: 'utc',
+    }));
 
     target = {
-      refId: angular.panel?.targets?.length ? getNextRefIdChar(angular.panel.targets) : 'A',
+      refId: 'TimeRegion',
       datasource: {
         type: 'datasource',
         uid: 'grafana',
