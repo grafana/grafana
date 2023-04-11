@@ -301,6 +301,7 @@ func (m *FakeProcessManager) Stop(ctx context.Context, pluginID string) error {
 type FakeBackendProcessProvider struct {
 	Requested map[string]int
 	Invoked   map[string]int
+	RejectID  string
 }
 
 func NewFakeBackendProcessProvider() *FakeBackendProcessProvider {
@@ -314,6 +315,9 @@ func (pr *FakeBackendProcessProvider) BackendFactory(_ context.Context, p *plugi
 	pr.Requested[p.ID]++
 	return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
 		pr.Invoked[pluginID]++
+		if pluginID == pr.RejectID {
+			return nil, fmt.Errorf("rejected")
+		}
 		return &FakePluginClient{}, nil
 	}
 }
