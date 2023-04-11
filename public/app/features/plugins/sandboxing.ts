@@ -6,34 +6,10 @@ import { GrafanaPlugin } from '@grafana/data';
 
 import { getGeneralSandboxDistortionMap } from './sandbox/distortion_map';
 import { createSandboxDocument, fabricateMockElement } from './sandbox/document_sandbox';
-
-const prefix = '[sandbox]';
+import { getSandboxedWebApis } from './sandbox/web_apis';
 
 type CompartmentDependencyModule = unknown;
 export const availableCompartmentDependenciesMap = new Map<string, CompartmentDependencyModule>();
-
-export function getSandboxedWebApis({ pluginId }: { pluginId: string; isDevMode: boolean }) {
-  const sandboxLog = function (...args: unknown[]) {
-    console.log(`${prefix} ${pluginId}:`, ...args);
-  };
-
-  return {
-    alert: function (message: string) {
-      sandboxLog('alert()', message);
-    },
-    console: {
-      log: sandboxLog,
-      warn: sandboxLog,
-      error: sandboxLog,
-      info: sandboxLog,
-      debug: sandboxLog,
-    },
-    fetch: function (url: string, options: any) {
-      sandboxLog('fetch()', url, options);
-      return Promise.reject('fetch() is not allowed in plugins');
-    },
-  };
-}
 
 const importSandboxCache = new Map<string, Promise<any>>();
 
