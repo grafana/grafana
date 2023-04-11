@@ -1,4 +1,4 @@
-import { render, screen, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { DatasetSelector } from './DatasetSelector';
@@ -7,13 +7,12 @@ import { buildSqlQueryEditorProps, buildMockDataSelectorProps, buildMockDatasour
 
 describe('SqlQueryEditor', () => {
   describe('alerts', () => {
-    afterEach(cleanup);
     const database_update_text = 'Your default database configuration has been changed or updated';
     const no_postgres_database_text = 'You do not currenlty have a database configured for this datasource';
 
     it('should ONLY render the `database update` alert', async () => {
       // @ts-ignore
-      // Property 'templateSrv' is protected but type and is not a class derived from 'SqlDatasource'.ts(2322); Oh hush now.
+      // Property 'templateSrv' is a protected type and is not a class derived from 'SqlDatasource'.ts(2322); Oh hush now.
       render(<SqlQueryEditor {...buildSqlQueryEditorProps({ datasource: buildMockDatasource(true) })} />);
 
       await waitFor(() => {
@@ -37,8 +36,6 @@ describe('SqlQueryEditor', () => {
 
 describe('DatasetSelector', () => {
   describe('should render with the correct default placeholder values', () => {
-    afterEach(cleanup);
-
     it(`should render with 'Select table' since no current dataset is chosen, no dataset has been preconfigured,
         and the selector has not been disabled via 'disableDatasetSelector'`, async () => {
       render(<DatasetSelector {...buildMockDataSelectorProps()} />);
@@ -67,8 +64,6 @@ describe('DatasetSelector', () => {
   });
 
   describe('should disable the database selector appropriately', () => {
-    afterEach(cleanup);
-
     it('should be disabled if a preconfigured database exists', async () => {
       render(<DatasetSelector {...buildMockDataSelectorProps({ preconfiguredDataset: 'database 1' })} />);
       await waitFor(() => {
@@ -90,8 +85,6 @@ describe('DatasetSelector', () => {
   });
 
   describe('database calls', () => {
-    afterEach(cleanup);
-
     it('should only query the database when needed', async () => {
       const mockProps = buildMockDataSelectorProps();
       render(<DatasetSelector {...mockProps} />);
