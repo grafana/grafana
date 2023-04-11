@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
-	"github.com/grafana/grafana/pkg/plugins/config"
+	pCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -78,7 +79,7 @@ var WireExtensionSet = wire.NewSet(
 )
 
 func ProvideClientDecorator(
-	cfg *setting.Cfg, pCfg *config.Cfg,
+	cfg *setting.Cfg, pCfg *pCfg.Cfg,
 	pluginRegistry registry.Service,
 	oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer,
@@ -88,7 +89,7 @@ func ProvideClientDecorator(
 }
 
 func NewClientDecorator(
-	cfg *setting.Cfg, pCfg *config.Cfg,
+	cfg *setting.Cfg, pCfg *pCfg.Cfg,
 	pluginRegistry registry.Service, oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer, cachingService caching.CachingService,
 ) (*client.Decorator, error) {

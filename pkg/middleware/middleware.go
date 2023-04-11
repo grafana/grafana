@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,10 +33,16 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 	t := web.NewTree()
 	t.Add("/api/datasources/uid/:uid/resources/*", nil)
 	t.Add("/api/datasources/:id/resources/*", nil)
+
 	return func(c *web.Context) {
 		c.Resp.Before(func(w web.ResponseWriter) { // if response has already been written, skip.
 			if w.Written() {
 				return
+			}
+
+			traceId := tracing.TraceIDFromContext(c.Req.Context(), false)
+			if traceId != "" {
+				w.Header().Set("grafana-trace-id", traceId)
 			}
 
 			_, _, resourceURLMatch := t.Match(c.Req.URL.Path)
