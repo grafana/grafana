@@ -34,4 +34,4 @@ To try out the nested folders feature, you'll need to enable the `nestedFolders`
 
 In subsequent releases, we’ll be refining and enhancing the user interface for managing dashboards and folders, to provide a more streamlined user experience.
 
-<!-- {{< figure src="" max-width="750px" caption="Screenshot to be added" >}} -->
+{{< figure src="/media/docs/grafana/screenshot-grafana-10.0-nested-folders.png" max-width="750px" caption="Nested folders in Grafana" >}}
