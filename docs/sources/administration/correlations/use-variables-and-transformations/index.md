@@ -18,7 +18,7 @@ Instructions below show how to set up a link that can run metrics query for the 
 
 ## Use variables and transformations in provisioning
 
-1. Add the following provisioning configuration to your Grafana
+1. Add the following provisioning configuration to your Grafana:
 
    ```yaml
    datasources:
@@ -69,15 +69,15 @@ Instructions below show how to set up a link that can run metrics query for the 
        - Required correlation type (query)
        - Target query matching test data source model
      - “App metrics” correlation contains the following configuration:
-       - Alias is set to ${application} variable (note that in provisioning files $ is used to access environment variables so it has to be [escaped]({{< relref "/docs/grafana/latest/administration/provisioning#using-environment-variables" >}}))
+       - Alias is set to ${application} variable (note that in provisioning files $ is used to access environment variables so it has to be [escaped]({{< relref "/docs/grafana/latest/administration/provisioning#using-environment-variables" >}})).
        - Regular expression transformation is created to extract values from “msg” field
-         - Regular expression transformation is used to capture the application name from the full name of the service stored in the log line
-         - The output of the transformation is mapped to a variable called “application”
+         - Regular expression transformation is used to capture the application name from the full name of the service stored in the log line.
+         - The output of the transformation is mapped to a variable called “application”.
      - “Service metrics” correlation is created in a similar way but with logfmt transformation to break down log message and access full name of the service (e.g. “app1.loginService”).
        - For example, when a logline “2020-01-01 10:00 level=error message=error service=app1.loginService” is provided as the input, the transformation produces new variables: level, message, and service.
-       - “service” variable is used as the alias in the target query
+       - “service” variable is used as the alias in the target query.
 
-1. Navigate to Explore and open “Source” data source
+1. Navigate to Explore and open “Source” data source.
 1. Select the “Raw Frames” scenario and provide the following data frames to emulate returning log lines:
    ```json
    [
@@ -101,15 +101,15 @@ Instructions below show how to set up a link that can run metrics query for the 
      }
    ]
    ```
-1. Run the query and open log details by clicking on the log line
+1. Run the query and open log details by clicking on the log line.
 
    {{< figure src="/static/img/docs/correlations/correlations-in-logs-panel-10-0.png" max-width="600px" caption="Correlation links in Logs panel" >}}
 
    A link “App metrics” and “Service metrics” show next to variables extracted out of the log line with transformations
 
-1. Click on the “App metrics” link
-1. A split view is opened and the target query is run
-1. Notice how the application name from the log line is filled in as the alias property in the target query
+1. Click on the “App metrics” link.
+1. A split view is opened and the target query is run.
+1. Notice how the application name from the log line is filled in as the alias property in the target query.
 
    {{< figure src="/static/img/docs/correlations/interpolated-target-query-10-0.png" max-width="600px" caption="Interpolated target query" >}}
 
