@@ -154,16 +154,16 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
                 type: MappingType.ValueToText,
                 options: {
                   Alerting: {
-                    color: 'red',
+                    color: theme.colors.error.main,
                   },
                   Pending: {
-                    color: 'yellow',
+                    color: theme.colors.warning.main,
                   },
                   Normal: {
-                    color: 'green',
+                    color: theme.colors.success.main,
                   },
                   NoData: {
-                    color: 'blue',
+                    color: theme.colors.info.main,
                   },
                 },
               },
@@ -198,67 +198,69 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
         </Stack>
       )}
       <div style={{ flex: 1 }}>
-        <AutoSizer>
-          {({ width, height }) => (
-            <TimelineChart
-              frames={frameSubset}
-              timeRange={timeRange}
-              timeZone={'browser'}
-              mode={TimelineMode.Changes}
-              // TODO do the math to get a good height
-              height={height}
-              width={width}
-              showValue={VisibilityMode.Never}
-              theme={theme}
-              rowHeight={0.8}
-              legend={{
-                calcs: [],
-                displayMode: LegendDisplayMode.List,
-                placement: 'bottom',
-                showLegend: true,
-              }}
-              legendItems={[
-                { label: 'Normal', color: 'green', yAxis: 1 },
-                { label: 'Pending', color: 'yellow', yAxis: 1 },
-                { label: 'Alerting', color: 'red', yAxis: 1 },
-                { label: 'NoData', color: 'blue', yAxis: 1 },
-              ]}
-            >
-              {(builder) => {
-                builder.setSync();
-                const interpolator = builder.getTooltipInterpolator();
+        {!isEmpty(frameSubset) && (
+          <AutoSizer>
+            {({ width, height }) => (
+              <TimelineChart
+                frames={frameSubset}
+                timeRange={timeRange}
+                timeZone={'browser'}
+                mode={TimelineMode.Changes}
+                // TODO do the math to get a good height
+                height={height}
+                width={width}
+                showValue={VisibilityMode.Never}
+                theme={theme}
+                rowHeight={0.8}
+                legend={{
+                  calcs: [],
+                  displayMode: LegendDisplayMode.List,
+                  placement: 'bottom',
+                  showLegend: true,
+                }}
+                legendItems={[
+                  { label: 'Normal', color: theme.colors.success.main, yAxis: 1 },
+                  { label: 'Pending', color: theme.colors.warning.main, yAxis: 1 },
+                  { label: 'Alerting', color: theme.colors.error.main, yAxis: 1 },
+                  { label: 'NoData', color: theme.colors.info.main, yAxis: 1 },
+                ]}
+              >
+                {(builder) => {
+                  builder.setSync();
+                  const interpolator = builder.getTooltipInterpolator();
 
-                // I found this in TooltipPlugin.tsx
-                if (interpolator) {
-                  builder.addHook('setCursor', (u) => {
-                    interpolator(
-                      (seriesIdx) => {
-                        if (seriesIdx) {
-                          const currentPointer = pointerSubject.current.getValue();
-                          pointerSubject.current.next({ ...currentPointer, seriesIdx });
-                          // setCursorState(prev => ({...prev, seriesIdx}));
-                        }
-                        // console.log('Series Index: ', seriesIdx)
-                        // this one returns a number and gives us the ID for what series we are hovering over
-                      },
-                      (pointIdx) => {
-                        if (pointIdx) {
-                          const currentPointer = pointerSubject.current.getValue();
-                          pointerSubject.current.next({ ...currentPointer, pointIdx });
-                          // setCursorState(prev => ({...prev, pointIdx}));
-                        }
-                        // this is supposed to be the X-axis ID for the timestamp but it's always 0
-                        // console.log('Point Index: ', pointIdx);
-                      },
-                      () => {},
-                      u
-                    );
-                  });
-                }
-              }}
-            </TimelineChart>
-          )}
-        </AutoSizer>
+                  // I found this in TooltipPlugin.tsx
+                  if (interpolator) {
+                    builder.addHook('setCursor', (u) => {
+                      interpolator(
+                        (seriesIdx) => {
+                          if (seriesIdx) {
+                            const currentPointer = pointerSubject.current.getValue();
+                            pointerSubject.current.next({ ...currentPointer, seriesIdx });
+                            // setCursorState(prev => ({...prev, seriesIdx}));
+                          }
+                          // console.log('Series Index: ', seriesIdx)
+                          // this one returns a number and gives us the ID for what series we are hovering over
+                        },
+                        (pointIdx) => {
+                          if (pointIdx) {
+                            const currentPointer = pointerSubject.current.getValue();
+                            pointerSubject.current.next({ ...currentPointer, pointIdx });
+                            // setCursorState(prev => ({...prev, pointIdx}));
+                          }
+                          // this is supposed to be the X-axis ID for the timestamp but it's always 0
+                          // console.log('Point Index: ', pointIdx);
+                        },
+                        () => {},
+                        u
+                      );
+                    });
+                  }
+                }}
+              </TimelineChart>
+            )}
+          </AutoSizer>
+        )}
       </div>
       <LogRecordViewerByTimestamp records={linesWithTimestamp} commonLabels={commonLabels} logsRef={logsRef} />
     </div>
