@@ -107,7 +107,7 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 		if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
 			ResourceCachingRequestHistogram.With(prometheus.Labels{
 				"plugin_id": req.PluginContext.PluginID,
-				"cache":           ch,
+				"cache":     ch,
 			}).Observe(time.Since(start).Seconds())
 		}
 	}()
@@ -118,6 +118,8 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	}
 
 	// Cache miss; do the actual request
+	// The call to update the cache happens in /pkg/api/plugin_resource.go in the flushStream() func
+	// TODO: Implement updating the cache from this method
 	return m.next.CallResource(ctx, req, sender)
 }
 
