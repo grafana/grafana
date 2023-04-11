@@ -54,7 +54,7 @@ Also, a text **Add** dropdown with these options has replaced the previous "+" i
 
 {{< figure src="/media/docs/grafana/screenshot-empty-dashboard-whats-new-9-5.png" max-width="750px" caption="Dashboard without any visualizations added" >}}
 
-### Dashboard panel redesign
+### Redesigned dashboard panel is generally available
 
 _Generally available in all editions of Grafana._
 
@@ -175,15 +175,16 @@ This feature should be used if you want to enforce strict role synchronization f
 
 To use this feature, enable the `onlyExternalOrgRoleSync` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support. We'll also be automatically enabling this feature for Grafana Cloud instances over the upcoming weeks.
 
-You can also _prevent_ the synchronization of organization roles from a given authentication provider. For more information, refer to our [skip org role sync]({{< relref "../setup-grafana/configure-grafana/#authgrafana_com-skip_org_role_sync/" >}}) documentation.
+You can also _prevent_ the synchronization of organization roles from a given authentication provider. Learn more in our [skip org role sync]({{< relref "../setup-grafana/configure-grafana/#authgrafana_com-skip_org_role_sync/" >}}) documentation.
 
 ### Reporting UI adapted to match the new navigation style
 
 _Generally available in Grafana Enterprise, Pro and Advanced._
 
-We updated the reporting UI to fit better the new navigation style, adding a horizontal slider and moving the Preview and Send buttons to the Action section in the page. We also fixed the alignment of the different sections. 
+We updated the reporting UI to fit better the new navigation style, adding a horizontal slider and moving the Preview and Send buttons to the Action section in the page. We also fixed the alignment of the different sections.
 
 {{< figure src="/media/docs/grafana/Screenshot-newUI-report.png" max-width="750px" caption="Grafana new report UI" >}}
+
 
 ### Experimental support to use JWTs as auth method
 
