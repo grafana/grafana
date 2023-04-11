@@ -2,7 +2,6 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTable, Column, TableInstance, useAbsoluteLayout, CellProps } from 'react-table';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -13,6 +12,8 @@ import { DashboardViewItem } from 'app/features/search/types';
 type NestedData = Record<string, DashboardViewItem[] | undefined>;
 
 interface BrowseViewProps {
+  height: number;
+  width: number;
   folderUID: string | undefined;
 }
 
@@ -25,13 +26,10 @@ interface FlatNestedTreeItem {
 const HEADER_HEIGHT = 35;
 const ITEM_HEIGHT = 35;
 
-export function BrowseView({ folderUID }: BrowseViewProps) {
+export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
   const styles = useStyles2(getStyles);
-  // const columnStyles = useStyles2(getColumnStyles);
-  // const tableStyles = useTableStyles(useTheme2(), TableCellHeight.Sm);
 
   const [openFolders, setOpenFolders] = useState<string[]>([]);
-
   const [nestedData, setNestedData] = useState<NestedData>({});
 
   // Note: entire implementation of this component must be replaced.
@@ -91,16 +89,16 @@ export function BrowseView({ folderUID }: BrowseViewProps) {
   const tableColumns = useMemo(() => {
     const checkboxColumn: Column<FlatNestedTreeItem> = {
       id: 'checkbox',
-      width: 30,
+      // width: 30,
       Header: () => <input type="checkbox" />,
       Cell: () => <input type="checkbox" />,
     };
 
     const nameColumn: Column<FlatNestedTreeItem> = {
       id: 'name',
-      width: 500,
+      // width: 500,
       accessor: (row) => row,
-      Header: () => <span>Name</span>,
+      Header: 'Name',
       Cell: (
         { value }: CellProps<FlatNestedTreeItem, FlatNestedTreeItem> // TODO: generic args aren't type checked
       ) => <BrowseItem item={value.item} isOpen={value.isOpen} level={value.level} onFolderClick={handleFolderClick} />,
@@ -108,15 +106,16 @@ export function BrowseView({ folderUID }: BrowseViewProps) {
 
     const typeColumn: Column<FlatNestedTreeItem> = {
       id: 'type',
-      width: 300,
+      // width: 300,
       accessor: (row) => row.item.kind,
-      Header: () => <span>Name</span>,
+      Header: 'Type',
     };
 
     return [checkboxColumn, nameColumn, typeColumn];
   }, [handleFolderClick]);
 
-  const tableInstance = useTable({ columns: tableColumns, data: flatTree }, useAbsoluteLayout);
+  const tableInstance = useTable({ columns: tableColumns, data: flatTree });
+
   const { getTableProps, getTableBodyProps, headerGroups } = tableInstance;
 
   const virtualData = useMemo(() => {
@@ -127,49 +126,38 @@ export function BrowseView({ folderUID }: BrowseViewProps) {
     };
   }, [flatTree, tableInstance, handleFolderClick]);
 
-  const onItemsRendered = useCallback((args) => {
-    console.log('onItemsRendered', args);
-  }, []);
-
   return (
-    <div style={{ height: '100%' }}>
-      <AutoSizer>
-        {({ width, height }) => (
-          <div {...getTableProps()} role="table">
-            <div>
-              {headerGroups.map((headerGroup) => {
-                const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
+    <div {...getTableProps()} role="table">
+      {headerGroups.map((headerGroup) => {
+        const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps({
+          style: { width },
+        });
 
-                return (
-                  <div key={key} {...headerGroupProps} className={styles.headerRow}>
-                    {headerGroup.headers.map((column) => {
-                      const { key, ...headerProps } = column.getHeaderProps();
-                      return (
-                        <div key={key} {...headerProps} role="columnheader" className={styles.headerCell}>
-                          {column.render('Header')}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div {...getTableBodyProps()}>
-              <List
-                onItemsRendered={onItemsRendered}
-                height={height - HEADER_HEIGHT}
-                width={width}
-                itemCount={flatTree.length}
-                itemData={virtualData}
-                itemSize={ITEM_HEIGHT}
-              >
-                {Row}
-              </List>
-            </div>
+        return (
+          <div key={key} {...headerGroupProps} className={styles.headerRow}>
+            {headerGroup.headers.map((column) => {
+              const { key, ...headerProps } = column.getHeaderProps();
+              return (
+                <div key={key} {...headerProps} role="columnheader" className={styles.cell}>
+                  {column.render('Header')}
+                </div>
+              );
+            })}
           </div>
-        )}
-      </AutoSizer>
+        );
+      })}
+
+      <div {...getTableBodyProps()}>
+        <List
+          height={height - HEADER_HEIGHT}
+          width={width}
+          itemCount={flatTree.length}
+          itemData={virtualData}
+          itemSize={ITEM_HEIGHT}
+        >
+          {Row}
+        </List>
+      </div>
     </div>
   );
 }
@@ -182,7 +170,6 @@ interface VirtualData {
 
 const Row = ({ index, style, data }: { index: number; style: React.CSSProperties; data: VirtualData }) => {
   const styles = useStyles2(getStyles);
-  // const { item, isOpen, level } = data.items[index];
   const { rows, prepareRow } = data.tableInstance;
 
   const row = rows[index];
@@ -192,7 +179,7 @@ const Row = ({ index, style, data }: { index: number; style: React.CSSProperties
     <div {...row.getRowProps({ style })} className={styles.rowContainer}>
       {row.cells.map((cell) => {
         return (
-          <div {...cell.getCellProps()} className={styles.headerCell}>
+          <div {...cell.getCellProps()} className={styles.cell}>
             {cell.render('Cell')}
           </div>
         );
@@ -213,7 +200,7 @@ function BrowseItem({
   onFolderClick: (uid: string, newOpenState: boolean) => void;
 }) {
   return (
-    <span style={{ paddingLeft: level * 16 }}>
+    <span style={{ paddingLeft: level * 24 }}>
       {item.kind === 'folder' ? (
         <IconButton onClick={() => onFolderClick(item.uid, !isOpen)} name={isOpen ? 'angle-down' : 'angle-right'} />
       ) : (
@@ -226,39 +213,29 @@ function BrowseItem({
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
-
   return {
-    noData: css`
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-    `,
-    headerCell: css`
-      padding: ${theme.spacing(1)};
-    `,
-    headerRow: css`
-      background-color: ${theme.colors.background.secondary};
-      height: ${HEADER_HEIGHT}px;
-      align-items: center;
-    `,
-    selectedRow: css`
-      background-color: ${rowHoverBg};
-      box-shadow: inset 3px 0px ${theme.colors.primary.border};
-    `,
-    rowContainer: css`
-      label: row;
-      &:hover {
-        background-color: ${rowHoverBg};
-      }
+    cell: css({
+      padding: theme.spacing(1),
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    }),
 
-      &:not(:hover) div[role='cell'] {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    `,
+    headerRow: css({
+      label: 'header-row',
+      display: 'grid',
+      gridTemplateColumns: 'auto 2fr 1fr',
+      backgroundColor: theme.colors.background.secondary,
+      height: HEADER_HEIGHT,
+    }),
+
+    rowContainer: css({
+      display: 'grid',
+      gridTemplateColumns: 'auto 2fr 1fr',
+
+      '&:hover': {
+        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.03),
+      },
+    }),
   };
 };

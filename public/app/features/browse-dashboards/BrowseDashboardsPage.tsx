@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { memo, useMemo } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { locationSearchToObject } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
@@ -38,9 +39,17 @@ const BrowseDashboardsPage = memo(({ match, location }: Props) => {
       <Page.Contents className={styles.pageContents}>
         <BrowseActions />
 
-        {/* TODO: Move auto-sizer here and pass height into Search and Browse views */}
-
-        {searchState.query ? <SearchView searchState={searchState} /> : <BrowseView folderUID={folderUID} />}
+        <div className={styles.subView}>
+          <AutoSizer>
+            {({ width, height }) =>
+              searchState.query ? (
+                <SearchView searchState={searchState} />
+              ) : (
+                <BrowseView width={width} height={height} folderUID={folderUID} />
+              )
+            }
+          </AutoSizer>
+        </div>
       </Page.Contents>
     </Page>
   );
@@ -50,6 +59,11 @@ const getStyles = () => ({
   pageContents: css({
     display: 'grid',
     gridTemplateRows: 'auto 1fr',
+    height: '100%',
+  }),
+
+  // AutoSizer needs an element to measure the full height available
+  subView: css({
     height: '100%',
   }),
 });
