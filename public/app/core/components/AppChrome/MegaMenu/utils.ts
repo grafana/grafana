@@ -4,10 +4,10 @@ import { locationUtil, NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 
-import { ShowModalReactEvent } from '../../../types/events';
-import appEvents from '../../app_events';
-import { getFooterLinks } from '../Footer/Footer';
-import { HelpModal } from '../help/HelpModal';
+import { ShowModalReactEvent } from '../../../../types/events';
+import appEvents from '../../../app_events';
+import { getFooterLinks } from '../../Footer/Footer';
+import { HelpModal } from '../../help/HelpModal';
 
 export const enrichConfigItems = (items: NavModelItem[], location: Location<unknown>) => {
   const onOpenShortcuts = () => {

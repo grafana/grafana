@@ -7,10 +7,9 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { KioskMode } from 'app/types';
 
-import { MegaMenu } from '../MegaMenu/MegaMenu';
-
-import { NavToolbar } from './NavToolbar';
-import { TopSearchBar } from './TopSearchBar';
+import { MegaMenu } from './MegaMenu/MegaMenu';
+import { NavToolbar } from './NavToolbar/NavToolbar';
+import { TopSearchBar } from './TopBar/TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export interface Props extends PropsWithChildren<{}> {}

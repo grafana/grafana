@@ -4,7 +4,7 @@ import { cloneDeep } from 'lodash';
 import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 
-import { getNavSubTitle, getNavTitle } from '../components/MegaMenu/navBarItem-translations';
+import { getNavSubTitle, getNavTitle } from '../components/AppChrome/MegaMenu/navBarItem-translations';
 
 export const HOME_NAV_ID = 'home';
 

@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import React, { FC, ReactNode, useContext, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 
 import { textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -16,7 +17,7 @@ import {
   ConfirmModal,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
-import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbarSeparator';
+import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import config from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { appEvents } from 'app/core/core';
@@ -76,6 +77,8 @@ export function addCustomRightAction(content: DashNavButtonModel) {
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export const DashNav = React.memo<Props>((props) => {
+  // this ensures the component rerenders when the location changes
+  useLocation();
   const forceUpdate = useForceUpdate();
   const { showModal, hideModal } = useContext(ModalsContext);
 

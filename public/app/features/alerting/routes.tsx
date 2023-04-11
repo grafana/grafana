@@ -2,8 +2,8 @@ import { uniq } from 'lodash';
 import React from 'react';
 
 import { OrgRole } from '@grafana/data';
-import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
+import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
 import { config } from 'app/core/config';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types';
