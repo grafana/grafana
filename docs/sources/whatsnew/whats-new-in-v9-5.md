@@ -135,7 +135,7 @@ Visualize queries when creating or editing recording rules, so you can see the r
 
 {{< figure src="/media/docs/alerting/preview-queries-recording-rule.png" max-width="750px" caption="Preview queries for recording rules" >}}
 
-### Wait before firing alerts when no data is returned
+### Updated alert behavior when an evaluation returns no data
 
 Alert rules that are configured to fire when an evaluation returns no data now only fire when the entire duration of the evaluation period has finished. This means that rather than immediately firing when the alert rule condition is breached, the alert rule waits until the time set in the **For** field has finished and then fires, reducing alert noise and allowing for temporary data availability issues.
 
