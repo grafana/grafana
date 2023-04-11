@@ -95,8 +95,9 @@ export class QueryCache {
     const reqTargSigs = new Map<TargetIdent, TargetSig>();
     request.targets.forEach((targ) => {
       let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
+      // @todo refactor getTargSig into datasource class and remove targExpr. See #65952 for a potential implementation
       let targExpr = interpolateString(targ.expr);
-      let targSig = getTargSig(targExpr, request, targ); // ${request.maxDataPoints} ?
+      let targSig = getTargSig(targExpr, request, targ);
 
       reqTargSigs.set(targIdent, targSig);
     });
