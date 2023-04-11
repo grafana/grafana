@@ -49,7 +49,7 @@ Example: If source results contain a field called “employee”, the value of t
 
 In addition to mapping field values to shorter variable names, more correlation variables can be created by applying transformations to existing fields
 
-Please check an example in [Use variables and transformations in a correlation]({{< relref "./use-variables-and-transformations" >}}).
+For more details, please see the example in [Use variables and transformations in a correlation]({{< relref "./use-variables-and-transformations" >}}).
 
 ### Correlation Transformations
 
@@ -59,7 +59,7 @@ There are two types of transformations: logfmt and regular expression.
 
 Each transformation uses a selected field value as the input. The output of a transformation is a set of new variables based on the type and options of the transformation.
 
-Please check an example in [Use variables and transformations in a correlation]({{< relref "./use-variables-and-transformations" >}}) for more details.
+For more details, please see the example in [Use variables and transformations in a correlation]({{< relref "./use-variables-and-transformations" >}}) for more details.
 
 ### Logfmt transformation
 
