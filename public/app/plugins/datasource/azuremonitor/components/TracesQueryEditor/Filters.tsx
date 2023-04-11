@@ -1,17 +1,17 @@
 import { uniq } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { TimeRange, SelectableValue } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
 import { EditorList } from '@grafana/experimental';
 import { Field } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps, AzureTracesFilter } from '../../types';
+import { AzureMonitorOption, AzureQueryEditorFieldProps, AzureTracesFilter } from '../../types';
 
 import { makeRenderItem } from './Filter';
 import { tablesSchema } from './consts';
 import { setFilters } from './setQueryValue';
 
-const Filters = ({ query, datasource, onQueryChange }: AzureQueryEditorFieldProps) => {
+const Filters = ({ query, datasource, onQueryChange, variableOptionGroup }: AzureQueryEditorFieldProps) => {
   const { azureTraces } = query;
   const queryTraceTypes = azureTraces?.traceTypes ? azureTraces.traceTypes : Object.keys(tablesSchema);
 
@@ -30,7 +30,7 @@ const Filters = ({ query, datasource, onQueryChange }: AzureQueryEditorFieldProp
     (item) => !excludedProperties.has(item)
   );
 
-  const [propertyMap, setPropertyMap] = useState(new Map<string, Array<SelectableValue<string>>>());
+  const [propertyMap, setPropertyMap] = useState(new Map<string, Array<AzureMonitorOption<string>>>());
   const queryFilters = useMemo(() => query.azureTraces?.filters ?? [], [query.azureTraces?.filters]);
   const [filters, updateFilters] = useState(queryFilters);
 
@@ -49,7 +49,7 @@ const Filters = ({ query, datasource, onQueryChange }: AzureQueryEditorFieldProp
   useTime(timeSrv.timeRange());
 
   useEffect(() => {
-    setPropertyMap(new Map<string, Array<SelectableValue<string>>>());
+    setPropertyMap(new Map<string, Array<AzureMonitorOption<string>>>());
   }, [timeRange]);
 
   const changedFunc = (changed: Array<Partial<AzureTracesFilter>>) => {
@@ -85,6 +85,7 @@ const Filters = ({ query, datasource, onQueryChange }: AzureQueryEditorFieldProp
           timeRange,
           queryTraceTypes,
           properties,
+          variableOptionGroup,
         })}
       />
     </Field>

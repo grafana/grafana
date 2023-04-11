@@ -1,21 +1,33 @@
-import React, { useState } from 'react';
+import { cx } from '@emotion/css';
+import React, { RefCallback, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, DataFrame, SelectableValue, TimeRange } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import { HorizontalGroup, Select, ButtonSelect, AsyncMultiSelect } from '@grafana/ui';
+import {
+  HorizontalGroup,
+  Select,
+  ButtonSelect,
+  AsyncMultiSelect,
+  getSelectStyles,
+  useTheme2,
+  Checkbox,
+} from '@grafana/ui';
 
 import { AzureMonitorQuery, AzureQueryType, AzureTracesFilter } from '../../dataquery.gen';
 import Datasource from '../../datasource';
+import { AzureMonitorOption, VariableOptionGroup } from '../../types';
+import { addValueToOptions } from '../../utils/common';
 
 export interface FilterProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
-  propertyMap: Map<string, Array<SelectableValue<string>>>;
-  setPropertyMap: React.Dispatch<React.SetStateAction<Map<string, Array<SelectableValue<string>>>>>;
+  propertyMap: Map<string, AzureMonitorOption[]>;
+  setPropertyMap: React.Dispatch<React.SetStateAction<Map<string, Array<AzureMonitorOption<string>>>>>;
   timeRange: TimeRange;
   queryTraceTypes: string[];
   properties: string[];
+  variableOptionGroup: VariableOptionGroup;
 }
 
 const onFieldChange = <Key extends keyof AzureTracesFilter>(
@@ -40,10 +52,10 @@ const getTraceProperties = async (
   datasource: Datasource,
   timeRange: TimeRange,
   traceTypes: string[],
-  propertyMap: Map<string, SelectableValue[]>,
-  setPropertyMap: React.Dispatch<React.SetStateAction<Map<string, Array<SelectableValue<string>>>>>,
+  propertyMap: Map<string, AzureMonitorOption[]>,
+  setPropertyMap: React.Dispatch<React.SetStateAction<Map<string, Array<AzureMonitorOption<string>>>>>,
   filter?: Partial<AzureTracesFilter>
-): Promise<SelectableValue[]> => {
+): Promise<AzureMonitorOption[]> => {
   const { azureTraces } = query;
   if (!azureTraces) {
     return [];
@@ -99,7 +111,7 @@ const getTraceProperties = async (
         if (value[property] === '') {
           label = '<Empty>';
         }
-        return { label: `${label} - (${value.count})`, value: value[property] };
+        return { label: `${label} - (${value.count})`, value: value[property].toString() };
       });
       propertyMap.set(property, values);
       setPropertyMap(propertyMap);
@@ -122,6 +134,38 @@ export function makeRenderItem(props: FilterProps) {
   return renderItem;
 }
 
+interface OptionProps {
+  isFocused: boolean;
+  isSelected: boolean;
+  innerProps: JSX.IntrinsicElements['div'];
+  innerRef: RefCallback<HTMLDivElement>;
+  data: SelectableValue<string>;
+}
+
+const Option = ({ data, innerProps, innerRef, isFocused, isSelected }: React.PropsWithChildren<OptionProps>) => {
+  const theme = useTheme2();
+  const styles = getSelectStyles(theme);
+
+  return (
+    <div
+      ref={innerRef}
+      className={cx(
+        styles.option,
+        isFocused && styles.optionFocused,
+        isSelected && styles.optionSelected,
+        data.isDisabled && styles.optionDisabled
+      )}
+      {...innerProps}
+      aria-label="Select option"
+      title={data.title}
+    >
+      <div className={styles.optionBody}>
+        <Checkbox value={isSelected} label={data.label ?? ''} />
+      </div>
+    </div>
+  );
+};
+
 const Filter = (
   props: FilterProps & {
     item: Partial<AzureTracesFilter>;
@@ -140,14 +184,20 @@ const Filter = (
     item,
     onChange,
     onDelete,
+    variableOptionGroup,
   } = props;
   const [loading, setLoading] = useState(false);
-  const [values, setValues] = useState(propertyMap.get(item.property ?? ''));
+  const [values, setValues] = useState<Array<AzureMonitorOption<string> | VariableOptionGroup>>(
+    addValueToOptions(propertyMap.get(item.property ?? '') ?? [], variableOptionGroup)
+  );
+  const [selected, setSelected] = useState<SelectableValue[]>(
+    item.filters ? item.filters.map((filter) => ({ value: filter, label: filter === '' ? '<Empty>' : filter })) : []
+  );
 
   const loadOptions = async () => {
     setLoading(true);
     if (item.property && item.property !== '') {
-      const vals = propertyMap.get(item.property);
+      const vals = addValueToOptions(propertyMap.get(item.property ?? '') ?? [], variableOptionGroup);
       if (!vals) {
         const promise = await getTraceProperties(
           query,
@@ -158,7 +208,7 @@ const Filter = (
           setPropertyMap,
           item
         );
-        setValues(promise);
+        setValues(addValueToOptions(promise, variableOptionGroup));
         setLoading(false);
         return promise;
       } else {
@@ -177,7 +227,10 @@ const Filter = (
         menuShouldPortal
         placeholder="Property"
         value={item.property ? { value: item.property, label: item.property } : null}
-        options={properties.map((type) => ({ label: type, value: type }))}
+        options={addValueToOptions(
+          properties.map((type) => ({ label: type, value: type })),
+          variableOptionGroup
+        )}
         onChange={(e) => onFieldChange('property', item, e, onChange)}
         width={25}
       />
@@ -194,18 +247,17 @@ const Filter = (
       <AsyncMultiSelect
         menuShouldPortal
         placeholder="Value"
-        value={
-          item.filters
-            ? item.filters.map((filter) => ({ value: filter, label: filter === '' ? '<Empty>' : filter }))
-            : []
-        }
+        value={selected}
         loadOptions={loadOptions}
         isLoading={loading}
         onOpenMenu={loadOptions}
-        onChange={(e) => onFieldChange('filters', item, e, onChange)}
+        onChange={(e: Array<SelectableValue<string>>) => setSelected(e)}
         width={35}
         defaultOptions={values}
         isClearable
+        components={{ Option }}
+        closeMenuOnSelect={false}
+        onCloseMenu={() => onFieldChange('filters', item, selected, onChange)}
       />
       <AccessoryButton aria-label="Remove" icon="times" variant="secondary" onClick={onDelete} type="button" />
     </HorizontalGroup>
