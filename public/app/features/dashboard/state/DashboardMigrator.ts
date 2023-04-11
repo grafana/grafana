@@ -825,9 +825,8 @@ export class DashboardMigrator {
           }
 
           // Update any overrides referencing the cell display mode
-          const overrides = panel.fieldConfig.overrides;
-          if (overrides?.length) {
-            for (const override of overrides) {
+          if (panel.fieldConfig?.overrides) {
+            for (const override of panel.fieldConfig.overrides) {
               for (let j = 0; j < override.properties?.length ?? 0; j++) {
                 let overrideDisplayMode = override.properties[j].value;
                 if (override.properties[j].id === 'custom.displayMode') {
