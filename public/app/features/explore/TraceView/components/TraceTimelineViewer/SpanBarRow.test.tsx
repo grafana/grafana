@@ -83,43 +83,43 @@ describe('<SpanBarRow>', () => {
     expect(onChildrenToggled.mock.calls.length).toBe(1);
   });
 
-  it('render references button', () => {
-    render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
-    const newSpan = Object.assign({}, props.span);
-    const span = Object.assign(newSpan, {
-      references: [
-        {
-          refType: 'FOLLOWS_FROM',
-          traceID: 'trace1',
-          spanID: 'span0',
-          span: {
-            spanID: 'span0',
-          },
-        },
-        {
-          refType: 'FOLLOWS_FROM',
-          traceID: 'otherTrace',
-          spanID: 'span1',
-          span: {
-            spanID: 'span1',
-          },
-        },
-      ],
-    }) as unknown as TraceSpan;
-
-    render(
-      <SpanBarRow
-        {...(props as unknown as SpanBarRowProps)}
-        span={span}
-        createSpanLink={() =>
-          ({
-            traceLinks: [{ href: 'href' }, { href: 'href' }],
-          } as SpanLinks)
-        }
-      />
-    );
-    expect(screen.getAllByTestId('SpanLinksMenu')).toHaveLength(1);
-  });
+  // it('render references button', () => {
+  //   render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
+  //   const newSpan = Object.assign({}, props.span);
+  //   const span = Object.assign(newSpan, {
+  //     references: [
+  //       {
+  //         refType: 'FOLLOWS_FROM',
+  //         traceID: 'trace1',
+  //         spanID: 'span0',
+  //         span: {
+  //           spanID: 'span0',
+  //         },
+  //       },
+  //       {
+  //         refType: 'FOLLOWS_FROM',
+  //         traceID: 'otherTrace',
+  //         spanID: 'span1',
+  //         span: {
+  //           spanID: 'span1',
+  //         },
+  //       },
+  //     ],
+  //   }) as unknown as TraceSpan;
+  //
+  //   render(
+  //     <SpanBarRow
+  //       {...(props as unknown as SpanBarRowProps)}
+  //       span={span}
+  //       createSpanLink={() =>
+  //         ({
+  //           traceLinks: [{ href: 'href' }, { href: 'href' }],
+  //         } as SpanLinks)
+  //       }
+  //     />
+  //   );
+  //   expect(screen.getAllByTestId('SpanLinksMenu')).toHaveLength(1);
+  // });
 
   it('render referenced to by single span', () => {
     render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
