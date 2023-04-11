@@ -501,8 +501,8 @@ export class ElasticDatasource
   }
 
   getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
-    const { disableElasticsearchBackendExploreQuery, elasticsearchBackendMigration } = config.featureToggles;
-    if (!disableElasticsearchBackendExploreQuery || elasticsearchBackendMigration) {
+    const { disableElasticsearchBackendQuerying } = config.featureToggles;
+    if (!disableElasticsearchBackendQuerying) {
       const contextRequest = this.makeLogContextDataRequest(row, options);
 
       return lastValueFrom(
@@ -679,13 +679,8 @@ export class ElasticDatasource
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
-    // Run request through backend if it is coming from Explore and disableElasticsearchBackendExploreQuery is not set
-    // or if elasticsearchBackendMigration feature toggle is enabled
-    const { elasticsearchBackendMigration, disableElasticsearchBackendExploreQuery } = config.featureToggles;
-    const shouldRunTroughBackend =
-      (request.app === CoreApp.Explore && !disableElasticsearchBackendExploreQuery) || elasticsearchBackendMigration;
-
-    if (shouldRunTroughBackend) {
+    const { disableElasticsearchBackendQuerying } = config.featureToggles;
+    if (!disableElasticsearchBackendQuerying) {
       const start = new Date();
       return super.query(request).pipe(tap((response) => trackQuery(response, request, start)));
     }

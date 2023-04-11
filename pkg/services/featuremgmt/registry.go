@@ -304,12 +304,6 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:        "elasticsearchBackendMigration",
-			Description: "Use Elasticsearch as backend data source",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "showTraceId",
 			Description: "Show trace ids for requests",
 			State:       FeatureStateAlpha,
@@ -458,12 +452,6 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:        "disableElasticsearchBackendExploreQuery",
-			Description: "Disable executing of Elasticsearch Explore queries trough backend",
-			State:       FeatureStateBeta,
-			Owner:       grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "prometheusDataplane",
 			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
 			State:       FeatureStateAlpha,
@@ -511,6 +499,12 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "disableElasticsearchBackendQuerying",
+			Description: "Disable processing of queries and responses in Elasticsearch data source trough backend",
+			State:       FeatureStateStable,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 	}
 )

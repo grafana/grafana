@@ -187,10 +187,6 @@ const (
 	// Enable OAuth access_token expiration check and token refresh using the refresh_token
 	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
 
-	// FlagElasticsearchBackendMigration
-	// Use Elasticsearch as backend data source
-	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
-
 	// FlagShowTraceId
 	// Show trace ids for requests
 	FlagShowTraceId = "showTraceId"
@@ -279,10 +275,6 @@ const (
 	// Replaces the current in-request token rotation so that the client initiates the rotation
 	FlagClientTokenRotation = "clientTokenRotation"
 
-	// FlagDisableElasticsearchBackendExploreQuery
-	// Disable executing of Elasticsearch Explore queries trough backend
-	FlagDisableElasticsearchBackendExploreQuery = "disableElasticsearchBackendExploreQuery"
-
 	// FlagPrometheusDataplane
 	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
 	FlagPrometheusDataplane = "prometheusDataplane"
@@ -314,4 +306,8 @@ const (
 	// FlagDataplaneFrontendFallback
 	// Support dataplane contract field name change for transformations and field name matchers where the name is different
 	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
+
+	// FlagDisableElasticsearchBackendQuerying
+	// Disable processing of queries and responses in Elasticsearch data source trough backend
+	FlagDisableElasticsearchBackendQuerying = "disableElasticsearchBackendQuerying"
 )
