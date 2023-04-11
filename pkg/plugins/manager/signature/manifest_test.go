@@ -213,7 +213,7 @@ func TestCalculate(t *testing.T) {
 
 	t.Run("Signature verification should work with any path separator", func(t *testing.T) {
 		var toSlashUnix = newToSlash('/')
-		var windowsToSlash = newToSlash('\\')
+		var toSlashWindows = newToSlash('\\')
 
 		for _, tc := range []struct {
 			name    string
@@ -221,7 +221,7 @@ func TestCalculate(t *testing.T) {
 			toSlash func(string) string
 		}{
 			{"unix", "/", toSlashUnix},
-			{"windows", "\\", windowsToSlash},
+			{"windows", "\\", toSlashWindows},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				// Replace toSlash for cross-platform testing
@@ -275,18 +275,18 @@ func newToSlash(sep rune) func(string) string {
 
 func TestNewToSlash(t *testing.T) {
 	t.Run("unix", func(t *testing.T) {
-		unixToSlash := newToSlash('/')
-		require.Equal(t, "folder", unixToSlash("folder"))
-		require.Equal(t, "/folder", unixToSlash("/folder"))
-		require.Equal(t, "/folder/file", unixToSlash("/folder/file"))
-		require.Equal(t, "/folder/other\\file", unixToSlash("/folder/other\\file"))
+		toSlashUnix := newToSlash('/')
+		require.Equal(t, "folder", toSlashUnix("folder"))
+		require.Equal(t, "/folder", toSlashUnix("/folder"))
+		require.Equal(t, "/folder/file", toSlashUnix("/folder/file"))
+		require.Equal(t, "/folder/other\\file", toSlashUnix("/folder/other\\file"))
 	})
 
 	t.Run("windows", func(t *testing.T) {
-		windowsToSlash := newToSlash('\\')
-		require.Equal(t, "folder", windowsToSlash("folder"))
-		require.Equal(t, "C:/folder", windowsToSlash("C:\\folder"))
-		require.Equal(t, "folder/file.exe", windowsToSlash("folder\\file.exe"))
+		toSlashWindows := newToSlash('\\')
+		require.Equal(t, "folder", toSlashWindows("folder"))
+		require.Equal(t, "C:/folder", toSlashWindows("C:\\folder"))
+		require.Equal(t, "folder/file.exe", toSlashWindows("folder\\file.exe"))
 	})
 }
 
