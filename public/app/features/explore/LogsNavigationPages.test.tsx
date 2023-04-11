@@ -44,7 +44,7 @@ describe('LogsNavigationPages', () => {
     expect(screen.getByText(/02:59:11 — 02:59:15/i)).toBeInTheDocument();
     expect(screen.getByText(/02:59:01 — 02:59:05/i)).toBeInTheDocument();
   });
-  it('should render logs pages with correct range if normal order', async () => {
+  it('should invoke the callback when clicked', async () => {
     const onPageClicked = jest.fn();
     setup({ onClick: onPageClicked });
     expect(onPageClicked).not.toHaveBeenCalled();
