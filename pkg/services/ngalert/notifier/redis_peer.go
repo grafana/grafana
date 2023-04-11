@@ -217,7 +217,7 @@ func (p *redisPeer) Position() int {
 		return p.position
 	}
 	for i, peer := range members {
-		if peer == p.name {
+		if peer == p.withPrefix(p.name) {
 			p.logger.Debug("cluster position found", "name", p.name, "position", i)
 			p.position = i
 			p.positionFetchedAt = time.Now()
