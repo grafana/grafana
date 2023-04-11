@@ -54,7 +54,7 @@ Also, a text **Add** dropdown with these options has replaced the previous "+" i
 
 {{< figure src="/media/docs/grafana/screenshot-empty-dashboard-whats-new-9-5.png" max-width="750px" caption="Dashboard without any visualizations added" >}}
 
-### Dashboard panel redesign
+### Redesigned dashboard panel is generally available
 
 _Generally available in all editions of Grafana._
 
