@@ -2,15 +2,12 @@ import { css, cx } from '@emotion/css';
 import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
-import { SearchWrapper } from 'app/features/search';
 import { KioskMode } from 'app/types';
 
 import { MegaMenu } from '../MegaMenu/MegaMenu';
-import { NavBar } from '../NavBar/NavBar';
 
 import { NavToolbar } from './NavToolbar';
 import { TopSearchBar } from './TopSearchBar';
@@ -22,21 +19,6 @@ export function AppChrome({ children }: Props) {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const state = chrome.useState();
-
-  if (!config.featureToggles.topnav) {
-    return (
-      <>
-        {!state.chromeless && (
-          <>
-            <NavBar />
-            <SearchWrapper />
-            <CommandPalette />
-          </>
-        )}
-        <main className="main-view">{children}</main>
-      </>
-    );
-  }
 
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
 

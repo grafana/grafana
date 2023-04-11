@@ -183,11 +183,6 @@ function shouldHideNavBar(location: HistoryLocation) {
     return true;
   }
 
-  // Temporary, can be removed after topnav is made permanent
-  if ((location.pathname.indexOf('/d/') === 0 && queryParams.editview) || queryParams.editPanel) {
-    return true;
-  }
-
   return false;
 }
 

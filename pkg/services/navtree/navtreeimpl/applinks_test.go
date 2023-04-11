@@ -128,7 +128,7 @@ func TestAddAppLinks(t *testing.T) {
 		require.Equal(t, "/a/test-app1/page2", treeRoot.Children[0].Children[1].Url)
 	})
 
-	t.Run("Should move apps to Apps category when topnav is enabled", func(t *testing.T) {
+	t.Run("Should move apps to Apps category", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
 		treeRoot := navtree.NavTreeRoot{}
 		err := service.addAppLinks(&treeRoot, reqCtx)
@@ -141,7 +141,7 @@ func TestAddAppLinks(t *testing.T) {
 		require.Equal(t, testApp1.Name, appsNode.Children[0].Text)
 	})
 
-	t.Run("Should remove the default nav child (DefaultNav=true) when topnav is enabled and should set its URL to the plugin nav root", func(t *testing.T) {
+	t.Run("Should remove the default nav child (DefaultNav=true) and should set its URL to the plugin nav root", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
 		treeRoot := navtree.NavTreeRoot{}
 		err := service.addAppLinks(&treeRoot, reqCtx)

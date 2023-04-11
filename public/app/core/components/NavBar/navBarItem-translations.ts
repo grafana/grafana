@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
@@ -30,9 +29,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'dashboards':
       return t('nav.dashboards.title', 'Dashboards');
     case 'dashboards/browse':
-      return config.featureToggles.topnav
-        ? t('nav.dashboards.title', 'Dashboards')
-        : t('nav.manage-dashboards.title', 'Browse');
+      return t('nav.dashboards.title', 'Dashboards');
     case 'dashboards/playlists':
       return t('nav.playlists.title', 'Playlists');
     case 'dashboards/snapshots':
@@ -72,9 +69,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'alerting-admin':
       return t('nav.alerting-admin.title', 'Admin');
     case 'cfg':
-      return config.featureToggles.topnav
-        ? t('nav.config.title', 'Administration')
-        : t('nav.config.titleBeforeTopnav', 'Configuration');
+      return t('nav.config.title', 'Administration');
     case 'datasources':
       return t('nav.datasources.title', 'Data sources');
     case 'correlations':
@@ -86,9 +81,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'plugins':
       return t('nav.plugins.title', 'Plugins');
     case 'org-settings':
-      return config.featureToggles.topnav
-        ? t('nav.org-settings.title', 'Default preferences')
-        : t('nav.org-settings.titleBeforeTopnav', 'Preferences');
+      return t('nav.org-settings.title', 'Default preferences');
     case 'apikeys':
       return t('nav.api-keys.title', 'API keys');
     case 'serviceaccounts':
@@ -98,9 +91,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'support-bundles':
       return t('nav.support-bundles.title', 'Support bundles');
     case 'global-users':
-      return config.featureToggles.topnav
-        ? t('nav.global-users.title', 'Users')
-        : t('nav.global-users.titleBeforeTopnav', 'Users');
+      return t('nav.global-users.title', 'Users');
     case 'global-orgs':
       return t('nav.global-orgs.title', 'Organizations');
     case 'server-settings':
@@ -137,9 +128,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'dashboards':
       return t('nav.dashboards.subtitle', 'Create and manage dashboards to visualize your data');
     case 'dashboards/browse':
-      return config.featureToggles.topnav
-        ? t('nav.dashboards.subtitle', 'Create and manage dashboards to visualize your data')
-        : undefined;
+      return t('nav.dashboards.subtitle', 'Create and manage dashboards to visualize your data');
     case 'manage-folder':
       return t('nav.manage-folder.subtitle', 'Manage folder dashboards and permissions');
     case 'dashboards/playlists':
@@ -193,12 +182,10 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'support-bundles':
       return t('nav.support-bundles.subtitle', 'Download support bundles');
     case 'admin':
-      return config.featureToggles.topnav
-        ? t(
-            'nav.admin.subtitle',
-            'Manage server-wide settings and access to resources such as organizations, users, and licenses'
-          )
-        : undefined;
+      return t(
+        'nav.admin.subtitle',
+        'Manage server-wide settings and access to resources such as organizations, users, and licenses'
+      );
     case 'apps':
       return t('nav.apps.subtitle', 'App plugins that extend the Grafana experience');
     case 'monitoring':

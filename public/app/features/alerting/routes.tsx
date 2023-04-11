@@ -1,6 +1,5 @@
 import { uniq } from 'lodash';
 import React from 'react';
-import { Redirect } from 'react-router-dom';
 
 import { OrgRole } from '@grafana/data';
 import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
@@ -17,8 +16,7 @@ const legacyRoutes: RouteDescriptor[] = [
   ...commonRoutes,
   {
     path: '/alerting',
-    component: () =>
-      config.featureToggles.topnav ? <NavLandingPage navId="alerting-legacy" /> : <Redirect to="/alerting/list" />,
+    component: () => <NavLandingPage navId="alerting-legacy" />,
   },
   {
     path: '/alerting/list',
@@ -90,19 +88,12 @@ const legacyRoutes: RouteDescriptor[] = [
 
 const unifiedRoutes: RouteDescriptor[] = [
   ...commonRoutes,
-  config.featureToggles.topnav
-    ? {
-        path: '/alerting',
-        component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/Home')
-        ),
-      }
-    : {
-        path: '/alerting/home',
-        component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/Home')
-        ),
-      },
+  {
+    path: '/alerting',
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/Home')
+    ),
+  },
   {
     path: '/alerting/list',
     roles: evaluateAccess(
