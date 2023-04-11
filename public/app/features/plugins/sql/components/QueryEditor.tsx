@@ -128,7 +128,7 @@ export function SqlQueryEditor({
           elevated={true}
           onRemove={() => setHasNoPostgresDefaultDatabaseConfig(false)}
         >
-          You do not currenlty have a database configured for this datasource. Please configure a default database
+          You do not currently have a database configured for this datasource. Please configure a default database
           first.
         </Alert>
       )}
