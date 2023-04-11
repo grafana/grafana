@@ -22,7 +22,9 @@ var (
 )
 
 func HandleNoCacheHeaders(ctx *contextmodel.ReqContext) {
+	// X-Grafana-NoCache tells Grafana to skip the cache while retrieving datasource instance metadata
 	ctx.SkipDSCache = ctx.Req.Header.Get("X-Grafana-NoCache") == "true"
+	// X-Cache-Skip tells Grafana to skip the Enterprise query/resource cache while issuing query and resource calls
 	ctx.SkipQueryCache = ctx.Req.Header.Get("X-Cache-Skip") == "true"
 }
 
