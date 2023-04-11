@@ -109,15 +109,15 @@ func getPanelIDFromRequest(r *http.Request) (int64, error) {
 }
 
 func getMatchersFromRequest(r *http.Request) (labels.Matchers, error) {
-	s := r.URL.Query().Get("matchers")
-	if s == "" {
-		return nil, nil
+	var matchers labels.Matchers
+	for _, s := range r.URL.Query()["matcher"] {
+		m, err := labels.ParseMatcher(s)
+		if err != nil {
+			return nil, err
+		}
+		matchers = append(matchers, m)
 	}
-	m, err := labels.ParseMatchers(s)
-	if err != nil {
-		return nil, err
-	}
-	return m, nil
+	return matchers, nil
 }
 
 func getStatesFromRequest(r *http.Request) ([]eval.State, error) {

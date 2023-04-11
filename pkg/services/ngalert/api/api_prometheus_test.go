@@ -1048,7 +1048,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 	})
 
-	t.Run("test with matchers on labels", func(t *testing.T) {
+	t.Run("test with matcher on labels", func(t *testing.T) {
 		fakeStore, fakeAIM, _, api := setupAPI(t)
 		// create two rules in the same Rule Group to keep assertions simple
 		rules := ngmodels.GenerateAlertRules(1, ngmodels.AlertRuleGen(withOrgID(orgID), withGroup("Rule-Group-1"), withNamespace(&folder.Folder{
@@ -1063,7 +1063,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			withLabels(data.Labels{"test": "value2"}), withAlertingState())
 
 		t.Run("invalid matchers returns 400 Bad Request", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?matchers=unknown", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?matcher=unknown", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -1101,7 +1101,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 
 		t.Run("then with single matcher", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?matchers=test=value1", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?matcher=test=value1", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -1122,8 +1122,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Len(t, rg.Rules[0].Alerts, 1)
 		})
 
-		t.Run("then with regex matchers", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?matchers~=test=value[0-9]+", nil)
+		t.Run("then with regex matcher", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?matcher~=test=value[0-9]+", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -1145,7 +1145,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 
 		t.Run("then with multiple matchers", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?matchers=alertname=test_title_0,test=value1", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?matchers=alertname=test_title_0&matcher=test=value1", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
