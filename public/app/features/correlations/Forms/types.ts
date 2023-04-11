@@ -15,7 +15,3 @@ export type TransformationDTO = {
   expression?: string;
   mapValue?: string;
 };
-
-export const emptyTransformation: TransformationDTO = {
-  type: TransformationType.Logfmt,
-};
