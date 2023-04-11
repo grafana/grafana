@@ -1,10 +1,13 @@
 import React, { FC, useMemo } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { useStyles } from '@grafana/ui';
 import { Database } from 'app/percona/shared/components/Elements/Icons/Database';
 import { Databases } from 'app/percona/shared/core';
+import * as UserFlow from 'app/percona/shared/core/reducers/userFlow';
+import { useDispatch } from 'app/types';
 
-import { InstanceTypesExtra, InstanceAvailableType } from '../../panel.types';
+import { InstanceAvailableType, InstanceTypesExtra } from '../../panel.types';
 
 import { Messages } from './AddInstance.messages';
 import { getStyles } from './AddInstance.styles';
@@ -43,7 +46,17 @@ export const AddInstance: FC<AddInstanceProps> = ({ onSelectInstanceType, showAz
     [showAzure]
   );
 
-  const selectInstanceType = (type: string) => () => onSelectInstanceType({ type: type as InstanceAvailableType });
+  const dispatch = useDispatch();
+  dispatch(UserFlow.startFlow(uuidv4(), 'inventory:add_instance'));
+
+  const selectInstanceType = (type: string) => () => {
+    dispatch(
+      UserFlow.emitEvent('select_instance_type', {
+        type,
+      })
+    );
+    onSelectInstanceType({ type: type as InstanceAvailableType });
+  };
 
   return (
     <section className={styles.content}>

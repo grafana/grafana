@@ -11,6 +11,7 @@ import { SettingsService } from 'app/percona/settings/Settings.service';
 import { Settings, SettingsAPIChangePayload } from 'app/percona/settings/Settings.types';
 import { PlatformService } from 'app/percona/settings/components/Platform/Platform.service';
 import { api } from 'app/percona/shared/helpers/api';
+import { uiEventsReducer } from 'app/percona/ui-events/reducer';
 
 import { ServerInfo } from '../types';
 
@@ -247,6 +248,7 @@ export default {
     services: servicesReducer,
     backupLocations: perconaBackupLocations,
     tour: tourReducer,
+    telemetry: uiEventsReducer,
     roles: rolesReducers,
     users: usersReducers,
     advisors: advisorsReducers,

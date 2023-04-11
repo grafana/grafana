@@ -16,6 +16,7 @@ import {
 } from 'app/percona/shared/core/reducers/user/user';
 import { useAppDispatch } from 'app/store/store';
 
+import { Telemetry } from '../../../ui-events/components/Telemetry';
 import usePerconaTour from '../../core/hooks/tour';
 
 import { Messages } from './PerconaBootstrapper.messages';
@@ -90,6 +91,7 @@ export const PerconaBootstrapper = ({ onReady }: PerconaBootstrapperProps) => {
 
   return (
     <>
+      {isLoggedIn && <Telemetry />}
       <PerconaNavigation />
       <PerconaTourBootstrapper />
       {isLoggedIn && showTour && (

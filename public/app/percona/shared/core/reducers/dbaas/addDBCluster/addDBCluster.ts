@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
-import { withAppEvents } from '../../../../../../features/alerting/unified/utils/redux';
-import { newDBClusterService } from '../../../../../dbaas/components/DBCluster/DBCluster.utils';
-import { getCronStringFromValues } from '../../../../helpers/cron/cron';
-import { SETTINGS_TIMEOUT } from '../../../constants';
-import { updateSettingsAction } from '../../index';
-import { prepareSourceRanges } from '../dbaas.utils';
+import { withAppEvents } from 'app/features/alerting/unified/utils/redux';
+import { newDBClusterService } from 'app/percona/dbaas/components/DBCluster/DBCluster.utils';
+import { SETTINGS_TIMEOUT } from 'app/percona/shared/core/constants';
+import { prepareSourceRanges } from 'app/percona/shared/core/reducers/dbaas/dbaas.utils';
+import { updateSettingsAction } from 'app/percona/shared/core/reducers/index';
+import { getCronStringFromValues } from 'app/percona/shared/helpers/cron/cron';
 
 import { AddDBClusterArgs, PerconaAddDBClusterState } from './addDBCluster.types';
 
