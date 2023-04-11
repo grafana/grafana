@@ -1,6 +1,7 @@
 import { cloneDeep, find, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
 import { generate, lastValueFrom, Observable, of, throwError } from 'rxjs';
-import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
+import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap, switchMap } from 'rxjs/operators';
+import { SemVer } from 'semver';
 
 import {
   DataFrame,
@@ -13,7 +14,6 @@ import {
   DataSourceWithSupplementaryQueriesSupport,
   DateTime,
   dateTime,
-  Field,
   getDefaultTimeRange,
   AbstractQuery,
   LogLevel,
@@ -25,17 +25,23 @@ import {
   QueryFixAction,
   CoreApp,
   SupplementaryQueryType,
+  DataQueryError,
+  FieldCache,
+  FieldType,
+  rangeUtil,
+  Field,
+  sortDataFrame,
 } from '@grafana/data';
 import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv, getDataSourceSrv, config } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
-import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
+import { RowContextOptions } from '../../../features/logs/components/log-context/types';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 
 import { ElasticResponse } from './ElasticResponse';
-import { IndexPattern } from './IndexPattern';
+import { IndexPattern, intervalMap } from './IndexPattern';
 import LanguageProvider from './LanguageProvider';
 import { ElasticQueryBuilder } from './QueryBuilder';
 import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
@@ -48,8 +54,16 @@ import {
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { defaultBucketAgg, hasMetricOfType } from './queryDef';
 import { trackQuery } from './tracking';
-import { Logs, BucketAggregation, DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
-import { coerceESVersion, getScriptValue, isSupportedVersion } from './utils';
+import {
+  Logs,
+  BucketAggregation,
+  DataLinkConfig,
+  ElasticsearchOptions,
+  ElasticsearchQuery,
+  TermsQuery,
+  Interval,
+} from './types';
+import { getScriptValue, isSupportedVersion, unsupportedVersionMessage } from './utils';
 
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
@@ -79,12 +93,12 @@ export class ElasticDatasource
   name: string;
   index: string;
   timeField: string;
-  esVersion: string;
   xpack: boolean;
   interval: string;
   maxConcurrentShardRequests?: number;
   queryBuilder: ElasticQueryBuilder;
   indexPattern: IndexPattern;
+  intervalPattern?: Interval;
   logMessageField?: string;
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
@@ -92,6 +106,7 @@ export class ElasticDatasource
   includeFrozen: boolean;
   isProxyAccess: boolean;
   timeSrv: TimeSrv;
+  databaseVersion: SemVer | null;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
@@ -107,9 +122,9 @@ export class ElasticDatasource
     const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
 
     this.timeField = settingsData.timeField;
-    this.esVersion = coerceESVersion(settingsData.esVersion);
     this.xpack = Boolean(settingsData.xpack);
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
+    this.intervalPattern = settingsData.interval;
     this.interval = settingsData.timeInterval;
     this.maxConcurrentShardRequests = settingsData.maxConcurrentShardRequests;
     this.queryBuilder = new ElasticQueryBuilder({
@@ -119,6 +134,7 @@ export class ElasticDatasource
     this.logLevelField = settingsData.logLevelField || '';
     this.dataLinks = settingsData.dataLinks || [];
     this.includeFrozen = settingsData.includeFrozen ?? false;
+    this.databaseVersion = null;
     this.annotations = {
       QueryEditor: ElasticsearchAnnotationsQueryEditor,
     };
@@ -143,13 +159,6 @@ export class ElasticDatasource
     if (!this.isProxyAccess) {
       const error = new Error(
         'Browser access mode in the Elasticsearch datasource is no longer available. Switch to server access mode.'
-      );
-      return throwError(() => error);
-    }
-
-    if (!isSupportedVersion(this.esVersion)) {
-      const error = new Error(
-        'Support for Elasticsearch versions after their end-of-life (currently versions < 7.10) was removed.'
       );
       return throwError(() => error);
     }
@@ -395,16 +404,24 @@ export class ElasticDatasource
     return queries.map((q) => this.applyTemplateVariables(q, scopedVars));
   }
 
-  testDatasource() {
+  async testDatasource() {
+    // we explicitly ask for uncached, "fresh" data here
+    const dbVersion = await this.getDatabaseVersion(false);
+    // if we are not able to determine the elastic-version, we assume it is a good version.
+    const isSupported = dbVersion != null ? isSupportedVersion(dbVersion) : true;
+    const versionMessage = isSupported ? '' : `WARNING: ${unsupportedVersionMessage} `;
     // validate that the index exist and has date field
     return lastValueFrom(
       this.getFields(['date']).pipe(
         mergeMap((dateFields) => {
           const timeField: any = find(dateFields, { text: this.timeField });
           if (!timeField) {
-            return of({ status: 'error', message: 'No date field named ' + this.timeField + ' found' });
+            return of({
+              status: 'error',
+              message: 'No date field named ' + this.timeField + ' found',
+            });
           }
-          return of({ status: 'success', message: 'Index OK. Time field name OK.' });
+          return of({ status: 'success', message: `${versionMessage}Index OK. Time field name OK` });
         }),
         catchError((err) => {
           console.error(err);
@@ -484,65 +501,86 @@ export class ElasticDatasource
   }
 
   getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
-    const sortField = row.dataFrame.fields.find((f) => f.name === 'sort');
-    const searchAfter = sortField?.values.get(row.rowIndex) || [row.timeEpochMs];
-    const sort = options?.direction === 'FORWARD' ? 'asc' : 'desc';
+    const { disableElasticsearchBackendExploreQuery, elasticsearchBackendMigration } = config.featureToggles;
+    if (!disableElasticsearchBackendExploreQuery || elasticsearchBackendMigration) {
+      const contextRequest = this.makeLogContextDataRequest(row, options);
 
-    const header =
-      options?.direction === 'FORWARD'
-        ? this.getQueryHeader('query_then_fetch', dateTime(row.timeEpochMs))
-        : this.getQueryHeader('query_then_fetch', undefined, dateTime(row.timeEpochMs));
+      return lastValueFrom(
+        this.query(contextRequest).pipe(
+          catchError((err) => {
+            const error: DataQueryError = {
+              message: 'Error during context query. Please check JS console logs.',
+              status: err.status,
+              statusText: err.statusText,
+            };
+            throw error;
+          }),
+          switchMap((res) => {
+            return of(processToLogContextDataFrames(res));
+          })
+        )
+      );
+    } else {
+      const sortField = row.dataFrame.fields.find((f) => f.name === 'sort');
+      const searchAfter = sortField?.values.get(row.rowIndex) || [row.timeEpochMs];
+      const sort = options?.direction === 'FORWARD' ? 'asc' : 'desc';
 
-    const limit = options?.limit ?? 10;
-    const esQuery = JSON.stringify({
-      size: limit,
-      query: {
-        bool: {
-          filter: [
-            {
-              range: {
-                [this.timeField]: {
-                  [options?.direction === 'FORWARD' ? 'gte' : 'lte']: row.timeEpochMs,
-                  format: 'epoch_millis',
+      const header =
+        options?.direction === 'FORWARD'
+          ? this.getQueryHeader('query_then_fetch', dateTime(row.timeEpochMs))
+          : this.getQueryHeader('query_then_fetch', undefined, dateTime(row.timeEpochMs));
+
+      const limit = options?.limit ?? 10;
+      const esQuery = JSON.stringify({
+        size: limit,
+        query: {
+          bool: {
+            filter: [
+              {
+                range: {
+                  [this.timeField]: {
+                    [options?.direction === 'FORWARD' ? 'gte' : 'lte']: row.timeEpochMs,
+                    format: 'epoch_millis',
+                  },
                 },
               },
+            ],
+          },
+        },
+        sort: [{ [this.timeField]: sort }, { _doc: sort }],
+        search_after: searchAfter,
+      });
+      const payload = [header, esQuery].join('\n') + '\n';
+      const url = this.getMultiSearchUrl();
+      const response = await lastValueFrom(this.post(url, payload));
+      const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [{ type: 'logs', id: '1' }] }];
+      const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
+      const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
+      const dataFrame = _first(logResponse.data);
+      if (!dataFrame) {
+        return { data: [] };
+      }
+      /**
+       * The LogRowContext requires there is a field in the dataFrame.fields
+       * named `ts` for timestamp and `line` for the actual log line to display.
+       * Unfortunatly these fields are hardcoded and are required for the lines to
+       * be properly displayed. This code just copies the fields based on this.timeField
+       * and this.logMessageField and recreates the dataFrame so it works.
+       */
+      const timestampField = dataFrame.fields.find((f: Field) => f.name === this.timeField);
+      const lineField = dataFrame.fields.find((f: Field) => f.name === this.logMessageField);
+      if (timestampField && lineField) {
+        return {
+          data: [
+            {
+              ...dataFrame,
+              fields: [...dataFrame.fields, { ...timestampField, name: 'ts' }, { ...lineField, name: 'line' }],
             },
           ],
-        },
-      },
-      sort: [{ [this.timeField]: sort }, { _doc: sort }],
-      search_after: searchAfter,
-    });
-    const payload = [header, esQuery].join('\n') + '\n';
-    const url = this.getMultiSearchUrl();
-    const response = await lastValueFrom(this.post(url, payload));
-    const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [{ type: 'logs', id: '1' }] }];
-    const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
-    const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
-    const dataFrame = _first(logResponse.data);
-    if (!dataFrame) {
-      return { data: [] };
+        };
+      }
+      return logResponse;
     }
-    /**
-     * The LogRowContextProvider requires there is a field in the dataFrame.fields
-     * named `ts` for timestamp and `line` for the actual log line to display.
-     * Unfortunatly these fields are hardcoded and are required for the lines to
-     * be properly displayed. This code just copies the fields based on this.timeField
-     * and this.logMessageField and recreates the dataFrame so it works.
-     */
-    const timestampField = dataFrame.fields.find((f: Field) => f.name === this.timeField);
-    const lineField = dataFrame.fields.find((f: Field) => f.name === this.logMessageField);
-    if (timestampField && lineField) {
-      return {
-        data: [
-          {
-            ...dataFrame,
-            fields: [...dataFrame.fields, { ...timestampField, name: 'ts' }, { ...lineField, name: 'line' }],
-          },
-        ],
-      };
-    }
-    return logResponse;
   };
 
   getDataProvider(
@@ -1040,6 +1078,85 @@ export class ElasticDatasource
     const finalQuery = JSON.parse(this.templateSrv.replace(JSON.stringify(expandedQuery), scopedVars));
     return finalQuery;
   }
+
+  private getDatabaseVersionUncached(): Promise<SemVer | null> {
+    // we want this function to never fail
+    return lastValueFrom(this.request('GET', '/')).then(
+      (data) => {
+        const versionNumber = data?.version?.number;
+        if (typeof versionNumber !== 'string') {
+          return null;
+        }
+        try {
+          return new SemVer(versionNumber);
+        } catch (error) {
+          console.error(error);
+          return null;
+        }
+      },
+      (error) => {
+        console.error(error);
+        return null;
+      }
+    );
+  }
+
+  async getDatabaseVersion(useCachedData = true): Promise<SemVer | null> {
+    if (useCachedData) {
+      const cached = this.databaseVersion;
+      if (cached != null) {
+        return cached;
+      }
+    }
+
+    const freshDatabaseVersion = await this.getDatabaseVersionUncached();
+    this.databaseVersion = freshDatabaseVersion;
+    return freshDatabaseVersion;
+  }
+
+  private makeLogContextDataRequest = (row: LogRowModel, options?: RowContextOptions) => {
+    const direction = options?.direction || 'BACKWARD';
+    const logQuery: Logs = {
+      type: 'logs',
+      id: '1',
+      settings: {
+        limit: options?.limit ? options?.limit.toString() : '10',
+        // Sorting of results in the context query
+        sortDirection: direction === 'BACKWARD' ? 'desc' : 'asc',
+        // Used to get the next log lines before/after the current log line using sort field of selected log line
+        searchAfter: row.dataFrame.fields.find((f) => f.name === 'sort')?.values.get(row.rowIndex) ?? [row.timeEpochMs],
+      },
+    };
+
+    const query: ElasticsearchQuery = {
+      refId: `log-context-${row.dataFrame.refId}-${direction}`,
+      metrics: [logQuery],
+      query: '',
+    };
+
+    const timeRange = createContextTimeRange(row.timeEpochMs, direction, this.intervalPattern);
+    const range = {
+      from: timeRange.from,
+      to: timeRange.to,
+      raw: timeRange,
+    };
+
+    const interval = rangeUtil.calculateInterval(range, 1);
+
+    const contextRequest: DataQueryRequest<ElasticsearchQuery> = {
+      requestId: `log-context-request-${row.dataFrame.refId}-${options?.direction}`,
+      targets: [query],
+      interval: interval.interval,
+      intervalMs: interval.intervalMs,
+      range,
+      scopedVars: {},
+      timezone: 'UTC',
+      app: CoreApp.Explore,
+      startTime: Date.now(),
+      hideFromInspector: true,
+    };
+    return contextRequest;
+  };
 }
 
 /**
@@ -1092,7 +1209,6 @@ function generateDataLink(linkConfig: DataLinkConfig): DataLink {
     };
   }
 }
-
 function transformHitsBasedOnDirection(response: any, direction: 'asc' | 'desc') {
   if (direction === 'desc') {
     return response;
@@ -1110,4 +1226,74 @@ function transformHitsBasedOnDirection(response: any, direction: 'asc' | 'desc')
       },
     ],
   };
+}
+
+function processToLogContextDataFrames(result: DataQueryResponse): DataQueryResponse {
+  const frames = result.data.map((frame) => sortDataFrame(frame, 0, true));
+  const processedFrames = frames.map((frame) => {
+    // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
+    const cache = new FieldCache(frame);
+    const timestampField = cache.getFirstFieldOfType(FieldType.time);
+    const lineField = cache.getFirstFieldOfType(FieldType.string);
+    const idField = cache.getFieldByName('_id');
+
+    if (!timestampField || !lineField || !idField) {
+      return { ...frame, fields: [] };
+    }
+
+    return {
+      ...frame,
+      fields: [
+        {
+          ...timestampField,
+          name: 'ts',
+        },
+        {
+          ...lineField,
+          name: 'line',
+        },
+        {
+          ...idField,
+          name: 'id',
+        },
+      ],
+    };
+  });
+
+  return {
+    ...result,
+    data: processedFrames,
+  };
+}
+
+function createContextTimeRange(rowTimeEpochMs: number, direction: string, intervalPattern: Interval | undefined) {
+  const offset = 7;
+  // For log context, we want to request data from 7 subsequent/previous indices
+  if (intervalPattern) {
+    const intervalInfo = intervalMap[intervalPattern];
+    if (direction === 'FORWARD') {
+      return {
+        from: dateTime(rowTimeEpochMs).utc(),
+        to: dateTime(rowTimeEpochMs).add(offset, intervalInfo.amount).utc().startOf(intervalInfo.startOf),
+      };
+    } else {
+      return {
+        from: dateTime(rowTimeEpochMs).subtract(offset, intervalInfo.amount).utc().startOf(intervalInfo.startOf),
+        to: dateTime(rowTimeEpochMs).utc(),
+      };
+    }
+    // If we don't have an interval pattern, we can't do this, so we just request data from 7h before/after
+  } else {
+    if (direction === 'FORWARD') {
+      return {
+        from: dateTime(rowTimeEpochMs).utc(),
+        to: dateTime(rowTimeEpochMs).add(offset, 'hours').utc(),
+      };
+    } else {
+      return {
+        from: dateTime(rowTimeEpochMs).subtract(offset, 'hours').utc(),
+        to: dateTime(rowTimeEpochMs).utc(),
+      };
+    }
+  }
 }

@@ -83,21 +83,22 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 			NamespaceUIDs: []string{namespace.UID},
 			RuleGroup:     ruleGroup,
 		}
-		if err = srv.store.ListAlertRules(ctx, &q); err != nil {
+		ruleList, err := srv.store.ListAlertRules(ctx, &q)
+		if err != nil {
 			return err
 		}
 
-		if len(q.Result) == 0 {
+		if len(ruleList) == 0 {
 			logger.Debug("no alert rules to delete from namespace/group")
 			return nil
 		}
 
 		var deletionCandidates = make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
-		for _, rule := range q.Result {
+		for _, rule := range ruleList {
 			key := rule.GetGroupKey()
 			deletionCandidates[key] = append(deletionCandidates[key], rule)
 		}
-		rulesToDelete := make([]string, 0, len(q.Result))
+		rulesToDelete := make([]string, 0, len(ruleList))
 		for groupKey, rules := range deletionCandidates {
 			if !authorizeAccessToRuleGroup(rules, hasAccess) {
 				unauthz = true
@@ -156,7 +157,8 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 		OrgID:         c.SignedInUser.OrgID,
 		NamespaceUIDs: []string{namespace.UID},
 	}
-	if err := srv.store.ListAlertRules(c.Req.Context(), &q); err != nil {
+	ruleList, err := srv.store.ListAlertRules(c.Req.Context(), &q)
+	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
@@ -172,7 +174,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 	}
 
 	ruleGroups := make(map[string]ngmodels.RulesGroup)
-	for _, r := range q.Result {
+	for _, r := range ruleList {
 		ruleGroups[r.RuleGroup] = append(ruleGroups[r.RuleGroup], r)
 	}
 
@@ -199,7 +201,8 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 		NamespaceUIDs: []string{namespace.UID},
 		RuleGroup:     ruleGroup,
 	}
-	if err := srv.store.ListAlertRules(c.Req.Context(), &q); err != nil {
+	ruleList, err := srv.store.ListAlertRules(c.Req.Context(), &q)
+	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
 	}
 
@@ -212,12 +215,12 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
 	}
 
-	if !authorizeAccessToRuleGroup(q.Result, hasAccess) {
+	if !authorizeAccessToRuleGroup(ruleList, hasAccess) {
 		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to access the group because it does not have access to one or many data sources one or many rules in the group use", ErrAuthorization), "")
 	}
 
 	result := apimodels.RuleGroupConfigResponse{
-		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, q.Result, namespace.ID, provenanceRecords),
+		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, ruleList, namespace.ID, provenanceRecords),
 	}
 	return response.JSON(http.StatusAccepted, result)
 }
@@ -256,7 +259,8 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 		PanelID:       panelID,
 	}
 
-	if err := srv.store.ListAlertRules(c.Req.Context(), &q); err != nil {
+	ruleList, err := srv.store.ListAlertRules(c.Req.Context(), &q)
+	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
@@ -270,7 +274,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 	}
 
 	configs := make(map[ngmodels.AlertRuleGroupKey]ngmodels.RulesGroup)
-	for _, r := range q.Result {
+	for _, r := range ruleList {
 		groupKey := r.GetGroupKey()
 		group := configs[groupKey]
 		group = append(group, r)
@@ -299,7 +303,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 	}
 
 	rules, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.OrgID, namespace, func(condition ngmodels.Condition) error {
-		return srv.conditionValidator.Validate(eval.Context(c.Req.Context(), c.SignedInUser), condition)
+		return srv.conditionValidator.Validate(eval.NewContext(c.Req.Context(), c.SignedInUser), condition)
 	}, srv.cfg)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")

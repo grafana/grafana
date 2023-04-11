@@ -122,6 +122,9 @@ var (
 	// MRenderingSummary is a metric summary for image rendering request duration
 	MRenderingSummary *prometheus.SummaryVec
 
+	// MRenderingUserLookupSummary is a metric summary for image rendering user lookup duration
+	MRenderingUserLookupSummary *prometheus.SummaryVec
+
 	// MAccessPermissionsSummary is a metric summary for loading permissions request duration when evaluating access
 	MAccessPermissionsSummary prometheus.Histogram
 
@@ -198,6 +201,9 @@ var (
 
 	// MStatTotalPublicDashboards is a metric total amount of public dashboards
 	MStatTotalPublicDashboards prometheus.Gauge
+
+	// MStatTotalCorrelations is a metric total amount of correlations
+	MStatTotalCorrelations prometheus.Gauge
 )
 
 func init() {
@@ -392,6 +398,16 @@ func init() {
 		[]string{"status", "type"},
 	)
 
+	MRenderingUserLookupSummary = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       "rendering_user_lookup_duration_milliseconds",
+			Help:       "summary of rendering user lookup duration",
+			Objectives: objectiveMap,
+			Namespace:  ExporterName,
+		},
+		[]string{"success", "from"},
+	)
+
 	MRenderingQueue = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "rendering_queue_size",
 		Help:      "size of rendering queue",
@@ -579,6 +595,12 @@ func init() {
 		Help:      "total amount of public dashboards",
 		Namespace: ExporterName,
 	})
+
+	MStatTotalCorrelations = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_correlations",
+		Help:      "total amount of correlations",
+		Namespace: ExporterName,
+	})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -663,6 +685,7 @@ func initMetricVars() {
 		LDAPUsersSyncExecutionTime,
 		MRenderingRequestTotal,
 		MRenderingSummary,
+		MRenderingUserLookupSummary,
 		MRenderingQueue,
 		MAccessPermissionsSummary,
 		MAccessEvaluationsSummary,
@@ -691,5 +714,6 @@ func initMetricVars() {
 		MStatTotalPublicDashboards,
 		MPublicDashboardRequestCount,
 		MPublicDashboardDatasourceQuerySuccess,
+		MStatTotalCorrelations,
 	)
 }

@@ -54,6 +54,22 @@ import (
 //       400: ValidationError
 //       404: NotFound
 
+// swagger:route GET /api/alertmanager/grafana/config/history alertmanager RouteGetGrafanaAlertingConfigHistory
+//
+// gets Alerting configurations that were successfully applied in the past
+//
+//     Responses:
+//       200: GettableHistoricUserConfigs
+
+// swagger:route POST /api/alertmanager/grafana/config/history/{id}/_activate alertmanager RoutePostGrafanaAlertingConfigHistoryActivate
+//
+// revert Alerting configuration to the historical configuration specified by the given id
+//
+//     Responses:
+//       202: Ack
+//       400: ValidationError
+//       404: NotFound
+
 // swagger:route DELETE /api/alertmanager/grafana/config/api/v1/alerts alertmanager RouteDeleteGrafanaAlertingConfig
 //
 // deletes the Alerting config for a tenant
@@ -228,6 +244,13 @@ type AlertManagerNotReady struct{}
 
 // swagger:model
 type MultiStatus struct{}
+
+// swagger:parameters RouteGetGrafanaAlertingConfigHistory
+type RouteGetGrafanaAlertingConfigHistoryParams struct {
+	// Limit response to n historic configurations.
+	// in:query
+	Limit int `json:"limit"`
+}
 
 // swagger:parameters RoutePostTestGrafanaReceivers
 type TestReceiversConfigParams struct {
@@ -444,6 +467,13 @@ type BodyAlertingConfig struct {
 	Body PostableUserConfig
 }
 
+// swagger:parameters RoutePostGrafanaAlertingConfigHistoryActivate
+type HistoricalConfigId struct {
+	// Id should be the id of the GettableHistoricUserConfig
+	// in:path
+	Id int64 `json:"id"`
+}
+
 // alertmanager routes
 // swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
 // testing routes
@@ -631,6 +661,20 @@ func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafana
 		}
 	}
 	return UIDs
+}
+
+type GettableHistoricUserConfig struct {
+	ID                      int64                     `yaml:"id" json:"id"`
+	TemplateFiles           map[string]string         `yaml:"template_files" json:"template_files"`
+	TemplateFileProvenances map[string]Provenance     `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
+	AlertmanagerConfig      GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	LastApplied             *strfmt.DateTime          `yaml:"last_applied,omitempty" json:"last_applied,omitempty"`
+}
+
+// swagger:response GettableHistoricUserConfigs
+type GettableHistoricUserConfigs struct {
+	// in:body
+	Body []GettableHistoricUserConfig
 }
 
 type GettableApiAlertingConfig struct {

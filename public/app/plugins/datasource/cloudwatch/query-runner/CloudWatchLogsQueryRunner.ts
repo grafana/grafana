@@ -31,7 +31,7 @@ import { BackendDataSourceResponse, config, FetchError, FetchResponse, toDataQue
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
-import { RowContextOptions } from '../../../../features/logs/components/LogRowContextProvider';
+import { RowContextOptions } from '../../../../features/logs/components/log-context/types';
 import {
   CloudWatchJsonData,
   CloudWatchLogsQuery,
@@ -301,7 +301,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     return this.awsRequest(this.dsQueryEndpoint, requestParams, {
       'X-Cache-Skip': 'true',
     }).pipe(
-      map((response) => resultsToDataFrames({ data: response })),
+      map((response) => resultsToDataFrames(response)),
       catchError((err: FetchError) => {
         if (config.featureToggles.datasourceQueryMultiStatus && err.status === 207) {
           throw err;

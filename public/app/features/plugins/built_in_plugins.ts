@@ -67,6 +67,7 @@ import * as tablePanel from 'app/plugins/panel/table/module';
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as timeseriesPanel from 'app/plugins/panel/timeseries/module';
 import * as tracesPanel from 'app/plugins/panel/traces/module';
+import * as trendPanel from 'app/plugins/panel/trend/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 import * as xyChartPanel from 'app/plugins/panel/xychart/module';
 
@@ -107,6 +108,7 @@ const builtInPlugins: any = {
 
   'app/plugins/panel/text/module': textPanel,
   'app/plugins/panel/timeseries/module': timeseriesPanel,
+  'app/plugins/panel/trend/module': trendPanel,
   'app/plugins/panel/state-timeline/module': stateTimelinePanel,
   'app/plugins/panel/status-history/module': statusHistoryPanel,
   'app/plugins/panel/candlestick/module': candlestickPanel,
