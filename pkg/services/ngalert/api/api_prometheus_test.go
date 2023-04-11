@@ -1145,7 +1145,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 
 		t.Run("then with multiple matchers", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?matchers=alertname=test_title_0&matcher=test=value1", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?matcher=alertname=test_title_0&matcher=test=value1", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
