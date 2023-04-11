@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { compact, fill } from 'lodash';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -35,7 +36,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 export const TransformationsEditor = (props: Props) => {
   const { control, formState, register, setValue, watch, getValues } = useFormContext();
   const { readOnly } = props;
-  const [keptVals, setKeptVals] = useState<{ [key: string]: { expression: string; mapValue: string } }>({});
+  const [keptVals, setKeptVals] = useState<Array<{ expression?: string; mapValue?: string }>>([]);
 
   const styles = useStyles2(getStyles);
 
@@ -79,19 +80,21 @@ export const TransformationsEditor = (props: Props) => {
                               onChange={(value) => {
                                 if (!readOnly) {
                                   const currentValues = getValues().config.transformations[index];
-                                  setKeptVals({
-                                    ...keptVals,
-                                    [index.toString()]: {
-                                      expression: currentValues.expression,
-                                      mapValue: currentValues.mapValue,
-                                    },
-                                  });
+                                  let keptValsCopy = fill(Array(index + 1), {});
+                                  keptVals.forEach((keptVal, i) => (keptValsCopy[i] = keptVal));
+                                  keptValsCopy[index] = {
+                                    expression: currentValues.expression,
+                                    mapValue: currentValues.mapValue,
+                                  };
+
+                                  setKeptVals(keptValsCopy);
+
                                   const newValueDetails = getSupportedTransTypeDetails(value.value);
 
                                   if (newValueDetails.showExpression) {
                                     setValue(
                                       `config.transformations.${index}.expression`,
-                                      keptVals[index.toString()]?.expression || ''
+                                      keptVals[index]?.expression || ''
                                     );
                                   } else {
                                     setValue(`config.transformations.${index}.expression`, '');
@@ -100,7 +103,7 @@ export const TransformationsEditor = (props: Props) => {
                                   if (newValueDetails.showMapValue) {
                                     setValue(
                                       `config.transformations.${index}.mapValue`,
-                                      keptVals[index.toString()]?.mapValue || ''
+                                      keptVals[index]?.mapValue || ''
                                     );
                                   } else {
                                     setValue(`config.transformations.${index}.mapValue`, '');
@@ -217,7 +220,14 @@ export const TransformationsEditor = (props: Props) => {
                             type="button"
                             tooltip="Remove transformation"
                             name={'trash-alt'}
-                            onClick={() => remove(index)}
+                            onClick={() => {
+                              const keptValsCopy: Array<{ expression?: string; mapValue?: string } | undefined> = [
+                                ...keptVals,
+                              ];
+                              keptValsCopy[index] = undefined;
+                              setKeptVals(compact(keptValsCopy));
+                              remove(index);
+                            }}
                           >
                             Remove
                           </IconButton>
