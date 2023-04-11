@@ -249,6 +249,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		if len(withStates) > 0 {
 			// Filtering is weird but firing, pending, and normal filters also need to be
 			// applied to the rule. Others such as nodata and error should have no effect.
+			// This is to match the current behavior in the UI.
 			filteredRules := make([]apimodels.AlertingRule, 0, len(ruleGroup.Rules))
 			for _, rule := range ruleGroup.Rules {
 				var state *eval.State
