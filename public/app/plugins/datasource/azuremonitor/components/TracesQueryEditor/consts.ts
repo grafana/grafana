@@ -1,5 +1,15 @@
 import { omit } from 'lodash';
 
+export const Tables = {
+  availabilityResults: 'Availablity Results',
+  dependencies: 'Dependencies',
+  events: 'Events',
+  exceptions: 'Exceptions',
+  pageViews: 'Page Views',
+  requests: 'Requests',
+  traces: 'Traces',
+};
+
 // Resource centric tables mapped to legacy tables
 export const tables = {
   AppAvailabilityResults: 'availabilityResults',

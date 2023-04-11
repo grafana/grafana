@@ -11,10 +11,13 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
 const (
 	TimeSeries = "time_series"
+	Table      = "table"
+	Trace      = "trace"
 )
 
 var (
@@ -193,6 +196,39 @@ type LogJSONQuery struct {
 		// Deprecated: Use Resources instead
 		Resource string `json:"resource"`
 	} `json:"azureLogAnalytics"`
+}
+
+type TracesJSONQuery struct {
+	AzureTraces struct {
+		// Filters for property values.
+		Filters []TracesFilters `json:"filters"`
+
+		// Operation ID. Used only for Traces queries.
+		OperationId *string `json:"operationId"`
+
+		// KQL query to be executed.
+		Query *string `json:"query"`
+
+		// Array of resource URIs to be queried.
+		Resources []string `json:"resources"`
+
+		// Specifies the format results should be returned as.
+		ResultFormat *dataquery.AzureMonitorQueryAzureTracesResultFormat `json:"resultFormat"`
+
+		// Types of events to filter by.
+		TraceTypes []string `json:"traceTypes"`
+	} `json:"azureTraces"`
+}
+
+type TracesFilters struct {
+	// Values to filter by.
+	Filters []string `json:"filters"`
+
+	// Comparison operator to use. Either equals or not equals.
+	Operation string `json:"operation"`
+
+	// Property name, auto-populated based on available traces.
+	Property string `json:"property"`
 }
 
 // MetricChartDefinition is the JSON model for a metrics chart definition

@@ -215,7 +215,7 @@ function hasQueryForType(query: AzureMonitorQuery): boolean {
       return !!query.azureResourceGraph;
 
     case AzureQueryType.AzureTraces:
-      return !!query.azureLogAnalytics;
+      return !!query.azureTraces;
 
     case AzureQueryType.GrafanaTemplateVariableFn:
       return !!query.grafanaTemplateVariableFn;

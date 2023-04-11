@@ -26,6 +26,10 @@ export interface AzureMonitorQuery extends common.DataQuery {
    */
   azureResourceGraph?: AzureResourceGraphQuery;
   /**
+   * Application Insights Traces sub-query properties.
+   */
+  azureTraces?: AzureTracesQuery;
+  /**
    * @deprecated Legacy template variable support.
    */
   grafanaTemplateVariableFn?: GrafanaTemplateVariableQuery;
@@ -160,10 +164,6 @@ export const defaultAzureMetricQuery: Partial<AzureMetricQuery> = {
  */
 export interface AzureLogsQuery {
   /**
-   * Operation ID. Used only for Traces queries.
-   */
-  operationId?: string;
-  /**
    * KQL query to be executed.
    */
   query?: string;
@@ -187,6 +187,61 @@ export interface AzureLogsQuery {
 
 export const defaultAzureLogsQuery: Partial<AzureLogsQuery> = {
   resources: [],
+};
+
+/**
+ * Application Insights Traces sub-query properties
+ */
+export interface AzureTracesQuery {
+  /**
+   * Filters for property values.
+   */
+  filters?: Array<AzureTracesFilter>;
+  /**
+   * Operation ID. Used only for Traces queries.
+   */
+  operationId?: string;
+  /**
+   * KQL query to be executed.
+   */
+  query?: string;
+  /**
+   * Array of resource URIs to be queried.
+   */
+  resources?: Array<string>;
+  /**
+   * Specifies the format results should be returned as.
+   */
+  resultFormat?: ResultFormat;
+  /**
+   * Types of events to filter by.
+   */
+  traceTypes?: Array<string>;
+}
+
+export const defaultAzureTracesQuery: Partial<AzureTracesQuery> = {
+  filters: [],
+  resources: [],
+  traceTypes: [],
+};
+
+export interface AzureTracesFilter {
+  /**
+   * Values to filter by.
+   */
+  filters: Array<string>;
+  /**
+   * Comparison operator to use. Either equals or not equals.
+   */
+  operation: string;
+  /**
+   * Property name, auto-populated based on available traces.
+   */
+  property: string;
+}
+
+export const defaultAzureTracesFilter: Partial<AzureTracesFilter> = {
+  filters: [],
 };
 
 export enum ResultFormat {
