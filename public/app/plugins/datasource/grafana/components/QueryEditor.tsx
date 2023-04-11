@@ -159,7 +159,22 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
 
   onQueryTypeChange = (sel: SelectableValue<GrafanaQueryType>) => {
     const { onChange, query, onRunQuery } = this.props;
-    onChange({ ...query, queryType: sel.value! });
+    const newQuery = { ...query, queryType: sel.value! };
+    if (newQuery.queryType === GrafanaQueryType.TimeRegions) {
+      if (!newQuery.timeRegions?.length) {
+        newQuery.timeRegions = [
+          {
+            name: 'T1',
+            color: 'dark-green',
+            timezone: 'browser',
+          },
+        ];
+      }
+    } else {
+      delete newQuery.timeRegions;
+    }
+
+    onChange(newQuery);
     onRunQuery();
 
     // Reload the channel list
@@ -489,6 +504,11 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
           <Alert title="Grafana Search" severity="info">
             Using this datasource to call the new search system is experimental, and subject to change at any time
             without notice.
+          </Alert>
+        )}
+        {queryType === GrafanaQueryType.TimeRegions && (
+          <Alert title="Annotation query" severity="info">
+            This query produces data that is only visible in panels that can render time regions.
           </Alert>
         )}
         <InlineFieldRow>

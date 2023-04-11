@@ -117,7 +117,11 @@ const TimeRegionEditor = ({ value, index, onChange }: SingleRegion) => {
             isClearable
             placeholder="Everyday"
             value={value.fromDayOfWeek ?? null}
-            onChange={(v) => onChange(index, { ...value, fromDayOfWeek: v ? v.value : undefined })}
+            onChange={(v) => {
+              const fromDayOfWeek = v ? v.value : undefined;
+              const toDayOfWeek = v ? value.toDayOfWeek : undefined; // clear if everyday
+              onChange(index, { ...value, fromDayOfWeek, toDayOfWeek });
+            }}
             width={20}
           />
           <TimePickerInput
@@ -131,14 +135,16 @@ const TimeRegionEditor = ({ value, index, onChange }: SingleRegion) => {
       </InlineField>
       <InlineField label="To">
         <HorizontalGroup spacing="xs">
-          <Select
-            options={days}
-            isClearable
-            placeholder="Everyday"
-            value={value.toDayOfWeek ?? null}
-            onChange={(v) => onChange(index, { ...value, toDayOfWeek: v ? v.value : undefined })}
-            width={20}
-          />
+          {value.fromDayOfWeek && (
+            <Select
+              options={days}
+              isClearable
+              placeholder="Everyday"
+              value={value.toDayOfWeek ?? null}
+              onChange={(v) => onChange(index, { ...value, toDayOfWeek: v ? v.value : undefined })}
+              width={20}
+            />
+          )}
           <TimePickerInput
             value={getTime(value.to)}
             onChange={(v) => onChange(index, { ...value, to: v ? v.format('HH:mm') : undefined })}
