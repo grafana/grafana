@@ -105,13 +105,13 @@ export const fetchPromRulesAction = createAsyncThunk(
       rulesSourceName,
       filter,
       limitAlerts,
-      matchers,
+      matcher,
       state,
     }: {
       rulesSourceName: string;
       filter?: FetchPromRulesFilter;
       limitAlerts?: number;
-      matchers?: string;
+      matcher?: string;
       state?: string[];
     },
     thunkAPI
@@ -123,7 +123,7 @@ export const fetchPromRulesAction = createAsyncThunk(
       thunk: 'unifiedalerting/fetchPromRules',
     });
 
-    return await withSerializedError(fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matchers, state));
+    return await withSerializedError(fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state));
   }
 );
 
@@ -354,7 +354,7 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
 interface FetchPromRulesRulesActionProps {
   filter?: FetchPromRulesFilter;
   limitAlerts?: number;
-  matchers?: string;
+  matcher?: string;
   state?: string[];
 }
 

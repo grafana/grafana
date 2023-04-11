@@ -14,12 +14,12 @@ export interface FetchPromRulesFilter {
 export interface PrometheusDataSourceConfig {
   dataSourceName: string;
   limitAlerts?: number;
-  matchers?: string;
+  matcher?: string;
   state?: GrafanaAlertState[];
 }
 
 export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
-  const { dataSourceName, limitAlerts, matchers } = dataSourceConfig;
+  const { dataSourceName, limitAlerts, matcher } = dataSourceConfig;
 
   return {
     rules: (filter?: FetchPromRulesFilter) => {
@@ -30,8 +30,8 @@ export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfi
       if (dataSourceName === GRAFANA_RULES_SOURCE_NAME && limitAlerts) {
         searchParams.set('limit_alerts', String(limitAlerts));
       }
-      if (dataSourceName === GRAFANA_RULES_SOURCE_NAME && matchers) {
-        searchParams.set('matchers', matchers);
+      if (dataSourceName === GRAFANA_RULES_SOURCE_NAME && matcher) {
+        searchParams.set('matcher', matcher);
       }
 
       const params = prepareRulesFilterQueryParams(searchParams, filter);
@@ -66,14 +66,14 @@ export async function fetchRules(
   dataSourceName: string,
   filter?: FetchPromRulesFilter,
   limitAlerts?: number,
-  matchers?: string,
+  matcher?: string,
   state?: string[]
 ): Promise<RuleNamespace[]> {
   if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
     throw new Error('Filtering by dashboard UID is only supported for Grafana Managed rules.');
   }
 
-  const { url, params } = prometheusUrlBuilder({ dataSourceName, limitAlerts, matchers }).rules(filter);
+  const { url, params } = prometheusUrlBuilder({ dataSourceName, limitAlerts, matcher }).rules(filter);
 
   // adding state param here instead of adding it in prometheusUrlBuilder, for being a possible multiple query param
   const response = await lastValueFrom(
