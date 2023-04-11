@@ -19,7 +19,7 @@ export interface PrometheusDataSourceConfig {
 }
 
 export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
-  const { dataSourceName, limitAlerts, matcher } = dataSourceConfig;
+  const { dataSourceName, limitAlerts } = dataSourceConfig;
 
   return {
     rules: (filter?: FetchPromRulesFilter) => {
@@ -29,9 +29,6 @@ export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfi
       // we do this because the response is large otherwise and we don't show all of them in the UI anyway.
       if (dataSourceName === GRAFANA_RULES_SOURCE_NAME && limitAlerts) {
         searchParams.set('limit_alerts', String(limitAlerts));
-      }
-      if (dataSourceName === GRAFANA_RULES_SOURCE_NAME && matcher) {
-        searchParams.set('matcher', matcher);
       }
 
       const params = prepareRulesFilterQueryParams(searchParams, filter);
@@ -58,8 +55,30 @@ export function prepareRulesFilterQueryParams(
   return Object.fromEntries(params);
 }
 
-function paramsWithState(state: string[] | undefined, params: Record<string, string>) {
-  return state?.length ? { ...params, state } : params;
+function paramsWithMatcherAndState(
+  state: string[] | undefined,
+  matcher: string | undefined,
+  params: Record<string, string | string[]>
+) {
+  let paramsResult = { ...params };
+
+  if (state?.length) {
+    paramsResult = { ...paramsResult, state };
+  }
+
+  //we need to remove curly braces and change the separated-coma format to an array of strings
+  //otherwise the API throws 400
+  if (matcher) {
+    paramsResult = {
+      ...paramsResult,
+      matcher: matcher
+        ?.replace(/[{}]/g, '')
+        .split(',')
+        .map((value) => value.trim()),
+    };
+  }
+
+  return paramsResult;
 }
 
 export async function fetchRules(
@@ -79,7 +98,7 @@ export async function fetchRules(
   const response = await lastValueFrom(
     getBackendSrv().fetch<PromRulesResponse>({
       url,
-      params: paramsWithState(state, params),
+      params: paramsWithMatcherAndState(state, matcher, params),
       showErrorAlert: false,
       showSuccessAlert: false,
     })
