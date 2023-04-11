@@ -12,5 +12,4 @@ Users with [Viewer base role]({{< relref "/docs/grafana/latest/administration/ro
 
 Users with [Admin base role]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/" >}}) or with [datasources:write RBAC role]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/" >}}) can:
 
-- User with Admin base role or with datasources:write RBAC role can:
 - Add, edit and delete correlations
