@@ -27,22 +27,25 @@ You can also [upload a JSON trace file]({{< relref "#upload-a-json-trace-file" >
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
-1. Hover the cursor over the **Configuration** (gear) icon.
-1. Select **Data Sources**.
-1. Select the Zipkin data source.
+1.  Click **Connections** in the left-side menu.
+1.  Under Your connections, click **Data sources**.
+1.  Enter `Zipkin` in the search bar.
+1.  Select **Zipkin**.
 
-Set the data source's basic configuration options carefully:
+    The **Settings** tab of the data source is displayed.
 
-| Name           | Description                                                              |
-| -------------- | ------------------------------------------------------------------------ |
-| **Name**       | Sets the name you use to refer to the data source in panels and queries. |
-| **Default**    | Defines whether this data source is pre-selected for new panels.         |
-| **URL**        | Sets the URL of the Zipkin instance, such as `http://localhost:9411`.    |
-| **Basic Auth** | Enables basic authentication for the Zipkin data source.                 |
-| **User**       | Defines the user name for basic authentication.                          |
-| **Password**   | Defines the password for basic authentication.                           |
+1.  Set the data source's basic configuration options:
+
+    | Name           | Description                                                              |
+    | -------------- | ------------------------------------------------------------------------ |
+    | **Name**       | Sets the name you use to refer to the data source in panels and queries. |
+    | **Default**    | Defines whether this data source is pre-selected for new panels.         |
+    | **URL**        | Sets the URL of the Zipkin instance, such as `http://localhost:9411`.    |
+    | **Basic Auth** | Enables basic authentication for the Zipkin data source.                 |
+    | **User**       | Defines the user name for basic authentication.                          |
+    | **Password**   | Defines the password for basic authentication.                           |
 
 ### Trace to logs
 

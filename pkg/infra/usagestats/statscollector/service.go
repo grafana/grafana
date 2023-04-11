@@ -2,7 +2,6 @@ package statscollector
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -74,7 +73,6 @@ func ProvideService(
 		s.collectConcurrentUsers,
 		s.collectDatasourceStats,
 		s.collectDatasourceAccess,
-		s.collectElasticStats,
 		s.collectAlertNotifierStats,
 		s.collectPrometheusFlavors,
 		s.collectAdditionalMetrics,
@@ -160,6 +158,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	m["stats.data_keys.count"] = statsResult.DataKeys
 	m["stats.active_data_keys.count"] = statsResult.ActiveDataKeys
 	m["stats.public_dashboards.count"] = statsResult.PublicDashboards
+	m["stats.correlations.count"] = statsResult.Correlations
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
@@ -240,28 +239,6 @@ func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interf
 	return m, nil
 }
 
-func (s *Service) collectElasticStats(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
-	esDataSourcesQuery := datasources.GetDataSourcesByTypeQuery{Type: datasources.DS_ES}
-	dataSources, err := s.datasources.GetDataSourcesByType(ctx, &esDataSourcesQuery)
-	if err != nil {
-		s.log.Error("Failed to get elasticsearch json data", "error", err)
-		return nil, err
-	}
-	for _, data := range dataSources {
-		esVersion, err := data.JsonData.Get("esVersion").String()
-		if err != nil {
-			continue
-		}
-		statName := fmt.Sprintf("stats.ds.elasticsearch.v%s.count", strings.ReplaceAll(esVersion, ".", "_"))
-
-		count, _ := m[statName].(int64)
-
-		m[statName] = count + 1
-	}
-	return m, nil
-}
-
 func (s *Service) collectDatasourceAccess(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 
@@ -337,6 +314,8 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "false"}).Set(float64(inactiveDataKeys))
 
 	metrics.MStatTotalPublicDashboards.Set(float64(statsResult.PublicDashboards))
+
+	metrics.MStatTotalCorrelations.Set(float64(statsResult.Correlations))
 
 	dsResult, err := s.statsService.GetDataSourceStats(ctx, &stats.GetDataSourceStatsQuery{})
 	if err != nil {

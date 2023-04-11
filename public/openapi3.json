@@ -332,7 +332,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/DashboardVersionDTO"
+                "$ref": "#/components/schemas/DashboardVersionMeta"
               },
               "type": "array"
             }
@@ -3829,48 +3829,6 @@
           },
           "term": {
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "DashboardVersionDTO": {
-        "properties": {
-          "created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "createdBy": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardUid": {
-            "type": "string"
-          },
-          "data": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "message": {
-            "type": "string"
-          },
-          "parentVersion": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "restoredFrom": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "version": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"

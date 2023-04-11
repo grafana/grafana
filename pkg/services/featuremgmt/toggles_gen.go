@@ -7,10 +7,6 @@
 package featuremgmt
 
 const (
-	// FlagAlertingBigTransactions
-	// Use big transactions for alerting database writes
-	FlagAlertingBigTransactions = "alertingBigTransactions"
-
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
@@ -144,11 +140,11 @@ const (
 	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
-	// Displays new top nav and page layouts
+	// Enables new top navigation and page layouts
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer
-	// Run GRPC server
+	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
 
 	// FlagEntityStore
@@ -194,6 +190,10 @@ const (
 	// FlagElasticsearchBackendMigration
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
+
+	// FlagShowTraceId
+	// Show trace ids for requests
+	FlagShowTraceId = "showTraceId"
 
 	// FlagDatasourceOnboarding
 	// Enable data source onboarding page
@@ -267,6 +267,10 @@ const (
 	// Enable time series table transformer &amp; sparkline cell type
 	FlagTimeSeriesTable = "timeSeriesTable"
 
+	// FlagPrometheusResourceBrowserCache
+	// Displays browser caching options in Prometheus data source configuration
+	FlagPrometheusResourceBrowserCache = "prometheusResourceBrowserCache"
+
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
@@ -282,4 +286,32 @@ const (
 	// FlagPrometheusDataplane
 	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
 	FlagPrometheusDataplane = "prometheusDataplane"
+
+	// FlagAlertStateHistoryLokiSecondary
+	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
+	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
+
+	// FlagAlertStateHistoryLokiPrimary
+	// Enable a remote Loki instance as the primary source for state history reads.
+	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
+
+	// FlagAlertStateHistoryLokiOnly
+	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
+	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
+
+	// FlagUnifiedRequestLog
+	// Writes error logs to the request logger
+	FlagUnifiedRequestLog = "unifiedRequestLog"
+
+	// FlagRenderAuthJWT
+	// Uses JWT-based auth for rendering instead of relying on remote cache
+	FlagRenderAuthJWT = "renderAuthJWT"
+
+	// FlagPyroscopeFlameGraph
+	// Changes flame graph to pyroscope one
+	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
+
+	// FlagDataplaneFrontendFallback
+	// Support dataplane contract field name change for transformations and field name matchers where the name is different
+	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
 )
