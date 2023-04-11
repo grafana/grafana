@@ -22,3 +22,14 @@ export function fabricateMockElement(nodeName: string, sandboxDocument: Document
   element.setAttribute('id', 'grafana-plugin-sandbox');
   return element;
 }
+
+export function isDomElement(obj: unknown): obj is Element {
+  if (typeof obj === 'object' && obj instanceof Element) {
+    try {
+      return obj.nodeName !== undefined;
+    } catch (e) {
+      return false;
+    }
+  }
+  return false;
+}

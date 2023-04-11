@@ -32,7 +32,7 @@ import * as ticks from 'app/core/utils/ticks';
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
-import { availableCompartmentDependenciesMap, importPluginInsideSandbox } from './sandboxing';
+import { availableCompartmentDependenciesMap, importPluginInsideSandbox } from './sandbox/plugin_loader';
 import { locateFromCDN, translateForCDN } from './systemjsPlugins/pluginCDN';
 import { fetchCSS, locateCSS } from './systemjsPlugins/pluginCSS';
 import { locateWithCache, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
@@ -196,15 +196,11 @@ export async function importPluginModule(path: string, version?: string): Promis
     }
   }
 
-  console.log('requesting plugin: ', path, 'version: ', version, '');
-
   // if path contains any string in nearMembranePOCPluginList, load it via compartments
   if (nearMembranePOCPluginList.some((pluginName) => path.includes(pluginName))) {
-    console.log('Sandbox POC: loading plugin via compartments', path);
     return importPluginInsideSandbox(path);
   }
 
-  console.log('Sandbox POC: loading plugin directly', path);
   return grafanaRuntime.SystemJS.import(path);
 }
 
