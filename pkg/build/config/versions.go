@@ -207,6 +207,8 @@ var Versions = VersionMap{
 	CloudMode: {
 		Variants: []Variant{
 			VariantLinuxAmd64Musl,
+			// We still need this variant to build the .deb file
+			VariantLinuxAmd64,
 		},
 		PluginSignature: PluginSignature{
 			Sign:      true,

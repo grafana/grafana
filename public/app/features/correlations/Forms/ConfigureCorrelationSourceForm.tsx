@@ -4,8 +4,10 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Field, FieldSet, Input, useStyles2 } from '@grafana/ui';
+import { Card, Field, FieldSet, Input, useStyles2 } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+
+import { getVariableUsageInfo } from '../../explore/utils/links';
 
 import { useCorrelationsFormContext } from './correlationsFormContext';
 import { getInputId } from './utils';
@@ -14,14 +16,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css`
     max-width: ${theme.spacing(80)};
   `,
+  variable: css`
+    font-family: ${theme.typography.fontFamilyMonospace};
+    font-weight: ${theme.typography.fontWeightMedium};
+  `,
 });
 
 export const ConfigureCorrelationSourceForm = () => {
-  const { control, formState, register } = useFormContext();
+  const { control, formState, register, getValues } = useFormContext();
   const styles = useStyles2(getStyles);
   const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.uid);
 
   const { correlation, readOnly } = useCorrelationsFormContext();
+
+  const currentTargetQuery = getValues('config.target');
+  const variables = getVariableUsageInfo(currentTargetQuery, {}).variables.map(
+    (variable) => variable.variableName + (variable.fieldPath ? `.${variable.fieldPath}` : '')
+  );
 
   return (
     <>
@@ -73,6 +84,27 @@ export const ConfigureCorrelationSourceForm = () => {
             readOnly={readOnly}
           />
         </Field>
+
+        {variables.length > 0 && (
+          <Card>
+            <Card.Heading>Variables used in the target query</Card.Heading>
+            <Card.Description>
+              <div>
+                You have used following variables in the target query:{' '}
+                {variables.map((name, i) => (
+                  <span className={styles.variable} key={i}>
+                    {name}
+                    {i < variables.length - 1 ? ', ' : ''}
+                  </span>
+                ))}
+              </div>
+              <div>
+                A data point needs to provide values to all variables as fields or as transformations output to make the
+                correlation button appear in the visualization.
+              </div>
+            </Card.Description>
+          </Card>
+        )}
       </FieldSet>
     </>
   );

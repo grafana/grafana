@@ -146,6 +146,9 @@ func verifyExistingOrg(sess *DBSession, orgId int64) error {
 
 func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
 	var org org.Org
+	org.Created = time.Now()
+	org.Updated = org.Created
+
 	if ss.Cfg.AutoAssignOrg {
 		has, err := sess.Where("id=?", ss.Cfg.AutoAssignOrgId).Get(&org)
 		if err != nil {
@@ -164,18 +167,11 @@ func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, erro
 
 		org.Name = mainOrgName
 		org.ID = int64(ss.Cfg.AutoAssignOrgId)
-	} else {
-		org.Name = orgName
-	}
-
-	org.Created = time.Now()
-	org.Updated = time.Now()
-
-	if org.ID != 0 {
 		if err := sess.InsertId(&org, ss.Dialect); err != nil {
 			return 0, err
 		}
 	} else {
+		org.Name = orgName
 		if _, err := sess.InsertOne(&org); err != nil {
 			return 0, err
 		}
