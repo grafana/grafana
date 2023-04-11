@@ -1,12 +1,13 @@
 import { GridSelection } from '@glideapps/glide-data-grid';
+import { capitalize } from 'lodash';
 import React from 'react';
 
 import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
-import { ContextMenu, MenuItem } from '@grafana/ui';
+import { ContextMenu, MenuGroup, MenuItem } from '@grafana/ui';
 import { MenuDivider } from '@grafana/ui/src/components/Menu/MenuDivider';
 
-import { deleteRows, EMPTY_DF, EMPTY_GRID_SELECTION } from '../utils';
+import { cleanStringFieldAfterConversion, deleteRows, EMPTY_DF, EMPTY_GRID_SELECTION } from '../utils';
 
 interface Props {
   x: number;
@@ -60,13 +61,19 @@ export const DatagridContextMenu = ({
     columnDeletionLabel = `Delete ${selectedColumns.length} columns`;
   }
 
+  const showDeleteRow = (row !== undefined && row >= 0) || selectedRows.length;
+  const showDeleteColumn = (column !== undefined && column >= 0) || selectedColumns.length;
+  const showClearRow = row !== undefined && row >= 0 && !selectedRows.length;
+  const showClearColumn = column !== undefined && column >= 0 && !selectedColumns.length;
+
   const renderContextMenuItems = () => (
     <>
-      {(row !== undefined && row >= 0) || selectedRows.length ? (
+      {showDeleteRow ? (
         <MenuItem
           label={rowDeletionLabel}
           onClick={() => {
             if (selectedRows.length) {
+              console.log(selectedRows);
               saveData(deleteRows(data, selectedRows, true));
               setGridSelection(EMPTY_GRID_SELECTION);
               return;
@@ -78,7 +85,7 @@ export const DatagridContextMenu = ({
           }}
         />
       ) : null}
-      {(column !== undefined && column >= 0) || selectedColumns.length ? (
+      {showDeleteColumn ? (
         <MenuItem
           label={columnDeletionLabel}
           onClick={() => {
@@ -99,8 +106,8 @@ export const DatagridContextMenu = ({
           }}
         />
       ) : null}
-      <MenuDivider />
-      {row !== undefined && row >= 0 && !selectedRows.length ? (
+      {showDeleteColumn || showDeleteRow ? <MenuDivider /> : null}
+      {showClearRow ? (
         <MenuItem
           label="Clear row"
           onClick={() => {
@@ -108,7 +115,7 @@ export const DatagridContextMenu = ({
           }}
         />
       ) : null}
-      {column !== undefined && column >= 0 && !selectedColumns.length ? (
+      {showClearColumn ? (
         <MenuItem
           label="Clear column"
           onClick={() => {
@@ -121,7 +128,7 @@ export const DatagridContextMenu = ({
           }}
         />
       ) : null}
-      <MenuDivider />
+      {showClearRow || showClearColumn ? <MenuDivider /> : null}
       <MenuItem
         label="Remove all data"
         onClick={() => {
@@ -133,12 +140,11 @@ export const DatagridContextMenu = ({
   );
 
   const renderHeaderMenuItems = () => {
-    if (!column) {
+    if (column === null || column === undefined) {
       return null;
     }
 
     const fieldType = data.fields[column].type;
-    let labelTpl = 'Change to %s field type';
     const fieldTypeConversionData: Array<{
       label: string;
       options: {
@@ -149,7 +155,7 @@ export const DatagridContextMenu = ({
 
     const addToConversionData = (fieldType: FieldType) => {
       fieldTypeConversionData.push({
-        label: labelTpl.replace('%s', fieldType),
+        label: capitalize(fieldType),
         options: {
           targetField: data.fields[column].name,
           destinationType: fieldType,
@@ -166,6 +172,10 @@ export const DatagridContextMenu = ({
     } else if (fieldType === FieldType.boolean) {
       addToConversionData(FieldType.number);
       addToConversionData(FieldType.string);
+    } else {
+      addToConversionData(FieldType.string);
+      addToConversionData(FieldType.number);
+      addToConversionData(FieldType.boolean);
     }
 
     let columnFreezeLabel = 'Set column freeze position';
@@ -176,23 +186,32 @@ export const DatagridContextMenu = ({
 
     return (
       <>
-        {fieldTypeConversionData.map((conversionData, index) => (
-          <MenuItem
-            key={index}
-            label={conversionData.label}
-            onClick={() => {
-              const field = convertFieldType(data.fields[column], conversionData.options);
-              const copy = {
-                name: data.name,
-                fields: [...data.fields],
-                length: data.length,
-              };
-              copy.fields[column] = field;
+        {fieldTypeConversionData.length ? (
+          <MenuGroup label="Set field type">
+            {fieldTypeConversionData.map((conversionData, index) => (
+              <MenuItem
+                key={index}
+                label={conversionData.label}
+                onClick={() => {
+                  const field = convertFieldType(data.fields[column], conversionData.options);
+                  if (conversionData.options.destinationType === FieldType.string) {
+                    cleanStringFieldAfterConversion(field);
+                  }
 
-              saveData(copy);
-            }}
-          />
-        ))}
+                  const copy = {
+                    name: data.name,
+                    fields: [...data.fields],
+                    length: data.length,
+                  };
+                  copy.fields[column] = field;
+
+                  saveData(copy);
+                }}
+              />
+            ))}
+          </MenuGroup>
+        ) : null}
+        <MenuDivider />
         <MenuItem
           label={columnFreezeLabel}
           onClick={() => {

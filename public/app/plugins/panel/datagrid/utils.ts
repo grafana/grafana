@@ -41,7 +41,7 @@ export const EMPTY_GRID_SELECTION = {
 
 export const TRAILING_ROW_OPTIONS = {
   sticky: false,
-  tint: false,
+  tint: true,
 };
 
 export const RIGHT_ELEMENT_PROPS = {
@@ -70,22 +70,19 @@ export const getCellWidth = (field: Field, fontSize: number): number => {
 };
 
 export const deleteRows = (gridData: DataFrame, rows: number[], hardDelete = false): DataFrame => {
-  for (let i = 0; i < rows.length; i++) {
-    for (let j = 0; j < gridData.fields.length; j++) {
-      const field = gridData.fields[j];
+  for (const field of gridData.fields) {
+    const valuesArray = field.values.toArray();
 
-      const rowIndex = rows[i];
-
-      const valuesArray = field.values.toArray();
-
+    //delete from the end of the array to avoid index shifting
+    for (let i = rows.length - 1; i >= 0; i--) {
       if (hardDelete) {
-        valuesArray.splice(rowIndex, 1);
+        valuesArray.splice(rows[i], 1);
       } else {
-        valuesArray.splice(rowIndex, 1, null);
+        valuesArray.splice(rows[i], 1, null);
       }
-
-      field.values = new ArrayVector(valuesArray);
     }
+
+    field.values = new ArrayVector(valuesArray);
   }
 
   return new MutableDataFrame(gridData);
@@ -138,4 +135,11 @@ export const publishSnapshot = (data: DataFrame, panelID: number): void => {
 
 export const isDatagridEditEnabled = () => {
   return config.featureToggles.enableDatagridEditingPanel;
+};
+
+//Converting an array of nulls or undefineds returns them as strings and prints them in the cells instead of empty cells. Thus the cleanup func
+export const cleanStringFieldAfterConversion = (field: Field): void => {
+  const valuesArray = field.values.toArray();
+  field.values = new ArrayVector(valuesArray.map((val) => (val === 'undefined' || val === 'null' ? null : val)));
+  return;
 };

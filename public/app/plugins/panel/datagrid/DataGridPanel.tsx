@@ -90,6 +90,8 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
       [FieldType.number, GridColumnIcon.HeaderNumber],
       [FieldType.string, GridColumnIcon.HeaderTextTemplate],
       [FieldType.boolean, GridColumnIcon.HeaderBoolean],
+      [FieldType.time, GridColumnIcon.HeaderDate],
+      [FieldType.other, GridColumnIcon.HeaderReference],
     ]);
 
     if (!gridData) {
@@ -146,32 +148,37 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
 
     const value = field.values.get(row);
 
-    if (value === undefined || value === null) {
-      return EMPTY_CELL;
-    }
-
     switch (field.type) {
       case FieldType.boolean:
         return {
           kind: GridCellKind.Boolean,
-          data: value,
+          data: value ? value : false,
           allowOverlay: false,
+          readonly: false,
         };
       case FieldType.number:
         return {
           kind: GridCellKind.Number,
-          data: value,
+          data: value ? value : 0,
           allowOverlay: isDatagridEditEnabled()!,
           readonly: false,
-          displayData: value.toString(),
+          displayData: value !== null && value !== undefined ? value.toString() : '',
+        };
+      case FieldType.string:
+        return {
+          kind: GridCellKind.Text,
+          data: value ? value : '',
+          allowOverlay: isDatagridEditEnabled()!,
+          readonly: false,
+          displayData: value !== null && value !== undefined ? value.toString() : '',
         };
       default:
         return {
           kind: GridCellKind.Text,
-          data: value,
+          data: value ? value : '',
           allowOverlay: isDatagridEditEnabled()!,
           readonly: false,
-          displayData: value.toString(),
+          displayData: value !== null && value !== undefined ? value.toString() : '',
         };
     }
   };
@@ -180,7 +187,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     const [col, row] = cell;
     const field: Field = gridData.fields[col];
 
-    if (!field || !newValue.data) {
+    if (!field) {
       return;
     }
 
@@ -194,7 +201,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   };
 
   const onColumnInputBlur = (columnName: string) => {
-    const len = gridData.length ?? 50; //todo ?????? 50????
+    const len = gridData.length ?? 0;
 
     const newFrame = new MutableDataFrame(gridData);
 
