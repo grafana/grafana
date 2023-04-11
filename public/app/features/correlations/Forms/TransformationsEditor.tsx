@@ -148,13 +148,19 @@ export const TransformationsEditor = (props: Props) => {
                       <Field
                         label={
                           <Stack gap={0.5}>
-                            <Label>Expression</Label>
+                            <Label>
+                              Expression
+                              {getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
+                                .requireExpression
+                                ? ' *'
+                                : ''}
+                            </Label>
                             <Tooltip
                               content={
                                 <div>
                                   <p>
-                                    Optional. The expression the transformation will use. Currently only valid with
-                                    regular expressions, as logfmt does not need further specifications.
+                                    Required for regular expression. The expression the transformation will use. Logfmt
+                                    does not use further specifications.
                                   </p>
                                 </div>
                               }
@@ -170,6 +176,10 @@ export const TransformationsEditor = (props: Props) => {
                           readOnly={readOnly}
                           disabled={
                             !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).showExpression
+                          }
+                          required={
+                            getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
+                              .requireExpression
                           }
                         />
                       </Field>
@@ -241,6 +251,7 @@ interface SupportedTransformationTypeDetails {
   description?: string;
   showExpression: boolean;
   showMapValue: boolean;
+  requireExpression?: boolean;
 }
 
 function getSupportedTransTypeDetails(transType: SupportedTransformationType): SupportedTransformationTypeDetails {
@@ -261,6 +272,7 @@ function getSupportedTransTypeDetails(transType: SupportedTransformationType): S
           'Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value.',
         showExpression: true,
         showMapValue: true,
+        requireExpression: true,
       };
     default:
       return { label: transType, value: transType, showExpression: false, showMapValue: false };
