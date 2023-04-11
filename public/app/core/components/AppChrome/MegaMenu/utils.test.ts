@@ -5,7 +5,7 @@ import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
 import { enrichConfigItems, getActiveItem, isMatchOrChildMatch } from './utils';
 
-jest.mock('../../app_events', () => ({
+jest.mock('../../../app_events', () => ({
   publish: jest.fn(),
 }));
 
