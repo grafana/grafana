@@ -57,7 +57,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     }
 
     const vals = await datasource.getScenarios();
-    const hideAlias = ['simulation'];
+    const hideAlias = [TestDataQueryType.Simulation, TestDataQueryType.Annotations];
     return vals.map((v) => ({
       ...v,
       hideAliasField: hideAlias.includes(v.id),
@@ -113,6 +113,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         break;
       case TestDataQueryType.PredictableCSVWave:
         update.csvWave = defaultCSVWaveQuery;
+        break;
+      case TestDataQueryType.Annotations:
+        update.lines = 10;
         break;
       case TestDataQueryType.USA:
         update.usa = {
@@ -277,7 +280,20 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
           </InlineField>
         </InlineFieldRow>
       )}
-
+      {scenarioId === TestDataQueryType.Annotations && (
+        <InlineFieldRow>
+          <InlineField label="Count" labelWidth={14}>
+            <Input
+              type="number"
+              name="lines"
+              value={query.lines}
+              width={32}
+              onChange={onInputChange}
+              placeholder="10"
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
       {scenarioId === TestDataQueryType.USA && <USAQueryEditor onChange={onUSAStatsChange} query={query.usa ?? {}} />}
       {scenarioId === TestDataQueryType.GrafanaAPI && (
         <InlineField labelWidth={14} label="Endpoint">
