@@ -400,11 +400,6 @@ func readMatrixOrVectorWide(iter *jsoniter.Iterator, resultType string, opt Opti
 			switch l1Field {
 			case "metric":
 				iter.ReadVal(&valueField.Labels)
-				if opt.Dataplane {
-					if n, ok := valueField.Labels["__name__"]; ok {
-						valueField.Name = n
-					}
-				}
 
 			case "value":
 				timeMap, rowIdx = addValuePairToFrame(frame, timeMap, rowIdx, iter)
@@ -503,11 +498,6 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Opt
 			switch l1Field {
 			case "metric":
 				iter.ReadVal(&valueField.Labels)
-				if opt.Dataplane {
-					if n, ok := valueField.Labels["__name__"]; ok {
-						valueField.Name = n
-					}
-				}
 
 			case "value":
 				t, v, err := readTimeValuePair(iter)
