@@ -166,6 +166,7 @@ export class QueryCache {
                         dashId: currentRequest.dashboardUID ?? '',
                         expr: currentRequest.expr ?? '',
                         interval: currentRequest.interval ?? '',
+                        sent: false,
                       });
 
                       // We don't need to save each subsequent request, only the first one
