@@ -78,7 +78,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     dispatch(
       fetchAllPromAndRulerRulesAction(false, {
         limitAlerts: INSTANCES_DISPLAY_LIMIT,
-        matchers: props.options.alertInstanceLabelFilter,
+        matcher: props.options.alertInstanceLabelFilter,
         state: stateList,
       })
     );
@@ -86,7 +86,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
       dispatch(
         fetchAllPromAndRulerRulesAction(false, {
           limitAlerts: INSTANCES_DISPLAY_LIMIT,
-          matchers: props.options.alertInstanceLabelFilter,
+          matcher: props.options.alertInstanceLabelFilter,
           state: stateList,
         })
       )
