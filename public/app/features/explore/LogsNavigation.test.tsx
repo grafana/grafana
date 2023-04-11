@@ -22,7 +22,6 @@ const defaultProps: LogsNavigationProps = {
   visibleRange: { from: 1637322959000, to: 1637322981811 },
   onChangeTime: jest.fn(),
   scrollToTopLogs: jest.fn(),
-  scrollToFirstLog: jest.fn(),
   addResultsToCache: jest.fn(),
   clearCache: jest.fn(),
 };
@@ -95,11 +94,11 @@ describe('LogsNavigation', () => {
   });
 
   it('should reset the scroll when pagination is clic ked', async () => {
-    const scrollToFirstLogMock = jest.fn();
-    setup({ scrollToFirstLog: scrollToFirstLogMock });
+    const scrollToTopLogsMock = jest.fn();
+    setup({ scrollToTopLogs: scrollToTopLogsMock });
 
-    expect(scrollToFirstLogMock).not.toHaveBeenCalled();
+    expect(scrollToTopLogsMock).not.toHaveBeenCalled();
     await userEvent.click(screen.getByTestId('olderLogsButton'));
-    expect(scrollToFirstLogMock).toHaveBeenCalled();
+    expect(scrollToTopLogsMock).toHaveBeenCalled();
   });
 });

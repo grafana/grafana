@@ -122,7 +122,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
   cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
-  firstLogRef = createRef<HTMLDivElement>();
   logsVolumeEventBus: EventBus;
 
   state: State = {
@@ -327,8 +326,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
   scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
 
-  scrollToFirstLog = () => this.firstLogRef.current?.scrollIntoView();
-
   render() {
     const {
       width,
@@ -400,7 +397,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           )}
         </Collapse>
         <Collapse label="Logs" loading={loading} isOpen className={styleOverridesForStickyNavigation}>
-          <div className={styles.logOptions} ref={this.topLogsRef}>
+          <div className={styles.logOptions}>
             <InlineFieldRow>
               <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
                 <InlineSwitch
@@ -485,7 +482,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             onEscapeNewlines={this.onEscapeNewlines}
             clearDetectedFields={this.clearDetectedFields}
           />
-          <div className={styles.logsSection} ref={this.firstLogRef}>
+          <div className={styles.logsSection} ref={this.topLogsRef}>
             <div className={styles.logRows} data-testid="logRows">
               <LogRows
                 logRows={logRows}
@@ -538,7 +535,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
               loading={loading}
               queries={logsQueries ?? []}
               scrollToTopLogs={this.scrollToTopLogs}
-              scrollToFirstLog={this.scrollToFirstLog}
               addResultsToCache={addResultsToCache}
               clearCache={clearCache}
             />
