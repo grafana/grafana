@@ -269,7 +269,7 @@ require (
 	github.com/dave/dst v0.27.2
 	github.com/go-jose/go-jose/v3 v3.0.0
 	github.com/grafana/go-mssqldb v0.9.1
-	github.com/grafana/kindsys v0.0.0-20230309200316-812b9884a375
+	github.com/grafana/kindsys v0.0.0-20230411171525-d555cfca2ad9
 	github.com/grafana/thema v0.0.0-20230302221249-6952e4a999b7
 	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f

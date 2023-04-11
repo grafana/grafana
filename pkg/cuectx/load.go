@@ -10,6 +10,7 @@ import (
 	"cuelang.org/go/cue/build"
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/kindsys"
+	kindcheck "github.com/grafana/kindsys/validation"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/load"
 	"github.com/yalue/merged_fs"
@@ -221,6 +222,10 @@ func LoadInstanceWithGrafana(fsys fs.FS, dir string, opts ...load.Option) (*buil
 func LoadCoreKindDef(defpath string, ctx *cue.Context, overlay fs.FS) (kindsys.Def[kindsys.CoreProperties], error) {
 	vk, err := BuildGrafanaInstance(ctx, defpath, "kind", overlay)
 	if err != nil {
+		return kindsys.Def[kindsys.CoreProperties]{}, err
+	}
+
+	if err := kindcheck.EnsureNoExportedKindName(vk); err != nil {
 		return kindsys.Def[kindsys.CoreProperties]{}, err
 	}
 

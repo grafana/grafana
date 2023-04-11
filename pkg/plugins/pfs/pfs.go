@@ -16,6 +16,7 @@ import (
 	"cuelang.org/go/cue/parser"
 	"cuelang.org/go/cue/token"
 	"github.com/grafana/kindsys"
+	kindcheck "github.com/grafana/kindsys/validation"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/load"
 	"github.com/grafana/thema/vmux"
@@ -214,6 +215,10 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 		iv := gpi.LookupPath(cue.MakePath(cue.Str("composableKinds"), cue.Str(si.Name())))
 		if !iv.Exists() {
 			continue
+		}
+
+		if err := kindcheck.EnsureNoExportedKindName(iv); err != nil {
+			return ParsedPlugin{}, err
 		}
 
 		props, err := kindsys.ToKindProps[kindsys.ComposableProperties](iv)
