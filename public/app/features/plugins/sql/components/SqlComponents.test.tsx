@@ -8,7 +8,7 @@ import { buildSqlQueryEditorProps, buildMockDataSelectorProps, buildMockDatasour
 describe('SqlQueryEditor', () => {
   describe('alerts', () => {
     const database_update_text = 'Your default database configuration has been changed or updated';
-    const no_postgres_database_text = 'You do not currenlty have a database configured for this datasource';
+    const no_postgres_database_text = 'You do not currently have a database configured for this datasource';
 
     it('should ONLY render the `database update` alert', async () => {
       // @ts-ignore
