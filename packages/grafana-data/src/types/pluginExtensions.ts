@@ -1,3 +1,5 @@
+import { DataQuery } from '@grafana/schema';
+
 import { RawTimeRange, TimeZone } from './time';
 
 // Plugin Extensions types
@@ -17,7 +19,8 @@ export type PluginExtension = {
 
 export type PluginExtensionLink = PluginExtension & {
   type: PluginExtensionTypes.link;
-  path: string;
+  path?: string;
+  onClick?: (event?: React.MouseEvent) => void;
 };
 
 // Objects used for registering extensions (in app plugins)
@@ -28,11 +31,11 @@ export type PluginExtensionConfig<Context extends object = object, ExtraProps ex
   'title' | 'description'
 > &
   ExtraProps & {
-    // The unique name of the placement
-    // Core Grafana placements are available in the `PluginExtensionPlacements` enum
-    placement: string;
+    // The unique identifier of the Extension Point
+    // (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
+    extensionPointId: string;
 
-    // (Optional) A function that can be used to configure the extension dynamically based on the placement's context
+    // (Optional) A function that can be used to configure the extension dynamically based on the extension point's context
     configure?: (
       context?: Readonly<Context>
     ) => Partial<{ title: string; description: string } & ExtraProps> | undefined;
@@ -40,10 +43,14 @@ export type PluginExtensionConfig<Context extends object = object, ExtraProps ex
 
 export type PluginExtensionLinkConfig<Context extends object = object> = PluginExtensionConfig<
   Context,
-  Pick<PluginExtensionLink, 'path'>
+  Pick<PluginExtensionLink, 'path'> & {
+    type: PluginExtensionTypes.link;
+    onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
+  }
 >;
 
-export type PluginExtensionEventHelpers = {
+export type PluginExtensionEventHelpers<Context extends object = object> = {
+  context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: {
     // The title of the modal
@@ -53,11 +60,11 @@ export type PluginExtensionEventHelpers = {
   }) => void;
 };
 
-// Placements & Contexts
+// Extension Points & Contexts
 // --------------------------------------------------------
 
-// Placements available in core Grafana
-export enum PluginExtensionPlacements {
+// Extension Points available in core Grafana
+export enum PluginExtensionPoints {
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
 }
 
@@ -68,16 +75,11 @@ export type PluginExtensionPanelContext = {
   timeRange: RawTimeRange;
   timeZone: TimeZone;
   dashboard: Dashboard;
-  targets: Target[];
+  targets: DataQuery[];
 };
 
 type Dashboard = {
   uid: string;
   title: string;
   tags: string[];
-};
-
-type Target = {
-  pluginId: string;
-  refId: string;
 };

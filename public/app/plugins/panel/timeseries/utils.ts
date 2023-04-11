@@ -22,10 +22,24 @@ import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 export function prepareGraphableFields(
   series: DataFrame[],
   theme: GrafanaTheme2,
-  timeRange?: TimeRange
+  timeRange?: TimeRange,
+  // numeric X requires a single frame where the first field is numeric
+  xNumFieldIdx?: number
 ): DataFrame[] | null {
   if (!series?.length) {
     return null;
+  }
+
+  let useNumericX = xNumFieldIdx != null;
+
+  // Make sure the numeric x field is first in the frame
+  if (xNumFieldIdx != null && xNumFieldIdx > 0) {
+    series = [
+      {
+        ...series[0],
+        fields: [series[0].fields[xNumFieldIdx], ...series[0].fields.filter((f, i) => i !== xNumFieldIdx)],
+      },
+    ];
   }
 
   // some datasources simply tag the field as time, but don't convert to milli epochs
@@ -49,20 +63,26 @@ export function prepareGraphableFields(
     let hasTimeField = false;
     let hasValueField = false;
 
-    let nulledFrame = applyNullInsertThreshold({
-      frame,
-      refFieldPseudoMin: timeRange?.from.valueOf(),
-      refFieldPseudoMax: timeRange?.to.valueOf(),
-    });
+    let nulledFrame = useNumericX
+      ? frame
+      : applyNullInsertThreshold({
+          frame,
+          refFieldPseudoMin: timeRange?.from.valueOf(),
+          refFieldPseudoMax: timeRange?.to.valueOf(),
+        });
 
-    for (const field of nullToValue(nulledFrame).fields) {
+    const frameFields = nullToValue(nulledFrame).fields;
+
+    for (let fieldIdx = 0; fieldIdx < frameFields?.length ?? 0; fieldIdx++) {
+      const field = frameFields[fieldIdx];
+
       switch (field.type) {
         case FieldType.time:
           hasTimeField = true;
           fields.push(field);
           break;
         case FieldType.number:
-          hasValueField = true;
+          hasValueField = useNumericX ? fieldIdx > 0 : true;
           copy = {
             ...field,
             values: new ArrayVector(
@@ -124,7 +144,7 @@ export function prepareGraphableFields(
       }
     }
 
-    if (hasTimeField && hasValueField) {
+    if ((useNumericX || hasTimeField) && hasValueField) {
       frames.push({
         ...frame,
         length: nulledFrame.length,
@@ -134,20 +154,19 @@ export function prepareGraphableFields(
   }
 
   if (frames.length) {
-    setClassicPaletteIdxs(frames, theme);
+    setClassicPaletteIdxs(frames, theme, 0);
     return frames;
   }
 
   return null;
 }
 
-const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2) => {
+const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2, skipFieldIdx?: number) => {
   let seriesIndex = 0;
-
   frames.forEach((frame) => {
-    frame.fields.forEach((field) => {
+    frame.fields.forEach((field, fieldIdx) => {
       // TODO: also add FieldType.enum type here after https://github.com/grafana/grafana/pull/60491
-      if (field.type === FieldType.number || field.type === FieldType.boolean) {
+      if (fieldIdx !== skipFieldIdx && (field.type === FieldType.number || field.type === FieldType.boolean)) {
         field.state = {
           ...field.state,
           seriesIndex: seriesIndex++, // TODO: skip this for fields with custom renderers (e.g. Candlestick)?

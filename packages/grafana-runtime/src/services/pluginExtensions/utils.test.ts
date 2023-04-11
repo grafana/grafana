@@ -15,6 +15,17 @@ describe('Plugin Extensions / Utils', () => {
           path: '...',
         } as PluginExtension)
       ).toBe(true);
+
+      expect(
+        isPluginExtensionLink({
+          id: 'id',
+          pluginId: 'plugin-id',
+          type: PluginExtensionTypes.link,
+          title: 'Title',
+          description: 'Description',
+          onClick: () => {},
+        } as PluginExtension)
+      ).toBe(true);
     });
     test('should return FALSE if the object is NOT a link extension', () => {
       expect(

@@ -17,7 +17,7 @@ jest.mock('@grafana/data', () => ({
 
 const now = dateTime().valueOf();
 const intervalInSeconds = 60 * 5;
-const endInput = encodeURIComponent(dateTime(now).add(5, 'hours').format('Y-MM-DD HH:mm'));
+const endInput = encodeURIComponent(dateTime(now).add(6, 'hours').format('Y-MM-DD HH:mm'));
 
 const getPanelData = (panelDataOverrides?: Partial<PanelData>) => {
   const panelData = {
