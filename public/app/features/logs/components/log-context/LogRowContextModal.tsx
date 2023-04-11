@@ -36,12 +36,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       transform: translate(-50%, -50%);
     `,
     entry: css`
-      display: inline-table;
       position: sticky;
       z-index: 1;
       top: -1px;
       bottom: -1px;
-      padding: ${theme.spacing(1)} 0 ${theme.spacing(1)} 0;
+      & > td {
+        padding: ${theme.spacing(1)} 0 ${theme.spacing(1)} 0;
+      }
       background: ${theme.colors.emphasize(theme.colors.background.secondary)};
 
       & > table {
@@ -57,6 +58,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: scroll;
       max-height: 75%;
       align-self: stretch;
+      display: inline-block;
     `,
     flexColumn: css`
       display: flex;
@@ -68,9 +70,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       & > div:last-child {
         margin-left: auto;
       }
-    `,
-    logRowGroup: css`
-      width: 100%;
     `,
     noMarginBottom: css`
       & > table {
@@ -106,11 +105,10 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   timeZone,
 }) => {
   const scrollElement = React.createRef<HTMLDivElement>();
-  const entryElement = React.createRef<HTMLDivElement>();
+  const entryElement = React.createRef<HTMLTableRowElement>();
 
   const theme = useTheme2();
-  const { modal, flexColumn, flexRow, entry, datasourceUi, logRowGroup, logRowGroups, noMarginBottom } =
-    getStyles(theme);
+  const { modal, flexColumn, flexRow, entry, datasourceUi, logRowGroups, noMarginBottom } = getStyles(theme);
   const [context, setContext] = useState<{ after: LogRowModel[]; before: LogRowModel[] }>({ after: [], before: [] });
   const [limit, setLimit] = useState<number>(LoadMoreOptions[0].value!);
   const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(LoadMoreOptions[0]);
@@ -124,12 +122,14 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     if (open && row && limit) {
       const rawResults = await Promise.all([
         getRowContext(row, {
-          limit: limit,
+          limit: logsSortOrder === LogsSortOrder.Descending ? limit + 1 : limit,
+          direction:
+            logsSortOrder === LogsSortOrder.Descending ? LokiQueryDirection.Forward : LokiQueryDirection.Backward,
         }),
         getRowContext(row, {
-          // The start time is inclusive so we will get the one row we are using as context entry
-          limit: limit + 1,
-          direction: LokiQueryDirection.Forward,
+          limit: logsSortOrder === LogsSortOrder.Ascending ? limit + 1 : limit,
+          direction:
+            logsSortOrder === LogsSortOrder.Ascending ? LokiQueryDirection.Forward : LokiQueryDirection.Backward,
         }),
       ]);
 
@@ -137,18 +137,15 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         return dataFrameToLogsModel(result.data);
       });
 
+      const afterRows = logsSortOrder === LogsSortOrder.Ascending ? logsModels[0].rows.reverse() : logsModels[0].rows;
+      const beforeRows = logsSortOrder === LogsSortOrder.Ascending ? logsModels[1].rows.reverse() : logsModels[1].rows;
+
       setContext({
-        after: logsModels[0].rows.reverse().filter((r) => {
-          // if(r.uid && r.uid){
-          //   return r.uid !== row.uid;
-          // }
-          return r.timeEpochNs !== row.timeEpochNs;
+        after: afterRows.filter((r) => {
+          return r.timeEpochNs !== row.timeEpochNs && r.entry !== row.entry;
         }),
-        before: logsModels[1].rows.reverse().filter((r) => {
-          // if(r.uid && r.uid){
-          //   return r.uid !== row.uid;
-          // }
-          return r.timeEpochNs !== row.timeEpochNs;
+        before: beforeRows.filter((r) => {
+          return r.timeEpochNs !== row.timeEpochNs && r.entry !== row.entry;
         }),
       });
     } else {
@@ -193,52 +190,59 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         </div>
       </div>
       <div ref={scrollElement} className={logRowGroups}>
-        <div className={cx(logRowGroup, noMarginBottom)}>
-          <LogRows
-            logRows={context.after}
-            dedupStrategy={LogsDedupStrategy.none}
-            showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
-            showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-            wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
-            prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
-            enableLogDetails={true}
-            timeZone={timeZone}
-            displayedFields={displayedFields}
-            onClickShowField={showField}
-            onClickHideField={hideField}
-          />
-        </div>
-
-        <div ref={entryElement} className={cx(entry, logRowGroup, noMarginBottom)}>
-          <LogRows
-            logRows={[row]}
-            dedupStrategy={LogsDedupStrategy.none}
-            showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
-            showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-            wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
-            prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
-            enableLogDetails={true}
-            timeZone={timeZone}
-            displayedFields={displayedFields}
-            onClickShowField={showField}
-            onClickHideField={hideField}
-          />
-        </div>
-        <div className={logRowGroup}>
-          <LogRows
-            logRows={context.before}
-            dedupStrategy={LogsDedupStrategy.none}
-            showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
-            showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-            wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
-            prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
-            enableLogDetails={true}
-            timeZone={timeZone}
-            displayedFields={displayedFields}
-            onClickShowField={showField}
-            onClickHideField={hideField}
-          />
-        </div>
+        <table>
+          <tr>
+            <td className={noMarginBottom}>
+              <LogRows
+                logRows={context.after}
+                dedupStrategy={LogsDedupStrategy.none}
+                showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
+                showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+                wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
+                enableLogDetails={true}
+                timeZone={timeZone}
+                displayedFields={displayedFields}
+                onClickShowField={showField}
+                onClickHideField={hideField}
+              />
+            </td>
+          </tr>
+          <tr ref={entryElement} className={entry}>
+            <td className={noMarginBottom}>
+              <LogRows
+                logRows={[row]}
+                dedupStrategy={LogsDedupStrategy.none}
+                showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
+                showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+                wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
+                enableLogDetails={true}
+                timeZone={timeZone}
+                displayedFields={displayedFields}
+                onClickShowField={showField}
+                onClickHideField={hideField}
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <LogRows
+                logRows={context.before}
+                dedupStrategy={LogsDedupStrategy.none}
+                showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
+                showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+                wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
+                enableLogDetails={true}
+                timeZone={timeZone}
+                displayedFields={displayedFields}
+                onClickShowField={showField}
+                onClickHideField={hideField}
+              />
+            </td>
+          </tr>
+        </table>
       </div>
       <div>
         <div>{/* Showing {limit} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match */}</div>
