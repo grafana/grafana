@@ -1,11 +1,11 @@
 ---
 description: Learn how to configure SAML authentication in Grafana's UI.
-menuTitle: Configure SAML authentication in UI
-title: Configure SAML authentication in Grafana's UI
+menuTitle: Configure SAML using the UI
+title: Configure SAML authentication using the Grafana user interface
 weight: 1150
 ---
 
-# Configure SAML authentication in Grafana
+# Configure SAML authentication using the Grafana user interface
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) version 10.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
@@ -19,7 +19,7 @@ The Grafana SAML UI provides the following advantages over configuring SAML in t
 
 > **Note:** Configuration in the UI takes precedence over the configuration in the Grafana configuration file. SAML settings from the UI will override any SAML configuration set in the Grafana configuration file.
 
-# Before you begin
+## Before you begin
 
 To follow this guide, you need:
 
@@ -27,7 +27,7 @@ To follow this guide, you need:
 - Permissions that allow you to read and update authentication settings. These permissions are granted by `fixed:authentication.config:writer` role.
   By default, this role is granted to Grafana server administrator in self-hosted instances and to Organization admins in hosted Grafana instances.
 
-# Configure SAML
+## Steps
 
 You can save your SAML configuration, see SAML integration status and enable or disable SAML authentication on the top right-hand side.
 If your SAML configuration is not valid or is incomplete, you will be notified about it when saving the configuration.
