@@ -12,7 +12,7 @@ Adding access to create correlations for [Viewers and Editors]({{< relref "/docs
 
 ## Add permissions to create correlations
 
-1. Got to the Administration section in Grafana
-1. Open Users page
-1. Select the user to be granted access to create correlations
-1. Add _Data sources writer_ role
+1. Got to the Administration section in Grafana.
+1. Open Users page.
+1. Select the user to be granted access to create correlations.
+1. Add _Data sources writer_ role.

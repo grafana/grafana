@@ -11,22 +11,22 @@ Make sure you have permission to add new correlations. Only users with write per
 
 ## Create a correlation in Administration page
 
-1. Go to the Administration section in Grafana
-1. Open Correlations page
-1. Click the “Add” button in the top right corner
+1. Go to the Administration section in Grafana.
+1. Open Correlations page.
+1. Click the “Add” button in the top right corner.
 1. Provide a **label** for the correlation.
-1. Provide an optional **description**
+1. Provide an optional **description**.
 1. Go to the next page.
-1. Provide **target data source**
-1. Provide **target query** using variables
-1. Go to the next page
-1. Provide **source data source**
-1. Provide **results field**
+1. Provide **target data source**.
+1. Provide **target query** using variables.
+1. Go to the next page.
+1. Provide **source data source**.
+1. Provide **results field**.
 1. Add transformations if you need variables that are not fields in the source data source.
-1. Click “Add” to add a new transformation
-1. Select the type of a transformation
-1. Configure transformation depending on the selected type
-1. Save correlation
+1. Click “Add” to add a new transformation.
+1. Select the type of a transformation.
+1. Configure transformation depending on the selected type.
+1. Save correlation.
 
 You can edit correlation in the same way, but you cannot change the selected data sources.
 
@@ -100,12 +100,12 @@ Description of provisioning properties:
 
 When you set up a correlation with admin page you can use the target query editor. When you use provisioning you may need to know the structure of the target query which may not be well documented depending on the plugin. Here is a quick step-by-step guide on how to determine the target query model:
 
-1. Open Explore
-1. Select the data source you want to use as the target of the correlation
-1. Open the inspector tab and select “Query”
-1. Run a sample query
-1. Inspect results
-1. Look for the “queries” list object. Each object is created using the query model structure defined by the data source. You can use the same structure in your provisioning file
+1. Open Explore.
+1. Select the data source you want to use as the target of the correlation.
+1. Open the inspector tab and select “Query”.
+1. Run a sample query.
+1. Inspect results.
+1. Look for the “queries” list object. Each object is created using the query model structure defined by the data source. You can use the same structure in your provisioning file.
 
    {{< figure src="/static/img/docs/correlations/determine-target-query-structure-inspector-10-0.png" max-width="600px" caption="Query inspector with target query structure" >}}
 
