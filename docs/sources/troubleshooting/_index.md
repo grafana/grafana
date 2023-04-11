@@ -59,4 +59,4 @@ sudo yum install urw-fonts
 
 ## More help
 
-Check out the [Grafana Community](https://community.grafana.com/) for more troubleshooting help (you must be logged in to post or comment). 
+Check out the [Grafana Community](https://community.grafana.com/) for more troubleshooting help (you must be logged in to post or comment).
