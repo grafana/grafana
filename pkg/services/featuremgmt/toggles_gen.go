@@ -318,4 +318,8 @@ const (
 	// FlagDataplaneFrontendFallback
 	// Support dataplane contract field name change for transformations and field name matchers where the name is different
 	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
+
+	// FlagUseCachingService
+	// When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation
+	FlagUseCachingService = "useCachingService"
 )
