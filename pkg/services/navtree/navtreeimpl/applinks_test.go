@@ -119,15 +119,6 @@ func TestAddAppLinks(t *testing.T) {
 		},
 	}
 
-	t.Run("Should add enabled apps with pages", func(t *testing.T) {
-		treeRoot := navtree.NavTreeRoot{}
-		err := service.addAppLinks(&treeRoot, reqCtx)
-		require.NoError(t, err)
-		require.Equal(t, "Test app1 name", treeRoot.Children[0].Text)
-		require.Equal(t, "/a/test-app1/catalog", treeRoot.Children[0].Url)
-		require.Equal(t, "/a/test-app1/page2", treeRoot.Children[0].Children[1].Url)
-	})
-
 	t.Run("Should move apps to Apps category", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
 		err := service.addAppLinks(&treeRoot, reqCtx)
@@ -138,6 +129,16 @@ func TestAddAppLinks(t *testing.T) {
 		require.Equal(t, "Apps", appsNode.Text)
 		require.Len(t, appsNode.Children, 3)
 		require.Equal(t, testApp1.Name, appsNode.Children[0].Text)
+	})
+
+	t.Run("Should add enabled apps with pages", func(t *testing.T) {
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		appsNode := treeRoot.FindById(navtree.NavIDApps)
+		require.Equal(t, "Test app1 name", appsNode.Children[0].Text)
+		require.Equal(t, "/a/test-app1/catalog", appsNode.Children[0].Url)
+		require.Equal(t, "/a/test-app1/page2", appsNode.Children[0].Children[0].Url)
 	})
 
 	t.Run("Should remove the default nav child (DefaultNav=true) and should set its URL to the plugin nav root", func(t *testing.T) {
@@ -458,11 +459,12 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
-		require.Len(t, treeRoot.Children, 1)
-		require.Equal(t, "Test app1 name", treeRoot.Children[0].Text)
-		require.Len(t, treeRoot.Children[0].Children, 2)
-		require.Equal(t, "/a/test-app1/catalog", treeRoot.Children[0].Children[0].Url)
-		require.Equal(t, "/a/test-app1/page2", treeRoot.Children[0].Children[1].Url)
+		appsNode := treeRoot.FindById(navtree.NavIDApps)
+		require.Len(t, appsNode.Children, 1)
+		require.Equal(t, "Test app1 name", appsNode.Children[0].Text)
+		require.Equal(t, "/a/test-app1/catalog", appsNode.Children[0].Url)
+		require.Len(t, appsNode.Children[0].Children, 1)
+		require.Equal(t, "/a/test-app1/page2", appsNode.Children[0].Children[0].Url)
 	})
 	t.Run("Should add one include when the user is a viewer", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
@@ -473,10 +475,11 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
-		require.Len(t, treeRoot.Children, 1)
-		require.Equal(t, "Test app1 name", treeRoot.Children[0].Text)
-		require.Len(t, treeRoot.Children[0].Children, 1)
-		require.Equal(t, "/a/test-app1/page2", treeRoot.Children[0].Children[0].Url)
+		appsNode := treeRoot.FindById(navtree.NavIDApps)
+		require.Len(t, appsNode.Children, 1)
+		require.Equal(t, "Test app1 name", appsNode.Children[0].Text)
+		require.Len(t, appsNode.Children[0].Children, 1)
+		require.Equal(t, "/a/test-app1/page2", appsNode.Children[0].Children[0].Url)
 	})
 	t.Run("Should add both includes when the user is a viewer with catalog read", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
@@ -488,11 +491,12 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
-		require.Len(t, treeRoot.Children, 1)
-		require.Equal(t, "Test app1 name", treeRoot.Children[0].Text)
-		require.Len(t, treeRoot.Children[0].Children, 2)
-		require.Equal(t, "/a/test-app1/catalog", treeRoot.Children[0].Children[0].Url)
-		require.Equal(t, "/a/test-app1/page2", treeRoot.Children[0].Children[1].Url)
+		appsNode := treeRoot.FindById(navtree.NavIDApps)
+		require.Len(t, appsNode.Children, 1)
+		require.Equal(t, "Test app1 name", appsNode.Children[0].Text)
+		require.Equal(t, "/a/test-app1/catalog", appsNode.Children[0].Url)
+		require.Len(t, appsNode.Children[0].Children, 1)
+		require.Equal(t, "/a/test-app1/page2", appsNode.Children[0].Children[0].Url)
 	})
 	t.Run("Should add one include when the user is an editor without catalog read", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
@@ -504,9 +508,10 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
-		require.Len(t, treeRoot.Children, 1)
-		require.Equal(t, "Test app1 name", treeRoot.Children[0].Text)
-		require.Len(t, treeRoot.Children[0].Children, 1)
-		require.Equal(t, "/a/test-app1/page2", treeRoot.Children[0].Children[0].Url)
+		appsNode := treeRoot.FindById(navtree.NavIDApps)
+		require.Len(t, appsNode.Children, 1)
+		require.Equal(t, "Test app1 name", appsNode.Children[0].Text)
+		require.Len(t, appsNode.Children[0].Children, 1)
+		require.Equal(t, "/a/test-app1/page2", appsNode.Children[0].Children[0].Url)
 	})
 }
