@@ -77,7 +77,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: 100%;
     width: 100%;
     overflow: hidden;
-    padding: ${theme.spacing()};
+    padding: ${theme.spacing(2)};
   `,
 });
 

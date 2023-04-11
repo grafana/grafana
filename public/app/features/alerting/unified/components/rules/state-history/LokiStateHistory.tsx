@@ -99,18 +99,22 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
           <TagList tags={commonLabels.map((label) => label.join('='))} />
         </Stack>
       )}
-      <div className={styles.graphWrapper}>
-        {!isEmpty(frameSubset) && (
-          <LogTimelineViewer frames={frameSubset} timeRange={timeRange} pointerSubject={pointerSubject.current} />
-        )}
-      </div>
-      <FilterInput label="Filter instances" value={instancesFilter} onChange={setInstancesFilter} />
-      <LogRecordViewerByTimestamp
-        records={historyRecords}
-        commonLabels={commonLabels}
-        logsRef={logsRef}
-        onLabelClick={onLogRecordLabelClick}
-      />
+      {isEmpty(frameSubset) ? (
+        <div className={styles.emptyState}>No state transitions have occurred in the last 60 minutes.</div>
+      ) : (
+        <>
+          <div className={styles.graphWrapper}>
+            <LogTimelineViewer frames={frameSubset} timeRange={timeRange} pointerSubject={pointerSubject.current} />
+          </div>
+          <FilterInput label="Filter instances" value={instancesFilter} onChange={setInstancesFilter} />
+          <LogRecordViewerByTimestamp
+            records={historyRecords}
+            commonLabels={commonLabels}
+            logsRef={logsRef}
+            onLabelClick={onLogRecordLabelClick}
+          />
+        </>
+      )}
     </div>
   );
 };
@@ -314,6 +318,13 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
   graphWrapper: css`
     padding: ${theme.spacing()} 0;
+  `,
+  emptyState: css`
+    color: ${theme.colors.text.secondary};
+
+    display: flex;
+    align-items: center;
+    margin: auto auto;
   `,
 });
 
