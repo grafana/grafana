@@ -207,7 +207,7 @@ datasources:
         datasourceUid: 'loki'
         spanStartTimeShift: '1h'
         spanEndTimeShift: '-1h'
-        tags: ['job', 'instance', 'pod', 'namespace']
+        tags: [{ key: 'service.name', value: 'service'}, { key: 'job'}]
         filterByTraceID: false
         filterBySpanID: false
         customQuery: true
