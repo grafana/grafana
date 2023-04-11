@@ -37,7 +37,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     super(instanceSettings);
     this.variables = new TestDataVariableSupport();
     this.annotations = {
-      getDefaultQuery: () => ({ scenarioId: TestDataQueryType.Annotations }),
+      getDefaultQuery: () => ({ scenarioId: TestDataQueryType.Annotations, lines: 10 }),
 
       // Make sure annotations have scenarioId set
       prepareAnnotation: (old: AnnotationQuery<TestData>) => {
@@ -49,6 +49,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
           target: {
             refId: 'Anno',
             scenarioId: TestDataQueryType.Annotations,
+            lines: 10,
           },
         };
       },
@@ -162,7 +163,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
   }
 
   annotationDataTopicTest(target: TestData, req: DataQueryRequest<TestData>): Observable<DataQueryResponse> {
-    const events = this.buildFakeAnnotationEvents(req.range, 50);
+    const events = this.buildFakeAnnotationEvents(req.range, target.lines ?? 10);
     const dataFrame = new ArrayDataFrame(events);
     dataFrame.meta = { dataTopic: DataTopic.Annotations };
     return of({ key: target.refId, data: [dataFrame] }).pipe(delay(100));
