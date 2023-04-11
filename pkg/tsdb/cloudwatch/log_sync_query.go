@@ -4,110 +4,307 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-const (
-	alertMaxAttempts = 8
-	alertPollPeriod  = time.Second
-)
+func Test_executeSyncLogQuery(t *testing.T) {
+	origNewCWClient := NewCWClient
+	t.Cleanup(func() {
+		NewCWClient = origNewCWClient
+	})
 
-var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	resp := backend.NewQueryDataResponse()
-
-	for _, q := range req.Queries {
-		var logsQuery models.LogsQuery
-		err := json.Unmarshal(q.JSON, &logsQuery)
-		if err != nil {
-			continue
-		}
-
-		logsQuery.Subtype = "StartQuery"
-		logsQuery.QueryString = logsQuery.Expression
-
-		region := logsQuery.Region
-		if logsQuery.Region == "" || region == defaultRegion {
-			instance, err := e.getInstance(req.PluginContext)
-			if err != nil {
-				return nil, err
-			}
-			logsQuery.Region = instance.Settings.Region
-		}
-
-		logsClient, err := e.getCWLogsClient(req.PluginContext, region)
-		if err != nil {
-			return nil, err
-		}
-
-		getQueryResultsOutput, err := e.syncQuery(ctx, logsClient, q, logsQuery)
-		if err != nil {
-			return nil, err
-		}
-
-		dataframe, err := logsResultsToDataframes(getQueryResultsOutput)
-		if err != nil {
-			return nil, err
-		}
-
-		var frames []*data.Frame
-		if len(logsQuery.StatsGroups) > 0 && len(dataframe.Fields) > 0 {
-			frames, err = groupResults(dataframe, logsQuery.StatsGroups)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			frames = data.Frames{dataframe}
-		}
-
-		refId := "A"
-		if(q.RefID != "") {
-			refId = q.RefID
-		}
-
-		respD := resp.Responses[refId]
-		respD.Frames = frames
-		resp.Responses[refId] = respD
+	var cli fakeCWLogsClient
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return &cli
 	}
 
-	return resp, nil
+	t.Run("getCWLogsClient is called with region from input JSON", func(t *testing.T) {
+		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
+		})
+		sess := fakeSessionCache{}
+		executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
+
+		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"queryMode":    "Logs",
+						"region": "some region"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"some region"}, sess.calledRegions)
+	})
+
+	t.Run("getCWLogsClient is called with region from instance manager when region is default", func(t *testing.T) {
+		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}}, nil
+		})
+		sess := fakeSessionCache{}
+
+		executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
+		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"queryMode":    "Logs",
+						"region": "default"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"instance manager's region"}, sess.calledRegions)
+	})
+
+	t.Run("with header", func(t *testing.T) {
+		testcases := []struct {
+			name    string
+			headers map[string]string
+			called  bool
+		}{
+			{
+				"alert header",
+				map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+				true,
+			},
+			{
+				"expression header",
+				map[string]string{fmt.Sprintf("http_%s", query.HeaderFromExpression): "some value"},
+				true,
+			},
+			{
+				"no header",
+				map[string]string{},
+				false,
+			},
+		}
+		origExecuteSyncLogQuery := executeSyncLogQuery
+		var syncCalled bool
+		executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+			syncCalled = true
+			return nil, nil
+		}
+
+		for _, tc := range testcases {
+			t.Run(tc.name, func(t *testing.T) {
+				syncCalled = false
+				cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
+				im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+					return DataSource{Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}}, nil
+				})
+				sess := fakeSessionCache{}
+
+				executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
+				_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+					Headers:       tc.headers,
+					PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+					Queries: []backend.DataQuery{
+						{
+							TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+							JSON: json.RawMessage(`{
+								"queryMode":    "Logs",
+								"type":        "logAction",
+								"subtype":     "StartQuery",
+								"region":      "default",
+								"queryString": "fields @message"
+							}`),
+						},
+					},
+				})
+
+				assert.NoError(t, err)
+				assert.Equal(t, tc.called, syncCalled)
+			})
+		}
+
+		executeSyncLogQuery = origExecuteSyncLogQuery
+	})
 }
+func Test_executeSyncLogQueryMocks(t *testing.T) {
+	origNewCWClient := NewCWClient
+	t.Cleanup(func() {
+		NewCWClient = origNewCWClient
+	})
 
-func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	queryContext backend.DataQuery, logsQuery models.LogsQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
-	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, logsQuery, queryContext.TimeRange)
-	if err != nil {
-		return nil, err
+	var cli *mockLogsSyncClient
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return cli
 	}
 
-	requestParams := models.LogsQuery{
-		Region:  logsQuery.Region,
-		QueryId: *startQueryOutput.QueryId,
-	}
+	t.Run("when a query refId is not provided, 'A' is assigned by default", func(t *testing.T) {
+		cli = &mockLogsSyncClient{}
+		cli.On("StartQueryWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.StartQueryOutput{
+			QueryId: aws.String("abcd-efgh-ijkl-mnop"),
+		}, nil)
+		cli.On("GetQueryResultsWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}, nil)
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
-	ticker := time.NewTicker(alertPollPeriod)
-	defer ticker.Stop()
+		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"queryMode":    "Logs"
+					}`),
+				},
+			},
+		})
 
-	attemptCount := 1
-	for range ticker.C {
-		res, err := e.executeGetQueryResults(ctx, logsClient, requestParams)
-		if err != nil {
-			return nil, err
-		}
-		if isTerminated(*res.Status) {
-			return res, err
-		}
-		if attemptCount >= alertMaxAttempts {
-			return res, fmt.Errorf("fetching of query results exceeded max number of attempts")
-		}
+		assert.NoError(t, err)
+		_, ok := res.Responses["A"]
+		assert.True(t, ok)
+	})
 
-		attemptCount++
-	}
+	t.Run("when a query refId is provided, it is returned in the response", func(t *testing.T) {
+		cli = &mockLogsSyncClient{}
+		cli.On("StartQueryWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.StartQueryOutput{
+			QueryId: aws.String("abcd-efgh-ijkl-mnop"),
+		}, nil)
+		cli.On("GetQueryResultsWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}, nil)
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
-	return nil, nil
+		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"queryMode":    "Logs"
+					}`),
+				},
+				{
+					RefID:     "B",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"queryMode":    "Logs"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		_, ok := res.Responses["A"]
+		assert.True(t, ok)
+		_, ok = res.Responses["B"]
+		assert.True(t, ok)
+	})
+
+	t.Run("when RefIDs are provided, correctly pass them on with the results", func(t *testing.T) {
+		// This test demonstrates that given two queries with different RefIds,
+		// when each query has a different response from AWS API calls, the RefIds are correctly reassigned to the associated response.
+		cli = &mockLogsSyncClient{}
+		// mock.MatchedBy makes sure that the QueryId below will only be returned when the input expression = "query string for A"
+		cli.On("StartQueryWithContext", mock.Anything, mock.MatchedBy(func(input *cloudwatchlogs.StartQueryInput) bool {
+			return *input.QueryString == "fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|query string for A"
+		}), mock.Anything).Return(&cloudwatchlogs.StartQueryOutput{
+			QueryId: aws.String("queryId for A"),
+		}, nil)
+
+		// mock.MatchedBy makes sure that the QueryId below will only be returned when the input expression = "query string for B"
+		cli.On("StartQueryWithContext", mock.Anything, mock.MatchedBy(func(input *cloudwatchlogs.StartQueryInput) bool {
+			return *input.QueryString == "fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|query string for B"
+		}), mock.Anything).Return(&cloudwatchlogs.StartQueryOutput{
+			QueryId: aws.String("queryId for B"),
+		}, nil)
+		cli.On("GetQueryResultsWithContext", mock.Anything, mock.MatchedBy(func(input *cloudwatchlogs.GetQueryResultsInput) bool {
+			return *input.QueryId == "queryId for A"
+		}), mock.Anything).Return(&cloudwatchlogs.GetQueryResultsOutput{
+			// this result will only be returned when the argument is QueryId = "query string for A"
+			Results: [][]*cloudwatchlogs.ResultField{{{
+				Field: utils.Pointer("@log"),
+				Value: utils.Pointer("A result"),
+			}}},
+			Status: aws.String("Complete")}, nil)
+		cli.On("GetQueryResultsWithContext", mock.Anything, mock.MatchedBy(func(input *cloudwatchlogs.GetQueryResultsInput) bool {
+			return *input.QueryId == "queryId for B"
+		}), mock.Anything).Return(&cloudwatchlogs.GetQueryResultsOutput{
+			// this result will only be returned when the argument is QueryId = "query string for B"
+			Results: [][]*cloudwatchlogs.ResultField{{{
+				Field: utils.Pointer("@log"),
+				Value: utils.Pointer("B result"),
+			}}},
+			Status: aws.String("Complete")}, nil)
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"queryMode":    "Logs",
+						"expression": "query string for A"
+					}`),
+				},
+				{
+					RefID:     "B",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"queryMode":    "Logs",
+						"expression": "query string for B"
+					}`),
+				},
+			},
+		})
+
+		expectedLogFieldFromFirstCall := data.NewField("@log", nil, []*string{utils.Pointer("A result")}) // verifies the response from GetQueryResultsWithContext matches the input RefId A
+		assert.NoError(t, err)
+		respA, ok := res.Responses["A"]
+		require.True(t, ok)
+		assert.Equal(t, []*data.Field{expectedLogFieldFromFirstCall}, respA.Frames[0].Fields)
+
+		expectedLogFieldFromSecondCall := data.NewField("@log", nil, []*string{utils.Pointer("B result")}) // verifies the response from GetQueryResultsWithContext matches the input RefId B
+		respB, ok := res.Responses["B"]
+		require.True(t, ok)
+		assert.Equal(t, []*data.Field{expectedLogFieldFromSecondCall}, respB.Frames[0].Fields)
+	})
 }
