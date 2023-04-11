@@ -7,7 +7,7 @@ import { getGrafanaSearcher } from './searcher';
 import { NestedFolderDTO } from './types';
 import { queryResultToViewItem } from './utils';
 
-export const PAGE_SIZE = 25;
+export const PAGE_SIZE = 1000;
 
 interface PaginatedResponse {
   folders: DashboardViewItem[];
