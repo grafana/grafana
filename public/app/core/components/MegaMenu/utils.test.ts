@@ -3,7 +3,7 @@ import { Location } from 'history';
 import { GrafanaConfig, locationUtil, NavModelItem } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
-import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive } from './utils';
+import { enrichConfigItems, getActiveItem, isMatchOrChildMatch } from './utils';
 
 jest.mock('../../app_events', () => ({
   publish: jest.fn(),
@@ -31,46 +31,6 @@ describe('enrichConfigItems', () => {
         hideFromMenu: true,
       },
     ];
-  });
-
-  it('does not add a sign in item if a user signed in', () => {
-    const contextSrv = new ContextSrv();
-    contextSrv.user.isSignedIn = false;
-    setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
-    const signInNode = enrichedConfigItems.find((item) => item.id === 'sign-in');
-    expect(signInNode).toBeDefined();
-  });
-
-  it('adds a sign in item if a user is not signed in', () => {
-    const contextSrv = new ContextSrv();
-    contextSrv.user.isSignedIn = true;
-    setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
-    const signInNode = enrichedConfigItems.find((item) => item.id === 'sign-in');
-    expect(signInNode).toBeDefined();
-  });
-
-  it('does not add an org switcher to the profile node if there is 1 org', () => {
-    const contextSrv = new ContextSrv();
-    contextSrv.user.orgCount = 1;
-    setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
-    const profileNode = enrichedConfigItems.find((item) => item.id === 'profile');
-    expect(profileNode!.children).toBeUndefined();
-  });
-
-  it('adds an org switcher to the profile node if there is more than 1 org', () => {
-    const contextSrv = new ContextSrv();
-    contextSrv.user.orgCount = 2;
-    setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
-    const profileNode = enrichedConfigItems.find((item) => item.id === 'profile');
-    expect(profileNode!.children).toContainEqual(
-      expect.objectContaining({
-        text: 'Switch organization',
-      })
-    );
   });
 
   it('enhances the help node with extra child links', () => {
@@ -239,27 +199,5 @@ describe('getActiveItem', () => {
       text: 'More specific dashboard',
       url: '/d/moreSpecificDashboard',
     });
-  });
-});
-
-describe('isSearchActive', () => {
-  it('returns true if the search query parameter is "open"', () => {
-    const mockLocation = {
-      hash: '',
-      pathname: '/',
-      search: '?search=open',
-      state: '',
-    };
-    expect(isSearchActive(mockLocation)).toBe(true);
-  });
-
-  it('returns false if the search query parameter is missing', () => {
-    const mockLocation = {
-      hash: '',
-      pathname: '/',
-      search: '',
-      state: '',
-    };
-    expect(isSearchActive(mockLocation)).toBe(false);
   });
 });

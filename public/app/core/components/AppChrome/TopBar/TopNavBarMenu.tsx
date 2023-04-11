@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Menu, MenuItem, useStyles2 } from '@grafana/ui';
 
-import { enrichConfigItems, enrichWithInteractionTracking } from '../../NavBar/utils';
+import { enrichConfigItems, enrichWithInteractionTracking } from '../../MegaMenu/utils';
 
 export interface TopNavBarMenuProps {
   node: NavModelItem;

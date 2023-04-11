@@ -7,9 +7,8 @@ import { GrafanaTheme2, NavSection } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 import { useSelector } from 'app/types';
 
-import { enrichConfigItems, enrichWithInteractionTracking, getActiveItem } from '../NavBar/utils';
-
 import { NavBarMenu } from './NavBarMenu';
+import { enrichConfigItems, enrichWithInteractionTracking, getActiveItem } from './utils';
 
 export interface Props {
   onClose: () => void;
