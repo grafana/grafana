@@ -74,6 +74,7 @@ export const VizLegendListItem = <T = unknown,>({
       <button
         disabled={readonly}
         type="button"
+        title={item.label}
         onBlur={onMouseOut}
         onFocus={onMouseOver}
         onMouseOver={onMouseOver}
