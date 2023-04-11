@@ -35,6 +35,7 @@ import {
 } from 'app/types/unified-alerting';
 import {
   AlertQuery,
+  GrafanaAlertState,
   GrafanaAlertStateDecision,
   GrafanaRuleDefinition,
   PromAlertingRuleState,
@@ -629,4 +630,8 @@ export function getCloudRule(override?: Partial<CombinedRule>) {
     rulerRule: mockRulerAlertingRule(),
     ...override,
   });
+}
+
+export function mockAlertWithState(state: GrafanaAlertState, labels?: {}): Alert {
+  return { activeAt: '', annotations: {}, labels: labels || {}, state: state, value: '' };
 }

@@ -27,27 +27,28 @@ The dashboard user interface provides a number of features that you can use to c
 
 The following image and descriptions highlights all dashboards features.
 
-{{< figure src="/static/img/docs/v91/dashboard-features/dashboard-features.png" width="700px" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-annotated-9-5-0.png" width="700px" >}}
 
-- (1) **Grafana home**: Click the Grafana home icon to be redirected to the home page configured in the Grafana instance.
+- (1) **Grafana home**: Click **Home** in the breadcrumb to be redirected to the home page configured in the Grafana instance.
 - (2) **Dashboard title**: When you click the dashboard title you can search for dashboard contained in the current folder.
-- (3) **Share dashboard or panel**: Use this option to share the current dashboard by link or snapshot. You can also export the dashboard definition from the share modal.
-- (4) **Add a new panel**: Use this option to add a panel, dashboard row, or library panel to the current dashboard.
-- (5) **Dashboard settings**: Use this option to change dashboard name, folder, and tags and manage variables and annotation queries. For more information about dashboard settings, refer to [Modify dashboard settings]({{< relref "../build-dashboards/modify-dashboard-settings/" >}}).
-- (6) **Time picker dropdown**: Click to select relative time range options and set custom absolute time ranges.
+- (3) **Share dashboard or panel**: Use this option to share the current dashboard or panel by link or snapshot. You can also export the dashboard definition from the share modal.
+- (4) **Add**: Use this option to add a panel, dashboard row, or library panel to the current dashboard.
+- (5) **Save dashboard**: Click to save changes to your dashboard.
+- (6) **Dashboard insights**: Click to view analytics about your dashboard including information about users, activity, query counts.
+- (7) **Dashboard settings**: Use this option to change dashboard name, folder, and tags and manage variables and annotation queries. For more information about dashboard settings, refer to [Modify dashboard settings]({{< relref "../build-dashboards/modify-dashboard-settings/" >}}).
+- (8) **Time picker dropdown**: Click to select relative time range options and set custom absolute time ranges.
   - You can change the **Timezone** and **fiscal year** settings from the time range controls by clicking the **Change time settings** button.
   - Time settings are saved on a per-dashboard basis.
-- (7) **Zoom out time range**: Click to zoom out the time range. For more information about how to use time range controls, refer to [Common time range controls]({{< relref "#common-time-range-controls" >}}).
-- (8) **Refresh dashboard**: Click to immediately trigger queries and refresh dashboard data.
-- (9) **Refresh dashboard time interval**: Click to select a dashboard auto refresh time interval.
-- (10) **View mode**: Click to display the dashboard on a large screen such as a TV or a kiosk. View mode hides irrelevant information such as navigation menus. For more information about view mode, refer to [How to Create Kiosks to Display Dashboards on a TV](https://grafana.com/blog/2019/05/02/grafana-tutorial-how-to-create-kiosks-to-display-dashboards-on-a-tv/).
-- (11) **Dashboard panel**: The primary building block of a dashboard is the panel. To add a new panel, dashboard row, or library panel, click **Add panel**.
+- (9) **Zoom out time range**: Click to zoom out the time range. For more information about how to use time range controls, refer to [Common time range controls]({{< relref "#common-time-range-controls" >}}).
+- (10) **Refresh dashboard**: Click to immediately trigger queries and refresh dashboard data.
+- (11) **Refresh dashboard time interval**: Click to select a dashboard auto refresh time interval.
+- (12) **View mode**: Click to display the dashboard on a large screen such as a TV or a kiosk. View mode hides irrelevant information such as navigation menus. For more information about view mode, refer to [How to Create Kiosks to Display Dashboards on a TV](https://grafana.com/blog/2019/05/02/grafana-tutorial-how-to-create-kiosks-to-display-dashboards-on-a-tv/).
+- (13) **Dashboard panel**: The primary building block of a dashboard is the panel. To add a new panel, dashboard row, or library panel, click **Add panel**.
   - Library panels can be shared among many dashboards.
   - To move a panel, drag the panel header to another location.
   - To resize a panel, click and drag the lower right corner of the panel.
-- (12) **Graph legend**: Change series colors, y-axis and series visibility directly from the legend.
-- (13) **Search**: Click **Search** to search for dashboards by name or panel title.
-- (14) **Dashboard row**: A dashboard row is a logical divider within a dashboard that groups panels together.
+- (14) **Graph legend**: Change series colors, y-axis and series visibility directly from the legend.
+- (15) **Dashboard row**: A dashboard row is a logical divider within a dashboard that groups panels together.
   - Rows can be collapsed or expanded allowing you to hide parts of the dashboard.
   - Panels inside a collapsed row do not issue queries.
   - Use [repeating rows]({{< relref "../build-dashboards/create-dashboard/#configure-repeating-rows" >}}) to dynamically create rows based on a template variable.
@@ -129,7 +130,7 @@ Hover your cursor over the field to see the exact time stamps in the range and t
 
 Click the current time range to change it. You can change the current time using a _relative time range_, such as the last 15 minutes, or an _absolute time range_, such as `2020-05-14 00:00:00 to 2020-05-15 23:59:59`.
 
-<img class="no-shadow" src="/static/img/docs/time-range-controls/change-current-time-range-7-0.png" max-width="900px">
+<img class="no-shadow" src="/media/docs/grafana/dashboards/screenshot-change-current-time-range.png" max-width="900px">
 
 #### Relative time range
 
