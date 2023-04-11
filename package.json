@@ -425,8 +425,7 @@
     "ngtemplate-loader/loader-utils": "^2.0.0",
     "trim": "0.0.3",
     "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch",
-    "react-split-pane@0.1.92": "patch:react-split-pane@npm:0.1.92#.yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch",
-    "@storybook/addon-docs@6.5.16": "patch:@storybook/addon-docs@npm:6.5.16#.yarn/patches/@storybook-addon-docs-npm-6.5.16-56ecbd77e7.patch"
+    "react-split-pane@0.1.92": "patch:react-split-pane@npm:0.1.92#.yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch"
   },
   "workspaces": {
     "packages": [
