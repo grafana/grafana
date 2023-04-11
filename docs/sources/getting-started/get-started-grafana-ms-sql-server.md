@@ -12,6 +12,8 @@ weight: 500
 
 Microsoft SQL Server is a popular relational database management system that is widely used in development and production environments. This topic walks you through the steps to create a series of dashboards in Grafana to display metrics from a MS SQL Server database.
 
+> **Note:** You must install Grafana 5.1+ in order to use the integrated MS SQL data source.
+
 #### Download MS SQL Server
 
 MS SQL Server can be installed on Windows or Linux operating systems and also on Docker containers. Refer to the [MS SQL Server downloads page](https://www.microsoft.com/en-us/sql-server/sql-server-downloads), for a complete list of all available options.

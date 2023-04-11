@@ -12,8 +12,6 @@ weight: 400
 
 > **Note:** You can also configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself. Grafana offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) to help you get started.
 
-{{< docs/shared "getting-started/first-step.md" >}}
-
 #### Get InfluxDB
 
 You can [download InfluxDB](https://portal.influxdata.com/downloads/) and install it locally or you can sign up for [InfluxDB Cloud](https://www.influxdata.com/products/influxdb-cloud/). Windows installers are not available for some versions of InfluxDB.
