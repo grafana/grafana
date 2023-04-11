@@ -23,7 +23,7 @@ describe('SqlQueryEditor', () => {
       });
     });
 
-    it.skip('should ONLY render the `no postgres database` alert', async () => {
+    it('should ONLY render the `no postgres database` alert', async () => {
       render(<SqlQueryEditor {...buildSqlQueryEditorProps({ queryHeaderProps: { disableDatasetSelector: true } })} />);
 
       await waitFor(() => {

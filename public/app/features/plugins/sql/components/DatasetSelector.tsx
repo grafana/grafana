@@ -46,11 +46,15 @@ export const DatasetSelector = ({
   }, []);
 
   const determinePlaceholder = () => {
-    return usePreconfiguredDataset
-      ? preconfiguredDataset
-      : disableDatasetSelector
-      ? 'Unconfigured database'
-      : 'Select table';
+    if (preconfiguredDataset) {
+      return preconfiguredDataset;
+    }
+
+    if (disableDatasetSelector) {
+      return 'Unconfigured database';
+    }
+
+    return 'Select table';
   };
 
   return (
