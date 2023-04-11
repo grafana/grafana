@@ -12,7 +12,7 @@ type Metrics struct {
 	PublicDashboardsAmount *prometheus.GaugeVec
 }
 
-func NewMetrics() *Metrics {
+func newMetrics() *Metrics {
 	return &Metrics{
 		PublicDashboardsAmount: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: namespace,

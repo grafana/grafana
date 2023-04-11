@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type PublicDashboardsMetricServiceImpl struct {
+type Service struct {
 	store   publicdashboards.Store
 	Metrics *Metrics
 	log     log.Logger
@@ -20,10 +20,10 @@ type PublicDashboardsMetricServiceImpl struct {
 func ProvideService(
 	store publicdashboards.Store,
 	prom prometheus.Registerer,
-) (*PublicDashboardsMetricServiceImpl, error) {
-	s := &PublicDashboardsMetricServiceImpl{
+) (*Service, error) {
+	s := &Service{
 		store:   store,
-		Metrics: NewMetrics(),
+		Metrics: newMetrics(),
 		log:     log.New("publicdashboards.metric"),
 	}
 
@@ -34,7 +34,7 @@ func ProvideService(
 	return s, nil
 }
 
-func (s *PublicDashboardsMetricServiceImpl) registerMetrics(prom prometheus.Registerer) error {
+func (s *Service) registerMetrics(prom prometheus.Registerer) error {
 	err := prom.Register(s.Metrics.PublicDashboardsAmount)
 	var alreadyRegisterErr prometheus.AlreadyRegisteredError
 	if errors.As(err, &alreadyRegisterErr) {
@@ -46,7 +46,7 @@ func (s *PublicDashboardsMetricServiceImpl) registerMetrics(prom prometheus.Regi
 	return err
 }
 
-func (s *PublicDashboardsMetricServiceImpl) Run(ctx context.Context) error {
+func (s *Service) Run(ctx context.Context) error {
 	s.recordMetrics(ctx)
 
 	ticker := time.NewTicker(12 * time.Hour)
@@ -60,7 +60,7 @@ func (s *PublicDashboardsMetricServiceImpl) Run(ctx context.Context) error {
 	}
 }
 
-func (s *PublicDashboardsMetricServiceImpl) recordMetrics(ctx context.Context) {
+func (s *Service) recordMetrics(ctx context.Context) {
 	records, err := s.store.GetMetrics(ctx)
 	if err != nil {
 		s.log.Error("error collecting background metrics", "err", err)
