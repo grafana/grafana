@@ -18,6 +18,7 @@ import {
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import alertDef from 'app/features/alerting/state/alertDef';
+import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from 'app/features/alerting/unified/state/actions';
@@ -76,7 +77,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     const stateList = getStateList(props.options.stateFilter);
     dispatch(
       fetchAllPromAndRulerRulesAction(false, {
-        limitAlerts: 1,
+        limitAlerts: INSTANCES_DISPLAY_LIMIT,
         matchers: props.options.alertInstanceLabelFilter,
         state: stateList,
       })
@@ -84,7 +85,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () =>
       dispatch(
         fetchAllPromAndRulerRulesAction(false, {
-          limitAlerts: 1,
+          limitAlerts: INSTANCES_DISPLAY_LIMIT,
           matchers: props.options.alertInstanceLabelFilter,
           state: stateList,
         })
