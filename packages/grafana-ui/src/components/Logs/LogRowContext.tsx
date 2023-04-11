@@ -158,13 +158,14 @@ export const LogRowContextGroup = ({
               <List
                 items={rows}
                 renderItem={(item) => {
+                  const message = typeof item === 'string' ? item : item.message ?? '';
                   return (
                     <div
                       className={css`
                         padding: 5px 0;
                       `}
                     >
-                      {typeof item === 'string' && textUtil.hasAnsiCodes(item) ? <LogMessageAnsi value={item} /> : item}
+                      {textUtil.hasAnsiCodes(message) ? <LogMessageAnsi value={message} /> : message}
                     </div>
                   );
                 }}

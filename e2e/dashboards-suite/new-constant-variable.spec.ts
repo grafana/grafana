@@ -2,11 +2,13 @@ import { e2e } from '@grafana/e2e';
 import { GrafanaBootConfig } from '@grafana/runtime';
 
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
+const DASHBOARD_NAME = 'Test variable output';
 
 describe('Variables - Constant', () => {
   it('can add a new constant variable', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e().contains(DASHBOARD_NAME).should('be.visible');
 
     // Create a new "Constant" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
@@ -15,8 +17,8 @@ describe('Variables - Constant', () => {
       e2e().get('input').type('Constant{enter}');
     });
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type('VariableUnderTest').blur();
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2().type('Variable under test').blur();
     e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInputV2().type('pesto').blur();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2().type('Variable under test').blur();
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().eq(0).should('have.text', 'pesto');
 

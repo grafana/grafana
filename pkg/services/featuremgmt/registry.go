@@ -506,6 +506,13 @@ var (
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
+			Name:            "externalServiceAuth",
+			Description:     "Starts an OAuth2 authentication provider for external services",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+			Owner:           grafanaAuthnzSquad,
+		},
+		{
 			Name:         "dataplaneFrontendFallback",
 			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
 			State:        FeatureStateAlpha,

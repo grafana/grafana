@@ -205,29 +205,6 @@ export type LogsVolumeCustomMetaData = {
   sourceQuery: DataQuery;
 };
 
-export const getLogsVolumeAbsoluteRange = (
-  dataFrames: DataFrame[],
-  defaultRange: AbsoluteTimeRange
-): AbsoluteTimeRange => {
-  return dataFrames[0].meta?.custom?.absoluteRange || defaultRange;
-};
-
-export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: string } | null => {
-  const customMeta = dataFrames[0]?.meta?.custom;
-
-  if (customMeta && customMeta.datasourceName) {
-    return {
-      name: customMeta.datasourceName,
-    };
-  }
-
-  return null;
-};
-
-export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
-  return dataFrames[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
-};
-
 /**
  * Data sources that support supplementary queries in Explore.
  * This will enable users to see additional data when running original queries.
