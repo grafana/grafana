@@ -24,18 +24,6 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   topSpacing?: number;
 }
 
-export function getIconFromSeverity(severity: AlertVariant): IconName {
-  switch (severity) {
-    case 'error':
-    case 'warning':
-      return 'exclamation-triangle';
-    case 'info':
-      return 'info-circle';
-    case 'success':
-      return 'check';
-  }
-}
-
 export const Alert = React.forwardRef<HTMLDivElement, Props>(
   (
     {
@@ -102,6 +90,18 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 );
 
 Alert.displayName = 'Alert';
+
+export const getIconFromSeverity = (severity: AlertVariant): IconName => {
+  switch (severity) {
+    case 'error':
+    case 'warning':
+      return 'exclamation-triangle';
+    case 'info':
+      return 'info-circle';
+    case 'success':
+      return 'check';
+  }
+};
 
 const getStyles = (
   theme: GrafanaTheme2,

@@ -174,7 +174,7 @@
     },
     "alerts-and-incidents": {
       "subtitle": "Alerting and incident management apps",
-      "title": "Alerts & incidents"
+      "title": "Alerts & IRM"
     },
     "api-keys": {
       "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",

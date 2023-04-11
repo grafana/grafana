@@ -41,7 +41,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { serializeParams } from '../../../core/utils/fetch';
-import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
+import { RowContextOptions } from '../../../features/logs/components/log-context/types';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 import { renderLegendFormat } from '../prometheus/legend';
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
@@ -66,8 +66,8 @@ import {
   findLastPosition,
   getLabelFilterPositions,
 } from './modifyQuery';
-import { runQueryInChunks } from './queryChunking';
 import { getQueryHints } from './queryHints';
+import { runSplitQuery } from './querySplitting';
 import {
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
@@ -75,7 +75,7 @@ import {
   getParserFromQuery,
   isLogsQuery,
   isValidQuery,
-  requestSupporsChunking,
+  requestSupportsSplitting,
 } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
@@ -284,8 +284,8 @@ export class LokiDatasource
       return this.runLiveQueryThroughBackend(fixedRequest);
     }
 
-    if (config.featureToggles.lokiQuerySplitting && requestSupporsChunking(fixedRequest.targets)) {
-      return runQueryInChunks(this, fixedRequest);
+    if (config.featureToggles.lokiQuerySplitting && requestSupportsSplitting(fixedRequest.targets)) {
+      return runSplitQuery(this, fixedRequest);
     }
 
     return this.runQuery(fixedRequest);

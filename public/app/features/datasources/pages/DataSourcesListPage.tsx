@@ -2,10 +2,7 @@ import React from 'react';
 
 import { config } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
-import {
-  ConnectionsRedirectNotice,
-  DestinationPage,
-} from 'app/features/connections/components/ConnectionsRedirectNotice';
+import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice';
 import { StoreState, useSelector } from 'app/types';
 
 import { DataSourceAddButton } from '../components/DataSourceAddButton';
@@ -19,9 +16,7 @@ export function DataSourcesListPage() {
   return (
     <Page navId="datasources" actions={actions}>
       <Page.Contents>
-        {config.featureToggles.dataConnectionsConsole && (
-          <ConnectionsRedirectNotice destinationPage={DestinationPage.dataSources} />
-        )}
+        {config.featureToggles.dataConnectionsConsole && <ConnectionsRedirectNotice />}
         <DataSourcesList />
       </Page.Contents>
     </Page>

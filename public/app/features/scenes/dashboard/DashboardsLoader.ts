@@ -11,7 +11,6 @@ import {
   SceneGridLayout,
   SceneGridRow,
   SceneTimeRange,
-  SceneObject,
   SceneQueryRunner,
   SceneVariableSet,
   VariableValueSelectors,
@@ -20,14 +19,20 @@ import {
   DataSourceVariable,
   QueryVariable,
   ConstantVariable,
+  SceneRefreshPicker,
   SceneDataTransformer,
+  SceneGridItem,
+  SceneDataProvider,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/types';
 import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
+import { ShareQueryDataProvider } from './ShareQueryDataProvider';
+import { getVizPanelKeyForPanelId } from './utils';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -81,14 +86,14 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
   }
 }
 
-export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObject[] {
+export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<SceneGridItem | SceneGridRow> {
   // collects all panels and rows
-  const panels: SceneObject[] = [];
+  const panels: Array<SceneGridItem | SceneGridRow> = [];
 
   // indicates expanded row that's currently processed
   let currentRow: PanelModel | null = null;
   // collects panels in the currently processed, expanded row
-  let currentRowPanels: SceneObject[] = [];
+  let currentRowPanels: SceneGridItem[] = [];
 
   for (const panel of oldPanels) {
     if (panel.type === 'row') {
@@ -99,9 +104,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
             new SceneGridRow({
               title: panel.title,
               isCollapsed: true,
-              placement: {
-                y: panel.gridPos.y,
-              },
+              y: panel.gridPos.y,
               children: panel.panels ? panel.panels.map(createVizPanelFromPanelModel) : [],
             })
           );
@@ -116,9 +119,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
           panels.push(
             new SceneGridRow({
               title: currentRow!.title,
-              placement: {
-                y: currentRow.gridPos.y,
-              },
+              y: currentRow.gridPos.y,
               children: currentRowPanels,
             })
           );
@@ -144,9 +145,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
     panels.push(
       new SceneGridRow({
         title: currentRow!.title,
-        placement: {
-          y: currentRow.gridPos.y,
-        },
+        y: currentRow.gridPos.y,
         children: currentRowPanels,
       })
     );
@@ -184,7 +183,13 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       children: createSceneObjectsForPanels(oldModel.panels),
     }),
     $timeRange: new SceneTimeRange(oldModel.time),
-    actions: [new SceneTimePicker({})],
+    actions: [
+      new SceneTimePicker({}),
+      new SceneRefreshPicker({
+        refresh: oldModel.refresh,
+        intervals: oldModel.timepicker.refresh_intervals,
+      }),
+    ],
     $variables: variables,
     ...(variables && {
       controls: [new VariableValueSelectors({})],
@@ -258,33 +263,53 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
 }
 
 export function createVizPanelFromPanelModel(panel: PanelModel) {
-  const queryRunner = new SceneQueryRunner({
-    queries: panel.targets,
-    maxDataPoints: panel.maxDataPoints ?? undefined,
+  return new SceneGridItem({
+    x: panel.gridPos.x,
+    y: panel.gridPos.y,
+    width: panel.gridPos.w,
+    height: panel.gridPos.h,
+    isDraggable: true,
+    isResizable: true,
+    body: new VizPanel({
+      key: getVizPanelKeyForPanelId(panel.id),
+      title: panel.title,
+      pluginId: panel.type,
+      options: panel.options ?? {},
+      fieldConfig: panel.fieldConfig,
+      pluginVersion: panel.pluginVersion,
+      displayMode: panel.transparent ? 'transparent' : undefined,
+      // To be replaced with it's own option persited option instead derived
+      hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
+      $data: createPanelDataProvider(panel),
+    }),
   });
+}
 
-  return new VizPanel({
-    title: panel.title,
-    pluginId: panel.type,
-    placement: {
-      x: panel.gridPos.x,
-      y: panel.gridPos.y,
-      width: panel.gridPos.w,
-      height: panel.gridPos.h,
-    },
-    options: panel.options ?? {},
-    fieldConfig: panel.fieldConfig,
-    pluginVersion: panel.pluginVersion,
-    displayMode: panel.transparent ? 'transparent' : undefined,
-    // To be replaced with it's own option persited option instead derived
-    hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
-    $data: panel.transformations?.length
-      ? new SceneDataTransformer({
-          $data: queryRunner,
-          transformations: panel.transformations,
-        })
-      : queryRunner,
-  });
+export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | undefined {
+  if (!panel.targets?.length) {
+    return undefined;
+  }
+
+  let dataProvider: SceneDataProvider | undefined = undefined;
+
+  if (panel.datasource?.uid === SHARED_DASHBOARD_QUERY) {
+    dataProvider = new ShareQueryDataProvider({ query: panel.targets[0] });
+  } else {
+    dataProvider = new SceneQueryRunner({
+      queries: panel.targets,
+      maxDataPoints: panel.maxDataPoints ?? undefined,
+    });
+  }
+
+  // Wrap inner data provider in a data transformer
+  if (panel.transformations?.length) {
+    dataProvider = new SceneDataTransformer({
+      $data: dataProvider,
+      transformations: panel.transformations,
+    });
+  }
+
+  return dataProvider;
 }
 
 let loader: DashboardLoader | null = null;
