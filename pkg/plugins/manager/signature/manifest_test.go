@@ -212,14 +212,25 @@ func TestCalculate(t *testing.T) {
 	})
 
 	t.Run("Signature verification should work with any path separator", func(t *testing.T) {
+		var toSlashUnix = newToSlash('/')
+		var windowsToSlash = newToSlash('\\')
+
 		for _, tc := range []struct {
-			name string
-			sep  string
+			name    string
+			sep     string
+			toSlash func(string) string
 		}{
-			{"unix", "/"},
-			{"windows", "\\"},
+			{"unix", "/", toSlashUnix},
+			{"windows", "\\", windowsToSlash},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
+				// Replace toSlash for cross-platform testing
+				oldToSlash := toSlash
+				t.Cleanup(func() {
+					toSlash = oldToSlash
+				})
+				toSlash = tc.toSlash
+
 				basePath := "../testdata/app-with-child/dist"
 
 				sig, err := Calculate(context.Background(), log.NewTestLogger(), &fakes.FakePluginSource{
@@ -248,6 +259,34 @@ func TestCalculate(t *testing.T) {
 				}, sig)
 			})
 		}
+	})
+}
+
+// newToSlash returns a new function that acts as filepath.ToSlash but for the specified os-separator.
+// This can be used to test filepath.ToSlash-dependant code cross-platform.
+func newToSlash(sep rune) func(string) string {
+	return func(path string) string {
+		if sep == '/' {
+			return path
+		}
+		return strings.ReplaceAll(path, string(sep), "/")
+	}
+}
+
+func TestNewToSlash(t *testing.T) {
+	t.Run("unix", func(t *testing.T) {
+		unixToSlash := newToSlash('/')
+		require.Equal(t, "folder", unixToSlash("folder"))
+		require.Equal(t, "/folder", unixToSlash("/folder"))
+		require.Equal(t, "/folder/file", unixToSlash("/folder/file"))
+		require.Equal(t, "/folder/other\\file", unixToSlash("/folder/other\\file"))
+	})
+
+	t.Run("windows", func(t *testing.T) {
+		windowsToSlash := newToSlash('\\')
+		require.Equal(t, "folder", windowsToSlash("folder"))
+		require.Equal(t, "C:/folder", windowsToSlash("C:\\folder"))
+		require.Equal(t, "folder/file.exe", windowsToSlash("folder\\file.exe"))
 	})
 }
 
