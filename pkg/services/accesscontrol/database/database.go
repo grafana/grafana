@@ -2,8 +2,10 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -35,9 +37,12 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 			INNER JOIN role ON role.id = permission.role_id
 		` + filter
 
-		if query.RolePrefix != "" {
-			q += " WHERE role.name LIKE ?"
-			params = append(params, query.RolePrefix+"%")
+		if len(query.RolePrefixes) > 0 {
+			q += " WHERE ( " + strings.Repeat("role.name LIKE ? OR ", len(query.RolePrefixes))
+			q = q[:len(q)-4] + " )" // remove last " OR "
+			for i := range query.RolePrefixes {
+				params = append(params, query.RolePrefixes[i]+"%")
+			}
 		}
 
 		if err := sess.SQL(q, params...).Find(&result); err != nil {
@@ -230,4 +235,182 @@ func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, u
 		return nil
 	})
 	return err
+}
+
+func (s *AccessControlStore) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
+	role, assignment := genExternalServiceRoleAndAssignment(cmd)
+
+	return s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		// Create or update the role
+		existingRole, errSaveRole := s.saveRole(ctx, sess, &role)
+		if errSaveRole != nil {
+			return errSaveRole
+		}
+		// Update permissions
+		errSavePerm := s.savePermissions(ctx, sess, existingRole, cmd.Permissions)
+		if errSavePerm != nil {
+			return errSavePerm
+		}
+		// Assing role to service account
+		assignment.RoleID = existingRole.ID
+		errSaveAssign := s.saveUserAssignment(ctx, sess, assignment)
+		if errSaveAssign != nil {
+			return errSaveAssign
+		}
+
+		return nil
+	})
+}
+
+func genExternalServiceRoleAndAssignment(cmd accesscontrol.SaveExternalServiceRoleCommand) (accesscontrol.Role, accesscontrol.UserRole) {
+	role := accesscontrol.Role{
+		OrgID:       cmd.OrgID,
+		Version:     1,
+		Name:        fmt.Sprintf("%s%s:permissions", accesscontrol.ExternalServiceRolePrefix, cmd.ExternalServiceID),
+		UID:         fmt.Sprintf("%s%s_permissions", accesscontrol.ExternalServiceRoleUIDPrefix, cmd.ExternalServiceID),
+		DisplayName: fmt.Sprintf("External Service %s Permissions", cmd.ExternalServiceID),
+		Description: fmt.Sprintf("External Service %s permissions", cmd.ExternalServiceID),
+		Hidden:      true,
+		Created:     time.Now(),
+		Updated:     time.Now(),
+	}
+	if cmd.Global {
+		role.OrgID = accesscontrol.GlobalOrgID
+	}
+
+	assignment := accesscontrol.UserRole{
+		OrgID:   cmd.OrgID,
+		UserID:  cmd.ServiceAccountID,
+		Created: time.Now(),
+	}
+	if cmd.Global {
+		assignment.OrgID = accesscontrol.GlobalOrgID
+	}
+	return role, assignment
+}
+
+func getRoleByUID(ctx context.Context, sess *db.Session, uid string) (*accesscontrol.Role, error) {
+	var role accesscontrol.Role
+	has, err := sess.Where("uid = ?", uid).Get(&role)
+	if err != nil {
+		return nil, err
+	}
+	if !has {
+		return nil, accesscontrol.ErrRoleNotFound
+	}
+	return &role, nil
+}
+
+func alreadyAssigned(ctx context.Context, sess *db.Session, roleID, saID int64) (bool, error) {
+	var assignement accesscontrol.UserRole
+	has, err := sess.Where("role_id = ? AND user_id = ?", roleID, saID).Get(&assignement)
+	if err != nil {
+		return false, err
+	}
+	return has, nil
+}
+
+func getRolePermissions(ctx context.Context, sess *db.Session, id int64) ([]accesscontrol.Permission, error) {
+	var permissions []accesscontrol.Permission
+	err := sess.Where("role_id = ?", id).Find(&permissions)
+	if err != nil {
+		return nil, err
+	}
+	return permissions, nil
+}
+
+func permissionDiff(previous, new []accesscontrol.Permission) (added, removed []accesscontrol.Permission) {
+	type key struct{ Action, Scope string }
+	prevMap := map[key]int64{}
+	for i := range previous {
+		prevMap[key{previous[i].Action, previous[i].Scope}] = previous[i].ID
+	}
+	newMap := map[key]int64{}
+	for i := range new {
+		newMap[key{new[i].Action, new[i].Scope}] = 0
+	}
+	for i := range new {
+		key := key{new[i].Action, new[i].Scope}
+		if _, already := prevMap[key]; !already {
+			added = append(added, new[i])
+		} else {
+			delete(prevMap, key)
+		}
+	}
+
+	for p, id := range prevMap {
+		removed = append(removed, accesscontrol.Permission{ID: id, Action: p.Action, Scope: p.Scope})
+	}
+
+	return added, removed
+}
+
+func (*AccessControlStore) saveRole(ctx context.Context, sess *db.Session, role *accesscontrol.Role) (*accesscontrol.Role, error) {
+	existingRole, err := getRoleByUID(ctx, sess, role.UID)
+	if err != nil && err != accesscontrol.ErrRoleNotFound {
+		return nil, err
+	}
+
+	if existingRole == nil {
+		if _, err := sess.Insert(role); err != nil {
+			return nil, err
+		}
+	} else {
+		role.ID = existingRole.ID
+		if _, err := sess.Where("id = ?", existingRole.ID).MustCols("org_id").Update(role); err != nil {
+			return nil, err
+		}
+	}
+	return getRoleByUID(ctx, sess, role.UID)
+}
+
+func (*AccessControlStore) savePermissions(ctx context.Context, sess *db.Session, role *accesscontrol.Role, permissions []accesscontrol.Permission) error {
+	now := time.Now()
+	storedPermissions, err := getRolePermissions(ctx, sess, role.ID)
+	if err != nil {
+		return err
+	}
+	added, removed := permissionDiff(storedPermissions, permissions)
+	if len(added) > 0 {
+		for i := range added {
+			added[i].RoleID = role.ID
+			added[i].Created = now
+			added[i].Updated = now
+		}
+		if _, err := sess.Insert(&added); err != nil {
+			return err
+		}
+	}
+	if len(removed) > 0 {
+		ids := make([]int64, len(removed))
+		for i := range removed {
+			ids[i] = removed[i].ID
+		}
+		count, err := sess.In("id", ids).Delete(&accesscontrol.Permission{})
+		if err != nil {
+			return err
+		}
+		if count != int64(len(removed)) {
+			return fmt.Errorf("failed to delete permissions that have been removed from role")
+		}
+	}
+	return nil
+}
+
+func (*AccessControlStore) saveUserAssignment(ctx context.Context, sess *db.Session, assignment accesscontrol.UserRole) error {
+	has, err := alreadyAssigned(ctx, sess, assignment.RoleID, assignment.UserID)
+	if err != nil {
+		return err
+	}
+	if !has {
+		if _, err := sess.Insert(&assignment); err != nil {
+			return err
+		}
+	} else {
+		_, err := sess.Where("role_id = ? AND user_id = ?", assignment.RoleID, assignment.UserID).MustCols("org_id").Update(&assignment)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -62,6 +62,7 @@ type store interface {
 	SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
 	GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
+	SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error
 }
 
 // Service is the service implementing role based access control.
@@ -107,11 +108,11 @@ func (s *Service) getUserPermissions(ctx context.Context, user *user.SignedInUse
 	}
 
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgID:      user.OrgID,
-		UserID:     user.UserID,
-		Roles:      accesscontrol.GetOrgRoles(user),
-		TeamIDs:    user.Teams,
-		RolePrefix: accesscontrol.ManagedRolePrefix,
+		OrgID:        user.OrgID,
+		UserID:       user.UserID,
+		Roles:        accesscontrol.GetOrgRoles(user),
+		TeamIDs:      user.Teams,
+		RolePrefixes: []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix},
 	})
 	if err != nil {
 		return nil, err
@@ -413,4 +414,22 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 		return permission.Action == searchOptions.Action
 	}
 	return strings.HasPrefix(permission.Action, searchOptions.ActionPrefix)
+}
+
+func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
+	// If accesscontrol is disabled no need to save the external service role
+	if accesscontrol.IsDisabled(s.cfg) {
+		return nil
+	}
+
+	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		s.log.Debug("registering external service role is behind a feature flag, enable it to use this feature.")
+		return nil
+	}
+
+	if err := cmd.Validate(); err != nil {
+		return err
+	}
+
+	return s.store.SaveExternalServiceRole(ctx, cmd)
 }
