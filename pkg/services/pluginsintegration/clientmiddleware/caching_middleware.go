@@ -106,7 +106,7 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 		// record request duration if caching was used
 		if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
 			ResourceCachingRequestHistogram.With(prometheus.Labels{
-				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
+				"plugin_id": req.PluginContext.PluginID,
 				"cache":           ch,
 			}).Observe(time.Since(start).Seconds())
 		}
