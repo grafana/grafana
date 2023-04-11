@@ -671,6 +671,23 @@ describe('explore links utils', () => {
       const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
       expect(dataLinkRtnVal).toBe(true);
     });
+
+    it('returns deduplicated list of variables', () => {
+      const dataLink = {
+        url: '',
+        title: '',
+        internal: {
+          datasourceUid: 'uid',
+          datasourceName: 'dsName',
+          query: { query: 'test ${test} ${foo} ${test:raw} $test' },
+        },
+      };
+      const scopedVars = {
+        testVal: { text: '', value: 'val1' },
+      };
+      const variables = getVariableUsageInfo(dataLink, scopedVars).variables;
+      expect(variables).toHaveLength(2);
+    });
   });
 });
 

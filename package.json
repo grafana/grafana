@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
-  "version": "9.5.0-pre",
+  "version": "10.0.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
     "build": "yarn i18n:compile && NODE_ENV=production webpack --progress --config scripts/webpack/webpack.prod.js",
@@ -278,6 +278,7 @@
     "@opentelemetry/semantic-conventions": "1.9.1",
     "@popperjs/core": "2.11.6",
     "@prometheus-io/lezer-promql": "^0.37.0-rc.1",
+    "@pyroscope/flamegraph": "^0.35.5",
     "@react-aria/button": "3.6.1",
     "@react-aria/dialog": "3.3.1",
     "@react-aria/focus": "3.8.0",
