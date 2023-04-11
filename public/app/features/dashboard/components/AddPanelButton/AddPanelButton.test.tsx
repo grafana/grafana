@@ -1,4 +1,5 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { defaultDashboard } from '@grafana/schema';
@@ -38,11 +39,10 @@ it('renders button without menu when menu is not open', () => {
 });
 
 it('renders button with menu when menu is open', async () => {
+  const user = userEvent.setup();
   setup();
 
-  await act(async () => {
-    await fireEvent.click(screen.getByRole('button', { name: 'Add' }));
-  });
+  await user.click(screen.getByRole('button', { name: 'Add' }));
 
   expect(screen.queryByText('Menu')).toBeInTheDocument();
 });
