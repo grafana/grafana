@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -43,9 +44,9 @@ type ImageService interface {
 }
 
 // ScreenshotImageService takes screenshots of the alert rule and saves the
-// image in the store. The image contains a unique token that can be passed
-// as an annotation or label to the Alertmanager. This service cannot take
-// screenshots of alert rules that are not associated with a dashboard panel.
+// image in the store. The image url can be passed as an annotation or label
+// to the Alertmanager. This service cannot take screenshots of alert rules
+// that are not associated with a dashboard panel.
 type ScreenshotImageService struct {
 	cache             CacheService
 	limiter           screenshot.RateLimiter
@@ -147,7 +148,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 
 	// If there is an image is in the cache return it instead of taking another screenshot
 	if image, ok := s.cache.Get(ctx, optsHash); ok {
-		logger.Debug("Found cached image", "token", image.Token)
+		logger.Debug("Found cached image", "id", image.ID)
 		return &image, nil
 	}
 
@@ -170,9 +171,15 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 			}
 			return nil, err
 		}
-
 		logger.Debug("Took screenshot", "path", screenshot.Path)
-		image := models.Image{Path: screenshot.Path}
+
+		// Create a URL from the path.
+		screenshotURL := url.URL{Scheme: "file", Path: screenshot.Path}
+		image := models.Image{
+			// TODO: do we even need Path anymore?
+			Path: screenshot.Path,
+			URL:  screenshotURL.String(),
+		}
 
 		// Uploading images is optional
 		if s.uploads != nil {
@@ -186,7 +193,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		if err := s.store.SaveImage(ctx, &image); err != nil {
 			return nil, fmt.Errorf("failed to save image: %w", err)
 		}
-		logger.Debug("Saved image", "token", image.Token)
+		logger.Debug("Saved image", "id", image.ID)
 
 		return image, nil
 	})
@@ -197,7 +204,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 	image := result.(models.Image)
 	if err = s.cache.Set(ctx, optsHash, image); err != nil {
 		s.logger.Warn("Failed to cache image",
-			"token", image.Token,
+			"id", image.ID,
 			"error", err)
 	}
 

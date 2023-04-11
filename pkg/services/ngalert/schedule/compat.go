@@ -50,7 +50,7 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 	}
 
 	if alertState.Image != nil {
-		nA[alertingModels.ImageTokenAnnotation] = alertState.Image.Token
+		nA[alertingModels.ImageTokenAnnotation] = alertState.Image.URL
 	}
 
 	if alertState.StateReason != "" {

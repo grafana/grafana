@@ -488,6 +488,9 @@ func addAlertImageMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("support longer URLs in alert_image table", migrator.NewRawSQLMigration("").
 		Postgres("ALTER TABLE alert_image ALTER COLUMN url TYPE VARCHAR(2048);").
 		Mysql("ALTER TABLE alert_image MODIFY url VARCHAR(2048) NOT NULL;"))
+
+	mg.AddMigration("drop unique `token` index on alert_image", migrator.NewDropIndexMigration(imageTable, imageTable.Indices[0]))
+	mg.AddMigration("add unique index on `url` to alert_image", migrator.NewAddIndexMigration(imageTable, &migrator.Index{Type: migrator.UniqueIndex, Cols: []string{"url"}}))
 }
 
 func extractAlertmanagerConfigurationHistoryMigration(mg *migrator.Migrator) {

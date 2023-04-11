@@ -20,8 +20,8 @@ func newImageStore(store store.ImageStore) images.ImageStore {
 	}
 }
 
-func (i imageStore) GetImage(ctx context.Context, token string) (*images.Image, error) {
-	image, err := i.store.GetImage(ctx, token)
+func (i imageStore) GetImage(ctx context.Context, url string) (*images.Image, error) {
+	image, err := i.store.GetImage(ctx, url)
 	if err != nil {
 		if errors.Is(err, models.ErrImageNotFound) {
 			err = images.ErrImageNotFound
@@ -30,7 +30,6 @@ func (i imageStore) GetImage(ctx context.Context, token string) (*images.Image, 
 	var result *images.Image
 	if image != nil {
 		result = &images.Image{
-			Token:     image.Token,
 			Path:      image.Path,
 			URL:       image.URL,
 			CreatedAt: image.CreatedAt,

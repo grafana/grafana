@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -16,14 +14,14 @@ const (
 )
 
 type ImageStore interface {
-	// GetImage returns the image with the token. It returns ErrImageNotFound
-	// if the image has expired or if an image with the token does not exist.
-	GetImage(ctx context.Context, token string) (*models.Image, error)
+	// GetImage returns the image with the url. It returns ErrImageNotFound
+	// if the image has expired or if an image with the url does not exist.
+	GetImage(ctx context.Context, url string) (*models.Image, error)
 
-	// GetImages returns all images that match the tokens. If one or more images
-	// have expired or do not exist then it also returns the unmatched tokens
+	// GetImages returns all images that match the urls. If one or more images
+	// have expired or do not exist then it also returns the unmatched urls
 	// and an ErrImageNotFound error.
-	GetImages(ctx context.Context, tokens []string) ([]models.Image, []string, error)
+	GetImages(ctx context.Context, urls []string) ([]models.Image, []string, error)
 
 	// SaveImage saves the image or returns an error.
 	SaveImage(ctx context.Context, img *models.Image) error
@@ -37,10 +35,10 @@ type ImageAdminStore interface {
 	DeleteExpiredImages(context.Context) (int64, error)
 }
 
-func (st DBstore) GetImage(ctx context.Context, token string) (*models.Image, error) {
+func (st DBstore) GetImage(ctx context.Context, url string) (*models.Image, error) {
 	var image models.Image
 	if err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		exists, err := sess.Where("token = ? AND expires_at > ?", token, TimeNow().UTC()).Get(&image)
+		exists, err := sess.Where("url = ? AND expires_at > ?", url, TimeNow().UTC()).Get(&image)
 		if err != nil {
 			return fmt.Errorf("failed to get image: %w", err)
 		} else if !exists {
@@ -54,15 +52,15 @@ func (st DBstore) GetImage(ctx context.Context, token string) (*models.Image, er
 	return &image, nil
 }
 
-func (st DBstore) GetImages(ctx context.Context, tokens []string) ([]models.Image, []string, error) {
+func (st DBstore) GetImages(ctx context.Context, urls []string) ([]models.Image, []string, error) {
 	var images []models.Image
 	if err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.In("token", tokens).Where("expires_at > ?", TimeNow().UTC()).Find(&images)
+		return sess.In("url", urls).Where("expires_at > ?", TimeNow().UTC()).Find(&images)
 	}); err != nil {
 		return nil, nil, err
 	}
-	if len(images) < len(tokens) {
-		return images, unmatchedTokens(tokens, images), models.ErrImageNotFound
+	if len(images) < len(urls) {
+		return images, unmatchedURLs(urls, images), models.ErrImageNotFound
 	}
 	return images, nil, nil
 }
@@ -70,15 +68,10 @@ func (st DBstore) GetImages(ctx context.Context, tokens []string) ([]models.Imag
 func (st DBstore) SaveImage(ctx context.Context, img *models.Image) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if img.ID == 0 {
-			// If the ID is zero then this is a new image. It needs a token, a created timestamp
+			// If the ID is zero then this is a new image. It needs a created timestamp
 			// and an expiration time. The expiration time of the image is derived from the created
 			// timestamp rather than the current time as it helps assert that the expiration time
 			// has the intended duration in tests.
-			token, err := uuid.NewRandom()
-			if err != nil {
-				return fmt.Errorf("failed to create token: %w", err)
-			}
-			img.Token = token.String()
 			img.CreatedAt = TimeNow().UTC()
 			img.ExpiresAt = img.CreatedAt.Add(imageExpirationDuration)
 			if _, err := sess.Insert(img); err != nil {
@@ -117,16 +110,16 @@ func (st DBstore) DeleteExpiredImages(ctx context.Context) (int64, error) {
 	return n, nil
 }
 
-// unmatchedTokens returns the tokens that were not matched to an image.
-func unmatchedTokens(tokens []string, images []models.Image) []string {
+// unmatchedURLs returns the urls that were not matched to an image.
+func unmatchedURLs(urls []string, images []models.Image) []string {
 	matched := make(map[string]struct{})
 	for _, image := range images {
-		matched[image.Token] = struct{}{}
+		matched[image.URL] = struct{}{}
 	}
-	unmatched := make([]string, 0, len(tokens))
-	for _, token := range tokens {
-		if _, ok := matched[token]; !ok {
-			unmatched = append(unmatched, token)
+	unmatched := make([]string, 0, len(urls))
+	for _, url := range urls {
+		if _, ok := matched[url]; !ok {
+			unmatched = append(unmatched, url)
 		}
 	}
 	return unmatched
