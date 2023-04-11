@@ -173,7 +173,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 			entry := requireSingleEntry(t, res)
 			lblJsn, _ := json.Marshal(states[0].Labels)
 			exp := fmt.Sprintf("%x", md5.Sum(lblJsn))
-			require.Equal(t, exp, entry.InstanceID)
+			require.Equal(t, exp, entry.Fingerprint)
 		})
 	})
 

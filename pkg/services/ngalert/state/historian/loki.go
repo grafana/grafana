@@ -266,7 +266,7 @@ func statesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			Condition:      rule.Condition,
 			DashboardUID:   rule.DashboardUID,
 			PanelID:        rule.PanelID,
-			InstanceID:     fmt.Sprintf("%x", md5.Sum(instFingerprint)),
+			Fingerprint:    fmt.Sprintf("%x", md5.Sum(instFingerprint)),
 			InstanceLabels: sanitizedLabels,
 		}
 		if state.State.State == eval.Error {
@@ -310,7 +310,7 @@ type lokiEntry struct {
 	Condition     string           `json:"condition"`
 	DashboardUID  string           `json:"dashboardUID"`
 	PanelID       int64            `json:"panelID"`
-	InstanceID    string           `json:"instanceID"`
+	Fingerprint   string           `json:"fingerprint"`
 	// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.
 	// These should not be conflated with labels associated with log streams.
 	InstanceLabels map[string]string `json:"labels"`
