@@ -384,7 +384,11 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         />
       )}
       {renameColumnInputData.isInputOpen ? (
-        <RenameColumnCell onColumnInputBlur={onRenameInputBlur} renameColumnData={renameColumnInputData} />
+        <RenameColumnCell
+          onColumnInputBlur={onRenameInputBlur}
+          renameColumnData={renameColumnInputData}
+          classStyle={styles.renameColumnInput}
+        />
       ) : null}
     </>
   );
@@ -438,6 +442,13 @@ const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => {
         :focus {
           outline: none;
         }
+      }
+    `,
+    renameColumnInput: css`
+      height: 37px;
+      border: 1px solid ${theme.colors.primary.main};
+      :focus {
+        outline: none;
       }
     `,
   };

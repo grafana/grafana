@@ -7,9 +7,10 @@ import { RenameColumnInputData } from '../utils';
 interface Props {
   renameColumnData: RenameColumnInputData;
   onColumnInputBlur: (columnName: string, columnIdx: number) => void;
+  classStyle?: string;
 }
 
-export const RenameColumnCell = ({ renameColumnData, onColumnInputBlur }: Props) => {
+export const RenameColumnCell = ({ renameColumnData, onColumnInputBlur, classStyle }: Props) => {
   const { x, y, width, height, inputValue, columnIdx } = renameColumnData;
   const [styles, setStyles] = useState({});
   const [value, setValue] = useState<string>(inputValue!);
@@ -48,7 +49,15 @@ export const RenameColumnCell = ({ renameColumnData, onColumnInputBlur }: Props)
 
   return (
     <Portal>
-      <input type="text" value={value} onBlur={onBlur} ref={ref} style={styles} onChange={onChange} />
+      <input
+        type="text"
+        className={classStyle}
+        value={value}
+        onBlur={onBlur}
+        ref={ref}
+        style={styles}
+        onChange={onChange}
+      />
     </Portal>
   );
 };

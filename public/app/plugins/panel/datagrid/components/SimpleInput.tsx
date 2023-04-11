@@ -13,7 +13,6 @@ export const SimpleInput = ({ onBlur, placeholder }: Props) => {
       return;
     }
 
-    ref.current.value = '';
     ref.current.focus();
   });
 
