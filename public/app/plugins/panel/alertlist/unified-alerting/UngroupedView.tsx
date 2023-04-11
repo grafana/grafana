@@ -17,7 +17,7 @@ import {
 import { createUrl } from 'app/features/alerting/unified/utils/url';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { GRAFANA_DATASOURCE_NAME } from '../../../../features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../../features/alerting/unified/utils/datasource';
 import { AlertingRule, AlertInstanceTotalState, CombinedRuleWithLocation } from '../../../../types/unified-alerting';
 import { AlertInstances } from '../AlertInstances';
 import { getStyles } from '../UnifiedAlertList';
@@ -29,7 +29,9 @@ type Props = {
 };
 
 function getGrafanaInstancesTotal(totals: Partial<Record<AlertInstanceTotalState, number>>) {
-  return Object.values(totals).reduce((total, currentTotal) => total + currentTotal, 0);
+  return Object.values(totals)
+    .filter((total) => total !== undefined)
+    .reduce((total, currentTotal) => total + currentTotal, 0);
 }
 
 const UngroupedModeView = ({ rules, options }: Props) => {
@@ -52,7 +54,7 @@ const UngroupedModeView = ({ rules, options }: Props) => {
           const strIndentifier = stringifyIdentifier(indentifier);
 
           const grafanaInstancesTotal =
-            ruleWithLocation.dataSourceName === GRAFANA_DATASOURCE_NAME
+            ruleWithLocation.dataSourceName === GRAFANA_RULES_SOURCE_NAME
               ? getGrafanaInstancesTotal(ruleWithLocation.instanceTotals)
               : undefined;
 

@@ -59,7 +59,7 @@ export function prepareRulesFilterQueryParams(
 }
 
 function paramsWithState(state: string[] | undefined, params: Record<string, string>) {
-  return state?.length ? { ...params, state: state } : params;
+  return state?.length ? { ...params, state } : params;
 }
 
 export async function fetchRules(
