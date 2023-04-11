@@ -159,7 +159,7 @@ Get additional help while configuring your Alertmanager. If you enter an invalid
 ## InfluxDB plugin database field deprecation
 
 The `database` field in the provisioning file has been deprecated.
-This information will be stored in `jsonData` with `dbName` field.
+This information will be stored in the `jsonData` field using the `dbName` property.
 The `database` field will be removed in the future to make InfluxDB consistent with other data sources.
 For more information and examples please refer to the [InfluxDB Provisioning docs]({{< relref "../datasources/influxdb/#provision-the-data-source" >}}).
 
@@ -184,7 +184,6 @@ _Generally available in Grafana Enterprise, Pro and Advanced._
 We updated the reporting UI to fit better the new navigation style, adding a horizontal slider and moving the Preview and Send buttons to the Action section in the page. We also fixed the alignment of the different sections.
 
 {{< figure src="/media/docs/grafana/Screenshot-newUI-report.png" max-width="750px" caption="Grafana new report UI" >}}
-
 
 ### Experimental support to use JWTs as auth method
 
