@@ -129,7 +129,6 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	t.Run("Should move apps to Apps category", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
 		treeRoot := navtree.NavTreeRoot{}
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
@@ -142,7 +141,6 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	t.Run("Should remove the default nav child (DefaultNav=true) and should set its URL to the plugin nav root", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
 		treeRoot := navtree.NavTreeRoot{}
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
@@ -155,7 +153,6 @@ func TestAddAppLinks(t *testing.T) {
 
 	// This can be done by using `[navigation.app_sections]` in the INI config
 	t.Run("Should move apps that have root nav id configured to the root", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
 		service.navigationAppConfig = map[string]NavigationAppConfig{
 			"test-app1": {SectionID: navtree.NavIDRoot},
 		}
@@ -179,7 +176,6 @@ func TestAddAppLinks(t *testing.T) {
 
 	// This can be done by using `[navigation.app_sections]` in the INI config
 	t.Run("Should move apps that have specific nav id configured to correct section", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
 		service.navigationAppConfig = map[string]NavigationAppConfig{
 			"test-app1": {SectionID: navtree.NavIDAdmin},
 		}
@@ -207,7 +203,6 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	t.Run("Should only add a 'Monitoring' section if a plugin exists that wants to live there", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
 		service.navigationAppConfig = map[string]NavigationAppConfig{}
 
 		// Check if the Monitoring section is not there if no apps try to register to it
@@ -231,7 +226,6 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	t.Run("Should add a 'Alerts and Incidents' section if a plugin exists that wants to live there", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
 		service.navigationAppConfig = map[string]NavigationAppConfig{}
 
 		// Check if the 'Alerts and Incidents' section is not there if no apps try to register to it
@@ -257,7 +251,6 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	t.Run("Should add a 'Alerts and Incidents' section if a plugin exists that wants to live there even without an alerting node", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
 		service.navigationAppConfig = map[string]NavigationAppConfig{}
 
 		// Check if the 'Alerts and Incidents' section is not there if no apps try to register to it
@@ -281,7 +274,6 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	t.Run("Should be able to control app sort order with SortWeight (smaller SortWeight displayed first)", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
 		service.navigationAppConfig = map[string]NavigationAppConfig{
 			"test-app2": {SectionID: navtree.NavIDMonitoring, SortWeight: 2},
 			"test-app1": {SectionID: navtree.NavIDMonitoring, SortWeight: 3},
@@ -300,7 +292,7 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	t.Run("Should replace page from plugin", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav, featuremgmt.FlagDataConnectionsConsole)
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagDataConnectionsConsole)
 		service.navigationAppConfig = map[string]NavigationAppConfig{}
 		service.navigationAppPathConfig = map[string]NavigationAppConfig{
 			"/connections/connect-data": {SectionID: "connections"},
@@ -340,7 +332,7 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	t.Run("Should not register pages under the app plugin section unless AddToNav=true", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav, featuremgmt.FlagDataConnectionsConsole)
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagDataConnectionsConsole)
 		service.navigationAppPathConfig = map[string]NavigationAppConfig{} // We don't configure it as a standalone plugin page
 
 		treeRoot := navtree.NavTreeRoot{}
