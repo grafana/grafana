@@ -97,6 +97,7 @@ export function AutoSaveField<T = string>(props: Props<T>) {
     <>
       <Field
         {...restProps}
+        loading={loading || undefined}
         invalid={isInvalid}
         disabled={disabled}
         error={error || (fieldState.showError && saveErrorMessage)}
