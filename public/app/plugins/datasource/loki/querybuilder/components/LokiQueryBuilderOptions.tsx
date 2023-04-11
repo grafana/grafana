@@ -101,7 +101,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               />
             </EditorField>
           )}
-          <EditorField label="Resolution">
+          <EditorField label="Resolution" tooltip="Sets the step parameter of Loki metrics range queries.">
             <Select
               isSearchable={false}
               onChange={onResolutionChange}
