@@ -42,14 +42,21 @@ export function SqlQueryEditor({
   }, [datasource]);
 
   useEffect(() => {
-    // This checks to see whether there is indeed a default database (preconfiguredDataset), and if so,
-    // if that default database is different than they currently-chosen one. Both scenarios require an alert.
-    if (!!preconfiguredDatabase && query.dataset !== preconfiguredDatabase) {
+    /*
+      This checks if
+        1) there is a preconfigured database (freshly created MSSQL/MYSQL datasources may or may not have a preconfigured database)?
+        2) there is a previously-chosen database from the DatasetSelector (freshly created datasources will NOT have a previously-chosen database,
+           and we don't want this alert to be displayed on all newly created datasources)?
+      Iff yes to both,
+        3) is that preconfigured database different than they previously-chosen one?
+      If so, display the alert.
+    */
+    if (!!preconfiguredDatabase && !!query.dataset && query.dataset !== preconfiguredDatabase) {
       setHasDatabaseConfigIssue(true);
     }
 
-    // This tests if the Postgres datasource - Postgres datasources are passed a default prop of `disableDatasetSelector` -
-    // was configured with a default database or not (preconfiguredDatabase). Then throw appropriate warning.
+    // This tests the Postgres datasource - all Postgres datasources are passed a default prop of `disableDatasetSelector`.
+    // 1) Is it indeed a Posgres datasource, and 2) is it configured with a default database? If os, then display appropriate alert.
     if (queryHeaderProps?.disableDatasetSelector && !preconfiguredDatabase) {
       setHasNoPostgresDefaultDatabaseConfig(true);
     }
@@ -115,10 +122,13 @@ export function SqlQueryEditor({
             setHasDatabaseConfigIssue(false);
             onChange({ ...query, dataset: preconfiguredDatabase });
           }}
-          buttonContent="UNDERSTOOD"
+          buttonContent="Update Query"
         >
-          Your default database configuration has been changed or updated. Make note of the query you have built before
-          clicking UNDERSTOOD. Clicking UNDERSTOOD will update your query parameters with the new database data.
+          <span>
+            Your default database configuration has been changed or updated. Make note of the query you have built
+            before clicking <code>Update Query.</code> Clicking <code>Update Query</code> will clear your previous query
+            parameters.
+          </span>
         </Alert>
       )}
       {hasNoPostgresDefaultDatabaseConfig && (
