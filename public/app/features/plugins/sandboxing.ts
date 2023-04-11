@@ -5,16 +5,16 @@ import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { GrafanaPlugin } from '@grafana/data';
 
 import { getGeneralSandboxDistortionMap } from './sandbox/distortion_map';
-import { createSandboxDocument } from './sandbox/document_sandbox';
+import { createSandboxDocument, fabricateMockElement } from './sandbox/document_sandbox';
 
 const prefix = '[sandbox]';
 
 type CompartmentDependencyModule = unknown;
 export const availableCompartmentDependenciesMap = new Map<string, CompartmentDependencyModule>();
 
-export function getSandboxedWebApis({ pluginName }: { pluginName: string; isDevMode: boolean }) {
+export function getSandboxedWebApis({ pluginId }: { pluginId: string; isDevMode: boolean }) {
   const sandboxLog = function (...args: unknown[]) {
-    console.log(`${prefix} ${pluginName}:`, ...args);
+    console.log(`${prefix} ${pluginId}:`, ...args);
   };
 
   return {
@@ -56,12 +56,23 @@ async function getPluginCode(path: string) {
   return await response.text();
 }
 
+function isDomElement(obj: unknown): obj is Element {
+  if (typeof obj === 'object' && obj instanceof Element) {
+    try {
+      return obj.nodeName !== undefined;
+    } catch (e) {
+      return false;
+    }
+  }
+  return false;
+}
+
 export async function doImportPluginInsideSandbox(path: string): Promise<{ plugin: GrafanaPlugin }> {
   let resolved = false;
   return new Promise(async (resolve, reject) => {
-    const pluginName = path.split('/')[1];
+    const pluginId = path.split('/')[1];
 
-    console.log('[actually] Importing plugin inside sandbox: ', pluginName, ' from path: ', path, '');
+    console.log('[sandbox] Importing plugin inside sandbox: ', pluginId, ' from path: ', path, '');
     const pluginCode = await getPluginCode(path);
 
     const sandboxDocument = createSandboxDocument();
@@ -75,7 +86,13 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
       // distortions are interceptors to modify the behavior of objects when
       // the code inside the sandbox tries to access them
       distortionCallback(v) {
-        //@ts-ignore
+        if (isDomElement(v)) {
+          if (v.closest(`[data-sandbox-id="${pluginId}"]`)) {
+            return v;
+          }
+          return fabricateMockElement(v.nodeName, sandboxDocument);
+        }
+        // //@ts-ignore
         // if (v.name) {
         //   //@ts-ignore
         //   console.log('distortionCallback', v.name, v);
@@ -107,7 +124,7 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
           }
         },
         ...getSandboxedWebApis({
-          pluginName,
+          pluginId: pluginId,
           isDevMode: true,
         }),
         document: sandboxDocument,

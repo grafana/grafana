@@ -1,5 +1,5 @@
 import { set } from 'lodash';
-import { ComponentClass, ComponentType } from 'react';
+import React, { ComponentClass, ComponentType } from 'react';
 
 import { FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
 import {
@@ -109,7 +109,7 @@ export class PanelPlugin<
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier;
 
-  panel: ComponentType<PanelProps<TOptions>> | null;
+  _panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
@@ -126,7 +126,21 @@ export class PanelPlugin<
 
   constructor(panel: ComponentType<PanelProps<TOptions>> | null) {
     super();
-    this.panel = panel;
+    this._panel = panel;
+  }
+
+  get panel(): typeof this._panel {
+    const pluginId = this.meta.id;
+    const PanelComponent = this._panel;
+    function PanelWrapper(props: PanelProps<TOptions>) {
+      return (
+        <div data-sandbox-id={pluginId}>
+          {/* @ts-ignore */}
+          <PanelComponent {...props} />
+        </div>
+      );
+    }
+    return PanelWrapper;
   }
 
   get defaults() {
