@@ -734,15 +734,15 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 
 ### max_open_conns_default
 
-For SQL datasources (MySql, Postgres, MSSQL) override the default maximum number of open connections (default: 100). Values configured in data source settings will be preferred over this value.
+For SQL data sources (MySql, Postgres, MSSQL) you can override the default maximum number of open connections (default: 100). The value configured in data source settings will be preferred over the default value.
 
 ### max_idle_conns_default
 
-For SQL datasources (MySql, Postgres, MSSQL) override the default allowed number of idle connections (default: 100). Values configured in data source settings will be preferred over this value.
+For SQL data sources (MySql, Postgres, MSSQL) you can override the default allowed number of idle connections (default: 100). The value configured in data source settings will be preferred over the default value.
 
 ### max_conn_lifetime_default
 
-For SQL datasources (MySql, Postgres, MSSQL) override the default maximum connection lifetime specified in seconds (default: 14400). Values configured in data source settings will be preferred over this value.
+For SQL data sources (MySql, Postgres, MSSQL) you can override the default maximum connection lifetime specified in seconds (default: 14400). The value configured in data source settings will be preferred over the default value.
 
 <hr/>
 
