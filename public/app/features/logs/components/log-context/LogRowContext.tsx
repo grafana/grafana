@@ -22,7 +22,8 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
-import { LogMessageAnsi } from './LogMessageAnsi';
+import { LogMessageAnsi } from '../LogMessageAnsi';
+
 import { HasMoreContextRows, LogRowContextQueryErrors, LogRowContextRows } from './LogRowContextProvider';
 
 export enum LogGroupPosition {

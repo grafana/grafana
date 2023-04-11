@@ -43,8 +43,8 @@ import { dedupLogRows, filterLogLevels } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { ExploreId } from 'app/types/explore';
 
-import { RowContextOptions } from '../logs/components/LogRowContextProvider';
 import { LogRows } from '../logs/components/LogRows';
+import { RowContextOptions } from '../logs/components/log-context/types';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
