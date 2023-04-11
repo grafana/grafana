@@ -127,7 +127,7 @@ Navigate to an alert rule directly from a dashboard or a panel to easily access 
 
 Navigate from an alert rule straight to a dashboard or a panel associated with the alert rule to visualize your alerting data.
 
-{{< figure src="/media/docs/alerting/dashboard-alert-rule.png" max-width="750px" caption="Access a dashboard or panel from an alert rule" >}}
+{{< figure src="/media/docs/alerting/dashboard-alert-rule-2.png" max-width="750px" caption="Access a dashboard or panel from an alert rule" >}}
 
 ### Preview queries for recording rules
 
