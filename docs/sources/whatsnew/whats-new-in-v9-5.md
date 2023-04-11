@@ -179,8 +179,14 @@ You can also _prevent_ the synchronization of organization roles from a given au
 
 ### Reporting UI adapted to match the new navigation style
 
-_Generally available in Enterprise edition of Grafana._
+_Generally available in Grafana Enterprise, Pro and Advanced._
 
 We updated the reporting UI to fit better the new navigation style, adding a horizontal slider and moving the Preview and Send buttons to the Action section in the page. We also fixed the alignment of the different sections. 
 
 {{< figure src="/media/docs/grafana/Screenshot-newUI-report.png" max-width="750px" caption="Grafana new report UI" >}}
+
+### Experimental support to use JWTs as auth method
+
+_Experimental in all editions of Grafana, for on-prem users only._
+
+This feature adds support to use JWTs tokens to store rendering keys instead of relying on “remote caching”. It covers most of the rendering use cases, though some still relies on the remote cache as store. Users can enable it by enabling the feature flag `renderAuthJWT` in the custom.ini configuration. It allows to use JWT in rendering service instead of the main remote cache configured.
