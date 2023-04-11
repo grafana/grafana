@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -55,7 +56,12 @@ N1c5v9v/4h6qeA==
 -----END PGP PUBLIC KEY BLOCK-----
 `
 
-var runningWindows = runtime.GOOS == "windows"
+var (
+	runningWindows = runtime.GOOS == "windows"
+
+	// toSlash is filepath.ToSlash, but can be overwritten in tests path separators cross-platform
+	toSlash = filepath.ToSlash
+)
 
 // PluginManifest holds details for the file manifest
 type PluginManifest struct {
@@ -194,6 +200,9 @@ func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, p
 	// Track files missing from the manifest
 	var unsignedFiles []string
 	for _, f := range plugin.FS.Files() {
+		// Ensure slashes are used, because MANIFEST.txt always uses slashes regardless of the filesystem
+		f = toSlash(f)
+
 		// Ignoring unsigned Chromium debug.log so it doesn't invalidate the signature for Renderer plugin running on Windows
 		if runningWindows && plugin.JSONData.Type == plugins.Renderer && f == "chrome-win/debug.log" {
 			continue
