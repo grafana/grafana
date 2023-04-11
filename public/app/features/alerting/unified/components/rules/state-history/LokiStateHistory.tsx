@@ -19,7 +19,7 @@ import {
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
 import { Stack } from '@grafana/experimental';
 import { LegendDisplayMode, MappingType, ThresholdsMode, VisibilityMode } from '@grafana/schema';
-import { Alert, FilterInput, TagList, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, FilterInput, Icon, TagList, useStyles2, useTheme2 } from '@grafana/ui';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import { TimelineMode } from 'app/core/components/TimelineChart/utils';
 
@@ -91,6 +91,8 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
 
   frameSubsetRef.current = frameSubset;
 
+  const hasMoreInstances = frameSubset.length < dataFrames.length;
+
   return (
     <div className={styles.fullSize}>
       {!isEmpty(commonLabels) && (
@@ -106,6 +108,14 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
           <div className={styles.graphWrapper}>
             <LogTimelineViewer frames={frameSubset} timeRange={timeRange} pointerSubject={pointerSubject.current} />
           </div>
+          {hasMoreInstances && (
+            <div className={styles.moreInstancesWarning}>
+              <Stack direction="row" alignItems="center" gap={1}>
+                <Icon name="exclamation-triangle" size="sm" />
+                <small>{`Only showing ${frameSubset.length} out of ${dataFrames.length} instances`}</small>
+              </Stack>
+            </div>
+          )}
           <FilterInput label="Filter instances" value={instancesFilter} onChange={setInstancesFilter} />
           <LogRecordViewerByTimestamp
             records={historyRecords}
@@ -325,6 +335,10 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     align-items: center;
     margin: auto auto;
+  `,
+  moreInstancesWarning: css`
+    color: ${theme.colors.warning.text};
+    padding: ${theme.spacing()};
   `,
 });
 
