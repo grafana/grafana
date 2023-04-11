@@ -714,7 +714,7 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 				}
 				require.NoError(t, err)
 
-				s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+				errDBSession := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 					storedRole, err := getRoleByUID(ctx, sess, fmt.Sprintf("externalservice_%s_permissions", tt.cmds[i].ExternalServiceID))
 					require.NoError(t, err)
 					require.NotNil(t, storedRole)
@@ -737,6 +737,7 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 
 					return nil
 				})
+				require.NoError(t, errDBSession)
 			}
 		})
 	}

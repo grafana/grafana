@@ -781,6 +781,7 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			ac := setupTestEnv(t)
+			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth)
 			for _, r := range tt.runs {
 				err := ac.SaveExternalServiceRole(ctx, r.cmd)
 				if r.wantErr {
