@@ -597,7 +597,8 @@ function errorAndDurationQuery(
   let serviceGraphViewMetrics = [];
   let errorRateBySpanName = '';
   let durationsBySpanName: string[] = [];
-  const spanNames = rateResponse.data[0][0]?.fields[1]?.values.toArray() ?? [];
+  const spanNamesUnescaped = rateResponse.data[0][0]?.fields[1]?.values.toArray() ?? [];
+  const spanNames = spanNamesUnescaped.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&'));
 
   if (spanNames.length > 0) {
     errorRateBySpanName = buildExpr(errorRateMetric, 'span_name=~"' + spanNames.join('|') + '"', request);
