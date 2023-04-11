@@ -31,9 +31,12 @@ import '@glideapps/glide-data-grid/dist/index.css';
 
 import { AddColumn } from './components/AddColumn';
 import { DatagridContextMenu } from './components/DatagridContextMenu';
+import { RenameColumnCell } from './components/RenameColumnCell';
 import { PanelOptions } from './panelcfg.gen';
 import {
+  RenameColumnInputData,
   clearCellsFromRangeSelection,
+  DatagridContextMenuData,
   deleteRows,
   EMPTY_CELL,
   EMPTY_GRID_SELECTION,
@@ -44,21 +47,13 @@ import {
   TRAILING_ROW_OPTIONS,
 } from './utils';
 
-interface DatagridContextMenuData {
-  x?: number;
-  y?: number;
-  column?: number;
-  row?: number;
-  isHeaderMenu?: boolean;
-  isContextMenuOpen: boolean;
-}
-
 interface Props extends PanelProps<PanelOptions> {}
 
 export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig }) => {
   const [columnWidths, setColumnWidths] = useState<Map<number, number>>(new Map());
   const [columns, setColumns] = useState<SizedGridColumn[]>([]);
   const [contextMenuData, setContextMenuData] = useState<DatagridContextMenuData>({ isContextMenuOpen: false });
+  const [renameColumnInputData, setRenameColumnInputData] = useState<RenameColumnInputData>({ isInputOpen: false });
   const [gridSelection, setGridSelection] = useState<GridSelection>(EMPTY_GRID_SELECTION);
   const [columnFreezeIndex, setColumnFreezeIndex] = useState<number>(0);
   const [toggleSearch, setToggleSearch] = useState<boolean>(false);
@@ -264,6 +259,16 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
       isContextMenuOpen: true,
       isHeaderMenu: true,
     });
+
+    setRenameColumnInputData({
+      x: screenPosition.x,
+      y: screenPosition.y,
+      width: screenPosition.width,
+      height: screenPosition.height,
+      columnIdx: col,
+      isInputOpen: false,
+      inputValue: frame.fields[col].name,
+    });
   };
 
   const onColumnMove = (from: number, to: number) => {
@@ -287,6 +292,29 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     }
 
     publishSnapshot(newFrame, id);
+  };
+
+  const onColumnRename = () => {
+    setRenameColumnInputData((prevData) => {
+      return {
+        ...prevData,
+        isInputOpen: true,
+      };
+    });
+  };
+
+  const onRenameInputBlur = (columnName: string, columnIdx: number) => {
+    const newFrame = new MutableDataFrame(frame);
+    newFrame.fields[columnIdx].name = columnName;
+
+    publishSnapshot(newFrame, id);
+
+    setRenameColumnInputData((prevData) => {
+      return {
+        ...prevData,
+        isInputOpen: false,
+      };
+    });
   };
 
   if (!document.getElementById('portal')) {
@@ -343,21 +371,21 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
       />
       {contextMenuData.isContextMenuOpen && (
         <DatagridContextMenu
-          x={contextMenuData.x!}
-          y={contextMenuData.y!}
-          column={contextMenuData.column}
-          row={contextMenuData.row}
+          menuData={contextMenuData}
           data={frame}
           saveData={(data) => publishSnapshot(data, id)}
           closeContextMenu={closeContextMenu}
           setToggleSearch={setToggleSearch}
           gridSelection={gridSelection}
           setGridSelection={setGridSelection}
-          isHeaderMenu={contextMenuData.isHeaderMenu}
           setColumnFreezeIndex={setColumnFreezeIndex}
           columnFreezeIndex={columnFreezeIndex}
+          renameColumnClicked={onColumnRename}
         />
       )}
+      {renameColumnInputData.isInputOpen ? (
+        <RenameColumnCell onColumnInputBlur={onRenameInputBlur} renameColumnData={renameColumnInputData} />
+      ) : null}
     </>
   );
 };

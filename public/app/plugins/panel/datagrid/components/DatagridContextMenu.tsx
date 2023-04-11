@@ -7,41 +7,42 @@ import { convertFieldType } from '@grafana/data/src/transformations/transformers
 import { ContextMenu, MenuGroup, MenuItem } from '@grafana/ui';
 import { MenuDivider } from '@grafana/ui/src/components/Menu/MenuDivider';
 
-import { cleanStringFieldAfterConversion, deleteRows, EMPTY_DF, EMPTY_GRID_SELECTION } from '../utils';
+import {
+  cleanStringFieldAfterConversion,
+  DatagridContextMenuData,
+  deleteRows,
+  EMPTY_DF,
+  EMPTY_GRID_SELECTION,
+} from '../utils';
 
 interface Props {
-  x: number;
-  y: number;
-  column?: number;
-  row?: number;
+  menuData: DatagridContextMenuData;
   data: DataFrame;
   saveData: (data: DataFrame) => void;
   closeContextMenu: () => void;
   setToggleSearch: (toggleSearch: boolean) => void;
   gridSelection: GridSelection;
   setGridSelection: (gridSelection: GridSelection) => void;
-  isHeaderMenu?: boolean;
   setColumnFreezeIndex: (index: number) => void;
   columnFreezeIndex: number;
+  renameColumnClicked: () => void;
 }
 
 export const DatagridContextMenu = ({
-  x,
-  y,
-  column,
-  row,
+  menuData,
   data,
   saveData,
   closeContextMenu,
   setToggleSearch,
   gridSelection,
   setGridSelection,
-  isHeaderMenu,
   setColumnFreezeIndex,
   columnFreezeIndex,
+  renameColumnClicked,
 }: Props) => {
   let selectedRows: number[] = [];
   let selectedColumns: number[] = [];
+  const { row, column, x, y, isHeaderMenu } = menuData;
 
   if (gridSelection.rows) {
     selectedRows = gridSelection.rows.toArray();
@@ -222,6 +223,7 @@ export const DatagridContextMenu = ({
             }
           }}
         />
+        <MenuItem label="Rename column" onClick={renameColumnClicked} />
         <MenuDivider />
         <MenuItem
           label={columnDeletionLabel}
@@ -247,8 +249,8 @@ export const DatagridContextMenu = ({
   return (
     <ContextMenu
       renderMenuItems={isHeaderMenu ? renderHeaderMenuItems : renderContextMenuItems}
-      x={x}
-      y={y}
+      x={x!}
+      y={y!}
       onClose={closeContextMenu}
     />
   );

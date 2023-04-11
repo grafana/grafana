@@ -49,6 +49,25 @@ export const RIGHT_ELEMENT_PROPS = {
   sticky: false,
 };
 
+export interface DatagridContextMenuData {
+  x?: number;
+  y?: number;
+  column?: number;
+  row?: number;
+  isHeaderMenu?: boolean;
+  isContextMenuOpen: boolean;
+}
+
+export interface RenameColumnInputData {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  isInputOpen: boolean;
+  inputValue?: string;
+  columnIdx?: number;
+}
+
 interface CellRange {
   x: number;
   y: number;
