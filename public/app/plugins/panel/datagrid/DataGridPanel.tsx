@@ -61,6 +61,7 @@ interface Props extends PanelProps<PanelOptions> {}
 
 export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig }) => {
   const [gridData, setGridData] = useState<DataFrame>(data.series[options.selectedSeries ?? 0]);
+  const [columnWidths, setColumnWidths] = useState<Map<number, number>>(new Map());
   const [columns, setColumns] = useState<SizedGridColumn[]>([]);
   const [contextMenuData, setContextMenuData] = useState<DatagridContextMenuData>({ isContextMenuOpen: false });
   const [gridSelection, setGridSelection] = useState<GridSelection>(EMPTY_GRID_SELECTION);
@@ -98,10 +99,10 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
       return;
     }
 
-    setColumns((prevColumns) => [
+    setColumns([
       ...gridData.fields.map((f, i) => {
         const displayName = getFieldDisplayName(f, gridData);
-        const width = prevColumns[i]?.width ?? getCellWidth(f, theme.typography.fontSize);
+        const width = columnWidths.get(i) ?? getCellWidth(f, theme.typography.fontSize);
         return {
           title: displayName,
           width: width,
@@ -111,7 +112,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         };
       }),
     ]);
-  }, [gridData, theme.typography.fontSize]);
+  }, [columnWidths, gridData, theme.typography.fontSize]);
 
   useEffect(() => {
     setGridColumns();
@@ -128,10 +129,11 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   }, [id, options, data]);
 
   useEffect(() => {
+    //If it's not using a snapshot keep intermediary layer gridData updated with data
     if (!isSnapshotted) {
       setGridData(data.series[options.selectedSeries ?? 0]);
     }
-  }, [data, isSnapshotted, options.selectedSeries]);
+  }, [data, gridData.fields.length, gridData.length, isSnapshotted, options.selectedSeries]);
 
   useEffect(() => {
     if (isSnapshotted) {
@@ -227,16 +229,11 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   };
 
   const onColumnResize = (column: GridColumn, newSize: number, colIndex: number, newSizeWithGrow: number) => {
-    setColumns((prevColumns) => {
-      const newColumns = [...prevColumns];
-      newColumns[colIndex] = {
-        title: column.title,
-        icon: column.icon,
-        width: newSize,
-        hasMenu: isDatagridEditEnabled(),
-        trailingRowOptions: { targetColumn: colIndex },
-      };
-      return newColumns;
+    setColumnWidths((prevWidths) => {
+      const newWidths = new Map(prevWidths);
+      newWidths.set(colIndex, newSize);
+
+      return newWidths;
     });
 
     setIsResizeInProgress(true);
@@ -398,9 +395,6 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
 };
 
 const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => {
-  const height = '37px';
-  const width = '120px';
-
   return {
     dataEditor: css`
       .dvn-scroll-inner > div:nth-child(2) {
@@ -422,7 +416,7 @@ const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => {
       }
     `,
     addColumnDiv: css`
-      width: ${width};
+      width: '120px';
       display: flex;
       flex-direction: column;
       background-color: ${theme.colors.background.primary};
@@ -430,7 +424,7 @@ const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => {
         pointer-events: ${isResizeInProgress ? 'none' : 'auto'};
         border: none;
         outline: none;
-        height: ${height};
+        height: '37px';
         font-size: 20px;
         background-color: ${theme.colors.background.secondary};
         color: ${theme.colors.text.primary};
@@ -443,7 +437,7 @@ const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => {
         }
       }
       input {
-        height: ${height};
+        height: '37px';
         border: 1px solid ${theme.colors.primary.main};
         :focus {
           outline: none;
