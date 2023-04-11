@@ -63,8 +63,8 @@ describe('Database Field Migration', () => {
       },
     };
 
-    // @ts-ignore @ts-ignore Ignore this line as it's expected that
-    // the database object will not be in necessary (most current) state
+    // @ts-ignore Ignore this line as it's expected that
+    // the database object will not be in the expected (most current) state
     const { rerender, result } = renderHook(() => useMigrateDatabaseFields(props));
     rerender();
   });
