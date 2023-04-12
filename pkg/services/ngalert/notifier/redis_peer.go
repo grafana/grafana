@@ -38,6 +38,7 @@ const (
 	update               = "update"
 	redisServerLabel     = "redis-server"
 	networkRetryInterval = time.Second * 10
+	membersSyncInterval  = time.Second * 5
 )
 
 type redisPeer struct {
@@ -63,8 +64,9 @@ type redisPeer struct {
 	messagesSentSize     *prometheus.CounterVec
 	nodePingDuration     *prometheus.HistogramVec
 
-	activeMembers []string
-	membersMtx    sync.Mutex
+	// List of active members of the cluster. Should be accessed through the Members function.
+	members    []string
+	membersMtx sync.Mutex
 
 	// Last known position in the cluster.
 	position int
@@ -108,7 +110,7 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		heartbeatInterval: time.Second * 5,
 		heartbeatTimeout:  time.Minute,
 		positionValidFor:  time.Minute,
-		activeMembers:     make([]string, 0),
+		members:           make([]string, 0),
 	}
 
 	// The metrics for the redis peer are exactly the same as for the official
@@ -211,7 +213,7 @@ func (p *redisPeer) heartbeatLoop() {
 }
 
 func (p *redisPeer) membersSyncLoop() {
-	ticker := time.NewTicker(time.Second * 5)
+	ticker := time.NewTicker(membersSyncInterval)
 	for {
 		select {
 		case <-ticker.C:
@@ -224,14 +226,14 @@ func (p *redisPeer) membersSyncLoop() {
 			if err != nil {
 				p.logger.Error("error getting keys from redis", "err", err, "pattern", p.withPrefix(peerPattern))
 				p.membersMtx.Lock()
-				p.activeMembers = []string{}
+				p.members = []string{}
 				p.membersMtx.Unlock()
 				continue
 			}
 			// This might happen on startup, when no value is in the store yet.
 			if len(members) == 0 {
 				p.membersMtx.Lock()
-				p.activeMembers = []string{}
+				p.members = []string{}
 				p.membersMtx.Unlock()
 				continue
 			}
@@ -262,7 +264,7 @@ func (p *redisPeer) membersSyncLoop() {
 			dur := time.Since(startTime)
 			p.logger.Debug("membership sync done", "duration_ms", dur.Milliseconds())
 			p.membersMtx.Lock()
-			p.activeMembers = peers
+			p.members = peers
 			p.membersMtx.Unlock()
 		case <-p.shutdownc:
 			ticker.Stop()
@@ -321,7 +323,7 @@ func (p *redisPeer) GetHealthScore() int {
 func (p *redisPeer) Members() []string {
 	p.membersMtx.Lock()
 	defer p.membersMtx.Unlock()
-	return p.activeMembers
+	return p.members
 }
 
 func (p *redisPeer) WaitReady(ctx context.Context) error {
