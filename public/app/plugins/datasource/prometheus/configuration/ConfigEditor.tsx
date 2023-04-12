@@ -3,13 +3,14 @@ import React, { useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
-import { AlertingSettings, DataSourceHttpSettingsOverhaul, Alert, SecureSocksProxySettings } from '@grafana/ui';
+import { AlertingSettings, Alert, SecureSocksProxySettings } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { PromOptions } from '../types';
 
 import { AzureAuthSettings } from './AzureAuthSettings';
 import { hasCredentials, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
+import { DataSourceHttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaul';
 import { PromSettings } from './PromSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps<PromOptions>;
