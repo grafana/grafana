@@ -1,4 +1,4 @@
-import { chain } from 'lodash';
+import { chain, isArray } from 'lodash';
 
 import {
   DataFrame,
@@ -20,11 +20,29 @@ import {
   VariableSuggestionsScope,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { VariableFormatID } from '@grafana/schema';
+import { formatRegistry, VariableValue, VariableValueSingle } from '@grafana/scenes';
 import { getConfig } from 'app/core/config';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
+
+formatRegistry.register({
+  id: 'percentencodeasuri',
+  name: 'Percent encode as URI',
+  description: 'Useful for URL escaping values, taking into URI syntax characters',
+  formatter: (value: VariableValue) => {
+    if (isArray(value)) {
+      return encodeURIStrict('{' + value.join(',') + '}');
+    }
+
+    return encodeURIStrict(value);
+  },
+});
+
+const encodeURIStrict = (str: VariableValueSingle) =>
+  encodeURI(String(str)).replace(/[!'()*]/g, (c) => {
+    return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+  });
 
 const timeRangeVars = [
   {
@@ -305,7 +323,7 @@ export class LinkSrv implements LinkService {
     };
 
     if (replaceVariables) {
-      info.href = replaceVariables(info.href, undefined, VariableFormatID.PercentEncode);
+      info.href = replaceVariables(info.href, undefined, 'percentencodeasuri');
       info.title = replaceVariables(link.title);
     }
 
