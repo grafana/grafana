@@ -75,9 +75,7 @@ func getK8sHTTPTransport(datapath string) *http.Transport {
 			TLSHandshakeTimeout: 10 * time.Second,
 			TLSClientConfig: &tls.Config{
 				RootCAs:      rootCerts,
-				ClientCAs:    rootCerts,
 				Certificates: []tls.Certificate{cert},
-				ClientAuth:   tls.RequireAndVerifyClientCert,
 			},
 		}
 	}

@@ -85,7 +85,10 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	config, err := createAggregatorConfig(extensionsConfig.GenericConfig.Config)
+	certUtil := certgenerator.CertUtil{
+		K8sDataPath: s.dataPath,
+	}
+	config, err := createAggregatorConfig(extensionsConfig.GenericConfig.Config, certUtil.CACertFile())
 	if err != nil {
 		return err
 	}

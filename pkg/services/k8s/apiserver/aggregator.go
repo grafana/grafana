@@ -20,6 +20,7 @@ limitations under the License.
 package apiserver
 
 import (
+	"crypto/x509"
 	"fmt"
 	"net/http"
 	"strings"
@@ -33,8 +34,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apiserver/pkg/authentication/authenticator"
+	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
+	clientCertAuth "k8s.io/apiserver/pkg/authentication/request/x509"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/dynamiccertificates"
 	"k8s.io/apiserver/pkg/server/healthz"
+	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/server/resourceconfig"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
@@ -52,6 +58,7 @@ import (
 
 func createAggregatorConfig(
 	sharedConfig genericapiserver.Config,
+	certPath string,
 ) (*aggregatorapiserver.Config, error) {
 	// make a shallow copy to let us twiddle a few things
 	// most of the config actually remains the same.  We only need to mess with a couple items related to the particulars of the aggregator
@@ -69,6 +76,16 @@ func createAggregatorConfig(
 	genericConfig.MergedResourceConfig = mergedResourceConfig
 	versionedInformers := informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
 	serviceResolver := aggregatorapiserver.NewClusterIPServiceResolver(versionedInformers.Core().V1().Services().Lister())
+
+	clientCA, err := dynamiccertificates.NewDynamicCAContentFromFile("client-ca-bundle", certPath)
+	if err != nil {
+		return nil, err
+	}
+	genericConfig.SecureServing.ClientCA = clientCA
+	genericConfig.Authentication.Authenticator, err = newClientCertAuthenticator(clientCA.CurrentCABundleContent())
+	if err != nil {
+		return nil, err
+	}
 
 	aggregatorConfig := &aggregatorapiserver.Config{
 		GenericConfig: &genericapiserver.RecommendedConfig{
@@ -253,4 +270,29 @@ func apiServicesToRegister(delegateAPIServer genericapiserver.DelegationTarget, 
 	}
 
 	return apiServices
+}
+
+func newClientCertAuthenticator(certPem []byte) (authenticator.Request, error) {
+	reqHeaderOptions := options.RequestHeaderAuthenticationOptions{
+		UsernameHeaders:     []string{"X-Remote-User"},
+		GroupHeaders:        []string{"X-Remote-Group"},
+		ExtraHeaderPrefixes: []string{"X-Remote-Extra-"},
+	}
+
+	requestHeaderAuthenticator, err := headerrequest.New(
+		reqHeaderOptions.UsernameHeaders,
+		reqHeaderOptions.GroupHeaders,
+		reqHeaderOptions.ExtraHeaderPrefixes,
+	)
+	if err != nil {
+		return nil, err
+	}
+	roots := x509.NewCertPool()
+	roots.AppendCertsFromPEM(certPem)
+	opts := x509.VerifyOptions{
+		Roots:     roots,
+		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+
+	return clientCertAuth.NewVerifier(opts, requestHeaderAuthenticator, sets.NewString()), nil
 }
