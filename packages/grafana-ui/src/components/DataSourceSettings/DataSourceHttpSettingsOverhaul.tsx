@@ -135,7 +135,8 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
       className={inputStyle}
       placeholder={defaultUrl}
       value={dataSourceConfig.url}
-      data-testid={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
+      // eslint-disable-next-line
+      aria-label={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
       onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
       disabled={dataSourceConfig.readOnly}
     />
