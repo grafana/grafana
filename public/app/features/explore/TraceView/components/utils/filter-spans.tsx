@@ -22,26 +22,26 @@ export function filterSpansNewTraceView(searchProps: SearchProps, spans: TraceSp
     return undefined;
   }
 
-  const arraysToMatchAcross = [];
+  let filteredSpans = false;
   if (searchProps.serviceName) {
-    arraysToMatchAcross.push(getServiceNameMatches(spans, searchProps));
+    spans = getServiceNameMatches(spans, searchProps);
+    filteredSpans = true;
   }
   if (searchProps.spanName) {
-    arraysToMatchAcross.push(getSpanNameMatches(spans, searchProps));
+    spans = getSpanNameMatches(spans, searchProps);
+    filteredSpans = true;
   }
   if (searchProps.from || searchProps.to) {
-    arraysToMatchAcross.push(getDurationMatches(spans, searchProps));
+    spans = getDurationMatches(spans, searchProps);
+    filteredSpans = true;
   }
   const tagMatches = getTagMatches(spans, searchProps.tags);
   if (tagMatches) {
-    arraysToMatchAcross.push(tagMatches);
+    spans = tagMatches;
+    filteredSpans = true;
   }
 
-  if (arraysToMatchAcross.length > 0) {
-    // only return spans that are matched in all filters used
-    return new Set([...arraysToMatchAcross].reduce((a, b) => a.filter((c) => b.includes(c))));
-  }
-  return undefined;
+  return filteredSpans ? new Set(spans.map((span: TraceSpan) => span.spanID)) : undefined;
 }
 
 const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
@@ -52,34 +52,32 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
   });
 
   if (tags.length > 0) {
-    return spans
-      .filter((span: TraceSpan) => {
-        // match against every tag filter
-        return tags.every((tag: Tag) => {
-          if (tag.key && tag.value) {
-            if (span.tags.some((kv) => checkKeyAndValueForMatch(tag, kv))) {
-              return getReturnValue(tag.operator, true);
-            } else if (span.process.tags.some((kv) => checkKeyAndValueForMatch(tag, kv))) {
-              return getReturnValue(tag.operator, true);
-            } else if (span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForMatch(tag, kv)))) {
-              return getReturnValue(tag.operator, true);
-            }
-          } else if (tag.key) {
-            if (span.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key))) {
-              return getReturnValue(tag.operator, true);
-            } else if (span.process.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key))) {
-              return getReturnValue(tag.operator, true);
-            } else if (
-              span.logs &&
-              span.logs.some((log) => log.fields.some((kv) => checkKeyForMatch(tag.key!, kv.key)))
-            ) {
-              return getReturnValue(tag.operator, true);
-            }
+    return spans.filter((span: TraceSpan) => {
+      // match against every tag filter
+      return tags.every((tag: Tag) => {
+        if (tag.key && tag.value) {
+          if (span.tags.some((kv) => checkKeyAndValueForMatch(tag, kv))) {
+            return getReturnValue(tag.operator, true);
+          } else if (span.process.tags.some((kv) => checkKeyAndValueForMatch(tag, kv))) {
+            return getReturnValue(tag.operator, true);
+          } else if (span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForMatch(tag, kv)))) {
+            return getReturnValue(tag.operator, true);
           }
-          return getReturnValue(tag.operator, false);
-        });
-      })
-      .map((span: TraceSpan) => span.spanID);
+        } else if (tag.key) {
+          if (span.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key))) {
+            return getReturnValue(tag.operator, true);
+          } else if (span.process.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key))) {
+            return getReturnValue(tag.operator, true);
+          } else if (
+            span.logs &&
+            span.logs.some((log) => log.fields.some((kv) => checkKeyForMatch(tag.key!, kv.key)))
+          ) {
+            return getReturnValue(tag.operator, true);
+          }
+        }
+        return getReturnValue(tag.operator, false);
+      });
+    });
   }
   return undefined;
 };
@@ -97,23 +95,19 @@ const getReturnValue = (operator: string, found: boolean) => {
 };
 
 const getServiceNameMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
-  return spans
-    .filter((span: TraceSpan) => {
-      return searchProps.serviceNameOperator === '='
-        ? span.process.serviceName === searchProps.serviceName
-        : span.process.serviceName !== searchProps.serviceName;
-    })
-    .map((span: TraceSpan) => span.spanID);
+  return spans.filter((span: TraceSpan) => {
+    return searchProps.serviceNameOperator === '='
+      ? span.process.serviceName === searchProps.serviceName
+      : span.process.serviceName !== searchProps.serviceName;
+  });
 };
 
 const getSpanNameMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
-  return spans
-    .filter((span: TraceSpan) => {
-      return searchProps.spanNameOperator === '='
-        ? span.operationName === searchProps.spanName
-        : span.operationName !== searchProps.spanName;
-    })
-    .map((span: TraceSpan) => span.spanID);
+  return spans.filter((span: TraceSpan) => {
+    return searchProps.spanNameOperator === '='
+      ? span.operationName === searchProps.spanName
+      : span.operationName !== searchProps.spanName;
+  });
 };
 
 const getDurationMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
@@ -139,7 +133,7 @@ const getDurationMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
           });
   }
 
-  return filteredSpans.map((span: TraceSpan) => span.spanID);
+  return filteredSpans;
 };
 
 export const convertTimeFilter = (time: string) => {

@@ -45,9 +45,7 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
     });
 
     const spanMatches = Array.from(spanFilterMatches!);
-    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
-      ? spanMatches.indexOf(focusedSpanIdForSearch)
-      : 0;
+    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch);
 
     // new query || at end, go to start
     if (prevMatchedIndex === -1 || prevMatchedIndex === spanMatches.length - 1) {
@@ -67,9 +65,7 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
     });
 
     const spanMatches = Array.from(spanFilterMatches!);
-    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
-      ? spanMatches.indexOf(focusedSpanIdForSearch)
-      : 0;
+    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch);
 
     // new query || at start, go to end
     if (prevMatchedIndex === -1 || prevMatchedIndex === 0) {

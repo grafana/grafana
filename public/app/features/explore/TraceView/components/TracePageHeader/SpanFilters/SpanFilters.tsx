@@ -30,7 +30,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { randomId, SearchProps } from '../../../useSearch';
+import { randomId, SearchProps, Tag } from '../../../useSearch';
 import { Trace } from '../../types';
 import NewTracePageSearchBar from '../NewTracePageSearchBar';
 
@@ -157,6 +157,32 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
       });
   };
 
+  const onTagChange = (tag: Tag, v: SelectableValue<string>) => {
+    setSearch({
+      ...search,
+      tags: search.tags?.map((x) => {
+        return x.id === tag.id ? { ...x, key: v?.value || '', value: undefined } : x;
+      }),
+    });
+
+    const loadTagValues = async () => {
+      if (v?.value) {
+        setTagValues({
+          ...tagValues,
+          [tag.id]: await getTagValues(v.value),
+        });
+      } else {
+        // removed value
+        const updatedValues = { ...tagValues };
+        if (updatedValues[tag.id]) {
+          delete updatedValues[tag.id];
+        }
+        setTagValues(updatedValues);
+      }
+    };
+    loadTagValues();
+  };
+
   const addTag = () => {
     const tag = {
       id: randomId(),
@@ -277,31 +303,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                       aria-label={`Select tag key`}
                       isClearable
                       key={tag.key}
-                      onChange={(v) => {
-                        setSearch({
-                          ...search,
-                          tags: search.tags?.map((x) => {
-                            return x.id === tag.id ? { ...x, key: v?.value || '', value: undefined } : x;
-                          }),
-                        });
-
-                        const loadTagValues = async () => {
-                          if (v?.value) {
-                            setTagValues({
-                              ...tagValues,
-                              [tag.id]: await getTagValues(v.value),
-                            });
-                          } else {
-                            // removed value
-                            const updatedValues = { ...tagValues };
-                            if (updatedValues[tag.id]) {
-                              delete updatedValues[tag.id];
-                            }
-                            setTagValues(updatedValues);
-                          }
-                        };
-                        loadTagValues();
-                      }}
+                      onChange={(v) => onTagChange(tag, v)}
                       onOpenMenu={getTagKeys}
                       options={tagKeys}
                       placeholder="Select tag"
