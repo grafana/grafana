@@ -13,7 +13,13 @@ const row = createLogRow({ uid: '1' });
 const timeZone = 'UTC';
 
 describe('LogRowContextModal', () => {
+  const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+
+  beforeEach(() => {
+    window.HTMLElement.prototype.scrollIntoView = jest.fn();
+  });
   afterEach(() => {
+    window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     jest.clearAllMocks();
   });
 
