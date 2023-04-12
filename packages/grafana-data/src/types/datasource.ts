@@ -499,6 +499,7 @@ export interface DataQueryError {
 
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   requestId: string; // Used to identify results and optionally cancel the request in backendSrv
+
   interval: string;
   intervalMs: number;
   maxDataPoints?: number;
